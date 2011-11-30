@@ -7,12 +7,10 @@ from xml.dom.minidom import getDOMImplementation
 
 def main(argv):
     command = argv.pop(0)
-    print command
     if (command == "resource"):
-#        create_xml_string("primitive", [("myoptions", "abcd"),("2ndOptions", "xxx")])
-        resource_create_cmd(argv)
+        resource__cmd(argv)
 
-def resource_create_cmd(argv):
+def resource_cmd(argv):
     sub_cmd = argv.pop(0)
     if (sub_cmd == "create"):
         res_id = argv.pop(0)
@@ -30,6 +28,11 @@ def resource_create_cmd(argv):
                     ra_values.append(arg)
         
         resource_create(res_id, res_type, ra_values, op_values)
+    elif (sub_cmd == "delete"):
+        res_id = argv.pop(0)
+        args = ["crm_resource","--resource", res_id, "-t","primitive","-D"]
+        output = subprocess.call(args)
+        print output
 
 # Create a resource using crm_resource
 # ra_class, ra_type & ra_provider must all contain valid info
@@ -41,7 +44,6 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
     output = subprocess.call(args)
-    print output
 
 def convert_args_to_instance_variables(ra_values, ra_id):
     tuples = convert_args_to_tuples(ra_values)
@@ -50,7 +52,6 @@ def convert_args_to_instance_variables(ra_values, ra_id):
     for (a,b) in tuples:
         ivs.append(("nvpair",[("name",a),("value",b),("id",attribute_id+"-"+a)],[]))
     ret = ("instance_attributes", [[("id"),(attribute_id)]], ivs)
-    print ret
     return [ret]
 
 def convert_args_to_tuples(ra_values):
@@ -80,21 +81,10 @@ def create_xml_element(tag, options, children = []):
     newdoc = impl.createDocument(None, tag, None)
     element = newdoc.documentElement
 
-    print "Tag:"
-    print tag
-    print "Options:"
-    print options
-    print "Children:"
-    print children
-    print "XX"
     for option in options:
-        print option
-        print option.__class__
         element.setAttribute(option[0],option[1])
 
     for child in children:
-        print "CHILD"
-        print child
         element.appendChild(create_xml_element(child[0], child[1], child[2]))
 
     print element.toprettyxml()
