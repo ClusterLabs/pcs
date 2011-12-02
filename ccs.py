@@ -4,15 +4,20 @@ import sys
 import subprocess
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
+import usage
 
 def main(argv):
     command = argv.pop(0)
+    if (command == "-h"):
+        usage.main()
     if (command == "resource"):
-        resource__cmd(argv)
+        resource_cmd(argv)
 
 def resource_cmd(argv):
     sub_cmd = argv.pop(0)
-    if (sub_cmd == "create"):
+    if (sub_cmd == "help"):
+        usage.resource()
+    elif (sub_cmd == "create"):
         res_id = argv.pop(0)
         res_type = argv.pop(0)
         ra_values = []
@@ -32,7 +37,10 @@ def resource_cmd(argv):
         res_id = argv.pop(0)
         args = ["crm_resource","--resource", res_id, "-t","primitive","-D"]
         output = subprocess.call(args)
-        print output
+    elif (sub_cmd == "list"):
+        args = ["crm_resource","-L"]
+        output = subprocess.call(args)
+
 
 # Create a resource using crm_resource
 # ra_class, ra_type & ra_provider must all contain valid info
@@ -40,11 +48,26 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
     primitive_values = get_full_ra_type(ra_type)
     primitive_values.insert(0,("id",ra_id))
-    xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes)
+    op_attributes = convert_args_to_operations(op_values, ra_id)
+    xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes + op_attributes)
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
     output = subprocess.call(args)
 
+def convert_args_to_operations(op_values, ra_id):
+    op_name = op_values.pop(0)
+    tuples = convert_args_to_tuples(op_values)
+    op_attrs = []
+    for (a,b) in tuples:
+        op_attrs.append((a,b))
+
+    op_attrs.append(("id",ra_id+"-"+a+"-"+b))
+    op_attrs.append((a,b))
+    op_attrs.append(("name",op_name))
+    ops = [(("op",op_attrs,[]))]
+    ret = ("operations", [], ops)
+    return [ret]
+        
 def convert_args_to_instance_variables(ra_values, ra_id):
     tuples = convert_args_to_tuples(ra_values)
     ivs = []
