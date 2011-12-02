@@ -5,15 +5,26 @@ import subprocess
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
 import usage
+import corosync
 
 def main(argv):
+    if len(argv) == 0:
+        usage.main()
+        exit(1)
+
     command = argv.pop(0)
     if (command == "-h"):
         usage.main()
     if (command == "resource"):
         resource_cmd(argv)
+    if (command == "corosync"):
+        corosync.corosync_cmd(argv)
 
 def resource_cmd(argv):
+    if len(argv) == 0:
+        usage.resource()
+        exit(1)
+
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
         usage.resource()

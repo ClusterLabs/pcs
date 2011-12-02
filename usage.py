@@ -3,8 +3,9 @@ def main():
     print "Control and configure pacemaker and corosync."
     print ""
     print "Commands:"
-    print "    node        Manage nodes"
+    print "    node        Manage nodes (NOT YET IMPLEMENTED)"
     print "    resource    Manage cluster resources"
+    print "    corosync    Configure corosync"
 
 def resource():
     print "Usage: ccs resource [commands]..."
@@ -25,3 +26,17 @@ def resource():
     print "    ccs delete ClusterIP"
     print ""
     print "    ccs list"
+
+def corosync():
+    print "Usage: ccs corosync [commands]..."
+    print "Configure corosync for use with pacemaker"
+    print ""
+    print "Commands:"
+    print "    configure [<bindnetaddr> <mcastaddr> <mcastport>]"
+    print "        Configure corosync for use with pacemaker. If no options"
+    print "        are specified the following values are specified:"
+    print "        bindnetaddr: (first local interface network address)"
+    print "        mcastaddr:   226.94.1.1"
+    print "        mcastport:   5405"
+    print ""
+
