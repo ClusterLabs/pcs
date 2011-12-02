@@ -48,7 +48,7 @@ def corosync_configure(argv):
 
 
 def get_local_network():
-    args = ["ip", "route"]
+    args = ["/sbin/ip", "route"]
     p = subprocess.Popen(args, stdout=subprocess.PIPE)
     iproute_out = p.stdout.read()
     network_addr = re.search(r"\n([0-9\.]+)", iproute_out)
