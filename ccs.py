@@ -1,13 +1,31 @@
 #!/usr/bin/python
 
-import sys
+import sys, getopt, os
 import subprocess
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
 import usage
 import corosync
+import utils
 
+usefile = False
+filename = ""
 def main(argv):
+    global filename, usefile
+    try:
+        opts, argv = getopt.getopt(argv, "hf:")
+    except getopt.GetoptError, err:
+        usage.main()
+        sys.exit(1)
+
+    for o, a in opts:
+        if o == "-h":
+            usage.main()
+            sys.exit()
+        elif o == "-f":
+            usefile = True
+            filename = a
+
     if len(argv) == 0:
         usage.main()
         exit(1)
@@ -47,10 +65,12 @@ def resource_cmd(argv):
     elif (sub_cmd == "delete"):
         res_id = argv.pop(0)
         args = ["crm_resource","--resource", res_id, "-t","primitive","-D"]
-        output = subprocess.call(args)
+        output = utils.run(args, usefile, filename)
+        print output,
     elif (sub_cmd == "list"):
         args = ["crm_resource","-L"]
-        output = subprocess.call(args)
+        output = utils.run(args, usefile, filename)
+        print output,
 
 
 # Create a resource using crm_resource

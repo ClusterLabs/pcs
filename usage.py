@@ -1,6 +1,10 @@
 def main():
-    print "Usage: ccs [-h] [commands]..."
+    print "Usage: ccs [-f file] [-h] [commands]..."
     print "Control and configure pacemaker and corosync."
+    print ""
+    print "Options:"
+    print "    -h          Display usage and exit"
+    print "    -f file     Perform actions on file instead of active CIB"
     print ""
     print "Commands:"
     print "    node        Manage nodes (NOT YET IMPLEMENTED)"
