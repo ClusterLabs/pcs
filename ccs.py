@@ -85,9 +85,12 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes + op_attributes)
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
-    output = subprocess.call(args)
+    output = utils.run(args)
+    print output
 
 def convert_args_to_operations(op_values, ra_id):
+    if len(op_values) == 0:
+        return []
     op_name = op_values.pop(0)
     tuples = convert_args_to_tuples(op_values)
     op_attrs = []
