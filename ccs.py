@@ -25,6 +25,8 @@ def main(argv):
         elif o == "-f":
             usefile = True
             filename = a
+            utils.usefile = usefile
+            utils.filename = filename
 
     if len(argv) == 0:
         usage.main()
@@ -65,11 +67,11 @@ def resource_cmd(argv):
     elif (sub_cmd == "delete"):
         res_id = argv.pop(0)
         args = ["crm_resource","--resource", res_id, "-t","primitive","-D"]
-        output = utils.run(args, usefile, filename)
+        output = utils.run(args)
         print output,
     elif (sub_cmd == "list"):
         args = ["crm_resource","-L"]
-        output = utils.run(args, usefile, filename)
+        output = utils.run(args)
         print output,
 
 

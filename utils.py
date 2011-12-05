@@ -1,8 +1,12 @@
 import os, subprocess
 import ccs
 
+# usefile & filename variables are set in ccs module
+usefile = False
+filename = ""
+
 # Run command, with environment and return output
-def run(args, usefile, filename):
+def run(args):
     env_var = os.environ
     if usefile:
         env_var["CIB_file"] = filename
