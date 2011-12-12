@@ -38,7 +38,7 @@ def corosync():
     print "Commands:"
     print "    configure [<bindnetaddr> <mcastaddr> <mcastport>]"
     print "        Configure corosync for use with pacemaker. If no options"
-    print "        are specified the following values are specified:"
+    print "        are specified the following values are used:"
     print "        bindnetaddr: (first local interface network address)"
     print "        mcastaddr:   226.94.1.1"
     print "        mcastport:   5405"
