@@ -1,46 +1,50 @@
 def main():
-    print "Usage: ccs [-f file] [-h] [commands]..."
-    print "Control and configure pacemaker and corosync."
-    print ""
-    print "Options:"
-    print "    -h          Display usage and exit"
-    print "    -f file     Perform actions on file instead of active CIB"
-    print ""
-    print "Commands:"
-    print "    node        Manage nodes (NOT YET IMPLEMENTED)"
-    print "    resource    Manage cluster resources"
-    print "    corosync    Configure corosync"
+    print """
+Usage: ccs [-f file] [-h] [commands]...
+Control and configure pacemaker and corosync.
+
+Options:
+    -h          Display usage and exit
+    -f file     Perform actions on file instead of active CIB
+
+Commands:
+    node        Manage nodes (NOT YET IMPLEMENTED)
+    resource    Manage cluster resources
+    corosync    Configure corosync
+"""
 
 def resource():
-    print "Usage: ccs resource [commands]..."
-    print "Manage pacemaker resources"
-    print ""
-    print "Commands:"
-    print "    create <resource id> <provider:class:type|type> [resource options]"
-    print "    delete <resource id>"
-    print "    list"
-    print ""
-    print "Examples:"
-    print "    ccs create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\"
-    print "               cidr_netmask=32 op monitor interval=30s"
-    print ""
-    print "    ccs create ClusterIP IPaddr2 ip=192.168.0.99 \\"
-    print "               cidr_netmask=32 op monitor interval=30s"
-    print ""
-    print "    ccs delete ClusterIP"
-    print ""
-    print "    ccs list"
+    print """Usage: ccs resource [commands]...
+Manage pacemaker resources
+Commands:
+    create <resource id> <provider:class:type|type> [resource options]
+    delete <resource id>
+    list
+
+Examples:
+    ccs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
+               cidr_netmask=32 op monitor interval=30s
+
+    ccs resource create ClusterIP IPaddr2 ip=192.168.0.99 \\
+               cidr_netmask=32 op monitor interval=30s
+
+    ccs resource delete ClusterIP
+
+    ccs resource list
+"""
 
 def corosync():
-    print "Usage: ccs corosync [commands]..."
-    print "Configure corosync for use with pacemaker"
-    print ""
-    print "Commands:"
-    print "    configure [<bindnetaddr> <mcastaddr> <mcastport>]"
-    print "        Configure corosync for use with pacemaker. If no options"
-    print "        are specified the following values are used:"
-    print "        bindnetaddr: (first local interface network address)"
-    print "        mcastaddr:   226.94.1.1"
-    print "        mcastport:   5405"
-    print ""
+    print """
+Usage: ccs corosync [commands]...
+Configure corosync for use with pacemaker
+
+Commands:
+    configure [<bindnetaddr> <mcastaddr> <mcastport>]
+        Configure corosync for use with pacemaker. If no options
+        are specified the following values are used:
+        bindnetaddr: (first local interface network address)
+        mcastaddr:   226.94.1.1
+        mcastport:   5405
+"""
+
 
