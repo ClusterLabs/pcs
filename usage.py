@@ -11,6 +11,7 @@ Commands:
     node        Manage nodes (NOT YET IMPLEMENTED)
     resource    Manage cluster resources
     corosync    Configure corosync
+    property    Set pacemaker properties
 """
 
 def resource():
@@ -51,4 +52,16 @@ Commands:
         mcastport:   5405
 """
 
+def property():
+    print """
+Usage: ccs property <properties>...
+Configure pacemaker properties
+
+Commands:
+    set <property>=<value>
+        Set specific pacemaker properties
+
+Examples:
+    ccs property set stonith-enabled=false
+"""
 

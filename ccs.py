@@ -4,6 +4,7 @@ import sys, getopt, os
 import usage
 import corosync
 import resource
+import prop
 import utils
 
 usefile = False
@@ -37,6 +38,8 @@ def main(argv):
         resource.resource_cmd(argv)
     elif (command == "corosync"):
         corosync.corosync_cmd(argv)
+    elif (command == "property"):
+        prop.property_cmd(argv)
     else:
         usage.main()
 

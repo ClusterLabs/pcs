@@ -1,6 +1,9 @@
 import os, subprocess
 import sys
 import ccs
+import xml.dom.minidom
+from xml.dom.minidom import parseString
+
 
 # usefile & filename variables are set in ccs module
 usefile = False
@@ -46,6 +49,37 @@ def get_cib_xpath(xpath_query):
     if (retval != 0):
         return ""
     return output
+
+# If the property exists, remove it and replace it with the new property
+def set_cib_property(prop, value):
+    crm_config = get_cib_xpath("//crm_config")
+    if (crm_config == ""):
+        print "Unable to get crm_config, is pacemaker running?"
+        sys.exit(1)
+    document = parseString(crm_config)
+    crm_config = document.documentElement
+    cluster_property_set = crm_config.getElementsByTagName("cluster_property_set")[0]
+    property_exists = False
+    for child in cluster_property_set.childNodes:
+        if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
+            break
+        if (child.getAttribute("id") == "cib-bootstrap-options-" + prop):
+            cluster_property_set.removeChild(child)
+            property_exists = True
+            break
+
+    new_property = document.createElement("nvpair")
+    new_property.setAttribute("id","cib-bootstrap-options-"+prop)
+    new_property.setAttribute("name",prop)
+    new_property.setAttribute("value",value)
+    cluster_property_set.appendChild(new_property)
+
+
+    args = ["cibadmin", "-c", "-M", "--xml-text", cluster_property_set.toxml()]
+    output, retVal = run(args)
+    print output
+
+
 
 def write_empty_cib(filename):
 
