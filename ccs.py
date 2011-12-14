@@ -31,12 +31,14 @@ def main(argv):
         exit(1)
 
     command = argv.pop(0)
-    if (command == "-h"):
+    if (command == "-h" or command == "help"):
         usage.main()
-    if (command == "resource"):
+    elif (command == "resource"):
         resource.resource_cmd(argv)
-    if (command == "corosync"):
+    elif (command == "corosync"):
         corosync.corosync_cmd(argv)
+    else:
+        usage.main()
 
 
 if __name__ == "__main__":

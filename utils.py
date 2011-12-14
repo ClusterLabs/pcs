@@ -12,20 +12,39 @@ def run(args):
     if usefile:
         env_var["CIB_file"] = filename
 
-    if not os.path.isfile(filename):
-        try:
-            write_empty_cib(filename)
-        except IOError:
-            print "Unable to write to file: " + filename
-            sys.exit(1)
+        if not os.path.isfile(filename):
+            try:
+                write_empty_cib(filename)
+            except IOError:
+                print "Unable to write to file: " + filename
+                sys.exit(1)
 
     try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, env = env_var)
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var)
         output = p.stdout.read()
+        p.wait()
+        returnVal = p.returncode
     except OSError:
         print "Unable to locate command: " + args[0]
         sys.exit(1)
 
+    return output, returnVal
+
+# Check is something exists in the CIB, if it does return it, if not, return
+#  an empty string
+def does_exist(xpath_query):
+    args = ["cibadmin", "-o", "resources", "-Q", "--xpath", xpath_query]
+    output,retval = run(args)
+    if (retval != 0):
+        return False
+    return True
+
+# Return matches from the CIB with the xpath_query
+def get_cib_xpath(xpath_query):
+    args = ["cibadmin", "-Q", "--xpath", xpath_query]
+    output,retval = run(args)
+    if (retval != 0):
+        return ""
     return output
 
 def write_empty_cib(filename):

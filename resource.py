@@ -1,5 +1,7 @@
+import sys
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
+from xml.dom.minidom import parseString
 import usage
 import utils
 
@@ -29,13 +31,15 @@ def resource_cmd(argv):
         resource_create(res_id, res_type, ra_values, op_values)
     elif (sub_cmd == "delete"):
         res_id = argv.pop(0)
-        args = ["crm_resource","--resource", res_id, "-t","primitive","-D"]
-        output = utils.run(args)
-        print output,
+        resource_remove(res_id)
     elif (sub_cmd == "list"):
         args = ["crm_resource","-L"]
-        output = utils.run(args)
+        output,retval = utils.run(args)
         print output,
+    elif (sub_cmd == "group"):
+        resource_group(argv)
+    else:
+        usage.resource()
 
 
 # Create a resource using crm_resource
@@ -48,7 +52,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes + op_attributes)
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
-    output = utils.run(args)
+    output,retval = utils.run(args)
     print output
 
 def convert_args_to_operations(op_values, ra_id):
@@ -112,3 +116,94 @@ def create_xml_element(tag, options, children = []):
     print element.toprettyxml()
     return element
 
+def resource_group(argv):
+    if (len(argv) == 0):
+        usage.resource()
+        sys.exit(1)
+
+    group_cmd = argv.pop(0)
+    if (group_cmd == "add"):
+        if (len(argv) < 2):
+            usage.resource()
+            sys.exit(1)
+        group_name = argv.pop(0)
+        resource_group_add(group_name, argv)
+    elif (group_cmd == "remove_resource"):
+        print "NYI"
+        
+    elif (group_cmd == "delete"):
+        print "NYI"
+
+    elif (group_cmd == "list"):
+        print "NYI"
+
+    else:
+        usage.resource()
+        sys.exit(1)
+
+# Removes a resource and if it's the last resource in a group, remove the group
+def resource_remove(resource_id):
+    group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')
+    num_resources_in_group = 0
+
+    if (group != ""):
+        num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
+
+    if (group == "" or num_resources_in_group > 1):
+        args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
+        print "Deleting Resource - " + resource_id,
+        output,retVal = utils.run(args)
+    else:
+        args = ["cibadmin", "-o", "resources", "-D", "--xml-text", group]
+        print "Deleting Resource (and group) - " + resource_id,
+        output,retVal = utils.run(args)
+
+def resource_group_add(group_name, resource_ids):
+    group_xpath = "//group[@id='"+group_name+"']"
+    group_xml = utils.get_cib_xpath(group_xpath)
+    if (group_xml == ""):
+        impl = getDOMImplementation()
+        newdoc = impl.createDocument(None, "group", None)
+        element = newdoc.documentElement
+        element.setAttribute("id", group_name)
+        xml_resource_string = element.toxml()
+    else:
+        element = parseString(group_xml).documentElement
+
+    resources_to_move = ""
+    for resource_id in resource_ids:
+        # If resource already exists in group then we skip
+        if (utils.get_cib_xpath("//group[@id='"+group_name+"']/primitive[@id='"+resource_id+"']") != ""):
+            print resource_id + " already exists in " + group_name + "\n"
+            continue
+
+        args = ["cibadmin", "-o", "resources", "-Q", "--xpath", "//primitive[@id='"+resource_id+"']"]
+        output,retVal = utils.run(args)
+        if (retVal != 0):
+            print "Bad resource: " + resource_id
+            continue
+        print "Query for " + resource_id,
+        print output
+        resources_to_move = resources_to_move + output
+        print "Delete " + resource_id,
+        resource_remove(resource_id)
+
+    if (resources_to_move != ""):
+        print "Resources to Move:",
+        print resources_to_move
+        resources_to_move = "<resources>" + resources_to_move + "</resources>"
+        resource_children = parseString(resources_to_move).documentElement
+        print "Child Nodes:\n"
+        print resource_children.toprettyxml()
+        for child in resource_children.childNodes:
+            element.appendChild(child)
+        xml_resource_string = element.toprettyxml()
+        print "New Group String",
+        print xml_resource_string
+        
+        args = ["cibadmin", "-o", "resources", "-c", "-M", "-X", xml_resource_string]
+        output,retval = utils.run(args)
+        print output,
+    else:
+        print "No resources to add.\n"
+        sys.exit(1)

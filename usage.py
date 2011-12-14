@@ -17,9 +17,13 @@ def resource():
     print """Usage: ccs resource [commands]...
 Manage pacemaker resources
 Commands:
-    create <resource id> <provider:class:type|type> [resource options]
-    delete <resource id>
-    list
+    resource create <resource id> <provider:class:type|type> [resource options]
+    resource delete <resource id>
+    resource list
+    resource group add <group name> <resource id>...
+    resource group remove_resource <group name> <resource id> ...
+    resource group delete <group name>
+    resource group list
 
 Examples:
     ccs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\

@@ -15,6 +15,8 @@ def corosync_cmd(argv):
         usage.corosync()
     elif (sub_cmd == "configure"):
         corosync_configure(argv)
+    else:
+        usage.corosync()
 
 def corosync_configure(argv):
     if len(argv) == 3:
@@ -51,7 +53,7 @@ def get_local_network():
     args = ["/sbin/ip", "route"]
     p = subprocess.Popen(args, stdout=subprocess.PIPE)
     iproute_out = p.stdout.read()
-    network_addr = re.search(r"\n([0-9\.]+)", iproute_out)
+    network_addr = re.search(r"^([0-9\.]+)", iproute_out)
     if network_addr:
         return network_addr.group(1)
     else:
