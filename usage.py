@@ -12,6 +12,7 @@ Commands:
     resource    Manage cluster resources
     corosync    Configure corosync
     property    Set pacemaker properties
+    constraint  Set resource constraints
 """
 
 def resource():
@@ -65,3 +66,36 @@ Examples:
     ccs property set stonith-enabled=false
 """
 
+def constraint():
+    print """
+Usage: ccs constraint [constraints]...
+Manage resource constraints
+
+Commands:
+    location [show resources|nodes]
+        List all the current location constraints, if 'resources' is specified
+        location constraints are displayed per resource (default), if 'nodes'
+        is specified location constraints are displayed per node. 
+
+    location force <resource name> [on] <node>
+        Force the resource named to always run on the node specified
+
+    location force <resource name> off <node>
+        Force the resource named to never run on the specified node
+
+    location forcerm <resource name> [on] <node>
+        Remove the constraint forcing the resource named to always run on the
+        node specified
+
+    location forcerm <resource name> off <node>
+        Remove the constraint forcing the resource named to never run on the
+        node specified
+
+    location add <id> <resource name> <node> <score>
+        Add a location constraint with the appropriate id, resource name,
+          node name and score. (For more advanced pacemaker usage)
+
+    location rm <id> [<resource name> <node> <score>]
+        Remove a location constraint with the appropriate id, resource name,
+          node name and score. (For more advanced pacemaker usage)
+"""

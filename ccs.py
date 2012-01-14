@@ -5,6 +5,7 @@ import usage
 import corosync
 import resource
 import prop
+import constraint
 import utils
 
 usefile = False
@@ -40,6 +41,8 @@ def main(argv):
         corosync.corosync_cmd(argv)
     elif (command == "property"):
         prop.property_cmd(argv)
+    elif (command == "constraint"):
+        constraint.constraint_cmd(argv)
     else:
         usage.main()
 

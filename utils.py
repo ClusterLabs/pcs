@@ -36,7 +36,7 @@ def run(args):
 # Check is something exists in the CIB, if it does return it, if not, return
 #  an empty string
 def does_exist(xpath_query):
-    args = ["cibadmin", "-o", "resources", "-Q", "--xpath", xpath_query]
+    args = ["cibadmin", "-Q", "--xpath", xpath_query]
     output,retval = run(args)
     if (retval != 0):
         return False
