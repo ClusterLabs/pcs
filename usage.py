@@ -1,6 +1,6 @@
 def main():
     print """
-Usage: ccs [-f file] [-h] [commands]...
+Usage: pcs [-f file] [-h] [commands]...
 Control and configure pacemaker and corosync.
 
 Options:
@@ -16,7 +16,7 @@ Commands:
 """
 
 def resource():
-    print """Usage: ccs resource [commands]...
+    print """Usage: pcs resource [commands]...
 Manage pacemaker resources
 Commands:
     resource create <resource id> <provider:class:type|type> [resource options]
@@ -28,20 +28,20 @@ Commands:
     resource group list
 
 Examples:
-    ccs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
+    pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
                cidr_netmask=32 op monitor interval=30s
 
-    ccs resource create ClusterIP IPaddr2 ip=192.168.0.99 \\
+    pcs resource create ClusterIP IPaddr2 ip=192.168.0.99 \\
                cidr_netmask=32 op monitor interval=30s
 
-    ccs resource delete ClusterIP
+    pcs resource delete ClusterIP
 
-    ccs resource list
+    pcs resource list
 """
 
 def corosync():
     print """
-Usage: ccs corosync [commands]...
+Usage: pcs corosync [commands]...
 Configure corosync for use with pacemaker
 
 Commands:
@@ -55,7 +55,7 @@ Commands:
 
 def property():
     print """
-Usage: ccs property <properties>...
+Usage: pcs property <properties>...
 Configure pacemaker properties
 
 Commands:
@@ -63,12 +63,12 @@ Commands:
         Set specific pacemaker properties
 
 Examples:
-    ccs property set stonith-enabled=false
+    pcs property set stonith-enabled=false
 """
 
 def constraint():
     print """
-Usage: ccs constraint [constraints]...
+Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:

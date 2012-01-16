@@ -1,11 +1,11 @@
 import os, subprocess
 import sys
-import ccs
+import pcs
 import xml.dom.minidom
 from xml.dom.minidom import parseString
 
 
-# usefile & filename variables are set in ccs module
+# usefile & filename variables are set in pcs module
 usefile = False
 filename = ""
 
