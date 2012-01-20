@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2012-2012 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2012 Red Hat, Inc. All rights reserved.
 #
 # This copyrighted material is made available to anyone wishing to use,
 # modify, copy, or redistribute it subject to the terms and conditions
@@ -15,6 +15,7 @@ Release: 1%{?dist}
 License: GPLv2
 URL: http://github.com/feist/pcs
 Group: System Environment/Base
+BuildArch: noarch
 Summary: Pacemaker Configuration System	
 Source0: http://people.redhat.com/cfeist/pcs/pcs-%{version}.tar.gz
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
