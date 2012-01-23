@@ -3,12 +3,12 @@
 from distutils.core import setup
 
 setup(name='pcs',
-    version='0.9.0',
+    version='0.9.1',
     description='Pacemaker Configuration System',
     author='Chris Feist',
     author_email='cfeist@redhat.com',
     url='http://github.com/feist/pcs',
     packages=['pcs'],
-    package_data={'pcs':['COPYING','corosync.conf.template']}, 
+    package_data={'pcs':['corosync.conf.template']}, 
     py_modules=['pcs'],
     )
