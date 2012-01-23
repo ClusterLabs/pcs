@@ -72,6 +72,9 @@ Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:
+    show
+        List all current location, order and colocation constraints
+
     location [show resources|nodes]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
@@ -98,4 +101,30 @@ Commands:
     location rm <id> [<resource name> <node> <score>]
         Remove a location constraint with the appropriate id, resource name,
           node name and score. (For more advanced pacemaker usage)
+
+    order [show]
+        List all current ordering constraints.
+
+    order list <resource1> <resource2> [resourceN]...
+        Require that resource be started in the order specified
+
+    order rm <resource1> [resourceN]...
+        Remove resource from any order list
+
+    order add <resource1> <resource2> <score> [symmetrical|nonsymmetrical]
+        Specify that resource1 should start before rsource2 with the specified
+        score and specify if resources will be stopped in the reverse order
+        they were started (symmetrical) or not (nonsymmetrical).  Default is
+        symmetrical.  (For more advance pacemaker usage)
+
+    colocation add <source resource> <target resource> [score]
+        Request <source resource> to run on the same node where pacemaker has
+        determined <target resource> should run.  Positive values of score
+        mean the resources should be run on the same node, negative values
+        mean the resources should not be run on the same node.  Specifying
+        'INFINITY' (or '-INFINITY') for the score force <source resource> to
+        run (or not run) on <target resource>. (score defaults to "INFINITY")
+
+    colocation rm <source resource> <target resource>
+        Remove colocation constraints with <source resource>
 """
