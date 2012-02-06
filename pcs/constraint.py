@@ -144,8 +144,11 @@ def order_show():
         oc_resource2 = ord_loc.getAttribute("then")
         oc_id = ord_loc.getAttribute("id")
         oc_score = ord_loc.getAttribute("score")
+        oc_sym = ""
+        if ord_loc.getAttribute("symmetrical") == "false":
+            oc_sym = " (non-symmetrical)"
         score_text = "" if (oc_score == "INFINITY") else " (" + oc_score + ")"
-        print "  " + oc_resource1 + " then " + oc_resource2 + score_text
+        print "  " + oc_resource1 + " then " + oc_resource2 + score_text + oc_sym
 
 def order_list(argv):
     for i in range(0,len(argv)-1):
@@ -195,6 +198,8 @@ def order_add(argv,returnElementOnly=False):
     element.setAttribute("first",resource1)
     element.setAttribute("then",resource2)
     element.setAttribute("score",score)
+    if (sym == "false"):
+        element.setAttribute("symmetrical", "false")
     constraintsElement.appendChild(element)
 
     if returnElementOnly == False:
