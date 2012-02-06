@@ -59,6 +59,9 @@ Usage: pcs property <properties>...
 Configure pacemaker properties
 
 Commands:
+    list [property]
+        List property settings (Default: all settings)
+
     set <property>=<value>
         Set specific pacemaker properties
 

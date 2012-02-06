@@ -9,7 +9,7 @@ from xml.dom.minidom import parseString
 usefile = False
 filename = ""
 
-# Run command, with environment and return output
+# Run command, with environment and return (output, retval)
 def run(args):
     env_var = os.environ
     if usefile:
