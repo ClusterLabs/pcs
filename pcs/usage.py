@@ -60,7 +60,7 @@ Configure pacemaker properties
 
 Commands:
     list [property]
-        List property settings (Default: all settings)
+        List property settings (Default: all properties)
 
     set <property>=<value>
         Set specific pacemaker properties
