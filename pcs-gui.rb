@@ -1,7 +1,7 @@
 require 'sinatra'
 require 'sinatra/reloader' if development?
 
-set :port, 2222
+#set :port, 2222
 set :logging, true
 
 @nodes = (1..7)
