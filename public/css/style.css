@@ -231,10 +231,12 @@ td.node_list_sprite {
 .text_field {
   line-height: 22px;
   font-family: "Liberation";
-  font-size: 12;
+  font-size: 12px;
   color: #333333;
   border: 1px solid #cdcdcd;
-  background: url("../images/field_bg.png")
+  background: url("../images/field_bg.png");
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 #node_sub_info {
@@ -289,6 +291,7 @@ td.node_list_sprite {
 }
 
 .datatable_header {
+  padding-left: 3px;
   font-family: "Overpass";
   font-size: 14px;
   color: #333333;

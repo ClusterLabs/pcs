@@ -1,8 +1,8 @@
 <head>
-  <link rel="stylesheet" type="text/css" href="css/style.css" />
-  <link rel="stylesheet" type="text/css" href="css/overpass.css" />
-  <link rel="stylesheet" type="text/css" href="css/liberation.css" />
-  <script src="js/jquery-1.7.1.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="/css/style.css" />
+  <link rel="stylesheet" type="text/css" href="/css/overpass.css" />
+  <link rel="stylesheet" type="text/css" href="/css/liberation.css" />
+  <script src="/js/jquery-1.7.1.min.js"></script>
 </head>
 <html>
   <body>
@@ -11,7 +11,7 @@
       <table id="menu_controls" width=1000>
 	<tr><td rowspan=2 width="170px" style="vertical-align: top;">
 	    <div id="logo">
-	      <img  src="images/HAM-logo.png">
+	      <img src="/images/HAM-logo.png">
 	    </div>
 	  </td>
 	<td class="right">
@@ -51,9 +51,9 @@
     <tr>
       <td id="node_list">
 	<table cellpadding=0 cellspacing=0 style="float:left;">
-	  <% (1..7).each  do |i| %>
-	    <% if i != 1 %>
-	      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');">
+	  <% @nodes.each  do |i| %>
+	    <% if i != @cur_node %>
+	      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='/nodes/<%=i%>'">
 	      <% else %>
 		<tr style="background-color: #e4f5fd">
 	      <% end %>
@@ -66,7 +66,7 @@
 	    <td style="width:100%;">
 	      Node <%= i %>
 	    </td>
-	    <% if i != 1 %>
+	    <% if i != @cur_node %>
 	      <td style="display:none">
 	      <% else %>
 	      <td>
@@ -80,7 +80,7 @@
       <td id="node_info" colspan=2>
 	<div id="node_info_header">
 	  <div id="node_info_header_title">Edit Node</div>
-	  <div id="node_info_header_title_name">&nbsp;Node 1</div>
+	  <div id="node_info_header_title_name">&nbsp;Node <%=@cur_node%></div>
 	  <div class="link" style="float: right">Close</div>
 	  <div class="x sprites" style="float: right"></div>
 	</div>
@@ -107,12 +107,15 @@
 	</div>
 
 	<div id="node_details">
-	  <div class="reg">Node ID: </div>
-	  <div class="bold">1</div>
-	  <div class="reg"> Uptime: </div>
-	  <div class="bold">XX:XX:XX:XX</div>
-	  <div class="reg"> Hostname: </div>
-	  <div class="bold">localhost</div>
+	  <table><tr>
+	      <td><div class="reg">Node ID: <%=@cur_node%></div></td>
+	      <td><div class="bold">1</div></td>
+	      <td><div class="reg"> Uptime: </div></td>
+	      <td><div class="bold">XX:XX:XX:XX</div></td>
+	      <td><div class="reg"> Hostname: </div></td>
+	      <td><div><input style="margin-right: 50px;" value="node<%=@cur_node%>.lab.msp.redhat.com" type="text" size="35" class="text_field"></div></td>
+	    </tr>
+	  </table>
 	</div>
 
 	<table style="clear:left;float:left;margin-top:25px;">
