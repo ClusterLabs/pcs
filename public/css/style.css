@@ -96,6 +96,7 @@ div.first a {
   font-size: 12px;
   text-align: right;
   color: #888888;
+  border-bottom: 0px;
 }
 
 table#main {
