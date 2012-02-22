@@ -45,13 +45,14 @@ td.right {
   background: #000000;
 }
 
-#header #menu_list .active {
+#header #menu_list a.active {
   padding: 8px;
   padding-left: 16px;
   padding-right: 16px;
   margin: 0px;
   border: 0px;
   background:  -webkit-gradient(linear, left top, left bottom, from(#4b4b4b), to(#323232));
+  background:  -moz-linear-gradient(top, #4b4b4b, #323232);
   float: left;
 }
 
@@ -187,6 +188,7 @@ td.node_list_sprite {
 
 #node_info {
   background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#f5f5f5));
+  background: -moz-linear-gradient(top, #ffffff, #f5f5f5);
 }
 
 #node_info_header {
@@ -230,7 +232,7 @@ td.node_list_sprite {
 }
 
 .text_field {
-  line-height: 22px;
+  height: 25px;
   font-family: "Liberation";
   font-size: 12px;
   color: #333333;

@@ -1,37 +1,58 @@
 require 'sinatra'
+require 'sinatra/reloader' if development?
+
+set :port, 2222
+set :logging, true
 
 @nodes = (1..7)
-  
+
+helpers do
+  def setup
+    @nodes = {} 
+    (1..7).each do |i|
+      @nodes[i] = [i, "Node #{i}", "node#{i}.lab.msp.redhat.com"]
+    end
+    @cur_node = params[:node].to_i
+    if @cur_node == 0 then
+      @cur_node = @nodes[1]
+    else
+      @cur_node = @nodes[@cur_node]
+    end
+  end
+end
+
+get '/blah' do
+  print "blah"
+  erb "Blah!"
+end
+
+get '/resourcedeps/?:resource?' do
+  setup()
+  @resourcedepsmenuclass = "class=\"active\""
+  erb :index
+end
+
+get '/resources/?:resource?' do
+  setup()
+  @resourcemenuclass = "class=\"active\""
+  erb :index
+end
+
+get '/nodes/?:node?' do
+  print "Nodes\n"
+  setup()
+  @nodemenuclass = "class=\"active\""
+  erb :index
+end
+
 get '/' do
-  @nodes = (1..7)
-  @cur_node = 1
-  erb :index
+  print "Redirecting...\n"
+  call(env.merge("PATH_INFO" => '/nodes'))
 end
 
-get '/nodes/?' do
-  @nodes = (1..7)
-  @cur_node = 1
-  erb :index
-end
-
-get '/nodes/:node' do
-  @nodes = {} 
-  (1..7).each do |i|
-    @nodes[i] = [i, "Node #{i}", "node#{i}.lab.msp.redhat.com"]
-  end
-  @cur_node = params[:node].to_i
-  if @cur_node == 0 then
-    @cur_node = @nodes[1]
-  else
-    @cur_node = @nodes[@cur_node]
-  end
-  print "TEST"
-  print @nodes
-  erb :index
-end
 
 get '*' do
-  @cur_node = 1
-  @nodes = [1,2]
-  erb :index
+  print params[:splat]
+  print "2Redirecting...\n"
+  call(env.merge("PATH_INFO" => '/nodes'))
 end
