@@ -1,0 +1,393 @@
+body {
+  margin-top: 0px;
+  margin-left: 0px;
+}
+
+#header {
+  padding-left: 38px;
+  background-image:url("../images/Shell_bg.png");
+  height: 79px;
+}
+
+#header #logo {
+  padding-top: 20px;
+  padding-right: 15px;
+  float: left;
+}
+
+td.right {
+  float: right;
+}
+
+#header li {
+  list-style: none;
+  display: inline;
+  list-style-type: none;
+}
+
+#header #menu_controls {
+  padding-top: 0px;
+  padding-bottom: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  height: 79px;
+  border-collapse: collapse;
+}
+
+#menu_controls tr, #menu_controls td {
+  vertical-align: bottom;
+}
+
+#menu_controls #menu_list ul {
+  margin-bottom: 8px;
+  padding-right: 0px;
+  margin-right: 0px;
+  background: #000000;
+}
+
+#header #menu_list .active {
+  padding: 8px;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin: 0px;
+  border: 0px;
+  background:  -webkit-gradient(linear, left top, left bottom, from(#4b4b4b), to(#323232));
+  float: left;
+}
+
+#header #menu_list a {
+  padding: 8px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background: #000000;
+  float: left;
+}
+
+div.first a {
+  border-top-left-radius: 9;
+}
+
+#header a, #header a:link, #header a:visited, #header a:hover, #header a:active {
+  text-decoration: none;
+  color: #cccccc
+}
+
+#header a.active {
+  color: #ffffff;
+}
+
+#menu_controls #dropdown {
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
+  text-align: right;
+  color: #888888;
+}
+
+#menu_list {
+  color: #cccccc;
+  font-family: "Overpass";
+  font-size: 12px;
+  font-weight: bold;
+}
+
+#tab_name {
+  font-family: "Overpass";
+  font-size: 12px;
+  text-align: right;
+  color: #888888;
+}
+
+table#main {
+  border-spacing: 0px;
+  margin-top: 15px;
+  margin-left: 38px;
+  width: 1000px;
+}
+
+#page_header {
+  font-family: "Overpass";
+  font-size: 16px;
+  font-weight: bold;
+  color: #333333;
+}
+
+#remove_add {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: #2b85db;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+  padding-left: 5px;
+}
+
+#remove_add div {
+  float: left;
+}
+
+
+td#tab_name {
+  border-right: 1px;
+  border-left: 1px;
+  border-top: 1px;
+  border-color: #b4b4b4;
+  border-style: inset;
+  border-top-left-radius: 5;
+  border-top-right-radius: 5;
+  padding-left: 7px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  padding-right: 0px;
+}
+
+.borderbottom {
+  border-bottom: 1px;
+  border-top: 0px;
+  border-right: 0px;
+  border-left: 0px;
+  border-color: #b4b4b4;
+  border-style: inset;
+  vertical-align: top;
+}
+td#node_list, td#node_info {
+  border: 1px;
+  border-top: 0px;
+  border-color: #b4b4b4;
+  border-style: inset;
+  vertical-align: top;
+}
+
+td#node_list {
+  width:300px;
+}
+
+td#node_info {
+  padding: 25px;
+}
+
+#node_list td{
+  font-family: "Liberation";
+  font-size: 14px;
+  color: #2b85db;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+td.node_list_sprite {
+  padding-right: 20px;
+  padding-left: 5px;
+}
+
+
+.node_list_check {
+  margin-right: 10px;
+  clear: left;
+}
+
+#node_info {
+  background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#f5f5f5));
+}
+
+#node_info_header {
+  font-family: "Overpass";
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+#node_info_header_title {
+  color: #888888;
+  float: left;
+}
+
+#node_info_header_title_name {
+  color: #333333;
+  float: left;
+}
+
+#node_details {
+  clear: left;
+  padding-top: 40px;
+  font-family: "Liberation";
+}
+
+#node_details div {
+  float: left;
+}
+
+#node_details .reg {
+  font-family: "Liberation";
+  font-size: 12px;
+  padding-right: 5px;
+}
+
+#node_details .bold {
+  font-family: "Liberation";
+  font-size: 12px;
+  font-weight: bold;
+  padding-right: 20px;
+}
+
+.text_field {
+  line-height: 22px;
+  font-family: "Liberation";
+  font-size: 12;
+  color: #333333;
+  border: 1px solid #cdcdcd;
+  background: url("../images/field_bg.png")
+}
+
+#node_sub_info {
+  padding-top: 20px;
+  clear: left;
+  vertical-align: middle;
+}
+
+#node_sub_info * {
+  float: left;
+}
+
+#node_options_buttons {
+  padding-top: 20px;
+  clear: left;
+}
+
+#node_options_buttons div {
+  float: left;
+}
+
+#node_options_buttons .link {
+  padding-left: 5px;
+  padding-right: 25px;
+}
+
+#failoverdomains {
+  clear: left;
+  float: left;
+}
+
+#failoverdomains td {
+  min-width: 150px;
+  padding-left: 10px;
+}
+
+#failoverdomains th {
+  text-align: left;
+  padding-left: 10px;
+}
+
+#clusterdaemons {
+  float: left;
+}
+
+#clusterdaemons td {
+  min-width: 150px;
+}
+
+#locationdep td {
+  min-width: 450px;
+}
+
+.datatable_header {
+  font-family: "Overpass";
+  font-size: 14px;
+  color: #333333;
+}
+
+.datatable {
+  border-spacing: 0px;
+}
+
+.datatable td, .datatable th {
+  font-family: "Liberation";
+  font-size: 11px;
+  padding: 5px;
+}
+
+.datatable td, .datatable th{
+  text-align: left;
+  padding-left: 10;
+}
+
+.datatable th {
+  font-weight: bold;
+  color: #666666;
+  border-top: 1px solid #b8b8b8;
+  border-bottom: 1px solid #ededed;
+  background: #fcfcfc;
+}
+
+.datatable td {
+  background: #ffffff;
+  border: 0px;
+}
+
+.datatable th:first-child, .datatable td:first-child{
+  border-left: 1px solid #b8b8b8;
+}
+
+.datatable th:last-child, .datatable td:last-child {
+  border-right: 1px solid #b8b8b8;
+}
+
+.datatable tr:last-child td {
+  border-bottom: 1px solid #b8b8b8;
+}
+
+table.datatable td {
+  color: #2b85db
+}
+
+.link {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: #2b85db;
+}
+
+#copyright {
+  color: #666764;
+  float: left;
+}
+
+#footer {
+  font-family: "Overpass";
+  font-weight: bold;
+  font-size: 11px;
+  color: #2b85db;
+  padding-left: 12;
+  margin-top: 10px;
+}
+
+#footer a, #footer a:link, #footer a:visited, #footer a:hover, #footer a:active {
+  text-decoration: none;
+  color: #2b85db;
+}
+
+#help {
+  float: right;
+  margin-right: 5px;
+}
+
+.status {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: #53b900;
+}
+
+.sprites {
+  background-image: url("../images/action-icons.png");
+  background-color     : transparent; 
+  background-repeat    : no-repeat; 
+  float: left;
+  height: 16px;
+  width: 16px;
+}
+
+.x { background-position: -32px -1px; }
+.plus { background-position: -48px -1px; }
+.check { background-position: -448px -1px; }
+.restart { background-position: -272 -17px; }
+.standby { background-position: -368 -16px; }
+.cancel { background-position: -160 -17px; }
+.configure { background-position: -64 -16; }
+.arrow { background-position: -544 -16; }
