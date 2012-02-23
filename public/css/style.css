@@ -151,12 +151,23 @@ td#tab_name {
   border-style: inset;
   vertical-align: top;
 }
+
 td#node_list, td#node_info {
   border: 1px;
   border-top: 0px;
   border-color: #b4b4b4;
   border-style: inset;
   vertical-align: top;
+}
+
+td.node_name {
+  cursor: default;
+  width: 100%;
+}
+
+td.resource_name {
+  cursor:default;
+  padding-right:20px;
 }
 
 td#node_list {
@@ -167,12 +178,29 @@ td#node_info {
   padding: 25px;
 }
 
+#node_list th {
+  font-family: "Overpass";
+  font-size: 12px;
+  font-weight: bold;
+  color: #707070;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  text-align: left;
+  background: #f6f6f6;
+}
 #node_list td{
   font-family: "Liberation";
   font-size: 14px;
   color: #2b85db;
   padding-top: 3px;
   padding-bottom: 3px;
+}
+
+#node_list .resource_type {
+  cursor: default;
+  padding-right: 20px;
+  color: #000000;
+  width: 100%;
 }
 
 td.node_list_sprite {
@@ -214,21 +242,33 @@ td.node_list_sprite {
   font-family: "Liberation";
 }
 
+#node_details td {
+  white-space: nowrap;
+}
+
 #node_details div {
   float: left;
 }
 
-#node_details .reg {
+#node_info .reg {
   font-family: "Liberation";
   font-size: 12px;
   padding-right: 5px;
 }
 
-#node_details .bold {
+#node_info .bold {
   font-family: "Liberation";
   font-size: 12px;
   font-weight: bold;
   padding-right: 20px;
+}
+
+#node_info .resource_name {
+  color: #8c8c8c;
+}
+
+.center {
+  text-align: center;
 }
 
 .text_field {
@@ -300,6 +340,23 @@ td.node_list_sprite {
   color: #333333;
 }
 
+#resource_selector select {
+  width: 200px;
+  height: 25px;
+  padding-right: 50px;
+}
+
+#resource_selector td {
+  padding: 12px;
+  padding-left: 0px;
+}
+
+
+#resource_selector .bold {
+  padding-right: 10px;
+}
+
+
 .datatable {
   border-spacing: 0px;
 }
@@ -345,6 +402,7 @@ table.datatable td {
 }
 
 .link {
+  cursor:default;
   font-family: "Liberation";
   font-size: 12px;
   color: #2b85db;
@@ -380,6 +438,12 @@ table.datatable td {
   color: #53b900;
 }
 
+.status-offline {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: red;
+}
+
 .sprites {
   background-image: url("../images/action-icons.png");
   background-color     : transparent; 
@@ -390,10 +454,14 @@ table.datatable td {
 }
 
 .x { background-position: -32px -1px; }
+.xdark { background-position: -32px -17px; }
 .plus { background-position: -48px -1px; }
 .check { background-position: -448px -1px; }
-.restart { background-position: -272 -17px; }
-.standby { background-position: -368 -16px; }
-.cancel { background-position: -160 -17px; }
-.configure { background-position: -64 -16; }
-.arrow { background-position: -544 -16; }
+.restart { background-position: -272px -17px; }
+.standby { background-position: -368px -16px; }
+.cancel { background-position: -160px -17px; }
+.configure { background-position: -64px -16px; }
+.arrow { background-position: -544px -16px; }
+.move { background-position: -16px -17px; }
+.history { background-position: -256px -17px; }
+.previewmap { background-position: -400px -1px; }

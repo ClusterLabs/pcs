@@ -1,0 +1,48 @@
+<head>
+  <link rel="stylesheet" type="text/css" href="/css/style.css" />
+  <link rel="stylesheet" type="text/css" href="/css/overpass.css" />
+  <link rel="stylesheet" type="text/css" href="/css/liberation.css" />
+  <script src="/js/jquery-1.7.1.min.js"></script>
+  <script src="/js/jquery-ui-1.8.17.custom.min.js"></script>
+</head>
+<html>
+  <body>
+
+  <div id="header">
+      <table id="menu_controls" width=1000>
+	<tr><td rowspan=2 width="170px" style="vertical-align: top;">
+	    <div id="logo">
+	      <img src="/images/HAM-logo.png">
+	    </div>
+	  </td>
+	<td class="right">
+	    <ul id="dropdown">
+	      <li>Admin@redhat.com</li>
+	    </ul>
+	</td></tr>
+	<tr><td>
+	    <div id="menu_list">
+	      <div class="menuitem first"><a href="/nodes" <%= @nodemenuclass %>>NODES</a></div>
+	      <div class="menuitem"><a href="/resources" <%= @resourcemenuclass %>>RESOURCE</a></div>
+	      <div class="menuitem"><a href="/resourcedeps" <%= @resourcedepsmenuclass %>>RESOURCE DEPENDENCIES</a></div>
+	      <div class="menuitem"><a href="/fencedevices">FENCE DEVICES</a></div>
+	      <div class="menuitem"><a href="/failoverdomains">FAILOVER DOMAINS</a></div>
+	      <div class="menuitem"><a href="/configure">CONFIGURE</a></div>
+	    </div>
+	</td>
+      </tr>
+      </table>
+  </div>
+
+  <%= yield %>
+  <tr><td colspan=3>
+      <div id="footer">
+	<div id="copyright">&copy 2011</div>&nbsp;<a href="http://www.redhat.com">Red Hat, Inc.</a>  <a href="http://access.redhat.com/">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Red Hat Customer Portal</a>
+	<div id="help"><a href="#">Help</a></div>
+      </div>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

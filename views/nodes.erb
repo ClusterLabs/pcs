@@ -1,0 +1,140 @@
+  <table id="main" width=930>
+    <tr><td id="page_header" colspan=3>
+	NODES
+      </td>
+    </tr>
+    <tr>
+      <td id="remove_add" class="borderbottom">
+	<div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+	<div class="plus sprites"></div><div class="link">&nbsp;Add</div>
+      </td>
+      <td class="borderbottom">&nbsp;</td>
+      <td id="tab_name" width="85">
+	<div style="float: left">&nbsp;Edit Node&nbsp;</div><div class="check sprites"></div>
+      </td>
+    </tr>
+    <tr>
+      <td id="node_list">
+	<table cellpadding=0 cellspacing=0 style="float:left;">
+	  <% @nodes.each  do |i,node| %>
+	    <% print "XXX" %>
+	    <% print @cur_node %>
+	    <% print "XXX" %>
+	    <% if i != @cur_node.id %>
+	      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='/nodes/<%=i%>'">
+	      <% else %>
+		<tr style="background-color: #e4f5fd">
+	      <% end %>
+	    <td>
+	      <input class="node_list_check" type="checkbox">
+	    </td>
+	    <td class="node_list_sprite">
+	      <div class="check sprites"></div>
+	    </td>
+	    <td class="node_name" <%= 'style="color:red;" ' if !node.active %>>
+	      <%= node.name %>
+	    </td>
+	    <% if i != @cur_node.id %>
+	      <td style="display:none">
+	      <% else %>
+	      <td>
+	      <% end %>
+	      <div class="arrow sprites"></div>
+	    </td>
+	  </tr>
+	<% end %>
+	</table>
+      </td>
+      <td id="node_info" colspan=2>
+	<div id="test">
+	  <div id="node_info_header">
+	    <div id="node_info_header_title">Edit Node</div>
+	    <div id="node_info_header_title_name">&nbsp;<%=@cur_node.name%></div>
+	    <div class="link" style="float: right" onclick="$('#node_info').css('height',$('#node_info').height());$('#test').hide('slide');">Close</div>
+	    <div class="x sprites" style="float: right"></div>
+	  </div>
+
+	  <div id="node_sub_info">
+	    <table>
+	      <tr>
+		<td><input style="margin-right: 50px;" type="text" value="<%=@cur_node.name%>" size="35" class="text_field"></td>
+		<td><div style="margin-right: 8px;" class="check sprites"></div></td>
+		<td>
+		  <% if @cur_node.active %>
+		    <div class="status">Online</div>
+		  <% else %>
+		    <div class="status-offline">Offline</div>
+		  <% end %>
+		</td>
+	      </tr>
+	    </table>
+	  </div>
+
+	  <div id="node_options_buttons">
+	    <div class="restart sprites" style="float: left"></div>
+	    <div class="link">Restart</div>
+	    <div class="standby sprites" style="float: left"></div>
+	    <div class="link">Standby</div>
+	    <div class="cancel sprites" style="float: left"></div>
+	    <div class="link">Leave Cluster</div>
+	    <div class="configure sprites" style="float: left"></div>
+	    <div class="link">Configure Fencing</div>
+	  </div>
+
+	  <div id="node_details">
+	    <table><tr>
+		<td><div class="reg">Node ID:</div></td>
+		<td><div class="bold"><%=@cur_node.id%></div></td>
+		<td><div class="reg"> Uptime: </div></td>
+		<td><div class="bold">XX:XX:XX:XX</div></td>
+		<td><div class="reg"> Hostname: </div></td>
+		<td><div><input style="margin-right: 50px;" value="<%=@cur_node.hostname%>" type="text" size="35" class="text_field"></div></td>
+	      </tr>
+	    </table>
+	  </div>
+
+	  <table style="clear:left;float:left;margin-top:25px;">
+	    <tr><td class="datatable_header">Failover Domains</td></tr>
+	    <tr><td>
+		<div id="failoverdomains">
+		  <table class="datatable">
+		    <tr><th>NAME</th></tr>
+		    <tr><td>fdom1</td></tr>
+		    <tr><td>example1</td></tr>
+		    <tr><td>example2</td></tr>
+		  </table>
+		</div>
+	      </td>
+	    </tr>
+	  </table>
+	  <table style="float:left;margin-top:25px;padding-left:30px">
+	    <tr><td class="datatable_header">Cluster Daemons</td></tr>
+	    <tr><td>
+		<div id="clusterdaemons">
+		  <table class="datatable">
+		    <tr><th>NAME</th><th>STATUS</th></tr>
+		    <tr><td>cman</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div style="float:left" class="status">Running</div></td></tr>
+		    <tr><td>rgmanager</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div style="float:left" class="status">Running</div></td></tr>
+		    <tr><td>ricci</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div style="float:left" class="status">Running</div></td></tr>
+		  </table>
+		</div>
+	      </td>
+	    </tr>
+	  </table>
+	  <table style="clear:left;float:left;margin-top:25px;">
+	    <tr><td class="datatable_header">Location Dependency</td></tr>
+	    <tr><td>
+		<div id="locationdep">
+		  <table class="datatable">
+		    <tr><th>NAME</th></tr>
+		    <tr><td>exdep 1a1a1a</td></tr>
+		    <tr><td>exdep 2b2b2b</td></td></tr>
+		  <tr><td>exdep 3c3c3c</td></tr>
+		</table>
+	      </div>
+	    </td>
+	  </tr>
+	</table>
+      </td>
+    </tr>
+  </div>
