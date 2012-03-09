@@ -155,14 +155,15 @@ def resource_remove(resource_id, output = True):
             print "Deleting Resource - " + resource_id,
         output,retVal = utils.run(args)
         if retVal != 0:
-            print output
+            return False
     else:
         args = ["cibadmin", "-o", "resources", "-D", "--xml-text", group]
         if output == True:
             print "Deleting Resource (and group) - " + resource_id,
         output,retVal = utils.run(args)
         if retVal != 0:
-            print output
+            return False
+    return True
 
 # This removes a resource from a group, but keeps it in the config
 def resource_group_rm(group_name, resource_ids):
@@ -180,12 +181,15 @@ def resource_group_rm(group_name, resource_ids):
             print "ERROR Resource '%s' does not exist in group '%s'" % (resource_id, group_name)
             sys.exit(1)
 
-        resource_remove(resource_id, False)
+        if not resource_remove(resource_id, False):
+            print "Unable to move resource"
+            sys.exit(1)
         output, retval = utils.add_to_cib("resources", resource_xml)
         if retval != 0:
             print "ERROR: Unable to re-add resource"
             print output
             sys.exit(1)
+    return True
 
 
 def resource_group_add(group_name, resource_ids):
