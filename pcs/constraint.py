@@ -68,6 +68,7 @@ def constraint_cmd(argv):
     elif (sub_cmd == "show"):
         location_show([])
         order_show()
+        colocation_show()
     else:
         print sub_cmd
         usage.constraint()
@@ -255,7 +256,11 @@ def location_show(argv):
         lc_rsc = rsc_loc.getAttribute("rsc")
         lc_id = rsc_loc.getAttribute("id")
         lc_score = rsc_loc.getAttribute("score")
-        
+
+# NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
+# rsc_location)
+        if lc_score == "":
+            lc_score = "0";
 
         if lc_score == "INFINITY":
             positive = True

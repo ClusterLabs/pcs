@@ -50,6 +50,13 @@ def get_cib_xpath(xpath_query):
         return ""
     return output
 
+# Create an object in the cib
+# Returns output, retval
+def add_to_cib(scope, xml):
+    args = ["cibadmin"]
+    args = args  + ["-o", "resources", "-C", "-X", xml]
+    return run(args)
+
 # If the property exists, remove it and replace it with the new property
 def set_cib_property(prop, value):
     crm_config = get_cib_xpath("//crm_config")

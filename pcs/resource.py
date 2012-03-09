@@ -129,8 +129,11 @@ def resource_group(argv):
         group_name = argv.pop(0)
         resource_group_add(group_name, argv)
     elif (group_cmd == "remove_resource"):
-        print "NYI"
-        
+        if (len(argv) < 2):
+            usage.resource()
+            sys.exit(1)
+        group_name = argv.pop(0)
+        resource_group_rm(group_name, argv)
     elif (group_cmd == "delete"):
         print "NYI"
 
@@ -142,7 +145,7 @@ def resource_group(argv):
         sys.exit(1)
 
 # Removes a resource and if it's the last resource in a group, remove the group
-def resource_remove(resource_id):
+def resource_remove(resource_id, output = True):
     group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0
 
@@ -151,12 +154,42 @@ def resource_remove(resource_id):
 
     if (group == "" or num_resources_in_group > 1):
         args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
-        print "Deleting Resource - " + resource_id,
+        if output == True:
+            print "Deleting Resource - " + resource_id,
         output,retVal = utils.run(args)
+        if retVal != 0:
+            print output
     else:
         args = ["cibadmin", "-o", "resources", "-D", "--xml-text", group]
-        print "Deleting Resource (and group) - " + resource_id,
+        if output == True:
+            print "Deleting Resource (and group) - " + resource_id,
         output,retVal = utils.run(args)
+        if retVal != 0:
+            print output
+
+# This removes a resource from a group, but keeps it in the config
+def resource_group_rm(group_name, resource_ids):
+    resource_id = resource_ids[0]
+    group_xpath = "//group[@id='"+group_name+"']"
+    group_xml = utils.get_cib_xpath(group_xpath)
+    if group_xml == "":
+        print "ERROR: Group '%s' does not exist" % group_name
+        sys.exit(1)
+
+    for resource_id in resource_ids:
+        element = parseString(group_xml).documentElement
+        resource_xml = utils.get_cib_xpath("//group[@id='"+group_name+"']/primitive[@id='"+resource_id+"']")
+        if resource_xml == "":
+            print "ERROR Resource '%s' does not exist in group '%s'" % (resource_id, group_name)
+            sys.exit(1)
+
+        resource_remove(resource_id, False)
+        output, retval = utils.add_to_cib("resources", resource_xml)
+        if retval != 0:
+            print "ERROR: Unable to re-add resource"
+            print output
+            sys.exit(1)
+
 
 def resource_group_add(group_name, resource_ids):
     group_xpath = "//group[@id='"+group_name+"']"
@@ -182,28 +215,20 @@ def resource_group_add(group_name, resource_ids):
         if (retVal != 0):
             print "Bad resource: " + resource_id
             continue
-        print "Query for " + resource_id,
-        print output
         resources_to_move = resources_to_move + output
-        print "Delete " + resource_id,
-        resource_remove(resource_id)
+        resource_remove(resource_id,False)
 
     if (resources_to_move != ""):
-        print "Resources to Move:",
-        print resources_to_move
         resources_to_move = "<resources>" + resources_to_move + "</resources>"
         resource_children = parseString(resources_to_move).documentElement
-        print "Child Nodes:\n"
-        print resource_children.toprettyxml()
         for child in resource_children.childNodes:
             element.appendChild(child)
         xml_resource_string = element.toprettyxml()
-        print "New Group String",
-        print xml_resource_string
         
         args = ["cibadmin", "-o", "resources", "-c", "-M", "-X", xml_resource_string]
         output,retval = utils.run(args)
-        print output,
+        if retVal != 0:
+            print output,
     else:
         print "No resources to add.\n"
         sys.exit(1)
