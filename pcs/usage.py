@@ -26,7 +26,6 @@ Commands:
     resource list
     resource group add <group name> <resource id>...
     resource group remove_resource <group name> <resource id> ...
-    resource group delete <group name>
     resource group list
 
 Examples:

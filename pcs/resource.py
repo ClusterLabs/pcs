@@ -134,9 +134,6 @@ def resource_group(argv):
             sys.exit(1)
         group_name = argv.pop(0)
         resource_group_rm(group_name, argv)
-    elif (group_cmd == "delete"):
-        print "NYI"
-
     elif (group_cmd == "list"):
         print "NYI"
 
