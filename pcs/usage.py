@@ -13,10 +13,12 @@ Commands:
     corosync    Configure corosync
     property    Set pacemaker properties
     constraint  Set resource constraints
+    status      View pacemaker status
 """
 
 def resource():
-    print """Usage: pcs resource [commands]...
+    print """
+Usage: pcs resource [commands]...
 Manage pacemaker resources
 Commands:
     resource create <resource id> <provider:class:type|type> [resource options]
@@ -130,4 +132,25 @@ Commands:
 
     colocation rm <source resource> <target resource>
         Remove colocation constraints with <source resource>
+"""
+
+def status():
+    print """
+Usage: pcs status [commands]...
+View current cluster and resource status
+Commands:
+    status
+        View all information about the cluster and resources
+
+    status resources
+        View current status of cluster resources
+
+    status cluster
+        View current cluster status
+
+    status nodes
+        View current status of nodes
+
+    status actions
+        View failed actions
 """

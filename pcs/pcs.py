@@ -7,6 +7,7 @@ import resource
 import prop
 import constraint
 import utils
+import status
 
 usefile = False
 filename = ""
@@ -43,6 +44,8 @@ def main(argv):
         prop.property_cmd(argv)
     elif (command == "constraint"):
         constraint.constraint_cmd(argv)
+    elif (command == "status"):
+        status.status_cmd(argv)
     else:
         usage.main()
 
