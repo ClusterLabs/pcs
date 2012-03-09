@@ -40,6 +40,7 @@ end
 
 get '/resources/?:resource?' do
   @resources = getResources
+  @resource_agents = getResourceAgents
   @resourcemenuclass = "class=\"active\""
 
   @cur_resource = @resources[0]
@@ -88,12 +89,25 @@ def getResources
 
   doc = REXML::Document.new(File.open("/tmp/testclusterstatus", "rb"))
   resource_list = []
-  puts "PRE"
   doc.elements.each('crm_mon/resources/resource') do |e|
     resource_list.push(Resource.new(e))
   end
   resource_list
 end
+
+def getResourceAgents
+  doc = REXML::Document.new(File.open("/usr/share/ccs/cluster.rng", "rb"))
+  resource_agent_list = []
+  doc.elements.each('grammar/define') do |e|
+    if ["FENCE", "UNFENCE", "DEVICE","CHILDREN", "RESOURCEACTION", "FENCEDEVICEOPTIONS"].include?(e.attributes["name"]) 
+      next
+    end
+    ra = ResourceAgent.new
+    ra.name = e.attributes["name"]
+    print ra.name+"\n"
+  end
+end
+
 
 class Node
   attr_accessor :active, :id, :name, :hostname
@@ -126,5 +140,14 @@ class Resource
     else
       @location = ""
     end
+  end
+end
+
+class ResourceAgent
+  attr_accessor :name, :attributes, :resource_class
+  def initialize(name=nil, attributes=[], resource_class=nil)
+    @name = name
+    @attributes = attributes
+    @resource_class = nil
   end
 end
