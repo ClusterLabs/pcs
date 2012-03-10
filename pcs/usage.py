@@ -23,7 +23,7 @@ Manage pacemaker resources
 Commands:
     resource create <resource id> <provider:class:type|type> [resource options]
     resource delete <resource id>
-    resource list
+    resource [list|show]
     resource group add <group name> <resource id>...
     resource group remove_resource <group name> <resource id> ...
     resource group list

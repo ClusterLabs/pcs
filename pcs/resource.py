@@ -7,8 +7,7 @@ import utils
 
 def resource_cmd(argv):
     if len(argv) == 0:
-        usage.resource()
-        exit(1)
+        argv = ["show"]
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
@@ -32,7 +31,7 @@ def resource_cmd(argv):
     elif (sub_cmd == "delete"):
         res_id = argv.pop(0)
         resource_remove(res_id)
-    elif (sub_cmd == "list"):
+    elif (sub_cmd == "list" or sub_cmd == "show"):
         args = ["crm_resource","-L"]
         output,retval = utils.run(args)
         print output,
