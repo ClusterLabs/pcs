@@ -8,6 +8,9 @@ Options:
     -f file     Perform actions on file instead of active CIB
 
 Commands:
+    add <resource id> <provider:class:type|type> [resource options]
+    set <property>=<value>
+
     node        Manage nodes (NOT YET IMPLEMENTED)
     resource    Manage cluster resources
     corosync    Configure corosync

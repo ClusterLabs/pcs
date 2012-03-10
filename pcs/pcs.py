@@ -46,6 +46,12 @@ def main(argv):
         constraint.constraint_cmd(argv)
     elif (command == "status"):
         status.status_cmd(argv)
+    elif (command == "add"):
+        argv.insert(0,"create")
+        resource.resource_cmd(argv)
+    elif (command == "set"):
+        argv.insert(0,"set")
+        prop.property_cmd(argv)
     else:
         usage.main()
 
