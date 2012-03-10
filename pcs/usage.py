@@ -60,7 +60,7 @@ Usage: pcs property <properties>...
 Configure pacemaker properties
 
 Commands:
-    list [property]
+    [list|show [property]]
         List property settings (Default: all properties)
 
     set <property>=<value>

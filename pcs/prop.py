@@ -6,15 +6,14 @@ from xml.dom.minidom import parseString
 
 def property_cmd(argv):
     if len(argv) == 0:
-        usage.property()
-        exit(1)
+        argv = ["list"]
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
         usage.property()
     elif (sub_cmd == "set"):
         set_property(argv)
-    elif (sub_cmd == "list"):
+    elif (sub_cmd == "list" or sub_cmd == "show"):
         list_property(argv)
     else:
         usage.property()
