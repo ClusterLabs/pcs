@@ -7,8 +7,7 @@ from xml.dom.minidom import parseString
 
 def constraint_cmd(argv):
     if len(argv) == 0:
-        usage.constraint()
-        sys.exit(1)
+        argv = ["list"]
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
@@ -65,7 +64,7 @@ def constraint_cmd(argv):
             usage.constraint()
             sys.exit(1)
 
-    elif (sub_cmd == "show"):
+    elif (sub_cmd == "show" or sub_cmd == "list"):
         location_show([])
         order_show()
         colocation_show()

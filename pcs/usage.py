@@ -76,7 +76,7 @@ Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:
-    show
+    [list|show]
         List all current location, order and colocation constraints
 
     location [show resources|nodes]
