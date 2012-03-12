@@ -3,6 +3,9 @@ require 'sinatra/reloader' if development?
 require 'open3'
 require 'rexml/document'
 
+OCF_ROOT = "/usr/lib/ocf"
+HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
+
 #set :port, 2222
 set :logging, true
 
@@ -35,24 +38,27 @@ end
 
 get '/resourcedeps/?:resource?' do
   @resourcedepsmenuclass = "class=\"active\""
+  setup()
   erb :resourcedeps, :layout => :main
 end
 
 get '/resources/?:resource?' do
   @resources = getResources
-  @resource_agents = getResourceAgents
   @resourcemenuclass = "class=\"active\""
 
   @cur_resource = @resources[0]
+  @cur_resource.options = getResourceOptions(@cur_resource.id)
   if params[:resource]
     @resources.each do |r|
       if r.id == params[:resource]
 	@cur_resource = r
+	@cur_resource.options = getResourceOptions(r.id)
 	break
       end
     end
   end
 
+  @resource_agents = getResourceAgents(@cur_resource.agentname)
   puts "OUTPUT"
   puts @cur_resource.id
   puts @cur_resource.name
@@ -95,17 +101,43 @@ def getResources
   resource_list
 end
 
-def getResourceAgents
-  doc = REXML::Document.new(File.open("/usr/share/ccs/cluster.rng", "rb"))
-  resource_agent_list = []
-  doc.elements.each('grammar/define') do |e|
-    if ["FENCE", "UNFENCE", "DEVICE","CHILDREN", "RESOURCEACTION", "FENCEDEVICEOPTIONS"].include?(e.attributes["name"]) 
-      next
-    end
-    ra = ResourceAgent.new
-    ra.name = e.attributes["name"]
-    print ra.name+"\n"
+def getResourceOptions(resource_id)
+  ret = {}
+  resource_options = `/root/pcs/pcs/pcs resource show #{resource_id}`
+  resource_options.each_line { |line|
+    keyval = line.strip.split(/: /,2)
+    ret[keyval[0]] = keyval[1]
+  }
+  return ret
+end
+
+def getResourceAgents(resource_agent)
+  resource_agent_list = {}
+  if resource_agent == nil
+    return resource_agent_list
   end
+  agents = Dir.glob(HEARTBEAT_AGENTS_DIR + '*')
+  agents.each { |a|
+    ra = ResourceAgent.new
+    ra.name = "ocf::heartbeat:" + a.sub(/.*\//,"")
+
+    print a + "-" + resource_agent + "\n"
+    if a.sub(/.*\//,"") == resource_agent.sub(/.*:/,"")
+      ENV['OCF_ROOT'] = OCF_ROOT
+      metadata = `#{a} meta-data`
+
+      doc = REXML::Document.new(metadata)
+      doc.elements.each('resource-agent/parameters/parameter') { |param|
+	print param.attributes["name"]
+	ra.options[param.attributes["name"]] = param.attributes["name"]
+      }
+    end
+
+
+    print ra.name+"\n"
+    resource_agent_list[ra.name] = ra
+  }
+  resource_agent_list
 end
 
 
@@ -118,11 +150,11 @@ class Node
 end
 
 class Resource 
-  attr_accessor :id, :name, :type, :agent, :role, :active, :orphaned, :managed,
-    :failed, :failure_ignored, :nodes, :location
+  attr_accessor :id, :name, :type, :agent, :agentname, :role, :active, :orphaned, :managed,
+    :failed, :failure_ignored, :nodes, :location, :options
   def initialize(e)
     @id = e.attributes["id"]
-    @agent = e.attributes["resource_agent"]
+    @agentname = e.attributes["resource_agent"]
     @active = e.attributes["active"] == "true" ? true : false
     @orphaned = e.attributes["orphaned"] == "true" ? true : false
     @failed = e.attributes["failed"] == "true" ? true : false
@@ -144,10 +176,22 @@ class Resource
 end
 
 class ResourceAgent
-  attr_accessor :name, :attributes, :resource_class
-  def initialize(name=nil, attributes=[], resource_class=nil)
+  attr_accessor :name, :options, :resource_class
+  def initialize(name=nil, options={}, resource_class=nil)
     @name = name
-    @attributes = attributes
+    @options = options
     @resource_class = nil
+  end
+
+  def provider
+    name.gsub(/::.*/,"")
+  end
+
+  def class
+    name.gsub(/.*::(.*):.*/,"$1")
+  end
+
+  def type
+    name.gsub(/.*:/,"")
   end
 end

@@ -36,7 +36,7 @@
 	      <%= r.id %>
 	    </td>
 	    <td class="resource_type">
-	      <%= r.agent %>
+	      <%= r.agentname %>
 	    </td>
 	    <% if r != @cur_resource %>
 	      <td style="display:none">
@@ -100,15 +100,13 @@
 	      <td class="bold">Class</td>
 	      <td>
 		<select>
-		  <option value="LSB">LSB</option>
-		  <option value="OCF">OCF</option>
+		  <option value="heartbeat">heartbeat</option>
 		</select>
 	      </td>
 	      <td style="padding-left:10px;" class="bold">Provider</td>
 	      <td>
 		<select>
-		  <option value="LSB">Red Hat</option>
-		  <option value="Other">Other</option>
+		  <option value="OCF">OCF</option>
 		</select>
 	      </td>
 	    </tr>
@@ -116,14 +114,26 @@
 	      <td class="bold">Type</td>
 	      <td>
 		<select>
-		  <option width=250px value="Apache">Apache</option>
-		  <option value="IPAddr2">IPAddr2</option>
+		  <% @resource_agents.each { |name, ra| %>
+		    <option <%= ra.name == @cur_resource.agentname ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
+		  <% } %>
 		</select>
 	      </td>
 	    </tr>
 	  </table>
 
 	  <table style="clear:left;float:left;margin-top:25px;">
+	    <% @resource_agents[@cur_resource.agentname].options.each { |name, desc|  %>
+	      <tr>
+		<td class="reg">
+		  <%= name %>
+		</td>
+		<td>
+		  <input style="margin-right: 50px;" type="text" value="<%=@cur_resource.options[name]%>" size="35" class="text_field">
+		</td>
+	      </tr>
+	    <% } %>
+	    <!--
 	    <tr>
 	      <td class="reg">
 		Server Root
@@ -156,6 +166,7 @@
 		<input style="margin-right: 50px;" type="text" value="<%=@cur_resource.name%>" size="35" class="text_field">
 	      </td>
 	    </tr>
+	    -->
 	    <tr><td class="center" style="padding-top:20px;" colspan=2>
 		<input type=submit class="text_field" value="Apply Changes">
 	      </td>
