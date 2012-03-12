@@ -4,6 +4,7 @@ from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
 import usage
 import utils
+import re
 
 def resource_cmd(argv):
     if len(argv) == 0:
@@ -32,16 +33,14 @@ def resource_cmd(argv):
         res_id = argv.pop(0)
         resource_remove(res_id)
     elif (sub_cmd == "list" or sub_cmd == "show"):
-        args = ["crm_resource","-L"]
-        output,retval = utils.run(args)
-        print output,
+        resource_show(argv)
     elif (sub_cmd == "group"):
         resource_group(argv)
     else:
         usage.resource()
 
 
-# Create a resource using crm_resource
+# Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values):
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
@@ -232,3 +231,24 @@ def resource_group_add(group_name, resource_ids):
     else:
         print "No resources to add.\n"
         sys.exit(1)
+
+def resource_show(argv):
+    if len(argv) == 0:    
+        args = ["crm_resource","-L"]
+        output,retval = utils.run(args)
+        print output,
+        return
+
+    preg = re.compile(r'.*<primitive',re.DOTALL)
+    for arg in argv:
+        args = ["crm_resource","-r",arg,"-q"]
+        output,retval = utils.run(args)
+        if retval != 0:
+            print "Error: unable to find resource '"+arg+"'"
+            sys.exit(1)
+        output = preg.sub("<primitive", output)
+        dom = parseString(output)
+        doc = dom.documentElement
+        print "Resource:", arg
+        for nvpair in doc.getElementsByTagName("nvpair"):
+            print "  " + nvpair.getAttribute("name") + ": " + nvpair.getAttribute("value")

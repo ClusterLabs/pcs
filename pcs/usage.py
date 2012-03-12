@@ -26,7 +26,7 @@ Manage pacemaker resources
 Commands:
     resource create <resource id> <provider:class:type|type> [resource options]
     resource delete <resource id>
-    resource [list|show]
+    resource [list|show] [resource_id]
     resource group add <group name> <resource id>...
     resource group remove_resource <group name> <resource id> ...
     resource group list
@@ -39,6 +39,8 @@ Examples:
                cidr_netmask=32 op monitor interval=30s
 
     pcs resource delete ClusterIP
+
+    pcs resource list ClusterIP
 
     pcs resource list
 """
