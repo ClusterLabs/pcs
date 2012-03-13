@@ -58,6 +58,7 @@ def add_to_cib(scope, xml):
     return run(args)
 
 # If the property exists, remove it and replace it with the new property
+# If the value is blank, then we just remove it
 def set_cib_property(prop, value):
     crm_config = get_cib_xpath("//crm_config")
     if (crm_config == ""):
@@ -67,24 +68,27 @@ def set_cib_property(prop, value):
     crm_config = document.documentElement
     cluster_property_set = crm_config.getElementsByTagName("cluster_property_set")[0]
     property_exists = False
-    for child in cluster_property_set.childNodes:
+    for child in cluster_property_set.getElementsByTagName("nvpair"):
         if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
             break
         if (child.getAttribute("id") == "cib-bootstrap-options-" + prop):
-            cluster_property_set.removeChild(child)
+            child.parentNode.removeChild(child)
             property_exists = True
             break
 
-    new_property = document.createElement("nvpair")
-    new_property.setAttribute("id","cib-bootstrap-options-"+prop)
-    new_property.setAttribute("name",prop)
-    new_property.setAttribute("value",value)
-    cluster_property_set.appendChild(new_property)
+# If the value is empty we don't add it to the cluster
+    if value != "":
+        new_property = document.createElement("nvpair")
+        new_property.setAttribute("id","cib-bootstrap-options-"+prop)
+        new_property.setAttribute("name",prop)
+        new_property.setAttribute("value",value)
+        cluster_property_set.appendChild(new_property)
 
 
-    args = ["cibadmin", "-c", "-M", "--xml-text", cluster_property_set.toxml()]
+    args = ["cibadmin", "-c", "-R", "--xml-text", cluster_property_set.toxml()]
     output, retVal = run(args)
-    print output
+    if output != "":
+        print output
 
 
 

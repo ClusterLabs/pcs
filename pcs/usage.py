@@ -68,8 +68,9 @@ Commands:
     [list|show [property]]
         List property settings (Default: all properties)
 
-    set <property>=<value>
-        Set specific pacemaker properties
+    set <property>=[<value>]
+        Set specific pacemaker properties (if the value is blank then the
+        property is removed from the configuration)
 
 Examples:
     pcs property set stonith-enabled=false
