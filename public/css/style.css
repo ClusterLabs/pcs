@@ -315,7 +315,7 @@ td.node_list_sprite {
   text-align: center;
 }
 
-input[type=text] {
+input[type=text], input[type=submit] {
   height: 25px;
   font-family: "Liberation";
   font-size: 12px;
