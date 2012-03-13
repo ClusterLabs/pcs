@@ -3,6 +3,10 @@ body {
   margin-left: 0px;
 }
 
+a, a:link, a:visited, a:hover, a:active {
+  text-decoration: none;
+}
+
 #header {
   padding-left: 38px;
   background-image:url("../images/Shell_bg.png");
@@ -69,7 +73,6 @@ div.first a {
 }
 
 #header a, #header a:link, #header a:visited, #header a:hover, #header a:active {
-  text-decoration: none;
   color: #cccccc
 }
 
@@ -113,6 +116,47 @@ table#main {
   font-weight: bold;
   color: #333333;
 }
+
+#config_options {
+  font-family: "Overpass";
+  border-spacing: 15;
+}
+
+#config_options td:first-child {
+  color: #000000;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #ffffff
+}
+
+#config_options td {
+  font-size: 14px;
+  font-weight: normal;
+  padding: 0px 15px 0px 15px;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  background-color: #fcfcfc;
+  color: #3fa7e1;
+}
+#config_options a,
+#config_options a:link,
+#config_options a:visited,
+#config_options a:hover,
+#config_options a:active {
+  background-color: #fcfcfc;
+  color: #3fa7e1;
+}
+
+#config_options td.selected,
+#config_options td.selected a,
+#config_options td.selected a:link,
+#config_options td.selected a:visited,
+#config_options td.selected a:hover,
+#config_options td.selected a:active {
+  background-color: #3fa7e1;
+  color: #ffffff;
+}
+
 
 #remove_add {
   font-family: "Liberation";
@@ -271,7 +315,7 @@ td.node_list_sprite {
   text-align: center;
 }
 
-.text_field {
+input[type=text] {
   height: 25px;
   font-family: "Liberation";
   font-size: 12px;
@@ -281,6 +325,27 @@ td.node_list_sprite {
   padding-left: 10px;
   padding-right: 10px;
 }
+
+#config {
+  background-color:#f8f8f8;
+}
+
+#config td {
+  padding: 7px;
+}
+
+#config td {
+  font-family: "Liberation";
+  font-size: 13px;
+  padding-right: 5px;
+}
+
+.units {
+  font-size: 10px;
+  padding-left: 5px;
+  vertical-align: center;
+}
+  
 
 #node_sub_info {
   padding-top: 20px;
@@ -423,7 +488,6 @@ table.datatable td {
 }
 
 #footer a, #footer a:link, #footer a:visited, #footer a:hover, #footer a:active {
-  text-decoration: none;
   color: #2b85db;
 }
 

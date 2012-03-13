@@ -3,8 +3,13 @@ require 'sinatra/reloader' if development?
 require 'open3'
 require 'rexml/document'
 
+use Rack::CommonLogger
+
 OCF_ROOT = "/usr/lib/ocf"
 HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
+PENGINE = "/usr/lib64/heartbeat/pengine"
+PCS = "/root/pcs/pcs/pcs" 
+CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
 
 #set :port, 2222
 set :logging, true
@@ -34,6 +39,11 @@ end
 get '/blah' do
   print "blah"
   erb "Blah!"
+end
+
+get '/configure/?:page?' do
+  @config_options = getConfigOptions(params[:page])
+  erb :configure, :layout => :main
 end
 
 get '/resourcedeps/?:resource?' do
@@ -85,7 +95,7 @@ get '*' do
 end
 
 def getNodes
-  stdin, stdout, stderror = Open3.popen3('/root/pcs/pcs/pcs status nodes')
+  stdin, stdout, stderror = Open3.popen3("#{PCS} status nodes")
   out = stdout.readlines
   [out[1].split(' ')[1..-1], out[2].split(' ')[1..-1]]
 end
@@ -103,7 +113,7 @@ end
 
 def getResourceOptions(resource_id)
   ret = {}
-  resource_options = `/root/pcs/pcs/pcs resource show #{resource_id}`
+  resource_options = `#{PCS} resource show #{resource_id}`
   resource_options.each_line { |line|
     keyval = line.strip.split(/: /,2)
     ret[keyval[0]] = keyval[1]
@@ -140,6 +150,52 @@ def getResourceAgents(resource_agent)
   resource_agent_list
 end
 
+def getConfigOptions(page="general")
+  config_options = []
+  case page
+  when "general", nil
+    cg1 = []
+    cg1 << ConfigOption.new("Cluster Delay Time", "cdt",  "int", 4, "Seconds") 
+    cg1 << ConfigOption.new("Batch Limit", "cdt",  "int", 4) 
+    cg1 << ConfigOption.new("Default Action Timeout", "cdt",  "int", 4, "Seconds") 
+    cg2 = []
+    cg2 << ConfigOption.new("During timeout should cluster stop all active resources", "res_stop", "radio", "4", "", ["Yes","No"])
+
+    cg3 = []
+    cg3 << ConfigOption.new("PE Error Storage", "res_stop", "radio", "4", "", ["Yes","No"])
+    cg3 << ConfigOption.new("PE Warning Storage", "res_stop", "radio", "4", "", ["Yes","No"])
+    cg3 << ConfigOption.new("PE Input Storage", "res_stop", "radio", "4", "", ["Yes","No"])
+
+    config_options << cg1
+    config_options << cg2
+    config_options << cg3
+  when "pacemaker"
+    cg1 = []
+    cg1 << ConfigOption.new("Batch Limit", "batch-limit",  "int", 4, "jobs") 
+    cg1 << ConfigOption.new("No Quorum Policy", "no-quorum-policy",  "dropdown","" ,"", {"ignore" => "Ignore","freeze" => "Freeze", "stop" => "Stop", "suicide" => "Suicide"}) 
+    cg1 << ConfigOption.new("Symmetric", "symmetric-cluster", "check")
+    cg2 = []
+    cg2 << ConfigOption.new("Stonith Enabled", "stonith-enabled", "check")
+    cg2 << ConfigOption.new("Stonith Action", "stonith-action",  "dropdown","" ,"", {"reboot" => "Reboot","poweroff" => "Poweroff"}) 
+    cg3 = []
+    cg3 << ConfigOption.new("Cluster Delay", "cluster-delay",  "int", 4) 
+    cg3 << ConfigOption.new("Stop Orphan Resources", "stop-orphan-resources", "check")
+    cg3 << ConfigOption.new("Stop Orphan Actions", "stop-orphan-actions", "check")
+    cg3 << ConfigOption.new("Start Failure is Fatal", "start-failure-is-fatal", "check")
+    cg3 << ConfigOption.new("PE Error Storage", "pe-error-series-max", "int", "4")
+    cg3 << ConfigOption.new("PE Warning Storage", "pe-warn-series-max", "int", "4")
+    cg3 << ConfigOption.new("PE Input Storage", "pe-input-series-max", "int", "4")
+
+    config_options << cg1
+    config_options << cg2
+    config_options << cg3
+  end
+
+  allconfigoptions = []
+  config_options.each { |i| i.each { |j| allconfigoptions << j } }
+  ConfigOption.getDefaultValues(allconfigoptions)
+  return config_options
+end
 
 class Node
   attr_accessor :active, :id, :name, :hostname
@@ -193,5 +249,98 @@ class ResourceAgent
 
   def type
     name.gsub(/.*:/,"")
+  end
+end
+
+class ConfigOption
+  attr_accessor :name, :configname, :type, :size, :units, :options, :default
+  def initialize(name, configname, type="str", size = 10, units = "", options = [])
+    @name = name
+    @configname = configname
+    @type = type
+    @size = size
+    @units = units
+    @options = options
+  end
+
+  def value
+    @@cache_value ||= {}
+    @@cache_value = {}
+    if @@cache_value[configname]  == nil
+      puts "GET VALUE FOR: #{configname}"
+      resource_options = `#{CRM_ATTRIBUTE} --get-value -n #{configname} 2>&1`
+      resource_value = resource_options.sub(/.*value=/m,"").strip
+      if resource_value == "(null)"
+	@@cache_value[configname] = default
+      else
+	@@cache_value[configname] = resource_options.sub(/.*: /,"").strip
+      end
+    else
+      print "#{configname} is defined: #{@@cache_value[configname]}...\n"
+    end
+
+    return @@cache_value[configname]
+  end
+
+  def self.getDefaultValues(cos)
+    metadata = `/usr/lib64/heartbeat/pengine metadata`
+    doc = REXML::Document.new(metadata)
+
+    cos.each { |co|
+      puts "resource-agent/parameters/parameter[@name='#{co.configname}']"
+      doc.elements.each("resource-agent/parameters/parameter[@name='#{co.configname}']/content") { |e|
+	co.default = e.attributes["default"]
+	break
+      }
+    }
+  end
+
+  def checked(option)
+    case type
+    when "radio"
+      val = value
+      if option == "Yes"
+	if val == "true"
+	  return "checked"
+	end
+      else
+	if val == "false"
+	  return "checked"
+	end
+      end
+    when "check"
+      if value == "true"
+	return "checked"
+      end
+    when "dropdown"
+      print "Dropdown: #{value}-#{option}\n"
+      if value == option
+	return "selected"
+      end
+    end
+  end
+
+  def html
+    case type
+    when "int"
+      return "<input name=\"#{configname}\" value=\"#{value}\" type=text size=#{size}>"
+    when "str"
+      return "<input name=\"#{configname}\" value=\"#{value}\" type=text size=#{size}>"
+    when "radio"
+      ret = ""
+      options.each {|option|
+	ret += "<input type=radio #{checked(option)} name=\"#{configname}\" value=\"#{option}\">#{option}"
+      }
+      return ret
+    when "check"
+      return "<input name=\"#{configname}\" #{checked(configname)} type=checkbox size=#{size}>"
+    when "dropdown"
+      ret = "<select name=\"#{configname}\">"
+      options.each {|key, option|
+	ret += "<option #{checked(key)} value=\"#{key}\">#{option}</option>"
+      }
+      ret += "<select"
+      return ret
+    end
   end
 end
