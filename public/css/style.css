@@ -482,7 +482,7 @@ input[type=text], input[type=submit] {
   border-bottom: 1px solid #b8b8b8;
 }
 
-table.datatable td {
+table.datatable td, table.datatable a {
   color: #2b85db
 }
 

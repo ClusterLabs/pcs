@@ -35,6 +35,8 @@ helpers do
     else
       @cur_node = @nodes.values[0]
     end
+
+    @loc_dep_allow, @loc_dep_disallow = getLocationDeps(@cur_node)
   end
 end
 
@@ -107,6 +109,34 @@ get '*' do
   call(env.merge("PATH_INFO" => '/nodes'))
 end
 
+def getLocationDeps(cur_node)
+  stdin, stdout, stderror = Open3.popen3("#{PCS} constraint location show nodes #{cur_node.id}")
+  out = stdout.readlines
+  deps_allow = []
+  deps_disallow = []
+  allowed = false
+  disallowed = false
+  out.each {|line|
+    line = line.strip
+    next if line == "Location Constraints:" or line.match(/^Node:/)
+
+    if line == "Allowed to run:"
+      allowed = true
+      next
+    elsif line == "Not allowed to run:"
+      disallowed = true
+      next
+    end
+
+    if disallowed == true
+      deps_disallow << line.sub(/ .*/,"")
+    elsif allowed == true
+      deps_allow << line.sub(/ .*/,"")
+    end
+  }  
+  [deps_allow, deps_disallow]
+end
+
 def getNodes
   stdin, stdout, stderror = Open3.popen3("#{PCS} status nodes")
   out = stdout.readlines
@@ -119,6 +149,9 @@ def getResources
   doc = REXML::Document.new(File.open("/tmp/testclusterstatus", "rb"))
   resource_list = []
   doc.elements.each('crm_mon/resources/resource') do |e|
+    resource_list.push(Resource.new(e))
+  end
+  doc.elements.each('crm_mon/resources/group/resource') do |e|
     resource_list.push(Resource.new(e))
   end
   resource_list

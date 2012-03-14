@@ -127,9 +127,15 @@
 		<div id="locationdep">
 		  <table class="datatable">
 		    <tr><th>NAME</th></tr>
-		    <tr><td>exdep 1a1a1a</td></tr>
-		    <tr><td>exdep 2b2b2b</td></td></tr>
-		  <tr><td>exdep 3c3c3c</td></tr>
+		    <% @loc_dep_allow.each { |loc| %>
+		      <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td></tr>
+		    <% } %>
+		    <% @loc_dep_disallow.each { |loc| %>
+		      <tr><td ><a style="color: red;" href="/resources/<%=loc%>"><%= loc %> (Not allowed)</a></td></tr>
+		    <% } %>
+		    <% if @loc_dep_allow.length == 0 and @loc_dep_disallow.length == 0 %>
+		      <tr><td style="color: gray;">NONE</td></tr>
+		    <% end %>
 		</table>
 	      </div>
 	    </td>
