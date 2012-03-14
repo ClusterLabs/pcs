@@ -85,10 +85,12 @@ Commands:
     [list|show]
         List all current location, order and colocation constraints
 
-    location [show resources|nodes]
+    location [show resources|nodes [specific nodes|resources]]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
-        is specified location constraints are displayed per node. 
+        is specified location constraints are displayed per node.  If specific
+        nodes or resources are specified then we only show information about
+        them
 
     location force <resource name> [on] <node>
         Force the resource named to always run on the node specified

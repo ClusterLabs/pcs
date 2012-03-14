@@ -243,6 +243,11 @@ def location_show(argv):
     else:
         byNode = False
 
+    if len(argv) > 1:
+        valid_noderes = argv[1:]
+    else:
+        valid_noderes = []
+
     (dom,constraintsElement) = getCurrentConstraints()
     nodehashon = {}
     nodehashoff = {}
@@ -292,6 +297,9 @@ def location_show(argv):
 
     if byNode == True:
         for node in nodelist:
+            if len(valid_noderes) != 0:
+                if node not in valid_noderes:
+                    continue
             print "  Node: " + node
 
             if (node in nodehashon):
@@ -313,6 +321,9 @@ def location_show(argv):
                         print "Score: "+ options[2]
     else:
         for rsc in rsclist:
+            if len(valid_noderes) != 0:
+                if rsc not in valid_noderes:
+                    continue
             print "  Resource: " + rsc
             if (rsc in rschashon):
                 print "    Enabled on:",
