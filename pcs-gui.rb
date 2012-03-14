@@ -5,11 +5,13 @@ require 'rexml/document'
 
 use Rack::CommonLogger
 
-OCF_ROOT = "/usr/lib/ocf"
-HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
-PENGINE = "/usr/lib64/heartbeat/pengine"
-PCS = "/root/pcs/pcs/pcs" 
-CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
+configure do
+  OCF_ROOT = "/usr/lib/ocf"
+  HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
+  PENGINE = "/usr/lib64/heartbeat/pengine"
+  PCS = "/root/pcs/pcs/pcs" 
+  CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
+end
 
 #set :port, 2222
 set :logging, true
@@ -36,9 +38,19 @@ helpers do
   end
 end
 
-get '/blah' do
-  print "blah"
-  erb "Blah!"
+post '*' do
+  print params
+  params[:config].each { |key, value|
+    if (value == "on")
+      value = "true"
+    elsif value == "off"
+      value = "false"
+    end
+
+    print `#{CRM_ATTRIBUTE} --attr-name #{key} --attr-value #{value} 2>&1`
+    print "#{key} - #{value}\n"
+  }
+  redirect params[:splat][0]
 end
 
 get '/configure/?:page?' do
@@ -273,7 +285,7 @@ class ConfigOption
       if resource_value == "(null)"
 	@@cache_value[configname] = default
       else
-	@@cache_value[configname] = resource_options.sub(/.*: /,"").strip
+	@@cache_value[configname] = resource_value
       end
     else
       print "#{configname} is defined: #{@@cache_value[configname]}...\n"
@@ -321,21 +333,24 @@ class ConfigOption
   end
 
   def html
+    paramname = "config[#{configname}]"
     case type
     when "int"
-      return "<input name=\"#{configname}\" value=\"#{value}\" type=text size=#{size}>"
+      return "<input name=\"#{paramname}\" value=\"#{value}\" type=text size=#{size}>"
     when "str"
-      return "<input name=\"#{configname}\" value=\"#{value}\" type=text size=#{size}>"
+      return "<input name=\"#{paramname}\" value=\"#{value}\" type=text size=#{size}>"
     when "radio"
       ret = ""
       options.each {|option|
-	ret += "<input type=radio #{checked(option)} name=\"#{configname}\" value=\"#{option}\">#{option}"
+	ret += "<input type=radio #{checked(option)} name=\"#{paramname}\" value=\"#{option}\">#{option}"
       }
       return ret
     when "check"
-      return "<input name=\"#{configname}\" #{checked(configname)} type=checkbox size=#{size}>"
+      ret = "<input name=\"#{paramname}\" value=\"off\" type=hidden size=#{size}>"
+      ret += "<input name=\"#{paramname}\" #{checked(paramname)} type=checkbox size=#{size}>"
+      return ret
     when "dropdown"
-      ret = "<select name=\"#{configname}\">"
+      ret = "<select name=\"#{paramname}\">"
       options.each {|key, option|
 	ret += "<option #{checked(key)} value=\"#{key}\">#{option}</option>"
       }

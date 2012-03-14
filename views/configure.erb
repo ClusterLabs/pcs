@@ -14,7 +14,7 @@
     </td></tr>
     <tr>
       <td id="config" colspan=3>
-	<form>
+	<form method=POST>
 	  <% @config_options.each { |co_group| %>
 	    <table>
 	      <% co_group.each { |co| %>
@@ -26,7 +26,9 @@
 	    </table>
 	    <br>
 	  <% } %> 
-	  <input type=submit style="margin-left:20px;" class="text_field" value="Apply Changes">
+	  <% if @config_options.length != 0 %>
+	    <input type=submit style="margin-left:20px;" class="text_field" value="Apply Changes">
+	  <% end %>
 	</form>
       </td>
     </tr>
