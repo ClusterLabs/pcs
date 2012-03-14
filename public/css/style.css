@@ -36,17 +36,12 @@ td.right {
   margin-bottom: 0px;
   height: 79px;
   border-collapse: collapse;
+  border-spacing: 0px;
 }
 
-#menu_controls tr, #menu_controls td {
+#menu_controls tr, #menu_controls  td {
   vertical-align: bottom;
-}
-
-#menu_controls #menu_list ul {
-  margin-bottom: 8px;
-  padding-right: 0px;
-  margin-right: 0px;
-  background: #000000;
+  padding: 0px;
 }
 
 #header #menu_list a.active {
@@ -68,6 +63,15 @@ td.right {
   float: left;
 }
 
+#menu_list table {
+  border-collapse: collapse;
+}
+
+td.menuitem {
+  padding: 0px;
+  vertical-align: middle;
+}
+
 div.first a {
   border-top-left-radius: 9;
 }
@@ -80,15 +84,31 @@ div.first a {
   color: #ffffff;
 }
 
-#menu_controls #dropdown {
+#menu_controls #dropdownr {
   font-family: "Overpass";
   font-size: 11px;
   font-weight: bold;
   text-align: right;
   color: #888888;
+  background: #000000;
+  padding: 2px 5px 2px 5px;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
 }
 
-#menu_list {
+#menu_controls #dropdownl {
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
+  text-align: left;
+  color: #888888;
+  background: #000000;
+  padding: 2px 5px 2px 5px;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+#menu_list a, #menu_list span{
   color: #cccccc;
   font-family: "Overpass";
   font-size: 12px;
@@ -271,6 +291,7 @@ td.node_list_sprite {
 }
 
 #node_info_header_title {
+  font-weight: normal;
   color: #888888;
   float: left;
 }
@@ -345,7 +366,6 @@ input[type=text], input[type=submit] {
   padding-left: 5px;
   vertical-align: center;
 }
-  
 
 #node_sub_info {
   padding-top: 20px;
@@ -529,3 +549,4 @@ table.datatable td {
 .move { background-position: -16px -17px; }
 .history { background-position: -256px -17px; }
 .previewmap { background-position: -400px -1px; }
+.downarrow { background-position: -528px -1px; }

@@ -55,6 +55,7 @@ end
 
 get '/configure/?:page?' do
   @config_options = getConfigOptions(params[:page])
+  @configuremenuclass = "class=\"active\""
   erb :configure, :layout => :main
 end
 
