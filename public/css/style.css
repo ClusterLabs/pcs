@@ -251,6 +251,10 @@ td#tab_name {
   vertical-align: top;
 }
 
+td#config {
+  vertical-align: top;
+}
+
 td#node_list, td#node_info {
   border: 1px;
   border-top: 0px;

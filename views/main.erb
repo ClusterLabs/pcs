@@ -16,8 +16,9 @@
       var footer = $('#footer').height();
       var tr1 = $('#main > tbody > tr:nth-child(1)').height();
       var tr2 = $('#main > tbody > tr:nth-child(2)').height();
+      var tr3 = $('#main > tbody > tr:nth-child(4)').height();
       var push = $('#push').height();
-      var newheight = wheight - header - footer - tr1 - tr2 - push + 15;
+      var newheight = wheight - header - footer - tr1 - tr2 - tr3 - 25;
       if (origMainTRHeight <= newheight) {
 	$('#main > tbody > tr:nth-child(3)').height(newheight);
 	$('#content').height($('#main').height());
