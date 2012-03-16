@@ -5,12 +5,37 @@
   <link rel="stylesheet" type="text/css" href="/css/liberation.css" />
   <script src="/js/jquery-1.7.1.min.js"></script>
   <script src="/js/jquery-ui-1.8.17.custom.min.js"></script>
+  <script type="text/javascript">
+    var origMainTRHeight = 0;
+    function resizeTable() {
+      var wheight = $(window).height();
+      var header = $('#header').height();
+      var footer = $('#footer').height();
+      var tr1 = $('#main > tbody > tr:nth-child(1)').height();
+      var tr2 = $('#main > tbody > tr:nth-child(2)').height();
+      var push = $('#push').height();
+      var newheight = wheight - header - footer - tr1 - tr2 - push + 15;
+      if (origMainTRHeight < newheight) {
+	$('#main > tbody > tr:nth-child(3)').height(newheight);
+	$('#content').height(wheight - header - footer - push + 15);
+      }
+    }
+    $(window).resize(function() {
+	resizeTable();
+	});
+    $(window).load(function() {
+	origMainTRHeight = $('#main > tbody > tr:nth-child(3)').height();
+	resizeTable();
+	});
+
+  </script>
 </head>
 <html>
   <body>
-
+    <div id="wrapper">
   <div id="header">
-      <table id="menu_controls" width=1000>
+    <div id="topmenu">
+    <table id="menu_controls">
 	<tr><td rowspan=2 width="170px" style="vertical-align: top;">
 	    <div id="logo">
 	      <img src="/images/HAM-logo.png">
@@ -52,17 +77,19 @@
 	</td>
       </tr>
       </table>
+    </div>
   </div>
 
-  <%= yield %>
-  <tr><td colspan=3>
-      <div id="footer">
-	<div id="copyright">&copy 2012</div>&nbsp;<a href="http://www.redhat.com">Red Hat, Inc.</a>  <a href="http://access.redhat.com/">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Red Hat Customer Portal</a>
-	<div id="help"><a href="#">Help</a></div>
-      </div>
-    </td>
-  </tr>
-</table>
+  <div id="content">
+    <%= yield %>
+  </div>
+  <div id="push">
+  </div>
+</div>
+  <div id="footer">
+    <div id="copyright">&copy 2012</div>&nbsp;<a href="http://www.redhat.com">Red Hat, Inc.</a>  <a href="http://access.redhat.com/">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Red Hat Customer Portal</a>
+    <div id="help"><a href="#">Help</a></div>
+  </div>
 </body>
   <script type="text/javascript">
     $(".node_list_check").click(function(e){

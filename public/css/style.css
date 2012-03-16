@@ -1,6 +1,6 @@
-body {
-  margin-top: 0px;
-  margin-left: 0px;
+html, body {
+  margin: 0px 0px 0px 0px;
+  height:100%;
 }
 
 a, a:link, a:visited, a:hover, a:active {
@@ -8,9 +8,42 @@ a, a:link, a:visited, a:hover, a:active {
 }
 
 #header {
-  padding-left: 38px;
   background-image:url("../images/Shell_bg.png");
   height: 79px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+#topmenu {
+  padding-left: 38px;
+  padding-right: 38px;
+}
+
+#content {
+  padding-left: 38px;
+  padding-right: 38px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 960px;
+}
+
+#push {
+  height: 40px;
+}
+
+#wrapper {
+  min-height:100%;
+}
+
+#footer {
+  padding-left: 38px;
+  padding-right: 38px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 960px;
+  height: 30px;
+  margin: -30px auto 0;
 }
 
 #header #logo {
@@ -37,6 +70,9 @@ td.right {
   height: 79px;
   border-collapse: collapse;
   border-spacing: 0px;
+  width: 960px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #menu_controls tr, #menu_controls  td {
@@ -126,8 +162,7 @@ div.first a {
 table#main {
   border-spacing: 0px;
   margin-top: 15px;
-  margin-left: 38px;
-  width: 1000px;
+  width: 960px;
 }
 
 #page_header {
@@ -415,8 +450,8 @@ input[type=text], input[type=submit] {
 }
 
 #locationdep td {
-  min-width: 450px;
-}
+  min-width: 200px;
+} 
 
 .datatable_header {
   padding-left: 3px;
@@ -470,7 +505,7 @@ input[type=text], input[type=submit] {
   border: 0px;
 }
 
-.datatable th:first-child, .datatable td:first-child{
+.datatable th:first-child, .datatable td:first-child {
   border-left: 1px solid #b8b8b8;
 }
 
@@ -503,8 +538,6 @@ table.datatable td, table.datatable a {
   font-weight: bold;
   font-size: 11px;
   color: #2b85db;
-  padding-left: 12;
-  margin-top: 10px;
 }
 
 #footer a, #footer a:link, #footer a:visited, #footer a:hover, #footer a:active {

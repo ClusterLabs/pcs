@@ -1,0 +1,18 @@
+    <div id="resource_agent_<%=@resource.name%>">
+      <table style="clear:left; float:left; margin-top: 25px;">
+	<% @resource.options.each { |name, desc|  %>
+	  <tr>
+	    <td class="reg">
+	      <%= name %>
+	    </td>
+	    <td>
+	      <input style="margin-right: 50px;" type="text" value="<%=@resource.options[name]%>" size="35" class="text_field">
+	    </td>
+	  </tr>
+	<% } %>
+	<tr><td class="center" style="padding-top:20px;" colspan=2>
+	    <input type=submit class="text_field" value="Apply Changes">
+	  </td>
+	</tr>
+      </table>
+    </div>
