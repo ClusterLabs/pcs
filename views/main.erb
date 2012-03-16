@@ -7,7 +7,10 @@
   <script src="/js/jquery-ui-1.8.17.custom.min.js"></script>
   <script type="text/javascript">
     var origMainTRHeight = 0;
-    function resizeTable() {
+    function resizeTable(refresh) {
+      if (refresh == true) {
+	origMainTRHeight = $('#main > tbody > tr:nth-child(3)').height();
+      }
       var wheight = $(window).height();
       var header = $('#header').height();
       var footer = $('#footer').height();
@@ -15,17 +18,16 @@
       var tr2 = $('#main > tbody > tr:nth-child(2)').height();
       var push = $('#push').height();
       var newheight = wheight - header - footer - tr1 - tr2 - push + 15;
-      if (origMainTRHeight < newheight) {
+      if (origMainTRHeight <= newheight) {
 	$('#main > tbody > tr:nth-child(3)').height(newheight);
-	$('#content').height(wheight - header - footer - push + 15);
+	$('#content').height($('#main').height());
       }
     }
     $(window).resize(function() {
 	resizeTable();
 	});
     $(window).load(function() {
-	origMainTRHeight = $('#main > tbody > tr:nth-child(3)').height();
-	resizeTable();
+	resizeTable(true);
 	});
 
   </script>
