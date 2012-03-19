@@ -1,9 +1,11 @@
+import os
 import subprocess
 import re
 import usage
 
-COROSYNC_CONFIG_TEMPLATE = "corosync.conf.template"
-COROSYNC_CONFIG_FEDORA_TEMPLATE = "corosync.conf.fedora.template"
+pcs_dir = os.path.dirname(os.path.realpath(__file__))
+COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
+COROSYNC_CONFIG_FEDORA_TEMPLATE = pcs_dir + "/corosync.conf.fedora.template"
 COROSYNC_CONFIG_FILE = "/etc/corosync/corosync.conf"
 
 def corosync_cmd(argv):
