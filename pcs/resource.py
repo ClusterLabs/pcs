@@ -157,9 +157,11 @@ def resource_remove(resource_id, output = True):
     else:
         args = ["cibadmin", "-o", "resources", "-D", "--xml-text", group]
         if output == True:
-            print "Deleting Resource (and group) - " + resource_id,
-        output,retVal = utils.run(args)
+            print "Deleting Resource (and group) - " + resource_id
+        cmdoutput,retVal = utils.run(args)
         if retVal != 0:
+            if output == True:
+                print "ERROR: Unable to remove resource 'resource_id' (do constraints exist?)"
             return False
     return True
 
