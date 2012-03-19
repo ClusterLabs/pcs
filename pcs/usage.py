@@ -57,6 +57,9 @@ Commands:
         bindnetaddr: (first local interface network address)
         mcastaddr:   226.94.1.1
         mcastport:   5405
+
+    configure fedora <node1> [node2] [...]
+        Configure corosync on Fedora 17 and later.
 """
 
 def property():

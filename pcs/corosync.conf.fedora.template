@@ -1,0 +1,17 @@
+totem {
+version: 2
+secauth: off
+cluster_name: feist_test
+}
+
+nodelist {
+@@nodes
+}
+
+quorum {
+provider: corosync_votequorum
+}
+
+logging {
+to_syslog: yes
+}
