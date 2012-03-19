@@ -6,7 +6,7 @@
   <tr>
     <td id="remove_add" class="borderbottom">
       <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
-      <div class="plus sprites"></div><div class="link">&nbsp;Add&nbsp;&nbsp;&nbsp;&nbsp;</div>
+      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
       <div class="plus sprites"></div><div class="link">&nbsp;Create Group</div>
     </td>
     <td class="borderbottom">&nbsp;</td>
@@ -144,3 +144,33 @@
 	</tr>
       </div>
     </table>
+    <div id="add_resource" style="display: none;">
+      <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
+	<tr>
+	  <td class="bold">Class</td>
+	  <td>
+	    <select>
+	      <option value="OCF">OCF</option>
+	    </select>
+	  </td>
+	  <td style="padding-left:10px;" class="bold">Provider</td>
+	  <td>
+	    <select>
+	      <option value="heartbeat">heartbeat</option>
+	    </select>
+	  </td>
+	</tr>
+	<tr>
+	  <td class="bold">Type</td>
+	  <td>
+	    <select id="add_ra_type" onchange="$('#new_resource_agent').load('/resources/metadata/' + this.value + '/new');">
+	      <% @resource_agents.each { |name, ra| %>
+		<option <%= ra.name == @cur_resource.agentname ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
+	      <% } %>
+	    </select>
+	  </td>
+	</tr>
+      </table>
+      <div id="new_resource_agent">
+      </div>
+    </div>

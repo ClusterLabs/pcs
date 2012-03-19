@@ -1,12 +1,23 @@
     <div id="resource_agent_<%=@resource.name%>">
       <table style="clear:left; float:left; margin-top: 25px;">
+	<% if @new_resource %>
+	  <tr>
+	    <td class="reg">
+	      Resource Name
+	    </td>
+	    <td>
+	      <input style="margin-right: 50px;" type="text" name="name" size="35" class="text_field">
+	    </td>
+	  </tr>
+	<% end %>
+
 	<% @resource.options.each { |name, desc|  %>
 	  <tr>
 	    <td class="reg">
 	      <%= name %>
 	    </td>
 	    <td>
-	      <input style="margin-right: 50px;" type="text" value="<%=@resource.options[name]%>" size="35" class="text_field">
+	      <input style="margin-right: 50px;" type="text" name="<%=name%>" value="<%=@resource.options[name]%>" size="35" class="text_field">
 	    </td>
 	  </tr>
 	<% } %>

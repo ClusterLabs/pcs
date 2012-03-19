@@ -90,17 +90,26 @@ get '/resources/?:resource?' do
   erb :resource, :layout => :main
 end
 
-get '/resources/metadata/:resourcename' do
+get '/resources/metadata/:resourcename/?:new?' do
   @resource = ResourceAgent.new(params[:resourcename])
   @resource.options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
+  @new_resource = params[:new]
   
   erb :resourceagentform
 end
 
 get '/nodes/?:node?' do
-  print "Nodes\n"
   setup()
   @nodemenuclass = "class=\"active\""
+  @resources = getResources
+  @resources_running = []
+  @resources.each { |r|
+    r.nodes && r.nodes.each {|n|
+      if n.name == @cur_node.id
+	@resources_running << r
+      end
+    }
+  }
   erb :nodes, :layout => :main
 end
 

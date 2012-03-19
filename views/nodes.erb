@@ -122,6 +122,24 @@
 	    </tr>
 	  </table>
 	  <table style="clear:left;float:left;margin-top:25px;">
+	    <tr><td class="datatable_header">Resources Currently Running on <%=@cur_node.id%></td></tr>
+	    <tr><td>
+		<div id="resources_running">
+		  <table class="datatable">
+		    <tr><th>NAME</th></tr>
+		    <% @resources_running.each { |r| %>
+		      <tr><td><a href="/resources/<%=r.id%>"><%= r.id %> (<%=r.agentname%>)</a></td>
+		      </tr>
+		    <% } %>
+		    <% if @resources_running.length == 0 %>
+		      <tr><td style="color: gray;">NONE</td></tr>
+		    <% end %>
+		</table>
+	      </div>
+	    </td>
+	  </tr>
+	</table>
+	  <table style="clear:left;float:left;margin-top:25px;">
 	    <tr><td class="datatable_header">Resource Location Preferences</td></tr>
 	    <tr><td>
 		<div id="locationdep">
@@ -141,7 +159,7 @@
 		      </tr>
 		    <% } %>
 		    <% if @loc_dep_allow.length == 0 and @loc_dep_disallow.length == 0 %>
-		      <tr><td style="color: gray;">NONE</td></tr>
+		      <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
 		    <% end %>
 		</table>
 	      </div>
