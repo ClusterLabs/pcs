@@ -24,25 +24,28 @@ def resource():
 Usage: pcs resource [commands]...
 Manage pacemaker resources
 Commands:
-    resource create <resource id> <provider:class:type|type> [resource options]
-    resource delete <resource id>
     resource [list|show] [resource_id]
+    resource create <resource id> <provider:class:type|type> [resource options]
+    resource update <resource id> [resource options]
+    resource delete <resource id>
     resource group add <group name> <resource id>...
     resource group remove_resource <group name> <resource id> ...
     resource group list
 
 Examples:
+    pcs resource list
+
+    pcs resource list ClusterIP
+
     pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
                cidr_netmask=32 op monitor interval=30s
 
     pcs resource create ClusterIP IPaddr2 ip=192.168.0.99 \\
                cidr_netmask=32 op monitor interval=30s
 
+    pcs resource update ClusterIP ip=192.168.0.98 cidr_netmask=
+
     pcs resource delete ClusterIP
-
-    pcs resource list ClusterIP
-
-    pcs resource list
 """
 
 def corosync():

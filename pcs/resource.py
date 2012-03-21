@@ -29,6 +29,9 @@ def resource_cmd(argv):
                     ra_values.append(arg)
         
         resource_create(res_id, res_type, ra_values, op_values)
+    elif (sub_cmd == "update"):
+        res_id = argv.pop(0)
+        resource_update(res_id,argv)
     elif (sub_cmd == "delete"):
         res_id = argv.pop(0)
         resource_remove(res_id)
@@ -51,7 +54,24 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
     output,retval = utils.run(args)
-    print output
+
+# Update a resource, removing any args that are empty and adding/updating
+# args that are not empty
+def resource_update(res_id,args):
+    params = convert_args_to_tuples(args)
+    for (key,val) in params:
+        if val == "":
+            output,retval = utils.run(["crm_resource", "-r", res_id, "-d",
+                key])
+            if retval != 0:
+                print "Error: Unable to remove '%s' from '%s'" % (key,res_id)
+                sys.exit(1)
+        else:
+            output,retval = utils.run(["crm_resource", "-r", res_id, "-p",
+                key,"-v",val])
+            if retval != 0:
+                print "Error: Unable to add '%s' from '%s'" % (key,res_id)
+                sys.exit(1)
 
 def convert_args_to_operations(op_values, ra_id):
     if len(op_values) == 0:
