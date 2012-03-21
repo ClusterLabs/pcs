@@ -1,5 +1,5 @@
 def getResources
-  stdin, stdout, stderror = Open3.popen3('/root/pacemaker/tools/crm_mon --as-xml=/tmp/testclusterstatus')
+  stdin, stdout, stderror = Open3.popen3('/root/pacemaker/tools/crm_mon -r --as-xml=/tmp/testclusterstatus')
 
   doc = REXML::Document.new(File.open("/tmp/testclusterstatus", "rb"))
   resource_list = []
@@ -26,11 +26,16 @@ def getResourceMetadata(resourcepath)
   ENV['OCF_ROOT'] = OCF_ROOT
   metadata = `#{resourcepath} meta-data`
   doc = REXML::Document.new(metadata)
-  options = {}
+  options_required = {}
+  options_optional = {}
   doc.elements.each('resource-agent/parameters/parameter') { |param|
-    options[param.attributes["name"]] = ""
+    if param.attributes["required"] == "1"
+      options_required[param.attributes["name"]] = ""
+    else
+      options_optional[param.attributes["name"]] = ""
+    end
   }
-  options
+  [options_required, options_optional]
 end
 
 def getResourceAgents(resource_agent)
@@ -44,8 +49,9 @@ def getResourceAgents(resource_agent)
     ra.name = "ocf::heartbeat:" + a.sub(/.*\//,"")
 
     if a.sub(/.*\//,"") == resource_agent.sub(/.*:/,"")
-      options = getResourceMetadata(a)
-      ra.options = options
+      required_options, optional_options = getResourceMetadata(a)
+      ra.required_options = required_options
+      ra.optional_options = optional_options
     end
     resource_agent_list[ra.name] = ra
   }
@@ -61,6 +67,7 @@ class Resource
     @active = e.attributes["active"] == "true" ? true : false
     @orphaned = e.attributes["orphaned"] == "true" ? true : false
     @failed = e.attributes["failed"] == "true" ? true : false
+    @active = e.attributes["active"] == "true" ? true : false
     @nodes = []
     e.elements.each do |n| 
       node = Node.new
@@ -77,10 +84,13 @@ class Resource
 end
 
 class ResourceAgent
-  attr_accessor :name, :options, :resource_class
-  def initialize(name=nil, options={}, resource_class=nil)
+  attr_accessor :name, :resource_class, :required_options, :optional_options
+  def initialize(name=nil, required_options={}, optional_options={}, resource_class=nil)
     @name = name
-    @options = options
+    @required_options = {}
+    @optional_options = {}
+    @required_options = required_options
+    @optional_options = optional_options
     @resource_class = nil
   end
 

@@ -1,29 +1,49 @@
-    <div id="resource_agent_<%=@resource.name%>">
-      <table style="clear:left; float:left; margin-top: 25px;">
-	<% if @new_resource %>
-	  <tr>
-	    <td class="reg">
-	      Resource Name
-	    </td>
-	    <td>
-	      <input style="margin-right: 50px;" type="text" name="name" size="35" class="text_field">
-	    </td>
-	  </tr>
-	<% end %>
-
-	<% @resource.options.each { |name, desc|  %>
-	  <tr>
-	    <td class="reg">
-	      <%= name %>
-	    </td>
-	    <td>
-	      <input style="margin-right: 50px;" type="text" name="<%=name%>" value="<%=@resource.options[name]%>" size="35" class="text_field">
-	    </td>
-	  </tr>
-	<% } %>
-	<tr><td class="center" style="padding-top:20px;" colspan=2>
-	    <input type=submit class="text_field" value="Apply Changes">
+<div id="resource_agent_<%=@resource.name%>">
+  <form method=POST action="<%= @existing_resource ? "/resources/#{@cur_resource.id}" : "/resourceadd"%>">
+    <table style="clear:left; float:left; margin-top: 25px;">
+      <% if @new_resource %>
+	<tr>
+	  <td class="reg">
+	    Resource Name
+	  </td>
+	  <td>
+	    <input style="margin-right: 50px;" type="text" name="name" size="35" class="text_field">
 	  </td>
 	</tr>
-      </table>
-    </div>
+      <% end %>
+
+      <% if @existing_resource %>
+	<input type="hidden" name="resource_id" value="<%=@cur_resource.id%>">
+      <% end %>
+
+      <input type="hidden" name="resource_type" value="<%=@resource.name%>">
+      <% @resource.required_options.each { |name, desc|  %>
+	<tr>
+	  <td class="reg">
+	    <%= name %>
+	  </td>
+	  <td>
+	    <input style="margin-right: 50px;" type="text" name="<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	  </td>
+	</tr>
+      <% } %>
+      <tr>
+	<td colspan=2><hr></td>
+      </tr>
+      <% @resource.optional_options.each { |name, desc|  %>
+	<tr>
+	  <td class="reg">
+	    <%= name %>
+	  </td>
+	  <td>
+	    <input style="margin-right: 50px;" type="text" name="<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	  </td>
+	</tr>
+      <% } %>
+      <tr><td class="center" style="padding-top:20px;" colspan=2>
+	  <input type=submit class="text_field" value="<%= @existing_resource ? "Apply Changes" : "Create Resource" %>">
+	</td>
+      </tr>
+    </table>
+  </form>
+</div>

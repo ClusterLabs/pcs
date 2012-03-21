@@ -41,9 +41,20 @@ helpers do
 
     @loc_dep_allow, @loc_dep_disallow = getLocationDeps(@cur_node)
   end
+
+  def getParamLine(params)
+    param_line = ""
+    params.each { |param, val|
+      if param == "name" or param == "resource_type" or param == "resource_id"
+	next
+      end
+      param_line += " #{param}=#{val}"
+    }
+    param_line
+  end
 end
 
-post '*' do
+post '/configure/?:page?' do
   print params
   params[:config].each { |key, value|
     if (value == "on")
@@ -58,6 +69,13 @@ post '*' do
   redirect params[:splat][0]
 end
 
+post '/resourceadd' do
+  param_line = getParamLine(params)
+  puts "pcs resource create #{params[:name]} #{params[:resource_type]} #{param_line}"
+  puts `#{PCS} resource create #{params[:name]} #{params[:resource_type]} #{param_line}`
+  redirect "/resources/#{params[:name]}"
+end
+
 get '/configure/?:page?' do
   @config_options = getConfigOptions(params[:page])
   @configuremenuclass = "class=\"active\""
@@ -68,6 +86,13 @@ get '/resourcedeps/?:resource?' do
   @resourcedepsmenuclass = "class=\"active\""
   setup()
   erb :resourcedeps, :layout => :main
+end
+
+post '/resources/:resource?' do
+  param_line = getParamLine(params)
+  puts "#{PCS} resource update #{params[:resource_id]} #{param_line}"
+  puts `#{PCS} resource update #{params[:resource_id]} #{param_line}`
+  redirect params[:splat][0]
 end
 
 get '/resources/?:resource?' do
@@ -92,7 +117,7 @@ end
 
 get '/resources/metadata/:resourcename/?:new?' do
   @resource = ResourceAgent.new(params[:resourcename])
-  @resource.options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
+  @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
   @new_resource = params[:new]
   
   erb :resourceagentform

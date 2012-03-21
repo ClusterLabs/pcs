@@ -5,9 +5,9 @@
   </tr>
   <tr>
     <td id="remove_add" class="borderbottom">
-      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove();">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
       <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
-      <div class="plus sprites"></div><div class="link">&nbsp;Create Group</div>
+      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="alert('Not Yet Implemented');">Create Group</a></div>
     </td>
     <td class="borderbottom">&nbsp;</td>
     <td id="tab_name" width="115">
@@ -27,12 +27,12 @@
 	      <tr style="background-color: #e4f5fd">
 	      <% end %>
 	      <td class="node_list_check">
-		<input class="node_list_check" type="checkbox">
+		<input class="node_list_check" type="checkbox" res_id="<%=r.id%>">
 	      </td>
 	      <td class="node_list_sprite">
 		<div class="check sprites"></div>
 	      </td>
-	      <td nowrap class="resource_name" <%= 'style="color:red;" ' if r.failed %>>
+	      <td nowrap class="resource_name" <%= 'style="color:red;" ' if r.failed || !r.active%>>
 		<%= r.id %>
 	      </td>
 	      <td class="resource_type">
@@ -66,6 +66,8 @@
 		  <td>
 		    <% if @cur_resource.failed %>
 		      <div class="status-offline">Failed</div>
+		    <% elsif not @cur_resource.active %>
+		      <div class="status-offline">Inactive</div>
 		    <% else %>
 		      <div class="status">Running</div>
 		    <% end %>
@@ -99,13 +101,13 @@
 	      <tr>
 		<td class="bold">Class</td>
 		<td>
-		  <select>
+		  <select disabled>
 		    <option value="OCF">OCF</option>
 		  </select>
 		</td>
 		<td style="padding-left:10px;" class="bold">Provider</td>
 		<td>
-		  <select>
+		  <select disabled>
 		    <option value="heartbeat">heartbeat</option>
 		  </select>
 		</td>
@@ -113,7 +115,7 @@
 	      <tr>
 		<td class="bold">Type</td>
 		<td>
-		  <select id="ra_type" onchange="$('#cur_resource_agent').load('/resources/metadata/' + this.value);">
+		  <select  disabled id="ra_type" onchange="$('#cur_resource_agent').load('/resources/metadata/' + this.value);">
 		    <% @resource_agents.each { |name, ra| %>
 		      <option <%= ra.name == @cur_resource.agentname ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
 		    <% } %>
@@ -122,24 +124,9 @@
 	      </tr>
 	    </table>
 
-	    <div id="cur_resource_agent">
-	      <table style="clear:left;float:left;margin-top:25px;">
-		<% @resource_agents[@cur_resource.agentname].options.each { |name, desc|  %>
-		  <tr>
-		    <td class="reg">
-		      <%= name %>
-		    </td>
-		    <td>
-		      <input style="margin-right: 50px;" type="text" value="<%=@cur_resource.options[name]%>" size="35" class="text_field">
-		    </td>
-		  </tr>
-		<% } %>
-		<tr><td class="center" style="padding-top:20px;" colspan=2>
-		    <input type=submit class="text_field" value="Apply Changes">
-		  </td>
-		</tr>
-	      </table>
-	    </div>
+	    <% @resource = @resource_agents[@cur_resource.agentname] %>
+	    <% @existing_resource = true %>
+	    <%= erb :resourceagentform %>
 	  </td>
 	</tr>
       </div>
@@ -174,3 +161,8 @@
       <div id="new_resource_agent">
       </div>
     </div>
+    <div id="verify_remove" style="display: none;">
+      <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
+      <span id="resource_to_remove"></span>
+    </div>
+
