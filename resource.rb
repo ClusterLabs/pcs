@@ -1,5 +1,7 @@
 def getResources
   stdin, stdout, stderror = Open3.popen3('/root/pacemaker/tools/crm_mon -r --as-xml=/tmp/testclusterstatus')
+  stdout.readlines
+  stderror.readlines
 
   doc = REXML::Document.new(File.open("/tmp/testclusterstatus", "rb"))
   resource_list = []

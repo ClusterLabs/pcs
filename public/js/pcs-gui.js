@@ -7,12 +7,12 @@ function verify_remove() {
   });
   list_of_nodes += "</ul>";
   if (nodes_to_remove != 0) {
-    $("#resource_to_remove").replaceWith(list_of_nodes);
+    $("#resource_to_remove").html(list_of_nodes);
     $("#verify_remove").dialog({title: 'Resource Removal',
       modal: true, resizable: false, heigh: 140,
       buttons: {
 	"Remove resource(s)": function() {
-	  $(this).dialog("close");
+	  $('#node_list > form').submit();
 	},
       Cancel: function() {
 	$(this).dialog("close");

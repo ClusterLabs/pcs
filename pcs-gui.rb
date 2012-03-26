@@ -76,6 +76,16 @@ post '/resourceadd' do
   redirect "/resources/#{params[:name]}"
 end
 
+post '/resourcerm' do
+  params.each { |k,v|
+    if k.index("resid-") == 0
+      puts "#{PCS} resource delete #{k.gsub("resid-","")}"
+      puts `#{PCS} resource delete #{k.gsub("resid-","")}`
+    end
+  }
+  redirect "/resources/"
+end
+
 get '/configure/?:page?' do
   @config_options = getConfigOptions(params[:page])
   @configuremenuclass = "class=\"active\""
