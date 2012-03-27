@@ -54,8 +54,8 @@
 	<td id="node_info" colspan=2>
 	  <div id="test">
 	    <div id="node_info_header">
-	      <div id="node_info_header_title">Edit Resource</div>
-	      <div id="node_info_header_title_name">&nbsp;<%=@cur_resource.id%></div>
+	      <div id="node_info_header_title">Edit Resource&nbsp;</div>
+	      <div id="node_info_header_title_name"><%=@cur_resource.id%></div>
 	      <div class="link" style="float: right" onclick="$('#node_info').css('height',$('#node_info').height());$('#test').hide('slide');">Close</div>
 	      <div class="x sprites" style="float: right"></div>
 	    </div>
@@ -67,11 +67,11 @@
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
 		    <% if @cur_resource.failed %>
-		      <div class="status-offline">Failed</div>
+		      <div id="res_status" class="status-offline">Failed</div>
 		    <% elsif not @cur_resource.active %>
-		      <div class="status-offline">Inactive</div>
+		      <div id="res_status" class="status-offline">Inactive</div>
 		    <% else %>
-		      <div class="status">Running</div>
+		      <div id="res_status" class="status">Running</div>
 		    <% end %>
 		  </td>
 		</tr>
@@ -94,7 +94,7 @@
 	    <div id="node_details">
 	      <table><tr>
 		  <td nowrap><div class="bold">Current Location:</div></td>
-		  <td><div class="reg"><%=@cur_resource.location%></div></td>
+		  <td><div id="cur_res_loc" class="reg"><%=@cur_resource.location%></div></td>
 		</tr>
 	      </table>
 	    </div>
@@ -167,4 +167,8 @@
       <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
       <span id="resource_to_remove"></span>
     </div>
-
+    <script type="text/javascript">
+      $(window).load(function () {
+	  resource_update();
+	  });
+    </script>

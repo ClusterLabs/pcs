@@ -69,9 +69,28 @@ function node_update() {
   });
 }
 
-$(window).load(function () {
-  node_update();
-});
+function resource_update() {
+  resource = $('#node_info_header_title_name').first().text();
+  $.ajax({
+    type: 'GET',
+    url: '/remote/resource_status?resource='+resource,
+    timeout: 2000,
+    success: function(data) {
+      data = jQuery.parseJSON(data);
+      $("#cur_res_loc").html(data[0].location);
+      $("#res_status").html(data[0].status);
+      if (data[0].status == "Running") {
+	setStatus($("#res_status"), true);
+      } else {
+	setStatus($("#res_status"), false);
+      }
+      window.setTimeout(resource_update, 10000);
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      window.setTimeout(update, 60000);
+    }
+  });
+}
 
 function setStatus(item,running) {
   if (running) {

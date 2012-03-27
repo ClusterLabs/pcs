@@ -21,6 +21,27 @@ def remote(params)
     status = ["uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status]
     ret = JSON.generate(status)
     return ret
+  when "resource_status"
+    resource_id = params[:resource]
+    @resources = getResources
+    location = ""
+    @resources.each {|r|
+      if r.id == resource_id
+	if r.failed
+	  status =  "Failed"
+	elsif !r.active
+	  status = "Inactive"
+	else
+	  status = "Running"
+	end
+	if r.nodes.length != 0
+	  location = r.nodes[0].name
+	  break
+	end
+      end
+    }
+    status = ["location" => location, "status" => status]
+    return JSON.generate(status)
   when "set_corosync_conf"
     puts "#{params['corosync_conf']}"
   when "start_daemons"
