@@ -3,10 +3,12 @@ require 'sinatra/reloader' if development?
 require 'open3'
 require 'rexml/document'
 require './resource.rb'
+require './remote.rb'
 
 use Rack::CommonLogger
 
 also_reload './resource.rb'
+also_reload './remote.rb'
 
 configure do
   OCF_ROOT = "/usr/lib/ocf"
@@ -19,6 +21,9 @@ end
 set :port, 2222
 set :logging, true
 
+if not defined? @@cur_node_name
+  @@cur_node_name = `hostname`.chomp
+end
 
 @nodes = (1..7)
 
@@ -153,6 +158,13 @@ get '/' do
   call(env.merge("PATH_INFO" => '/nodes'))
 end
 
+get '/remote/?:command?' do
+  return remote(params)
+end
+
+post '/remote/?:command?' do
+  return remote(params)
+end
 
 get '*' do
   print params[:splat]
@@ -189,8 +201,11 @@ def getLocationDeps(cur_node)
 end
 
 def getNodes
-  stdin, stdout, stderror = Open3.popen3("#{PCS} status nodes")
+  stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes")
   out = stdout.readlines
+  if waitth.value.exitstatus != 0
+    return [[],[]]
+  end
   [out[1].split(' ')[1..-1], out[2].split(' ')[1..-1]]
 end
 

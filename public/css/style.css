@@ -276,11 +276,16 @@ td.resource_name {
 }
 
 td#node_list {
-  width:300px;
+  width:225px;
+}
+
+#uptime {
+  width:80px;
 }
 
 td#node_info {
   padding: 25px;
+  width:735px;
 }
 
 #node_list th {

@@ -22,3 +22,63 @@ function verify_remove() {
     alert("You must select at least one node.");
   }
 }
+
+function node_update() {
+  node = $('#node_info_header_title_name').first().text();
+  $.getJSON("/remote/status?node="+node, function (data) {
+    uptime = data[0].uptime;
+    if (uptime) {
+      usplit = uptime.split(",");
+      uptime = usplit[0].split(" up ")[1] + usplit[1];
+    } else {
+      uptime = "Unknown";
+    }
+    if (data[0].noresponse) {
+      pcsd_status = "Stopped";
+      pacemaker_status = "Unknown";
+      corosync_status = "Unknown";
+      setStatus($('#pacemaker_status'),false);
+      setStatus($('#corosync_status'),false);
+      setStatus($('#pcsd_status'),false);
+    } else  {
+      pcsd_status = "Running";
+
+      if (data[0].pacemaker) {
+	pacemaker_status = "Running";
+	setStatus($('#pacemaker_status'),true);
+      } else {
+	pacemaker_status = "Stopped";
+	setStatus($('#pacemaker_status'),false);
+      }
+
+      if (data[0].corosync) {
+	corosync_status = "Running";
+	setStatus($('#corosync_status'),true);
+      } else {
+	corosync_status = "Stopped";
+	setStatus($('#corosync_status'),false);
+      }
+    }
+
+    mydata = data
+    $("#uptime").html(uptime);
+    $("#pacemaker_status").html(pacemaker_status);
+    $("#corosync_status").html(corosync_status);
+    $("#pcsd_status").html(pcsd_status);
+    window.setTimeout(node_update,10000);
+  });
+}
+
+$(window).load(function () {
+  node_update();
+});
+
+function setStatus(item,running) {
+  if (running) {
+    item.removeClass();
+    item.addClass('status');
+  } else {
+    item.removeClass();
+    item.addClass('status-offline');
+  }
+}

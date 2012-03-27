@@ -48,8 +48,8 @@
       <td id="node_info" colspan=2>
 	<div id="test">
 	  <div id="node_info_header">
-	    <div id="node_info_header_title">Edit Node</div>
-	    <div id="node_info_header_title_name">&nbsp;<%=@cur_node.name%></div>
+	    <div id="node_info_header_title">Edit Node&nbsp;</div>
+	    <div id="node_info_header_title_name"><%=@cur_node.name%></div>
 	    <div class="link" style="float: right" onclick="$('#node_info').css('height',$('#node_info').height());$('#test').hide('slide');">Close</div>
 	    <div class="x sprites" style="float: right"></div>
 	  </div>
@@ -86,9 +86,9 @@
 		<td><div class="reg">Node ID:</div></td>
 		<td><div class="bold"><%=@cur_node.id%></div></td>
 		<td><div class="reg"> Uptime: </div></td>
-		<td><div class="bold">XX:XX:XX:XX</div></td>
+		<td><div class="bold" id="uptime"></div></td>
 		<td><div class="reg"> Hostname: </div></td>
-		<td><div><input style="margin-right: 50px;" value="<%=@cur_node.hostname%>" type="text" size="35" class="text_field"></div></td>
+		<td><div><input style="margin-right: 50px;" value="<%=@cur_node.hostname%>" type="text" size="25" class="text_field"></div></td>
 	      </tr>
 	    </table>
 	  </div>
@@ -113,9 +113,9 @@
 		<div id="clusterdaemons">
 		  <table class="datatable">
 		    <tr><th>NAME</th><th>STATUS</th></tr>
-		    <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div style="float:left" class="status">Running</div></td></tr>
-		    <tr><td>corosync</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div style="float:left" class="status">Running</div></td></tr>
-		    <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div style="float:left" class="status">Running</div></td></tr>
+		    <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pacemaker_status" style="float:left" class="status"></div></td></tr>
+		    <tr><td>corosync</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="corosync_status" style="float:left" class="status"></div></td></tr>
+		    <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pcsd_status" style="float:left" class="status"></div></td></tr>
 		  </table>
 		</div>
 	      </td>
