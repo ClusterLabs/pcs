@@ -52,9 +52,38 @@ def main(argv):
     elif (command == "set"):
         argv.insert(0,"set")
         prop.property_cmd(argv)
+    elif (command == "start"):
+        start_cluster(argv)
+    elif (command == "stop"):
+        stop_cluster(argv)
     else:
         usage.main()
 
+def start_cluster(argv):
+    print "Starting Cluster"
+    output, retval = utils.run(["/etc/init.d/corosync", "start"])
+    print output
+    if retval != 0:
+        print "Error: unable to start corosync"
+        sys.exit(1)
+    output, retval = utils.run(["/etc/init.d/pacemaker", "start"])
+    print output
+    if retval != 0:
+        print "Error: unable to start pacemaker"
+        sys.exit(1)
+
+def stop_cluster(argv):
+    print "Stopping Cluster"
+    output, retval = utils.run(["/etc/init.d/pacemaker", "stop"])
+    print output
+    if retval != 0:
+        print "Error: unable to stop pacemaker"
+        sys.exit(1)
+    output, retval = utils.run(["/etc/init.d/corosync", "stop"])
+    print output
+    if retval != 0:
+        print "Error: unable to stop corosync"
+        sys.exit(1)
 
 if __name__ == "__main__":
   main(sys.argv[1:])

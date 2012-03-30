@@ -2,6 +2,8 @@ import os
 import subprocess
 import re
 import usage
+import urllib2
+import utils
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -21,15 +23,31 @@ def corosync_cmd(argv):
     else:
         usage.corosync()
 
-def corosync_configure(argv):
+# Create config and then send it to all of the nodes and start
+# corosync & pacemaker on the nodes
+# partial_argv is an array of args passed to corosync configure sync_start
+def sync_start(partial_argv):
+    argv = partial_argv[:]
+    nodes = partial_argv[1:]
+    argv.insert(0,"fedora")
+    config = corosync_configure(argv,True)
+    for node in nodes:
+        utils.setCorosyncConfig(node,config)
+
+    
+def corosync_configure(argv,returnConfig=False):
     fedora_config = False
     if len(argv) == 0:
         bindnetaddr = get_local_network()
         mcastaddr = "226.94.1.1"
         mcastport = "5405"
-    elif argv[0] == "fedora":
-        nodes = argv[1:]
+    elif argv[0] == "fedora" and len(argv) > 2:
+        nodes = argv[2:]
+        cluster_name = argv[1]
         fedora_config = True
+    elif argv[0] == "sync_start" and len(argv) > 2:
+        sync_start(argv[1:])
+        return
     elif len(argv) == 3:
         bindnetaddr = argv.pop(0)
         mcastaddr = argv.pop(0)
@@ -57,11 +75,14 @@ def corosync_configure(argv):
             i = i+1
 
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
+        corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
     else:
         corosync_config = corosync_config.replace("@@bindnetaddr",bindnetaddr)
         corosync_config = corosync_config.replace("@@mcastaddr",mcastaddr)
         corosync_config = corosync_config.replace("@@mcastport",mcastport)
-    print corosync_config
+
+    if returnConfig:
+        return corosync_config
 
     try:
         f = open(COROSYNC_CONFIG_FILE,'w')

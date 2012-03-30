@@ -17,6 +17,8 @@ Commands:
     property    Set pacemaker properties
     constraint  Set resource constraints
     status      View pacemaker status
+    start       Start corosync & pacemaker
+    stop        Stop corosync & pacemaker
 """
 
 def resource():
@@ -61,8 +63,12 @@ Commands:
         mcastaddr:   226.94.1.1
         mcastport:   5405
 
-    configure fedora <node1> [node2] [...]
+    configure fedora <cluster name> <node1 ip> [node2 ip] [...]
         Configure corosync on Fedora 17 and later.
+
+    configure sync_start <cluster name> <node1 ip> [node2 ip] [...]
+        Configure corosync and sync configuration out to listed nodes and
+        start corosync and pacemaker services on the nodes
 """
 
 def property():

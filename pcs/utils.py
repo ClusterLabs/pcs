@@ -2,12 +2,23 @@ import os, subprocess
 import sys
 import pcs
 import xml.dom.minidom
+import urllib,urllib2
 from xml.dom.minidom import parseString
 
 
 # usefile & filename variables are set in pcs module
 usefile = False
 filename = ""
+
+# Set the corosync.conf file on the specified node
+def setCorosyncConfig(node,config):
+    url = 'http://' + node + ':2222/remote/create_cluster'
+    data = urllib.urlencode({'corosync_conf':config})
+    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+    urllib2.install_opener(opener)
+    result = opener.open(url,data)
+    html = result.read()
+    print html
 
 # Run command, with environment and return (output, retval)
 def run(args):

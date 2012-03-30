@@ -1,7 +1,7 @@
 totem {
 version: 2
 secauth: off
-cluster_name: feist_test
+cluster_name: @@cluster_name
 }
 
 nodelist {
