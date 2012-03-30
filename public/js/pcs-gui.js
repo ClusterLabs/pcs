@@ -26,14 +26,18 @@ function verify_remove() {
 function node_update() {
   node = $('#node_info_header_title_name').first().text();
   $.getJSON("/remote/status?node="+node, function (data) {
-    uptime = data[0].uptime;
+    uptime = data.uptime;
     if (uptime) {
       usplit = uptime.split(",");
       uptime = usplit[0].split(" up ")[1] + usplit[1];
+      if (!uptime) {
+	uptime = data.uptime
+      }
+
     } else {
       uptime = "Unknown";
     }
-    if (data[0].noresponse) {
+    if (data.noresponse) {
       pcsd_status = "Stopped";
       pacemaker_status = "Unknown";
       corosync_status = "Unknown";
@@ -43,7 +47,7 @@ function node_update() {
     } else  {
       pcsd_status = "Running";
 
-      if (data[0].pacemaker) {
+      if (data.pacemaker) {
 	pacemaker_status = "Running";
 	setStatus($('#pacemaker_status'),true);
       } else {
@@ -51,7 +55,7 @@ function node_update() {
 	setStatus($('#pacemaker_status'),false);
       }
 
-      if (data[0].corosync) {
+      if (data.corosync) {
 	corosync_status = "Running";
 	setStatus($('#corosync_status'),true);
       } else {

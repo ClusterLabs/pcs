@@ -1,11 +1,15 @@
 require 'sinatra'
 require 'sinatra/reloader' if development?
+#require 'rack/ssl'
 require 'open3'
 require 'rexml/document'
 require './resource.rb'
 require './remote.rb'
+require 'webrick'
+#require 'webrick/https'
 
 use Rack::CommonLogger
+#use Rack::SSL
 
 also_reload './resource.rb'
 also_reload './remote.rb'
