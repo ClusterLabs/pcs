@@ -25,51 +25,59 @@ function verify_remove() {
 
 function node_update() {
   node = $('#node_info_header_title_name').first().text();
-  $.getJSON("/remote/status?node="+node, function (data) {
-    uptime = data.uptime;
-    if (uptime) {
-      usplit = uptime.split(",");
-      uptime = usplit[0].split(" up ")[1] + usplit[1];
-      if (!uptime) {
-	uptime = data.uptime
-      }
+  $.ajax({
+    type: 'GET',
+    url: '/remote/status?node='+node,
+    timeout: 2000,
+    success: function (data) {
+      data = jQuery.parseJSON(data);
+      uptime = data.uptime;
+      if (uptime) {
+	usplit = uptime.split(",");
+	uptime = usplit[0].split(" up ")[1] + usplit[1];
+	if (!uptime) {
+	  uptime = data.uptime;
+	}
 
-    } else {
-      uptime = "Unknown";
-    }
-    if (data.noresponse) {
-      pcsd_status = "Stopped";
-      pacemaker_status = "Unknown";
-      corosync_status = "Unknown";
-      setStatus($('#pacemaker_status'),false);
-      setStatus($('#corosync_status'),false);
-      setStatus($('#pcsd_status'),false);
-    } else  {
-      pcsd_status = "Running";
-
-      if (data.pacemaker) {
-	pacemaker_status = "Running";
-	setStatus($('#pacemaker_status'),true);
       } else {
-	pacemaker_status = "Stopped";
+	uptime = "Unknown";
+      }
+      if (data.noresponse) {
+	pcsd_status = "Stopped";
+	pacemaker_status = "Unknown";
+	corosync_status = "Unknown";
 	setStatus($('#pacemaker_status'),false);
-      }
-
-      if (data.corosync) {
-	corosync_status = "Running";
-	setStatus($('#corosync_status'),true);
-      } else {
-	corosync_status = "Stopped";
 	setStatus($('#corosync_status'),false);
-      }
-    }
+	setStatus($('#pcsd_status'),false);
+      } else  {
+	pcsd_status = "Running";
 
-    mydata = data
-    $("#uptime").html(uptime);
-    $("#pacemaker_status").html(pacemaker_status);
-    $("#corosync_status").html(corosync_status);
-    $("#pcsd_status").html(pcsd_status);
-    window.setTimeout(node_update,10000);
+	if (data.pacemaker) {
+	  pacemaker_status = "Running";
+	  setStatus($('#pacemaker_status'),true);
+	} else {
+	  pacemaker_status = "Stopped";
+	  setStatus($('#pacemaker_status'),false);
+	}
+
+	if (data.corosync) {
+	  corosync_status = "Running";
+	  setStatus($('#corosync_status'),true);
+	} else {
+	  corosync_status = "Stopped";
+	  setStatus($('#corosync_status'),false);
+	}
+      }
+      mydata = data;
+      $("#uptime").html(uptime);
+      $("#pacemaker_status").html(pacemaker_status);
+      $("#corosync_status").html(corosync_status);
+      $("#pcsd_status").html(pcsd_status);
+      window.setTimeout(node_update,10000);
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      window.setTimeout(node_update, 60000);
+    }
   });
 }
 
@@ -81,9 +89,9 @@ function resource_update() {
     timeout: 2000,
     success: function(data) {
       data = jQuery.parseJSON(data);
-      $("#cur_res_loc").html(data[0].location);
-      $("#res_status").html(data[0].status);
-      if (data[0].status == "Running") {
+      $("#cur_res_loc").html(data.location);
+      $("#res_status").html(data.status);
+      if (data.status == "Running") {
 	setStatus($("#res_status"), true);
       } else {
 	setStatus($("#res_status"), false);
@@ -91,7 +99,7 @@ function resource_update() {
       window.setTimeout(resource_update, 10000);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
-      window.setTimeout(update, 60000);
+      window.setTimeout(resource_update, 60000);
     }
   });
 }

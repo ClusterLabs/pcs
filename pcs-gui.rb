@@ -20,6 +20,7 @@ configure do
   PENGINE = "/usr/lib64/heartbeat/pengine"
   PCS = "/root/pcs/pcs/pcs" 
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
+  COROSYNC_CONF = "/etc/corosync/corosync.conf"
 end
 
 set :port, 2222
@@ -48,7 +49,9 @@ helpers do
       @cur_node = @nodes.values[0]
     end
 
-    @loc_dep_allow, @loc_dep_disallow = getLocationDeps(@cur_node)
+    if @nodes.length != 0
+      @loc_dep_allow, @loc_dep_disallow = getLocationDeps(@cur_node)
+    end
   end
 
   def getParamLine(params)
@@ -148,7 +151,7 @@ get '/nodes/?:node?' do
   @resources = getResources
   @resources_running = []
   @resources.each { |r|
-    r.nodes && r.nodes.each {|n|
+    @cur_node && r.nodes && r.nodes.each {|n|
       if n.name == @cur_node.id
 	@resources_running << r
       end

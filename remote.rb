@@ -6,24 +6,53 @@ require 'uri'
 def remote(params)
   case (params[:command])
   when "status"
-    return remote_status(params)
+    return node_status(params)
+  when "resource_status"
+    return resource_status(params)
+  when "create_cluster"
+    return create_cluster(params)
   when "set_corosync_conf"
     puts "#{params['corosync_conf']}"
-  when "start_daemons"
-    puts "Starting Daemons"
-    puts `/etc/init.d/corosync start`
-    puts `/etc/init.d/pacemaker start`
+  when "cluster_start"
+    return cluster_start()
+  when "cluster_stop"
+    return cluster_stop()
   end
 end
 
-def remote_status(params)
+def cluster_start()
+    puts "Starting Daemons"
+    puts `#{PCS} start`
+end
+
+def cluster_stop()
+    puts "Starting Daemons"
+    puts `#{PCS} stop`
+end
+
+
+def create_cluster(params)
+  if params[:corosync_conf] != nil and params[:corosync_conf] != ""
+    puts "#{params[:corosync_conf]}"
+    cluster_stop()
+    FileUtils.cp(COROSYNC_CONF,COROSYNC_CONF + "." + Time.now.to_i.to_s)
+    File.open("/etc/corosync/corosync.conf",'w') {|f|
+      f.write(params[:corosync_conf])
+    }
+    cluster_start()
+  else
+    puts "Invalid corosync.conf file"
+  end
+end
+
+def node_status(params)
   if params[:node] != nil and params[:node] != "" and params[:node] != @@cur_node_name
     begin
       uri = URI.parse("http://#{params[:node]}:2222/remote/status?hello=1")
       output = Net::HTTP::get_response(uri)
       return output.body
     rescue
-      return '[{"noresponse":true}]'
+      return '{"noresponse":true}'
     end
   end
   uptime = `uptime`.chomp
@@ -38,14 +67,15 @@ def resource_status(params)
   resource_id = params[:resource]
   @resources = getResources
   location = ""
+  res_status = ""
   @resources.each {|r|
     if r.id == resource_id
       if r.failed
-	status =  "Failed"
+	res_status =  "Failed"
       elsif !r.active
-	status = "Inactive"
+	res_status = "Inactive"
       else
-	status = "Running"
+	res_status = "Running"
       end
       if r.nodes.length != 0
 	location = r.nodes[0].name
@@ -53,6 +83,6 @@ def resource_status(params)
       end
     end
   }
-  status = ["location" => location, "status" => status]
+  status = {"location" => location, "status" => res_status}
   return JSON.generate(status)
 end

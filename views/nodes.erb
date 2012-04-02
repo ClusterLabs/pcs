@@ -17,9 +17,6 @@
       <td id="node_list">
 	<table cellpadding=0 cellspacing=0 style="float:left;">
 	  <% @nodes.each  do |i,node| %>
-	    <% print "XXX" %>
-	    <% print @cur_node %>
-	    <% print "XXX" %>
 	    <% if i != @cur_node.id %>
 	      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='/nodes/<%=i%>'">
 	      <% else %>
@@ -46,132 +43,136 @@
 	</table>
       </td>
       <td id="node_info" colspan=2>
-	<div id="test">
-	  <div id="node_info_header">
-	    <div id="node_info_header_title">Edit Node&nbsp;</div>
-	    <div id="node_info_header_title_name"><%=@cur_node.name%></div>
-	    <div class="link" style="float: right" onclick="$('#node_info').css('height',$('#node_info').height());$('#test').hide('slide');">Close</div>
-	    <div class="x sprites" style="float: right"></div>
-	  </div>
+	<% if @cur_node %>
+	  <div id="test">
+	    <div id="node_info_header">
+	      <div id="node_info_header_title">Edit Node&nbsp;</div>
+	      <div id="node_info_header_title_name"><%=@cur_node.name%></div>
+	      <div class="link" style="float: right" onclick="$('#node_info').css('height',$('#node_info').height());$('#test').hide('slide');">Close</div>
+	      <div class="x sprites" style="float: right"></div>
+	    </div>
 
-	  <div id="node_sub_info">
-	    <table>
-	      <tr>
-		<td><input style="margin-right: 50px;" type="text" value="<%=@cur_node.name%>" size="35" class="text_field"></td>
-		<td><div style="margin-right: 8px;" class="check sprites"></div></td>
-		<td>
-		  <% if @cur_node.active %>
-		    <div class="status">Online</div>
-		  <% else %>
-		    <div class="status-offline">Offline</div>
-		  <% end %>
+	    <div id="node_sub_info">
+	      <table>
+		<tr>
+		  <td><input style="margin-right: 50px;" type="text" value="<%=@cur_node.name%>" size="35" class="text_field"></td>
+		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
+		  <td>
+		    <% if @cur_node.active %>
+		      <div class="status">Online</div>
+		    <% else %>
+		      <div class="status-offline">Offline</div>
+		    <% end %>
+		  </td>
+		</tr>
+	      </table>
+	    </div>
+
+	    <div id="node_options_buttons">
+	      <div class="restart sprites" style="float: left"></div>
+	      <div class="link">Restart</div>
+	      <div class="standby sprites" style="float: left"></div>
+	      <div class="link">Standby</div>
+	      <div class="cancel sprites" style="float: left"></div>
+	      <div class="link">Leave Cluster</div>
+	      <div class="configure sprites" style="float: left"></div>
+	      <div class="link">Configure Fencing</div>
+	    </div>
+
+	    <div id="node_details">
+	      <table><tr>
+		  <td><div class="reg">Node ID:</div></td>
+		  <td><div class="bold"><%=@cur_node.id%></div></td>
+		  <td><div class="reg"> Uptime: </div></td>
+		  <td><div class="bold" id="uptime"></div></td>
+		  <td><div class="reg"> Hostname: </div></td>
+		  <td><div><input style="margin-right: 50px;" value="<%=@cur_node.hostname%>" type="text" size="25" class="text_field"></div></td>
+		</tr>
+	      </table>
+	    </div>
+
+	    <table style="clear:left;float:left;margin-top:25px;">
+	      <tr><td class="datatable_header">Failover Domains</td></tr>
+	      <tr><td>
+		  <div id="failoverdomains">
+		    <table class="datatable">
+		      <tr><th>NAME</th></tr>
+		      <tr><td>fdom1</td></tr>
+		      <tr><td>example1</td></tr>
+		      <tr><td>example2</td></tr>
+		    </table>
+		  </div>
 		</td>
 	      </tr>
 	    </table>
-	  </div>
-
-	  <div id="node_options_buttons">
-	    <div class="restart sprites" style="float: left"></div>
-	    <div class="link">Restart</div>
-	    <div class="standby sprites" style="float: left"></div>
-	    <div class="link">Standby</div>
-	    <div class="cancel sprites" style="float: left"></div>
-	    <div class="link">Leave Cluster</div>
-	    <div class="configure sprites" style="float: left"></div>
-	    <div class="link">Configure Fencing</div>
-	  </div>
-
-	  <div id="node_details">
-	    <table><tr>
-		<td><div class="reg">Node ID:</div></td>
-		<td><div class="bold"><%=@cur_node.id%></div></td>
-		<td><div class="reg"> Uptime: </div></td>
-		<td><div class="bold" id="uptime"></div></td>
-		<td><div class="reg"> Hostname: </div></td>
-		<td><div><input style="margin-right: 50px;" value="<%=@cur_node.hostname%>" type="text" size="25" class="text_field"></div></td>
+	    <table style="float:left;margin-top:25px;padding-left:30px">
+	      <tr><td class="datatable_header">Cluster Daemons</td></tr>
+	      <tr><td>
+		  <div id="clusterdaemons">
+		    <table class="datatable">
+		      <tr><th>NAME</th><th>STATUS</th></tr>
+		      <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pacemaker_status" style="float:left" class="status"></div></td></tr>
+		      <tr><td>corosync</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="corosync_status" style="float:left" class="status"></div></td></tr>
+		      <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pcsd_status" style="float:left" class="status"></div></td></tr>
+		    </table>
+		  </div>
+		</td>
 	      </tr>
 	    </table>
-	  </div>
-
-	  <table style="clear:left;float:left;margin-top:25px;">
-	    <tr><td class="datatable_header">Failover Domains</td></tr>
-	    <tr><td>
-		<div id="failoverdomains">
-		  <table class="datatable">
-		    <tr><th>NAME</th></tr>
-		    <tr><td>fdom1</td></tr>
-		    <tr><td>example1</td></tr>
-		    <tr><td>example2</td></tr>
-		  </table>
-		</div>
-	      </td>
-	    </tr>
-	  </table>
-	  <table style="float:left;margin-top:25px;padding-left:30px">
-	    <tr><td class="datatable_header">Cluster Daemons</td></tr>
-	    <tr><td>
-		<div id="clusterdaemons">
-		  <table class="datatable">
-		    <tr><th>NAME</th><th>STATUS</th></tr>
-		    <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pacemaker_status" style="float:left" class="status"></div></td></tr>
-		    <tr><td>corosync</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="corosync_status" style="float:left" class="status"></div></td></tr>
-		    <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pcsd_status" style="float:left" class="status"></div></td></tr>
-		  </table>
-		</div>
-	      </td>
-	    </tr>
-	  </table>
-	  <table style="clear:left;float:left;margin-top:25px;">
-	    <tr><td class="datatable_header">Resources Currently Running on <%=@cur_node.id%></td></tr>
-	    <tr><td>
-		<div id="resources_running">
-		  <table class="datatable">
-		    <tr><th>NAME</th></tr>
-		    <% @resources_running.each { |r| %>
-		      <tr><td><a href="/resources/<%=r.id%>"><%= r.id %> (<%=r.agentname%>)</a></td>
-		      </tr>
-		    <% } %>
-		    <% if @resources_running.length == 0 %>
-		      <tr><td style="color: gray;">NONE</td></tr>
-		    <% end %>
-		</table>
-	      </div>
-	    </td>
-	  </tr>
-	</table>
-	  <table style="clear:left;float:left;margin-top:25px;">
-	    <tr><td class="datatable_header">Resource Location Preferences</td></tr>
-	    <tr><td>
-		<div id="locationdep">
-		  <table class="datatable">
-		    <tr><th>NAME</th><th>Score</th><th>Stickyness</th></tr>
-		    <% @loc_dep_allow.each { |loc| %>
-		      <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
-			<td></td>
-			<td></td>
-		      </tr>
-		    <% } %>
-		    <% @loc_dep_disallow.each { |loc| %>
-		      <tr>
-			<td ><a style="color: red;" href="/resources/<%=loc%>"><%= loc %> (Not allowed)</a></td>
-			<td></td>
-			<td></td>
-		      </tr>
-		    <% } %>
-		    <% if @loc_dep_allow.length == 0 and @loc_dep_disallow.length == 0 %>
-		      <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
-		    <% end %>
-		</table>
-	      </div>
-	    </td>
-	  </tr>
-	</table>
-      </td>
-    </tr>
-  </div>
+	    <table style="clear:left;float:left;margin-top:25px;">
+	      <tr><td class="datatable_header">Resources Currently Running on <%=@cur_node.id%></td></tr>
+	      <tr><td>
+		  <div id="resources_running">
+		    <table class="datatable">
+		      <tr><th>NAME</th></tr>
+		      <% @resources_running.each { |r| %>
+			<tr><td><a href="/resources/<%=r.id%>"><%= r.id %> (<%=r.agentname%>)</a></td>
+			</tr>
+		      <% } %>
+		      <% if @resources_running.length == 0 %>
+			<tr><td style="color: gray;">NONE</td></tr>
+		      <% end %>
+		    </table>
+		  </div>
+		</td>
+	      </tr>
+	    </table>
+	    <table style="clear:left;float:left;margin-top:25px;">
+	      <tr><td class="datatable_header">Resource Location Preferences</td></tr>
+	      <tr><td>
+		  <div id="locationdep">
+		    <table class="datatable">
+		      <tr><th>NAME</th><th>Score</th><th>Stickyness</th></tr>
+		      <% @loc_dep_allow.each { |loc| %>
+			<tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
+			  <td></td>
+			  <td></td>
+			</tr>
+		      <% } %>
+		      <% @loc_dep_disallow.each { |loc| %>
+			<tr>
+			  <td ><a style="color: red;" href="/resources/<%=loc%>"><%= loc %> (Not allowed)</a></td>
+			  <td></td>
+			  <td></td>
+			</tr>
+		      <% } %>
+		      <% if @loc_dep_allow.length == 0 and @loc_dep_disallow.length == 0 %>
+			<tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+		      <% end %>
+		    </table>
+		  </div>
+		</td>
+	      </tr>
+	    </table>
+	  </td>
+	</tr>
+      </div>
+    <% end %>
+  </td>
+</tr>
 </table>
 <script type="text/javascript">
   $(window).load(function () {
       node_update();
-      });
+  });
 </script>
