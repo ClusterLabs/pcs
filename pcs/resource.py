@@ -54,6 +54,9 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
     output,retval = utils.run(args)
+    if retval != 0:
+        print "ERROR: Unable to create resource/fence device"
+    print output
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
@@ -113,7 +116,11 @@ def get_full_ra_type(ra_type):
         return ([("class","ocf"),("type",ra_type),("provider","heartbeat")])
     
     ra_def = ra_type.split(":")
-    return([("class",ra_def[0]),("type",ra_def[2]),("provider",ra_def[1])])
+    # If len = 2 then we're creating a fence device
+    if len(ra_def) == 2:
+        return([("class",ra_def[0]),("type",ra_def[1])])
+    else:
+        return([("class",ra_def[0]),("type",ra_def[2]),("provider",ra_def[1])])
 
 
 def create_xml_string(tag, options, children = []):
@@ -131,7 +138,6 @@ def create_xml_element(tag, options, children = []):
     for child in children:
         element.appendChild(create_xml_element(child[0], child[1], child[2]))
 
-    print element.toprettyxml()
     return element
 
 def resource_group(argv):
@@ -258,7 +264,10 @@ def resource_show(argv):
     if len(argv) == 0:    
         args = ["crm_resource","-L"]
         output,retval = utils.run(args)
-        print output,
+        preg = re.compile(r'.*(stonith:.*)')
+        for line in output.strip().split('\n'):
+            if not preg.match(line):
+                print line
         return
 
     preg = re.compile(r'.*<primitive',re.DOTALL)

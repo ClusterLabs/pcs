@@ -4,6 +4,7 @@ import sys, getopt, os
 import usage
 import corosync
 import resource
+import stonith
 import prop
 import constraint
 import utils
@@ -40,6 +41,8 @@ def main(argv):
         resource.resource_cmd(argv)
     elif (command == "corosync"):
         corosync.corosync_cmd(argv)
+    elif (command == "stonith"):
+        stonith.stonith_cmd(argv)
     elif (command == "property"):
         prop.property_cmd(argv)
     elif (command == "constraint"):

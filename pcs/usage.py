@@ -14,6 +14,7 @@ Commands:
     node        Manage nodes (NOT YET IMPLEMENTED)
     resource    Manage cluster resources
     corosync    Configure corosync
+    stonith     Configure fence devices
     property    Set pacemaker properties
     constraint  Set resource constraints
     status      View pacemaker status
@@ -69,6 +70,18 @@ Commands:
     configure sync_start <cluster name> <node1 ip> [node2 ip] [...]
         Configure corosync and sync configuration out to listed nodes and
         start corosync and pacemaker services on the nodes
+"""
+
+def stonith():
+    print """
+Usage: pcs stonith [commands]...
+Configure fence devices for use with pacemaker
+
+Commands:
+    stonith [list|show] [stonith_id]
+    stonith create <stonith_id> <fence device type> [fence device options]
+    stonith update <stonith_id> [fence device options]
+    stonith delete <stonith_id>
 """
 
 def property():
