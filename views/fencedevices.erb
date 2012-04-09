@@ -1,17 +1,16 @@
 <table id="main">
   <tr><td id="page_header" colspan=3>
-      RESOURCES
+      FENCE DEVICES
     </td>
   </tr>
   <tr>
     <td id="remove_add" class="borderbottom">
       <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove();">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
-      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
-      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="alert('Not Yet Implemented');">Create Group</a></div>
+      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Fence Device', modal:true, width: 'auto'});">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
     </td>
     <td class="borderbottom">&nbsp;</td>
     <td id="tab_name" width="115">
-      <div style="float: left">&nbsp;Edit Resource&nbsp;</div><div class="check sprites"></div>
+      <div style="float: left">&nbsp;Edit Fence Device&nbsp;</div><div class="check sprites"></div>
     </td>
   </tr>
   <tr>
@@ -23,7 +22,7 @@
 	  </tr>
 	  <% @resources.each  do |r| %>
 	    <% if r != @cur_resource %>
-	      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='/resources/<%=r.id%>'">
+	      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='/fencedevices/<%=r.id%>'">
 	      <% else %>
 		<tr style="background-color: #e4f5fd">
 		<% end %>
@@ -54,7 +53,7 @@
 	<td id="node_info" colspan=2>
 	  <div id="test">
 	    <div id="node_info_header">
-	      <div id="node_info_header_title">Edit Resource&nbsp;</div>
+	      <div id="node_info_header_title">Edit Fence Device&nbsp;</div>
 	      <div id="node_info_header_title_name"><%=@cur_resource.id%></div>
 	      <div class="link" style="float: right" onclick="$('#node_info').css('height',$('#node_info').height());$('#test').hide('slide');">Close</div>
 	      <div class="x sprites" style="float: right"></div>
@@ -64,16 +63,6 @@
 	      <table>
 		<tr>
 		  <td><input style="margin-right: 50px;" type="text" value="<%=@cur_resource.id%>" size="35" class="text_field"></td>
-		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
-		  <td>
-		    <% if @cur_resource.failed %>
-		      <div id="res_status" class="status-offline">Failed</div>
-		    <% elsif not @cur_resource.active %>
-		      <div id="res_status" class="status-offline">Inactive</div>
-		    <% else %>
-		      <div id="res_status" class="status">Running</div>
-		    <% end %>
-		  </td>
 		</tr>
 	      </table>
 	    </div>
@@ -81,54 +70,30 @@
 	    <div id="node_options_buttons">
 	      <div class="xdark sprites" style="float: left"></div>
 	      <div class="link">Delete</div>
-	      <div class="cancel sprites" style="float: left"></div>
-	      <div class="link">Stop</div>
-	      <div class="restart sprites" style="float: left"></div>
-	      <div class="link">Restart</div>
-	      <div class="move sprites" style="float: left"></div>
-	      <div class="link">Move</div>
-	      <div class="history sprites" style="float: left"></div>
-	      <div class="link">History</div>
 	    </div>
 
 	    <div id="node_details">
-	      <table><tr>
-		  <td nowrap><div class="bold">Current Location:</div></td>
-		  <td><div id="cur_res_loc" class="reg"><%=@cur_resource.location%></div></td>
-		</tr>
-	      </table>
 	    </div>
 
 	    <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
 	      <tr>
-		<td class="bold">Class</td>
-		<td>
-		  <select disabled>
-		    <option value="OCF">OCF</option>
-		  </select>
-		</td>
-		<td style="padding-left:10px;" class="bold">Provider</td>
-		<td>
-		  <select disabled>
-		    <option value="heartbeat">heartbeat</option>
-		  </select>
-		</td>
-	      </tr>
-	      <tr>
 		<td class="bold">Type</td>
 		<td>
-		  <select  disabled id="ra_type" onchange="$('#cur_resource_agent').load('/resources/metadata/' + this.value);">
+		  <select  disabled id="ra_type">
 		    <% @resource_agents.each { |name, ra| %>
-		      <option <%= ra.name == @cur_resource.agentname ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
+		      <option <%= ra.name == @cur_resource.agentname.gsub(/.*:/,"") ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
 		    <% } %>
 		  </select>
 		</td>
 	      </tr>
 	    </table>
-
-	    <% @resource = @resource_agents[@cur_resource.agentname] %>
+	    <% @fenceagent = @resource_agents[@cur_resource.agentname.gsub(/.*:/,"")] %>
 	    <% @existing_resource = true %>
-	    <%= erb :resourceagentform %>
+	    <% puts "OUT" %>
+	    <% puts @fenceagent %>
+	    <% puts @cur_resource %>
+	    <% puts @cur_resource.options %>
+	    <%= erb :fenceagentform %>
 	  </td>
 	</tr>
       </div>
@@ -136,23 +101,9 @@
     <div id="add_resource" style="display: none;">
       <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
 	<tr>
-	  <td class="bold">Class</td>
-	  <td>
-	    <select>
-	      <option value="OCF">OCF</option>
-	    </select>
-	  </td>
-	  <td style="padding-left:10px;" class="bold">Provider</td>
-	  <td>
-	    <select>
-	      <option value="heartbeat">heartbeat</option>
-	    </select>
-	  </td>
-	</tr>
-	<tr>
 	  <td class="bold">Type</td>
 	  <td>
-	    <select id="add_ra_type" onchange="$('#new_resource_agent').load('/resources/metadata/' + this.value + '/new');">
+	    <select id="add_ra_type" onchange="$('#new_resource_agent').load('/fencedevices/metadata/' + this.value + '/new');">
 	      <% @resource_agents.each { |name, ra| %>
 		<option <%= ra.name == @cur_resource.agentname ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
 	      <% } %>

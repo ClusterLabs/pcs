@@ -5,6 +5,7 @@ require 'open3'
 require 'rexml/document'
 require './resource.rb'
 require './remote.rb'
+require './fenceagent.rb'
 require 'webrick'
 #require 'webrick/https'
 
@@ -13,6 +14,7 @@ use Rack::CommonLogger
 
 also_reload './resource.rb'
 also_reload './remote.rb'
+also_reload './fenceagent.rb'
 
 configure do
   OCF_ROOT = "/usr/lib/ocf"
@@ -81,6 +83,13 @@ post '/configure/?:page?' do
   redirect params[:splat][0]
 end
 
+post '/fencedeviceadd' do
+  param_line = getParamLine(params)
+  puts "pcs stonith create #{params[:name]} #{params[:resource_type]} #{param_line}"
+  puts `#{PCS} stonith create #{params[:name]} #{params[:resource_type]} #{param_line}`
+  redirect "/fencedevices/#{params[:name]}"
+end
+
 post '/resourceadd' do
   param_line = getParamLine(params)
   puts "pcs resource create #{params[:name]} #{params[:resource_type]} #{param_line}"
@@ -104,16 +113,33 @@ get '/configure/?:page?' do
   erb :configure, :layout => :main
 end
 
-get '/resourcedeps/?:resource?' do
-  @resourcedepsmenuclass = "class=\"active\""
-  setup()
-  erb :resourcedeps, :layout => :main
+get '/fencedevices/?:fencedevice?' do
+  @resources = getResources(true)
+  @cur_resource = @resources[0]
+  if params[:fencedevice]
+    @resources.each do |fd|
+      if fd.id == params[:fencedevice]
+	@cur_resource = fd
+	break
+      end
+    end
+  end
+  @cur_resource.options = getResourceOptions(@cur_resource.id)
+  @resource_agents = getFenceAgents(@cur_resource.agentname)
+  erb :fencedevices, :layout => :main
 end
 
 post '/resources/:resource?' do
   param_line = getParamLine(params)
   puts "#{PCS} resource update #{params[:resource_id]} #{param_line}"
   puts `#{PCS} resource update #{params[:resource_id]} #{param_line}`
+  redirect params[:splat][0]
+end
+
+post '/fencedevices/:fencedevice?' do
+  param_line = getParamLine(params)
+  puts "#{PCS} stonith update #{params[:resource_id]} #{param_line}"
+  puts `#{PCS} stonith update #{params[:resource_id]} #{param_line}`
   redirect params[:splat][0]
 end
 
@@ -143,6 +169,14 @@ get '/resources/metadata/:resourcename/?:new?' do
   @new_resource = params[:new]
   
   erb :resourceagentform
+end
+
+get '/fencedevices/metadata/:fencedevicename/?:new?' do
+  @fenceagent = FenceAgent.new(params[:fencedevicename])
+  @fenceagent.required_options, @fenceagent.optional_options = getFenceAgentMetadata(params[:fencedevicename])
+  @new_fenceagent = params[:new]
+  
+  erb :fenceagentform
 end
 
 get '/nodes/?:node?' do

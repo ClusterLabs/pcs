@@ -1,4 +1,4 @@
-def getResources
+def getResources(get_fence_devices = false)
   stdin, stdout, stderror = Open3.popen3('/root/pacemaker/tools/crm_mon -r --as-xml=/tmp/testclusterstatus')
   stdout.readlines
   stderror.readlines
@@ -6,10 +6,18 @@ def getResources
   doc = REXML::Document.new(File.open("/tmp/testclusterstatus", "rb"))
   resource_list = []
   doc.elements.each('crm_mon/resources/resource') do |e|
-    resource_list.push(Resource.new(e))
+    if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
+      get_fence_devices && resource_list.push(Resource.new(e))
+    else
+      !get_fence_devices && resource_list.push(Resource.new(e))
+    end
   end
   doc.elements.each('crm_mon/resources/group/resource') do |e|
-    resource_list.push(Resource.new(e))
+    if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
+      get_fence_devices && resource_list.push(Resource.new(e))
+    else
+      !get_fence_devices && resource_list.push(Resource.new(e))
+    end
   end
   resource_list
 end
