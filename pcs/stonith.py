@@ -4,7 +4,7 @@ import resource
 #import xml.dom.minidom
 #from xml.dom.minidom import getDOMImplementation
 #from xml.dom.minidom import parseString
-#import usage
+import usage
 import utils
 import re
 
