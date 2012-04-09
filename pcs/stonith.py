@@ -33,7 +33,7 @@ def stonith_cmd(argv):
         resource.resource_create(stn_id, stn_type, st_values, op_values)
     elif (sub_cmd == "update"):
         stn_id = argv.pop(0)
-        resource_update(stn_id,argv)
+        resource.resource_update(stn_id,argv)
     elif (sub_cmd == "delete"):
         stn_id = argv.pop(0)
         resource_remove(stn_id)
