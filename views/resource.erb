@@ -16,6 +16,7 @@
   </tr>
   <tr>
     <td id="node_list">
+      <% if @cur_resource %>
       <form method=post action="/resourcerm">
 	<table cellpadding=0 cellspacing=0 style="float:left;">
 	  <tr>
@@ -50,8 +51,10 @@
 	      <% end %>
 	    </table>
 	  </form>
+	  <% end %>
 	</td>
 	<td id="node_info" colspan=2>
+	  <% if @cur_resource %>
 	  <div id="test">
 	    <div id="node_info_header">
 	      <div id="node_info_header_title">Edit Resource&nbsp;</div>
@@ -92,11 +95,11 @@
 	    </div>
 
 	    <div id="node_details">
-	      <table><tr>
-		  <td nowrap><div class="bold">Current Location:</div></td>
-		  <td><div id="cur_res_loc" class="reg"><%=@cur_resource.location%></div></td>
-		</tr>
-	      </table>
+		<table><tr>
+		    <td nowrap><div class="bold">Current Location:</div></td>
+		    <td><div id="cur_res_loc" class="reg"><%=@cur_resource.location%></div></td>
+		  </tr>
+		</table>
 	    </div>
 
 	    <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
@@ -129,6 +132,9 @@
 	    <% @resource = @resource_agents[@cur_resource.agentname] %>
 	    <% @existing_resource = true %>
 	    <%= erb :resourceagentform %>
+	  <% else %>
+	    No resources have been configured
+	  <% end %>
 	  </td>
 	</tr>
       </div>
@@ -154,7 +160,7 @@
 	  <td>
 	    <select id="add_ra_type" onchange="$('#new_resource_agent').load('/resources/metadata/' + this.value + '/new');">
 	      <% @resource_agents.each { |name, ra| %>
-		<option <%= ra.name == @cur_resource.agentname ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
+		<option width=250px value="<%=ra.type%>"><%=ra.type%></option>
 	      <% } %>
 	    </select>
 	  </td>

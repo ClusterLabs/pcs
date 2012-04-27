@@ -19,7 +19,7 @@ also_reload './fenceagent.rb'
 configure do
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
-  PENGINE = "/usr/lib64/heartbeat/pengine"
+  PENGINE = "/usr/libexec/pacemaker/pengine"
   PCS = "/root/pcs/pcs/pcs" 
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
@@ -147,19 +147,23 @@ get '/resources/?:resource?' do
   @resources = getResources
   @resourcemenuclass = "class=\"active\""
 
-  @cur_resource = @resources[0]
-  @cur_resource.options = getResourceOptions(@cur_resource.id)
-  if params[:resource]
-    @resources.each do |r|
-      if r.id == params[:resource]
-	@cur_resource = r
-	@cur_resource.options = getResourceOptions(r.id)
-	break
+  if @resources.length == 0
+    @cur_resource = nil
+    @resource_agents = getResourceAgents()
+  else
+    @cur_resource = @resources[0]
+    @cur_resource.options = getResourceOptions(@cur_resource.id)
+    if params[:resource]
+      @resources.each do |r|
+	if r.id == params[:resource]
+	  @cur_resource = r
+	  @cur_resource.options = getResourceOptions(r.id)
+	  break
+	end
       end
     end
+    @resource_agents = getResourceAgents(@cur_resource.agentname)
   end
-
-  @resource_agents = getResourceAgents(@cur_resource.agentname)
   erb :resource, :layout => :main
 end
 
@@ -241,13 +245,31 @@ def getLocationDeps(cur_node)
   [deps_allow, deps_disallow]
 end
 
+# Return array containing an array of nodes online & nodes offline
+# [ Nodes Online, Nodes Offline]
 def getNodes
   stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes")
   out = stdout.readlines
+
+  online = out[1]
+  offline = out[2]
+
+  if online
+    online = online.split(' ')[1..-1]
+  else
+    online = []
+  end
+
+  if offline
+    offline = offline.split(' ')[1..-1]
+  else
+    offline = []
+  end
+
   if waitth.value.exitstatus != 0
     return [[],[]]
   end
-  [out[1].split(' ')[1..-1], out[2].split(' ')[1..-1]]
+  [online, offline]
 end
 
 
@@ -338,7 +360,7 @@ class ConfigOption
   end
 
   def self.getDefaultValues(cos)
-    metadata = `/usr/lib64/heartbeat/pengine metadata`
+    metadata = `${PENGINE} metadata`
     doc = REXML::Document.new(metadata)
 
     cos.each { |co|

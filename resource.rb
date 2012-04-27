@@ -1,9 +1,9 @@
 def getResources(get_fence_devices = false)
-  stdin, stdout, stderror = Open3.popen3('/root/pacemaker/tools/crm_mon -r --as-xml=/tmp/testclusterstatus')
-  stdout.readlines
+  stdin, stdout, stderror = Open3.popen3('crm_mon --one-shot -r --as-xml')
+  crm_output =  stdout.readlines
   stderror.readlines
 
-  doc = REXML::Document.new(File.open("/tmp/testclusterstatus", "rb"))
+  doc = REXML::Document.new(crm_output.join("\n"))
   resource_list = []
   doc.elements.each('crm_mon/resources/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
@@ -48,17 +48,14 @@ def getResourceMetadata(resourcepath)
   [options_required, options_optional]
 end
 
-def getResourceAgents(resource_agent)
+def getResourceAgents(resource_agent = nil)
   resource_agent_list = {}
-  if resource_agent == nil
-    return resource_agent_list
-  end
   agents = Dir.glob(HEARTBEAT_AGENTS_DIR + '*')
   agents.each { |a|
     ra = ResourceAgent.new
     ra.name = "ocf::heartbeat:" + a.sub(/.*\//,"")
 
-    if a.sub(/.*\//,"") == resource_agent.sub(/.*:/,"")
+    if resource_agent and a.sub(/.*\//,"") == resource_agent.sub(/.*:/,"")
       required_options, optional_options = getResourceMetadata(a)
       ra.required_options = required_options
       ra.optional_options = optional_options

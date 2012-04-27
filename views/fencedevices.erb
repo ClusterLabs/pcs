@@ -36,7 +36,7 @@
 		  <%= r.id %>
 		</td>
 		<td class="resource_type">
-		  <%= r.agentname.sub(/.*:/,'') %>
+		  <%= r.agentname.sub(/.*:fence_/,'') %>
 		</td>
 		<% if r != @cur_resource %>
 		  <td style="display:none">

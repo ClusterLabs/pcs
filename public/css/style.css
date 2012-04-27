@@ -265,6 +265,10 @@ td#node_list, td#node_info {
   vertical-align: top;
 }
 
+td#remove_add {
+  width: 30%;
+}
+
 td.node_name {
   cursor: default;
   width: 100%;

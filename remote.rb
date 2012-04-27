@@ -12,7 +12,11 @@ def remote(params)
   when "create_cluster"
     return create_cluster(params)
   when "set_corosync_conf"
-    puts "#{params['corosync_conf']}"
+    if set_cluster_conf(params)
+      return "Succeeded"
+    else
+      return "Failed"
+    end
   when "cluster_start"
     return cluster_start()
   when "cluster_stop"
@@ -30,18 +34,24 @@ def cluster_stop()
     puts `#{PCS} stop`
 end
 
-
-def create_cluster(params)
+def set_cluster_conf(params)
   if params[:corosync_conf] != nil and params[:corosync_conf] != ""
-    puts "#{params[:corosync_conf]}"
-    cluster_stop()
     FileUtils.cp(COROSYNC_CONF,COROSYNC_CONF + "." + Time.now.to_i.to_s)
     File.open("/etc/corosync/corosync.conf",'w') {|f|
       f.write(params[:corosync_conf])
     }
+    return true
+  else
+    return false
+    puts "Invalid corosync.conf file"
+  end
+end
+
+def create_cluster(params)
+  if set_cluster_conf(params)
     cluster_start()
   else
-    puts "Invalid corosync.conf file"
+    return "Failed"
   end
 end
 
@@ -56,8 +66,8 @@ def node_status(params)
     end
   end
   uptime = `uptime`.chomp
-  corosync_status = system("/etc/init.d/corosync", "status")
-  pacemaker_status = system("/etc/init.d/pacemaker", "status")
+  corosync_status = system("systemctl", "status", "corosync.service")
+  pacemaker_status = system("systemctl", "status", "pacemaker.service")
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status }
   ret = JSON.generate(status)
   return ret
