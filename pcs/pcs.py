@@ -59,30 +59,42 @@ def main(argv):
         start_cluster(argv)
     elif (command == "stop"):
         stop_cluster(argv)
+    elif (command == "startall"):
+        start_cluster_all()
+    elif (command == "stopall"):
+        stop_cluster_all()
     else:
         usage.main()
 
 def start_cluster(argv):
     print "Starting Cluster"
-    output, retval = utils.run(["/etc/init.d/corosync", "start"])
+    output, retval = utils.run(["systemctl", "start","corosync.service"])
     print output
     if retval != 0:
         print "Error: unable to start corosync"
         sys.exit(1)
-    output, retval = utils.run(["/etc/init.d/pacemaker", "start"])
+    output, retval = utils.run(["systemctl", "start", "pacemaker.service"])
     print output
     if retval != 0:
         print "Error: unable to start pacemaker"
         sys.exit(1)
 
+def start_cluster_all():
+    for node in utils.getNodesFromCorosyncConf():
+        utils.startCluster(node)
+
+def stop_cluster_all():
+    for node in utils.getNodesFromCorosyncConf():
+        utils.stopCluster(node)
+
 def stop_cluster(argv):
     print "Stopping Cluster"
-    output, retval = utils.run(["/etc/init.d/pacemaker", "stop"])
+    output, retval = utils.run(["systemctl", "stop","pacemaker.service"])
     print output
     if retval != 0:
         print "Error: unable to stop pacemaker"
         sys.exit(1)
-    output, retval = utils.run(["/etc/init.d/corosync", "stop"])
+    output, retval = utils.run(["systemctl", "stop","corosync.service"])
     print output
     if retval != 0:
         print "Error: unable to stop corosync"

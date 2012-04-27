@@ -4,6 +4,7 @@ import pcs
 import xml.dom.minidom
 import urllib,urllib2
 from xml.dom.minidom import parseString
+import re
 
 
 # usefile & filename variables are set in pcs module
@@ -12,13 +13,41 @@ filename = ""
 
 # Set the corosync.conf file on the specified node
 def setCorosyncConfig(node,config):
-    url = 'http://' + node + ':2222/remote/create_cluster'
     data = urllib.urlencode({'corosync_conf':config})
+    sendHTTPRequest(node, 'remote/set_corosync_conf', data)
+
+def startCluster(node):
+    sendHTTPRequest(node, 'remote/cluster_start')
+
+def stopCluster(node):
+    sendHTTPRequest(node, 'remote/cluster_stop')
+
+def sendHTTPRequest(host, request, data = None):
+    url = 'http://' + host + ':2222/' + request
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
     urllib2.install_opener(opener)
-    result = opener.open(url,data)
-    html = result.read()
-    print html
+    try:
+        result = opener.open(url,data)
+        html = result.read()
+        print host + ": " + html
+    except urllib2.HTTPError, e:
+        print "Error connecting to %s - (HTTP error: %d)" % (host,e.code)
+    except urllib2.URLError, e:
+        print "Unable to connect to %s (%s)" % (host, e.reason)
+
+def getNodesFromCorosyncConf():
+    nodes = []
+    lines = getCorosyncConf().strip().split('\n')
+    preg = re.compile(r'.*ring0_addr: (.*)')
+    for line in lines:
+        match = preg.match(line)
+        if match:
+            nodes.append (match.group(1))
+
+    return nodes
+
+def getCorosyncConf(conf='/etc/corosync/corosync.conf'):
+    return open(conf).read()
 
 # Run command, with environment and return (output, retval)
 def run(args):

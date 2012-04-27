@@ -20,6 +20,8 @@ Commands:
     status      View pacemaker status
     start       Start corosync & pacemaker
     stop        Stop corosync & pacemaker
+    startall    Start corosync & pacemaker on all nodes
+    stopall     Stop corosync & pacemaker on all nodes
 """
 
 def resource():
@@ -57,6 +59,10 @@ Usage: pcs corosync [commands]...
 Configure corosync for use with pacemaker
 
 Commands:
+    sync
+        Sync corosync configuration to all nodes found from current
+        corosync.conf file
+
     configure [<bindnetaddr> <mcastaddr> <mcastport>]
         Configure corosync for use with pacemaker. If no options
         are specified the following values are used:
@@ -66,6 +72,9 @@ Commands:
 
     configure fedora <cluster name> <node1 ip> [node2 ip] [...]
         Configure corosync on Fedora 17 and later.
+
+    configure sync <cluster name> <node1 ip> [node2 ip] [...]
+        Configure corosync and sync configuration out to listed nodes
 
     configure sync_start <cluster name> <node1 ip> [node2 ip] [...]
         Configure corosync and sync configuration out to listed nodes and

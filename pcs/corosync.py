@@ -20,6 +20,8 @@ def corosync_cmd(argv):
         usage.corosync()
     elif (sub_cmd == "configure"):
         corosync_configure(argv)
+    elif (sub_cmd == "sync"):
+        sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     else:
         usage.corosync()
 
@@ -33,7 +35,18 @@ def sync_start(partial_argv):
     config = corosync_configure(argv,True)
     for node in nodes:
         utils.setCorosyncConfig(node,config)
+        utils.startCluster(node)
 
+def sync(partial_argv):
+    argv = partial_argv[:]
+    nodes = partial_argv[1:]
+    argv.insert(0,"fedora")
+    config = corosync_configure(argv,True)
+    sync_nodes(nodes,config)
+
+def sync_nodes(nodes,config):
+    for node in nodes:
+        utils.setCorosyncConfig(node,config)
     
 def corosync_configure(argv,returnConfig=False):
     fedora_config = False
@@ -45,6 +58,9 @@ def corosync_configure(argv,returnConfig=False):
         nodes = argv[2:]
         cluster_name = argv[1]
         fedora_config = True
+    elif argv[0] == "sync" and len(argv) > 2:
+        sync(argv[1:])
+        return
     elif argv[0] == "sync_start" and len(argv) > 2:
         sync_start(argv[1:])
         return
