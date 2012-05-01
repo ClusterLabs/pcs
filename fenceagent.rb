@@ -1,4 +1,4 @@
-def getFenceAgents(fence_agent)
+def getFenceAgents(fence_agent = nil)
   fence_agent_list = {}
   if fence_agent == nil
     return fence_agent_list

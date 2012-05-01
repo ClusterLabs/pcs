@@ -73,7 +73,7 @@ function node_update() {
       $("#pacemaker_status").html(pacemaker_status);
       $("#corosync_status").html(corosync_status);
       $("#pcsd_status").html(pcsd_status);
-      window.setTimeout(node_update,10000);
+      window.setTimeout(node_update,4000);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
       window.setTimeout(node_update, 60000);
@@ -96,7 +96,7 @@ function resource_update() {
       } else {
 	setStatus($("#res_status"), false);
       }
-      window.setTimeout(resource_update, 10000);
+      window.setTimeout(resource_update, 4000);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
       window.setTimeout(resource_update, 60000);

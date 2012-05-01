@@ -66,8 +66,10 @@ def node_status(params)
     end
   end
   uptime = `uptime`.chomp
-  corosync_status = system("systemctl", "status", "corosync.service")
-  pacemaker_status = system("systemctl", "status", "pacemaker.service")
+  `systemctl status corosync.service`
+  corosync_status = $?.success?
+  `systemctl status pacemaker.service`
+  pacemaker_status = $?.success?
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status }
   ret = JSON.generate(status)
   return ret

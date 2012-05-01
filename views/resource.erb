@@ -130,6 +130,9 @@
 	    </table>
 
 	    <% @resource = @resource_agents[@cur_resource.agentname] %>
+	    <% puts @resource %>
+	    <% puts @resource_agents %>
+	    <% puts @cur_resource.agentname %>
 	    <% @existing_resource = true %>
 	    <%= erb :resourceagentform %>
 	  <% else %>

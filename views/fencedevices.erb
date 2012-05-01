@@ -51,6 +51,7 @@
 	  </form>
 	</td>
 	<td id="node_info" colspan=2>
+	  <% if @cur_resource %>
 	  <div id="test">
 	    <div id="node_info_header">
 	      <div id="node_info_header_title">Edit Fence Device&nbsp;</div>
@@ -94,6 +95,9 @@
 	    <% puts @cur_resource %>
 	    <% puts @cur_resource.options %>
 	    <%= erb :fenceagentform %>
+	  <% else %>
+	    No fence devices have been confgiured
+	  <% end %>
 	  </td>
 	</tr>
       </div>

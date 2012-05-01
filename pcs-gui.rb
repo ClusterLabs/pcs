@@ -115,17 +115,23 @@ end
 
 get '/fencedevices/?:fencedevice?' do
   @resources = getResources(true)
-  @cur_resource = @resources[0]
-  if params[:fencedevice]
-    @resources.each do |fd|
-      if fd.id == params[:fencedevice]
-	@cur_resource = fd
-	break
+
+  if @resources.length == 0
+    @cur_resource = nil
+    @resource_agents = getFenceAgents()
+  else
+    @cur_resource = @resources[0]
+    if params[:fencedevice]
+      @resources.each do |fd|
+	if fd.id == params[:fencedevice]
+	  @cur_resource = fd
+	  @cur_resource.options = getResourceOptions(@cur_resource.id)
+	  break
+	end
       end
     end
+    @resource_agents = getFenceAgents(@cur_resource.agentname)
   end
-  @cur_resource.options = getResourceOptions(@cur_resource.id)
-  @resource_agents = getFenceAgents(@cur_resource.agentname)
   erb :fencedevices, :layout => :main
 end
 
@@ -344,7 +350,6 @@ class ConfigOption
     @@cache_value ||= {}
     @@cache_value = {}
     if @@cache_value[configname]  == nil
-      puts "GET VALUE FOR: #{configname}"
       resource_options = `#{CRM_ATTRIBUTE} --get-value -n #{configname} 2>&1`
       resource_value = resource_options.sub(/.*value=/m,"").strip
       if resource_value == "(null)"
@@ -360,7 +365,7 @@ class ConfigOption
   end
 
   def self.getDefaultValues(cos)
-    metadata = `${PENGINE} metadata`
+    metadata = `#{PENGINE} metadata`
     doc = REXML::Document.new(metadata)
 
     cos.each { |co|
