@@ -107,6 +107,16 @@ post '/resourcerm' do
   redirect "/resources/"
 end
 
+post '/fencerm' do
+  params.each { |k,v|
+    if k.index("resid-") == 0
+      puts "#{PCS} resource delete #{k.gsub("resid-","")}"
+      puts `#{PCS} resource delete #{k.gsub("resid-","")}`
+    end
+  }
+  redirect "/fencedevices/"
+end
+
 get '/configure/?:page?' do
   @config_options = getConfigOptions(params[:page])
   @configuremenuclass = "class=\"active\""

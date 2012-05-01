@@ -4,6 +4,7 @@ def getFenceAgents(fence_agent = nil)
   agents.each { |a|
     fa = FenceAgent.new
     fa.name =  a.sub(/.*\//,"")
+    next if fa.name == "fence_ack_manual"
 
     if fence_agent and a.sub(/.*\//,"") == fence_agent.sub(/.*:/,"")
       required_options, optional_options = getFenceAgentMetadata(fa.name)

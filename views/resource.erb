@@ -162,8 +162,8 @@
 	  <td class="bold">Type</td>
 	  <td>
 	    <select id="add_ra_type" onchange="$('#new_resource_agent').load('/resources/metadata/' + this.value + '/new');">
-	      <% @resource_agents.each { |name, ra| %>
-		<option width=250px value="<%=ra.type%>"><%=ra.type%></option>
+	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
+		<option width=250px value="<%=@resource_agents[name].type%>"><%=@resource_agents[name].type%></option>
 	      <% } %>
 	    </select>
 	  </td>
