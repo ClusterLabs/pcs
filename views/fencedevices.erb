@@ -52,52 +52,52 @@
 	</td>
 	<td id="node_info" colspan=2>
 	  <% if @cur_resource %>
-	  <div id="test">
-	    <div id="node_info_header">
-	      <div id="node_info_header_title">Edit Fence Device&nbsp;</div>
-	      <div id="node_info_header_title_name"><%=@cur_resource.id%></div>
-	      <div class="link" style="float: right" onclick="$('#node_info').css('height',$('#node_info').height());$('#test').hide('slide');">Close</div>
-	      <div class="x sprites" style="float: right"></div>
-	    </div>
+	    <div id="test">
+	      <div id="node_info_header">
+		<div id="node_info_header_title">Edit Fence Device&nbsp;</div>
+		<div id="node_info_header_title_name"><%=@cur_resource.id%></div>
+		<div class="link" style="float: right" onclick="$('#node_info').css('height',$('#node_info').height());$('#test').hide('slide');">Close</div>
+		<div class="x sprites" style="float: right"></div>
+	      </div>
 
-	    <div id="node_sub_info">
-	      <table>
+	      <div id="node_sub_info">
+		<table>
+		  <tr>
+		    <td><input style="margin-right: 50px;" type="text" value="<%=@cur_resource.id%>" size="35" class="text_field"></td>
+		  </tr>
+		</table>
+	      </div>
+
+	      <div id="node_options_buttons">
+		<div class="xdark sprites" style="float: left"></div>
+		<div class="link">Delete</div>
+	      </div>
+
+	      <div id="node_details">
+	      </div>
+
+	      <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
 		<tr>
-		  <td><input style="margin-right: 50px;" type="text" value="<%=@cur_resource.id%>" size="35" class="text_field"></td>
+		  <td class="bold">Type</td>
+		  <td>
+		    <select  disabled id="ra_type">
+		      <% @resource_agents.each { |name, ra| %>
+			<option <%= ra.name == @cur_resource.agentname.gsub(/.*:/,"") ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
+		      <% } %>
+		    </select>
+		  </td>
 		</tr>
 	      </table>
-	    </div>
-
-	    <div id="node_options_buttons">
-	      <div class="xdark sprites" style="float: left"></div>
-	      <div class="link">Delete</div>
-	    </div>
-
-	    <div id="node_details">
-	    </div>
-
-	    <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
-	      <tr>
-		<td class="bold">Type</td>
-		<td>
-		  <select  disabled id="ra_type">
-		    <% @resource_agents.each { |name, ra| %>
-		      <option <%= ra.name == @cur_resource.agentname.gsub(/.*:/,"") ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
-		    <% } %>
-		  </select>
-		</td>
-	      </tr>
-	    </table>
-	    <% @fenceagent = @resource_agents[@cur_resource.agentname.gsub(/.*:/,"")] %>
-	    <% @existing_resource = true %>
-	    <% puts "OUT" %>
-	    <% puts @fenceagent %>
-	    <% puts @cur_resource %>
-	    <% puts @cur_resource.options %>
-	    <%= erb :fenceagentform %>
-	  <% else %>
-	    No fence devices have been confgiured
-	  <% end %>
+	      <% @fenceagent = @resource_agents[@cur_resource.agentname.gsub(/.*:/,"")] %>
+	      <% @existing_resource = true %>
+	      <% puts "OUT" %>
+	      <% puts @fenceagent %>
+	      <% puts @cur_resource %>
+	      <% puts @cur_resource.options %>
+	      <%= erb :fenceagentform %>
+	    <% else %>
+	      No fence devices have been confgiured
+	    <% end %>
 	  </td>
 	</tr>
       </div>
@@ -109,7 +109,7 @@
 	  <td>
 	    <select id="add_ra_type" onchange="$('#new_resource_agent').load('/fencedevices/metadata/' + this.value + '/new');">
 	      <% @resource_agents.each { |name, ra| %>
-		<option <%= ra.name == @cur_resource.agentname ? "selected" : ""%> width=250px value="<%=ra.type%>"><%=ra.type%></option>
+		<option width=250px value="<%=ra.type%>"><%=ra.type%></option>
 	      <% } %>
 	    </select>
 	  </td>
