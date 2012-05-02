@@ -159,7 +159,7 @@ def resource_group(argv):
         group_name = argv.pop(0)
         resource_group_rm(group_name, argv)
     elif (group_cmd == "list"):
-        print "NYI"
+        resource_group_list(argv)
 
     else:
         usage.resource()
@@ -260,12 +260,34 @@ def resource_group_add(group_name, resource_ids):
         print "No resources to add.\n"
         sys.exit(1)
 
+def resource_group_list(argv):
+    group_xpath = "//group"
+    group_xml = utils.get_cib_xpath(group_xpath)
+
+    # If no groups exist, we silently return
+    if (group_xml == ""):
+        return
+
+    element = parseString(group_xml).documentElement
+    # If there is more than one group returned it's wrapped in an xpath-query
+    # element
+    if element.tagName == "xpath-query":
+        elements = element.getElementsByTagName("group")
+    else:
+        elements = [element]
+
+    for e in elements:
+        print e.getAttribute("id") + ":",
+        for resource in e.getElementsByTagName("primitive"):
+            print resource.getAttribute("id"),
+        print ""
+
 def resource_show(argv):
     if len(argv) == 0:    
         args = ["crm_resource","-L"]
         output,retval = utils.run(args)
         preg = re.compile(r'.*(stonith:.*)')
-        for line in output.strip().split('\n'):
+        for line in output.split('\n'):
             if not preg.match(line):
                 print line
         return
