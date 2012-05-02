@@ -1,5 +1,19 @@
 <div id="resource_agent_<%=@resource.name%>">
   <form method=POST action="<%= @existing_resource ? "/resources/#{@cur_resource.id}" : "/resourceadd"%>">
+    <div id="resource_group">
+      <table><tr>
+	  <td nowrap><div class="bold">Resource Group:</div></td>
+	  <td>
+	    <select name="resource_group">
+		<option value="">None</option>
+	      <% @groups.each do |g| %>
+		<option <%= "selected" if @cur_resource and g == @cur_resource.group %> value="<%=g%>"><%=g%></option>
+	      <% end %>
+	    </select>
+	  </td>
+	</tr>
+      </table>
+    </div>
     <table style="clear:left; float:left; margin-top: 25px;">
       <% if @new_resource %>
 	<tr>

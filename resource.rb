@@ -1,10 +1,10 @@
-def getResources(get_fence_devices = false)
+def getResourcesGroups(get_fence_devices = false)
   stdin, stdout, stderror = Open3.popen3('crm_mon --one-shot -r --as-xml')
   crm_output =  stdout.readlines
-  stderror.readlines
 
   doc = REXML::Document.new(crm_output.join("\n"))
   resource_list = []
+  group_list = []
   doc.elements.each('crm_mon/resources/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
       get_fence_devices && resource_list.push(Resource.new(e))
@@ -14,12 +14,18 @@ def getResources(get_fence_devices = false)
   end
   doc.elements.each('crm_mon/resources/group/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
-      get_fence_devices && resource_list.push(Resource.new(e))
+      get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
     else
-      !get_fence_devices && resource_list.push(Resource.new(e))
+      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
     end
   end
-  resource_list
+
+  doc.elements.each('crm_mon/resources/group') do |e|
+    group_list.push(e.attributes["id"])
+    puts group_list
+  end
+
+  [resource_list, group_list]
 end
 
 def getResourceOptions(resource_id)
@@ -66,9 +72,10 @@ def getResourceAgents(resource_agent = nil)
 end
 
 class Resource 
-  attr_accessor :id, :name, :type, :agent, :agentname, :role, :active, :orphaned, :managed,
-    :failed, :failure_ignored, :nodes, :location, :options
-  def initialize(e)
+  attr_accessor :id, :name, :type, :agent, :agentname, :role, :active,
+    :orphaned, :managed, :failed, :failure_ignored, :nodes, :location,
+    :options, :group
+  def initialize(e, group = nil)
     @id = e.attributes["id"]
     @agentname = e.attributes["resource_agent"]
     @active = e.attributes["active"] == "true" ? true : false
@@ -76,6 +83,7 @@ class Resource
     @failed = e.attributes["failed"] == "true" ? true : false
     @active = e.attributes["active"] == "true" ? true : false
     @nodes = []
+    @group = group
     e.elements.each do |n| 
       node = Node.new
       node.name = n.attributes["name"]

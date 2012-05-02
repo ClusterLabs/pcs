@@ -35,7 +35,7 @@
 		  <div class="check sprites"></div>
 		</td>
 		<td nowrap class="resource_name" <%= 'style="color:red;" ' if r.failed || !r.active%>>
-		  <%= r.id %>
+		  <%= r.id %><%= " (" + r.group + ")" if r.group %>
 		</td>
 		<td class="resource_type">
 		  <%= r.agentname.sub(/.*:/,'') %>

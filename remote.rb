@@ -77,7 +77,7 @@ end
 
 def resource_status(params)
   resource_id = params[:resource]
-  @resources = getResources
+  @resources,@groups = getResourcesGroups
   location = ""
   res_status = ""
   @resources.each {|r|

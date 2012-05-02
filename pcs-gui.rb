@@ -59,7 +59,7 @@ helpers do
   def getParamLine(params)
     param_line = ""
     params.each { |param, val|
-      if param == "name" or param == "resource_type" or param == "resource_id"
+      if param == "name" or param == "resource_type" or param == "resource_id" or param == "resource_group"
 	next
       end
       param_line += " #{param}=#{val}"
@@ -84,6 +84,7 @@ post '/configure/?:page?' do
 end
 
 post '/fencedeviceadd' do
+  puts params
   param_line = getParamLine(params)
   puts "pcs stonith create #{params[:name]} #{params[:resource_type]} #{param_line}"
   puts `#{PCS} stonith create #{params[:name]} #{params[:resource_type]} #{param_line}`
@@ -94,6 +95,10 @@ post '/resourceadd' do
   param_line = getParamLine(params)
   puts "pcs resource create #{params[:name]} #{params[:resource_type]} #{param_line}"
   puts `#{PCS} resource create #{params[:name]} #{params[:resource_type]} #{param_line}`
+  if params[:resource_group]
+    puts "#{PCS} resource group add #{params[:resource_group]} #{params[:name]}"
+    puts `#{PCS} resource group add #{params[:resource_group]} #{params[:name]}`
+  end
   redirect "/resources/#{params[:name]}"
 end
 
@@ -124,7 +129,7 @@ get '/configure/?:page?' do
 end
 
 get '/fencedevices/?:fencedevice?' do
-  @resources = getResources(true)
+  @resources, @groups = getResourcesGroups(true)
 
   if @resources.length == 0
     @cur_resource = nil
@@ -146,10 +151,16 @@ get '/fencedevices/?:fencedevice?' do
 end
 
 post '/resources/:resource?' do
+  puts "POST"
   param_line = getParamLine(params)
   puts "#{PCS} resource update #{params[:resource_id]} #{param_line}"
   puts `#{PCS} resource update #{params[:resource_id]} #{param_line}`
-  redirect params[:splat][0]
+
+  if params[:resource_group]
+    puts "#{PCS} resource group add #{params[:resource_group]} #{params[:name]}"
+    puts `#{PCS} resource group add #{params[:resource_group]} #{params[:resource_id]}`
+  end
+  redirect "/resources/#{params[:name]}"
 end
 
 post '/fencedevices/:fencedevice?' do
@@ -160,7 +171,7 @@ post '/fencedevices/:fencedevice?' do
 end
 
 get '/resources/?:resource?' do
-  @resources = getResources
+  @resources, @groups = getResourcesGroups
   @resourcemenuclass = "class=\"active\""
 
   if @resources.length == 0
@@ -187,6 +198,7 @@ get '/resources/metadata/:resourcename/?:new?' do
   @resource = ResourceAgent.new(params[:resourcename])
   @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
   @new_resource = params[:new]
+  @resources, @groups = getResourcesGroups
   
   erb :resourceagentform
 end
@@ -202,7 +214,7 @@ end
 get '/nodes/?:node?' do
   setup()
   @nodemenuclass = "class=\"active\""
-  @resources = getResources
+  @resources, @groups = getResourcesGroups
   @resources_running = []
   @resources.each { |r|
     @cur_node && r.nodes && r.nodes.each {|n|
