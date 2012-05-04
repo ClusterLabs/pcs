@@ -81,18 +81,42 @@ function node_update() {
   });
 }
 
+function resource_list_setup() {
+  $('.node_list_check input[type=checkbox]').click(function(e) {
+    e.stopPropagation();
+  });
+}
+
 function resource_list_update() {
   resource = $('#node_info_header_title_name').first().text();
+
+  // If resources are checked we need to keep them selected on refresh
+  var checkedResources = new Array();
+  $('.node_list_check :checked').each(function(i,e) {
+    checkedResources.push($(e).attr("res_id"));
+  });
+
   $.ajax({
     type: 'GET',
-    url: '/resources/'+resource+'/resource_list',
+    url: '/resource_list/'+resource,
     timeout: 2000,
     success: function(data) {
-      $("#node_list").html(data);
+      newdata = $(data);
+      newdata.find('.node_list_check input[type="checkbox"]').each( function(i,e) {
+	var res_id = $(e).attr("res_id");
+	for (var i=checkedResources.length-1; i>= 0; --i) {
+	  if (checkedResources[i] == res_id) {
+	    $(e).prop("checked",true);
+	  }
+	}
+      });
+      
+      $("#node_list").html(newdata);
+      resource_list_setup();
       window.setTimeout(resource_list_update, 4000);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
-      window.setTimeout(resource_update, 60000);
+      window.setTimeout(resource_list_update, 60000);
     }
   });
 }

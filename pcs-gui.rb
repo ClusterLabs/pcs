@@ -17,6 +17,7 @@ also_reload './resource.rb'
 also_reload './remote.rb'
 also_reload './fenceagent.rb'
 
+@@cluster_name = "Test Cluster"
 configure do
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
@@ -179,38 +180,34 @@ post '/fencedevices/:fencedevice?' do
   redirect params[:splat][0]
 end
 
-get '/resources/?:resource?/?:resourcelist?' do
-  @resources, @groups = getResourcesGroups
-  @resourcemenuclass = "class=\"active\""
+['/resources/?:resource?', '/resource_list/?:resource?'].each do |path|
+  get path do
+    @resources, @groups = getResourcesGroups
+    @resourcemenuclass = "class=\"active\""
 
-  if @resources.length == 0
-    @cur_resource = nil
-    @resource_agents = getResourceAgents()
-  else
-    @cur_resource = @resources[0]
-    @cur_resource.options = getResourceOptions(@cur_resource.id)
-    if params[:resource]
-      @resources.each do |r|
-	if r.id == params[:resource]
-	  @cur_resource = r
-	  @cur_resource.options = getResourceOptions(r.id)
-	  break
+    if @resources.length == 0
+      @cur_resource = nil
+      @resource_agents = getResourceAgents()
+    else
+      @cur_resource = @resources[0]
+      @cur_resource.options = getResourceOptions(@cur_resource.id)
+      if params[:resource]
+	@resources.each do |r|
+	  if r.id == params[:resource]
+	    @cur_resource = r
+	    @cur_resource.options = getResourceOptions(r.id)
+	    break
+	  end
 	end
       end
+      @resource_agents = getResourceAgents(@cur_resource.agentname)
     end
-    @resource_agents = getResourceAgents(@cur_resource.agentname)
+    if path.start_with? '/resource_list'
+      erb :_resource_list
+    else
+      erb :resource, :layout => :main
+    end
   end
-  if params[:resourcelist] == "resource_list"
-    erb :_resource_list
-  else
-    erb :resource, :layout => :main
-  end
-end
-
-get '/resource_list/?:resource?' do
-  @resources, @groups = getResourcesGroups
-  @cur_resource = params[:resource]
-  erb :_resource_list
 end
 
 get '/resources/metadata/:resourcename/?:new?' do
