@@ -1,3 +1,5 @@
+require 'pp'
+
 def getResourcesGroups(get_fence_devices = false)
   stdin, stdout, stderror = Open3.popen3('crm_mon --one-shot -r --as-xml')
   crm_output =  stdout.readlines
@@ -24,6 +26,8 @@ def getResourcesGroups(get_fence_devices = false)
     group_list.push(e.attributes["id"])
     puts group_list
   end
+
+  resource_list.sort_by!{|a|a.id}
 
   [resource_list, group_list]
 end

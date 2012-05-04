@@ -81,6 +81,22 @@ function node_update() {
   });
 }
 
+function resource_list_update() {
+  resource = $('#node_info_header_title_name').first().text();
+  $.ajax({
+    type: 'GET',
+    url: '/resources/'+resource+'/resource_list',
+    timeout: 2000,
+    success: function(data) {
+      $("#node_list").html(data);
+      window.setTimeout(resource_list_update, 4000);
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      window.setTimeout(resource_update, 60000);
+    }
+  });
+}
+
 function resource_update() {
   resource = $('#node_info_header_title_name').first().text();
   $.ajax({

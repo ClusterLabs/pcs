@@ -10,6 +10,7 @@
 		<option <%= "selected" if @cur_resource and g == @cur_resource.group %> value="<%=g%>"><%=g%></option>
 	      <% end %>
 	    </select>
+	    <input type=hidden name="_orig_resource_group" value="<%= @cur_resource.group if @cur_resource %>">
 	  </td>
 	</tr>
       </table>
@@ -37,7 +38,7 @@
 	    <%= name %>
 	  </td>
 	  <td>
-	    <input style="margin-right: 50px;" type="text" name="<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	    <input style="margin-right: 50px;" type="text" name="_res_param_<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
@@ -50,7 +51,7 @@
 	    <%= name %>
 	  </td>
 	  <td>
-	    <input style="margin-right: 50px;" type="text" name="<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	    <input style="margin-right: 50px;" type="text" name="_res_param_<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>

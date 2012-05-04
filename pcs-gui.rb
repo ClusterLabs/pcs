@@ -7,6 +7,7 @@ require './resource.rb'
 require './remote.rb'
 require './fenceagent.rb'
 require 'webrick'
+require 'pp'
 #require 'webrick/https'
 
 use Rack::CommonLogger
@@ -59,10 +60,10 @@ helpers do
   def getParamLine(params)
     param_line = ""
     params.each { |param, val|
-      if param == "name" or param == "resource_type" or param == "resource_id" or param == "resource_group"
-	next
+      if param.start_with?("_res_param_")
+	myparam = param.sub(/^_res_param_/,"")
+	param_line += " #{myparam}=#{val}"
       end
-      param_line += " #{param}=#{val}"
     }
     param_line
   end
@@ -151,16 +152,24 @@ get '/fencedevices/?:fencedevice?' do
 end
 
 post '/resources/:resource?' do
-  puts "POST"
+  pp params
   param_line = getParamLine(params)
   puts "#{PCS} resource update #{params[:resource_id]} #{param_line}"
   puts `#{PCS} resource update #{params[:resource_id]} #{param_line}`
 
+  puts params[:resource_group]
   if params[:resource_group]
-    puts "#{PCS} resource group add #{params[:resource_group]} #{params[:name]}"
-    puts `#{PCS} resource group add #{params[:resource_group]} #{params[:resource_id]}`
+    if params[:resource_group] == ""
+      if params[:_orig_resource_group] != ""
+	puts "#{PCS} resource group remove_resource #{params[:_orig_resource_group]} #{params[:resource]}"
+	puts `#{PCS} resource group remove_resource #{params[:_orig_resource_group]} #{params[:resource]}`
+      end
+    else
+      puts "#{PCS} resource group add #{params[:resource_group]} #{params[:resource]}"
+      puts `#{PCS} resource group add #{params[:resource_group]} #{params[:resource]}`
+    end
   end
-  redirect "/resources/#{params[:name]}"
+  redirect "/resources/#{params[:resource]}"
 end
 
 post '/fencedevices/:fencedevice?' do
@@ -170,7 +179,7 @@ post '/fencedevices/:fencedevice?' do
   redirect params[:splat][0]
 end
 
-get '/resources/?:resource?' do
+get '/resources/?:resource?/?:resourcelist?' do
   @resources, @groups = getResourcesGroups
   @resourcemenuclass = "class=\"active\""
 
@@ -191,7 +200,17 @@ get '/resources/?:resource?' do
     end
     @resource_agents = getResourceAgents(@cur_resource.agentname)
   end
-  erb :resource, :layout => :main
+  if params[:resourcelist] == "resource_list"
+    erb :_resource_list
+  else
+    erb :resource, :layout => :main
+  end
+end
+
+get '/resource_list/?:resource?' do
+  @resources, @groups = getResourcesGroups
+  @cur_resource = params[:resource]
+  erb :_resource_list
 end
 
 get '/resources/metadata/:resourcename/?:new?' do
