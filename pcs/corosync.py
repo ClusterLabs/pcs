@@ -31,7 +31,6 @@ def corosync_cmd(argv):
 def sync_start(partial_argv):
     argv = partial_argv[:]
     nodes = partial_argv[1:]
-    argv.insert(0,"fedora")
     config = corosync_configure(argv,True)
     for node in nodes:
         utils.setCorosyncConfig(node,config)
@@ -40,7 +39,6 @@ def sync_start(partial_argv):
 def sync(partial_argv):
     argv = partial_argv[:]
     nodes = partial_argv[1:]
-    argv.insert(0,"fedora")
     config = corosync_configure(argv,True)
     sync_nodes(nodes,config)
 
@@ -49,25 +47,16 @@ def sync_nodes(nodes,config):
         utils.setCorosyncConfig(node,config)
     
 def corosync_configure(argv,returnConfig=False):
-    fedora_config = False
-    if len(argv) == 0:
-        bindnetaddr = get_local_network()
-        mcastaddr = "226.94.1.1"
-        mcastport = "5405"
-    elif argv[0] == "fedora" and len(argv) > 2:
-        nodes = argv[2:]
-        cluster_name = argv[1]
-        fedora_config = True
+    fedora_config = True
+    if len(argv) > 1:
+        nodes = argv[1:]
+        cluster_name = argv[0]
     elif argv[0] == "sync" and len(argv) > 2:
         sync(argv[1:])
         return
     elif argv[0] == "sync_start" and len(argv) > 2:
         sync_start(argv[1:])
         return
-    elif len(argv) == 3:
-        bindnetaddr = argv.pop(0)
-        mcastaddr = argv.pop(0)
-        mcastport = argv.pop(0)
     else:
         usage.corosync()
         exit(1)
@@ -92,10 +81,6 @@ def corosync_configure(argv,returnConfig=False):
 
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
         corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
-    else:
-        corosync_config = corosync_config.replace("@@bindnetaddr",bindnetaddr)
-        corosync_config = corosync_config.replace("@@mcastaddr",mcastaddr)
-        corosync_config = corosync_config.replace("@@mcastport",mcastport)
 
     if returnConfig:
         return corosync_config

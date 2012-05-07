@@ -63,15 +63,8 @@ Commands:
         Sync corosync configuration to all nodes found from current
         corosync.conf file
 
-    configure [<bindnetaddr> <mcastaddr> <mcastport>]
-        Configure corosync for use with pacemaker. If no options
-        are specified the following values are used:
-        bindnetaddr: (first local interface network address)
-        mcastaddr:   226.94.1.1
-        mcastport:   5405
-
-    configure fedora <cluster name> <node1 ip> [node2 ip] [...]
-        Configure corosync on Fedora 17 and later.
+    configure <cluster name> <node1 ip> [node2 ip] [...]
+        Configure corosync with <cluster name> and specified nodes
 
     configure sync <cluster name> <node1 ip> [node2 ip] [...]
         Configure corosync and sync configuration out to listed nodes
