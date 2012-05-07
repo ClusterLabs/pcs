@@ -17,7 +17,7 @@ also_reload './resource.rb'
 also_reload './remote.rb'
 also_reload './fenceagent.rb'
 
-@@cluster_name = "Test Cluster"
+@@cluster_name = `corosync-cmapctl totem.cluster_name`.gsub(/.*= /,"").strip
 configure do
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
