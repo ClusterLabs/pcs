@@ -30,6 +30,8 @@ Usage: pcs resource [commands]...
 Manage pacemaker resources
 Commands:
     resource [list|show] [resource_id]
+    resource start <resource id>
+    resource stop <resource id>
     resource create <resource id> <provider:class:type|type> [resource options]
     resource update <resource id> [resource options]
     resource delete <resource id>
@@ -84,6 +86,11 @@ Commands:
     stonith create <stonith_id> <fence device type> [fence device options]
     stonith update <stonith_id> [fence device options]
     stonith delete <stonith_id>
+
+Examples:
+    pcs stonith create MyStonith ssh hostlist="f1" op monitor interval=30s
+
+
 """
 
 def property():

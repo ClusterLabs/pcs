@@ -39,6 +39,15 @@ def resource_cmd(argv):
         resource_show(argv)
     elif (sub_cmd == "group"):
         resource_group(argv)
+    elif (sub_cmd == "start"):
+        resource_start(argv)
+    elif (sub_cmd == "stop"):
+        resource_stop(argv)
+    elif (sub_cmd == "restart"):
+# Need to have a wait in here to make sure the stop registers
+        print "Not Yet Implemented"
+#        if resource_stop(argv):
+#            resource_start(argv)
     else:
         usage.resource()
 
@@ -56,7 +65,6 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     output,retval = utils.run(args)
     if retval != 0:
         print "ERROR: Unable to create resource/fence device"
-    print output
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
@@ -166,6 +174,7 @@ def resource_group(argv):
         sys.exit(1)
 
 # Removes a resource and if it's the last resource in a group, remove the group
+# Also performs a 'cleanup' to remove it completely
 def resource_remove(resource_id, output = True):
     group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0
@@ -187,8 +196,12 @@ def resource_remove(resource_id, output = True):
         cmdoutput,retVal = utils.run(args)
         if retVal != 0:
             if output == True:
-                print "ERROR: Unable to remove resource 'resource_id' (do constraints exist?)"
+                print "ERROR: Unable to remove resource '%s' (do constraints exist?)" % (resource_id)
             return False
+    args = ["crm_resource","-C","-r",resource_id]
+    cmdoutput, retVal = utils.run(args)
+# We don't currently check output because the resource may have already been
+# properly cleaned up
     return True
 
 # This removes a resource from a group, but keeps it in the config
@@ -305,3 +318,21 @@ def resource_show(argv):
         print "Resource:", arg
         for nvpair in doc.getElementsByTagName("nvpair"):
             print "  " + nvpair.getAttribute("name") + ": " + nvpair.getAttribute("value")
+
+def resource_stop(argv):
+    args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
+    output, retval = utils.run(args)
+    if retval != 0:
+        print output,
+        return False
+    else:
+        return True
+
+def resource_start(argv):
+    args = ["crm_resource", "-r", argv[0], "-m", "-d", "target-role"]
+    output, retval = utils.run(args)
+    if retval != 0:
+        print output,
+        return False
+    else:
+        return True

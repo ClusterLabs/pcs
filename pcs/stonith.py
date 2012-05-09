@@ -3,7 +3,7 @@ import resource
 #import sys
 #import xml.dom.minidom
 #from xml.dom.minidom import getDOMImplementation
-#from xml.dom.minidom import parseString
+from xml.dom.minidom import parseString
 import usage
 import utils
 import re
