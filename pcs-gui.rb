@@ -114,6 +114,14 @@ post '/resourcerm' do
   redirect "/resources/"
 end
 
+post '/resource_group_add' do
+  rg = params["resource_group"]
+  resources = params["resources"]
+  puts "#{PCS} resource group add #{rg} #{resources}"
+  puts `#{PCS} resource group add #{rg} #{resources}`
+  redirect "/resources/"
+end
+
 post '/fencerm' do
   params.each { |k,v|
     if k.index("resid-") == 0
@@ -132,6 +140,7 @@ end
 
 get '/fencedevices/?:fencedevice?' do
   @resources, @groups = getResourcesGroups(true)
+  pp @resources
 
   if @resources.length == 0
     @cur_resource = nil
@@ -174,7 +183,9 @@ post '/resources/:resource?' do
 end
 
 post '/fencedevices/:fencedevice?' do
+  pp params
   param_line = getParamLine(params)
+  pp param_line
   puts "#{PCS} stonith update #{params[:resource_id]} #{param_line}"
   puts `#{PCS} stonith update #{params[:resource_id]} #{param_line}`
   redirect params[:splat][0]

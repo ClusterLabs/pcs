@@ -7,10 +7,10 @@
     <td id="remove_add" class="borderbottom">
       <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove();">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
       <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
-      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="alert('Not Yet Implemented');">Create Group</a></div>
+      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="create_group();">Create Group</a></div>
     </td>
     <td class="borderbottom">&nbsp;</td>
-    <td id="tab_name" width="115">
+    <td id="tab_name" width="125">
       <div style="float: left">&nbsp;Edit Resource&nbsp;</div><div class="check sprites"></div>
     </td>
   </tr>
@@ -48,15 +48,17 @@
 
 	    <div id="node_options_buttons">
 	      <div class="xdark sprites" style="float: left"></div>
-	      <div class="link">Delete</div>
+	      <div id="resource_delete_link" class="link">Delete</div>
 	      <div class="cancel sprites" style="float: left"></div>
-	      <div class="link">Stop</div>
+	      <div id="resource_stop_link" class="link">Stop</div>
 	      <div class="restart sprites" style="float: left"></div>
-	      <div class="link">Restart</div>
+	      <div id="resource_start_link" class="link">Start</div>
+	      <!--
 	      <div class="move sprites" style="float: left"></div>
-	      <div class="link">Move</div>
+	      <div id="resource_move_link" class="link">Move</div>
 	      <div class="history sprites" style="float: left"></div>
-	      <div class="link">History</div>
+	      <div id="resource_history_link" class="link">History</div>
+	      -->
 	    </div>
 
 	    <div id="node_details">
@@ -98,7 +100,7 @@
 	    <% @existing_resource = true %>
 	    <%= erb :resourceagentform %>
 	  <% else %>
-	    No resources have been configured
+	      <span id="node_info_header"><span id="node_info_header_title">No resources have been configured</span></span>
 	  <% end %>
 	  </td>
 	</tr>
@@ -134,12 +136,19 @@
       <div id="new_resource_agent">
       </div>
     </div>
+    <div id="add_group" style="display: none;">
+      <form method=POST action="/resource_group_add">
+	<p style="font-size:12px;">Group Name:</p><input name="resource_group" type=text>
+	<input id="resources_to_add_to_group"  type=hidden name="resources" value="">
+      </form>
+    </div>
     <div id="verify_remove" style="display: none;">
       <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
       <span id="resource_to_remove"></span>
     </div>
     <script type="text/javascript">
       $(window).load(function () {
+	  setup_resource_links();
 	  resource_update();
 	  resource_list_update();
 	  });

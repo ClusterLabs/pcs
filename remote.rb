@@ -21,6 +21,10 @@ def remote(params)
     return cluster_start()
   when "cluster_stop"
     return cluster_stop()
+  when "resource_start"
+    return resource_start(params)
+  when "resource_stop"
+    return resource_stop(params)
   end
 end
 
@@ -97,4 +101,18 @@ def resource_status(params)
   }
   status = {"location" => location, "status" => res_status}
   return JSON.generate(status)
+end
+
+def resource_stop(params)
+  pp params
+  puts "RESOURCE STOP"
+  puts "#{PCS} resource stop #{params[:resource]}"
+  puts `#{PCS} resource stop #{params[:resource]}`
+end
+
+def resource_start(params)
+  pp params
+  puts "RESOURCE START"
+  puts "#{PCS} resource start #{params[:resource]}"
+  puts `#{PCS} resource start #{params[:resource]}`
 end

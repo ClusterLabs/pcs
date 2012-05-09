@@ -1,3 +1,4 @@
+<% if @fenceagent %>
 <div id="resource_agent_<%=@fenceagent.name%>">
   <form method=POST action="<%= @existing_resource ? "/fencedevices/#{@cur_resource.id}" : "/fencedeviceadd"%>">
     <table style="clear:left; float:left; margin-top: 25px;">
@@ -23,7 +24,7 @@
 	    <%= name %>
 	  </td>
 	  <td>
-	    <input style="margin-right: 50px;" type="text" name="<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	    <input style="margin-right: 50px;" type="text" name="_res_param_<%=name%>" value="<%=@cur_resource.options[name] if (@existing_resource and @cur_resource and @cur_resource.options)%>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
@@ -36,7 +37,7 @@
 	    <%= name %>
 	  </td>
 	  <td>
-	    <input style="margin-right: 50px;" type="text" name="<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	    <input style="margin-right: 50px;" type="text" name="_res_param_<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource and @cur_resource and @cur_resource.options%>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
@@ -47,3 +48,4 @@
     </table>
   </form>
 </div>
+<% end %>

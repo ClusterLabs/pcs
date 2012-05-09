@@ -1,3 +1,28 @@
+function create_group() {
+  var num_nodes = 0;
+  var node_names = "";
+  $("#node_list :checked").each(function (index,element) {
+    num_nodes++;
+    node_names += element.getAttribute("res_id") + " "
+  });
+
+  if (num_nodes == 0) {
+    alert("You must select at least one node to add to a group");
+  } else {
+    $("#resources_to_add_to_group").val(node_names);
+    $("#add_group").dialog({title: 'Create Group',
+      modal: true, resizable: false, 
+      buttons: {
+	"Create Group": function() {
+	  $('#add_group > form').submit();
+	},
+      Cancel: function() {
+	$(this).dialog("close");
+      }}
+    });
+  }
+}
+
 function verify_remove() {
   var list_of_nodes = "<ul>";
   var nodes_to_remove = 0;
@@ -9,7 +34,7 @@ function verify_remove() {
   if (nodes_to_remove != 0) {
     $("#resource_to_remove").html(list_of_nodes);
     $("#verify_remove").dialog({title: 'Resource Removal',
-      modal: true, resizable: false, heigh: 140,
+      modal: true, resizable: false,
       buttons: {
 	"Remove resource(s)": function() {
 	  $('#node_list > form').submit();
@@ -101,8 +126,12 @@ function resource_list_update() {
     url: '/resource_list/'+resource,
     timeout: 2000,
     success: function(data) {
-      newdata = $(data);
-      newdata.find('.node_list_check input[type="checkbox"]').each( function(i,e) {
+      try {
+	newdata = $(data);
+      } catch(err) {
+	newdata = $("");
+      }
+      newdata.find('.node_list_check input[type=checkbox]').each( function(i,e) {
 	var res_id = $(e).attr("res_id");
 	for (var i=checkedResources.length-1; i>= 0; --i) {
 	  if (checkedResources[i] == res_id) {
@@ -152,4 +181,25 @@ function setStatus(item,running) {
     item.removeClass();
     item.addClass('status-offline');
   }
+}
+
+function setup_resource_links() {
+  resource = $("#node_info_header_title_name").text();
+  $("#resource_delete_link").click(function () {
+    $.post('/resourcerm',"resid-"+resource+"=1");
+  });
+  $("#resource_stop_link").click(function () {
+    $.post('/remote/resource_stop',"resource="+resource);
+    alert("Stopping Resource");
+  });
+  $("#resource_start_link").click(function () {
+    $.post('/remote/resource_start',"resource="+resource);
+    alert("Starting Resource");
+  });
+  $("#resource_move_link").click(function () {
+    alert("Not Yet Implemented");
+  });
+  $("#resource_history_link").click(function () {
+    alert("Noy Yet Implemented");
+  });
 }
