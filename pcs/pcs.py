@@ -2,7 +2,7 @@
 
 import sys, getopt, os
 import usage
-import corosync
+import cluster
 import resource
 import stonith
 import prop
@@ -39,8 +39,8 @@ def main(argv):
         usage.main()
     elif (command == "resource"):
         resource.resource_cmd(argv)
-    elif (command == "corosync"):
-        corosync.corosync_cmd(argv)
+    elif (command == "cluster"):
+        cluster.cluster_cmd(argv)
     elif (command == "stonith"):
         stonith.stonith_cmd(argv)
     elif (command == "property"):
@@ -55,50 +55,8 @@ def main(argv):
     elif (command == "set"):
         argv.insert(0,"set")
         prop.property_cmd(argv)
-    elif (command == "start"):
-        start_cluster(argv)
-    elif (command == "stop"):
-        stop_cluster(argv)
-    elif (command == "startall"):
-        start_cluster_all()
-    elif (command == "stopall"):
-        stop_cluster_all()
     else:
         usage.main()
-
-def start_cluster(argv):
-    print "Starting Cluster"
-    output, retval = utils.run(["systemctl", "start","corosync.service"])
-    print output
-    if retval != 0:
-        print "Error: unable to start corosync"
-        sys.exit(1)
-    output, retval = utils.run(["systemctl", "start", "pacemaker.service"])
-    print output
-    if retval != 0:
-        print "Error: unable to start pacemaker"
-        sys.exit(1)
-
-def start_cluster_all():
-    for node in utils.getNodesFromCorosyncConf():
-        utils.startCluster(node)
-
-def stop_cluster_all():
-    for node in utils.getNodesFromCorosyncConf():
-        utils.stopCluster(node)
-
-def stop_cluster(argv):
-    print "Stopping Cluster"
-    output, retval = utils.run(["systemctl", "stop","pacemaker.service"])
-    print output
-    if retval != 0:
-        print "Error: unable to stop pacemaker"
-        sys.exit(1)
-    output, retval = utils.run(["systemctl", "stop","corosync.service"])
-    print output
-    if retval != 0:
-        print "Error: unable to stop corosync"
-        sys.exit(1)
 
 if __name__ == "__main__":
   main(sys.argv[1:])

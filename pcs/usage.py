@@ -13,15 +13,11 @@ Commands:
 
     node        Manage nodes (NOT YET IMPLEMENTED)
     resource    Manage cluster resources
-    corosync    Configure corosync
+    cluster     Configure cluster options
     stonith     Configure fence devices
     property    Set pacemaker properties
     constraint  Set resource constraints
-    status      View pacemaker status
-    start       Start corosync & pacemaker
-    stop        Stop corosync & pacemaker
-    startall    Start corosync & pacemaker on all nodes
-    stopall     Stop corosync & pacemaker on all nodes
+    status      View cluster status
 """
 
 def resource():
@@ -55,12 +51,17 @@ Examples:
     pcs resource delete ClusterIP
 """
 
-def corosync():
+def cluster():
     print """
-Usage: pcs corosync [commands]...
-Configure corosync for use with pacemaker
+Usage: pcs cluster [commands]...
+Configure cluster for use with pacemaker
 
 Commands:
+    start       Start corosync & pacemaker
+    stop        Stop corosync & pacemaker
+    startall    Start corosync & pacemaker on all nodes
+    stopall     Stop corosync & pacemaker on all nodes
+
     sync
         Sync corosync configuration to all nodes found from current
         corosync.conf file

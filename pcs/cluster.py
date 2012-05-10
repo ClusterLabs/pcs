@@ -10,20 +10,28 @@ COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
 COROSYNC_CONFIG_FEDORA_TEMPLATE = pcs_dir + "/corosync.conf.fedora.template"
 COROSYNC_CONFIG_FILE = "/etc/corosync/corosync.conf"
 
-def corosync_cmd(argv):
+def cluster_cmd(argv):
     if len(argv) == 0:
-        usage.corosync()
+        usage.cluster()
         exit(1)
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.corosync()
+        usage.cluster()
     elif (sub_cmd == "configure"):
         corosync_configure(argv)
     elif (sub_cmd == "sync"):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
+    elif (sub_cmd == "start"):
+        start_cluster(argv)
+    elif (sub_cmd == "stop"):
+        stop_cluster(argv)
+    elif (sub_cmd == "startall"):
+        start_cluster_all()
+    elif (sub_cmd == "stopall"):
+        stop_cluster_all()
     else:
-        usage.corosync()
+        usage.cluster()
 
 # Create config and then send it to all of the nodes and start
 # corosync & pacemaker on the nodes
@@ -58,7 +66,7 @@ def corosync_configure(argv,returnConfig=False):
         sync_start(argv[1:])
         return
     else:
-        usage.corosync()
+        usage.cluster()
         exit(1)
 
     if fedora_config == True:
@@ -104,3 +112,37 @@ def get_local_network():
     else:
         print "ERROR: Unable to determine network address, is interface up?"
         exit(1)
+
+def start_cluster(argv):
+    print "Starting Cluster"
+    output, retval = utils.run(["systemctl", "start","corosync.service"])
+    print output
+    if retval != 0:
+        print "Error: unable to start corosync"
+        sys.exit(1)
+    output, retval = utils.run(["systemctl", "start", "pacemaker.service"])
+    print output
+    if retval != 0:
+        print "Error: unable to start pacemaker"
+        sys.exit(1)
+
+def start_cluster_all():
+    for node in utils.getNodesFromCorosyncConf():
+        utils.startCluster(node)
+
+def stop_cluster_all():
+    for node in utils.getNodesFromCorosyncConf():
+        utils.stopCluster(node)
+
+def stop_cluster(argv):
+    print "Stopping Cluster"
+    output, retval = utils.run(["systemctl", "stop","pacemaker.service"])
+    print output
+    if retval != 0:
+        print "Error: unable to stop pacemaker"
+        sys.exit(1)
+    output, retval = utils.run(["systemctl", "stop","corosync.service"])
+    print output
+    if retval != 0:
+        print "Error: unable to stop corosync"
+        sys.exit(1)
