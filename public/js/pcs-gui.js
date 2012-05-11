@@ -76,6 +76,7 @@ function node_update() {
 	setStatus($('#pcsd_status'),false);
       } else  {
 	pcsd_status = "Running";
+	setStatus($('#pcsd_status'),true);
 
 	if (data.pacemaker) {
 	  pacemaker_status = "Running";
