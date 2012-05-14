@@ -56,15 +56,18 @@ def sync_nodes(nodes,config):
     
 def corosync_configure(argv,returnConfig=False):
     fedora_config = True
-    if len(argv) > 1:
-        nodes = argv[1:]
-        cluster_name = argv[0]
+    if len(argv) == 0:
+        usage.cluster()
+        exit(1)
     elif argv[0] == "sync" and len(argv) > 2:
         sync(argv[1:])
         return
     elif argv[0] == "sync_start" and len(argv) > 2:
         sync_start(argv[1:])
         return
+    elif len(argv) > 1:
+        nodes = argv[1:]
+        cluster_name = argv[0]
     else:
         usage.cluster()
         exit(1)

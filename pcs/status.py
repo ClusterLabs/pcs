@@ -26,7 +26,7 @@ def status_cmd(argv):
     elif (sub_cmd == "actions"):
         actions_status(argv)
     else:
-        usage.property()
+        usage.status()
         sys.exit(1)
 
 def actions_status(argv):
