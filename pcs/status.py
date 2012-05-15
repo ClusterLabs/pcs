@@ -34,10 +34,19 @@ def actions_status(argv):
 
 # Parse crm_mon for status
 def nodes_status(argv):
+    if len(argv) == 1 and argv[0] == "corosync":
+        nodes = utils.getCorosyncNodes()
+        print "Corosync Nodes:",
+        for node in nodes:
+            print node,
+        print
+        sys.exit(0)
+
+
     (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1"])
 
     if (retval != 0):
-        print "Error running crm_mon!"
+        print "Error running crm_mon, is pacemaker running?"
         sys.exit(1)
 
     print "Nodes:"
@@ -68,7 +77,7 @@ def resources_status(argv):
     (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r"])
 
     if (retval != 0):
-        print "Error running crm_mon!"
+        print "Error running crm_mon, is pacemaker running?"
         sys.exit(1)
 
     print "Resources:"
@@ -102,7 +111,7 @@ def cluster_status(argv):
     (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r"])
 
     if (retval != 0):
-        print "Error running crm_mon!"
+        print "Error running crm_mon, is pacemaker running?"
         sys.exit(1)
 
     in_cluster = False

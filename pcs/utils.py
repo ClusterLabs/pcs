@@ -49,6 +49,18 @@ def getNodesFromCorosyncConf():
 def getCorosyncConf(conf='/etc/corosync/corosync.conf'):
     return open(conf).read()
 
+def getCorosyncNodes():
+    cc = getCorosyncConf()
+    nodes = []
+
+    ring_re = re.compile(r'ring0_addr:\s+([\w-]*)')
+    for line in cc.split('\n'):
+        x = ring_re.search(line)
+        if x and x.groups():
+            nodes.append(x.groups()[0])
+
+    return nodes
+
 # Run command, with environment and return (output, retval)
 def run(args):
     env_var = os.environ

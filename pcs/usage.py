@@ -190,8 +190,9 @@ Commands:
     status cluster
         View current cluster status
 
-    status nodes
-        View current status of nodes
+    status nodes [corosync]
+        View current status of nodes from pacemaker, or if corosync is
+        specified, print nodes currently configured in corosync
 
     status actions
         View failed actions
