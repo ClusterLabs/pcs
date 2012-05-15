@@ -8,7 +8,8 @@ require './remote.rb'
 require './fenceagent.rb'
 require 'webrick'
 require 'pp'
-#require 'webrick/https'
+require 'webrick/https'
+require 'openssl'
 
 use Rack::CommonLogger
 #use Rack::SSL
@@ -301,7 +302,7 @@ def getLocationDeps(cur_node)
 end
 
 # Return array containing an array of nodes online & nodes offline
-# [ Nodes Online, Nodes Offline]
+# [ Nodes Online, Nodes Offline] 
 def getNodes
   stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes")
   out = stdout.readlines
@@ -310,18 +311,32 @@ def getNodes
   offline = out[2]
 
   if online
-    online = online.split(' ')[1..-1]
+    online = online.split(' ')[1..-1].sort
   else
     online = []
   end
 
   if offline
-    offline = offline.split(' ')[1..-1]
+    offline = offline.split(' ')[1..-1].sort
   else
     offline = []
   end
 
+  # If exit status is 0, then the cluster probably isn't running so we use
+  # corosync node list
   if waitth.value.exitstatus != 0
+    stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes corosync")
+    out = stdout.readlines
+    if out.length > 0
+      out2 = out[0].chomp.split(/: /)
+      if out2.length > 1
+	out2[1].split(/ /).each {|n| 
+	  offline << n
+	}
+	return [[],offline]
+      end
+    end
+
     return [[],[]]
   end
   [online, offline]

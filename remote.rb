@@ -18,9 +18,9 @@ def remote(params)
       return "Failed"
     end
   when "cluster_start"
-    return cluster_start()
+    return cluster_start(params)
   when "cluster_stop"
-    return cluster_stop()
+    return cluster_stop(params)
   when "resource_start"
     return resource_start(params)
   when "resource_stop"
@@ -28,14 +28,22 @@ def remote(params)
   end
 end
 
-def cluster_start()
+def cluster_start(params)
+  if params[:name]
+    response = Net::HTTP.post_form(URI.parse('http://' + params[:name] + ':2222/remote/cluster_start'), {})
+  else
     puts "Starting Daemons"
-    puts `#{PCS} start`
+    puts `#{PCS} cluster start`
+  end
 end
 
-def cluster_stop()
+def cluster_stop(params)
+  if params[:name]
+    response = Net::HTTP.post_form(URI.parse('http://' + params[:name] + ':2222/remote/cluster_stop'), {})
+  else
     puts "Starting Daemons"
-    puts `#{PCS} stop`
+    puts `#{PCS} cluster stop`
+  end
 end
 
 def set_cluster_conf(params)

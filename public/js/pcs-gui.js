@@ -184,6 +184,16 @@ function setStatus(item,running) {
   }
 }
 
+function setup_node_links() {
+  node = $("#node_info_header_title_name").text();
+  $("#node_start").click(function() {
+    $.post('/remote/cluster_start',{"name": node});
+  });
+  $("#node_stop").click(function() {
+    $.post('/remote/cluster_stop', {"name": node});
+  });
+}
+
 function setup_resource_links() {
   resource = $("#node_info_header_title_name").text();
   $("#resource_delete_link").click(function () {

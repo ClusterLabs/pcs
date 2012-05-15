@@ -69,10 +69,14 @@
 	    </div>
 
 	    <div id="node_options_buttons">
-	      <div class="restart sprites" style="float: left"></div>
-	      <div class="link">Restart</div>
+	      <div id="node_start">
+		<div class="restart sprites" style="float: left"></div>
+		<div class="link">Start</div>
+	      </div>
+	      <div id="node_stop">
 	      <div class="standby sprites" style="float: left"></div>
-	      <div class="link">Standby</div>
+	      <div class="link">Stop</div>
+	      </div>
 	      <div class="cancel sprites" style="float: left"></div>
 	      <div class="link">Leave Cluster</div>
 	      <div class="configure sprites" style="float: left"></div>
@@ -173,6 +177,7 @@
 </table>
 <script type="text/javascript">
   $(window).load(function () {
+      setup_node_links();
       node_update();
   });
 </script>
