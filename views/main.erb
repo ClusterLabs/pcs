@@ -4,7 +4,7 @@
   <link rel="stylesheet" type="text/css" href="/css/overpass.css" />
   <link rel="stylesheet" type="text/css" href="/css/liberation.css" />
   <link rel="stylesheet" type="text/css" href="/css/jquery-ui-1.8.17.custom.css" />
-  <script src="/js/jquery-1.7.1.js"></script>
+  <script src="/js/jquery-1.7.1.min.js"></script>
   <script src="/js/jquery-ui-1.8.17.custom.min.js"></script>
   <script src="/js/pcs-gui.js"></script>
   <script type="text/javascript">
@@ -61,7 +61,7 @@
 		  <td colspan=2 style="padding-bottom:8px;">
 		    <div style="float:left">
 		      <div style="float:right;" id="dropdownl">
-			Cluster:<%=@@cluster_name%><span style="float:right;" class="downarrow sprites"></span>
+			<%=@manage ? "Select Cluster" : "Cluster:" + @@cluster_name%><span style="float:right;" class="downarrow sprites"></span>
 		      </div>
 		    </div>
 		  </td>
@@ -73,7 +73,7 @@
 		    </div>
 		  </td>
 		</tr>
-
+		<% if !@manage %>
 		<tr>
 		  <td class="menuitem first"><a href="/nodes" <%= @nodemenuclass %>>NODES</a></td>
 		  <td class="menuitem"><a href="/resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
@@ -81,6 +81,11 @@
 		  <td class="menuitem"><a style="color:red;" href="/failoverdomains">FAILOVER DOMAINS</a></td>
 		  <td class="menuitem"><a href="/configure/pacemaker" <%= @configuremenuclass %>>CONFIGURE</a></td>
 		</tr>
+	      <% else %>
+		<tr height="37px">
+		  <td colspan=5 width="565px"></td>
+		</tr>
+	      <% end %>
 	      </table>
 	    </div>
 	</td>

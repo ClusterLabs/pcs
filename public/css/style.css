@@ -174,6 +174,15 @@ table#main {
   color: #333333;
 }
 
+#page_header div {
+  float: left;
+  vertical-align: middle;
+}
+
+#manage_cluster_commands td {
+  padding-right: 15px;
+}
+
 #config_options {
   font-family: "Overpass";
   border-spacing: 15;
@@ -421,6 +430,7 @@ input[type=text], input[type=submit] {
   padding-top: 20px;
   clear: left;
   vertical-align: middle;
+  font-family: "Liberation";
 }
 
 #node_sub_info * {
@@ -545,6 +555,7 @@ table.datatable td, table.datatable a {
   font-family: "Liberation";
   font-size: 12px;
   color: #2b85db;
+  font-weight: normal;
 }
 
 #copyright {

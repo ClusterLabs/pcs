@@ -23,7 +23,20 @@ function create_group() {
   }
 }
 
-function verify_remove() {
+function verify_remove(error_message, ok_message) {
+  if (!error_message)
+    error_message = "You must select at least one node.";
+  if (!ok_message)
+    ok_message = "Remove resource(s)";
+
+  var buttonOpts = {}
+  buttonOpts[ok_message] = function() {
+	  $('#node_list > form').submit();
+  };
+  buttonOpts["Cancel"] = function() {
+    $(this).dialog("close");
+  };
+
   var list_of_nodes = "<ul>";
   var nodes_to_remove = 0;
   $("#node_list :checked").each(function (index,element) {
@@ -35,16 +48,10 @@ function verify_remove() {
     $("#resource_to_remove").html(list_of_nodes);
     $("#verify_remove").dialog({title: 'Resource Removal',
       modal: true, resizable: false,
-      buttons: {
-	"Remove resource(s)": function() {
-	  $('#node_list > form').submit();
-	},
-      Cancel: function() {
-	$(this).dialog("close");
-      }}
+      buttons: buttonOpts
     });
   } else {
-    alert("You must select at least one node.");
+    alert(error_message);
   }
 }
 
@@ -213,4 +220,34 @@ function setup_resource_links() {
   $("#resource_history_link").click(function () {
     alert("Noy Yet Implemented");
   });
+}
+
+function create_cluster_dialog() {
+  var buttonOpts = {}
+
+  buttonOpts["Create Cluster"] = function() {
+	  $('#create_new_cluster_form').submit();
+  };
+
+  buttonOpts["Cancel"] = function() {
+    $(this).dialog("close");
+  };
+
+  $("#create_new_cluster").dialog({title: 'Create Cluster',
+    modal: false, resizable: false,
+    width: 'auto',
+    buttons: buttonOpts
+  });
+}
+
+function create_cluster_add_nodes() {
+  node_list = $("#create_new_cluster_form tr");
+  cur_num_nodes = node_list.length - 3;
+  first_node = node_list.eq(1);
+  new_node = first_node.clone();
+  $("input",new_node).attr("name", "node-"+(cur_num_nodes+2));
+  $("td", new_node).first().text("Node " + (cur_num_nodes+2)+ ":");
+  new_node.insertBefore(node_list.last());
+  if (node_list.length == 9)
+    $("#create_new_cluster_form tr").last().remove();
 }

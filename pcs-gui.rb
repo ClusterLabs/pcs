@@ -6,6 +6,7 @@ require 'rexml/document'
 require './resource.rb'
 require './remote.rb'
 require './fenceagent.rb'
+require './cluster.rb'
 require 'webrick'
 require 'pp'
 require 'webrick/https'
@@ -17,6 +18,7 @@ use Rack::CommonLogger
 also_reload './resource.rb'
 also_reload './remote.rb'
 also_reload './fenceagent.rb'
+also_reload './cluster.rb'
 
 @@cluster_name = `corosync-cmapctl totem.cluster_name`.gsub(/.*= /,"").strip
 configure do
@@ -26,6 +28,7 @@ configure do
   PCS = "/root/pcs/pcs/pcs" 
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
+  SETTINGS_FILE = "pcs_settings.conf"
 end
 
 set :port, 2222
@@ -252,6 +255,12 @@ get '/nodes/?:node?' do
     }
   }
   erb :nodes, :layout => :main
+end
+
+get '/manage' do
+  @manage = true
+  @clusters = [Cluster.new("my_cluster_name",["f1"], 3), Cluster.new("mc2",["f2"], 8)]
+  erb :manage, :layout => :main
 end
 
 get '/' do

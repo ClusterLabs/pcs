@@ -1,0 +1,69 @@
+<table id="main">
+  <tr><td id="page_header" colspan=3 style="vertical-align:middle;">
+      <table id="manage_cluster_commands"><tr>
+	  <td>
+	    MANAGE CLUSTERS
+	  </td>
+	  </td>
+	  <td>
+	      <a href="#" class="x sprites"></a>
+	    <div class="link">
+	      <a href="#" onclick="verify_remove('You must select at least one cluster to remove', 'Remove Cluster(s)');">Remove</a>
+	    </div>
+	  </td>
+	  <td>
+	    <a href="#" class="plus sprites"></a>
+	    <div class="link">
+	      <a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});">
+		Add Existing
+	      </a>
+	    </div>
+	  </td>
+	  <td>
+	    <a href="#" class="plus sprites"></a>
+	    <div class="link">
+	      <a href="#" onclick="create_cluster_dialog();">Create New</a>
+	    </div>
+	  </td>
+	</tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="borderbottom" colspan=3>
+    </td>
+  </tr>
+  <tr>
+    <td id="node_list" style="width:400px;">
+      <%= erb :_cluster_list %>
+    </td>
+    <td id="node_info" colspan=2>
+      <div id="node_info_header">
+	<div id="node_info_header_title">INFORMATION ABOUT CLUSTERS</div>
+      </div>
+      <div id="node_sub_info">Select a cluster to view more detailed cluster information</div>
+    </td>
+  </tr>
+</table>
+<div id="verify_remove" style="display: none;">
+  <p style="font-size:12px;">Are you sure you want to remove the following cluster(s) from the GUI?</p>
+  <span id="resource_to_remove"></span>
+</div>
+<div id="create_new_cluster" style="display: none;">
+  <form id="create_new_cluster_form">
+    <br>
+    Enter the hostnames of the nodes you would like to use to create a cluster:
+    <br>
+    <br>
+    <table>
+      <tr><td align=right>Cluster Name:</td><td><input size="50" name="cluster-name" type="text"></input></td></tr>
+      <tr><td align=right>Node 1:</td><td><input size="50" name="node-1" type="text"></input></td></tr>
+      <tr><td align=right>Node 2:</td><td><input size="50" name="node-2" type="text"></input></td></tr>
+      <tr><td></td><td onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td></tr>
+    </table>
+  </form>
+</div>
+<script type="text/javascript">
+  $(window).load(function () {
+      });
+</script>
