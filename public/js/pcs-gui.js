@@ -65,12 +65,9 @@ function node_update() {
       data = jQuery.parseJSON(data);
       uptime = data.uptime;
       if (uptime) {
-	usplit = uptime.split(",");
-	uptime = usplit[0].split(" up ")[1] + usplit[1];
 	if (!uptime) {
 	  uptime = data.uptime;
 	}
-
       } else {
 	uptime = "Unknown";
       }

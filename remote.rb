@@ -77,7 +77,13 @@ def node_status(params)
       return '{"noresponse":true}'
     end
   end
-  uptime = `uptime`.chomp
+
+  uptime = `cat /proc/uptime`.chomp.split(' ')[0].split('.')[0].to_i
+  mm, ss = uptime.divmod(60)
+  hh, mm = mm.divmod(60)
+  dd, hh = hh.divmod(24)
+  uptime = "%d days, %02d:%02d:%02d" % [dd, hh, mm, ss]
+
   `systemctl status corosync.service`
   corosync_status = $?.success?
   `systemctl status pacemaker.service`
