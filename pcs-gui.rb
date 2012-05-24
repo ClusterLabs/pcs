@@ -7,6 +7,7 @@ require './resource.rb'
 require './remote.rb'
 require './fenceagent.rb'
 require './cluster.rb'
+require './config.rb'
 require 'webrick'
 require 'pp'
 require 'webrick/https'
@@ -19,8 +20,12 @@ also_reload './resource.rb'
 also_reload './remote.rb'
 also_reload './fenceagent.rb'
 also_reload './cluster.rb'
+also_reload './config.rb'
 
-@@cluster_name = `corosync-cmapctl totem.cluster_name`.gsub(/.*= /,"").strip
+before do
+  @@cluster_name = `corosync-cmapctl totem.cluster_name`.gsub(/.*= /,"").strip
+end
+
 configure do
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
@@ -37,8 +42,6 @@ set :logging, true
 if not defined? @@cur_node_name
   @@cur_node_name = `hostname`.chomp
 end
-
-@nodes = (1..7)
 
 helpers do
   def setup
@@ -257,10 +260,41 @@ get '/nodes/?:node?' do
   erb :nodes, :layout => :main
 end
 
-get '/manage' do
+get '/manage/?' do
   @manage = true
-  @clusters = [Cluster.new("my_cluster_name",["f1"], 3), Cluster.new("mc2",["f2"], 8)]
+  pcs_config = PCSConfig.new
+  @clusters = pcs_config.clusters
   erb :manage, :layout => :main
+end
+
+post '/manage/newcluster' do
+  pcs_config = PCSConfig.new
+  @manage = true
+  @cluster_name = params[:clustername]
+  @nodes = []
+  params.each {|k,v|
+    if k.start_with?("node-") and v != ""
+      @nodes << v
+    end
+  }
+  pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
+  pcs_config.save
+
+  Open3.popen3(PCS, "cluster", "configure", "sync_start", @cluster_name, *@nodes) { |stdin, stdout, stderr, wait_thr|
+    exit_status = wait_thr.value
+  }
+  redirect '/manage'
+end
+
+post '/manage/removecluster' do
+  pcs_config = PCSConfig.new
+  params.each { |k,v|
+    if k.start_with?("clusterid-")
+      pcs_config.remove_cluster(k.sub("clusterid-",""))
+    end
+  }
+  pcs_config.save
+  redirect '/manage'
 end
 
 get '/' do

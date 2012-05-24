@@ -219,11 +219,90 @@ function setup_resource_links() {
   });
 }
 
+function checkClusterNodes() {
+  var nodes = [];
+  $('input[name^="node-"]').each(function(i,e) {
+    if (e.value != "") {
+      nodes.push(e.value)
+    }
+  });
+
+  $.post('/remote/check_gui_status',{"nodes": nodes.join(",")});
+  $.ajax({
+    type: 'POST',
+    url: '/remote/check_gui_status',
+    data: {"nodes": nodes.join(",")},
+    timeout: 2000,
+    success: function (data) {
+      mydata = jQuery.parseJSON(data);
+      update_create_cluster_dialog(mydata);
+
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      alert("ERROR: Unable to contact server");
+    }
+  });
+}
+
+function update_create_cluster_dialog(nodes) {
+  var keys = [];
+  for (var i in nodes) {
+    if (nodes.hasOwnProperty(i)) {
+      keys.push(i);
+    }
+  }
+
+  var bad_nodes = 0;
+  var good_nodes = 0;
+  var cluster_name = $('input[name^="clustername"]').val()
+    $('#create_new_cluster input[name^="node-"]').each(function() {
+      if ($(this).val() == "") {
+	$(this).parent().prev().css("background-color", "");
+	return;
+      }
+      for (var i = 0; i < keys.length; i++) {
+	if ($(this).val() == keys[i]) {
+	  if (nodes[keys[i]] != "Online") {
+	    $(this).parent().prev().css("background-color", "red");
+	    bad_nodes++;
+	  } else {
+	    $(this).parent().prev().css("background-color", "");
+	    good_nodes++;
+	  }
+	}
+      }
+    });
+  if (bad_nodes != 0) {
+    $("#unable_to_connect_error_msg").show();
+  } else {
+    $("#unable_to_connect_error_msg").hide();
+  }
+
+  if (good_nodes == 0 && bad_nodes == 0) {
+    $("#at_least_one_node_error_msg").show();
+  } else {
+    $("#at_least_one_node_error_msg").hide();
+  }
+
+  if (cluster_name == "") {
+    $("#bad_cluster_name_error_msg").show();
+  } else {
+    $("#bad_cluster_name_error_msg").hide();
+  }
+
+
+  if (good_nodes != 0 && bad_nodes == 0 && cluster_name != "") {
+    $('#create_new_cluster_form').submit();
+  }
+
+}
+
 function create_cluster_dialog() {
   var buttonOpts = {}
 
   buttonOpts["Create Cluster"] = function() {
-	  $('#create_new_cluster_form').submit();
+          checkClusterNodes();
+//	  $('#create_new_cluster_form').submit();
   };
 
   buttonOpts["Cancel"] = function() {
@@ -238,13 +317,14 @@ function create_cluster_dialog() {
 }
 
 function create_cluster_add_nodes() {
-  node_list = $("#create_new_cluster_form tr");
-  cur_num_nodes = node_list.length - 3;
-  first_node = node_list.eq(1);
+  node_list = $("#create_new_cluster_form tr").has("input[name^='node-']");;
+  cur_num_nodes = node_list.length;
+  first_node = node_list.eq(0);
   new_node = first_node.clone();
-  $("input",new_node).attr("name", "node-"+(cur_num_nodes+2));
-  $("td", new_node).first().text("Node " + (cur_num_nodes+2)+ ":");
-  new_node.insertBefore(node_list.last());
-  if (node_list.length == 9)
-    $("#create_new_cluster_form tr").last().remove();
+  $("input",new_node).attr("name", "node-"+(cur_num_nodes+1));
+  $("input",new_node).val("");
+  $("td", new_node).first().text("Node " + (cur_num_nodes+1)+ ":");
+  new_node.insertAfter(node_list.last());
+  if (node_list.length == 7)
+    $("#create_new_cluster_form tr").has("input[name^='node-']").last().next().remove();
 }

@@ -25,6 +25,8 @@ def remote(params)
     return resource_start(params)
   when "resource_stop"
     return resource_stop(params)
+  when "check_gui_status"
+    return check_gui_status(params)
   end
 end
 
@@ -57,6 +59,22 @@ def set_cluster_conf(params)
     return false
     puts "Invalid corosync.conf file"
   end
+end
+
+def check_gui_status(params)
+  node_results = {}
+  if params[:nodes] != nil and params[:nodes] != ""
+    node_array = params[:nodes].split(",")
+   Open3.popen3(PCS, "cluster", "gui-status", *node_array) { |stdin, stdout, stderr, wait_thr|
+     exit_status = wait_thr.value
+     stdout.readlines.each {|l|
+       l = l.chomp
+       out = l.split(/: /)
+       node_results[out[0]] = out[1]
+     }
+   }
+  end
+  return JSON.generate(node_results)
 end
 
 def create_cluster(params)

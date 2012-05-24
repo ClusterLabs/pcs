@@ -46,20 +46,23 @@
   </tr>
 </table>
 <div id="verify_remove" style="display: none;">
-  <p style="font-size:12px;">Are you sure you want to remove the following cluster(s) from the GUI?</p>
+  <p style="font-size:12px;">Are you sure you want to remove the following cluster(s) from the GUI? (This only removes the cluster from the GUI, it does not stop the cluster from running)</p>
   <span id="resource_to_remove"></span>
 </div>
 <div id="create_new_cluster" style="display: none;">
-  <form id="create_new_cluster_form">
+  <form id="create_new_cluster_form" action="/manage/newcluster" method="post">
     <br>
     Enter the hostnames of the nodes you would like to use to create a cluster:
     <br>
     <br>
     <table>
-      <tr><td align=right>Cluster Name:</td><td><input size="50" name="cluster-name" type="text"></input></td></tr>
+      <tr><td align=right>Cluster Name:</td><td><input size="50" name="clustername" type="text"></input></td></tr>
       <tr><td align=right>Node 1:</td><td><input size="50" name="node-1" type="text"></input></td></tr>
       <tr><td align=right>Node 2:</td><td><input size="50" name="node-2" type="text"></input></td></tr>
       <tr><td></td><td onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td></tr>
+      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg" style="display:none;">Unable to contact nodes highlighted in red.<br>Please make sure pcs-gui is started on all nodes.</span></td></tr>
+      <tr><td align=center style="color: red" colspan=2"><span id="at_least_one_node_error_msg" style="display:none;">At least one valid node must be entered.</span></td></tr>
+      <tr><td align=center style="color: red" colspan=2"><span id="bad_cluster_name_error_msg" style="display:none;">You may not leave the cluster name field blank</span></td></tr>
     </table>
   </form>
 </div>
