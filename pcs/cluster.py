@@ -22,6 +22,8 @@ def cluster_cmd(argv):
         corosync_configure(argv)
     elif (sub_cmd == "sync"):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
+    elif (sub_cmd == "gui-status"):
+        cluster_gui_status(argv)
     elif (sub_cmd == "start"):
         start_cluster(argv)
     elif (sub_cmd == "stop"):
@@ -53,6 +55,23 @@ def sync(partial_argv):
 def sync_nodes(nodes,config):
     for node in nodes:
         utils.setCorosyncConfig(node,config)
+
+# If no arguments get current cluster node status, otherwise get listed
+# nodes status
+def cluster_gui_status(argv):
+    if len(argv) == 0:
+        check_nodes(utils.getNodesFromCorosyncConf())
+    else:
+        check_nodes(argv)
+
+# Check and see if pcs-gui is running on the nodes listed
+def check_nodes(nodes):
+    for node in nodes:
+        status = utils.checkStatus(node)
+        if status[0] == 0:
+            print node + ": Online"
+        else:
+            print node + ": Offline"
     
 def corosync_configure(argv,returnConfig=False):
     fedora_config = True

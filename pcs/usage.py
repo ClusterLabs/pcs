@@ -61,6 +61,9 @@ Commands:
     stop        Stop corosync & pacemaker
     startall    Start corosync & pacemaker on all nodes
     stopall     Stop corosync & pacemaker on all nodes
+    gui-status  [node] [...]
+        Get current status of pcs-gui on nodes specified, or on all nodes
+        configure in corosync.conf if no nodes are specified
 
     sync
         Sync corosync configuration to all nodes found from current

@@ -11,6 +11,11 @@ import re
 usefile = False
 filename = ""
 
+# Check status of node
+def checkStatus(node):
+    out = sendHTTPRequest(node, 'remote/status', None, False)
+    return out
+
 # Set the corosync.conf file on the specified node
 def setCorosyncConfig(node,config):
     data = urllib.urlencode({'corosync_conf':config})
@@ -22,18 +27,27 @@ def startCluster(node):
 def stopCluster(node):
     sendHTTPRequest(node, 'remote/cluster_stop')
 
-def sendHTTPRequest(host, request, data = None):
+# Send an HTTP request to a node return a tuple with status, data
+# If status is 0 then data contains server response
+# Otherwise if non-zero then data contains error message
+def sendHTTPRequest(host, request, data = None, printResult = True):
     url = 'http://' + host + ':2222/' + request
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
     urllib2.install_opener(opener)
     try:
         result = opener.open(url,data)
         html = result.read()
-        print host + ": " + html
+        if printResult:
+            print host + ": " + html
+        return (0,html)
     except urllib2.HTTPError, e:
-        print "Error connecting to %s - (HTTP error: %d)" % (host,e.code)
+        if printResult:
+            print "Error connecting to %s - (HTTP error: %d)" % (host,e.code)
+        return (1,"Error connecting to %s - (HTTP error: %d)" % (host,e.code))
     except urllib2.URLError, e:
-        print "Unable to connect to %s (%s)" % (host, e.reason)
+        if printResult:
+            print "Unable to connect to %s (%s)" % (host, e.reason)
+        return (2,"Unable to connect to %s (%s)" % (host, e.reason))
 
 def getNodesFromCorosyncConf():
     nodes = []
