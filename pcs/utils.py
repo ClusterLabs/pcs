@@ -75,6 +75,22 @@ def getCorosyncNodes():
 
     return nodes
 
+def getCorosyncActiveNodes():
+    args = ["/sbin/corosync-quorumtool", "-l"]
+    nodes = []
+    output,retval = run(args)
+    if retval != 0:
+        return []
+
+    in_nodes = False
+    for line in output.rstrip().split('\n'):
+        if in_nodes:
+            nodes.append(line.split()[2])
+        if not in_nodes and "Nodeid" in line:
+            in_nodes = True
+
+    return nodes
+    
 # Run command, with environment and return (output, retval)
 def run(args):
     env_var = os.environ

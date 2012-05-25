@@ -34,13 +34,29 @@ def actions_status(argv):
 
 # Parse crm_mon for status
 def nodes_status(argv):
-    if len(argv) == 1 and argv[0] == "corosync":
-        nodes = utils.getCorosyncNodes()
-        print "Corosync Nodes:",
-        for node in nodes:
+    if len(argv) == 1 and (argv[0] == "corosync" or argv[0] == "both"):
+        all_nodes = utils.getCorosyncNodes()
+        online_nodes = utils.getCorosyncActiveNodes()
+        offline_nodes = []
+        for node in all_nodes:
+            if node in online_nodes:
+                next
+            else:
+                offline_nodes.append(node)
+
+        online_nodes.sort()
+        offline_nodes.sort()
+        print "Corosync Nodes:"
+        print " Online:",
+        for node in online_nodes:
             print node,
-        print
-        sys.exit(0)
+        print ""
+        print " Offline:",
+        for node in offline_nodes:
+            print node,
+        print ""
+        if argv[0] != "both":
+            sys.exit(0)
 
 
     (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1"])
@@ -49,7 +65,7 @@ def nodes_status(argv):
         print "Error running crm_mon, is pacemaker running?"
         sys.exit(1)
 
-    print "Nodes:"
+    print "Pacemaker Nodes:"
 
     onlinereg = re.compile(r"^Online: (.*)$",re.M)
     onlinematch = onlinereg.search(output)
@@ -57,6 +73,7 @@ def nodes_status(argv):
         onlinenodes = onlinematch.group(1).split(" ")
         onlinenodes.pop(0) 
         onlinenodes.pop()
+        onlinenodes.sort()
         print " Online:",
         for node in onlinenodes:
             print node,
@@ -68,6 +85,7 @@ def nodes_status(argv):
         offlinenodes = offlinematch.group(1).split(" ")
         offlinenodes.pop(0) 
         offlinenodes.pop()
+        offlinenodes.sort()
         print " Offline:",
         for node in offlinenodes:
             print node,

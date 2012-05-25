@@ -4,6 +4,7 @@ import re
 import usage
 import urllib2
 import utils
+import sys
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
