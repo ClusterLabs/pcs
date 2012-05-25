@@ -55,7 +55,7 @@ function verify_remove(error_message, ok_message) {
   }
 }
 
-function node_update() {
+function remote_node_update() {
   node = $('#node_info_header_title_name').first().text();
   $.ajax({
     type: 'GET',
@@ -97,19 +97,48 @@ function node_update() {
 	  corosync_status = "Stopped";
 	  setStatus($('#corosync_status'),false);
 	}
+
       }
       mydata = data;
       $("#uptime").html(uptime);
       $("#pacemaker_status").html(pacemaker_status);
       $("#corosync_status").html(corosync_status);
       $("#pcsd_status").html(pcsd_status);
-      window.setTimeout(node_update,4000);
+      window.setTimeout(remote_node_update,4000);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
-      window.setTimeout(node_update, 60000);
+      window.setTimeout(remote_node_update, 60000);
     }
   });
 }
+
+function local_node_update() {
+  node = $('#node_info_header_title_name').first().text();
+  $.ajax({
+    type: 'GET',
+    url: '/remote/status',
+    timeout: 2000,
+    success: function (data) {
+      data = jQuery.parseJSON(data);
+      if ($.inArray(node,data.corosync_online) > -1) {
+	setStatus($('#corosync_online_status'), true, "Corosync Connected")
+      } else {
+	setStatus($('#corosync_online_status'), false, "Corosync Not Connected")
+      }
+      if ($.inArray(node,data.pacemaker_online) > -1) {
+	setStatus($('#pacemaker_online_status'), true, "Pacemaker Connected")
+      } else {
+	setStatus($('#pacemaker_online_status'), false, "Pacemaker Not Connected")
+      }
+      window.setTimeout(local_node_update, 4000);
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      window.setTimeout(local_node_update, 60000);
+    }
+  });
+}
+      
+
 
 function resource_list_setup() {
   $('.node_list_check input[type=checkbox]').click(function(e) {
@@ -178,7 +207,7 @@ function resource_update() {
   });
 }
 
-function setStatus(item,running) {
+function setStatus(item, running, message) {
   if (running) {
     item.removeClass();
     item.addClass('status');
@@ -186,6 +215,8 @@ function setStatus(item,running) {
     item.removeClass();
     item.addClass('status-offline');
   }
+  if (typeof message !== 'undefined')
+    item.html(message)
 }
 
 function setup_node_links() {

@@ -50,7 +50,10 @@ end
 
 def set_cluster_conf(params)
   if params[:corosync_conf] != nil and params[:corosync_conf] != ""
-    FileUtils.cp(COROSYNC_CONF,COROSYNC_CONF + "." + Time.now.to_i.to_s)
+    begin
+      FileUtils.cp(COROSYNC_CONF,COROSYNC_CONF + "." + Time.now.to_i.to_s)
+    rescue
+    end
     File.open("/etc/corosync/corosync.conf",'w') {|f|
       f.write(params[:corosync_conf])
     }
@@ -106,7 +109,37 @@ def node_status(params)
   corosync_status = $?.success?
   `systemctl status pacemaker.service`
   pacemaker_status = $?.success?
-  status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status }
+
+  corosync_online = []
+  corosync_offline = []
+  pacemaker_online = []
+  pacemaker_offline = []
+  in_pacemaker = false
+  stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes both")
+  stdout.readlines.each {|l|
+    l = l.chomp
+    if l.start_with?("Pacemaker Nodes:")
+      in_pacemaker = true
+    end
+    if l.end_with?(":")
+      next
+    end
+
+    title,nodes = l.split(/: /,2)
+    if nodes == nil
+      next
+    end
+
+    if title == " Online"
+      in_pacemaker ? pacemaker_online.concat(nodes.split(/ /)) : corosync_online.concat(nodes.split(/ /))
+    else
+      in_pacemaker ? pacemaker_offline.concat(nodes.split(/ /)) : corosync_offline.concat(nodes.split(/ /))
+    end
+  }
+
+  status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
+ "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
+ "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline }
   ret = JSON.generate(status)
   return ret
 end

@@ -7,6 +7,6 @@ class Cluster
   end
 
   def ui_address
-    return "http://" + nodes[0] + ":2222/"
+    return "http://" + nodes[0] + ":2222/nodes"
   end
 end

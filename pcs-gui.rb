@@ -31,6 +31,7 @@ configure do
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
   PENGINE = "/usr/libexec/pacemaker/pengine"
   PCS = "/root/pcs/pcs/pcs" 
+#  PCS = "/sbin/pcs" 
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   SETTINGS_FILE = "pcs_settings.conf"
@@ -104,7 +105,7 @@ post '/resourceadd' do
   param_line = getParamLine(params)
   puts "pcs resource create #{params[:name]} #{params[:resource_type]} #{param_line}"
   puts `#{PCS} resource create #{params[:name]} #{params[:resource_type]} #{param_line}`
-  if params[:resource_group]
+  if params[:resource_group] and params[:resource_group] != ""
     puts "#{PCS} resource group add #{params[:resource_group]} #{params[:name]}"
     puts `#{PCS} resource group add #{params[:resource_group]} #{params[:name]}`
   end
@@ -299,7 +300,7 @@ end
 
 get '/' do
   print "Redirecting...\n"
-  call(env.merge("PATH_INFO" => '/nodes'))
+  call(env.merge("PATH_INFO" => '/manage'))
 end
 
 get '/remote/?:command?' do

@@ -55,14 +55,19 @@
 	    <div id="node_sub_info">
 	      <table>
 		<tr>
-		  <td><input style="margin-right: 50px;" type="text" value="<%=@cur_node.name%>" size="35" class="text_field"></td>
+		  <td rowspan=2><input style="margin-right: 50px;" type="text" value="<%=@cur_node.name%>" size="35" class="text_field"></td>
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
-		    <% if @cur_node.active %>
-		      <div class="status">Online</div>
-		    <% else %>
-		      <div class="status-offline">Offline</div>
-		    <% end %>
+		    <!--		      <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pacemaker_status" style="float:left" class="status"></div></td></tr> -->
+		    <div id="pacemaker_online_status">
+		    </div>
+		  </td>
+		</tr>
+		<tr>
+		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
+		  <td>
+		    <div id="corosync_online_status">
+		    </div>
 		  </td>
 		</tr>
 	      </table>
@@ -178,6 +183,7 @@
 <script type="text/javascript">
   $(window).load(function () {
       setup_node_links();
-      node_update();
+      local_node_update();
+      remote_node_update();
   });
 </script>
