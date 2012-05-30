@@ -72,38 +72,27 @@ function remote_node_update() {
 	uptime = "Unknown";
       }
       if (data.noresponse) {
-	pcsd_status = "Stopped";
-	pacemaker_status = "Unknown";
-	corosync_status = "Unknown";
-	setStatus($('#pacemaker_status'),false);
-	setStatus($('#corosync_status'),false);
-	setStatus($('#pcsd_status'),false);
+	setStatus($('#pacemaker_status'),2, "Unknown");
+	setStatus($('#corosync_status'),2, "Unknown");
+	setStatus($('#pcsd_status'),1,"Stopped");
       } else  {
-	pcsd_status = "Running";
-	setStatus($('#pcsd_status'),true);
+	setStatus($('#pcsd_status'),0, "Running");
 
 	if (data.pacemaker) {
-	  pacemaker_status = "Running";
-	  setStatus($('#pacemaker_status'),true);
+	  setStatus($('#pacemaker_status'),0, "Running");
 	} else {
-	  pacemaker_status = "Stopped";
-	  setStatus($('#pacemaker_status'),false);
+	  setStatus($('#pacemaker_status'),1, "Stopped");
 	}
 
 	if (data.corosync) {
-	  corosync_status = "Running";
-	  setStatus($('#corosync_status'),true);
+	  setStatus($('#corosync_status'),0, "Running");
 	} else {
-	  corosync_status = "Stopped";
-	  setStatus($('#corosync_status'),false);
+	  setStatus($('#corosync_status'),1, "Running");
 	}
 
       }
       mydata = data;
       $("#uptime").html(uptime);
-      $("#pacemaker_status").html(pacemaker_status);
-      $("#corosync_status").html(corosync_status);
-      $("#pcsd_status").html(pcsd_status);
       window.setTimeout(remote_node_update,4000);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -121,14 +110,14 @@ function local_node_update() {
     success: function (data) {
       data = jQuery.parseJSON(data);
       if ($.inArray(node,data.corosync_online) > -1) {
-	setStatus($('#corosync_online_status'), true, "Corosync Connected")
+	setStatus($('#corosync_online_status'), 0, "Corosync Connected")
       } else {
-	setStatus($('#corosync_online_status'), false, "Corosync Not Connected")
+	setStatus($('#corosync_online_status'), 1, "Corosync Not Connected")
       }
       if ($.inArray(node,data.pacemaker_online) > -1) {
-	setStatus($('#pacemaker_online_status'), true, "Pacemaker Connected")
+	setStatus($('#pacemaker_online_status'), 0, "Pacemaker Connected")
       } else {
-	setStatus($('#pacemaker_online_status'), false, "Pacemaker Not Connected")
+	setStatus($('#pacemaker_online_status'), 1, "Pacemaker Not Connected")
       }
       window.setTimeout(local_node_update, 4000);
     },
@@ -195,9 +184,9 @@ function resource_update() {
       $("#cur_res_loc").html(data.location);
       $("#res_status").html(data.status);
       if (data.status == "Running") {
-	setStatus($("#res_status"), true);
+	setStatus($("#res_status"), 0);
       } else {
-	setStatus($("#res_status"), false);
+	setStatus($("#res_status"), 1);
       }
       window.setTimeout(resource_update, 4000);
     },
@@ -207,14 +196,22 @@ function resource_update() {
   });
 }
 
-function setStatus(item, running, message) {
-  if (running) {
+// Set the status of a service
+// 0 = Running (green)
+// 1 = Stopped (red)
+// 2 = Unknown (gray)
+function setStatus(item, status, message) {
+  if (status == 0) {
     item.removeClass();
     item.addClass('status');
-  } else {
+  } else if (status == 1) {
     item.removeClass();
     item.addClass('status-offline');
+  } else if (status == 2) {
+    item.removeClass();
+    item.addClass('status-unknown');
   }
+
   if (typeof message !== 'undefined')
     item.html(message)
 }
@@ -358,4 +355,10 @@ function create_cluster_add_nodes() {
   new_node.insertAfter(node_list.last());
   if (node_list.length == 7)
     $("#create_new_cluster_form tr").has("input[name^='node-']").last().next().remove();
+}
+
+function show_hide_constraints(element) {
+  //$(element).parent().siblings().each (function(index,element) {
+  $(element).parent().siblings().toggle("slow");
+  $(element).children("span, p").toggle();
 }

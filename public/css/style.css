@@ -591,6 +591,16 @@ table.datatable td, table.datatable a {
   color: red;
 }
 
+.status-unknown {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: gray;
+}
+
+.datatable_header span {
+  margin-top: 4px;
+}
+
 .sprites {
   background-image: url("../images/action-icons.png");
   background-color     : transparent; 
@@ -613,3 +623,4 @@ table.datatable td, table.datatable a {
 .history { background-position: -256px -17px; }
 .previewmap { background-position: -400px -1px; }
 .downarrow { background-position: -528px -1px; }
+.rightarrow { background-position: -544 -1px; }

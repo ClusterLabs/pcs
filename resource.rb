@@ -41,6 +41,83 @@ def getResourceOptions(resource_id)
   return ret
 end
 
+# Returns two arrays, one that lists resources that start before
+# one that lists resources that start after
+def getOrderingConstraints(resource_id)
+  ordering_constraints = `#{PCS} constraint order show`
+  before = []
+  after = []
+  ordering_constraints.each_line { |line|
+    if line.start_with?("Ordering Constraints:")
+      next
+    end
+    line.strip!
+    sline = line.split(/ /,3)
+    pp sline
+    if (sline[0] == resource_id)
+      after << sline[2]
+    end
+    if (sline[2] == resource_id)
+      before << sline[0]
+    end
+  }
+  return before,after
+end
+
+# Returns two arrays, one that lists nodes that can run resource
+# one that lists nodes that cannot
+def getLocationConstraints(resource_id)
+  location_constraints = `#{PCS} constraint location show resources #{resource_id}`
+  enabled_nodes = []
+  disabled_nodes = []
+  location_constraints.each_line { |line|
+    if line.start_with?("Location Constraints:") or line.start_with?("  Resource:")
+      next
+    end
+    line.strip!
+    if line.start_with?("Enabled on:")
+      enabled_nodes.concat(line.split(/: /,2)[1..-1])
+    end
+    if line.start_with?("Disabled on:")
+      disabled_nodes.concat(line.split(/: /,2)[1..-1])
+    end
+  }
+  return enabled_nodes,disabled_nodes
+end
+
+# Returns two arrays, one that lists resources that should be together
+# one that lists resources that should be apart
+def getColocationConstraints(resource_id)
+  colocation_constraints = `#{PCS} constraint colocation show`
+  together = []
+  apart = []
+  colocation_constraints.each_line { |line|
+    if line.start_with?("Colocation Constraints:")
+      next
+    end
+    line.strip!
+    sline = line.split(/ /,4)
+    score = sline[3] == nil ? "INFINITY" : sline[3][1..-2]
+    pp sline
+    if (sline[0] == resource_id)
+      if score == "INFINITY"  or (score != "-INFINITY" and score.to_i >= 0)
+	together << [sline[2],score]
+      else
+	apart << [sline[2],score]
+      end
+    end
+
+    if (sline[2] == resource_id)
+      if score == "INFINITY"  or (score != "-INFINITY" and score.to_i >= 0)
+	together << [sline[0],score]
+      else
+	apart << [sline[0],score]
+      end
+    end
+  }
+  return together,apart
+end
+
 def getResourceMetadata(resourcepath)
   ENV['OCF_ROOT'] = OCF_ROOT
   metadata = `#{resourcepath} meta-data`

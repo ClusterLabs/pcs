@@ -220,7 +220,12 @@ end
 	end
       end
       @resource_agents = getResourceAgents(@cur_resource.agentname)
+      @ord_dep_before, @ord_dep_after  = getOrderingConstraints(@cur_resource.id)
+      @colo_dep_together, @colo_dep_apart = getColocationConstraints(@cur_resource.id)
+      @enabled_nodes, @disabled_nodes = getLocationConstraints(@cur_resource.id)
     end
+
+
     if path.start_with? '/resource_list'
       erb :_resource_list
     else
