@@ -75,7 +75,7 @@
 		      <table class="datatable">
 			<tr><th>Node</th><th>Score</th><th>Stickyness</th><th>Remove</th></tr>
 			<% @enabled_nodes.each { |loc,score| %>
-			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
+			  <tr><td><a href="/nodes/<%=loc%>"><%= loc %></a></td>
 			    <td><%=score%></td>
 			    <td></td>
 			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
