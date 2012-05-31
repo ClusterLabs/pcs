@@ -73,11 +73,12 @@
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>NAME</th><th>Score</th><th>Stickyness</th></tr>
+			<tr><th>Node</th><th>Score</th><th>Stickyness</th><th>Remove</th></tr>
 			<% @enabled_nodes.each { |loc,score| %>
 			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td><%=score%></td>
 			    <td></td>
+			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
 			  </tr>
 			<% } %>
 			<% @disabled_nodes.each { |loc| %>
@@ -85,10 +86,11 @@
 			    <td ><a style="color: red;" href="/resources/<%=loc%>"><%= loc %> (Not allowed)</a></td>
 			    <td></td>
 			    <td></td>
+			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
 			  </tr>
 			<% } %>
 			<% if @enabled_nodes.length == 0 and @disabled_nodes.length == 0 %>
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
 			<% end %>
 		      </table>
 		    </div>
@@ -100,11 +102,12 @@
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Resource</th><th>Before/After</th><th>Score</th></tr>
+			<tr><th>Resource</th><th>Before/After</th><th>Score</th><th>Remove</th></tr>
 			<% @ord_dep_before.each { |loc| %>
 			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td>Starts before <%=@cur_resource.id%></td>
 			    <td></td>
+			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
 			  </tr>
 			<% } %>
 			<% @ord_dep_after.each { |loc| %>
@@ -112,10 +115,11 @@
 			    <td ><a href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td>Starts after <%=@cur_resource.id%></td>
 			    <td></td>
+			    <td align=center><a href="#" class="remove">X</a></td>
 			  </tr>
 			<% } %>
 			<% if @ord_dep_before.length == 0 and @ord_dep_after.length == 0 %>
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
 			<% end %>
 		      </table>
 		    </div>
@@ -127,11 +131,12 @@
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Resource</th><th>Together/Apart</th><th>Score</th></tr>
+			<tr><th>Resource</th><th>Together/Apart</th><th>Score</th><th>Remove</th></tr>
 			<% @colo_dep_together.each { |loc, score| %>
 			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td>Together</td>
 			    <td><%=score%></td>
+			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
 			  </tr>
 			<% } %>
 			<% @colo_dep_apart.each { |loc, score| %>
@@ -139,10 +144,11 @@
 			    <td><a style="color: red;" href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td style="color: red;">Apart</td>
 			    <td style="color: red;"><%=score%></td>
+			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
 			  </tr>
 			<% } %>
 			<% if @colo_dep_together.length == 0 and @colo_dep_apart.length == 0 %>
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
 			<% end %>
 		      </table>
 		    </div>
