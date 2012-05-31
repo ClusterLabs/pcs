@@ -87,7 +87,7 @@ function remote_node_update() {
 	if (data.corosync) {
 	  setStatus($('#corosync_status'),0, "Running");
 	} else {
-	  setStatus($('#corosync_status'),1, "Running");
+	  setStatus($('#corosync_status'),1, "Stopped");
 	}
 
       }
@@ -361,4 +361,9 @@ function show_hide_constraints(element) {
   //$(element).parent().siblings().each (function(index,element) {
   $(element).parent().siblings().toggle("slow");
   $(element).children("span, p").toggle();
+}
+
+function show_hide_constraint_tables(element) {
+  $(element).siblings().hide();
+  $("#add_constraint_" + $(element).val()).show();
 }

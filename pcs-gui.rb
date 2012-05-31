@@ -8,6 +8,7 @@ require './remote.rb'
 require './fenceagent.rb'
 require './cluster.rb'
 require './config.rb'
+require './pcs.rb'
 require 'webrick'
 require 'pp'
 require 'webrick/https'
@@ -21,6 +22,7 @@ also_reload './remote.rb'
 also_reload './fenceagent.rb'
 also_reload './cluster.rb'
 also_reload './config.rb'
+also_reload './pcs.rb'
 
 before do
   @@cluster_name = `corosync-cmapctl totem.cluster_name`.gsub(/.*= /,"").strip
@@ -225,6 +227,7 @@ end
       @enabled_nodes, @disabled_nodes = getLocationConstraints(@cur_resource.id)
     end
 
+    @nodes_online, @nodes_offline = getNodes
 
     if path.start_with? '/resource_list'
       erb :_resource_list
@@ -301,6 +304,69 @@ post '/manage/removecluster' do
   }
   pcs_config.save
   redirect '/manage'
+end
+
+post '/resources_cmd/add_constraint' do
+  puts ""
+  puts "Add Constraint..."
+  puts ""
+  pp params
+  if params[:location_constraint]
+    params.each {|k,v|
+      if k.start_with?("deny-") and v == "on"
+	score = "-INFINITY"
+	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
+      elsif k.start_with?("allow-") and v == "on"
+	score = "INFINITY"
+	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
+      elsif k.start_with?("score-") and v != ""
+	score = v
+	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
+      end
+    }
+  elsif params[:order_constraint]
+    params.each {|k,v|
+      if k.start_with?("order-") and v != ""
+	if v.start_with?("before-")
+	  score = "INFINITY"
+	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
+	    sym = true
+	  else
+	    sym = false
+	  end
+	  add_order_constraint(v.split(/-/,2)[1], params[:cur_resource], score, sym)
+	elsif v.start_with?("after-")
+	  score = "INFINITY"
+	  add_order_constraint(params[:cur_resource], v.split(/-/,2)[1], score, sym)
+	end
+      end
+    }
+  elsif params[:colocation_constraint]
+    params.each {|k,v|
+      if k.start_with?("order-") and v != ""
+	puts "ORDER!"
+	if v.start_with?("together-")
+	  puts "TOGETHER!"
+	  if params["score-" + v.split(/-/,2)[1]] != nil
+	    score = params["score-" + v.split(/-/,2)[1]]
+	  else
+	    score = "INFINITY"
+	  end
+	  add_colocation_constraint(params[:cur_resource], v.split(/-/,2)[1], score)
+	elsif v.start_with?("apart-")
+	  if params["score-" + v.split(/-/,2)[1]] != nil
+	    score = params["score-" + v.split(/-/,2)[1]]
+	  else
+	    score = "-INFINITY"
+	  end
+	  add_colocation_constraint(params[:cur_resource], v.split(/-/,2)[1], score)
+	end
+      end
+    }
+
+  end
+
+  redirect '/resources/' + params[:cur_resource]
 end
 
 get '/' do

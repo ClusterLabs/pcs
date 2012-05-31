@@ -68,18 +68,34 @@ end
 # one that lists nodes that cannot
 def getLocationConstraints(resource_id)
   location_constraints = `#{PCS} constraint location show resources #{resource_id}`
-  enabled_nodes = []
-  disabled_nodes = []
+  enabled_nodes = {}
+  disabled_nodes = {}
   location_constraints.each_line { |line|
     if line.start_with?("Location Constraints:") or line.start_with?("  Resource:")
       next
     end
     line.strip!
     if line.start_with?("Enabled on:")
-      enabled_nodes.concat(line.split(/: /,2)[1..-1])
+      prev = nil
+      line.split(/: /,2)[1].split(/ /).each { |n|
+	if n.start_with?("(")
+	  enabled_nodes[prev] = n[1..-2]
+	else
+	  enabled_nodes[n] = "INFINITY"
+	  prev = n
+	end
+      }
     end
     if line.start_with?("Disabled on:")
-      disabled_nodes.concat(line.split(/: /,2)[1..-1])
+      prev = nil
+      line.split(/: /,2)[1].split(/ /).each { |n|
+	if n.start_with?("(")
+	  enabled_nodes[prev] = n[1..-2]
+	else
+	  enabled_nodes[n] = "-INFINITY"
+	  prev = n
+	end
+      }
     end
   }
   return enabled_nodes,disabled_nodes

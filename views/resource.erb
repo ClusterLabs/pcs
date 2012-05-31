@@ -62,20 +62,21 @@
 	    </div>
 
 	    <div id="node_details">
-	      <table><tr>
+	      <table style="margin-bottom:25px;"><tr>
 		  <td nowrap><div class="bold">Current Location:</div></td>
 		  <td><div id="cur_res_loc" class="reg"><%=@cur_resource.location%></div></td>
 		</tr>
 	      </table>
-	      <table style="clear:left;float:left;margin-top:25px;">
+	      <div style="margin-left:5px;"class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_constraint').dialog({title: 'Add Constraint', modal:true, width: 'auto'});">Add Constraint</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+	      <table style="clear:left;float:left">
 		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Location Preferences (<%= @enabled_nodes.length + @disabled_nodes.length %>)<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
 			<tr><th>NAME</th><th>Score</th><th>Stickyness</th></tr>
-			<% @enabled_nodes.each { |loc| %>
+			<% @enabled_nodes.each { |loc,score| %>
 			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
-			    <td></td>
+			    <td><%=score%></td>
 			    <td></td>
 			  </tr>
 			<% } %>
@@ -226,6 +227,71 @@
     <div id="verify_remove" style="display: none;">
       <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
       <span id="resource_to_remove"></span>
+    </div>
+    <div id="add_constraint" style="display: none;">
+      What type of constraint would you like to add?
+      <select onchange="show_hide_constraint_tables(this);">
+	<option value=""></option>
+	<option value="location">Location</option>
+	<option value="order">Order</option>
+	<option value="colocation">Colocation</option>
+      </select>
+      <div id="add_constraint_location" style="display:none;">
+	<form method=POST action="/resources_cmd/add_constraint">
+	  <input type=hidden name="location_constraint" value="1">
+	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id%>">
+	  <table>
+	    <tr><th>Node</th><th>Allowed</th><th>Not Allowed</th><th>Score</th></tr>
+	    <% @nodes_online.concat(@nodes_offline).sort().each {|n| %>
+	      <tr>
+		<td><%=n%></td>
+		<td align=center><input type=checkbox name="allow-<%=n%>"></td>
+		<td align=center><input type=checkbox name="deny-<%=n%>"></td>
+		<td align=center><input type=text size=4 name="score-<%=n%>"></td>
+	      </tr>
+	    <% } %>
+	    <tr><td colspan=4><input type=submit></td></tr>
+	  </table>
+	</div>
+      </form>
+      <div id="add_constraint_order" style="display:none;">
+	<form method=POST action="/resources_cmd/add_constraint">
+	  <input type=hidden name="order_constraint" value="1">
+	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id%>">
+	  <table>
+	    <tr><th>Resource</th><th>Before</th><th>After</th><th>Symmetrical</th></tr>
+	    <% @resources.each {|n| %>
+	      <% next if n.id == @cur_resource.id %>
+	      <tr>
+		<td><%=n.id%></td>
+		<td align=center><input type="checkbox" value="before-<%=n.id%>" name="order-<%=n.id%>"></td>
+		<td align=center><input type="checkbox" value="after-<%=n.id%>" name="order-<%=n.id%>"></td>
+		<td align=center><input type="checkbox" name="symmetrical-<%=n.id%>" checked></td>
+	      </tr>
+	    <% } %>
+	    <tr><td colspan=3><input type=submit></td></tr>
+	  </table>
+	</form>
+      </div>
+      <div id="add_constraint_colocation" style="display:none;">
+	<form method=POST action="/resources_cmd/add_constraint">
+	  <input type=hidden name="colocation_constraint" value="1">
+	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id%>">
+	  <table>
+	    <tr><th>Resource</th><th>Together</th><th>Apart</th><th>Score</th></tr>
+	    <% @resources.each {|n| %>
+	      <% next if n.id == @cur_resource.id %>
+	      <tr>
+		<td><%=n.id%></td>
+		<td align=center><input type="checkbox" value="together-<%=n.id%>" name="order-<%=n.id%>"></td>
+		<td align=center><input type="checkbox" value="apart-<%=n.id%>" name="order-<%=n.id%>"></td>
+		<td align=center><input type=text size=4></td>
+	      </tr>
+	    <% } %>
+	    <tr><td colspan=3><input type=submit></td></tr>
+	  </table>
+	</form>
+      </div>
     </div>
     <script type="text/javascript">
       $(window).load(function () {
