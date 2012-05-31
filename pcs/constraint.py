@@ -100,6 +100,9 @@ def colocation_rm(argv):
         if co_loc.getAttribute("rsc") == resource1 and co_loc.getAttribute("with-rsc") == resource2:
             constraintsElement.removeChild(co_loc)
             elementFound = True
+        if co_loc.getAttribute("rsc") == resource2 and co_loc.getAttribute("with-rsc") == resource1:
+            constraintsElement.removeChild(co_loc)
+            elementFound = True
 
     if elementFound == True:
         xml_constraint_string = constraintsElement.toxml()
