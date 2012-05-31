@@ -86,6 +86,7 @@ def colocation_show():
         print "  " + co_resource1 + " with " + co_resource2 + score_text
 
 def colocation_rm(argv):
+    elementFound = False
     if len(argv) < 2:
         usage.constraint()
         sys.exit(1)
