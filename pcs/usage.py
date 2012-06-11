@@ -61,9 +61,15 @@ Commands:
     stop        Stop corosync & pacemaker
     startall    Start corosync & pacemaker on all nodes
     stopall     Stop corosync & pacemaker on all nodes
-    gui-status  [node] [...]
+
+    gui-status [node] [...]
         Get current status of pcs-gui on nodes specified, or on all nodes
-        configure in corosync.conf if no nodes are specified
+        configured in corosync.conf if no nodes are specified
+
+    auth [node] [...]
+        Authenticate pcs to pcs-gui on nodes specified, or on all nodes
+        configured in corosync.conf if no nodes are specified (authorization
+        tokens are stored in ~/.pcs/token)
 
     sync
         Sync corosync configuration to all nodes found from current
@@ -199,4 +205,7 @@ Commands:
 
     status actions
         View failed actions
+
+    status xml
+        View xml version of status (output from crm_mon -r -1 -X)
 """

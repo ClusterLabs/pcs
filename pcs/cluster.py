@@ -25,6 +25,8 @@ def cluster_cmd(argv):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     elif (sub_cmd == "gui-status"):
         cluster_gui_status(argv)
+    elif (sub_cmd == "auth"):
+        cluster_auth(argv)
     elif (sub_cmd == "start"):
         start_cluster(argv)
     elif (sub_cmd == "stop"):
@@ -57,6 +59,25 @@ def sync_nodes(nodes,config):
     for node in nodes:
         utils.setCorosyncConfig(node,config)
 
+def cluster_auth(argv):
+    if len(argv) == 0:
+        auth_nodes(utils.getNodesFromCorosyncConf())
+    else:
+        auth_nodes(argv)
+
+def auth_nodes(nodes):
+    for node in nodes:
+        status = utils.checkStatus(node)
+        if status[0] == 0:
+            print node + ": Already authorized"
+        elif status[0] == 3:
+            utils.updateToken(node)
+            print "%s: Authorized" % (node)
+        else:
+            print "Unable to communicate with %s" % (node)
+            exit(1)
+
+
 # If no arguments get current cluster node status, otherwise get listed
 # nodes status
 def cluster_gui_status(argv):
@@ -71,6 +92,8 @@ def check_nodes(nodes):
         status = utils.checkStatus(node)
         if status[0] == 0:
             print node + ": Online"
+        elif status[0] == 3:
+            print node + ": Unable to authenticate"
         else:
             print node + ": Offline"
     

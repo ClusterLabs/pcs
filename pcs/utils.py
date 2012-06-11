@@ -5,6 +5,8 @@ import xml.dom.minidom
 import urllib,urllib2
 from xml.dom.minidom import parseString
 import re
+import getpass
+import json
 
 
 # usefile & filename variables are set in pcs module
@@ -15,6 +17,44 @@ filename = ""
 def checkStatus(node):
     out = sendHTTPRequest(node, 'remote/status', None, False)
     return out
+
+def updateToken(node):
+    username = raw_input(node + " username: ")
+    password = getpass.getpass(node + " password: ")
+    data = urllib.urlencode({'username':username, 'password':password})
+    out = sendHTTPRequest(node, 'remote/auth', data, False)
+    if out[0] != 0:
+        print "ERROR: Unable to connect to pcs-gui on %s" % node
+        print out
+        exit(1)
+    token = out[1]
+    if token == "":
+        print "ERROR: Username and/or password is incorrect"
+        exit(1)
+
+    tokens = readTokens()
+    tokens[node] = token
+    writeTokens(tokens)
+
+    return True
+
+# Returns a dictionary {'nodeA':'tokenA'}
+def readTokens():
+    tokenfile = os.path.expanduser("~/.pcs/tokens")
+    if (os.path.isfile(tokenfile) == False):
+        return {}
+    tokens = json.load(open(tokenfile))
+    return tokens
+
+# Takes a dictionary {'nodeA':'tokenA'}
+def writeTokens(tokens):
+    tokenfile = os.path.expanduser("~/.pcs/tokens")
+    if (os.path.isfile(tokenfile) == False):
+        if not os.path.exists(os.path.expanduser("~/.pcs")):
+            os.mkdir(os.path.expanduser("~/.pcs"),0700);
+    f = os.fdopen (os.open(tokenfile, os.O_WRONLY | os.O_CREAT, 0600), 'w')
+    f.write(json.dumps(tokens))
+    f.close()
 
 # Set the corosync.conf file on the specified node
 def setCorosyncConfig(node,config):
@@ -30,9 +70,17 @@ def stopCluster(node):
 # Send an HTTP request to a node return a tuple with status, data
 # If status is 0 then data contains server response
 # Otherwise if non-zero then data contains error message
+# Returns a tuple (error, error message)
+# 0 = Success,
+# 1 = HTTP Error
+# 2 = No response,
+# 3 = Auth Error
 def sendHTTPRequest(host, request, data = None, printResult = True):
     url = 'http://' + host + ':2222/' + request
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+    tokens = readTokens()
+    if host in tokens:
+        opener.addheaders.append(('Cookie', 'token='+tokens[host]))
     urllib2.install_opener(opener)
     try:
         result = opener.open(url,data)
@@ -42,8 +90,14 @@ def sendHTTPRequest(host, request, data = None, printResult = True):
         return (0,html)
     except urllib2.HTTPError, e:
         if printResult:
-            print "Error connecting to %s - (HTTP error: %d)" % (host,e.code)
-        return (1,"Error connecting to %s - (HTTP error: %d)" % (host,e.code))
+            if e.code == 401:
+                print "Unable to authenticate to %s - (HTTP error: %d)" % (host,e.code)
+            else:
+                print "Error connecting to %s - (HTTP error: %d)" % (host,e.code)
+        if e.code == 401:
+            return (3,"Unable to authenticate to %s - (HTTP error: %d)" % (host,e.code))
+        else:
+            return (1,"Error connecting to %s - (HTTP error: %d)" % (host,e.code))
     except urllib2.URLError, e:
         if printResult:
             print "Unable to connect to %s (%s)" % (host, e.reason)

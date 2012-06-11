@@ -25,6 +25,8 @@ def status_cmd(argv):
         nodes_status(argv)
     elif (sub_cmd == "actions"):
         actions_status(argv)
+    elif (sub_cmd == "xml"):
+        xml_status()
     else:
         usage.status()
         sys.exit(1)
@@ -144,3 +146,10 @@ def cluster_status(argv):
                 break
 
             print "",line
+def xml_status():
+    (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r", "-X"])
+
+    if (retval != 0):
+        print "Error running crm_mon, is pacemaker running?"
+        sys.exit(1)
+    print output

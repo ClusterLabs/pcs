@@ -65,6 +65,8 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     output,retval = utils.run(args)
     if retval != 0:
         print "ERROR: Unable to create resource/fence device"
+        print output.split('\n')[0]
+        sys.exit(1)
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
