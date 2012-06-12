@@ -25,6 +25,8 @@ def status_cmd(argv):
         nodes_status(argv)
     elif (sub_cmd == "actions"):
         actions_status(argv)
+    elif (sub_cmd == "token"):
+        token_status(argv)
     elif (sub_cmd == "xml"):
         xml_status()
     else:

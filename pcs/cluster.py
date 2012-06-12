@@ -27,6 +27,8 @@ def cluster_cmd(argv):
         cluster_gui_status(argv)
     elif (sub_cmd == "auth"):
         cluster_auth(argv)
+    elif (sub_cmd == "token"):
+        cluster_token(argv)
     elif (sub_cmd == "start"):
         start_cluster(argv)
     elif (sub_cmd == "stop"):
@@ -64,6 +66,18 @@ def cluster_auth(argv):
         auth_nodes(utils.getNodesFromCorosyncConf())
     else:
         auth_nodes(argv)
+
+def cluster_token(argv):
+    if len(argv) != 1:
+        print "ERROR: Must specify only one node"
+        sys.exit(1)
+    node = argv[0]
+    tokens = utils.readTokens()
+    if node in tokens:
+        print tokens[node]
+    else:
+        print "ERROR: No authorization token for: %s" % (node)
+        sys.exit(1)
 
 def auth_nodes(nodes):
     for node in nodes:

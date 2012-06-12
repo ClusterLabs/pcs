@@ -71,6 +71,9 @@ Commands:
         configured in corosync.conf if no nodes are specified (authorization
         tokens are stored in ~/.pcs/token)
 
+    token <node>
+        Get authorization token for specified node
+
     sync
         Sync corosync configuration to all nodes found from current
         corosync.conf file
