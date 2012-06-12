@@ -32,4 +32,34 @@ def add_colocation_constraint(resourceA, resourceB, score)
     return waitth.value
   }
 end
-  
+
+def get_node_token(node)
+  puts PCS, "cluster", "token", node
+  Open3.popen3(PCS, "cluster", "token", node) { |stdin, stdout, stderror, waitth|
+    return waitth.value,stdout.readlines()
+  }
+end
+
+def send_request_with_token(node,request, post=false, data={})
+  begin
+    retval, token = get_node_token(node)
+    puts "RETVAL/TOKEN"
+    token = token[0].strip
+    uri = URI.parse("http://#{node}:2222/remote/" + request)
+    if post
+      req = Net::HTTP::Post.new(uri.path)
+      req.set_form_data(data)
+    else
+      req = Net::HTTP::Get.new(uri.path)
+    end
+    req.add_field("Cookie","token="+token)
+    res = Net::HTTP.new(uri.host, uri.port).start do |http|
+      http.request(req)
+    end
+    output = res
+    return output.body
+  rescue
+    puts "No response from: " + node
+    return '{"noresponse":true}'
+  end
+end

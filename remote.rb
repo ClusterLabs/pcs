@@ -1,12 +1,15 @@
 require 'json'
 require 'net/http'
 require 'uri'
+require './pcs.rb'
 
 # Commands for remote access
 def remote(params)
   case (params[:command])
   when "status"
     return node_status(params)
+  when "auth"
+    return auth(params)
   when "resource_status"
     return resource_status(params)
   when "create_cluster"
@@ -32,7 +35,7 @@ end
 
 def cluster_start(params)
   if params[:name]
-    response = Net::HTTP.post_form(URI.parse('http://' + params[:name] + ':2222/remote/cluster_start'), {})
+    response = send_request_with_token(params[:name], 'cluster_start', true)
   else
     puts "Starting Daemons"
     puts `#{PCS} cluster start`
@@ -41,7 +44,7 @@ end
 
 def cluster_stop(params)
   if params[:name]
-    response = Net::HTTP.post_form(URI.parse('http://' + params[:name] + ':2222/remote/cluster_stop'), {})
+    response = send_request_with_token(params[:name], 'cluster_stop', true)
   else
     puts "Starting Daemons"
     puts `#{PCS} cluster stop`
@@ -90,13 +93,7 @@ end
 
 def node_status(params)
   if params[:node] != nil and params[:node] != "" and params[:node] != @@cur_node_name
-    begin
-      uri = URI.parse("http://#{params[:node]}:2222/remote/status?hello=1")
-      output = Net::HTTP::get_response(uri)
-      return output.body
-    rescue
-      return '{"noresponse":true}'
-    end
+    return send_request_with_token(params[:node],"status?hello=1")
   end
 
   uptime = `cat /proc/uptime`.chomp.split(' ')[0].split('.')[0].to_i
@@ -142,6 +139,10 @@ def node_status(params)
  "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline }
   ret = JSON.generate(status)
   return ret
+end
+
+def auth(params)
+  return PCSAuth.validUser(params['username'],params['password'])
 end
 
 def resource_status(params)

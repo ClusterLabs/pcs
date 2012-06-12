@@ -76,7 +76,11 @@ function remote_node_update() {
 	setStatus($('#corosync_status'),2, "Unknown");
 	setStatus($('#pcsd_status'),1,"Stopped");
       } else  {
-	setStatus($('#pcsd_status'),0, "Running");
+	if (data.notauthorized) {
+	  setStatus($('#pcsd_status'),1, "Not Authorized");
+	} else {
+	  setStatus($('#pcsd_status'),0, "Running");
+	}
 
 	if (data.pacemaker) {
 	  setStatus($('#pacemaker_status'),0, "Running");
@@ -114,6 +118,13 @@ function local_node_update() {
       } else {
 	setStatus($('#corosync_online_status'), 1, "Corosync Not Connected")
       }
+      for (var i=0; i < data.pacemaker_online.length; i++) {
+    	setNodeStatus(data.pacemaker_online[i], true);
+      }
+      for (var i=0; i < data.pacemaker_offline.length; i++) {
+    	setNodeStatus(data.pacemaker_offline[i], false);
+      }
+
       if ($.inArray(node,data.pacemaker_online) > -1) {
 	setStatus($('#pacemaker_online_status'), 0, "Pacemaker Connected")
       } else {
@@ -215,6 +226,17 @@ function setStatus(item, status, message) {
   if (typeof message !== 'undefined')
     item.html(message)
 }
+
+// Set the node in the node list blue or red depending on
+// whether pacemaker is connected or not
+function setNodeStatus(node, running) {
+  if (running) {
+    $('.node_name:contains("'+node+'")').css('color','');
+  } else {
+    $('.node_name:contains("'+node+'")').css('color','red');
+  }
+}
+  
 
 function setup_node_links() {
   node = $("#node_info_header_title_name").text();

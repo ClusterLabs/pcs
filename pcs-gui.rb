@@ -9,6 +9,7 @@ require './fenceagent.rb'
 require './cluster.rb'
 require './config.rb'
 require './pcs.rb'
+require './auth.rb'
 require 'webrick'
 require 'pp'
 require 'webrick/https'
@@ -23,9 +24,20 @@ also_reload './fenceagent.rb'
 also_reload './cluster.rb'
 also_reload './config.rb'
 also_reload './pcs.rb'
+also_reload './auth.rb'
+
+enable :sessions
 
 before do
   @@cluster_name = `corosync-cmapctl totem.cluster_name`.gsub(/.*= /,"").strip
+  puts "SESSION:"
+  pp session
+  puts "COOKIES:"
+  pp request.cookies
+  if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
+    puts "Checking protection"
+    protected! 
+  end
 end
 
 configure do
@@ -37,6 +49,7 @@ configure do
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   SETTINGS_FILE = "pcs_settings.conf"
+  USER_FILE = "pcs_users.conf"
 end
 
 set :port, 2222
@@ -47,6 +60,18 @@ if not defined? @@cur_node_name
 end
 
 helpers do
+  def protected!
+    if not PCSAuth.isLoggedIn(session, request.cookies)
+      if request.path.start_with?('/remote')
+	puts "ERROR: Request without authentication"
+	halt [401, '{"notauthorized":"false"}']
+      else
+	session[:pre_login_path] = request.path
+	redirect '/login'
+      end
+    end
+  end
+
   def setup
     @nodes_online, @nodes_offline = getNodes
     @nodes = {}
@@ -77,6 +102,29 @@ helpers do
       end
     }
     param_line
+  end
+end
+
+
+get('/login'){ erb :login, :layout => :main }
+
+get '/logout' do 
+  session.clear
+  erb :login, :layout => :main
+end
+
+post '/login' do
+  if PCSAuth.validUser(params['username'],params['password'])
+    session["username"] = params['username']
+    if session["pre_login_path"]
+      plp = session["pre_login_path"]
+      session.delete("pre_login_path")
+      redirect plp
+    else
+      redirect '/'
+    end
+  else
+    redirect '/login?badlogin=1'
   end
 end
 
@@ -266,6 +314,8 @@ get '/nodes/?:node?' do
       end
     }
   }
+
+  @nodes = @nodes.sort_by{|k,v|k}
   erb :nodes, :layout => :main
 end
 

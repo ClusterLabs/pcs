@@ -53,7 +53,6 @@ def getOrderingConstraints(resource_id)
     end
     line.strip!
     sline = line.split(/ /,3)
-    pp sline
     if (sline[0] == resource_id)
       after << sline[2]
     end
@@ -114,7 +113,6 @@ def getColocationConstraints(resource_id)
     line.strip!
     sline = line.split(/ /,4)
     score = sline[3] == nil ? "INFINITY" : sline[3][1..-2]
-    pp sline
     if (sline[0] == resource_id)
       if score == "INFINITY"  or (score != "-INFINITY" and score.to_i >= 0)
 	together << [sline[2],score]

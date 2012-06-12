@@ -245,7 +245,7 @@
       <div id="add_constraint_location" style="display:none;">
 	<form method=POST action="/resources_cmd/add_constraint">
 	  <input type=hidden name="location_constraint" value="1">
-	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id%>">
+	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id if @cur_resource%>">
 	  <table>
 	    <tr><th>Node</th><th>Allowed</th><th>Not Allowed</th><th>Score</th></tr>
 	    <% @nodes_online.concat(@nodes_offline).sort().each {|n| %>
@@ -263,7 +263,7 @@
       <div id="add_constraint_order" style="display:none;">
 	<form method=POST action="/resources_cmd/add_constraint">
 	  <input type=hidden name="order_constraint" value="1">
-	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id%>">
+	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id if @cur_resource%>">
 	  <table>
 	    <tr><th>Resource</th><th>Before</th><th>After</th><th>Symmetrical</th></tr>
 	    <% @resources.each {|n| %>
@@ -282,7 +282,7 @@
       <div id="add_constraint_colocation" style="display:none;">
 	<form method=POST action="/resources_cmd/add_constraint">
 	  <input type=hidden name="colocation_constraint" value="1">
-	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id%>">
+	  <input type=hidden name="cur_resource" value="<%=@cur_resource.id if @cur_resource%>">
 	  <table>
 	    <tr><th>Resource</th><th>Together</th><th>Apart</th><th>Score</th></tr>
 	    <% @resources.each {|n| %>
