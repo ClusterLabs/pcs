@@ -37,6 +37,8 @@ def cluster_cmd(argv):
         start_cluster_all()
     elif (sub_cmd == "stopall"):
         stop_cluster_all()
+    elif (sub_cmd == "cib"):
+        get_cib()
     else:
         usage.cluster()
 
@@ -206,3 +208,10 @@ def stop_cluster(argv):
     if retval != 0:
         print "Error: unable to stop corosync"
         sys.exit(1)
+
+def get_cib():
+    output, retval = utils.run(["cibadmin", "-l", "-Q"])
+    if retval != 0:
+        print "Error: unable to get cib"
+        sys.exit(1)
+    print output,

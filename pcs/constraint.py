@@ -44,7 +44,7 @@ def constraint_cmd(argv):
         elif (sub_cmd2 == "rm"):
             order_rm(argv)
         elif (sub_cmd2 == "show"):
-            order_show()
+            order_show(argv)
         else:
             usage.constraint()
             sys.exit(1)
@@ -59,21 +59,31 @@ def constraint_cmd(argv):
         elif (sub_cmd2 == "rm"):
             colocation_rm(argv)
         elif (sub_cmd2 == "show"):
-            colocation_show()
+            colocation_show(argv)
         else:
             usage.constraint()
             sys.exit(1)
-
+    elif (sub_cmd == "rm"):
+        constraint_rm(argv)
     elif (sub_cmd == "show" or sub_cmd == "list"):
-        location_show([])
-        order_show()
-        colocation_show()
+        location_show(argv)
+        order_show(argv)
+        colocation_show(argv)
+    elif (sub_cmd == "all"):
+        location_show(["all"])
+        order_show(["all"])
+        colocation_show(["all"])
     else:
         print sub_cmd
         usage.constraint()
         sys.exit(1)
 
-def colocation_show():
+def colocation_show(argv):
+    if (len(argv) != 0 and argv[0] == "all"):
+        showDetail = True
+    else:
+        showDetail = False
+
     (dom,constraintsElement) = getCurrentConstraints()
 
     print "Colocation Constraints:"
@@ -82,8 +92,11 @@ def colocation_show():
         co_resource2 = co_loc.getAttribute("with-rsc")
         co_id = co_loc.getAttribute("id")
         co_score = co_loc.getAttribute("score")
-        score_text = "" if (co_score == "INFINITY") else " (" + co_score + ")"
-        print "  " + co_resource1 + " with " + co_resource2 + score_text
+        score_text = "" if (co_score == "INFINITY") and not showDetail else " (" + co_score + ")"
+        co_id_out = ""
+        if showDetail:
+            co_id_out = " (id:"+co_id+")"
+        print "  " + co_resource1 + " with " + co_resource2 + score_text + co_id_out
 
 def colocation_rm(argv):
     elementFound = False
@@ -139,7 +152,12 @@ def colocation_add(argv):
 
 
 
-def order_show():
+def order_show(argv):
+    if (len(argv) != 0 and argv[0] == "all"):
+        showDetail = True
+    else:
+        showDetail = False
+
     (dom,constraintsElement) = getCurrentConstraints()
 
     print "Ordering Constraints:"
@@ -149,10 +167,13 @@ def order_show():
         oc_id = ord_loc.getAttribute("id")
         oc_score = ord_loc.getAttribute("score")
         oc_sym = ""
+        oc_id_out = ""
         if ord_loc.getAttribute("symmetrical") == "false":
             oc_sym = " (non-symmetrical)"
-        score_text = "" if (oc_score == "INFINITY") else " (" + oc_score + ")"
-        print "  " + oc_resource1 + " then " + oc_resource2 + score_text + oc_sym
+        score_text = "" if (oc_score == "INFINITY") and not showDetail else " (" + oc_score + ")"
+        if showDetail:
+            oc_id_out = " (id:"+oc_id+")"
+        print "  " + oc_resource1 + " then " + oc_resource2 + score_text + oc_sym + oc_id_out
 
 def order_list(argv):
     for i in range(0,len(argv)-1):
@@ -244,8 +265,13 @@ def location_force(argv, remove=False):
 def location_show(argv):
     if (len(argv) != 0 and argv[0] == "nodes"):
         byNode = True
+        showDetail = False
+    elif (len(argv) != 0 and argv[0] == "all"):
+        byNode = False
+        showDetail = True
     else:
         byNode = False
+        showDetail = False
 
     if len(argv) > 1:
         valid_noderes = argv[1:]
@@ -257,9 +283,10 @@ def location_show(argv):
     nodehashoff = {}
     rschashon = {}
     rschashoff = {}
+    all_loc_constraints = constraintsElement.getElementsByTagName('rsc_location')
 
     print "Location Constraints:"
-    for rsc_loc in constraintsElement.getElementsByTagName('rsc_location'):
+    for rsc_loc in all_loc_constraints:
         lc_node = rsc_loc.getAttribute("node")
         lc_rsc = rsc_loc.getAttribute("rsc")
         lc_id = rsc_loc.getAttribute("id")
@@ -333,15 +360,19 @@ def location_show(argv):
                 print "    Enabled on:",
                 for options in rschashon[rsc]:
                     print options[1],
-                    if options[2] != "INFINITY":
-                        print "("+options[2]+") ",
+                    if options[2] != "INFINITY" or showDetail:
+                        print "("+options[2]+")",
+                    if showDetail:
+                        print "(id:"+options[0]+")",
                 print ""
             if (rsc in rschashoff):
                 print "    Disabled on:",
                 for options in rschashoff[rsc]:
                     print options[1],
-                    if options[2] != "-INFINITY":
-                        print "("+options[2]+") ",
+                    if options[2] != "-INFINITY" or showDetail:
+                        print "("+options[2]+")",
+                    if showDetail:
+                        print "(id:"+options[0]+")",
                 print ""
 
 
@@ -404,3 +435,30 @@ def getCurrentConstraints():
     dom = parseString(current_constraints_xml)
     constraintsElement = dom.getElementsByTagName('constraints')[0]
     return (dom, constraintsElement)
+
+def constraint_rm(argv):
+    if len(argv) == 1:
+        c_id = argv[0]
+    else:
+        usage.constraint()
+        sys.exit(1)
+
+
+    elementFound = False
+    (dom,constraintsElement) = getCurrentConstraints()
+
+    for co in constraintsElement.childNodes[:]:
+        if co.nodeType != xml.dom.Node.ELEMENT_NODE:
+            continue
+        if co.getAttribute("id") == c_id:
+            constraintsElement.removeChild(co)
+            elementFound = True
+
+    if elementFound == True:
+        xml_constraint_string = constraintsElement.toxml()
+        args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
+        output,retval = utils.run(args)
+        if output != "":
+            print output
+    else:
+        print "No matching resources found in ordering list"

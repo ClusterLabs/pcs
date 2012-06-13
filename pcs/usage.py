@@ -87,6 +87,9 @@ Commands:
     configure sync_start <cluster name> <node1 ip> [node2 ip] [...]
         Configure corosync and sync configuration out to listed nodes and
         start corosync and pacemaker services on the nodes
+
+    cib
+        Get the raw xml from the CIB (Cluster Information Base)
 """
 
 def stonith():
@@ -132,6 +135,9 @@ Commands:
     [list|show]
         List all current location, order and colocation constraints
 
+    all
+        List all current location, order and colocation constraints with ids
+
     location [show resources|nodes [specific nodes|resources]]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
@@ -161,8 +167,9 @@ Commands:
         Remove a location constraint with the appropriate id, resource name,
           node name and score. (For more advanced pacemaker usage)
 
-    order [show]
-        List all current ordering constraints.
+    order [show [all]]
+        List all current ordering constraints (if 'all' is specified show
+        the internal constraint id's as well).
 
     order list <resource1> <resource2> [resourceN]...
         Require that resource be started in the order specified
@@ -176,6 +183,10 @@ Commands:
         they were started (symmetrical) or not (nonsymmetrical).  Default is
         symmetrical.  (For more advance pacemaker usage)
 
+    colocation [show [all]]
+        List all current colocation constraints (if 'all' is specified show
+        the internal constraint id's as well).
+
     colocation add <source resource> <target resource> [score]
         Request <source resource> to run on the same node where pacemaker has
         determined <target resource> should run.  Positive values of score
@@ -186,6 +197,9 @@ Commands:
 
     colocation rm <source resource> <target resource>
         Remove colocation constraints with <source resource>
+
+    rm [constraint id]
+        Remove constraint with the specified id
 """
 
 def status():
