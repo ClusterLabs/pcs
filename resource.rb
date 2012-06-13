@@ -44,7 +44,7 @@ end
 # Returns two arrays, one that lists resources that start before
 # one that lists resources that start after
 def getOrderingConstraints(resource_id)
-  ordering_constraints = `#{PCS} constraint order show`
+  ordering_constraints = `#{PCS} constraint order show all`
   before = []
   after = []
   ordering_constraints.each_line { |line|
@@ -52,12 +52,12 @@ def getOrderingConstraints(resource_id)
       next
     end
     line.strip!
-    sline = line.split(/ /,3)
+    sline = line.split(/ /,6)
     if (sline[0] == resource_id)
-      after << sline[2]
+      after << [sline[-1].to_s[4..-2],sline[2]]
     end
     if (sline[2] == resource_id)
-      before << sline[0]
+      before << [sline[-1].to_s[4..-2],sline[0]]
     end
   }
   return before,after
@@ -66,21 +66,31 @@ end
 # Returns two arrays, one that lists nodes that can run resource
 # one that lists nodes that cannot
 def getLocationConstraints(resource_id)
-  location_constraints = `#{PCS} constraint location show resources #{resource_id}`
+  location_constraints = `#{PCS} constraint location show all`
   enabled_nodes = {}
   disabled_nodes = {}
+  inResource = false
   location_constraints.each_line { |line|
-    if line.start_with?("Location Constraints:") or line.start_with?("  Resource:")
+    line.strip!
+    next if line.start_with?("Location Constraints:")
+    if line.start_with?("Resource:")
+      if line == "Resource: " + resource_id
+	inResource = true
+      else
+	inResource = false
+      end
       next
     end
-    line.strip!
+    next if !inResource
     if line.start_with?("Enabled on:")
       prev = nil
       line.split(/: /,2)[1].split(/ /).each { |n|
-	if n.start_with?("(")
-	  enabled_nodes[prev] = n[1..-2]
+	if n.start_with?("(id:")
+	  enabled_nodes[prev][0] = n[4..-2]
+	elsif n.start_with?("(")
+	  enabled_nodes[prev][1] = n[1..-2]
 	else
-	  enabled_nodes[n] = "INFINITY"
+	  enabled_nodes[n] = []
 	  prev = n
 	end
       }
@@ -88,10 +98,12 @@ def getLocationConstraints(resource_id)
     if line.start_with?("Disabled on:")
       prev = nil
       line.split(/: /,2)[1].split(/ /).each { |n|
-	if n.start_with?("(")
-	  enabled_nodes[prev] = n[1..-2]
+	if n.start_with?("(id:")
+	  disabled_nodes[prev][0] = n[4..-2]
+	elsif n.start_with?("(")
+	  disabled_nodes[prev][1] = n[1..-2]
 	else
-	  enabled_nodes[n] = "-INFINITY"
+	  disabled_nodes[n] = []
 	  prev = n
 	end
       }
@@ -103,7 +115,7 @@ end
 # Returns two arrays, one that lists resources that should be together
 # one that lists resources that should be apart
 def getColocationConstraints(resource_id)
-  colocation_constraints = `#{PCS} constraint colocation show`
+  colocation_constraints = `#{PCS} constraint colocation show all`
   together = []
   apart = []
   colocation_constraints.each_line { |line|
@@ -111,10 +123,12 @@ def getColocationConstraints(resource_id)
       next
     end
     line.strip!
-    sline = line.split(/ /,4)
-    score = sline[3] == nil ? "INFINITY" : sline[3][1..-2]
+    sline = line.split(/ /,5)
+    score = []
+    score[0] = sline[4][4..-2]
+    score[1] = sline[3][1..-2]
     if (sline[0] == resource_id)
-      if score == "INFINITY"  or (score != "-INFINITY" and score.to_i >= 0)
+      if score[1] == "INFINITY"  or (score[1] != "-INFINITY" and score[1].to_i >= 0)
 	together << [sline[2],score]
       else
 	apart << [sline[2],score]

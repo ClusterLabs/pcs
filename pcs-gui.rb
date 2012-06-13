@@ -35,7 +35,6 @@ before do
   puts "COOKIES:"
   pp request.cookies
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
-    puts "Checking protection"
     protected! 
   end
 end
@@ -356,6 +355,14 @@ post '/manage/removecluster' do
   redirect '/manage'
 end
 
+post '/resource_cmd/rm_constraint' do
+  if params[:constraint_id]
+    remove_constraint(params[:constraint_id])
+  end
+
+  redirect '/resources/' + params[:cur_resource]
+end
+
 post '/resources_cmd/add_constraint' do
   puts ""
   puts "Add Constraint..."
@@ -387,6 +394,11 @@ post '/resources_cmd/add_constraint' do
 	  add_order_constraint(v.split(/-/,2)[1], params[:cur_resource], score, sym)
 	elsif v.start_with?("after-")
 	  score = "INFINITY"
+	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
+	    sym = true
+	  else
+	    sym = false
+	  end
 	  add_order_constraint(params[:cur_resource], v.split(/-/,2)[1], score, sym)
 	end
       end

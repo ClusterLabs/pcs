@@ -33,6 +33,15 @@ def add_colocation_constraint(resourceA, resourceB, score)
   }
 end
 
+def remove_constraint(constraint_id)
+  puts "REMOVE CONSTRAINT"
+  puts PCS, "constraint", "rm", constraint_id
+  Open3.popen3(PCS, "constraint", "rm", constraint_id) { |stdin, stdout, stderror, waitth|
+    puts stdout.readlines()
+    return waitth.value
+  }
+end
+
 def get_node_token(node)
   puts PCS, "cluster", "token", node
   Open3.popen3(PCS, "cluster", "token", node) { |stdin, stdout, stderror, waitth|

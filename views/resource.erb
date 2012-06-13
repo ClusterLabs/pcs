@@ -75,18 +75,25 @@
 		      <table class="datatable">
 			<tr><th>Node</th><th>Score</th><th>Stickyness</th><th>Remove</th></tr>
 			<% @enabled_nodes.each { |loc,score| %>
-			  <tr><td><a href="/nodes/<%=loc%>"><%= loc %></a></td>
-			    <td><%=score%></td>
+			  <tr>
+			    <td><a href="/nodes/<%=loc%>"><%= loc %></a></td>
+			    <td><%=score[1]%></td>
 			    <td></td>
-			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
+			    <td style="text-align:center">
+			      <% @constraint_id = score[0] %>
+			      <%= erb :_rm_constraint_form %>
+			    </td>
 			  </tr>
 			<% } %>
-			<% @disabled_nodes.each { |loc| %>
+			<% @disabled_nodes.each { |loc, score| %>
 			  <tr>
-			    <td ><a style="color: red;" href="/resources/<%=loc%>"><%= loc %> (Not allowed)</a></td>
+			    <td ><a style="color: red;" href="/nodes/<%=loc%>"><%= loc %> (Not allowed)</a></td>
+			    <td><%=score[1]%></td>
 			    <td></td>
-			    <td></td>
-			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
+			    <td style="text-align:center">
+			      <% @constraint_id = score[0] %>
+			      <%= erb :_rm_constraint_form %>
+			    </td>
 			  </tr>
 			<% } %>
 			<% if @enabled_nodes.length == 0 and @disabled_nodes.length == 0 %>
@@ -103,19 +110,25 @@
 		    <div id="locationdep">
 		      <table class="datatable">
 			<tr><th>Resource</th><th>Before/After</th><th>Score</th><th>Remove</th></tr>
-			<% @ord_dep_before.each { |loc| %>
+			<% @ord_dep_before.each { |loc_id, loc| %>
 			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td>Starts before <%=@cur_resource.id%></td>
 			    <td></td>
-			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
+			    <td style="text-align:center">
+			      <% @constraint_id = loc_id %>
+			      <%= erb :_rm_constraint_form %>
+			    </td>
 			  </tr>
 			<% } %>
-			<% @ord_dep_after.each { |loc| %>
+			<% @ord_dep_after.each { |loc_id, loc| %>
 			  <tr>
 			    <td ><a href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td>Starts after <%=@cur_resource.id%></td>
 			    <td></td>
-			    <td align=center><a href="#" class="remove">X</a></td>
+			    <td style="text-align:center">
+			      <% @constraint_id = loc_id %>
+			      <%= erb :_rm_constraint_form %>
+			    </td>
 			  </tr>
 			<% } %>
 			<% if @ord_dep_before.length == 0 and @ord_dep_after.length == 0 %>
@@ -135,16 +148,22 @@
 			<% @colo_dep_together.each { |loc, score| %>
 			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td>Together</td>
-			    <td><%=score%></td>
-			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
+			    <td><%=score[1]%></td>
+			    <td style="text-align:center">
+			      <% @constraint_id = score[0] %>
+			      <%= erb :_rm_constraint_form %>
+			    </td>
 			  </tr>
 			<% } %>
 			<% @colo_dep_apart.each { |loc, score| %>
 			  <tr style="color: red;">
 			    <td><a style="color: red;" href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td style="color: red;">Apart</td>
-			    <td style="color: red;"><%=score%></td>
-			    <td style="text-align:center"><a onclick="alert('Not Yet Implemented');" href="#" class="remove">X</a></td>
+			    <td style="color: red;"><%=score[1]%></td>
+			    <td style="text-align:center">
+			      <% @constraint_id = score[0] %>
+			      <%= erb :_rm_constraint_form %>
+			    </td>
 			  </tr>
 			<% } %>
 			<% if @colo_dep_together.length == 0 and @colo_dep_apart.length == 0 %>

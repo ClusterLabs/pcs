@@ -1,0 +1,5 @@
+<form style="display:inline;" method="post" action="/resource_cmd/rm_constraint">
+  <input type=hidden name="cur_resource" value="<%=@cur_resource.id%>">
+  <input type=hidden name="constraint_id" value="<%=@constraint_id%>">
+  <a onclick="$(this).parent().submit();" href="#" class="remove">X</a>
+</form>
