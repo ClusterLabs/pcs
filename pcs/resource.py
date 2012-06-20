@@ -73,15 +73,16 @@ def resource_list_available():
             if metadata == False:
                 continue
             sd = ""
+            full_res_name = "ocf:" + provider + ":" + resource
             try:
                 dom = parseString(metadata)
                 shortdesc = dom.documentElement.getElementsByTagName("shortdesc")
                 if len(shortdesc) > 0:
-                    sd = " - " +  shortdesc[0].firstChild.nodeValue.strip().replace("\n", "")
+                    sd = " - " +  format_desc(full_res_name.__len__() + 3, shortdesc[0].firstChild.nodeValue.strip().replace("\n", ""))
             except xml.parsers.expat.ExpatError:
                 sd = ""
             finally:
-                print "ocf:" + provider + ":" + resource + sd
+                print full_res_name + sd
 
 def resource_list_options(resource):
     found_resource = False
@@ -121,7 +122,10 @@ def resource_list_options(resource):
 # Return the string formatted with a line length of 79 and indented
 def format_desc(indent, desc):
     desc = " ".join(desc.split())
-    afterindent = 79 - indent
+    rows, columns = os.popen('stty size', 'r').read().split()
+    columns = int(columns)
+    if columns < 40: columns = 40
+    afterindent = columns - indent
     output = ""
     first = True
 
