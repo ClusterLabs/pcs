@@ -1,10 +1,12 @@
 import sys
+import os
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
 import usage
 import utils
 import re
+import textwrap
 
 def resource_cmd(argv):
     if len(argv) == 0:
@@ -14,21 +16,26 @@ def resource_cmd(argv):
     if (sub_cmd == "help"):
         usage.resource()
     elif (sub_cmd == "create"):
-        res_id = argv.pop(0)
-        res_type = argv.pop(0)
-        ra_values = []
-        op_values = []
-        op_args = False
-        for arg in argv:
-            if op_args:
-                op_values.append(arg)
-            else:
-                if arg == "op":
-                    op_args = True
+        if len(argv) == 0:
+            resource_list_available()
+        elif len(argv) == 1:
+            resource_list_options(argv[0])
+        else:
+            res_id = argv.pop(0)
+            res_type = argv.pop(0)
+            ra_values = []
+            op_values = []
+            op_args = False
+            for arg in argv:
+                if op_args:
+                    op_values.append(arg)
                 else:
-                    ra_values.append(arg)
+                    if arg == "op":
+                        op_args = True
+                    else:
+                        ra_values.append(arg)
         
-        resource_create(res_id, res_type, ra_values, op_values)
+            resource_create(res_id, res_type, ra_values, op_values)
     elif (sub_cmd == "update"):
         res_id = argv.pop(0)
         resource_update(res_id,argv)
@@ -51,6 +58,93 @@ def resource_cmd(argv):
     else:
         usage.resource()
 
+
+# List available resources
+# TODO make location more easily configurable
+def resource_list_available():
+    os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
+    providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
+    for provider in providers:
+        resources = sorted(os.listdir("/usr/lib/ocf/resource.d/" + provider))
+        for resource in resources:
+            if resource.startswith(".") or resource == "ocf-shellfuncs":
+                continue
+            metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
+            if metadata == False:
+                continue
+            sd = ""
+            try:
+                dom = parseString(metadata)
+                shortdesc = dom.documentElement.getElementsByTagName("shortdesc")
+                if len(shortdesc) > 0:
+                    sd = " - " +  shortdesc[0].firstChild.nodeValue.strip().replace("\n", "")
+            except xml.parsers.expat.ExpatError:
+                sd = ""
+            finally:
+                print "ocf:" + provider + ":" + resource + sd
+
+def resource_list_options(resource):
+    found_resource = False
+    if "ocf:" in resource:
+        resource_split = resource.split(":",3)
+        providers = [resource_split[1]]
+        resource = resource_split[2]
+    else:
+        providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
+    for provider in providers:
+        metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
+        if metadata == False:
+            continue
+        else:
+            found_resource = True
+        
+        try:
+            print "Resource options for: %s" % resource
+            dom = parseString(metadata)
+            params = dom.documentElement.getElementsByTagName("parameter")
+            for param in params:
+                name = param.getAttribute("name")
+                if param.getAttribute("required") == "1":
+                    name += " (required)"
+                desc = param.getElementsByTagName("longdesc")[0].firstChild.nodeValue.strip().replace("\n", "")
+                indent = name.__len__() + 4
+                desc = format_desc(indent, desc)
+                print "  " + name + ": " + desc
+        except xml.parsers.expat.ExpatError:
+            print "Unable to parse xml for: %s" % (resource)
+        break
+
+    if not found_resource:
+        print "Unable to find resource: %s" % resource
+        sys.exit(1)
+
+# Return the string formatted with a line length of 79 and indented
+def format_desc(indent, desc):
+    desc = " ".join(desc.split())
+    afterindent = 79 - indent
+    output = ""
+    first = True
+
+    for line in textwrap.wrap(desc, afterindent):
+        if not first:
+            for i in range(0,indent):
+                output += " "
+        output += line
+        output += "\n"
+        first = False
+
+    return output.rstrip()
+
+def get_metadata(resource_agent_script):
+    os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
+    if (not os.path.isfile(resource_agent_script)) or (not os.access(resource_agent_script, os.X_OK)):
+        return False
+
+    (metadata, retval) = utils.run([resource_agent_script, "meta-data"])
+    if retval == 0:
+        return metadata
+    else:
+        return False
 
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info

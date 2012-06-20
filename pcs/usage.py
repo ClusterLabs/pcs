@@ -8,7 +8,7 @@ Options:
     -f file     Perform actions on file instead of active CIB
 
 Commands:
-    add <resource id> <provider:class:type|type> [resource options]
+    add <resource id> <class:provider:type|type> [resource options]
     set <property>=<value>
 
     node        Manage nodes (NOT YET IMPLEMENTED)
@@ -25,15 +25,40 @@ def resource():
 Usage: pcs resource [commands]...
 Manage pacemaker resources
 Commands:
-    resource [list|show] [resource_id]
-    resource start <resource id>
-    resource stop <resource id>
-    resource create <resource id> <provider:class:type|type> [resource options]
-    resource update <resource id> [resource options]
-    resource delete <resource id>
-    resource group add <group name> <resource id>...
-    resource group remove_resource <group name> <resource id> ...
-    resource group list
+    [list|show] [resource_id]
+        List all currently configured resources
+
+    start <resource_id>
+        Start resource specified by resource_id
+
+    stop <resource id>
+        Stop resource specified by resource_id
+
+    create
+        Show list of all available resources
+
+    create <class:provider:type|type>
+        Show options for specified resource
+
+    create <resource id> <class:provider:type|type> [resource options]
+        Create specified resource
+
+    update <resource id> [resource options]
+        Add/Change options to specified resource_id
+
+    delete <resource id>
+        Delete the specified resource
+
+    group add <group name> <resource_id>...
+        Add the specified resource to the group (creating the group if it does
+        not exist
+
+    group remove_resource <group name> <resource_id> ...
+        Remove the specified resource from the group (removing the croup if
+        it does not have any other resources)
+
+    group list
+        List all currently configured resource groups
 
 Examples:
     pcs resource list
