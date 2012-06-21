@@ -1,15 +1,14 @@
 require 'sinatra'
-require 'sinatra/reloader' if development?
-#require 'rack/ssl'
+require 'sinatra/reloader' if development?  #require 'rack/ssl'
 require 'open3'
 require 'rexml/document'
-require './resource.rb'
-require './remote.rb'
-require './fenceagent.rb'
-require './cluster.rb'
-require './config.rb'
-require './pcs.rb'
-require './auth.rb'
+require 'resource.rb'
+require 'remote.rb'
+require 'fenceagent.rb'
+require 'cluster.rb'
+require 'config.rb'
+require 'pcs.rb'
+require 'auth.rb'
 require 'webrick'
 require 'pp'
 require 'webrick/https'
@@ -18,13 +17,13 @@ require 'openssl'
 use Rack::CommonLogger
 #use Rack::SSL
 
-also_reload './resource.rb'
-also_reload './remote.rb'
-also_reload './fenceagent.rb'
-also_reload './cluster.rb'
-also_reload './config.rb'
-also_reload './pcs.rb'
-also_reload './auth.rb'
+also_reload 'resource.rb'
+also_reload 'remote.rb'
+also_reload 'fenceagent.rb'
+also_reload 'cluster.rb'
+also_reload 'config.rb'
+also_reload 'pcs.rb'
+also_reload 'auth.rb'
 
 enable :sessions
 
@@ -43,8 +42,11 @@ configure do
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
   PENGINE = "/usr/libexec/pacemaker/pengine"
-  PCS = "/root/pcs/pcs/pcs" 
-#  PCS = "/sbin/pcs" 
+  if Dir.pwd == "/var/lib/pcs-gui"
+    PCS = "/sbin/pcs" 
+  else
+    PCS = "/root/pcs/pcs/pcs" 
+  end
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   SETTINGS_FILE = "pcs_settings.conf"
@@ -483,6 +485,10 @@ end
 def getNodes
   stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes")
   out = stdout.readlines
+  if waitth.value.exitstatus != 0
+    stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes corosync")
+    out = stdout.readlines
+  end
 
   online = out[1]
   offline = out[2]
@@ -499,23 +505,6 @@ def getNodes
     offline = []
   end
 
-  # If exit status is 0, then the cluster probably isn't running so we use
-  # corosync node list
-  if waitth.value.exitstatus != 0
-    stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes corosync")
-    out = stdout.readlines
-    if out.length > 0
-      out2 = out[0].chomp.split(/: /)
-      if out2.length > 1
-	out2[1].split(/ /).each {|n| 
-	  offline << n
-	}
-	return [[],offline]
-      end
-    end
-
-    return [[],[]]
-  end
   [online, offline]
 end
 

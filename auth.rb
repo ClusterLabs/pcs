@@ -42,8 +42,9 @@ class PCSAuth
     session["username"] != nil
   end
 
+  # Always an admin until we implement groups
   def self.isAdmin(session)
-    session["username"] == "feist"
+    true
   end
 
   def self.createUser(username, password)

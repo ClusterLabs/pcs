@@ -1,0 +1,10 @@
+[Unit]
+Description=PCS GUI
+
+[Service]
+WorkingDirectory=/var/lib/pcs-gui
+ExecStart=/usr/local/pcs-gui/pcs-gui start
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

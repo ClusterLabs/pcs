@@ -1,7 +1,7 @@
 require 'json'
 require 'net/http'
 require 'uri'
-require './pcs.rb'
+require 'pcs.rb'
 
 # Commands for remote access
 def remote(params)
