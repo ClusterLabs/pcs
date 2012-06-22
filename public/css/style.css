@@ -58,12 +58,6 @@ td.right {
   float: right;
 }
 
-#header li {
-  list-style: none;
-  display: inline;
-  list-style-type: none;
-}
-
 #header #menu_controls {
   padding-top: 0px;
   padding-bottom: 0px;
@@ -82,7 +76,7 @@ td.right {
   padding: 0px;
 }
 
-#header #menu_list a.active {
+#header > #menu_list > a.active {
   padding: 8px;
   padding-left: 16px;
   padding-right: 16px;
@@ -93,7 +87,7 @@ td.right {
   float: left;
 }
 
-#header #menu_list a {
+.menuitem >  a {
   padding: 8px;
   padding-left: 16px;
   padding-right: 16px;
@@ -628,3 +622,69 @@ tr td a.remove {
 .previewmap { background-position: -400px -1px; }
 .downarrow { background-position: -528px -1px; }
 .rightarrow { background-position: -544 -1px; }
+
+.menuheader { position: relative; }
+.menuheader .label {
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
+  text-align: left;
+  color: #888888;
+}
+
+.menuheader .menu {
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
+  text-align: left;
+  background: white;
+
+  display: none;
+  width: auto;
+  position: absolute;
+#  top: 22px;
+  border-radius: 0 0 5px 5px;
+  z-index: 10;
+  padding-bottom: 5px;
+  box-shadow: 0 5px 14px #dadada;
+  text-align: right;
+}
+.menuheader:hover .menu {
+  display: block;
+  position: absolute;
+}
+
+.menuheader:last-child .menu {
+  float: right;
+  right: 0px;
+}
+
+.menu a {
+  width: 80px; /* HACK: must be the same width as the widest menu header */
+#  color: #777;
+  text-decoration: none;
+  font-size: 13px;
+  border-radius: 0;
+  font-weight: normal;
+  display: block;
+  position: relative;
+  line-height: 24px;
+#  border-top: 1px rgba(0,0,0,0) solid;
+  padding-left: 30px;
+  padding-right: 10px;
+#  padding-top: 3px;
+  padding-bottom: 3px;
+  font-family: "Overpass";
+  float: left;
+}
+
+.menu-item:hover {
+  background: -webkit-linear-gradient(top,  #4db5f1 0%, #127AB4 100%);
+  color: white;
+  border-top: 1px #47ace5 solid;
+  cursor: pointer;
+}
+
+li.menuheader {
+  list-style: none;
+}
