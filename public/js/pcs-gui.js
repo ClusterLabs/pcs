@@ -1,3 +1,5 @@
+var pcs_timeout = 6000;
+
 function create_group() {
   var num_nodes = 0;
   var node_names = "";
@@ -60,7 +62,7 @@ function remote_node_update() {
   $.ajax({
     type: 'GET',
     url: '/remote/status?node='+node,
-    timeout: 2000,
+    timeout: pcs_timeout,
     success: function (data) {
       data = jQuery.parseJSON(data);
       uptime = data.uptime;
@@ -110,7 +112,7 @@ function local_node_update() {
   $.ajax({
     type: 'GET',
     url: '/remote/status',
-    timeout: 2000,
+    timeout: pcs_timeout,
     success: function (data) {
       data = jQuery.parseJSON(data);
       if ($.inArray(node,data.corosync_online) > -1) {
@@ -158,7 +160,7 @@ function resource_list_update() {
   $.ajax({
     type: 'GET',
     url: '/resource_list/'+resource,
-    timeout: 2000,
+    timeout: pcs_timeout,
     success: function(data) {
       try {
 	newdata = $(data);
@@ -189,7 +191,7 @@ function resource_update() {
   $.ajax({
     type: 'GET',
     url: '/remote/resource_status?resource='+resource,
-    timeout: 2000,
+    timeout: pcs_timeout,
     success: function(data) {
       data = jQuery.parseJSON(data);
       $("#cur_res_loc").html(data.location);
@@ -282,7 +284,7 @@ function checkClusterNodes() {
     type: 'POST',
     url: '/remote/check_gui_status',
     data: {"nodes": nodes.join(",")},
-    timeout: 2000,
+    timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
       update_create_cluster_dialog(mydata);
