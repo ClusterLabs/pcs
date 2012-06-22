@@ -5,7 +5,6 @@ import xml.dom.minidom
 import urllib,urllib2
 from xml.dom.minidom import parseString
 import re
-import getpass
 import json
 
 
@@ -18,9 +17,7 @@ def checkStatus(node):
     out = sendHTTPRequest(node, 'remote/status', None, False)
     return out
 
-def updateToken(node):
-    username = raw_input(node + " username: ")
-    password = getpass.getpass(node + " password: ")
+def updateToken(node,username,password):
     data = urllib.urlencode({'username':username, 'password':password})
     out = sendHTTPRequest(node, 'remote/auth', data, False)
     if out[0] != 0:
@@ -43,7 +40,10 @@ def readTokens():
     tokenfile = os.path.expanduser("~/.pcs/tokens")
     if (os.path.isfile(tokenfile) == False):
         return {}
-    tokens = json.load(open(tokenfile))
+    try:
+        tokens = json.load(open(tokenfile))
+    except:
+        return {}
     return tokens
 
 # Takes a dictionary {'nodeA':'tokenA'}
@@ -115,7 +115,11 @@ def getNodesFromCorosyncConf():
     return nodes
 
 def getCorosyncConf(conf='/etc/corosync/corosync.conf'):
-    return open(conf).read()
+    try:
+        out = open(conf).read()
+    except IOError:
+        return ""
+    return out
 
 def getCorosyncNodes():
     cc = getCorosyncConf()

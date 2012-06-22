@@ -5,6 +5,7 @@ import usage
 import urllib2
 import utils
 import sys
+import getpass
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -82,12 +83,17 @@ def cluster_token(argv):
         sys.exit(1)
 
 def auth_nodes(nodes):
+    username = None
+    password = None
     for node in nodes:
         status = utils.checkStatus(node)
         if status[0] == 0:
             print node + ": Already authorized"
         elif status[0] == 3:
-            utils.updateToken(node)
+            if username == None:
+                username = raw_input("Username: ")
+                password = getpass.getpass("Password: ")
+            utils.updateToken(node,username,password)
             print "%s: Authorized" % (node)
         else:
             print "Unable to communicate with %s" % (node)
