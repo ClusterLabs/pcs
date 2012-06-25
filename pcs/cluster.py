@@ -40,6 +40,10 @@ def cluster_cmd(argv):
         stop_cluster_all()
     elif (sub_cmd == "cib"):
         get_cib()
+    elif (sub_cmd == "node"):
+        cluster_node(argv)
+    elif (sub_cmd == "localnode"):
+        cluster_localnode(argv)
     else:
         usage.cluster()
 
@@ -161,14 +165,7 @@ def corosync_configure(argv,returnConfig=False):
     if returnConfig:
         return corosync_config
 
-    try:
-        f = open(COROSYNC_CONFIG_FILE,'w')
-        f.write(corosync_config)
-        f.close()
-    except IOError:
-        print "ERROR: Unable to write corosync configuration file, try running as root."
-        exit(1)
-
+    utils.setCorosyncConf(corosync_config)
 
 def get_local_network():
     args = ["/sbin/ip", "route"]
@@ -221,3 +218,19 @@ def get_cib():
         print "Error: unable to get cib"
         sys.exit(1)
     print output,
+
+def cluster_node(argv):
+    print "NYI"
+
+def cluster_localnode(argv):
+    if len(argv) == 2 and argv[0] == "add":
+        node = argv[1]
+        success = utils.addNodeToCorosync(node)
+        if success:
+            print "%s: successfully added!" % node
+        else:
+            print "Error: unable to add %s" % node
+            sys.exit(1)
+    else:
+        usage.cluster()
+        exit(1)

@@ -115,6 +115,12 @@ Commands:
 
     cib
         Get the raw xml from the CIB (Cluster Information Base)
+
+    node add <node ip/name>
+        Add the node to corosync.conf and corosync on all nodes in the cluster
+
+    localnode add <node ip/name>
+        Add the specified node to corosync.conf and corosync only on this node
 """
 
 def stonith():

@@ -5,8 +5,7 @@ cluster_name: @@cluster_name
 }
 
 nodelist {
-@@nodes
-}
+@@nodes}
 
 quorum {
 provider: corosync_votequorum

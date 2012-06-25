@@ -121,6 +121,15 @@ def getCorosyncConf(conf='/etc/corosync/corosync.conf'):
         return ""
     return out
 
+def setCorosyncConf(corosync_config, conf_file='/etc/corosync/corosync.conf'):
+    try:
+        f = open(conf_file,'w')
+        f.write(corosync_config)
+        f.close()
+    except IOError:
+        print "ERROR: Unable to write corosync configuration file, try running as root."
+        exit(1)
+
 def getCorosyncActiveNodes():
     args = ["/sbin/corosync-quorumtool", "-l"]
     nodes = []
@@ -136,7 +145,63 @@ def getCorosyncActiveNodes():
             in_nodes = True
 
     return nodes
-    
+
+# Add node specified to corosync.conf and insert into corosync (if running)
+def addNodeToCorosync(node):
+# Before adding, make sure node isn't already in corosync.conf or in running
+# corosync process
+    for c_node in getNodesFromCorosyncConf():
+        if c_node == node:
+            print "Node already exists in corosync.conf"
+            sys.exit(1)
+    for c_node in getCorosyncActiveNodes():
+        if c_node == node:
+            print "Node already exists in running corosync"
+            sys.exit(1)
+    corosync_conf = getCorosyncConf()
+    new_nodeid = getHighestnodeid(corosync_conf) + 1
+    nl_re = re.compile(r"nodelist\s*{")
+    results = nl_re.search(corosync_conf)
+    if results:
+        bracket_depth = 1
+        count = results.end()
+        for c in corosync_conf[results.end():]:
+            if c == "}":
+                bracket_depth -= 1
+            if c == "{":
+                bracket_depth += 1
+
+            if bracket_depth == 0:
+                break
+            count += 1
+        new_corosync_conf = corosync_conf[:count]
+        new_corosync_conf += "  node {\n"
+        new_corosync_conf += "        ring0_addr: %s\n" % (node)
+        new_corosync_conf += "        nodeid: %d\n" % (new_nodeid)
+        new_corosync_conf += "       }\n"
+        new_corosync_conf += corosync_conf[count:]
+        setCorosyncConf(new_corosync_conf)
+
+        run(["/sbin/corosync-cmapctl", "-s", "nodelist.node." +
+            str(new_nodeid - 1) + ".nodeid", "u32", str(new_nodeid)])
+        run(["/sbin/corosync-cmapctl", "-s", "nodelist.node." +
+            str(new_nodeid - 1) + ".ring0_addr", "str", node])
+    else:
+        print "Unable to find nodelist in corosync.conf"
+        sys.exit(1)
+
+    return True
+
+def getHighestnodeid(corosync_conf):
+    highest = 0
+    corosync_conf = getCorosyncConf()
+    p = re.compile(r"nodeid:\s*([0-9]+)")
+    mall = p.findall(corosync_conf)
+    for m in mall:
+        if int(m) > highest:
+            highest = int(m)
+    return highest
+
 # Run command, with environment and return (output, retval)
 def run(args):
     env_var = os.environ
