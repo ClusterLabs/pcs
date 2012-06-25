@@ -30,6 +30,8 @@ def remote(params)
     return resource_stop(params)
   when "check_gui_status"
     return check_gui_status(params)
+  when "add_node"
+    return remote_add_node(params)
   end
 end
 
@@ -81,6 +83,13 @@ def check_gui_status(params)
    }
   end
   return JSON.generate(node_results)
+end
+
+def remote_add_node(params)
+  if params[:new_nodename] != nil
+    pp add_node(params[:new_nodename])
+  end
+  return ""
 end
 
 def create_cluster(params)
