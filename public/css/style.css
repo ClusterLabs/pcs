@@ -9,6 +9,10 @@ a, a:link, a:visited, a:hover, a:active {
   text-decoration: none;
 }
 
+table {
+  empty-cells:show;
+}
+
 #header {
   background-image:url("../images/Shell_bg.png");
   height: 79px;
