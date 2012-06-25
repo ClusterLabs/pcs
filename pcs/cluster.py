@@ -182,14 +182,14 @@ def get_local_network():
         exit(1)
 
 def start_cluster(argv):
-    print "Starting Cluster"
+    print "Starting Cluster...",
     output, retval = utils.run(["systemctl", "start","corosync.service"])
-    print output
+    print output,
     if retval != 0:
         print "Error: unable to start corosync"
         sys.exit(1)
     output, retval = utils.run(["systemctl", "start", "pacemaker.service"])
-    print output
+    print output,
     if retval != 0:
         print "Error: unable to start pacemaker"
         sys.exit(1)
@@ -203,14 +203,14 @@ def stop_cluster_all():
         utils.stopCluster(node)
 
 def stop_cluster(argv):
-    print "Stopping Cluster"
+    print "Stopping Cluster..."
     output, retval = utils.run(["systemctl", "stop","pacemaker.service"])
-    print output
+    print output,
     if retval != 0:
         print "Error: unable to stop pacemaker"
         sys.exit(1)
     output, retval = utils.run(["systemctl", "stop","corosync.service"])
-    print output
+    print output,
     if retval != 0:
         print "Error: unable to stop corosync"
         sys.exit(1)
