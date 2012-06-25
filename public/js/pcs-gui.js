@@ -25,7 +25,7 @@ function create_group() {
   }
 }
 
-function verify_remove(error_message, ok_message) {
+function verify_remove(error_message, ok_message, resource_id) {
   if (!error_message)
     error_message = "You must select at least one resource.";
   if (!ok_message)
@@ -33,7 +33,13 @@ function verify_remove(error_message, ok_message) {
 
   var buttonOpts = {}
   buttonOpts[ok_message] = function() {
-	  $('#node_list > form').submit();
+    if (resource_id) {
+      $('<form action="/resourcerm" method="POST">' +
+	  '<input type="hidden" name="resid-'+resource_id+'" value="1">' +
+	  '</form>').submit();
+    } else {
+      $('#node_list > form').submit();
+    }
   };
   buttonOpts["Cancel"] = function() {
     $(this).dialog("close");
@@ -41,10 +47,16 @@ function verify_remove(error_message, ok_message) {
 
   var list_of_nodes = "<ul>";
   var nodes_to_remove = 0;
-  $("#node_list :checked").each(function (index,element) {
-    list_of_nodes += "<li>" + element.getAttribute("res_id")+"</li>";
+
+  if (resource_id) {
+    list_of_nodes += "<li>" + resource_id +"</li>";
     nodes_to_remove++;
-  });
+  } else {
+    $("#node_list :checked").each(function (index,element) {
+      list_of_nodes += "<li>" + element.getAttribute("res_id")+"</li>";
+      nodes_to_remove++;
+    });
+  }
   list_of_nodes += "</ul>";
   if (nodes_to_remove != 0) {
     $("#resource_to_remove").html(list_of_nodes);
@@ -253,7 +265,7 @@ function setup_node_links() {
 function setup_resource_links() {
   resource = $("#node_info_header_title_name").text();
   $("#resource_delete_link").click(function () {
-    $.post('/resourcerm',"resid-"+resource+"=1");
+    verify_remove(false, false, [resource]);
   });
   $("#resource_stop_link").click(function () {
     $.post('/remote/resource_stop',"resource="+resource);
