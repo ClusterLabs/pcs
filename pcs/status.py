@@ -39,7 +39,7 @@ def actions_status(argv):
 # Parse crm_mon for status
 def nodes_status(argv):
     if len(argv) == 1 and (argv[0] == "corosync" or argv[0] == "both"):
-        all_nodes = utils.getCorosyncNodes()
+        all_nodes = utils.getNodesFromCorosyncConf()
         online_nodes = utils.getCorosyncActiveNodes()
         offline_nodes = []
         for node in all_nodes:

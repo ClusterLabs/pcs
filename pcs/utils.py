@@ -121,18 +121,6 @@ def getCorosyncConf(conf='/etc/corosync/corosync.conf'):
         return ""
     return out
 
-def getCorosyncNodes():
-    cc = getCorosyncConf()
-    nodes = []
-
-    ring_re = re.compile(r'ring0_addr:\s+([\w-]*)')
-    for line in cc.split('\n'):
-        x = ring_re.search(line)
-        if x and x.groups():
-            nodes.append(x.groups()[0])
-
-    return nodes
-
 def getCorosyncActiveNodes():
     args = ["/sbin/corosync-quorumtool", "-l"]
     nodes = []
