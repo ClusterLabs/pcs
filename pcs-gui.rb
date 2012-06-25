@@ -85,6 +85,9 @@ helpers do
 
     if params[:node]
       @cur_node = @nodes[params[:node]]
+      if not @cur_node
+	@cur_node = @nodes.values[0]
+      end
     else
       @cur_node = @nodes.values[0]
     end

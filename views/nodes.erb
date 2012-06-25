@@ -53,7 +53,7 @@
 	    <div id="node_sub_info">
 	      <table>
 		<tr>
-		  <td rowspan=2><input style="margin-right: 50px;" type="text" value="<%=@cur_node.name%>" size="35" class="text_field"></td>
+		  <td rowspan=2><input disabled style="margin-right: 50px;" type="text" value="<%=@cur_node.name%>" size="35" class="text_field"></td>
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
 		    <!--		      <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pacemaker_status" style="float:left" class="status"></div></td></tr> -->
@@ -93,7 +93,7 @@
 		  <td><div class="reg"> Uptime: </div></td>
 		  <td><div class="bold" id="uptime"></div></td>
 		  <td><div class="reg"> Hostname: </div></td>
-		  <td><div><input style="margin-right: 50px;" value="<%=@cur_node.hostname%>" type="text" size="25" class="text_field"></div></td>
+		  <td><div class="bold"><%=@cur_node.hostname%></div></td>
 		</tr>
 	      </table>
 	    </div>
