@@ -401,7 +401,7 @@ def resource_show(argv):
         output,retval = utils.run(args)
         preg = re.compile(r'.*(stonith:.*)')
         for line in output.split('\n'):
-            if not preg.match(line):
+            if not preg.match(line) and line != "":
                 print line
         return
 
