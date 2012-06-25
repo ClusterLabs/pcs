@@ -9,7 +9,7 @@ function create_group() {
   });
 
   if (num_nodes == 0) {
-    alert("You must select at least one node to add to a group");
+    alert("You must select at least one resource to add to a group");
   } else {
     $("#resources_to_add_to_group").val(node_names);
     $("#add_group").dialog({title: 'Create Group',
@@ -27,7 +27,7 @@ function create_group() {
 
 function verify_remove(error_message, ok_message) {
   if (!error_message)
-    error_message = "You must select at least one node.";
+    error_message = "You must select at least one resource.";
   if (!ok_message)
     ok_message = "Remove resource(s)";
 
