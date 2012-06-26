@@ -83,6 +83,10 @@ helpers do
       @nodes[i]  = Node.new(i, i, i, false)
     end
 
+    if @nodes_online.length == 0
+      @pcs_node_offline = true
+    end
+
     if params[:node]
       @cur_node = @nodes[params[:node]]
       if not @cur_node

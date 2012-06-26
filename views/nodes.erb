@@ -28,7 +28,14 @@
 	    <td class="node_list_sprite">
 	      <div class="check sprites"></div>
 	    </td>
-	    <td class="node_name" <%= 'style="color:red;" ' if !node.active %>>
+	    <% 
+	      if @pcs_node_offline
+		node_color = "gray"
+	      elsif !node.active
+		node_color = "red"
+	      end
+	    %>
+	    <td class="node_name" <%= 'style="color:'+node_color+'" ' if node_color %>>
 	      <%= node.name %>
 	    </td>
 	    <% if i != @cur_node.id %>
