@@ -127,7 +127,7 @@ def resource_list_options(resource):
 # Return the string formatted with a line length of 79 and indented
 def format_desc(indent, desc):
     desc = " ".join(desc.split())
-    rows, columns = os.popen('stty size', 'r').read().split()
+    rows, columns = utils.getTerminalSize()
     columns = int(columns)
     if columns < 40: columns = 40
     afterindent = columns - indent

@@ -135,15 +135,24 @@ Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
 Commands:
-    stonith [list|show] [stonith_id]
-    stonith create <stonith_id> <fence device type> [fence device options]
-    stonith update <stonith_id> [fence device options]
-    stonith delete <stonith_id>
+    [list|show] [stonith_id]
+    create
+        Show list of all available stonith agents
+
+    create <stonith agent>
+        Show options for specified stonith agent
+
+    create <stonith_id> <stonith device type> [stonith device options]
+        Create stonith device with specified type and options
+
+    update <stonith_id> [stonith device options]
+        Add/Change options to specified resource_id
+        
+    delete <stonith_id>
+        Remove stonith_id from configuration
 
 Examples:
     pcs stonith create MyStonith ssh hostlist="f1" op monitor interval=30s
-
-
 """
 
 def property():

@@ -7,6 +7,9 @@ from xml.dom.minidom import parseString
 import usage
 import utils
 import re
+import glob
+import os
+import resource
 
 def stonith_cmd(argv):
     if len(argv) == 0:
@@ -16,21 +19,26 @@ def stonith_cmd(argv):
     if (sub_cmd == "help"):
         usage.stonith()
     elif (sub_cmd == "create"):
-        stn_id = argv.pop(0)
-        stn_type = "stonith:"+argv.pop(0)
-        st_values = []
-        op_values = []
-        op_args = False
-        for arg in argv:
-            if op_args:
-                op_values.append(arg)
-            else:
-                if arg == "op":
-                    op_args = True
+        if len(argv) == 0:
+            stonith_list_available()
+        elif len(argv) == 1:
+            stonith_list_options(argv[0])
+        else:
+            stn_id = argv.pop(0)
+            stn_type = "stonith:"+argv.pop(0)
+            st_values = []
+            op_values = []
+            op_args = False
+            for arg in argv:
+                if op_args:
+                    op_values.append(arg)
                 else:
-                    st_values.append(arg)
-        
-        resource.resource_create(stn_id, stn_type, st_values, op_values)
+                    if arg == "op":
+                        op_args = True
+                    else:
+                        st_values.append(arg)
+            
+            resource.resource_create(stn_id, stn_type, st_values, op_values)
     elif (sub_cmd == "update"):
         stn_id = argv.pop(0)
         resource.resource_update(stn_id,argv)
@@ -66,3 +74,54 @@ def stonith_show(argv):
         print "Resource:", arg
         for nvpair in doc.getElementsByTagName("nvpair"):
             print "  " + nvpair.getAttribute("name") + ": " + nvpair.getAttribute("value")
+
+def stonith_list_available():
+    bad_fence_devices = ["kdump_send", "legacy", "na", "nss_wrapper",
+            "pcmk", "vmware_helper", "ack_manual"]
+    fence_devices = sorted(glob.glob("/usr/sbin/fence_*"))
+    for bfd in bad_fence_devices:
+        try:
+            fence_devices.remove("/usr/sbin/fence_"+bfd)
+        except ValueError:
+            continue
+
+    for fd in fence_devices:
+        metadata = get_metadata(fd)
+        if metadata == False:
+            print "Error: no metadata for %s" % fd
+            continue
+        fd = fd[10:]
+        dom = parseString(metadata)
+        ra = dom.documentElement
+        shortdesc = ra.getAttribute("shortdesc")
+
+        sd = ""
+        if len(shortdesc) > 0:
+            sd = " - " +  resource.format_desc(fd.__len__() + 3, shortdesc)
+        print fd + sd
+
+def stonith_list_options(stonith_agent):
+    metadata = get_metadata("/usr/sbin/" + stonith_agent)
+    if not metadata:
+        print "Unable to get metadata for %s" % stonith_agent
+        sys.exit(1)
+    print "Stonith options for: %s" % stonith_agent
+    dom = parseString(metadata)
+    params = dom.documentElement.getElementsByTagName("parameter")
+    for param in params:
+        name = param.getAttribute("name")
+        if param.getAttribute("required") == "1":
+            name += " (required)"
+        desc = param.getElementsByTagName("shortdesc")[0].firstChild.nodeValue.strip().replace("\n", "")
+        indent = name.__len__() + 4
+        desc = resource.format_desc(indent, desc)
+        print "  " + name + ": " + desc
+
+def get_metadata(fence_agent_script):
+    if (not os.path.isfile(fence_agent_script)) or (not os.access(fence_agent_script, os.X_OK)):
+        return False
+    (metadata, retval) = utils.run([fence_agent_script, "-o", "metadata"])
+    if retval == 0:
+        return metadata
+    else:
+        return False
