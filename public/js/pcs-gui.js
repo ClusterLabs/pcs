@@ -34,9 +34,11 @@ function verify_remove(error_message, ok_message, resource_id) {
   var buttonOpts = {}
   buttonOpts[ok_message] = function() {
     if (resource_id) {
-      $('<form action="/resourcerm" method="POST">' +
+      var f = $('<form action="/resourcerm" method="POST">' +
 	  '<input type="hidden" name="resid-'+resource_id+'" value="1">' +
-	  '</form>').submit();
+	  '</form>');
+      f.appendTo($('body'));
+      f.submit();
     } else {
       $('#node_list > form').submit();
     }
