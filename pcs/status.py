@@ -29,6 +29,8 @@ def status_cmd(argv):
         token_status(argv)
     elif (sub_cmd == "xml"):
         xml_status()
+    elif (sub_cmd == "corosync"):
+        corosync_status()
     else:
         usage.status()
         sys.exit(1)
@@ -148,6 +150,15 @@ def cluster_status(argv):
                 break
 
             print "",line
+
+def corosync_status():
+    (output, retval) = utils.run(["/sbin/corosync-quorumtool", "-l"])
+    if retval != 0:
+        print "Error: Corosync not running"
+        sys.exit(1)
+    else:
+        print output,
+
 def xml_status():
     (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r", "-X"])
 
