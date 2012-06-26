@@ -7,6 +7,7 @@ import usage
 import utils
 import re
 import textwrap
+import xml.etree.ElementTree
 
 def resource_cmd(argv):
     if len(argv) == 0:
@@ -55,6 +56,10 @@ def resource_cmd(argv):
         print "Not Yet Implemented"
 #        if resource_stop(argv):
 #            resource_start(argv)
+    elif (sub_cmd == "manage"):
+        resource_manage(argv, True)
+    elif (sub_cmd == "unmanage"):
+        resource_manage(argv, False)
     else:
         usage.resource()
 
@@ -436,3 +441,31 @@ def resource_start(argv):
         return False
     else:
         return True
+
+def resource_manage(argv, set_managed):
+    if len(argv) == 0:
+        usage.resource()
+        sys.exit(1)
+
+    for resource in argv:
+        if not utils.does_exist("//primitive[@id='"+resource+"']"):
+            print "Error: %s doesn't exist." % resource
+            sys.exit(1)
+        exists =  utils.does_exist("//primitive[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']")
+        if set_managed and not exists:
+            print "Error: %s is already managed" % resource
+            sys.exit(1)
+        elif not set_managed and exists:
+            print "Error: %s is already unmanaged" % resource
+            sys.exit(1)
+
+    for resource in argv:
+        if not set_managed:
+            (output, retval) =  utils.set_unmanaged(resource)
+            if retval != 0:
+                print "Error attempting to unmanage resource: %s" % output
+                sys.exit(1)
+        else:
+            xpath = "//primitive[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
+            my_xml = utils.get_cib_xpath(xpath)
+            utils.remove_from_cib(my_xml)

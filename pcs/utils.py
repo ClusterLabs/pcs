@@ -250,6 +250,16 @@ def add_to_cib(scope, xml):
     args = args  + ["-o", "resources", "-C", "-X", xml]
     return run(args)
 
+def remove_from_cib(xml):
+    args = ["cibadmin"]
+    args = args + ["-D", "-X", xml]
+    return run(args)
+
+def set_unmanaged(resource):
+    args = ["crm_resource", "--resource", resource, "--set-parameter",
+            "is-managed", "--meta", "--parameter-value", "false"]
+    return run(args)
+
 # If the property exists, remove it and replace it with the new property
 # If the value is blank, then we just remove it
 def set_cib_property(prop, value):

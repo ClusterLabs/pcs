@@ -60,6 +60,12 @@ Commands:
     group list
         List all currently configured resource groups
 
+    manage <resource 1> [resource 2] ...
+        Set resources listed to managed mode (default)
+
+    unmanage <resource 1> [resource 2] ...
+        Set resources listed to unmanaged mode
+
 Examples:
     pcs resource list
 
