@@ -692,3 +692,8 @@ tr td a.remove {
 li.menuheader {
   list-style: none;
 }
+
+#add_constraint_location td {
+  font-family: "Liberation";
+}
+
