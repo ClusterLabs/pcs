@@ -102,7 +102,7 @@ def sendHTTPRequest(host, request, data = None, printResult = True):
         result = opener.open(url,data)
         html = result.read()
         if printResult:
-            print host + ": " + html
+            print host + ": " + html.strip()
         return (0,html)
     except urllib2.HTTPError, e:
         if printResult:

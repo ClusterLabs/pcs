@@ -241,7 +241,7 @@ def cluster_node(argv):
         if retval != 0:
             print "Error: unable to add %s on %s - %s" % (node,my_node,output[0].strip())
         else:
-            print "%s: Updated" % my_node
+            print "%s: Corosync updated" % my_node
             corosync_conf = output
     if corosync_conf != None:
         utils.setCorosyncConfig(node, corosync_conf)
