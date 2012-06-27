@@ -44,6 +44,8 @@ def cluster_cmd(argv):
         cluster_node(argv)
     elif (sub_cmd == "localnode"):
         cluster_localnode(argv)
+    elif (sub_cmd == "get_conf"):
+        cluster_get_corosync_conf(argv)
     else:
         usage.cluster()
 
@@ -220,7 +222,33 @@ def get_cib():
     print output,
 
 def cluster_node(argv):
-    print "NYI"
+    if len(argv) != 2 or argv[0] != "add":
+        usage.cluster();
+        sys.exit(1)
+
+    node = argv[1]
+    status,output = utils.checkStatus(node)
+    if status == 2:
+        print "Error: pcs-gui is not running on new node"
+        sys.exit(1)
+    elif status == 3:
+        print "Error: %s is not yet authenticated (try pcs cluster auth %s)" % (node, node)
+        sys.exit(1)
+
+    corosync_conf = None
+    for my_node in utils.getNodesFromCorosyncConf():
+        retval, output = utils.addLocalNode(my_node,node)
+        if retval != 0:
+            print "Error: unable to add %s on %s - %s" % (node,my_node,output[0].strip())
+        else:
+            print "%s: Updated" % my_node
+            corosync_conf = output
+    if corosync_conf != None:
+        utils.setCorosyncConfig(node, corosync_conf)
+        utils.startCluster(node)
+    else:
+        print "Error: Unable to update any nodes"
+        sys.exit(1)
 
 def cluster_localnode(argv):
     if len(argv) == 2 and argv[0] == "add":
@@ -234,3 +262,11 @@ def cluster_localnode(argv):
     else:
         usage.cluster()
         exit(1)
+
+def cluster_get_corosync_conf(argv):
+    if len(argv) != 1:
+        usage.cluster()
+        exit(1)
+
+    node = argv[0]
+    print utils.getCorosyncConfig(node)

@@ -57,6 +57,13 @@ def writeTokens(tokens):
     f.close()
 
 # Set the corosync.conf file on the specified node
+def getCorosyncConfig(node):
+    retval, output = sendHTTPRequest(node, 'remote/get_corosync_conf', None, False)
+    if retval == 0:
+        return output
+    else:
+        return None
+
 def setCorosyncConfig(node,config):
     data = urllib.urlencode({'corosync_conf':config})
     sendHTTPRequest(node, 'remote/set_corosync_conf', data)
@@ -66,6 +73,15 @@ def startCluster(node):
 
 def stopCluster(node):
     sendHTTPRequest(node, 'remote/cluster_stop')
+
+def addLocalNode(node,node_to_add):
+    data = urllib.urlencode({'new_nodename':node_to_add})
+    retval, output = sendHTTPRequest(node, 'remote/add_node', data, False)
+    if retval == 0:
+        myout = json.loads(output)
+        return myout
+    else:
+        return 1, output
 
 # Send an HTTP request to a node return a tuple with status, data
 # If status is 0 then data contains server response

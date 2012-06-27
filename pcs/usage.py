@@ -124,9 +124,13 @@ Commands:
 
     node add <node ip/name>
         Add the node to corosync.conf and corosync on all nodes in the cluster
+        and sync the new corosync.conf to the new node
 
     localnode add <node ip/name>
         Add the specified node to corosync.conf and corosync only on this node
+
+    get_conf <node ip/name>
+        Get the corosync.conf from the specified node
 """
 
 def stonith():
