@@ -75,6 +75,6 @@ end
 
 def add_node(new_nodename)
   Open3.popen3(PCS, "cluster", "localnode", "add", new_nodename) { |stdin, stdout, stderror, waitth|
-    return waitth.value,stdout.readlines()
+    return waitth.value.exitstatus,stdout.readlines()
   }
 end

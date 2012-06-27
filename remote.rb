@@ -14,8 +14,10 @@ def remote(params)
     return resource_status(params)
   when "create_cluster"
     return create_cluster(params)
+  when "get_corosync_conf"
+    return get_corosync_conf(params)
   when "set_corosync_conf"
-    if set_cluster_conf(params)
+    if set_corosync_conf(params)
       return "Succeeded"
     else
       return "Failed"
@@ -53,7 +55,12 @@ def cluster_stop(params)
   end
 end
 
-def set_cluster_conf(params)
+def get_corosync_conf(params)
+  f = File.open("/etc/corosync/corosync.conf",'r')
+  return f.read
+end
+
+def set_corosync_conf(params)
   if params[:corosync_conf] != nil and params[:corosync_conf] != ""
     begin
       FileUtils.cp(COROSYNC_CONF,COROSYNC_CONF + "." + Time.now.to_i.to_s)
@@ -86,14 +93,20 @@ def check_gui_status(params)
 end
 
 def remote_add_node(params)
+  pp params
   if params[:new_nodename] != nil
-    pp add_node(params[:new_nodename])
+    retval, output =  add_node(params[:new_nodename])
   end
-  return ""
+
+  if retval == 0
+    return JSON.generate([retval,get_corosync_conf([])])
+  end
+
+  return JSON.generate([retval,output])
 end
 
 def create_cluster(params)
-  if set_cluster_conf(params)
+  if set_corosync_conf(params)
     cluster_start()
   else
     return "Failed"
