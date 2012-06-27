@@ -254,12 +254,20 @@ function setNodeStatus(node, running) {
 }
   
 
+function fade_in_out(id) {
+  $(id).fadeTo(1000, 0.01, function() {
+    $(id).fadeTo(1000, 1);
+  });
+}
+
 function setup_node_links() {
   node = $("#node_info_header_title_name").text();
   $("#node_start").click(function() {
+    fade_in_out("#node_start");
     $.post('/remote/cluster_start',{"name": node});
   });
   $("#node_stop").click(function() {
+    fade_in_out("#node_stop");
     $.post('/remote/cluster_stop', {"name": node});
   });
 }
@@ -270,12 +278,12 @@ function setup_resource_links() {
     verify_remove(false, false, [resource]);
   });
   $("#resource_stop_link").click(function () {
+    fade_in_out("#resource_stop_link");
     $.post('/remote/resource_stop',"resource="+resource);
-    alert("Stopping Resource");
   });
   $("#resource_start_link").click(function () {
+    fade_in_out("#resource_start_link");
     $.post('/remote/resource_start',"resource="+resource);
-    alert("Starting Resource");
   });
   $("#resource_move_link").click(function () {
     alert("Not Yet Implemented");
