@@ -42,7 +42,9 @@ def cluster_start(params)
     response = send_request_with_token(params[:name], 'cluster_start', true)
   else
     puts "Starting Daemons"
-    puts `#{PCS} cluster start`
+    output =  `#{PCS} cluster start`
+    print output
+    return output
   end
 end
 
