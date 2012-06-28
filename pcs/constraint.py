@@ -150,8 +150,6 @@ def colocation_add(argv):
     if output != "":
         print output
 
-
-
 def order_show(argv):
     if (len(argv) != 0 and argv[0] == "all"):
         showDetail = True
@@ -430,6 +428,9 @@ def location_add(argv,rm=False):
 def getCurrentConstraints():
     current_constraints_xml = utils.get_cib_xpath('//constraints')
 
+    if current_constraints_xml == "":
+        print "Error: unable to process cib"
+        sys.exit(1)
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
     dom = parseString(current_constraints_xml)
