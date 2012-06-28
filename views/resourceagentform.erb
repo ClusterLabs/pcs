@@ -38,7 +38,7 @@
 	    <%= name %>
 	  </td>
 	  <td>
-	    <input style="margin-right: 50px;" type="text" name="_res_param_<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	    <input style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
@@ -51,7 +51,7 @@
 	    <%= name %>
 	  </td>
 	  <td>
-	    <input style="margin-right: 50px;" type="text" name="_res_param_<%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	    <input style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>

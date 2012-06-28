@@ -104,8 +104,8 @@ helpers do
   def getParamLine(params)
     param_line = ""
     params.each { |param, val|
-      if param.start_with?("_res_param_") and val != ""
-	myparam = param.sub(/^_res_param_/,"")
+      if param.start_with?("_res_paramne_") or (param.start_with?("_res_paramempty_") and val != "")
+	myparam = param.sub(/^_res_paramne_/,"").sub(/^_res_paramempty_/,"")
 	param_line += " #{myparam}=#{val}"
       end
     }
