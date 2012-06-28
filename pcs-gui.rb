@@ -13,6 +13,7 @@ require 'webrick'
 require 'pp'
 require 'webrick/https'
 require 'openssl'
+require 'logger'
 
 use Rack::CommonLogger
 #use Rack::SSL
@@ -51,6 +52,13 @@ configure do
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   SETTINGS_FILE = "pcs_settings.conf"
   USER_FILE = "pcs_users.conf"
+
+  $logger = Logger.new('/var/lib/pcs-gui/pcs-gui-log', 'weekly')
+  $logger.level = Logger::INFO
+  $stdout.reopen('/var/lib/pcs-gui/pcs-gui-out', 'a')
+  $stdout.sync = true
+  $stderr.reopen($stdout)
+#  $stderr.reopen('/var/lib/pcs-gui/pcs-gui-stderror', 'a')
 end
 
 set :port, 2222
@@ -154,18 +162,18 @@ end
 post '/fencedeviceadd' do
   puts params
   param_line = getParamLine(params)
-  puts "pcs stonith create #{params[:name]} #{params[:resource_type]} #{param_line}"
-  puts `#{PCS} stonith create #{params[:name]} #{params[:resource_type]} #{param_line}`
+  run_cmd(PCS, "stonith", "create", params[:name], params[:resource_type],
+	  *(param_line.split(" ")))
   redirect "/fencedevices/#{params[:name]}"
 end
 
 post '/resourceadd' do
   param_line = getParamLine(params)
-  puts "pcs resource create #{params[:name]} #{params[:resource_type]} #{param_line}"
-  puts `#{PCS} resource create #{params[:name]} #{params[:resource_type]} #{param_line}`
+  run_cmd(PCS, "resource", "create", params[:name], params[:resource_type],
+	  *(param_line.split(" ")))
   if params[:resource_group] and params[:resource_group] != ""
-    puts "#{PCS} resource group add #{params[:resource_group]} #{params[:name]}"
-    puts `#{PCS} resource group add #{params[:resource_group]} #{params[:name]}`
+    run_cmd(PCS, "resource","group", "add", params[:resource_group],
+	    params[:name])
   end
   redirect "/resources/#{params[:name]}"
 end
@@ -173,8 +181,7 @@ end
 post '/resourcerm' do
   params.each { |k,v|
     if k.index("resid-") == 0
-      puts "#{PCS} resource delete #{k.gsub("resid-","")}"
-      puts `#{PCS} resource delete #{k.gsub("resid-","")}`
+      run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
     end
   }
   redirect "/resources/"
@@ -183,16 +190,14 @@ end
 post '/resource_group_add' do
   rg = params["resource_group"]
   resources = params["resources"]
-  puts "#{PCS} resource group add #{rg} #{resources}"
-  puts `#{PCS} resource group add #{rg} #{resources}`
+  run_cmd(PCS, "resource", "group", "add", rg, *(resources.split(" ")))
   redirect "/resources/"
 end
 
 post '/fencerm' do
   params.each { |k,v|
     if k.index("resid-") == 0
-      puts "#{PCS} resource delete #{k.gsub("resid-","")}"
-      puts `#{PCS} resource delete #{k.gsub("resid-","")}`
+      run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
     end
   }
   redirect "/fencedevices/"
@@ -217,11 +222,11 @@ get '/fencedevices/?:fencedevice?' do
       @resources.each do |fd|
 	if fd.id == params[:fencedevice]
 	  @cur_resource = fd
-	  @cur_resource.options = getResourceOptions(@cur_resource.id)
 	  break
 	end
       end
     end
+    @cur_resource.options = getResourceOptions(@cur_resource.id)
     @resource_agents = getFenceAgents(@cur_resource.agentname)
   end
   erb :fencedevices, :layout => :main
@@ -230,19 +235,16 @@ end
 post '/resources/:resource?' do
   pp params
   param_line = getParamLine(params)
-  puts "#{PCS} resource update #{params[:resource_id]} #{param_line}"
-  puts `#{PCS} resource update #{params[:resource_id]} #{param_line}`
+  run_cmd(PCS, "resource", "update", params[:resource_id], *(param_line.split(" ")))
 
   puts params[:resource_group]
   if params[:resource_group]
     if params[:resource_group] == ""
       if params[:_orig_resource_group] != ""
-	puts "#{PCS} resource group remove_resource #{params[:_orig_resource_group]} #{params[:resource]}"
-	puts `#{PCS} resource group remove_resource #{params[:_orig_resource_group]} #{params[:resource]}`
+	run_cmd(PCS, "resource", "group", "remove_resource", params[:_orig_resource_group], params[:resource])
       end
     else
-      puts "#{PCS} resource group add #{params[:resource_group]} #{params[:resource]}"
-      puts `#{PCS} resource group add #{params[:resource_group]} #{params[:resource]}`
+      run_cmd(PCS, "resource", "group", "add", params[:resource_group], params[:resource])
     end
   end
   redirect "/resources/#{params[:resource]}"
@@ -252,8 +254,7 @@ post '/fencedevices/:fencedevice?' do
   pp params
   param_line = getParamLine(params)
   pp param_line
-  puts "#{PCS} stonith update #{params[:resource_id]} #{param_line}"
-  puts `#{PCS} stonith update #{params[:resource_id]} #{param_line}`
+  run_cmd(PCS, "stonith", "update", params[:resource_id], *(param_line.split(" ")))
   redirect params[:splat][0]
 end
 
@@ -490,11 +491,10 @@ end
 # Return array containing an array of nodes online & nodes offline
 # [ Nodes Online, Nodes Offline] 
 def getNodes
-  stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes")
-  out = stdout.readlines
-  if waitth.value.exitstatus != 0
-    stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes corosync")
-    out = stdout.readlines
+  out, stderror, retval = run_cmd(PCS, "status", "nodes")
+
+  if retval != 0
+    out, stderror, retval = run_cmd(PCS, "status", "nodes", "corosync")
   end
 
   online = out[1]

@@ -78,3 +78,14 @@ def add_node(new_nodename)
     return waitth.value.exitstatus,stdout.readlines()
   }
 end
+
+def run_cmd(*args)
+  stdin, stdout, stderror, waitth = Open3.popen3(*args)
+  $logger.info("Running: " + args.join(" "))
+  $logger.info("Return Value: " + waitth.value.exitstatus.to_s)
+  out = stdout.readlines()
+  errout = stderror.readlines()
+  retval = waitth.value.exitstatus
+  $logger.info(out)
+  return out, errout, retval
+end
