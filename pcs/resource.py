@@ -340,21 +340,22 @@ def resource_group_add(group_name, resource_ids):
     out = utils.get_cib()
     dom = xml.dom.minidom.parseString(out)
     top_element = dom.documentElement
+    resources_element = top_element.getElementsByTagName("resources")[0]
     group_found = False
-    for group in top_element.getElementsByTagName("group"):
-        if group.getAttribute("id") == "group_name":
-            group_found = True
-            mygroup = group
 
     for resource in top_element.getElementsByTagName("primitive"):
         if resource.getAttribute("id") == group_name:
             print "Error: %s is already a resource" % group_name
             sys.exit(1)
 
+    for group in top_element.getElementsByTagName("group"):
+        if group.getAttribute("id") == group_name:
+            group_found = True
+            mygroup = group
+
     if group_found == False:
         mygroup = dom.createElement("group")
         mygroup.setAttribute("id", group_name)
-        resources_element = top_element.getElementsByTagName("resources")[0]
         resources_element.appendChild(mygroup)
 
 
@@ -375,7 +376,6 @@ def resource_group_add(group_name, resource_ids):
             if resource.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                 continue
             if resource.getAttribute("id") == resource_id:
-                resource.parentNode.removeChild(resource)
                 resources_to_move.append(resource)
                 resource_found = True
                 break
@@ -386,7 +386,10 @@ def resource_group_add(group_name, resource_ids):
 
     if resources_to_move:
         for resource in resources_to_move:
+            oldParent = resource.parentNode
             mygroup.appendChild(resource)
+            if oldParent.tagName == "group" and len(oldParent.getElementsByTagName("primitive")) == 0:
+                oldParent.parentNode.removeChild(oldParent)
         
         xml_resource_string = resources_element.toxml()
         args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
