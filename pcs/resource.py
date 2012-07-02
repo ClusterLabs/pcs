@@ -389,7 +389,6 @@ def resource_group_add(group_name, resource_ids):
             mygroup.appendChild(resource)
         
         xml_resource_string = resources_element.toxml()
-        print xml_resource_string
         args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
         output,retval = utils.run(args)
         if retval != 0:
