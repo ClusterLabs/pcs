@@ -40,6 +40,8 @@ def cluster_cmd(argv):
         stop_cluster_all()
     elif (sub_cmd == "cib"):
         get_cib()
+    elif (sub_cmd == "push"):
+        cluster_push(argv)
     elif (sub_cmd == "node"):
         cluster_node(argv)
     elif (sub_cmd == "localnode"):
@@ -213,6 +215,20 @@ def stop_cluster(argv):
     if retval != 0:
         print "Error: unable to stop corosync"
         sys.exit(1)
+
+def cluster_push(argv):
+    if len(argv) == 2 and argv[0] == "cib":
+        filename = argv[1]
+    else:
+        print argv
+        #usage.cluster()
+        sys.exit(1)
+    output, retval = utils.run(["cibadmin", "--replace", "--xml-file", filename])
+    if retval != 0:
+        print output,
+        sys.exit(1)
+    else:
+        print "CIB updated"
 
 def get_cib():
     print utils.get_cib(),

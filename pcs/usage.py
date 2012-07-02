@@ -121,6 +121,9 @@ Commands:
     cib
         Get the raw xml from the CIB (Cluster Information Base)
 
+    push cib <filename>
+        Push the raw xml from <filename> to the CIB (Cluster Information Base)
+
     node add <node ip/name>
         Add the node to corosync.conf and corosync on all nodes in the cluster
         and sync the new corosync.conf to the new node
