@@ -337,45 +337,65 @@ def resource_group_rm(group_name, resource_ids):
 
 
 def resource_group_add(group_name, resource_ids):
-    group_xpath = "//group[@id='"+group_name+"']"
-    group_xml = utils.get_cib_xpath(group_xpath)
-    if (group_xml == ""):
-        impl = getDOMImplementation()
-        newdoc = impl.createDocument(None, "group", None)
-        element = newdoc.documentElement
-        element.setAttribute("id", group_name)
-        xml_resource_string = element.toxml()
-    else:
-        element = parseString(group_xml).documentElement
+    out = utils.get_cib()
+    dom = xml.dom.minidom.parseString(out)
+    top_element = dom.documentElement
+    group_found = False
+    for group in top_element.getElementsByTagName("group"):
+        if group.getAttribute("id") == "group_name":
+            group_found = True
+            mygroup = group
 
-    resources_to_move = ""
+    for resource in top_element.getElementsByTagName("primitive"):
+        if resource.getAttribute("id") == group_name:
+            print "Error: %s is already a resource" % group_name
+            sys.exit(1)
+
+    if group_found == False:
+        mygroup = dom.createElement("group")
+        mygroup.setAttribute("id", group_name)
+        resources_element = top_element.getElementsByTagName("resources")[0]
+        resources_element.appendChild(mygroup)
+
+
+    resources_to_move = []
     for resource_id in resource_ids:
-        # If resource already exists in group then we skip
-        if (utils.get_cib_xpath("//group[@id='"+group_name+"']/primitive[@id='"+resource_id+"']") != ""):
-            print resource_id + " already exists in " + group_name + "\n"
+        already_exists = False
+        for resource in mygroup.getElementsByTagName("primitive"):
+            # If resource already exists in group then we skip
+            if resource.getAttribute("id") == resource_id:
+                print resource_id + " already exists in " + group_name + "\n"
+                already_exists = True
+                break
+        if already_exists == True:
             continue
 
-        args = ["cibadmin", "-o", "resources", "-Q", "--xpath", "//primitive[@id='"+resource_id+"']"]
-        output,retVal = utils.run(args)
-        if (retVal != 0):
-            print "Bad resource: " + resource_id
-            continue
-        resources_to_move = resources_to_move + output
-        resource_remove(resource_id,False)
+        resource_found = False
+        for resource in resources_element.getElementsByTagName("primitive"):
+            if resource.nodeType == xml.dom.minidom.Node.TEXT_NODE:
+                continue
+            if resource.getAttribute("id") == resource_id:
+                resource.parentNode.removeChild(resource)
+                resources_to_move.append(resource)
+                resource_found = True
+                break
 
-    if (resources_to_move != ""):
-        resources_to_move = "<resources>" + resources_to_move + "</resources>"
-        resource_children = parseString(resources_to_move).documentElement
-        for child in resource_children.childNodes:
-            element.appendChild(child)
-        xml_resource_string = element.toprettyxml()
+        if resource_found == False:
+            print "Unable to find resource: " + resource_id
+            continue
+
+    if resources_to_move:
+        for resource in resources_to_move:
+            mygroup.appendChild(resource)
         
-        args = ["cibadmin", "-o", "resources", "-c", "-M", "-X", xml_resource_string]
+        xml_resource_string = resources_element.toxml()
+        print xml_resource_string
+        args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
         output,retval = utils.run(args)
-        if retVal != 0:
+        if retval != 0:
             print output,
     else:
-        print "No resources to add.\n"
+        print "Error: No resources to add."
         sys.exit(1)
 
 def resource_group_list(argv):

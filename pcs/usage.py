@@ -11,9 +11,8 @@ Commands:
     add <resource id> <class:provider:type|type> [resource options]
     set <property>=<value>
 
-    node        Manage nodes (NOT YET IMPLEMENTED)
     resource    Manage cluster resources
-    cluster     Configure cluster options
+    cluster     Configure cluster options and nodes
     stonith     Configure fence devices
     property    Set pacemaker properties
     constraint  Set resource constraints
@@ -128,6 +127,16 @@ Commands:
 
     localnode add <node ip/name>
         Add the specified node to corosync.conf and corosync only on this node
+
+    node remove <node ip/name>
+        Shutdown specified node and remove it from pacemaker and corosync on
+        all other nodes in the cluster
+
+    localnode remove <node ip/name>
+        Remove the specified node from corosync.conf & corosync on local node
+
+    pacemaker remove <node ip/name>
+        Remove specified node from running pacemaker configuration
 
     get_conf <node ip/name>
         Get the corosync.conf from the specified node

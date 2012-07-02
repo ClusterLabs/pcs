@@ -13,14 +13,14 @@ import status
 usefile = False
 filename = ""
 def main(argv):
-    global filename, usefile
+    global filename, usefile, pcs_options
     try:
-        opts, argv = getopt.getopt(argv, "hf:")
+        pcs_options, argv = getopt.getopt(argv, "hf:p")
     except getopt.GetoptError, err:
         usage.main()
         sys.exit(1)
 
-    for o, a in opts:
+    for o, a in pcs_options:
         if o == "-h":
             usage.main()
             sys.exit()

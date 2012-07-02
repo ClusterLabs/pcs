@@ -215,49 +215,80 @@ def stop_cluster(argv):
         sys.exit(1)
 
 def get_cib():
-    output, retval = utils.run(["cibadmin", "-l", "-Q"])
-    if retval != 0:
-        print "Error: unable to get cib"
-        sys.exit(1)
-    print output,
+    print utils.get_cib(),
 
 def cluster_node(argv):
-    if len(argv) != 2 or argv[0] != "add":
+    if len(argv) != 2:
+        usage.cluster();
+        sys.exit(1)
+
+    if argv[0] == "add":
+        add_node = True
+    elif argv[0] == "remove":
+        add_node = False
+    else:
         usage.cluster();
         sys.exit(1)
 
     node = argv[1]
     status,output = utils.checkStatus(node)
     if status == 2:
-        print "Error: pcs-gui is not running on new node"
+        print "Error: pcs-gui is not running on %s" % node
         sys.exit(1)
     elif status == 3:
         print "Error: %s is not yet authenticated (try pcs cluster auth %s)" % (node, node)
         sys.exit(1)
 
-    corosync_conf = None
-    for my_node in utils.getNodesFromCorosyncConf():
-        retval, output = utils.addLocalNode(my_node,node)
-        if retval != 0:
-            print "Error: unable to add %s on %s - %s" % (node,my_node,output[0].strip())
+    if add_node == True:
+        corosync_conf = None
+        for my_node in utils.getNodesFromCorosyncConf():
+            retval, output = utils.addLocalNode(my_node,node)
+            if retval != 0:
+                print "Error: unable to add %s on %s - %s" % (node,my_node,output.strip())
+            else:
+                print "%s: Corosync updated" % my_node
+                corosync_conf = output
+        if corosync_conf != None:
+            utils.setCorosyncConfig(node, corosync_conf)
+            utils.startCluster(node)
         else:
-            print "%s: Corosync updated" % my_node
-            corosync_conf = output
-    if corosync_conf != None:
-        utils.setCorosyncConfig(node, corosync_conf)
-        utils.startCluster(node)
+            print "Error: Unable to update any nodes"
+            sys.exit(1)
     else:
-        print "Error: Unable to update any nodes"
-        sys.exit(1)
+        nodesRemoved = False
+        for my_node in utils.getNodesFromCorosyncConf():
+            retval, output = utils.removeLocalNode(my_node,node)
+            if retval != 0:
+                print "Error: unable to remove %s on %s - %s" % (node,my_node,output.strip())
+            else:
+                if output[0] == 0:
+                    print "%s: Corosync updated" % my_node
+                    nodesRemoved = True
+                else:
+                    print "%s: Error executing command occured: %s" % (my_node, "".join(output[1]))
+        if nodesRemoved == False:
+            print "Error: Unable to update any nodes"
+            sys.exit(1)
 
 def cluster_localnode(argv):
-    if len(argv) == 2 and argv[0] == "add":
+    if len(argv) != 2:
+        usage.cluster()
+        exit(1)
+    elif argv[0] == "add":
         node = argv[1]
         success = utils.addNodeToCorosync(node)
         if success:
             print "%s: successfully added!" % node
         else:
             print "Error: unable to add %s" % node
+            sys.exit(1)
+    elif argv[0] == "remove":
+        node = argv[1]
+        success = utils.removeNodeFromCorosync(node)
+        if success:
+            print "%s: successfully removed!" % node
+        else:
+            print "Error: unable to remove %s" % node
             sys.exit(1)
     else:
         usage.cluster()
