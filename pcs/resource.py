@@ -284,6 +284,10 @@ def resource_remove(resource_id, output = True):
     group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0
 
+    if not utils.does_exist('//resources/descendant::primitive[@id="'+resource_id+'"]'):
+        print "Error: Resource does not exist."
+        sys.exit(1)
+
     if (group != ""):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
 
