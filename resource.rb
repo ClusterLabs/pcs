@@ -21,6 +21,20 @@ def getResourcesGroups(get_fence_devices = false)
       !get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
     end
   end
+  doc.elements.each('crm_mon/resources/clone/resource') do |e|
+    if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
+      get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
+    else
+      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
+    end
+  end
+  doc.elements.each('crm_mon/resources/clone/group/resource') do |e|
+    if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
+      get_fence_devices && resource_list.push(Resource.new(e,e.parent.parent.attributes["id"] + "/" + e.parent.attributes["id"]))
+    else
+      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.parent.attributes["id"] + "/" + e.parent.attributes["id"]))
+    end
+  end
 
   doc.elements.each('crm_mon/resources/group') do |e|
     group_list.push(e.attributes["id"])
