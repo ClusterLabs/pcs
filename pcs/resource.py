@@ -318,6 +318,10 @@ def resource_clone_create(argv, update = False):
         for ma in clone.getElementsByTagName("meta_attributes"):
             clone.removeChild(ma)
     else:
+        for c in re.getElementsByTagName("clone"):
+            if c.getAttribute("id") == name + "-clone":
+                print "Error: clone already exists for: %s" % name
+                sys.exit(1)
         clone = dom.createElement("clone")
         clone.setAttribute("id",name + "-clone")
         clone.appendChild(element)
