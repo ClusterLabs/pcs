@@ -47,6 +47,8 @@ def resource_cmd(argv):
         resource_show(argv)
     elif (sub_cmd == "group"):
         resource_group(argv)
+    elif (sub_cmd == "clone"):
+        resource_clone(argv)
     elif (sub_cmd == "start"):
         resource_start(argv)
     elif (sub_cmd == "stop"):
@@ -278,7 +280,100 @@ def resource_group(argv):
         usage.resource()
         sys.exit(1)
 
-# Removes a resource and if it's the last resource in a group, remove the group
+def resource_clone(argv):
+    if len(argv) < 2:
+        usage.resource()
+        sys.exit(1)
+
+    sub_cmd = argv.pop(0)
+    if sub_cmd == "create":
+        resource_clone_create(argv)
+    elif sub_cmd == "update":
+        resource_clone_create(argv,True)
+    elif sub_cmd == "remove":
+        resource_clone_remove(argv)
+    else:
+        usage.resource()
+        sys.exit(1)
+
+def resource_clone_create(argv, update = False):
+    name = argv.pop(0)
+    element = None
+    dom = xml.dom.minidom.parseString(utils.get_cib())
+    re = dom.documentElement.getElementsByTagName("resources")[0]
+    for res in re.getElementsByTagName("primitive") + re.getElementsByTagName("group"):
+        if res.getAttribute("id") == name:
+            element = res
+            break
+
+    if element == None:
+        print "Error: unable to find group or resource: %s" % name
+        sys.exit(1)
+
+    if update == True:
+        if element.parentNode.tagName != "clone":
+            print "Error: %s is not currently a clone" % name
+            sys.exit(1)
+        clone = element.parentNode
+        for ma in clone.getElementsByTagName("meta_attributes"):
+            clone.removeChild(ma)
+    else:
+        clone = dom.createElement("clone")
+        clone.setAttribute("id",name + "-clone")
+        clone.appendChild(element)
+        re.appendChild(clone)
+
+    meta = dom.createElement("meta_attributes")
+    meta.setAttribute("id",name + "-clone-meta")
+    args = convert_args_to_tuples(argv)
+    for arg in args:
+        nvpair = dom.createElement("nvpair")
+        nvpair.setAttribute("id", name+"-"+arg[0])
+        nvpair.setAttribute("name", arg[0])
+        nvpair.setAttribute("value", arg[1])
+        meta.appendChild(nvpair)
+    clone.appendChild(meta)
+    xml_resource_string = re.toxml()
+    args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
+    output, retval = utils.run(args)
+
+    if retval != 0:
+        print output
+        sys.exit(1)
+
+def resource_clone_remove(argv):
+    if len(argv) != 1:
+        usage.resource()
+        sys.exit(1)
+
+    name = argv.pop()
+    dom = xml.dom.minidom.parseString(utils.get_cib())
+    re = dom.documentElement.getElementsByTagName("resources")[0]
+
+    found = False
+    for res in re.getElementsByTagName("primitive") + re.getElementsByTagName("group"):
+        if res.getAttribute("id") == name:
+            clone = res.parentNode
+            if clone.tagName != "clone":
+                print "Error: %s is not in a clone" % name
+                sys.exit(1)
+            clone.parentNode.appendChild(res)
+            clone.parentNode.removeChild(clone)
+            found = True
+            break
+
+    if found == False:
+        print "Error: could not find resource or group: %s" % name
+        sys.exit(1)
+
+    xml_resource_string = re.toxml()
+    args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
+    output, retval = utils.run(args)
+
+    if retval != 0:
+        print output
+        sys.exit(1)
+    
 # Also performs a 'cleanup' to remove it completely
 def resource_remove(resource_id, output = True):
     group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')

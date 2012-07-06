@@ -59,6 +59,17 @@ Commands:
     group list
         List all currently configured resource groups
 
+    clone create <resource id | group name> [clone options]...
+        Setup up the specified resource or group as a clone
+
+    clone update <resource id | group name> [clone options]...
+        Update the clone containing the resource or group replacing all
+        current options with the new options
+
+    clone remove <resource id | group name>
+        Remove the clone which contains the specified group or resource (the
+        resource or group will not be removed)
+
     manage <resource 1> [resource 2] ...
         Set resources listed to managed mode (default)
 
