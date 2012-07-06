@@ -5,7 +5,7 @@
   </tr>
   <tr>
     <td id="remove_add" class="borderbottom">
-      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove();">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove('You must select at least one fence device.', 'Remove fence device(s)', 'Fence Device Removal');">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
       <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Fence Device', modal:true, width: 'auto'});">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
     </td>
     <td class="borderbottom">&nbsp;</td>
@@ -70,7 +70,7 @@
 
 	      <div id="node_options_buttons">
 		<div class="xdark sprites" style="float: left"></div>
-		<div class="link">Delete</div>
+		<div id="stonith_delete_link" class="link">Remove</div>
 	      </div>
 
 	      <div id="node_details">
@@ -120,6 +120,7 @@
     </div>
     <script type="text/javascript">
       $(window).load(function () {
+	  setup_resource_links();
 	  resource_update();
 	  });
     </script>

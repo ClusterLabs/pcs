@@ -25,16 +25,20 @@ function create_group() {
   }
 }
 
-function verify_remove(error_message, ok_message, resource_id) {
+function verify_remove(error_message, ok_message, title_message, resource_id, post_location) {
   if (!error_message)
     error_message = "You must select at least one resource.";
   if (!ok_message)
     ok_message = "Remove resource(s)";
+  if (!title_message)
+    title_message = "Resource Removal";
+  if (!post_location)
+    post_location = "/resourcerm";
 
   var buttonOpts = {}
   buttonOpts[ok_message] = function() {
     if (resource_id) {
-      var f = $('<form action="/resourcerm" method="POST">' +
+      var f = $('<form action="'+post_location+'" method="POST">' +
 	  '<input type="hidden" name="resid-'+resource_id+'" value="1">' +
 	  '</form>');
       f.appendTo($('body'));
@@ -62,7 +66,7 @@ function verify_remove(error_message, ok_message, resource_id) {
   list_of_nodes += "</ul>";
   if (nodes_to_remove != 0) {
     $("#resource_to_remove").html(list_of_nodes);
-    $("#verify_remove").dialog({title: 'Resource Removal',
+    $("#verify_remove").dialog({title: title_message,
       modal: true, resizable: false,
       buttons: buttonOpts
     });
@@ -275,7 +279,10 @@ function setup_node_links() {
 function setup_resource_links() {
   resource = $("#node_info_header_title_name").text();
   $("#resource_delete_link").click(function () {
-    verify_remove(false, false, [resource]);
+    verify_remove(false, false, false, [resource]);
+  });
+  $("#stonith_delete_link").click(function () {
+    verify_remove('You must select at least one fence device.', 'Remove fence device(s)', 'Fence Device Removal', [resource], '/fencerm');
   });
   $("#resource_stop_link").click(function () {
     fade_in_out("#resource_stop_link");

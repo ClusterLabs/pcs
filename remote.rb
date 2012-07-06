@@ -34,6 +34,10 @@ def remote(params)
     return check_gui_status(params)
   when "add_node"
     return remote_add_node(params)
+  when "remove_node"
+    return remote_remove_node(params)
+  else
+    return [404, "Unknown Request"]
   end
 end
 
@@ -98,6 +102,21 @@ def remote_add_node(params)
   pp params
   if params[:new_nodename] != nil
     retval, output =  add_node(params[:new_nodename])
+  end
+
+  if retval == 0
+    return JSON.generate([retval,get_corosync_conf([])])
+  end
+
+  return JSON.generate([retval,output])
+end
+
+def remote_remove_node(params)
+  pp params
+  if params[:remove_nodename] != nil
+    retval, output = remove_node(params[:remove_nodename])
+  else
+    return 404, "No nodename specified"
   end
 
   if retval == 0

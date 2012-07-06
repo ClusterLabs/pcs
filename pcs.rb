@@ -74,9 +74,13 @@ def send_request_with_token(node,request, post=false, data={})
 end
 
 def add_node(new_nodename)
-  Open3.popen3(PCS, "cluster", "localnode", "add", new_nodename) { |stdin, stdout, stderror, waitth|
-    return waitth.value.exitstatus,stdout.readlines()
-  }
+  out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
+  return retval, out
+end
+
+def remove_node(new_nodename)
+  out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
+  return retval, out
 end
 
 def run_cmd(*args)
