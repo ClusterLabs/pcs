@@ -25,14 +25,14 @@ def getResourcesGroups(get_fence_devices = false)
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
       get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
     else
-      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
+      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"],true))
     end
   end
   doc.elements.each('crm_mon/resources/clone/group/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
       get_fence_devices && resource_list.push(Resource.new(e,e.parent.parent.attributes["id"] + "/" + e.parent.attributes["id"]))
     else
-      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.parent.attributes["id"] + "/" + e.parent.attributes["id"]))
+      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.parent.attributes["id"] + "/" + e.parent.attributes["id"]),true)
     end
   end
 
@@ -42,6 +42,7 @@ def getResourcesGroups(get_fence_devices = false)
 
   resource_list.sort_by!{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
+  pp resource_list
   [resource_list, group_list]
 end
 
@@ -196,8 +197,8 @@ end
 class Resource 
   attr_accessor :id, :name, :type, :agent, :agentname, :role, :active,
     :orphaned, :managed, :failed, :failure_ignored, :nodes, :location,
-    :options, :group
-  def initialize(e, group = nil)
+    :options, :group, :clone
+  def initialize(e, group = nil, clone = false)
     @id = e.attributes["id"]
     @agentname = e.attributes["resource_agent"]
     @active = e.attributes["active"] == "true" ? true : false
@@ -206,6 +207,7 @@ class Resource
     @active = e.attributes["active"] == "true" ? true : false
     @nodes = []
     @group = group
+    @clone = clone
     e.elements.each do |n| 
       node = Node.new
       node.name = n.attributes["name"]

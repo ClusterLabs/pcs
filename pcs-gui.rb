@@ -174,7 +174,14 @@ post '/resourceadd' do
   if params[:resource_group] and params[:resource_group] != ""
     run_cmd(PCS, "resource","group", "add", params[:resource_group],
 	    params[:name])
+    resource_group = params[:resource_group]
   end
+
+  if params[:resource_clone] and params[:resource_clone] != ""
+    name = resource_group ? resource_group : params[:name]
+    run_cmd(PCS, "resource", "clone", "create", name)
+  end
+
   redirect "/resources/#{params[:name]}"
 end
 
@@ -237,7 +244,6 @@ post '/resources/:resource?' do
   param_line = getParamLine(params)
   run_cmd(PCS, "resource", "update", params[:resource_id], *(param_line.split(" ")))
 
-  puts params[:resource_group]
   if params[:resource_group]
     if params[:resource_group] == ""
       if params[:_orig_resource_group] != ""
@@ -247,6 +253,17 @@ post '/resources/:resource?' do
       run_cmd(PCS, "resource", "group", "add", params[:resource_group], params[:resource])
     end
   end
+
+  if params[:resource_clone]
+    if params[:resource_clone] == ""
+      if params[:_orig_resource_clone] != ""
+	run_cmd(PCS, "resource", "clone", "remove", params[:resource])
+      end
+    elsif params[:_orig_resource_clone] == ""
+      run_cmd(PCS, "resource", "clone", "create", params[:resource])
+    end
+  end
+
   redirect "/resources/#{params[:resource]}"
 end
 
@@ -333,6 +350,22 @@ get '/manage/?' do
   pcs_config = PCSConfig.new
   @clusters = pcs_config.clusters
   erb :manage, :layout => :main
+end
+
+get '/manage/:node/?*' do
+  if params[:node]
+    return send_request_with_token(params[:node], params[:splat].join("/"), false, {}, false)
+  end
+end
+
+post '/manage/existingcluster' do
+  pcs_config = PCSConfig.new
+  node = params['node-name']
+  status =  JSON.parse(send_request_with_token(node, 'status'))
+  nodes = status["corosync_offline"] + status["corosync_online"]
+  pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
+  pcs_config.save
+  redirect '/manage'
 end
 
 post '/manage/newcluster' do

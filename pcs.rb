@@ -43,18 +43,20 @@ def remove_constraint(constraint_id)
 end
 
 def get_node_token(node)
-  puts PCS, "cluster", "token", node
-  Open3.popen3(PCS, "cluster", "token", node) { |stdin, stdout, stderror, waitth|
-    return waitth.value,stdout.readlines()
-  }
+  out, stderror, retval = run_cmd(PCS, "cluster", "token", node)
+  return retval, out
 end
 
-def send_request_with_token(node,request, post=false, data={})
+def send_request_with_token(node,request, post=false, data={}, remote=true)
   begin
     retval, token = get_node_token(node)
-    puts "RETVAL/TOKEN"
     token = token[0].strip
-    uri = URI.parse("http://#{node}:2222/remote/" + request)
+    if remote
+      uri = URI.parse("http://#{node}:2222/remote/" + request)
+    else
+      uri = URI.parse("http://#{node}:2222/" + request)
+    end
+
     if post
       req = Net::HTTP::Post.new(uri.path)
       req.set_form_data(data)

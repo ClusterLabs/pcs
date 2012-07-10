@@ -179,7 +179,8 @@ def node_status(params)
 
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
  "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
- "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline }
+ "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
+ "cluster_name" => @@cluster_name }
   ret = JSON.generate(status)
   return ret
 end

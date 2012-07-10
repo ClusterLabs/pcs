@@ -300,6 +300,28 @@ function setup_resource_links() {
   });
 }
 
+function checkExistingNode() {
+  var node = "";
+  $('input[name="node-name"]').each(function(i,e) {
+    node = e.value;
+  });
+
+  $.ajax({
+    type: 'POST',
+    url: '/remote/check_gui_status',
+    data: {"nodes": node},
+    timeout: pcs_timeout,
+    success: function (data) {
+      mydata = jQuery.parseJSON(data);
+      update_existing_cluster_dialog(mydata);
+
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      alert("ERROR: Unable to contact server");
+    }
+  });
+}
+
 function checkClusterNodes() {
   var nodes = [];
   $('input[name^="node-"]').each(function(i,e) {
@@ -308,7 +330,6 @@ function checkClusterNodes() {
     }
   });
 
-  $.post('/remote/check_gui_status',{"nodes": nodes.join(",")});
   $.ajax({
     type: 'POST',
     url: '/remote/check_gui_status',
@@ -323,6 +344,35 @@ function checkClusterNodes() {
       alert("ERROR: Unable to contact server");
     }
   });
+}
+
+function add_existing_dialog() {
+  var buttonOpts = {}
+
+  buttonOpts["Add Existing"] = function() {
+          checkExistingNode();
+  };
+
+  buttonOpts["Cancel"] = function() {
+    $(this).dialog("close");
+  };
+
+  $("#add_existing_cluster").dialog({title: 'Add Existing Cluster',
+    modal: false, resizable: false,
+    width: 'auto',
+    buttons: buttonOpts
+  });
+}
+
+function update_existing_cluster_dialog(data) {
+  for (var i in data) {
+    if (data[i] == "Online") {
+      $('#add_existing_cluster_form').submit();
+      return;
+    }
+    break;
+  }
+  $('#unable_to_connect_error_msg_ae').show();
 }
 
 function update_create_cluster_dialog(nodes) {

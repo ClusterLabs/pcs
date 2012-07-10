@@ -14,7 +14,7 @@
 	  <td>
 	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});">
+	      <a href="#" onclick="add_existing_dialog();">
 		Add Existing
 	      </a>
 	    </div>
@@ -48,6 +48,19 @@
 <div id="verify_remove" style="display: none;">
   <p style="font-size:12px;">Are you sure you want to remove the following cluster(s) from the GUI? (This only removes the cluster from the GUI, it does not stop the cluster from running)</p>
   <span id="resource_to_remove"></span>
+</div>
+<div id="add_existing_cluster" style="display: none;">
+  <form id="add_existing_cluster_form" action="/manage/existingcluster" method="post">
+    <br>
+    Enter the hostname/IP of a node in a cluster that you would like to manage:
+    <br>
+    <br>
+    <table>
+      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg_ae" style="display:none;">Unable to contact node.<br>Please make sure pcs-gui is started and authenticated.</span></td></tr>
+      <tr><td align=right>Node Name/IP:</td><td><input size="50" name="node-name" type="text"></td></tr>
+    </table>
+  </form>
+</div>
 </div>
 <div id="create_new_cluster" style="display: none;">
   <form id="create_new_cluster_form" action="/manage/newcluster" method="post">
