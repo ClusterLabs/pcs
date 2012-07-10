@@ -242,7 +242,9 @@ end
 post '/resources/:resource?' do
   pp params
   param_line = getParamLine(params)
-  run_cmd(PCS, "resource", "update", params[:resource_id], *(param_line.split(" ")))
+  if param_line.length != 0
+    run_cmd(PCS, "resource", "update", params[:resource_id], *(param_line.split(" ")))
+  end
 
   if params[:resource_group]
     if params[:resource_group] == ""
@@ -254,14 +256,11 @@ post '/resources/:resource?' do
     end
   end
 
-  if params[:resource_clone]
-    if params[:resource_clone] == ""
-      if params[:_orig_resource_clone] != ""
-	run_cmd(PCS, "resource", "clone", "remove", params[:resource])
-      end
-    elsif params[:_orig_resource_clone] == ""
-      run_cmd(PCS, "resource", "clone", "create", params[:resource])
-    end
+  if params[:resource_clone] and params[:_orig_resource_clone] == "false"
+    run_cmd(PCS, "resource", "clone", "create", params[:resource])
+  end
+  if params[:_orig_resource_clone] == "true" and not params[:resource_clone]
+    run_cmd(PCS, "resource", "clone", "remove", params[:resource].sub(/:.*/,''))
   end
 
   redirect "/resources/#{params[:resource]}"

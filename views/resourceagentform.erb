@@ -17,7 +17,7 @@
 	  <td nowrap><div class="bold">Clone:</div></td>
 	  <td>
 	    <input type="hidden" name="_orig_resource_clone" value="<%= @cur_resource.clone if @cur_resource %>">
-	    <input type=checkbox name="resource_clone">
+	    <input type=checkbox name="resource_clone" <%= "checked" if @cur_resource && @cur_resource.clone %>>
 	  </td>
 	</tr>
       </table>

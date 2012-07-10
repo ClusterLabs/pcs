@@ -42,7 +42,6 @@ def getResourcesGroups(get_fence_devices = false)
 
   resource_list.sort_by!{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
-  pp resource_list
   [resource_list, group_list]
 end
 
