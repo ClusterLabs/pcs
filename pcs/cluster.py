@@ -34,10 +34,18 @@ def cluster_cmd(argv):
         start_cluster(argv)
     elif (sub_cmd == "stop"):
         stop_cluster(argv)
+    elif (sub_cmd == "enable"):
+        enable_cluster()
+    elif (sub_cmd == "disable"):
+        disable_cluster()
     elif (sub_cmd == "startall"):
         start_cluster_all()
     elif (sub_cmd == "stopall"):
         stop_cluster_all()
+    elif (sub_cmd == "enableall"):
+        enable_cluster_all()
+    elif (sub_cmd == "disableall"):
+        disable_cluster_all()
     elif (sub_cmd == "cib"):
         get_cib()
     elif (sub_cmd == "push"):
@@ -202,6 +210,22 @@ def start_cluster_all():
 def stop_cluster_all():
     for node in utils.getNodesFromCorosyncConf():
         utils.stopCluster(node)
+
+def enable_cluster():
+    utils.run(["systemctl", "enable", "corosync.service"])
+    utils.run(["systemctl", "enable", "pacemaker.service"])
+
+def disable_cluster():
+    utils.run(["systemctl", "disable", "corosync.service"])
+    utils.run(["systemctl", "disable", "pacemaker.service"])
+
+def enable_cluster_all():
+    for node in utils.getNodesFromCorosyncConf():
+        utils.enableCluster(node)
+
+def disable_cluster_all():
+    for node in utils.getNodesFromCorosyncConf():
+        utils.disableCluster(node)
 
 def stop_cluster(argv):
     print "Stopping Cluster..."

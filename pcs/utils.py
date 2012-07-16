@@ -74,6 +74,12 @@ def startCluster(node):
 def stopCluster(node):
     sendHTTPRequest(node, 'remote/cluster_stop')
 
+def enableCluster(node):
+    sendHTTPRequest(node, 'remote/cluster_enable')
+
+def disableCluster(node):
+    sendHTTPRequest(node, 'remote/cluster_disable')
+
 def addLocalNode(node,node_to_add):
     data = urllib.urlencode({'new_nodename':node_to_add})
     retval, output = sendHTTPRequest(node, 'remote/add_node', data, False)

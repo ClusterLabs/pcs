@@ -100,8 +100,14 @@ Configure cluster for use with pacemaker
 Commands:
     start       Start corosync & pacemaker
     stop        Stop corosync & pacemaker
+    enable      Configure corosync & pacemaker to run on startup
+    disable     Configure corosync & pacemaker to not run on startup
+
     startall    Start corosync & pacemaker on all nodes
     stopall     Stop corosync & pacemaker on all nodes
+    enableall   Configure corosync & pacemaker to run on startup on all nodes
+    disableall  Configure corosync & pacemaker to not run on startup on all
+                nodes
 
     gui-status [node] [...]
         Get current status of pcs-gui on nodes specified, or on all nodes
