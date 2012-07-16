@@ -8,6 +8,8 @@ def remote(params)
   case (params[:command])
   when "status"
     return node_status(params)
+  when "status_all"
+    return status_all(params)
   when "auth"
     return auth(params)
   when "resource_status"
@@ -26,6 +28,10 @@ def remote(params)
     return cluster_start(params)
   when "cluster_stop"
     return cluster_stop(params)
+  when "cluster_enable"
+    return cluster_enable(params)
+  when "cluster_disable"
+    return cluster_disable(params)
   when "resource_start"
     return resource_start(params)
   when "resource_stop"
@@ -58,6 +64,30 @@ def cluster_stop(params)
   else
     puts "Starting Daemons"
     puts `#{PCS} cluster stop`
+  end
+end
+
+def cluster_enable(params)
+  if params[:name]
+    response = send_request_with_token(params[:name], 'cluster_enable', true)
+  else
+    success = enable_cluster()
+    if not success
+      return JSON.generate({"error" => "true"})
+    end
+    return "Cluster Enabled"
+  end
+end
+
+def cluster_disable(params)
+  if params[:name]
+    response = send_request_with_token(params[:name], 'cluster_enable', true)
+  else
+    success = disable_cluster()
+    if not success
+      return JSON.generate({"error" => "true"})
+    end
+    return "Cluster Disabled"
   end
 end
 
@@ -183,6 +213,24 @@ def node_status(params)
  "cluster_name" => @@cluster_name }
   ret = JSON.generate(status)
   return ret
+end
+
+def status_all(params)
+  nodes = get_corosync_nodes()
+  if nodes == nil
+    return JSON.generate({"error" => "true"})
+  end
+
+  final_response = {}
+  threads = []
+  nodes.each {|node|
+    threads << Thread.new {
+      final_response[node] = JSON.parse(send_request_with_token(node, 'status'))
+    }
+  }
+  threads.each { |t| t.join }
+  return JSON.generate(final_response)
+
 end
 
 def auth(params)

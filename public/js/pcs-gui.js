@@ -79,43 +79,47 @@ function remote_node_update() {
   node = $('#node_info_header_title_name').first().text();
   $.ajax({
     type: 'GET',
-    url: '/remote/status?node='+node,
+    url: '/remote/status_all',
     timeout: pcs_timeout,
     success: function (data) {
+
       data = jQuery.parseJSON(data);
-      uptime = data.uptime;
+      node_data = data[node];
+
+      local_node_update(node, data);
+      uptime = node_data.uptime;
       if (uptime) {
 	if (!uptime) {
-	  uptime = data.uptime;
+	  uptime = node_data.uptime;
 	}
       } else {
 	uptime = "Unknown";
       }
-      if (data.noresponse) {
+      if (node_data.noresponse) {
 	setStatus($('#pacemaker_status'),2, "Unknown");
 	setStatus($('#corosync_status'),2, "Unknown");
 	setStatus($('#pcsd_status'),1,"Stopped");
       } else  {
-	if (data.notauthorized) {
+	if (node_data.notauthorized) {
 	  setStatus($('#pcsd_status'),1, "Not Authorized");
 	} else {
 	  setStatus($('#pcsd_status'),0, "Running");
 	}
 
-	if (data.pacemaker) {
+	if (node_data.pacemaker) {
 	  setStatus($('#pacemaker_status'),0, "Running");
 	} else {
 	  setStatus($('#pacemaker_status'),1, "Stopped");
 	}
 
-	if (data.corosync) {
+	if (node_data.corosync) {
 	  setStatus($('#corosync_status'),0, "Running");
 	} else {
 	  setStatus($('#corosync_status'),1, "Stopped");
 	}
+	
 
       }
-      mydata = data;
       $("#uptime").html(uptime);
       window.setTimeout(remote_node_update,4000);
     },
@@ -125,37 +129,27 @@ function remote_node_update() {
   });
 }
 
-function local_node_update() {
-  node = $('#node_info_header_title_name').first().text();
-  $.ajax({
-    type: 'GET',
-    url: '/remote/status',
-    timeout: pcs_timeout,
-    success: function (data) {
-      data = jQuery.parseJSON(data);
-      if ($.inArray(node,data.corosync_online) > -1) {
-	setStatus($('#corosync_online_status'), 0, "Corosync Connected")
-      } else {
-	setStatus($('#corosync_online_status'), 1, "Corosync Not Connected")
-      }
-      for (var i=0; i < data.pacemaker_online.length; i++) {
-    	setNodeStatus(data.pacemaker_online[i], true);
-      }
-      for (var i=0; i < data.pacemaker_offline.length; i++) {
-    	setNodeStatus(data.pacemaker_offline[i], false);
-      }
+function local_node_update(node, data) {
+  node_data = data[node];
+  if ($.inArray(node,node_data.corosync_online) > -1) {
+    setStatus($('#corosync_online_status'), 0, "Corosync Connected")
+  } else {
+    setStatus($('#corosync_online_status'), 1, "Corosync Not Connected")
+  }
 
-      if ($.inArray(node,data.pacemaker_online) > -1) {
-	setStatus($('#pacemaker_online_status'), 0, "Pacemaker Connected")
-      } else {
-	setStatus($('#pacemaker_online_status'), 1, "Pacemaker Not Connected")
-      }
-      window.setTimeout(local_node_update, 4000);
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      window.setTimeout(local_node_update, 60000);
+  if ($.inArray(node,node_data.pacemaker_online) > -1) {
+    setStatus($('#pacemaker_online_status'), 0, "Pacemaker Connected")
+  } else {
+    setStatus($('#pacemaker_online_status'), 1, "Pacemaker Not Connected")
+  }
+
+  for (var n in data) {
+    if (data[n].pacemaker_online && (jQuery.inArray(n, data[n].pacemaker_online) != -1)) {
+	setNodeStatus(n, true);
+    } else {
+    	setNodeStatus(n,false);
     }
-  });
+  }
 }
       
 

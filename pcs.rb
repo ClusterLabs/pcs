@@ -48,6 +48,7 @@ def get_node_token(node)
 end
 
 def send_request_with_token(node,request, post=false, data={}, remote=true)
+  start = Time.now
   begin
     retval, token = get_node_token(node)
     token = token[0].strip
@@ -63,6 +64,7 @@ def send_request_with_token(node,request, post=false, data={}, remote=true)
     else
       req = Net::HTTP::Get.new(uri.path)
     end
+    $logger.info("Request: " + uri.to_s + " (" + (Time.now-start).to_s + "s)")
     req.add_field("Cookie","token="+token)
     res = Net::HTTP.new(uri.host, uri.port).start do |http|
       http.request(req)
@@ -85,13 +87,42 @@ def remove_node(new_nodename)
   return retval, out
 end
 
+def get_corosync_nodes()
+  stdout, stderror, retval = run_cmd(PCS, "status", "nodes", "corosync")
+  if retval != 0
+    return nil
+  end
+
+  stdout.each {|x| x.strip!}
+  corosync_online = stdout[1].sub(/^.*Online:/,"").strip
+  corosync_offline = stdout[2].sub(/^.*Offline:/,"").strip
+  corosync_nodes = (corosync_online.split(/ /)) + (corosync_offline.split(/ /))
+
+  return corosync_nodes
+end
+
+def enable_cluster()
+  stdout, stderror, retval = run_cmd(PCS, "cluster", "enable")
+  return false if retval != 0
+  return true
+end
+
+def disable_cluster()
+  stdout, stderror, retval = run_cmd(PCS, "cluster", "disable")
+  return false if retval != 0
+  return true
+end
+
 def run_cmd(*args)
+  start = Time.now
   stdin, stdout, stderror, waitth = Open3.popen3(*args)
-  $logger.info("Running: " + args.join(" "))
-  $logger.info("Return Value: " + waitth.value.exitstatus.to_s)
   out = stdout.readlines()
   errout = stderror.readlines()
   retval = waitth.value.exitstatus
+  duration = Time.now - start
+  $logger.info("Running: " + args.join(" "))
+  $logger.info("Return Value: " + retval.to_s)
   $logger.info(out)
+  $logger.info("Duration: " + duration.to_s + "s")
   return out, errout, retval
 end
