@@ -2,6 +2,7 @@ require 'json'
 require 'net/http'
 require 'uri'
 require 'pcs.rb'
+require 'resource.rb'
 
 # Commands for remote access
 def remote(params)
@@ -185,8 +186,8 @@ def node_status(params)
   pacemaker_online = []
   pacemaker_offline = []
   in_pacemaker = false
-  stdin, stdout, stderror, waitth = Open3.popen3("#{PCS} status nodes both")
-  stdout.readlines.each {|l|
+  stdout, stderr, retval = run_cmd(PCS,"status","nodes","both")
+  stdout.each {|l|
     l = l.chomp
     if l.start_with?("Pacemaker Nodes:")
       in_pacemaker = true
@@ -207,10 +208,22 @@ def node_status(params)
     end
   }
 
+  resource_list, group_list = getResourcesGroups()
+  out_rl = []
+  resource_list.each {|r|
+    out_nodes = []
+    r.nodes.each{|n|
+      out_nodes.push(n.name)
+    }
+    out_rl.push({:id => r.id, :agentname => r.agentname, :active => r.active,
+		:nodes => out_nodes, :group => r.group, :clone => r.clone,
+		:failed => r.failed, :orphaned => r.orphaned})
+  }
+
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
  "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
  "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
- "cluster_name" => @@cluster_name }
+ "cluster_name" => @@cluster_name, "resources" => out_rl, "groups" => group_list }
   ret = JSON.generate(status)
   return ret
 end

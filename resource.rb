@@ -1,8 +1,8 @@
 require 'pp'
 
 def getResourcesGroups(get_fence_devices = false)
-  stdin, stdout, stderror = Open3.popen3('crm_mon --one-shot -r --as-xml')
-  crm_output =  stdout.readlines
+  stdout, stderror, retval = run_cmd("crm_mon", "--one-shot", "-r", "--as-xml")
+  crm_output = stdout
 
   doc = REXML::Document.new(crm_output.join("\n"))
   resource_list = []

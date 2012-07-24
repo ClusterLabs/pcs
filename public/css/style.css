@@ -291,7 +291,7 @@ td#node_list {
 }
 
 #uptime {
-  width:80px;
+  width:123px;
 }
 
 td#node_info {
@@ -366,6 +366,10 @@ td.node_list_sprite {
 
 #node_details td {
   white-space: nowrap;
+}
+
+#node_details div {
+  padding-right: 5px;
 }
 
 #node_details div {
@@ -522,7 +526,6 @@ input[type=text], input[type=submit] {
 .datatable th {
   font-weight: bold;
   color: #666666;
-  border-top: 1px solid #b8b8b8;
   border-bottom: 1px solid #ededed;
   background: #fcfcfc;
 }
@@ -532,20 +535,14 @@ input[type=text], input[type=submit] {
   border: 0px;
 }
 
-.datatable th:first-child, .datatable td:first-child {
-  border-left: 1px solid #b8b8b8;
-}
-
-.datatable th:last-child, .datatable td:last-child {
-  border-right: 1px solid #b8b8b8;
-}
-
-.datatable tr:last-child td {
-  border-bottom: 1px solid #b8b8b8;
-}
-
 table.datatable td, table.datatable a {
-  color: #2b85db
+  color: #2b85db;
+}
+
+table.datatable {
+  border-width: 1px 1px 1px 1px;
+  border-color: #b8b8b8;
+  border-style: solid;
 }
 
 .link {
@@ -697,3 +694,10 @@ li.menuheader {
   font-family: "Liberation";
 }
 
+.node_hover {
+  background: #e4f5fd;
+}
+
+.node_selected {
+  background: #e4f5fd;
+}

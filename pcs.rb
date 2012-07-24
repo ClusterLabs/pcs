@@ -101,6 +101,42 @@ def get_corosync_nodes()
   return corosync_nodes
 end
 
+# Get pacemaker nodes, but if they are not present fall back to corosync
+def get_nodes()
+  stdout, stderr, retval = run_cmd(PCS, "status", "nodes")
+  if retval != 0
+    stdout, stderr, retval = run_cmd(PCS, "status", "nodes", "corosync")
+  end
+
+  online = stdout[1]
+  offline = stdout[2]
+
+  if online
+    online = online.split(' ')[1..-1].sort
+  else
+    online = []
+  end
+
+  if offline
+    offline = offline.split(' ')[1..-1].sort
+  else
+    offline = []
+  end
+
+  [online, offline]
+end
+
+
+
+def get_cluster_version()
+  stdout, stderror, retval = run_cmd("corosync-cmapctl","totem.cluster_name")
+  if retval != 0
+    return ""
+  else
+    return stdout.join().gsub(/.*= /,"").strip
+  end
+end
+
 def enable_cluster()
   stdout, stderror, retval = run_cmd(PCS, "cluster", "enable")
   return false if retval != 0

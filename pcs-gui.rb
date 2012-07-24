@@ -29,7 +29,7 @@ also_reload 'auth.rb'
 enable :sessions
 
 before do
-  @@cluster_name = `corosync-cmapctl totem.cluster_name`.gsub(/.*= /,"").strip
+  @@cluster_name = get_cluster_version()
   puts "SESSION:"
   pp session
   puts "COOKIES:"
@@ -82,7 +82,7 @@ helpers do
   end
 
   def setup
-    @nodes_online, @nodes_offline = getNodes
+    @nodes_online, @nodes_offline = get_nodes()
     @nodes = {}
     @nodes_online.each do |i|
       @nodes[i]  = Node.new(i, i, i, true)
@@ -300,7 +300,7 @@ end
       @enabled_nodes, @disabled_nodes = getLocationConstraints(@cur_resource.id)
     end
 
-    @nodes_online, @nodes_offline = getNodes
+    @nodes_online, @nodes_offline = get_nodes
 
     if path.start_with? '/resource_list'
       erb :_resource_list
@@ -519,34 +519,6 @@ def getLocationDeps(cur_node)
   }  
   [deps_allow, deps_disallow]
 end
-
-# Return array containing an array of nodes online & nodes offline
-# [ Nodes Online, Nodes Offline] 
-def getNodes
-  out, stderror, retval = run_cmd(PCS, "status", "nodes")
-
-  if retval != 0
-    out, stderror, retval = run_cmd(PCS, "status", "nodes", "corosync")
-  end
-
-  online = out[1]
-  offline = out[2]
-
-  if online
-    online = online.split(' ')[1..-1].sort
-  else
-    online = []
-  end
-
-  if offline
-    offline = offline.split(' ')[1..-1].sort
-  else
-    offline = []
-  end
-
-  [online, offline]
-end
-
 
 def getConfigOptions(page="general")
   config_options = []

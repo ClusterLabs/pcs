@@ -87,61 +87,16 @@ function remote_node_update() {
       node_data = data[node];
 
       local_node_update(node, data);
-      uptime = node_data.uptime;
-      if (uptime) {
-	if (!uptime) {
-	  uptime = node_data.uptime;
-	}
-      } else {
-	uptime = "Unknown";
-      }
-      if (node_data.noresponse) {
-	setStatus($('#pacemaker_status'),2, "Unknown");
-	setStatus($('#corosync_status'),2, "Unknown");
-	setStatus($('#pcsd_status'),1,"Stopped");
-      } else  {
-	if (node_data.notauthorized) {
-	  setStatus($('#pcsd_status'),1, "Not Authorized");
-	} else {
-	  setStatus($('#pcsd_status'),0, "Running");
-	}
-
-	if (node_data.pacemaker) {
-	  setStatus($('#pacemaker_status'),0, "Running");
-	} else {
-	  setStatus($('#pacemaker_status'),1, "Stopped");
-	}
-
-	if (node_data.corosync) {
-	  setStatus($('#corosync_status'),0, "Running");
-	} else {
-	  setStatus($('#corosync_status'),1, "Stopped");
-	}
-	
-
-      }
-      $("#uptime").html(uptime);
-      window.setTimeout(remote_node_update,4000);
+//      window.setTimeout(remote_node_update,pcs_timeout);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
-      window.setTimeout(remote_node_update, 60000);
+//      window.setTimeout(remote_node_update, 60000);
     }
   });
 }
 
 function local_node_update(node, data) {
   node_data = data[node];
-  if ($.inArray(node,node_data.corosync_online) > -1) {
-    setStatus($('#corosync_online_status'), 0, "Corosync Connected")
-  } else {
-    setStatus($('#corosync_online_status'), 1, "Corosync Not Connected")
-  }
-
-  if ($.inArray(node,node_data.pacemaker_online) > -1) {
-    setStatus($('#pacemaker_online_status'), 0, "Pacemaker Connected")
-  } else {
-    setStatus($('#pacemaker_online_status'), 1, "Pacemaker Not Connected")
-  }
 
   for (var n in data) {
     if (data[n].pacemaker_online && (jQuery.inArray(n, data[n].pacemaker_online) != -1)) {
@@ -151,8 +106,6 @@ function local_node_update(node, data) {
     }
   }
 }
-      
-
 
 function resource_list_setup() {
   $('.node_list_check input[type=checkbox]').click(function(e) {
@@ -190,7 +143,7 @@ function resource_list_update() {
       
       $("#node_list").html(newdata);
       resource_list_setup();
-      window.setTimeout(resource_list_update, 4000);
+      window.setTimeout(resource_list_update, pcs_timeout);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
       window.setTimeout(resource_list_update, 60000);
@@ -213,7 +166,7 @@ function resource_update() {
       } else {
 	setStatus($("#res_status"), 1);
       }
-      window.setTimeout(resource_update, 4000);
+      window.setTimeout(resource_update, pcs_timeout);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
       window.setTimeout(resource_update, 60000);
@@ -259,14 +212,15 @@ function fade_in_out(id) {
 }
 
 function setup_node_links() {
-  node = $("#node_info_header_title_name").text();
   $("#node_start").click(function() {
+    node = $("#node_info_header_title_name").text();
     fade_in_out("#node_start");
-    $.post('/remote/cluster_start',{"name": node});
+    $.post('/remote/cluster_start',{"name": $.trim(node)});
   });
   $("#node_stop").click(function() {
+    node = $("#node_info_header_title_name").text();
     fade_in_out("#node_stop");
-    $.post('/remote/cluster_stop', {"name": node});
+    $.post('/remote/cluster_stop', {"name": $.trim(node)});
   });
 }
 
@@ -463,4 +417,33 @@ function show_hide_constraints(element) {
 function show_hide_constraint_tables(element) {
   $(element).siblings().hide();
   $("#add_constraint_" + $(element).val()).show();
+}
+
+function remove_constraint(constraint_form) {
+  constraint_id = ($(constraint_form).find("[name='constraint_id']").val());
+  cur_resource = ($(constraint_form).find("[name='cur_resource']").val());
+  $.ajax({
+    type: 'POST',
+    url: '/resource_cmd/rm_constraint',
+    data: {"constraint_id": constraint_id, "cur_resource": cur_resource},
+    timeout: pcs_timeout,
+    success: function (data) {
+      $(constraint_form).parent().parent().hide(1000);
+      $(constraint_form).parent().parent().remove();
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      alert("ERROR: Unable to contact server");
+    }
+  });
+  fade_in_out($(constraint_form).parent().parent());
+}
+
+function hover_over(o) {
+  $(o).find('td').last().css('display','');
+  $(o).addClass("node_selected");
+}
+
+function hover_out(o) {
+  $(o).find('td').last().css('display','none');
+  $(o).removeClass("node_selected");
 }

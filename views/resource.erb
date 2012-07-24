@@ -72,6 +72,8 @@
 		    <div id="locationdep">
 		      <table class="datatable">
 			<tr><th>Node</th><th>Score</th><th>Stickyness</th><th>Remove</th></tr>
+			<% @enabled_nodes.length == 0 and @disabled_nodes.length == 0 ? show_none = true : show_none = false%>
+			<tr <%= 'style="display:none;"' if not show_none %> ><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
 			<% @enabled_nodes.each { |loc,score| %>
 			  <tr>
 			    <td><a href="/nodes/<%=loc%>"><%= loc %></a></td>
@@ -94,9 +96,6 @@
 			    </td>
 			  </tr>
 			<% } %>
-			<% if @enabled_nodes.length == 0 and @disabled_nodes.length == 0 %>
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
-			<% end %>
 		      </table>
 		    </div>
 		  </td>
@@ -108,6 +107,8 @@
 		    <div id="locationdep">
 		      <table class="datatable">
 			<tr><th>Resource</th><th>Before/After</th><th>Score</th><th>Remove</th></tr>
+			<% @ord_dep_before.length == 0 and @ord_dep_after.length == 0 ? show_none = true : show_none = false%>
+			<tr <%= 'style="display:none;"' if not show_none %> ><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
 			<% @ord_dep_before.each { |loc_id, loc| %>
 			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
 			    <td>Starts before <%=@cur_resource.id%></td>
@@ -129,9 +130,6 @@
 			    </td>
 			  </tr>
 			<% } %>
-			<% if @ord_dep_before.length == 0 and @ord_dep_after.length == 0 %>
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
-			<% end %>
 		      </table>
 		    </div>
 		  </td>
