@@ -178,6 +178,10 @@ Pcs.nodesController = Ember.ArrayController.create({
 
 	  self.pushObject(node);
 	});
+	if (self.content && self.content.length > 0 && self.cur_node == null) {
+	  self.set("cur_node", self.content[0].name);
+	  self.content[0].set("cur_node",true);
+	}
       }
     });
   }
