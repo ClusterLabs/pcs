@@ -64,72 +64,55 @@ def nodes_status(argv):
         if argv[0] != "both":
             sys.exit(0)
 
+    info_dom = utils.getClusterState()
 
-    (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1"])
-
-    if (retval != 0):
-        print "Error running crm_mon, is pacemaker running?"
+    nodes = info_dom.getElementsByTagName("nodes")
+    if nodes.length == 0:
+        print "Error: No nodes section found"
         sys.exit(1)
+
+    onlinenodes = []
+    offlinenodes = []
+    for node in nodes[0].getElementsByTagName("node"):
+        if node.getAttribute("online") == "true":
+            onlinenodes.append(node.getAttribute("name"))
+        else:
+            offlinenodes.append(node.getAttribute("name"))
 
     print "Pacemaker Nodes:"
 
-    onlinereg = re.compile(r"^Online: (.*)$",re.M)
-    onlinematch = onlinereg.search(output)
-    if onlinematch:
-        onlinenodes = onlinematch.group(1).split(" ")
-        onlinenodes.pop(0) 
-        onlinenodes.pop()
-        onlinenodes.sort()
-        print " Online:",
-        for node in onlinenodes:
-            print node,
-        print ""
+    print " Online:",
+    for node in onlinenodes:
+        print node,
+    print ""
 
-    offlinereg = re.compile(r"^OFFLINE: (.*)$", re.M)
-    offlinematch = offlinereg.search(output)
-    if offlinematch:
-        offlinenodes = offlinematch.group(1).split(" ")
-        offlinenodes.pop(0) 
-        offlinenodes.pop()
-        offlinenodes.sort()
-        print " Offline:",
-        for node in offlinenodes:
-            print node,
-        print ""
+    print " Offline:",
+    for node in offlinenodes:
+        print node,
+    print ""
 
 def resources_status(argv):
-    (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r"])
-
-    if (retval != 0):
-        print "Error running crm_mon, is pacemaker running?"
-        sys.exit(1)
+    info_dom = utils.getClusterState()
 
     print "Resources:"
-    in_resources = False
-    resourcere = re.compile(r"\s+(\S+)\s+\((\S+)\):\s+(.*)$",re.M)
-    resource_list = []
-    blank_lines = 0
-    for line in output.splitlines():
-        if not in_resources:
-            if line.find("Full list of resources:") == 0:
-                in_resources = True
-                continue
-        else:
-            if line.find("Resource Group:") == 1:
-                continue
-            if len(line) == 0:
-                blank_lines += 1
-                if blank_lines == 2:
-                    break
-                continue
 
-            resource_match = resourcere.search(line)
-            if (resource_match):
-                resource_list.append((resource_match.group(1), resource_match.group(2), resource_match.group(3)))
-                print " " + resource_match.group(1),
-                print "("+ resource_match.group(2)+ ")",
-                print "-", resource_match.group(3)
+    groups = {}
+    nongroup_resources = []
+    resources = info_dom.getElementsByTagName("resources")
+    if resources.length == 0:
+        print "Error: No resources section found"
+        sys.exit(1)
 
+    for resource in resources[0].getElementsByTagName("resource"):
+        nodes = resource.getElementsByTagName("node")
+        node_line = ""
+        if nodes.length > 0:
+            for node in nodes:
+                node_line += node.getAttribute("name") + " "
+
+        print "", resource.getAttribute("id"),
+        print "(" + resource.getAttribute("resource_agent") + ")",
+        print "- " + resource.getAttribute("role") + " " + node_line
 
 def cluster_status(argv):
     (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r"])

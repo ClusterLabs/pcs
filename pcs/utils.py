@@ -379,6 +379,15 @@ def getTerminalSize(fd=1):
  
     return hw
 
+# Returns an xml dom containing the current status of the cluster
+def getClusterState():
+    (output, retval) = run(["/usr/sbin/crm_mon", "-1", "-X","-r"])
+    if (retval != 0):
+        print "Error running crm_mon, is pacemaker running?"
+        sys.exit(1)
+    dom = parseString(output)
+    return dom
+
 def write_empty_cib(filename):
 
     empty_xml = """<?xml version="1.0" encoding="UTF-8"?>
