@@ -126,8 +126,6 @@ def get_nodes()
   [online, offline]
 end
 
-
-
 def get_cluster_version()
   stdout, stderror, retval = run_cmd("corosync-cmapctl","totem.cluster_name")
   if retval != 0

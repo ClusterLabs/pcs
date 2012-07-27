@@ -310,6 +310,21 @@ end
   end
 end
 
+get '/resources/resourceform/:resource' do
+  @resources, @groups = getResourcesGroups()
+  @existing_resource = true
+  @resources.each do |r|
+    if r.id = params[:resource]
+      @cur_resource = r
+    end
+  end
+  @cur_resource.options = getResourceOptions(@cur_resource.id)
+  @resource_agents = getResourceAgents(@cur_resource.agentname)
+  @resource = @resource_agents[@cur_resource.agentname]
+
+  erb :resourceagentform
+end
+
 get '/resources/metadata/:resourcename/?:new?' do
   @resource = ResourceAgent.new(params[:resourcename])
   @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
@@ -401,8 +416,6 @@ post '/resource_cmd/rm_constraint' do
   if params[:constraint_id]
     remove_constraint(params[:constraint_id])
   end
-
-  redirect '/resources/' + params[:cur_resource]
 end
 
 post '/resources_cmd/add_constraint' do

@@ -701,3 +701,7 @@ li.menuheader {
 .node_selected {
   background: #e4f5fd;
 }
+
+.ui-progressbar .ui-progressbar-value {
+  background-image: url(images/pbar-ani.gif);
+}

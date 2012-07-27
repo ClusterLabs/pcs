@@ -20,7 +20,7 @@
 	  {{#each Pcs.nodesController}}
 	    <tr {{bindAttr onmouseover="onmouseover"}} {{bindAttr onmouseout="onmouseout"}} {{bindAttr class="trclass"}} {{bindAttr nodeID="name"}} onclick='Pcs.nodesController.load_node(this);'>
 	    <td class="node_list_check">
-	      {{view Ember.Checkbox checkedBinding="checked" class="node_list_check"}}
+	      {{view Ember.Checkbox checkedBinding="checked" onclick="checked" class="node_list_check"}}
 	    </td>
 	    <td class="node_list_sprite">
 	      <div class="check sprites"></div>
@@ -41,6 +41,7 @@
 	  </script>
       </td>
       <td id="node_info" colspan=2>
+	<div id="node_info_div" style="opacity: 0;">
 	<% if @cur_node %>
 	  <div id="test">
 	    <div id="node_info_header">
@@ -117,9 +118,6 @@
 		    </script>
 		  <td><div class="reg"> Uptime:</div></td>
 		  <td><div class="bold" id="uptime"><script type="text/x-handlebars">{{Pcs.nodesController.cur_node.uptime}}</script></div></td>
-<!--		  <td><div class="reg"> Hostname: </div></td>
-		  <td><div class="bold"><%=@cur_node.hostname%></div></td>
-		  -->
 		</tr>
 	      </table>
 	    </div>
@@ -191,25 +189,18 @@
 	      <tr><td class="datatable_header">Resource Location Preferences</td></tr>
 	      <tr><td>
 		  <div id="locationdep">
+		    <script type="text/x-handlebars">
 		    <table class="datatable">
 		      <tr><th>NAME</th><th>Score</th><th>Stickyness</th></tr>
-		      <% @loc_dep_allow.each { |loc| %>
-			<tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
-			  <td></td>
-			  <td></td>
-			</tr>
-		      <% } %>
-		      <% @loc_dep_disallow.each { |loc| %>
-			<tr>
-			  <td ><a style="color: red;" href="/resources/<%=loc%>"><%= loc %> (Not allowed)</a></td>
-			  <td></td>
-			  <td></td>
-			</tr>
-		      <% } %>
-		      <% if @loc_dep_allow.length == 0 and @loc_dep_disallow.length == 0 %>
+		    {{#if Pcs.nodesController.cur_node.location_constraints}}
+		    {{#each Pcs.nodesController.cur_node.location_constraints}}
+		      <tr><td>{{rsc}}</td><td>{{score}}</td><td></td></tr>
+		    {{/each}}
+		    {{else}}
 			<tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
-		      <% end %>
+		    {{/if}}
 		    </table>
+		    </script>
 		  </div>
 		</td>
 	      </tr>
@@ -218,6 +209,7 @@
 	</tr>
       </div>
     <% end %>
+  </div>
   </td>
 </tr>
 </table>
@@ -225,5 +217,6 @@
 $(window).load(function () {
   setup_node_links();
   remote_node_update();
+//  $("#node_info").fadeTo(0, .01);
 });
 </script>

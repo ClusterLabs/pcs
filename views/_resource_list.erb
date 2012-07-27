@@ -1,36 +1,31 @@
-<% if @cur_resource %>
-  <form method=post action="/resourcerm">
+    <script type="text/x-handlebars">
     <table cellpadding=0 cellspacing=0 style="float:left;">
       <tr>
-	<th></th><th></th><th>NAME</th><th>TYPE</th><th></th>
+	<th></th><th></th><th>NAME&nbsp;</th><th>TYPE</th><th></th>
       </tr>
-      <% @resources.each  do |r| %>
-	<% if r != @cur_resource %>
-	  <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='/resources/<%=r.id%>'">
-	  <% else %>
-	    <tr style="background-color: #e4f5fd">
-	    <% end %>
+	{{#each Pcs.resourcesController}}
+	    <tr {{bindAttr onmouseover="onmouseover"}} {{bindAttr onmouseout="onmouseout"}} {{bindAttr class="trclass"}} {{bindAttr nodeID="name"}} onclick='Pcs.resourcesController.load_resource(this);'>
+
 	    <td class="node_list_check">
-	      <input class="node_list_check" type="checkbox" name="resid-<%=r.id%>" res_id="<%=r.id%>">
+            {{view Ember.Checkbox checkedBinding="checked" onclick="checked" class="node_list_check"}}
 	    </td>
 	    <td class="node_list_sprite">
 	      <div class="check sprites"></div>
 	    </td>
-	    <td nowrap class="resource_name" <%= 'style="color:red;" ' if r.failed || !r.active%>>
-	      <%= r.id %><%= " (" + r.group + ")" if r.group %>
+	    {{#if up}}
+		<td class="resource_name">
+	    {{else}}
+		<td class="resource_name" style="color:red">
+            {{/if}}
+		{{name}}
 	    </td>
 	    <td class="resource_type">
-	      <%= r.agentname.sub(/.*:/,'') %>
+		{{agentname}}
 	    </td>
-	    <% if r != @cur_resource %>
-	      <td style="display:none">
-	      <% else %>
-		<td>
-		<% end %>
+	    <td {{bindAttr style="showArrow"}}>
 		<div class="arrow sprites"></div>
-	      </td>
+	    </td>
 	    </tr>
-	  <% end %>
+	    {{/each}}
 	</table>
-      </form>
-    <% end %>
+    </script>

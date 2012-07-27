@@ -1,3 +1,4 @@
+<div style="display:none;" id="resource_page"></div>
 <table id="main">
   <tr><td id="page_header" colspan=3>
       RESOURCES
@@ -17,32 +18,41 @@
   <tr>
     <td id="node_list">
       <%= erb :_resource_list %>
-	</td>
+    </td>
 	<td id="node_info" colspan=2>
+	  <div id="node_info_div" style="opacity: 0;">
 	  <% if @cur_resource %>
 	  <div id="test">
 	    <div id="node_info_header">
 	      <div id="node_info_header_title">Edit Resource&nbsp;</div>
-	      <div id="node_info_header_title_name"><%=@cur_resource.id%></div>
+	      <div id="node_info_header_title_name">
+		<script type="text/x-handlebars">
+		{{Pcs.resourcesController.cur_resource.name}}
+                </script>
+	      </div>
 	    </div>
 
+	    <script type="text/x-handlebars">
 	    <div id="node_sub_info">
 	      <table>
 		<tr>
-		  <td><input style="margin-right: 50px;" type="text" value="<%=@cur_resource.id%>" size="35" class="text_field"></td>
+		  <td><input style="margin-right: 50px;" type="text" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}} size="35" class="text_field"></td>
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
-		    <% if @cur_resource.failed %>
+		  {{#if Pcs.resourcesController.cur_resource.failed}}
 		      <div id="res_status" class="status-offline">Failed</div>
-		    <% elsif not @cur_resource.active %>
-		      <div id="res_status" class="status-offline">Inactive</div>
-		    <% else %>
+                  {{else}}
+		  {{#if Pcs.resourcesController.cur_resource.active}}
 		      <div id="res_status" class="status">Running</div>
-		    <% end %>
+		  {{else}}
+		      <div id="res_status" class="status-offline">Inactive</div>
+		  {{/if}}
+		  {{/if}}
 		  </td>
 		</tr>
 	      </table>
 	    </div>
+	    </script>
 
 	    <div id="node_options_buttons">
 	      <div class="xdark sprites" style="float: left"></div>
@@ -62,114 +72,95 @@
 	    <div id="node_details">
 	      <table style="margin-bottom:25px;"><tr>
 		  <td nowrap><div class="bold">Current Location:</div></td>
-		  <td><div id="cur_res_loc" class="reg"><%=@cur_resource.location%></div></td>
+		  <td><div id="cur_res_loc" class="reg">
+		      <script type="text/x-handlebars">
+			{{Pcs.resourcesController.cur_resource.nodes}}
+		      </script>
+		  </div> </td>
 		</tr>
 	      </table>
-	      <div style="margin-left:5px;"class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_constraint').dialog({title: 'Add Constraint', modal:true, width: 'auto'});">Add Constraint</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+	      <div style="margin-left:5px;"class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_constraint').dialog({title: 'Add Constraint', modal:true, width: 'auto'});">Add Constraint</a>&nbsp;&nbsp;&nbsp;&nbsp;</div><br/>
+	      <script type="text/x-handlebars">
 	      <table style="clear:left;float:left">
-		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Location Preferences (<%= @enabled_nodes.length + @disabled_nodes.length %>)<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Location Preferences ({{Pcs.resourcesController.cur_resource.location_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
 			<tr><th>Node</th><th>Score</th><th>Stickyness</th><th>Remove</th></tr>
-			<% @enabled_nodes.length == 0 and @disabled_nodes.length == 0 ? show_none = true : show_none = false%>
-			<tr <%= 'style="display:none;"' if not show_none %> ><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
-			<% @enabled_nodes.each { |loc,score| %>
-			  <tr>
-			    <td><a href="/nodes/<%=loc%>"><%= loc %></a></td>
-			    <td><%=score[1]%></td>
-			    <td></td>
-			    <td style="text-align:center">
-			      <% @constraint_id = score[0] %>
-			      <%= erb :_rm_constraint_form %>
-			    </td>
-			  </tr>
-			<% } %>
-			<% @disabled_nodes.each { |loc, score| %>
-			  <tr>
-			    <td ><a style="color: red;" href="/nodes/<%=loc%>"><%= loc %> (Not allowed)</a></td>
-			    <td><%=score[1]%></td>
-			    <td></td>
-			    <td style="text-align:center">
-			      <% @constraint_id = score[0] %>
-			      <%= erb :_rm_constraint_form %>
-			    </td>
-			  </tr>
-			<% } %>
+			{{#each Pcs.resourcesController.cur_resource.location_constraints}}
+			<tr>
+			  <td>{{node}}</td>
+			  <td>{{score}}</td>
+                          <td></td>
+			  <td {{bindAttr constraint_id="id"}} style="text-align:center">
+				<a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+			  </td>
+			</tr>
+		        {{/each}}
+                        {{#unless Pcs.resourcesController.cur_resource.location_constraints}}
+			<tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+		        {{/unless}}
 		      </table>
 		    </div>
 		  </td>
 		</tr>
 	      </table>
+	      </script>
+	      <script type="text/x-handlebars">
 	      <table style="clear:left;float:left;">
-		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Ordering Preferences (<%= @ord_dep_before.length + @ord_dep_after.length %>)<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Ordering Preferences ({{Pcs.resourcesController.cur_resource.ordering_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
 			<tr><th>Resource</th><th>Before/After</th><th>Score</th><th>Remove</th></tr>
-			<% @ord_dep_before.length == 0 and @ord_dep_after.length == 0 ? show_none = true : show_none = false%>
-			<tr <%= 'style="display:none;"' if not show_none %> ><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
-			<% @ord_dep_before.each { |loc_id, loc| %>
-			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
-			    <td>Starts before <%=@cur_resource.id%></td>
+		        {{#each Pcs.resourcesController.cur_resource.ordering_constraints}}	
+			  <tr><td>{{other_rsc}}</td>
+			    {{#if before}}
+			    <td>Starts before {{then}}</td>
+			    {{else}}
+			    <td>Starts after {{first}}</td>
+			    {{/if}}
+
 			    <td></td>
-			    <td style="text-align:center">
-			      <% @constraint_id = loc_id %>
-			      <%= erb :_rm_constraint_form %>
+			    <td {{bindAttr constraint_id="id"}} style="text-align:center">
+				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
 			    </td>
 			  </tr>
-			<% } %>
-			<% @ord_dep_after.each { |loc_id, loc| %>
-			  <tr>
-			    <td ><a href="/resources/<%=loc%>"><%= loc %></a></td>
-			    <td>Starts after <%=@cur_resource.id%></td>
-			    <td></td>
-			    <td style="text-align:center">
-			      <% @constraint_id = loc_id %>
-			      <%= erb :_rm_constraint_form %>
-			    </td>
-			  </tr>
-			<% } %>
+ 			{{/each}}
+			{{#unless Pcs.resourcesController.cur_resource.ordering_constraints}}
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+			{{/unless}}
 		      </table>
 		    </div>
 		  </td>
 		</tr>
 	      </table>
+	      </script>
+	      <script type="text/x-handlebars">
 	      <table style="clear:left;float:left">
-		<tr><td onclick="show_hide_constraints(this)" class="datatable_header">Resource Colocation Preferences (<%= @colo_dep_together.length + @colo_dep_apart.length %>)<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header">Resource Colocation Preferences ({{Pcs.resourcesController.cur_resource.colocation_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
 			<tr><th>Resource</th><th>Together/Apart</th><th>Score</th><th>Remove</th></tr>
-			<% @colo_dep_together.each { |loc, score| %>
-			  <tr><td><a href="/resources/<%=loc%>"><%= loc %></a></td>
-			    <td>Together</td>
-			    <td><%=score[1]%></td>
-			    <td style="text-align:center">
-			      <% @constraint_id = score[0] %>
-			      <%= erb :_rm_constraint_form %>
+			{{#each Pcs.resourcesController.cur_resource.colocation_constraints}}
+			  <tr><td>{{other_rsc}}</td>
+			    <td>{{together}}</td>
+			    <td>{{score}}</td>
+			    <td {{bindAttr constraint_id="id"}} style="text-align:center">
+				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
 			    </td>
 			  </tr>
-			<% } %>
-			<% @colo_dep_apart.each { |loc, score| %>
-			  <tr style="color: red;">
-			    <td><a style="color: red;" href="/resources/<%=loc%>"><%= loc %></a></td>
-			    <td style="color: red;">Apart</td>
-			    <td style="color: red;"><%=score[1]%></td>
-			    <td style="text-align:center">
-			      <% @constraint_id = score[0] %>
-			      <%= erb :_rm_constraint_form %>
-			    </td>
-			  </tr>
-			<% } %>
-			<% if @colo_dep_together.length == 0 and @colo_dep_apart.length == 0 %>
+                        {{/each}}
+ 			{{#unless Pcs.resourcesController.cur_resource.colocation_constraints}}
 			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
-			<% end %>
+ 			{{/unless}}
 		      </table>
 		    </div>
 		  </td>
 		</tr>
 	      </table>
+	      </script>
 	    </div>
 
 	    <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
@@ -199,11 +190,10 @@
 	      </tr>
 	    </table>
 
-	    <% @resource = @resource_agents[@cur_resource.agentname] %>
-	    <% @existing_resource = true %>
-	    <%= erb :resourceagentform %>
+	    <div id="resource_agent_form"></div>
 	  <% else %>
 	      <span id="node_info_header"><span id="node_info_header_title">No resources have been configured</span></span>
+	    </div>
 	  <% end %>
 	  </td>
 	</tr>
@@ -317,7 +307,7 @@
     <script type="text/javascript">
       $(window).load(function () {
 	  setup_resource_links();
-	  resource_update();
-	  resource_list_update();
+//	  resource_update();
+//	  resource_list_update();
 	  });
     </script>

@@ -107,12 +107,13 @@ function local_node_update(node, data) {
   }
 }
 
-function resource_list_setup() {
+function disable_checkbox_clicks() {
   $('.node_list_check input[type=checkbox]').click(function(e) {
     e.stopPropagation();
   });
 }
 
+// TODO: REMOVE
 function resource_list_update() {
   resource = $('#node_info_header_title_name').first().text();
 
@@ -142,7 +143,7 @@ function resource_list_update() {
       });
       
       $("#node_list").html(newdata);
-      resource_list_setup();
+      disable_checkbox_clicks();
       window.setTimeout(resource_list_update, pcs_timeout);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -151,6 +152,7 @@ function resource_list_update() {
   });
 }
 
+// TODO: REMOVE
 function resource_update() {
   resource = $('#node_info_header_title_name').first().text();
   $.ajax({
@@ -225,18 +227,21 @@ function setup_node_links() {
 }
 
 function setup_resource_links() {
-  resource = $("#node_info_header_title_name").text();
   $("#resource_delete_link").click(function () {
+    resource = $.trim($("#node_info_header_title_name").text());
     verify_remove(false, false, false, [resource]);
   });
   $("#stonith_delete_link").click(function () {
+    resource = $.trim($("#node_info_header_title_name").text());
     verify_remove('You must select at least one fence device.', 'Remove fence device(s)', 'Fence Device Removal', [resource], '/fencerm');
   });
   $("#resource_stop_link").click(function () {
+    resource = $.trim($("#node_info_header_title_name").text());
     fade_in_out("#resource_stop_link");
     $.post('/remote/resource_stop',"resource="+resource);
   });
   $("#resource_start_link").click(function () {
+    resource = $.trim($("#node_info_header_title_name").text());
     fade_in_out("#resource_start_link");
     $.post('/remote/resource_start',"resource="+resource);
   });
@@ -419,25 +424,6 @@ function show_hide_constraint_tables(element) {
   $("#add_constraint_" + $(element).val()).show();
 }
 
-function remove_constraint(constraint_form) {
-  constraint_id = ($(constraint_form).find("[name='constraint_id']").val());
-  cur_resource = ($(constraint_form).find("[name='cur_resource']").val());
-  $.ajax({
-    type: 'POST',
-    url: '/resource_cmd/rm_constraint',
-    data: {"constraint_id": constraint_id, "cur_resource": cur_resource},
-    timeout: pcs_timeout,
-    success: function (data) {
-      $(constraint_form).parent().parent().hide(1000);
-      $(constraint_form).parent().parent().remove();
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      alert("ERROR: Unable to contact server");
-    }
-  });
-  fade_in_out($(constraint_form).parent().parent());
-}
-
 function hover_over(o) {
   $(o).find('td').last().css('display','');
   $(o).addClass("node_selected");
@@ -446,4 +432,69 @@ function hover_over(o) {
 function hover_out(o) {
   $(o).find('td').last().css('display','none');
   $(o).removeClass("node_selected");
+}
+
+function load_row(node_row, ac, cur_elem){
+  hover_over(node_row);
+  $(node_row).siblings().each(function(key,sib) {
+    hover_out(sib);
+  });
+  var self = ac;
+  $("#node_info_div").fadeTo(500, .01,function() {
+    node_name = $(node_row).attr("nodeID");
+    $.each(self.content, function(key, node) {
+      if (node.name == node_name) {
+	self.set(cur_elem,node);
+	node.set(cur_elem, true);
+      } else {
+	self.content[key].set(cur_elem,false);
+      }
+    });
+    $("#node_info_div").fadeTo(500,1);
+  });
+}
+
+function load_resource_agent_form(resource_row) {
+  $("#resource_agent_form").empty();
+  resource_name = $(resource_row).attr("nodeID");
+  $.ajax({
+    type: 'GET',
+    url: '/resources/resourceform/' + resource_name,
+    timeout: pcs_timeout,
+    success: function (data) {
+      $("#resource_agent_form").html(data);
+    }
+  });
+}
+
+function show_loading_screen() {
+  $("#loading_screen_progress_bar").progressbar({ value: 100});
+  $("#loading_screen").dialog({
+    modal: true,
+    title: "Loading",
+    height: 60,
+    width: 250,
+    hide: {
+      effect: 'fade',
+      direction: 'down',
+      speed: 750
+    }
+  });
+}
+
+function hide_loading_screen() {
+  $("#loading_screen").dialog('close');
+}
+
+function remove_constraint(id) {
+  fade_in_out($("[constraint_id='"+id+"']"));
+  $.ajax({
+    type: 'POST',
+    url: '/resource_cmd/rm_constraint',
+    data: {"constraint_id": id},
+    timeout: pcs_timeout,
+    success: function (data) {
+      Pcs.resourcesController.remove_constraint(id);
+    }
+  });
 }

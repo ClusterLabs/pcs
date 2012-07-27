@@ -208,23 +208,26 @@ def node_status(params)
     end
   }
 
-  resource_list, group_list = getResourcesGroups()
+  resource_list, group_list = getResourcesGroups(false,true)
   out_rl = []
   resource_list.each {|r|
     out_nodes = []
+    oConstraints = []
     r.nodes.each{|n|
       out_nodes.push(n.name)
     }
     out_rl.push({:id => r.id, :agentname => r.agentname, :active => r.active,
 		:nodes => out_nodes, :group => r.group, :clone => r.clone,
-		:failed => r.failed, :orphaned => r.orphaned})
+		:failed => r.failed, :orphaned => r.orphaned, :options => r.options})
   }
-
+  constraints = getAllConstraints()
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
  "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
  "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
- "cluster_name" => @@cluster_name, "resources" => out_rl, "groups" => group_list }
+ "cluster_name" => @@cluster_name, "resources" => out_rl, "groups" => group_list,
+ "constraints" => constraints}
   ret = JSON.generate(status)
+  getAllConstraints()
   return ret
 end
 
@@ -275,15 +278,19 @@ def resource_status(params)
 end
 
 def resource_stop(params)
-  pp params
-  puts "RESOURCE STOP"
-  puts "#{PCS} resource stop #{params[:resource]}"
-  puts `#{PCS} resource stop #{params[:resource]}`
+  stdout, stderr, retval = run_cmd(PCS,"resource","stop", params[:resource])
+  if retval == 0
+    return JSON.generate({"success" => "true"})
+  else
+    return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
+  end
 end
 
 def resource_start(params)
-  pp params
-  puts "RESOURCE START"
-  puts "#{PCS} resource start #{params[:resource]}"
-  puts `#{PCS} resource start #{params[:resource]}`
+  stdout, stderr, retval = run_cmd(PCS,"resource","start", params[:resource])
+  if retval == 0
+    return JSON.generate({"success" => "true"})
+  else
+    return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
+  end
 end

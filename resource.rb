@@ -1,6 +1,6 @@
 require 'pp'
 
-def getResourcesGroups(get_fence_devices = false)
+def getResourcesGroups(get_fence_devices = false, get_all_options = false)
   stdout, stderror, retval = run_cmd("crm_mon", "--one-shot", "-r", "--as-xml")
   crm_output = stdout
 
@@ -42,6 +42,25 @@ def getResourcesGroups(get_fence_devices = false)
 
   resource_list.sort_by!{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
+  if get_all_options
+    stdout, stderror, retval = run_cmd("cibadmin", "-Q")
+    cib_output = stdout
+    resources_attr_map = {}
+    doc = REXML::Document.new(cib_output.join("\n"))
+    doc.elements.each('//primitive') do |r|
+      resources_attr_map[r.attributes["id"]] = {}
+      r.each_recursive do |ia|
+	if ia.node_type == :element and ia.name == "nvpair"
+	  resources_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
+	end
+      end
+    end
+
+    resource_list.each {|r|
+      r.options = resources_attr_map[r.id]
+    }
+  end
+
   [resource_list, group_list]
 end
 
@@ -53,6 +72,24 @@ def getResourceOptions(resource_id)
     ret[keyval[0]] = keyval[1]
   }
   return ret
+end
+
+def getAllConstraints()
+  stdout, stderror, retval = run_cmd("cibadmin", "-Q", "--xpath", "//constraints")
+  constraints = {}
+  if retval != 0
+    return {}
+  end
+  doc = REXML::Document.new(stdout.join("\n"))
+  constraints = {}
+  doc.elements.each('constraints/*') do |e|
+    if constraints[e.name]
+      constraints[e.name] << e.attributes
+    else
+      constraints[e.name] = [e.attributes]
+    end
+  end
+  return constraints
 end
 
 # Returns two arrays, one that lists resources that start before
@@ -150,7 +187,7 @@ def getColocationConstraints(resource_id)
     end
 
     if (sline[2] == resource_id)
-      if score == "INFINITY"  or (score != "-INFINITY" and score.to_i >= 0)
+      if score[1] == "INFINITY"  or (score[1] != "-INFINITY" and score[1].to_i >= 0)
 	together << [sline[0],score]
       else
 	apart << [sline[0],score]
