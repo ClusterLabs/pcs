@@ -77,7 +77,7 @@ def stonith_show(argv):
 
 def stonith_list_available():
     bad_fence_devices = ["kdump_send", "legacy", "na", "nss_wrapper",
-            "pcmk", "vmware_helper", "ack_manual"]
+            "pcmk", "vmware_helper", "ack_manual", "virtd"]
     fence_devices = sorted(glob.glob("/usr/sbin/fence_*"))
     for bfd in bad_fence_devices:
         try:

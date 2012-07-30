@@ -53,7 +53,7 @@ Commands:
         not exist
 
     group remove_resource <group name> <resource_id> ...
-        Remove the specified resource from the group (removing the croup if
+        Remove the specified resource from the group (removing the group if
         it does not have any other resources)
 
     group list
