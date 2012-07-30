@@ -340,4 +340,5 @@ def cluster_get_corosync_conf(argv):
         exit(1)
 
     node = argv[0]
-    print utils.getCorosyncConfig(node)
+    retval, output = utils.getCorosyncConfig(node)
+    print output
