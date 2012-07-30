@@ -277,7 +277,7 @@ def run(args):
 
     try:
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var)
-        output = p.stdout.read()
+        output,stderror = p.communicate()
         p.wait()
         returnVal = p.returncode
     except OSError:
