@@ -30,6 +30,13 @@
 		{{Pcs.resourcesController.cur_resource.name}}
                 </script>
 	      </div>
+	      <div>
+		<script type="text/x-handlebars">
+{{#if Pcs.resourcesController.cur_resource.group}}
+ &nbsp;({{Pcs.resourcesController.cur_resource.group}})
+{{/if}}
+                </script>
+	      </div>
 	    </div>
 
 	    <script type="text/x-handlebars">

@@ -7,17 +7,20 @@
 	    <tr {{bindAttr onmouseover="onmouseover"}} {{bindAttr onmouseout="onmouseout"}} {{bindAttr class="trclass"}} {{bindAttr nodeID="name"}} onclick='Pcs.resourcesController.load_resource(this);'>
 
 	    <td class="node_list_check">
-            {{view Ember.Checkbox checkedBinding="checked" onclick="checked" class="node_list_check"}}
+            {{view Ember.Checkbox checkedBinding="checked" class="node_list_check"}}
 	    </td>
 	    <td class="node_list_sprite">
 	      <div class="check sprites"></div>
 	    </td>
 	    {{#if up}}
-		<td class="resource_name">
+		<td class="resource_name" nowrap>
 	    {{else}}
-		<td class="resource_name" style="color:red">
+		<td class="resource_name" style="color:red" nowrap>
             {{/if}}
 		{{name}}
+		{{#if group}}
+		({{group}})
+		{{/if}}
 	    </td>
 	    <td class="resource_type">
 		{{agentname}}
@@ -26,6 +29,6 @@
 		<div class="arrow sprites"></div>
 	    </td>
 	    </tr>
-	    {{/each}}
-	</table>
+	{{/each}}
+    </table>
     </script>

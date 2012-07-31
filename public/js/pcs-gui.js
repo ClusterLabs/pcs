@@ -3,9 +3,9 @@ var pcs_timeout = 6000;
 function create_group() {
   var num_nodes = 0;
   var node_names = "";
-  $("#node_list :checked").each(function (index,element) {
+  $("#node_list :checked").parent().parent().each(function (index,element) {
     num_nodes++;
-    node_names += element.getAttribute("res_id") + " "
+    node_names += element.getAttribute("nodeID") + " "
   });
 
   if (num_nodes == 0) {

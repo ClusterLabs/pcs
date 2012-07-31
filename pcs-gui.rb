@@ -315,7 +315,7 @@ get '/resources/resourceform/:resource' do
   @resources, @groups = getResourcesGroups()
   @existing_resource = true
   @resources.each do |r|
-    if r.id = params[:resource]
+    if r.id == params[:resource]
       @cur_resource = r
     end
   end
