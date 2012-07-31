@@ -248,6 +248,9 @@ Pcs.resourcesController = Ember.ArrayController.create({
 	self.set("cur_resource", resource);
       }
 
+      if (resources_checked[resource.name])
+	resource.checked = true;
+
       self.pushObject(resource);
     });
     if (self.content && self.content.length > 0 && self.cur_resource == null) {
