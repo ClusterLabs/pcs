@@ -276,6 +276,7 @@ end
 
 ['/resources/?:resource?', '/resource_list/?:resource?'].each do |path|
   get path do
+    @load_data = true
     @resources, @groups = getResourcesGroups
     @resourcemenuclass = "class=\"active\""
 
@@ -344,6 +345,7 @@ end
 
 get '/nodes/?:node?' do
   setup()
+  @load_data = true
   @nodemenuclass = "class=\"active\""
   @resources, @groups = getResourcesGroups
   @resources_running = []

@@ -123,10 +123,12 @@
     <div id="loading_screen_progress_bar"></div>
   </div>
 </body>
+<% if @load_data %>
   <script src="/js/nodes-ember.js"></script>
   <script type="text/javascript">
     $(".node_list_check").click(function(e){
 	e.stopPropagation();
     });
   </script>
+<% end %>
 </html>
