@@ -422,6 +422,7 @@ def resource_group_rm(group_name, resource_ids):
     for group in dom.getElementsByTagName("group"):
         if group.getAttribute("id") == group_name:
             group_match = group
+            break
 
     if not group_match:
         print "ERROR: Group '%s' does not exist" % group_name
@@ -430,7 +431,7 @@ def resource_group_rm(group_name, resource_ids):
     resources_to_move = []
     for resource_id in resource_ids:
         found_resource = False
-        for resource in group.getElementsByTagName("primitive"):
+        for resource in group_match.getElementsByTagName("primitive"):
             if resource.getAttribute("id") == resource_id:
                 found_resource = True
                 resources_to_move.append(resource)
@@ -443,6 +444,9 @@ def resource_group_rm(group_name, resource_ids):
         parent = resource.parentNode
         resource.parentNode.removeChild(resource)
         parent.parentNode.appendChild(resource)
+
+    if len(group_match.getElementsByTagName("primitive")) == 0:
+        group_match.parentNode.removeChild(group_match)
 
     output, retval = utils.run(["cibadmin", "--replace", "-o", "configuration", "-X", dom.toxml()])
 
