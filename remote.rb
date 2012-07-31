@@ -82,7 +82,7 @@ end
 
 def cluster_disable(params)
   if params[:name]
-    response = send_request_with_token(params[:name], 'cluster_enable', true)
+    response = send_request_with_token(params[:name], 'cluster_disable', true)
   else
     success = disable_cluster()
     if not success
