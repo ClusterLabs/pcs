@@ -415,27 +415,41 @@ def resource_remove(resource_id, output = True):
 # This removes a resource from a group, but keeps it in the config
 def resource_group_rm(group_name, resource_ids):
     resource_id = resource_ids[0]
-    group_xpath = "//group[@id='"+group_name+"']"
-    group_xml = utils.get_cib_xpath(group_xpath)
-    if group_xml == "":
+    dom = parseString(utils.get_cib())
+    dom = dom.getElementsByTagName("configuration")[0]
+    group_match = None
+
+    for group in dom.getElementsByTagName("group"):
+        if group.getAttribute("id") == group_name:
+            group_match = group
+
+    if not group_match:
         print "ERROR: Group '%s' does not exist" % group_name
         sys.exit(1)
 
+    resources_to_move = []
     for resource_id in resource_ids:
-        element = parseString(group_xml).documentElement
-        resource_xml = utils.get_cib_xpath("//group[@id='"+group_name+"']/primitive[@id='"+resource_id+"']")
-        if resource_xml == "":
+        found_resource = False
+        for resource in group.getElementsByTagName("primitive"):
+            if resource.getAttribute("id") == resource_id:
+                found_resource = True
+                resources_to_move.append(resource)
+                break
+        if not found_resource:
             print "ERROR Resource '%s' does not exist in group '%s'" % (resource_id, group_name)
             sys.exit(1)
 
-        if not resource_remove(resource_id, False):
-            print "Unable to move resource"
-            sys.exit(1)
-        output, retval = utils.add_to_cib("resources", resource_xml)
-        if retval != 0:
-            print "ERROR: Unable to re-add resource"
-            print output
-            sys.exit(1)
+    for resource in resources_to_move:
+        parent = resource.parentNode
+        resource.parentNode.removeChild(resource)
+        parent.parentNode.appendChild(resource)
+
+    output, retval = utils.run(["cibadmin", "--replace", "-o", "configuration", "-X", dom.toxml()])
+
+    if retval != 0:
+        print "ERROR: Unable to re-add resource"
+        print output
+        sys.exit(1)
     return True
 
 
