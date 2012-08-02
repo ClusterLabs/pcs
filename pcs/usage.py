@@ -116,10 +116,20 @@ Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
 
 Commands:
-    start       Start corosync & pacemaker
-    stop        Stop corosync & pacemaker
-    enable      Configure corosync & pacemaker to run on startup
-    disable     Configure corosync & pacemaker to not run on startup
+    start [node] [...]
+        Start corosync & pacemaker on specified node(s), if a node is not
+        specified then corosync & pacemaker are started on the local node.
+    stop [node] [...]
+        Stop corosync & pacemaker on specified node(s), if a node is not
+        specified then corosync & pacemaker are started on the local node.
+    enable [node] [...]
+        Configure corosync & pacemaker to run on startup on specified node(s),
+        if node is not specified then corosync & pacemaker are enabled on the
+        local node.
+    disable [node] [...]
+        Configure corosync & pacemaker to not run on startup on specified
+        node(s), if node is not specified then corosync & pacemaker are disabled
+        on the local node.
 
     startall    Start corosync & pacemaker on all nodes
     stopall     Stop corosync & pacemaker on all nodes

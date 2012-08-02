@@ -35,9 +35,9 @@ def cluster_cmd(argv):
     elif (sub_cmd == "stop"):
         stop_cluster(argv)
     elif (sub_cmd == "enable"):
-        enable_cluster()
+        enable_cluster(argv)
     elif (sub_cmd == "disable"):
-        disable_cluster()
+        disable_cluster(argv)
     elif (sub_cmd == "startall"):
         start_cluster_all()
     elif (sub_cmd == "stopall"):
@@ -191,6 +191,11 @@ def get_local_network():
         exit(1)
 
 def start_cluster(argv):
+    if len(argv) > 0:
+        for node in argv:
+            utils.startCluster(node)
+            return
+
     print "Starting Cluster...",
     output, retval = utils.run(["systemctl", "start","corosync.service"])
     print output,
@@ -211,11 +216,21 @@ def stop_cluster_all():
     for node in utils.getNodesFromCorosyncConf():
         utils.stopCluster(node)
 
-def enable_cluster():
+def enable_cluster(argv):
+    if len(argv) > 0:
+        for node in argv:
+            utils.enableCluster(node)
+            return
+
     utils.run(["systemctl", "enable", "corosync.service"])
     utils.run(["systemctl", "enable", "pacemaker.service"])
 
-def disable_cluster():
+def disable_cluster(argv):
+    if len(argv) > 0:
+        for node in argv:
+            utils.disableCluster(node)
+            return
+
     utils.run(["systemctl", "disable", "corosync.service"])
     utils.run(["systemctl", "disable", "pacemaker.service"])
 
@@ -228,7 +243,12 @@ def disable_cluster_all():
         utils.disableCluster(node)
 
 def stop_cluster(argv):
-    print "Stopping Cluster..."
+    if len(argv) > 0:
+        for node in argv:
+            utils.stopCluster(node)
+            return
+
+    print "Stopping Cluster...",
     output, retval = utils.run(["systemctl", "stop","pacemaker.service"])
     print output,
     if retval != 0:
