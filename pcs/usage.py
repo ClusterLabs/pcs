@@ -43,7 +43,14 @@ Commands:
         Create specified resource
 
     update <resource id> [resource options]
-        Add/Change options to specified resource_id
+        Add/Change options to specified resource
+
+    add_operation <resource id> <operation name> [operation properties]
+        Add operation for specified resource
+
+    remove_operation <resource id> <operation name> [operation properties]
+        Remove specified operation (note: you must specify the exeact operation
+        properties to properly remove an existing operation).
 
     delete <resource id>
         Delete the specified resource
@@ -69,6 +76,17 @@ Commands:
     clone remove <resource id | group name>
         Remove the clone which contains the specified group or resource (the
         resource or group will not be removed)
+
+    master create <master/slave name> <group or resource> [options]
+        Configure a resource or group as a multi-state (master/slave) resource
+
+    master update <master/slave name> [options]
+        Update a multi-state (master/slave) resource options
+
+    master remove <master/slave name>|<resource/group>
+        Set resource/group specified as a normal (non-multi-state) resource
+        or group.  If a master/slave name is specified, the resource/group it
+        containts will be converted to a normal resource.
 
     manage <resource 1> [resource 2] ...
         Set resources listed to managed mode (default)

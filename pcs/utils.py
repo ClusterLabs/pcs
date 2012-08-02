@@ -319,6 +319,30 @@ def get_cib():
         sys.exit(1)
     return output
 
+def get_cib_dom():
+    try:
+        dom = parseString(get_cib())
+        return dom
+    except:
+        print "Error: unable to get cib"
+        sys.exit(1)
+
+# Replace only configuration section of cib with dom passed
+def replace_cib_configuration(dom):
+    output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-X", dom.toxml()])
+    if retval != 0:
+        print "ERROR: Unable to update cib"
+        print output
+        sys.exit(1)
+
+# Checks to see if id exists in the xml dom passed
+def does_id_exist(dom, check_id):
+    all_elem = dom.getElementsByTagName("*")
+    for elem in all_elem:
+        if elem.getAttribute("id") == check_id:
+            return True
+    return False
+
 def set_unmanaged(resource):
     args = ["crm_resource", "--resource", resource, "--set-parameter",
             "is-managed", "--meta", "--parameter-value", "false"]

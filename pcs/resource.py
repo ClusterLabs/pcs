@@ -40,6 +40,12 @@ def resource_cmd(argv):
     elif (sub_cmd == "update"):
         res_id = argv.pop(0)
         resource_update(res_id,argv)
+    elif (sub_cmd == "add_operation"):
+        res_id = argv.pop(0)
+        resource_operation_add(res_id,argv)
+    elif (sub_cmd == "remove_operation"):
+        res_id = argv.pop(0)
+        resource_operation_remove(res_id,argv)
     elif (sub_cmd == "delete"):
         res_id = argv.pop(0)
         resource_remove(res_id)
@@ -49,6 +55,8 @@ def resource_cmd(argv):
         resource_group(argv)
     elif (sub_cmd == "clone"):
         resource_clone(argv)
+    elif (sub_cmd == "master"):
+        resource_master(argv)
     elif (sub_cmd == "start"):
         resource_start(argv)
     elif (sub_cmd == "stop"):
@@ -176,20 +184,132 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
 def resource_update(res_id,args):
+    dom = utils.get_cib_dom()
+
+    resource = None
+    for resource in dom.getElementsByTagName("primitive"):
+        if resource.getAttribute("id") == res_id:
+            break
+    
+    if not resource:
+        print "Error: Unable to find resource: %s" % res_id
+        sys.exit(1)
+
+    instance_attributes = resource.getElementsByTagName("instance_attributes")
+    if len(instance_attributes) == 0:
+        instance_attributes = dom.createElement("instance_attributes")
+        instance_attributes.setAttribute("id", res_id + "-instance_attributes")
+        resource.appendChild(instance_attributes)
+    else:
+        instance_attributes = instance_attributes[0]
+    
     params = convert_args_to_tuples(args)
     for (key,val) in params:
-        if val == "":
-            output,retval = utils.run(["crm_resource", "-r", res_id, "-d",
-                key])
-            if retval != 0:
-                print "Error: Unable to remove '%s' from '%s'" % (key,res_id)
-                sys.exit(1)
-        else:
-            output,retval = utils.run(["crm_resource", "-r", res_id, "-p",
-                key,"-v",val])
-            if retval != 0:
-                print "Error: Unable to add '%s' from '%s'" % (key,res_id)
-                sys.exit(1)
+        ia_found = False
+        for ia in instance_attributes.getElementsByTagName("nvpair"):
+            if ia.getAttribute("name") == key:
+                ia_found = True
+                if val == "":
+                    instance_attributes.removeChild(ia)
+                else:
+                    ia.setAttribute("value", val)
+                break
+        if not ia_found:
+            ia = dom.createElement("nvpair")
+            ia.setAttribute("id", res_id + "-instance_attributes-" + key)
+            ia.setAttribute("name", key)
+            ia.setAttribute("value", val)
+            instance_attributes.appendChild(ia)
+    if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
+        instance_attributes.parentNode.removeChild(instance_attributes)
+
+    utils.replace_cib_configuration(dom)
+
+def resource_operation_add(res_id, argv):
+    if len(argv) < 1:
+        usage.resource()
+        sys.exit(1)
+
+    op_name = argv.pop(0)
+    dom = utils.get_cib_dom()
+    resource_found = False
+
+    for resource in dom.getElementsByTagName("primitive"):
+        if resource.getAttribute("id") == res_id:
+            resource_found = True
+            break
+
+    if not resource_found:
+        print "Unable to find resource: %s" % res_id
+        sys.exit(1)
+
+    op_properties = convert_args_to_tuples(argv)
+    op_properties.sort(key=lambda a:a[0])
+    op_properties.insert(0,('name', op_name))
+    found_match = False
+
+    op = dom.createElement("op")
+    op_id = res_id + "-"
+    for prop in op_properties:
+        op.setAttribute(prop[0], prop[1])
+        op_id += prop[0] + "-" + prop[1] + "-"
+    op_id = op_id[:-1]
+    op.setAttribute("id", op_id)
+
+    operations = resource.getElementsByTagName("operations")
+    if len(operations) == 0:
+        operations = dom.createElement("operations")
+        resource.appendChild(operations)
+    else:
+        operations = operations[0]
+
+    operations.appendChild(op)
+
+    utils.replace_cib_configuration(dom)
+
+def resource_operation_remove(res_id, argv):
+    if len(argv) < 1:
+        usage.resource()
+        sys.exit(1)
+
+    original_argv = " ".join(argv)
+
+    op_name = argv.pop(0)
+    dom = utils.get_cib_dom()
+    resource_found = False
+
+    for resource in dom.getElementsByTagName("primitive"):
+        if resource.getAttribute("id") == res_id:
+            resource_found = True
+            break
+
+    if not resource_found:
+        print "Unable to find resource: %s" % res_id
+        sys.exit(1)
+
+    op_properties = convert_args_to_tuples(argv)
+    op_properties.append(('name', op_name))
+    found_match = False
+    for op in resource.getElementsByTagName("op"):
+        temp_properties = []
+        for attrName in op.attributes.keys():
+            if attrName == "id":
+                continue
+            temp_properties.append((attrName,op.attributes.get(attrName).nodeValue))
+
+        if len(set(op_properties) ^ set(temp_properties)) == 0:
+            found_match = True
+            parent = op.parentNode
+            parent.removeChild(op)
+            if len(parent.getElementsByTagName("op")) == 0:
+                parent.parentNode.removeChild(parent)
+            break
+
+    if not found_match:
+        print "Unable to find operation matching: %s" % original_argv
+        sys.exit(1)
+
+    utils.replace_cib_configuration(dom)
 
 def convert_args_to_operations(op_values, ra_id):
     if len(op_values) == 0:
@@ -299,7 +419,7 @@ def resource_clone(argv):
 def resource_clone_create(argv, update = False):
     name = argv.pop(0)
     element = None
-    dom = xml.dom.minidom.parseString(utils.get_cib())
+    dom = utils.get_cib_dom()
     re = dom.documentElement.getElementsByTagName("resources")[0]
     for res in re.getElementsByTagName("primitive") + re.getElementsByTagName("group"):
         if res.getAttribute("id") == name:
@@ -351,7 +471,7 @@ def resource_clone_remove(argv):
         sys.exit(1)
 
     name = argv.pop()
-    dom = xml.dom.minidom.parseString(utils.get_cib())
+    dom = utils.get_cib_dom()
     re = dom.documentElement.getElementsByTagName("resources")[0]
 
     found = False
@@ -378,6 +498,120 @@ def resource_clone_remove(argv):
         print output
         sys.exit(1)
     
+def resource_master(argv):
+    if len(argv) < 2:
+        usage.resource()
+        sys.exit(1)
+
+    sub_cmd = argv.pop(0)
+    if sub_cmd == "create":
+        resource_master_create(argv)
+    elif sub_cmd == "update":
+        resource_master_create(argv,True)
+    elif sub_cmd == "remove":
+        resource_master_remove(argv)
+    else:
+        usage.resource()
+        sys.exit(1)
+
+def resource_master_create(argv, update=False):
+    if (len(argv) < 2 and not update) or (len(argv) < 1 and update):
+        usage.resource()
+        sys.exit(1)
+
+    dom = utils.get_cib_dom()
+    master_id = argv.pop(0)
+
+    if (update):
+        master_found = False
+        for master in dom.getElementsByTagName("master"):
+            if master.getAttribute("id") == master_id:
+                master_element = master
+                master_found = True
+                break
+        if not master_found:
+            print "Error: Unable to find multi-state resource with id %s" % master_id
+            sys.exit(1)
+    else:
+        rg_id = argv.pop(0)
+        if utils.does_id_exist(dom, master_id):
+            print "Error: %s already exists in the cib" % master_id
+            sys.exit(1)
+        resources = dom.getElementsByTagName("resources")[0]
+        rg_found = False
+        for resource in (resources.getElementsByTagName("primitive") +
+            resources.getElementsByTagName("group")):
+            if resource.getAttribute("id") == rg_id:
+                rg_found = True
+                break
+        if not rg_found:
+            print "Error: Unable to find resource or group with id %s" % rg_id
+            sys.exit(1)
+        master_element = dom.createElement("master")
+        master_element.setAttribute("id", master_id)
+        resource.parentNode.removeChild(resource)
+        master_element.appendChild(resource)
+        resources.appendChild(master_element)
+
+    if len(argv) > 0:
+        meta = None
+        for child in master_element.childNodes:
+            if child.nodeType != xml.dom.Node.ELEMENT_NODE:
+                continue
+            if child.tagName == "meta_attributes":
+                meta = child
+        if meta == None:
+            meta = dom.createElement("meta_attributes")
+            meta.setAttribute("id", master_id + "-meta_attributes")
+            master_element.appendChild(meta)
+
+        for arg in convert_args_to_tuples(argv):
+            for nvpair in meta.getElementsByTagName("nvpair"):
+                if nvpair.getAttribute("name") == arg[0]:
+                    meta.removeChild(nvpair)
+                    break
+            if arg[1] == "":
+                continue
+            nvpair = dom.createElement("nvpair")
+            nvpair.setAttribute("id", meta.getAttribute("id") + "-" + arg[0])
+            nvpair.setAttribute("name", arg[0])
+            nvpair.setAttribute("value", arg[1])
+            meta.appendChild(nvpair)
+        if len(meta.getElementsByTagName("nvpair")) == 0:
+            master_element.removeChild(meta)
+    utils.replace_cib_configuration(dom)
+
+def resource_master_remove(argv):
+    if len(argv) < 1:
+        usage.resource()
+        sys.exit(1)
+
+    dom = utils.get_cib_dom()
+    master_id = argv.pop(0)
+
+    master_found = False
+# Check to see if there's a resource/group with the master_id if so, we remove the parent
+    for rg in (dom.getElementsByTagName("primitive") + dom.getElementsByTagName("group")):
+        if rg.getAttribute("id") == master_id and rg.parentNode.tagName == "master":
+            master_id = rg.parentNode.getAttribute("id")
+
+    for master in dom.getElementsByTagName("master"):
+        if master.getAttribute("id") == master_id:
+            childNodes = (master.getElementsByTagName("group") + master.getElementsByTagName("primitive"))
+            for child in childNodes[:]:
+                parent = child.parentNode
+                parent.removeChild(child)
+                parent.parentNode.appendChild(child)
+            master_found = True
+            break
+
+    if not master_found:
+            print "Error: Unable to find multi-state resource with id %s" % master_id
+            sys.exit(1)
+
+    master.parentNode.removeChild(master)
+    utils.replace_cib_configuration(dom)
+
 # Also performs a 'cleanup' to remove it completely
 def resource_remove(resource_id, output = True):
     group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')
@@ -415,7 +649,7 @@ def resource_remove(resource_id, output = True):
 # This removes a resource from a group, but keeps it in the config
 def resource_group_rm(group_name, resource_ids):
     resource_id = resource_ids[0]
-    dom = parseString(utils.get_cib())
+    dom = get_cib_dom()
     dom = dom.getElementsByTagName("configuration")[0]
     group_match = None
 
@@ -448,18 +682,13 @@ def resource_group_rm(group_name, resource_ids):
     if len(group_match.getElementsByTagName("primitive")) == 0:
         group_match.parentNode.removeChild(group_match)
 
-    output, retval = utils.run(["cibadmin", "--replace", "-o", "configuration", "-X", dom.toxml()])
+    utils.replace_cib_configuration(dom)
 
-    if retval != 0:
-        print "ERROR: Unable to re-add resource"
-        print output
-        sys.exit(1)
     return True
 
 
 def resource_group_add(group_name, resource_ids):
-    out = utils.get_cib()
-    dom = xml.dom.minidom.parseString(out)
+    dom = utils.get_cib_dom()
     top_element = dom.documentElement
     resources_element = top_element.getElementsByTagName("resources")[0]
     group_found = False
@@ -553,19 +782,31 @@ def resource_show(argv):
                 print line
         return
 
-    preg = re.compile(r'.*<primitive',re.DOTALL)
+    preg = re.compile(r'.*xml:\n',re.DOTALL)
     for arg in argv:
         args = ["crm_resource","-r",arg,"-q"]
         output,retval = utils.run(args)
         if retval != 0:
             print "Error: unable to find resource '"+arg+"'"
             sys.exit(1)
-        output = preg.sub("<primitive", output)
+        output = preg.sub("", output)
         dom = parseString(output)
         doc = dom.documentElement
         print "Resource:", arg
         for nvpair in doc.getElementsByTagName("nvpair"):
             print "  " + nvpair.getAttribute("name") + ": " + nvpair.getAttribute("value")
+        for op in doc.getElementsByTagName("op"):
+            alist = []
+            for i in range(op.attributes.length):
+                name = op.attributes.item(i).name
+                val = op.attributes.item(i).value
+                if name == "name" or name == "id":
+                    continue
+                alist.append(name+"="+val)
+            print "  op " + op.getAttribute("name"),
+            for a in alist:
+                print a,
+            print
 
 def resource_stop(argv):
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
