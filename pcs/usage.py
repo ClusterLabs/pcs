@@ -300,7 +300,7 @@ Commands:
         List all current colocation constraints (if 'all' is specified show
         the internal constraint id's as well).
 
-    colocation add <source resource> <target resource> [score]
+    colocation add <source resource> <target resource> [score] [options]
         Request <source resource> to run on the same node where pacemaker has
         determined <target resource> should run.  Positive values of score
         mean the resources should be run on the same node, negative values

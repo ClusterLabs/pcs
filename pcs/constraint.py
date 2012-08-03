@@ -94,8 +94,15 @@ def colocation_show(argv):
         co_score = co_loc.getAttribute("score")
         score_text = "" if (co_score == "INFINITY") and not showDetail else " (" + co_score + ")"
         co_id_out = ""
+        for attr in co_loc.attributes.items():
+            name = attr[0]
+            value = attr[1]
+            if name != "rsc" and name != "with-rsc" and name != "id" and name != "score":
+                co_id_out += " (" + name+":"+value+")"
+
         if showDetail:
-            co_id_out = " (id:"+co_id+")"
+            co_id_out += " (id:"+co_id+")"
+
         print "  " + co_resource1 + " with " + co_resource2 + score_text + co_id_out
 
 def colocation_rm(argv):
@@ -127,6 +134,27 @@ def colocation_rm(argv):
         print "No matching resources found in ordering list"
 
 
+# When passed an array of arguments if the first argument doesn't have an '='
+# then it's the score, otherwise they're all arguments
+# Return a tuple with the score and array of name,value pairs
+def parse_score_options(argv):
+    if len(argv) == 0:
+        return "INFINITY",[]
+
+    arg_array = []
+    first = argv[0]
+    if first.find('=') != -1:
+        score = "INFINITY"
+    else:
+        score = argv.pop(0)
+
+    for arg in argv:
+        args = arg.split('=')
+        if (len(args) != 2):
+            continue
+        arg_array.append(args)
+    return (score, arg_array)
+
 def colocation_add(argv):
     if len(argv) < 2:
         usage.constraint()
@@ -134,15 +162,20 @@ def colocation_add(argv):
 
     resource1 = argv.pop(0)
     resource2 = argv.pop(0)
-    score = "INFINITY" if (len(argv) == 0) else argv.pop(0)
-    cl_id = "colocation-" + resource1 + "-" + resource2 + "-" + score
+
+    score,nv_pairs = parse_score_options(argv)
 
     (dom,constraintsElement) = getCurrentConstraints()
+    cl_id = utils.find_unique_id(dom, "colocation-" + resource1 + "-" +
+            resource2 + "-" + score)
+
     element = dom.createElement("rsc_colocation")
     element.setAttribute("id",cl_id)
     element.setAttribute("rsc",resource1)
     element.setAttribute("with-rsc",resource2)
     element.setAttribute("score",score)
+    for nv_pair in nv_pairs:
+        element.setAttribute(nv_pair[0], nv_pair[1])
     constraintsElement.appendChild(element)
     xml_constraint_string = constraintsElement.toxml()
     args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]

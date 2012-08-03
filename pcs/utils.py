@@ -343,6 +343,16 @@ def does_id_exist(dom, check_id):
             return True
     return False
 
+# Returns check_id if it doesn't exist in the dom, otherwise it adds an integer
+# to the end of the id and increments it until a unique id is found
+def find_unique_id(dom, check_id):
+    counter = 1
+    temp_id = check_id
+    while does_id_exist(dom,temp_id):
+        temp_id = check_id + "-" + str(counter)
+        counter += 1
+    return temp_id
+
 def set_unmanaged(resource):
     args = ["crm_resource", "--resource", resource, "--set-parameter",
             "is-managed", "--meta", "--parameter-value", "false"]
