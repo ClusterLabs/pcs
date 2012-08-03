@@ -70,9 +70,21 @@ def resource_cmd(argv):
         resource_manage(argv, True)
     elif (sub_cmd == "unmanage"):
         resource_manage(argv, False)
+    elif (sub_cmd == "rsc" or sub_cmd == "op"):
+        if len(argv) < 2:
+            usage.resource()
+            sys.exit(1)
+
+        rsc_subcmd = argv.pop(0)
+        if (sub_cmd == "rsc" and rsc_subcmd == "defaults"):
+            set_default("rsc_defaults", argv)
+        elif (sub_cmd == "op" and rsc_subcmd == "defaults"):
+            set_default("op_defaults", argv)
+        else:
+            usage.resource()
+            sys.exit(1)
     else:
         usage.resource()
-
 
 # List available resources
 # TODO make location more easily configurable
@@ -853,3 +865,11 @@ def resource_manage(argv, set_managed):
             xpath = "//primitive[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
             my_xml = utils.get_cib_xpath(xpath)
             utils.remove_from_cib(my_xml)
+
+def set_default(def_type, argv):
+    for arg in argv:
+        args = arg.split('=')
+        if (len(args) != 2):
+            print "Invalid Property: " + arg
+            continue
+        utils.setAttribute(def_type, args[0], args[1])

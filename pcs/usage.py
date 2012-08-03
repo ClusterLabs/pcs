@@ -94,6 +94,12 @@ Commands:
     unmanage <resource 1> [resource 2] ...
         Set resources listed to unmanaged mode
 
+    rsc defaults [options]
+        Set default values for resources
+
+    op defaults [options]
+        Set default values for operations
+
 Examples:
     pcs resource list
 
