@@ -125,17 +125,28 @@ Commands:
     start [node] [...]
         Start corosync & pacemaker on specified node(s), if a node is not
         specified then corosync & pacemaker are started on the local node.
+
     stop [node] [...]
         Stop corosync & pacemaker on specified node(s), if a node is not
         specified then corosync & pacemaker are started on the local node.
+
     enable [node] [...]
         Configure corosync & pacemaker to run on startup on specified node(s),
         if node is not specified then corosync & pacemaker are enabled on the
         local node.
+
     disable [node] [...]
         Configure corosync & pacemaker to not run on startup on specified
         node(s), if node is not specified then corosync & pacemaker are disabled
         on the local node.
+
+    standby <node>
+        Put specified node into standby mode (the node specified will no longer
+        be able to host resources
+    
+    unstandby <node>
+        Remove node from standby mode (the node specified will now be able to
+        host resources
 
     startall    Start corosync & pacemaker on all nodes
     stopall     Stop corosync & pacemaker on all nodes

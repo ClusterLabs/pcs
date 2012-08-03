@@ -34,6 +34,10 @@ def cluster_cmd(argv):
         start_cluster(argv)
     elif (sub_cmd == "stop"):
         stop_cluster(argv)
+    elif (sub_cmd == "standby"):
+        node_standby(argv)
+    elif (sub_cmd == "unstandby"):
+        node_standby(argv, False)
     elif (sub_cmd == "enable"):
         enable_cluster(argv)
     elif (sub_cmd == "disable"):
@@ -215,6 +219,16 @@ def start_cluster_all():
 def stop_cluster_all():
     for node in utils.getNodesFromCorosyncConf():
         utils.stopCluster(node)
+
+def node_standby(argv,standby=True):
+    if len(argv) == 0:
+        print usage.cluster()
+        sys.exit(1)
+
+    if standby:
+        utils.run(["crm_standby", "-v", "on", "-N", argv[0]])
+    else:
+        utils.run(["crm_standby", "-D", "-N", argv[0]])
 
 def enable_cluster(argv):
     if len(argv) > 0:
