@@ -1,20 +1,32 @@
 var pcs_timeout = 6000;
 
+function menu_show(item,show) {
+  if (show) {
+    $("#" + item + "_menu").addClass("active");
+    $("#" + item + "_title_row").show();
+    $("#" + item + "_header_row").show();
+    $("#" + item + "_list_row").show();
+  } else {
+    $("#" + item + "_menu").removeClass("active");
+    $("#" + item + "_title_row").hide();
+    $("#" + item + "_header_row").hide();
+    $("#" + item + "_list_row").hide();
+  }
+}
+
 function select_menu(item) {
   if (item == "NODES") {
-    $("#resource_title_row").hide();
-    $("#resource_header_row").hide();
-    $("#resource_list_row").hide();
-    $("#node_title_row").show();
-    $("#node_header_row").show();
-    $("#node_list_row").show();
+    menu_show("node",true);
+    menu_show("resource", false);
+    menu_show("stonith",false);
   } else if (item == "RESOURCES") {
-    $("#resource_title_row").show();
-    $("#resource_header_row").show();
-    $("#resource_list_row").show();
-    $("#node_title_row").hide();
-    $("#node_header_row").hide();
-    $("#node_list_row").hide();
+    menu_show("node",false);
+    menu_show("resource", true);
+    menu_show("stonith",false);
+  } else if (item == "FENCE DEVICES") {
+    menu_show("node",false);
+    menu_show("resource", false);
+    menu_show("stonith",true);
   }
   $(window).resize();
 }
@@ -473,12 +485,19 @@ function load_row(node_row, ac, cur_elem, containing_elem){
   });
 }
 
-function load_resource_agent_form(resource_row) {
-  $("#resource_agent_form").empty();
+function load_agent_form(resource_row, stonith) {
   resource_name = $(resource_row).attr("nodeID");
+  if (stonith) {
+    $("#stonith_agent_form").empty();
+    url = '/fencedevices/fencedeviceform/' + resource_name;
+  } else {
+    $("#resource_agent_form").empty();
+    url = '/resources/resourceform/' + resource_name;
+  }
+
   $.ajax({
     type: 'GET',
-    url: '/resources/resourceform/' + resource_name,
+    url: url,
     timeout: pcs_timeout,
     success: function (data) {
       $("#resource_agent_form").html(data);

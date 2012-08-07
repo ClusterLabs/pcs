@@ -1,4 +1,7 @@
 Pcs = Ember.Application.create({
+  nodes_view: true,
+  stonith_view: false,
+  resource_view: false,
   update: function(first_run) {
     if (first_run)
       show_loading_screen();
@@ -104,7 +107,12 @@ Pcs.resourcesController = Ember.ArrayController.create({
 
   load_resource: function(resource_row) {
     load_row(resource_row, this, 'cur_resource', "#resource_info_div");
-    load_resource_agent_form(resource_row, this, 'cur_resource');
+    load_agent_form(resource_row, false);
+  },
+
+  load_stonith: function(resource_row) {
+    load_row(resource_row, this, 'cur_resource', "#stonith_info_div");
+    load_agent_form(resource_row, true);
   },
 
   remove_constraint: function(constraint_id) {
@@ -229,7 +237,8 @@ Pcs.resourcesController = Ember.ArrayController.create({
 	options: value["options"],
 	location_constraints: res_loc_constraints[value["id"]],
 	ordering_constraints: res_ord_constraints[value["id"]],
-	colocation_constraints: res_col_constraints[value["id"]]
+	colocation_constraints: res_col_constraints[value["id"]],
+	stonith: value["stonith"]
       });
       var pathname = window.location.pathname.split('/');
 

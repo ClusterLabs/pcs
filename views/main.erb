@@ -89,9 +89,9 @@
 		</tr>
 		<% if !@manage %>
 		<tr>
-		  <td class="menuitem first"><a onclick="select_menu('NODES'); return true;" href="#" <%= @nodemenuclass %>>NODES</a></td>
-		  <td class="menuitem"><a onclick="select_menu('RESOURCES'); return true;" href="#" <%= @resourcemenuclass %>>RESOURCES</a></td>
-		  <td class="menuitem"><a href="/fencedevices">FENCE DEVICES</a></td>
+		  <td class="menuitem first"><a id="node_menu" onclick="select_menu('NODES'); return true;" href="#nodes" <%= @nodemenuclass %>>NODES</a></td>
+		  <td class="menuitem"><a id="resource_menu" onclick="select_menu('RESOURCES'); return true;" href="#resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
+		  <td class="menuitem"><a id="stonith_menu" onclick="select_menu('FENCE DEVICES'); return true;" href="#fencedevices">FENCE DEVICES</a></td>
 		  <!--		  <td class="menuitem"><a style="color:red;" href="/failoverdomains">FAILOVER DOMAINS</a></td> -->
 		  <td class="menuitem"><a href="/configure/pacemaker" <%= @configuremenuclass %>>CONFIGURE</a></td>
 		</tr>
@@ -123,7 +123,7 @@
   <div id="loading_screen" style="display:hidden;">
     <div id="loading_screen_progress_bar"></div>
   </div>
-<table id="footer">
+<table id="footer" style="display: none;">
   <tr>
     <td>&copy 2012&nbsp;<a href="http://www.redhat.com">Red Hat, Inc.</a>&nbsp;&nbsp;<a href="http://access.redhat.com/">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Red Hat Customer Portal</td>
     <td align=right><a href="#">Help</a></td>

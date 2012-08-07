@@ -350,6 +350,28 @@ get '/fencedevices/metadata/:fencedevicename/?:new?' do
   erb :fenceagentform
 end
 
+get '/fencedevices/fencedeviceform/:fencedevice' do
+  @resources, @groups = getResourcesGroups(true)
+
+  @cur_resource = nil
+  @resources.each do |r|
+    if r.id == params[:fencedevice]
+      @cur_resource = r
+      break
+    end
+  end
+
+  if @cur_resource
+    @cur_resource.options = getResourceOptions(@cur_resource.id)
+    @resource_agents = getFenceAgents(@cur_resource.agentname)
+    @existing_resource = true
+    @fenceagent = @resource_agents[@cur_resource.agentname.gsub(/.*:/,"")]
+    erb :fenceagentform
+  else
+    "Can't find fence device"
+  end
+end
+
 get '/nodes/?:node?' do
   setup()
   @load_data = true

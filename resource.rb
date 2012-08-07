@@ -233,7 +233,7 @@ end
 class Resource 
   attr_accessor :id, :name, :type, :agent, :agentname, :role, :active,
     :orphaned, :managed, :failed, :failure_ignored, :nodes, :location,
-    :options, :group, :clone
+    :options, :group, :clone, :stonith
   def initialize(e, group = nil, clone = false)
     @id = e.attributes["id"]
     @agentname = e.attributes["resource_agent"]
@@ -244,6 +244,7 @@ class Resource
     @nodes = []
     @group = group
     @clone = clone
+    @stonith = false
     e.elements.each do |n| 
       node = Node.new
       node.name = n.attributes["name"]

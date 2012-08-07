@@ -4,7 +4,12 @@
 	<th></th><th></th><th>NAME&nbsp;</th><th>TYPE</th><th></th>
       </tr>
 	{{#each Pcs.resourcesController}}
-	    <tr {{bindAttr onmouseover="onmouseover"}} {{bindAttr onmouseout="onmouseout"}} {{bindAttr class="trclass"}} {{bindAttr nodeID="name"}} onclick='Pcs.resourcesController.load_resource(this);'>
+	<% if @myView == "resource" %>
+            {{#unless stonith}}
+	<% else %>
+            {{#if stonith}}
+        <% end %>
+	    <tr {{bindAttr onmouseover="onmouseover"}} {{bindAttr onmouseout="onmouseout"}} {{bindAttr class="trclass"}} {{bindAttr nodeID="name"}} onclick='Pcs.resourcesController.load_<%=@myView%>(this);'>
 
 	    <td class="node_list_check">
             {{view Ember.Checkbox checkedBinding="checked" class="node_list_check"}}
@@ -29,6 +34,11 @@
 		<div class="arrow sprites"></div>
 	    </td>
 	    </tr>
+	<% if @myView == "resource" %>
+            {{/unless}}
+	<% else %>
+            {{/if}}
+        <% end %>
 	{{/each}}
     </table>
     </script>

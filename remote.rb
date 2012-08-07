@@ -209,6 +209,9 @@ def node_status(params)
   }
 
   resource_list, group_list = getResourcesGroups(false,true)
+  stonith_resource_list, stonith_group_list = getResourcesGroups(true,true)
+  stonith_resource_list.each {|sr| sr.stonith = true}
+  resource_list = resource_list + stonith_resource_list
   out_rl = []
   resource_list.each {|r|
     out_nodes = []
@@ -218,7 +221,8 @@ def node_status(params)
     }
     out_rl.push({:id => r.id, :agentname => r.agentname, :active => r.active,
 		:nodes => out_nodes, :group => r.group, :clone => r.clone,
-		:failed => r.failed, :orphaned => r.orphaned, :options => r.options})
+		:failed => r.failed, :orphaned => r.orphaned, :options => r.options,
+    		:stonith => r.stonith})
   }
   constraints = getAllConstraints()
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
