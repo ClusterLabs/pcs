@@ -216,7 +216,7 @@ get '/configure/?:page?' do
   erb :configure, :layout => :main
 end
 
-get '/fencedevices/?:fencedevice?' do
+get '/fencedevices2/?:fencedevice?' do
   @resources, @groups = getResourcesGroups(true)
   pp @resources
 
@@ -274,7 +274,7 @@ post '/fencedevices/:fencedevice?' do
   redirect params[:splat][0]
 end
 
-['/resources/?:resource?', '/resource_list/?:resource?'].each do |path|
+['/resources2/?:resource?', '/resource_list/?:resource?'].each do |path|
   get path do
     @load_data = true
     @resources, @groups = getResourcesGroups
