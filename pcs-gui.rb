@@ -319,11 +319,18 @@ get '/resources/resourceform/:resource' do
       @cur_resource = r
     end
   end
-  @cur_resource.options = getResourceOptions(@cur_resource.id)
-  @resource_agents = getResourceAgents(@cur_resource.agentname)
-  @resource = @resource_agents[@cur_resource.agentname]
-
-  erb :resourceagentform
+  if @cur_resource
+    @cur_resource.options = getResourceOptions(@cur_resource.id)
+    @resource_agents = getResourceAgents(@cur_resource.agentname)
+    @resource = @resource_agents[@cur_resource.agentname]
+    if @resource
+      erb :resourceagentform
+    else
+      "Can't find resource"
+    end
+  else
+    "Resource doesn't exist"
+  end
 end
 
 get '/resources/metadata/:resourcename/?:new?' do
@@ -356,7 +363,7 @@ get '/nodes/?:node?' do
       end
     }
   }
-
+  @resource_agents = getResourceAgents()
   @nodes = @nodes.sort_by{|k,v|k}
   erb :nodes, :layout => :main
 end

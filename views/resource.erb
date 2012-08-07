@@ -4,7 +4,7 @@
       RESOURCES
     </td>
   </tr>
-  <tr>
+  <tr id="resource_header_row">
     <td id="remove_add" class="borderbottom">
       <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove();">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
       <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
@@ -15,7 +15,7 @@
       <div style="float: left">&nbsp;Edit Resource&nbsp;</div><div class="check sprites"></div>
     </td>
   </tr>
-  <tr>
+  <tr id="resource_list_row">
     <td id="node_list">
       <%= erb :_resource_list %>
     </td>

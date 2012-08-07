@@ -4,13 +4,14 @@
   <link rel="stylesheet" type="text/css" href="/css/overpass.css" />
   <link rel="stylesheet" type="text/css" href="/css/liberation.css" />
   <link rel="stylesheet" type="text/css" href="/css/jquery-ui-1.8.20.custom.css" />
+  <script type="text/javascript">
+	ENV = { "RAISE_ON_DEPRECATION": true, "VIEW_PRESERVES_CONTEXT": true,
+	  "CP_DEFAULT_CACHEABLE": true};
+  </script>
   <script src="/js/jquery-1.7.2.js"></script>
   <script src="/js/jquery-ui-1.8.20.custom.min.js"></script>
-  <!--
-  <script src="/js/underscore-1.3.3.js"></script>
-  <script src="/js/backbone-0.9.2.js"></script>
-  -->
-  <script src="/js/ember-0.9.8.1.js"></script>
+  <script src="/js/handlebars-1.0.0.beta.6.js"></script>
+  <script src="/js/ember-1.0.pre.min.js"></script>
   <script src="/js/pcs-gui.js"></script>
   <script type="text/javascript">
     var origMainTRHeight = 0;
@@ -88,8 +89,8 @@
 		</tr>
 		<% if !@manage %>
 		<tr>
-		  <td class="menuitem first"><a href="/nodes" <%= @nodemenuclass %>>NODES</a></td>
-		  <td class="menuitem"><a href="/resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
+		  <td class="menuitem first"><a onclick="select_menu('NODES'); return true;" href="#" <%= @nodemenuclass %>>NODES</a></td>
+		  <td class="menuitem"><a onclick="select_menu('RESOURCES'); return true;" href="#" <%= @resourcemenuclass %>>RESOURCES</a></td>
 		  <td class="menuitem"><a href="/fencedevices">FENCE DEVICES</a></td>
 		  <!--		  <td class="menuitem"><a style="color:red;" href="/failoverdomains">FAILOVER DOMAINS</a></td> -->
 		  <td class="menuitem"><a href="/configure/pacemaker" <%= @configuremenuclass %>>CONFIGURE</a></td>
@@ -115,13 +116,20 @@
   <div id="push">
   </div>
 </div>
-  <div id="footer">
+<!--  <div id="footer">
     <div id="copyright">&copy 2012</div>&nbsp;<a href="http://www.redhat.com">Red Hat, Inc.</a>  <a href="http://access.redhat.com/">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Red Hat Customer Portal</a>
     <div id="help"><a href="#">Help</a></div>
-  </div>
+  </div> -->
   <div id="loading_screen" style="display:hidden;">
     <div id="loading_screen_progress_bar"></div>
   </div>
+<table id="footer">
+  <tr>
+    <td>&copy 2012&nbsp;<a href="http://www.redhat.com">Red Hat, Inc.</a>&nbsp;&nbsp;<a href="http://access.redhat.com/">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Red Hat Customer Portal</td>
+    <td align=right><a href="#">Help</a></td>
+  </tr>
+</table>
+</div>
 </body>
 <% if @load_data %>
   <script src="/js/nodes-ember.js"></script>
@@ -129,6 +137,7 @@
     $(".node_list_check").click(function(e){
 	e.stopPropagation();
     });
+    select_menu("NODES");
   </script>
 <% end %>
 </html>

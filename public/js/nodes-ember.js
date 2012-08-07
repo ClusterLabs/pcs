@@ -10,17 +10,12 @@ Pcs = Ember.Application.create({
 	Pcs.resourcesController.update(data);
 	Ember.run.next(this,disable_checkbox_clicks);
 	if (first_run) {
-	  if ($('#resource_page')) {
 	    Ember.run.next(this,function () {
-	      Pcs.resourcesController.load_resource($('.node_selected').first());
+	      Pcs.resourcesController.load_resource($('#resource_list_row').find('.node_selected').first());
+	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first());
 	    });
-	  } else {
-	    Ember.run.next(this,function () {
-	      Pcs.nodesController.load_node($('.node_selected').first());
-	    });
-	  }
-	  hide_loading_screen();
-	}
+	} 
+	hide_loading_screen();
 	window.setTimeout(Pcs.update,20000);
       },
       error: hide_loading_screen
@@ -108,7 +103,7 @@ Pcs.resourcesController = Ember.ArrayController.create({
   },
 
   load_resource: function(resource_row) {
-    load_row(resource_row, this, 'cur_resource');
+    load_row(resource_row, this, 'cur_resource', "#resource_info_div");
     load_resource_agent_form(resource_row, this, 'cur_resource');
   },
 
@@ -268,7 +263,7 @@ Pcs.nodesController = Ember.ArrayController.create({
   },
 
   load_node: function(node_row){
-    load_row(node_row, this, 'cur_node');
+    load_row(node_row, this, 'cur_node', '#node_info_div');
   },
 
   update: function(data){

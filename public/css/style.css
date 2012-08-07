@@ -43,13 +43,13 @@ table {
 }
 
 #footer {
-  padding-left: 38px;
-  padding-right: 38px;
+/*  padding-left: 38px;
+  padding-right: 38px; */
   margin-left: auto;
   margin-right: auto;
   width: 960px;
   height: 30px;
-  margin: -30px auto 0;
+  margin: 30px auto 0;
 }
 
 #header #logo {

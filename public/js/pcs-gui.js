@@ -1,5 +1,24 @@
 var pcs_timeout = 6000;
 
+function select_menu(item) {
+  if (item == "NODES") {
+    $("#resource_title_row").hide();
+    $("#resource_header_row").hide();
+    $("#resource_list_row").hide();
+    $("#node_title_row").show();
+    $("#node_header_row").show();
+    $("#node_list_row").show();
+  } else if (item == "RESOURCES") {
+    $("#resource_title_row").show();
+    $("#resource_header_row").show();
+    $("#resource_list_row").show();
+    $("#node_title_row").hide();
+    $("#node_header_row").hide();
+    $("#node_list_row").hide();
+  }
+  $(window).resize();
+}
+
 function create_group() {
   var num_nodes = 0;
   var node_names = "";
@@ -434,13 +453,13 @@ function hover_out(o) {
   $(o).removeClass("node_selected");
 }
 
-function load_row(node_row, ac, cur_elem){
+function load_row(node_row, ac, cur_elem, containing_elem){
   hover_over(node_row);
   $(node_row).siblings().each(function(key,sib) {
     hover_out(sib);
   });
   var self = ac;
-  $("#node_info_div").fadeTo(500, .01,function() {
+  $(containing_elem).fadeTo(500, .01,function() {
     node_name = $(node_row).attr("nodeID");
     $.each(self.content, function(key, node) {
       if (node.name == node_name) {
@@ -450,7 +469,7 @@ function load_row(node_row, ac, cur_elem){
 	self.content[key].set(cur_elem,false);
       }
     });
-    $("#node_info_div").fadeTo(500,1);
+    $(containing_elem).fadeTo(500,1);
   });
 }
 
