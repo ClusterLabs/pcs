@@ -14,8 +14,10 @@ Pcs = Ember.Application.create({
 	Ember.run.next(this,disable_checkbox_clicks);
 	if (first_run) {
 	    Ember.run.next(this,function () {
-	      Pcs.resourcesController.load_resource($('#resource_list_row').find('.node_selected').first());
-	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first());
+	      initial_page_load();
+//	      Pcs.resourcesController.load_resource($('#resource_list_row').find('.node_selected').first());
+//	      Pcs.resourcesController.load_stonith($('#stonith_list_row').find('.node_selected').first());
+//	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first());
 	    });
 	} 
 	hide_loading_screen();
@@ -52,6 +54,20 @@ Pcs.Resource = Ember.Object.extend({
     else
       return "hover_out(this);"
   }.property("cur_resource"),
+  res_class: function() {
+    cpt = this.agentname.split(":");
+    return cpt[0];
+  }.property("agentname"),
+  res_provider: function() {
+    cpt = this.agentname.split(":");
+    return cpt[2];
+  }.property("agentname"),
+  res_type: function() {
+    cpt = this.agentname.split(":");
+    if (this.stonith) 
+      return cpt[1];
+    return cpt[3];
+  }.property("agentname"),
   showArrow: function(){
     if (this.cur_resource != true)
       return "display:none;"
@@ -108,11 +124,13 @@ Pcs.resourcesController = Ember.ArrayController.create({
   load_resource: function(resource_row) {
     load_row(resource_row, this, 'cur_resource', "#resource_info_div");
     load_agent_form(resource_row, false);
+    window.location.hash = "#resources#" + $(resource_row).attr("nodeID");
   },
 
   load_stonith: function(resource_row) {
     load_row(resource_row, this, 'cur_resource', "#stonith_info_div");
     load_agent_form(resource_row, true);
+    window.location.hash = "#fencedevices#" + $(resource_row).attr("nodeID");
   },
 
   remove_constraint: function(constraint_id) {
@@ -273,6 +291,7 @@ Pcs.nodesController = Ember.ArrayController.create({
 
   load_node: function(node_row){
     load_row(node_row, this, 'cur_node', '#node_info_div');
+    window.location.hash = "#nodes#" + $(node_row).attr("nodeID");
   },
 
   update: function(data){

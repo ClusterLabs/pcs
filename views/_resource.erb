@@ -40,7 +40,7 @@
 	    <div id="node_sub_info">
 	      <table>
 		<tr>
-		  <td><input style="margin-right: 50px;" type="text" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}} size="35" class="text_field"></td>
+		  <td><input disabled style="margin-right: 50px;" type="text" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}} size="35" class="text_field"></td>
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
 		  {{#if Pcs.resourcesController.cur_resource.failed}}
@@ -171,34 +171,32 @@
 	    </div>
 	  <% end %>
 
-	    <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
+	  <script type="text/x-handlebars">
+	    <table style="clear:left;float:left;margin-top:25px;">
+	      <% if @myView == "resource" %>
 	      <tr>
-		<td class="bold">Class</td>
-		<td>
-		  <select disabled>
-		    <option value="OCF">OCF</option>
-		  </select>
+		<td class="bold">Class:</td>
+		<td class="reg">
+		{{Pcs.resourcesController.cur_resource.res_class}}
 		</td>
-		<td style="padding-left:10px;" class="bold">Provider</td>
-		<td>
-		  <select disabled>
-		    <option value="heartbeat">heartbeat</option>
-		  </select>
+		<td style="padding-left:10px;" class="bold">Provider:</td>
+		<td class="reg">
+		{{Pcs.resourcesController.cur_resource.res_provider}}
 		</td>
 	      </tr>
+	      <% end %>
 	      <tr>
-		<td class="bold">Type</td>
-		<td>
-		  <select  disabled id="ra_type" onchange="$('#cur_resource_agent').load('/resources/metadata/' + this.value);">
-		    <% @resource_agents.each { |name, ra| %>
-		      <option  width=250px value="<%=ra.type%>"><%=ra.type%></option>
-		    <% } %>
-		  </select>
+		<td class="bold">Type:</td>
+		<td class="reg">
+		{{Pcs.resourcesController.cur_resource.res_type}}
 		</td>
 	      </tr>
 	    </table>
+	  </script>
 
-	    <div id="resource_agent_form"></div>
+	    <% if @myView == "resource" %>
+	      <div style="clear:left;" id="resource_agent_form"></div>
+	    <% end %>
 	    <script type="text/x-handlebars">
 	    {{#if Pcs.resourcesController.no_resources}}
 	      <span id="node_info_header"><span id="node_info_header_title">No resources have been configured</span></span>
@@ -237,6 +235,7 @@
 	  </td>
 	</tr>
       </table>
+	</script>
       <div id="new_resource_agent">
       </div>
     </div>

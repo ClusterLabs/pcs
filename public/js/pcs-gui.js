@@ -1,5 +1,19 @@
 var pcs_timeout = 6000;
 
+function initial_page_load() {
+  current_location =  window.location.hash.split('#');
+  if (current_location.length == 1)
+    select_menu("NODES");
+  else {
+    if (current_location[1] == "nodes")
+      select_menu("NODES", current_location[2]);
+    else if (current_location[1] == "resources")
+      select_menu("RESOURCES", current_location[2]);
+    else if (current_location[1] == "fencedevices")
+      select_menu("FENCE DEVICES", current_location[2]);
+  }
+}
+
 function menu_show(item,show) {
   if (show) {
     $("#" + item + "_menu").addClass("active");
@@ -14,21 +28,34 @@ function menu_show(item,show) {
   }
 }
 
-function select_menu(item) {
-  if (item == "NODES") {
-    menu_show("node",true);
-    menu_show("resource", false);
-    menu_show("stonith",false);
-  } else if (item == "RESOURCES") {
-    menu_show("node",false);
-    menu_show("resource", true);
-    menu_show("stonith",false);
-  } else if (item == "FENCE DEVICES") {
-    menu_show("node",false);
-    menu_show("resource", false);
-    menu_show("stonith",true);
+// Changes the visible change when another menu is selected
+// If item is specified, we load that item as well
+// If initial is set to true, we load default (first item) on other pages
+// and load the default item on the specified page if item is set
+function select_menu(menu, item, initial) {
+  if (menu == "NODES") {
+    if (item)
+      Pcs.nodesController.load_node($('[nodeID='+item+']'));
+    menu_show("node", true);
+  } else {
+    menu_show("node", false);
   }
-  $(window).resize();
+
+  if (menu == "RESOURCES") {
+    if (item)
+      Pcs.resourcesController.load_resource($('[nodeID='+item+']'));
+    menu_show("resource", true);
+  } else {
+    menu_show("resource", false);
+  }
+
+  if (menu == "FENCE DEVICES") {
+    if (item)
+      Pcs.resourcesController.load_stonith($('[nodeID='+item+']'));
+    menu_show("stonith", true);
+  } else {
+    menu_show("stonith", false);
+  }
 }
 
 function create_group() {
@@ -488,19 +515,21 @@ function load_row(node_row, ac, cur_elem, containing_elem){
 function load_agent_form(resource_row, stonith) {
   resource_name = $(resource_row).attr("nodeID");
   if (stonith) {
-    $("#stonith_agent_form").empty();
+    form = $("#stonith_agent_form");
     url = '/fencedevices/fencedeviceform/' + resource_name;
   } else {
-    $("#resource_agent_form").empty();
+    form = $("#resource_agent_form");
     url = '/resources/resourceform/' + resource_name;
   }
+
+  form.empty();
 
   $.ajax({
     type: 'GET',
     url: url,
     timeout: pcs_timeout,
     success: function (data) {
-      $("#resource_agent_form").html(data);
+      form.html(data);
     }
   });
 }
