@@ -34,12 +34,9 @@ def add_colocation_constraint(resourceA, resourceB, score)
 end
 
 def remove_constraint(constraint_id)
-  puts "REMOVE CONSTRAINT"
-  puts PCS, "constraint", "rm", constraint_id
-  Open3.popen3(PCS, "constraint", "rm", constraint_id) { |stdin, stdout, stderror, waitth|
-    puts stdout.readlines()
-    return waitth.value
-  }
+  stdout, stderror, retval = run_cmd(PCS, "constraint", "rm", constraint_id)
+  puts stdout
+  return retval
 end
 
 def get_node_token(node)
@@ -148,13 +145,13 @@ def disable_cluster()
 end
 
 def run_cmd(*args)
+  $logger.info("Running: " + args.join(" "))
   start = Time.now
   stdin, stdout, stderror, waitth = Open3.popen3(*args)
   out = stdout.readlines()
   errout = stderror.readlines()
   retval = waitth.value.exitstatus
   duration = Time.now - start
-  $logger.info("Running: " + args.join(" "))
   $logger.info("Return Value: " + retval.to_s)
   $logger.info(out)
   $logger.info("Duration: " + duration.to_s + "s")
