@@ -141,21 +141,18 @@ def check_nodes(nodes):
     
 def corosync_configure(argv,returnConfig=False):
     fedora_config = True
-    if len(argv) == 0:
+    if len(argv) < 2:
         usage.cluster()
         exit(1)
-    elif argv[0] == "sync" and len(argv) > 2:
-        sync(argv[1:])
+    if not returnConfig and "--start" in utils.pcs_options_hash and not "--local" in utils.pcs_options_hash:
+        sync_start(argv)
         return
-    elif argv[0] == "sync_start" and len(argv) > 2:
-        sync_start(argv[1:])
+    elif not returnConfig and not "--local" in utils.pcs_options_hash:
+        sync(argv)
         return
-    elif len(argv) > 1:
+    else:
         nodes = argv[1:]
         cluster_name = argv[0]
-    else:
-        usage.cluster()
-        exit(1)
 
     if fedora_config == True:
         f = open(COROSYNC_CONFIG_FEDORA_TEMPLATE, 'r')
@@ -182,6 +179,8 @@ def corosync_configure(argv,returnConfig=False):
         return corosync_config
 
     utils.setCorosyncConf(corosync_config)
+    if "--start" in utils.pcs_options_hash:
+        start_cluster([])
 
 def get_local_network():
     args = ["/sbin/ip", "route"]

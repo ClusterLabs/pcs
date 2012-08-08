@@ -170,15 +170,10 @@ Commands:
         Sync corosync configuration to all nodes found from current
         corosync.conf file
 
-    configure <cluster name> <node1 ip> [node2 ip] [...]
-        Configure corosync with <cluster name> and specified nodes
-
-    configure sync <cluster name> <node1 ip> [node2 ip] [...]
+    configure [--start] [--local] <cluster name> <node1 ip> [node2 ip] [...]
         Configure corosync and sync configuration out to listed nodes
-
-    configure sync_start <cluster name> <node1 ip> [node2 ip] [...]
-        Configure corosync and sync configuration out to listed nodes and
-        start corosync and pacemaker services on the nodes
+        --local will only perform changes on the local node
+        --start will also start the cluster on the specified nodes
 
     cib
         Get the raw xml from the CIB (Cluster Information Base)

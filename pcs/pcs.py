@@ -14,13 +14,15 @@ usefile = False
 filename = ""
 def main(argv):
     global filename, usefile, pcs_options
+    utils.pcs_options_hash = {}
     try:
-        pcs_options, argv = getopt.getopt(argv, "hf:p")
+        pcs_options, argv = getopt.gnu_getopt(argv, "hf:p", ["local","start"])
     except getopt.GetoptError, err:
         usage.main()
         sys.exit(1)
 
     for o, a in pcs_options:
+        utils.pcs_options_hash[o] = a
         if o == "-h":
             usage.main()
             sys.exit()

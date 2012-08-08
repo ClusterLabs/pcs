@@ -11,6 +11,7 @@ import json
 # usefile & filename variables are set in pcs module
 usefile = False
 filename = ""
+pcs_options_hash = {}
 
 # Check status of node
 def checkStatus(node):
