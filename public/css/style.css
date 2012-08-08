@@ -368,12 +368,10 @@ td.node_list_sprite {
   white-space: nowrap;
 }
 
-#node_details div {
+#node_details > div {
   padding-right: 5px;
-}
-
-#node_details div {
   float: left;
+  clear: left;
 }
 
 #node_info .reg {
