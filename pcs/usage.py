@@ -155,11 +155,11 @@ Commands:
                 nodes
 
     gui-status [node] [...]
-        Get current status of pcs-gui on nodes specified, or on all nodes
+        Get current status of pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified
 
     auth [node] [...]
-        Authenticate pcs to pcs-gui on nodes specified, or on all nodes
+        Authenticate pcs to pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified (authorization
         tokens are stored in ~/.pcs/token)
 

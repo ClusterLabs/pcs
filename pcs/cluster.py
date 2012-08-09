@@ -128,7 +128,7 @@ def cluster_gui_status(argv):
     else:
         check_nodes(argv)
 
-# Check and see if pcs-gui is running on the nodes listed
+# Check and see if pcsd is running on the nodes listed
 def check_nodes(nodes):
     for node in nodes:
         status = utils.checkStatus(node)
@@ -306,7 +306,7 @@ def cluster_node(argv):
     node = argv[1]
     status,output = utils.checkStatus(node)
     if status == 2:
-        print "Error: pcs-gui is not running on %s" % node
+        print "Error: pcsd is not running on %s" % node
         sys.exit(1)
     elif status == 3:
         print "Error: %s is not yet authenticated (try pcs cluster auth %s)" % (node, node)

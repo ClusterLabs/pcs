@@ -22,7 +22,7 @@ def updateToken(node,username,password):
     data = urllib.urlencode({'username':username, 'password':password})
     out = sendHTTPRequest(node, 'remote/auth', data, False)
     if out[0] != 0:
-        print "ERROR: Unable to connect to pcs-gui on %s" % node
+        print "ERROR: Unable to connect to pcsd on %s" % node
         print out
         exit(1)
     token = out[1]
