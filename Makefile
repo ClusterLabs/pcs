@@ -1,5 +1,5 @@
 tarball:
-	rm dist/pcsd.tar.gz
+	rm -f dist/pcsd.tar.gz
 	tar -C .. -czvf dist/pcsd.tar.gz --exclude ".*" --exclude .git --exclude --exclude=gemhome/*  --exclude=dist pcs-gui
 
 build_gems:
