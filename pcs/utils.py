@@ -166,19 +166,14 @@ def setCorosyncConf(corosync_config, conf_file='/etc/corosync/corosync.conf'):
         exit(1)
 
 def getCorosyncActiveNodes():
-    args = ["/sbin/corosync-quorumtool", "-l"]
+    args = ["/sbin/corosync-cmapctl"]
     nodes = []
     output,retval = run(args)
     if retval != 0:
         return []
 
-    in_nodes = False
-    for line in output.rstrip().split('\n'):
-        if in_nodes:
-            nodes.append(line.split()[2])
-        if not in_nodes and "Nodeid" in line:
-            in_nodes = True
-
+    p = re.compile(r"^nodelist\.node\.\d+\.ring\d+_addr.*= (.*)", re.M)
+    nodes = p.findall(output)
     return nodes
 
 # Add node specified to corosync.conf and insert into corosync (if running)
