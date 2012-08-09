@@ -84,9 +84,11 @@ def addLocalNode(node,node_to_add):
     if retval == 0:
         try:
             myout = json.loads(output)
+            retval2 = myout[0]
+            output = myout[1]
         except ValueError:
             return 1,output
-        return 0,myout
+        return retval2, output
     else:
         return 1, output
 
