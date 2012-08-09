@@ -196,6 +196,8 @@
 
 	    <% if @myView == "resource" %>
 	      <div style="clear:left;" id="resource_agent_form"></div>
+	    <% else %>
+	      <div style="clear:left;" id="stonith_agent_form"></div>
 	    <% end %>
 	    <script type="text/x-handlebars">
 	    {{#if Pcs.resourcesController.no_resources}}
