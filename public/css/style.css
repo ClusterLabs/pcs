@@ -395,7 +395,7 @@ td.node_list_sprite {
   text-align: center;
 }
 
-input[type=text], input[type=submit] {
+input[type=text], input[type=submit], input[type=password] {
   height: 25px;
   font-family: "Liberation";
   font-size: 12px;
