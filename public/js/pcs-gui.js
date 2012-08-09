@@ -42,6 +42,7 @@ function select_menu(menu, item, initial) {
   }
 
   if (menu == "RESOURCES") {
+    Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_res);
     if (item)
       Pcs.resourcesController.load_resource($('[nodeID='+item+']'));
     menu_show("resource", true);
@@ -50,6 +51,7 @@ function select_menu(menu, item, initial) {
   }
 
   if (menu == "FENCE DEVICES") {
+    Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_ston);
     if (item)
       Pcs.resourcesController.load_stonith($('[nodeID='+item+']'));
     menu_show("stonith", true);

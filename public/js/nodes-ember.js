@@ -2,6 +2,7 @@ Pcs = Ember.Application.create({
   nodes_view: true,
   stonith_view: false,
   resource_view: false,
+  update_timeout: null,
   update: function(first_run) {
     if (first_run)
       show_loading_screen();
@@ -15,13 +16,14 @@ Pcs = Ember.Application.create({
 	if (first_run) {
 	    Ember.run.next(this,function () {
 	      initial_page_load();
-//	      Pcs.resourcesController.load_resource($('#resource_list_row').find('.node_selected').first());
-//	      Pcs.resourcesController.load_stonith($('#stonith_list_row').find('.node_selected').first());
-//	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first());
+	      Pcs.resourcesController.load_resource($('#resource_list_row').find('.node_selected').first(),true);
+	      Pcs.resourcesController.load_stonith($('#stonith_list_row').find('.node_selected').first(),true);
+	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first(),true);
 	    });
 	} 
 	hide_loading_screen();
-	window.setTimeout(Pcs.update,20000);
+	clearTimeout(Pcs.update_timeout);
+	Pcs.update_timeout = window.setTimeout(Pcs.update,20000);
       },
       error: hide_loading_screen
     });
@@ -117,20 +119,26 @@ Pcs.resourcesController = Ember.ArrayController.create({
       return false;
   }.property("content"),
   cur_resource: null,
+  cur_resource_res: null,
+  cur_resource_ston: null,
   init: function(){
     this._super();
   },
 
-  load_resource: function(resource_row) {
+  load_resource: function(resource_row, dont_update_hash) {
     load_row(resource_row, this, 'cur_resource', "#resource_info_div");
+    this.set('cur_resource_res', this.cur_resource);
     load_agent_form(resource_row, false);
-    window.location.hash = "#resources#" + $(resource_row).attr("nodeID");
+    if (!dont_update_hash)
+      window.location.hash = "#resources#" + $(resource_row).attr("nodeID");
   },
 
-  load_stonith: function(resource_row) {
-    load_row(resource_row, this, 'cur_resource', "#stonith_info_div");
+  load_stonith: function(resource_row, dont_update_hash) {
+    load_row(resource_row, this, 'cur_resource_ston', "#stonith_info_div");
+    this.set('cur_resource_ston', this.cur_resource);
     load_agent_form(resource_row, true);
-    window.location.hash = "#fencedevices#" + $(resource_row).attr("nodeID");
+    if (!dont_update_hash)
+      window.location.hash = "#fencedevices#" + $(resource_row).attr("nodeID");
   },
 
   remove_constraint: function(constraint_id) {
@@ -268,6 +276,11 @@ Pcs.resourcesController = Ember.ArrayController.create({
       if (resource.name == cur_res_name) {
 	resource.set("cur_resource",true);
 	self.set("cur_resource", resource);
+	if (resource.stonith) {
+	  self.set("cur_resource_ston", resource);
+	} else {
+	  self.set("cur_resource_res", resource);
+	}
       }
 
       if (resources_checked[resource.name])
@@ -276,8 +289,21 @@ Pcs.resourcesController = Ember.ArrayController.create({
       self.pushObject(resource);
     });
     if (self.content && self.content.length > 0 && self.cur_resource == null) {
+      for (var i=0; i< self.content.length; i++) {
+	if (self.content[i].stonith) {
+	  self.set("cur_resource_ston", self.content[i]);
+	  self.content[i].set("cur_resource",true);
+	  break;
+	}
+      }
+      for (var i=0; i< self.content.length; i++) {
+	if (!self.content[i].stonith) {
+	  self.set("cur_resource_res", self.content[i]);
+	  self.content[i].set("cur_resource",true);
+	  break;
+	}
+      }
       self.set("cur_resource", self.content[0]);
-      self.content[0].set("cur_resource",true);
     }
   }
 });
@@ -289,9 +315,10 @@ Pcs.nodesController = Ember.ArrayController.create({
     this._super();
   },
 
-  load_node: function(node_row){
+  load_node: function(node_row, dont_update_hash){
     load_row(node_row, this, 'cur_node', '#node_info_div');
-    window.location.hash = "#nodes#" + $(node_row).attr("nodeID");
+    if (!dont_update_hash)
+      window.location.hash = "#nodes#" + $(node_row).attr("nodeID");
   },
 
   update: function(data){
