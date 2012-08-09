@@ -494,7 +494,7 @@ function hover_out(o) {
   $(o).removeClass("node_selected");
 }
 
-function load_row(node_row, ac, cur_elem, containing_elem){
+function load_row(node_row, ac, cur_elem, containing_elem, also_set){
   hover_over(node_row);
   $(node_row).siblings().each(function(key,sib) {
     hover_out(sib);
@@ -506,8 +506,17 @@ function load_row(node_row, ac, cur_elem, containing_elem){
       if (node.name == node_name) {
 	self.set(cur_elem,node);
 	node.set(cur_elem, true);
+	if (also_set)
+	  self.set(also_set, node);
       } else {
-	self.content[key].set(cur_elem,false);
+	if (self.cur_resource_ston &&
+	    self.cur_resource_ston.name == node.name)
+	  self.content[key].set(cur_elem,true);
+	else if (self.cur_resource_res &&
+		 self.cur_resource_res.name == node.name)
+	  self.content[key].set(cur_elem,true);
+	else
+	  self.content[key].set(cur_elem,false);
       }
     });
     $(containing_elem).fadeTo(500,1);

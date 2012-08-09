@@ -126,16 +126,14 @@ Pcs.resourcesController = Ember.ArrayController.create({
   },
 
   load_resource: function(resource_row, dont_update_hash) {
-    load_row(resource_row, this, 'cur_resource', "#resource_info_div");
-    this.set('cur_resource_res', this.cur_resource);
+    load_row(resource_row, this, 'cur_resource', "#resource_info_div", 'cur_resource_res');
     load_agent_form(resource_row, false);
     if (!dont_update_hash)
       window.location.hash = "#resources#" + $(resource_row).attr("nodeID");
   },
 
   load_stonith: function(resource_row, dont_update_hash) {
-    load_row(resource_row, this, 'cur_resource_ston', "#stonith_info_div");
-    this.set('cur_resource_ston', this.cur_resource);
+    load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
     load_agent_form(resource_row, true);
     if (!dont_update_hash)
       window.location.hash = "#fencedevices#" + $(resource_row).attr("nodeID");
@@ -210,8 +208,18 @@ Pcs.resourcesController = Ember.ArrayController.create({
     });
 
     var cur_res_holder = "";
+    var cur_res_holder_res = "";
+    var cur_res_holder_ston = "";
     if (self.cur_resource)
-      cur_res_holder = self.cur_resource.name
+      cur_res_holder = self.cur_resource.name;
+    if (self.cur_resource_res)
+      cur_res_holder_res = self.cur_resource_res.name;
+    if (self.cur_resource_ston)
+      cur_res_holder_ston = self.cur_resource_ston.name;
+
+    self.set("cur_resource",null);
+    self.set("cur_resource_res",null);
+    self.set("cur_resource_ston",null);
 
     resources_checked = {};
     $.each(self.content, function (key, value) {
@@ -276,11 +284,16 @@ Pcs.resourcesController = Ember.ArrayController.create({
       if (resource.name == cur_res_name) {
 	resource.set("cur_resource",true);
 	self.set("cur_resource", resource);
-	if (resource.stonith) {
-	  self.set("cur_resource_ston", resource);
-	} else {
-	  self.set("cur_resource_res", resource);
-	}
+      }
+
+      if (resource.name == cur_res_holder_res) {
+	resource.set("cur_resource",true);
+	self.set("cur_resource_res", resource);
+      }
+
+      if (resource.name == cur_res_holder_ston) {
+	resource.set("cur_resource",true);
+	self.set("cur_resource_ston", resource);
       }
 
       if (resources_checked[resource.name])
