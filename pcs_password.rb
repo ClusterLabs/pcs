@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 require 'auth.rb'
 require 'highline/import'
-USER_FILE = "/var/lib/pcs-gui/pcs_users.conf"
+USER_FILE = "/var/lib/pcsd/pcs_users.conf"
 
 def usage()
   puts "Usage: pcs_passwd <accountName> [pcs password file]"

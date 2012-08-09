@@ -1,28 +1,28 @@
 #!/bin/sh
 ##
-# pcs-gui Pacemaker & Corosync configuration GUI
+# pcsd Pacemaker & Corosync configuration daemon
 #
 # chkconfig:   - 21 81 
-# description: Pacemaker & Corosync configuration GUI
+# description: Pacemaker & Corosync configuration daemon
 
 ### BEGIN INIT INFO
-# Provides: pcs-gui
+# Provides: pcsd
 # Required-Start: $network $syslog
 # Required-Stop: $network $syslog
 # Should-Start: 
 # Should-Stop: 
 # Default-Start:
 # Default-Stop:
-# Short-Description: Starts and stops Pacemaker & Corosync GUI
-# Description: Starts and stops Pacemaker & Corosync GUI
+# Short-Description: Starts and stops Pacemaker & Corosync daemon
+# Description: Starts and stops Pacemaker & Corosync daemon
 ### END INIT INFO
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
 exec="/usr/bin/ruby"
-prog="pcs-gui"
-config="/var/lib/pcs-gui"
+prog="pcsd"
+config="/var/lib/pcsd"
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
@@ -31,8 +31,8 @@ lockfile=/var/lock/subsys/$prog
 start() {
     [ -x $exec ] || exit 5
     echo -n $"Starting $prog: "
-    export GEM_HOME=/usr/local/pcs-gui/gemhome
-    daemon $exec -I/usr/local/pcs-gui /usr/local/pcs-gui/pcs-gui.rb
+    export GEM_HOME=/usr/local/pcsd/gemhome
+    daemon $exec -I/usr/local/pcsd /usr/local/pcsd/pcsd.rb
     # if not running, start it up here, usually something like "daemon $exec"
     retval=$?
     echo

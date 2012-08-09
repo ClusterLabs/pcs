@@ -43,7 +43,7 @@ configure do
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
   PENGINE = "/usr/libexec/pacemaker/pengine"
-  if Dir.pwd == "/var/lib/pcs-gui"
+  if Dir.pwd == "/var/lib/pcsd"
     PCS = "/sbin/pcs" 
   else
     PCS = "/root/pcs/pcs/pcs" 
@@ -53,12 +53,12 @@ configure do
   SETTINGS_FILE = "pcs_settings.conf"
   USER_FILE = "pcs_users.conf"
 
-  $logger = Logger.new('/var/lib/pcs-gui/pcs-gui-log', 'weekly')
+  $logger = Logger.new('/var/lib/pcsd/pcsd.log', 'weekly')
   $logger.level = Logger::INFO
-  $stdout.reopen('/var/lib/pcs-gui/pcs-gui-out', 'a')
+  $stdout.reopen('/var/lib/pcsd/pcsd-debug.log', 'a')
   $stdout.sync = true
   $stderr.reopen($stdout)
-#  $stderr.reopen('/var/lib/pcs-gui/pcs-gui-stderror', 'a')
+#  $stderr.reopen('/var/lib/pcsd/pcsd-stderror', 'a')
 end
 
 set :port, 2222

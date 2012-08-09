@@ -1,4 +1,4 @@
-require "./pcs-gui.rb"
+require "./pcsd.rb"
 
 use Rack::SSL
 

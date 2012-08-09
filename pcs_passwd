@@ -1,4 +1,4 @@
 #!/bin/sh
 
-export GEM_HOME=/usr/local/pcs-gui/gemhome
-exec ruby -I/usr/local/pcs-gui /usr/local/pcs-gui/pcs_password.rb "$@"
+export GEM_HOME=/usr/local/pcsd/gemhome
+exec ruby -I/usr/local/pcsd /usr/local/pcsd/pcs_password.rb "$@"

@@ -2,8 +2,8 @@
 Description=PCS GUI
 
 [Service]
-WorkingDirectory=/var/lib/pcs-gui
-ExecStart=/usr/local/pcs-gui/pcs-gui start
+WorkingDirectory=/var/lib/pcsd
+ExecStart=/usr/local/pcsd/pcsd start
 Type=simple
 
 [Install]
