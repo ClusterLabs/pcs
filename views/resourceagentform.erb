@@ -50,10 +50,11 @@
 	</tr>
       <% } %>
       <tr>
-	<td colspan=2><hr></td>
+	<td class="reg" onclick="show_hide_constraints(this)">
+	  <span class="rightarrow sprites"></span><span class="downarrow sprites" style="display: none;"></span></td>
       </tr>
       <% @resource.optional_options.each { |name, desc|  %>
-	<tr>
+	<tr style="display:none;">
 	  <td class="reg">
 	    <%= name %>
 	  </td>
@@ -62,7 +63,7 @@
 	  </td>
 	</tr>
       <% } %>
-      <tr><td class="center" style="padding-top:20px;" colspan=2>
+      <tr class="stop"><td class="center" style="padding-top:20px;" colspan=2>
 	  <input type=submit class="text_field" value="<%= @existing_resource ? "Apply Changes" : "Create Resource" %>">
 	</td>
       </tr>

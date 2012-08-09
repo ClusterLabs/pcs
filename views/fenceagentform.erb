@@ -21,7 +21,7 @@
       <% @fenceagent.required_options.each { |name, desc|  %>
 	<tr>
 	  <td class="reg">
-	    <%= name %>
+	    &nbsp;<%= name %>
 	  </td>
 	  <td>
 	    <input style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if (@existing_resource and @cur_resource and @cur_resource.options)%>" size="35" class="text_field">
@@ -29,19 +29,20 @@
 	</tr>
       <% } %>
       <tr>
-	<td colspan=2><hr></td>
+	<td class="reg" onclick="show_hide_constraints(this)">
+	  <span class="rightarrow sprites"></span><span class="downarrow sprites" style="display: none;"></span></td>
       </tr>
       <% @fenceagent.optional_options.each { |name, desc|  %>
-	<tr>
+	<tr style="display: none;">
 	  <td class="reg">
-	    <%= name %>
+	    &nbsp;<%= name %>
 	  </td>
 	  <td>
 	    <input style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if @existing_resource and @cur_resource and @cur_resource.options%>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
-      <tr><td class="center" style="padding-top:20px;" colspan=2>
+      <tr class="stop"><td class="center" style="padding-top:20px;" colspan=2>
 	  <input type=submit class="text_field" value="<%= @existing_resource ? "Apply Changes" : "Create Fence Instance" %>">
 	</td>
       </tr>

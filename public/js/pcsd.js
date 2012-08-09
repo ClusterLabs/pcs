@@ -475,7 +475,7 @@ function create_cluster_add_nodes() {
 
 function show_hide_constraints(element) {
   //$(element).parent().siblings().each (function(index,element) {
-  $(element).parent().siblings().toggle("slow");
+  $(element).parent().nextUntil(".stop").toggle();
   $(element).children("span, p").toggle();
 }
 
