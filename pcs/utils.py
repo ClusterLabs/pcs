@@ -172,9 +172,35 @@ def getCorosyncActiveNodes():
     if retval != 0:
         return []
 
-    p = re.compile(r"^nodelist\.node\.\d+\.ring\d+_addr.*= (.*)", re.M)
-    nodes = p.findall(output)
-    return nodes
+    nodename_re = re.compile(r"^nodelist\.node\.(\d+)\.ring\d+_addr.*= (.*)", re.M)
+    nodestatus_re = re.compile(r"^runtime\.totem\.pg\.mrp\.srp\.members\.(\d+).status.*= (.*)", re.M)
+    nodenameid_mapping_re = re.compile(r"nodelist\.node\.(\d+)\.nodeid.*= (\d+)", re.M)
+    
+    nodes = nodename_re.findall(output)
+    nodes_status = nodestatus_re.findall(output)
+    nodes_mapping = nodenameid_mapping_re.findall(output)
+    node_status = {}
+
+    for orig_id, node in nodes:
+        mapped_id = None
+        for old_id, new_id in nodes_mapping:
+            if orig_id == old_id:
+                mapped_id = new_id
+                break
+        if mapped_id == None:
+            print "Error mapping %s" % node
+            continue
+        for new_id, status in nodes_status:
+            if new_id == mapped_id:
+                node_status[node] = status
+                break
+
+    nodes_active = []
+    for node,status in node_status.items():
+        if status == "joined":
+            nodes_active.append(node)
+
+    return nodes_active
 
 # Add node specified to corosync.conf and insert into corosync (if running)
 def addNodeToCorosync(node):
