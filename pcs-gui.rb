@@ -426,9 +426,7 @@ post '/manage/newcluster' do
   pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
   pcs_config.save
 
-  Open3.popen3(PCS, "cluster", "configure", "sync_start", @cluster_name, *@nodes) { |stdin, stdout, stderr, wait_thr|
-    exit_status = wait_thr.value
-  }
+  run_cmd(PCS, "cluster", "configure", "--start", @cluster_name, *@nodes)
   redirect '/manage'
 end
 
