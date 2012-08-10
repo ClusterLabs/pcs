@@ -659,8 +659,10 @@ def resource_remove(resource_id, output = True):
             if output == True:
                 print "ERROR: Unable to remove resource '%s' (do constraints exist?)" % (resource_id)
             return False
-    args = ["crm_resource","-C","-r",resource_id]
-    cmdoutput, retVal = utils.run(args)
+# Only clean up resource if we're *not* using a file (otherwise we get a 60s timeout)
+    if (not utils.usefile):
+        args = ["crm_resource","-C","-r",resource_id]
+        cmdoutput, retVal = utils.run(args)
 # We don't currently check output because the resource may have already been
 # properly cleaned up
     return True
