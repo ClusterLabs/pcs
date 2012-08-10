@@ -72,15 +72,20 @@ def resource_cmd(argv):
     elif (sub_cmd == "unmanage"):
         resource_manage(argv, False)
     elif (sub_cmd == "rsc" or sub_cmd == "op"):
-        if len(argv) < 2:
+        if len(argv) < 1:
             usage.resource()
             sys.exit(1)
-
         rsc_subcmd = argv.pop(0)
         if (sub_cmd == "rsc" and rsc_subcmd == "defaults"):
-            set_default("rsc_defaults", argv)
+            if len(argv) == 0:
+                show_defaults("rsc_defaults")
+            else:
+                set_default("rsc_defaults", argv)
         elif (sub_cmd == "op" and rsc_subcmd == "defaults"):
-            set_default("op_defaults", argv)
+            if len(argv) == 0:
+                show_defaults("op_defaults")
+            else:
+                set_default("op_defaults", argv)
         else:
             usage.resource()
             sys.exit(1)
@@ -670,7 +675,7 @@ def resource_remove(resource_id, output = True):
 # This removes a resource from a group, but keeps it in the config
 def resource_group_rm(group_name, resource_ids):
     resource_id = resource_ids[0]
-    dom = get_cib_dom()
+    dom = utils.get_cib_dom()
     dom = dom.getElementsByTagName("configuration")[0]
     group_match = None
 
@@ -874,6 +879,23 @@ def resource_manage(argv, set_managed):
             xpath = "//primitive[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
             my_xml = utils.get_cib_xpath(xpath)
             utils.remove_from_cib(my_xml)
+
+def show_defaults(def_type):
+    dom = utils.get_cib_dom()
+    defs = dom.getElementsByTagName(def_type)
+    if len(defs) > 0:
+        defs = defs[0]
+    else:
+        print "No defaults set"
+        return
+
+    foundDefault = False
+    for d in defs.getElementsByTagName("nvpair"):
+        print d.getAttribute("name") + ": " + d.getAttribute("value")
+        foundDefault = True
+
+    if not foundDefault:
+        print "No defaults set"
 
 def set_default(def_type, argv):
     for arg in argv:

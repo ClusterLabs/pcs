@@ -95,10 +95,12 @@ Commands:
         Set resources listed to unmanaged mode
 
     rsc defaults [options]
-        Set default values for resources
+        Set default values for resources, if no options are passed, lists
+        currently configured defaults
 
     op defaults [options]
-        Set default values for operations
+        Set default values for operations, if no options are passed, lists
+        currently configured defaults
 
 Examples:
     pcs resource list
