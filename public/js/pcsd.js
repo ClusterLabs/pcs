@@ -119,8 +119,10 @@ function verify_remove(error_message, ok_message, title_message, resource_id, po
     nodes_to_remove++;
   } else {
     $("#node_list :checked").each(function (index,element) {
-      list_of_nodes += "<li>" + element.getAttribute("res_id")+"</li>";
-      nodes_to_remove++;
+      if ($(element).is(':visible')) {
+	list_of_nodes += "<li>" + $(element).parent().parent().attr("nodeID")+"</li>";
+	nodes_to_remove++;
+      }
     });
   }
   list_of_nodes += "</ul>";
