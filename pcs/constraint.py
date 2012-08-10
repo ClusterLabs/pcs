@@ -496,3 +496,25 @@ def constraint_rm(argv):
             print output
     else:
         print "No matching resources found in ordering list"
+
+def find_constraints_containing(resource_id):
+    dom = utils.get_cib_dom()
+
+    constraints = dom.getElementsByTagName("constraints")
+    if (len(constraints) == 0):
+        return []
+    else:
+        constraints = constraints[0]
+
+    constraints_found = []
+    myConstraints = constraints.getElementsByTagName("rsc_colocation")
+    myConstraints += constraints.getElementsByTagName("rsc_location")
+    myConstraints += constraints.getElementsByTagName("rsc_order")
+    attr_to_match = ["rsc", "first", "then", "with-rsc", "first", "then"]
+    for c in myConstraints:
+        for attr in attr_to_match:
+            if c.getAttribute(attr) == resource_id:
+                constraints_found.append(c.getAttribute("id"))
+                break
+    return constraints_found
+

@@ -8,6 +8,7 @@ import utils
 import re
 import textwrap
 import xml.etree.ElementTree
+import constraint
 
 def resource_cmd(argv):
     if len(argv) == 0:
@@ -638,10 +639,16 @@ def resource_remove(resource_id, output = True):
 
     if (group == "" or num_resources_in_group > 1):
         args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
+        constraints = constraint.find_constraints_containing(resource_id)
+        for c in constraints:
+            if output == True:
+                print "Removing Constraint - " + c
+            constraint.constraint_rm([c])
         if output == True:
-            print "Deleting Resource - " + resource_id,
+            print "Deleting Resource - " + resource_id
         output,retVal = utils.run(args)
         if retVal != 0:
+            print "Unable to remove resource: %s, it may still be referenced in constraints." % resource_id
             return False
     else:
         args = ["cibadmin", "-o", "resources", "-D", "--xml-text", group]
