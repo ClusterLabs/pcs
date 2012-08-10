@@ -384,12 +384,6 @@ Pcs.nodesController = Ember.ArrayController.create({
 
     self.set('content',[]);
     $.each(nodes, function(key, node_id) {
-      if (data[node_id]["noresponse"] == true) {
-	up_status = false;
-      } else {
-	up_status = true;
-      }
-
       if ($.inArray(node_id, corosync_nodes_online) > -1) {
 	corosync_online = true;
       } else {
@@ -401,9 +395,23 @@ Pcs.nodesController = Ember.ArrayController.create({
 	pacemaker_online = false;
       }
 
+      if (data[node_id]["noresponse"] == true) {
+	pcsd_daemon = false
+      } else {
+	pcsd_daemon = true
+      }
+
+      if (data[node_id]["corosync"] && data[node_id]["pacemaker"] &&
+		pacemaker_online && corosync_online) {
+	up_status = true;
+      } else {
+       up_status = false;
+      }       
+
       var node = Pcs.Clusternode.create({
 	name: node_id,
 	up: up_status,
+	pcsd: pcsd_daemon,
 	corosync_daemon: data[node_id]["corosync"],
 	pacemaker_daemon: data[node_id]["pacemaker"],
 	corosync: corosync_online,

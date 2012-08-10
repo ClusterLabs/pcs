@@ -375,18 +375,18 @@ end
 get '/nodes/?:node?' do
   setup()
   @load_data = true
-  @nodemenuclass = "class=\"active\""
+#  @nodemenuclass = "class=\"active\""
   @resources, @groups = getResourcesGroups
-  @resources_running = []
-  @resources.each { |r|
-    @cur_node && r.nodes && r.nodes.each {|n|
-      if n.name == @cur_node.id
-	@resources_running << r
-      end
-    }
-  }
+#  @resources_running = []
+#  @resources.each { |r|
+#    @cur_node && r.nodes && r.nodes.each {|n|
+#      if n.name == @cur_node.id
+#	@resources_running << r
+#      end
+#    }
+#  }
   @resource_agents = getResourceAgents()
-  @nodes = @nodes.sort_by{|k,v|k}
+#  @nodes = @nodes.sort_by{|k,v|k}
   erb :nodes, :layout => :main
 end
 
