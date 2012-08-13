@@ -3,13 +3,15 @@ import usage
 import utils
 import xml.dom.minidom
 import re
+import resource
 from xml.dom.minidom import parseString
 
 def status_cmd(argv):
     if len(argv) == 0:
         cluster_status([])
         print
-        resources_status([])
+        print "Resources:"
+        resource.resource_show([])
         print
         nodes_status([])
         sys.exit(0)
@@ -18,7 +20,7 @@ def status_cmd(argv):
     if (sub_cmd == "help"):
         usage.status()
     elif (sub_cmd == "resources"):
-        resources_status(argv)
+        resource.resource_show(argv)
     elif (sub_cmd == "cluster"):
         cluster_status(argv)
     elif (sub_cmd == "nodes"):
@@ -100,6 +102,7 @@ def nodes_status(argv):
         print node,
     print ""
 
+# TODO: Remove, currently unused, we use status from the resource.py
 def resources_status(argv):
     info_dom = utils.getClusterState()
 
