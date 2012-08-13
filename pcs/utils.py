@@ -284,7 +284,7 @@ def getHighestnodeid(corosync_conf):
     return highest
 
 # Run command, with environment and return (output, retval)
-def run(args):
+def run(args, ignore_stderr=False):
     env_var = os.environ
     if usefile:
         env_var["CIB_file"] = filename
@@ -297,7 +297,10 @@ def run(args):
                 sys.exit(1)
 
     try:
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var)
+        if ignore_stderr:
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var)
+        else:
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var)
         output,stderror = p.communicate()
         returnVal = p.returncode
     except OSError:
