@@ -38,6 +38,12 @@ def resource_cmd(argv):
                         ra_values.append(arg)
         
             resource_create(res_id, res_type, ra_values, op_values)
+    elif (sub_cmd == "standards"):
+        resource_standards()
+    elif (sub_cmd == "providers"):
+        resource_providers()
+    elif (sub_cmd == "agents"):
+        resource_agents(argv)
     elif (sub_cmd == "update"):
         res_id = argv.pop(0)
         resource_update(res_id,argv)
@@ -198,6 +204,41 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
         print "ERROR: Unable to create resource/fence device"
         print output.split('\n')[0]
         sys.exit(1)
+
+def resource_standards(return_output=False):
+    output, retval = utils.run(["crm_resource","--list-standards"], True)
+    if retval != 0:
+        print "Error: unable to get current list of standards"
+        print output
+        sys.exit(1)
+    output = output.strip()
+    if return_output == True:
+        return output
+    print output
+
+def resource_providers():
+    output, retval = utils.run(["crm_resource","--list-ocf-providers"],True)
+    if retval != 0:
+        print "Error: unable to get current list of providers"
+        print output
+    print output.strip()
+
+def resource_agents(argv):
+    if len(argv) > 1:
+        usage.resource()
+        sys.exit(1)
+    elif len(argv) == 1:
+        standards = [argv[0]]
+    else:
+        output = resource_standards(True)
+        standards = output.split('\n')
+
+    for s in standards:
+        output, retval = utils.run(["crm_resource", "--list-agents", s])
+        preg = re.compile(r'\d+ agents found for standard.*$', re.MULTILINE)
+        output = preg.sub("", output)
+        output = output.strip()
+        print output
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty

@@ -42,6 +42,15 @@ Commands:
     create <resource id> <class:provider:type|type> [resource options]
         Create specified resource
 
+    standards
+        List available resource agent standards
+
+    providers
+        List available resource agent providers
+
+    agents [standard[:provider]]
+        List available agents optionally filtered by standard and provider
+
     update <resource id> [resource options]
         Add/Change options to specified resource
 
