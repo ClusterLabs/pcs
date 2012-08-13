@@ -73,9 +73,13 @@ def nodes_status(argv):
 
     onlinenodes = []
     offlinenodes = []
+    standbynodes = []
     for node in nodes[0].getElementsByTagName("node"):
         if node.getAttribute("online") == "true":
-            onlinenodes.append(node.getAttribute("name"))
+            if node.getAttribute("standby") == "true":
+                standbynodes.append(node.getAttribute("name"))
+            else:
+                onlinenodes.append(node.getAttribute("name"))
         else:
             offlinenodes.append(node.getAttribute("name"))
 
@@ -83,6 +87,11 @@ def nodes_status(argv):
 
     print " Online:",
     for node in onlinenodes:
+        print node,
+    print ""
+
+    print " Standby:",
+    for node in standbynodes:
         print node,
     print ""
 
