@@ -181,7 +181,7 @@ Commands:
         Sync corosync configuration to all nodes found from current
         corosync.conf file
 
-    configure [--start] [--local] <cluster name> <node1 ip> [node2 ip] [...]
+    configure [--start] [--local] <cluster name> <node1 name> [node2] [...]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes
@@ -192,24 +192,24 @@ Commands:
     push cib <filename>
         Push the raw xml from <filename> to the CIB (Cluster Information Base)
 
-    node add <node ip/name>
+    node add <node name>
         Add the node to corosync.conf and corosync on all nodes in the cluster
         and sync the new corosync.conf to the new node
 
-    localnode add <node ip/name>
+    localnode add <node name>
         Add the specified node to corosync.conf and corosync only on this node
 
-    node remove <node ip/name>
+    node remove <node name>
         Shutdown specified node and remove it from pacemaker and corosync on
         all other nodes in the cluster
 
-    localnode remove <node ip/name>
+    localnode remove <node name>
         Remove the specified node from corosync.conf & corosync on local node
 
-    pacemaker remove <node ip/name>
+    pacemaker remove <node name>
         Remove specified node from running pacemaker configuration
 
-    get_conf <node ip/name>
+    get_conf <node name>
         Get the corosync.conf from the specified node
 """
 
