@@ -527,6 +527,8 @@ function load_row(node_row, ac, cur_elem, containing_elem, also_set){
 
 function load_agent_form(resource_row, stonith) {
   resource_name = $(resource_row).attr("nodeID");
+  var url;
+  var form;
   if (stonith) {
     form = $("#stonith_agent_form");
     url = '/fencedevices/fencedeviceform/' + resource_name;
