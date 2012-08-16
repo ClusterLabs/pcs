@@ -181,7 +181,7 @@ Commands:
         Sync corosync configuration to all nodes found from current
         corosync.conf file
 
-    configure [--start] [--local] <cluster name> <node1 name> [node2] [...]
+    setup [--start] [--local] <cluster name> <node1 name> [node2] [...]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes

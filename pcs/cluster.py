@@ -20,8 +20,8 @@ def cluster_cmd(argv):
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
         usage.cluster()
-    elif (sub_cmd == "configure"):
-        corosync_configure(argv)
+    elif (sub_cmd == "setup"):
+        corosync_setup(argv)
     elif (sub_cmd == "sync"):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     elif (sub_cmd == "gui-status"):
@@ -69,7 +69,7 @@ def cluster_cmd(argv):
 def sync_start(partial_argv):
     argv = partial_argv[:]
     nodes = partial_argv[1:]
-    config = corosync_configure(argv,True)
+    config = corosync_setup(argv,True)
     for node in nodes:
         utils.setCorosyncConfig(node,config)
         utils.startCluster(node)
@@ -77,7 +77,7 @@ def sync_start(partial_argv):
 def sync(partial_argv):
     argv = partial_argv[:]
     nodes = partial_argv[1:]
-    config = corosync_configure(argv,True)
+    config = corosync_setup(argv,True)
     sync_nodes(nodes,config)
 
 def sync_nodes(nodes,config):
@@ -139,7 +139,7 @@ def check_nodes(nodes):
         else:
             print node + ": Offline"
     
-def corosync_configure(argv,returnConfig=False):
+def corosync_setup(argv,returnConfig=False):
     fedora_config = True
     if len(argv) < 2:
         usage.cluster()
