@@ -89,10 +89,15 @@
 		</tr>
 		<% if !@manage %>
 		<tr>
-		  <td class="menuitem first"><a id="node_menu" onclick="select_menu('NODES'); return true;" href="#nodes" <%= @nodemenuclass %>>NODES</a></td>
-		  <td class="menuitem"><a id="resource_menu" onclick="select_menu('RESOURCES'); return true;" href="#resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
-		  <td class="menuitem"><a id="stonith_menu" onclick="select_menu('FENCE DEVICES'); return true;" href="#fencedevices">FENCE DEVICES</a></td>
-		  <!--		  <td class="menuitem"><a style="color:red;" href="/failoverdomains">FAILOVER DOMAINS</a></td> -->
+		  <% if @load_data %>
+		    <td class="menuitem first"><a id="node_menu" onclick="select_menu('NODES'); return true;" href="#nodes" <%= @nodemenuclass %>>NODES</a></td>
+		    <td class="menuitem"><a id="resource_menu" onclick="select_menu('RESOURCES'); return true;" href="#resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
+		    <td class="menuitem"><a id="stonith_menu" onclick="select_menu('FENCE DEVICES'); return true;" href="#fencedevices">FENCE DEVICES</a></td>
+		  <% else %>
+		    <td class="menuitem first"><a id="node_menu" href="/nodes#nodes" <%= @nodemenuclass %>>NODES</a></td>
+		    <td class="menuitem"><a id="resource_menu" href="/nodes#resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
+		    <td class="menuitem"><a id="stonith_menu" href="/nodes#fencedevices">FENCE DEVICES</a></td>
+		  <% end %>
 		  <td class="menuitem"><a href="/configure/pacemaker" <%= @configuremenuclass %>>CONFIGURE</a></td>
 		</tr>
 	      <% else %>

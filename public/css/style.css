@@ -165,6 +165,10 @@ table#main {
   width: 960px;
 }
 
+table#main > tbody > tr {
+  display: none;
+}
+
 #page_header {
   font-family: "Overpass";
   font-size: 16px;
