@@ -231,7 +231,7 @@
 	  <td>
 	    <select id="add_ra_type" onchange="$('#new_resource_agent').load('/resources/metadata/' + this.value + '/new');">
 	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
-		<option width=250px value="<%=@resource_agents[name].type%>"><%=@resource_agents[name].type%></option>
+		<option width=250px <%= @resource_agents[name].type == "IPaddr2" ? "selected" : "" %> value="<%=@resource_agents[name].type%>"><%=@resource_agents[name].type%></option>
 	      <% } %>
 	    </select>
 	  </td>
