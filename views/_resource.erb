@@ -76,7 +76,6 @@
 	    </div>
 
 	    <div id="node_details">
-	      <% if @myView == "resource" %>
 	      <table style="margin-bottom:25px;"><tr>
 		  <td nowrap><div class="bold">Current Location:</div></td>
 		  <td><div id="cur_res_loc" class="reg">
@@ -86,6 +85,7 @@
 		  </div> </td>
 		</tr>
 	      </table>
+	      <% if @myView == "resource" %>
 	      <div><div class="plus sprites"></div><div class="link" style="display:inline;">&nbsp;<a href="#" onclick="$('#add_constraint').dialog({title: 'Add Constraint', modal:true, width: 'auto'});">Add&nbsp;Constraint</a>&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
 	      <script type="text/x-handlebars">
 	      <table style="clear:left;float:left">
