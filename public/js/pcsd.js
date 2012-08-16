@@ -44,7 +44,7 @@ function select_menu(menu, item, initial) {
   if (menu == "RESOURCES") {
     Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_res);
     if (item)
-      Pcs.resourcesController.load_resource($('[nodeID='+item+']'));
+      Pcs.resourcesController.load_resource($('[nodeID="'+item+'"]'));
     menu_show("resource", true);
   } else {
     menu_show("resource", false);
