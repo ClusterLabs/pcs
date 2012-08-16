@@ -4,8 +4,8 @@
   </tr>
   <tr id="<%=@myView%>_header_row">
     <td id="remove_add" class="borderbottom">
-      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove();">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
-      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove();return false;">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});return false;">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
       <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="create_group();">Create Group</a></div>
     </td>
     <td class="borderbottom">&nbsp;</td>
