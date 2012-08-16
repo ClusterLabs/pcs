@@ -85,6 +85,29 @@ function create_group() {
   }
 }
 
+// If update is set to true we update the resource instead of create it
+function create_resource(form, update) {
+  dataString = $(form).serialize();
+  url = $(form).attr("action");
+  $.ajax({
+    type: "POST",
+    url: url,
+    data: dataString,
+    success: function() {
+      if (!update) {
+	$('#add_resource').dialog('close');
+      }
+      Pcs.update();
+    },
+    error: function() {
+      if (update)
+	alert("Unable to update resource.");
+      else
+	alert("Unable to add resource.");
+    }
+  });
+}
+
 function verify_remove(error_message, ok_message, title_message, resource_id, post_location) {
   if (!error_message)
     error_message = "You must select at least one resource.";
