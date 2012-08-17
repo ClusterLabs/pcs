@@ -1,27 +1,40 @@
+<% @pageName = @myView == "resource" ? "Resource" : "Fence Device" %>
 <tr id="<%=@myView%>_title_row"><td id="page_header" colspan=3>
 <%= @myView == "resource" ? "RESOURCES" : "FENCE DEVICES" %>
     </td>
   </tr>
   <tr id="<%=@myView%>_header_row">
     <td id="remove_add" class="borderbottom">
-      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;<a href="#" onclick="verify_remove();return false;">Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
-      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});return false;">Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;
+	<% if @myView == "resource" %>
+	  <a href="#" onclick='verify_remove("resource");return false;'>
+	<% else %>
+	  <a href="#" onclick='verify_remove("stonith");return false;'>
+	<% end %>
+      Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+  <div class="plus sprites"></div><div class="link">&nbsp;
+    <% if @myView == "resource" %>
+      <a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});return false;">
+    <% else %>
+      <a href="#" onclick="$('#add_stonith').dialog({title: 'Add Fence Device', modal:true, width: 'auto'});return false;">
+    <% end %>
+  Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
       <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="create_group();">Create Group</a></div>
     </td>
     <td class="borderbottom">&nbsp;</td>
     <td id="tab_name" width="125">
-      <div style="float: left">&nbsp;Edit Resource&nbsp;</div><div class="check sprites"></div>
+      <div style="float: left">&nbsp;Edit <%= @pageName%>&nbsp;</div><div class="check sprites"></div>
     </td>
   </tr>
   <tr id="<%=@myView%>_list_row">
-    <td id="node_list">
+    <td id="<%=@myView%>_list" class="node_list">
       <%= erb :_resource_list %>
     </td>
 	<td id="node_info" colspan=2>
 	  <div id="<%=@myView%>_info_div" style="opacity: 0;">
 	  <div id="test">
 	    <div id="node_info_header">
-	      <div id="node_info_header_title">Edit Resource&nbsp;</div>
+	      <div id="<%=@myView%>_info_header_title" class="node_info_header_title" >Edit <%= @pageName %>&nbsp;</div>
 	      <div id="node_info_header_title_name">
 		<script type="text/x-handlebars">
 		{{Pcs.resourcesController.cur_resource.name}}
@@ -59,13 +72,16 @@
 	    </script>
 
 	    <div id="node_options_buttons">
-	      <div class="xdark sprites" style="float: left"></div>
-	      <div id="resource_delete_link" class="link">Remove</div>
 	      <% if @myView == "resource" %>
+		<div class="xdark sprites" style="float: left"></div>
+		<div id="resource_delete_link" class="link">Remove</div>
 		<div class="cancel sprites" style="float: left"></div>
 		<div id="resource_stop_link" class="link">Stop</div>
-	      <div class="restart sprites" style="float: left"></div>
-	      <div id="resource_start_link" class="link">Start</div>
+		<div class="restart sprites" style="float: left"></div>
+		<div id="resource_start_link" class="link">Start</div>
+	      <% else %>
+		<div class="xdark sprites" style="float: left"></div>
+		<div id="stonith_delete_link" class="link">Remove</div>
 	      <% end %>
 	      <!--
 	      <div class="move sprites" style="float: left"></div>
@@ -239,6 +255,22 @@
       </table>
 	</script>
       <div id="new_resource_agent">
+      </div>
+    </div>
+    <div id="add_stonith" style="display: none;">
+      <table id="stonith_selector" style="clear:left;float:left;margin-top:25px;">
+	<tr>
+	  <td class="bold">Type</td>
+	  <td>
+	    <select id="add_stonith_type" onchange="$('#new_stonith_agent').load('/fencedevices/metadata/' + this.value + '/new');">
+	      <% @stonith_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
+		<option width=250px value="<%=@stonith_agents[name].type%>"><%=@stonith_agents[name].type%></option>
+	    <% } %>
+	    </select>
+	  </td>
+	</tr>
+      </table>
+      <div id="new_stonith_agent">
       </div>
     </div>
     <div id="add_group" style="display: none;">

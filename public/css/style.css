@@ -268,7 +268,7 @@ td#config {
   vertical-align: top;
 }
 
-td#node_list, td#node_info {
+td.node_list, td#node_info {
   border: 1px;
   border-top: 0px;
   border-color: #b4b4b4;
@@ -290,7 +290,7 @@ td.resource_name {
   padding-right:20px;
 }
 
-td#node_list {
+td.node_list {
   width:225px;
 }
 
@@ -303,7 +303,7 @@ td#node_info {
   width:735px;
 }
 
-#node_list th {
+.node_list th {
   font-family: "Overpass";
   font-size: 12px;
   font-weight: bold;
@@ -313,7 +313,7 @@ td#node_info {
   text-align: left;
   background: #f6f6f6;
 }
-#node_list td{
+.node_list td{
   font-family: "Liberation";
   font-size: 14px;
   color: #2b85db;
@@ -321,7 +321,7 @@ td#node_info {
   padding-bottom: 3px;
 }
 
-#node_list .resource_type {
+.node_list .resource_type {
   cursor: default;
   padding-right: 20px;
   color: #000000;
@@ -351,7 +351,7 @@ td.node_list_sprite {
   color: #1a1a1a;
 }
 
-#node_info_header_title {
+.node_info_header_title {
   font-weight: normal;
   color: #888888;
   float: left;

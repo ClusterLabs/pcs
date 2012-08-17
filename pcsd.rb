@@ -386,6 +386,7 @@ get '/nodes/?:node?' do
 #    }
 #  }
   @resource_agents = getResourceAgents()
+  @stonith_agents = getFenceAgents()
 #  @nodes = @nodes.sort_by{|k,v|k}
   erb :nodes, :layout => :main
 end

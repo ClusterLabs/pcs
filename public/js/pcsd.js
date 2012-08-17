@@ -1,5 +1,13 @@
 var pcs_timeout = 6000;
 
+function curResource() {
+  return Pcs.resourcesController.cur_resource.name
+}
+
+function curStonith() {
+  return Pcs.resourcesController.cur_resource.name
+}
+
 function initial_page_load() {
   current_location =  window.location.hash.split('#');
   if (current_location.length == 1)
@@ -34,6 +42,7 @@ function menu_show(item,show) {
 // and load the default item on the specified page if item is set
 function select_menu(menu, item, initial) {
   if (menu == "NODES") {
+    Pcs.cur_page = "nodes";
     if (item)
       Pcs.nodesController.load_node($('[nodeID='+item+']'));
     menu_show("node", true);
@@ -42,6 +51,7 @@ function select_menu(menu, item, initial) {
   }
 
   if (menu == "RESOURCES") {
+    Pcs.cur_page = "resources";
     Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_res);
     if (item)
       Pcs.resourcesController.load_resource($('[nodeID="'+item+'"]'));
@@ -51,6 +61,7 @@ function select_menu(menu, item, initial) {
   }
 
   if (menu == "FENCE DEVICES") {
+    Pcs.cur_page = "stonith";
     Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_ston);
     if (item)
       Pcs.resourcesController.load_stonith($('[nodeID='+item+']'));
@@ -58,6 +69,7 @@ function select_menu(menu, item, initial) {
   } else {
     menu_show("stonith", false);
   }
+  setup_resource_links();
 }
 
 function create_group() {
@@ -108,7 +120,7 @@ function create_resource(form, update) {
   });
 }
 
-function verify_remove(error_message, ok_message, title_message, resource_id, post_location) {
+function verify_remove(rem_type, error_message, ok_message, title_message, resource_id, post_location) {
   if (!error_message)
     error_message = "You must select at least one resource.";
   if (!ok_message)
@@ -121,14 +133,16 @@ function verify_remove(error_message, ok_message, title_message, resource_id, po
   var buttonOpts = {}
   buttonOpts[ok_message] = function() {
     if (resource_id) {
-      var f = $('<form action="'+post_location+'" method="POST">' +
-	  '<input type="hidden" name="resid-'+resource_id+'" value="1">' +
-	  '</form>');
-      f.appendTo($('body'));
-      f.submit();
+      remove_resource([resource_id]);
     } else {
-      $('#node_list > form').submit();
+      ids = []
+      $.each($('#'+rem_type+'_list :checked'), function (i,e) {
+	ids.push($(e).parent().parent().attr("nodeID"))
+      });
+      if (ids.length > 0)
+	remove_resource(ids);
     }
+    $(this).dialog("close");
   };
   buttonOpts["Cancel"] = function() {
     $(this).dialog("close");
@@ -141,7 +155,7 @@ function verify_remove(error_message, ok_message, title_message, resource_id, po
     list_of_nodes += "<li>" + resource_id +"</li>";
     nodes_to_remove++;
   } else {
-    $("#node_list :checked").each(function (index,element) {
+    $("#"+rem_type+"_list :checked").each(function (index,element) {
       if ($(element).is(':visible')) {
 	list_of_nodes += "<li>" + $(element).parent().parent().attr("nodeID")+"</li>";
 	nodes_to_remove++;
@@ -311,24 +325,20 @@ function setup_node_links() {
   });
 }
 
-function setup_resource_links() {
+function setup_resource_links(link_type) {
   $("#resource_delete_link").click(function () {
-    resource = $.trim($("#node_info_header_title_name").text());
-    verify_remove(false, false, false, [resource]);
+    verify_remove("resource", null, "Remove resource", "Resource Removal", curResource(), "/resourcerm");
   });
   $("#stonith_delete_link").click(function () {
-    resource = $.trim($("#node_info_header_title_name").text());
-    verify_remove('You must select at least one fence device.', 'Remove fence device(s)', 'Fence Device Removal', [resource], '/fencerm');
+    verify_remove("stonith", null, "Remove fence device", "Fence Device Removal", curStonith(), "/fencerm")
   });
   $("#resource_stop_link").click(function () {
-    resource = $.trim($("#node_info_header_title_name").text());
     fade_in_out("#resource_stop_link");
-    $.post('/remote/resource_stop',"resource="+resource);
+    $.post('/remote/resource_stop',"resource="+curResource());
   });
   $("#resource_start_link").click(function () {
-    resource = $.trim($("#node_info_header_title_name").text());
     fade_in_out("#resource_start_link");
-    $.post('/remote/resource_start',"resource="+resource);
+    $.post('/remote/resource_start',"resource="+curResource());
   });
   $("#resource_move_link").click(function () {
     alert("Not Yet Implemented");
@@ -589,6 +599,24 @@ function show_loading_screen() {
 
 function hide_loading_screen() {
   $("#loading_screen").dialog('close');
+}
+
+function remove_resource(ids) {
+  for (var i=0; i<ids.length; i++) {
+    var res = ids[i];
+    var resid_name = "resid-" + ids[i];
+    var data = {};
+    data[resid_name] = true;
+    $.ajax({
+      type: 'POST',
+      url: '/resourcerm',
+      data: data,
+      timeout: pcs_timeout,
+      error: function (xhr, status, error) {
+	alert("Unable to remove resource: " + res + " ("+error+")");
+      }
+    });
+  }
 }
 
 function remove_constraint(id) {
