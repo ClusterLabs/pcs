@@ -41,6 +41,7 @@
     $(window).load(function() {
 	resizeTable(true);
 	$('#add_ra_type').trigger('change');
+	$('#add_stonith_type').trigger('change');
 	$('#new_resource_agent').ajaxStop(function() {
 	  resizeDialog();
 	  });
