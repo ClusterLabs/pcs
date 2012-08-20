@@ -10,15 +10,18 @@ function curStonith() {
 
 function initial_page_load() {
   current_location =  window.location.hash.split('#');
-  if (current_location.length == 1)
-    select_menu("NODES");
+  current_path = window.location.pathname.substr(window.location.pathname.lastIndexOf('/') + 1);
+  if (current_path == "" || current_path == "manage")
+    select_menu("MANAGE");
   else {
-    if (current_location[1] == "nodes")
-      select_menu("NODES", current_location[2]);
-    else if (current_location[1] == "resources")
+    if (current_location[1] == "resources")
       select_menu("RESOURCES", current_location[2]);
     else if (current_location[1] == "fencedevices")
       select_menu("FENCE DEVICES", current_location[2]);
+    else if (current_location[1] == "manage")
+      select_menu("MANAGE", current_location[2]);
+    else 
+      select_menu("NODES", current_location[2]);
   }
 }
 
@@ -68,6 +71,13 @@ function select_menu(menu, item, initial) {
     menu_show("stonith", true);
   } else {
     menu_show("stonith", false);
+  }
+
+  if (menu == "MANAGE") {
+    Pcs.cur_page = "manage";
+    menu_show("cluster", true);
+  } else {
+    menu_show("cluster", false);
   }
   setup_resource_links();
 }
@@ -133,16 +143,25 @@ function verify_remove(rem_type, error_message, ok_message, title_message, resou
   var buttonOpts = {}
   buttonOpts[ok_message] = function() {
     if (resource_id) {
-      remove_resource([resource_id]);
+      if (rem_type == "cluster")
+	remove_cluster([resource_id]);
+      else
+	remove_resource([resource_id]);
     } else {
       ids = []
       $.each($('#'+rem_type+'_list :checked'), function (i,e) {
 	ids.push($(e).parent().parent().attr("nodeID"))
       });
-      if (ids.length > 0)
-	remove_resource(ids);
+      if (ids.length > 0) {
+	if (rem_type == "cluster")
+	  remove_cluster(ids);
+	else
+	  remove_resource(ids);
+      }
     }
     $(this).dialog("close");
+    if (rem_type == "cluster")
+      document.location.reload();
   };
   buttonOpts["Cancel"] = function() {
     $(this).dialog("close");
@@ -599,6 +618,24 @@ function show_loading_screen() {
 
 function hide_loading_screen() {
   $("#loading_screen").dialog('close');
+}
+
+function remove_cluster(ids) {
+  for (var i=0; i<ids.length; i++) {
+    var cluster = ids[i];
+    var clusterid_name = "clusterid-"+ids[i];
+    var data = {}
+    data[clusterid_name] = true;
+    $.ajax({
+      type: 'POST',
+      url: '/manage/removecluster',
+      data: data,
+      timeout: pcs_timeout,
+      error: function (xhr, status, error) {
+	alert("Unable to remove resource: " + res + " ("+error+")");
+      }
+    });
+  }
 }
 
 function remove_resource(ids) {

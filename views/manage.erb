@@ -1,5 +1,5 @@
 <table id="main">
-  <tr><td id="page_header" colspan=3 style="vertical-align:middle;">
+  <tr id="cluster_title_row"><td id="page_header" colspan=3 style="vertical-align:middle;">
       <table id="manage_cluster_commands"><tr>
 	  <td>
 	    MANAGE CLUSTERS
@@ -8,7 +8,7 @@
 	  <td>
 	      <a href="#" class="x sprites"></a>
 	    <div class="link">
-	      <a href="#" onclick="verify_remove('node','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
+	      <a href="#" onclick="verify_remove('cluster','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
 	    </div>
 	  </td>
 	  <td>
@@ -29,12 +29,12 @@
       </table>
     </td>
   </tr>
-  <tr>
+  <tr id="cluster_header_row">
     <td class="borderbottom" colspan=3>
     </td>
   </tr>
-  <tr>
-    <td id="node_list" style="width:400px;">
+  <tr id="cluster_list_row">
+    <td id="cluster_list" class="node_list" style="width:400px;">
       <%= erb :_cluster_list %>
     </td>
     <td id="node_info" colspan=2>
@@ -82,5 +82,7 @@
 </div>
 <script type="text/javascript">
   $(window).load(function () {
+    Pcs = {};
+    initial_page_load();
       });
 </script>

@@ -4,7 +4,7 @@
       <th></th><th></th><th>NAME</th><th>NODES</th>
     </tr>
     <% @clusters.each  do |c| %>
-      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='<%=c.ui_address%>'">
+      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='<%=c.ui_address%>'" nodeID="<%=c.name%>">
 	<td class="node_list_check">
 	  <input class="node_list_check" type="checkbox" name="clusterid-<%=c.name%>" res_id="<%=c.name%>">
 	</td>
