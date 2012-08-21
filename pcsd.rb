@@ -186,12 +186,20 @@ post '/resourceadd' do
 end
 
 post '/resourcerm' do
+  errors = ""
   params.each { |k,v|
     if k.index("resid-") == 0
-      run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
+      out, errout, retval = run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
+      if retval != 0
+	errors += "Unable to remove: " + k.gsub("resid-","") + "\n"
+      end
     end
   }
-  redirect "/resources/"
+  if errors == ""
+    return 200
+  else
+    return [500, errors]
+  end
 end
 
 post '/resource_group_add' do

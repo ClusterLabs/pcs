@@ -639,21 +639,27 @@ function remove_cluster(ids) {
 }
 
 function remove_resource(ids) {
+  var data = {};
+  var res = "";
   for (var i=0; i<ids.length; i++) {
-    var res = ids[i];
+    res += ids[i] + ", ";
     var resid_name = "resid-" + ids[i];
-    var data = {};
     data[resid_name] = true;
-    $.ajax({
-      type: 'POST',
-      url: '/resourcerm',
-      data: data,
-      timeout: pcs_timeout,
-      error: function (xhr, status, error) {
-	alert("Unable to remove resource: " + res + " ("+error+")");
-      }
-    });
   }
+  res = res.slice(0,-2);
+
+  $.ajax({
+    type: 'POST',
+    url: '/resourcerm',
+    data: data,
+    timeout: pcs_timeout,
+    success: function () {
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert("Unable to remove resources: " + res + " ("+error+")");
+    }
+  });
 }
 
 function remove_constraint(id) {
