@@ -1,0 +1,86 @@
+<cib admin_epoch="0" cib-last-written="Thu Aug 23 17:12:12 2012" crm_feature_set="3.0.6" dc-uuid="2" epoch="580" have-quorum="0" num_updates="1" update-client="crmd" update-origin="rh7-3" validate-with="pacemaker-1.2">
+  <configuration>
+    <crm_config/>
+    <nodes>
+      <node id="1" type="normal" uname="rh7-1"/>
+      <node id="2" type="normal" uname="rh7-2"/>
+      <node id="3" type="normal" uname="rh7-3"/>
+    </nodes>
+    <resources>
+      <primitive class="ocf" id="ClusterIP" provider="heartbeat" type="IPaddr2">
+        <instance_attributes id="ClusterIP-instance_attributes">
+          <nvpair id="ClusterIP-instance_attributes-ip" name="ip" value="192.168.0.99"/>
+          <nvpair id="ClusterIP-instance_attributes-cidr_netmask" name="cidr_netmask" value="32"/>
+        </instance_attributes>
+        <operations>
+          <op id="ClusterIP-interval-30s" interval="30s" name="monitor"/>
+        </operations>
+      </primitive>
+      <primitive class="ocf" id="DummyRes" provider="heartbeat" type="Dummy">
+        <instance_attributes id="DummyRes-instance_attributes">
+          <nvpair id="DummyRes-instance_attributes-fake" name="fake" value="my fake"/>
+        </instance_attributes>
+      </primitive>
+      <group id="MyGroup">
+        <primitive class="ocf" id="ClusterIP2" provider="heartbeat" type="IPaddr2">
+          <instance_attributes id="ClusterIP2-instance_attributes">
+            <nvpair id="ClusterIP2-instance_attributes-ip" name="ip" value="192.168.0.100"/>
+            <nvpair id="ClusterIP2-instance_attributes-cidr_netmask" name="cidr_netmask" value="32"/>
+          </instance_attributes>
+          <operations>
+            <op id="ClusterIP2-interval-30s" interval="30s" name="monitor"/>
+            <op id="ClusterIP2-name-monitor-interval-31s" interval="31s" name="monitor"/>
+          </operations>
+        </primitive>
+        <primitive class="ocf" id="ClusterIP32" provider="heartbeat" type="IPaddr2">
+          <instance_attributes id="ClusterIP32-instance_attributes">
+            <nvpair id="ClusterIP32-instance_attributes-ip" name="ip" value="192.168.0.99"/>
+            <nvpair id="ClusterIP32-instance_attributes-cidr_netmask" name="cidr_netmask" value="32"/>
+          </instance_attributes>
+          <operations>
+            <op id="ClusterIP32-interval-30s" interval="30s" name="monitor"/>
+          </operations>
+        </primitive>
+      </group>
+      <clone id="ClusterIP4-clone">
+        <primitive class="ocf" id="ClusterIP4" provider="heartbeat" type="IPaddr2">
+          <instance_attributes id="ClusterIP4-instance_attributes">
+            <nvpair id="ClusterIP4-instance_attributes-ip" name="ip" value="192.168.0.99"/>
+            <nvpair id="ClusterIP4-instance_attributes-cidr_netmask" name="cidr_netmask" value="32"/>
+          </instance_attributes>
+          <operations>
+            <op id="ClusterIP4-interval-30s" interval="30s" name="monitor"/>
+          </operations>
+        </primitive>
+        <meta_attributes id="ClusterIP4-clone-meta">
+          <nvpair id="ClusterIP4-globally-unique" name="globally-unique" value="true"/>
+        </meta_attributes>
+      </clone>
+      <master id="MyMaster">
+        <primitive class="ocf" id="ClusterIP5" provider="heartbeat" type="IPaddr2">
+          <instance_attributes id="ClusterIP5-instance_attributes">
+            <nvpair id="ClusterIP5-instance_attributes-ip" name="ip" value="192.168.0.99"/>
+            <nvpair id="ClusterIP5-instance_attributes-cidr_netmask" name="cidr_netmask" value="32"/>
+          </instance_attributes>
+          <operations>
+            <op id="ClusterIP5-interval-30s" interval="30s" name="monitor"/>
+          </operations>
+        </primitive>
+        <meta_attributes id="MyMaster-meta_attributes">
+          <nvpair id="MyMaster-meta_attributes-master-max" name="master-max" value="2"/>
+        </meta_attributes>
+      </master>
+      <primitive class="ocf" id="ClusterIP6" provider="heartbeat" type="IPaddr2">
+        <instance_attributes id="ClusterIP6-instance_attributes">
+          <nvpair id="ClusterIP6-instance_attributes-ip" name="ip" value="192.168.0.99"/>
+          <nvpair id="ClusterIP6-instance_attributes-cidr_netmask" name="cidr_netmask" value="32"/>
+        </instance_attributes>
+        <operations>
+          <op id="ClusterIP6-interval-30s" interval="30s" name="monitor"/>
+        </operations>
+      </primitive>
+    </resources>
+    <constraints/>
+  </configuration>
+  <status/>
+</cib>
