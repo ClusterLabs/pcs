@@ -416,10 +416,15 @@ post '/manage/existingcluster' do
   pcs_config = PCSConfig.new
   node = params['node-name']
   status =  JSON.parse(send_request_with_token(node, 'status'))
-  nodes = status["corosync_offline"] + status["corosync_online"]
-  pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
-  pcs_config.save
-  redirect '/manage'
+  if status.has_key?("corosync_offline") and
+    status.has_key?("corosync_online") then
+    nodes = status["corosync_offline"] + status["corosync_online"]
+    pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
+    pcs_config.save
+    redirect '/manage'
+  else
+    redirect '/manage/?error=notauthorized'
+  end
 end
 
 post '/manage/newcluster' do
