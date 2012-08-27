@@ -46,19 +46,24 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
     stdout, stderror, retval = run_cmd("cibadmin", "-Q")
     cib_output = stdout
     resources_attr_map = {}
-    doc = REXML::Document.new(cib_output.join("\n"))
-    doc.elements.each('//primitive') do |r|
-      resources_attr_map[r.attributes["id"]] = {}
-      r.each_recursive do |ia|
-	if ia.node_type == :element and ia.name == "nvpair"
-	  resources_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
+    begin
+      doc = REXML::Document.new(cib_output.join("\n"))
+
+      doc.elements.each('//primitive') do |r|
+	resources_attr_map[r.attributes["id"]] = {}
+	r.each_recursive do |ia|
+	  if ia.node_type == :element and ia.name == "nvpair"
+	    resources_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
+	  end
 	end
       end
-    end
 
-    resource_list.each {|r|
-      r.options = resources_attr_map[r.id]
-    }
+      resource_list.each {|r|
+	r.options = resources_attr_map[r.id]
+      }
+    rescue ParseException
+      $logger.info("ERROR: Parse Exception parsing cibadmin -Q")
+    end
   end
 
   [resource_list, group_list]

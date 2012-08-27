@@ -245,7 +245,13 @@ def status_all(params)
   threads = []
   nodes.each {|node|
     threads << Thread.new {
-      final_response[node] = JSON.parse(send_request_with_token(node, 'status'))
+      response = send_request_with_token(node, 'status')
+      begin
+	final_response[node] = JSON.parse(response)
+      rescue ParseError
+	final_response[node] = JSON.parse({"bad_json" => true})
+	$logger.info("ERROR: Parse Error when parsing status JSON from #{node}")
+      end
     }
   }
   threads.each { |t| t.join }

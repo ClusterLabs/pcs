@@ -132,7 +132,7 @@
 {{#if Pcs.nodesController.cur_node.pacemaker_daemon}}
 <div id="pacemaker_status" style="float:left" class="status">Running
 {{else}}
-{{#if Pcs.nodesController.cur_node.up}}
+{{#if Pcs.nodesController.cur_node.pcsd}}
 <div id="pacemaker_status" style="float:left" class="status-offline">Stopped
 {{else}}
 <div id="pacemaker_status" style="float:left" class="status-unknown">Unknown
@@ -143,7 +143,7 @@
 {{#if Pcs.nodesController.cur_node.corosync_daemon}}
 <div id="corosync_status" style="float:left" class="status">Running
 {{else}}
-{{#if Pcs.nodesController.cur_node.up}}
+{{#if Pcs.nodesController.cur_node.pcsd}}
 <div id="corosync_status" style="float:left" class="status-offline">Stopped
 {{else}}
 <div id="corosync_status" style="float:left" class="status-unknown">Unknown
