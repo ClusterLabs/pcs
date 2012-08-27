@@ -2,6 +2,10 @@ require 'pp'
 
 def getResourcesGroups(get_fence_devices = false, get_all_options = false)
   stdout, stderror, retval = run_cmd("crm_mon", "--one-shot", "-r", "--as-xml")
+  if retval != 0
+    return [],[], retval
+  end
+
   crm_output = stdout
 
   doc = REXML::Document.new(crm_output.join("\n"))
@@ -66,7 +70,7 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
     end
   end
 
-  [resource_list, group_list]
+  [resource_list, group_list, 0]
 end
 
 def getResourceOptions(resource_id)

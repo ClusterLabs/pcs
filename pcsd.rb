@@ -320,7 +320,10 @@ end
 end
 
 get '/resources/resourceform/:resource' do
-  @resources, @groups = getResourcesGroups()
+  @resources, @groups, retval = getResourcesGroups()
+  if retval != 0
+    return "Unable to get options, pacemaker is not running on node"
+  end
   @existing_resource = true
   @resources.each do |r|
     if r.id == params[:resource]
@@ -359,7 +362,10 @@ get '/fencedevices/metadata/:fencedevicename/?:new?' do
 end
 
 get '/fencedevices/fencedeviceform/:fencedevice' do
-  @resources, @groups = getResourcesGroups(true)
+  @resources, @groups, retval = getResourcesGroups(true)
+  if retval != 0
+    return "Unable to get options, pacemaker is not running on node"
+  end
 
   @cur_resource = nil
   @resources.each do |r|
