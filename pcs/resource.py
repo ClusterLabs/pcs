@@ -97,6 +97,7 @@ def resource_cmd(argv):
             sys.exit(1)
     else:
         usage.resource()
+        sys.exit(1)
 
 # List available resources
 # TODO make location more easily configurable

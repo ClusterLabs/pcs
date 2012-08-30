@@ -34,7 +34,7 @@ def main(argv):
 
     if len(argv) == 0:
         usage.main()
-        exit(1)
+        sys.exit(1)
 
     command = argv.pop(0)
     if (command == "-h" or command == "help"):
@@ -59,6 +59,7 @@ def main(argv):
         prop.property_cmd(argv)
     else:
         usage.main()
+        sys.exit(1)
 
 if __name__ == "__main__":
   main(sys.argv[1:])

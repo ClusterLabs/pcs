@@ -49,6 +49,7 @@ def stonith_cmd(argv):
         stonith_show(argv)
     else:
         usage.stonith()
+        sys.exit(1)
 
 # TODO abstract this with resource_show to pull from xml
 def stonith_show(argv):

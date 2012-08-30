@@ -62,6 +62,7 @@ def cluster_cmd(argv):
         cluster_get_corosync_conf(argv)
     else:
         usage.cluster()
+        sys.exit(1)
 
 # Create config and then send it to all of the nodes and start
 # corosync & pacemaker on the nodes
@@ -221,7 +222,7 @@ def stop_cluster_all():
 
 def node_standby(argv,standby=True):
     if len(argv) == 0:
-        print usage.cluster()
+        usage.cluster()
         sys.exit(1)
 
     if standby:
