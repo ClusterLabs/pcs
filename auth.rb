@@ -5,7 +5,7 @@ require 'securerandom'
 class PCSAuth
   def self.validUser(username, password)
     begin
-      json = File.read(USER_FILE)
+      json = File.read($user_pass_file)
       users = JSON.parse(json)
     rescue
       users = []
@@ -23,7 +23,7 @@ class PCSAuth
 
   def self.validToken(token)
     begin
-      json = File.read(USER_FILE)
+      json = File.read($user_pass_file)
       users = JSON.parse(json)
     rescue
       users = []
@@ -49,7 +49,7 @@ class PCSAuth
 
   def self.createUser(username, password)
     begin
-      json = File.read(USER_FILE)
+      json = File.read($user_pass_file)
       users = JSON.parse(json)
     rescue
       users = []
@@ -59,7 +59,7 @@ class PCSAuth
 
     users.delete_if{|u| u["username"] == username}
     users << {"username" => username, "password" => password, "token" => token}
-    File.open(USER_FILE, "w") do |f|
+    File.open($user_pass_file, "w") do |f|
       f.write(JSON.pretty_generate(users))
     end
   end

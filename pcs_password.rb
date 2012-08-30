@@ -1,19 +1,48 @@
 #!/usr/bin/ruby
 require 'auth.rb'
 require 'highline/import'
-USER_FILE = "/var/lib/pcsd/pcs_users.conf"
+require 'optparse'
 
-def usage()
-  puts "Usage: pcs_passwd <accountName> [pcs password file]"
-end
+$user_pass_file = "/var/lib/pcsd/pcs_users.conf"
 
-if ARGV.length == 2
-  USER_FILE = ARGV[1]
-elsif ARGV.length != 1
-  usage()
+options = {}
+opts = OptionParser.new 
+opts.banner = "Usage: pcs_passwd <user> [-p password] [-f pcs password file]"
+
+opts.on("-h", "--help", "Print this usage text") do |o|
+  puts opts
   exit
 end
 
-password = ask("Password: ") { |q| q.echo = false }
-PCSAuth.createUser(ARGV[0], password)
+opts.on("-p", "--password PASSWORD", "Password to assign user") do |o|
+  options[:password] = o
+end
+
+opts.on("-f", "--file FILENAME", "Use specified password file") do |o|
+  options[:file] = o
+end
+
+begin
+  opts.parse!
+rescue OptionParser::InvalidOption => e
+  puts "Error: " + e.to_s()
+  puts opts
+  exit(1)
+end
+
+if ARGV.length == 1
+  user = ARGV[0]
+  $user_pass_file = options[:file] if options[:file]
+  if options[:password]
+    password = options[:password]
+  else
+    password = ask("Password: ") { |q| q.echo = false }
+  end
+else
+  puts "Error: invalid command line"
+  puts opts
+  exit(1)
+end
+
+PCSAuth.createUser(user, password)
 
