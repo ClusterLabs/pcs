@@ -27,7 +27,7 @@ def cluster_cmd(argv):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     elif (sub_cmd == "status"):
         status.cluster_status(argv)
-    elif (sub_cmd == "gui-status"):
+    elif (sub_cmd == "pcsd-status"):
         cluster_gui_status(argv)
     elif (sub_cmd == "auth"):
         cluster_auth(argv)

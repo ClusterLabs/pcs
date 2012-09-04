@@ -4,6 +4,7 @@ import utils
 import xml.dom.minidom
 import re
 import resource
+import cluster
 from xml.dom.minidom import parseString
 
 def status_cmd(argv):
@@ -29,6 +30,8 @@ def status_cmd(argv):
         nodes_status(argv)
     elif (sub_cmd == "actions"):
         actions_status(argv)
+    elif (sub_cmd == "pcsd"):
+        cluster.cluster_gui_status(argv)
     elif (sub_cmd == "token"):
         token_status(argv)
     elif (sub_cmd == "xml"):

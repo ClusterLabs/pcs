@@ -161,7 +161,7 @@ Commands:
     status
         View current cluster status (an alias of 'pcs status cluster')
 
-    gui-status [node] [...]
+    pcsd-status [node] [...]
         Get current status of pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified
 
@@ -354,6 +354,9 @@ Commands:
 
     status actions
         View failed actions
+
+    status pcsd <node> ...
+        Show the current status of pcsd on the specified nodes
 
     status xml
         View xml version of status (output from crm_mon -r -1 -X)
