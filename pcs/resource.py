@@ -17,27 +17,33 @@ def resource_cmd(argv):
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
         usage.resource()
-    elif (sub_cmd == "create"):
-        if len(argv) == 0:
-            resource_list_available()
-        elif len(argv) == 1:
+    elif (sub_cmd == "list"):
+        resource_list_available(argv)
+    elif (sub_cmd == "describe"):
+        if len(argv) == 1:
             resource_list_options(argv[0])
         else:
-            res_id = argv.pop(0)
-            res_type = argv.pop(0)
-            ra_values = []
-            op_values = []
-            op_args = False
-            for arg in argv:
-                if op_args:
-                    op_values.append(arg)
+            usage.resource()
+            sys.exit(1)
+    elif (sub_cmd == "create"):
+        if len(argv) < 2:
+            usage.resource()
+            sys.exit(1)
+        res_id = argv.pop(0)
+        res_type = argv.pop(0)
+        ra_values = []
+        op_values = []
+        op_args = False
+        for arg in argv:
+            if op_args:
+                op_values.append(arg)
+            else:
+                if arg == "op":
+                    op_args = True
                 else:
-                    if arg == "op":
-                        op_args = True
-                    else:
-                        ra_values.append(arg)
-        
-            resource_create(res_id, res_type, ra_values, op_values)
+                    ra_values.append(arg)
+    
+        resource_create(res_id, res_type, ra_values, op_values)
     elif (sub_cmd == "standards"):
         resource_standards()
     elif (sub_cmd == "providers"):
@@ -56,7 +62,7 @@ def resource_cmd(argv):
     elif (sub_cmd == "delete"):
         res_id = argv.pop(0)
         resource_remove(res_id)
-    elif (sub_cmd == "list" or sub_cmd == "show"):
+    elif (sub_cmd == "show"):
         resource_show(argv)
     elif (sub_cmd == "group"):
         resource_group(argv)
@@ -101,7 +107,12 @@ def resource_cmd(argv):
 
 # List available resources
 # TODO make location more easily configurable
-def resource_list_available():
+def resource_list_available(argv):
+    if len(argv) != 0:
+        filter_string = argv[0]
+    else:
+        filter_string = ""
+
     os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
     providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
     for provider in providers:
@@ -109,11 +120,13 @@ def resource_list_available():
         for resource in resources:
             if resource.startswith(".") or resource == "ocf-shellfuncs":
                 continue
+            full_res_name = "ocf:" + provider + ":" + resource
+            if full_res_name.count(filter_string) == 0:
+                continue
             metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
             if metadata == False:
                 continue
             sd = ""
-            full_res_name = "ocf:" + provider + ":" + resource
             try:
                 dom = parseString(metadata)
                 shortdesc = dom.documentElement.getElementsByTagName("shortdesc")

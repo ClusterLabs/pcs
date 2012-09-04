@@ -21,8 +21,9 @@ def resource():
 Usage: pcs resource [commands]...
 Manage pacemaker resources
 Commands:
-    [list|show] [resource_id]
-        List all currently configured resources
+    show [resource_id]
+        Show all currently configured resources or if a resource is specified
+        show the options for the configured resource
 
     start <resource_id>
         Start resource specified by resource_id
@@ -30,11 +31,14 @@ Commands:
     stop <resource id>
         Stop resource specified by resource_id
 
-    create
+    list
         Show list of all available resources
 
-    create <class:provider:type|type>
-        Show options for specified resource
+    list <class|provider|type>
+        Show available resources filtered by specified type, class or provider
+
+    describe <class:provider:type|type>
+        Show options for the specified resource
 
     create <resource id> <class:provider:type|type> [resource options]
         Create specified resource
@@ -109,9 +113,9 @@ Commands:
         currently configured defaults
 
 Examples:
-    pcs resource list
+    pcs resource show
 
-    pcs resource list ClusterIP
+    pcs resource show ClusterIP
 
     pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
                cidr_netmask=32 op monitor interval=30s
