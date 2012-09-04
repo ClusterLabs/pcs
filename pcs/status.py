@@ -21,6 +21,8 @@ def status_cmd(argv):
         usage.status()
     elif (sub_cmd == "resources"):
         resource.resource_show(argv)
+    elif (sub_cmd == "groups"):
+        resource.resource_group_list(argv)
     elif (sub_cmd == "cluster"):
         cluster_status(argv)
     elif (sub_cmd == "nodes"):

@@ -347,6 +347,9 @@ Commands:
     status resources
         View current status of cluster resources
 
+    status groups
+        View currently configured groups and their resources
+
     status cluster
         View current cluster status
 
