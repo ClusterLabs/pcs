@@ -685,13 +685,12 @@ def resource_master_remove(argv):
         if rg.getAttribute("id") == master_id and rg.parentNode.tagName == "master":
             master_id = rg.parentNode.getAttribute("id")
 
+    resources_to_cleanup = []
     for master in dom.getElementsByTagName("master"):
         if master.getAttribute("id") == master_id:
-            childNodes = (master.getElementsByTagName("group") + master.getElementsByTagName("primitive"))
-            for child in childNodes[:]:
-                parent = child.parentNode
-                parent.removeChild(child)
-                parent.parentNode.appendChild(child)
+            childNodes = master.getElementsByTagName("primitive")
+            for child in childNodes:
+                resources_to_cleanup.append(child.getAttribute("id"))
             master_found = True
             break
 
@@ -701,6 +700,10 @@ def resource_master_remove(argv):
 
     master.parentNode.removeChild(master)
     utils.replace_cib_configuration(dom)
+    if (not utils.usefile):
+        for r in resources_to_cleanup:
+            args = ["crm_resource","-C","-r",r]
+            cmdoutput, retVal = utils.run(args)
 
 # Also performs a 'cleanup' to remove it completely
 def resource_remove(resource_id, output = True):
@@ -708,6 +711,9 @@ def resource_remove(resource_id, output = True):
     num_resources_in_group = 0
 
     if not utils.does_exist('//resources/descendant::primitive[@id="'+resource_id+'"]'):
+        if utils.does_exist('//resources/master[@id="'+resource_id+'"]'):
+            return resource_master_remove([resource_id])
+
         print "Error: Resource does not exist."
         sys.exit(1)
 

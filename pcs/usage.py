@@ -62,8 +62,8 @@ Commands:
         Remove specified operation (note: you must specify the exeact operation
         properties to properly remove an existing operation).
 
-    delete <resource id>
-        Delete the specified resource
+    delete <resource id | master/slave id>
+        Delete the specified resource or master/slave resource
 
     group add <group name> <resource_id>...
         Add the specified resource to the group (creating the group if it does
@@ -85,11 +85,6 @@ Commands:
 
     master create <master/slave name> <group or resource> [options]
         Configure a resource or group as a multi-state (master/slave) resource
-
-    master remove <master/slave name>|<resource/group>
-        Set resource/group specified as a normal (non-multi-state) resource
-        or group.  If a master/slave name is specified, the resource/group it
-        containts will be converted to a normal resource.
 
     manage <resource 1> [resource 2] ...
         Set resources listed to managed mode (default)
