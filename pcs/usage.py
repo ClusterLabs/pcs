@@ -8,9 +8,6 @@ Options:
     -f file     Perform actions on file instead of active CIB
 
 Commands:
-    add <resource id> <class:provider:type|type> [resource options]
-    set <property>=<value>
-
     resource    Manage cluster resources
     cluster     Configure cluster options and nodes
     stonith     Configure fence devices
