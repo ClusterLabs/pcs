@@ -262,11 +262,22 @@ def resource_update(res_id,args):
     dom = utils.get_cib_dom()
 
     resource = None
-    for resource in dom.getElementsByTagName("primitive"):
-        if resource.getAttribute("id") == res_id:
+    for r in dom.getElementsByTagName("primitive"):
+        if r.getAttribute("id") == res_id:
+            resource = r
             break
-    
+
     if not resource:
+        clone = None
+        for c in dom.getElementsByTagName("clone"):
+            if c.getAttribute("id") == res_id:
+                clone = r
+
+        if clone:
+            for a in c.childNodes:
+                if a.localName == "primitive" or a.localName == "group":
+                    return resource_clone_create([a.getAttribute("id")] + args, True)
+
         print "Error: Unable to find resource: %s" % res_id
         sys.exit(1)
 
@@ -483,8 +494,6 @@ def resource_clone(argv):
     sub_cmd = argv.pop(0)
     if sub_cmd == "create":
         resource_clone_create(argv)
-    elif sub_cmd == "update":
-        resource_clone_create(argv,True)
     else:
         usage.resource()
         sys.exit(1)

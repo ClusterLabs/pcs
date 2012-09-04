@@ -53,7 +53,7 @@ Commands:
         List available agents optionally filtered by standard and provider
 
     update <resource id> [resource options]
-        Add/Change options to specified resource
+        Add/Change options to specified resource or clone
 
     add_operation <resource id> <operation name> [operation properties]
         Add operation for specified resource
@@ -78,10 +78,6 @@ Commands:
 
     clone create <resource id | group name> [clone options]...
         Setup up the specified resource or group as a clone
-
-    clone update <resource id | group name> [clone options]...
-        Update the clone containing the resource or group replacing all
-        current options with the new options
 
     unclone <resource id | group name>
         Remove the clone which contains the specified group or resource (the
