@@ -205,7 +205,7 @@ Commands:
     pacemaker remove <node name>
         Remove specified node from running pacemaker configuration
 
-    get_conf <node name>
+    corosync <node name>
         Get the corosync.conf from the specified node
 """
 

@@ -67,7 +67,7 @@ def cluster_cmd(argv):
         cluster_node(argv)
     elif (sub_cmd == "localnode"):
         cluster_localnode(argv)
-    elif (sub_cmd == "get_conf"):
+    elif (sub_cmd == "corosync"):
         cluster_get_corosync_conf(argv)
     else:
         usage.cluster()
