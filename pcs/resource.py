@@ -272,11 +272,21 @@ def resource_update(res_id,args):
         for c in dom.getElementsByTagName("clone"):
             if c.getAttribute("id") == res_id:
                 clone = r
+                break
 
         if clone:
             for a in c.childNodes:
                 if a.localName == "primitive" or a.localName == "group":
                     return resource_clone_create([a.getAttribute("id")] + args, True)
+
+        master = None
+        for m in dom.getElementsByTagName("master"):
+            if m.getAttribute("id") == res_id:
+                master = r 
+                break
+
+        if master:
+            return resource_master_create([res_id] + args, True)
 
         print "Error: Unable to find resource: %s" % res_id
         sys.exit(1)
@@ -588,8 +598,6 @@ def resource_master(argv):
     sub_cmd = argv.pop(0)
     if sub_cmd == "create":
         resource_master_create(argv)
-    elif sub_cmd == "update":
-        resource_master_create(argv,True)
     elif sub_cmd == "remove":
         resource_master_remove(argv)
     else:

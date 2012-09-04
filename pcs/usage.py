@@ -53,7 +53,7 @@ Commands:
         List available agents optionally filtered by standard and provider
 
     update <resource id> [resource options]
-        Add/Change options to specified resource or clone
+        Add/Change options to specified resource, clone or multi-state resource
 
     add_operation <resource id> <operation name> [operation properties]
         Add operation for specified resource
@@ -85,9 +85,6 @@ Commands:
 
     master create <master/slave name> <group or resource> [options]
         Configure a resource or group as a multi-state (master/slave) resource
-
-    master update <master/slave name> [options]
-        Update a multi-state (master/slave) resource options
 
     master remove <master/slave name>|<resource/group>
         Set resource/group specified as a normal (non-multi-state) resource
