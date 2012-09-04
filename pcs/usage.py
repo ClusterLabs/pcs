@@ -122,27 +122,33 @@ Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
 
 Commands:
-    start [node] [...]
+    start [--all] [node] [...]
         Start corosync & pacemaker on specified node(s), if a node is not
         specified then corosync & pacemaker are started on the local node.
+        If --all is specified then corosync & pacemaker are started on all
+        nodes.
 
-    stop [node] [...]
+    stop [--all] [node] [...]
         Stop corosync & pacemaker on specified node(s), if a node is not
-        specified then corosync & pacemaker are started on the local node.
+        specified then corosync & pacemaker are stopped on the local node.
+        If --all is specified then corosync & pacemaker are stopped on all
+        nodes.
 
     force_stop
         Force corosync and pacemaker daemons to stop on the local node
         (performs kill -9).
 
-    enable [node] [...]
+    enable [--all] [node] [...]
         Configure corosync & pacemaker to run on startup on specified node(s),
         if node is not specified then corosync & pacemaker are enabled on the
-        local node.
+        local node. If --all is specified then corosync & pacemaker are enabled
+        on all nodes.
 
-    disable [node] [...]
+    disable [--all] [node] [...]
         Configure corosync & pacemaker to not run on startup on specified
         node(s), if node is not specified then corosync & pacemaker are disabled
-        on the local node.
+        on the local node. If --all is specified then corosync & pacemaker are
+        disabled on all nodes.
 
     standby <node>
         Put specified node into standby mode (the node specified will no longer
@@ -151,12 +157,6 @@ Commands:
     unstandby <node>
         Remove node from standby mode (the node specified will now be able to
         host resources
-
-    startall    Start corosync & pacemaker on all nodes
-    stopall     Stop corosync & pacemaker on all nodes
-    enableall   Configure corosync & pacemaker to run on startup on all nodes
-    disableall  Configure corosync & pacemaker to not run on startup on all
-                nodes
 
     status
         View current cluster status (an alias of 'pcs status cluster')

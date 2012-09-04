@@ -34,9 +34,15 @@ def cluster_cmd(argv):
     elif (sub_cmd == "token"):
         cluster_token(argv)
     elif (sub_cmd == "start"):
-        start_cluster(argv)
+        if "--all" in utils.pcs_options:
+            start_cluster_all()
+        else:
+            start_cluster(argv)
     elif (sub_cmd == "stop"):
-        stop_cluster(argv)
+        if "--all" in utils.pcs_options:
+            stop_cluster_all()
+        else:
+            stop_cluster(argv)
     elif (sub_cmd == "force_stop"):
         force_stop_cluster(argv)
     elif (sub_cmd == "standby"):
@@ -44,17 +50,15 @@ def cluster_cmd(argv):
     elif (sub_cmd == "unstandby"):
         node_standby(argv, False)
     elif (sub_cmd == "enable"):
-        enable_cluster(argv)
+        if "--all" in utils.pcs_options:
+            enable_cluster_all()
+        else:
+            enable_cluster(argv)
     elif (sub_cmd == "disable"):
-        disable_cluster(argv)
-    elif (sub_cmd == "startall"):
-        start_cluster_all()
-    elif (sub_cmd == "stopall"):
-        stop_cluster_all()
-    elif (sub_cmd == "enableall"):
-        enable_cluster_all()
-    elif (sub_cmd == "disableall"):
-        disable_cluster_all()
+        if "--all" in utils.pcs_options:
+            disable_cluster_all()
+        else:
+            disable_cluster(argv)
     elif (sub_cmd == "cib"):
         get_cib()
     elif (sub_cmd == "push"):

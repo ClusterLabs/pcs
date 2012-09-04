@@ -13,16 +13,16 @@ import status
 usefile = False
 filename = ""
 def main(argv):
-    global filename, usefile, pcs_options
-    utils.pcs_options_hash = {}
+    global filename, usefile
+    utils.pcs_options = {}
     try:
-        pcs_options, argv = getopt.gnu_getopt(argv, "hf:p", ["local","start"])
+        pcs_options, argv = getopt.gnu_getopt(argv, "hf:p", ["local","start","all"])
     except getopt.GetoptError, err:
         usage.main()
         sys.exit(1)
 
     for o, a in pcs_options:
-        utils.pcs_options_hash[o] = a
+        utils.pcs_options[o] = a
         if o == "-h":
             usage.main()
             sys.exit()
