@@ -6,6 +6,7 @@ import urllib2
 import utils
 import sys
 import getpass
+import status
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -24,6 +25,8 @@ def cluster_cmd(argv):
         corosync_setup(argv)
     elif (sub_cmd == "sync"):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
+    elif (sub_cmd == "status"):
+        status.cluster_status(argv)
     elif (sub_cmd == "gui-status"):
         cluster_gui_status(argv)
     elif (sub_cmd == "auth"):

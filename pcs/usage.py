@@ -162,6 +162,9 @@ Commands:
     disableall  Configure corosync & pacemaker to not run on startup on all
                 nodes
 
+    status
+        View current cluster status (an alias of 'pcs status cluster')
+
     gui-status [node] [...]
         Get current status of pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified
