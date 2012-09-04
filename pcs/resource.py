@@ -68,6 +68,8 @@ def resource_cmd(argv):
         resource_group(argv)
     elif (sub_cmd == "clone"):
         resource_clone(argv)
+    elif (sub_cmd == "unclone"):
+        resource_clone_remove(argv)
     elif (sub_cmd == "master"):
         resource_master(argv)
     elif (sub_cmd == "start"):
@@ -483,8 +485,6 @@ def resource_clone(argv):
         resource_clone_create(argv)
     elif sub_cmd == "update":
         resource_clone_create(argv,True)
-    elif sub_cmd == "remove":
-        resource_clone_remove(argv)
     else:
         usage.resource()
         sys.exit(1)

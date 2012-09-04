@@ -83,7 +83,7 @@ Commands:
         Update the clone containing the resource or group replacing all
         current options with the new options
 
-    clone remove <resource id | group name>
+    unclone <resource id | group name>
         Remove the clone which contains the specified group or resource (the
         resource or group will not be removed)
 
