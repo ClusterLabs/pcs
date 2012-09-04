@@ -142,6 +142,10 @@ Commands:
         Stop corosync & pacemaker on specified node(s), if a node is not
         specified then corosync & pacemaker are started on the local node.
 
+    force_stop
+        Force corosync and pacemaker daemons to stop on the local node
+        (performs kill -9).
+
     enable [node] [...]
         Configure corosync & pacemaker to run on startup on specified node(s),
         if node is not specified then corosync & pacemaker are enabled on the
