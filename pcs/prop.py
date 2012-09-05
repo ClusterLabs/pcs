@@ -13,6 +13,8 @@ def property_cmd(argv):
         usage.property()
     elif (sub_cmd == "set"):
         set_property(argv)
+    elif (sub_cmd == "unset"):
+        unset_property(argv)
     elif (sub_cmd == "list" or sub_cmd == "show"):
         list_property(argv)
     else:
@@ -26,6 +28,14 @@ def set_property(argv):
             print "Invalid Property: " + arg
             continue
         utils.set_cib_property(args[0],args[1])
+
+def unset_property(argv):
+    if len(argv) < 1:
+        usage.property()
+        sys.exit(1)
+
+    for arg in argv:
+        utils.set_cib_property(arg, "")
 
 def list_property(argv):
     print_all = False

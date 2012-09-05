@@ -250,6 +250,9 @@ Commands:
         Set specific pacemaker properties (if the value is blank then the
         property is removed from the configuration)
 
+    unset <property>
+        Remove property from configuration
+
 Examples:
     pcs property set stonith-enabled=false
 """
