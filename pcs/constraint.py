@@ -18,7 +18,7 @@ def constraint_cmd(argv):
         else:
             sub_cmd2 = argv.pop(0)
 
-        elif (sub_cmd2 == "add"):
+        if (sub_cmd2 == "add"):
             location_add(argv)
         elif (sub_cmd2 == "rm"):
             location_add(argv,True)
