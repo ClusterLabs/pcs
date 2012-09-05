@@ -18,34 +18,40 @@ def stonith_cmd(argv):
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
         usage.stonith()
-    elif (sub_cmd == "create"):
-        if len(argv) == 0:
-            stonith_list_available()
-        elif len(argv) == 1:
+    elif (sub_cmd == "list"):
+        stonith_list_available(argv)
+    elif (sub_cmd == "describe"):
+        if len(argv) == 1:
             stonith_list_options(argv[0])
         else:
-            stn_id = argv.pop(0)
-            stn_type = "stonith:"+argv.pop(0)
-            st_values = []
-            op_values = []
-            op_args = False
-            for arg in argv:
-                if op_args:
-                    op_values.append(arg)
+            usage.stonith()
+            sys.exit(1)
+    elif (sub_cmd == "create"):
+        if len(argv) < 2:
+            usage.stonith()
+            sys.exit(1)
+        stn_id = argv.pop(0)
+        stn_type = "stonith:"+argv.pop(0)
+        st_values = []
+        op_values = []
+        op_args = False
+        for arg in argv:
+            if op_args:
+                op_values.append(arg)
+            else:
+                if arg == "op":
+                    op_args = True
                 else:
-                    if arg == "op":
-                        op_args = True
-                    else:
-                        st_values.append(arg)
-            
-            resource.resource_create(stn_id, stn_type, st_values, op_values)
+                    st_values.append(arg)
+        
+        resource.resource_create(stn_id, stn_type, st_values, op_values)
     elif (sub_cmd == "update"):
         stn_id = argv.pop(0)
         resource.resource_update(stn_id,argv)
     elif (sub_cmd == "delete"):
         stn_id = argv.pop(0)
         resource_remove(stn_id)
-    elif (sub_cmd == "list" or sub_cmd == "show"):
+    elif (sub_cmd == "show"):
         stonith_show(argv)
     else:
         usage.stonith()
@@ -76,7 +82,12 @@ def stonith_show(argv):
         for nvpair in doc.getElementsByTagName("nvpair"):
             print "  " + nvpair.getAttribute("name") + ": " + nvpair.getAttribute("value")
 
-def stonith_list_available():
+def stonith_list_available(argv):
+    if len(argv) != 0:
+        filter_string = argv[0]
+    else:
+        filter_string = ""
+
     bad_fence_devices = ["kdump_send", "legacy", "na", "nss_wrapper",
             "pcmk", "vmware_helper", "ack_manual", "virtd"]
     fence_devices = sorted(glob.glob("/usr/sbin/fence_*"))
@@ -87,6 +98,8 @@ def stonith_list_available():
             continue
 
     for fd in fence_devices:
+        if fd.count(filter_string) == 0:
+            continue
         metadata = get_metadata(fd)
         if metadata == False:
             print "Error: no metadata for %s" % fd

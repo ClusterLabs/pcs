@@ -215,11 +215,13 @@ Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
 Commands:
-    [list|show] [stonith_id]
-    create
-        Show list of all available stonith agents
+    show [stonith_id]
 
-    create <stonith agent>
+    list [filter]
+        Show list of all available stonith agents (if filter is provided then
+        only stonith agents matching the filter will be shown)
+
+    describe <stonith agent>
         Show options for specified stonith agent
 
     create <stonith_id> <stonith device type> [stonith device options]
