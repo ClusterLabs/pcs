@@ -43,6 +43,24 @@ def remote(params)
     return remote_add_node(params)
   when "remove_node"
     return remote_remove_node(params)
+  when "resource_form"
+    return resource_form(params)
+  when "fence_device_form"
+    return fence_device_form(params)
+  when "update_resource"
+    return update_resource(params)
+  when "update_fence_device"
+    return update_fence_device(params)
+  when "resource_metadata"
+    return resource_metadata(params)
+  when "fence_device_metadata"
+    return fence_device_metadata(params)
+  when "get_avail_resource_agents"
+    return get_avail_resource_agents(params)
+  when "get_avail_fence_agents"
+    return get_avail_fence_agents(params)
+  when "remove_resource"
+    return remove_resource(params)
   else
     return [404, "Unknown Request"]
   end
@@ -117,7 +135,7 @@ def check_gui_status(params)
   node_results = {}
   if params[:nodes] != nil and params[:nodes] != ""
     node_array = params[:nodes].split(",")
-   Open3.popen3(PCS, "cluster", "gui-status", *node_array) { |stdin, stdout, stderr, wait_thr|
+   Open3.popen3(PCS, "cluster", "pcsd-status", *node_array) { |stdin, stdout, stderr, wait_thr|
      exit_status = wait_thr.value
      stdout.readlines.each {|l|
        l = l.chomp
@@ -235,8 +253,11 @@ def node_status(params)
   return ret
 end
 
-def status_all(params)
-  nodes = get_corosync_nodes()
+def status_all(params, nodes = [])
+  if nodes.length == 0
+    nodes = get_corosync_nodes()
+  end
+
   if nodes == nil
     return JSON.generate({"error" => "true"})
   end
@@ -302,5 +323,154 @@ def resource_start(params)
     return JSON.generate({"success" => "true"})
   else
     return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
+  end
+end
+
+def resource_form(params)
+  @resources, @groups, retval = getResourcesGroups()
+  if retval != 0
+    return "Unable to get options, pacemaker is not running on node"
+  end
+  @existing_resource = true
+  @resources.each do |r|
+    if r.id == params[:resource]
+      @cur_resource = r
+    end
+  end
+  if @cur_resource
+    @cur_resource.options = getResourceOptions(@cur_resource.id)
+    @resource_agents = getResourceAgents(@cur_resource.agentname)
+    @resource = @resource_agents[@cur_resource.agentname]
+    if @resource
+      erb :resourceagentform
+    else
+      "Can't find resource"
+    end
+  else
+    "Resource doesn't exist"
+  end
+end
+
+def fence_device_form(params)
+  @resources, @groups, retval = getResourcesGroups(true)
+  if retval != 0
+    return "Unable to get options, pacemaker is not running on node"
+  end
+
+  @cur_resource = nil
+  @resources.each do |r|
+    if r.id == params[:resource]
+      @cur_resource = r
+      break
+    end
+  end
+
+  if @cur_resource
+    @cur_resource.options = getResourceOptions(@cur_resource.id)
+    @resource_agents = getFenceAgents(@cur_resource.agentname)
+    @existing_resource = true
+    @fenceagent = @resource_agents[@cur_resource.agentname.gsub(/.*:/,"")]
+    erb :fenceagentform
+  else
+    "Can't find fence device"
+  end
+end
+
+# Creates resource if params[:resource_id] is not set
+def update_resource (params)
+  pp params
+  param_line = getParamLine(params)
+  if not params[:resource_id]
+    out, stderr, retval = run_cmd(PCS, "resource", "create", params[:name], params[:resource_type],
+	    *(param_line.split(" ")))
+    if retval != 0
+      return [404,JSON.generate({"error" => "true"})]
+    end
+    if params[:resource_group] and params[:resource_group] != ""
+      run_cmd(PCS, "resource","group", "add", params[:resource_group],
+	      params[:name])
+      resource_group = params[:resource_group]
+    end
+
+    if params[:resource_clone] and params[:resource_clone] != ""
+      name = resource_group ? resource_group : params[:name]
+      run_cmd(PCS, "resource", "clone", "create", name)
+    end
+    return
+  end
+
+  if param_line.length != 0
+    run_cmd(PCS, "resource", "update", params[:resource_id], *(param_line.split(" ")))
+  end
+
+  if params[:resource_group]
+    if params[:resource_group] == ""
+      if params[:_orig_resource_group] != ""
+	run_cmd(PCS, "resource", "group", "remove_resource", params[:_orig_resource_group], params[:resource])
+      end
+    else
+      run_cmd(PCS, "resource", "group", "add", params[:resource_group], params[:resource])
+    end
+  end
+
+  if params[:resource_clone] and params[:_orig_resource_clone] == "false"
+    run_cmd(PCS, "resource", "clone", "create", params[:resource])
+  end
+  if params[:_orig_resource_clone] == "true" and not params[:resource_clone]
+    run_cmd(PCS, "resource", "clone", "remove", params[:resource].sub(/:.*/,''))
+  end
+
+  redirect "/resources/#{params[:resource]}"
+end
+
+def update_fence_device (params)
+  p "Updating fence device"
+  pp params
+  param_line = getParamLine(params)
+  pp param_line
+  run_cmd(PCS, "stonith", "update", params[:resource_id], *(param_line.split(" ")))
+end
+
+def get_avail_resource_agents (params)
+  agents = getResourceAgents()
+  return JSON.generate(agents)
+end
+
+def get_avail_fence_agents(params)
+  agents = getFenceAgents()
+  return JSON.generate(agents)
+end
+
+def resource_metadata (params)
+  @resource = ResourceAgent.new(params[:resourcename])
+  @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
+  @new_resource = params[:new]
+  @resources, @groups = getResourcesGroups
+  
+  erb :resourceagentform
+end
+
+def fence_device_metadata (params)
+  @fenceagent = FenceAgent.new(params[:resourcename])
+  @fenceagent.required_options, @fenceagent.optional_options = getFenceAgentMetadata(params[:resourcename])
+  @new_fenceagent = params[:new]
+  
+  erb :fenceagentform
+end
+
+def remove_resource (params)
+  errors = ""
+  params.each { |k,v|
+    if k.index("resid-") == 0
+      out, errout, retval = run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
+      if retval != 0
+	errors += "Unable to remove: " + k.gsub("resid-","") + "\n"
+      end
+    end
+  }
+  if errors == ""
+    return 200
+  else
+    return [500, errors]
   end
 end

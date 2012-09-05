@@ -245,9 +245,9 @@
 	<tr>
 	  <td class="bold">Type</td>
 	  <td>
-	    <select id="add_ra_type" onchange="$('#new_resource_agent').load('/resources/metadata/' + this.value + '/new');">
+	    <select id="add_ra_type" onchange="load_resource_form($('#new_resource_agent'), this.value);">
 	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
-		<option width=250px <%= @resource_agents[name].type == "IPaddr2" ? "selected" : "" %> value="<%=@resource_agents[name].type%>"><%=@resource_agents[name].type%></option>
+		<option width=250px <%= @resource_agents[name]["type"] == "IPaddr2" ? "selected" : "" %> value="<%=@resource_agents[name]["type"]%>"><%=@resource_agents[name]["type"]%></option>
 	      <% } %>
 	    </select>
 	  </td>
@@ -262,9 +262,9 @@
 	<tr>
 	  <td class="bold">Type</td>
 	  <td>
-	    <select id="add_stonith_type" onchange="$('#new_stonith_agent').load('/fencedevices/metadata/' + this.value + '/new');">
+	    <select id="add_stonith_type" onchange="load_resource_form($('#new_stonith_agent'),this.value,true);">
 	      <% @stonith_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
-		<option width=250px value="<%=@stonith_agents[name].type%>"><%=@stonith_agents[name].type%></option>
+		<option width=250px <%= @stonith_agents[name]["type"] == "fence_apc" ? "selected" : "" %> value="<%=@stonith_agents[name]["type"]%>"><%=@stonith_agents[name]["type"]%></option>
 	    <% } %>
 	    </select>
 	  </td>
@@ -299,7 +299,7 @@
 	  </script>
 	  <table>
 	    <tr><th>Node</th><th>Allowed</th><th>Not Allowed</th><th>Score</th></tr>
-	    <% @nodes_online.concat(@nodes_offline).sort().each {|n| %>
+	    <% @nodes.sort().each {|n| %>
 	      <tr>
 		<td><%=n%></td>
 		<td align=center><input type=checkbox name="allow-<%=n%>"></td>

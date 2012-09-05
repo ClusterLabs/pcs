@@ -46,12 +46,12 @@ configure do
   if Dir.pwd == "/var/lib/pcsd"
     PCS = "/sbin/pcs" 
   else
-    PCS = "/root/pcs/pcs/pcs" 
+    PCS = "../pcs/pcs/pcs" 
   end
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   SETTINGS_FILE = "pcs_settings.conf"
-  USER_FILE = "pcs_users.conf"
+  $user_pass_file = "pcs_users.conf"
 
   $logger = Logger.new('/var/lib/pcsd/pcsd.log', 'weekly')
   $logger.level = Logger::INFO
@@ -107,6 +107,7 @@ helpers do
     if @nodes.length != 0
       @loc_dep_allow, @loc_dep_disallow = getLocationDeps(@cur_node)
     end
+    @nodes = @nodes_online.concat(@nodes_offline)
   end
 
   def getParamLine(params)
@@ -159,49 +160,6 @@ post '/configure/?:page?' do
   redirect params[:splat][0]
 end
 
-post '/fencedeviceadd' do
-  puts params
-  param_line = getParamLine(params)
-  run_cmd(PCS, "stonith", "create", params[:name], params[:resource_type],
-	  *(param_line.split(" ")))
-  redirect "/fencedevices/#{params[:name]}"
-end
-
-post '/resourceadd' do
-  param_line = getParamLine(params)
-  run_cmd(PCS, "resource", "create", params[:name], params[:resource_type],
-	  *(param_line.split(" ")))
-  if params[:resource_group] and params[:resource_group] != ""
-    run_cmd(PCS, "resource","group", "add", params[:resource_group],
-	    params[:name])
-    resource_group = params[:resource_group]
-  end
-
-  if params[:resource_clone] and params[:resource_clone] != ""
-    name = resource_group ? resource_group : params[:name]
-    run_cmd(PCS, "resource", "clone", "create", name)
-  end
-
-  redirect "/resources/#{params[:name]}"
-end
-
-post '/resourcerm' do
-  errors = ""
-  params.each { |k,v|
-    if k.index("resid-") == 0
-      out, errout, retval = run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
-      if retval != 0
-	errors += "Unable to remove: " + k.gsub("resid-","") + "\n"
-      end
-    end
-  }
-  if errors == ""
-    return 200
-  else
-    return [500, errors]
-  end
-end
-
 post '/resource_group_add' do
   rg = params["resource_group"]
   resources = params["resources"]
@@ -247,41 +205,6 @@ get '/fencedevices2/?:fencedevice?' do
   erb :fencedevices, :layout => :main
 end
 
-post '/resources/:resource?' do
-  pp params
-  param_line = getParamLine(params)
-  if param_line.length != 0
-    run_cmd(PCS, "resource", "update", params[:resource_id], *(param_line.split(" ")))
-  end
-
-  if params[:resource_group]
-    if params[:resource_group] == ""
-      if params[:_orig_resource_group] != ""
-	run_cmd(PCS, "resource", "group", "remove_resource", params[:_orig_resource_group], params[:resource])
-      end
-    else
-      run_cmd(PCS, "resource", "group", "add", params[:resource_group], params[:resource])
-    end
-  end
-
-  if params[:resource_clone] and params[:_orig_resource_clone] == "false"
-    run_cmd(PCS, "resource", "clone", "create", params[:resource])
-  end
-  if params[:_orig_resource_clone] == "true" and not params[:resource_clone]
-    run_cmd(PCS, "resource", "clone", "remove", params[:resource].sub(/:.*/,''))
-  end
-
-  redirect "/resources/#{params[:resource]}"
-end
-
-post '/fencedevices/:fencedevice?' do
-  pp params
-  param_line = getParamLine(params)
-  pp param_line
-  run_cmd(PCS, "stonith", "update", params[:resource_id], *(param_line.split(" ")))
-  redirect params[:splat][0]
-end
-
 ['/resources2/?:resource?', '/resource_list/?:resource?'].each do |path|
   get path do
     @load_data = true
@@ -319,32 +242,8 @@ end
   end
 end
 
-get '/resources/resourceform/:resource' do
-  @resources, @groups, retval = getResourcesGroups()
-  if retval != 0
-    return "Unable to get options, pacemaker is not running on node"
-  end
-  @existing_resource = true
-  @resources.each do |r|
-    if r.id == params[:resource]
-      @cur_resource = r
-    end
-  end
-  if @cur_resource
-    @cur_resource.options = getResourceOptions(@cur_resource.id)
-    @resource_agents = getResourceAgents(@cur_resource.agentname)
-    @resource = @resource_agents[@cur_resource.agentname]
-    if @resource
-      erb :resourceagentform
-    else
-      "Can't find resource"
-    end
-  else
-    "Resource doesn't exist"
-  end
-end
-
 get '/resources/metadata/:resourcename/?:new?' do
+  return ""
   @resource = ResourceAgent.new(params[:resourcename])
   @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
   @new_resource = params[:new]
@@ -354,36 +253,12 @@ get '/resources/metadata/:resourcename/?:new?' do
 end
 
 get '/fencedevices/metadata/:fencedevicename/?:new?' do
+  return ""
   @fenceagent = FenceAgent.new(params[:fencedevicename])
   @fenceagent.required_options, @fenceagent.optional_options = getFenceAgentMetadata(params[:fencedevicename])
   @new_fenceagent = params[:new]
   
   erb :fenceagentform
-end
-
-get '/fencedevices/fencedeviceform/:fencedevice' do
-  @resources, @groups, retval = getResourcesGroups(true)
-  if retval != 0
-    return "Unable to get options, pacemaker is not running on node"
-  end
-
-  @cur_resource = nil
-  @resources.each do |r|
-    if r.id == params[:fencedevice]
-      @cur_resource = r
-      break
-    end
-  end
-
-  if @cur_resource
-    @cur_resource.options = getResourceOptions(@cur_resource.id)
-    @resource_agents = getFenceAgents(@cur_resource.agentname)
-    @existing_resource = true
-    @fenceagent = @resource_agents[@cur_resource.agentname.gsub(/.*:/,"")]
-    erb :fenceagentform
-  else
-    "Can't find fence device"
-  end
 end
 
 get '/nodes/?:node?' do
@@ -411,6 +286,38 @@ get '/manage/?' do
   @clusters = pcs_config.clusters
   erb :manage, :layout => :main
 end
+
+get '/managec/:cluster/main' do
+  @@cluster_name = params[:cluster]
+#  @resources, @groups = getResourcesGroups
+  @load_data = true
+  @resources = []
+  @groups = []
+  @resource_agents = get_resource_agents_avail() 
+  @stonith_agents = get_stonith_agents_avail() 
+  puts "RA"
+  puts @resource_agents
+  puts "ST"
+  puts @stonith_agents
+  @nodes = get_cluster_nodes(params[:cluster])
+  erb :nodes, :layout => :main
+end
+
+get '/managec/:cluster/status_all' do
+  status_all("",get_cluster_nodes(params[:cluster]))
+end
+
+remote_mc= lambda do
+  puts "A"
+  pp params[:splat]
+  puts "B"
+  if params[:cluster]
+    send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, false)
+  end
+end
+
+get '/managec/:cluster/?*', &remote_mc
+post '/managec/:cluster/?*', &remote_mc
 
 get '/manage/:node/?*' do
   if params[:node]
@@ -446,7 +353,7 @@ post '/manage/newcluster' do
   pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
   pcs_config.save
 
-  run_cmd(PCS, "cluster", "configure", "--start", @cluster_name, *@nodes)
+  run_cmd(PCS, "cluster", "setup", "--start", @cluster_name, *@nodes)
   redirect '/manage'
 end
 

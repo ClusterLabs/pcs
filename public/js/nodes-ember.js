@@ -1,11 +1,13 @@
 Pcs = Ember.Application.create({
+  cluster_name: get_cluster_name(),
   cur_page: "",
   update_timeout: null,
   update: function(first_run) {
     if (first_run)
       show_loading_screen();
     $.ajax({
-      url: "/remote/status_all",
+      url: "/managec/" + cluster_name + "/status_all",
+//      url: "/test_status.json",
       dataType: "json",
       success: function(data) {
 	Pcs.nodesController.update(data);
@@ -23,7 +25,10 @@ Pcs = Ember.Application.create({
 	clearTimeout(Pcs.update_timeout);
 	Pcs.update_timeout = window.setTimeout(Pcs.update,20000);
       },
-      error: hide_loading_screen
+      error: function(a,b,c) {
+	hide_loading_screen();
+      }
+
     });
   }
 });

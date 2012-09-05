@@ -1,6 +1,6 @@
 <% if @fenceagent %>
 <div id="resource_agent_<%=@fenceagent.name%>">
-  <form method=POST action="<%= @existing_resource ? "/fencedevices/#{@cur_resource.id}" : "/fencedeviceadd"%>">
+  <form method=POST action="/update_fence_device">
     <table style="clear:left; float:left; margin-top: 25px;">
       <% if @new_fenceagent %>
 	<tr>
@@ -46,7 +46,7 @@
 	</tr>
       <% } %>
       <tr class="stop"><td class="center" style="padding-top:20px;" colspan=2>
-	  <input type=submit class="text_field" value="<%= @existing_resource ? "Apply Changes" : "Create Fence Instance" %>">
+	  <input type=submit class="text_field" onclick="create_resource($(this).parents('form'),<%=@existing_resource ? 'true':'false'%>,true); return false;" value="<%= @existing_resource ? "Apply Changes" : "Create Fence Instance" %>">
 	</td>
       </tr>
     </table>

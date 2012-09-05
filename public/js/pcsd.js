@@ -108,26 +108,44 @@ function create_group() {
 }
 
 // If update is set to true we update the resource instead of create it
-function create_resource(form, update) {
+// if stonith is set to true we update/create a stonith agent
+function create_resource(form, update, stonith) {
   dataString = $(form).serialize();
-  url = $(form).attr("action");
+  url = get_cluster_remote_url() + $(form).attr("action");
+  var name;
+  if (stonith)
+    name = "fence device";
+    else name = "resource"
   $.ajax({
     type: "POST",
     url: url,
     data: dataString,
     success: function() {
       if (!update) {
-	$('#add_resource').dialog('close');
+	if (stonith)
+	  $('#add_stonith').dialog('close');
+	else
+	  $('#add_resource').dialog('close');
       }
       Pcs.update();
     },
     error: function() {
       if (update)
-	alert("Unable to update resource.");
+	alert("Unable to update " + name);
       else
-	alert("Unable to add resource.");
+	alert("Unable to add " + name);
     }
   });
+}
+
+function load_resource_form(item, ra, stonith) {
+  data = { new: true, resourcename: ra};
+  if (!stonith)
+    command = "resource_metadata";
+  else
+    command = "fence_device_metadata";
+  
+  item.load(get_cluster_remote_url() + command, data);
 }
 
 function verify_remove(rem_type, error_message, ok_message, title_message, resource_id, post_location) {
@@ -353,17 +371,17 @@ function setup_resource_links(link_type) {
   });
   $("#resource_stop_link").click(function () {
     fade_in_out("#resource_stop_link");
-    $.post('/remote/resource_stop',"resource="+curResource());
+    $.post(get_cluster_remote_url() + 'resource_stop',"resource="+curResource());
   });
   $("#resource_start_link").click(function () {
     fade_in_out("#resource_start_link");
-    $.post('/remote/resource_start',"resource="+curResource());
+    $.post(get_cluster_remote_url() + 'resource_start',"resource="+curResource());
   });
   $("#resource_move_link").click(function () {
     alert("Not Yet Implemented");
   });
   $("#resource_history_link").click(function () {
-    alert("Noy Yet Implemented");
+    alert("Not Yet Implemented");
   });
 }
 
@@ -581,12 +599,13 @@ function load_agent_form(resource_row, stonith) {
   resource_name = $(resource_row).attr("nodeID");
   var url;
   var form;
+  var data = {resource: resource_name};
   if (stonith) {
     form = $("#stonith_agent_form");
-    url = '/fencedevices/fencedeviceform/' + resource_name;
+    url = '/managec/' + Pcs.cluster_name + '/fence_device_form';
   } else {
     form = $("#resource_agent_form");
-    url = '/resources/resourceform/' + resource_name;
+    url = '/managec/' + Pcs.cluster_name + '/resource_form';
   }
 
   form.empty();
@@ -594,6 +613,7 @@ function load_agent_form(resource_row, stonith) {
   $.ajax({
     type: 'GET',
     url: url,
+    data: data,
     timeout: pcs_timeout,
     success: function (data) {
       form.html(data);
@@ -650,7 +670,7 @@ function remove_resource(ids) {
 
   $.ajax({
     type: 'POST',
-    url: '/resourcerm',
+    url: get_cluster_remote_url() + 'remove_resource',
     data: data,
     timeout: pcs_timeout,
     success: function () {
@@ -673,4 +693,14 @@ function remove_constraint(id) {
       Pcs.resourcesController.remove_constraint(id);
     }
   });
+}
+
+// Pull currently managed cluster name out of URL
+function get_cluster_name() {
+  cluster_name = location.pathname.match("/managec/(.*)/")[1];
+  return cluster_name;
+}
+
+function get_cluster_remote_url() {
+    return '/managec/' + Pcs.cluster_name + "/";
 }

@@ -65,7 +65,7 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
       resource_list.each {|r|
 	r.options = resources_attr_map[r.id]
       }
-    rescue ParseException
+    rescue ParseException => pe
       $logger.info("ERROR: Parse Exception parsing cibadmin -Q")
     end
   end
@@ -289,5 +289,9 @@ class ResourceAgent
 
   def type
     name.gsub(/.*:/,"")
+  end
+
+  def to_json(options = {})
+    JSON.generate({"type" => type})
   end
 end

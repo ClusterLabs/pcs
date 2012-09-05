@@ -7,6 +7,6 @@ class Cluster
   end
 
   def ui_address
-    return "/manage/" + nodes[0] + "/nodes"
+    return "/managec/" + @name + "/main"
   end
 end

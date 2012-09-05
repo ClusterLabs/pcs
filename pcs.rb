@@ -44,6 +44,45 @@ def get_node_token(node)
   return retval, out
 end
 
+# Gets all of the nodes specified in the pcs config file for the cluster
+def get_cluster_nodes(cluster_name)
+  pcs_config = PCSConfig.new
+  clusters = pcs_config.clusters
+  cluster = nil
+  for c in clusters
+    pp c.nodes
+    pp c.name
+    pp cluster_name
+    if c.name == cluster_name
+      cluster = c
+      break
+    end
+  end
+
+  if cluster.nodes != nil
+    nodes = cluster.nodes
+  else
+    print "Error: no nodes found for #{cluster}"
+    nodes = []
+  end
+  return nodes
+end
+
+def send_cluster_request_with_token(cluster_name, request, post=false, data={}, remote=true)
+  out = ""
+  nodes = get_cluster_nodes(cluster_name)
+
+  for node in nodes
+    out = send_request_with_token(node,request, post=false, data, remote=true)
+    if out != '{"noresponse":true}'
+      puts "OUT"
+      puts request
+      break
+    end
+  end
+  return out
+end
+
 def send_request_with_token(node,request, post=false, data={}, remote=true)
   start = Time.now
   begin
@@ -55,20 +94,25 @@ def send_request_with_token(node,request, post=false, data={}, remote=true)
       uri = URI.parse("http://#{node}:2222/" + request)
     end
 
+    p "Sending Request: " + uri.to_s
     if post
       req = Net::HTTP::Post.new(uri.path)
       req.set_form_data(data)
     else
       req = Net::HTTP::Get.new(uri.path)
+      req.set_form_data(data)
     end
     $logger.info("Request: " + uri.to_s + " (" + (Time.now-start).to_s + "s)")
     req.add_field("Cookie","token="+token)
     res = Net::HTTP.new(uri.host, uri.port).start do |http|
+      http.read_timeout = 5
       http.request(req)
     end
     output = res
     return output.body
-  rescue
+  rescue Exception => e
+    puts "EXCEPTION"
+    puts e
     puts "No response from: " + node
     return '{"noresponse":true}'
   end
@@ -121,6 +165,24 @@ def get_nodes()
   end
 
   [online, offline]
+end
+
+def get_resource_agents_avail()
+  ra = JSON.parse(send_cluster_request_with_token(params[:cluster], 'get_avail_resource_agents'))
+  if (ra["noresponse"] == true)
+    return {}
+  else
+    return ra
+  end
+end
+
+def get_stonith_agents_avail()
+  sa = JSON.parse(send_cluster_request_with_token(params[:cluster], 'get_avail_fence_agents'))
+  if (sa["noresponse"] == true)
+    return {}
+  else
+    return sa
+  end
 end
 
 def get_cluster_version()

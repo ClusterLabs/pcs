@@ -51,4 +51,8 @@ class FenceAgent
   def type
     name
   end
+
+  def to_json(options = {})
+    JSON.generate({:type => name})
+  end
 end
