@@ -154,10 +154,10 @@ def corosync_setup(argv,returnConfig=False):
     if len(argv) < 2:
         usage.cluster()
         exit(1)
-    if not returnConfig and "--start" in utils.pcs_options_hash and not "--local" in utils.pcs_options_hash:
+    if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options:
         sync_start(argv)
         return
-    elif not returnConfig and not "--local" in utils.pcs_options_hash:
+    elif not returnConfig and not "--local" in utils.pcs_options:
         sync(argv)
         return
     else:
@@ -189,7 +189,7 @@ def corosync_setup(argv,returnConfig=False):
         return corosync_config
 
     utils.setCorosyncConf(corosync_config)
-    if "--start" in utils.pcs_options_hash:
+    if "--start" in utils.pcs_options:
         start_cluster([])
 
 def get_local_network():
