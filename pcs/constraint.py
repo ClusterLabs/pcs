@@ -18,19 +18,20 @@ def constraint_cmd(argv):
         else:
             sub_cmd2 = argv.pop(0)
 
-        if (sub_cmd2 == "force"):
-            location_force(argv)
-        elif (sub_cmd2 == "forcerm"):
-            location_force(argv,True)
         elif (sub_cmd2 == "add"):
             location_add(argv)
         elif (sub_cmd2 == "rm"):
             location_add(argv,True)
         elif (sub_cmd2 == "show"):
             location_show(argv)
+        elif len(argv) >= 2:
+            location_prefer([sub_cmd2] + argv)
         else:
             usage.constraint()
+            print argv
             sys.exit(1)
+    elif (sub_cmd == "start"):
+        order_start(argv)
     elif (sub_cmd == "order"):
         if (len(argv) == 0):
             sub_cmd2 = "show"
@@ -233,7 +234,18 @@ def order_rm(argv):
     else:
         print "No matching resources found in ordering list"
 
+def order_start(argv):
+    if len(argv) != 3 and len(argv) != 4:
+        usage.constraint()
+        sys.exit(1)
 
+    resource1 = argv.pop(0)
+    resource2 = argv.pop(1)
+    if len(argv) == 2:
+        score = argv.pop(1)
+    else:
+        score = "INFINITY"
+    order_add([resource1, resource2, score])
 
 def order_add(argv,returnElementOnly=False):
     if len(argv) != 3 and len(argv) != 4:
@@ -266,31 +278,6 @@ def order_add(argv,returnElementOnly=False):
             print output
     else:
         return element.toxml()
-
-def location_force(argv, remove=False):
-    if len(argv) != 2 and len(argv) != 3:
-        usage.constraint()
-        sys.exit(1)
-
-    on = True
-
-    rsc = argv[0]
-    if len(argv) == 2:
-        node = argv[1]
-    else:
-        if (argv[1] != "on") and (argv[1] != "off"):
-            usage.constraint()
-            sys.exit(1)
-        if (argv[1] == "off"):
-            on = False
-        node = argv[2]
-
-    loc_id = "loc_" + node + "_" + rsc
-    if (on == True):
-        location_add([loc_id,rsc,node,"INFINITY"],remove)
-    else:
-        location_add([loc_id,rsc,node,"-INFINITY"],remove)
-
 
 # Show the currently configured location constraints by node or resource
 def location_show(argv):
@@ -388,14 +375,14 @@ def location_show(argv):
                     continue
             print "  Resource: " + rsc
             if (rsc in rschashon):
-                print "    Enabled on:",
                 for options in rschashon[rsc]:
+                    print "    Enabled on:",
                     print options[1],
                     if options[2] != "INFINITY" or showDetail:
-                        print "("+options[2]+")",
+                        print "(score:"+options[2]+")",
                     if showDetail:
                         print "(id:"+options[0]+")",
-                print ""
+                    print
             if (rsc in rschashoff):
                 print "    Disabled on:",
                 for options in rschashoff[rsc]:
@@ -406,6 +393,37 @@ def location_show(argv):
                         print "(id:"+options[0]+")",
                 print ""
 
+def location_prefer(argv):
+    rsc = argv.pop(0)
+    prefer_option = argv.pop(0)
+
+    if prefer_option == "prefers":
+        prefer = True
+    elif prefer_option == "avoids":
+        prefer = False
+    else:
+        usage.constraint()
+        sys.exit(1)
+
+
+    for nodeconf in argv:
+        nodeconf_a = nodeconf.split("=",1)
+        if len(nodeconf_a) == 1:
+            node = nodeconf_a[0]
+            if prefer:
+                score = "INFINITY"
+            else:
+                score = "-INFINITY"
+        else:
+            score = nodeconf_a[1]
+            if not prefer:
+                if score[0] == "-":
+                    score = score[1:]
+                else:
+                    score = "-" + score
+            node = nodeconf_a[0]
+        location_add(["location-" +rsc+"-"+node+"-"+score,rsc,node,score])
+        
 
 def location_add(argv,rm=False):
     if len(argv) != 4 and (rm == False or len(argv) < 1): 
@@ -471,12 +489,16 @@ def getCurrentConstraints():
     return (dom, constraintsElement)
 
 def constraint_rm(argv):
-    if len(argv) == 1:
-        c_id = argv[0]
-    else:
+    if len(argv) < 1:
         usage.constraint()
         sys.exit(1)
 
+    if len(argv) != 1:
+        for arg in argv:
+            constraint_rm([arg])
+        return
+    else:
+        c_id = argv.pop(0)
 
     elementFound = False
     (dom,constraintsElement) = getCurrentConstraints()

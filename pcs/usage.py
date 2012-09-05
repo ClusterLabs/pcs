@@ -269,26 +269,20 @@ Commands:
     all
         List all current location, order and colocation constraints with ids
 
+    location <rsc> prefers <node[=score]>...
+        Create a location constraint on for a resource to prefer the specified
+        node and score (default score: INFINITY)
+
+    location <rsc> avoids <node[=score]>...
+        Create a location constraint on for a resource to avoid the specified
+        node and score (default score: INFINITY)
+
     location [show resources|nodes [specific nodes|resources]]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
         is specified location constraints are displayed per node.  If specific
         nodes or resources are specified then we only show information about
         them
-
-    location force <resource name> [on] <node>
-        Force the resource named to always run on the node specified
-
-    location force <resource name> off <node>
-        Force the resource named to never run on the specified node
-
-    location forcerm <resource name> [on] <node>
-        Remove the constraint forcing the resource named to always run on the
-        node specified
-
-    location forcerm <resource name> off <node>
-        Remove the constraint forcing the resource named to never run on the
-        node specified
 
     location add <id> <resource name> <node> <score>
         Add a location constraint with the appropriate id, resource name,
@@ -297,6 +291,10 @@ Commands:
     location rm <id> [<resource name> <node> <score>]
         Remove a location constraint with the appropriate id, resource name,
           node name and score. (For more advanced pacemaker usage)
+
+    start <first rsc> then <second rsc> [score]
+        Create an ordering constraint to start the first resource before the
+        second with an optional score (default score: INFINITY)
 
     order [show [all]]
         List all current ordering constraints (if 'all' is specified show
@@ -329,8 +327,8 @@ Commands:
     colocation rm <source resource> <target resource>
         Remove colocation constraints with <source resource>
 
-    rm [constraint id]
-        Remove constraint with the specified id
+    rm [constraint id]...
+        Remove constraint(s) with the specified id(s)
 """
 
 def status():
