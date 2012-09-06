@@ -15,12 +15,26 @@ filename = ""
 def main(argv):
     global filename, usefile
     utils.pcs_options = {}
+    modified_argv = []
+    real_argv = []
     try:
-        pcs_options, argv = getopt.gnu_getopt(argv, "hf:p", ["local","start","all"])
+        # pull out negative number arguments and add them back after getopt
+        for arg in argv:
+            if arg[0] == "-":
+                if arg[1:].isdigit():
+                    real_argv.append(arg)
+                else:
+                    modified_argv.append(arg)
+            else:
+                real_argv.append(arg)
+                modified_argv.append(arg)
+
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p", ["local","start","all"])
     except getopt.GetoptError, err:
+        print err
         usage.main()
         sys.exit(1)
-
+    argv = real_argv
     for o, a in pcs_options:
         utils.pcs_options[o] = a
         if o == "-h":
