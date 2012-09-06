@@ -248,17 +248,30 @@ def order_start(argv):
     order_add([resource1, resource2, score])
 
 def order_add(argv,returnElementOnly=False):
-    if len(argv) != 3 and len(argv) != 4:
+    if len(argv) < 3:
         usage.constraint()
         sys.exit(1)
 
     resource1 = argv.pop(0)
     resource2 = argv.pop(0)
     score = argv.pop(0)
-    sym = "true" if (len(argv) == 0 or argv.pop(0) != "nonsymmetrical") else "false"
+    sym = "true" if (len(argv) == 0 or argv[0] != "nonsymmetrical") else "false"
     order_id = "order-" + resource1 + "-" + resource2 + "-" + score
 
-    print "Adding " + resource1 + " " + resource2 + " score: " + score + " Symmetrical: "+sym
+    order_options = []
+    if len(argv) != 0:
+        if argv[0] == "nonsymmetrical" or argv[0] == "symmetrical":
+            argv.pop(0)
+        for arg in argv:
+            if arg.count("=") == 1:
+                mysplit = arg.split("=")
+                order_options.append((mysplit[0],mysplit[1]))
+
+    if len(argv) != 0:
+        options = " (Options: " + " ".join(argv)+")"
+    else:
+        options = ""
+    print "Adding " + resource1 + " " + resource2 + " (score:" + score + ") (Symmetrical:"+sym+")" + options
 
     (dom,constraintsElement) = getCurrentConstraints()
     element = dom.createElement("rsc_order")
@@ -266,6 +279,8 @@ def order_add(argv,returnElementOnly=False):
     element.setAttribute("first",resource1)
     element.setAttribute("then",resource2)
     element.setAttribute("score",score)
+    for order_opt in order_options:
+        element.setAttribute(order_opt[0], order_opt[1])
     if (sym == "false"):
         element.setAttribute("symmetrical", "false")
     constraintsElement.appendChild(element)

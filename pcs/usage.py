@@ -306,11 +306,13 @@ Commands:
     order rm <resource1> [resourceN]...
         Remove resource from any order list
 
-    order add <resource1> <resource2> <score> [symmetrical|nonsymmetrical]
+    order add <rsc1> <rsc2> <score> [symmetrical|nonsymmetrical] [options]...
         Specify that resource1 should start before rsource2 with the specified
         score and specify if resources will be stopped in the reverse order
         they were started (symmetrical) or not (nonsymmetrical).  Default is
         symmetrical.  (For more advance pacemaker usage)
+
+        Options are specified by option_name=option_value
 
     colocation [show [all]]
         List all current colocation constraints (if 'all' is specified show
