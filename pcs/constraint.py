@@ -30,8 +30,6 @@ def constraint_cmd(argv):
             usage.constraint()
             print argv
             sys.exit(1)
-    elif (sub_cmd == "start"):
-        order_start(argv)
     elif (sub_cmd == "order"):
         if (len(argv) == 0):
             sub_cmd2 = "show"
@@ -47,8 +45,7 @@ def constraint_cmd(argv):
         elif (sub_cmd2 == "show"):
             order_show(argv)
         else:
-            usage.constraint()
-            sys.exit(1)
+            order_start([sub_cmd2] + argv)
     elif (sub_cmd == "colocation"):
         if (len(argv) == 0):
             sub_cmd2 = "show"
@@ -235,17 +232,41 @@ def order_rm(argv):
         print "No matching resources found in ordering list"
 
 def order_start(argv):
-    if len(argv) != 3 and len(argv) != 4:
+    if len(argv) < 3:
         usage.constraint()
         sys.exit(1)
 
+    first_action = "start"
+    then_action = "start"
+    score = "INFINITY"
+    action = argv[0]
+    if action == "start" or action == "promote" or action == "stop" or action == "demote":
+            first_action = action
+            argv.pop(0)
+
     resource1 = argv.pop(0)
-    resource2 = argv.pop(1)
-    if len(argv) == 2:
-        score = argv.pop(1)
-    else:
-        score = "INFINITY"
-    order_add([resource1, resource2, score])
+    if argv.pop(0) != "then":
+        usage.constraint()
+        sys.exit(1)
+    
+    if len(argv) == 0:
+        usage.constraint()
+        sys.exit(1)
+
+    action = argv[0]
+    if action == "start" or action == "promote" or action == "stop" or action == "demote":
+            then_action = action
+            argv.pop(0)
+
+    if len(argv) == 0:
+        usage.constraint()
+        sys.exit(1)
+    resource2 = argv.pop(0)
+
+    if len(argv) != 0:
+        score = argv.pop(0)
+
+    order_add([resource1, resource2, score, "first-action="+first_action, "then-action="+then_action])
 
 def order_add(argv,returnElementOnly=False):
     if len(argv) < 3:
@@ -291,6 +312,8 @@ def order_add(argv,returnElementOnly=False):
         output,retval = utils.run(args)
         if output != "":
             print output
+        if retval != 0:
+            sys.exit(1)
     else:
         return element.toxml()
 

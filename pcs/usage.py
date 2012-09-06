@@ -292,13 +292,14 @@ Commands:
         Remove a location constraint with the appropriate id, resource name,
           node name and score. (For more advanced pacemaker usage)
 
-    start <first rsc> then <second rsc> [score]
-        Create an ordering constraint to start the first resource before the
-        second with an optional score (default score: INFINITY)
-
     order [show [all]]
         List all current ordering constraints (if 'all' is specified show
         the internal constraint id's as well).
+
+    order [first action] <first rsc> then [then action] <then rsc> [score]
+        Add an ordering constraint specifying actions (start,stop,promote,
+        demote) and if no action is specified the default action will be
+        start.
 
     order list <resource1> <resource2> [resourceN]...
         Require that resource be started in the order specified
@@ -307,7 +308,7 @@ Commands:
         Remove resource from any order list
 
     order add <rsc1> <rsc2> <score> [symmetrical|nonsymmetrical] [options]...
-        Specify that resource1 should start before rsource2 with the specified
+        Specify that rsc1 should start before rsc2 with the specified
         score and specify if resources will be stopped in the reverse order
         they were started (symmetrical) or not (nonsymmetrical).  Default is
         symmetrical.  (For more advance pacemaker usage)
