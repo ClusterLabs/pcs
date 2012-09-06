@@ -9,12 +9,7 @@ from xml.dom.minidom import parseString
 
 def status_cmd(argv):
     if len(argv) == 0:
-        cluster_status([])
-        print
-        print "Resources:"
-        resource.resource_show([])
-        print
-        nodes_status([])
+        full_status()
         sys.exit(0)
 
     sub_cmd = argv.pop(0)
@@ -41,6 +36,15 @@ def status_cmd(argv):
     else:
         usage.status()
         sys.exit(1)
+
+def full_status():
+    (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r"])
+
+    if (retval != 0):
+        print "Error running crm_mon, is pacemaker running?"
+        sys.exit(1)
+
+    print output
 
 def actions_status(argv):
     print "Not Yet Implemented"
