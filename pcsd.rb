@@ -160,13 +160,6 @@ post '/configure/?:page?' do
   redirect params[:splat][0]
 end
 
-post '/resource_group_add' do
-  rg = params["resource_group"]
-  resources = params["resources"]
-  run_cmd(PCS, "resource", "group", "add", rg, *(resources.split(" ")))
-  redirect "/resources/"
-end
-
 post '/fencerm' do
   params.each { |k,v|
     if k.index("resid-") == 0
@@ -374,74 +367,6 @@ post '/resource_cmd/rm_constraint' do
   end
 end
 
-post '/resources_cmd/add_constraint' do
-  puts ""
-  puts "Add Constraint..."
-  puts ""
-  pp params
-  if params[:location_constraint]
-    params.each {|k,v|
-      if k.start_with?("deny-") and v == "on"
-	score = "-INFINITY"
-	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
-      elsif k.start_with?("allow-") and v == "on"
-	score = "INFINITY"
-	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
-      elsif k.start_with?("score-") and v != ""
-	score = v
-	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
-      end
-    }
-  elsif params[:order_constraint]
-    params.each {|k,v|
-      if k.start_with?("order-") and v != ""
-	if v.start_with?("before-")
-	  score = "INFINITY"
-	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
-	    sym = true
-	  else
-	    sym = false
-	  end
-	  add_order_constraint(v.split(/-/,2)[1], params[:cur_resource], score, sym)
-	elsif v.start_with?("after-")
-	  score = "INFINITY"
-	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
-	    sym = true
-	  else
-	    sym = false
-	  end
-	  add_order_constraint(params[:cur_resource], v.split(/-/,2)[1], score, sym)
-	end
-      end
-    }
-  elsif params[:colocation_constraint]
-    params.each {|k,v|
-      if k.start_with?("order-") and v != ""
-	puts "ORDER!"
-	if v.start_with?("together-")
-	  puts "TOGETHER!"
-	  if params["score-" + v.split(/-/,2)[1]] != nil
-	    score = params["score-" + v.split(/-/,2)[1]]
-	  else
-	    score = "INFINITY"
-	  end
-	  add_colocation_constraint(params[:cur_resource], v.split(/-/,2)[1], score)
-	elsif v.start_with?("apart-")
-	  if params["score-" + v.split(/-/,2)[1]] != nil
-	    score = params["score-" + v.split(/-/,2)[1]]
-	  else
-	    score = "-INFINITY"
-	  end
-	  add_colocation_constraint(params[:cur_resource], v.split(/-/,2)[1], score)
-	end
-      end
-    }
-
-  end
-
-  redirect '/resources/' + params[:cur_resource]
-end
-
 get '/' do
   print "Redirecting...\n"
   call(env.merge("PATH_INFO" => '/manage'))
@@ -458,6 +383,7 @@ end
 get '*' do
   print params[:splat]
   print "2Redirecting...\n"
+  return "Bad URL"
   call(env.merge("PATH_INFO" => '/nodes'))
 end
 

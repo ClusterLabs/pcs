@@ -85,7 +85,7 @@ function select_menu(menu, item, initial) {
 function create_group() {
   var num_nodes = 0;
   var node_names = "";
-  $("#node_list :checked").parent().parent().each(function (index,element) {
+  $("#resource_list :checked").parent().parent().each(function (index,element) {
     num_nodes++;
     node_names += element.getAttribute("nodeID") + " "
   });
@@ -98,7 +98,21 @@ function create_group() {
       modal: true, resizable: false, 
       buttons: {
 	"Create Group": function() {
-	  $('#add_group > form').submit();
+	  var data = $('#add_group > form').serialize();
+	  var url = get_cluster_remote_url() + "add_group";
+	  $.ajax({
+	    type: "POST",
+	    url: url,
+	    data: data,
+	    success: function() {
+	      Pcs.update();
+	      $("#add_group").dialog("close");
+	    },
+	    error: function() {
+	      alert("Unable to create group");
+	      $("#add_group").dialog("close");
+	    }
+	  });
 	},
       Cancel: function() {
 	$(this).dialog("close");
@@ -678,6 +692,24 @@ function remove_resource(ids) {
     },
     error: function (xhr, status, error) {
       alert("Unable to remove resources: " + res + " ("+error+")");
+    }
+  });
+}
+
+function add_constraint(form) {
+  var data = form.serialize();
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_constraint',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+      Pcs.update();
+      $("#add_constraint").dialog("close");
+    },
+    error: function (xhr, status, error) {
+      alert("Unable to add constraints: ("+error+")");
+      $("#add_constraint").dialog("close");
     }
   });
 }

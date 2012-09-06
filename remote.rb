@@ -61,6 +61,10 @@ def remote(params)
     return get_avail_fence_agents(params)
   when "remove_resource"
     return remove_resource(params)
+  when "add_constraint"
+    return add_constraint(params)
+  when "add_group"
+    return add_group(params)
   else
     return [404, "Unknown Request"]
   end
@@ -231,6 +235,8 @@ def node_status(params)
   stonith_resource_list.each {|sr| sr.stonith = true}
   resource_list = resource_list + stonith_resource_list
   out_rl = []
+  print "Resource List:"
+  pp resource_list
   resource_list.each {|r|
     out_nodes = []
     oConstraints = []
@@ -378,6 +384,7 @@ end
 
 # Creates resource if params[:resource_id] is not set
 def update_resource (params)
+  p "update_resource"
   pp params
   param_line = getParamLine(params)
   if not params[:resource_id]
@@ -406,7 +413,7 @@ def update_resource (params)
   if params[:resource_group]
     if params[:resource_group] == ""
       if params[:_orig_resource_group] != ""
-	run_cmd(PCS, "resource", "group", "remove_resource", params[:_orig_resource_group], params[:resource])
+	run_cmd(PCS, "resource", "group", "remove_resource", params[:_orig_resource_group], params[:resource_id])
       end
     else
       run_cmd(PCS, "resource", "group", "add", params[:resource_group], params[:resource])
@@ -414,10 +421,10 @@ def update_resource (params)
   end
 
   if params[:resource_clone] and params[:_orig_resource_clone] == "false"
-    run_cmd(PCS, "resource", "clone", "create", params[:resource])
+    run_cmd(PCS, "resource", "clone", "create", params[:resource_id])
   end
   if params[:_orig_resource_clone] == "true" and not params[:resource_clone]
-    run_cmd(PCS, "resource", "clone", "remove", params[:resource].sub(/:.*/,''))
+    run_cmd(PCS, "resource", "unclone", params[:resource_id].sub(/:.*/,''))
   end
 
   redirect "/resources/#{params[:resource]}"
@@ -473,4 +480,71 @@ def remove_resource (params)
   else
     return [500, errors]
   end
+end
+
+def add_constraint(params)
+  if params[:location_constraint]
+    params.each {|k,v|
+      if k.start_with?("deny-") and v == "on"
+	score = "-INFINITY"
+	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
+      elsif k.start_with?("allow-") and v == "on"
+	score = "INFINITY"
+	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
+      elsif k.start_with?("score-") and v != ""
+	score = v
+	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
+      end
+    }
+  elsif params[:order_constraint]
+    params.each {|k,v|
+      if k.start_with?("order-") and v != ""
+	if v.start_with?("before-")
+	  score = "INFINITY"
+	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
+	    sym = true
+	  else
+	    sym = false
+	  end
+	  add_order_constraint(v.split(/-/,2)[1], params[:cur_resource], score, sym)
+	elsif v.start_with?("after-")
+	  score = "INFINITY"
+	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
+	    sym = true
+	  else
+	    sym = false
+	  end
+	  add_order_constraint(params[:cur_resource], v.split(/-/,2)[1], score, sym)
+	end
+      end
+    }
+  elsif params[:colocation_constraint]
+    params.each {|k,v|
+      if k.start_with?("order-") and v != ""
+	puts "ORDER!"
+	if v.start_with?("together-")
+	  puts "TOGETHER!"
+	  if params["score-" + v.split(/-/,2)[1]] != nil
+	    score = params["score-" + v.split(/-/,2)[1]]
+	  else
+	    score = "INFINITY"
+	  end
+	  add_colocation_constraint(params[:cur_resource], v.split(/-/,2)[1], score)
+	elsif v.start_with?("apart-")
+	  if params["score-" + v.split(/-/,2)[1]] != nil
+	    score = params["score-" + v.split(/-/,2)[1]]
+	  else
+	    score = "-INFINITY"
+	  end
+	  add_colocation_constraint(params[:cur_resource], v.split(/-/,2)[1], score)
+	end
+      end
+    }
+  end
+end
+
+def add_group(params)
+  rg = params["resource_group"]
+  resources = params["resources"]
+  run_cmd(PCS, "resource", "group", "add", rg, *(resources.split(" ")))
 end

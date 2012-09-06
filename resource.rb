@@ -27,9 +27,9 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
   end
   doc.elements.each('crm_mon/resources/clone/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
-      get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
+      get_fence_devices && resource_list.push(Resource.new(e))
     else
-      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"],true))
+      !get_fence_devices && resource_list.push(Resource.new(e,nil,true))
     end
   end
   doc.elements.each('crm_mon/resources/clone/group/resource') do |e|
@@ -65,7 +65,7 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
       resource_list.each {|r|
 	r.options = resources_attr_map[r.id]
       }
-    rescue ParseException => pe
+    rescue REXML::ParseException
       $logger.info("ERROR: Parse Exception parsing cibadmin -Q")
     end
   end

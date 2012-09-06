@@ -67,7 +67,7 @@
 	</tr>
       <% } %>
       <tr class="stop"><td class="center" style="padding-top:20px;" colspan=2>
-	  <input type=submit class="text_field" onclick="create_resource($(this).parents('form'),<%=@existing_resource ? 'true':'false'%>); return false;" value="<%= @existing_resource ? "AApply Changes" : "Create Resource" %>">
+	  <input type=submit class="text_field" onclick="create_resource($(this).parents('form'),<%=@existing_resource ? 'true':'false'%>); return false;" value="<%= @existing_resource ? "Apply Changes" : "Create Resource" %>">
 	</td>
       </tr>
     </table>
