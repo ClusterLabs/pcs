@@ -19,6 +19,7 @@ def main(argv):
     real_argv = []
     try:
         # pull out negative number arguments and add them back after getopt
+        prev_arg = ""
         for arg in argv:
             if arg[0] == "-":
                 if arg[1:].isdigit():
@@ -26,8 +27,10 @@ def main(argv):
                 else:
                     modified_argv.append(arg)
             else:
-                real_argv.append(arg)
+                if prev_arg != "-f":
+                    real_argv.append(arg)
                 modified_argv.append(arg)
+            prev_arg = arg
 
         pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p", ["local","start","all"])
     except getopt.GetoptError, err:
