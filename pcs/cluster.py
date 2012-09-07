@@ -113,8 +113,16 @@ def cluster_token(argv):
         sys.exit(1)
 
 def auth_nodes(nodes):
-    username = None
-    password = None
+    if "-u" in utils.pcs_options:
+        username = utils.pcs_options["-u"]
+    else:
+        username = None
+
+    if "-p" in utils.pcs_options:
+        password = utils.pcs_options["-p"]
+    else:
+        password = None
+
     for node in nodes:
         status = utils.checkStatus(node)
         if status[0] == 0:
@@ -122,6 +130,7 @@ def auth_nodes(nodes):
         elif status[0] == 3:
             if username == None:
                 username = raw_input("Username: ")
+            if password == None:
                 password = getpass.getpass("Password: ")
             utils.updateToken(node,username,password)
             print "%s: Authorized" % (node)

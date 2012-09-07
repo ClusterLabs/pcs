@@ -165,7 +165,7 @@ Commands:
         Get current status of pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified
 
-    auth [node] [...]
+    auth [node] [...] [-u username] [-p password]
         Authenticate pcs to pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified (authorization
         tokens are stored in ~/.pcs/token)

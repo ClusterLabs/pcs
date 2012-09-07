@@ -27,12 +27,12 @@ def main(argv):
                 else:
                     modified_argv.append(arg)
             else:
-                if prev_arg != "-f":
+                if prev_arg != "-f" or prev_arg != "-p" or prev_arg != "-u":
                     real_argv.append(arg)
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p", ["local","start","all"])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all"])
     except getopt.GetoptError, err:
         print err
         usage.main()
