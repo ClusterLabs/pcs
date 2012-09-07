@@ -356,6 +356,8 @@ def cluster_node(argv):
             sys.exit(1)
     else:
         nodesRemoved = False
+        output, retval = utils.run(["crm_node", "--force","-R", node])
+
         for my_node in utils.getNodesFromCorosyncConf():
             retval, output = utils.removeLocalNode(my_node,node)
             if retval != 0:
