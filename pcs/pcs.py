@@ -27,7 +27,7 @@ def main(argv):
                 else:
                     modified_argv.append(arg)
             else:
-                if prev_arg != "-f" or prev_arg != "-p" or prev_arg != "-u":
+                if prev_arg != "-f" and prev_arg != "-p" and prev_arg != "-u":
                     real_argv.append(arg)
                 modified_argv.append(arg)
             prev_arg = arg
