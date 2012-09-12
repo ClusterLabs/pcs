@@ -300,10 +300,13 @@ Commands:
         List all current ordering constraints (if 'all' is specified show
         the internal constraint id's as well).
 
-    order [first action] <first rsc> then [then action] <then rsc> [score]
+    order [action] <first rsc> then [action] <then rsc> [options]
         Add an ordering constraint specifying actions (start,stop,promote,
         demote) and if no action is specified the default action will be
         start.
+
+        Available options are kind=Optional/Mandatory/Serialize and
+        symmetrical=true/false
 
     order list <resource1> <resource2> [resourceN]...
         Require that resource be started in the order specified
@@ -311,11 +314,11 @@ Commands:
     order rm <resource1> [resourceN]...
         Remove resource from any order list
 
-    order add <rsc1> <rsc2> <score> [symmetrical|nonsymmetrical] [options]...
-        Specify that rsc1 should start before rsc2 with the specified
-        score and specify if resources will be stopped in the reverse order
-        they were started (symmetrical) or not (nonsymmetrical).  Default is
-        symmetrical.  (For more advance pacemaker usage)
+    order add <rsc1> <rsc2> [symmetrical|nonsymmetrical] [options]...
+        Specify that rsc1 should start before rsc2 and specify if
+        resources will be stopped in the reverse order they were started
+        (symmetrical) or not (nonsymmetrical).  Default is symmetrical.
+        (For more advance pacemaker usage)
 
         Options are specified by option_name=option_value
 

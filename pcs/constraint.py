@@ -203,11 +203,16 @@ def order_show(argv):
             then_action = then_action + " "
         oc_id = ord_loc.getAttribute("id")
         oc_score = ord_loc.getAttribute("score")
+        oc_kind = ord_loc.getAttribute("kind")
         oc_sym = ""
         oc_id_out = ""
         if ord_loc.getAttribute("symmetrical") == "false":
             oc_sym = " (non-symmetrical)"
-        score_text = "" if (oc_score == "INFINITY") and not showDetail else " (" + oc_score + ")"
+        if oc_kind != "":
+            oc_score = oc_kind
+        if oc_kind == "" and oc_score == "":
+            oc_score = "Mandatory"
+        score_text = "" if (oc_score == "INFINITY" or oc_score == "Mandatory") and not showDetail else " (" + oc_score + ")"
         if showDetail:
             oc_id_out = " (id:"+oc_id+")"
         print "  " + first_action + oc_resource1 + " then " + then_action + oc_resource2 + score_text + oc_sym + oc_id_out
@@ -246,7 +251,6 @@ def order_start(argv):
 
     first_action = "start"
     then_action = "start"
-    score = "INFINITY"
     action = argv[0]
     if action == "start" or action == "promote" or action == "stop" or action == "demote":
             first_action = action
@@ -271,21 +275,22 @@ def order_start(argv):
         sys.exit(1)
     resource2 = argv.pop(0)
 
+    order_options = []
     if len(argv) != 0:
-        score = argv.pop(0)
+        order_options = order_options + argv[:]
 
-    order_add([resource1, resource2, score, "first-action="+first_action, "then-action="+then_action])
+    order_options.append("first-action="+first_action)
+    order_options.append("then-action="+then_action)
+    order_add([resource1, resource2] + order_options)
 
 def order_add(argv,returnElementOnly=False):
-    if len(argv) < 3:
+    if len(argv) < 2:
         usage.constraint()
         sys.exit(1)
 
     resource1 = argv.pop(0)
     resource2 = argv.pop(0)
-    score = argv.pop(0)
     sym = "true" if (len(argv) == 0 or argv[0] != "nonsymmetrical") else "false"
-    order_id = "order-" + resource1 + "-" + resource2 + "-" + score
 
     order_options = []
     if len(argv) != 0:
@@ -300,14 +305,31 @@ def order_add(argv,returnElementOnly=False):
         options = " (Options: " + " ".join(argv)+")"
     else:
         options = ""
-    print "Adding " + resource1 + " " + resource2 + " (score:" + score + ") (Symmetrical:"+sym+")" + options
+
+    scorekind = "kind: Mandatory"
+    id_suffix = "mandatory"
+    for opt in order_options:
+        if opt[0] == "score":
+            scorekind = "score: " + opt[1]
+            id_suffix = opt[1]
+            break
+        if opt[0] == "kind":
+            scorekind = "kind: " + opt[1]
+            id_suffix = opt[1]
+            break
+
+    print "Adding " + resource1 + " " + resource2 + " ("+scorekind+")" + options
+
+    order_id = "order-" + resource1 + "-" + resource2 + "-" + id_suffix
+    if utils.does_id_exist(utils.get_cib_dom(), order_id):
+        print "Error: Unable to create constraint, similar constraint already exists: %s" % order_id
+        sys.exit(1)
 
     (dom,constraintsElement) = getCurrentConstraints()
     element = dom.createElement("rsc_order")
     element.setAttribute("id",order_id)
     element.setAttribute("first",resource1)
     element.setAttribute("then",resource2)
-    element.setAttribute("score",score)
     for order_opt in order_options:
         element.setAttribute(order_opt[0], order_opt[1])
     if (sym == "false"):
@@ -316,7 +338,7 @@ def order_add(argv,returnElementOnly=False):
 
     if returnElementOnly == False:
         xml_constraint_string = constraintsElement.toxml()
-        args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
+        args = ["cibadmin", "-o", "constraints", "-R", "--xml-text", xml_constraint_string]
         output,retval = utils.run(args)
         if output != "":
             print output
