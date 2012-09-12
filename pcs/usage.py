@@ -76,14 +76,14 @@ Commands:
     group list
         List all currently configured resource groups
 
-    clone create <resource id | group name> [clone options]...
+    clone <resource id | group name> [clone options]...
         Setup up the specified resource or group as a clone
 
     unclone <resource id | group name>
         Remove the clone which contains the specified group or resource (the
         resource or group will not be removed)
 
-    master create <master/slave name> <group or resource> [options]
+    master <master/slave name> <group or resource> [options]
         Configure a resource or group as a multi-state (master/slave) resource
 
     manage <resource 1> [resource 2] ...

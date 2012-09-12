@@ -501,12 +501,7 @@ def resource_clone(argv):
         usage.resource()
         sys.exit(1)
 
-    sub_cmd = argv.pop(0)
-    if sub_cmd == "create":
-        resource_clone_create(argv)
-    else:
-        usage.resource()
-        sys.exit(1)
+    resource_clone_create(argv)
 
 def resource_clone_create(argv, update = False):
     name = argv.pop(0)
@@ -595,14 +590,7 @@ def resource_master(argv):
         usage.resource()
         sys.exit(1)
 
-    sub_cmd = argv.pop(0)
-    if sub_cmd == "create":
-        resource_master_create(argv)
-    elif sub_cmd == "remove":
-        resource_master_remove(argv)
-    else:
-        usage.resource()
-        sys.exit(1)
+    resource_master_create(argv)
 
 def resource_master_create(argv, update=False):
     if (len(argv) < 2 and not update) or (len(argv) < 1 and update):
