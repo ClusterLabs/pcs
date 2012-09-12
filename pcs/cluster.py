@@ -60,7 +60,7 @@ def cluster_cmd(argv):
         else:
             disable_cluster(argv)
     elif (sub_cmd == "cib"):
-        get_cib()
+        get_cib(argv)
     elif (sub_cmd == "push"):
         cluster_push(argv)
     elif (sub_cmd == "node"):
@@ -314,8 +314,18 @@ def cluster_push(argv):
     else:
         print "CIB updated"
 
-def get_cib():
-    print utils.get_cib(),
+def get_cib(argv):
+    if len(argv) == 0:
+        print utils.get_cib(),
+    else:
+        filename = argv[0]
+        f = open(filename, 'w')
+        output = utils.get_cib()
+        if output != "":
+            f.write(utils.get_cib())
+        else:
+            print "Error: No data in the CIB"
+            sys.exit(1)
 
 def cluster_node(argv):
     if len(argv) != 2:

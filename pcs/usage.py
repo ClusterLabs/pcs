@@ -184,8 +184,10 @@ Commands:
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes
 
-    cib
-        Get the raw xml from the CIB (Cluster Information Base)
+    cib [filename]
+        Get the raw xml from the CIB (Cluster Information Base).  If a
+        filename is provided, we save the cib to that file, otherwise the cib
+        is printed
 
     push cib <filename>
         Push the raw xml from <filename> to the CIB (Cluster Information Base)
