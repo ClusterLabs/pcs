@@ -71,6 +71,8 @@ def constraint_cmd(argv):
         location_show(["all"])
         order_show(["all"])
         colocation_show(["all"])
+    elif (sub_cmd == "ref"):
+        constraint_ref(argv)
     else:
         print sub_cmd
         usage.constraint()
@@ -193,6 +195,12 @@ def order_show(argv):
     for ord_loc in constraintsElement.getElementsByTagName('rsc_order'):
         oc_resource1 = ord_loc.getAttribute("first")
         oc_resource2 = ord_loc.getAttribute("then")
+        first_action = ord_loc.getAttribute("first-action")
+        then_action = ord_loc.getAttribute("then-action")
+        if first_action != "":
+            first_action = first_action + " "
+        if then_action != "":
+            then_action = then_action + " "
         oc_id = ord_loc.getAttribute("id")
         oc_score = ord_loc.getAttribute("score")
         oc_sym = ""
@@ -202,7 +210,7 @@ def order_show(argv):
         score_text = "" if (oc_score == "INFINITY") and not showDetail else " (" + oc_score + ")"
         if showDetail:
             oc_id_out = " (id:"+oc_id+")"
-        print "  " + oc_resource1 + " then " + oc_resource2 + score_text + oc_sym + oc_id_out
+        print "  " + first_action + oc_resource1 + " then " + then_action + oc_resource2 + score_text + oc_sym + oc_id_out
 
 def order_list(argv):
     for i in range(0,len(argv)-1):
@@ -557,16 +565,41 @@ def constraint_rm(argv):
     else:
         print "No matching resources found in ordering list"
 
+def constraint_ref(argv):
+    if len(argv) == 0:
+        constraint.usage()
+        sys.exit(1)
+
+    for arg in argv:
+        print "Resource: %s" % arg
+        constraints = find_constraints_containing(arg)
+        if len(constraints) == 0:
+            print "  No Matches."
+        else:
+            for constraint in constraints:
+                print "  " + constraint
+
 def find_constraints_containing(resource_id):
     dom = utils.get_cib_dom()
+    constraints_found = []
+
+    resources = dom.getElementsByTagName("primitive")
+    resource_match = None
+    for res in resources:
+        if res.getAttribute("id") == resource_id:
+            resource_match = res
+            break
+
+    if resource_match:
+        if resource_match.parentNode.tagName == "master" or resource_match.parentNode.tagName == "clone":
+            constraints_found = find_constraints_containing(resource_match.parentNode.getAttribute("id"))
 
     constraints = dom.getElementsByTagName("constraints")
-    if (len(constraints) == 0):
+    if len(constraints) == 0:
         return []
     else:
         constraints = constraints[0]
 
-    constraints_found = []
     myConstraints = constraints.getElementsByTagName("rsc_colocation")
     myConstraints += constraints.getElementsByTagName("rsc_location")
     myConstraints += constraints.getElementsByTagName("rsc_order")
@@ -577,4 +610,34 @@ def find_constraints_containing(resource_id):
                 constraints_found.append(c.getAttribute("id"))
                 break
     return constraints_found
+
+# Re-assign any constraints referencing a resource to its parent (a clone
+# or master)
+def constraint_resource_update(old_id):
+    dom = utils.get_cib_dom()
+    resources = dom.getElementsByTagName("primitive")
+    found_resource = None
+    for res in resources:
+        if res.getAttribute("id") == old_id:
+            found_resource = res
+            break
+
+    new_id = None
+    if found_resource:
+        if found_resource.parentNode.tagName == "master" or found_resource.parentNode.tagName == "clone":
+            new_id = found_resource.parentNode.getAttribute("id")
+
+    if new_id:
+        constraints = dom.getElementsByTagName("rsc_location")
+        constraints += dom.getElementsByTagName("rsc_order")
+        constraints += dom.getElementsByTagName("rsc_colocation")
+        attrs_to_update=["rsc","first","then", "with-rsc"]
+        for constraint in constraints:
+            for attr in attrs_to_update:
+                if constraint.getAttribute(attr) == old_id:
+                    constraint.setAttribute(attr, new_id)
+
+
+        update = dom.getElementsByTagName("constraints")[0].toxml()
+        output, retval = utils.run(["cibadmin", "--replace", "-o", "constraints", "-X", update])
 

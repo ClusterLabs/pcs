@@ -221,6 +221,12 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
         print output.split('\n')[0]
         sys.exit(1)
 
+    if "--clone" in utils.pcs_options:
+        resource_clone_create([ra_id])
+    elif "--master" in utils.pcs_options:
+        resource_master_create([ra_id+"-master",ra_id])
+
+
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)
     if retval != 0:
@@ -497,11 +503,12 @@ def resource_group(argv):
         sys.exit(1)
 
 def resource_clone(argv):
-    if len(argv) < 2:
+    if len(argv) < 1:
         usage.resource()
         sys.exit(1)
-
+    res = argv[0]
     resource_clone_create(argv)
+    constraint.constraint_resource_update(res)
 
 def resource_clone_create(argv, update = False):
     name = argv.pop(0)
@@ -658,6 +665,7 @@ def resource_master_create(argv, update=False):
         if len(meta.getElementsByTagName("nvpair")) == 0:
             master_element.removeChild(meta)
     utils.replace_cib_configuration(dom)
+    constraint.constraint_resource_update(rg_id)
 
 def resource_master_remove(argv):
     if len(argv) < 1:
@@ -697,6 +705,8 @@ def resource_master_remove(argv):
 def resource_remove(resource_id, output = True):
     group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0
+    master = utils.get_cib_xpath('//resources/master/primitive[@id="'+resource_id+'"]/..')
+    clone = utils.get_cib_xpath('//resources/clone/primitive[@id="'+resource_id+'"]/..')
 
     if not utils.does_exist('//resources/descendant::primitive[@id="'+resource_id+'"]'):
         if utils.does_exist('//resources/master[@id="'+resource_id+'"]'):
@@ -709,7 +719,12 @@ def resource_remove(resource_id, output = True):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
 
     if (group == "" or num_resources_in_group > 1):
-        args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
+        if clone != "":
+            args = ["cibadmin", "-o", "resources", "-D", "--xml-text", clone]
+        elif master != "":
+            args = ["cibadmin", "-o", "resources", "-D", "--xml-text", master]
+        else:
+            args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
         constraints = constraint.find_constraints_containing(resource_id)
         for c in constraints:
             if output == True:
@@ -720,6 +735,7 @@ def resource_remove(resource_id, output = True):
         output,retVal = utils.run(args)
         if retVal != 0:
             print "Unable to remove resource: %s, it may still be referenced in constraints." % resource_id
+            sys.exit(1)
             return False
     else:
         args = ["cibadmin", "-o", "resources", "-D", "--xml-text", group]

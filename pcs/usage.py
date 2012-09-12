@@ -41,7 +41,9 @@ Commands:
         Show options for the specified resource
 
     create <resource id> <class:provider:type|type> [resource options]
-        Create specified resource
+        Create specified resource.  If --clone is specified a clone resource
+        is created, if --master is specified a master/slave resource is
+        created.
 
     standards
         List available resource agent standards
@@ -332,6 +334,9 @@ Commands:
 
     rm [constraint id]...
         Remove constraint(s) with the specified id(s)
+
+    ref [resource]...
+        List constraints referencing specified resource
 """
 
 def status():
