@@ -86,7 +86,9 @@ def cluster_stop(params)
     response = send_request_with_token(params[:name], 'cluster_stop', true)
   else
     puts "Starting Daemons"
-    puts `#{PCS} cluster stop`
+    output =  `#{PCS} cluster stop`
+    print output
+    return output
   end
 end
 
