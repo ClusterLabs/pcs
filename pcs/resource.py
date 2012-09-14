@@ -665,7 +665,8 @@ def resource_master_create(argv, update=False):
         if len(meta.getElementsByTagName("nvpair")) == 0:
             master_element.removeChild(meta)
     utils.replace_cib_configuration(dom)
-    constraint.constraint_resource_update(rg_id)
+    if not update:
+        constraint.constraint_resource_update(rg_id)
 
 def resource_master_remove(argv):
     if len(argv) < 1:
