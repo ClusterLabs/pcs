@@ -41,8 +41,11 @@ def main(argv):
     for o, a in pcs_options:
         utils.pcs_options[o] = a
         if o == "-h":
-            usage.main()
-            sys.exit()
+            if len(argv) == 0:
+                usage.main()
+                sys.exit()
+            else:
+                argv = [argv[0], "help"]
         elif o == "-f":
             usefile = True
             filename = a
