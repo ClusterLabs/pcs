@@ -41,9 +41,9 @@ Commands:
         Show options for the specified resource
 
     create <resource id> <class:provider:type|type> [resource options]
-        Create specified resource.  If --clone is specified a clone resource
-        is created, if --master is specified a master/slave resource is
-        created.
+        Create specified resource.  If --clone is specified a clone resource is
+        created (with options specified by --cloneopt <clone_option>=<value>),
+        if --master is specified a master/slave resource is created.
 
     standards
         List available resource agent standards

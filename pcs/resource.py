@@ -222,7 +222,12 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
         sys.exit(1)
 
     if "--clone" in utils.pcs_options:
-        resource_clone_create([ra_id])
+        clone_opts = []
+        if "--cloneopt" in utils.pcs_options:
+            clone_opts = utils.pcs_options["--cloneopt"]
+            if type(clone_opts) != list:
+                clone_opts = [clone_opts]
+        resource_clone_create([ra_id] + clone_opts)
     elif "--master" in utils.pcs_options:
         resource_master_create([ra_id+"-master",ra_id])
 

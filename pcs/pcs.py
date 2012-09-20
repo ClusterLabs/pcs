@@ -32,14 +32,20 @@ def main(argv):
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all","clone","master"])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all","clone","cloneopt=","master"])
     except getopt.GetoptError, err:
         print err
         usage.main()
         sys.exit(1)
     argv = real_argv
     for o, a in pcs_options:
-        utils.pcs_options[o] = a
+        if not o in utils.pcs_options:
+            utils.pcs_options[o] = a
+        else:
+            if type(utils.pcs_options[o]) is list:
+                utils.pcs_options[o].append(a)
+            else:
+                utils.pcs_options[o] = [utils.pcs_options[o], a]
         if o == "-h":
             if len(argv) == 0:
                 usage.main()
