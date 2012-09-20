@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='pcs',
-    version='0.9.22',
+    version='0.9.24',
     description='Pacemaker Configuration System',
     author='Chris Feist',
     author_email='cfeist@redhat.com',
@@ -11,4 +11,5 @@ setup(name='pcs',
     packages=['pcs'],
     package_data={'pcs':['corosync.conf.template','corosync.conf.fedora.template']}, 
     py_modules=['pcs'],
+    scripts=['pcs/pcs.py']
     )

@@ -1,3 +1,7 @@
+ifndef PYTHON_SITELIB
+  PYTHON_SITELIB=`python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"`
+endif
+
 install:
 	python setup.py install --prefix ${DESTDIR}/usr
 	mkdir -p ${DESTDIR}/usr/sbin/
