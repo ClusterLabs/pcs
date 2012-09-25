@@ -7,7 +7,7 @@ import usage
 import utils
 import re
 import textwrap
-import xml.etree.ElementTree
+import xml.etree.ElementTree as ET
 import constraint
 
 def resource_cmd(argv):
@@ -887,6 +887,13 @@ def resource_group_list(argv):
         print ""
 
 def resource_show(argv):
+    if "--all" in utils.pcs_options:
+        root = utils.get_cib_etree()
+        resources = root.find(".//resources")
+        for child in resources:
+            print_node(child,1)
+        return
+
     if len(argv) == 0:    
         args = ["crm_resource","-L"]
         output,retval = utils.run(args)
@@ -992,3 +999,61 @@ def set_default(def_type, argv):
             print "Invalid Property: " + arg
             continue
         utils.setAttribute(def_type, args[0], args[1])
+
+def print_node(node, tab = 0):
+    spaces = " " * tab
+    if node.tag == "group":
+        print spaces + "Group: " + node.attrib["id"] + get_attrs(node,' (',')')
+        ivar_string = get_instance_vars_string(node)
+        if ivar_string != "":
+            print spaces + " " + get_instance_vars_string(node)
+        for child in node:
+            print_node(child, tab + 1)
+    if node.tag == "clone":
+        print spaces + "Clone: " + node.attrib["id"] + get_attrs(node,' (',')')
+        ivar_string = get_instance_vars_string(node)
+        if ivar_string != "":
+            print spaces + " " + get_instance_vars_string(node)
+        for child in node:
+            print_node(child, tab + 1)
+    if node.tag == "primitive":
+        print spaces + "Resource: " + node.attrib["id"] + get_attrs(node,' (',')')
+        ivar_string = get_instance_vars_string(node)
+        if ivar_string != "":
+            print spaces + " Attributes: " + get_instance_vars_string(node)
+        ops_string = get_operations(node)
+        if ops_string != "":
+            print spaces + " Operations: " + ops_string
+        for child in node:
+            print_node(child, tab + 1)
+
+def get_instance_vars_string(node):
+    output = ""
+    ivars = node.findall("instance_attributes/nvpair")
+    for ivar in ivars:
+        output += ivar.attrib["name"] + "=" + ivar.attrib["value"] + " "
+
+    return output
+
+def get_operations(node):
+    output = ""
+    ops = node.findall("operations/op")
+    for op in ops:
+        output += op.attrib["name"] + " "
+        for attr,val in op.attrib.items():
+            if attr in ["id","name"] :
+                continue
+            output += attr + "=" + val + " "
+    return output.rstrip()
+
+def get_attrs(node, prepend_string = "", append_string = ""):
+    output = ""
+    for attr,val in node.attrib.items():
+        if attr in ["id"]:
+            continue
+        output += attr + "=" + val + " "
+    if output != "":
+        return prepend_string + output.rstrip() + append_string
+    else:
+        return output.rstrip()
+

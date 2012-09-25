@@ -4,6 +4,7 @@ import pcs
 import xml.dom.minidom
 import urllib,urllib2
 from xml.dom.minidom import parseString
+import xml.etree.ElementTree as ET
 import re
 import json
 
@@ -150,6 +151,15 @@ def getNodesFromCorosyncConf():
             nodes.append (match.group(1))
 
     return nodes
+
+def getNodesFromPacemaker():
+    ret_nodes = []
+    root = get_cib_etree()
+    nodes = root.findall(".//node")
+    for node in nodes:
+        ret_nodes.append(node.attrib["uname"])
+    ret_nodes.sort()
+    return ret_nodes
 
 def getCorosyncConf(conf='/etc/corosync/corosync.conf'):
     try:
@@ -360,6 +370,14 @@ def get_cib_dom():
     try:
         dom = parseString(get_cib())
         return dom
+    except:
+        print "Error: unable to get cib"
+        sys.exit(1)
+
+def get_cib_etree():
+    try:
+        root = ET.fromstring(get_cib())
+        return root
     except:
         print "Error: unable to get cib"
         sys.exit(1)

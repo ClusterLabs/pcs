@@ -14,6 +14,7 @@ Commands:
     property    Set pacemaker properties
     constraint  Set resource constraints
     status      View cluster status
+    config      Print full cluster configuration
 """
 
 def resource():
@@ -21,9 +22,10 @@ def resource():
 Usage: pcs resource [commands]...
 Manage pacemaker resources
 Commands:
-    show [resource_id]
+    show [resource_id] [--all]
         Show all currently configured resources or if a resource is specified
-        show the options for the configured resource
+        show the options for the configured resource.  If --all is specified
+        resource options will be displayed
 
     start <resource_id>
         Start resource specified by resource_id
@@ -364,9 +366,11 @@ Commands:
     status corosync
         View current corosync status
 
-    status nodes [corosync]
-        View current status of nodes from pacemaker, or if corosync is
-        specified, print nodes currently configured in corosync
+    status nodes [corosync|both|config]
+        View current status of nodes from pacemaker. If 'corosync' is
+        specified, print nodes currently configured in corosync, if 'both'
+        is specified, print nodes from both corosync & pacemaker.  If 'config'
+        is specified, print nodes from corosync & pacemaker configuration.
 
     status actions
         View failed actions

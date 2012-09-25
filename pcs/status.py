@@ -51,6 +51,21 @@ def actions_status(argv):
 
 # Parse crm_mon for status
 def nodes_status(argv):
+    if len(argv) == 1 and (argv[0] == "config"):
+        corosync_nodes = utils.getNodesFromCorosyncConf()
+        pacemaker_nodes = utils.getNodesFromPacemaker()
+        print "Corosync Nodes:"
+        print "",
+        for node in corosync_nodes:
+            print node.strip(),
+        print ""
+        print "Pacemaker Nodes:"
+        print "",
+        for node in pacemaker_nodes:
+            print node.strip(),
+
+        return
+
     if len(argv) == 1 and (argv[0] == "corosync" or argv[0] == "both"):
         all_nodes = utils.getNodesFromCorosyncConf()
         online_nodes = utils.getCorosyncActiveNodes()

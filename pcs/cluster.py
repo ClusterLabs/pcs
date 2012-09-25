@@ -7,6 +7,9 @@ import utils
 import sys
 import getpass
 import status
+import prop
+import resource
+import constraint
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -414,3 +417,17 @@ def cluster_get_corosync_conf(argv):
     node = argv[0]
     retval, output = utils.getCorosyncConfig(node)
     print output
+
+def print_config():
+    status.nodes_status(["config"])
+    print ""
+    print ""
+    print "Resources: "
+    utils.pcs_options["--all"] = 1
+    resource.resource_show([])
+    print ""
+    constraint.location_show([])
+    constraint.order_show([])
+    constraint.colocation_show([])
+    print ""
+    prop.list_property([])

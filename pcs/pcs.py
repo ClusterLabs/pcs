@@ -77,6 +77,8 @@ def main(argv):
         constraint.constraint_cmd(argv)
     elif (command == "status"):
         status.status_cmd(argv)
+    elif (command == "config"):
+        cluster.print_config()
     else:
         usage.main()
         sys.exit(1)

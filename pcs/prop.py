@@ -50,6 +50,7 @@ def list_property(argv):
     dom = parseString(output)
     de = dom.documentElement
     properties = de.getElementsByTagName("nvpair")
+    print "Cluster Properties:"
     for prop in properties:
         if print_all == True or (argv[0] == prop.getAttribute("name")):
-            print prop.getAttribute("name") + ": " + prop.getAttribute("value")
+            print " " + prop.getAttribute("name") + ": " + prop.getAttribute("value")
