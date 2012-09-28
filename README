@@ -1,1 +1,25 @@
 PCS - Pacemaker/Corosync configuration system
+
+Quick install
+
+# tar -xzvf pcs-0.9.26.tar.gz
+# cd pcs-0.9.26
+# make install
+
+This will install pcs into /sbin/pcs
+
+To create a cluster run the following commands on all nodes (replacing node1, node2, node3 with a list of nodes in the cluster.
+# pcs cluster setup --local cluster_name node1 node2 node3
+
+Then run the following command on all nodes:
+# pcs cluster start
+
+After a few moments the cluster should startup and you can get the status of the cluster
+# pcs status
+
+After this you can add resources and stonith agents:
+# pcs resource help
+and
+# pcs stonith help
+
+If you have an questions or concerns please feel free to email cfeist@redhat.com or open a github issue on the pcs project.
