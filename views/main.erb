@@ -94,12 +94,13 @@
 		    <td class="menuitem first"><a id="node_menu" onclick="select_menu('NODES'); return true;" href="#nodes" <%= @nodemenuclass %>>NODES</a></td>
 		    <td class="menuitem"><a id="resource_menu" onclick="select_menu('RESOURCES'); return true;" href="#resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
 		    <td class="menuitem"><a id="stonith_menu" onclick="select_menu('FENCE DEVICES'); return true;" href="#fencedevices">FENCE DEVICES</a></td>
+		    <td class="menuitem"><a id="configure_menu" onclick="select_menu('CONFIGURE'); return true;" href="#configure">CONFIGURE</a></td>
 		  <% else %>
 		    <td class="menuitem first"><a id="node_menu" href="/nodes#nodes" <%= @nodemenuclass %>>NODES</a></td>
 		    <td class="menuitem"><a id="resource_menu" href="/nodes#resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
 		    <td class="menuitem"><a id="stonith_menu" href="/nodes#fencedevices">FENCE DEVICES</a></td>
+		    <td class="menuitem"><a id="configure_menu" href="/nodes#configure" <%= @configuremenuclass %>>CONFIGURE</a></td>
 		  <% end %>
-		  <td class="menuitem"><a href="/configure/pacemaker" <%= @configuremenuclass %>>CONFIGURE</a></td>
 		</tr>
 	      <% else %>
 		<tr height="37px">

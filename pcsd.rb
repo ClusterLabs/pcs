@@ -73,7 +73,7 @@ helpers do
     if not PCSAuth.isLoggedIn(session, request.cookies)
       if request.path.start_with?('/remote')
 	puts "ERROR: Request without authentication"
-	halt [401, '{"notauthorized":"false"}']
+	halt [401, '{"notauthorized":"true"}']
       else
 	session[:pre_login_path] = request.path
 	redirect '/login'
@@ -143,21 +143,6 @@ post '/login' do
   else
     redirect '/login?badlogin=1'
   end
-end
-
-post '/configure/?:page?' do
-  print params
-  params[:config].each { |key, value|
-    if (value == "on")
-      value = "true"
-    elsif value == "off"
-      value = "false"
-    end
-
-    print `#{CRM_ATTRIBUTE} --attr-name #{key} --attr-value #{value} 2>&1`
-    print "#{key} - #{value}\n"
-  }
-  redirect params[:splat][0]
 end
 
 post '/fencerm' do
@@ -293,6 +278,7 @@ get '/managec/:cluster/main' do
   puts "ST"
   puts @stonith_agents
   @nodes = get_cluster_nodes(params[:cluster])
+  @config_options = getConfigOptions2()
   erb :nodes, :layout => :main
 end
 
@@ -300,17 +286,31 @@ get '/managec/:cluster/status_all' do
   status_all("",get_cluster_nodes(params[:cluster]))
 end
 
-remote_mc= lambda do
-  puts "A"
+get '/managec/:cluster/?*' do
+  puts "Lambda A GET"
   pp params[:splat]
-  puts "B"
+  pp params
+  puts "Lambda B"
+  raw_data = request.env["rack.input"].read
+  p "Raw Data"
+  pp raw_data
   if params[:cluster]
-    send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, false)
+    send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, false, raw_data)
   end
 end
 
-get '/managec/:cluster/?*', &remote_mc
-post '/managec/:cluster/?*', &remote_mc
+post '/managec/:cluster/?*' do
+  puts "Lambda A POST"
+  pp params[:splat]
+  pp params
+  puts "Lambda B"
+  raw_data = request.env["rack.input"].read
+  p "Raw Data"
+  pp raw_data
+  if params[:cluster]
+    send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), true, params, false, raw_data)
+  end
+end
 
 get '/manage/:node/?*' do
   if params[:node]
@@ -415,6 +415,37 @@ def getLocationDeps(cur_node)
   [deps_allow, deps_disallow]
 end
 
+def getConfigOptions2()
+  config_options = {}
+  general_page = []
+  general_page << ConfigOption.new("Cluster Delay Time", "cluster-delay",  "int", 4, "Seconds") 
+#  general_page << ConfigOption.new("Batch Limit", "cdt",  "int", 4) 
+#  general_page << ConfigOption.new("Default Action Timeout", "cdt",  "int", 4, "Seconds") 
+#  general_page << ConfigOption.new("During timeout should cluster stop all active resources", "res_stop", "radio", "4", "", ["Yes","No"])
+
+#  general_page << ConfigOption.new("PE Error Storage", "res_stop", "radio", "4", "", ["Yes","No"])
+#  general_page << ConfigOption.new("PE Warning Storage", "res_stop", "radio", "4", "", ["Yes","No"])
+#  general_page << ConfigOption.new("PE Input Storage", "res_stop", "radio", "4", "", ["Yes","No"])
+  config_options["general"] = general_page
+
+  pacemaker_page = []
+  pacemaker_page << ConfigOption.new("Batch Limit", "batch-limit",  "int", 4, "jobs")
+  pacemaker_page << ConfigOption.new("No Quorum Policy", "no-quorum-policy",  "dropdown","" ,"", {"ignore" => "Ignore","freeze" => "Freeze", "stop" => "Stop", "suicide" => "Suicide"})
+  pacemaker_page << ConfigOption.new("Symmetric", "symmetric-cluster", "check")
+  pacemaker_page << ConfigOption.new("Stonith Enabled", "stonith-enabled", "check")
+  pacemaker_page << ConfigOption.new("Stonith Action", "stonith-action",  "dropdown","" ,"", {"reboot" => "Reboot","poweroff" => "Poweroff"}) 
+  pacemaker_page << ConfigOption.new("Cluster Delay", "cluster-delay",  "int", 4) 
+  pacemaker_page << ConfigOption.new("Stop Orphan Resources", "stop-orphan-resources", "check")
+  pacemaker_page << ConfigOption.new("Stop Orphan Actions", "stop-orphan-actions", "check")
+  pacemaker_page << ConfigOption.new("Start Failure is Fatal", "start-failure-is-fatal", "check")
+  pacemaker_page << ConfigOption.new("PE Error Storage", "pe-error-series-max", "int", "4")
+  pacemaker_page << ConfigOption.new("PE Warning Storage", "pe-warn-series-max", "int", "4")
+  pacemaker_page << ConfigOption.new("PE Input Storage", "pe-input-series-max", "int", "4")
+  config_options["pacemaker"] = pacemaker_page
+
+  return config_options
+end
+
 def getConfigOptions(page="general")
   config_options = []
   case page
@@ -483,6 +514,7 @@ class ConfigOption
   end
 
   def value
+    return "{{#{configname}}}"
     @@cache_value ||= {}
     @@cache_value = {}
     if @@cache_value[configname]  == nil
@@ -540,11 +572,12 @@ class ConfigOption
 
   def html
     paramname = "config[#{configname}]"
+    js_name = configname.gsub(/-/,"_")
     case type
     when "int"
-      return "<input name=\"#{paramname}\" value=\"#{value}\" type=text size=#{size}>"
+      return "<input name=\"#{paramname}\" {{bindAttr value=\"cluster_settings.#{js_name}.value\"}} type=text size=#{size}>"
     when "str"
-      return "<input name=\"#{paramname}\" value=\"#{value}\" type=text size=#{size}>"
+      return "<input name=\"#{paramname}\" value=\"{{cluster_name}}\" type=text size=#{size}>"
     when "radio"
       ret = ""
       options.each {|option|
@@ -552,8 +585,8 @@ class ConfigOption
       }
       return ret
     when "check"
-      ret = "<input name=\"#{paramname}\" value=\"off\" type=hidden size=#{size}>"
-      ret += "<input name=\"#{paramname}\" #{checked(paramname)} type=checkbox size=#{size}>"
+      ret = "{{view Ember.Checkbox checkedBinding=\"cluster_settings.#{js_name}.value\"}}"
+      ret += "<input type=hidden name=\"#{js_name}-checkbox\" value=\"1\">"
       return ret
     when "dropdown"
       ret = "<select name=\"#{paramname}\">"

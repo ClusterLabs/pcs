@@ -20,9 +20,16 @@ function initial_page_load() {
       select_menu("FENCE DEVICES", current_location[2]);
     else if (current_location[1] == "manage")
       select_menu("MANAGE", current_location[2]);
+    else if (current_location[1] == "configure")
+      select_menu("CONFIGURE", current_location[2]);
     else 
       select_menu("NODES", current_location[2]);
   }
+}
+
+function configure_menu_show(item) {
+  $("#configure-"+item).show();
+  $(".configure-"+item).addClass("selected");
 }
 
 function menu_show(item,show) {
@@ -79,6 +86,14 @@ function select_menu(menu, item, initial) {
   } else {
     menu_show("cluster", false);
   }
+
+  if (menu == "CONFIGURE") {
+    Pcs.cur_page = "configure";
+    menu_show("configure", true);
+  } else {
+    menu_show("configure", false);
+  }
+
   setup_resource_links();
 }
 
@@ -723,6 +738,22 @@ function remove_constraint(id) {
     timeout: pcs_timeout,
     success: function (data) {
       Pcs.resourcesController.remove_constraint(id);
+    }
+  });
+}
+
+function update_cluster_settings(form) {
+  var data = form.serialize();
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'update_cluster_settings',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert("Error updating configuration: ("+error+")");
     }
   });
 }

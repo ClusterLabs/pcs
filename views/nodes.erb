@@ -108,7 +108,7 @@
 	      <!-- <div class="cancel sprites" style="float: left"></div>
 	      	      <div class="link">Leave Cluster</div> -->
 	      <div class="configure sprites" style="float: left"></div>
-	      <div class="link"><a href="/fencedevices">Configure Fencing</a></div>
+	      <div class="link"><a href="#fencedevices" onclick="select_menu('FENCE DEVICES');return true;">Configure Fencing</a></div>
 	    </div>
 
 	    <div id="node_details">
@@ -154,9 +154,13 @@
 </div></td></tr>
 		      <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
 {{#if Pcs.nodesController.cur_node.pcsd}}
-<div id="pcsd_status" style="float:left" class="status">Running
+  <div id="pcsd_status" style="float:left" class="status">Running
 {{else}}
-<div id="pcsd_status" style="float:left" class="status-offline">Stopped
+  {{#if Pcs.nodesController.cur_node.authorized}}
+    <div id="pcsd_status" style="float:left" class="status-offline">Stopped
+  {{else}}
+    <div id="pcsd_status" style="float:left" class="status-offline">Running (not Authorized)
+  {{/if}}
 {{/if}}
 </div></td></tr>
 		    </table>
@@ -175,7 +179,7 @@
 		      <tr><th>NAME</th></tr>
 		      {{#if Pcs.nodesController.cur_node.running_resources}}
 		        {{#each Pcs.nodesController.cur_node.running_resources}}
-		  	<tr><td><a href="/resources/">{{this}}</a></td></tr>
+		  	<tr><td>{{this}}</td></tr>
 		        {{/each}}
 		      {{else}}
 			<tr><td style="color: gray;">NONE</td></tr>
@@ -212,6 +216,7 @@
   </div>
   </td>
 </tr>
+<%= erb :_configure %>
 <% @myView = "stonith" %>
 <%= erb :_resource %>
 <% @myView = "resource" %>

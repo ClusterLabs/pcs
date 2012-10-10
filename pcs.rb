@@ -1,6 +1,47 @@
 # Wrapper for PCS command
 #
 
+def getAllSettings()
+  stdout, stderr, retval = run_cmd(PCS, "property")
+  stdout.map(&:chomp!)
+  stdout.map(&:strip!)
+  stdout2, stderr2, retval2 = run_cmd(PENGINE, "metadata")
+  metadata = stdout2.join
+  ret = {}
+  if retval == 0 and retval2 == 0
+    doc = REXML::Document.new(metadata)
+
+    default = ""
+    el_type = ""
+    doc.elements.each("resource-agent/parameters/parameter") { |e|
+      name = e.attributes["name"]
+      name.gsub!(/-/,"_")
+      e.elements.each("content") { |c|
+	default = c.attributes["default"]
+	el_type = c.attributes["type"]
+      }
+      ret[name] = {"value" => default, "type" => el_type}
+    }
+
+    stdout.each {|line|
+      key,val = line.split(': ', 2)
+      key.gsub!(/-/,"_")
+      if ret.has_key?(key)
+	if ret[key]["type"] == "boolean"
+	  val == "true" ?  ret[key]["value"] = true : ret[key]["value"] = false
+	else
+	  ret[key]["value"] = val
+	end
+
+      else
+	ret[key] = {"value" => val, "type" => "unknown"}
+      end
+    }
+    return ret
+  end
+  return {"error" => "Unable to get configuration settings"}
+end
+
 def add_location_constraint(resource, node, score)
   id = "loc_" + node + "_" + resource
   puts "ADD LOCATION CONSTRAINT"
@@ -68,12 +109,12 @@ def get_cluster_nodes(cluster_name)
   return nodes
 end
 
-def send_cluster_request_with_token(cluster_name, request, post=false, data={}, remote=true)
+def send_cluster_request_with_token(cluster_name, request, post=false, data={}, remote=true, raw_data=nil)
   out = ""
   nodes = get_cluster_nodes(cluster_name)
 
   for node in nodes
-    out = send_request_with_token(node,request, post=false, data, remote=true)
+    out = send_request_with_token(node,request, post, data, remote=true, raw_data)
     if out != '{"noresponse":true}'
       puts "OUT"
       puts request
@@ -83,7 +124,7 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
   return out
 end
 
-def send_request_with_token(node,request, post=false, data={}, remote=true)
+def send_request_with_token(node,request, post=false, data={}, remote=true, raw_data = nil)
   start = Time.now
   begin
     retval, token = get_node_token(node)
@@ -97,7 +138,7 @@ def send_request_with_token(node,request, post=false, data={}, remote=true)
     p "Sending Request: " + uri.to_s
     if post
       req = Net::HTTP::Post.new(uri.path)
-      req.set_form_data(data)
+      raw_data ? req.body = raw_data : req.set_form_data(data)
     else
       req = Net::HTTP::Get.new(uri.path)
       req.set_form_data(data)

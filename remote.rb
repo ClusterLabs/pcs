@@ -65,6 +65,8 @@ def remote(params)
     return add_constraint(params)
   when "add_group"
     return add_group(params)
+  when "update_cluster_settings"
+    return update_cluster_settings(params)
   else
     return [404, "Unknown Request"]
   end
@@ -237,8 +239,6 @@ def node_status(params)
   stonith_resource_list.each {|sr| sr.stonith = true}
   resource_list = resource_list + stonith_resource_list
   out_rl = []
-  print "Resource List:"
-  pp resource_list
   resource_list.each {|r|
     out_nodes = []
     oConstraints = []
@@ -251,11 +251,12 @@ def node_status(params)
     		:stonith => r.stonith})
   }
   constraints = getAllConstraints()
+  cluster_settings = getAllSettings()
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
  "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
  "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
  "cluster_name" => @@cluster_name, "resources" => out_rl, "groups" => group_list,
- "constraints" => constraints}
+ "constraints" => constraints, "cluster_settings" => cluster_settings}
   ret = JSON.generate(status)
   getAllConstraints()
   return ret
@@ -386,8 +387,6 @@ end
 
 # Creates resource if params[:resource_id] is not set
 def update_resource (params)
-  p "update_resource"
-  pp params
   param_line = getParamLine(params)
   if not params[:resource_id]
     out, stderr, retval = run_cmd(PCS, "resource", "create", params[:name], params[:resource_type],
@@ -549,4 +548,13 @@ def add_group(params)
   rg = params["resource_group"]
   resources = params["resources"]
   run_cmd(PCS, "resource", "group", "add", rg, *(resources.split(" ")))
+end
+
+def update_cluster_settings(params)
+  settings = params["config"]
+  p "Settings"
+  pp settings
+  settings.each{|name,val|
+    run_cmd(PCS, "property", "set", name + "=" + val)
+  }
 end

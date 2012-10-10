@@ -1,5 +1,6 @@
 Pcs = Ember.Application.create({
   cluster_name: get_cluster_name(),
+  cluster_settings: null,
   cur_page: "",
   update_timeout: null,
   update: function(first_run) {
@@ -12,6 +13,8 @@ Pcs = Ember.Application.create({
       success: function(data) {
 	Pcs.nodesController.update(data);
 	Pcs.resourcesController.update(data);
+	Pcs.settingsController.update(data);
+	Pcs.set("cluster_settings",data["rh7-1"].cluster_settings);
 	Ember.run.next(this,disable_checkbox_clicks);
 	if (first_run) {
 	    Ember.run.next(this,function () {
@@ -31,6 +34,12 @@ Pcs = Ember.Application.create({
 
     });
   }
+});
+
+Pcs.Setting = Ember.Object.extend({
+  name: null,
+  value: null,
+  type: null
 });
 
 Pcs.Resource = Ember.Object.extend({
@@ -111,6 +120,26 @@ Pcs.Clusternode = Ember.Object.extend({
       return ""
   }.property("cur_node"),
   location_constraints: null
+});
+
+Pcs.settingsController = Ember.ArrayController.create({
+  content: [],
+  update: function(data) {
+    var self = this;
+    var settings = {};
+    self.set('content',[]);
+    $.each(data, function(key, value) {
+      if (value["cluster_settings"]) {
+	$.each(value["cluster_settings"], function(k2, v2) {
+	  var setting = Pcs.Setting.create({
+	    name: k2,
+	    value: v2
+	  });
+	  self.pushObject(setting);
+	});
+      }
+    });
+  }
 });
 
 Pcs.resourcesController = Ember.ArrayController.create({
@@ -367,7 +396,6 @@ Pcs.nodesController = Ember.ArrayController.create({
 	corosync_nodes_online = corosync_nodes_online.concat(value["corosync_online"]);
       if (value["pacemaker_online"])
 	pacemaker_nodes_online = pacemaker_nodes_online.concat(value["pacemaker_online"]);
-
     });
     nodes.sort();
     var resources_on_nodes = {};
@@ -423,6 +451,12 @@ Pcs.nodesController = Ember.ArrayController.create({
 	pcsd_daemon = true
       }
 
+      if (data[node_id]["notauthorized"] == "true") {
+	authorized = false;
+      } else {
+	authorized = true;
+      }
+
       if (data[node_id]["corosync"] && data[node_id]["pacemaker"] &&
 		pacemaker_online && corosync_online) {
 	up_status = true;
@@ -432,8 +466,9 @@ Pcs.nodesController = Ember.ArrayController.create({
 
       var node = Pcs.Clusternode.create({
 	name: node_id,
+	authorized:  authorized,
 	up: up_status,
-	pcsd: pcsd_daemon,
+	pcsd: pcsd_daemon && authorized,
 	corosync_daemon: data[node_id]["corosync"],
 	pacemaker_daemon: data[node_id]["pacemaker"],
 	corosync: corosync_online,
