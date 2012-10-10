@@ -51,7 +51,7 @@ def stonith_cmd(argv):
     elif (sub_cmd == "delete"):
         if len(argv) > 0:
             stn_id = argv.pop(0)
-            resource_remove(stn_id)
+            resource.resource_remove(stn_id)
         else:
             usage.stonith()
             sys.exit(1)
