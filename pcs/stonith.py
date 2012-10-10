@@ -49,8 +49,12 @@ def stonith_cmd(argv):
         stn_id = argv.pop(0)
         resource.resource_update(stn_id,argv)
     elif (sub_cmd == "delete"):
-        stn_id = argv.pop(0)
-        resource_remove(stn_id)
+        if len(argv) > 0:
+            stn_id = argv.pop(0)
+            resource_remove(stn_id)
+        else:
+            usage.stonith()
+            sys.exit(1)
     elif (sub_cmd == "show"):
         stonith_show(argv)
     else:
