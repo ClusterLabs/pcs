@@ -373,11 +373,11 @@ get '/' do
 end
 
 get '/remote/?:command?' do
-  return remote(params)
+  return remote(params,request)
 end
 
 post '/remote/?:command?' do
-  return remote(params)
+  return remote(params,request)
 end
 
 get '*' do

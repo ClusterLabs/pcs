@@ -5,14 +5,14 @@ require 'pcs.rb'
 require 'resource.rb'
 
 # Commands for remote access
-def remote(params)
+def remote(params,request)
   case (params[:command])
   when "status"
     return node_status(params)
   when "status_all"
     return status_all(params)
   when "auth"
-    return auth(params)
+    return auth(params,request)
   when "resource_status"
     return resource_status(params)
   when "create_cluster"
@@ -289,8 +289,8 @@ def status_all(params, nodes = [])
 
 end
 
-def auth(params)
-  return PCSAuth.validUser(params['username'],params['password'])
+def auth(params,request)
+  return PCSAuth.validUser(params['username'],params['password'], true, request)
 end
 
 def resource_status(params)

@@ -1,24 +1,32 @@
 require 'json'
 require 'pp'
 require 'securerandom'
+require 'rpam'
 
 class PCSAuth
-  def self.validUser(username, password)
-    begin
-      json = File.read($user_pass_file)
-      users = JSON.parse(json)
-    rescue
-      users = []
+  def self.validUser(username, password, generate_token = false, request = nil)
+    if username != "hacluster"
+      return nil
+    end
+    if not Rpam.auth(username,password)
+      return nil
     end
 
-    users.each {|u|
-      if u["username"] == username
-	if u["password"] == password
-	  return u["token"]
-	end
+    if generate_token
+      token = SecureRandom.uuid
+      begin
+	json = File.read($user_pass_file)
+	users = JSON.parse(json)
+      rescue
+	users = []
       end
-    }
-    return nil
+      users << {"username" => username, "token" => token, "client" => request.ip, "creation_date" => Time.now}
+      File.open($user_pass_file, "w") do |f|
+	f.write(JSON.pretty_generate(users))
+      end
+      return token
+    end
+    return true
   end
 
   def self.validToken(token)
