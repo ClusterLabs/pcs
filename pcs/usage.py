@@ -126,6 +126,16 @@ Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
 
 Commands:
+    auth [node] [...] [-u username] [-p password]
+        Authenticate pcs to pcsd on nodes specified, or on all nodes
+        configured in corosync.conf if no nodes are specified (authorization
+        tokens are stored in ~/.pcs/token)
+
+    setup [--start] [--local] <cluster name> <node1 name> [node2] [...]
+        Configure corosync and sync configuration out to listed nodes
+        --local will only perform changes on the local node
+        --start will also start the cluster on the specified nodes
+
     start [--all] [node] [...]
         Start corosync & pacemaker on specified node(s), if a node is not
         specified then corosync & pacemaker are started on the local node.
@@ -169,22 +179,12 @@ Commands:
         Get current status of pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified
 
-    auth [node] [...] [-u username] [-p password]
-        Authenticate pcs to pcsd on nodes specified, or on all nodes
-        configured in corosync.conf if no nodes are specified (authorization
-        tokens are stored in ~/.pcs/token)
-
     token <node>
         Get authorization token for specified node
 
     sync
         Sync corosync configuration to all nodes found from current
         corosync.conf file
-
-    setup [--start] [--local] <cluster name> <node1 name> [node2] [...]
-        Configure corosync and sync configuration out to listed nodes
-        --local will only perform changes on the local node
-        --start will also start the cluster on the specified nodes
 
     cib [filename]
         Get the raw xml from the CIB (Cluster Information Base).  If a
