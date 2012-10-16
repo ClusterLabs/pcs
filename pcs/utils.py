@@ -114,7 +114,7 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 # 2 = No response,
 # 3 = Auth Error
 def sendHTTPRequest(host, request, data = None, printResult = True):
-    url = 'http://' + host + ':2222/' + request
+    url = 'https://' + host + ':2224/' + request
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
     tokens = readTokens()
     if host in tokens:
