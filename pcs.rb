@@ -130,9 +130,9 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
     retval, token = get_node_token(node)
     token = token[0].strip
     if remote
-      uri = URI.parse("http://#{node}:2222/remote/" + request)
+      uri = URI.parse("https://#{node}:2224/remote/" + request)
     else
-      uri = URI.parse("http://#{node}:2222/" + request)
+      uri = URI.parse("https://#{node}:2224/" + request)
     end
 
     p "Sending Request: " + uri.to_s
@@ -145,7 +145,10 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
     end
     $logger.info("Request: " + uri.to_s + " (" + (Time.now-start).to_s + "s)")
     req.add_field("Cookie","token="+token)
-    res = Net::HTTP.new(uri.host, uri.port).start do |http|
+    myhttp = Net::HTTP.new(uri.host, uri.port)
+    myhttp.use_ssl = true
+    myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    res = myhttp.start do |http|
       http.read_timeout = 5
       http.request(req)
     end

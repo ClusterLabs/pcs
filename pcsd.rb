@@ -61,8 +61,8 @@ configure do
 #  $stderr.reopen('/var/lib/pcsd/pcsd-stderror', 'a')
 end
 
-set :port, 2222
 set :logging, true
+set :run, false
 
 if not defined? @@cur_node_name
   @@cur_node_name = `hostname`.chomp
