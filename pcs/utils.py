@@ -7,12 +7,14 @@ from xml.dom.minidom import parseString
 import xml.etree.ElementTree as ET
 import re
 import json
+import settings
 
 
 # usefile & filename variables are set in pcs module
 usefile = False
 filename = ""
 pcs_options = {}
+fence_bin = settings.fence_agent_binaries
 
 # Check status of node
 def checkStatus(node):
@@ -161,14 +163,14 @@ def getNodesFromPacemaker():
     ret_nodes.sort()
     return ret_nodes
 
-def getCorosyncConf(conf='/etc/corosync/corosync.conf'):
+def getCorosyncConf(conf=settings.corosync_conf_file):
     try:
         out = open(conf).read()
     except IOError:
         return ""
     return out
 
-def setCorosyncConf(corosync_config, conf_file='/etc/corosync/corosync.conf'):
+def setCorosyncConf(corosync_config, conf_file=settings.corosync_conf_file):
     try:
         f = open(conf_file,'w')
         f.write(corosync_config)
@@ -178,7 +180,7 @@ def setCorosyncConf(corosync_config, conf_file='/etc/corosync/corosync.conf'):
         exit(1)
 
 def getCorosyncActiveNodes():
-    args = ["/sbin/corosync-cmapctl"]
+    args = ["corosync-cmapctl"]
     nodes = []
     output,retval = run(args)
     if retval != 0:
@@ -250,9 +252,9 @@ def addNodeToCorosync(node):
         new_corosync_conf += corosync_conf[count:]
         setCorosyncConf(new_corosync_conf)
 
-        run(["/sbin/corosync-cmapctl", "-s", "nodelist.node." +
+        run(["corosync-cmapctl", "-s", "nodelist.node." +
             str(new_nodeid - 1) + ".nodeid", "u32", str(new_nodeid)])
-        run(["/sbin/corosync-cmapctl", "-s", "nodelist.node." +
+        run(["corosync-cmapctl", "-s", "nodelist.node." +
             str(new_nodeid - 1) + ".ring0_addr", "str", node])
     else:
         print "Unable to find nodelist in corosync.conf"
@@ -286,7 +288,7 @@ def removeNodeFromCorosync(node):
                 new_corosync_conf = "\n".join(corosync_conf[0:x] + corosync_conf[x+4:])
                 print new_corosync_conf
                 setCorosyncConf(new_corosync_conf)
-                run(["/sbin/corosync-cmapctl", "-D", "nodelist.node." +
+                run(["corosync-cmapctl", "-D", "nodelist.node." +
                     str(nodeid) + "."])
 
     if error:
@@ -317,6 +319,12 @@ def run(args, ignore_stderr=False):
                 print "Unable to write to file: " + filename
                 sys.exit(1)
 
+    command = args[0]
+    if command[0:3] == "crm" or command == "cibadmin":
+        args[0] = settings.pacemaker_binaries + command
+    if command[0:8] == "corosync":
+        args[0] = settings.corosync_binaries + command
+        
     try:
         if ignore_stderr:
             p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var)
@@ -478,7 +486,7 @@ def getTerminalSize(fd=1):
 
 # Returns an xml dom containing the current status of the cluster
 def getClusterState():
-    (output, retval) = run(["/usr/sbin/crm_mon", "-1", "-X","-r"])
+    (output, retval) = run(["crm_mon", "-1", "-X","-r"])
     if (retval != 0):
         print "Error running crm_mon, is pacemaker running?"
         sys.exit(1)

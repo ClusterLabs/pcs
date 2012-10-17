@@ -38,7 +38,7 @@ def status_cmd(argv):
         sys.exit(1)
 
 def full_status():
-    (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r"])
+    (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):
         print "Error running crm_mon, is pacemaker running?"
@@ -151,7 +151,7 @@ def resources_status(argv):
         print "- " + resource.getAttribute("role") + " " + node_line
 
 def cluster_status(argv):
-    (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r"])
+    (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):
         print "Error running crm_mon, is pacemaker running?"
@@ -171,7 +171,7 @@ def cluster_status(argv):
             print "",line
 
 def corosync_status():
-    (output, retval) = utils.run(["/sbin/corosync-quorumtool", "-l"])
+    (output, retval) = utils.run(["corosync-quorumtool", "-l"])
     if retval != 0:
         print "Error: Corosync not running"
         sys.exit(1)
@@ -179,7 +179,7 @@ def corosync_status():
         print output,
 
 def xml_status():
-    (output, retval) = utils.run(["/usr/sbin/crm_mon", "-1", "-r", "-X"])
+    (output, retval) = utils.run(["crm_mon", "-1", "-r", "-X"])
 
     if (retval != 0):
         print "Error running crm_mon, is pacemaker running?"

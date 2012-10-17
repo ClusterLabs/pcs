@@ -10,11 +10,12 @@ import status
 import prop
 import resource
 import constraint
+import settings
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
 COROSYNC_CONFIG_FEDORA_TEMPLATE = pcs_dir + "/corosync.conf.fedora.template"
-COROSYNC_CONFIG_FILE = "/etc/corosync/corosync.conf"
+COROSYNC_CONFIG_FILE = settings.corosync_conf_file
 
 def cluster_cmd(argv):
     if len(argv) == 0:

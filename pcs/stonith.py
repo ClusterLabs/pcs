@@ -94,10 +94,10 @@ def stonith_list_available(argv):
 
     bad_fence_devices = ["kdump_send", "legacy", "na", "nss_wrapper",
             "pcmk", "vmware_helper", "ack_manual", "virtd"]
-    fence_devices = sorted(glob.glob("/usr/sbin/fence_*"))
+    fence_devices = sorted(glob.glob(utils.fence_bin + "fence_*"))
     for bfd in bad_fence_devices:
         try:
-            fence_devices.remove("/usr/sbin/fence_"+bfd)
+            fence_devices.remove(utils.fence_bin + "fence_"+bfd)
         except ValueError:
             continue
 
@@ -119,7 +119,7 @@ def stonith_list_available(argv):
         print fd + sd
 
 def stonith_list_options(stonith_agent):
-    metadata = get_metadata("/usr/sbin/" + stonith_agent)
+    metadata = get_metadata(utils.fence_bin + stonith_agent)
     if not metadata:
         print "Unable to get metadata for %s" % stonith_agent
         sys.exit(1)
