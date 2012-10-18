@@ -248,6 +248,7 @@ def resource_providers():
     if retval != 0:
         print "Error: unable to get current list of providers"
         print output
+        sys.exit(1)
     print output.strip()
 
 def resource_agents(argv):
