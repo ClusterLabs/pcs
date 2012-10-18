@@ -347,6 +347,9 @@ def does_exist(xpath_query):
         return False
     return True
 
+def does_resource_exist(resource_id):
+    return does_exist("//primitive[@id='"+resource_id+"']")
+
 # Return matches from the CIB with the xpath_query
 def get_cib_xpath(xpath_query):
     args = ["cibadmin", "-Q", "--xpath", xpath_query]

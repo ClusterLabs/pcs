@@ -28,7 +28,6 @@ def constraint_cmd(argv):
             location_prefer([sub_cmd2] + argv)
         else:
             usage.constraint()
-            print argv
             sys.exit(1)
     elif (sub_cmd == "order"):
         if (len(argv) == 0):
@@ -74,7 +73,6 @@ def constraint_cmd(argv):
     elif (sub_cmd == "ref"):
         constraint_ref(argv)
     else:
-        print sub_cmd
         usage.constraint()
         sys.exit(1)
 
@@ -162,6 +160,14 @@ def colocation_add(argv):
 
     resource1 = argv.pop(0)
     resource2 = argv.pop(0)
+
+    if not utils.does_resource_exist(resource1):
+        print "Error: Resource '" + resource1 + "' does not exist"
+        sys.exit(1)
+
+    if not utils.does_resource_exist(resource2):
+        print "Error: Resource '" + resource2 + "' does not exist"
+        sys.exit(1)
 
     score,nv_pairs = parse_score_options(argv)
 
@@ -290,6 +296,15 @@ def order_add(argv,returnElementOnly=False):
 
     resource1 = argv.pop(0)
     resource2 = argv.pop(0)
+
+    if not utils.does_resource_exist(resource1):
+        print "Error: Resource '" + resource1 + "' does not exist"
+        sys.exit(1)
+
+    if not utils.does_resource_exist(resource2):
+        print "Error: Resource '" + resource2 + "' does not exist"
+        sys.exit(1)
+
     sym = "true" if (len(argv) == 0 or argv[0] != "nonsymmetrical") else "false"
 
     order_options = []
@@ -509,6 +524,10 @@ def location_add(argv,rm=False):
         resource_name = argv.pop(0)
         node = argv.pop(0)
         score = argv.pop(0)
+        # If resource doesn't exist, we error out
+        if not utils.does_resource_exist(resource_name):
+            print "Error: Resource " + resource_name + "' does not exist"
+            sys.exit(1)
 
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
