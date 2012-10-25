@@ -14,7 +14,7 @@ Pcs = Ember.Application.create({
 	Pcs.nodesController.update(data);
 	Pcs.resourcesController.update(data);
 	Pcs.settingsController.update(data);
-	Pcs.set("cluster_settings",data["rh7-1"].cluster_settings);
+	Pcs.set("cluster_settings",data[Object.keys(data)[0]].cluster_settings);
 	Ember.run.next(this,disable_checkbox_clicks);
 	if (first_run) {
 	    Ember.run.next(this,function () {

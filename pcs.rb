@@ -100,7 +100,7 @@ def get_cluster_nodes(cluster_name)
     end
   end
 
-  if cluster.nodes != nil
+  if cluster && cluster.nodes != nil
     nodes = cluster.nodes
   else
     print "Error: no nodes found for #{cluster}"
@@ -212,7 +212,8 @@ def get_nodes()
 end
 
 def get_resource_agents_avail()
-  ra = JSON.parse(send_cluster_request_with_token(params[:cluster], 'get_avail_resource_agents'))
+  result = send_cluster_request_with_token(params[:cluster], 'get_avail_resource_agents')
+  ra = JSON.parse(result)
   if (ra["noresponse"] == true)
     return {}
   else

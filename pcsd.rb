@@ -514,7 +514,6 @@ class ConfigOption
   end
 
   def value
-    return "{{#{configname}}}"
     @@cache_value ||= {}
     @@cache_value = {}
     if @@cache_value[configname]  == nil
