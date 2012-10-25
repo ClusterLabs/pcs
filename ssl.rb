@@ -38,5 +38,9 @@ trap(:INT) do
   server.shutdown
 end
 
-require './pcsd'
+trap(:TERM) do
+  server.shutdown
+end
+
+require 'pcsd'
 server.run(Sinatra::Application , webrick_options) 

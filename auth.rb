@@ -8,7 +8,7 @@ class PCSAuth
     if username != "hacluster"
       return nil
     end
-    if not Rpam.auth(username,password)
+    if not Rpam.auth(username,password, :service => "pcsd")
       return nil
     end
 
