@@ -742,6 +742,18 @@ function remove_constraint(id) {
   });
 }
 
+function show_cluster_info(row) {
+  cluster_name = $(row).attr("nodeID");
+
+  $("#node_sub_info").children().each(function (i, val) {
+    if ($(val).attr("id") == ("cluster_info_" + cluster_name))
+      $(val).show();
+    else
+      $(val).hide();
+  });
+
+}
+
 function update_cluster_settings(form) {
   var data = form.serialize();
   $.ajax({

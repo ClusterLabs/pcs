@@ -41,7 +41,25 @@
       <div id="node_info_header">
 	<div id="node_info_header_title">INFORMATION ABOUT CLUSTERS</div>
       </div>
-      <div id="node_sub_info">Select a cluster to view more detailed cluster information</div>
+      <div id="node_sub_info">
+	<div id="no_cluster_selected">Select a cluster to view more detailed cluster information</div>
+	<% @clusters.each do |c| %>
+	  <div id="cluster_info_<%=c.name%>" style="display:none;">
+	    <table>
+	      <tr><td colspan=2><b>Cluster:</b> <%=c.name%></td></tr>
+	      <tr><td><b>Nodes:</b></td>
+		<td>
+		  <table>
+		    <% c.nodes.each { |n| %>
+		      <tr><td></td><td><%=n%></td></tr>
+		    <% } %>
+		  </table>
+		</td>
+	      </tr>
+	    </table>
+	  </div>
+	<% end %>
+      </div>
     </td>
   </tr>
 </table>
