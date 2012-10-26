@@ -471,6 +471,14 @@ function add_existing_dialog() {
     $(this).dialog("close");
   };
 
+  // If you hit enter it triggers the first button: Add Existing
+  $('#add_existing_cluster').keypress(function(e) {
+    if (e.keyCode == $.ui.keyCode.ENTER) {
+      $(this).parent().find("button:eq(0)").trigger("click");
+      return false;
+    }
+  });
+
   $("#add_existing_cluster").dialog({title: 'Add Existing Cluster',
     modal: false, resizable: false,
     width: 'auto',
