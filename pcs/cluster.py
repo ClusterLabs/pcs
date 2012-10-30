@@ -222,15 +222,15 @@ def start_cluster(argv):
             utils.startCluster(node)
             return
 
-    print "Starting Cluster...",
-    output, retval = utils.run(["systemctl", "start","corosync.service"])
-    print output,
+    print "Starting Cluster..."
+    output, retval = utils.run(["service", "corosync","start"])
     if retval != 0:
+        print output
         print "Error: unable to start corosync"
         sys.exit(1)
-    output, retval = utils.run(["systemctl", "start", "pacemaker.service"])
-    print output,
+    output, retval = utils.run(["service", "pacemaker", "start"])
     if retval != 0:
+        print output
         print "Error: unable to start pacemaker"
         sys.exit(1)
 
@@ -258,8 +258,7 @@ def enable_cluster(argv):
             utils.enableCluster(node)
             return
 
-    utils.run(["systemctl", "enable", "corosync.service"])
-    utils.run(["systemctl", "enable", "pacemaker.service"])
+    utils.enableServices()
 
 def disable_cluster(argv):
     if len(argv) > 0:
@@ -267,8 +266,7 @@ def disable_cluster(argv):
             utils.disableCluster(node)
             return
 
-    utils.run(["systemctl", "disable", "corosync.service"])
-    utils.run(["systemctl", "disable", "pacemaker.service"])
+    utils.disableServices()
 
 def enable_cluster_all():
     for node in utils.getNodesFromCorosyncConf():
@@ -284,15 +282,15 @@ def stop_cluster(argv):
             utils.stopCluster(node)
             return
 
-    print "Stopping Cluster...",
-    output, retval = utils.run(["systemctl", "stop","pacemaker.service"])
-    print output,
+    print "Stopping Cluster..."
+    output, retval = utils.run(["service", "pacemaker","stop"])
     if retval != 0:
+        print output,
         print "Error: unable to stop pacemaker"
         sys.exit(1)
-    output, retval = utils.run(["systemctl", "stop","corosync.service"])
-    print output,
+    output, retval = utils.run(["service", "corosync","stop"])
     if retval != 0:
+        print output,
         print "Error: unable to stop corosync"
         sys.exit(1)
 

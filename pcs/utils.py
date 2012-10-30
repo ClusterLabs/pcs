@@ -511,3 +511,25 @@ def write_empty_cib(filename):
     f = open(filename, 'w')
     f.write(empty_xml)
     f.close()
+
+def is_systemctl():
+    if os.path.exists('/usr/bin/systemctl'):
+        return True
+    else:
+        return False
+
+def enableServices():
+    if is_systemctl():
+        utils.run(["systemctl", "enable", "corosync.service"])
+        utils.run(["systemctl", "enable", "pacemaker.service"])
+    else:
+        utils.run(["chkconfig", "corosync", "on"])
+        utils.run(["chkconfig", "pacemaker", "on"])
+
+def disableServices():
+    if is_systemctl():
+        utils.run(["systemctl", "disable", "corosync.service"])
+        utils.run(["systemctl", "disable", "pacemaker.service"])
+    else:
+        utils.run(["chkconfig", "corosync", "off"])
+        utils.run(["chkconfig", "pacemaker", "off"])
