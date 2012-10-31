@@ -518,6 +518,17 @@ def is_systemctl():
     else:
         return False
 
+def is_rhel6():
+    try:
+        issue = open('/etc/issue').read()
+    except IOError as e:
+        return False
+
+    if re.search(r'Red Hat Enterprise Linux Server release 6\.', issue):
+        return True
+    else:
+        return False
+
 def enableServices():
     if is_systemctl():
         utils.run(["systemctl", "enable", "corosync.service"])

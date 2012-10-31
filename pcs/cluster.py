@@ -163,14 +163,14 @@ def check_nodes(nodes):
             print node + ": Offline"
     
 def corosync_setup(argv,returnConfig=False):
-    fedora_config = True
+    fedora_config = not utils.is_rhel6()
     if len(argv) < 2:
         usage.cluster()
         exit(1)
-    if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options:
+    if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options and fedora_config:
         sync_start(argv)
         return
-    elif not returnConfig and not "--local" in utils.pcs_options:
+    elif not returnConfig and not "--local" in utils.pcs_options and fedora_config:
         sync(argv)
         return
     else:
@@ -179,13 +179,10 @@ def corosync_setup(argv,returnConfig=False):
 
     if fedora_config == True:
         f = open(COROSYNC_CONFIG_FEDORA_TEMPLATE, 'r')
-    else:
-        f = open(COROSYNC_CONFIG_TEMPLATE, 'r')
 
-    corosync_config = f.read()
-    f.close()
+        corosync_config = f.read()
+        f.close()
 
-    if fedora_config == True:
         i = 1
         new_nodes_section = ""
         for node in nodes:
@@ -197,11 +194,23 @@ def corosync_setup(argv,returnConfig=False):
 
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
         corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
+        if returnConfig:
+            return corosync_config
 
-    if returnConfig:
-        return corosync_config
+        utils.setCorosyncConf(corosync_config)
+    else:
+        output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--createcluster", cluster_name])
+        if retval != 0:
+            print output
+            print "Error creating cluster:", cluster_name
+            sys.exit(1)
+        for node in nodes:
+            output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--addnode", node])
+            if retval != 0:
+                print output
+                print "Error adding node:", node
+                sys.exit(1)
 
-    utils.setCorosyncConf(corosync_config)
     if "--start" in utils.pcs_options:
         start_cluster([])
 
@@ -223,11 +232,18 @@ def start_cluster(argv):
             return
 
     print "Starting Cluster..."
-    output, retval = utils.run(["service", "corosync","start"])
-    if retval != 0:
-        print output
-        print "Error: unable to start corosync"
-        sys.exit(1)
+    if utils.is_rhel6():
+        output, retval = utils.run(["service", "cman","start"])
+        if retval != 0:
+            print output
+            print "Error: unable to start cman"
+            sys.exit(1)
+    else:
+        output, retval = utils.run(["service", "corosync","start"])
+        if retval != 0:
+            print output
+            print "Error: unable to start corosync"
+            sys.exit(1)
     output, retval = utils.run(["service", "pacemaker", "start"])
     if retval != 0:
         print output
@@ -288,11 +304,18 @@ def stop_cluster(argv):
         print output,
         print "Error: unable to stop pacemaker"
         sys.exit(1)
-    output, retval = utils.run(["service", "corosync","stop"])
-    if retval != 0:
-        print output,
-        print "Error: unable to stop corosync"
-        sys.exit(1)
+    if utils.is_rhel6():
+        output, retval = utils.run(["service", "cman","stop"])
+        if retval != 0:
+            print output,
+            print "Error: unable to stop cman"
+            sys.exit(1)
+    else:
+        output, retval = utils.run(["service", "corosync","stop"])
+        if retval != 0:
+            print output,
+            print "Error: unable to stop corosync"
+            sys.exit(1)
 
 def force_stop_cluster(argv):
     daemons = ["crmd", "pengine", "attrd", "lrmd", "stonithd", "cib", "pacemakerd", "corosync"]
