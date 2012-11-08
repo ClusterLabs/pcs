@@ -764,16 +764,18 @@ function show_cluster_info(row) {
 
 function update_cluster_settings(form) {
   var data = form.serialize();
+  $('html, body, form, :input, :submit').css("cursor","wait");
   $.ajax({
     type: 'POST',
     url: get_cluster_remote_url() + 'update_cluster_settings',
     data: data,
     timeout: pcs_timeout,
     success: function() {
-      Pcs.update();
+      window.location.reload();
     },
     error: function (xhr, status, error) {
       alert("Error updating configuration: ("+error+")");
+      $('html, body, form, :input, :submit').css("cursor","auto");
     }
   });
 }

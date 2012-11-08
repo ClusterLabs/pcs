@@ -17,22 +17,18 @@
     <td id="config" colspan=3>
       <form>
 	<% @config_options.each { |page, options| %>
-	  <script type="text/x-handlebars">
-	    {{#with Pcs}}
-	      <table>
-		<% options.each { |co| %>
- 		  <tr>
-		    <td class="label"><%= co.name %>:</td>
-		    <td><%= co.html %><span class="units"><%= co.units %></span></td>
-		  </tr>
-		<% } %>
-	      </table>
-	    {{/with}}
-	</script>
+	  <table>
+	    <% options.each {|co| %>
+	      <tr>
+		<td class="label"><%= co.name %>:</td>
+		<td><%= co.html %><span class="units"><%= co.units %></span></td>
+	      </tr>
+	    <% } %>
+	  </table>
 	<br>
       <% } %> 
 	<% if @config_options.length != 0 %>
-	  <input type=submit style="margin-left:20px;" class="text_field" onclick="alert('Current settings are view only'); return false; update_cluster_settings($(this).parent('form')); return false;" value="Apply Changes">
+	  <input type=submit style="margin-left:20px;" class="text_field" onclick="update_cluster_settings($(this).parent('form')); return false;" value="Apply Changes">
       <% end %>
       </form>
     </td>

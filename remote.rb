@@ -552,9 +552,26 @@ end
 
 def update_cluster_settings(params)
   settings = params["config"]
+  hidden_settings = params["hidden"]
   p "Settings"
   pp settings
+  output = ""
+  hidden_settings.each{|name,val|
+    found = false
+    settings.each{|name2,val2|
+      if name == name2
+	found = true
+	break
+      end
+    }
+    if not found
+      settings[name] = val
+    end
+  }
+
+
   settings.each{|name,val|
     run_cmd(PCS, "property", "set", name + "=" + val)
   }
+  return [200, "Update Successful"]
 end

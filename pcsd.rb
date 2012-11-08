@@ -443,6 +443,9 @@ def getConfigOptions2()
   pacemaker_page << ConfigOption.new("PE Input Storage", "pe-input-series-max", "int", "4")
   config_options["pacemaker"] = pacemaker_page
 
+  allconfigoptions = []
+  config_options.each { |i,k| k.each { |j| allconfigoptions << j } }
+  ConfigOption.getDefaultValues(allconfigoptions)
   return config_options
 end
 
@@ -535,8 +538,8 @@ class ConfigOption
     metadata = `#{PENGINE} metadata`
     doc = REXML::Document.new(metadata)
 
+    puts "SET DEFAULTS"
     cos.each { |co|
-      puts "resource-agent/parameters/parameter[@name='#{co.configname}']"
       doc.elements.each("resource-agent/parameters/parameter[@name='#{co.configname}']/content") { |e|
 	co.default = e.attributes["default"]
 	break
@@ -558,11 +561,12 @@ class ConfigOption
 	end
       end
     when "check"
-      if value == "true"
+      if value == "true" || value == "on"
 	return "checked"
+      else
+	return ""
       end
     when "dropdown"
-      print "Dropdown: #{value}-#{option}\n"
       if value == option
 	return "selected"
       end
@@ -571,12 +575,12 @@ class ConfigOption
 
   def html
     paramname = "config[#{configname}]"
-    js_name = configname.gsub(/-/,"_")
+    hidden_paramname = "hidden[#{configname}]"
     case type
     when "int"
-      return "<input name=\"#{paramname}\" {{bindAttr value=\"cluster_settings.#{js_name}.value\"}} type=text size=#{size}>"
+      return "<input name=\"#{paramname}\" value=\"#{value}\" type=text size=#{size}>"
     when "str"
-      return "<input name=\"#{paramname}\" value=\"{{cluster_name}}\" type=text size=#{size}>"
+      return "<input name=\"#{paramname}\" value=\"#{value}\" type=text size=#{size}>"
     when "radio"
       ret = ""
       options.each {|option|
@@ -584,8 +588,8 @@ class ConfigOption
       }
       return ret
     when "check"
-      ret = "{{view Ember.Checkbox checkedBinding=\"cluster_settings.#{js_name}.value\"}}"
-      ret += "<input type=hidden name=\"#{js_name}-checkbox\" value=\"1\">"
+      ret = "<input type=checkbox name=\"#{paramname}\" " + checked(nil) + ">"
+      ret += "<input type=hidden name=\"#{hidden_paramname}\" value=\"off\">"
       return ret
     when "dropdown"
       ret = "<select name=\"#{paramname}\">"
