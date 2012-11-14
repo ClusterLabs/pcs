@@ -11,6 +11,7 @@ import prop
 import resource
 import constraint
 import settings
+import socket
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -176,6 +177,13 @@ def corosync_setup(argv,returnConfig=False):
     else:
         nodes = argv[1:]
         cluster_name = argv[0]
+
+# Verify that all nodes are resolvable otherwise problems may occur
+    for node in nodes:
+        try:
+            socket.gethostbyname(node)
+        except socket.error:
+            print "Warning: Unable to resolve hostname: %s" % node
 
     if fedora_config == True:
         f = open(COROSYNC_CONFIG_FEDORA_TEMPLATE, 'r')
