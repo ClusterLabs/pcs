@@ -608,7 +608,7 @@ def constraint_rm(argv):
 
 def constraint_ref(argv):
     if len(argv) == 0:
-        constraint.usage()
+        usage.constraint()
         sys.exit(1)
 
     for arg in argv:
