@@ -434,13 +434,11 @@ def set_cib_property(prop, value):
     document = parseString(crm_config)
     crm_config = document.documentElement
     cluster_property_set = crm_config.getElementsByTagName("cluster_property_set")[0]
-    property_exists = False
     for child in cluster_property_set.getElementsByTagName("nvpair"):
         if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
             break
         if (child.getAttribute("id") == "cib-bootstrap-options-" + prop):
             child.parentNode.removeChild(child)
-            property_exists = True
             break
 
 # If the value is empty we don't add it to the cluster
@@ -531,16 +529,16 @@ def is_rhel6():
 
 def enableServices():
     if is_systemctl():
-        utils.run(["systemctl", "enable", "corosync.service"])
-        utils.run(["systemctl", "enable", "pacemaker.service"])
+        run(["systemctl", "enable", "corosync.service"])
+        run(["systemctl", "enable", "pacemaker.service"])
     else:
-        utils.run(["chkconfig", "corosync", "on"])
-        utils.run(["chkconfig", "pacemaker", "on"])
+        run(["chkconfig", "corosync", "on"])
+        run(["chkconfig", "pacemaker", "on"])
 
 def disableServices():
     if is_systemctl():
-        utils.run(["systemctl", "disable", "corosync.service"])
-        utils.run(["systemctl", "disable", "pacemaker.service"])
+        run(["systemctl", "disable", "corosync.service"])
+        run(["systemctl", "disable", "pacemaker.service"])
     else:
-        utils.run(["chkconfig", "corosync", "off"])
-        utils.run(["chkconfig", "pacemaker", "off"])
+        run(["chkconfig", "corosync", "off"])
+        run(["chkconfig", "pacemaker", "off"])
