@@ -132,8 +132,6 @@ def resources_status(argv):
 
     print "Resources:"
 
-    groups = {}
-    nongroup_resources = []
     resources = info_dom.getElementsByTagName("resources")
     if resources.length == 0:
         print "Error: No resources section found"
