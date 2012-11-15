@@ -9,7 +9,6 @@ import utils
 import re
 import glob
 import os
-import resource
 
 def stonith_cmd(argv):
     if len(argv) == 0:
