@@ -44,6 +44,10 @@ def resource_cmd(argv):
                     ra_values.append(arg)
     
         resource_create(res_id, res_type, ra_values, op_values)
+    elif (sub_cmd == "move"):
+        resource_move(argv)
+    elif (sub_cmd == "unmove"):
+        resource_move(argv,True)
     elif (sub_cmd == "standards"):
         resource_standards()
     elif (sub_cmd == "providers"):
@@ -231,6 +235,30 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     elif "--master" in utils.pcs_options:
         resource_master_create([ra_id+"-master",ra_id])
 
+
+def resource_move(argv,unmove=False):
+    if len(argv) == 0:
+        print "Error: must specify resource to move/unmove"
+        sys.exit(1)
+
+    resource_id = argv.pop(0)
+
+    if len(argv) >= 1:
+        dest_node = argv.pop(0)
+    else:
+        dest_node = None
+
+    if unmove:
+        output,ret = utils.run(["crm_resource", "--resource", resource_id, "--un-move"])
+    else:
+        if dest_node == None:
+            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move"])
+        else:
+            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node])
+    if ret != 0:
+        print "Error moving/unmoving resource"
+        print output
+        sys.exit(1)
 
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)

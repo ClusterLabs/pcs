@@ -4,6 +4,7 @@ import utils
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
+from collections import defaultdict
 
 def constraint_cmd(argv):
     if len(argv) == 0:
@@ -384,6 +385,7 @@ def location_show(argv):
     nodehashoff = {}
     rschashon = {}
     rschashoff = {}
+    ruleshash = defaultdict(list)
     all_loc_constraints = constraintsElement.getElementsByTagName('rsc_location')
 
     print "Location Constraints:"
@@ -392,6 +394,17 @@ def location_show(argv):
         lc_rsc = rsc_loc.getAttribute("rsc")
         lc_id = rsc_loc.getAttribute("id")
         lc_score = rsc_loc.getAttribute("score")
+
+        rules = rsc_loc.getElementsByTagName('rule')
+        if len(rules) > 0:
+            for rule in rules:
+                rule_score = rule.getAttribute("score")
+                for exp in rule.getElementsByTagName('expression'):
+                    attr = exp.getAttribute("attribute")
+                    operation = exp.getAttribute("operation")
+                    value = exp.getAttribute("value")
+                    ruleshash[lc_rsc].append([lc_id,"%s %s %s" % (attr, operation, value), rule_score])
+            continue
 
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
 # rsc_location)
@@ -474,6 +487,11 @@ def location_show(argv):
                         print "("+options[2]+")",
                     if showDetail:
                         print "(id:"+options[0]+")",
+                print ""
+            for res_id,rule,score in ruleshash[rsc]:
+                print "    Rule: " + rule + " (score:%s)" % (score),
+                if showDetail:
+                    print "(id:%s)" % (res_id),
                 print ""
 
 def location_prefer(argv):

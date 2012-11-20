@@ -22,16 +22,23 @@ def resource():
 Usage: pcs resource [commands]...
 Manage pacemaker resources
 Commands:
-    show [resource_id] [--all]
+    show [resource id] [--all]
         Show all currently configured resources or if a resource is specified
         show the options for the configured resource.  If --all is specified
         resource options will be displayed
 
-    start <resource_id>
+    start <resource id>
         Start resource specified by resource_id
 
     stop <resource id>
         Stop resource specified by resource_id
+
+    move <resource id> [destination node]
+        Move resource off current node (and optionally onto destination node
+
+    unmove <resource id>
+        Remove constraints created by the move command and allow the resource
+        to move back to its original location
 
     list
         Show list of all available resources
