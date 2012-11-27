@@ -959,6 +959,10 @@ def resource_show(argv):
             print
 
 def resource_stop(argv):
+    if len(argv) < 1:
+        print "Error: You must specify a resource to stop"
+        sys.exit(1)
+
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
     if retval != 0:
@@ -968,6 +972,10 @@ def resource_stop(argv):
         return True
 
 def resource_start(argv):
+    if len(argv) < 1:
+        print "Error: You must specify a resource to start"
+        sys.exit(1)
+
     args = ["crm_resource", "-r", argv[0], "-m", "-d", "target-role"]
     output, retval = utils.run(args)
     if retval != 0:
