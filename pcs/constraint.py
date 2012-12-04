@@ -404,7 +404,6 @@ def location_show(argv):
                     operation = exp.getAttribute("operation")
                     value = exp.getAttribute("value")
                     ruleshash[lc_rsc].append([lc_id,"%s %s %s" % (attr, operation, value), rule_score])
-            continue
 
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
 # rsc_location)
