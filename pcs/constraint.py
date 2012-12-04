@@ -472,6 +472,8 @@ def location_show(argv):
             print "  Resource: " + rsc
             if (rsc in rschashon):
                 for options in rschashon[rsc]:
+                    if options[1] == "":
+                        continue
                     print "    Enabled on:",
                     print options[1],
                     if options[2] != "INFINITY" or showDetail:
@@ -488,11 +490,12 @@ def location_show(argv):
                     if showDetail:
                         print "(id:"+options[0]+")",
                 print ""
-            for res_id,rule,score in ruleshash[rsc]:
-                print "    Rule: " + rule + " (score:%s)" % (score),
-                if showDetail:
-                    print "(id:%s)" % (res_id),
-                print ""
+    for rsc in ruleshash:
+        for res_id,rule,score in ruleshash[rsc]:
+            print "    Rule: " + rule + " (score:%s)" % (score),
+            if showDetail:
+                print "(id:%s)" % (res_id),
+            print ""
 
 def location_prefer(argv):
     rsc = argv.pop(0)
