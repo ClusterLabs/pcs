@@ -1,0 +1,709 @@
+html, body {
+  margin: 0px 0px 0px 0px;
+  height:100%;
+  font-size: 10px;
+}
+
+a, a:link, a:visited, a:hover, a:active {
+  color: #2B85DB;
+  text-decoration: none;
+}
+
+table {
+  empty-cells:show;
+}
+
+#header {
+  background-image:url("../images/Shell_bg.png");
+  height: 79px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+#topmenu {
+  padding-left: 38px;
+  padding-right: 38px;
+}
+
+#content {
+  padding-left: 38px;
+  padding-right: 38px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 960px;
+}
+
+#push {
+  height: 40px;
+}
+
+#wrapper {
+  min-height:100%;
+}
+
+#footer {
+/*  padding-left: 38px;
+  padding-right: 38px; */
+  margin-left: auto;
+  margin-right: auto;
+  width: 960px;
+  height: 30px;
+  margin: 30px auto 0;
+}
+
+#header #logo {
+  padding-top: 20px;
+  padding-right: 15px;
+  float: left;
+}
+
+td.right {
+  float: right;
+}
+
+#header #menu_controls {
+  padding-top: 0px;
+  padding-bottom: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  height: 79px;
+  border-collapse: collapse;
+  border-spacing: 0px;
+  width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#menu_controls tr, #menu_controls  td {
+  vertical-align: bottom;
+  padding: 0px;
+}
+
+#header > #menu_list > a.active {
+  padding: 8px;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin: 0px;
+  border: 0px;
+  background:  -webkit-gradient(linear, left top, left bottom, from(#4b4b4b), to(#323232));
+  background:  -moz-linear-gradient(top, #4b4b4b, #323232);
+  float: left;
+}
+
+.menuitem >  a {
+  padding: 8px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background: #000000;
+  float: left;
+}
+
+#menu_list table {
+  border-collapse: collapse;
+}
+
+td.menuitem {
+  padding: 0px;
+  vertical-align: middle;
+}
+
+div.first a {
+  border-top-left-radius: 9;
+}
+
+#header a, #header a:link, #header a:visited, #header a:hover, #header a:active {
+  color: #cccccc
+}
+
+#header a.active {
+  color: #ffffff;
+}
+
+#menu_controls #dropdownr {
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
+  text-align: right;
+  color: #888888;
+  background: #000000;
+  padding: 2px 5px 2px 5px;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+#menu_controls #dropdownl {
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
+  text-align: left;
+  color: #888888;
+  background: #000000;
+  padding: 2px 5px 2px 5px;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+#menu_list a, #menu_list span{
+  color: #cccccc;
+  font-family: "Overpass";
+  font-size: 12px;
+  font-weight: bold;
+}
+
+#tab_name {
+  font-family: "Overpass";
+  font-size: 12px;
+  text-align: right;
+  color: #888888;
+  border-bottom: 0px;
+}
+
+table#main {
+  border-spacing: 0px;
+  margin-top: 15px;
+  width: 960px;
+}
+
+table#main > tbody > tr {
+  display: none;
+}
+
+#page_header {
+  font-family: "Overpass";
+  font-size: 16px;
+  font-weight: bold;
+  color: #333333;
+}
+
+#page_header div {
+  float: left;
+  vertical-align: middle;
+}
+
+#manage_cluster_commands td {
+  padding-right: 15px;
+}
+
+#config_options {
+  font-family: "Overpass";
+  border-spacing: 15;
+}
+
+#config_options td:first-child {
+  color: #000000;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #ffffff
+}
+
+#config_options td {
+  font-size: 14px;
+  font-weight: normal;
+  padding: 0px 15px 0px 15px;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  background-color: #fcfcfc;
+  color: #3fa7e1;
+}
+#config_options a,
+#config_options a:link,
+#config_options a:visited,
+#config_options a:hover,
+#config_options a:active {
+  background-color: #fcfcfc;
+  color: #3fa7e1;
+}
+
+#config_options td.selected,
+#config_options td.selected a,
+#config_options td.selected a:link,
+#config_options td.selected a:visited,
+#config_options td.selected a:hover,
+#config_options td.selected a:active {
+  background-color: #3fa7e1;
+  color: #ffffff;
+}
+
+
+#remove_add {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: #2b85db;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+  padding-left: 5px;
+}
+
+#remove_add div {
+  float: left;
+}
+
+
+td#tab_name {
+  border-right: 1px;
+  border-left: 1px;
+  border-top: 1px;
+  border-color: #b4b4b4;
+  border-style: inset;
+  border-top-left-radius: 5;
+  border-top-right-radius: 5;
+  padding-left: 7px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  padding-right: 0px;
+}
+
+.borderbottom {
+  border-bottom: 1px;
+  border-top: 0px;
+  border-right: 0px;
+  border-left: 0px;
+  border-color: #b4b4b4;
+  border-style: inset;
+  vertical-align: top;
+}
+
+td#config {
+  vertical-align: top;
+}
+
+td.node_list, td#node_info {
+  border: 1px;
+  border-top: 0px;
+  border-color: #b4b4b4;
+  border-style: inset;
+  vertical-align: top;
+}
+
+td#remove_add {
+  width: 30%;
+}
+
+td.node_name {
+  cursor: default;
+  width: 100%;
+}
+
+td.resource_name {
+  cursor:default;
+  padding-right:20px;
+}
+
+td.node_list {
+  width:225px;
+}
+
+#uptime {
+  width:123px;
+}
+
+td#node_info {
+  padding: 25px;
+  width:735px;
+}
+
+.node_list th {
+  font-family: "Overpass";
+  font-size: 12px;
+  font-weight: bold;
+  color: #707070;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  text-align: left;
+  background: #f6f6f6;
+}
+.node_list td{
+  font-family: "Liberation";
+  font-size: 14px;
+  color: #2b85db;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.node_list .resource_type {
+  cursor: default;
+  padding-right: 20px;
+  color: #000000;
+  width: 100%;
+}
+
+td.node_list_sprite {
+  padding-right: 20px;
+  padding-left: 5px;
+}
+
+
+.node_list_check {
+  margin-right: 10px;
+  clear: left;
+}
+
+#node_info {
+  background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#f5f5f5));
+  background: -moz-linear-gradient(top, #ffffff, #f5f5f5);
+}
+
+#node_info_header {
+  font-family: "Overpass";
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.node_info_header_title {
+  font-weight: normal;
+  color: #888888;
+  float: left;
+}
+
+#node_info_header_title_name {
+  color: #333333;
+  float: left;
+}
+
+#node_details {
+  clear: left;
+  padding-top: 40px;
+  font-family: "Liberation";
+}
+
+#node_details td {
+  white-space: nowrap;
+}
+
+#node_details > div {
+  padding-right: 5px;
+  float: left;
+  clear: left;
+}
+
+#node_info .reg {
+  font-family: "Liberation";
+  font-size: 12px;
+  padding-right: 5px;
+}
+
+#node_info .bold {
+  font-family: "Liberation";
+  font-size: 12px;
+  font-weight: bold;
+  padding-right: 20px;
+}
+
+#node_info .resource_name {
+  color: #8c8c8c;
+}
+
+.center {
+  text-align: center;
+}
+
+input[type=text], input[type=submit], input[type=password] {
+  height: 25px;
+  font-family: "Liberation";
+  font-size: 12px;
+  color: #333333;
+  border: 1px solid #cdcdcd;
+  background: url("../images/field_bg.png");
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#config {
+  background-color:#f8f8f8;
+}
+
+#config td {
+  padding: 7px;
+}
+
+#config td {
+  font-family: "Liberation";
+  font-size: 13px;
+  padding-right: 5px;
+}
+
+.units {
+  font-size: 10px;
+  padding-left: 5px;
+  vertical-align: center;
+}
+
+#node_sub_info {
+  padding-top: 20px;
+  clear: left;
+  vertical-align: middle;
+  font-family: "Liberation";
+}
+
+#node_sub_info * {
+/*  float: left; */
+}
+
+#node_options_buttons {
+  padding-top: 20px;
+  clear: left;
+}
+
+#node_options_buttons div {
+  float: left;
+}
+
+#node_options_buttons .link {
+  padding-left: 5px;
+  padding-right: 15px;
+}
+
+#failoverdomains {
+  clear: left;
+  float: left;
+}
+
+#failoverdomains td {
+  min-width: 150px;
+  padding-left: 10px;
+}
+
+#failoverdomains th {
+  text-align: left;
+  padding-left: 10px;
+}
+
+#clusterdaemons {
+  float: left;
+}
+
+#clusterdaemons td {
+  min-width: 150px;
+}
+
+#locationdep td:first-child {
+  min-width: 200px;
+} 
+
+#resources_running td {
+  min-width: 300px;
+}
+
+.datatable_header {
+  padding-left: 3px;
+  font-family: "Overpass";
+  font-size: 14px;
+  color: #333333;
+}
+
+#resource_selector select {
+  width: 200px;
+  height: 25px;
+  padding-right: 50px;
+}
+
+#resource_selector td {
+  padding: 12px;
+  padding-left: 0px;
+}
+
+
+#resource_selector .bold {
+  padding-right: 10px;
+}
+
+
+.datatable {
+  border-spacing: 0px;
+}
+
+.datatable td, .datatable th {
+  font-family: "Liberation";
+  font-size: 11px;
+  padding: 5px;
+}
+
+.datatable td, .datatable th{
+  text-align: left;
+  padding-left: 10;
+}
+
+.datatable th {
+  font-weight: bold;
+  color: #666666;
+  border-bottom: 1px solid #ededed;
+  background: #fcfcfc;
+}
+
+.datatable td {
+  background: #ffffff;
+  border: 0px;
+}
+
+table.datatable td, table.datatable a {
+  color: #2b85db;
+}
+
+table.datatable {
+  border-width: 1px 1px 1px 1px;
+  border-color: #b8b8b8;
+  border-style: solid;
+}
+
+.link {
+  cursor:pointer;
+  font-family: "Liberation";
+  font-size: 12px;
+  color: #2b85db;
+  font-weight: normal;
+}
+
+#copyright {
+  color: #666764;
+  float: left;
+}
+
+#footer {
+  font-family: "Overpass";
+  font-weight: bold;
+  font-size: 11px;
+  color: #2b85db;
+}
+
+#footer a, #footer a:link, #footer a:visited, #footer a:hover, #footer a:active {
+  color: #2b85db;
+}
+
+#help {
+  float: right;
+  margin-right: 5px;
+}
+
+tr td a.remove {
+  color: red;
+}
+
+.status {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: #53b900;
+}
+
+.status-offline {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: red;
+}
+
+.status-unknown {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: gray;
+}
+
+.datatable_header span {
+  margin-top: 4px;
+}
+
+.sprites {
+  background-image: url("../images/action-icons.png");
+  background-color     : transparent; 
+  background-repeat    : no-repeat; 
+  float: left;
+  height: 16px;
+  width: 16px;
+}
+
+.x { background-position: -32px -1px; }
+.xdark { background-position: -32px -17px; }
+.plus { background-position: -48px -1px; }
+.check { background-position: -448px -1px; }
+.restart { background-position: -272px -17px; }
+.standby { background-position: -368px -16px; }
+.cancel { background-position: -160px -17px; }
+.configure { background-position: -64px -16px; }
+.arrow { background-position: -544px -16px; }
+.move { background-position: -16px -17px; }
+.history { background-position: -256px -17px; }
+.previewmap { background-position: -400px -1px; }
+.downarrow { background-position: -528px -1px; }
+.rightarrow { background-position: -544 -1px; }
+
+.menuheader { position: relative; }
+.menuheader .label {
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
+  text-align: left;
+  color: #888888;
+}
+
+.menuheader .menu {
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
+  text-align: left;
+  background: white;
+
+  display: none;
+  width: auto;
+  position: absolute;
+#  top: 22px;
+  border-radius: 0 0 5px 5px;
+  z-index: 10;
+  padding-bottom: 5px;
+  box-shadow: 0 5px 14px #dadada;
+  text-align: right;
+}
+.menuheader:hover .menu {
+  display: block;
+  position: absolute;
+}
+
+.menuheader:last-child .menu {
+  float: right;
+  right: 0px;
+}
+
+.menu a {
+  width: 80px; /* HACK: must be the same width as the widest menu header */
+#  color: #777;
+  text-decoration: none;
+  font-size: 13px;
+  border-radius: 0;
+  font-weight: normal;
+  display: block;
+  position: relative;
+  line-height: 24px;
+#  border-top: 1px rgba(0,0,0,0) solid;
+  padding-left: 30px;
+  padding-right: 10px;
+#  padding-top: 3px;
+  padding-bottom: 3px;
+  font-family: "Overpass";
+  float: left;
+}
+
+.menu-item:hover {
+  background: -webkit-linear-gradient(top,  #4db5f1 0%, #127AB4 100%);
+  color: white;
+  border-top: 1px #47ace5 solid;
+  cursor: pointer;
+}
+
+li.menuheader {
+  list-style: none;
+}
+
+#add_constraint_location td {
+  font-family: "Liberation";
+}
+
+.node_hover {
+  background: #e4f5fd;
+}
+
+.node_selected {
+  background: #e4f5fd;
+}
+
+.ui-progressbar .ui-progressbar-value {
+  background-image: url(images/pbar-ani.gif);
+}

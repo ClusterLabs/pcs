@@ -1,0 +1,356 @@
+<% @pageName = @myView == "resource" ? "Resource" : "Fence Device" %>
+<tr id="<%=@myView%>_title_row"><td id="page_header" colspan=3>
+<%= @myView == "resource" ? "RESOURCES" : "FENCE DEVICES" %>
+    </td>
+  </tr>
+  <tr id="<%=@myView%>_header_row">
+    <td id="remove_add" class="borderbottom">
+      <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;
+	<% if @myView == "resource" %>
+	  <a href="#" onclick='verify_remove("resource");return false;'>
+	<% else %>
+	  <a href="#" onclick='verify_remove("stonith");return false;'>
+	<% end %>
+      Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+  <div class="plus sprites"></div><div class="link">&nbsp;
+    <% if @myView == "resource" %>
+      <a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});return false;">
+    <% else %>
+      <a href="#" onclick="$('#add_stonith').dialog({title: 'Add Fence Device', modal:true, width: 'auto'});return false;">
+    <% end %>
+  Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="create_group();">Create Group</a></div>
+    </td>
+    <td class="borderbottom">&nbsp;</td>
+    <td id="tab_name" width="125">
+      <div style="float: left">&nbsp;Edit <%= @pageName%>&nbsp;</div><div class="check sprites"></div>
+    </td>
+  </tr>
+  <tr id="<%=@myView%>_list_row">
+    <td id="<%=@myView%>_list" class="node_list">
+      <%= erb :_resource_list %>
+    </td>
+	<td id="node_info" colspan=2>
+	  <div id="<%=@myView%>_info_div" style="opacity: 0;">
+	  <div id="test">
+	    <div id="node_info_header">
+	      <div id="<%=@myView%>_info_header_title" class="node_info_header_title" >Edit <%= @pageName %>&nbsp;</div>
+	      <div id="node_info_header_title_name">
+		<script type="text/x-handlebars">
+		{{Pcs.resourcesController.cur_resource.name}}
+                </script>
+	      </div>
+	      <div>
+		<script type="text/x-handlebars">
+{{#if Pcs.resourcesController.cur_resource.group}}
+ &nbsp;({{Pcs.resourcesController.cur_resource.group}})
+{{/if}}
+                </script>
+	      </div>
+	    </div>
+
+	    <script type="text/x-handlebars">
+	    <div id="node_sub_info">
+	      <table>
+		<tr>
+		  <td><input disabled style="margin-right: 50px;" type="text" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}} size="35" class="text_field"></td>
+		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
+		  <td>
+		  {{#if Pcs.resourcesController.cur_resource.failed}}
+		      <div id="res_status" class="status-offline">Failed</div>
+                  {{else}}
+		  {{#if Pcs.resourcesController.cur_resource.active}}
+		      <div id="res_status" class="status">Running</div>
+		  {{else}}
+		      <div id="res_status" class="status-offline">Inactive</div>
+		  {{/if}}
+		  {{/if}}
+		  </td>
+		</tr>
+	      </table>
+	    </div>
+	    </script>
+
+	    <div id="node_options_buttons">
+	      <% if @myView == "resource" %>
+		<div class="xdark sprites" style="float: left"></div>
+		<div id="resource_delete_link" class="link">Remove</div>
+		<div class="cancel sprites" style="float: left"></div>
+		<div id="resource_stop_link" class="link">Stop</div>
+		<div class="restart sprites" style="float: left"></div>
+		<div id="resource_start_link" class="link">Start</div>
+	      <% else %>
+		<div class="xdark sprites" style="float: left"></div>
+		<div id="stonith_delete_link" class="link">Remove</div>
+	      <% end %>
+	      <!--
+	      <div class="move sprites" style="float: left"></div>
+	      <div id="resource_move_link" class="link">Move</div>
+	      <div class="history sprites" style="float: left"></div>
+	      <div id="resource_history_link" class="link">History</div>
+	      -->
+	    </div>
+
+	    <div id="node_details">
+	      <table style="margin-bottom:25px;"><tr>
+		  <td nowrap><div class="bold">Current Location:</div></td>
+		  <td><div id="cur_res_loc" class="reg">
+		      <script type="text/x-handlebars">
+			{{Pcs.resourcesController.cur_resource.nodes}}
+		      </script>
+		  </div> </td>
+		</tr>
+	      </table>
+	      <% if @myView == "resource" %>
+	      <div><div class="plus sprites"></div><div class="link" style="display:inline;">&nbsp;<a href="#" onclick="$('#add_constraint').dialog({title: 'Add Constraint', modal:true, width: 'auto'});">Add&nbsp;Constraint</a>&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
+	      <script type="text/x-handlebars">
+	      <table style="clear:left;float:left">
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Location Preferences ({{Pcs.resourcesController.cur_resource.location_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td>
+		    <div id="locationdep">
+		      <table class="datatable">
+			<tr><th>Node</th><th>Score</th><th>Stickyness</th><th>Remove</th></tr>
+			{{#each Pcs.resourcesController.cur_resource.location_constraints}}
+			<tr>
+			  <td>{{node}}</td>
+			  <td>{{score}}</td>
+                          <td></td>
+			  <td {{bindAttr constraint_id="id"}} style="text-align:center">
+				<a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+			  </td>
+			</tr>
+		        {{/each}}
+                        {{#unless Pcs.resourcesController.cur_resource.location_constraints}}
+			<tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+		        {{/unless}}
+		      </table>
+		    </div>
+		  </td>
+		</tr>
+	      </table>
+	      </script>
+	      <script type="text/x-handlebars">
+	      <table style="clear:left;float:left;">
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Ordering Preferences ({{Pcs.resourcesController.cur_resource.ordering_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td>
+		    <div id="locationdep">
+		      <table class="datatable">
+			<tr><th>Resource</th><th>Before/After</th><th>Score</th><th>Remove</th></tr>
+		        {{#each Pcs.resourcesController.cur_resource.ordering_constraints}}	
+			  <tr><td>{{other_rsc}}</td>
+			    {{#if before}}
+			    <td>Starts before {{then}}</td>
+			    {{else}}
+			    <td>Starts after {{first}}</td>
+			    {{/if}}
+
+			    <td></td>
+			    <td {{bindAttr constraint_id="id"}} style="text-align:center">
+				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+			    </td>
+			  </tr>
+ 			{{/each}}
+			{{#unless Pcs.resourcesController.cur_resource.ordering_constraints}}
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+			{{/unless}}
+		      </table>
+		    </div>
+		  </td>
+		</tr>
+	      </table>
+	      </script>
+	      <script type="text/x-handlebars">
+	      <table style="clear:left;float:left">
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header">Resource Colocation Preferences ({{Pcs.resourcesController.cur_resource.colocation_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td>
+		    <div id="locationdep">
+		      <table class="datatable">
+			<tr><th>Resource</th><th>Together/Apart</th><th>Score</th><th>Remove</th></tr>
+			{{#each Pcs.resourcesController.cur_resource.colocation_constraints}}
+			  <tr><td>{{other_rsc}}</td>
+			    <td>{{together}}</td>
+			    <td>{{score}}</td>
+			    <td {{bindAttr constraint_id="id"}} style="text-align:center">
+				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+			    </td>
+			  </tr>
+                        {{/each}}
+ 			{{#unless Pcs.resourcesController.cur_resource.colocation_constraints}}
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+ 			{{/unless}}
+		      </table>
+		    </div>
+		  </td>
+		</tr>
+	      </table>
+	      </script>
+	    </div>
+	  <% end %>
+
+	  <script type="text/x-handlebars">
+	    <table style="clear:left;float:left;margin-top:25px;">
+	      <% if @myView == "resource" %>
+	      <tr>
+		<td class="bold">Class:</td>
+		<td class="reg">
+		{{Pcs.resourcesController.cur_resource.res_class}}
+		</td>
+		<td style="padding-left:10px;" class="bold">Provider:</td>
+		<td class="reg">
+		{{Pcs.resourcesController.cur_resource.res_provider}}
+		</td>
+	      </tr>
+	      <% end %>
+	      <tr>
+		<td class="bold">Type:</td>
+		<td class="reg">
+		{{Pcs.resourcesController.cur_resource.res_type}}
+		</td>
+	      </tr>
+	    </table>
+	  </script>
+
+	    <% if @myView == "resource" %>
+	      <div style="clear:left;" id="resource_agent_form"></div>
+	    <% else %>
+	      <div style="clear:left;" id="stonith_agent_form"></div>
+	    <% end %>
+	    <script type="text/x-handlebars">
+	    {{#if Pcs.resourcesController.no_resources}}
+	      <span id="node_info_header"><span id="node_info_header_title">No resources have been configured</span></span>
+	     {{/if}}
+	    </script>
+	    </div>
+	  </td>
+	</tr>
+    <% if @myView == "resource" %>
+      </div>
+    </table>
+    <div id="add_resource" style="display: none;">
+      <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
+	<tr>
+	  <td class="bold">Class</td>
+	  <td>
+	    <select>
+	      <option value="OCF">OCF</option>
+	    </select>
+	  </td>
+	  <td style="padding-left:10px;" class="bold">Provider</td>
+	  <td>
+	    <select>
+	      <option value="heartbeat">heartbeat</option>
+	    </select>
+	  </td>
+	</tr>
+	<tr>
+	  <td class="bold">Type</td>
+	  <td>
+	    <select id="add_ra_type" onchange="load_resource_form($('#new_resource_agent'), this.value);">
+	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
+		<option width=250px <%= @resource_agents[name]["type"] == "IPaddr2" ? "selected" : "" %> value="<%=@resource_agents[name]["type"]%>"><%=@resource_agents[name]["type"]%></option>
+	      <% } %>
+	    </select>
+	  </td>
+	</tr>
+      </table>
+	</script>
+      <div id="new_resource_agent">
+      </div>
+    </div>
+    <div id="add_stonith" style="display: none;">
+      <table id="stonith_selector" style="clear:left;float:left;margin-top:25px;">
+	<tr>
+	  <td class="bold">Type</td>
+	  <td>
+	    <select id="add_stonith_type" onchange="load_resource_form($('#new_stonith_agent'),this.value,true);">
+	      <% @stonith_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
+		<option width=250px <%= @stonith_agents[name]["type"] == "fence_apc" ? "selected" : "" %> value="<%=@stonith_agents[name]["type"]%>"><%=@stonith_agents[name]["type"]%></option>
+	    <% } %>
+	    </select>
+	  </td>
+	</tr>
+      </table>
+      <div id="new_stonith_agent">
+      </div>
+    </div>
+    <div id="add_group" style="display: none;">
+      <form method=POST action="/resource_group_add">
+	<p style="font-size:12px;">Group Name:</p><input name="resource_group" type=text>
+	<input id="resources_to_add_to_group"  type=hidden name="resources" value="">
+      </form>
+    </div>
+    <div id="verify_remove" style="display: none;">
+      <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
+      <span id="resource_to_remove"></span>
+    </div>
+    <div id="add_constraint" style="display: none;">
+      What type of constraint would you like to add?
+      <select onchange="show_hide_constraint_tables(this);">
+	<option value=""></option>
+	<option value="location">Location</option>
+	<option value="order">Order</option>
+	<option value="colocation">Colocation</option>
+      </select>
+      <div id="add_constraint_location" style="display:none;">
+	<form method=POST action="/resources_cmd/add_constraint">
+	  <input type=hidden name="location_constraint" value="1">
+	  <script type="text/x-handlebars">
+	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
+	  </script>
+	  <table>
+	    <tr><th>Node</th><th>Allowed</th><th>Not Allowed</th><th>Score</th></tr>
+	    <% @nodes.sort().each {|n| %>
+	      <tr>
+		<td><%=n%></td>
+		<td align=center><input type=checkbox name="allow-<%=n%>"></td>
+		<td align=center><input type=checkbox name="deny-<%=n%>"></td>
+		<td align=center><input type=text size=8 name="score-<%=n%>"></td>
+	      </tr>
+	    <% } %>
+	    <tr><td colspan=4><input type=submit onclick="add_constraint($(this).parents('form'));return false;"></td></tr>
+	  </table>
+	</div>
+      </form>
+      <div id="add_constraint_order" style="display:none;">
+	<form method=POST action="/resources_cmd/add_constraint">
+	  <input type=hidden name="order_constraint" value="1">
+	  <script type="text/x-handlebars">
+	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
+	  </script>
+	  <table>
+	    <tr><th>Resource</th><th>Before</th><th>After</th><th>Symmetrical</th></tr>
+	    <% @resources.each {|n| %>
+	      <% #next if n.id == @cur_resource.id %>
+	      <tr>
+		<td><%=n.id%></td>
+		<td align=center><input type="checkbox" value="before-<%=n.id%>" name="order-<%=n.id%>"></td>
+		<td align=center><input type="checkbox" value="after-<%=n.id%>" name="order-<%=n.id%>"></td>
+		<td align=center><input type="checkbox" name="symmetrical-<%=n.id%>" checked></td>
+	      </tr>
+	    <% } %>
+	    <tr><td colspan=3><input type=submit onclick="add_constraint($(this).parents('form'));return false;"></td></tr>
+	  </table>
+	</form>
+      </div>
+      <div id="add_constraint_colocation" style="display:none;">
+	<form method=POST action="/resources_cmd/add_constraint">
+	  <input type=hidden name="colocation_constraint" value="1">
+	  <script type="text/x-handlebars">
+	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
+	  </script>
+	  <table>
+	    <tr><th>Resource</th><th>Together</th><th>Apart</th><th>Score</th></tr>
+	    <% @resources.each {|n| %>
+	      <%# next if n.id == @cur_resource.id %>
+	      <tr>
+		<td><%=n.id%></td>
+		<td align=center><input type="checkbox" value="together-<%=n.id%>" name="order-<%=n.id%>"></td>
+		<td align=center><input type="checkbox" value="apart-<%=n.id%>" name="order-<%=n.id%>"></td>
+		<td align=center><input type=text size=8></td>
+	      </tr>
+	    <% } %>
+	    <tr><td colspan=3><input type=submit onclick="add_constraint($(this).parents('form'));return false;"></td></tr>
+	  </table>
+	</form>
+      </div>
+    <% end %>

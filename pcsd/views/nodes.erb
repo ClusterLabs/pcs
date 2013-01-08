@@ -1,0 +1,231 @@
+  <table id="main">
+    <tr id="node_title_row"><td id="page_header" colspan=3>
+	NODES
+      </td>
+    </tr>
+    <tr id="node_header_row">
+      <td id="remove_add" class="borderbottom">
+	<div id="no_coro_support" onclick="alert('Corosync does not presently support adding and removing nodes in a live cluster.  To remove or add nodes, you must shut down all nodes in the cluster and use the pcs command.');">
+	  <div class="x sprites"></div><div class="link">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+	  <div class="plus sprites"></div><div class="link">&nbsp;Add</div>
+	</div>
+      </td>
+      <td class="borderbottom">&nbsp;</td>
+      <td id="tab_name" width="85">
+	<div style="float: left">&nbsp;Edit Node&nbsp;</div><div class="check sprites"></div>
+      </td>
+    </tr>
+    <tr id="node_list_row">
+      <td id="node_list" class="node_list">
+	  <script type="text/x-handlebars">
+	<table cellpadding=0 cellspacing=0 style="float:left;">
+	  {{#each Pcs.nodesController}}
+	    <tr {{bindAttr onmouseover="onmouseover"}} {{bindAttr onmouseout="onmouseout"}} {{bindAttr class="trclass"}} {{bindAttr nodeID="name"}} onclick='Pcs.nodesController.load_node(this);'>
+	    <td class="node_list_check">
+	      {{view Ember.Checkbox checkedBinding="checked" onclick="checked" class="node_list_check"}}
+	    </td>
+	    <td class="node_list_sprite">
+	      <div class="check sprites"></div>
+	    </td>
+	    {{#if up}}
+	    <td class="node_name">
+	    {{else}}
+	    <td class="node_name" style="color:red">
+	    {{/if}}
+		 {{name}}
+	    </td>
+	    <td {{bindAttr style="showArrow"}}>
+	      <div class="arrow sprites"></div>
+	    </td>
+	  </tr>
+        {{/each}}
+	</table>
+	  </script>
+      </td>
+      <td id="node_info" colspan=2>
+	<div id="node_info_div" style="opacity: 0;">
+	  <div id="test">
+	    <div id="node_info_header">
+	      <div id="node_info_header_title" class="node_info_header_title">Edit Node&nbsp;</div>
+	      <div id="node_info_header_title_name">
+		    <script type="text/x-handlebars">
+{{Pcs.nodesController.cur_node.name}}
+		    </script>
+	    </div>
+
+	    </div>
+
+	    <div id="node_sub_info">
+	      <table>
+		<tr>
+		  <td rowspan=2>
+		    <script type="text/x-handlebars">
+				<input disabled style="margin-right: 50px;" type="text" {{bindAttr value="Pcs.nodesController.cur_node.name"}} size="35" class="text_field">
+		    </script>
+		</td>
+		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
+		  <td>
+		    <!--		      <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pacemaker_status" style="float:left" class="status"></div></td></tr> -->
+		    <script type="text/x-handlebars">
+		    {{#if Pcs.nodesController.cur_node.pacemaker}}
+		    <div id="pacemaker_online_status" class="status">
+			Pacemaker Connected
+		    {{else}}
+		    <div id="pacemaker_online_status" class="status-offline">
+			Pacemaker Not Connected
+		    {{/if}}
+		    </script>
+		    </div>
+		  </td>
+		</tr>
+		<tr>
+		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
+		  <td>
+		    <script type="text/x-handlebars">
+		    {{#if Pcs.nodesController.cur_node.corosync}}
+		    <div id="corosync_online_status" class="status">
+			Corosync Connected
+		    {{else}}
+		    <div id="corosync_online_status" class="status-offline">
+			Corosync Not Connected
+		    {{/if}}
+		    </script>
+		    </div>
+		  </td>
+		</tr>
+	      </table>
+	    </div>
+
+	    <div id="node_options_buttons">
+	      <div id="node_start" class="link">
+		<div class="restart sprites" style="float: left"></div>
+		&nbsp;Start
+	      </div>
+	      <div id="node_stop" class="link">
+		<div class="standby sprites" style="float: left"></div>
+		&nbsp;Stop
+	      </div>
+	      <!-- <div class="cancel sprites" style="float: left"></div>
+	      	      <div class="link">Leave Cluster</div> -->
+	      <div class="configure sprites" style="float: left"></div>
+	      <div class="link"><a href="#fencedevices" onclick="select_menu('FENCE DEVICES');return true;">Configure Fencing</a></div>
+	    </div>
+
+	    <div id="node_details">
+	      <table><tr>
+		  <td><div class="reg">Node ID:</div></td>
+		  <td><div class="bold"><script type="text/x-handlebars">
+{{Pcs.nodesController.cur_node.name}}</script></div></td>
+		    </script>
+		  <td><div class="reg"> Uptime:</div></td>
+		  <td><div class="bold" id="uptime"><script type="text/x-handlebars">{{Pcs.nodesController.cur_node.uptime}}</script></div></td>
+		</tr>
+	      </table>
+	    </div>
+
+	    <table style="float:left;margin-top:25px">
+	      <tr><td class="datatable_header">Cluster Daemons</td></tr>
+	      <tr><td>
+		  <div id="clusterdaemons">
+		      <script type="text/x-handlebars">
+		    <table class="datatable">
+		      <tr><th>NAME</th><th>STATUS</th></tr>
+		      <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
+{{#if Pcs.nodesController.cur_node.pacemaker_daemon}}
+<div id="pacemaker_status" style="float:left" class="status">Running
+{{else}}
+{{#if Pcs.nodesController.cur_node.pcsd}}
+<div id="pacemaker_status" style="float:left" class="status-offline">Stopped
+{{else}}
+<div id="pacemaker_status" style="float:left" class="status-unknown">Unknown
+{{/if}}
+{{/if}}
+</div></td></tr>
+		      <tr><td>corosync</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
+{{#if Pcs.nodesController.cur_node.corosync_daemon}}
+<div id="corosync_status" style="float:left" class="status">Running
+{{else}}
+{{#if Pcs.nodesController.cur_node.pcsd}}
+<div id="corosync_status" style="float:left" class="status-offline">Stopped
+{{else}}
+<div id="corosync_status" style="float:left" class="status-unknown">Unknown
+{{/if}}
+{{/if}}
+</div></td></tr>
+		      <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
+{{#if Pcs.nodesController.cur_node.pcsd}}
+  <div id="pcsd_status" style="float:left" class="status">Running
+{{else}}
+  {{#if Pcs.nodesController.cur_node.authorized}}
+    <div id="pcsd_status" style="float:left" class="status-offline">Stopped
+  {{else}}
+    <div id="pcsd_status" style="float:left" class="status-offline">Running (not Authorized)
+  {{/if}}
+{{/if}}
+</div></td></tr>
+		    </table>
+		      </script>
+		  </div>
+		</td>
+	      </tr>
+	    </table>
+	    <table style="clear:left;float:left;margin-top:25px;">
+	      <tr><td class="datatable_header"><script type="text/x-handlebars">Resources Currently Running on 
+{{Pcs.nodesController.cur_node.name}}</script></td></tr>
+	      <tr><td>
+		  <div id="resources_running">
+		      <script type="text/x-handlebars">
+		    <table class="datatable">
+		      <tr><th>NAME</th></tr>
+		      {{#if Pcs.nodesController.cur_node.running_resources}}
+		        {{#each Pcs.nodesController.cur_node.running_resources}}
+		  	<tr><td>{{this}}</td></tr>
+		        {{/each}}
+		      {{else}}
+			<tr><td style="color: gray;">NONE</td></tr>
+		      {{/if}}
+		    </table>
+		      </script>
+		  </div>
+		</td>
+	      </tr>
+	    </table>
+	    <table style="clear:left;float:left;margin-top:25px;">
+	      <tr><td class="datatable_header">Resource Location Preferences</td></tr>
+	      <tr><td>
+		  <div id="locationdep">
+		    <script type="text/x-handlebars">
+		    <table class="datatable">
+		      <tr><th>NAME</th><th>Score</th><th>Stickyness</th></tr>
+		    {{#if Pcs.nodesController.cur_node.location_constraints}}
+		    {{#each Pcs.nodesController.cur_node.location_constraints}}
+		      <tr><td>{{rsc}}</td><td>{{score}}</td><td></td></tr>
+		    {{/each}}
+		    {{else}}
+			<tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+		    {{/if}}
+		    </table>
+		    </script>
+		  </div>
+		</td>
+	      </tr>
+	    </table>
+	  </td>
+	</tr>
+      </div>
+  </div>
+  </td>
+</tr>
+<%= erb :_configure %>
+<% @myView = "stonith" %>
+<%= erb :_resource %>
+<% @myView = "resource" %>
+<%= erb :_resource %>
+</table>
+<script type="text/javascript">
+$(window).load(function () {
+  setup_node_links();
+//  remote_node_update();
+//  $("#node_info").fadeTo(0, .01);
+});
+</script>

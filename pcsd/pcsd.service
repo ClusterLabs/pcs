@@ -1,0 +1,10 @@
+[Unit]
+Description=PCS GUI
+
+[Service]
+WorkingDirectory=/var/lib/pcsd
+ExecStart=/usr/local/pcsd/pcsd start
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
