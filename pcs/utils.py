@@ -518,7 +518,7 @@ def is_systemctl():
 
 def is_rhel6():
     try:
-        issue = open('/etc/issue').read()
+        issue = open('/etc/system-release').read()
     except IOError as e:
         return False
 
