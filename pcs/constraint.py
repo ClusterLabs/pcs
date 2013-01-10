@@ -162,11 +162,11 @@ def colocation_add(argv):
     resource1 = argv.pop(0)
     resource2 = argv.pop(0)
 
-    if not utils.does_resource_exist(resource1):
+    if not utils.is_valid_constraint_resource(resource1):
         print "Error: Resource '" + resource1 + "' does not exist"
         sys.exit(1)
 
-    if not utils.does_resource_exist(resource2):
+    if not utils.is_valid_constraint_resource(resource2):
         print "Error: Resource '" + resource2 + "' does not exist"
         sys.exit(1)
 
@@ -298,11 +298,11 @@ def order_add(argv,returnElementOnly=False):
     resource1 = argv.pop(0)
     resource2 = argv.pop(0)
 
-    if not utils.does_resource_exist(resource1):
+    if not utils.is_valid_constraint_resource(resource1):
         print "Error: Resource '" + resource1 + "' does not exist"
         sys.exit(1)
 
-    if not utils.does_resource_exist(resource2):
+    if not utils.is_valid_constraint_resource(resource2):
         print "Error: Resource '" + resource2 + "' does not exist"
         sys.exit(1)
 
@@ -545,7 +545,7 @@ def location_add(argv,rm=False):
         node = argv.pop(0)
         score = argv.pop(0)
         # If resource doesn't exist, we error out
-        if not utils.does_resource_exist(resource_name):
+        if not utils.is_valid_constraint_resource(resource_name):
             print "Error: Resource " + resource_name + "' does not exist"
             sys.exit(1)
 

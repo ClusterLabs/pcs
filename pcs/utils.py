@@ -347,8 +347,11 @@ def does_exist(xpath_query):
         return False
     return True
 
-def does_resource_exist(resource_id):
-    return does_exist("//primitive[@id='"+resource_id+"']")
+def is_valid_constraint_resource(resource_id):
+    return does_exist("//primitive[@id='"+resource_id+"']") or \
+            does_exist("//group[@id='"+resource_id+"']") or \
+            does_exist("//clone[@id='"+resource_id+"']") or \
+            does_exist("//master[@id='"+resource_id+"']")
 
 # Return matches from the CIB with the xpath_query
 def get_cib_xpath(xpath_query):
