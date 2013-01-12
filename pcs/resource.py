@@ -273,10 +273,8 @@ def resource_standards(return_output=False):
 
 def resource_providers():
     output, retval = utils.run(["crm_resource","--list-ocf-providers"],True)
-    if retval != 0:
-        print "Error: unable to get current list of providers"
-        print output
-        sys.exit(1)
+    # Return value is ignored because it contains the number of providers
+    # returned, not an error code
     print output.strip()
 
 def resource_agents(argv):
