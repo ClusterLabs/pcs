@@ -172,6 +172,7 @@ def resource_list_options(resource):
                 print "  " + name + ": " + desc
         except xml.parsers.expat.ExpatError:
             print "Unable to parse xml for: %s" % (resource)
+            sys.exit(1)
         break
 
     if not found_resource:
