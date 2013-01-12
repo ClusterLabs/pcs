@@ -155,17 +155,15 @@ def cluster_status(argv):
         print "Error running crm_mon, is pacemaker running?"
         sys.exit(1)
 
-    in_cluster = False
+    first_empty_line = False
     print "Cluster Status:"
     for line in output.splitlines():
-        if not in_cluster:
-            if line.find("============") == 0:
-                in_cluster = True
-                continue
+        if line == "":
+            if first_empty_line:
+                return
+            first_empty_line = True
+            continue
         else:
-            if line.find("============") == 0:
-                break
-
             print "",line
 
 def corosync_status():
