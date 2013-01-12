@@ -108,7 +108,11 @@ def stonith_list_available(argv):
             print "Error: no metadata for %s" % fd
             continue
         fd = fd[10:]
-        dom = parseString(metadata)
+        try:
+            dom = parseString(metadata)
+        except Exception:
+            print "Error: unable to parse metadata for fence agent: %s" % (fd)
+            continue
         ra = dom.documentElement
         shortdesc = ra.getAttribute("shortdesc")
 
@@ -137,7 +141,7 @@ def stonith_list_options(stonith_agent):
 def get_metadata(fence_agent_script):
     if (not os.path.isfile(fence_agent_script)) or (not os.access(fence_agent_script, os.X_OK)):
         return False
-    (metadata, retval) = utils.run([fence_agent_script, "-o", "metadata"])
+    (metadata, retval) = utils.run([fence_agent_script, "-o", "metadata"], True)
     if retval == 0:
         return metadata
     else:
