@@ -262,10 +262,8 @@ def resource_move(argv,unmove=False):
 
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)
-    if retval != 0:
-        print "Error: unable to get current list of standards"
-        print output
-        sys.exit(1)
+    # Return value is ignored because it contains the number of standards
+    # returned, not an error code
     output = output.strip()
     if return_output == True:
         return output
