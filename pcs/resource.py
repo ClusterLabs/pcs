@@ -728,12 +728,7 @@ def resource_master_remove(argv):
 
     master.parentNode.removeChild(master)
     utils.replace_cib_configuration(dom)
-    if (not utils.usefile):
-        for r in resources_to_cleanup:
-            args = ["crm_resource","-C","-r",r]
-            cmdoutput, retVal = utils.run(args)
 
-# Also performs a 'cleanup' to remove it completely
 def resource_remove(resource_id, output = True):
     group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0
