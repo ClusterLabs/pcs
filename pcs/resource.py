@@ -444,9 +444,18 @@ def resource_operation_remove(res_id, argv):
 
     utils.replace_cib_configuration(dom)
 
+# Takes in a resource id and an array of operation values starting
+# with the operation name, followed by options
+# sample op_values = ["monitor", "interval=5s"]
 def convert_args_to_operations(op_values, ra_id):
     if len(op_values) == 0:
         return []
+    if '=' in op_values[0]:
+        print "Error: When using 'op' you must specify an operation name after 'op'"
+        sys.exit(1)
+    if len(op_values) < 2:
+        print "Error: When using 'op' you must specify an operation name and at least one option"
+        sys.exit(1)
     op_name = op_values.pop(0)
     tuples = convert_args_to_tuples(op_values)
     op_attrs = []
