@@ -497,6 +497,20 @@ def getClusterState():
     dom = parseString(output)
     return dom
 
+def getClusterName():
+    try:
+        f = open(settings.corosync_conf_file,'r')
+    except IOError as e:
+        return ""
+
+    p = re.compile('cluster_name: *(.*)')
+    for line in f:
+        m = p.match(line)
+        if m:
+            return m.group(1)
+
+    return ""
+
 def write_empty_cib(filename):
 
     empty_xml = """<?xml version="1.0" encoding="UTF-8"?>

@@ -38,6 +38,8 @@ def status_cmd(argv):
         sys.exit(1)
 
 def full_status():
+    cluster_name = utils.getClusterName()
+    print "Cluster name: %s" % cluster_name
     (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):

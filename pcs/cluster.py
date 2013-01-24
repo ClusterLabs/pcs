@@ -449,6 +449,7 @@ def cluster_get_corosync_conf(argv):
     print output
 
 def print_config():
+    print "Cluster Name: %s" % utils.getClusterName()
     status.nodes_status(["config"])
     print ""
     print ""
