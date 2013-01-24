@@ -1058,6 +1058,13 @@ def print_node(node, tab = 0):
             print spaces + " Operations: " + ops_string
         for child in node:
             print_node(child, tab + 1)
+    if node.tag == "master":
+        print spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')')
+        ivar_string = get_instance_vars_string(node)
+        if ivar_string != "":
+            print spaces + " " + get_instance_vars_string(node)
+        for child in node:
+            print_node(child, tab + 1)
 
 def get_instance_vars_string(node):
     output = ""
