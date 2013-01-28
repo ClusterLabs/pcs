@@ -422,6 +422,25 @@ def find_unique_id(dom, check_id):
         counter += 1
     return temp_id
 
+# Checks to see if the specified operation already exists in passed set of
+# operations (ignoring id)
+def operation_exists(operations, op):
+    for existing_op in operations.getElementsByTagName("op"):
+        if len(existing_op.attributes.items()) != len(op.attributes.items()):
+            continue
+        match = False
+        for k,v in existing_op.attributes.items():
+            if k == "id":
+                continue
+            if v == op.getAttribute(k):
+                match = True
+            else:
+                match = False
+                break
+        if match == True:
+            return True
+    return False
+
 def set_unmanaged(resource):
     args = ["crm_resource", "--resource", resource, "--set-parameter",
             "is-managed", "--meta", "--parameter-value", "false"]

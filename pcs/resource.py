@@ -387,6 +387,7 @@ def resource_operation_add(res_id, argv):
         op.setAttribute(prop[0], prop[1])
         op_id += prop[0] + "-" + prop[1] + "-"
     op_id = op_id[:-1]
+    op_id = utils.find_unique_id(dom, op_id)
     op.setAttribute("id", op_id)
 
     operations = resource.getElementsByTagName("operations")
@@ -396,8 +397,11 @@ def resource_operation_add(res_id, argv):
     else:
         operations = operations[0]
 
-    operations.appendChild(op)
+    if utils.operation_exists(operations,op):
+        print "Error: identical operation already exists for %s" % res_id
+        sys.exit(1)
 
+    operations.appendChild(op)
     utils.replace_cib_configuration(dom)
 
 def resource_operation_remove(res_id, argv):
