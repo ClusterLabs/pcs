@@ -443,7 +443,7 @@ def resource_operation_remove(res_id, argv):
             break
 
     if not found_match:
-        print "Unable to find operation matching: %s" % original_argv
+        print "Error: Unable to find operation matching: %s" % original_argv
         sys.exit(1)
 
     utils.replace_cib_configuration(dom)
