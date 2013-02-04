@@ -8,13 +8,13 @@
 	  <td>
 	      <a href="#" class="x sprites"></a>
 	    <div class="link">
-	      <a href="#" onclick="verify_remove('cluster','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
+	      <a id="manage_remove_cluster" href="#" onclick="verify_remove('cluster','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
 	    </div>
 	  </td>
 	  <td>
 	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a href="#" onclick="add_existing_dialog();">
+	      <a id="manage_add_cluster" href="#" onclick="add_existing_dialog();">
 		Add Existing
 	      </a>
 	    </div>
@@ -22,7 +22,7 @@
 	  <td>
 	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a href="#" onclick="create_cluster_dialog();">Create New</a>
+	      <a id="manage_create_cluster" href="#" onclick="create_cluster_dialog();">Create New</a>
 	    </div>
 	  </td>
 	</tr>
@@ -91,7 +91,7 @@
       <tr><td align=right>Node 1:</td><td><input size="50" name="node-1" type="text"></input></td></tr>
       <tr><td align=right>Node 2:</td><td><input size="50" name="node-2" type="text"></input></td></tr>
       <tr><td align=right>Node 3:</td><td><input size="50" name="node-3" type="text"></input></td></tr>
-      <tr><td></td><td onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td></tr>
+      <tr><td></td><td id="manage_more_nodes" onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg" style="display:none;">Unable to contact nodes highlighted in red.<br>Please make sure pcsd is started on all nodes.</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="at_least_one_node_error_msg" style="display:none;">At least one valid node must be entered.</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="bad_cluster_name_error_msg" style="display:none;">You may not leave the cluster name field blank</span></td></tr>
