@@ -551,16 +551,20 @@ function update_create_cluster_dialog(nodes) {
 }
 
 function create_cluster_dialog() {
-  var buttonOpts = {}
-
-  buttonOpts["Create Cluster"] = function() {
-          checkClusterNodes();
-//	  $('#create_new_cluster_form').submit();
-  };
-
-  buttonOpts["Cancel"] = function() {
-    $(this).dialog("close");
-  };
+  var buttonOpts = [{
+    text: "Create Cluster",
+    id: "create_cluster_submit_btn",
+    click: function() {
+      checkClusterNodes();
+    }
+  },
+  {
+    text: "Cancel",
+    id: "create_cluster_cancel_btn",
+    click: function() {
+      $(this).dialog("close");
+    }
+  }]
 
   $("#create_new_cluster").dialog({title: 'Create Cluster',
     modal: false, resizable: false,
