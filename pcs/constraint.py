@@ -485,7 +485,7 @@ def location_show(argv):
                 for options in rschashoff[rsc]:
                     print options[1],
                     if options[2] != "-INFINITY" or showDetail:
-                        print "("+options[2]+")",
+                        print "(score:"+options[2]+")",
                     if showDetail:
                         print "(id:"+options[0]+")",
                 print ""
