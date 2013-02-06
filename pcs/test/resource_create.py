@@ -109,6 +109,11 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
+        line = 'resource delete'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 1
+        assert output.startswith("\nUsage: pcs resource")
+
         line = "resource delete ClusterIP"
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
@@ -138,6 +143,11 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
+        line = 'resource update'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 1
+        assert output.startswith("\nUsage: pcs resource")
+
         output, returnVal = pcs(temp_cib, "resource update ClusterIP ip=192.168.0.100")
         assert returnVal == 0
         assert output == ""
@@ -147,6 +157,16 @@ class ResourceAdditionTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
+
+        line = 'resource add_operation'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 1
+        assert output.startswith("\nUsage: pcs resource")
+
+        line = 'resource remove_operation'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 1
+        assert output.startswith("\nUsage: pcs resource")
 
         line = 'resource add_operation ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 

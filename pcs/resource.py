@@ -55,15 +55,27 @@ def resource_cmd(argv):
     elif (sub_cmd == "agents"):
         resource_agents(argv)
     elif (sub_cmd == "update"):
+        if len(argv) == 0:
+            usage.resource()
+            sys.exit(1)
         res_id = argv.pop(0)
         resource_update(res_id,argv)
     elif (sub_cmd == "add_operation"):
+        if len(argv) == 0:
+            usage.resource()
+            sys.exit(1)
         res_id = argv.pop(0)
         resource_operation_add(res_id,argv)
     elif (sub_cmd == "remove_operation"):
+        if len(argv) == 0:
+            usage.resource()
+            sys.exit(1)
         res_id = argv.pop(0)
         resource_operation_remove(res_id,argv)
     elif (sub_cmd == "delete"):
+        if len(argv) == 0:
+            usage.resource()
+            sys.exit(1)
         res_id = argv.pop(0)
         resource_remove(res_id)
     elif (sub_cmd == "show"):
