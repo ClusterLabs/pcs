@@ -50,6 +50,8 @@ Commands:
         Show options for the specified resource
 
     create <resource id> <class:provider:type|type> [resource options]
+           [op <operation type> <operation options> [<operation type>
+           <operation options>]...]
         Create specified resource.  If --clone is specified a clone resource is
         created (with options specified by --cloneopt <clone_option>=<value>),
         if --master is specified a master/slave resource is created.

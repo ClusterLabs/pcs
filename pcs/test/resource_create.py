@@ -92,7 +92,7 @@ class ResourceAdditionTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
-        line = "resource create ClusterIP6  ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
+        line = "resource create ClusterIP6  ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=31s start interval=32s op stop interval=33s"
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
@@ -101,6 +101,10 @@ class ResourceAdditionTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "resource show")
         assert returnVal == 0
         assert output == ' ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP2\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP3\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP4\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP5\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped \n'
+
+        output, returnVal = pcs(temp_cib, "resource show ClusterIP6 --all")
+        assert returnVal == 0
+        assert output == ' Resource: ClusterIP (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP2 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP3 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP4 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP5 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP6 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=31s \n              start interval=32s \n              stop interval=33s\n'
 
     def testDeleteResources(self):
 # Verify deleting resources works

@@ -32,11 +32,17 @@ def resource_cmd(argv):
         res_id = argv.pop(0)
         res_type = argv.pop(0)
         ra_values = []
-        op_values = []
+        op_values = [[]]
         op_args = False
         for arg in argv:
             if op_args:
-                op_values.append(arg)
+                if arg == "op":
+                    op_values.append([])
+                elif "=" not in arg and len(op_values[-1]) != 0:
+                    op_values.append([])
+                    op_values[-1].append(arg)
+                else:
+                    op_values[-1].append(arg)
             else:
                 if arg == "op":
                     op_args = True
@@ -460,30 +466,34 @@ def resource_operation_remove(res_id, argv):
 
     utils.replace_cib_configuration(dom)
 
-# Takes in a resource id and an array of operation values starting
+# Takes in a resource id and an array of arrays with operation values starting
 # with the operation name, followed by options
 # sample op_values = ["monitor", "interval=5s"]
-def convert_args_to_operations(op_values, ra_id):
-    if len(op_values) == 0:
-        return []
-    if '=' in op_values[0]:
-        print "Error: When using 'op' you must specify an operation name after 'op'"
-        sys.exit(1)
-    if len(op_values) < 2:
-        print "Error: When using 'op' you must specify an operation name and at least one option"
-        sys.exit(1)
-    op_name = op_values.pop(0)
-    tuples = convert_args_to_tuples(op_values)
-    op_attrs = []
-    for (a,b) in tuples:
-        op_attrs.append((a,b))
+def convert_args_to_operations(op_values_list, ra_id):
+    ret = []
+    ret_ops = []
+    for op_values in op_values_list:
+        if len(op_values) == 0:
+            return []
+        if '=' in op_values[0]:
+            print "Error: When using 'op' you must specify an operation name after 'op'"
+            sys.exit(1)
+        if len(op_values) < 2:
+            print "Error: When using 'op' you must specify an operation name and at least one option"
+            sys.exit(1)
+        op_name = op_values.pop(0)
+        tuples = convert_args_to_tuples(op_values)
+        op_attrs = []
+        for (a,b) in tuples:
+            op_attrs.append((a,b))
 
-    op_attrs.append(("id",ra_id+"-"+a+"-"+b))
-    op_attrs.append((a,b))
-    op_attrs.append(("name",op_name))
-    ops = [(("op",op_attrs,[]))]
-    ret = ("operations", [], ops)
-    return [ret]
+        op_attrs.append(("id",ra_id+"-"+op_name+"-"+a+"-"+b))
+        op_attrs.append((a,b))
+        op_attrs.append(("name",op_name))
+        ops = ("op",op_attrs,[])
+        ret_ops.append(ops)
+    ret = [("operations", [], ret_ops)]
+    return ret
         
 def convert_args_to_instance_variables(ra_values, ra_id):
     tuples = convert_args_to_tuples(ra_values)
