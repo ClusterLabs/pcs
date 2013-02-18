@@ -12,6 +12,7 @@ import resource
 import constraint
 import settings
 import socket
+import tempfile
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -68,6 +69,8 @@ def cluster_cmd(argv):
         get_cib(argv)
     elif (sub_cmd == "push"):
         cluster_push(argv)
+    elif (sub_cmd == "edit"):
+        cluster_edit(argv)
     elif (sub_cmd == "node"):
         cluster_node(argv)
     elif (sub_cmd == "localnode"):
@@ -346,6 +349,25 @@ def cluster_push(argv):
         sys.exit(1)
     else:
         print "CIB updated"
+
+def cluster_edit(argv):
+    if 'EDITOR' in os.environ:
+        editor = os.environ['EDITOR']
+        tempcib = tempfile.NamedTemporaryFile('w+b',-1,".pcs")
+        cib = utils.get_cib()
+        tempcib.write(cib)
+        subprocess.call([editor, tempcib.name])
+
+        tempcib.seek(0)
+        newcib = "".join(tempcib.readlines())
+        if newcib == cib:
+            print "CIB not updated, no changes detected"
+        else:
+            cluster_push(["cib",tempcib.name])
+
+    else:
+        print "Error: $EDITOR environment variable is not set"
+        sys.exit(1)
 
 def get_cib(argv):
     if len(argv) == 0:
