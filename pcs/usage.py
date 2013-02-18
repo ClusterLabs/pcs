@@ -113,6 +113,10 @@ Commands:
         Set default values for operations, if no options are passed, lists
         currently configured defaults
 
+    cleanup <resource id>
+        Cleans up the resource in the lrmd (useful to reset the resource
+        status and failcount)
+
 Examples:
     pcs resource show
 

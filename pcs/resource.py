@@ -125,6 +125,12 @@ def resource_cmd(argv):
         else:
             usage.resource()
             sys.exit(1)
+    elif (sub_cmd == "cleanup"):
+        if len(argv) < 1:
+            usage.resource()
+            sys.exit(1)
+        res_id = argv.pop(0)
+        resource_cleanup(res_id)
     else:
         usage.resource()
         sys.exit(1)
@@ -1129,3 +1135,11 @@ def get_attrs(node, prepend_string = "", append_string = ""):
     else:
         return output.rstrip()
 
+def resource_cleanup(res_id):
+    (output, retval) = utils.run(["crm_resource", "-C", "-r", res_id])
+    if retval != 0:
+        print "Error: Unable to cleanup resource: %s" % res_id
+        print output
+        sys.exit(1)
+    else:
+        print "Resource: %s successfully cleaned up" % res_id
