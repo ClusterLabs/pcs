@@ -1069,7 +1069,7 @@ def print_node(node, tab = 0):
         ivar_string = get_instance_vars_string(node)
         if ivar_string != "":
             print spaces + " Attributes: " + get_instance_vars_string(node)
-        ops_string = get_operations(node)
+        ops_string = get_operations(node, len(spaces) + len(" Operations: "))
         if ops_string != "":
             print spaces + " Operations: " + ops_string
         for child in node:
@@ -1090,15 +1090,22 @@ def get_instance_vars_string(node):
 
     return output
 
-def get_operations(node):
+def get_operations(node, indent):
     output = ""
     ops = node.findall("operations/op")
+    first = True
     for op in ops:
+        if not first:
+            output += ' ' * indent
+        else:
+            first = False
         output += op.attrib["name"] + " "
         for attr,val in op.attrib.items():
             if attr in ["id","name"] :
                 continue
             output += attr + "=" + val + " "
+        output += "\n"
+
     return output.rstrip()
 
 def get_attrs(node, prepend_string = "", append_string = ""):
