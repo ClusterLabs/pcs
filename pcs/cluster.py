@@ -356,6 +356,7 @@ def cluster_edit(argv):
         tempcib = tempfile.NamedTemporaryFile('w+b',-1,".pcs")
         cib = utils.get_cib()
         tempcib.write(cib)
+        tempcib.flush()
         subprocess.call([editor, tempcib.name])
 
         tempcib.seek(0)
