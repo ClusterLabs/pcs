@@ -356,7 +356,12 @@ def cluster_edit(argv):
         tempcib = tempfile.NamedTemporaryFile('w+b',-1,".pcs")
         cib = utils.get_cib()
         tempcib.write(cib)
-        subprocess.call([editor, tempcib.name])
+        tempcib.flush()
+        try:
+            subprocess.call([editor, tempcib.name])
+        except OSError:
+            print "Error: Unable to open file with $EDITOR: " + editor
+            sys.exit(1)
 
         tempcib.seek(0)
         newcib = "".join(tempcib.readlines())
