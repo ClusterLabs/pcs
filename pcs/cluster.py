@@ -357,7 +357,11 @@ def cluster_edit(argv):
         cib = utils.get_cib()
         tempcib.write(cib)
         tempcib.flush()
-        subprocess.call([editor, tempcib.name])
+        try:
+            subprocess.call([editor, tempcib.name])
+        except OSError:
+            print "Unable to open file with $EDITOR: " + editor
+            sys.exit(1)
 
         tempcib.seek(0)
         newcib = "".join(tempcib.readlines())
