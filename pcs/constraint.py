@@ -595,14 +595,20 @@ def getCurrentConstraints():
     constraintsElement = dom.getElementsByTagName('constraints')[0]
     return (dom, constraintsElement)
 
-def constraint_rm(argv):
+# If returnStatus is set, then we don't error out, we just print the error
+# and return false
+def constraint_rm(argv,returnStatus=False):
     if len(argv) < 1:
         usage.constraint()
         sys.exit(1)
 
+    bad_constraint = False
     if len(argv) != 1:
         for arg in argv:
-            constraint_rm([arg])
+            if not constraint_rm([arg],True):
+                bad_constraint = True
+        if bad_constraint:
+            sys.exit(1)
         return
     else:
         c_id = argv.pop(0)
@@ -624,7 +630,9 @@ def constraint_rm(argv):
         if output != "":
             print output
     else:
-        print "No matching resources found in ordering list"
+        print "Error: Unable to find constraint - '%s'" % c_id
+        if not returnStatus:
+            sys.exit(1)
 
 def constraint_ref(argv):
     if len(argv) == 0:
