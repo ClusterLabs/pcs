@@ -153,7 +153,7 @@ def resource_list_available(argv):
             full_res_name = "ocf:" + provider + ":" + resource
             if full_res_name.count(filter_string) == 0:
                 continue
-            metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
+            metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
             if metadata == False:
                 continue
             sd = ""
@@ -176,7 +176,7 @@ def resource_list_options(resource):
     else:
         providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
     for provider in providers:
-        metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
+        metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
         if metadata == False:
             continue
         else:
@@ -223,20 +223,13 @@ def format_desc(indent, desc):
 
     return output.rstrip()
 
-def get_metadata(resource_agent_script):
-    os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
-    if (not os.path.isfile(resource_agent_script)) or (not os.access(resource_agent_script, os.X_OK)):
-        return False
-
-    (metadata, retval) = utils.run([resource_agent_script, "meta-data"])
-    if retval == 0:
-        return metadata
-    else:
-        return False
-
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values):
+    if not utils.is_valid_resource(ra_type) and not ("--force" in utils.pcs_options):
+        print "Error: Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type
+        sys.exit(1)
+
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
     primitive_values = get_full_ra_type(ra_type)
     primitive_values.insert(0,("id",ra_id))

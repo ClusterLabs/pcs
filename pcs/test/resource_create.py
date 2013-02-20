@@ -106,6 +106,22 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: ClusterIP (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP2 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP3 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP4 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP5 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Resource: ClusterIP6 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=31s \n              start interval=32s \n              stop interval=33s\n'
 
+    def testAddBadResources(self):
+        line = "resource create bad_resource idontexist test=bad"
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 1
+        assert output == "Error: Unable to create resource 'idontexist', it is not installed on this system (use --force to override)\n"
+
+        line = "resource create bad_resource2 idontexist2 test4=bad3 --force"
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == ""
+
+        line = "resource show --all"
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == " Resource: bad_resource2 (type=idontexist2 class=ocf provider=heartbeat)\n  Attributes: test4=bad3 \n"
+
     def testDeleteResources(self):
 # Verify deleting resources works
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"

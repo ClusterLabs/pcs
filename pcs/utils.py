@@ -353,6 +353,37 @@ def is_valid_constraint_resource(resource_id):
             does_exist("//clone[@id='"+resource_id+"']") or \
             does_exist("//master[@id='"+resource_id+"']")
 
+# Check and see if the specified resource type is present on the file system
+# and properly responds to a meta-data request
+def is_valid_resource(resource):
+    found_resource = False
+    if resource.startswith("ocf:"):
+        resource_split = resource.split(":",3)
+        providers = [resource_split[1]]
+        resource = resource_split[2]
+    else:
+        providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
+
+    for provider in providers:
+        metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
+        if metadata == False:
+            continue
+        else:
+            found_resource = True
+    return found_resource
+
+def get_metadata(resource_agent_script):
+    os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
+    if (not os.path.isfile(resource_agent_script)) or (not os.access(resource_agent_script, os.X_OK)):
+        return False
+
+    (metadata, retval) = run([resource_agent_script, "meta-data"])
+    if retval == 0:
+        return metadata
+    else:
+        return False
+
+
 # Return matches from the CIB with the xpath_query
 def get_cib_xpath(xpath_query):
     args = ["cibadmin", "-Q", "--xpath", xpath_query]
