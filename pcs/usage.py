@@ -293,11 +293,11 @@ Commands:
         List all current location, order and colocation constraints with ids
 
     location <rsc> prefers <node[=score]>...
-        Create a location constraint on for a resource to prefer the specified
+        Create a location constraint on a resource to prefer the specified
         node and score (default score: INFINITY)
 
     location <rsc> avoids <node[=score]>...
-        Create a location constraint on for a resource to avoid the specified
+        Create a location constraint on a resource to avoid the specified
         node and score (default score: INFINITY)
 
     location [show resources|nodes [specific nodes|resources]]
