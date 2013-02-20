@@ -322,6 +322,26 @@ def resource_agents(argv):
 def resource_update(res_id,args):
     dom = utils.get_cib_dom()
 
+# Extract operation arguments
+    op_args = False
+    ra_values = []
+    op_values = []
+    for arg in args:
+        if op_args:
+            if arg == "op":
+                op_values.append([])
+            elif "=" not in arg and len(op_values[-1]) != 0:
+                op_values.append([])
+                op_values[-1].append(arg)
+            else:
+                op_values[-1].append(arg)
+        else:
+            if arg == "op":
+                op_args = True
+                op_values.append([])
+            else:
+                ra_values.append(arg)
+
     resource = None
     for r in dom.getElementsByTagName("primitive"):
         if r.getAttribute("id") == res_id:
@@ -360,7 +380,7 @@ def resource_update(res_id,args):
     else:
         instance_attributes = instance_attributes[0]
     
-    params = convert_args_to_tuples(args)
+    params = convert_args_to_tuples(ra_values)
     for (key,val) in params:
         ia_found = False
         for ia in instance_attributes.getElementsByTagName("nvpair"):
@@ -377,6 +397,28 @@ def resource_update(res_id,args):
             ia.setAttribute("name", key)
             ia.setAttribute("value", val)
             instance_attributes.appendChild(ia)
+
+    operations = resource.getElementsByTagName("operations")
+    if len(operations) == 0:
+        operations = dom.createElement("operations")
+        resource.appendChild(operations)
+    else:
+        operations = operations[0]
+
+    for element in op_values:
+        if len(element) <= 1:
+            continue
+        op = dom.createElement("op")
+        op_name = element.pop(0)
+        op.setAttribute("name",op_name)
+        op_id = res_id + "-" + op_name
+        op_vars = convert_args_to_tuples(element)
+        for (key,val) in op_vars:
+            op.setAttribute(key,val)
+            op_id += "-" + key + "-" + val
+        op.setAttribute("id", op_id)
+        operations.appendChild(op)
+        
     if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
         instance_attributes.parentNode.removeChild(instance_attributes)
 

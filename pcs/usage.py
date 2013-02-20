@@ -66,7 +66,10 @@ Commands:
         List available agents optionally filtered by standard and provider
 
     update <resource id> [resource options]
-        Add/Change options to specified resource, clone or multi-state resource
+        Add/Change options to specified resource, clone or multi-state
+        resource.  If an operation (op) is specified it will be added to the
+        current resource.  If you want to modify an existing operation you
+        must use the remove_operation & add_operation commands.
 
     add_operation <resource id> <operation name> [operation properties]
         Add operation for specified resource

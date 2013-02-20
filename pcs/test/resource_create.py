@@ -220,6 +220,42 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == 'Resource: ClusterIP\n  ip: 192.168.0.99\n  cidr_netmask: 32\n'
 
+    def testUpdateOpration(self):
+        line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == ""
+
+        line = 'resource add_operation ClusterIP monitor interval=31s'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == ""
+
+        line = 'resource update ClusterIP op monitor interval=32s'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == ""
+
+        line = 'resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == ""
+
+        line = 'resource update ClusterIP op'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == ""
+
+        line = 'resource update ClusterIP op monitor'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == ""
+
+        line = 'resource show ClusterIP --all'
+        output, returnVal = pcs(temp_cib, line) 
+        assert returnVal == 0
+        assert output == ' Resource: ClusterIP (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s \n              monitor interval=31s \n              monitor interval=32s \n              monitor interval=33s \n              start interval=30s timeout=180s\n'
+
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 
