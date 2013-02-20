@@ -65,11 +65,14 @@ Commands:
     agents [standard[:provider]]
         List available agents optionally filtered by standard and provider
 
-    update <resource id> [resource options]
+    update <resource id> [resource options] [op [<operation name>
+                                                      <operation options>]...]
         Add/Change options to specified resource, clone or multi-state
-        resource.  If an operation (op) is specified it will be added to the
-        current resource.  If you want to modify an existing operation you
-        must use the remove_operation & add_operation commands.
+        resource.  If an operation (op) is specified it will update the first
+        found operation with the same name on the specified resource, if no
+        operation with that name exists then a new operation will be created
+        If you want to create multiple monitor operations you should use the
+        add_operation & remove_operation commands.
 
     add_operation <resource id> <operation name> [operation properties]
         Add operation for specified resource

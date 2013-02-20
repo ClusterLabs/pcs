@@ -408,8 +408,15 @@ def resource_update(res_id,args):
     for element in op_values:
         if len(element) <= 1:
             continue
-        op = dom.createElement("op")
         op_name = element.pop(0)
+        op = dom.createElement("op")
+        for existing_op in operations.getElementsByTagName("op"):
+            if existing_op.getAttribute("name") == op_name:
+                op = existing_op
+                for key in op.attributes.keys():
+                    op.removeAttribute(key)
+                break
+
         op.setAttribute("name",op_name)
         op_id = res_id + "-" + op_name
         op_vars = convert_args_to_tuples(element)
