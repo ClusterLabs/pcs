@@ -272,6 +272,20 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: ClusterIP (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=33s \n              start interval=30s timeout=180s\n'
 
+    def testGroupRemoveTest(self):
+        self.setupClusterA(temp_cib)
+        output, returnVal = pcs(temp_cib, "constraint location ClusterIP3 prefers rh7-1")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource delete ClusterIP2")
+        assert returnVal == 0
+        assert output =='Deleting Resource - ClusterIP2\n'
+
+        output, returnVal = pcs(temp_cib, "resource delete ClusterIP3")
+        assert returnVal == 0
+        assert output =="Removing Constraint - location-ClusterIP3-rh7-1-INFINITY\nDeleting Resource (and group) - ClusterIP3\n"
+
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 

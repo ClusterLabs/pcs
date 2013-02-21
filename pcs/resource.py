@@ -828,6 +828,11 @@ def resource_remove(resource_id, output = True):
     if (group != ""):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
 
+    constraints = constraint.find_constraints_containing(resource_id)
+    for c in constraints:
+        if output == True:
+            print "Removing Constraint - " + c
+        constraint.constraint_rm([c])
     if (group == "" or num_resources_in_group > 1):
         if clone != "":
             args = ["cibadmin", "-o", "resources", "-D", "--xml-text", clone]
@@ -835,11 +840,6 @@ def resource_remove(resource_id, output = True):
             args = ["cibadmin", "-o", "resources", "-D", "--xml-text", master]
         else:
             args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
-        constraints = constraint.find_constraints_containing(resource_id)
-        for c in constraints:
-            if output == True:
-                print "Removing Constraint - " + c
-            constraint.constraint_rm([c])
         if output == True:
             print "Deleting Resource - " + resource_id
         output,retVal = utils.run(args)
@@ -855,6 +855,7 @@ def resource_remove(resource_id, output = True):
         if retVal != 0:
             if output == True:
                 print "ERROR: Unable to remove resource '%s' (do constraints exist?)" % (resource_id)
+                sys.exit(1)
             return False
     return True
 

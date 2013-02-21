@@ -82,7 +82,8 @@ Commands:
         properties to properly remove an existing operation).
 
     delete <resource id | master/slave id>
-        Delete the specified resource or master/slave resource
+        Delete the specified resource or master/slave resource (including any
+        constraints referencing the resource)
 
     group add <group name> <resource_id>...
         Add the specified resource to the group (creating the group if it does
