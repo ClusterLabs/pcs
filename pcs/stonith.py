@@ -66,7 +66,7 @@ def stonith_show(argv):
         args = ["crm_resource","-L"]
         output,retval = utils.run(args)
         preg = re.compile(r'.*(stonith:.*)')
-        for line in output.strip().split('\n'):
+        for line in output.split('\n'):
             if preg.match(line):
                 print line
         return
