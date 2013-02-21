@@ -353,25 +353,38 @@ def is_valid_constraint_resource(resource_id):
             does_exist("//clone[@id='"+resource_id+"']") or \
             does_exist("//master[@id='"+resource_id+"']")
 
-# Check and see if the specified resource type is present on the file system
-# and properly responds to a meta-data request
+# Check and see if the specified resource (or stonith) type is present on the
+# file system and properly responds to a meta-data request
 def is_valid_resource(resource):
     found_resource = False
+    stonith_resource = False
     if resource.startswith("ocf:"):
         resource_split = resource.split(":",3)
         providers = [resource_split[1]]
         resource = resource_split[2]
+    elif resource.startswith("stonith:"):
+        stonith_resource = True
+        resource_split = resource.split(":", 2)
+        stonith = resource_split[1]
     else:
         providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
 
-    for provider in providers:
-        metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
-        if metadata == False:
-            continue
-        else:
+    if stonith_resource:
+        metadata = get_stonith_metadata("/usr/sbin/" + stonith)
+        if metadata != False:
             found_resource = True
+    else:
+        for provider in providers:
+            metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
+            if metadata == False:
+                continue
+            else:
+                found_resource = True
+                break
+
     return found_resource
 
+# Get metadata from resource agent
 def get_metadata(resource_agent_script):
     os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
     if (not os.path.isfile(resource_agent_script)) or (not os.access(resource_agent_script, os.X_OK)):
@@ -383,6 +396,14 @@ def get_metadata(resource_agent_script):
     else:
         return False
 
+def get_stonith_metadata(fence_agent_script):
+    if (not os.path.isfile(fence_agent_script)) or (not os.access(fence_agent_script, os.X_OK)):
+        return False
+    (metadata, retval) = run([fence_agent_script, "-o", "metadata"], True)
+    if retval == 0:
+        return metadata
+    else:
+        return False
 
 # Return matches from the CIB with the xpath_query
 def get_cib_xpath(xpath_query):

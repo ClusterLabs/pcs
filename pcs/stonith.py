@@ -103,7 +103,7 @@ def stonith_list_available(argv):
     for fd in fence_devices:
         if fd.count(filter_string) == 0:
             continue
-        metadata = get_metadata(fd)
+        metadata = utils.get_stonith_metadata(fd)
         if metadata == False:
             print "Error: no metadata for %s" % fd
             continue
@@ -122,7 +122,7 @@ def stonith_list_available(argv):
         print fd + sd
 
 def stonith_list_options(stonith_agent):
-    metadata = get_metadata(utils.fence_bin + stonith_agent)
+    metadata = utils.get_stonith_metadata(utils.fence_bin + stonith_agent)
     if not metadata:
         print "Unable to get metadata for %s" % stonith_agent
         sys.exit(1)
@@ -138,11 +138,3 @@ def stonith_list_options(stonith_agent):
         desc = resource.format_desc(indent, desc)
         print "  " + name + ": " + desc
 
-def get_metadata(fence_agent_script):
-    if (not os.path.isfile(fence_agent_script)) or (not os.access(fence_agent_script, os.X_OK)):
-        return False
-    (metadata, retval) = utils.run([fence_agent_script, "-o", "metadata"], True)
-    if retval == 0:
-        return metadata
-    else:
-        return False
