@@ -34,6 +34,17 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == " test1\t(stonith:fence_noxist):\tStopped \n test2\t(stonith:fence_ilo):\tStopped \n"
 
+
+    def testStonithFenceConfirm(self):
+        output, returnVal = pcs(temp_cib, "stonith fence blah blah")
+        assert returnVal == 1
+        assert output == "Error: must specify one (and only one) node to fence\n"
+
+        output, returnVal = pcs(temp_cib, "stonith confirm blah blah")
+        assert returnVal == 1
+        assert output == "Error: must specify one (and only one) node to confirm fenced\n"
+
+
 # Run pcs with -f on specified file
 def pcs(testfile, args):
     return utils.run([pcs_location, "-f", testfile] + args.split())

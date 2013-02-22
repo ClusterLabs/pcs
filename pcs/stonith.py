@@ -56,6 +56,10 @@ def stonith_cmd(argv):
             sys.exit(1)
     elif (sub_cmd == "show"):
         stonith_show(argv)
+    elif (sub_cmd == "fence"):
+        stonith_fence(argv)
+    elif (sub_cmd == "confirm"):
+        stonith_confirm(argv)
     else:
         usage.stonith()
         sys.exit(1)
@@ -138,3 +142,34 @@ def stonith_list_options(stonith_agent):
         desc = resource.format_desc(indent, desc)
         print "  " + name + ": " + desc
 
+def stonith_fence(argv):
+    if len(argv) != 1:
+        print "Error: must specify one (and only one) node to fence"
+        sys.exit(1)
+
+    node = argv.pop(0)
+    args = ["stonith_admin", "-F", node]
+    output, retval = utils.run(args)
+
+    if retval != 0:
+        print "Error: unable to fence '%s'" % node
+        print output
+        sys.exit(1)
+    else:
+        print "Node: %s fenced" % node
+
+def stonith_confirm(argv):
+    if len(argv) != 1:
+        print "Error: must specify one (and only one) node to confirm fenced"
+        sys.exit(1)
+
+    node = argv.pop(0)
+    args = ["stonith_admin", "-C", node]
+    output, retval = utils.run(args)
+
+    if retval != 0:
+        print "Error: unable to confirm fencing of node '%s'" % node
+        print output
+        sys.exit(1)
+    else:
+        print "Node: %s confirmed fenced" % node

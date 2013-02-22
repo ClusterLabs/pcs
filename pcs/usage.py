@@ -263,6 +263,15 @@ Commands:
     delete <stonith_id>
         Remove stonith_id from configuration
 
+    fence <node>
+        Fence the node specified
+
+    confirm <node>
+        Confirm that the host specified is currently down
+
+        WARNING: if this node is not actually down data corruption/cluster
+        failure can occur.
+
 Examples:
     pcs stonith create MyStonith ssh hostlist="f1" op monitor interval=30s
 """
