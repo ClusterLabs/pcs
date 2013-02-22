@@ -597,7 +597,7 @@ def getCurrentConstraints():
 
 # If returnStatus is set, then we don't error out, we just print the error
 # and return false
-def constraint_rm(argv,returnStatus=False):
+def constraint_rm(argv,returnStatus=False, constraintsElement=None):
     if len(argv) < 1:
         usage.constraint()
         sys.exit(1)
@@ -614,8 +614,13 @@ def constraint_rm(argv,returnStatus=False):
         c_id = argv.pop(0)
 
     elementFound = False
-    (dom,constraintsElement) = getCurrentConstraints()
 
+    if not constraintsElement:
+        (dom, constraintsElement) = getCurrentConstraints()
+        use_cibadmin = True
+    else:
+        use_cibadmin = False
+        
     for co in constraintsElement.childNodes[:]:
         if co.nodeType != xml.dom.Node.ELEMENT_NODE:
             continue
@@ -624,11 +629,12 @@ def constraint_rm(argv,returnStatus=False):
             elementFound = True
 
     if elementFound == True:
-        xml_constraint_string = constraintsElement.toxml()
-        args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
-        output,retval = utils.run(args)
-        if output != "":
-            print output
+        if use_cibadmin:
+            xml_constraint_string = constraintsElement.toxml()
+            args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
+            output,retval = utils.run(args)
+            if output != "":
+                print output
     else:
         print "Error: Unable to find constraint - '%s'" % c_id
         if not returnStatus:

@@ -293,6 +293,24 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == 'Cluster Name: test99\nCorosync Nodes:\n rh7-1 rh7-2 \nPacemaker Nodes:\n \n\nResources: \n Resource: ClusterIP6 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Group: TestGroup1\n  Resource: ClusterIP (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n Group: TestGroup2\n  Resource: ClusterIP2 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n  Resource: ClusterIP3 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n Clone: ClusterIP4-clone\n  Resource: ClusterIP4 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n Master: Master\n  Resource: ClusterIP5 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n\nLocation Constraints:\nOrdering Constraints:\nColocation Constraints:\n\nCluster Properties:\n', output
 
+    def testMasterSlaveRemove(self):
+        self.setupClusterA(temp_cib)
+        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource delete Master")
+        assert returnVal == 0
+        assert output == "Removing Constraint - location-ClusterIP5-rh7-1-INFINITY\nRemoving Constraint - location-ClusterIP5-rh7-2-INFINITY\nRemoving Master - Master\n"
+
+        output, returnVal = pcs(temp_cib, "config")
+        assert returnVal == 0
+        assert output == "Cluster Name: test99\nCorosync Nodes:\n rh7-1 rh7-2 \nPacemaker Nodes:\n \n\nResources: \n Resource: ClusterIP6 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s\n Group: TestGroup1\n  Resource: ClusterIP (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n Group: TestGroup2\n  Resource: ClusterIP2 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n  Resource: ClusterIP3 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n Clone: ClusterIP4-clone\n  Resource: ClusterIP4 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s\n\nLocation Constraints:\nOrdering Constraints:\nColocation Constraints:\n\nCluster Properties:\n"
+
 # Run pcs with -f on specified file
 def pcs(testfile, args):
     return utils.run([pcs_location, "-f", testfile] + args.split())

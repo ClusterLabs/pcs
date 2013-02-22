@@ -809,7 +809,17 @@ def resource_master_remove(argv):
             print "Error: Unable to find multi-state resource with id %s" % master_id
             sys.exit(1)
 
+    constraints_element = dom.getElementsByTagName("constraints")
+    if len(constraints_element) > 0:
+        constraints_element = constraints_element[0]
+        constraints = []
+        for resource_id in resources_to_cleanup:
+            constraints = constraints + constraint.find_constraints_containing(resource_id)
+        for c in constraints:
+            print "Removing Constraint - " + c
+            constraint.constraint_rm([c], True, constraints_element)
     master.parentNode.removeChild(master)
+    print "Removing Master - " + master_id
     utils.replace_cib_configuration(dom)
 
 def resource_remove(resource_id, output = True):
