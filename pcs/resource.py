@@ -1038,7 +1038,7 @@ def resource_show(argv):
             print "  op " + op.getAttribute("name"),
             for a in alist:
                 print a,
-            print
+            print "(" + op.getAttribute("id") + ")"
 
 def resource_stop(argv):
     if len(argv) < 1:
