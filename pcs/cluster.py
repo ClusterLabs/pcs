@@ -77,6 +77,8 @@ def cluster_cmd(argv):
         cluster_localnode(argv)
     elif (sub_cmd == "corosync"):
         cluster_get_corosync_conf(argv)
+    elif (sub_cmd == "destroy"):
+        cluster_destroy(argv)
     else:
         usage.cluster()
         sys.exit(1)
@@ -489,3 +491,18 @@ def print_config():
     constraint.colocation_show([])
     print ""
     prop.list_property([])
+
+# Completely tear down the cluster & remove config files
+# Code taken from cluster-clean script in pacemaker
+def cluster_destroy(argv):
+    print "Killing all active corosync/pacemaker processes"
+    os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
+    os.system("service pacemaker stop")
+    os.system("service corosync stop")
+
+    print "Removing all cluster configuration files"
+    os.system("rm /etc/corosync/corosync.conf")
+    state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
+            "pe*.bz2","cib.*"]
+    for name in state_files:
+        os.system("find /var/lib -name '"+name+"' -exec rm -f \{\} \;")

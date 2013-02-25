@@ -245,6 +245,13 @@ Commands:
 
     corosync <node name>
         Get the corosync.conf from the specified node
+
+    destroy
+        Permanently destroy the cluster, killing all corosync/pacemaker
+        processes removing all cib files and corosync.conf file.
+        WARNING: This command permantly removes any cluster configuration that
+        has been created. It is recommended to run 'pcs cluster stop' before
+        destroying the cluster.
 """
 
 def stonith():
