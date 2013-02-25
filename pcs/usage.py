@@ -124,6 +124,14 @@ Commands:
         Cleans up the resource in the lrmd (useful to reset the resource
         status and failcount)
 
+    failcount show <resource> [node]
+        Show current failcount for specified resource from all nodes or
+        only on specified node
+
+    failcount reset <resource> [node]
+        Reset failcount for specified resource on all nodes or only on
+        specified node
+
 Examples:
     pcs resource show
 

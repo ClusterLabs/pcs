@@ -107,6 +107,8 @@ def resource_cmd(argv):
         resource_manage(argv, True)
     elif (sub_cmd == "unmanage"):
         resource_manage(argv, False)
+    elif (sub_cmd == "failcount"):
+        resource_failcount(argv)
     elif (sub_cmd == "rsc" or sub_cmd == "op"):
         if len(argv) < 1:
             usage.resource()
@@ -1091,6 +1093,68 @@ def resource_manage(argv, set_managed):
             xpath = "//primitive[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
             my_xml = utils.get_cib_xpath(xpath)
             utils.remove_from_cib(my_xml)
+
+def resource_failcount(argv):
+    if len(argv) < 2:
+        usage.resource()
+        sys.exit(1)
+
+    resource_command = argv.pop(0)
+    resource = argv.pop(0)
+    if resource_command != "show" and resource_command != "reset":
+        usage.resource()
+        sys.exit(1)
+
+    if len(argv) > 0:
+        node = argv.pop(0) 
+        all_nodes = False
+    else:
+        all_nodes = True
+
+    dom = utils.get_cib_dom()
+    output_dict = {}
+    trans_attrs = dom.getElementsByTagName("transient_attributes")
+    fail_counts_removed = 0
+    for ta in trans_attrs:
+        ta_node = ta.parentNode.getAttribute("uname")
+        if not all_nodes and ta_node != node:
+            continue
+        for nvp in ta.getElementsByTagName("nvpair"):
+            if nvp.getAttribute("name") == ("fail-count-" + resource):
+                if resource_command == "reset":
+                    (output, retval) = utils.run(["crm_attribute", "-N",
+                        ta_node, "-n", nvp.getAttribute("name"), "-t",
+                        "status", "-D"])
+                    if retval != 0:
+                        print "Error: Unable to remove failcounts from %s on %s" % (resource,ta_node)
+                        print output
+                        sys.exit(1)
+                    fail_counts_removed = fail_counts_removed + 1
+                else:
+                    output_dict[ta_node] = " " + ta_node + ": " + nvp.getAttribute("value") + "\n"
+                break
+
+    if resource_command == "reset":
+        if fail_counts_removed == 0:
+            print "No failcounts needed resetting"
+    if resource_command == "show":
+        output = ""
+        for key in sorted(output_dict.iterkeys()):
+            output += output_dict[key]
+
+
+        if output == "":
+            if all_nodes:
+                print "No failcounts for %s" % resource
+            else:
+                print "No failcounts for %s on %s" % (resource,node)
+        else:
+            if all_nodes:
+                print "Failcounts for %s" % resource
+            else:
+                print "Failcounts for %s on %s" % (resource,node)
+            print output,
+
 
 def show_defaults(def_type):
     dom = utils.get_cib_dom()
