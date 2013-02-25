@@ -155,7 +155,7 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 0
-        assert output == 'Resource: ClusterIP\n  ip: 192.168.0.99\n  cidr_netmask: 32\n  op monitor interval=30s\n'
+        assert output == 'Resource: ClusterIP\n  ip: 192.168.0.99\n  cidr_netmask: 32\n  op monitor interval=30s (ClusterIP-monitor-interval-30s)\n'
 
     def testResourceUpdate(self):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
@@ -200,7 +200,7 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 0
-        assert output == 'Resource: ClusterIP\n  ip: 192.168.0.99\n  cidr_netmask: 32\n  op monitor interval=30s\n  op monitor interval=31s\n', [output]
+        assert output == 'Resource: ClusterIP\n  ip: 192.168.0.99\n  cidr_netmask: 32\n  op monitor interval=30s (ClusterIP-monitor-interval-30s)\n  op monitor interval=31s (ClusterIP-name-monitor-interval-31s)\n', [output]
 
     def testRemoveOperation(self):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
@@ -225,7 +225,7 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 0
-        assert output == 'Resource: ClusterIP\n  ip: 192.168.0.99\n  cidr_netmask: 32\n  op monitor interval=31s\n'
+        assert output == 'Resource: ClusterIP\n  ip: 192.168.0.99\n  cidr_netmask: 32\n  op monitor interval=31s (ClusterIP-name-monitor-interval-31s)\n'
 
         line = 'resource remove_operation ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
