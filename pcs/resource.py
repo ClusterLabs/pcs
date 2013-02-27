@@ -33,23 +33,32 @@ def resource_cmd(argv):
         res_type = argv.pop(0)
         ra_values = []
         op_values = [[]]
+        meta_values=[]
         op_args = False
+        meta_args = False
         for arg in argv:
-            if op_args:
-                if arg == "op":
-                    op_values.append([])
-                elif "=" not in arg and len(op_values[-1]) != 0:
-                    op_values.append([])
-                    op_values[-1].append(arg)
-                else:
-                    op_values[-1].append(arg)
+            if arg == "op":
+                op_args = True
+                meta_args = False
+            elif arg == "meta":
+                meta_args = True
+                op_args = False
             else:
-                if arg == "op":
-                    op_args = True
+                if op_args:
+                    if arg == "op":
+                        op_values.append([])
+                    elif "=" not in arg and len(op_values[-1]) != 0:
+                        op_values.append([])
+                        op_values[-1].append(arg)
+                    else:
+                        op_values[-1].append(arg)
+                elif meta_args:
+                    if "=" in arg:
+                        meta_values.append(arg)
                 else:
                     ra_values.append(arg)
     
-        resource_create(res_id, res_type, ra_values, op_values)
+        resource_create(res_id, res_type, ra_values, op_values, meta_values)
     elif (sub_cmd == "move"):
         resource_move(argv)
     elif (sub_cmd == "unmove"):
@@ -78,6 +87,12 @@ def resource_cmd(argv):
             sys.exit(1)
         res_id = argv.pop(0)
         resource_operation_remove(res_id,argv)
+    elif (sub_cmd == "meta"):
+        if len(argv) < 2:
+            usage.resource()
+            sys.exit(1)
+        res_id = argv.pop(0)
+        resource_meta(res_id,argv)
     elif (sub_cmd == "delete"):
         if len(argv) == 0:
             usage.resource()
@@ -227,7 +242,7 @@ def format_desc(indent, desc):
 
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
-def resource_create(ra_id, ra_type, ra_values, op_values):
+def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
     if not utils.is_valid_resource(ra_type) and not ("--force" in utils.pcs_options):
         print "Error: Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type
         sys.exit(1)
@@ -236,7 +251,8 @@ def resource_create(ra_id, ra_type, ra_values, op_values):
     primitive_values = get_full_ra_type(ra_type)
     primitive_values.insert(0,("id",ra_id))
     op_attributes = convert_args_to_operations(op_values, ra_id)
-    xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes + op_attributes)
+    meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
+    xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes + op_attributes + meta_attributes)
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
     output,retval = utils.run(args)
@@ -319,21 +335,30 @@ def resource_update(res_id,args):
 
 # Extract operation arguments
     op_args = False
+    meta_args = False
     ra_values = []
     op_values = []
+    meta_values = []
     for arg in args:
-        if op_args:
-            if arg == "op":
-                op_values.append([])
-            elif "=" not in arg and len(op_values[-1]) != 0:
-                op_values.append([])
-                op_values[-1].append(arg)
-            else:
-                op_values[-1].append(arg)
+        if arg == "op":
+            op_args = True
+            meta_args = False
+            op_values.append([])
+        elif arg == "meta":
+            meta_args = True
+            op_args = False
         else:
-            if arg == "op":
-                op_args = True
-                op_values.append([])
+            if op_args:
+                if arg == "op":
+                    op_values.append([])
+                elif "=" not in arg and len(op_values[-1]) != 0:
+                    op_values.append([])
+                    op_values[-1].append(arg)
+                else:
+                    op_values[-1].append(arg)
+            elif meta_args:
+                if "=" in arg:
+                    meta_values.append(arg)
             else:
                 ra_values.append(arg)
 
@@ -392,6 +417,32 @@ def resource_update(res_id,args):
             ia.setAttribute("name", key)
             ia.setAttribute("value", val)
             instance_attributes.appendChild(ia)
+
+    meta_attributes = resource.getElementsByTagName("meta_attributes")
+    if len(meta_attributes) == 0:
+        meta_attributes = dom.createElement("meta_attributes")
+        meta_attributes.setAttribute("id", res_id + "-meta_attributes")
+        resource.appendChild(meta_attributes)
+    else:
+        meta_attributes = meta_attributes[0]
+    
+    meta_attrs = convert_args_to_tuples(meta_values)
+    for (key,val) in meta_attrs:
+        meta_found = False
+        for ma in meta_attributes.getElementsByTagName("nvpair"):
+            if ma.getAttribute("name") == key:
+                meta_found = True
+                if val == "":
+                    meta_attributes.removeChild(ma)
+                else:
+                    ma.setAttribute("value", val)
+                break
+        if not meta_found:
+            ma = dom.createElement("nvpair")
+            ma.setAttribute("id", res_id + "-meta_attributes-" + key)
+            ma.setAttribute("name", key)
+            ma.setAttribute("value", val)
+            meta_attributes.appendChild(ma)
 
     operations = resource.getElementsByTagName("operations")
     if len(operations) == 0:
@@ -516,6 +567,55 @@ def resource_operation_remove(res_id, argv):
 
     utils.replace_cib_configuration(dom)
 
+def resource_meta(res_id, argv):
+    dom = utils.get_cib_dom()
+    allowed_elements = ["primitive","group","clone","master"]
+    elems = []
+    element_found = False
+    for ae in allowed_elements:
+        elems = elems + dom.getElementsByTagName(ae)
+    for elem in elems:
+        if elem.getAttribute("id") == res_id:
+            element_found = True
+            break
+
+    if not element_found:
+        print "Unable to find a resource/clone/master/group: %s" % res_id
+        sys.exit(1)
+
+    # Make sure we only check direct children for meta_attributes
+    meta_attributes = []
+    for child in elem.childNodes:
+        if child.nodeType == child.ELEMENT_NODE and child.tagName == "meta_attributes":
+            meta_attributes.append(child)
+
+    if len(meta_attributes) == 0:
+        meta_attributes = dom.createElement("meta_attributes")
+        meta_attributes.setAttribute("id", res_id + "-meta_attributes")
+        elem.appendChild(meta_attributes)
+    else:
+        meta_attributes = meta_attributes[0]
+
+    meta_attrs = convert_args_to_tuples(argv)
+    for (key,val) in meta_attrs:
+        meta_found = False
+        for ma in meta_attributes.getElementsByTagName("nvpair"):
+            if ma.getAttribute("name") == key:
+                meta_found = True
+                if val == "":
+                    meta_attributes.removeChild(ma)
+                else:
+                    ma.setAttribute("value", val)
+                break
+        if not meta_found:
+            ma = dom.createElement("nvpair")
+            ma.setAttribute("id", res_id + "-meta_attributes-" + key)
+            ma.setAttribute("name", key)
+            ma.setAttribute("value", val)
+            meta_attributes.appendChild(ma)
+
+    utils.replace_cib_configuration(dom)
+
 # Takes in a resource id and an array of arrays with operation values starting
 # with the operation name, followed by options
 # sample op_values = ["monitor", "interval=5s"]
@@ -544,7 +644,19 @@ def convert_args_to_operations(op_values_list, ra_id):
         ret_ops.append(ops)
     ret = [("operations", [], ret_ops)]
     return ret
-        
+
+def convert_args_to_meta_attrs(meta_attrs, ra_id):
+    if len(meta_attrs) == 0:
+        return []
+
+    meta_vars = []
+    tuples = convert_args_to_tuples(meta_attrs)
+    attribute_id = ra_id + "-meta_attributes"
+    for (a,b) in tuples:
+        meta_vars.append(("nvpair",[("name",a),("value",b),("id",attribute_id+"-"+a)],[]))
+    ret = ("meta_attributes", [[("id"), (attribute_id)]], meta_vars)
+    return [ret]
+
 def convert_args_to_instance_variables(ra_values, ra_id):
     tuples = convert_args_to_tuples(ra_values)
     ivs = []
@@ -1015,30 +1127,19 @@ def resource_show(argv):
         return
 
     preg = re.compile(r'.*xml:\n',re.DOTALL)
+    root = utils.get_cib_etree()
+    resources = root.find(".//resources")
+    resource_found = False
     for arg in argv:
-        args = ["crm_resource","-r",arg,"-q"]
-        output,retval = utils.run(args)
-        if retval != 0:
+        for child in resources.findall(".//"):
+            if "id" in child.attrib and child.attrib["id"] == arg:
+                print_node(child,1)
+                resource_found = True
+                break
+        if not resource_found:
             print "Error: unable to find resource '"+arg+"'"
             sys.exit(1)
-        output = preg.sub("", output)
-        dom = parseString(output)
-        doc = dom.documentElement
-        print "Resource:", arg
-        for nvpair in doc.getElementsByTagName("nvpair"):
-            print "  " + nvpair.getAttribute("name") + ": " + nvpair.getAttribute("value")
-        for op in doc.getElementsByTagName("op"):
-            alist = []
-            for i in range(op.attributes.length):
-                name = op.attributes.item(i).name
-                val = op.attributes.item(i).value
-                if name == "name" or name == "id":
-                    continue
-                alist.append(name+"="+val)
-            print "  op " + op.getAttribute("name"),
-            for a in alist:
-                print a,
-            print "(" + op.getAttribute("id") + ")"
+        resource_found = False
 
 def resource_stop(argv):
     if len(argv) < 1:
@@ -1185,45 +1286,49 @@ def print_node(node, tab = 0):
     spaces = " " * tab
     if node.tag == "group":
         print spaces + "Group: " + node.attrib["id"] + get_attrs(node,' (',')')
-        ivar_string = get_instance_vars_string(node)
-        if ivar_string != "":
-            print spaces + " " + get_instance_vars_string(node)
+        print_instance_vars_string(node, spaces)
+        print_meta_vars_string(node, spaces)
+        print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
     if node.tag == "clone":
         print spaces + "Clone: " + node.attrib["id"] + get_attrs(node,' (',')')
-        ivar_string = get_instance_vars_string(node)
-        if ivar_string != "":
-            print spaces + " " + get_instance_vars_string(node)
+        print_instance_vars_string(node, spaces)
+        print_meta_vars_string(node, spaces)
+        print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
     if node.tag == "primitive":
         print spaces + "Resource: " + node.attrib["id"] + get_attrs(node,' (',')')
-        ivar_string = get_instance_vars_string(node)
-        if ivar_string != "":
-            print spaces + " Attributes: " + get_instance_vars_string(node)
-        ops_string = get_operations(node, len(spaces) + len(" Operations: "))
-        if ops_string != "":
-            print spaces + " Operations: " + ops_string
-        for child in node:
-            print_node(child, tab + 1)
+        print_instance_vars_string(node, spaces)
+        print_meta_vars_string(node, spaces)
+        print_operations(node, spaces)
     if node.tag == "master":
         print spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')')
-        ivar_string = get_instance_vars_string(node)
-        if ivar_string != "":
-            print spaces + " " + get_instance_vars_string(node)
+        print_instance_vars_string(node, spaces)
+        print_meta_vars_string(node, spaces)
+        print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
 
-def get_instance_vars_string(node):
+def print_instance_vars_string(node, spaces):
     output = ""
     ivars = node.findall("instance_attributes/nvpair")
     for ivar in ivars:
         output += ivar.attrib["name"] + "=" + ivar.attrib["value"] + " "
+    if output != "":
+        print spaces + " Attributes: " + output
 
-    return output
+def print_meta_vars_string(node, spaces):
+    output = ""
+    mvars = node.findall("meta_attributes/nvpair")
+    for mvar in mvars:
+        output += mvar.attrib["name"] + "=" + mvar.attrib["value"] + " "
+    if output != "":
+        print spaces + " Meta Attrs: " + output
 
-def get_operations(node, indent):
+def print_operations(node, spaces):
+    indent = len(spaces) + len(" Operations: ")
     output = ""
     ops = node.findall("operations/op")
     first = True
@@ -1237,9 +1342,12 @@ def get_operations(node, indent):
             if attr in ["id","name"] :
                 continue
             output += attr + "=" + val + " "
+        output += "(" + op.attrib["id"] + ")"
         output += "\n"
 
-    return output.rstrip()
+    output = output.rstrip()
+    if output != "":
+        print spaces + " Operations: " + output
 
 def get_attrs(node, prepend_string = "", append_string = ""):
     output = ""

@@ -51,7 +51,7 @@ Commands:
 
     create <resource id> <class:provider:type|type> [resource options]
            [op <operation type> <operation options> [<operation type>
-           <operation options>]...]
+           <operation options>]...] [meta <meta options>...]
         Create specified resource.  If --clone is specified a clone resource is
         created (with options specified by --cloneopt <clone_option>=<value>),
         if --master is specified a master/slave resource is created.
@@ -66,7 +66,7 @@ Commands:
         List available agents optionally filtered by standard and provider
 
     update <resource id> [resource options] [op [<operation name>
-                                                      <operation options>]...]
+           <operation options>]...] [meta <meta operations>...]
         Add/Change options to specified resource, clone or multi-state
         resource.  If an operation (op) is specified it will update the first
         found operation with the same name on the specified resource, if no
@@ -80,6 +80,10 @@ Commands:
     remove_operation <resource id> <operation name> [operation properties]
         Remove specified operation (note: you must specify the exeact operation
         properties to properly remove an existing operation).
+
+    meta <resource/group/master/clone id> <meta options>
+        Add (or remove with option= ) specified options to the specified
+        resource, group, master/slave or clone.
 
     delete <resource id | master/slave id>
         Delete the specified resource or master/slave resource (including any
