@@ -17,7 +17,6 @@
     </tr>
     <tr id="node_list_row">
       <td id="node_list" class="node_list">
-	  <script type="text/x-handlebars">
 	<table cellpadding=0 cellspacing=0 style="float:left;">
 	  {{#each Pcs.nodesController}}
 	    <tr {{bindAttr onmouseover="onmouseover"}} {{bindAttr onmouseout="onmouseout"}} {{bindAttr class="trclass"}} {{bindAttr nodeID="name"}} onclick='Pcs.nodesController.load_node(this);'>
@@ -40,7 +39,6 @@
 	  </tr>
         {{/each}}
 	</table>
-	  </script>
       </td>
       <td id="node_info" colspan=2>
 	<div id="node_info_div" style="opacity: 0;">
@@ -48,9 +46,7 @@
 	    <div id="node_info_header">
 	      <div id="node_info_header_title" class="node_info_header_title">Edit Node&nbsp;</div>
 	      <div id="node_info_header_title_name">
-		    <script type="text/x-handlebars">
 {{Pcs.nodesController.cur_node.name}}
-		    </script>
 	    </div>
 
 	    </div>
@@ -59,14 +55,11 @@
 	      <table>
 		<tr>
 		  <td rowspan=2>
-		    <script type="text/x-handlebars">
 				<input disabled style="margin-right: 50px;" type="text" {{bindAttr value="Pcs.nodesController.cur_node.name"}} size="35" class="text_field">
-		    </script>
 		</td>
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
 		    <!--		      <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div><div id="pacemaker_status" style="float:left" class="status"></div></td></tr> -->
-		    <script type="text/x-handlebars">
 		    {{#if Pcs.nodesController.cur_node.pacemaker}}
 		    <div id="pacemaker_online_status" class="status">
 			Pacemaker Connected
@@ -74,14 +67,12 @@
 		    <div id="pacemaker_online_status" class="status-offline">
 			Pacemaker Not Connected
 		    {{/if}}
-		    </script>
 		    </div>
 		  </td>
 		</tr>
 		<tr>
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
-		    <script type="text/x-handlebars">
 		    {{#if Pcs.nodesController.cur_node.corosync}}
 		    <div id="corosync_online_status" class="status">
 			Corosync Connected
@@ -89,7 +80,6 @@
 		    <div id="corosync_online_status" class="status-offline">
 			Corosync Not Connected
 		    {{/if}}
-		    </script>
 		    </div>
 		  </td>
 		</tr>
@@ -114,11 +104,9 @@
 	    <div id="node_details">
 	      <table><tr>
 		  <td><div class="reg">Node ID:</div></td>
-		  <td><div class="bold"><script type="text/x-handlebars">
-{{Pcs.nodesController.cur_node.name}}</script></div></td>
-		    </script>
+		  <td><div class="bold"></div></td>
 		  <td><div class="reg"> Uptime:</div></td>
-		  <td><div class="bold" id="uptime"><script type="text/x-handlebars">{{Pcs.nodesController.cur_node.uptime}}</script></div></td>
+		  <td><div class="bold" id="uptime"></div></td>
 		</tr>
 	      </table>
 	    </div>
@@ -127,7 +115,6 @@
 	      <tr><td class="datatable_header">Cluster Daemons</td></tr>
 	      <tr><td>
 		  <div id="clusterdaemons">
-		      <script type="text/x-handlebars">
 		    <table class="datatable">
 		      <tr><th>NAME</th><th>STATUS</th></tr>
 		      <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
@@ -164,17 +151,14 @@
 {{/if}}
 </div></td></tr>
 		    </table>
-		      </script>
 		  </div>
 		</td>
 	      </tr>
 	    </table>
 	    <table style="clear:left;float:left;margin-top:25px;">
-	      <tr><td class="datatable_header"><script type="text/x-handlebars">Resources Currently Running on 
-{{Pcs.nodesController.cur_node.name}}</script></td></tr>
+	      <tr><td class="datatable_header"></td></tr>
 	      <tr><td>
 		  <div id="resources_running">
-		      <script type="text/x-handlebars">
 		    <table class="datatable">
 		      <tr><th>NAME</th></tr>
 		      {{#if Pcs.nodesController.cur_node.running_resources}}
@@ -185,7 +169,6 @@
 			<tr><td style="color: gray;">NONE</td></tr>
 		      {{/if}}
 		    </table>
-		      </script>
 		  </div>
 		</td>
 	      </tr>
@@ -194,7 +177,6 @@
 	      <tr><td class="datatable_header">Resource Location Preferences</td></tr>
 	      <tr><td>
 		  <div id="locationdep">
-		    <script type="text/x-handlebars">
 		    <table class="datatable">
 		      <tr><th>NAME</th><th>Score</th><th>Stickyness</th></tr>
 		    {{#if Pcs.nodesController.cur_node.location_constraints}}
@@ -205,7 +187,6 @@
 			<tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
 		    {{/if}}
 		    </table>
-		    </script>
 		  </div>
 		</td>
 	      </tr>

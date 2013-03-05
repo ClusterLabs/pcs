@@ -36,20 +36,15 @@
 	    <div id="node_info_header">
 	      <div id="<%=@myView%>_info_header_title" class="node_info_header_title" >Edit <%= @pageName %>&nbsp;</div>
 	      <div id="node_info_header_title_name">
-		<script type="text/x-handlebars">
 		{{Pcs.resourcesController.cur_resource.name}}
-                </script>
 	      </div>
 	      <div>
-		<script type="text/x-handlebars">
 {{#if Pcs.resourcesController.cur_resource.group}}
  &nbsp;({{Pcs.resourcesController.cur_resource.group}})
 {{/if}}
-                </script>
 	      </div>
 	    </div>
 
-	    <script type="text/x-handlebars">
 	    <div id="node_sub_info">
 	      <table>
 		<tr>
@@ -69,7 +64,6 @@
 		</tr>
 	      </table>
 	    </div>
-	    </script>
 
 	    <div id="node_options_buttons">
 	      <% if @myView == "resource" %>
@@ -95,15 +89,12 @@
 	      <table style="margin-bottom:25px;"><tr>
 		  <td nowrap><div class="bold">Current Location:</div></td>
 		  <td><div id="cur_res_loc" class="reg">
-		      <script type="text/x-handlebars">
 			{{Pcs.resourcesController.cur_resource.nodes}}
-		      </script>
 		  </div> </td>
 		</tr>
 	      </table>
 	      <% if @myView == "resource" %>
 	      <div><div class="plus sprites"></div><div class="link" style="display:inline;">&nbsp;<a href="#" onclick="$('#add_constraint').dialog({title: 'Add Constraint', modal:true, width: 'auto'});">Add&nbsp;Constraint</a>&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
-	      <script type="text/x-handlebars">
 	      <table style="clear:left;float:left">
 		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Location Preferences ({{Pcs.resourcesController.cur_resource.location_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
@@ -128,8 +119,6 @@
 		  </td>
 		</tr>
 	      </table>
-	      </script>
-	      <script type="text/x-handlebars">
 	      <table style="clear:left;float:left;">
 		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Ordering Preferences ({{Pcs.resourcesController.cur_resource.ordering_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
@@ -158,8 +147,6 @@
 		  </td>
 		</tr>
 	      </table>
-	      </script>
-	      <script type="text/x-handlebars">
 	      <table style="clear:left;float:left">
 		<tr><td onclick="show_hide_constraints(this)" class="datatable_header">Resource Colocation Preferences ({{Pcs.resourcesController.cur_resource.colocation_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
@@ -183,11 +170,9 @@
 		  </td>
 		</tr>
 	      </table>
-	      </script>
 	    </div>
 	  <% end %>
 
-	  <script type="text/x-handlebars">
 	    <table style="clear:left;float:left;margin-top:25px;">
 	      <% if @myView == "resource" %>
 	      <tr>
@@ -208,18 +193,15 @@
 		</td>
 	      </tr>
 	    </table>
-	  </script>
 
 	    <% if @myView == "resource" %>
 	      <div style="clear:left;" id="resource_agent_form"></div>
 	    <% else %>
 	      <div style="clear:left;" id="stonith_agent_form"></div>
 	    <% end %>
-	    <script type="text/x-handlebars">
 	    {{#if Pcs.resourcesController.no_resources}}
 	      <span id="node_info_header"><span id="node_info_header_title">No resources have been configured</span></span>
 	     {{/if}}
-	    </script>
 	    </div>
 	  </td>
 	</tr>
@@ -253,7 +235,6 @@
 	  </td>
 	</tr>
       </table>
-	</script>
       <div id="new_resource_agent">
       </div>
     </div>
@@ -294,9 +275,7 @@
       <div id="add_constraint_location" style="display:none;">
 	<form method=POST action="/resources_cmd/add_constraint">
 	  <input type=hidden name="location_constraint" value="1">
-	  <script type="text/x-handlebars">
 	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
-	  </script>
 	  <table>
 	    <tr><th>Node</th><th>Allowed</th><th>Not Allowed</th><th>Score</th></tr>
 	    <% @nodes.sort().each {|n| %>
@@ -314,9 +293,7 @@
       <div id="add_constraint_order" style="display:none;">
 	<form method=POST action="/resources_cmd/add_constraint">
 	  <input type=hidden name="order_constraint" value="1">
-	  <script type="text/x-handlebars">
 	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
-	  </script>
 	  <table>
 	    <tr><th>Resource</th><th>Before</th><th>After</th><th>Symmetrical</th></tr>
 	    <% @resources.each {|n| %>
@@ -335,9 +312,7 @@
       <div id="add_constraint_colocation" style="display:none;">
 	<form method=POST action="/resources_cmd/add_constraint">
 	  <input type=hidden name="colocation_constraint" value="1">
-	  <script type="text/x-handlebars">
 	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
-	  </script>
 	  <table>
 	    <tr><th>Resource</th><th>Together</th><th>Apart</th><th>Score</th></tr>
 	    <% @resources.each {|n| %>

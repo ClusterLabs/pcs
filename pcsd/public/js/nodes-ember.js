@@ -1,4 +1,5 @@
 Pcs = Ember.Application.create({
+  LOG_TRANSITIONS: true,
   cluster_name: get_cluster_name(),
   cluster_settings: null,
   cur_page: "",
@@ -142,7 +143,7 @@ Pcs.settingsController = Ember.ArrayController.create({
   }
 });
 
-Pcs.resourcesController = Ember.ArrayController.create({
+Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   content: [],
   no_resources: function () {
     if (this.content.length == 0)
@@ -372,7 +373,7 @@ Pcs.resourcesController = Ember.ArrayController.create({
   }
 });
 
-Pcs.nodesController = Ember.ArrayController.create({
+Pcs.nodesController = Ember.ArrayController.createWithMixins({
   content: [],
   cur_node: null,
   init: function(){
@@ -507,4 +508,9 @@ function myUpdate() {
 //  window.setTimeout(myUpdate,4000);
 }
 
+var view = Ember.View.create({
+  templateName: 'mymain',
+  name: "mymain"
+});
+view.appendTo('#mymain');
 Pcs.update(true);

@@ -46,7 +46,7 @@ configure do
   if Dir.pwd == "/var/lib/pcsd"
     PCS = "/sbin/pcs" 
   else
-    PCS = "../pcs/pcs/pcs" 
+    PCS = "../pcs/pcs" 
   end
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
