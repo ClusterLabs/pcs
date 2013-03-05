@@ -16,11 +16,7 @@
 	    <td class="node_list_sprite">
 	      <div class="check sprites"></div>
 	    </td>
-	    {{#if up}}
-		<td class="resource_name" nowrap>
-	    {{else}}
-		<td class="resource_name" style="color:red" nowrap>
-            {{/if}}
+	    <td class="resource_name" {{bindAttr style="resource_name_style"}} nowrap>
 		{{name}}
 		{{#if group}}
 		({{group}})

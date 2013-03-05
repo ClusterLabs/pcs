@@ -24,6 +24,7 @@ Pcs = Ember.Application.create({
 	      Pcs.resourcesController.load_stonith($('#stonith_list_row').find('.node_selected').first(),true);
 	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first(),true);
 	    });
+	    Pcs.selectedNodeController.reset();
 	} 
 	hide_loading_screen();
 	clearTimeout(Pcs.update_timeout);
@@ -55,6 +56,14 @@ Pcs.Resource = Ember.Object.extend({
   up: function() {
     return this.active;
   }.property("active"),
+  resource_name_style: function() {
+    if (this.active) {
+      return "";
+    } else {
+      return "color:red";
+    }
+  }.property("active"),
+
   trclass: function(){
     if (this.cur_resource == true)
       return "node_selected";
@@ -154,7 +163,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       return true;
     else
       return false;
-  }.property("content"),
+  }.property("@each.content"),
   cur_resource: null,
   cur_resource_res: null,
   cur_resource_ston: null,
@@ -309,23 +318,45 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       else res_col_constraints[value["with-rsc"]] = [second];
     });
 
-    self.set('content',[]);
+//    self.set('content',[]);
     $.each(resources, function(key, value) {
-      var resource = Pcs.Resource.create({
-	name: value["id"],
-	agentname: value["agentname"],
-	active: value["active"],
-	nodes: value["nodes"],
-	group: value["group"],
-	clone: value["clone"],
-	failed: value["failed"],
-	orphaned: value["orphaned"],
-	options: value["options"],
-	location_constraints: res_loc_constraints[value["id"]],
-	ordering_constraints: res_ord_constraints[value["id"]],
-	colocation_constraints: res_col_constraints[value["id"]],
-	stonith: value["stonith"]
+      found = false;
+      var resource = null;
+      $.each(self.content, function(key, pre_existing_resource) {
+	if (pre_existing_resource && pre_existing_resource.name == value["id"]) {
+	  found = true;
+	  resource = pre_existing_resource;
+	  resource.set("agentname", value["agentname"]);
+	  resource.set("active", value["active"]);
+	  resource.set("nodes", value["nodes"]);
+	  resource.set("group", value["group"]);
+	  resource.set("clone", value["clone"]);
+	  resource.set("failed", value["failed"]);
+	  resource.set("orphaned", value["orphaned"]);
+	  resource.set("options", value["options"]);
+	  resource.set("location_constraints", res_loc_constraints[value["id"]]);
+	  resource.set("ordering_constraints", res_ord_constraints[value["id"]]);
+	  resource.set("colocation_constraints", res_col_constraints[value["id"]]);
+	  resource.set("stonith", value["stonith"]);
+	}
       });
+      if (found == false) {
+	resource = Pcs.Resource.create({
+	  name: value["id"],
+	  agentname: value["agentname"],
+	  active: value["active"],
+	  nodes: value["nodes"],
+	  group: value["group"],
+	  clone: value["clone"],
+	  failed: value["failed"],
+	  orphaned: value["orphaned"],
+	  options: value["options"],
+	  location_constraints: res_loc_constraints[value["id"]],
+	  ordering_constraints: res_ord_constraints[value["id"]],
+	  colocation_constraints: res_col_constraints[value["id"]],
+	  stonith: value["stonith"]
+	});
+      }
       var pathname = window.location.pathname.split('/');
 
       if (cur_res_holder == "") {
@@ -351,7 +382,8 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       if (resources_checked[resource.name])
 	resource.checked = true;
 
-      self.pushObject(resource);
+      if (found == false)
+	self.pushObject(resource);
     });
     if (self.content && self.content.length > 0 && self.cur_resource == null) {
       for (var i=0; i< self.content.length; i++) {
@@ -374,6 +406,14 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	self.set("cur_resource", self.cur_resource_ston);
       }
     }
+  }
+});
+
+Pcs.selectedNodeController = Ember.Object.create({
+  node: null,
+  reset: function() {
+    if (Pcs.nodesController)
+      this.set('node', Pcs.nodesController.objectAt(0));
   }
 });
 
@@ -437,7 +477,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	nodes_checked[value.name] = true;
     });
 
-    self.set('content',[]);
+//    self.set('content',[]);
     $.each(nodes, function(key, node_id) {
       if ($.inArray(node_id, corosync_nodes_online) > -1) {
 	corosync_online = true;
@@ -469,20 +509,42 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
        up_status = false;
       }       
 
-      var node = Pcs.Clusternode.create({
-	name: node_id,
-	authorized:  authorized,
-	up: up_status,
-	pcsd: pcsd_daemon && authorized,
-	corosync_daemon: data[node_id]["corosync"],
-	pacemaker_daemon: data[node_id]["pacemaker"],
-	corosync: corosync_online,
-	pacemaker: pacemaker_online,
-	cur_node: false,
-	running_resources: $.unique(resources_on_nodes[node_id].sort().reverse()),
-	location_constraints: lc_on_nodes[node_id].sort(),
-	uptime: data[node_id]["uptime"]
+      found = false;
+      var node = null;
+      $.each(self.content, function(key, pre_existing_node) {
+	if (pre_existing_node && pre_existing_node.name == node_id) {
+	  node = pre_existing_node;
+	  found = true;
+	  node.authorized =  authorized;
+	  node.set("up",up_status);
+	  node.set("pcsd",pcsd_daemon && authorized);
+	  node.set("corosync_daemon", data[node_id]["corosync"]);
+	  node.set("pacemaker_daemon", data[node_id]["pacemaker"]);
+	  node.set("corosync", corosync_online);
+	  node.set("pacemaker", pacemaker_online);
+	  node.set("cur_node",false);
+	  node.set("running_resources", $.unique(resources_on_nodes[node_id].sort().reverse()));
+	  node.set("location_constraints", lc_on_nodes[node_id].sort());
+	  node.set("uptime", data[node_id]["uptime"]);
+	}
       });
+
+      if (found == false) {
+	var node = Pcs.Clusternode.create({
+	  name: node_id,
+	  authorized:  authorized,
+	  up: up_status,
+	  pcsd: pcsd_daemon && authorized,
+	  corosync_daemon: data[node_id]["corosync"],
+	  pacemaker_daemon: data[node_id]["pacemaker"],
+	  corosync: corosync_online,
+	  pacemaker: pacemaker_online,
+	  cur_node: false,
+	  running_resources: $.unique(resources_on_nodes[node_id].sort().reverse()),
+	  location_constraints: lc_on_nodes[node_id].sort(),
+	  uptime: data[node_id]["uptime"]
+	});
+      }
       var pathname = window.location.pathname.split('/');
 
       if (cur_node_holder == "") {
@@ -498,7 +560,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       if (nodes_checked[node.name])
 	node.checked = true;
 
-      self.pushObject(node);
+      if (found == false)
+	self.pushObject(node);
     });
     if (self.content && self.content.length > 0 && self.cur_node == null) {
       self.set("cur_node", self.content[0]);
