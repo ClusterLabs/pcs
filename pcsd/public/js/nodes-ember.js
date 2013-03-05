@@ -37,6 +37,10 @@ Pcs = Ember.Application.create({
   }
 });
 
+Pcs.Router.map(function() {
+  this.route("Default Route", { path: "*x" });
+});
+
 Pcs.Setting = Ember.Object.extend({
   name: null,
   value: null,
