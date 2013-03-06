@@ -1,9 +1,9 @@
 <% @pageName = @myView == "resource" ? "Resource" : "Fence Device" %>
-<tr id="<%=@myView%>_title_row"><td id="page_header" colspan=3>
+<tr id="<%=@myView%>_title_row" {{bindAttr style="Pcs.<%=@myView%>_page"}}><td id="page_header" colspan=3>
 <%= @myView == "resource" ? "RESOURCES" : "FENCE DEVICES" %>
     </td>
   </tr>
-  <tr id="<%=@myView%>_header_row">
+  <tr id="<%=@myView%>_header_row" {{bindAttr style="Pcs.<%=@myView%>_page"}}>
     <td id="remove_add" class="borderbottom">
       <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;
 	<% if @myView == "resource" %>
@@ -26,7 +26,7 @@
       <div style="float: left">&nbsp;Edit <%= @pageName%>&nbsp;</div><div class="check sprites"></div>
     </td>
   </tr>
-  <tr id="<%=@myView%>_list_row">
+  <tr id="<%=@myView%>_list_row" {{bindAttr style="Pcs.<%=@myView%>_page"}}>
     <td id="<%=@myView%>_list" class="node_list">
       <%= erb :_resource_list %>
     </td>

@@ -1,5 +1,5 @@
 <table id="main">
-  <tr id="cluster_title_row"><td id="page_header" colspan=3 style="vertical-align:middle;">
+  <tr id="cluster_title_row" {{bindAttr style=Pcs.manage_page}}><td id="page_header" colspan=3 style="vertical-align:middle;">
       <table id="manage_cluster_commands"><tr>
 	  <td>
 	    MANAGE CLUSTERS
@@ -8,32 +8,32 @@
 	  <td>
 	      <a href="#" class="x sprites"></a>
 	    <div class="link">
-	      <a id="manage_remove_cluster" href="#" onclick="verify_remove('cluster','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
+	      <a id="manage_remove_cluster" href="#manage" onclick="verify_remove('cluster','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
 	    </div>
 	  </td>
 	  <td>
-	    <a href="#" class="plus sprites"></a>
+	    <a href="#manage" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_add_cluster" href="#" onclick="add_existing_dialog();">
+	      <a id="manage_add_cluster" href="#manage" onclick="add_existing_dialog();">
 		Add Existing
 	      </a>
 	    </div>
 	  </td>
 	  <td>
-	    <a href="#" class="plus sprites"></a>
+	    <a href="#manage" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_create_cluster" href="#" onclick="create_cluster_dialog();">Create New</a>
+	      <a id="manage_create_cluster" href="#manage" onclick="create_cluster_dialog();">Create New</a>
 	    </div>
 	  </td>
 	</tr>
       </table>
     </td>
   </tr>
-  <tr id="cluster_header_row">
+  <tr id="cluster_header_row" {{bindAttr style="Pcs.manage_page"}}>
     <td class="borderbottom" colspan=3>
     </td>
   </tr>
-  <tr id="cluster_list_row">
+  <tr id="cluster_list_row" {{bindAttr style="Pcs.manage_page"}}>
     <td id="cluster_list" class="node_list" style="width:400px;">
       <%= erb :_cluster_list %>
     </td>
@@ -98,9 +98,3 @@
     </table>
   </form>
 </div>
-<script type="text/javascript">
-  $(window).load(function () {
-    Pcs = {};
-    initial_page_load();
-      });
-</script>

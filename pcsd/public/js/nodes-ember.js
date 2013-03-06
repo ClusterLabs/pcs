@@ -1,14 +1,41 @@
-Pcs = Ember.Application.create({
+Pcs = Ember.Application.createWithMixins({
   LOG_TRANSITIONS: true,
   cluster_name: get_cluster_name(),
   cluster_settings: null,
   cur_page: "",
+  resource_page: function() {
+    if (this.cur_page == "resources") return "display: table-row;";
+    else return "display: none;";
+  }.property("cur_page"),
+  node_page: function() {
+    if (this.cur_page == "nodes") return "display: table-row;";
+    else return "display: none;";
+  }.property("cur_page"),
+  stonith_page: function() {
+    if (this.cur_page == "stonith") return "display: table-row;";
+    else return "display: none;";
+  }.property("cur_page"),
+  configure_page: function() {
+    if (this.cur_page == "configure") return "display: table-row;";
+    else return "display: none;";
+  }.property("cur_page"),
+  manage_page: function() {
+    if (this.cur_page == "manage") return "display: table-row;";
+    else return "display: none;";
+  }.property("cur_page"),
+
   update_timeout: null,
   update: function(first_run) {
     if (first_run)
       show_loading_screen();
+    if (this.cluster_name == null) {
+      Ember.debug("Empty Cluster Name");
+      hide_loading_screen();
+      return;
+    }
+    Ember.debug("Running ajax for: " + this.cluster_name);
     $.ajax({
-      url: "/managec/" + cluster_name + "/status_all",
+      url:  "status_all",
 //      url: "/test_status.json",
       dataType: "json",
       success: function(data) {
@@ -19,7 +46,6 @@ Pcs = Ember.Application.create({
 	Ember.run.next(this,disable_checkbox_clicks);
 	if (first_run) {
 	    Ember.run.next(this,function () {
-	      initial_page_load();
 	      Pcs.resourcesController.load_resource($('#resource_list_row').find('.node_selected').first(),true);
 	      Pcs.resourcesController.load_stonith($('#stonith_list_row').find('.node_selected').first(),true);
 	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first(),true);
@@ -39,7 +65,65 @@ Pcs = Ember.Application.create({
 });
 
 Pcs.Router.map(function() {
+  this.route("Configuration", { path: "configure"});
+  this.route("Fence Devices", { path: "fencedevices"});
+  this.resource("Resources", {path: "resources/:resource_id"}, function () {
+    this.route('new');
+  });
+  this.route("Resources", { path: "resources"});
+  this.route("Nodes", { path: "nodes"});
+//  this.resource("Resource", {path: 'resources/:resource_id'});
+  this.route("Manage", {path: "manage"});
   this.route("Default Route", { path: "*x" });
+});
+
+Pcs.ManageRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    select_menu("MANAGE");
+  }
+});
+
+Pcs.IndexRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    select_menu("NODES");
+  }
+});
+
+Pcs.DefaultRouteRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    select_menu("NODES");
+  }
+});
+
+Pcs.FenceDevicesRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    select_menu("FENCE DEVICES");
+  }
+});
+
+Pcs.NodesRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    Ember.debug("Nodes Route");
+    select_menu("NODES");
+  }
+});
+
+Pcs.ConfigurationRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    Ember.debug("Configuration Route");
+    select_menu("CONFIGURE"); 
+  }
+});
+
+Pcs.ResourcesRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    Ember.debug("Resources Route");
+    select_menu("RESOURCES"); 
+  },
+  model: function(params) {
+    Ember.debug("Resource: " + params.resource_id);
+    return null;
+  }
 });
 
 Pcs.Setting = Ember.Object.extend({
@@ -178,7 +262,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     load_row(resource_row, this, 'cur_resource', "#resource_info_div", 'cur_resource_res');
     load_agent_form(resource_row, false);
     if (!dont_update_hash)
-      window.location.hash = "#resources#" + $(resource_row).attr("nodeID");
+      window.location.hash = "/resources/" + $(resource_row).attr("nodeID");
 
     // If we're not on the resource page, we don't update the cur_resource
     if (Pcs.cur_page != "resources") {
@@ -575,9 +659,4 @@ function myUpdate() {
 //  window.setTimeout(myUpdate,4000);
 }
 
-var view = Ember.View.create({
-  templateName: 'mymain',
-  name: "mymain"
-});
-view.appendTo('#mymain');
 Pcs.update(true);

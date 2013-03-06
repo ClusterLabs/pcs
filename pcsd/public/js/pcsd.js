@@ -8,25 +8,6 @@ function curStonith() {
   return Pcs.resourcesController.cur_resource.name
 }
 
-function initial_page_load() {
-  current_location =  window.location.hash.split('#');
-  current_path = window.location.pathname.substr(window.location.pathname.lastIndexOf('/') + 1);
-  if (current_path == "" || current_path == "manage")
-    select_menu("MANAGE");
-  else {
-    if (current_location[1] == "resources")
-      select_menu("RESOURCES", current_location[2]);
-    else if (current_location[1] == "fencedevices")
-      select_menu("FENCE DEVICES", current_location[2]);
-    else if (current_location[1] == "manage")
-      select_menu("MANAGE", current_location[2]);
-    else if (current_location[1] == "configure")
-      select_menu("CONFIGURE", current_location[2]);
-    else 
-      select_menu("NODES", current_location[2]);
-  }
-}
-
 function configure_menu_show(item) {
   $("#configure-"+item).show();
   $(".configure-"+item).addClass("selected");
@@ -35,14 +16,8 @@ function configure_menu_show(item) {
 function menu_show(item,show) {
   if (show) {
     $("#" + item + "_menu").addClass("active");
-    $("#" + item + "_title_row").show();
-    $("#" + item + "_header_row").show();
-    $("#" + item + "_list_row").show();
   } else {
     $("#" + item + "_menu").removeClass("active");
-    $("#" + item + "_title_row").hide();
-    $("#" + item + "_header_row").hide();
-    $("#" + item + "_list_row").hide();
   }
 }
 
@@ -51,8 +26,9 @@ function menu_show(item,show) {
 // If initial is set to true, we load default (first item) on other pages
 // and load the default item on the specified page if item is set
 function select_menu(menu, item, initial) {
+  Ember.debug("SELECT MENU");
   if (menu == "NODES") {
-    Pcs.cur_page = "nodes";
+    Pcs.set('cur_page',"nodes")
     if (item)
       Pcs.nodesController.load_node($('[nodeID='+item+']'));
     menu_show("node", true);
@@ -61,7 +37,7 @@ function select_menu(menu, item, initial) {
   }
 
   if (menu == "RESOURCES") {
-    Pcs.cur_page = "resources";
+    Pcs.set('cur_page',"resources")
     Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_res);
     if (item)
       Pcs.resourcesController.load_resource($('[nodeID="'+item+'"]'));
@@ -71,7 +47,7 @@ function select_menu(menu, item, initial) {
   }
 
   if (menu == "FENCE DEVICES") {
-    Pcs.cur_page = "stonith";
+    Pcs.set('cur_page',"stonith");
     Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_ston);
     if (item)
       Pcs.resourcesController.load_stonith($('[nodeID='+item+']'));
@@ -81,20 +57,21 @@ function select_menu(menu, item, initial) {
   }
 
   if (menu == "MANAGE") {
-    Pcs.cur_page = "manage";
+    Pcs.set('cur_page',"manage");
     menu_show("cluster", true);
   } else {
     menu_show("cluster", false);
   }
 
   if (menu == "CONFIGURE") {
-    Pcs.cur_page = "configure";
+    Pcs.set('cur_page',"configure");
     menu_show("configure", true);
   } else {
     menu_show("configure", false);
   }
 
   setup_resource_links();
+  setup_node_links();
 }
 
 function create_group() {
@@ -207,8 +184,8 @@ function verify_remove(rem_type, error_message, ok_message, title_message, resou
       }
     }
     $(this).dialog("close");
-    if (rem_type == "cluster")
-      document.location.reload();
+//    if (rem_type == "cluster")
+ //     document.location.reload();
   };
   buttonOpts["Cancel"] = function() {
     $(this).dialog("close");
@@ -683,6 +660,7 @@ function hide_loading_screen() {
 
 function remove_cluster(ids) {
   for (var i=0; i<ids.length; i++) {
+    alert("inside rc");
     var cluster = ids[i];
     var clusterid_name = "clusterid-"+ids[i];
     var data = {}
@@ -786,7 +764,14 @@ function update_cluster_settings(form) {
 
 // Pull currently managed cluster name out of URL
 function get_cluster_name() {
-  cluster_name = location.pathname.match("/managec/(.*)/")[1];
+  cluster_name = location.pathname.match("/managec/(.*)/");
+  if (cluster_name && cluster_name.length >= 2) {
+    Ember.debug("Cluster Name: " + cluster_name[1]);
+    cluster_name = cluster_name[1];
+    return cluster_name;
+  }
+  Ember.debug("Cluster Name is 'null'");
+  cluster_name = null;
   return cluster_name;
 }
 

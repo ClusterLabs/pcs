@@ -138,7 +138,7 @@ post '/login' do
       session.delete("pre_login_path")
       redirect plp
     else
-      redirect '/'
+      redirect '/#manage'
     end
   else
     redirect '/login?badlogin=1'
@@ -262,6 +262,7 @@ get '/manage/?' do
   @manage = true
   pcs_config = PCSConfig.new
   @clusters = pcs_config.clusters
+  @load_data = true
   erb :manage, :layout => :main
 end
 
@@ -327,9 +328,9 @@ post '/manage/existingcluster' do
     nodes = status["corosync_offline"] + status["corosync_online"]
     pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
     pcs_config.save
-    redirect '/manage'
+    redirect '/manage#manage'
   else
-    redirect '/manage/?error=notauthorized'
+    redirect '/manage/?error=notauthorized#manage'
   end
 end
 
@@ -347,10 +348,11 @@ post '/manage/newcluster' do
   pcs_config.save
 
   run_cmd(PCS, "cluster", "setup", "--start", @cluster_name, *@nodes)
-  redirect '/manage'
+  redirect '/manage#manage'
 end
 
 post '/manage/removecluster' do
+  pp "REMOVE CLUSTER"
   pcs_config = PCSConfig.new
   params.each { |k,v|
     if k.start_with?("clusterid-")
@@ -358,7 +360,7 @@ post '/manage/removecluster' do
     end
   }
   pcs_config.save
-  redirect '/manage'
+  redirect '/manage#manage'
 end
 
 post '/resource_cmd/rm_constraint' do

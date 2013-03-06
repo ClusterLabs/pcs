@@ -51,9 +51,7 @@
 </head>
 <html>
   <body>
-  <div id="mymain">
-  </div>
-  <script type="text/x-handlebars" data-template-name="mymain">
+  <script type="text/x-handlebars">
     <div id="wrapper">
   <div id="header">
     <div id="topmenu">
@@ -70,7 +68,7 @@
 		<tr>
 		  <td colspan=2 style="padding-bottom:8px;">
 		    <div style="float:left">
-		      <div style="float:right;" id="dropdownl" onclick="window.location='/manage'">
+		      <div style="float:right;" id="dropdownl" onclick="window.location='/manage#manage'">
 			<%=@manage ? "Select Cluster" : "Cluster:" + @@cluster_name%><span style="float:right;" class="downarrow sprites"></span>
 		      </div>
 		    </div>
@@ -93,17 +91,10 @@
 		</tr>
 		<% if !@manage %>
 		<tr>
-		  <% if @load_data %>
-		    <td class="menuitem first"><a id="node_menu" onclick="select_menu('NODES'); return true;" href="#nodes" <%= @nodemenuclass %>>NODES</a></td>
-		    <td class="menuitem"><a id="resource_menu" onclick="select_menu('RESOURCES'); return true;" href="#resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
-		    <td class="menuitem"><a id="stonith_menu" onclick="select_menu('FENCE DEVICES'); return true;" href="#fencedevices">FENCE DEVICES</a></td>
-		    <td class="menuitem"><a id="configure_menu" onclick="select_menu('CONFIGURE'); return true;" href="#configure">CONFIGURE</a></td>
-		  <% else %>
-		    <td class="menuitem first"><a id="node_menu" href="/nodes#nodes" <%= @nodemenuclass %>>NODES</a></td>
-		    <td class="menuitem"><a id="resource_menu" href="/nodes#resources" <%= @resourcemenuclass %>>RESOURCES</a></td>
-		    <td class="menuitem"><a id="stonith_menu" href="/nodes#fencedevices">FENCE DEVICES</a></td>
-		    <td class="menuitem"><a id="configure_menu" href="/nodes#configure" <%= @configuremenuclass %>>CONFIGURE</a></td>
-		  <% end %>
+		  <td class="menuitem first">{{#linkTo "Nodes" }}NODES{{/linkTo}}</td>
+		  <td class="menuitem">{{#linkTo "Resources" }}RESOURCES{{/linkTo}}</td>
+		  <td class="menuitem">{{#linkTo "Fence Devices" }}FENCE DEVICES{{/linkTo}}</td>
+		  <td class="menuitem">{{#linkTo "Configuration" }}CONFIGURE{{/linkTo}}</td>
 		</tr>
 	      <% else %>
 		<tr height="37px">
@@ -125,8 +116,9 @@
   </div>
   <div id="push">
   </div>
-    </script>
 </div>
+    </script>
+
 <!--  <div id="footer">
     <div id="copyright">&copy 2012</div>&nbsp;<a href="http://www.redhat.com">Red Hat, Inc.</a>  <a href="http://access.redhat.com/">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Red Hat Customer Portal</a>
     <div id="help"><a href="#">Help</a></div>
@@ -142,10 +134,12 @@
 </table>
 </div>
 </body>
-<% if @load_data %>
   <script src="/js/nodes-ember.js"></script>
-<% end %>
   <script type="text/javascript">
+    Ember.debug("List checkboxes to stop pagination");
+    $(".node_list_check").each(function(i,v){
+      Ember.debug(i + "-" + v);
+    });
     $(".node_list_check").click(function(e){
 	e.stopPropagation();
     });
