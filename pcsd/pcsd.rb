@@ -136,6 +136,10 @@ post '/login' do
     if session["pre_login_path"]
       plp = session["pre_login_path"]
       session.delete("pre_login_path")
+      pp "Pre Login Path: " + plp
+      if plp == ""
+      	plp = plp + "#manage"
+      end
       redirect plp
     else
       redirect '/#manage'
