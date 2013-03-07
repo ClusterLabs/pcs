@@ -464,7 +464,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       }
 
       if (resources_checked[resource.name])
-	resource.checked = true;
+	resource.set('checked', true);
 
       if (found == false)
 	self.pushObject(resource);
@@ -642,7 +642,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       }
 
       if (nodes_checked[node.name])
-	node.checked = true;
+	node.set("checked",true);
 
       if (found == false)
 	self.pushObject(node);
