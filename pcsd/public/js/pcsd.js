@@ -644,7 +644,7 @@ function show_loading_screen() {
   $("#loading_screen").dialog({
     modal: true,
     title: "Loading",
-    height: 60,
+    height: 70,
     width: 250,
     hide: {
       effect: 'fade',
