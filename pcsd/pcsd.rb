@@ -278,12 +278,14 @@ get '/managec/:cluster/main' do
   @groups = []
   @resource_agents = get_resource_agents_avail() 
   @stonith_agents = get_stonith_agents_avail() 
-  puts "RA"
-  puts @resource_agents
-  puts "ST"
-  puts @stonith_agents
+  puts "Get Cluster Nodes"
   @nodes = get_cluster_nodes(params[:cluster])
-  @config_options = getConfigOptions2()
+  #
+#  Temporarily disable initial pull of config options since it slows down the cluster load
+#  puts "Get Config Options"
+#  @config_options = getConfigOptions2()
+  @config_options = []
+
   erb :nodes, :layout => :main
 end
 
