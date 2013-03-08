@@ -39,6 +39,10 @@
       <% end %>
 
       <input type="hidden" name="resource_type" value="<%=@resource.name%>">
+      <% puts "RESOURCE INFO" %>
+      <% puts @resource %>
+      <% puts @resource.name %>
+      <% puts @resource.required_options %>
       <% @resource.required_options.each { |name, desc|  %>
 	<tr>
 	  <td class="reg">
@@ -50,14 +54,13 @@
 	</tr>
       <% } %>
       <tr>
-	<td class="reg" onclick="show_hide_constraints(this)">
-	  <span class="rightarrow sprites"></span><span class="downarrow sprites" style="display: none;"></span></td>
-	<td class="reg">
-	  Optional Arguments
+	<td class="reg" onclick="show_hide_constraints(this)" colspan=2>
+	  <span class="rightarrow sprites" style="display: none;"></span><span class="downarrow sprites"></span>
+	  <div class="bold">Optional Arguments:</div>
 	</td>
       </tr>
       <% @resource.optional_options.each { |name, desc|  %>
-	<tr style="display:none;">
+	<tr>
 	  <td class="reg">
 	    <%= name %>
 	  </td>

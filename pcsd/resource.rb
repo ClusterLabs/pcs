@@ -78,7 +78,13 @@ def getResourceOptions(resource_id)
   resource_options = `#{PCS} resource show #{resource_id}`
   resource_options.each_line { |line|
     keyval = line.strip.split(/: /,2)
-    ret[keyval[0]] = keyval[1]
+    if keyval[0] == "Attributes" then
+      options = keyval[1].split(/ /)
+      options.each {|opt|
+      	kv = opt.split(/=/)
+      	ret[kv[0]] = kv[1]
+      }
+    end
   }
   return ret
 end
@@ -272,8 +278,6 @@ class ResourceAgent
   attr_accessor :name, :resource_class, :required_options, :optional_options
   def initialize(name=nil, required_options={}, optional_options={}, resource_class=nil)
     @name = name
-    @required_options = {}
-    @optional_options = {}
     @required_options = required_options
     @optional_options = optional_options
     @resource_class = nil
