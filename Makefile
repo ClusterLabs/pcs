@@ -9,11 +9,12 @@ install:
 	python setup.py install --prefix ${DESTDIR}${PREFIX}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	chmod 755 ${DESTDIR}${PYTHON_SITELIB}/pcs/pcs.py
-	ln -s ${PYTHON_SITELIB}/pcs/pcs.py ${DESTDIR}${PREFIX}/sbin/pcs
+	ln -fs ${PYTHON_SITELIB}/pcs/pcs.py ${DESTDIR}${PREFIX}/sbin/pcs
 	make install_pcsd
 
 
 install_pcsd:
+	make -C pcsd build_gems
 	mkdir -p ${DESTDIR}${PREFIX}/share/
 	cp -r pcsd ${DESTDIR}${PREFIX}/share/pcsd
 	install -d ${DESTDIR}/usr/lib/systemd/system/
