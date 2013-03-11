@@ -25,7 +25,7 @@ install_pcsd:
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/sbin/pcs
-	rm -f ${DESTDIR}${PYTHON_SITELIB}/pcs*
+	rm -rf ${DESTDIR}${PYTHON_SITELIB}/pcs
 	rm -rf ${DESTDIR}${PREFIX}/share/pcsd
 	rm -f ${DESTDIR}/usr/lib/systemd/system/pcsd.service
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
