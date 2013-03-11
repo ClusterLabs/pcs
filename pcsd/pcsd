@@ -31,9 +31,9 @@ lockfile=/var/lock/subsys/$prog
 start() {
     [ -x $exec ] || exit 5
     echo -n $"Starting $prog: "
-    export GEM_HOME=/usr/local/pcsd/gemhome
+    export GEM_HOME=/usr/share/pcsd/gemhome
     cd /var/lib/pcsd
-    daemon $exec -I/usr/local/pcsd /usr/local/pcsd/ssl.rb
+    daemon $exec -I/usr/share/pcsd /usr/share/pcsd/ssl.rb
     # if not running, start it up here, usually something like "daemon $exec"
     retval=$?
     echo

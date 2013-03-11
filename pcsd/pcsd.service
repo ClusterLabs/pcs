@@ -3,7 +3,7 @@ Description=PCS GUI
 
 [Service]
 WorkingDirectory=/var/lib/pcsd
-ExecStart=/usr/local/pcsd/pcsd start
+ExecStart=/usr/share/pcsd/pcsd start
 Type=simple
 
 [Install]
