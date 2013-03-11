@@ -15,8 +15,8 @@ install:
 
 install_pcsd:
 	make -C pcsd build_gems
-	mkdir -p ${DESTDIR}${PREFIX}/share/
-	cp -r pcsd ${DESTDIR}${PREFIX}/share/pcsd
+	mkdir -p ${DESTDIR}${PREFIX}/lib/
+	cp -r pcsd ${DESTDIR}${PREFIX}/lib/pcsd
 	install -d ${DESTDIR}/usr/lib/systemd/system/
 	install  pcsd/pcsd.service ${DESTDIR}/usr/lib/systemd/system/
 	install -d ${DESTDIR}/etc/pam.d
@@ -27,7 +27,7 @@ install_pcsd:
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/sbin/pcs
 	rm -rf ${DESTDIR}${PYTHON_SITELIB}/pcs
-	rm -rf ${DESTDIR}${PREFIX}/share/pcsd
+	rm -rf ${DESTDIR}${PREFIX}/lib/pcsd
 	rm -f ${DESTDIR}/usr/lib/systemd/system/pcsd.service
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
 	rm -rf ${DESTDIR}/var/lib/pcsd
