@@ -1173,10 +1173,10 @@ def resource_manage(argv, set_managed):
         sys.exit(1)
 
     for resource in argv:
-        if not utils.does_exist("//primitive[@id='"+resource+"']"):
+        if not utils.does_exist("(//primitive|//group)[@id='"+resource+"']"):
             print "Error: %s doesn't exist." % resource
             sys.exit(1)
-        exists =  utils.does_exist("//primitive[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']")
+        exists = utils.does_exist("(//primitive|//group)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']")
         if set_managed and not exists:
             print "Error: %s is already managed" % resource
             sys.exit(1)
@@ -1191,7 +1191,7 @@ def resource_manage(argv, set_managed):
                 print "Error attempting to unmanage resource: %s" % output
                 sys.exit(1)
         else:
-            xpath = "//primitive[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
+            xpath = "(//primitive|//group)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
             my_xml = utils.get_cib_xpath(xpath)
             utils.remove_from_cib(my_xml)
 

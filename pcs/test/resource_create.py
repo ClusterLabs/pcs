@@ -311,6 +311,54 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "Cluster Name: test99\nCorosync Nodes:\n rh7-1 rh7-2 \nPacemaker Nodes:\n \n\nResources: \n Resource: ClusterIP6 (type=IPaddr2 class=ocf provider=heartbeat)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)\n Group: TestGroup1\n  Resource: ClusterIP (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)\n Group: TestGroup2\n  Resource: ClusterIP2 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)\n  Resource: ClusterIP3 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)\n Clone: ClusterIP4-clone\n  Resource: ClusterIP4 (type=IPaddr2 class=ocf provider=heartbeat)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)\n\nLocation Constraints:\nOrdering Constraints:\nColocation Constraints:\n\nCluster Properties:\n", [output]
 
+    def testResourceManage(self):
+        output, returnVal = pcs(temp_cib, "resource create D0 Dummy")
+        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource create D1 Dummy")
+        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource create D2 Dummy")
+        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource group add DGroup D0")
+        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource unmanage D1")
+        print output
+        assert returnVal == 0
+        assert output == ""
+        output, returnVal = pcs(temp_cib, "resource unmanage D1")
+        assert returnVal == 1
+        assert output == "Error: D1 is already unmanaged\n",[output]
+        output, returnVal = pcs(temp_cib, "resource manage D2")
+        assert returnVal == 1
+        assert output == "Error: D2 is already managed\n",[output]
+        output, returnVal = pcs(temp_cib, "resource manage D1")
+        assert returnVal == 0
+        assert output == "",[output]
+        output, returnVal = pcs(temp_cib, "resource unmanage D1")
+        assert returnVal == 0
+        assert output == ""
+        output, returnVal = pcs(temp_cib, "resource show D1")
+        assert returnVal == 0
+        assert output == ' Resource: D1 (type=Dummy class=ocf provider=heartbeat)\n  Meta Attrs: is-managed=false \n',[output]
+        output, returnVal = pcs(temp_cib, "resource manage noexist")
+        assert returnVal == 1
+        assert output == "Error: noexist doesn't exist.\n",[output]
+        output, returnVal = pcs(temp_cib, "resource manage DGroup")
+        assert returnVal == 1
+        assert output == 'Error: DGroup is already managed\n',[output]
+        output, returnVal = pcs(temp_cib, "resource unmanage DGroup")
+        assert returnVal == 0
+        assert output == '',[output]
+        output, returnVal = pcs(temp_cib, "resource show DGroup")
+        assert returnVal == 0
+        assert output == ' Group: DGroup\n  Meta Attrs: is-managed=false \n  Resource: D0 (type=Dummy class=ocf provider=heartbeat)\n',[output]
+        output, returnVal = pcs(temp_cib, "resource manage DGroup")
+        assert returnVal == 0
+        assert output == '',[output]
+        output, returnVal = pcs(temp_cib, "resource show DGroup")
+        assert returnVal == 0
+        assert output == ' Group: DGroup\n  Resource: D0 (type=Dummy class=ocf provider=heartbeat)\n',[output]
+
+
     def testMetaAttrs(self):
         output, returnVal = pcs(temp_cib, "resource create D0 Dummy test=testA test2=test2a op monitor interval=30 meta test5=test5a test6=test6a")
         assert returnVal == 0
