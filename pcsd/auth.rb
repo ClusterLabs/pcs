@@ -15,15 +15,23 @@ class PCSAuth
     if generate_token
       token = SecureRandom.uuid
       begin
-	json = File.read($user_pass_file)
+      	password_file = File.open($user_pass_file, File::RDWR|File::CREAT)
+	password_file.flock(File::LOCK_EX)
+	json = password_file.read()
+	puts json
 	users = JSON.parse(json)
-      rescue
+      rescue Exception => ex
+	puts ex.message
+	puts ex.backtrace.join("\n")
+	print json
+	puts "Empty pcs_users.conf file, creating new file"
 	users = []
       end
       users << {"username" => username, "token" => token, "client" => request.ip, "creation_date" => Time.now}
-      File.open($user_pass_file, "w") do |f|
-	f.write(JSON.pretty_generate(users))
-      end
+      password_file.truncate(0)
+      password_file.rewind
+      password_file.write(JSON.pretty_generate(users))
+      password_file.close()
       return token
     end
     return true
