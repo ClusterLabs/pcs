@@ -21,6 +21,11 @@ def checkStatus(node):
     out = sendHTTPRequest(node, 'remote/status', None, False)
     return out
 
+# Check and see if we're authorized (faster than a status check)
+def checkAuthorization(node):
+    out = sendHTTPRequest(node, 'remote/check_auth', None, False)
+    return out
+
 def updateToken(node,username,password):
     data = urllib.urlencode({'username':username, 'password':password})
     out = sendHTTPRequest(node, 'remote/auth', data, False)

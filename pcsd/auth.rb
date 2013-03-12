@@ -21,9 +21,6 @@ class PCSAuth
 	puts json
 	users = JSON.parse(json)
       rescue Exception => ex
-	puts ex.message
-	puts ex.backtrace.join("\n")
-	print json
 	puts "Empty pcs_users.conf file, creating new file"
 	users = []
       end

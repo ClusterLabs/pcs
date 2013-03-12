@@ -13,6 +13,8 @@ def remote(params,request)
     return status_all(params)
   when "auth"
     return auth(params,request)
+  when "check_auth"
+    return check_auth(params, request)
   when "resource_status"
     return resource_status(params)
   when "create_cluster"
@@ -291,6 +293,11 @@ end
 
 def auth(params,request)
   return PCSAuth.validUser(params['username'],params['password'], true, request)
+end
+
+# If we get here, we're already authorized
+def check_auth(params, request)
+  return true
 end
 
 def resource_status(params)

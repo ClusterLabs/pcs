@@ -134,7 +134,7 @@ def auth_nodes(nodes):
         password = None
 
     for node in nodes:
-        status = utils.checkStatus(node)
+        status = utils.checkAuthorization(node)
         if status[0] == 0:
             print node + ": Already authorized"
         elif status[0] == 3:
@@ -160,7 +160,7 @@ def cluster_gui_status(argv):
 # Check and see if pcsd is running on the nodes listed
 def check_nodes(nodes):
     for node in nodes:
-        status = utils.checkStatus(node)
+        status = utils.checkAuthorization(node)
         if status[0] == 0:
             print node + ": Online"
         elif status[0] == 3:
@@ -403,7 +403,7 @@ def cluster_node(argv):
         sys.exit(1)
 
     node = argv[1]
-    status,output = utils.checkStatus(node)
+    status,output = utils.checkAuthorization(node)
     if status == 2:
         print "Error: pcsd is not running on %s" % node
         sys.exit(1)
