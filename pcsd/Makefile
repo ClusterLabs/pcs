@@ -5,10 +5,10 @@ tarball:
 	tar -C .. -czvf dist/pcsd.tar.gz --exclude ".*" --exclude .git --exclude --exclude=gemhome/*  --exclude=dist --exclude=assets --exclude=jquery-ui pcs-gui 
 
 build_gems:
-	cd gems; gem install --local -i ../gemhome ${PCSD_GEMS}
+	mkdir -p gems; cd gems; gem install --local -i ../gemhome ${PCSD_GEMS}
 
 get_gems:
-	cd gems; gem fetch ${PCSD_GEMS}
+	mkdir -p gems; cd gems; gem fetch ${PCSD_GEMS}
 
 clean_gems:
-	cd gems; rm -f ${PCSD_GEMS}
+	mkdir -p gems; cd gems; rm -f ${PCSD_GEMS}

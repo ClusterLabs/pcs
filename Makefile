@@ -1,16 +1,19 @@
 ifndef PYTHON_SITELIB
-  PYTHON_SITELIB=`python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"`
+  PYTHON_SITELIB=$(shell python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
 endif
+ifeq ($(PYTHON_SITELIB), /usr/lib/python2.6/dist-packages)
+  EXTRA_SETUP_OPTS="--install-layout=deb"
+endif
+
 ifndef PREFIX
   PREFIX=/usr
 endif
 
 install:
-	python setup.py install --prefix ${DESTDIR}${PREFIX}
+	python setup.py install --prefix ${DESTDIR}${PREFIX} ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	chmod 755 ${DESTDIR}${PYTHON_SITELIB}/pcs/pcs.py
 	ln -fs ${PYTHON_SITELIB}/pcs/pcs.py ${DESTDIR}${PREFIX}/sbin/pcs
-	make install_pcsd
 
 
 install_pcsd:
