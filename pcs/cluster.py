@@ -460,7 +460,10 @@ def cluster_get_corosync_conf(argv):
 
     node = argv[0]
     retval, output = utils.getCorosyncConfig(node)
-    print output
+    if retval != 0:
+        utils.err(output)
+    else:
+        print output
 
 def print_config():
     print "Cluster Name: %s" % utils.getClusterName()
