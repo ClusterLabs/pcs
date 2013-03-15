@@ -51,6 +51,7 @@ configure do
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
   COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
+  CIBADMIN = "/usr/sbin/cibadmin"
   SETTINGS_FILE = "pcs_settings.conf"
   $user_pass_file = "pcs_users.conf"
 
@@ -281,11 +282,7 @@ get '/managec/:cluster/main' do
   @stonith_agents = get_stonith_agents_avail() 
   puts "Get Cluster Nodes"
   @nodes = get_cluster_nodes(params[:cluster])
-  #
-#  Temporarily disable initial pull of config options since it slows down the cluster load
-#  puts "Get Config Options"
-#  @config_options = getConfigOptions2()
-  @config_options = []
+  @config_options = getConfigOptions2()
 
   erb :nodes, :layout => :main
 end
@@ -455,6 +452,7 @@ def getConfigOptions2()
   allconfigoptions = []
   config_options.each { |i,k| k.each { |j| allconfigoptions << j } }
   ConfigOption.getDefaultValues(allconfigoptions)
+  ConfigOption.loadValues(allconfigoptions)
   return config_options
 end
 
@@ -515,7 +513,7 @@ end
 
 
 class ConfigOption
-  attr_accessor :name, :configname, :type, :size, :units, :options, :default
+  attr_accessor :name, :configname, :type, :size, :units, :options, :default, :value
   def initialize(name, configname, type="str", size = 10, units = "", options = [])
     @name = name
     @configname = configname
@@ -525,22 +523,27 @@ class ConfigOption
     @options = options
   end
 
-  def value
-    @@cache_value ||= {}
-    @@cache_value = {}
-    if @@cache_value[configname]  == nil
-      resource_options = `#{CRM_ATTRIBUTE} --get-value -n #{configname} 2>&1`
-      resource_value = resource_options.sub(/.*value=/m,"").strip
-      if resource_value == "(null)"
-	@@cache_value[configname] = default
-      else
-	@@cache_value[configname] = resource_value
-      end
-    else
-      print "#{configname} is defined: #{@@cache_value[configname]}...\n"
+  def self.loadValues(cos)
+    cib, stderr, retval = run_cmd(CIBADMIN, "-Q")
+    if retval != 0
+      puts "Error: unable to load cib"
+      puts cib.join("")
+      puts stderr.join("")
+      return
     end
 
-    return @@cache_value[configname]
+    doc = REXML::Document.new(cib.join(""))
+
+    cos.each {|co|
+      prop_found = false
+      doc.elements.each("cib/configuration/crm_config/cluster_property_set/nvpair[@name='#{co.configname}']") { |e|
+      	co.value = e.attributes["value"]
+      	prop_found = true
+      }
+      if prop_found == false
+      	co.value = co.default
+      end
+    }
   end
 
   def self.getDefaultValues(cos)
