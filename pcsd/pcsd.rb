@@ -49,6 +49,7 @@ configure do
     PCS = "../pcs/pcs" 
   end
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
+  COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   SETTINGS_FILE = "pcs_settings.conf"
   $user_pass_file = "pcs_users.conf"

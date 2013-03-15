@@ -610,6 +610,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  node.set("running_resources", $.unique(resources_on_nodes[node_id].sort().reverse()));
 	  node.set("location_constraints", lc_on_nodes[node_id].sort());
 	  node.set("uptime", data[node_id]["uptime"]);
+	  node.set("node_id", data[node_id]["node_id"]);
 	}
       });
 
@@ -626,7 +627,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  cur_node: false,
 	  running_resources: $.unique(resources_on_nodes[node_id].sort().reverse()),
 	  location_constraints: lc_on_nodes[node_id].sort(),
-	  uptime: data[node_id]["uptime"]
+	  uptime: data[node_id]["uptime"],
+	  node_id: data[node_id]["node_id"]
 	});
       }
       var pathname = window.location.pathname.split('/');

@@ -235,7 +235,7 @@ def node_status(params)
       in_pacemaker ? pacemaker_offline.concat(nodes.split(/ /)) : corosync_offline.concat(nodes.split(/ /))
     end
   }
-
+  node_id = get_local_node_id()
   resource_list, group_list = getResourcesGroups(false,true)
   stonith_resource_list, stonith_group_list = getResourcesGroups(true,true)
   stonith_resource_list.each {|sr| sr.stonith = true}
@@ -258,7 +258,7 @@ def node_status(params)
  "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
  "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
  "cluster_name" => @@cluster_name, "resources" => out_rl, "groups" => group_list,
- "constraints" => constraints, "cluster_settings" => cluster_settings}
+ "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id}
   ret = JSON.generate(status)
   getAllConstraints()
   return ret
@@ -581,4 +581,13 @@ def update_cluster_settings(params)
     run_cmd(PCS, "property", "set", name + "=" + val)
   }
   return [200, "Update Successful"]
+end
+
+def get_local_node_id
+  out, errout, retval = run_cmd(COROSYNC_CMAPCTL, "-g", "runtime.votequorum.this_node_id")
+  if retval != 0
+    return "Error"
+  else
+    return out[0].split(/ = /)[1].strip()
+  end
 end
