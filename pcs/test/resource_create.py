@@ -65,6 +65,16 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0, 'Unable to list resources'
         assert output == "NO resources configured\n", "Bad output"
 
+
+    def testDescribe(self):
+        output, returnVal = pcs(temp_cib, "resource describe bad_resource") 
+        assert returnVal == 1
+        assert output == "Error: Unable to find resource: bad_resource\n"
+
+        output, returnVal = pcs(temp_cib, "resource describe Dummy")
+        assert returnVal == 0
+        assert output == "Resource options for: Dummy\n  state: Location to store the resource state in.\n  fake: Fake attribute that can be changed to cause a reload\n",[output]
+
     def testAddResources(self):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
@@ -74,7 +84,7 @@ class ResourceAdditionTest(unittest.TestCase):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
-        assert output.split('\n')[0] == "ERROR: Unable to create resource/fence device"
+        assert output.split('\n')[0] == "Error: Unable to create resource/fence device"
     
         line = "resource create ClusterIP2 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
@@ -321,7 +331,6 @@ class ResourceAdditionTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "resource group add DGroup D0")
         assert returnVal == 0
         output, returnVal = pcs(temp_cib, "resource unmanage D1")
-        print output
         assert returnVal == 0
         assert output == ""
         output, returnVal = pcs(temp_cib, "resource unmanage D1")

@@ -163,12 +163,10 @@ def colocation_add(argv):
     resource2 = argv.pop(0)
 
     if not utils.is_valid_constraint_resource(resource1):
-        print "Error: Resource '" + resource1 + "' does not exist"
-        sys.exit(1)
+        utils.err("Resource '" + resource1 + "' does not exist")
 
     if not utils.is_valid_constraint_resource(resource2):
-        print "Error: Resource '" + resource2 + "' does not exist"
-        sys.exit(1)
+        utils.err("Resource '" + resource2 + "' does not exist")
 
     score,nv_pairs = parse_score_options(argv)
 
@@ -299,12 +297,10 @@ def order_add(argv,returnElementOnly=False):
     resource2 = argv.pop(0)
 
     if not utils.is_valid_constraint_resource(resource1):
-        print "Error: Resource '" + resource1 + "' does not exist"
-        sys.exit(1)
+        utils.err("Resource '" + resource1 + "' does not exist")
 
     if not utils.is_valid_constraint_resource(resource2):
-        print "Error: Resource '" + resource2 + "' does not exist"
-        sys.exit(1)
+        utils.err("Resource '" + resource2 + "' does not exist")
 
     sym = "true" if (len(argv) == 0 or argv[0] != "nonsymmetrical") else "false"
 
@@ -338,8 +334,7 @@ def order_add(argv,returnElementOnly=False):
 
     order_id = "order-" + resource1 + "-" + resource2 + "-" + id_suffix
     if utils.does_id_exist(utils.get_cib_dom(), order_id):
-        print "Error: Unable to create constraint, similar constraint already exists: %s" % order_id
-        sys.exit(1)
+        utils.err("Unable to create constraint, similar constraint already exists: %s" % order_id)
 
     (dom,constraintsElement) = getCurrentConstraints()
     element = dom.createElement("rsc_order")
@@ -546,8 +541,7 @@ def location_add(argv,rm=False):
         score = argv.pop(0)
         # If resource doesn't exist, we error out
         if not utils.is_valid_constraint_resource(resource_name):
-            print "Error: Resource " + resource_name + "' does not exist"
-            sys.exit(1)
+            utils.err("Resource " + resource_name + "' does not exist")
 
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
@@ -565,8 +559,7 @@ def location_add(argv,rm=False):
         constraintsElement.removeChild(etr)
 
     if (rm == True and len(elementsToRemove) == 0):
-        print "Resource location id: " + constraint_id + " not found."
-        sys.exit(1)
+        utils.err("resource location id: " + constraint_id + " not found.")
 
     if (not rm):
         element = dom.createElement("rsc_location")
@@ -587,8 +580,7 @@ def getCurrentConstraints():
     current_constraints_xml = utils.get_cib_xpath('//constraints')
 
     if current_constraints_xml == "":
-        print "Error: unable to process cib"
-        sys.exit(1)
+        utils.err("unable to process cib")
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
     dom = parseString(current_constraints_xml)
@@ -636,7 +628,7 @@ def constraint_rm(argv,returnStatus=False, constraintsElement=None):
             if output != "":
                 print output
     else:
-        print "Error: Unable to find constraint - '%s'" % c_id
+        print >> sys.stderr, "Error: Unable to find constraint - '%s'" % c_id
         if not returnStatus:
             sys.exit(1)
 

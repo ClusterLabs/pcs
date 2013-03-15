@@ -212,13 +212,11 @@ def resource_list_options(resource):
                 desc = format_desc(indent, desc)
                 print "  " + name + ": " + desc
         except xml.parsers.expat.ExpatError:
-            print "Unable to parse xml for: %s" % (resource)
-            sys.exit(1)
+            utils.err ("Unable to parse xml for: %s" % (resource))
         break
 
     if not found_resource:
-        print "Unable to find resource: %s" % resource
-        sys.exit(1)
+        utils.err ("Unable to find resource: %s" % resource)
 
 # Return the string formatted with a line length of 79 and indented
 def format_desc(indent, desc):
@@ -244,8 +242,7 @@ def format_desc(indent, desc):
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
     if not utils.is_valid_resource(ra_type) and not ("--force" in utils.pcs_options):
-        print "Error: Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type
-        sys.exit(1)
+        utils.err ("Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type)
 
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
     primitive_values = get_full_ra_type(ra_type)
@@ -257,9 +254,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
     output,retval = utils.run(args)
     if retval != 0:
-        print "ERROR: Unable to create resource/fence device"
-        print output.split('\n')[0]
-        sys.exit(1)
+        utils.err ("Unable to create resource/fence device\n" + output.split('\n')[0])
 
     if "--clone" in utils.pcs_options:
         clone_opts = []
@@ -274,8 +269,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
 
 def resource_move(argv,unmove=False):
     if len(argv) == 0:
-        print "Error: must specify resource to move/unmove"
-        sys.exit(1)
+        utils.err ("must specify resource to move/unmove")
 
     resource_id = argv.pop(0)
 
@@ -292,9 +286,7 @@ def resource_move(argv,unmove=False):
         else:
             output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node])
     if ret != 0:
-        print "Error moving/unmoving resource"
-        print output
-        sys.exit(1)
+        utils.err ("error moving/unmoving resource\n" + output)
 
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)
@@ -389,8 +381,7 @@ def resource_update(res_id,args):
         if master:
             return resource_master_create([res_id] + args, True)
 
-        print "Error: Unable to find resource: %s" % res_id
-        sys.exit(1)
+        utils.err ("Unable to find resource: %s" % res_id)
 
     instance_attributes = resource.getElementsByTagName("instance_attributes")
     if len(instance_attributes) == 0:
@@ -492,8 +483,7 @@ def resource_operation_add(res_id, argv):
             break
 
     if not resource_found:
-        print "Unable to find resource: %s" % res_id
-        sys.exit(1)
+        utils.err ("Unable to find resource: %s" % res_id)
 
     op_properties = convert_args_to_tuples(argv)
     op_properties.sort(key=lambda a:a[0])
@@ -517,8 +507,7 @@ def resource_operation_add(res_id, argv):
         operations = operations[0]
 
     if utils.operation_exists(operations,op):
-        print "Error: identical operation already exists for %s" % res_id
-        sys.exit(1)
+        utils.err ("identical operation already exists for %s" % res_id)
 
     operations.appendChild(op)
     utils.replace_cib_configuration(dom)
@@ -540,8 +529,7 @@ def resource_operation_remove(res_id, argv):
             break
 
     if not resource_found:
-        print "Unable to find resource: %s" % res_id
-        sys.exit(1)
+        utils.err("Unable to find resource: %s" % res_id)
 
     op_properties = convert_args_to_tuples(argv)
     op_properties.append(('name', op_name))
@@ -562,8 +550,7 @@ def resource_operation_remove(res_id, argv):
             break
 
     if not found_match:
-        print "Error: Unable to find operation matching: %s" % original_argv
-        sys.exit(1)
+        utils.err ("Unable to find operation matching: %s" % original_argv)
 
     utils.replace_cib_configuration(dom)
 
@@ -580,8 +567,7 @@ def resource_meta(res_id, argv):
             break
 
     if not element_found:
-        print "Unable to find a resource/clone/master/group: %s" % res_id
-        sys.exit(1)
+        utils.err("unable to find a resource/clone/master/group: %s" % res_id)
 
     # Make sure we only check direct children for meta_attributes
     meta_attributes = []
@@ -626,11 +612,9 @@ def convert_args_to_operations(op_values_list, ra_id):
         if len(op_values) == 0:
             return []
         if '=' in op_values[0]:
-            print "Error: When using 'op' you must specify an operation name after 'op'"
-            sys.exit(1)
+            utils.err("When using 'op' you must specify an operation name after 'op'")
         if len(op_values) < 2:
-            print "Error: When using 'op' you must specify an operation name and at least one option"
-            sys.exit(1)
+            utils.err("When using 'op' you must specify an operation name and at least one option")
         op_name = op_values.pop(0)
         tuples = convert_args_to_tuples(op_values)
         op_attrs = []
@@ -749,21 +733,18 @@ def resource_clone_create(argv, update = False):
             break
 
     if element == None:
-        print "Error: unable to find group or resource: %s" % name
-        sys.exit(1)
+        utils.err("unable to find group or resource: %s" % name)
 
     if update == True:
         if element.parentNode.tagName != "clone":
-            print "Error: %s is not currently a clone" % name
-            sys.exit(1)
+            utils.err("%s is not currently a clone" % name)
         clone = element.parentNode
         for ma in clone.getElementsByTagName("meta_attributes"):
             clone.removeChild(ma)
     else:
         for c in re.getElementsByTagName("clone"):
             if c.getAttribute("id") == name + "-clone":
-                print "Error: clone already exists for: %s" % name
-                sys.exit(1)
+                utils.err("clone already exists for: %s" % name)
         clone = dom.createElement("clone")
         clone.setAttribute("id",name + "-clone")
         clone.appendChild(element)
@@ -784,8 +765,7 @@ def resource_clone_create(argv, update = False):
     output, retval = utils.run(args)
 
     if retval != 0:
-        print output
-        sys.exit(1)
+        utils.err("unable to create clone\n" + outptu)
 
 def resource_clone_remove(argv):
     if len(argv) != 1:
@@ -801,24 +781,21 @@ def resource_clone_remove(argv):
         if res.getAttribute("id") == name:
             clone = res.parentNode
             if clone.tagName != "clone":
-                print "Error: %s is not in a clone" % name
-                sys.exit(1)
+                utils.err("%s is not in a clone" % name)
             clone.parentNode.appendChild(res)
             clone.parentNode.removeChild(clone)
             found = True
             break
 
     if found == False:
-        print "Error: could not find resource or group: %s" % name
-        sys.exit(1)
+        utils.err("could not find resource or group: %s" % name)
 
     xml_resource_string = re.toxml()
     args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
     output, retval = utils.run(args)
 
     if retval != 0:
-        print output
-        sys.exit(1)
+        utils.err("unable to remove clone\n" + output)
     
 def resource_master(argv):
     if len(argv) < 2:
@@ -843,13 +820,11 @@ def resource_master_create(argv, update=False):
                 master_found = True
                 break
         if not master_found:
-            print "Error: Unable to find multi-state resource with id %s" % master_id
-            sys.exit(1)
+            utils.err("Unable to find multi-state resource with id %s" % master_id)
     else:
         rg_id = argv.pop(0)
         if utils.does_id_exist(dom, master_id):
-            print "Error: %s already exists in the cib" % master_id
-            sys.exit(1)
+            utils.err("%s already exists in the cib" % master_id)
         resources = dom.getElementsByTagName("resources")[0]
         rg_found = False
         for resource in (resources.getElementsByTagName("primitive") +
@@ -858,8 +833,7 @@ def resource_master_create(argv, update=False):
                 rg_found = True
                 break
         if not rg_found:
-            print "Error: Unable to find resource or group with id %s" % rg_id
-            sys.exit(1)
+            utils.err("Unable to find resource or group with id %s" % rg_id)
         master_element = dom.createElement("master")
         master_element.setAttribute("id", master_id)
         resource.parentNode.removeChild(resource)
@@ -920,8 +894,7 @@ def resource_master_remove(argv):
             break
 
     if not master_found:
-            print "Error: Unable to find multi-state resource with id %s" % master_id
-            sys.exit(1)
+            utils.err("Unable to find multi-state resource with id %s" % master_id)
 
     constraints_element = dom.getElementsByTagName("constraints")
     if len(constraints_element) > 0:
@@ -946,8 +919,7 @@ def resource_remove(resource_id, output = True):
         if utils.does_exist('//resources/master[@id="'+resource_id+'"]'):
             return resource_master_remove([resource_id])
 
-        print "Error: Resource does not exist."
-        sys.exit(1)
+        utils.err("Resource does not exist.")
 
     if (group != ""):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
@@ -968,9 +940,7 @@ def resource_remove(resource_id, output = True):
             print "Deleting Resource - " + resource_id
         output,retVal = utils.run(args)
         if retVal != 0:
-            print "Unable to remove resource: %s, it may still be referenced in constraints." % resource_id
-            sys.exit(1)
-            return False
+            utils.err("unable to remove resource: %s, it may still be referenced in constraints." % resource_id)
     else:
         args = ["cibadmin", "-o", "resources", "-D", "--xml-text", group]
         if output == True:
@@ -978,8 +948,7 @@ def resource_remove(resource_id, output = True):
         cmdoutput,retVal = utils.run(args)
         if retVal != 0:
             if output == True:
-                print "ERROR: Unable to remove resource '%s' (do constraints exist?)" % (resource_id)
-                sys.exit(1)
+                utils.err("Unable to remove resource '%s' (do constraints exist?)" % (resource_id))
             return False
     return True
 
@@ -996,8 +965,7 @@ def resource_group_rm(group_name, resource_ids):
             break
 
     if not group_match:
-        print "ERROR: Group '%s' does not exist" % group_name
-        sys.exit(1)
+        utils.err("Group '%s' does not exist" % group_name)
 
     resources_to_move = []
     for resource_id in resource_ids:
@@ -1008,8 +976,7 @@ def resource_group_rm(group_name, resource_ids):
                 resources_to_move.append(resource)
                 break
         if not found_resource:
-            print "ERROR Resource '%s' does not exist in group '%s'" % (resource_id, group_name)
-            sys.exit(1)
+            utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
 
     for resource in resources_to_move:
         parent = resource.parentNode
@@ -1032,8 +999,7 @@ def resource_group_add(group_name, resource_ids):
 
     for resource in top_element.getElementsByTagName("primitive"):
         if resource.getAttribute("id") == group_name:
-            print "Error: %s is already a resource" % group_name
-            sys.exit(1)
+            utils.err("Error: %s is already a resource" % group_name)
 
     for group in top_element.getElementsByTagName("group"):
         if group.getAttribute("id") == group_name:
@@ -1084,8 +1050,7 @@ def resource_group_add(group_name, resource_ids):
         if retval != 0:
             print output,
     else:
-        print "Error: No resources to add."
-        sys.exit(1)
+        utils.err("No resources to add.")
 
 def resource_group_list(argv):
     group_xpath = "//group"
@@ -1137,14 +1102,12 @@ def resource_show(argv):
                 resource_found = True
                 break
         if not resource_found:
-            print "Error: unable to find resource '"+arg+"'"
-            sys.exit(1)
+            utils.err("unable to find resource '"+arg+"'")
         resource_found = False
 
 def resource_stop(argv):
     if len(argv) < 1:
-        print "Error: You must specify a resource to stop"
-        sys.exit(1)
+        utils.err("You must specify a resource to stop")
 
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
@@ -1156,8 +1119,7 @@ def resource_stop(argv):
 
 def resource_start(argv):
     if len(argv) < 1:
-        print "Error: You must specify a resource to start"
-        sys.exit(1)
+        utils.err("You must specify a resource to start")
 
     args = ["crm_resource", "-r", argv[0], "-m", "-d", "target-role"]
     output, retval = utils.run(args)
@@ -1174,22 +1136,18 @@ def resource_manage(argv, set_managed):
 
     for resource in argv:
         if not utils.does_exist("(//primitive|//group)[@id='"+resource+"']"):
-            print "Error: %s doesn't exist." % resource
-            sys.exit(1)
+            utils.err("%s doesn't exist." % resource)
         exists = utils.does_exist("(//primitive|//group)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']")
         if set_managed and not exists:
-            print "Error: %s is already managed" % resource
-            sys.exit(1)
+            utils.err("%s is already managed" % resource)
         elif not set_managed and exists:
-            print "Error: %s is already unmanaged" % resource
-            sys.exit(1)
+            utils.err("%s is already unmanaged" % resource)
 
     for resource in argv:
         if not set_managed:
             (output, retval) =  utils.set_unmanaged(resource)
             if retval != 0:
-                print "Error attempting to unmanage resource: %s" % output
-                sys.exit(1)
+                utils.err("error attempting to unmanage resource: %s" % output)
         else:
             xpath = "(//primitive|//group)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
             my_xml = utils.get_cib_xpath(xpath)
@@ -1227,9 +1185,7 @@ def resource_failcount(argv):
                         ta_node, "-n", nvp.getAttribute("name"), "-t",
                         "status", "-D"])
                     if retval != 0:
-                        print "Error: Unable to remove failcounts from %s on %s" % (resource,ta_node)
-                        print output
-                        sys.exit(1)
+                        utils.err("Unable to remove failcounts from %s on %s\n" % (resource,ta_node) + output)
                     fail_counts_removed = fail_counts_removed + 1
                 else:
                     output_dict[ta_node] = " " + ta_node + ": " + nvp.getAttribute("value") + "\n"
@@ -1363,8 +1319,6 @@ def get_attrs(node, prepend_string = "", append_string = ""):
 def resource_cleanup(res_id):
     (output, retval) = utils.run(["crm_resource", "-C", "-r", res_id])
     if retval != 0:
-        print "Error: Unable to cleanup resource: %s" % res_id
-        print output
-        sys.exit(1)
+        utils.err("Unable to cleanup resource: %s" % res_id + output)
     else:
         print "Resource: %s successfully cleaned up" % res_id

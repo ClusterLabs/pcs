@@ -80,8 +80,7 @@ def stonith_show(argv):
         args = ["crm_resource","-r",arg,"-q"]
         output,retval = utils.run(args)
         if retval != 0:
-            print "Error: unable to find resource '"+arg+"'"
-            sys.exit(1)
+            utils.err("unable to find resource '"+arg+"'")
         output = preg.sub("<primitive", output)
         dom = parseString(output)
         doc = dom.documentElement
@@ -109,13 +108,13 @@ def stonith_list_available(argv):
             continue
         metadata = utils.get_stonith_metadata(fd)
         if metadata == False:
-            print "Error: no metadata for %s" % fd
+            print >> sys.stderr, "Error: no metadata for %s" % fd
             continue
         fd = fd[10:]
         try:
             dom = parseString(metadata)
         except Exception:
-            print "Error: unable to parse metadata for fence agent: %s" % (fd)
+            print >> sys.stderr, "Error: unable to parse metadata for fence agent: %s" % (fd)
             continue
         ra = dom.documentElement
         shortdesc = ra.getAttribute("shortdesc")
@@ -128,8 +127,7 @@ def stonith_list_available(argv):
 def stonith_list_options(stonith_agent):
     metadata = utils.get_stonith_metadata(utils.fence_bin + stonith_agent)
     if not metadata:
-        print "Unable to get metadata for %s" % stonith_agent
-        sys.exit(1)
+        utils.err("unable to get metadata for %s" % stonith_agent)
     print "Stonith options for: %s" % stonith_agent
     dom = parseString(metadata)
     params = dom.documentElement.getElementsByTagName("parameter")
@@ -144,32 +142,26 @@ def stonith_list_options(stonith_agent):
 
 def stonith_fence(argv):
     if len(argv) != 1:
-        print "Error: must specify one (and only one) node to fence"
-        sys.exit(1)
+        utils.err("must specify one (and only one) node to fence")
 
     node = argv.pop(0)
     args = ["stonith_admin", "-F", node]
     output, retval = utils.run(args)
 
     if retval != 0:
-        print "Error: unable to fence '%s'" % node
-        print output
-        sys.exit(1)
+        utils.err("unable to fence '%s'\n" % node + output)
     else:
         print "Node: %s fenced" % node
 
 def stonith_confirm(argv):
     if len(argv) != 1:
-        print "Error: must specify one (and only one) node to confirm fenced"
-        sys.exit(1)
+        utils.err("must specify one (and only one) node to confirm fenced")
 
     node = argv.pop(0)
     args = ["stonith_admin", "-C", node]
     output, retval = utils.run(args)
 
     if retval != 0:
-        print "Error: unable to confirm fencing of node '%s'" % node
-        print output
-        sys.exit(1)
+        utils.err("unable to confirm fencing of node '%s'\n" % node + output)
     else:
         print "Node: %s confirmed fenced" % node

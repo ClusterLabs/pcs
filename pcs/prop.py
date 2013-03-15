@@ -44,9 +44,7 @@ def list_property(argv):
 
     (output, retVal) = utils.run(["cibadmin","-Q","--scope", "crm_config"])
     if retVal != 0:
-        print "ERROR: Unable to get crm_config"
-        print output
-        exit(1)
+        utils.err("unable to get crm_config\n"+output)
     dom = parseString(output)
     de = dom.documentElement
     properties = de.getElementsByTagName("nvpair")

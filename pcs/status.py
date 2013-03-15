@@ -43,8 +43,7 @@ def full_status():
     (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):
-        print "Error running crm_mon, is pacemaker running?"
-        sys.exit(1)
+        utils.err("running crm_mon, is pacemaker running?")
 
     print output
 
@@ -96,8 +95,7 @@ def nodes_status(argv):
 
     nodes = info_dom.getElementsByTagName("nodes")
     if nodes.length == 0:
-        print "Error: No nodes section found"
-        sys.exit(1)
+        utils.err("No nodes section found")
 
     onlinenodes = []
     offlinenodes = []
@@ -136,8 +134,7 @@ def resources_status(argv):
 
     resources = info_dom.getElementsByTagName("resources")
     if resources.length == 0:
-        print "Error: No resources section found"
-        sys.exit(1)
+        utils.err("no resources section found")
 
     for resource in resources[0].getElementsByTagName("resource"):
         nodes = resource.getElementsByTagName("node")
@@ -154,8 +151,7 @@ def cluster_status(argv):
     (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):
-        print "Error running crm_mon, is pacemaker running?"
-        sys.exit(1)
+        utils.err("running crm_mon, is pacemaker running?")
 
     first_empty_line = False
     print "Cluster Status:"
@@ -171,8 +167,7 @@ def cluster_status(argv):
 def corosync_status():
     (output, retval) = utils.run(["corosync-quorumtool", "-l"])
     if retval != 0:
-        print "Error: Corosync not running"
-        sys.exit(1)
+        utils.err("corosync not running")
     else:
         print output,
 
@@ -180,6 +175,5 @@ def xml_status():
     (output, retval) = utils.run(["crm_mon", "-1", "-r", "-X"])
 
     if (retval != 0):
-        print "Error running crm_mon, is pacemaker running?"
-        sys.exit(1)
+        utils.err("running crm_mon, is pacemaker running?")
     print output

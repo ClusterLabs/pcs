@@ -112,15 +112,13 @@ def cluster_auth(argv):
 
 def cluster_token(argv):
     if len(argv) != 1:
-        print "ERROR: Must specify only one node"
-        sys.exit(1)
+        utils.err("Must specify only one node")
     node = argv[0]
     tokens = utils.readTokens()
     if node in tokens:
         print tokens[node]
     else:
-        print "ERROR: No authorization token for: %s" % (node)
-        sys.exit(1)
+        utils.err("No authorization token for: %s" % (node))
 
 def auth_nodes(nodes):
     if "-u" in utils.pcs_options:
@@ -215,14 +213,12 @@ def corosync_setup(argv,returnConfig=False):
         output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--createcluster", cluster_name])
         if retval != 0:
             print output
-            print "Error creating cluster:", cluster_name
-            sys.exit(1)
+            utils.err("error creating cluster: %s" % cluster_name)
         for node in nodes:
             output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--addnode", node])
             if retval != 0:
                 print output
-                print "Error adding node:", node
-                sys.exit(1)
+                utils.err("error adding node: %s", node)
 
     if "--start" in utils.pcs_options:
         start_cluster([])
@@ -235,8 +231,7 @@ def get_local_network():
     if network_addr:
         return network_addr.group(1)
     else:
-        print "ERROR: Unable to determine network address, is interface up?"
-        exit(1)
+        utils.err("unable to determine network address, is interface up?")
 
 def start_cluster(argv):
     if len(argv) > 0:
@@ -249,19 +244,16 @@ def start_cluster(argv):
         output, retval = utils.run(["service", "cman","start"])
         if retval != 0:
             print output
-            print "Error: unable to start cman"
-            sys.exit(1)
+            utils.err("unable to start cman")
     else:
         output, retval = utils.run(["service", "corosync","start"])
         if retval != 0:
             print output
-            print "Error: unable to start corosync"
-            sys.exit(1)
+            utils.err("unable to start corosync")
     output, retval = utils.run(["service", "pacemaker", "start"])
     if retval != 0:
         print output
-        print "Error: unable to start pacemaker"
-        sys.exit(1)
+        utils.err("unable to start pacemaker")
 
 def start_cluster_all():
     for node in utils.getNodesFromCorosyncConf():
@@ -315,20 +307,17 @@ def stop_cluster(argv):
     output, retval = utils.run(["service", "pacemaker","stop"])
     if retval != 0:
         print output,
-        print "Error: unable to stop pacemaker"
-        sys.exit(1)
+        utils.err("unable to stop pacemaker")
     if utils.is_rhel6():
         output, retval = utils.run(["service", "cman","stop"])
         if retval != 0:
             print output,
-            print "Error: unable to stop cman"
-            sys.exit(1)
+            utils.err("unable to stop cman")
     else:
         output, retval = utils.run(["service", "corosync","stop"])
         if retval != 0:
             print output,
-            print "Error: unable to stop corosync"
-            sys.exit(1)
+            utils.err("unable to stop corosync")
 
 def force_stop_cluster(argv):
     daemons = ["crmd", "pengine", "attrd", "lrmd", "stonithd", "cib", "pacemakerd", "corosync"]
@@ -342,13 +331,11 @@ def cluster_push(argv):
     if len(argv) == 2 and argv[0] == "cib":
         filename = argv[1]
     else:
-        print argv
-        #usage.cluster()
+        usage.cluster()
         sys.exit(1)
     output, retval = utils.run(["cibadmin", "--replace", "--xml-file", filename])
     if retval != 0:
-        print output,
-        sys.exit(1)
+        utils.err("unable to push cib\n" + output)
     else:
         print "CIB updated"
 
@@ -362,8 +349,7 @@ def cluster_edit(argv):
         try:
             subprocess.call([editor, tempcib.name])
         except OSError:
-            print "Error: Unable to open file with $EDITOR: " + editor
-            sys.exit(1)
+            utils.err("unable to open file with $EDITOR: " + editor)
 
         tempcib.seek(0)
         newcib = "".join(tempcib.readlines())
@@ -373,8 +359,7 @@ def cluster_edit(argv):
             cluster_push(["cib",tempcib.name])
 
     else:
-        print "Error: $EDITOR environment variable is not set"
-        sys.exit(1)
+        utils.err("$EDITOR environment variable is not set")
 
 def get_cib(argv):
     if len(argv) == 0:
@@ -386,8 +371,7 @@ def get_cib(argv):
         if output != "":
             f.write(utils.get_cib())
         else:
-            print "Error: No data in the CIB"
-            sys.exit(1)
+            utils.err("No data in the CIB")
 
 def cluster_node(argv):
     if len(argv) != 2:
@@ -405,18 +389,16 @@ def cluster_node(argv):
     node = argv[1]
     status,output = utils.checkAuthorization(node)
     if status == 2:
-        print "Error: pcsd is not running on %s" % node
-        sys.exit(1)
+        utils.err("pcsd is not running on %s" % node)
     elif status == 3:
-        print "Error: %s is not yet authenticated (try pcs cluster auth %s)" % (node, node)
-        sys.exit(1)
+        utils.err("%s is not yet authenticated (try pcs cluster auth %s)" % (node, node))
 
     if add_node == True:
         corosync_conf = None
         for my_node in utils.getNodesFromCorosyncConf():
             retval, output = utils.addLocalNode(my_node,node)
             if retval != 0:
-                print "Error: unable to add %s on %s - %s" % (node,my_node,output.strip())
+                print >> sys.stderr, "Error: unable to add %s on %s - %s" % (node,my_node,output.strip())
             else:
                 print "%s: Corosync updated" % my_node
                 corosync_conf = output
@@ -424,8 +406,7 @@ def cluster_node(argv):
             utils.setCorosyncConfig(node, corosync_conf)
             utils.startCluster(node)
         else:
-            print "Error: Unable to update any nodes"
-            sys.exit(1)
+            utils.err("Unable to update any nodes")
     else:
         nodesRemoved = False
         output, retval = utils.run(["crm_node", "--force","-R", node])
@@ -433,16 +414,15 @@ def cluster_node(argv):
         for my_node in utils.getNodesFromCorosyncConf():
             retval, output = utils.removeLocalNode(my_node,node)
             if retval != 0:
-                print "Error: unable to remove %s on %s - %s" % (node,my_node,output.strip())
+                print >> sys.stderr, "Error: unable to remove %s on %s - %s" % (node,my_node,output.strip())
             else:
                 if output[0] == 0:
                     print "%s: Corosync updated" % my_node
                     nodesRemoved = True
                 else:
-                    print "%s: Error executing command occured: %s" % (my_node, "".join(output[1]))
+                    print >> sys.stderr, "%s: Error executing command occured: %s" % (my_node, "".join(output[1]))
         if nodesRemoved == False:
-            print "Error: Unable to update any nodes"
-            sys.exit(1)
+            utils.err("Unable to update any nodes")
 
 def cluster_localnode(argv):
     if len(argv) != 2:
@@ -454,16 +434,14 @@ def cluster_localnode(argv):
         if success:
             print "%s: successfully added!" % node
         else:
-            print "Error: unable to add %s" % node
-            sys.exit(1)
+            utils.err("unable to add %s" % node)
     elif argv[0] == "remove":
         node = argv[1]
         success = utils.removeNodeFromCorosync(node)
         if success:
             print "%s: successfully removed!" % node
         else:
-            print "Error: unable to remove %s" % node
-            sys.exit(1)
+            utils.err("unable to remove %s" % node)
     else:
         usage.cluster()
         exit(1)

@@ -30,13 +30,10 @@ def updateToken(node,username,password):
     data = urllib.urlencode({'username':username, 'password':password})
     out = sendHTTPRequest(node, 'remote/auth', data, False)
     if out[0] != 0:
-        print "ERROR: Unable to connect to pcsd on %s" % node
-        print out
-        exit(1)
+        err("unable to connect to pcsd on %s\n" % node + out)
     token = out[1]
     if token == "":
-        print "ERROR: Username and/or password is incorrect"
-        exit(1)
+        err("Username and/or password is incorrect")
 
     tokens = readTokens()
     tokens[node] = token
@@ -181,8 +178,7 @@ def setCorosyncConf(corosync_config, conf_file=settings.corosync_conf_file):
         f.write(corosync_config)
         f.close()
     except IOError:
-        print "ERROR: Unable to write corosync configuration file, try running as root."
-        exit(1)
+        err("unable to write corosync configuration file, try running as root.")
 
 def getCorosyncActiveNodes():
     args = ["corosync-cmapctl"]
@@ -227,12 +223,10 @@ def addNodeToCorosync(node):
 # corosync process
     for c_node in getNodesFromCorosyncConf():
         if c_node == node:
-            print "Node already exists in corosync.conf"
-            sys.exit(1)
+            err("node already exists in corosync.conf")
     for c_node in getCorosyncActiveNodes():
         if c_node == node:
-            print "Node already exists in running corosync"
-            sys.exit(1)
+            err("Node already exists in running corosync")
     corosync_conf = getCorosyncConf()
     new_nodeid = getHighestnodeid(corosync_conf) + 1
     nl_re = re.compile(r"nodelist\s*{")
@@ -262,8 +256,7 @@ def addNodeToCorosync(node):
         run(["corosync-cmapctl", "-s", "nodelist.node." +
             str(new_nodeid - 1) + ".ring0_addr", "str", node])
     else:
-        print "Unable to find nodelist in corosync.conf"
-        sys.exit(1)
+        err("unable to find nodelist in corosync.conf")
 
     return True
 
@@ -321,8 +314,7 @@ def run(args, ignore_stderr=False):
             try:
                 write_empty_cib(filename)
             except IOError:
-                print "Unable to write to file: " + filename
-                sys.exit(1)
+                err("Unable to write to file: " + filename)
 
     command = args[0]
     if command[0:3] == "crm" or command == "cibadmin":
@@ -338,8 +330,7 @@ def run(args, ignore_stderr=False):
         output,stderror = p.communicate()
         returnVal = p.returncode
     except OSError:
-        print "Unable to locate command: " + args[0]
-        sys.exit(1)
+        err("unable to locate command: " + args[0])
 
     return output, returnVal
 
@@ -433,8 +424,7 @@ def remove_from_cib(xml):
 def get_cib():
     output, retval = run(["cibadmin", "-l", "-Q"])
     if retval != 0:
-        print "Error: unable to get cib"
-        sys.exit(1)
+        err("unable to get cib")
     return output
 
 def get_cib_dom():
@@ -442,24 +432,20 @@ def get_cib_dom():
         dom = parseString(get_cib())
         return dom
     except:
-        print "Error: unable to get cib"
-        sys.exit(1)
+        err("unable to get cib")
 
 def get_cib_etree():
     try:
         root = ET.fromstring(get_cib())
         return root
     except:
-        print "Error: unable to get cib"
-        sys.exit(1)
+        err("Error: unable to get cib")
 
 # Replace only configuration section of cib with dom passed
 def replace_cib_configuration(dom):
     output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-X", dom.toxml()])
     if retval != 0:
-        print "ERROR: Unable to update cib"
-        print output
-        sys.exit(1)
+        err("Unable to update cib\n"+output)
 
 # Checks to see if id exists in the xml dom passed
 def does_id_exist(dom, check_id):
@@ -508,8 +494,7 @@ def set_unmanaged(resource):
 def set_cib_property(prop, value):
     crm_config = get_cib_xpath("//crm_config")
     if (crm_config == ""):
-        print "Unable to get crm_config, is pacemaker running?"
-        sys.exit(1)
+        err("unable to get crm_config, is pacemaker running?")
     document = parseString(crm_config)
     crm_config = document.documentElement
     cluster_property_set = crm_config.getElementsByTagName("cluster_property_set")[0]
@@ -568,8 +553,7 @@ def getTerminalSize(fd=1):
 def getClusterState():
     (output, retval) = run(["crm_mon", "-1", "-X","-r"])
     if (retval != 0):
-        print "Error running crm_mon, is pacemaker running?"
-        sys.exit(1)
+        utils.err("error running crm_mon, is pacemaker running?")
     dom = parseString(output)
     return dom
 
@@ -619,6 +603,10 @@ def is_rhel6():
         return True
     else:
         return False
+
+def err(errorText):
+    sys.stderr.write("Error: %s\n" % errorText)
+    sys.exit(1)
 
 def enableServices():
     if is_systemctl():
