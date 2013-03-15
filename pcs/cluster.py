@@ -150,21 +150,28 @@ def auth_nodes(nodes):
 # If no arguments get current cluster node status, otherwise get listed
 # nodes status
 def cluster_gui_status(argv):
+    bad_nodes = False
     if len(argv) == 0:
-        check_nodes(utils.getNodesFromCorosyncConf())
+        bad_nodes = check_nodes(utils.getNodesFromCorosyncConf())
     else:
-        check_nodes(argv)
+        bad_nodes = check_nodes(argv)
+    if bad_nodes:
+        sys.exit(1)
 
 # Check and see if pcsd is running on the nodes listed
 def check_nodes(nodes):
+    bad_nodes = False
     for node in nodes:
         status = utils.checkAuthorization(node)
         if status[0] == 0:
             print node + ": Online"
         elif status[0] == 3:
             print node + ": Unable to authenticate"
+            bad_nodes = True
         else:
             print node + ": Offline"
+            bad_nodes = True
+    return bad_nodes
     
 def corosync_setup(argv,returnConfig=False):
     fedora_config = not utils.is_rhel6()
