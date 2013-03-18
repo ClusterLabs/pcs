@@ -26,11 +26,7 @@
 	    <td class="node_list_sprite">
 	      <div class="check sprites"></div>
 	    </td>
-	    {{#if up}}
-	    <td class="node_name">
-	    {{else}}
-	    <td class="node_name" style="color:red">
-	    {{/if}}
+	    <td class="node_name" {{bindAttr style="node_name_style"}}>
 		 {{name}}
 	    </td>
 	    <td {{bindAttr style="showArrow"}}>

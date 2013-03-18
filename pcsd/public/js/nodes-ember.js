@@ -217,6 +217,13 @@ Pcs.Clusternode = Ember.Object.extend({
     else
       return ""
   }.property("cur_node"),
+  node_name_style: function() {
+    if (this.up) {
+      return "";
+    } else {
+      return "color:red";
+    }
+  }.property("up"),
   location_constraints: null
 });
 
