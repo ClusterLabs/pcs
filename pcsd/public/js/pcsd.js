@@ -701,6 +701,31 @@ function remove_resource(ids) {
   });
 }
 
+function add_location_constraint(parent_id) {
+  var data = {};
+  data["res_id"] = Pcs.resourcesController.cur_resource.name
+  data["node_id"] = $(parent_id + " input[name='node_id']").val();
+  data["score"] = $(parent_id + " input[name='score']").val();
+  data["stickyness"] = $(parent_id + " input[name='stickyness']").val();
+  fade_in_out($(parent_id));
+  $.ajax({ 
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_location_constraint',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+      $(parent_id + " input").val("");
+      Pcs.resourcesController.add_loc_constraint(data["res_id"],"temp-cons-id",
+      						 data["node_id"], data["score"],
+      						 data["sticky"]);
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert("Unable to add constraints: ("+error+")");
+    }
+  });
+}
+  
 function add_constraint(form) {
   var data = form.serialize();
   $.ajax({

@@ -65,6 +65,8 @@ def remote(params,request)
     return remove_resource(params)
   when "add_constraint"
     return add_constraint(params)
+  when "add_location_constraint"
+    return add_location_constraint_remote(params)
   when "add_group"
     return add_group(params)
   when "update_cluster_settings"
@@ -548,6 +550,16 @@ def add_constraint(params)
 	end
       end
     }
+  end
+end
+
+def add_location_constraint_remote(params)
+  retval = add_location_constraint(params["res_id"], params["node_id"],
+				   params["score"], params["stickyness"])
+  if retval == 0
+    return [200, "Successfully added constraint"]
+  else
+    return [400, "Error adding constraint"]
   end
 end
 

@@ -42,7 +42,8 @@ def getAllSettings()
   return {"error" => "Unable to get configuration settings"}
 end
 
-def add_location_constraint(resource, node, score)
+# stickyness is ignored for now
+def add_location_constraint(resource, node, score, stickyness)
   id = "loc_" + node + "_" + resource
   puts "ADD LOCATION CONSTRAINT"
   puts PCS, "constraint", "location", "add", id, resource, node, score

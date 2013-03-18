@@ -291,6 +291,32 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       Pcs.resourcesController.cur_resource = temp_cur_resource;
   },
 
+  add_loc_constraint: function(res_id, constraint_id, node_id, score, stickyness) {
+    new_loc_constraint = {}
+    new_loc_constraint["id"] = constraint_id;
+    new_loc_constraint["rsc"] = res_id;
+    new_loc_constraint["node"] = node_id;
+    new_loc_constraint["score"] = score;
+    new_loc_constraint["temp"] = true;
+
+    $.each(this.content, function(key, value) {
+      if (value.name == res_id) {
+	if (value.get("location_constraints")) {
+	  var res_loc_constraints = {};
+	  $.each(value.get("location_constraints"), function (key, value) {
+	    if (res_id in res_loc_constraints)
+	      res_loc_constraints[res_id].push(value);
+	    else res_loc_constraints[res_id] = [value];
+	  });
+	  res_loc_constraints[res_id].push(new_loc_constraint);
+	  value.set("location_constraints", res_loc_constraints[res_id]);
+	} else {
+	  value.set("location_constraints", [new_loc_constraint]);
+	}
+      }
+    });
+  },
+
   remove_constraint: function(constraint_id) {
     $.each(this.content, function(key, value) {
       if (value.location_constraints) {
