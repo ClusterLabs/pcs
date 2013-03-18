@@ -720,7 +720,7 @@ function add_constraint(form) {
 }
 
 function remove_constraint(id) {
-  fade_in_out($("[constraint_id='"+id+"']"));
+  fade_in_out($("[constraint_id='"+id+"']").parent());
   $.ajax({
     type: 'POST',
     url: '/resource_cmd/rm_constraint',

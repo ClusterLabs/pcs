@@ -369,7 +369,15 @@ end
 
 post '/resource_cmd/rm_constraint' do
   if params[:constraint_id]
-    remove_constraint(params[:constraint_id])
+    puts "REMOVE CONSTRAINT"
+    retval = remove_constraint(params[:constraint_id])
+    if retval == 0
+      return "Constraint #{params[:constraint_id]} removed"
+    else
+      return [400, "Error removing constraint: #{params[:constraint_id]}"]
+    end
+  else
+    return [400,"Bad Constraint Options"]
   end
 end
 
