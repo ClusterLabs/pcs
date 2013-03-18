@@ -553,7 +553,7 @@ def getTerminalSize(fd=1):
 def getClusterState():
     (output, retval) = run(["crm_mon", "-1", "-X","-r"])
     if (retval != 0):
-        utils.err("error running crm_mon, is pacemaker running?")
+        err("error running crm_mon, is pacemaker running?")
     dom = parseString(output)
     return dom
 
