@@ -586,7 +586,7 @@ end
 def get_local_node_id
   out, errout, retval = run_cmd(COROSYNC_CMAPCTL, "-g", "runtime.votequorum.this_node_id")
   if retval != 0
-    return "Error"
+    return ""
   else
     return out[0].split(/ = /)[1].strip()
   end
