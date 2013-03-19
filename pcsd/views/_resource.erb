@@ -94,7 +94,6 @@
 		</tr>
 	      </table>
 	      <% if @myView == "resource" %>
-	      <div><div class="plus sprites"></div><div class="link" style="display:inline;">&nbsp;<a href="#" onclick="$('#add_constraint').dialog({title: 'Add Constraint', modal:true, width: 'auto'});">Add&nbsp;Constraint</a>&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
 	      <table style="clear:left;float:left">
 		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header">Resource Location Preferences ({{Pcs.resourcesController.cur_resource.location_constraints.length}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
@@ -278,68 +277,4 @@
       <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
       <span id="resource_to_remove"></span>
     </div>
-    <div id="add_constraint" style="display: none;">
-      What type of constraint would you like to add?
-      <select onchange="show_hide_constraint_tables(this);">
-	<option value=""></option>
-	<option value="location">Location</option>
-	<option value="order">Order</option>
-	<option value="colocation">Colocation</option>
-      </select>
-      <div id="add_constraint_location" style="display:none;">
-	<form method=POST action="/resources_cmd/add_constraint">
-	  <input type=hidden name="location_constraint" value="1">
-	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
-	  <table>
-	    <tr><th>Node</th><th>Allowed</th><th>Not Allowed</th><th>Score</th></tr>
-	    <% @nodes.sort().each {|n| %>
-	      <tr>
-		<td><%=n%></td>
-		<td align=center><input type=checkbox name="allow-<%=n%>"></td>
-		<td align=center><input type=checkbox name="deny-<%=n%>"></td>
-		<td align=center><input type=text size=8 name="score-<%=n%>"></td>
-	      </tr>
-	    <% } %>
-	    <tr><td colspan=4><input type=submit onclick="add_constraint($(this).parents('form'));return false;"></td></tr>
-	  </table>
-	</div>
-      </form>
-      <div id="add_constraint_order" style="display:none;">
-	<form method=POST action="/resources_cmd/add_constraint">
-	  <input type=hidden name="order_constraint" value="1">
-	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
-	  <table>
-	    <tr><th>Resource</th><th>Before</th><th>After</th><th>Symmetrical</th></tr>
-	    <% @resources.each {|n| %>
-	      <% #next if n.id == @cur_resource.id %>
-	      <tr>
-		<td><%=n.id%></td>
-		<td align=center><input type="checkbox" value="before-<%=n.id%>" name="order-<%=n.id%>"></td>
-		<td align=center><input type="checkbox" value="after-<%=n.id%>" name="order-<%=n.id%>"></td>
-		<td align=center><input type="checkbox" name="symmetrical-<%=n.id%>" checked></td>
-	      </tr>
-	    <% } %>
-	    <tr><td colspan=3><input type=submit onclick="add_constraint($(this).parents('form'));return false;"></td></tr>
-	  </table>
-	</form>
-      </div>
-      <div id="add_constraint_colocation" style="display:none;">
-	<form method=POST action="/resources_cmd/add_constraint">
-	  <input type=hidden name="colocation_constraint" value="1">
-	  <input type=hidden name="cur_resource" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}}>
-	  <table>
-	    <tr><th>Resource</th><th>Together</th><th>Apart</th><th>Score</th></tr>
-	    <% @resources.each {|n| %>
-	      <%# next if n.id == @cur_resource.id %>
-	      <tr>
-		<td><%=n.id%></td>
-		<td align=center><input type="checkbox" value="together-<%=n.id%>" name="order-<%=n.id%>"></td>
-		<td align=center><input type="checkbox" value="apart-<%=n.id%>" name="order-<%=n.id%>"></td>
-		<td align=center><input type=text size=8></td>
-	      </tr>
-	    <% } %>
-	    <tr><td colspan=3><input type=submit onclick="add_constraint($(this).parents('form'));return false;"></td></tr>
-	  </table>
-	</form>
-      </div>
     <% end %>
