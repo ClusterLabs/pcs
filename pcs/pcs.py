@@ -21,7 +21,7 @@ def main(argv):
         # pull out negative number arguments and add them back after getopt
         prev_arg = ""
         for arg in argv:
-            if arg[0] == "-":
+            if len(arg) > 0 and arg[0] == "-":
                 if arg[1:].isdigit():
                     real_argv.append(arg)
                 else:
