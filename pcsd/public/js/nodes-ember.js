@@ -662,7 +662,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	if (pre_existing_node && pre_existing_node.name == node_id) {
 	  node = pre_existing_node;
 	  found = true;
-	  node.authorized =  authorized;
+	  node.set("authorized",authorized);
 	  node.set("up",up_status);
 	  node.set("pcsd",pcsd_daemon && authorized);
 	  node.set("corosync_daemon", data[node_id]["corosync"]);
