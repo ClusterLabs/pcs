@@ -317,6 +317,36 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     });
   },
 
+  add_ord_constraint: function(res_id, constraint_id, target_res_id, order, score) {
+    new_ord_constraint = {}
+    new_ord_constraint["id"] = constraint_id;
+    new_ord_constraint["res_id"] = res_id;
+    new_ord_constraint["first"] = res_id;
+    new_ord_constraint["then"] = res_id;
+    new_ord_constraint["order"] = order;
+    new_ord_constraint["score"] = score;
+    new_ord_constraint["other_rsc"] = target_res_id;
+
+    new_ord_constraint["temp"] = true;
+    if (order == "before") new_ord_constraint["before"] = true;
+
+    $.each(this.content, function(key, value) {
+      if (value.name == res_id) {
+	if (value.get("ordering_constraints")) {
+	  var res_ord_constraints = {};
+	  $.each(value.get("ordering_constraints"), function (key, value) {
+	    if (res_id in res_ord_constraints)
+	      res_ord_constraints[res_id].push(value);
+	    else res_ord_constraints[res_id] = [value];
+	  });
+	  res_ord_constraints[res_id].push(new_ord_constraint);
+	  value.set("ordering_constraints", res_ord_constraints[res_id]);
+	} else {
+	  value.set("ordering_constraints", [new_ord_constraint]);
+	}
+      }
+    });
+  },
   remove_constraint: function(constraint_id) {
     $.each(this.content, function(key, value) {
       if (value.location_constraints) {

@@ -701,23 +701,32 @@ function remove_resource(ids) {
   });
 }
 
-function add_location_constraint(parent_id) {
+function add_constraint(parent_id, c_type) {
   var data = {};
   data["res_id"] = Pcs.resourcesController.cur_resource.name
   data["node_id"] = $(parent_id + " input[name='node_id']").val();
   data["score"] = $(parent_id + " input[name='score']").val();
   data["stickyness"] = $(parent_id + " input[name='stickyness']").val();
+  data["target_res_id"] = $(parent_id + " input[name='target_res_id']").val();
+  data["order"] = $(parent_id + " select[name='order']").val();
+  data["c_type"] = c_type;
   fade_in_out($(parent_id));
+
   $.ajax({ 
     type: 'POST',
-    url: get_cluster_remote_url() + 'add_location_constraint',
+    url: get_cluster_remote_url() + 'add_constraint_remote',
     data: data,
     timeout: pcs_timeout,
     success: function() {
       $(parent_id + " input").val("");
+      if (c_type == "loc")
       Pcs.resourcesController.add_loc_constraint(data["res_id"],"temp-cons-id",
-      						 data["node_id"], data["score"],
-      						 data["sticky"]);
+						 data["node_id"], data["score"],
+						 data["sticky"]);
+      else if (c_type == "ord")
+      Pcs.resourcesController.add_ord_constraint(data["res_id"],"temp-cons-id",
+      						 data["target_res_id"],
+						 data["order"], data["score"]);
       Pcs.update();
     },
     error: function (xhr, status, error) {
@@ -726,24 +735,6 @@ function add_location_constraint(parent_id) {
   });
 }
   
-function add_constraint(form) {
-  var data = form.serialize();
-  $.ajax({
-    type: 'POST',
-    url: get_cluster_remote_url() + 'add_constraint',
-    data: data,
-    timeout: pcs_timeout,
-    success: function() {
-      Pcs.update();
-      $("#add_constraint").dialog("close");
-    },
-    error: function (xhr, status, error) {
-      alert("Unable to add constraints: ("+error+")");
-      $("#add_constraint").dialog("close");
-    }
-  });
-}
-
 function remove_constraint(id) {
   fade_in_out($("[constraint_id='"+id+"']").parent());
   $.ajax({
@@ -753,6 +744,9 @@ function remove_constraint(id) {
     timeout: pcs_timeout,
     success: function (data) {
       Pcs.resourcesController.remove_constraint(id);
+    },
+    error: function (xhr, status, error) {
+      alert("Error removing constraint: ("+error+")");
     }
   });
 }

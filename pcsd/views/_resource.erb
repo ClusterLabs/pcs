@@ -120,7 +120,7 @@
 			  <td><input type="text" name="node_id"></td>
 			  <td><input type="text" name="score" size="5"></td>
 			  <td><input type="text" name="stickyness" size="5"></td>
-			  <td><button type="button" onclick="add_location_constraint('#new_res_loc');" name="add">Add</button></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_loc','loc');" name="add">Add</button></td>
 			</tr>
 		      </table>
 		    </div>
@@ -141,7 +141,7 @@
 			    <td>Starts after {{first}}</td>
 			    {{/if}}
 
-			    <td></td>
+			    <td>{{score}}</td>
 			    <td {{bindAttr constraint_id="id"}} style="text-align:center">
 				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
 			    </td>
@@ -150,6 +150,12 @@
 			{{#unless Pcs.resourcesController.cur_resource.ordering_constraints}}
 			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
 			{{/unless}}
+			<tr id="new_res_orc">
+			  <td><input type="text" name="target_res_id"></td>
+			  <td><select name="order"><option value="after">After<option value="before">Before</select></td>
+			  <td><input type="text" name="score" size="5"></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_orc','ord');" name="add">Add</button></td>
+			</tr>
 		      </table>
 		    </div>
 		  </td>

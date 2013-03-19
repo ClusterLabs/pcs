@@ -65,8 +65,8 @@ def remote(params,request)
     return remove_resource(params)
   when "add_constraint"
     return add_constraint(params)
-  when "add_location_constraint"
-    return add_location_constraint_remote(params)
+  when "add_constraint_remote"
+    return add_constraint_remote(params)
   when "add_group"
     return add_group(params)
   when "update_cluster_settings"
@@ -553,15 +553,30 @@ def add_constraint(params)
   end
 end
 
-def add_location_constraint_remote(params)
-  retval = add_location_constraint(params["res_id"], params["node_id"],
-				   params["score"], params["stickyness"])
+def add_constraint_remote(params)
+  case params["c_type"]
+  when "loc"
+    retval = add_location_constraint(params["res_id"], params["node_id"],
+				     params["score"], params["stickyness"])
+  when "ord"
+    resA = params["res_id"]
+    resB = params["target_res_id"]
+    if params["order"] == "before"
+      resA, resB = resB, resA
+    end
+
+    retval = add_order_constraint(resA, resB, params["score"])
+  else
+    return [400, "Unknown constraint type: #{params["ctype"]}"]
+  end
+
   if retval == 0
     return [200, "Successfully added constraint"]
   else
     return [400, "Error adding constraint"]
   end
 end
+
 
 def add_group(params)
   rg = params["resource_group"]

@@ -57,6 +57,9 @@ end
 def add_order_constraint(resourceA, resourceB, score, symmetrical = true)
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
   puts "ADD ORDER CONSTRAINT"
+  if score != ""
+    score = "score=" + score
+  end
   puts PCS, "constraint", "order", "add", resourceA, resourceB, score, sym
   Open3.popen3(PCS, "constraint", "order", "add", resourceA,
 	       resourceB, score, sym) { |stdin, stdout, stderror, waitth|
