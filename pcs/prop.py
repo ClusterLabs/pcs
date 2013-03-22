@@ -27,7 +27,10 @@ def set_property(argv):
         if (len(args) != 2):
             print "Invalid Property: " + arg
             continue
-        utils.set_cib_property(args[0],args[1])
+        if ("--force" in utils.pcs_options) or utils.is_valid_property(args[0]):
+            utils.set_cib_property(args[0],args[1])
+        else:
+            utils.err("unknown cluster property: '%s', (use --force to override)" % args[0])
 
 def unset_property(argv):
     if len(argv) < 1:

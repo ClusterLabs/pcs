@@ -304,9 +304,11 @@ Commands:
     [list|show [property]]
         List property settings (Default: all properties)
 
-    set <property>=[<value>]
+    set [--force] <property>=[<value>]
         Set specific pacemaker properties (if the value is blank then the
-        property is removed from the configuration)
+        property is removed from the configuration).  If a property is not
+        recognized by pcs the property will not be created unless the
+        '--force' is used.
 
     unset <property>
         Remove property from configuration

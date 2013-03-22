@@ -439,7 +439,7 @@ def get_cib_etree():
         root = ET.fromstring(get_cib())
         return root
     except:
-        err("Error: unable to get cib")
+        err("unable to get cib")
 
 # Replace only configuration section of cib with dom passed
 def replace_cib_configuration(dom):
@@ -488,6 +488,19 @@ def set_unmanaged(resource):
     args = ["crm_resource", "--resource", resource, "--set-parameter",
             "is-managed", "--meta", "--parameter-value", "false"]
     return run(args)
+
+def is_valid_property(prop):
+    output, retval = run([settings.pengine_binary, "metadata"])
+    if retval != 0:
+        err("unable to run pengine\n" + output)
+
+    dom = parseString(output)
+    properties = dom.getElementsByTagName("parameter");
+    for p in properties:
+        if p.getAttribute("name") == prop:
+            return True
+
+    return False
 
 # If the property exists, remove it and replace it with the new property
 # If the value is blank, then we just remove it
