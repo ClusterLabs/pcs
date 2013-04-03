@@ -22,4 +22,11 @@ After this you can add resources and stonith agents:
 and
 # pcs stonith help
 
+Currently this is built into Fedora (other distributions to follow).  You can
+see the current Fedora .spec in the fedora package git repositories here:
+http://pkgs.fedoraproject.org/cgit/pcs.git/
+
+Current Fedora 18 .spec:
+http://pkgs.fedoraproject.org/cgit/pcs.git/tree/pcs.spec?h=f18
+
 If you have an questions or concerns please feel free to email cfeist@redhat.com or open a github issue on the pcs project.
