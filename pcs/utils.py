@@ -589,6 +589,37 @@ def stonithCheck():
 
     return True
 
+def getResourceType(resource):
+    resClass = resource.getAttribute("class")
+    resProvider = resource.getAttribute("provider")
+    resType = resource.getAttribute("type")
+    return resClass + ":" + resProvider + ":" + resType
+
+# Returns empty array if all attributes are valid, otherwise return an array
+# of bad attributes
+# res_id is the resource id
+# ra_values is an array of 2 item tuples (key, value)
+# resource is a python minidom element of the resource from the cib
+def validInstanceAttributes(res_id, ra_values, resource_type):
+    found = False
+    resSplit = resource_type.split(":")
+    if len(resSplit) == 2:
+        (resClass, resType) = resSplit
+        metadata = get_stonith_metadata(fence_bin + resType)
+    else:
+        (resClass, resProvider, resType) = resource_type.split(":")
+        metadata = get_metadata("/usr/lib/ocf/resource.d/" + resProvider + "/" + resType)
+    root = ET.fromstring(metadata)
+    actions = root.find("parameters")
+    valid_parameters = []
+    bad_parameters = []
+    for action in actions.findall("parameter"):
+        valid_parameters.append(action.attrib["name"])
+    for key,value in ra_values:
+        if key not in valid_parameters:
+            bad_parameters.append(key)
+    return bad_parameters 
+
 def getClusterName():
     try:
         f = open(settings.corosync_conf_file,'r')

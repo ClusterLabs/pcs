@@ -369,15 +369,15 @@ class ResourceAdditionTest(unittest.TestCase):
 
 
     def testMetaAttrs(self):
-        output, returnVal = pcs(temp_cib, "resource create D0 Dummy test=testA test2=test2a op monitor interval=30 meta test5=test5a test6=test6a")
+        output, returnVal = pcs(temp_cib, "resource create --force D0 Dummy test=testA test2=test2a op monitor interval=30 meta test5=test5a test6=test6a")
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource create D1 Dummy test=testA test2=test2a op monitor interval=30")
+        output, returnVal = pcs(temp_cib, "resource create --force D1 Dummy test=testA test2=test2a op monitor interval=30")
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource update D0 test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
+        output, returnVal = pcs(temp_cib, "resource update --force D0 test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
         assert returnVal == 0
         assert output == "", [output]
 

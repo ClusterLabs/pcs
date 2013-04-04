@@ -249,6 +249,12 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
     primitive_values.insert(0,("id",ra_id))
     op_attributes = convert_args_to_operations(op_values, ra_id)
     meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
+    if not ("--force" in utils.pcs_options):
+        params = convert_args_to_tuples(ra_values)
+        bad_opts = utils.validInstanceAttributes(ra_id, params , get_full_ra_type(ra_type, True))
+        if len(bad_opts) != 0:
+            utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
+                    % (", ".join(bad_opts), get_full_ra_type(ra_type, True)))
     xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes + op_attributes + meta_attributes)
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
@@ -392,6 +398,17 @@ def resource_update(res_id,args):
         instance_attributes = instance_attributes[0]
     
     params = convert_args_to_tuples(ra_values)
+    if not ("--force" in utils.pcs_options):
+        resClass = resource.getAttribute("class")
+        resProvider = resource.getAttribute("provider")
+        resType = resource.getAttribute("type")
+        resource_type = resClass + ":" + resProvider + ":" + resType
+        bad_opts = utils.validInstanceAttributes(res_id, params, resource_type)
+        if len(bad_opts) != 0:
+            utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
+                    % (", ".join(bad_opts), utils.getResourceType(resource)))
+
+
     for (key,val) in params:
         ia_found = False
         for ia in instance_attributes.getElementsByTagName("nvpair"):
@@ -660,10 +677,13 @@ def convert_args_to_tuples(ra_values):
 
 # Passed a resource type (ex. ocf:heartbeat:IPaddr2 or IPaddr2) and returns
 # a list of tuples mapping the types to xml attributes
-def get_full_ra_type(ra_type):
+def get_full_ra_type(ra_type, return_string = False):
     if (ra_type.count(":") == 0):
-        return ([("class","ocf"),("type",ra_type),("provider","heartbeat")])
+        ra_type = "ocf:heartbeat:" + ra_type
     
+    if return_string:
+        return ra_type
+
     ra_def = ra_type.split(":")
     # If len = 2 then we're creating a fence device
     if len(ra_def) == 2:
