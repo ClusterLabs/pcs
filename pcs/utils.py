@@ -570,6 +570,25 @@ def getClusterState():
     dom = parseString(output)
     return dom
 
+# Returns true if stonith-enabled is not false/off & no stonith devices exist
+# So if the cluster can't start due to missing stonith devices return true
+def stonithCheck():
+    et = get_cib_etree()
+    cps = et.find("configuration/crm_config/cluster_property_set")
+    if cps != None:
+        for prop in cps.findall("nvpair"):
+            if 'name' in prop.attrib and prop.attrib["name"] == "stonith-enabled":
+                if prop.attrib["value"] == "off" or \
+                        prop.attrib["value"] == "false":
+                    return False
+        
+    primitives = et.findall("configuration/resources/primitive")
+    for p in primitives:
+        if p.attrib["class"] == "stonith":
+            return False
+
+    return True
+
 def getClusterName():
     try:
         f = open(settings.corosync_conf_file,'r')

@@ -45,6 +45,9 @@ def full_status():
     if (retval != 0):
         utils.err("running crm_mon, is pacemaker running?")
 
+    if utils.stonithCheck():
+        print("WARNING: no stonith devices and stonith-enabled is not false")
+
     print output
 
 def actions_status(argv):
