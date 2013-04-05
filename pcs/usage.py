@@ -16,6 +16,9 @@ Commands:
     status      View cluster status
     config      Print full cluster configuration
 """
+# Advanced usage to possibly add later
+#  --corosync_conf=<corosync file> Specify alternative corosync.conf file
+                                                    
 
 def resource():
     print """

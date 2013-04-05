@@ -4,8 +4,8 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
+from pcs_test_functions import pcs
 
-pcs_location = "../pcs.py"
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
 
@@ -100,12 +100,6 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "constraint rm blahblah")
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
         
-
-
-# Run pcs with -f on specified file
-def pcs(testfile, args):
-    return utils.run([pcs_location, "-f", testfile] + args.split())
-
 if __name__ == "__main__":
     unittest.main()
 

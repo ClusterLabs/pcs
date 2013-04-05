@@ -9,6 +9,7 @@ import prop
 import constraint
 import utils
 import status
+import settings
 
 usefile = False
 filename = ""
@@ -32,7 +33,7 @@ def main(argv):
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all","clone","cloneopt=","master","force"])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all","clone","cloneopt=","master","force","corosync_conf="])
     except getopt.GetoptError, err:
         print err
         usage.main()
@@ -57,6 +58,8 @@ def main(argv):
             filename = a
             utils.usefile = usefile
             utils.filename = filename
+        elif o == "--corosync_conf":
+            settings.corosync_conf_file = a
 
     if len(argv) == 0:
         usage.main()

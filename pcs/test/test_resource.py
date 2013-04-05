@@ -4,8 +4,8 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
+from pcs_test_functions import pcs
 
-pcs_location = "../pcs.py"
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
 
@@ -120,7 +120,7 @@ class ResourceAdditionTest(unittest.TestCase):
         line = "resource create bad_resource idontexist test=bad"
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
-        assert output == "Error: Unable to create resource 'idontexist', it is not installed on this system (use --force to override)\n"
+        assert output == "Error: Unable to create resource 'idontexist', it is not installed on this system (use --force to override)\n",[output]
 
         line = "resource create bad_resource2 idontexist2 test4=bad3 --force"
         output, returnVal = pcs(temp_cib, line) 
@@ -416,11 +416,6 @@ class ResourceAdditionTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "resource show --all")
         assert returnVal == 0
         assert output == " Resource: D0 (type=Dummy class=ocf provider=heartbeat)\n  Attributes: test=testC test2=test2a \n  Meta Attrs: test5=test5a test7=test7a \n  Operations: monitor interval=35 (D0-monitor-interval-35)\n Group: TestRG\n  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2 \n  Resource: D1 (type=Dummy class=ocf provider=heartbeat)\n   Attributes: test=testA test2=test2a \n   Meta Attrs: d1meta=superd1meta \n   Operations: monitor interval=30 (D1-monitor-interval-30)\n", [output]
-
-
-# Run pcs with -f on specified file
-def pcs(testfile, args):
-    return utils.run([pcs_location, "-f", testfile] + args.split())
 
 if __name__ == "__main__":
     unittest.main()

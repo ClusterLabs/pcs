@@ -165,7 +165,9 @@ def getNodesFromPacemaker():
     ret_nodes.sort()
     return ret_nodes
 
-def getCorosyncConf(conf=settings.corosync_conf_file):
+def getCorosyncConf(conf=None):
+    if not conf:
+        conf = settings.corosync_conf_file
     try:
         out = open(conf).read()
     except IOError:
