@@ -48,7 +48,6 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith show --all")
         assert returnVal == 0
-        print output
         assert output == " Resource: test1 (type=fence_noxist class=stonith)\n Resource: test2 (type=fence_ilo class=stonith)\n Resource: test3 (type=fence_ilo class=stonith)\n  Attributes: ipaddr=test login=testA \n",[output]
 
 
