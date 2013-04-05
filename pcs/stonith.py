@@ -55,7 +55,7 @@ def stonith_cmd(argv):
             usage.stonith()
             sys.exit(1)
     elif (sub_cmd == "show"):
-        stonith_show(argv)
+        resource.resource_show(argv, True)
     elif (sub_cmd == "fence"):
         stonith_fence(argv)
     elif (sub_cmd == "confirm"):
@@ -63,30 +63,6 @@ def stonith_cmd(argv):
     else:
         usage.stonith()
         sys.exit(1)
-
-# TODO abstract this with resource_show to pull from xml
-def stonith_show(argv):
-    if len(argv) == 0:    
-        args = ["crm_resource","-L"]
-        output,retval = utils.run(args)
-        preg = re.compile(r'.*(stonith:.*)')
-        for line in output.split('\n'):
-            if preg.match(line):
-                print line
-        return
-
-    preg = re.compile(r'.*<primitive',re.DOTALL)
-    for arg in argv:
-        args = ["crm_resource","-r",arg,"-q"]
-        output,retval = utils.run(args)
-        if retval != 0:
-            utils.err("unable to find resource '"+arg+"'")
-        output = preg.sub("<primitive", output)
-        dom = parseString(output)
-        doc = dom.documentElement
-        print "Resource:", arg
-        for nvpair in doc.getElementsByTagName("nvpair"):
-            print "  " + nvpair.getAttribute("name") + ": " + nvpair.getAttribute("value")
 
 def stonith_list_available(argv):
     if len(argv) != 0:

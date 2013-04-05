@@ -26,13 +26,30 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "stonith show test2 --all")
+        output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo bad_argument=test")
+        assert returnVal == 1
+        assert output == "Error: resource option(s): 'bad_argument', are not recognized for resource type: 'stonith:fence_ilo' (use --force to override)\n",[output]
+
+        output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo ipaddr=test")
         assert returnVal == 0
-        assert output == "Resource: test2\n"
+        assert output == "",[output]
+
+        output, returnVal = pcs(temp_cib, "stonith update test3 bad_ipaddr=test")
+        assert returnVal == 1
+        assert output == "Error: resource option(s): 'bad_ipaddr', are not recognized for resource type: 'stonith::fence_ilo' (use --force to override)\n",[output]
+
+        output, returnVal = pcs(temp_cib, "stonith update test3 login=testA")
+        assert returnVal == 0
+        assert output == "",[output]
+
+        output, returnVal = pcs(temp_cib, "stonith show test2")
+        assert returnVal == 0
+        assert output == " Resource: test2 (type=fence_ilo class=stonith)\n",[output]
 
         output, returnVal = pcs(temp_cib, "stonith show --all")
         assert returnVal == 0
-        assert output == " test1\t(stonith:fence_noxist):\tStopped \n test2\t(stonith:fence_ilo):\tStopped \n"
+        print output
+        assert output == " Resource: test1 (type=fence_noxist class=stonith)\n Resource: test2 (type=fence_ilo class=stonith)\n Resource: test3 (type=fence_ilo class=stonith)\n  Attributes: ipaddr=test login=testA \n",[output]
 
 
     def testStonithFenceConfirm(self):

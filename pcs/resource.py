@@ -402,7 +402,10 @@ def resource_update(res_id,args):
         resClass = resource.getAttribute("class")
         resProvider = resource.getAttribute("provider")
         resType = resource.getAttribute("type")
-        resource_type = resClass + ":" + resProvider + ":" + resType
+        if resProvider == "":
+            resource_type = resClass + ":" + resType
+        else:
+            resource_type = resClass + ":" + resProvider + ":" + resType
         bad_opts = utils.validInstanceAttributes(res_id, params, resource_type)
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
@@ -1094,12 +1097,16 @@ def resource_group_list(argv):
             print resource.getAttribute("id"),
         print ""
 
-def resource_show(argv):
+def resource_show(argv, stonith=False):
     if "--all" in utils.pcs_options:
         root = utils.get_cib_etree()
         resources = root.find(".//resources")
         for child in resources:
-            print_node(child,1)
+            if stonith and "class" in child.attrib and child.attrib["class"] == "stonith":
+                print_node(child,1)
+            elif not stonith and \
+                    ((not "class" in child.attrib) or (child.attrib["class"] != "stonith")):
+                print_node(child,1)
         return
 
     if len(argv) == 0:    
@@ -1107,7 +1114,11 @@ def resource_show(argv):
         output,retval = utils.run(args)
         preg = re.compile(r'.*(stonith:.*)')
         for line in output.split('\n'):
-            if not preg.match(line) and line != "":
+            if line == "":
+                continue
+            if not preg.match(line) and not stonith:
+                print line
+            elif preg.match(line) and stonith:
                 print line
         return
 

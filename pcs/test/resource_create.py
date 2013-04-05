@@ -367,6 +367,26 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Group: DGroup\n  Resource: D0 (type=Dummy class=ocf provider=heartbeat)\n',[output]
 
+    def testBadInstanceVariables(self):
+        output, returnVal = pcs(temp_cib, "resource create D0 Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
+        assert returnVal == 1
+        assert output == "Error: resource option(s): 'test, test2', are not recognized for resource type: 'ocf:heartbeat:Dummy' (use --force to override)\n", [output]
+
+        output, returnVal = pcs(temp_cib, "resource create --force D0 Dummy test=testC test2=test2a test4=test4A op monitor interval=35 meta test7=test7a test6=")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource update D0 test=testA test2=testB")
+        assert returnVal == 1
+        assert output == "Error: resource option(s): 'test, test2', are not recognized for resource type: 'ocf:heartbeat:Dummy' (use --force to override)\n", [output]
+
+        output, returnVal = pcs(temp_cib, "resource update --force D0 test=testB test2=testC test3=testD")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource show D0")
+        assert returnVal == 0
+        assert output == " Resource: D0 (type=Dummy class=ocf provider=heartbeat)\n  Attributes: test=testB test2=testC test4=test4A test3=testD \n  Meta Attrs: test7=test7a test6= \n  Operations: monitor interval=35 (D0-monitor-interval-35)\n", [output]
 
     def testMetaAttrs(self):
         output, returnVal = pcs(temp_cib, "resource create --force D0 Dummy test=testA test2=test2a op monitor interval=30 meta test5=test5a test6=test6a")
