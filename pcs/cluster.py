@@ -373,12 +373,15 @@ def get_cib(argv):
         print utils.get_cib(),
     else:
         filename = argv[0]
-        f = open(filename, 'w')
-        output = utils.get_cib()
-        if output != "":
-            f.write(utils.get_cib())
-        else:
-            utils.err("No data in the CIB")
+        try:
+            f = open(filename, 'w')
+            output = utils.get_cib()
+            if output != "":
+                    f.write(utils.get_cib())
+            else:
+                utils.err("No data in the CIB")
+        except IOError as e:
+            utils.err("Unable to write to file '%s', %s" % (filename, e.strerror))
 
 def cluster_node(argv):
     if len(argv) != 2:
