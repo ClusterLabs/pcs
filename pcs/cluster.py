@@ -478,6 +478,7 @@ def print_config():
     constraint.order_show([])
     constraint.colocation_show([])
     print ""
+    del utils.pcs_options["--all"]
     prop.list_property([])
 
 # Completely tear down the cluster & remove config files

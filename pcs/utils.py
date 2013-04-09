@@ -512,7 +512,13 @@ def set_cib_property(prop, value):
         err("unable to get crm_config, is pacemaker running?")
     document = parseString(crm_config)
     crm_config = document.documentElement
-    cluster_property_set = crm_config.getElementsByTagName("cluster_property_set")[0]
+    cluster_property_set = crm_config.getElementsByTagName("cluster_property_set")
+    if len(cluster_property_set) == 0:
+        cluster_property_set = document.createElement("cluster_property_set")
+        cluster_property_set.setAttribute("id", "cib-bootstrap-options")
+        crm_config.appendChild(cluster_property_set) 
+    else:
+        cluster_property_set = cluster_property_set[0]
     for child in cluster_property_set.getElementsByTagName("nvpair"):
         if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
             break
@@ -529,7 +535,7 @@ def set_cib_property(prop, value):
         cluster_property_set.appendChild(new_property)
 
 
-    args = ["cibadmin", "-c", "-R", "--xml-text", cluster_property_set.toxml()]
+    args = ["cibadmin", "-c", "-R", "--xml-text", crm_config.toxml()]
     output, retVal = run(args)
     if output != "":
         print output

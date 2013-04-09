@@ -304,8 +304,11 @@ Usage: pcs property <properties>...
 Configure pacemaker properties
 
 Commands:
-    [list|show [property]]
+    [list|show [property]] [--all | --defaults]
         List property settings (Default: all properties)
+        If --defaults is specified will show all property defaults, if --all
+        is specified, current configured properties will be shown with unset
+        properties and their defaults
 
     set [--force] <property>=[<value>]
         Set specific pacemaker properties (if the value is blank then the

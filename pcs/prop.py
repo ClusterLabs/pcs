@@ -1,8 +1,10 @@
 import sys
 import usage
 import utils
+import settings
 import xml.dom.minidom
 from xml.dom.minidom import parseString
+import xml.etree.ElementTree as ET
 
 def property_cmd(argv):
     if len(argv) == 0:
@@ -45,13 +47,48 @@ def list_property(argv):
     if len(argv) == 0:
         print_all = True
 
-    (output, retVal) = utils.run(["cibadmin","-Q","--scope", "crm_config"])
-    if retVal != 0:
-        utils.err("unable to get crm_config\n"+output)
-    dom = parseString(output)
-    de = dom.documentElement
-    properties = de.getElementsByTagName("nvpair")
+    if "--all" in utils.pcs_options or "--defaults" in utils.pcs_options:
+        if len(argv) != 0:
+            utils.err("you cannot specify a property when using --all or --defaults")
+        properties = get_default_properties()
+    else:
+        properties = {}
+        
+    if "--defaults" not in utils.pcs_options:
+        (output, retVal) = utils.run(["cibadmin","-Q","--scope", "crm_config"])
+        if retVal != 0:
+            utils.err("unable to get crm_config\n"+output)
+        dom = parseString(output)
+        de = dom.documentElement
+        crm_config_properties = de.getElementsByTagName("nvpair")
+        for prop in crm_config_properties:
+            if print_all == True or (argv[0] == prop.getAttribute("name")):
+                properties[prop.getAttribute("name")] = prop.getAttribute("value")
+
     print "Cluster Properties:"
-    for prop in properties:
-        if print_all == True or (argv[0] == prop.getAttribute("name")):
-            print " " + prop.getAttribute("name") + ": " + prop.getAttribute("value")
+    for prop,val in sorted(properties.iteritems()):
+        print " " + prop + ": " + val
+
+def get_default_properties():
+    (output, retVal) = utils.run([settings.pengine_binary, "metadata"])
+    if retVal != 0:
+        utils.err("unable to get pengine metadata\n"+output)
+    pe_root = ET.fromstring(output)
+
+    (output, retVal) = utils.run([settings.crmd_binary, "metadata"])
+    if retVal != 0:
+        utils.err("unable to get crmd metadata\n"+output)
+    crmd_root = ET.fromstring(output)
+    
+    parameters = {}
+    for root in [pe_root, crmd_root]:
+        for param in root.iter('parameter'):
+            name = param.attrib["name"]
+            content = param.find("content")
+            if content is not None:
+                default = content.attrib["default"]
+            else:
+                default = ""
+
+            parameters[name] =  default
+    return parameters

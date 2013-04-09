@@ -33,7 +33,7 @@ def main(argv):
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all","clone","cloneopt=","master","force","corosync_conf="])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all","clone","cloneopt=","master","force","corosync_conf=", "defaults"])
     except getopt.GetoptError, err:
         print err
         usage.main()
