@@ -23,7 +23,7 @@ def main(argv):
         prev_arg = ""
         for arg in argv:
             if len(arg) > 0 and arg[0] == "-":
-                if arg[1:].isdigit():
+                if arg[1:].isdigit() or arg[1:] == "INFINITY":
                     real_argv.append(arg)
                 else:
                     modified_argv.append(arg)
