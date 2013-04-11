@@ -178,6 +178,13 @@
  			{{#unless Pcs.resourcesController.cur_resource.colocation_constraints}}
 			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
  			{{/unless}}
+			<tr id="new_res_col">
+			  <td><input type="text" name="target_res_id"></td>
+			  <td><select name="colocate"><option value="together">Together<option value="apart">Apart</select></td>
+			  <td><input type="text" name="score" size="5"></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_col','col');" name="add">Add</button></td>
+			</tr>
+
 		      </table>
 		    </div>
 		  </td>

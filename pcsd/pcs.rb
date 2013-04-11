@@ -70,6 +70,9 @@ end
 
 def add_colocation_constraint(resourceA, resourceB, score)
   puts "ADD COLOCATION CONSTRAINT"
+  if score == "" or score == nil
+    score = "INFINITY"
+  end
   puts PCS, "constraint", "colocation", "add", resourceA, resourceB, score
   Open3.popen3(PCS, "constraint", "colocation", "add", resourceA,
 	       resourceB, score) { |stdin, stdout, stderror, waitth|

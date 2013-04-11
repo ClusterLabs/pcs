@@ -566,6 +566,19 @@ def add_constraint_remote(params)
     end
 
     retval = add_order_constraint(resA, resB, params["score"])
+  when "col"
+    resA = params["res_id"]
+    resB = params["target_res_id"]
+    score = params["score"]
+    if params["colocation_type"] == "apart"
+      if score.length > 0 and score[0] != "-"
+      	score = "-" + score
+      elsif score = ""
+      	score = "-INFINITY"
+      end
+    end
+
+    retval = add_colocation_constraint(resA, resB, score)
   else
     return [400, "Unknown constraint type: #{params["ctype"]}"]
   end

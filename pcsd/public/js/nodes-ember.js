@@ -347,6 +347,37 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       }
     });
   },
+
+  add_col_constraint: function(res_id, constraint_id, target_res_id, colocation_type, score) {
+    new_col_constraint = {}
+    new_col_constraint["id"] = constraint_id;
+    new_col_constraint["res_id"] = res_id;
+    new_col_constraint["score"] = score;
+    new_col_constraint["other_rsc"] = target_res_id;
+    if (colocation_type == "apart")
+      new_col_constraint["together"] = "Apart";
+    else
+      new_col_constraint["together"] = "Together";
+
+    new_col_constraint["temp"] = true;
+
+    $.each(this.content, function(key, value) {
+      if (value.name == res_id) {
+	if (value.get("colocation_constraints") && value.get("colocation_constraints").length > 0) {
+	  var res_col_constraints = {};
+	  $.each(value.get("colocation_constraints"), function (key, value) {
+	    if (res_id in res_col_constraints)
+	      res_col_constraints[res_id].push(value);
+	    else res_col_constraints[res_id] = [value];
+	  });
+	  res_col_constraints[res_id].push(new_col_constraint);
+	  value.set("colocation_constraints", res_col_constraints[res_id]);
+	} else {
+	  value.set("colocation_constraints", [new_col_constraint]);
+	}
+      }
+    });
+  },
   remove_constraint: function(constraint_id) {
     $.each(this.content, function(key, value) {
       if (value.location_constraints) {

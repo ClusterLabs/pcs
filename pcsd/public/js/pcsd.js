@@ -709,6 +709,7 @@ function add_constraint(parent_id, c_type) {
   data["stickyness"] = $(parent_id + " input[name='stickyness']").val();
   data["target_res_id"] = $(parent_id + " input[name='target_res_id']").val();
   data["order"] = $(parent_id + " select[name='order']").val();
+  data["colocation_type"] = $(parent_id + " select[name='colocate']").val();
   data["c_type"] = c_type;
   fade_in_out($(parent_id));
 
@@ -720,13 +721,17 @@ function add_constraint(parent_id, c_type) {
     success: function() {
       $(parent_id + " input").val("");
       if (c_type == "loc")
-      Pcs.resourcesController.add_loc_constraint(data["res_id"],"temp-cons-id",
-						 data["node_id"], data["score"],
-						 data["sticky"]);
+	Pcs.resourcesController.add_loc_constraint(data["res_id"],"temp-cons-id",
+						   data["node_id"], data["score"],
+						   data["sticky"]);
       else if (c_type == "ord")
-      Pcs.resourcesController.add_ord_constraint(data["res_id"],"temp-cons-id",
-      						 data["target_res_id"],
-						 data["order"], data["score"]);
+	Pcs.resourcesController.add_ord_constraint(data["res_id"],"temp-cons-id",
+						   data["target_res_id"],
+						   data["order"], data["score"]);
+      else if (c_type == "col")
+	Pcs.resourcesController.add_col_constraint(data["res_id"],"temp-cons-id",
+						   data["target_res_id"],
+						   data["colocation_type"], data["score"]);
       Pcs.update();
     },
     error: function (xhr, status, error) {
