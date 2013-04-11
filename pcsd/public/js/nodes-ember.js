@@ -3,6 +3,8 @@ Pcs = Ember.Application.createWithMixins({
   cluster_name: get_cluster_name(),
   cluster_settings: null,
   cur_page: "",
+  opening_resource: "",
+  opening_node: "",
   resource_page: function() {
     if (this.cur_page == "resources") return "display: table-row;";
     else return "display: none;";
@@ -122,6 +124,7 @@ Pcs.ResourcesRoute = Ember.Route.extend({
   },
   model: function(params) {
     Ember.debug("Resource: " + params.resource_id);
+    Pcs.opening_resource = params.resource_id;
     return null;
   }
 });
@@ -262,6 +265,16 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     this._super();
   },
 
+  update_cur_resource: function() {
+    cr = this.get("cur_resource").name;
+    $.each(this.content, function(key, value) {
+      if (value.name == cr)
+      	value.set("cur_resource", true);
+      else
+      	value.set("cur_resource", false);
+    });
+  },
+    
   load_resource: function(resource_row, dont_update_hash) {
     if (resource_row.length == 0)
       return;
@@ -538,7 +551,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       var pathname = window.location.pathname.split('/');
 
       if (cur_res_holder == "") {
-	cur_res_name = pathname[pathname.length-1];
+	cur_res_name = Pcs.opening_resource;
       } else {
 	cur_res_name = cur_res_holder;
       }
