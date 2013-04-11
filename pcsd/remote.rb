@@ -573,7 +573,7 @@ def add_constraint_remote(params)
     if params["colocation_type"] == "apart"
       if score.length > 0 and score[0] != "-"
       	score = "-" + score
-      elsif score = ""
+      elsif score == ""
       	score = "-INFINITY"
       end
     end
