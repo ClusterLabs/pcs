@@ -110,7 +110,7 @@ Commands:
         Remove the clone which contains the specified group or resource (the
         resource or group will not be removed)
 
-    master <master/slave name> <group or resource> [options]
+    master <master/slave name> <resource id | group name> [options]
         Configure a resource or group as a multi-state (master/slave) resource
 
     manage <resource 1> [resource 2] ...
