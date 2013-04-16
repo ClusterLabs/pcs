@@ -1112,6 +1112,8 @@ def resource_show(argv, stonith=False):
     if len(argv) == 0:    
         args = ["crm_resource","-L"]
         output,retval = utils.run(args)
+        if retval != 0:
+            utils.err("unable to get resource list from crm_resource\n"+output.rstrip())
         preg = re.compile(r'.*(stonith:.*)')
         for line in output.split('\n'):
             if line == "":
