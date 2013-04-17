@@ -260,7 +260,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
     output,retval = utils.run(args)
     if retval != 0:
-        utils.err ("Unable to create resource/fence device\n" + output.split('\n')[0])
+        utils.err ("Unable to create resource/fence device\n" + output)
 
     if "--clone" in utils.pcs_options:
         clone_opts = []
