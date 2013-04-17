@@ -82,7 +82,7 @@ def get_default_properties():
     
     parameters = {}
     for root in [pe_root, crmd_root]:
-        for param in root.iter('parameter'):
+        for param in root.getiterator('parameter'):
             name = param.attrib["name"]
             content = param.find("content")
             if content is not None:

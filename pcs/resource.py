@@ -1129,7 +1129,7 @@ def resource_show(argv, stonith=False):
     resources = root.find(".//resources")
     resource_found = False
     for arg in argv:
-        for child in resources.findall(".//"):
+        for child in resources.findall(".//*"):
             if "id" in child.attrib and child.attrib["id"] == arg:
                 print_node(child,1)
                 resource_found = True
@@ -1340,7 +1340,7 @@ def print_operations(node, spaces):
 
 def get_attrs(node, prepend_string = "", append_string = ""):
     output = ""
-    for attr,val in node.attrib.items():
+    for attr,val in sorted(node.attrib.items()):
         if attr in ["id"]:
             continue
         output += attr + "=" + val + " "

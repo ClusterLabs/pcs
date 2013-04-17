@@ -43,7 +43,7 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, 'stonith show apc-fencing')
         assert returnVal == 0
-        assert output == ' Resource: apc-fencing (type=fence_apc class=stonith)\n  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05" \n',[output]
+        assert output == ' Resource: apc-fencing (class=stonith type=fence_apc)\n  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05" \n',[output]
 
         output, returnVal = pcs(temp_cib, 'stonith delete apc-fencing')
         assert returnVal == 0
@@ -59,11 +59,11 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith show test2")
         assert returnVal == 0
-        assert output == " Resource: test2 (type=fence_ilo class=stonith)\n",[output]
+        assert output == " Resource: test2 (class=stonith type=fence_ilo)\n",[output]
 
         output, returnVal = pcs(temp_cib, "stonith show --all")
         assert returnVal == 0
-        assert output == " Resource: test1 (type=fence_noxist class=stonith)\n Resource: test2 (type=fence_ilo class=stonith)\n Resource: test3 (type=fence_ilo class=stonith)\n  Attributes: ipaddr=test login=testA \n",[output]
+        assert output == " Resource: test1 (class=stonith type=fence_noxist)\n Resource: test2 (class=stonith type=fence_ilo)\n Resource: test3 (class=stonith type=fence_ilo)\n  Attributes: ipaddr=test login=testA \n",[output]
 
 
     def testStonithFenceConfirm(self):
