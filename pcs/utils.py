@@ -619,7 +619,7 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
         metadata = get_metadata("/usr/lib/ocf/resource.d/" + resProvider + "/" + resType)
     root = ET.fromstring(metadata)
     actions = root.find("parameters")
-    valid_parameters = []
+    valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument"]
     bad_parameters = []
     for action in actions.findall("parameter"):
         valid_parameters.append(action.attrib["name"])

@@ -34,6 +34,21 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "",[output]
 
+# Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are allowed for
+# stonith agents
+        output, returnVal = pcs(temp_cib, 'stonith create apc-fencing fence_apc params ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"')
+        print output
+        assert returnVal == 0
+        assert output == "",[output]
+
+        output, returnVal = pcs(temp_cib, 'stonith show apc-fencing')
+        assert returnVal == 0
+        assert output == ' Resource: apc-fencing (type=fence_apc class=stonith)\n  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05" \n',[output]
+
+        output, returnVal = pcs(temp_cib, 'stonith delete apc-fencing')
+        assert returnVal == 0
+        assert output == 'Deleting Resource - apc-fencing\n',[output]
+
         output, returnVal = pcs(temp_cib, "stonith update test3 bad_ipaddr=test")
         assert returnVal == 1
         assert output == "Error: resource option(s): 'bad_ipaddr', are not recognized for resource type: 'stonith::fence_ilo' (use --force to override)\n",[output]
