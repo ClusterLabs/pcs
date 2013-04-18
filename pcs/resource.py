@@ -1168,9 +1168,9 @@ def resource_manage(argv, set_managed):
         sys.exit(1)
 
     for resource in argv:
-        if not utils.does_exist("(//primitive|//group)[@id='"+resource+"']"):
+        if not utils.does_exist("(//primitive|//group|//master|//clone)[@id='"+resource+"']"):
             utils.err("%s doesn't exist." % resource)
-        exists = utils.does_exist("(//primitive|//group)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']")
+        exists = utils.does_exist("(//primitive|//group|//master|//clone)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']")
         if set_managed and not exists:
             utils.err("%s is already managed" % resource)
         elif not set_managed and exists:

@@ -345,6 +345,56 @@ class ResourceAdditionTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "resource unmanage D1")
         assert returnVal == 0
         assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource create C1Master Dummy --master")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource create C2Master Dummy --master")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource create C3Master Dummy --clone")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource create C4Master Dummy --clone")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource unmanage C1Master")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource manage C1Master")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource unmanage C2Master-master")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource manage C2Master-master")
+        assert returnVal == 0
+        assert output == ""
+
+
+        output, returnVal = pcs(temp_cib, "resource unmanage C3Master")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource manage C3Master")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource unmanage C4Master-clone")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "resource manage C4Master-clone")
+        assert returnVal == 0
+        assert output == ""
+
         output, returnVal = pcs(temp_cib, "resource show D1")
         assert returnVal == 0
         assert output == ' Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: is-managed=false \n',[output]
