@@ -28,7 +28,7 @@ Commands:
     show [resource id] [--all]
         Show all currently configured resources or if a resource is specified
         show the options for the configured resource.  If --all is specified
-        resource options will be displayed
+        all configured resource options will be displayed
 
     start <resource id>
         Start resource specified by resource_id
@@ -268,6 +268,9 @@ Configure fence devices for use with pacemaker
 
 Commands:
     show [stonith_id]
+        Show all currently configured stonith devices or if a stonith_id is
+        specified show the options for the configured stonith device.  If
+        --all is specified all configured stonith options will be displayed
 
     list [filter]
         Show list of all available stonith agents (if filter is provided then
