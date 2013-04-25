@@ -166,7 +166,7 @@ Commands:
         configured in corosync.conf if no nodes are specified (authorization
         tokens are stored in ~/.pcs/token)
 
-    setup [--start] [--local] <cluster name> <node1 name> [node2] [...]
+    setup [--start] [--local] <cluster name> <node1> [node2] [...]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes
@@ -233,24 +233,24 @@ Commands:
         Edit the cib in the editor specified by the $EDITOR environment
         variable and push out any changes upon saving
 
-    node add <node name>
+    node add <node>
         Add the node to corosync.conf and corosync on all nodes in the cluster
         and sync the new corosync.conf to the new node
 
-    localnode add <node name>
+    localnode add <node>
         Add the specified node to corosync.conf and corosync only on this node
 
-    node remove <node name>
+    node remove <node>
         Shutdown specified node and remove it from pacemaker and corosync on
         all other nodes in the cluster
 
-    localnode remove <node name>
+    localnode remove <node>
         Remove the specified node from corosync.conf & corosync on local node
 
-    pacemaker remove <node name>
+    pacemaker remove <node>
         Remove specified node from running pacemaker configuration
 
-    corosync <node name>
+    corosync <node>
         Get the corosync.conf from the specified node
 
     destroy
