@@ -362,8 +362,9 @@ Commands:
     delete <stonith_id>
         Remove stonith_id from configuration
 
-    fence <node>
-        Fence the node specified
+    fence <node> [--off]
+        Fence the node specified (if --off is specified, use the 'off' API
+        call to stonith which will turn the node off instead of rebooting it)
 
     confirm <node>
         Confirm that the host specified is currently down

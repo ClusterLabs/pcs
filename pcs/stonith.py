@@ -121,7 +121,10 @@ def stonith_fence(argv):
         utils.err("must specify one (and only one) node to fence")
 
     node = argv.pop(0)
-    args = ["stonith_admin", "-F", node]
+    if "--off" in utils.pcs_options:
+        args = ["stonith_admin", "-F", node]
+    else:
+        args = ["stonith_admin", "-B", node]
     output, retval = utils.run(args)
 
     if retval != 0:
