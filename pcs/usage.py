@@ -1,12 +1,71 @@
-def main():
-    print """
+examples = ""
+def full_usage():
+    global examples
+    out = ""
+    out += main(False)
+    out += strip_extras(resource(False))
+    out += strip_extras(cluster(False))
+    out += strip_extras(stonith(False))
+    out += strip_extras(property(False))
+    out += strip_extras(constraint(False))
+    out += strip_extras(status(False))
+    print out.strip()
+    print "Examples:\n" + examples.replace(" \ ","")
+
+def strip_extras(text):
+    global examples
+    ret = ""
+    ret_ex = ""
+    group_name = text.split(" ")[2]
+    in_commands = False
+    in_examples = False
+    in_com = False
+    lines = text.split("\n")
+    minicmd = ""
+
+    ret += group_name.title() + ":\n"
+    for line in lines:
+        if not in_commands:
+            if line == "Commands:":
+                in_commands = True
+                continue
+        if not in_examples:
+            if line == "Examples:":
+                in_examples = True
+                continue
+        if not in_examples and not in_commands:
+            continue
+        if len(line) >= 4:
+            if line[0:4] == "    ":
+                if line[4:8] != "    ":
+                    if in_examples:
+                        minicmd = line.lstrip() + "  "
+                    else:
+                        minicmd = "    " + group_name + " " + line.lstrip() + "  "
+                else:
+                    minicmd += line.lstrip() + " "
+            else:
+                if in_commands:
+                    break
+        else:
+            if in_examples:
+                examples += minicmd + "\n\n"
+            else:
+                ret += minicmd + "\n"
+            minicmd = ""
+    return ret
+
+    
+def main(pout=True):
+    output =  """
 Usage: pcs [-f file] [-h] [commands]...
 Control and configure pacemaker and corosync.
 
 Options:
-    -h          Display usage and exit
+    -h, --help  Display usage and exit
     -f file     Perform actions on file instead of active CIB
     --debug     Print all network traffic and external commands run
+    --version   Print pcs version information
 
 Commands:
     resource    Manage cluster resources
@@ -19,12 +78,17 @@ Commands:
 """
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
+    if pout:
+        print output
+    else:
+        return output
                                                     
 
-def resource():
-    print """
+def resource(pout = True):
+    output = """
 Usage: pcs resource [commands]...
 Manage pacemaker resources
+
 Commands:
     show [resource id] [--all]
         Show all currently configured resources or if a resource is specified
@@ -56,9 +120,10 @@ Commands:
     create <resource id> <class:provider:type|type> [resource options]
            [op <operation type> <operation options> [<operation type>
            <operation options>]...] [meta <meta options>...]
-        Create specified resource.  If --clone is specified a clone resource is
-        created (with options specified by --cloneopt <clone_option>=<value>),
-        if --master is specified a master/slave resource is created.
+        Create specified resource.  If --clone is specified a clone resource
+        is created (with options specified by
+        --cloneopt <clone_option>=<value>), if --master is specified a
+        master/slave resource is created.
 
     standards
         List available resource agent standards
@@ -155,9 +220,13 @@ Examples:
 
     pcs resource delete ClusterIP
 """
+    if pout:
+        print output
+    else:
+        return output
 
-def cluster():
-    print """
+def cluster(pout = True):
+    output = """
 Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
 
@@ -261,9 +330,13 @@ Commands:
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster.
 """
+    if pout:
+        print output
+    else:
+        return output
 
-def stonith():
-    print """
+def stonith(pout = True):
+    output = """
 Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
@@ -294,16 +367,19 @@ Commands:
 
     confirm <node>
         Confirm that the host specified is currently down
-
         WARNING: if this node is not actually down data corruption/cluster
         failure can occur.
 
 Examples:
     pcs stonith create MyStonith ssh hostlist="f1" op monitor interval=30s
 """
+    if pout:
+        print output
+    else:
+        return output
 
-def property():
-    print """
+def property(pout = True):
+    output = """
 Usage: pcs property <properties>...
 Configure pacemaker properties
 
@@ -326,9 +402,13 @@ Commands:
 Examples:
     pcs property set stonith-enabled=false
 """
+    if pout:
+        print output
+    else:
+        return output
 
-def constraint():
-    print """
+def constraint(pout = True):
+    output = """
 Usage: pcs constraint [constraints]...
 Manage resource constraints
 
@@ -370,7 +450,6 @@ Commands:
         Add an ordering constraint specifying actions (start,stop,promote,
         demote) and if no action is specified the default action will be
         start.
-
         Available options are kind=Optional/Mandatory/Serialize and
         symmetrical=true/false
 
@@ -385,7 +464,6 @@ Commands:
         resources will be stopped in the reverse order they were started
         (symmetrical) or not (nonsymmetrical).  Default is symmetrical.
         (For more advance pacemaker usage)
-
         Options are specified by option_name=option_value
 
     colocation [show [all]]
@@ -409,39 +487,47 @@ Commands:
     ref [resource]...
         List constraints referencing specified resource
 """
+    if pout:
+        print output
+    else:
+        return output
 
-def status():
-    print """
+def status(pout = True):
+    output = """
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    status
+    [status]
         View all information about the cluster and resources
 
-    status resources
+    resources
         View current status of cluster resources
 
-    status groups
+    groups
         View currently configured groups and their resources
 
-    status cluster
+    cluster
         View current cluster status
 
-    status corosync
+    corosync
         View current corosync status
 
-    status nodes [corosync|both|config]
+    nodes [corosync|both|config]
         View current status of nodes from pacemaker. If 'corosync' is
         specified, print nodes currently configured in corosync, if 'both'
         is specified, print nodes from both corosync & pacemaker.  If 'config'
         is specified, print nodes from corosync & pacemaker configuration.
 
-    status actions
+    actions
         View failed actions
 
-    status pcsd <node> ...
+    pcsd <node> ...
         Show the current status of pcsd on the specified nodes
 
-    status xml
+    xml
         View xml version of status (output from crm_mon -r -1 -X)
 """
+    if pout:
+        print output
+    else:
+        return output

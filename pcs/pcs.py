@@ -33,7 +33,7 @@ def main(argv):
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all","clone","cloneopt=","master","force","corosync_conf=", "defaults","debug"])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:", ["local","start","all","clone","cloneopt=","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp"])
     except getopt.GetoptError, err:
         print err
         usage.main()
@@ -47,7 +47,7 @@ def main(argv):
                 utils.pcs_options[o].append(a)
             else:
                 utils.pcs_options[o] = [utils.pcs_options[o], a]
-        if o == "-h":
+        if o == "-h" or o == "--help":
             if len(argv) == 0:
                 usage.main()
                 sys.exit()
@@ -60,6 +60,12 @@ def main(argv):
             utils.filename = filename
         elif o == "--corosync_conf":
             settings.corosync_conf_file = a
+        elif o == "--version":
+            print "pcs 0.9.39"
+            sys.exit()
+        elif o == "--fullhelp":
+            usage.full_usage()
+            sys.exit()
 
     if len(argv) == 0:
         usage.main()

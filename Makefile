@@ -38,3 +38,5 @@ uninstall:
 tarball:
 	python setup.py sdist
 
+docs:
+	help2man -s 8 -N -h '--fullhelp' --output=pcs/pcs.8 --name='pacemaker/corosync configuration system' pcs/pcs.py
