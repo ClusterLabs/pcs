@@ -121,6 +121,9 @@ def sendHTTPRequest(host, request, data = None, printResult = True):
     url = 'https://' + host + ':2224/' + request
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
     tokens = readTokens()
+    if "--debug" in pcs_options:
+        print "Sending HTTP Request to: " + url
+        print "Data: " + str(data)
     if host in tokens:
         opener.addheaders.append(('Cookie', 'token='+tokens[host]))
     urllib2.install_opener(opener)
@@ -129,8 +132,14 @@ def sendHTTPRequest(host, request, data = None, printResult = True):
         html = result.read()
         if printResult:
             print host + ": " + html.strip()
+        if "--debug" in pcs_options:
+            print "Response Code: 0"
+            print "--Debug Response Start--\n" + html,
+            print "--Debug Response End--"
         return (0,html)
     except urllib2.HTTPError, e:
+        if "--debug" in pcs_options:
+            print "Response Code: " + e.code
         if printResult:
             if e.code == 401:
                 print "Unable to authenticate to %s - (HTTP error: %d)" % (host,e.code)
@@ -141,6 +150,8 @@ def sendHTTPRequest(host, request, data = None, printResult = True):
         else:
             return (1,"Error connecting to %s - (HTTP error: %d)" % (host,e.code))
     except urllib2.URLError, e:
+        if "--debug" in pcs_options:
+            print "Response Reason: " + str(e.reason)
         if printResult:
             print "Unable to connect to %s (%s)" % (host, e.reason)
         return (2,"Unable to connect to %s (%s)" % (host, e.reason))
@@ -325,12 +336,18 @@ def run(args, ignore_stderr=False):
         args[0] = settings.corosync_binaries + command
         
     try:
+        if "--debug" in pcs_options:
+            print "Running: " + " ".join(args)
         if ignore_stderr:
             p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var)
         else:
             p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var)
         output,stderror = p.communicate()
         returnVal = p.returncode
+        if "--debug" in pcs_options:
+            print "Return Value: " + str(returnVal)
+            print "--Debug Output Start--\n" + output
+            print "--Debug Output End--\n"
     except OSError:
         err("unable to locate command: " + args[0])
 

@@ -6,6 +6,7 @@ Control and configure pacemaker and corosync.
 Options:
     -h          Display usage and exit
     -f file     Perform actions on file instead of active CIB
+    --debug     Print all network traffic and external commands run
 
 Commands:
     resource    Manage cluster resources
