@@ -365,7 +365,7 @@ def resource_form(params)
       "Can't find resource"
     end
   else
-    "Resource doesn't exist"
+    "Resource #{params[:resource]} doesn't exist"
   end
 end
 

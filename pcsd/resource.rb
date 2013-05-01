@@ -74,6 +74,9 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
 end
 
 def getResourceOptions(resource_id)
+  # Strip ':' from resource name (for clones & master/slave)
+  resource_id = resource_id.sub!(/(.*):.*/,'\1')
+
   ret = {}
   resource_options = `#{PCS} resource show #{resource_id}`
   resource_options.each_line { |line|
