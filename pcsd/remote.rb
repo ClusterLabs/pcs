@@ -417,6 +417,10 @@ def update_resource (params)
   end
 
   if param_line.length != 0
+    # If it's a clone resource we strip off everything after the last ':'
+    if params[:resource_clone]
+      params[:resource_id].sub!(/(.*):.*/,'\1')
+    end
     run_cmd(PCS, "resource", "update", params[:resource_id], *(param_line.split(" ")))
   end
 
@@ -431,13 +435,12 @@ def update_resource (params)
   end
 
   if params[:resource_clone] and params[:_orig_resource_clone] == "false"
-    run_cmd(PCS, "resource", "clone", "create", params[:resource_id])
+    run_cmd(PCS, "resource", "clone", params[:resource_id])
   end
   if params[:_orig_resource_clone] == "true" and not params[:resource_clone]
     run_cmd(PCS, "resource", "unclone", params[:resource_id].sub(/:.*/,''))
   end
 
-  redirect "/resources/#{params[:resource]}"
 end
 
 def update_fence_device (params)
