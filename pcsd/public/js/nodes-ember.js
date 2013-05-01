@@ -576,6 +576,25 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       if (found == false)
 	self.pushObject(resource);
     });
+    
+    var resourcesToRemove = [];
+    $.each(self.content, function(key, res) {
+      found = false;
+      $.each(resources, function(k2, res2) {
+      	if (res && res2["id"] == res.name) {
+      	  found = true;
+	}
+      });
+      if (!found && res) {
+	resourcesToRemove.push(res);
+      }
+    });
+
+    // If any resources have been renamed or removed we remove them content
+    $.each(resourcesToRemove, function(k, v) {
+      self.content.removeObject(v);
+    });
+
     if (self.content && self.content.length > 0 && self.cur_resource == null) {
       for (var i=0; i< self.content.length; i++) {
 	if (self.content[i].stonith) {
