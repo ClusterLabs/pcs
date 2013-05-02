@@ -252,6 +252,8 @@ Pcs.settingsController = Ember.ArrayController.create({
 
 Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   content: [],
+  sortProperties: ['name'],
+  sortAscending: true,
   no_resources: function () {
     if (this.content.length == 0)
       return true;
