@@ -75,7 +75,7 @@ end
 
 def getResourceOptions(resource_id)
   # Strip ':' from resource name (for clones & master/slave)
-  resource_id = resource_id.sub!(/(.*):.*/,'\1')
+  resource_id = resource_id.sub(/(.*):.*/,'\1')
 
   ret = {}
   resource_options = `#{PCS} resource show #{resource_id}`
