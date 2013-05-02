@@ -20,6 +20,13 @@
 	    <input type=checkbox name="resource_clone" <%= "checked" if @cur_resource && @cur_resource.clone %>>
 	  </td>
 	</tr>
+	<tr>
+	  <td nowrap><div class="bold">Master/Slave:</div></td>
+	  <td>
+	    <input type="hidden" name="_orig_resource_ms" value="<%= @cur_resource.ms if @cur_resource %>">
+	    <input type=checkbox name="resource_ms" <%= "checked" if @cur_resource && @cur_resource.ms %>>
+	  </td>
+	</tr>
       </table>
     </div>
     <table style="clear:left; float:left; margin-top: 25px;">
