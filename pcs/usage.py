@@ -176,8 +176,12 @@ Commands:
         Remove the clone which contains the specified group or resource (the
         resource or group will not be removed)
 
-    master <master/slave name> <resource id | group name> [options]
+    master [<master/slave name>] <resource id | group name> [options]
         Configure a resource or group as a multi-state (master/slave) resource
+
+    unmaster <resource id | group name>
+        Remove the master which contains the specified group or resource (the
+        resource or group will not be removed)
 
     manage <resource 1> [resource 2] ...
         Set resources listed to managed mode (default)

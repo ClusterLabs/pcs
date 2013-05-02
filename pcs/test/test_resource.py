@@ -467,6 +467,44 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == " Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Attributes: test=testC test2=test2a \n  Meta Attrs: test5=test5a test7=test7a \n  Operations: monitor interval=35 (D0-monitor-interval-35)\n Group: TestRG\n  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2 \n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Attributes: test=testA test2=test2a \n   Meta Attrs: d1meta=superd1meta \n   Operations: monitor interval=30 (D1-monitor-interval-30)\n", [output]
 
+    def testCloneMaster(self):
+        output, returnVal  = pcs(temp_cib, "resource create D0 Dummy")
+        assert returnVal == 0
+        assert output == "", [output]
+        output, returnVal  = pcs(temp_cib, "resource create D1 Dummy")
+        assert returnVal == 0
+        assert output == "", [output]
+        output, returnVal  = pcs(temp_cib, "resource create D2 Dummy")
+        assert returnVal == 0
+        assert output == "", [output]
+        output, returnVal = pcs(temp_cib, "resource clone D0")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource master D1-master-custom D1")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource master D2")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource show --all")
+        assert returnVal == 0
+        assert output == ' Clone: D0-clone\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n', [output]
+
+        output, returnVal = pcs(temp_cib, "resource unmaster D0")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource unmaster D2")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource show --all")
+        assert returnVal == 0
+        assert output == " Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n", [output]
+
 if __name__ == "__main__":
     unittest.main()
 

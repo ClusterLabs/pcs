@@ -106,9 +106,11 @@ def resource_cmd(argv):
     elif (sub_cmd == "clone"):
         resource_clone(argv)
     elif (sub_cmd == "unclone"):
-        resource_clone_remove(argv)
+        resource_clone_master_remove(argv)
     elif (sub_cmd == "master"):
         resource_master(argv)
+    elif (sub_cmd == "unmaster"):
+        resource_clone_master_remove(argv)
     elif (sub_cmd == "start"):
         resource_start(argv)
     elif (sub_cmd == "stop"):
@@ -790,7 +792,7 @@ def resource_clone_create(argv, update = False):
     if retval != 0:
         utils.err("unable to create clone\n" + outptu)
 
-def resource_clone_remove(argv):
+def resource_clone_master_remove(argv):
     if len(argv) != 1:
         usage.resource()
         sys.exit(1)
@@ -803,8 +805,8 @@ def resource_clone_remove(argv):
     for res in re.getElementsByTagName("primitive") + re.getElementsByTagName("group"):
         if res.getAttribute("id") == name:
             clone = res.parentNode
-            if clone.tagName != "clone":
-                utils.err("%s is not in a clone" % name)
+            if clone.tagName != "clone" and clone.tagName != "master":
+                utils.err("%s is not in a clone or master/slave" % name)
             clone.parentNode.appendChild(res)
             clone.parentNode.removeChild(clone)
             found = True
@@ -821,18 +823,22 @@ def resource_clone_remove(argv):
         utils.err("unable to remove clone\n" + output)
     
 def resource_master(argv):
-    if len(argv) < 2:
-        usage.resource()
-        sys.exit(1)
-
     resource_master_create(argv)
 
 def resource_master_create(argv, update=False):
-    if (len(argv) < 2 and not update) or (len(argv) < 1 and update):
+    non_option_args_count = 0
+    for arg in argv:
+        if arg.find("=") == -1:
+            non_option_args_count += 1
+    
+    if (non_option_args_count < 1):
         usage.resource()
         sys.exit(1)
 
     dom = utils.get_cib_dom()
+    if non_option_args_count == 1 and not update:
+        argv.insert(0,argv[0]+"-master")
+
     master_id = argv.pop(0)
 
     if (update):
