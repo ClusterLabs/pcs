@@ -44,6 +44,9 @@ end
 
 # stickyness is ignored for now
 def add_location_constraint(resource, node, score, stickyness)
+  if score = ""
+    score = "INFINITY"
+  end
   id = "loc_" + node + "_" + resource
   puts "ADD LOCATION CONSTRAINT"
   puts PCS, "constraint", "location", "add", id, resource, node, score
