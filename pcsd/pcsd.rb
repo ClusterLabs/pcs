@@ -55,7 +55,7 @@ configure do
   SETTINGS_FILE = "pcs_settings.conf"
   $user_pass_file = "pcs_users.conf"
 
-  $logger = Logger.new('/var/lib/pcsd/pcsd.log', 'weekly')
+  $logger = Logger.new('/var/lib/pcsd/pcsd.log', 'daily')
   $logger.level = Logger::INFO
   $stdout.reopen('/var/lib/pcsd/pcsd-debug.log', 'a')
   $stdout.sync = true
