@@ -87,13 +87,19 @@ Pcs.ManageRoute = Ember.Route.extend({
 
 Pcs.IndexRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    select_menu("NODES");
+    if (window.location.pathname == "/manage")
+      select_menu("MANAGE");
+    else
+      select_menu("NODES");
   }
 });
 
 Pcs.DefaultRouteRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    select_menu("NODES");
+    if (window.location.pathname == "/manage")
+      select_menu("MANAGE");
+    else
+      select_menu("NODES");
   }
 });
 

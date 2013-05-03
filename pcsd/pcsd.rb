@@ -383,7 +383,7 @@ end
 
 get '/' do
   print "Redirecting...\n"
-  call(env.merge("PATH_INFO" => '/manage'))
+  redirect '/manage#manage'
 end
 
 get '/remote/?:command?' do
