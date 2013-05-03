@@ -143,6 +143,15 @@ Pcs.Setting = Ember.Object.extend({
 
 Pcs.Resource = Ember.Object.extend({
   name: null,
+  ms: false,
+  clone: false,
+  full_name: function() {
+    if (this.ms)
+      return this.name + " (M/S)";
+    if (this.clone)
+      return this.name + " (Clone)";
+    return this.name;
+  }.property("name"),
   cur_resource: false,
   checked: false,
   nodes_running: [],
@@ -530,6 +539,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  resource.set("nodes", value["nodes"]);
 	  resource.set("group", value["group"]);
 	  resource.set("clone", value["clone"]);
+	  resource.set("ms", value["ms"]);
 	  resource.set("failed", value["failed"]);
 	  resource.set("orphaned", value["orphaned"]);
 	  resource.set("options", value["options"]);
@@ -547,6 +557,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  nodes: value["nodes"],
 	  group: value["group"],
 	  clone: value["clone"],
+	  ms: value["ms"],
 	  failed: value["failed"],
 	  orphaned: value["orphaned"],
 	  options: value["options"],

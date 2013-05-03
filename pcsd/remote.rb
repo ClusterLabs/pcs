@@ -252,7 +252,7 @@ def node_status(params)
     out_rl.push({:id => r.id, :agentname => r.agentname, :active => r.active,
 		:nodes => out_nodes, :group => r.group, :clone => r.clone,
 		:failed => r.failed, :orphaned => r.orphaned, :options => r.options,
-    		:stonith => r.stonith})
+    		:stonith => r.stonith, :ms => r.ms})
   }
   constraints = getAllConstraints()
   cluster_settings = getAllSettings()
