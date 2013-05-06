@@ -136,13 +136,9 @@
 </body>
   <script src="/js/nodes-ember.js"></script>
   <script type="text/javascript">
-    Ember.debug("List checkboxes to stop pagination");
-    $(".node_list_check").each(function(i,v){
-      Ember.debug(i + "-" + v);
-    });
-    $(".node_list_check").click(function(e){
-	e.stopPropagation();
-    });
+$(function() {
+  disable_checkbox_clicks();
+});
 
   </script>
-</html>
+  </html>

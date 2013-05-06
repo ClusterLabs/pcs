@@ -661,7 +661,6 @@ function hide_loading_screen() {
 
 function remove_cluster(ids) {
   for (var i=0; i<ids.length; i++) {
-    alert("inside rc");
     var cluster = ids[i];
     var clusterid_name = "clusterid-"+ids[i];
     var data = {}
@@ -671,6 +670,9 @@ function remove_cluster(ids) {
       url: '/manage/removecluster',
       data: data,
       timeout: pcs_timeout,
+      success: function () {
+      	location.reload();
+      },
       error: function (xhr, status, error) {
 	alert("Unable to remove resource: " + res + " ("+error+")");
       }
