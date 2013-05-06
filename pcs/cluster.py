@@ -26,7 +26,7 @@ def cluster_cmd(argv):
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.cluster()
+        usage.cluster(argv)
     elif (sub_cmd == "setup"):
         corosync_setup(argv)
     elif (sub_cmd == "sync"):

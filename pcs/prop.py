@@ -12,7 +12,7 @@ def property_cmd(argv):
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.property()
+        usage.property(argv)
     elif (sub_cmd == "set"):
         set_property(argv)
     elif (sub_cmd == "unset"):

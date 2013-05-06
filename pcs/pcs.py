@@ -52,7 +52,7 @@ def main(argv):
                 usage.main()
                 sys.exit()
             else:
-                argv = [argv[0], "help"]
+                argv = [argv[0], "help" ] + argv[1:]
         elif o == "-f":
             usefile = True
             filename = a

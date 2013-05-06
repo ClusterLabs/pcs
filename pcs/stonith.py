@@ -16,7 +16,7 @@ def stonith_cmd(argv):
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.stonith()
+        usage.stonith(argv)
     elif (sub_cmd == "list"):
         stonith_list_available(argv)
     elif (sub_cmd == "describe"):

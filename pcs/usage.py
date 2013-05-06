@@ -1,14 +1,16 @@
+import re
+
 examples = ""
 def full_usage():
     global examples
     out = ""
     out += main(False)
-    out += strip_extras(resource(False))
-    out += strip_extras(cluster(False))
-    out += strip_extras(stonith(False))
-    out += strip_extras(property(False))
-    out += strip_extras(constraint(False))
-    out += strip_extras(status(False))
+    out += strip_extras(resource([],False))
+    out += strip_extras([],cluster(False))
+    out += strip_extras([],stonith(False))
+    out += strip_extras([],property(False))
+    out += strip_extras([],constraint(False))
+    out += strip_extras([],status(False))
     print out.strip()
     print "Examples:\n" + examples.replace(" \ ","")
 
@@ -55,6 +57,33 @@ def strip_extras(text):
             minicmd = ""
     return ret
 
+# Print only output for items that match the args
+# For now we only look at the first arg
+# If no args, then we return the full output
+
+def sub_usage(args, output):
+    if len(args) == 0:
+        return output
+
+    ret = ""
+    lines = output.split('\n')
+    begin_printing = False
+    usage = re.sub("\[commands\]", args[0], lines[1])
+    for line in lines:
+        if begin_printing == True and re.match("^    [^ ]",line) and not re.match("^    " + args[0], line):
+            begin_printing = False
+        if not re.match("^ ",line) and not re.match("^$",line):
+            begin_printing = False
+        if re.match("^    " + args[0], line):
+            begin_printing = True
+
+        if begin_printing:
+            ret += line + "\n"
+
+    if ret != "":
+        return "\n" + usage + "\n" + ret.rstrip() + "\n"
+    else:
+        return output
     
 def main(pout=True):
     output =  """
@@ -84,7 +113,7 @@ Commands:
         return output
                                                     
 
-def resource(pout = True):
+def resource(args = [], pout = True):
     output = """
 Usage: pcs resource [commands]...
 Manage pacemaker resources
@@ -225,11 +254,11 @@ Examples:
     pcs resource delete ClusterIP
 """
     if pout:
-        print output
+        print sub_usage(args, output)
     else:
         return output
 
-def cluster(pout = True):
+def cluster(args = [], pout = True):
     output = """
 Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
@@ -335,11 +364,11 @@ Commands:
         destroying the cluster.
 """
     if pout:
-        print output
+        print sub_usage(args, output)
     else:
         return output
 
-def stonith(pout = True):
+def stonith(args = [], pout = True):
     output = """
 Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
@@ -379,11 +408,11 @@ Examples:
     pcs stonith create MyStonith ssh hostlist="f1" op monitor interval=30s
 """
     if pout:
-        print output
+        print sub_usage(args, output)
     else:
         return output
 
-def property(pout = True):
+def property(args = [], pout = True):
     output = """
 Usage: pcs property <properties>...
 Configure pacemaker properties
@@ -408,11 +437,11 @@ Examples:
     pcs property set stonith-enabled=false
 """
     if pout:
-        print output
+        print sub_usage(args, output)
     else:
         return output
 
-def constraint(pout = True):
+def constraint(args = [], pout = True):
     output = """
 Usage: pcs constraint [constraints]...
 Manage resource constraints
@@ -493,11 +522,11 @@ Commands:
         List constraints referencing specified resource
 """
     if pout:
-        print output
+        print sub_usage(args, output)
     else:
         return output
 
-def status(pout = True):
+def status(args = [], pout = True):
     output = """
 Usage: pcs status [commands]...
 View current cluster and resource status
@@ -533,6 +562,6 @@ Commands:
         View xml version of status (output from crm_mon -r -1 -X)
 """
     if pout:
-        print output
+        print sub_usage(args, output)
     else:
         return output

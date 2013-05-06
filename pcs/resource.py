@@ -16,7 +16,7 @@ def resource_cmd(argv):
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.resource()
+        usage.resource(argv)
     elif (sub_cmd == "list"):
         resource_list_available(argv)
     elif (sub_cmd == "describe"):

@@ -12,7 +12,7 @@ def constraint_cmd(argv):
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.constraint()
+        usage.constraint(argv)
     elif (sub_cmd == "location"):
         if len (argv) == 0:
             sub_cmd2 = "show"

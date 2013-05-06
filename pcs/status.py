@@ -14,7 +14,7 @@ def status_cmd(argv):
 
     sub_cmd = argv.pop(0)
     if (sub_cmd == "help"):
-        usage.status()
+        usage.status(argv)
     elif (sub_cmd == "resources"):
         resource.resource_show(argv)
     elif (sub_cmd == "groups"):
