@@ -152,7 +152,10 @@ def auth_nodes(nodes):
 def cluster_gui_status(argv):
     bad_nodes = False
     if len(argv) == 0:
-        bad_nodes = check_nodes(utils.getNodesFromCorosyncConf())
+        nodes = utils.getNodesFromCorosyncConf()
+        if len(nodes) == 0:
+            utils.err("no nodes found in corosync.conf")
+        bad_nodes = check_nodes(nodes)
     else:
         bad_nodes = check_nodes(argv)
     if bad_nodes:
