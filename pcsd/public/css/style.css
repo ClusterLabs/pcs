@@ -708,6 +708,6 @@ li.menuheader {
   background-image: url(images/pbar-ani.gif);
 }
 
-#add_resource td {
+#add_resource td, #create_new_cluster_form td {
   color: white;
 }
