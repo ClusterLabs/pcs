@@ -283,13 +283,15 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   },
 
   update_cur_resource: function() {
-    cr = this.get("cur_resource").name;
-    $.each(this.content, function(key, value) {
-      if (value.name == cr)
-      	value.set("cur_resource", true);
-      else
-      	value.set("cur_resource", false);
-    });
+    if (this.get("cur_resource")) { 
+      cr = this.get("cur_resource").name;
+      $.each(this.content, function(key, value) {
+	if (value.name == cr)
+	  value.set("cur_resource", true);
+	else
+	  value.set("cur_resource", false);
+      });
+    }
   },
     
   load_resource: function(resource_row, dont_update_hash) {
