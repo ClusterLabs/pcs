@@ -144,6 +144,14 @@ function create_resource(form, update, stonith) {
   });
 }
 
+// Don't allow spaces in input fields
+function disable_spaces(item) {
+  myitem = item;
+  $(item).find("input").on("keydown", function (e) {
+    return e.which !== 32;
+  });
+}
+
 function load_resource_form(item, ra, stonith) {
   data = { new: true, resourcename: ra};
   if (!stonith)
@@ -151,7 +159,9 @@ function load_resource_form(item, ra, stonith) {
   else
     command = "fence_device_metadata";
   
-  item.load(get_cluster_remote_url() + command, data);
+  item.load(get_cluster_remote_url() + command, data, function() {
+    disable_spaces(this);
+  });
 }
 
 function verify_remove(rem_type, error_message, ok_message, title_message, resource_id, post_location) {
@@ -636,6 +646,8 @@ function load_agent_form(resource_row, stonith) {
     timeout: pcs_timeout,
     success: function (data) {
       form.html(data);
+      disable_spaces(form);
+      myform = form;
     }
   });
 }
