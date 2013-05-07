@@ -35,7 +35,7 @@ Pcs = Ember.Application.createWithMixins({
       hide_loading_screen();
       return;
     }
-    Ember.debug("Running ajax for: " + this.cluster_name);
+    Ember.debug("Data refresh for: " + this.cluster_name);
     $.ajax({
       url:  "status_all",
 //      url: "/test_status.json",
