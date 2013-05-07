@@ -61,7 +61,7 @@ def main(argv):
         elif o == "--corosync_conf":
             settings.corosync_conf_file = a
         elif o == "--version":
-            print "pcs 0.9.40"
+            print settings.pcs_version
             sys.exit()
         elif o == "--fullhelp":
             usage.full_usage()
