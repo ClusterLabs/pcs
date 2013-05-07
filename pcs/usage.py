@@ -147,7 +147,7 @@ Commands:
         Show options for the specified resource
 
     create <resource id> <class:provider:type|type> [resource options]
-           [op <operation type> <operation options> [<operation type>
+           [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
         Create specified resource.  If --clone is specified a clone resource
         is created (with options specified by
@@ -163,19 +163,19 @@ Commands:
     agents [standard[:provider]]
         List available agents optionally filtered by standard and provider
 
-    update <resource id> [resource options] [op [<operation name>
+    update <resource id> [resource options] [op [<operation action>
            <operation options>]...] [meta <meta operations>...]
         Add/Change options to specified resource, clone or multi-state
         resource.  If an operation (op) is specified it will update the first
-        found operation with the same name on the specified resource, if no
-        operation with that name exists then a new operation will be created
+        found operation with the same action on the specified resource, if no
+        operation with that action exists then a new operation will be created
         If you want to create multiple monitor operations you should use the
         add_operation & remove_operation commands.
 
-    add_operation <resource id> <operation name> [operation properties]
+    add_operation <resource id> <operation action> [operation properties]
         Add operation for specified resource
 
-    remove_operation <resource id> <operation name> [operation properties]
+    remove_operation <resource id> <operation action> [operation properties]
         Remove specified operation (note: you must specify the exeact operation
         properties to properly remove an existing operation).
 
