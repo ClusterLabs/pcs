@@ -230,10 +230,31 @@ def getResourceMetadata(resourcepath)
   options_required = {}
   options_optional = {}
   doc.elements.each('resource-agent/parameters/parameter') { |param|
+    temp_array = []
     if param.attributes["required"] == "1"
-      options_required[param.attributes["name"]] = ""
+      if param.elements["shortdesc"]
+	temp_array << param.elements["shortdesc"].text
+      else
+      	temp_array << ""
+      end
+      if param.elements["longdesc"]
+	temp_array << param.elements["longdesc"].text
+      else
+      	temp_array << ""
+      end
+      options_required[param.attributes["name"]] = temp_array
     else
-      options_optional[param.attributes["name"]] = ""
+      if param.elements["shortdesc"]
+	temp_array << param.elements["shortdesc"].text
+      else
+      	temp_array << ""
+      end
+      if param.elements["longdesc"]
+	temp_array << param.elements["longdesc"].text
+      else
+      	temp_array << ""
+      end
+      options_optional[param.attributes["name"]] = temp_array
     end
   }
   [options_required, options_optional]
