@@ -98,3 +98,24 @@
     </table>
   </form>
 </div>
+<div id="manage_error" style="display: none;">
+  <br>
+  <% if @error == "badclustername" %>
+    The cluster name, '<%=@errorval%>' has not yet been configured in pcsd.  Use 'Add Existing' to add a node which is part of the cluster.
+  <% end %>
+</div>
+<% if @error %>
+  <script type="text/javascript">
+    $(function() {
+      $("#manage_error").dialog({
+	title: "Bad Cluster Name",
+	buttons: {
+	  Ok: function() {
+	    $(this).dialog("close");
+	  }
+	},
+	autoOpen:true
+      });
+    });
+  </script>
+<% end %>

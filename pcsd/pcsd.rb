@@ -268,6 +268,8 @@ get '/manage/?' do
   @manage = true
   pcs_config = PCSConfig.new
   @clusters = pcs_config.clusters
+  @error = params[:error]
+  @errorval = params[:errorval]
   @load_data = true
   erb :manage, :layout => :main
 end
@@ -278,10 +280,13 @@ get '/managec/:cluster/main' do
   @load_data = true
   @resources = []
   @groups = []
+  @nodes = get_cluster_nodes(params[:cluster])
+  if @nodes == []
+    redirect '/manage/?error=badclustername&errorval=' + params[:cluster] + '#manage'
+  end
   @resource_agents = get_resource_agents_avail() 
   @stonith_agents = get_stonith_agents_avail() 
   puts "Get Cluster Nodes"
-  @nodes = get_cluster_nodes(params[:cluster])
   @config_options = getConfigOptions2()
 
   erb :nodes, :layout => :main
