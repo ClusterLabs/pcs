@@ -127,9 +127,13 @@ Pcs.ResourcesRoute = Ember.Route.extend({
   setupController: function(controller, model) {
     Ember.debug("Resources Route");
     select_menu("RESOURCES"); 
+    if (model) {
+      Pcs.resourcesController.set("cur_resource",model);
+      Pcs.resourcesController.update_cur_resource();
+    }
   },
   model: function(params) {
-    Ember.debug("Resource: " + params.resource_id);
+    Ember.debug("Router Resource: " + params.resource_id);
     Pcs.opening_resource = params.resource_id;
     return null;
   }
@@ -143,6 +147,9 @@ Pcs.Setting = Ember.Object.extend({
 
 Pcs.Resource = Ember.Object.extend({
   name: null,
+  id: function() {
+    return this.name;
+  }.property("name"),
   ms: false,
   clone: false,
   full_name: function() {
