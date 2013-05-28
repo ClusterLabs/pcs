@@ -201,6 +201,12 @@ def colocation_add(argv):
     cl_id = utils.find_unique_id(dom, "colocation-" + resource1 + "-" +
             resource2 + "-" + score)
 
+# If one role is specified, the other should default to "started"
+    if role1 != "" and role2 == "":
+        role2 = "Started"
+    if role2 != "" and role1 == "":
+        role1 = "Started"
+
     element = dom.createElement("rsc_colocation")
     element.setAttribute("id",cl_id)
     element.setAttribute("rsc",resource1)

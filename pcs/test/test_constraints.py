@@ -80,6 +80,22 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
+        line = "resource create M7 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M8 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M9 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M10 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
         line = "resource group add G1 D0"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
@@ -134,20 +150,23 @@ class ConstraintTest(unittest.TestCase):
         o, r = pcs(temp_cib, "constraint colocation add D4 with D5 100")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add D4 with D5 100")
-        assert r == 0 and o == "", o
-
         o, r = pcs(temp_cib, "constraint colocation add master M1 with master M2")
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint colocation add M3 with M4")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add slave M1 with started M2 500")
+        o, r = pcs(temp_cib, "constraint colocation add slave M5 with started M6 500")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation add M7 with Master M8")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation add Slave M9 with M10")
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint")
-        print o
+        assert r == 0 and o == 'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  D4 with D5 (100)\n  M1 with M2 (rsc-role:Master) (with-rsc-role:Master)\n  M3 with M4\n  M5 with M6 (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7 with M8 (rsc-role:Started) (with-rsc-role:Master)\n  M9 with M10 (rsc-role:Slave) (with-rsc-role:Started)\n', [o]
         
 if __name__ == "__main__":
     unittest.main()
