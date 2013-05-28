@@ -154,13 +154,40 @@ def parse_score_options(argv):
         arg_array.append(args)
     return (score, arg_array)
 
+# There are two acceptable syntaxes
+# Deprecated - colocation add <src> <tgt> [score] [options]
+# Supported - colocation add [role] <src> with [role] <tgt> [score] [options]
 def colocation_add(argv):
     if len(argv) < 2:
         usage.constraint()
         sys.exit(1)
 
-    resource1 = argv.pop(0)
-    resource2 = argv.pop(0)
+    role1 = ""
+    role2 = ""
+    if len(argv) > 2:
+        if not utils.is_score_or_opt(argv[2]):
+            if argv[2] == "with":
+                role1 = argv.pop(0).lower().capitalize()
+                resource1 = argv.pop(0)
+            else:
+                resource1 = argv.pop(0)
+
+            argv.pop(0) # Pop 'with'
+
+            if len(argv) == 1:
+                resource2 = argv.pop(0)
+            else:
+                if utils.is_score_or_opt(argv[1]):
+                    resource2 = argv.pop(0)
+                else:
+                    role2 = argv.pop(0).lower().capitalize()
+                    resource2 = argv.pop(0)
+        else:
+            resource1 = argv.pop(0)
+            resource2 = argv.pop(0)
+    else:
+        resource1 = argv.pop(0)
+        resource2 = argv.pop(0)
 
     if not utils.is_valid_constraint_resource(resource1):
         utils.err("Resource '" + resource1 + "' does not exist")
@@ -179,6 +206,10 @@ def colocation_add(argv):
     element.setAttribute("rsc",resource1)
     element.setAttribute("with-rsc",resource2)
     element.setAttribute("score",score)
+    if role1 != "":
+        element.setAttribute("rsc-role", role1)
+    if role2 != "":
+        element.setAttribute("with-rsc-role", role2)
     for nv_pair in nv_pairs:
         element.setAttribute(nv_pair[0], nv_pair[1])
     constraintsElement.appendChild(element)

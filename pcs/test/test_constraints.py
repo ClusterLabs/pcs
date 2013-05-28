@@ -56,6 +56,30 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
+        line = "resource create M1 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M2 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M3 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M4 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M5 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M6 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
         line = "resource group add G1 D0"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
@@ -99,6 +123,31 @@ class ConstraintTest(unittest.TestCase):
         
         output, returnVal = pcs(temp_cib, "constraint rm blahblah")
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
+
+    def testColocationConstraints(self):
+        o, r = pcs(temp_cib, "constraint colocation add D1 D3")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation add D1 D2 100")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation add D4 with D5 100")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation add D4 with D5 100")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation add master M1 with master M2")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation add M3 with M4")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint colocation add slave M1 with started M2 500")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint")
+        print o
         
 if __name__ == "__main__":
     unittest.main()

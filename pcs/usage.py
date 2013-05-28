@@ -504,13 +504,14 @@ Commands:
         List all current colocation constraints (if 'all' is specified show
         the internal constraint id's as well).
 
-    colocation add <source resource> <target resource> [score] [options]
-        Request <source resource> to run on the same node where pacemaker has
-        determined <target resource> should run.  Positive values of score
+    colocation add [role] <src rsc> with [role] <tgt rsc> [score] [options]
+        Request <src resource> to run on the same node where pacemaker has
+        determined <tgt resource> should run.  Positive values of score
         mean the resources should be run on the same node, negative values
         mean the resources should not be run on the same node.  Specifying
-        'INFINITY' (or '-INFINITY') for the score force <source resource> to
-        run (or not run) on <target resource>. (score defaults to "INFINITY")
+        'INFINITY' (or '-INFINITY') for the score force <src resource> to
+        run (or not run) with <tgt resource>. (score defaults to "INFINITY")
+        A role can be master, slave or started (default).
 
     colocation rm <source resource> <target resource>
         Remove colocation constraints with <source resource>

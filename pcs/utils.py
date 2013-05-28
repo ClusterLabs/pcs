@@ -675,6 +675,14 @@ def write_empty_cib(filename):
     f.write(empty_xml)
     f.close()
 
+# Test if 'var' is a score or option (contains an '=')
+def is_score_or_opt(var):
+    if var == "INFINITY" or var == "-INFINITY" or var.isdigit():
+        return True
+    elif var.find('=') != -1:
+        return True
+    return False
+
 def is_systemctl():
     if os.path.exists('/usr/bin/systemctl'):
         return True
