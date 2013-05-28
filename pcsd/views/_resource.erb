@@ -194,7 +194,7 @@
 	  <% end %>
 
 	    <table style="clear:left;float:left;margin-top:25px;">
-	      <% if @myView == "resource" %>
+	      <% if @myView == "resource" and false %>
 	      <tr>
 		<td class="bold">Class:</td>
 		<td class="reg">
@@ -230,6 +230,7 @@
     </table>
     <div id="add_resource" style="display: none;">
       <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
+	<% if false %>
 	<tr>
 	  <td class="bold">Class</td>
 	  <td>
@@ -244,6 +245,7 @@
 	    </select>
 	  </td>
 	</tr>
+	<% end %>
 	<tr>
 	  <td class="bold">Type</td>
 	  <td>
