@@ -61,13 +61,13 @@
 	</tr>
       <% } %>
       <tr>
-	<td class="reg" onclick="show_hide_constraints(this)" colspan=2>
-	  <span class="rightarrow sprites" style="display: none;"></span><span class="downarrow sprites"></span>
+	<td nowrap class="reg" onclick="show_hide_constraints(this)" colspan=2>
+	  <span class="rightarrow sprites"></span><span class="downarrow sprites" style="display: none;"></span>
 	  <div class="bold">Optional Arguments:</div>
 	</td>
       </tr>
       <% @resource.optional_options.each { |name, desc|  %>
-	<tr title="<%=desc[1]%>">
+	<tr title="<%=desc[1]%>" style="display:none;">
 	  <td class="reg">
 	    <%= name %>
 	  </td>
