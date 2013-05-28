@@ -437,7 +437,7 @@ end
 def getConfigOptions2()
   config_options = {}
   general_page = []
-  general_page << ConfigOption.new("Cluster Delay Time", "cluster-delay",  "int", 4, "Seconds") 
+#  general_page << ConfigOption.new("Cluster Delay Time", "cluster-delay",  "int", 4, "Seconds") 
 #  general_page << ConfigOption.new("Batch Limit", "cdt",  "int", 4) 
 #  general_page << ConfigOption.new("Default Action Timeout", "cdt",  "int", 4, "Seconds") 
 #  general_page << ConfigOption.new("During timeout should cluster stop all active resources", "res_stop", "radio", "4", "", ["Yes","No"])
