@@ -26,6 +26,17 @@ Pcs = Ember.Application.createWithMixins({
     else return "display: none;";
   }.property("cur_page"),
 
+  getResourcesFromID: function(resources) {
+    retArray = [];
+    for (var i=0; i < resources.length; i++) {
+      $.each(this.resourcesController.content, function(ind,v) { 
+      	if (v.name == resources[i]) {
+      	  retArray.push(v);
+	}
+      });
+    }
+    return retArray;
+  },
   update_timeout: null,
   update: function(first_run) {
     if (first_run)
@@ -41,8 +52,8 @@ Pcs = Ember.Application.createWithMixins({
 //      url: "/test_status.json",
       dataType: "json",
       success: function(data) {
-	Pcs.nodesController.update(data);
 	Pcs.resourcesController.update(data);
+	Pcs.nodesController.update(data);
 	Pcs.settingsController.update(data);
 	Pcs.set("cluster_settings",data[Object.keys(data)[0]].cluster_settings);
 	Ember.run.next(this,disable_checkbox_clicks);
@@ -73,6 +84,9 @@ Pcs.Router.map(function() {
     this.route('new');
   });
   this.route("Resources", { path: "resources"});
+  this.resource("Nodes", {path: "nodes/:node_id"}, function () {
+    this.route('new');
+  });
   this.route("Nodes", { path: "nodes"});
 //  this.resource("Resource", {path: 'resources/:resource_id'});
   this.route("Manage", {path: "manage"});
@@ -113,6 +127,10 @@ Pcs.NodesRoute = Ember.Route.extend({
   setupController: function(controller, model) {
     Ember.debug("Nodes Route");
     select_menu("NODES");
+  },
+  model: function(params) {
+    Ember.debug("Router Nodes: " + params.node_id);
+    return null;
   }
 });
 
@@ -665,7 +683,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
   load_node: function(node_row, dont_update_hash){
     load_row(node_row, this, 'cur_node', '#node_info_div');
     if (!dont_update_hash)
-      window.location.hash = "#nodes#" + $(node_row).attr("nodeID");
+      window.location.hash = "/nodes/" + $(node_row).attr("nodeID");
   },
 
   update: function(data){
@@ -690,11 +708,9 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	$.each(node_info["resources"], function(key, resource) {
 	  $.each(resource["nodes"], function(node_key, resource_on_node) {
 	    if (resources_on_nodes[resource_on_node])
-	      resources_on_nodes[resource_on_node].push(resource["id"] + " (" +
-							resource["agentname"] + ")");
+	      resources_on_nodes[resource_on_node].push(resource["id"]);
 	    else
-	      resources_on_nodes[resource_on_node] = [resource["id"] + " (" +
-		resource["agentname"] + ")"];
+	      resources_on_nodes[resource_on_node] = [resource["id"]];
 	  });
 	});
       }
@@ -761,7 +777,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  node.set("corosync", corosync_online);
 	  node.set("pacemaker", pacemaker_online);
 	  node.set("cur_node",false);
-	  node.set("running_resources", $.unique(resources_on_nodes[node_id].sort().reverse()));
+	  node.set("running_resources", Pcs.getResourcesFromID($.unique(resources_on_nodes[node_id].sort().reverse())));
 	  node.set("location_constraints", lc_on_nodes[node_id].sort());
 	  node.set("uptime", data[node_id]["uptime"]);
 	  node.set("node_id", data[node_id]["node_id"]);
@@ -779,7 +795,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  corosync: corosync_online,
 	  pacemaker: pacemaker_online,
 	  cur_node: false,
-	  running_resources: $.unique(resources_on_nodes[node_id].sort().reverse()),
+	  running_resources: Pcs.getResourcesFromID($.unique(resources_on_nodes[node_id].sort().reverse())),
 	  location_constraints: lc_on_nodes[node_id].sort(),
 	  uptime: data[node_id]["uptime"],
 	  node_id: data[node_id]["node_id"]

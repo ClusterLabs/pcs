@@ -26,7 +26,7 @@ function menu_show(item,show) {
 // If initial is set to true, we load default (first item) on other pages
 // and load the default item on the specified page if item is set
 function select_menu(menu, item, initial) {
-  Ember.debug("SELECT MENU");
+  Ember.debug("SELECT MENU - "+ menu);
   if (menu == "NODES") {
     Pcs.set('cur_page',"nodes")
     if (item)

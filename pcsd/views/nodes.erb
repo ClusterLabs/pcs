@@ -162,7 +162,7 @@
 		    <table class="datatable">
 		      <tr><th>NAME</th></tr>
 		      {{#if Pcs.nodesController.cur_node.running_resources}}
-		        {{#each res in Pcs.resourcesController.content}}
+		        {{#each res in Pcs.nodesController.cur_node.running_resources}}
 			<tr><td>{{#linkTo Resources.index res}}{{res.name}} ({{res.res_type}}){{/linkTo}}</td></tr>
 		        {{/each}}
 		      {{else}}
