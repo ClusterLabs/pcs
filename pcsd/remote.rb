@@ -31,6 +31,8 @@ def remote(params,request)
     return cluster_start(params)
   when "cluster_stop"
     return cluster_stop(params)
+  when "node_restart"
+    return node_restart(params)
   when "cluster_enable"
     return cluster_enable(params)
   when "cluster_disable"
@@ -93,6 +95,17 @@ def cluster_stop(params)
   else
     puts "Starting Daemons"
     output =  `#{PCS} cluster stop`
+    print output
+    return output
+  end
+end
+
+def node_restart(params)
+  if params[:name]
+    response = send_request_with_token(params[:name], 'node_restart', true)
+  else
+    puts "Restarting Node"
+    output =  `/sbin/reboot`
     print output
     return output
   end

@@ -376,6 +376,11 @@ function setup_node_links() {
     fade_in_out("#node_stop");
     $.post('/remote/cluster_stop', {"name": $.trim(node)});
   });
+  $("#node_restart").click(function() {
+    node = $("#node_info_header_title_name").text();
+    fade_in_out("#node_restart");
+    $.post('/remote/node_restart', {"name": $.trim(node)});
+  });
 }
 
 function setup_resource_links(link_type) {
