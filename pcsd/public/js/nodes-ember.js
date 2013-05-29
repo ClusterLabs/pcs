@@ -130,6 +130,7 @@ Pcs.NodesRoute = Ember.Route.extend({
   },
   model: function(params) {
     Ember.debug("Router Nodes: " + params.node_id);
+    Pcs.opening_node = params.node_id;
     return null;
   }
 });
@@ -804,7 +805,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       var pathname = window.location.pathname.split('/');
 
       if (cur_node_holder == "") {
-	cur_node_name = pathname[pathname.length-1];
+	cur_node_name = Pcs.opening_node;
       } else {
 	cur_node_name = cur_node_holder;
       }
