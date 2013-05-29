@@ -69,7 +69,9 @@ def getCorosyncConfig(node):
 
 def setCorosyncConfig(node,config):
     data = urllib.urlencode({'corosync_conf':config})
-    sendHTTPRequest(node, 'remote/set_corosync_conf', data)
+    (status, data) = sendHTTPRequest(node, 'remote/set_corosync_conf', data)
+    if status != 0:
+        err("Unable to set corosync config")
 
 def startCluster(node):
     sendHTTPRequest(node, 'remote/cluster_start')

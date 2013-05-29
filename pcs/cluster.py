@@ -178,6 +178,7 @@ def check_nodes(nodes):
     
 def corosync_setup(argv,returnConfig=False):
     fedora_config = not utils.is_rhel6()
+    failure = False
     if len(argv) < 2:
         usage.cluster()
         exit(1)
@@ -197,6 +198,10 @@ def corosync_setup(argv,returnConfig=False):
             socket.gethostbyname(node)
         except socket.error:
             print "Warning: Unable to resolve hostname: %s" % node
+            failure = True
+
+    if failure:
+        utils.err("Unable to resolve all hostnames.")
 
     if fedora_config == True:
         f = open(COROSYNC_CONFIG_FEDORA_TEMPLATE, 'r')
