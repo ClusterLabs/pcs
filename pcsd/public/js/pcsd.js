@@ -70,8 +70,6 @@ function select_menu(menu, item, initial) {
     menu_show("configure", false);
   }
 
-  setup_resource_links();
-  setup_node_links();
 }
 
 function create_group() {
@@ -366,6 +364,7 @@ function fade_in_out(id) {
 }
 
 function setup_node_links() {
+  Ember.debug("Setup node links");
   $("#node_start").click(function() {
     node = $("#node_info_header_title_name").text();
     fade_in_out("#node_start");
@@ -384,6 +383,7 @@ function setup_node_links() {
 }
 
 function setup_resource_links(link_type) {
+  Ember.debug("Setup resource links");
   $("#resource_delete_link").click(function () {
     verify_remove("resource", null, "Remove resource", "Resource Removal", curResource(), "/resourcerm");
   });

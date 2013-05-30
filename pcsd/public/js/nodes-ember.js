@@ -64,6 +64,8 @@ Pcs = Ember.Application.createWithMixins({
 	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first(),true);
 	    });
 	    Pcs.selectedNodeController.reset();
+	    setup_node_links();
+	    setup_resource_links();
 	} 
 	hide_loading_screen();
 	clearTimeout(Pcs.update_timeout);
