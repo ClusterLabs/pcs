@@ -61,7 +61,7 @@
 	</tr>
       <% } %>
       <tr>
-	<td nowrap class="reg" onclick="show_hide_constraints(this)" colspan=2>
+	<td id="<%= @new_resource ? "optional_args_new" : "optional_args_existing" %>" nowrap class="reg" onclick="show_hide_constraints(this)" colspan=2>
 	  <span class="rightarrow sprites"></span><span class="downarrow sprites" style="display: none;"></span>
 	  <div class="bold">Optional Arguments:</div>
 	</td>
