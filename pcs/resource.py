@@ -251,7 +251,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
     primitive_values.insert(0,("id",ra_id))
     op_attributes = convert_args_to_operations(op_values, ra_id)
     meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
-    if not ("--force" in utils.pcs_options):
+    if not ("--force" in utils.pcs_options) and not ra_type.startswith("lsb:") and not ra_type.startswith("systemd:"):
         params = convert_args_to_tuples(ra_values)
         bad_opts = utils.validInstanceAttributes(ra_id, params , get_full_ra_type(ra_type, True))
         if len(bad_opts) != 0:

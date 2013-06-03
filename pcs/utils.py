@@ -388,6 +388,20 @@ def is_valid_resource(resource):
         stonith_resource = True
         resource_split = resource.split(":", 2)
         stonith = resource_split[1]
+    elif resource.startswith("lsb:"):
+        resource_split = resource.split(":",2)
+        lsb_ra = resource_split[1]
+        if os.path.isfile("/etc/init.d/" + lsb_ra):
+            return True
+        else:
+            return False
+    elif resource.startswith("systemd:"):
+        resource_split = resource.split(":",2)
+        systemd_ra = resource_split[1]
+        if os.path.isfile("/usr/lib/systemd/system/" + systemd_ra + ".service"):
+            return True
+        else:
+            return False
     else:
         providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
 
