@@ -13,6 +13,7 @@ import constraint
 import settings
 import socket
 import tempfile
+import datetime
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -79,6 +80,8 @@ def cluster_cmd(argv):
         cluster_get_corosync_conf(argv)
     elif (sub_cmd == "destroy"):
         cluster_destroy(argv)
+    elif (sub_cmd == "report"):
+        cluster_report(argv)
     else:
         usage.cluster()
         sys.exit(1)
@@ -506,3 +509,48 @@ def cluster_destroy(argv):
             "pe*.bz2","cib.*"]
     for name in state_files:
         os.system("find /var/lib -name '"+name+"' -exec rm -f \{\} \;")
+
+def cluster_report(argv):
+    if len(argv) != 1:
+        usage.cluster(["report"])
+
+    outfile = argv[0]
+    dest_outfile = outfile + ".tar.bz2"
+    if os.path.exists(dest_outfile):
+        if "--force" not in utils.pcs_options:
+            utils.err(dest_outfile + " already exists, use --force to overwrite")
+        else:
+            try:
+                os.remove(dest_outfile)
+            except OSError, e:
+                utils.err("Unable to remove " + dest_outfile + ": " + e.strerror)
+    crm_report_opts = []
+
+    crm_report_opts.append("-f")
+    if "--from" in utils.pcs_options:
+        crm_report_opts.append(utils.pcs_options["--from"])
+        if "--to" in utils.pcs_options:
+            crm_report_opts.append("-t")
+            crm_report_opts.append(utils.pcs_options["--to"])
+    else:
+        yesterday = datetime.datetime.now() - datetime.timedelta(1)
+        crm_report_opts.append(yesterday.strftime("%Y-%m-%d %H:%M"))
+
+    crm_report_opts.append(outfile)
+    output, retval = utils.run([settings.crm_report] + crm_report_opts)
+    newoutput = ""
+    for line in output.split("\n"):
+        if line.startswith("cat:") or line.startswith("grep") or line.startswith("grep") or line.startswith("tail"):
+            continue
+        if "We will attempt to remove" in line:
+            continue
+        if "-p option" in line:
+            continue
+        if "However, doing" in line:
+            continue
+        if "to diagnose" in line:
+            continue
+        newoutput = newoutput + line + "\n"
+    if retval != 0:
+        utils.err(newoutput)
+    print newoutput

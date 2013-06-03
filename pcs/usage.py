@@ -362,6 +362,12 @@ Commands:
         WARNING: This command permantly removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster.
+
+    report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D" H:M:S"]] dest
+        Create a tarball containing everything needed when reporting cluster
+        problems.  If '--from' and '--to' are not used, the report will include
+        the past 24 hours
+        
 """
     if pout:
         print sub_usage(args, output)

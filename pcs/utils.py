@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import re
 import json
 import settings
+import signal
 
 
 # usefile & filename variables are set in pcs module
@@ -319,6 +320,10 @@ def getHighestnodeid(corosync_conf):
             highest = int(m)
     return highest
 
+# Restore default behavior before starting subprocesses
+def subprocess_setup():
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
 # Run command, with environment and return (output, retval)
 def run(args, ignore_stderr=False):
     env_var = os.environ
@@ -341,9 +346,9 @@ def run(args, ignore_stderr=False):
         if "--debug" in pcs_options:
             print "Running: " + " ".join(args)
         if ignore_stderr:
-            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var)
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var, preexec_fn=subprocess_setup)
         else:
-            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var)
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var, preexec_fn=subprocess_setup)
         output,stderror = p.communicate()
         returnVal = p.returncode
         if "--debug" in pcs_options:
