@@ -145,11 +145,11 @@ def sendHTTPRequest(host, request, data = None, printResult = True):
             print "Response Code: " + e.code
         if printResult:
             if e.code == 401:
-                print "Unable to authenticate to %s - (HTTP error: %d)" % (host,e.code)
+                print "Unable to authenticate to %s - (HTTP error: %d), try running 'pcs cluster auth'" % (host,e.code)
             else:
                 print "Error connecting to %s - (HTTP error: %d)" % (host,e.code)
         if e.code == 401:
-            return (3,"Unable to authenticate to %s - (HTTP error: %d)" % (host,e.code))
+            return (3,"Unable to authenticate to %s - (HTTP error: %d), try running 'pcs cluster auth'" % (host,e.code))
         else:
             return (1,"Error connecting to %s - (HTTP error: %d)" % (host,e.code))
     except urllib2.URLError, e:
