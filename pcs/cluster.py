@@ -80,6 +80,8 @@ def cluster_cmd(argv):
         cluster_get_corosync_conf(argv)
     elif (sub_cmd == "destroy"):
         cluster_destroy(argv)
+    elif (sub_cmd == "verify"):
+        cluster_verify(argv)
     elif (sub_cmd == "report"):
         cluster_report(argv)
     else:
@@ -509,6 +511,29 @@ def cluster_destroy(argv):
             "pe*.bz2","cib.*"]
     for name in state_files:
         os.system("find /var/lib -name '"+name+"' -exec rm -f \{\} \;")
+
+def cluster_verify(argv):
+    nofilename = True
+    if len(argv) == 1:
+        filename = argv.pop(0)
+        nofilename = False
+    elif len(argv) > 1:
+        usage.cluster("verify")
+    
+    options = []
+    if "-V" in utils.pcs_options:
+        options.append("-V")
+    if nofilename:
+        options.append("--live-check")
+    else:
+        options.append("--xml-file")
+        options.append(filename)
+
+    output, retval = utils.run([settings.crm_verify] + options)
+
+    if output != "":
+        print output
+    return retval
 
 def cluster_report(argv):
     if len(argv) != 1:
