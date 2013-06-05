@@ -38,12 +38,13 @@ def status_cmd(argv):
         sys.exit(1)
 
 def full_status():
-    cluster_name = utils.getClusterName()
-    print "Cluster name: %s" % cluster_name
     (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):
-        utils.err("running crm_mon, is pacemaker running?")
+        utils.err("cluster is not currently running on this node")
+
+    cluster_name = utils.getClusterName()
+    print "Cluster name: %s" % cluster_name
 
     if utils.stonithCheck():
         print("WARNING: no stonith devices and stonith-enabled is not false")
@@ -154,7 +155,7 @@ def cluster_status(argv):
     (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):
-        utils.err("running crm_mon, is pacemaker running?")
+        utils.err("cluster is not currently running on this node")
 
     first_empty_line = False
     print "Cluster Status:"
