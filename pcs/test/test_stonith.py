@@ -65,6 +65,9 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == " Resource: test1 (class=stonith type=fence_noxist)\n Resource: test2 (class=stonith type=fence_ilo)\n Resource: test3 (class=stonith type=fence_ilo)\n  Attributes: ipaddr=test login=testA \n",[output]
 
+        output, returnVal = pcs(temp_cib, 'stonith create test-fencing fence_apc pcmk_host_list="rhel7-node1 rhel7-node2" op monitor interval=60s')
+        assert returnVal == 0
+        assert output == ""
 
     def testStonithFenceConfirm(self):
         output, returnVal = pcs(temp_cib, "stonith fence blah blah")
@@ -78,7 +81,6 @@ class StonithTest(unittest.TestCase):
     def testPcmkHostList(self):
         output, returnVal = pcs(temp_cib, "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb'")
         returnVal == 0
-        print output
         assert output == ""
 
         output, returnVal = pcs(temp_cib, "stonith show F1")
