@@ -1310,7 +1310,11 @@ def print_instance_vars_string(node, spaces):
     output = ""
     ivars = node.findall("instance_attributes/nvpair")
     for ivar in ivars:
-        output += ivar.attrib["name"] + "=" + ivar.attrib["value"] + " "
+        name = ivar.attrib["name"]
+        value = ivar.attrib["value"]
+        if value.find(" ") != -1:
+            value = '"' + value + '"'
+        output += name + "=" + value + " "
     if output != "":
         print spaces + " Attributes: " + output
 

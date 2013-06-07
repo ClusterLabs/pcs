@@ -75,6 +75,17 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 1
         assert output == "Error: must specify one (and only one) node to confirm fenced\n"
 
+    def testPcmkHostList(self):
+        output, returnVal = pcs(temp_cib, "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb'")
+        returnVal == 0
+        print output
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "stonith show F1")
+        returnVal == 0
+        assert output == ' Resource: F1 (class=stonith type=fence_apc)\n  Attributes: pcmk_host_list="nodea nodeb" \n',[output]
+
+
 if __name__ == "__main__":
     unittest.main()
 
