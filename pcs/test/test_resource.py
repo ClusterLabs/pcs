@@ -505,6 +505,19 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == " Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n", [output]
 
+    def testLSBResource(self):
+        output, returnVal  = pcs(temp_cib, "resource create D2 lsb:network")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnval = pcs(temp_cib, "resource update D2 blah=blah")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnval = pcs(temp_cib, "resource update D2")
+        assert returnVal == 0
+        assert output == "", [output]
+
 if __name__ == "__main__":
     unittest.main()
 

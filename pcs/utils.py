@@ -375,6 +375,11 @@ def is_valid_constraint_resource(resource_id):
             does_exist("//clone[@id='"+resource_id+"']") or \
             does_exist("//master[@id='"+resource_id+"']")
 
+def does_resource_have_options(ra_type):
+    if ra_type.startswith("ocf:") or ra_type.startswith("stonith:") or ra_type.find(':') == -1:
+        return True
+    return False
+
 # Check and see if the specified resource (or stonith) type is present on the
 # file system and properly responds to a meta-data request
 def is_valid_resource(resource):
