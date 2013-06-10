@@ -427,11 +427,13 @@ def cluster_node(argv):
                 corosync_conf = output
         if corosync_conf != None:
             utils.setCorosyncConfig(node, corosync_conf)
-            utils.startCluster(node)
+            if "--start" in utils.pcs_options:
+                utils.startCluster(node)
         else:
             utils.err("Unable to update any nodes")
     else:
         nodesRemoved = False
+        stop_cluster([node])
         output, retval = utils.run(["crm_node", "--force","-R", node])
 
         for my_node in utils.getNodesFromCorosyncConf():

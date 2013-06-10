@@ -303,7 +303,9 @@ def removeNodeFromCorosync(node):
                 print new_corosync_conf
                 setCorosyncConf(new_corosync_conf)
                 run(["corosync-cmapctl", "-D", "nodelist.node." +
-                    str(nodeid) + "."])
+                    str(int(nodeid)-1) + ".ring0_addr"])
+                run(["corosync-cmapctl", "-D", "nodelist.node." +
+                    str(int(nodeid)-1) + ".nodeid"])
 
     if error:
         return False
