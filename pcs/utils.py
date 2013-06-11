@@ -188,7 +188,9 @@ def getCorosyncConf(conf=None):
         return ""
     return out
 
-def setCorosyncConf(corosync_config, conf_file=settings.corosync_conf_file):
+def setCorosyncConf(corosync_config, conf_file=None):
+    if conf_file == None:
+        conf_file = settings.corosync_conf_file
     try:
         f = open(conf_file,'w')
         f.write(corosync_config)

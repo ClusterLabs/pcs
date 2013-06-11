@@ -29,7 +29,10 @@ def cluster_cmd(argv):
     if (sub_cmd == "help"):
         usage.cluster(argv)
     elif (sub_cmd == "setup"):
-        corosync_setup(argv)
+        if "--name" in utils.pcs_options:
+            corosync_setup([utils.pcs_options["--name"]] + argv)
+        else:
+            utils.err("A cluster name (--name <name>) is required to setup a cluster")
     elif (sub_cmd == "sync"):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     elif (sub_cmd == "status"):

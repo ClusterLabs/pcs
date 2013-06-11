@@ -20,6 +20,7 @@ def main(argv):
     real_argv = []
     try:
         # pull out negative number arguments and add them back after getopt
+        # Need to improve to not re-add arguments to '--' options
         prev_arg = ""
         for arg in argv:
             if len(arg) > 0 and arg[0] == "-":
@@ -28,12 +29,13 @@ def main(argv):
                 else:
                     modified_argv.append(arg)
             else:
-                if prev_arg != "-f" and prev_arg != "-p" and prev_arg != "-u":
+                if prev_arg != "-f" and prev_arg != "-p" and prev_arg != "-u"\
+                        and prev_arg != "--corosync_conf" and prev_arg != "--name":
                     real_argv.append(arg)
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:V", ["local","start","all","clone","cloneopt=","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp","off","from=","to="])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:V", ["local","start","all","clone","cloneopt=","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp","off","from=","to=", "name="])
     except getopt.GetoptError, err:
         print err
         usage.main()

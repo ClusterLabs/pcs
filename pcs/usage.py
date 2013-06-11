@@ -269,7 +269,7 @@ Commands:
         configured in corosync.conf if no nodes are specified (authorization
         tokens are stored in ~/.pcs/token)
 
-    setup [--start] [--local] <cluster name> <node1> [node2] [...]
+    setup [--start] [--local] --name <cluster name> <node1> [node2] [..]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes
