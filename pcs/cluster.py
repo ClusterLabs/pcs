@@ -244,7 +244,7 @@ def corosync_setup(argv,returnConfig=False):
             output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--addnode", node])
             if retval != 0:
                 print output
-                utils.err("error adding node: %s", node)
+                utils.err("error adding node: %s" % node)
 
     if "--start" in utils.pcs_options:
         start_cluster([])

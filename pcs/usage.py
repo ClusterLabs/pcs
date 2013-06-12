@@ -17,11 +17,9 @@ def full_usage():
 def strip_extras(text):
     global examples
     ret = ""
-    ret_ex = ""
     group_name = text.split(" ")[2]
     in_commands = False
     in_examples = False
-    in_com = False
     lines = text.split("\n")
     minicmd = ""
 
