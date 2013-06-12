@@ -458,11 +458,9 @@ Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:
-    [list|show]
-        List all current location, order and colocation constraints
-
-    all
-        List all current location, order and colocation constraints with ids
+    [list|show] --all
+        List all current location, order and colocation constraints, if --all
+        is specified also list the constraint ids.
 
     location <rsc> prefers <node[=score]>...
         Create a location constraint on a resource to prefer the specified

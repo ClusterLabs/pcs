@@ -116,6 +116,22 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "constraint")
         assert returnVal == 0 and output == "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n", output
 
+    def testAllConstraints(self):
+        output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
+        assert returnVal == 0 and output == "", output
+
+        output, returnVal = pcs(temp_cib, "constraint order D4 then D5")
+        assert returnVal == 0 and output == "Adding D4 D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n", output
+
+        output, returnVal = pcs(temp_cib, "constraint colocation add D4 with D5")
+        assert returnVal == 0 and output == "", output
+
+        output, returnVal = pcs(temp_cib, "constraint --all")
+        assert returnVal == 0 and output == "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start D4 then start D5 (Mandatory) (id:order-D4-D5-mandatory)\nColocation Constraints:\n  D4 with D5 (INFINITY) (id:colocation-D4-D5-INFINITY)\n", output
+
+        output, returnVal = pcs(temp_cib, "constraint show --all")
+        assert returnVal == 0 and output == "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start D4 then start D5 (Mandatory) (id:order-D4-D5-mandatory)\nColocation Constraints:\n  D4 with D5 (INFINITY) (id:colocation-D4-D5-INFINITY)\n", output
+
     def testLocationConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output

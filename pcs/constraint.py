@@ -67,10 +67,6 @@ def constraint_cmd(argv):
         location_show(argv)
         order_show(argv)
         colocation_show(argv)
-    elif (sub_cmd == "all"):
-        location_show(["all"])
-        order_show(["all"])
-        colocation_show(["all"])
     elif (sub_cmd == "ref"):
         constraint_ref(argv)
     else:
@@ -78,7 +74,7 @@ def constraint_cmd(argv):
         sys.exit(1)
 
 def colocation_show(argv):
-    if (len(argv) != 0 and argv[0] == "all"):
+    if "--all" in utils.pcs_options:
         showDetail = True
     else:
         showDetail = False
@@ -226,7 +222,7 @@ def colocation_add(argv):
         print output
 
 def order_show(argv):
-    if (len(argv) != 0 and argv[0] == "all"):
+    if "--all" in utils.pcs_options:
         showDetail = True
     else:
         showDetail = False
@@ -400,7 +396,7 @@ def location_show(argv):
     if (len(argv) != 0 and argv[0] == "nodes"):
         byNode = True
         showDetail = False
-    elif (len(argv) != 0 and argv[0] == "all"):
+    elif "--all" in utils.pcs_options:
         byNode = False
         showDetail = True
     else:
