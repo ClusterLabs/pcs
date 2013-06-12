@@ -556,6 +556,31 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "", [output]
 
+    def testNoMoveMSClone(self):
+        output, returnVal  = pcs(temp_cib, "resource create D0 Dummy")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource create D1 Dummy --clone")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource create D2 Dummy --master")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource move D1")
+        assert returnVal == 0
+#        assert output == "Error: unable to move Clone resources", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource move D2")
+        assert returnVal == 0
+#        assert output == "Error: unable to move Master/Slave resources", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource --all")
+        assert returnVal == 0
+        assert output == ' Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n', [output]
+
 if __name__ == "__main__":
     unittest.main()
 
