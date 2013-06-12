@@ -467,6 +467,35 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == " Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Attributes: test=testC test2=test2a \n  Meta Attrs: test5=test5a test7=test7a \n  Operations: monitor interval=35 (D0-monitor-interval-35)\n Group: TestRG\n  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2 \n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Attributes: test=testA test2=test2a \n   Meta Attrs: d1meta=superd1meta \n   Operations: monitor interval=30 (D1-monitor-interval-30)\n", [output]
 
+    def testMSGroup(self):
+        output, returnVal  = pcs(temp_cib, "resource create D0 Dummy")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource create D1 Dummy")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource group add Group D0 D1")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource master GroupMaster Group")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource --all")
+        assert returnVal == 0
+        assert output == ' Master: GroupMaster\n  Group: Group\n   Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n', [output]
+
+        output, returnVal = pcs(temp_cib, "resource delete D0")
+        assert returnVal == 0
+        assert output == "Deleting Resource - D0\n", [output]
+
+        output, returnVal = pcs(temp_cib, "resource delete D1")
+        assert returnVal == 0
+        assert output == 'Deleting Resource (and group and M/S) - D1\n', [output]
+
     def testCloneMaster(self):
         output, returnVal  = pcs(temp_cib, "resource create D0 Dummy")
         assert returnVal == 0
@@ -477,6 +506,15 @@ class ResourceAdditionTest(unittest.TestCase):
         output, returnVal  = pcs(temp_cib, "resource create D2 Dummy")
         assert returnVal == 0
         assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource clone D0")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "resource unclone D0")
+        assert returnVal == 0
+        assert output == "", [output]
+
         output, returnVal = pcs(temp_cib, "resource clone D0")
         assert returnVal == 0
         assert output == "", [output]

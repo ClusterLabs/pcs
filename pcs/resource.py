@@ -964,10 +964,10 @@ def resource_master_remove(argv):
     utils.replace_cib_configuration(dom)
 
 def resource_remove(resource_id, output = True):
-    group = utils.get_cib_xpath('//resources/group/primitive[@id="'+resource_id+'"]/..')
+    group = utils.get_cib_xpath('//group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0
-    master = utils.get_cib_xpath('//resources/master/primitive[@id="'+resource_id+'"]/..')
-    clone = utils.get_cib_xpath('//resources/clone/primitive[@id="'+resource_id+'"]/..')
+    master = utils.get_cib_xpath('//master/primitive[@id="'+resource_id+'"]/..')
+    clone = utils.get_cib_xpath('//clone/primitive[@id="'+resource_id+'"]/..')
 
     if not utils.does_exist('//resources/descendant::primitive[@id="'+resource_id+'"]'):
         if utils.does_exist('//resources/master[@id="'+resource_id+'"]'):
@@ -983,6 +983,7 @@ def resource_remove(resource_id, output = True):
         if output == True:
             print "Removing Constraint - " + c
         constraint.constraint_rm([c])
+
     if (group == "" or num_resources_in_group > 1):
         if clone != "":
             args = ["cibadmin", "-o", "resources", "-D", "--xml-text", clone]
@@ -996,9 +997,16 @@ def resource_remove(resource_id, output = True):
         if retVal != 0:
             utils.err("unable to remove resource: %s, it may still be referenced in constraints." % resource_id)
     else:
-        args = ["cibadmin", "-o", "resources", "-D", "--xml-text", group]
+        top_master = utils.get_cib_xpath('//master/group/primitive[@id="'+resource_id+'"]/../..')
+        if top_master != "":
+            to_remove = top_master
+            msg = "and group and M/S"
+        else:
+            to_remove = group
+            msg = "and group"
+        args = ["cibadmin", "-o", "resources", "-D", "--xml-text", to_remove]
         if output == True:
-            print "Deleting Resource (and group) - " + resource_id
+            print "Deleting Resource ("+msg+") - " + resource_id
         cmdoutput,retVal = utils.run(args)
         if retVal != 0:
             if output == True:
