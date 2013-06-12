@@ -6,11 +6,11 @@ def full_usage():
     out = ""
     out += main(False)
     out += strip_extras(resource([],False))
-    out += strip_extras([],cluster(False))
-    out += strip_extras([],stonith(False))
-    out += strip_extras([],property(False))
-    out += strip_extras([],constraint(False))
-    out += strip_extras([],status(False))
+    out += strip_extras(cluster([],False))
+    out += strip_extras(stonith([],False))
+    out += strip_extras(property([],False))
+    out += strip_extras(constraint([],False))
+    out += strip_extras(status([],False))
     print out.strip()
     print "Examples:\n" + examples.replace(" \ ","")
 
@@ -43,7 +43,7 @@ def strip_extras(text):
                     if in_examples:
                         minicmd = line.lstrip() + "  "
                     else:
-                        minicmd = "    " + group_name + " " + line.lstrip() + "  "
+                        minicmd = "    " + " " + line.lstrip() + "  "
                 else:
                     minicmd += line.lstrip() + " "
             else:
@@ -148,11 +148,10 @@ Commands:
 
     create <resource id> <class:provider:type|type> [resource options]
            [op <operation action> <operation options> [<operation action>
-           <operation options>]...] [meta <meta options>...]
-        Create specified resource.  If --clone is specified a clone resource
-        is created (with options specified by
-        --cloneopt <clone_option>=<value>), if --master is specified a
-        master/slave resource is created.
+           <operation options>]...] [meta <meta options>...] [--clone|--master]
+        Create specified resource.  If --clone is used a clone resource is
+        created (with options specified by --cloneopt <clone_option>=<value>),
+        if --master is specified a master/slave resource is created.
 
     standards
         List available resource agent standards
@@ -358,8 +357,9 @@ Commands:
         Get the corosync.conf from the specified node
 
     destroy
-        Permanently destroy the cluster, killing all corosync/pacemaker
-        processes removing all cib files and corosync.conf file.
+        Permanently destroy the cluster on the current node, killing all
+        corosync/pacemaker processes removing all cib files and the
+        corosync.conf file.
         WARNING: This command permantly removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster.
