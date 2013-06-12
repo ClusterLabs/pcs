@@ -689,7 +689,7 @@ def getClusterName():
 
     return ""
 
-def write_empty_cib(filename):
+def write_empty_cib(cibfile):
 
     empty_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <cib admin_epoch="0" epoch="1" num_updates="1" validate-with="pacemaker-1.2">
@@ -701,7 +701,7 @@ def write_empty_cib(filename):
   </configuration>
   <status/>
 </cib>"""
-    f = open(filename, 'w')
+    f = open(cibfile, 'w')
     f.write(empty_xml)
     f.close()
 

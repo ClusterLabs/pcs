@@ -27,8 +27,6 @@ def status_cmd(argv):
         actions_status(argv)
     elif (sub_cmd == "pcsd"):
         cluster.cluster_gui_status(argv)
-    elif (sub_cmd == "token"):
-        token_status(argv)
     elif (sub_cmd == "xml"):
         xml_status()
     elif (sub_cmd == "corosync"):
