@@ -157,11 +157,13 @@ def resource_cmd(argv):
 # List available resources
 # TODO make location more easily configurable
 def resource_list_available(argv):
+    ret = ""
     if len(argv) != 0:
         filter_string = argv[0]
     else:
         filter_string = ""
 
+# ocf agents
     os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
     providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
     for provider in providers:
@@ -170,7 +172,7 @@ def resource_list_available(argv):
             if resource.startswith(".") or resource == "ocf-shellfuncs":
                 continue
             full_res_name = "ocf:" + provider + ":" + resource
-            if full_res_name.count(filter_string) == 0:
+            if full_res_name.lower().count(filter_string.lower()) == 0:
                 continue
             metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
             if metadata == False:
@@ -184,7 +186,30 @@ def resource_list_available(argv):
             except xml.parsers.expat.ExpatError:
                 sd = ""
             finally:
-                print full_res_name + sd
+                ret += full_res_name + sd + "\n"
+# lsb agents
+    lsb_dir = "/etc/init.d/"
+    agents = sorted(os.listdir(lsb_dir))
+    for agent in agents:
+        if os.access(lsb_dir + agent, os.X_OK):
+            ret += "lsb:" + agent + "\n"
+# systemd agents
+    agents, retval = utils.run(["systemctl", "list-unit-files", "--full"])
+    agents = agents.split("\n")
+
+    for agent in agents:
+        match = re.search(r'^([\S]*)\.service',agent)
+        if match:
+            ret += "systemd:" + match.group(1) + "\n"
+
+    if filter_string != "":
+        rlines = ret.split("\n")
+        for rline in rlines:
+            if rline.lower().find(filter_string.lower()) != -1:
+                print rline
+    else:
+        print ret,
+
 
 def resource_list_options(resource):
     found_resource = False
