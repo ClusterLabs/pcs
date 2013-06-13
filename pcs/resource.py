@@ -815,7 +815,7 @@ def resource_clone_create(argv, update = False):
     output, retval = utils.run(args)
 
     if retval != 0:
-        utils.err("unable to create clone\n" + outptu)
+        utils.err("unable to create clone\n" + output)
 
 def resource_clone_master_remove(argv):
     if len(argv) != 1:
