@@ -697,6 +697,8 @@ def convert_args_to_instance_variables(ra_values, ra_id):
     ret = ("instance_attributes", [[("id"),(attribute_id)]], ivs)
     return [ret]
 
+# Passed an array of strings ["a=b","c=d"], return array of tuples
+# [("a","b"),("c","d")]
 def convert_args_to_tuples(ra_values):
     ret = []
     for ra_val in ra_values:

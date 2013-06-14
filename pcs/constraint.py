@@ -1,7 +1,9 @@
 import sys
 import usage
 import utils
+import resource
 import xml.dom.minidom
+import xml.etree.ElementTree as ET
 from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
 from collections import defaultdict
@@ -69,6 +71,8 @@ def constraint_cmd(argv):
         colocation_show(argv)
     elif (sub_cmd == "ref"):
         constraint_ref(argv)
+    elif (sub_cmd == "rule"):
+        constraint_rule(argv)
     else:
         usage.constraint()
         sys.exit(1)
@@ -414,6 +418,7 @@ def location_show(argv):
     rschashon = {}
     rschashoff = {}
     ruleshash = defaultdict(list)
+    exphash = defaultdict(list)
     all_loc_constraints = constraintsElement.getElementsByTagName('rsc_location')
 
     print "Location Constraints:"
@@ -422,16 +427,28 @@ def location_show(argv):
         lc_rsc = rsc_loc.getAttribute("rsc")
         lc_id = rsc_loc.getAttribute("id")
         lc_score = rsc_loc.getAttribute("score")
+        lc_name = "Resource " + lc_rsc
+        if "--all" in utils.pcs_options:
+            lc_name += " (id:" + lc_id + ")" 
 
         rules = rsc_loc.getElementsByTagName('rule')
         if len(rules) > 0:
             for rule in rules:
                 rule_score = rule.getAttribute("score")
-                for exp in rule.getElementsByTagName('expression'):
-                    attr = exp.getAttribute("attribute")
-                    operation = exp.getAttribute("operation")
-                    value = exp.getAttribute("value")
-                    ruleshash[lc_rsc].append([lc_id,"%s %s %s" % (attr, operation, value), rule_score])
+                rule_string = ""
+                for n,v in rule.attributes.items():
+                    if n != "id":
+                        rule_string += n + "=" + v + " " 
+                rule_id = rule.getAttribute("id")
+                ruleshash[lc_name].append([rule_id, rule_string]) 
+                for exp in rule.childNodes:
+                    if exp.nodeType == xml.dom.minidom.Node.TEXT_NODE:
+                        continue
+                    exp_string = ""
+                    for n,v in exp.attributes.items():
+                        if n != "id":
+                            exp_string += n + "=" + v + " " 
+                    exphash[rule_id].append([exp.getAttribute("id"),exp_string])
 
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
 # rsc_location)
@@ -518,11 +535,18 @@ def location_show(argv):
                         print "(id:"+options[0]+")",
                 print ""
     for rsc in ruleshash:
-        for res_id,rule,score in ruleshash[rsc]:
-            print "    Rule: " + rule + " (score:%s)" % (score),
+        print "    Location Constraint: " + rsc
+        for res_id,rule in ruleshash[rsc]:
+            print "      Rule: " + rule,
             if showDetail:
                 print "(id:%s)" % (res_id),
             print ""
+            for exp_id,exp in exphash[res_id]:
+                print "        Expression: " + exp,
+                if showDetail:
+                    print "(id:%s)" % (exp_id),
+                print ""
+
 
 def location_prefer(argv):
     rsc = argv.pop(0)
@@ -741,3 +765,100 @@ def constraint_resource_update(old_id):
         update = dom.getElementsByTagName("constraints")[0].toxml()
         output, retval = utils.run(["cibadmin", "--replace", "-o", "constraints", "-X", update])
 
+def constraint_rule(argv):
+    if len(argv) < 2:
+        usage.constraint("rule")
+        sys.exit(1)
+
+    found = False
+    command = argv.pop(0)
+
+
+    constraint_id = None
+    rule_id = None
+    cib = utils.get_cib_etree()
+
+    if command == "add":
+        constraint_id = argv.pop(0)
+        constraint = None
+
+        rule_type = "expression"
+        if len(argv) != 0:
+            if argv[1].find('=') == -1:
+                rule_type = argv[1]
+
+        if rule_type != "expression" and rule_type != "date_expression":
+            utils.err("rule_type must either be expression or date_expression")
+
+        for a in cib.findall(".//configuration//"):
+            if a.get("id") == constraint_id and a.tag == "rsc_location":
+                found = True
+                constraint = a
+
+        if not found:
+            utils.err("Unable to find constraint: " + constraint_id)
+
+        rule = ET.SubElement(constraint,"rule")
+        expression = ET.SubElement(rule,rule_type)
+        args = resource.convert_args_to_tuples(argv)
+        dict_args = dict()
+        for k,v in args:
+            dict_args[k] = v
+        if rule_type == "expression": 
+            if "operation" not in dict_args or "attribute" not in dict_args:
+                utils.err("with rule_type: expression you must specify an attribute and operation")
+        elif rule_type == "date_expression":
+            if "operation" not in dict_args or ("start" not in dict_args and "stop" not in dict_args):
+                utils.err("with rule_type: date_expression you must specify an operation and a start/end")
+
+        for arg in args:
+            if arg[0] == "id" or arg[0] == "score":
+                rule.set(arg[0], arg[1])
+            else:
+                expression.set(arg[0],arg[1])
+
+        if rule.get("score") == None and rule.get("score-attribute") == None:
+            rule.set("score", "INFINITY")
+
+        dom = utils.get_cib_dom()
+        if rule.get("id") == None:
+            rule.set("id", utils.find_unique_id(dom,constraint.get("id") + "-rule"))
+        if expression.get("id") == None:
+            expression.set("id", utils.find_unique_id(dom,rule.get("id") + "-expr"))
+        if "score" in constraint.attrib:
+            del constraint.attrib["score"]
+        if "node" in constraint.attrib:
+            del constraint.attrib["node"]
+
+        utils.replace_cib_configuration(cib)
+
+    elif command == "rm":
+        temp_id = argv.pop(0)
+        constraints = cib.find('.//constraints')
+        loc_cons = cib.findall('.//rsc_location')
+
+        rules = cib.findall('.//rule')
+        for loc_con in loc_cons:
+            for rule in loc_con:
+                if rule.get("id") == temp_id:
+                    if len(loc_con) > 1:
+                        print "Removing Rule:",rule.get("id")
+                        loc_con.remove(rule)
+                        found = True
+                        break
+                    else:
+                        print "Removing Constraint:",loc_con.get("id") 
+                        constraints.remove(loc_con)
+                        found = True
+                        break
+
+            if found == True:
+                break
+
+        if found:
+            utils.replace_cib_configuration(cib)
+        else:
+            utils.err("unable to find rule with id: %s" % temp_id)
+    else:
+        usage.constraint("rule")
+        sys.exit(1)

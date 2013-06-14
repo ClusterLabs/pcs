@@ -530,6 +530,16 @@ Commands:
 
     ref [resource]...
         List constraints referencing specified resource
+
+    rule add <constraint id> [<rule type>] [score=<score>] [id=<rule id>]
+        <expression|expression|date options>...
+        Add a rule to a constraint, if score is omitted it defaults to
+        INFINITY, if id is omitted one is generated from the constraint id.
+        The <rule type> should be 'expression' or 'date_expression'
+
+    rule rm <rule id>
+        Remove a rule if a rule id is specified, if rule is last rule in its
+        constraint, the constraint will be removed
 """
     if pout:
         print sub_usage(args, output)

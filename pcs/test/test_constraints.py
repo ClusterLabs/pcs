@@ -184,6 +184,41 @@ class ConstraintTest(unittest.TestCase):
         o, r = pcs(temp_cib, "constraint")
         assert r == 0 and o == 'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  D4 with D5 (100)\n  M1 with M2 (rsc-role:Master) (with-rsc-role:Master)\n  M3 with M4\n  M5 with M6 (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7 with M8 (rsc-role:Started) (with-rsc-role:Master)\n  M9 with M10 (rsc-role:Slave) (with-rsc-role:Started)\n', [o]
         
+
+    def testLocationConstraintRule(self):
+        o, r = pcs(temp_cib, "constraint location D1 prefers rh7-1")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint location D2 prefers rh7-2")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY attribute=#uname operation=eq")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY attribute=#uname operation=eq")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY attribute=#uname operation=eq")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint --all")
+        assert r == 0 and o == 'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\n  Resource: D1\n    Location Constraint: Resource D1 (id:location-D1-rh7-1-INFINITY)\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-1) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-1-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-2) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-2-expr) \nOrdering Constraints:\nColocation Constraints:\n', [o]
+        
+        o, r = pcs(temp_cib, "constraint rule rm location-D1-rh7-1-INFINITY-rule-1")
+        assert r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n", o
+        
+        o, r = pcs(temp_cib, "constraint rule rm location-D1-rh7-1-INFINITY-rule-2")
+        assert r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n", o
+
+        o, r = pcs(temp_cib, "constraint --all")
+        assert r == 0 and o == 'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\n  Resource: D1\n    Location Constraint: Resource D1 (id:location-D1-rh7-1-INFINITY)\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-expr) \nOrdering Constraints:\nColocation Constraints:\n', [o]
+
+        o, r = pcs(temp_cib, "constraint rule rm location-D1-rh7-1-INFINITY-rule")
+        assert r == 0 and o == "Removing Constraint: location-D1-rh7-1-INFINITY\n", o
+
+        o, r = pcs(temp_cib, "constraint --all")
+        assert r == 0 and o == 'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\nOrdering Constraints:\nColocation Constraints:\n', [o]
+
 if __name__ == "__main__":
     unittest.main()
 

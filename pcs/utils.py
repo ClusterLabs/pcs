@@ -492,7 +492,11 @@ def get_cib_etree():
 
 # Replace only configuration section of cib with dom passed
 def replace_cib_configuration(dom):
-    output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-X", dom.toxml()])
+    if type(dom) == xml.etree.ElementTree.Element:
+        new_dom = ET.tostring(dom)
+    else:
+        new_dom = dom.toxml()
+    output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-X", new_dom])
     if retval != 0:
         err("Unable to update cib\n"+output)
 
