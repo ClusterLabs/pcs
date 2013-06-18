@@ -2,14 +2,14 @@ PCS - Pacemaker/Corosync configuration system
 
 Quick install
 
-# tar -xzvf pcs-0.9.34.tar.gz
-# cd pcs-0.9.34
+# tar -xzvf pcs-0.9.48.tar.gz
+# cd pcs-0.9.48
 # make install
 
 This will install pcs into /usr/sbin/pcs
 
 To create a cluster run the following commands on all nodes (replacing node1, node2, node3 with a list of nodes in the cluster.
-# pcs cluster setup --local cluster_name node1 node2 node3
+# pcs cluster setup --local --name cluster_name node1 node2 node3
 
 Then run the following command on all nodes:
 # pcs cluster start
