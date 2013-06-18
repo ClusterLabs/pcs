@@ -119,7 +119,7 @@ def cluster_auth(argv):
         auth_nodes(argv)
 
 def cluster_token(argv):
-    if len(argv) >= 1:
+    if len(argv) > 1:
         utils.err("Must specify only one node")
     elif len(argv) == 0:
         utils.err("Must specify a node to get authorization token from")
