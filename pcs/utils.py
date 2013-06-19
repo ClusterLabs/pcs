@@ -239,9 +239,11 @@ def getCorosyncActiveNodes():
 def addNodeToCorosync(node):
 # Before adding, make sure node isn't already in corosync.conf or in running
 # corosync process
+    num_nodes_in_conf = 0
     for c_node in getNodesFromCorosyncConf():
         if c_node == node:
             err("node already exists in corosync.conf")
+        num_nodes_in_conf = num_nodes_in_conf + 1
     for c_node in getCorosyncActiveNodes():
         if c_node == node:
             err("Node already exists in running corosync")
@@ -267,6 +269,8 @@ def addNodeToCorosync(node):
         new_corosync_conf += "        nodeid: %d\n" % (new_nodeid)
         new_corosync_conf += "       }\n"
         new_corosync_conf += corosync_conf[count:]
+        if num_nodes_in_conf == 2:
+            new_corosync_conf = rmQuorumOption(new_corosync_conf,("two_node","1"))
         setCorosyncConf(new_corosync_conf)
 
         run(["corosync-cmapctl", "-s", "nodelist.node." +
@@ -282,10 +286,11 @@ def addNodeToCorosync(node):
 def removeNodeFromCorosync(node):
     error = False
     node_found = False
+    num_nodes_in_conf = 0
     for c_node in getNodesFromCorosyncConf():
         if c_node == node:
             node_found = True
-            break
+        num_nodes_in_conf = num_nodes_in_conf + 1
 
     if not node_found:
         return False
@@ -302,7 +307,8 @@ def removeNodeFromCorosync(node):
                     error = True
                     break
                 new_corosync_conf = "\n".join(corosync_conf[0:x] + corosync_conf[x+4:])
-                print new_corosync_conf
+                if num_nodes_in_conf == 3:
+                    new_corosync_conf = addQuorumOption(new_corosync_conf,("two_node","1"))
                 setCorosyncConf(new_corosync_conf)
                 run(["corosync-cmapctl", "-D", "nodelist.node." +
                     str(int(nodeid)-1) + ".ring0_addr"])
@@ -313,6 +319,60 @@ def removeNodeFromCorosync(node):
         return False
     else:
         return True
+
+# Adds an option to the quorum section to the corosync.conf passed in and
+# returns a string containing the updated corosync.conf
+# corosync_conf is a string containing the full corosync.conf 
+# option is a tuple with (option, value)
+def addQuorumOption(corosync_conf,option):
+    lines = corosync_conf.split("\n")
+    newlines = []
+    output = ""
+    done = False
+
+    inQuorum = False
+    for line in lines:
+        if inQuorum and line.startswith(option[0] + ":"):
+            line = option[0] + ": " + option[1]
+            done = True
+        if line.startswith("quorum {"):
+            inQuorum = True
+        newlines.append(line)
+
+    if not done:
+        inQuorum = False
+        for line in newlines:
+            if inQuorum and line.startswith("provider:"):
+                line = line + "\n" + option[0] + ": " + option[1]
+                done = True
+            if line.startswith("quorum {") and not done:
+                inQuorum = True
+            if line.startswith("}") and inQuorum:
+                inQuorum = False
+            if not inQuorum or not line == "":
+                output = output + line + "\n"
+
+    return output.rstrip('\n') + "\n"
+
+# Removes an option in the quorum section of the corosync.conf passed in and
+# returns a string containing the updated corosync.conf
+# corosync_conf is a string containing the full corosync.conf 
+# option is a tuple with (option, value)
+def rmQuorumOption(corosync_conf,option):
+    lines = corosync_conf.split("\n")
+    newlines = []
+    output = ""
+    done = False
+
+    inQuorum = False
+    for line in lines:
+        if inQuorum and line.startswith(option[0] + ":"):
+            continue
+        if line.startswith("quorum {"):
+            inQuorum = True
+        output = output + line + "\n"
+
+    return output.rstrip('\n') + "\n"
 
 def getHighestnodeid(corosync_conf):
     highest = 0

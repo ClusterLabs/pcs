@@ -229,8 +229,13 @@ def corosync_setup(argv,returnConfig=False):
             new_nodes_section += "       }\n"
             i = i+1
 
+        two_node_section = ""
+        if len(nodes) == 2:
+            two_node_section = "two_node: 1"
+
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
         corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
+        corosync_config = corosync_config.replace("@@two_node",two_node_section)
         if returnConfig:
             return corosync_config
 
