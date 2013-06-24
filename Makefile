@@ -18,6 +18,7 @@ install:
 
 install_pcsd:
 	make -C pcsd build_gems
+	mkdir -p ${DESTDIR}/var/log/pcsd
 	mkdir -p ${DESTDIR}${PREFIX}/lib/
 	cp -r pcsd ${DESTDIR}${PREFIX}/lib/pcsd
 	install -d ${DESTDIR}/usr/lib/systemd/system/

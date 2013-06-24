@@ -16,6 +16,10 @@ require 'openssl'
 require 'logger'
 
 use Rack::CommonLogger
+use Rack::Session::Cookie,
+  :expire_after => 60 * 60,
+  :secret => SecureRandom.hex(30)
+
 #use Rack::SSL
 
 also_reload 'resource.rb'
@@ -26,10 +30,9 @@ also_reload 'config.rb'
 also_reload 'pcs.rb'
 also_reload 'auth.rb'
 
-enable :sessions
+#enable :sessions
 
 before do
-  @@cluster_name = get_cluster_version()
   puts "SESSION:"
   pp session
   puts "COOKIES:"
@@ -55,20 +58,25 @@ configure do
   SETTINGS_FILE = "pcs_settings.conf"
   $user_pass_file = "pcs_users.conf"
 
-  $logger = Logger.new('/var/lib/pcsd/pcsd.log', 'daily')
+  logger = File.open("/var/log/pcsd/pcsd-main.log", "a+")
+  STDOUT.reopen(logger)
+  STDERR.reopen(logger)
+  STDOUT.sync = true
+  STDERR.sync = true
+  $logger = Logger.new('/var/log/pcsd/pcsd-main.log', 'daily')
   $logger.level = Logger::INFO
-  $stdout.reopen('/var/lib/pcsd/pcsd-debug.log', 'a')
-  $stdout.sync = true
-  $stderr.reopen($stdout)
-#  $stderr.reopen('/var/lib/pcsd/pcsd-stderror', 'a')
+
+   if not defined? @@cluster_name
+     @@cluster_name = get_cluster_version()
+   end
+
+   if not defined? @@cur_node_name
+     @@cur_node_name = `hostname`.chomp
+   end
 end
 
 set :logging, true
 set :run, false
-
-if not defined? @@cur_node_name
-  @@cur_node_name = `hostname`.chomp
-end
 
 helpers do
   def protected!
