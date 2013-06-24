@@ -18,10 +18,9 @@ class PCSAuth
       	password_file = File.open($user_pass_file, File::RDWR|File::CREAT)
 	password_file.flock(File::LOCK_EX)
 	json = password_file.read()
-	puts json
 	users = JSON.parse(json)
       rescue Exception => ex
-	puts "Empty pcs_users.conf file, creating new file"
+	$logger.info "Empty pcs_users.conf file, creating new file"
 	users = []
       end
       users << {"username" => username, "token" => token, "client" => request.ip, "creation_date" => Time.now}

@@ -33,10 +33,6 @@ also_reload 'auth.rb'
 #enable :sessions
 
 before do
-  puts "SESSION:"
-  pp session
-  puts "COOKIES:"
-  pp request.cookies
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
@@ -82,7 +78,7 @@ helpers do
   def protected!
     if not PCSAuth.isLoggedIn(session, request.cookies)
       if request.path.start_with?('/remote')
-	puts "ERROR: Request without authentication"
+	$logger.info "ERROR: Request without authentication"
 	halt [401, '{"notauthorized":"true"}']
       else
 	session[:pre_login_path] = request.path
@@ -294,7 +290,6 @@ get '/managec/:cluster/main' do
   end
   @resource_agents = get_resource_agents_avail() 
   @stonith_agents = get_stonith_agents_avail() 
-  puts "Get Cluster Nodes"
   @config_options = getConfigOptions2()
 
   erb :nodes, :layout => :main
@@ -305,26 +300,14 @@ get '/managec/:cluster/status_all' do
 end
 
 get '/managec/:cluster/?*' do
-  puts "Lambda A GET"
-  pp params[:splat]
-  pp params
-  puts "Lambda B"
   raw_data = request.env["rack.input"].read
-  p "Raw Data"
-  pp raw_data
   if params[:cluster]
     send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, false, raw_data)
   end
 end
 
 post '/managec/:cluster/?*' do
-  puts "Lambda A POST"
-  pp params[:splat]
-  pp params
-  puts "Lambda B"
   raw_data = request.env["rack.input"].read
-  p "Raw Data"
-  pp raw_data
   if params[:cluster]
     send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), true, params, false, raw_data)
   end
@@ -382,7 +365,6 @@ end
 
 post '/resource_cmd/rm_constraint' do
   if params[:constraint_id]
-    puts "REMOVE CONSTRAINT"
     retval = remove_constraint(params[:constraint_id])
     if retval == 0
       return "Constraint #{params[:constraint_id]} removed"
@@ -547,9 +529,9 @@ class ConfigOption
   def self.loadValues(cos)
     cib, stderr, retval = run_cmd(CIBADMIN, "-Q")
     if retval != 0
-      puts "Error: unable to load cib"
-      puts cib.join("")
-      puts stderr.join("")
+      $logger.info "Error: unable to load cib"
+      $logger.info cib.join("")
+      $logger.info stderr.join("")
       return
     end
 
@@ -571,7 +553,6 @@ class ConfigOption
     metadata = `#{PENGINE} metadata`
     doc = REXML::Document.new(metadata)
 
-    puts "SET DEFAULTS"
     cos.each { |co|
       doc.elements.each("resource-agent/parameters/parameter[@name='#{co.configname}']/content") { |e|
 	co.default = e.attributes["default"]

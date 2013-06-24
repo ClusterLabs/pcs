@@ -48,45 +48,42 @@ def add_location_constraint(resource, node, score, stickyness)
     score = "INFINITY"
   end
   id = "loc_" + node + "_" + resource
-  puts "ADD LOCATION CONSTRAINT"
-  puts PCS, "constraint", "location", "add", id, resource, node, score
+  $logger.info [PCS, "constraint", "location", "add", id, resource, node, score]
   Open3.popen3(PCS, "constraint", "location", "add", id, resource,
 	       node, score) { |stdin, stdout, stderror, waitth|
-    puts stdout.readlines()
+    $logger.info stdout.readlines()
     return waitth.value
   }
 end
 
 def add_order_constraint(resourceA, resourceB, score, symmetrical = true)
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
-  puts "ADD ORDER CONSTRAINT"
   if score != ""
     score = "score=" + score
   end
-  puts PCS, "constraint", "order", "add", resourceA, resourceB, score, sym
+  $logger.info [PCS, "constraint", "order", "add", resourceA, resourceB, score, sym]
   Open3.popen3(PCS, "constraint", "order", "add", resourceA,
 	       resourceB, score, sym) { |stdin, stdout, stderror, waitth|
-    puts stdout.readlines()
+    $logger.info stdout.readlines()
     return waitth.value
   }
 end
 
 def add_colocation_constraint(resourceA, resourceB, score)
-  puts "ADD COLOCATION CONSTRAINT"
   if score == "" or score == nil
     score = "INFINITY"
   end
-  puts PCS, "constraint", "colocation", "add", resourceA, resourceB, score
+  $logger.info [PCS, "constraint", "colocation", "add", resourceA, resourceB, score]
   Open3.popen3(PCS, "constraint", "colocation", "add", resourceA,
 	       resourceB, score) { |stdin, stdout, stderror, waitth|
-    puts stdout.readlines()
+    $logger.info stdout.readlines()
     return waitth.value
   }
 end
 
 def remove_constraint(constraint_id)
   stdout, stderror, retval = run_cmd(PCS, "constraint", "rm", constraint_id)
-  puts stdout
+  $logger.info stdout
   return retval
 end
 
@@ -126,8 +123,7 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
   for node in nodes
     out = send_request_with_token(node,request, post, data, remote=true, raw_data)
     if out != '{"noresponse":true}'
-      puts "OUT"
-      puts request
+      $logger.info request
       break
     end
   end
@@ -165,9 +161,7 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
     output = res
     return output.body
   rescue Exception => e
-    puts "EXCEPTION"
-    puts e
-    puts "No response from: " + node
+    $logger.info "No response from: " + node
     return '{"noresponse":true}'
   end
 end
@@ -223,9 +217,6 @@ end
 
 def get_resource_agents_avail()
   result = send_cluster_request_with_token(params[:cluster], 'get_avail_resource_agents')
-  puts "XX"
-  puts "ReSULTS"
-  puts result
   ra = JSON.parse(result)
   if (ra["noresponse"] == true)
     return {}
@@ -273,7 +264,7 @@ def run_cmd(*args)
   retval = waitth.value.exitstatus
   duration = Time.now - start
   $logger.info("Return Value: " + retval.to_s)
-  $logger.info(out)
+  $logger.debug(out)
   $logger.info("Duration: " + duration.to_s + "s")
   return out, errout, retval
 end

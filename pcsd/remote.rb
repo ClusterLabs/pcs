@@ -82,7 +82,7 @@ def cluster_start(params)
   if params[:name]
     response = send_request_with_token(params[:name], 'cluster_start', true)
   else
-    puts "Starting Daemons"
+    $logger.info "Starting Daemons"
     output =  `#{PCS} cluster start`
     print output
     return output
@@ -93,7 +93,7 @@ def cluster_stop(params)
   if params[:name]
     response = send_request_with_token(params[:name], 'cluster_stop', true)
   else
-    puts "Starting Daemons"
+    $logger.info "Starting Daemons"
     output =  `#{PCS} cluster stop`
     print output
     return output
@@ -104,7 +104,7 @@ def node_restart(params)
   if params[:name]
     response = send_request_with_token(params[:name], 'node_restart', true)
   else
-    puts "Restarting Node"
+    $logger.info "Restarting Node"
     output =  `/sbin/reboot`
     print output
     return output
@@ -152,7 +152,7 @@ def set_corosync_conf(params)
     return true
   else
     return false
-    puts "Invalid corosync.conf file"
+    $logger.info "Invalid corosync.conf file"
   end
 end
 
@@ -554,9 +554,7 @@ def add_constraint(params)
   elsif params[:colocation_constraint]
     params.each {|k,v|
       if k.start_with?("order-") and v != ""
-	puts "ORDER!"
 	if v.start_with?("together-")
-	  puts "TOGETHER!"
 	  if params["score-" + v.split(/-/,2)[1]] != nil
 	    score = params["score-" + v.split(/-/,2)[1]]
 	  else

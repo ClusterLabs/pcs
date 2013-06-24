@@ -46,10 +46,6 @@
       <% end %>
 
       <input type="hidden" name="resource_type" value="<%=@resource.name%>">
-      <% puts "RESOURCE INFO" %>
-      <% puts @resource %>
-      <% puts @resource.name %>
-      <% puts @resource.required_options %>
       <% @resource.required_options.each { |name, desc|  %>
 	<tr title="<%=desc[1]%>">
 	  <td class="reg">
