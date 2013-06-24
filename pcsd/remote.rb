@@ -84,7 +84,7 @@ def cluster_start(params)
   else
     $logger.info "Starting Daemons"
     output =  `#{PCS} cluster start`
-    print output
+    $logger.debug output
     return output
   end
 end
@@ -95,7 +95,7 @@ def cluster_stop(params)
   else
     $logger.info "Starting Daemons"
     output =  `#{PCS} cluster stop`
-    print output
+    $logger.debug output
     return output
   end
 end
@@ -106,7 +106,7 @@ def node_restart(params)
   else
     $logger.info "Restarting Node"
     output =  `/sbin/reboot`
-    print output
+    $logger.debug output
     return output
   end
 end

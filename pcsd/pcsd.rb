@@ -54,21 +54,26 @@ configure do
   SETTINGS_FILE = "pcs_settings.conf"
   $user_pass_file = "pcs_users.conf"
 
-  logger = File.open("/var/log/pcsd/pcsd-main.log", "a+")
+  logger = File.open("/var/log/pcsd/pcsd-main.log", "a+", 0600)
   STDOUT.reopen(logger)
   STDERR.reopen(logger)
   STDOUT.sync = true
   STDERR.sync = true
   $logger = Logger.new('/var/log/pcsd/pcsd-main.log', 'daily')
-  $logger.level = Logger::INFO
+  if ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true" then
+    $logger.level = Logger::DEBUG
+    $logger.info "PCSD Debugging enabled"
+  else
+    $logger.level = Logger::INFO
+  end
 
-   if not defined? @@cluster_name
-     @@cluster_name = get_cluster_version()
-   end
+  if not defined? @@cluster_name
+    @@cluster_name = get_cluster_version()
+  end
 
-   if not defined? @@cur_node_name
-     @@cur_node_name = `hostname`.chomp
-   end
+  if not defined? @@cur_node_name
+    @@cur_node_name = `hostname`.chomp
+  end
 end
 
 set :logging, true
@@ -377,7 +382,7 @@ post '/resource_cmd/rm_constraint' do
 end
 
 get '/' do
-  print "Redirecting...\n"
+  $logger.info "Redirecting '/'...\n"
   redirect '/manage#manage'
 end
 
@@ -390,8 +395,8 @@ post '/remote/?:command?' do
 end
 
 get '*' do
-  print params[:splat]
-  print "2Redirecting...\n"
+  $logger.debug params[:splat]
+  $logger.info "Redirecting '*'...\n"
   return "Bad URL"
   call(env.merge("PATH_INFO" => '/nodes'))
 end

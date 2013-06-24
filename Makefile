@@ -21,6 +21,7 @@ install_pcsd:
 	mkdir -p ${DESTDIR}/var/log/pcsd
 	mkdir -p ${DESTDIR}${PREFIX}/lib/
 	cp -r pcsd ${DESTDIR}${PREFIX}/lib/pcsd
+	cp pcsd.conf ${DESTDIR}/etc/sysconfig/pcsd
 	install -d ${DESTDIR}/usr/lib/systemd/system/
 	install  pcsd/pcsd.service ${DESTDIR}/usr/lib/systemd/system/
 	install -d ${DESTDIR}/etc/pam.d

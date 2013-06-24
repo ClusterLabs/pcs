@@ -110,7 +110,7 @@ def get_cluster_nodes(cluster_name)
   if cluster && cluster.nodes != nil
     nodes = cluster.nodes
   else
-    print "Error: no nodes found for #{cluster_name}"
+    $logger.info "Error: no nodes found for #{cluster_name}"
     nodes = []
   end
   return nodes
@@ -263,8 +263,8 @@ def run_cmd(*args)
   errout = stderror.readlines()
   retval = waitth.value.exitstatus
   duration = Time.now - start
-  $logger.info("Return Value: " + retval.to_s)
+  $logger.debug("Return Value: " + retval.to_s)
   $logger.debug(out)
-  $logger.info("Duration: " + duration.to_s + "s")
+  $logger.debug("Duration: " + duration.to_s + "s")
   return out, errout, retval
 end
