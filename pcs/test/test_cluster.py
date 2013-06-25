@@ -13,6 +13,15 @@ class ClusterTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
 
+    def testNodeStandby(self):
+        output, returnVal = pcs(temp_cib, "cluster standby rh7-1") 
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "cluster standby nonexistant-node") 
+        assert returnVal == 1
+        assert output == "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
+
     def testCreation(self):
         output, returnVal = pcs(temp_cib, "cluster") 
         assert returnVal == 1

@@ -299,6 +299,16 @@ def node_standby(argv,standby=True):
         usage.cluster()
         sys.exit(1)
 
+    nodes = utils.getNodesFromCorosyncConf()
+    nodeFound = False
+    for node in nodes:
+        if node == argv[0]:
+            nodeFound = True
+            break
+
+    if not nodeFound:
+        utils.err("node '%s' does not appear to exist in configuration" % argv[0])
+
     if standby:
         utils.run(["crm_standby", "-v", "on", "-N", argv[0]])
     else:
