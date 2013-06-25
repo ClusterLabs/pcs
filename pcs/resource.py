@@ -182,7 +182,7 @@ def resource_list_available(argv):
                 dom = parseString(metadata)
                 shortdesc = dom.documentElement.getElementsByTagName("shortdesc")
                 if len(shortdesc) > 0:
-                    sd = " - " +  format_desc(full_res_name.__len__() + 3, shortdesc[0].firstChild.nodeValue.strip().replace("\n", ""))
+                    sd = " - " +  format_desc(full_res_name.__len__() + 3, shortdesc[0].firstChild.nodeValue.strip().replace("\n", " "))
             except xml.parsers.expat.ExpatError:
                 sd = ""
             finally:
@@ -234,7 +234,7 @@ def resource_list_options(resource):
                 name = param.getAttribute("name")
                 if param.getAttribute("required") == "1":
                     name += " (required)"
-                desc = param.getElementsByTagName("longdesc")[0].firstChild.nodeValue.strip().replace("\n", "")
+                desc = param.getElementsByTagName("longdesc")[0].firstChild.nodeValue.strip().replace("\n", " ")
                 indent = name.__len__() + 4
                 desc = format_desc(indent, desc)
                 print "  " + name + ": " + desc
