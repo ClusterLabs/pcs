@@ -470,6 +470,15 @@ Commands:
         Create a location constraint on a resource to avoid the specified
         node and score (default score: INFINITY)
 
+    location <rsc> rule [rule_id] [role=<role>] <score>: <expression>
+        Creates a location rule on the specified resource where the expression
+        looks like one of the following:
+          <expression> and|or <expression>
+          defined|not_defined <attribute>
+          <attribute> lt|gt|lte|gte|eq|ne <value>
+          date [start=<start>] [end=<end>] operation=gt|lt|in-range
+          date operation=date-spec <date spec options>...
+
     location [show resources|nodes [specific nodes|resources]]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
@@ -479,11 +488,11 @@ Commands:
 
     location add <id> <resource name> <node> <score>
         Add a location constraint with the appropriate id, resource name,
-          node name and score. (For more advanced pacemaker usage)
+        node name and score. (For more advanced pacemaker usage)
 
     location rm <id> [<resource name> <node> <score>]
         Remove a location constraint with the appropriate id, resource name,
-          node name and score. (For more advanced pacemaker usage)
+        node name and score. (For more advanced pacemaker usage)
 
     order [show [all]]
         List all current ordering constraints (if 'all' is specified show

@@ -17,7 +17,7 @@ def pcs(testfile, args):
                 in_quote = False
         else:
             arg_split_temp.append(arg.replace("'",""))
-            if arg.find("'") != -1:
+            if arg.find("'") != -1 and not (arg[0] == "'" and arg[-1] == "'"):
                 in_quote = True
 
     return utils.run([pcs_location, "-f", testfile, "--corosync_conf=corosync.conf"] + arg_split_temp)

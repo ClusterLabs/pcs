@@ -662,6 +662,95 @@ def setAttribute(a_type, a_name, a_value):
     if retval != 0:
         print output
 
+# Returns a rule with the following accepted syntax:
+# rule [id] [role=<role>] <score>: expression
+# Where expression can look like the following:
+# expression or|and expression [and|or expression...]
+# defined|not_defined <attribute>
+# <attribute> lt|gt|lte|gte|eq|ne <value>
+# date [start=<start>] [end=<end>] operation=gt|lt|in-range|date-spec
+def getRule(dom, element, argv):
+    if len(argv) < 4:
+        err ("wrong number of arguments when adding rule (do you have quotes around any #'s?")
+    
+    if argv.pop(0) != "rule":
+        err ("missing 'rule'")
+
+    role = None
+    rule_id = None
+    score = None
+    while argv:
+        val = argv.pop(0)
+        if val[-1] == ":":
+            score = val[:-1]
+            break
+        if val.find("=") == -1:
+            rule_id = val
+        elif val.startswith("role="):
+            role = val[5]
+    if score == None:
+        err("You must specify a score")
+
+    if score.isdigit() or score.lower() == "-infinity" or score.lower() == "infinity":
+        score_name = "score"
+    else:
+        score_name = "score-attribute"
+
+    rule = dom.createElement("rule")
+    rule_id = find_unique_id(dom, element.getAttribute("id") + "-rule")
+    rule.setAttribute("id", rule_id)
+    rule.setAttribute(score_name, score)
+    
+    expression = getExpression(dom, rule, argv)
+    rule.appendChild(expression)
+    return rule
+
+def getExpression(dom, element, argv):
+    if len(argv) < 2:
+        return None
+
+    unary_expression = False
+    if len(argv) == 2 and (argv[0] == "defined" or argv[0] == "not_defined"):
+        expression = dom.createElement("expression")
+        unary_expression = True
+        expression.setAttribute("operation", argv[0])
+        expression.setAttribute("attribute",argv[1])
+        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-expr"))
+        return expression
+    elif argv[0] == "date":
+        expression = dom.createElement("date_expression")
+        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-rule"))
+        date_expression = True
+        argv.pop(0)
+        count = 0
+        for i in range(0,len(argv)):
+            val = argv[i].split('=')
+            expression.setAttribute(val[0], val[1])
+            if val[0] == "operation" and val[1] == "date_spec":
+                date_spec = getDateSpec(dom, expression, argv[(i+1):])
+                expression.appendChild(date_spec)
+                break
+        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-dateexpr"))
+        return expression
+    elif len(argv) == 3 and argv[1] in ["lt","gt","lte","gte","eq","ne"]:
+        expression = dom.createElement("expression")
+        expression.setAttribute("attribute", argv[0])
+        expression.setAttribute("operation", argv[1])
+        expression.setAttribute("value", argv[2])
+        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-expr"))
+        return expression
+    else:
+        return None
+
+
+def getDateSpec(dom, element, argv):
+    date_spec = dom.createElement("date_spec")
+    for val in argv:
+        if val.find('=') != -1:
+            date_spec.setAttribute(val.split('=')[0],val.split('=')[1])
+    date_spec.setAttribute("id", find_unique_id(dom,element.getAttribute("id") + "-datespec"))
+    return date_spec
+
 def getTerminalSize(fd=1):
     """
     Returns height and width of current terminal. First tries to get
@@ -794,9 +883,10 @@ def is_rhel6():
     else:
         return False
 
-def err(errorText):
+def err(errorText, exit_after_error=True):
     sys.stderr.write("Error: %s\n" % errorText)
-    sys.exit(1)
+    if exit_after_error:
+        sys.exit(1)
 
 def enableServices():
     if is_systemctl():

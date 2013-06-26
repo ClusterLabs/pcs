@@ -28,7 +28,10 @@ def constraint_cmd(argv):
         elif (sub_cmd2 == "show"):
             location_show(argv)
         elif len(argv) >= 2:
-            location_prefer([sub_cmd2] + argv)
+            if argv[0] == "rule":
+                location_rule([sub_cmd2] + argv)
+            else:
+                location_prefer([sub_cmd2] + argv)
         else:
             usage.constraint()
             sys.exit(1)
@@ -419,6 +422,7 @@ def location_show(argv):
     rschashoff = {}
     ruleshash = defaultdict(list)
     exphash = defaultdict(list)
+    datespechash = defaultdict(list)
     all_loc_constraints = constraintsElement.getElementsByTagName('rsc_location')
 
     print "Location Constraints:"
@@ -448,6 +452,15 @@ def location_show(argv):
                     for n,v in exp.attributes.items():
                         if n != "id":
                             exp_string += n + "=" + v + " " 
+                        if n == "operation" and v == "date_spec":
+                            for ds in exp.childNodes:
+                                if ds.nodeType == xml.dom.minidom.Node.TEXT_NODE:
+                                    continue
+                                ds_string = ""
+                                for n2,v2 in ds.attributes.items():
+                                    if n2 != "id":
+                                        ds_string += n2 + "=" + v2+ " "
+                                datespechash[exp.getAttribute("id")].append([ds.getAttribute("id"),ds_string])
                     exphash[rule_id].append([exp.getAttribute("id"),exp_string])
 
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
@@ -546,6 +559,11 @@ def location_show(argv):
                 if showDetail:
                     print "(id:%s)" % (exp_id),
                 print ""
+                for ds_id, ds in datespechash[exp_id]:
+                    print "          Date Spec: " + ds,
+                    if showDetail:
+                        print "(id:%s)" % (ds_id),
+                    print ""
 
 
 def location_prefer(argv):
@@ -632,6 +650,26 @@ def location_add(argv,rm=False):
     if output != "":
         print output
 
+def location_rule(argv):
+    if len(argv) < 3:
+        usage.constraint("location rule")
+        sys.exit(1)
+    
+    res_name = argv.pop(0)
+
+    (dom, constraintsElement) = getCurrentConstraints()
+
+    lc = dom.createElement("rsc_location")
+    lc_id = utils.find_unique_id(dom, "location-" + res_name)
+    lc.setAttribute("id", lc_id)
+    lc.setAttribute("rsc", res_name)
+
+    rule = utils.getRule(dom, lc, argv)
+    lc.appendChild(rule)
+    constraintsElement.appendChild(lc)
+
+    utils.replace_cib_configuration(dom)
+    
 # Grabs the current constraints and returns the dom and constraint element
 def getCurrentConstraints():
     current_constraints_xml = utils.get_cib_xpath('//constraints')

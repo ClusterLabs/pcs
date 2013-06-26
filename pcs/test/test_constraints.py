@@ -112,6 +112,36 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
+    def testConstraintRules(self):
+        output, returnVal = pcs(temp_cib, "constraint location D1 rule 222: '#uname' eq c00n03")
+        print output
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "constraint location D2 rule -INFINITY: '#uname' eq c00n04")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "constraint location D3 rule pingd: defined pingd")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "constraint location D4 rule INFINITY: date start=2005-001 operation=gt")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "constraint location D5 rule INFINITY: date start=2005-001 end=2006-001 operation=in_range")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "constraint location D6 rule INFINITY: date operation=date_spec years=2005")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(temp_cib, "constraint")
+        assert returnVal == 0
+        assert output == 'Location Constraints:\n  Resource: D6\n  Resource: D4\n  Resource: D5\n  Resource: D2\n  Resource: D3\n  Resource: D1\n    Location Constraint: Resource D3\n      Rule: score-attribute=pingd  \n        Expression: attribute=pingd operation=defined  \n    Location Constraint: Resource D2\n      Rule: score=-INFINITY  \n        Expression: attribute=#uname operation=eq value=c00n04  \n    Location Constraint: Resource D1\n      Rule: score=222  \n        Expression: attribute=#uname operation=eq value=c00n03  \n    Location Constraint: Resource D6\n      Rule: score=INFINITY  \n        Expression: operation=date_spec  \n          Date Spec: years=2005  \n    Location Constraint: Resource D5\n      Rule: score=INFINITY  \n        Expression: start=2005-001 operation=in_range end=2006-001  \n    Location Constraint: Resource D4\n      Rule: score=INFINITY  \n        Expression: start=2005-001 operation=gt  \nOrdering Constraints:\nColocation Constraints:\n', [output]
+
     def testEmptyConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint")
         assert returnVal == 0 and output == "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n", output
