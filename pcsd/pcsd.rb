@@ -16,9 +16,19 @@ require 'openssl'
 require 'logger'
 
 use Rack::CommonLogger
+
+COOKIE_FILE = "/var/lib/pcsd/pcsd.cookiesecret"
+
+begin
+  secret = File.read(COOKIE_FILE)
+rescue Errno::ENOENT => e
+  secret = SecureRandom.hex(30)
+  File.open(COOKIE_FILE, 'w', 0700) {|f| f.write(secret)}
+end
+
 use Rack::Session::Cookie,
   :expire_after => 60 * 60,
-  :secret => SecureRandom.hex(30)
+  :secret => secret
 
 #use Rack::SSL
 
