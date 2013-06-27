@@ -296,6 +296,31 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output =="Removing Constraint - location-ClusterIP3-rh7-1-INFINITY\nDeleting Resource (and group) - ClusterIP3\n"
 
+    def testGroupOrder(self):
+        output, returnVal = pcs(temp_cib, "resource create A Dummy")
+        output, returnVal = pcs(temp_cib, "resource create B Dummy")
+        output, returnVal = pcs(temp_cib, "resource create C Dummy")
+        output, returnVal = pcs(temp_cib, "resource create D Dummy")
+        output, returnVal = pcs(temp_cib, "resource create E Dummy")
+        output, returnVal = pcs(temp_cib, "resource create F Dummy")
+        output, returnVal = pcs(temp_cib, "resource create G Dummy")
+        output, returnVal = pcs(temp_cib, "resource create H Dummy")
+        output, returnVal = pcs(temp_cib, "resource create I Dummy")
+        output, returnVal = pcs(temp_cib, "resource create J Dummy")
+        output, returnVal = pcs(temp_cib, "resource create K Dummy")
+
+        output, returnVal = pcs(temp_cib, "resource group add RGA A B C E D K J I")
+        assert returnVal == 0
+        assert output == "",output
+
+        output, returnVal = pcs(temp_cib, "resource")
+        assert returnVal == 0
+        assert output == ' F\t(ocf::heartbeat:Dummy):\tStopped \n G\t(ocf::heartbeat:Dummy):\tStopped \n H\t(ocf::heartbeat:Dummy):\tStopped \n Resource Group: RGA\n     A\t(ocf::heartbeat:Dummy):\tStopped \n     B\t(ocf::heartbeat:Dummy):\tStopped \n     C\t(ocf::heartbeat:Dummy):\tStopped \n     E\t(ocf::heartbeat:Dummy):\tStopped \n     D\t(ocf::heartbeat:Dummy):\tStopped \n     K\t(ocf::heartbeat:Dummy):\tStopped \n     J\t(ocf::heartbeat:Dummy):\tStopped \n     I\t(ocf::heartbeat:Dummy):\tStopped \n',[output]
+
+        output, returnVal = pcs(temp_cib, "resource group list")
+        assert returnVal == 0
+        assert output == "RGA: A B C E D K J I \n",[output]
+
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 
