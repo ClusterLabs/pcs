@@ -22,8 +22,8 @@ if not File.exists?(CRT_FILE) or not File.exists?(KEY_FILE)
   crt.not_after  = Time.now + 10 * 365 * 24 * 60 * 60 # 10 year
   crt.sign(key, OpenSSL::Digest::SHA256.new)
 
-  File.open(CRT_FILE, 'w') {|f| f.write(crt)}
-  File.open(KEY_FILE, 'w') {|f| f.write(key)}
+  File.open(CRT_FILE, 'w',0700) {|f| f.write(crt)}
+  File.open(KEY_FILE, 'w',0700) {|f| f.write(key)}
 end
 
 webrick_options = {

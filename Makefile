@@ -26,7 +26,7 @@ install_pcsd:
 	install  pcsd/pcsd.service ${DESTDIR}/usr/lib/systemd/system/
 	install -d ${DESTDIR}/etc/pam.d
 	install  pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
-	install -d ${DESTDIR}/var/lib/pcsd
+	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 
 
 uninstall:
