@@ -1,5 +1,5 @@
 [Unit]
-Description=PCS GUI
+Description=PCS GUI and remote configuration interface
 
 [Service]
 WorkingDirectory=/var/lib/pcsd
