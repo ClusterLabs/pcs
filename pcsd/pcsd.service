@@ -4,7 +4,8 @@ Description=PCS GUI and remote configuration interface
 [Service]
 WorkingDirectory=/var/lib/pcsd
 ExecStart=/usr/lib/pcsd/pcsd start
-Type=simple
+Type=notify
+NotifyAccess=all
 
 [Install]
 WantedBy=multi-user.target

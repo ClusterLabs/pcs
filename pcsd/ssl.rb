@@ -33,6 +33,9 @@ webrick_options = {
   :SSLCertificate     => OpenSSL::X509::Certificate.new(File.open(CRT_FILE).read),
   :SSLPrivateKey      => OpenSSL::PKey::RSA.new(File.open(KEY_FILE).read()),
   :SSLCertName        => [[ "CN", server_name ]],
+  :StartCallback => Proc.new {
+  	`systemd-notify --ready`
+  }
 }
 
 server = ::Rack::Handler::WEBrick
