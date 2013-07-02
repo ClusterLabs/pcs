@@ -114,7 +114,6 @@ class ConstraintTest(unittest.TestCase):
 
     def testConstraintRules(self):
         output, returnVal = pcs(temp_cib, "constraint location D1 rule 222: '#uname' eq c00n03")
-        print output
         assert returnVal == 0
         assert output == "", [output]
 

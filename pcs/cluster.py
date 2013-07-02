@@ -513,6 +513,9 @@ def print_config():
     utils.pcs_options["--all"] = 1
     resource.resource_show([])
     print ""
+    print "Stonith Devices: "
+    resource.resource_show([], True)
+    print ""
     constraint.location_show([])
     constraint.order_show([])
     constraint.colocation_show([])

@@ -37,7 +37,6 @@ class StonithTest(unittest.TestCase):
 # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are allowed for
 # stonith agents
         output, returnVal = pcs(temp_cib, 'stonith create apc-fencing fence_apc params ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"')
-        print output
         assert returnVal == 0
         assert output == "",[output]
 
@@ -68,6 +67,11 @@ class StonithTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, 'stonith create test-fencing fence_apc pcmk_host_list="rhel7-node1 rhel7-node2" op monitor interval=60s')
         assert returnVal == 0
         assert output == ""
+
+        output, returnVal = pcs(temp_cib, 'config show')
+        assert returnVal == 0
+        print output
+        assert output == 'Cluster Name: test99\nCorosync Nodes:\n rh7-1 rh7-2 \nPacemaker Nodes:\n \n\nResources: \n\nStonith Devices: \n Resource: test1 (class=stonith type=fence_noxist)\n Resource: test2 (class=stonith type=fence_ilo)\n Resource: test3 (class=stonith type=fence_ilo)\n  Attributes: ipaddr=test login=testA \n Resource: test-fencing (class=stonith type=fence_apc)\n  Attributes: pcmk_host_list="rhel7-node1 \n  Operations: monitor interval=60s (test-fencing-monitor-interval-60s)\n\nLocation Constraints:\nOrdering Constraints:\nColocation Constraints:\n\nCluster Properties:\n',[output]
 
     def testStonithFenceConfirm(self):
         output, returnVal = pcs(temp_cib, "stonith fence blah blah")
