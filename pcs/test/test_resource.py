@@ -130,7 +130,7 @@ class ResourceAdditionTest(unittest.TestCase):
         line = "resource show --all"
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
-        assert output == " Resource: bad_resource2 (class=ocf provider=heartbeat type=idontexist2)\n  Attributes: test4=bad3 \n",[output]
+        assert output == " Resource: bad_resource2 (class=ocf provider=heartbeat type=idontexist2)\n  Attributes: test4=bad3 \n  Operations: monitor interval=60s (bad_resource2-monitor-interval-60s)\n",[output]
 
     def testDeleteResources(self):
 # Verify deleting resources works
@@ -422,7 +422,7 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource show D1")
         assert returnVal == 0
-        assert output == ' Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: is-managed=false \n',[output]
+        assert output == ' Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: is-managed=false \n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n',[output]
         output, returnVal = pcs(temp_cib, "resource manage noexist")
         assert returnVal == 1
         assert output == "Error: noexist doesn't exist.\n",[output]
@@ -434,13 +434,13 @@ class ResourceAdditionTest(unittest.TestCase):
         assert output == '',[output]
         output, returnVal = pcs(temp_cib, "resource show DGroup")
         assert returnVal == 0
-        assert output == ' Group: DGroup\n  Meta Attrs: is-managed=false \n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n',[output]
+        assert output == ' Group: DGroup\n  Meta Attrs: is-managed=false \n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n',[output]
         output, returnVal = pcs(temp_cib, "resource manage DGroup")
         assert returnVal == 0
         assert output == '',[output]
         output, returnVal = pcs(temp_cib, "resource show DGroup")
         assert returnVal == 0
-        assert output == ' Group: DGroup\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n',[output]
+        assert output == ' Group: DGroup\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n',[output]
 
     def testBadInstanceVariables(self):
         output, returnVal = pcs(temp_cib, "resource create D0 Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
@@ -511,7 +511,7 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal  = pcs(temp_cib, "resource --all")
         assert returnVal == 0
-        assert output == ' Master: GroupMaster\n  Group: Group\n   Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n', [output]
+        assert output == ' Master: GroupMaster\n  Group: Group\n   Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (D0-monitor-interval-60s)\n   Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (D1-monitor-interval-60s)\n', [output]
 
         output, returnVal = pcs(temp_cib, "resource delete D0")
         assert returnVal == 0
@@ -554,7 +554,7 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource show --all")
         assert returnVal == 0
-        assert output == ' Clone: D0-clone\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n', [output]
+        assert output == ' Clone: D0-clone\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
 
         output, returnVal = pcs(temp_cib, "resource unmaster D0")
         assert returnVal == 0
@@ -566,7 +566,7 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource show --all")
         assert returnVal == 0
-        assert output == " Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n", [output]
+        assert output == " Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D0-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n", [output]
 
     def testLSBResource(self):
         output, returnVal  = pcs(temp_cib, "resource create D2 lsb:network")
@@ -604,7 +604,7 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal  = pcs(temp_cib, "resource --all")
         assert returnVal == 0
-        assert output == ' Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n', [output]
+        assert output == ' Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D0-monitor-interval-60s)\n Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
 
 if __name__ == "__main__":
     unittest.main()

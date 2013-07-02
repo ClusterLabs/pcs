@@ -271,6 +271,18 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
     if not utils.is_valid_resource(ra_type) and not ("--force" in utils.pcs_options):
         utils.err ("Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type)
 
+    # If the user doesn't specify a monitor attribute, we default to 60s automatically for them
+    is_monitor_present = False
+    if len(op_values[0]) == 0:
+        op_values = []
+    for op in op_values:
+        if len(op) > 0:
+            if op[0] == "monitor":
+                is_monitor_present = True
+                break
+    if not is_monitor_present:
+        op_values.append(['monitor','interval=60s'])
+
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
     primitive_values = get_full_ra_type(ra_type)
     primitive_values.insert(0,("id",ra_id))
