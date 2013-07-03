@@ -595,12 +595,12 @@ class ResourceAdditionTest(unittest.TestCase):
         assert output == "", [output]
 
         output, returnVal  = pcs(temp_cib, "resource move D1")
-        assert returnVal == 0
-#        assert output == "Error: unable to move Clone resources", [output]
+        assert returnVal == 1
+        assert output == "Error: cannot move cloned resources\n", [output]
 
         output, returnVal  = pcs(temp_cib, "resource move D2")
-        assert returnVal == 0
-#        assert output == "Error: unable to move Master/Slave resources", [output]
+        assert returnVal == 1
+        assert output == "Error: unable to move Master/Slave resources\n", [output]
 
         output, returnVal  = pcs(temp_cib, "resource --all")
         assert returnVal == 0

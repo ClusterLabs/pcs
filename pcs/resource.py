@@ -323,6 +323,15 @@ def resource_move(argv,unmove=False):
     else:
         dest_node = None
 
+    if not utils.does_exist("//primitive[@id='"+resource_id+"']"):
+        utils.err("%s is not a valid resource" % resource_id)
+
+    if utils.is_resource_clone(resource_id):
+        utils.err("cannot move cloned resources")
+
+    if utils.is_resource_masterslave(resource_id):
+        utils.err("unable to move Master/Slave resources")
+
     if unmove:
         output,ret = utils.run(["crm_resource", "--resource", resource_id, "--un-move"])
     else:

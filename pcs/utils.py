@@ -433,6 +433,12 @@ def does_exist(xpath_query):
         return False
     return True
 
+def is_resource_clone(resource_id):
+    return does_exist("//clone//primitive[@id='"+resource_id+"']")
+
+def is_resource_masterslave(resource_id):
+    return does_exist("//master//primitive[@id='"+resource_id+"']")
+
 def is_valid_constraint_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"']") or \
             does_exist("//group[@id='"+resource_id+"']") or \
