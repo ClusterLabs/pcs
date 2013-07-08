@@ -34,7 +34,7 @@ webrick_options = {
   :SSLPrivateKey      => OpenSSL::PKey::RSA.new(File.open(KEY_FILE).read()),
   :SSLCertName        => [[ "CN", server_name ]],
   :StartCallback => Proc.new {
-  	`python /usr/lib/pcsd/python-systemd-fix.py`
+  	`python /usr/lib/pcsd/systemd-notify-fix.py`
   }
 }
 
