@@ -406,6 +406,12 @@ Commands:
     delete <stonith_id>
         Remove stonith_id from configuration
 
+    level add <level> <node> <devices>
+        Added the fencing level for the specified node with a comma separated
+        list of stonith ids to attempt for that node at that level.
+
+    level rm <level> <node> <devices>
+
     fence <node> [--off]
         Fence the node specified (if --off is specified, use the 'off' API
         call to stonith which will turn the node off instead of rebooting it)
