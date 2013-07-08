@@ -40,10 +40,12 @@ webrick_options = {
 
 server = ::Rack::Handler::WEBrick
 trap(:INT) do
+  exit
   server.shutdown
 end
 
 trap(:TERM) do
+  exit
   server.shutdown
 end
 
