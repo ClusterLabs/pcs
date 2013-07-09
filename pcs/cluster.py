@@ -9,6 +9,7 @@ import getpass
 import status
 import prop
 import resource
+import stonith
 import constraint
 import settings
 import socket
@@ -515,7 +516,9 @@ def print_config():
     print ""
     print "Stonith Devices: "
     resource.resource_show([], True)
+    print "Fencing Levels: "
     print ""
+    stonith.stonith_level_show()
     constraint.location_show([])
     constraint.order_show([])
     constraint.colocation_show([])

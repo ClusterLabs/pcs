@@ -406,11 +406,19 @@ Commands:
     delete <stonith_id>
         Remove stonith_id from configuration
 
+    level
+        Lists all of the fencing levels currently configured
+
     level add <level> <node> <devices>
-        Added the fencing level for the specified node with a comma separated
-        list of stonith ids to attempt for that node at that level.
+        Add the fencing level for the specified node with a comma separated
+        list of devices (stonith ids) to attempt for that node at that level.
 
     level rm <level> <node> <devices>
+        Removes the fence level for the level, node and devices specified
+
+    level clear [level]
+        Clears the specified fence level or all levels if a level is not
+        specified
 
     fence <node> [--off]
         Fence the node specified (if --off is specified, use the 'off' API

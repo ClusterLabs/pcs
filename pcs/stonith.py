@@ -71,6 +71,8 @@ def stonith_cmd(argv):
             sys.exit(1)
     elif (sub_cmd == "show"):
         resource.resource_show(argv, True)
+    elif (sub_cmd == "level"):
+        stonith_level(argv)
     elif (sub_cmd == "fence"):
         stonith_fence(argv)
     elif (sub_cmd == "confirm"):
@@ -130,6 +132,126 @@ def stonith_list_options(stonith_agent):
         indent = name.__len__() + 4
         desc = resource.format_desc(indent, desc)
         print "  " + name + ": " + desc
+
+def stonith_level(argv):
+    if len(argv) == 0:
+        stonith_level_show()
+        return
+
+    subcmd = argv.pop(0)
+
+    if subcmd == "add":
+        if len(argv) < 3:
+            usage.stonith(["level add"])
+            sys.exit(1)
+        stonith_level_add(argv[0], argv[1], ",".join(argv[2:]))
+    elif subcmd == "rm":
+        if len(argv) < 3:
+            usage.stonith(["level rm"])
+            sys.exit(1)
+        stonith_level_rm(argv[0], argv[1], ",".join(argv[2:]))
+    elif subcmd == "clear":
+        if len(argv) == 0:
+            stonith_level_clear()
+        else:
+            stonith_level_clear(argv[0])
+
+def stonith_level_add(level, node, devices):
+    dom = utils.get_cib_dom()
+
+    ft = dom.getElementsByTagName("fencing-topology")
+    if len(ft) == 0:
+        conf = dom.getElementsByTagName("configuration")[0]
+        ft = dom.createElement("fencing-topology")
+        conf.appendChild(ft)
+    else:
+        ft = ft[0]
+
+    fls = ft.getElementsByTagName("fencing-level")
+    for fl in fls:
+        if fl.getAttribute("target") == node and fl.getAttribute("index") == level and fl.getAttribute("devices") == devices:
+            utils.err("unable to add fencing level, fencing level for node: %s, at level: %s, with device: %s already exists" % (node,level,devices))
+
+    new_fl = dom.createElement("fencing-level")
+    ft.appendChild(new_fl)
+    new_fl.setAttribute("target", node)
+    new_fl.setAttribute("index", level)
+    new_fl.setAttribute("devices", devices)
+    new_fl.setAttribute("id", utils.find_unique_id(dom, "fl-" + node +"-" + level))
+
+    utils.replace_cib_configuration(dom)
+
+def stonith_level_rm(level, node, devices):
+    dom = utils.get_cib_dom()
+
+    ft = dom.getElementsByTagName("fencing-topology")
+    if len(ft) == 0:
+        utils.err("unable to remove fencing level, fencing level for node: %s, at level: %s, with device: %s doesn't exist" % (node,level,devices))
+    else:
+        ft = ft[0]
+
+    fls = ft.getElementsByTagName("fencing-level")
+    found = False
+    for fl in fls:
+        if fl.getAttribute("target") == node and fl.getAttribute("index") == level and fl.getAttribute("devices") == devices:
+            found = True
+            break
+
+    if found == False:
+        utils.err("unable to remove fencing level, fencing level for node: %s, at level: %s, with device: %s doesn't exist" % (node,level,devices))
+
+    fl.parentNode.removeChild(fl)
+    utils.replace_cib_configuration(dom)
+
+def stonith_level_clear(level = None):
+    dom = utils.get_cib_dom()
+    ft = dom.getElementsByTagName("fencing-topology")
+
+    if len(ft) == 0:
+        return
+
+    if level == None:
+        ft = ft[0]
+        childNodes = ft.childNodes[:]
+        for node in childNodes:
+            node.parentNode.removeChild(node)
+    else:
+        fls = dom.getElementsByTagName("fencing-level")
+        if len(fls) == 0:
+            return
+        for fl in fls:
+            if fl.getAttribute("index") == level:
+                fl.parentNode.removeChild(fl)
+
+
+    utils.replace_cib_configuration(dom)
+
+def stonith_level_show():
+    dom = utils.get_cib_dom()
+
+    node_levels = {}
+    fls = dom.getElementsByTagName("fencing-level")
+    for fl in fls:
+        node = fl.getAttribute("target")
+        level = fl.getAttribute("index")
+        devices = fl.getAttribute("devices")
+
+        if node in node_levels:
+            node_levels[node].append((level,devices))
+        else:
+            node_levels[node] = [(level,devices)]
+
+    if len(node_levels.keys()) == 0:
+        return
+
+    nodes = node_levels.keys()
+    nodes.sort()
+
+    for node in nodes:
+        print " Node: " + node
+        for level in node_levels[node]:
+            print "  Level " + level[0] + " - " + level[1]
+
 
 def stonith_fence(argv):
     if len(argv) != 1:
