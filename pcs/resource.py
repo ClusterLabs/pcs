@@ -323,7 +323,7 @@ def resource_move(argv,unmove=False):
     else:
         dest_node = None
 
-    if not utils.does_exist("//primitive[@id='"+resource_id+"']"):
+    if not utils.does_exist("//primitive[@id='"+resource_id+"']") and not utils.does_exist("//group[@id='"+resource_id+"']"):
         utils.err("%s is not a valid resource" % resource_id)
 
     if utils.is_resource_clone(resource_id):
