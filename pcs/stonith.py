@@ -203,14 +203,14 @@ def stonith_level_rm(level, node, devices):
     fl.parentNode.removeChild(fl)
     utils.replace_cib_configuration(dom)
 
-def stonith_level_clear(level = None):
+def stonith_level_clear(node = None):
     dom = utils.get_cib_dom()
     ft = dom.getElementsByTagName("fencing-topology")
 
     if len(ft) == 0:
         return
 
-    if level == None:
+    if node == None:
         ft = ft[0]
         childNodes = ft.childNodes[:]
         for node in childNodes:
@@ -220,7 +220,7 @@ def stonith_level_clear(level = None):
         if len(fls) == 0:
             return
         for fl in fls:
-            if fl.getAttribute("index") == level:
+            if fl.getAttribute("target") == node:
                 fl.parentNode.removeChild(fl)
 
 
@@ -249,6 +249,7 @@ def stonith_level_show():
 
     for node in nodes:
         print " Node: " + node
+        node_levels[node].sort()
         for level in node_levels[node]:
             print "  Level " + level[0] + " - " + level[1]
 

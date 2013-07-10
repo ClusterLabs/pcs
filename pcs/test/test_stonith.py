@@ -155,18 +155,34 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
         
-        output, returnVal = pcs(temp_cib, "stonith level clear 2")
+        output, returnVal = pcs(temp_cib, "stonith level clear rh7-1a")
         assert returnVal == 0
         output = ""
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n',[output]
+        assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
+        
+        output, returnVal = pcs(temp_cib, "stonith level clear rh7-1")
+        assert returnVal == 0
+        output = ""
 
-        output, returnVal = pcs(temp_cib, "stonith level add 2 rh7-2 F2")
+        output, returnVal = pcs(temp_cib, "stonith level")
+        assert returnVal == 0
+        assert output == ' Node: rh7-2\n  Level 2 - F2\n',[output]
+        
+        output, returnVal = pcs(temp_cib, "stonith level add 2 rh7-1 F5,F2")
         assert returnVal == 0
         assert output == ""
 
+        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 F3,F4")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "stonith level")
+        assert returnVal == 0
+        assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
+        
         output, returnVal = pcs(temp_cib, "stonith level clear")
         assert returnVal == 0
         assert output == ""

@@ -416,9 +416,9 @@ Commands:
     level rm <level> <node> <devices>
         Removes the fence level for the level, node and devices specified
 
-    level clear [level]
-        Clears the specified fence level or all levels if a level is not
-        specified
+    level clear [node]
+        Clears the fence levels on the node specified or clears all fence
+        levels if a node is not specified
 
     fence <node> [--off]
         Fence the node specified (if --off is specified, use the 'off' API
