@@ -148,7 +148,7 @@ Commands:
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...] [--clone|--master]
         Create specified resource.  If --clone is used a clone resource is
-        created (with options specified by --cloneopt <clone_option>=<value>),
+        created (with options specified by 'clone clone_option>=<value>...',
         if --master is specified a master/slave resource is created.
 
     standards

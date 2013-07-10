@@ -606,6 +606,59 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D0-monitor-interval-60s)\n Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
 
+    def testResourceCloneCreation(self):
+        output, returnVal  = pcs(temp_cib, "resource create D1 Dummy --clone")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource create D2 Dummy --clone")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource --all")
+        assert returnVal == 0
+        assert output == ' Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Clone: D2-clone\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
+
+        output, returnVal  = pcs(temp_cib, "resource delete D1")
+        assert returnVal == 0
+        assert output == "Deleting Resource - D1\n", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource delete D2")
+        assert returnVal == 0
+        assert output == "Deleting Resource - D2\n", [output]
+
+        output,returnVal = pcs(temp_cib, "resource create --clone dlm ocf:pacemaker:controld op monitor interval=10s --cloneopt meta interleave=true clone-node-max=1 ordered=true")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output,returnVal = pcs(temp_cib, "resource --all")
+        assert returnVal == 0
+        assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource delete dlm")
+        assert returnVal == 0
+        assert output == "Deleting Resource - dlm\n", [output]
+
+        output,returnVal = pcs(temp_cib, "resource create --clone dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output,returnVal = pcs(temp_cib, "resource --all")
+        assert returnVal == 0
+        assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource delete dlm")
+        assert returnVal == 0
+        assert output == "Deleting Resource - dlm\n", [output]
+
+        output,returnVal = pcs(temp_cib, "resource create dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output,returnVal = pcs(temp_cib, "resource --all")
+        assert returnVal == 0
+        assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
+
 if __name__ == "__main__":
     unittest.main()
 

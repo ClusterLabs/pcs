@@ -34,8 +34,10 @@ def resource_cmd(argv):
         ra_values = []
         op_values = [[]]
         meta_values=[]
+        clone_opts=[]
         op_args = False
         meta_args = False
+        clone_args = False
         for arg in argv:
             if arg == "op":
                 op_args = True
@@ -43,8 +45,15 @@ def resource_cmd(argv):
             elif arg == "meta":
                 meta_args = True
                 op_args = False
+            elif arg == "clone":
+                clone_args = True
+                op_args = False
+                meta_args = False
             else:
-                if op_args:
+                if clone_args:
+                    if "=" in arg:
+                        clone_opts.append(arg)
+                elif op_args:
                     if arg == "op":
                         op_values.append([])
                     elif "=" not in arg and len(op_values[-1]) != 0:
@@ -58,7 +67,7 @@ def resource_cmd(argv):
                 else:
                     ra_values.append(arg)
     
-        resource_create(res_id, res_type, ra_values, op_values, meta_values)
+        resource_create(res_id, res_type, ra_values, op_values, meta_values, clone_opts)
     elif (sub_cmd == "move"):
         resource_move(argv)
     elif (sub_cmd == "unmove"):
@@ -267,7 +276,7 @@ def format_desc(indent, desc):
 
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
-def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
+def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
     if not utils.is_valid_resource(ra_type) and not ("--force" in utils.pcs_options):
         utils.err ("Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type)
 
@@ -301,16 +310,10 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[]):
     if retval != 0:
         utils.err ("Unable to create resource/fence device\n" + output)
 
-    if "--clone" in utils.pcs_options:
-        clone_opts = []
-        if "--cloneopt" in utils.pcs_options:
-            clone_opts = utils.pcs_options["--cloneopt"]
-            if type(clone_opts) != list:
-                clone_opts = [clone_opts]
+    if "--clone" in utils.pcs_options or len(clone_opts) > 0:
         resource_clone_create([ra_id] + clone_opts)
     elif "--master" in utils.pcs_options:
         resource_master_create([ra_id+"-master",ra_id])
-
 
 def resource_move(argv,unmove=False):
     if len(argv) == 0:
