@@ -155,9 +155,20 @@ def stonith_level(argv):
             stonith_level_clear()
         else:
             stonith_level_clear(argv[0])
+    else:
+        print "pcs stonith level: invalid option -- '%s'" % subcmd
+        usage.stonith("stonith level")
+        sys.exit(1)
 
 def stonith_level_add(level, node, devices):
     dom = utils.get_cib_dom()
+
+    if not "--force" in utils.pcs_options:
+        for dev in devices.split(","):
+            if not utils.is_stonith_resource(dev):
+                utils.err("%s is not a stonith id (use --force to override)" % dev)
+        if not utils.is_corosync_node(node):
+            utils.err("%s is not currently a node (use --force to override)" % node)
 
     ft = dom.getElementsByTagName("fencing-topology")
     if len(ft) == 0:

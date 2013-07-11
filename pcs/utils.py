@@ -433,6 +433,16 @@ def does_exist(xpath_query):
         return False
     return True
 
+def is_corosync_node(node):
+    c_nodes = getNodesFromCorosyncConf()
+    if node in c_nodes:
+        return True
+    return False
+
+    
+def is_stonith_resource(resource_id):
+    return does_exist("//primitive[@id='"+resource_id+"' and @class='stonith']")
+
 def is_resource_clone(resource_id):
     return does_exist("//clone//primitive[@id='"+resource_id+"']")
 

@@ -191,6 +191,41 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == '',[output]
 
+        output, returnVal = pcs(temp_cib, "stonith level 1")
+        assert returnVal == 1
+        assert output == "pcs stonith level: invalid option -- '1'\n\nUsage: pcs stonith s...\n    show [stonith_id]\n        Show all currently configured stonith devices or if a stonith_id is\n        specified show the options for the configured stonith device.  If\n        --all is specified all configured stonith options will be displayed\n\n",[output]
+
+        output, returnVal = pcs(temp_cib, "stonith level abcd")
+        assert returnVal == 1
+        assert output == "pcs stonith level: invalid option -- 'abcd'\n\nUsage: pcs stonith s...\n    show [stonith_id]\n        Show all currently configured stonith devices or if a stonith_id is\n        specified show the options for the configured stonith device.  If\n        --all is specified all configured stonith options will be displayed\n\n",[output]
+
+        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 blah")
+        assert returnVal == 1
+        assert output == 'Error: blah is not a stonith id (use --force to override)\n'
+
+        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 blah --force")
+        assert returnVal == 0
+        assert output == ''
+
+        output, returnVal = pcs(temp_cib, "stonith level")
+        assert returnVal == 0
+        assert output == ' Node: rh7-1\n  Level 1 - blah\n',[output]
+
+        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-9 F1")
+        assert returnVal == 1
+        assert output == 'Error: rh7-9 is not currently a node (use --force to override)\n'
+
+        output, returnVal = pcs(temp_cib, "stonith level")
+        assert returnVal == 0
+        assert output == ' Node: rh7-1\n  Level 1 - blah\n',[output]
+
+        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-9 F1 --force")
+        assert returnVal == 0
+        assert output == ''
+
+        output, returnVal = pcs(temp_cib, "stonith level")
+        assert returnVal == 0
+        assert output == ' Node: rh7-1\n  Level 1 - blah\n Node: rh7-9\n  Level 1 - F1\n',[output]
 
 if __name__ == "__main__":
     unittest.main()
