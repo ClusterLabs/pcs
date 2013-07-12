@@ -86,6 +86,9 @@ def enableCluster(node):
 def disableCluster(node):
     sendHTTPRequest(node, 'remote/cluster_disable')
 
+def destroyCluster(node):
+    sendHTTPRequest(node, 'remote/cluster_destroy')
+
 def addLocalNode(node,node_to_add):
     data = urllib.urlencode({'new_nodename':node_to_add})
     retval, output = sendHTTPRequest(node, 'remote/add_node', data, False)
@@ -142,7 +145,7 @@ def sendHTTPRequest(host, request, data = None, printResult = True):
         return (0,html)
     except urllib2.HTTPError, e:
         if "--debug" in pcs_options:
-            print "Response Code: " + e.code
+            print "Response Code: " + str(e.code)
         if printResult:
             if e.code == 401:
                 print "Unable to authenticate to %s - (HTTP error: %d), try running 'pcs cluster auth'" % (host,e.code)

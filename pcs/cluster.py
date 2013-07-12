@@ -540,17 +540,27 @@ def print_config():
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(argv):
-    print "Killing all active corosync/pacemaker processes"
-    os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
-    os.system("service pacemaker stop")
-    os.system("service corosync stop")
+    if "--all" in utils.pcs_options:
+        threads = {}
+        for node in utils.getNodesFromCorosyncConf():
+            threads[node] = DestroyClusterThread(node)
+            threads[node].start()
 
-    print "Removing all cluster configuration files"
-    os.system("rm /etc/corosync/corosync.conf")
-    state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
-            "pe*.bz2","cib.*"]
-    for name in state_files:
-        os.system("find /var/lib -name '"+name+"' -exec rm -f \{\} \;")
+        for thread in threads.values():
+            thread.join()
+    else:
+        print "Shutting down pacemaker/corosync services..."
+        print os.system("service pacemaker stop")
+        print os.system("service corosync stop")
+        print "Killing any remaining services..."
+        os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
+
+        print "Removing all cluster configuration files..."
+        os.system("rm /etc/corosync/corosync.conf")
+        state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
+                "pe*.bz2","cib.*"]
+        for name in state_files:
+            os.system("find /var/lib -name '"+name+"' -exec rm -f \{\} \;")
 
 def cluster_verify(argv):
     nofilename = True
@@ -637,5 +647,14 @@ class StartClusterThread (threading.Thread):
 
     def run(self):
         utils.startCluster(self.node)
+
+class DestroyClusterThread (threading.Thread):
+    def __init__ (self,node):
+        self.node = node
+        threading.Thread.__init__(self)
+        self.output = ""
+
+    def run(self):
+        utils.destroyCluster(self.node)
 
 

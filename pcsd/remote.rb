@@ -73,6 +73,8 @@ def remote(params,request)
     return add_group(params)
   when "update_cluster_settings"
     return update_cluster_settings(params)
+  when "cluster_destroy"
+    return cluster_destroy(params)
   else
     return [404, "Unknown Request"]
   end
@@ -642,6 +644,15 @@ def update_cluster_settings(params)
     run_cmd(PCS, "property", "set", name + "=" + val)
   }
   return [200, "Update Successful"]
+end
+
+def cluster_destroy(params)
+  out, errout, retval = run_cmd(PCS, "cluster", "destroy")
+  if retval == 0
+    return [200, "Successfully destroyed cluster"]
+  else
+    return [400, "Error destroying cluster:\n#{out}\n#{errout}\n#{retval}\n"]
+  end
 end
 
 def get_local_node_id
