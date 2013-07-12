@@ -15,6 +15,7 @@ import settings
 import socket
 import tempfile
 import datetime
+import threading
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -288,12 +289,22 @@ def start_cluster(argv):
         utils.err("unable to start pacemaker")
 
 def start_cluster_all():
+    threads = {}
     for node in utils.getNodesFromCorosyncConf():
-        utils.startCluster(node)
+        threads[node] = StartClusterThread(node)
+        threads[node].start()
+
+    for thread in threads.values():
+        thread.join()
 
 def stop_cluster_all():
+    threads = {}
     for node in utils.getNodesFromCorosyncConf():
-        utils.stopCluster(node)
+        threads[node] = StopClusterThread(node)
+        threads[node].start()
+
+    for thread in threads.values():
+        thread.join()
 
 def node_standby(argv,standby=True):
     if len(argv) == 0:
@@ -608,3 +619,23 @@ def cluster_report(argv):
     if retval != 0:
         utils.err(newoutput)
     print newoutput
+
+class StopClusterThread (threading.Thread):
+    def __init__ (self,node):
+        self.node = node
+        threading.Thread.__init__(self)
+        self.output = ""
+
+    def run(self):
+        utils.stopCluster(self.node)
+
+class StartClusterThread (threading.Thread):
+    def __init__ (self,node):
+        self.node = node
+        threading.Thread.__init__(self)
+        self.output = ""
+
+    def run(self):
+        utils.startCluster(self.node)
+
+
