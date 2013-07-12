@@ -383,7 +383,7 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "resource create C4Master Dummy --clone")
+        output, returnVal = pcs(temp_cib, "resource create C4Master Dummy clone")
         assert returnVal == 0
         assert output == ""
 

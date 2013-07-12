@@ -46,6 +46,7 @@ def resource_cmd(argv):
                 meta_args = True
                 op_args = False
             elif arg == "clone":
+                utils.pcs_options["--clone"] = ""
                 clone_args = True
                 op_args = False
                 meta_args = False
