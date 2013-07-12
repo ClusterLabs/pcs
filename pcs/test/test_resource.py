@@ -84,7 +84,7 @@ class ResourceAdditionTest(unittest.TestCase):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
-        assert output.split('\n')[0] == "Error: Unable to create resource/fence device"
+        assert output == "Error: unable to create resource/fence device 'ClusterIP', 'ClusterIP' already exists on this system\n",[output]
     
         line = "resource create ClusterIP2 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
@@ -654,6 +654,10 @@ class ResourceAdditionTest(unittest.TestCase):
         output,returnVal = pcs(temp_cib, "resource create dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
         assert returnVal == 0
         assert output == "", [output]
+
+        output,returnVal = pcs(temp_cib, "resource create dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        assert returnVal == 1
+        assert output == "Error: unable to create resource/fence device 'dlm', 'dlm' already exists on this system\n", [output]
 
         output,returnVal = pcs(temp_cib, "resource --all")
         assert returnVal == 0

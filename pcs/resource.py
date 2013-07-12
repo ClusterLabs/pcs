@@ -280,6 +280,9 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     if not utils.is_valid_resource(ra_type) and not ("--force" in utils.pcs_options):
         utils.err ("Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type)
 
+    if utils.does_exist('//resources/descendant::primitive[@id="'+ra_id+'"]'):
+        utils.err("unable to create resource/fence device '%s', '%s' already exists on this system" % (ra_id,ra_id))
+
     # If the user doesn't specify a monitor attribute, we default to 60s automatically for them
     is_monitor_present = False
     if len(op_values[0]) == 0:
@@ -735,7 +738,13 @@ def convert_args_to_tuples(ra_values):
 # a list of tuples mapping the types to xml attributes
 def get_full_ra_type(ra_type, return_string = False):
     if (ra_type.count(":") == 0):
-        ra_type = "ocf:heartbeat:" + ra_type
+        if os.path.isfile("/usr/lib/ocf/resource.d/heartbeat/%s" % ra_type):
+            ra_type = "ocf:heartbeat:" + ra_type
+        elif os.path.isfile("/usr/lib/ocf/resource.d/pacemaker/%s" % ra_type):
+            ra_type = "ocf:pacemaker:" + ra_type
+        else:
+            ra_type = "ocf:heartbeat:" + ra_type
+
     
     if return_string:
         return ra_type

@@ -846,6 +846,10 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
     else:
         (resClass, resProvider, resType) = resource_type.split(":")
         metadata = get_metadata("/usr/lib/ocf/resource.d/" + resProvider + "/" + resType)
+
+    if metadata == False:
+        err("Unable to find resource: ocf:%s:%s" % (resProvider, resType))
+
     root = ET.fromstring(metadata)
     actions = root.find("parameters")
     valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument"]
