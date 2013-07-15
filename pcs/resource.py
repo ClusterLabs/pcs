@@ -1431,6 +1431,6 @@ def get_attrs(node, prepend_string = "", append_string = ""):
 def resource_cleanup(res_id):
     (output, retval) = utils.run(["crm_resource", "-C", "-r", res_id])
     if retval != 0:
-        utils.err("Unable to cleanup resource: %s" % res_id + output)
+        utils.err("Unable to cleanup resource: %s" % res_id + "\n" + output)
     else:
         print "Resource: %s successfully cleaned up" % res_id
