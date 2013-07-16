@@ -354,10 +354,11 @@ Commands:
     corosync <node>
         Get the corosync.conf from the specified node
 
-    destroy
+    destroy [--all]
         Permanently destroy the cluster on the current node, killing all
         corosync/pacemaker processes removing all cib files and the
-        corosync.conf file.
+        corosync.conf file.  Using '--all' will attempt to destroy the
+        cluster on all nodes configure in the corosync.conf file
         WARNING: This command permantly removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster.
