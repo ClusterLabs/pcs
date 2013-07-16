@@ -1,4 +1,5 @@
 import os,sys
+import difflib
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
@@ -21,4 +22,12 @@ def pcs(testfile, args):
                 in_quote = True
 
     return utils.run([pcs_location, "-f", testfile, "--corosync_conf=corosync.conf"] + arg_split_temp)
+
+# Compare output and print usable diff
+def ac(a,b):
+    if a != b:
+        d = difflib.Differ()
+        diff = d.compare(b.splitlines(1),a.splitlines(1))
+        print "".join(diff)
+        assert False,[a]
 

@@ -431,7 +431,7 @@ def location_show(argv):
         lc_rsc = rsc_loc.getAttribute("rsc")
         lc_id = rsc_loc.getAttribute("id")
         lc_score = rsc_loc.getAttribute("score")
-        lc_name = "Resource " + lc_rsc
+        lc_name = "Resource: " + lc_rsc
         if "--all" in utils.pcs_options:
             lc_name += " (id:" + lc_id + ")" 
 
@@ -449,7 +449,16 @@ def location_show(argv):
                     if exp.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                         continue
                     exp_string = ""
+                    exp_string_start = ""
+                    if exp.tagName == "expression":
+                        if "value" in exp.attributes.keys():
+                            exp_string_start = exp.getAttribute("attribute") + " " + exp.getAttribute("operation") + " " + exp.getAttribute("value")
+                        else:
+                            exp_string_start = exp.getAttribute("operation") + " " + exp.getAttribute("attribute")
+
                     for n,v in exp.attributes.items():
+                        if exp.tagName == "expression" and (n == "attribute" or n == "operation" or n == "value"):
+                            continue
                         if n != "id":
                             exp_string += n + "=" + v + " " 
                         if n == "operation" and v == "date_spec":
@@ -461,7 +470,13 @@ def location_show(argv):
                                     if n2 != "id":
                                         ds_string += n2 + "=" + v2+ " "
                                 datespechash[exp.getAttribute("id")].append([ds.getAttribute("id"),ds_string])
-                    exphash[rule_id].append([exp.getAttribute("id"),exp_string])
+
+                    exp_full_string = ""
+                    if exp_string_start != "":
+                        exp_full_string = exp_string_start + " "
+                    exp_full_string += exp_string
+
+                    exphash[rule_id].append([exp.getAttribute("id"),exp_full_string])
 
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
 # rsc_location)
@@ -521,7 +536,9 @@ def location_show(argv):
                         print ""
                     else:
                         print "Score: "+ options[2]
+        show_location_rules(ruleshash,showDetail,exphash,datespechash)
     else:
+        rsclist.sort()
         for rsc in rsclist:
             if len(valid_noderes) != 0:
                 if rsc not in valid_noderes:
@@ -547,8 +564,14 @@ def location_show(argv):
                     if showDetail:
                         print "(id:"+options[0]+")",
                 print ""
+            miniruleshash={}
+            miniruleshash["Resource: " + rsc] = ruleshash["Resource: " + rsc]
+            show_location_rules(miniruleshash,showDetail,exphash,datespechash, True)
+
+def show_location_rules(ruleshash,showDetail,exphash,datespechash,noheader=False):
     for rsc in ruleshash:
-        print "    Location Constraint: " + rsc
+        if not noheader:
+            print "  " + rsc
         for res_id,rule in ruleshash[rsc]:
             print "      Rule: " + rule,
             if showDetail:
@@ -821,6 +844,7 @@ def constraint_rule(argv):
         constraint = None
 
         rule_type = "expression"
+        print argv
         if len(argv) != 0:
             if argv[1].find('=') == -1:
                 rule_type = argv[1]

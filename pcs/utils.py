@@ -730,11 +730,37 @@ def getRule(dom, element, argv):
     rule.setAttribute("id", rule_id)
     rule.setAttribute(score_name, score)
     
-    expression = getExpression(dom, rule, argv)
-    rule.appendChild(expression)
+    argv1 = []
+    argv2 = []
+    split = False
+    for arg in argv:
+        if not split:
+            if arg == "or":
+                rule.setAttribute("boolean-op","or")
+                split = True
+            elif arg == "and":
+                rule.setAttribute("boolean-op","and")
+                split = True
+            else:
+                argv1.append(arg)
+        else:
+            argv2.append(arg)
+
+
+    expression = getExpression(dom, rule, argv1)
+    try:
+        rule.appendChild(expression)
+    except:
+        print argv1
+        print expression
+        raise
+    if len(argv2) != 0:
+        expression = getExpression(dom, rule, argv2, "-2")
+        rule.appendChild(expression)
+
     return rule
 
-def getExpression(dom, element, argv):
+def getExpression(dom, element, argv, id_suffix=""):
     if len(argv) < 2:
         return None
 
@@ -748,7 +774,7 @@ def getExpression(dom, element, argv):
         return expression
     elif argv[0] == "date":
         expression = dom.createElement("date_expression")
-        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-rule"))
+        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-rule" + id_suffix))
         date_expression = True
         argv.pop(0)
         count = 0
@@ -759,14 +785,14 @@ def getExpression(dom, element, argv):
                 date_spec = getDateSpec(dom, expression, argv[(i+1):])
                 expression.appendChild(date_spec)
                 break
-        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-dateexpr"))
+        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-dateexpr" + id_suffix))
         return expression
     elif len(argv) == 3 and argv[1] in ["lt","gt","lte","gte","eq","ne"]:
         expression = dom.createElement("expression")
         expression.setAttribute("attribute", argv[0])
         expression.setAttribute("operation", argv[1])
         expression.setAttribute("value", argv[2])
-        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-expr"))
+        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-expr" + id_suffix))
         return expression
     else:
         return None
