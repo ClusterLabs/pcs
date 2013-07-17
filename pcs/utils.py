@@ -465,7 +465,7 @@ def does_resource_have_options(ra_type):
 
 # Check and see if the specified resource (or stonith) type is present on the
 # file system and properly responds to a meta-data request
-def is_valid_resource(resource):
+def is_valid_resource(resource, caseInsensitiveCheck=False):
     found_resource = False
     stonith_resource = False
     if resource.startswith("ocf:"):
@@ -499,7 +499,15 @@ def is_valid_resource(resource):
             found_resource = True
     else:
         for provider in providers:
-            metadata = get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
+            filepath = "/usr/lib/ocf/resource.d/" + provider + "/"
+            if caseInsensitiveCheck:
+                all_files = [ f for f in os.listdir(filepath ) ]
+                for f in all_files:
+                    if f.lower() == resource.lower() and os.path.isfile(filepath + f):
+                        return f
+                continue
+
+            metadata = get_metadata(filepath + resource)
             if metadata == False:
                 continue
             else:

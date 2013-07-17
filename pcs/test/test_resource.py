@@ -4,7 +4,7 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
-from pcs_test_functions import pcs
+from pcs_test_functions import pcs,ac
 
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
@@ -59,6 +59,23 @@ class ResourceAdditionTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
+
+    def testCaseInsensitive(self):
+        o,r = pcs(temp_cib, "resource create D1 dummy")
+        assert r == 0
+        ac(o,'')
+
+        o,r = pcs(temp_cib, "resource create D2 DUMMY")
+        assert r == 0
+        ac(o,'')
+
+        o,r = pcs(temp_cib, "resource create D3 ipaddr2")
+        assert r == 0
+        ac(o,'')
+
+        o,r = pcs(temp_cib, "resource create D4 ipaddr3")
+        assert r == 1
+        ac(o,"Error: Unable to create resource 'ipaddr3', it is not installed on this system (use --force to override)\n")
 
     def testEmpty(self):
         output, returnVal = pcs(temp_cib, "resource") 

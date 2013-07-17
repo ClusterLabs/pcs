@@ -278,6 +278,14 @@ def format_desc(indent, desc):
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
+
+# If we're not using --force, try to change the case of ra_type to match any
+# installed resources
+    if not "--force" in utils.pcs_options:
+        new_ra_type = utils.is_valid_resource(ra_type, True)
+        if new_ra_type != True and new_ra_type != False:
+            ra_type = new_ra_type
+
     if not utils.is_valid_resource(ra_type) and not ("--force" in utils.pcs_options):
         utils.err ("Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type)
 

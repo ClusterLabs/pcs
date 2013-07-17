@@ -23,7 +23,8 @@ def pcs(testfile, args):
 
     return utils.run([pcs_location, "-f", testfile, "--corosync_conf=corosync.conf"] + arg_split_temp)
 
-# Compare output and print usable diff
+# Compare output and print usable diff (diff b a)
+# a is the actual output, b is what should be output
 def ac(a,b):
     if a != b:
         d = difflib.Differ()
