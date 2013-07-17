@@ -588,6 +588,7 @@ def cluster_verify(argv):
 def cluster_report(argv):
     if len(argv) != 1:
         usage.cluster(["report"])
+        sys.exit(1)
 
     outfile = argv[0]
     dest_outfile = outfile + ".tar.bz2"
