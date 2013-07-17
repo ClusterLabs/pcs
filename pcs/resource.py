@@ -121,15 +121,12 @@ def resource_cmd(argv):
         resource_master(argv)
     elif (sub_cmd == "unmaster"):
         resource_clone_master_remove(argv)
-    elif (sub_cmd == "start"):
-        resource_start(argv)
-    elif (sub_cmd == "stop"):
-        resource_stop(argv)
-    elif (sub_cmd == "restart"):
-# Need to have a wait in here to make sure the stop registers
-        print "Not Yet Implemented"
-#        if resource_stop(argv):
-#            resource_start(argv)
+    elif (sub_cmd == "enable"):
+        resource_enable(argv)
+    elif (sub_cmd == "disable"):
+        resource_disable(argv)
+    elif (sub_cmd == "force-start"):
+        resource_force_start(argv)
     elif (sub_cmd == "manage"):
         resource_manage(argv, True)
     elif (sub_cmd == "unmanage"):
@@ -1221,9 +1218,9 @@ def resource_show(argv, stonith=False):
             utils.err("unable to find resource '"+arg+"'")
         resource_found = False
 
-def resource_stop(argv):
+def resource_disable(argv):
     if len(argv) < 1:
-        utils.err("You must specify a resource to stop")
+        utils.err("You must specify a resource to disable")
 
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
@@ -1233,9 +1230,9 @@ def resource_stop(argv):
     else:
         return True
 
-def resource_start(argv):
+def resource_enable(argv):
     if len(argv) < 1:
-        utils.err("You must specify a resource to start")
+        utils.err("You must specify a resource to enable")
 
     args = ["crm_resource", "-r", argv[0], "-m", "-d", "target-role"]
     output, retval = utils.run(args)
@@ -1244,6 +1241,14 @@ def resource_start(argv):
         return False
     else:
         return True
+
+def resource_force_start(argv):
+    if len(argv) < 1:
+        utils.err("You must specify a resource to force-start")
+
+    args = ["crm_resource", "-r", argv[0], "--force-start"]
+    output, retval = utils.run(args)
+    print output,
 
 def resource_manage(argv, set_managed):
     if len(argv) == 0:

@@ -122,11 +122,18 @@ Commands:
         show the options for the configured resource.  If --all is specified
         all configured resource options will be displayed
 
-    start <resource id>
-        Start resource specified by resource_id
+    enable <resource id>
+        Enable resource specified by resource_id
 
-    stop <resource id>
-        Stop resource specified by resource_id
+    disable <resource id>
+        Disable resource specified by resource_id (this will cause the cluster
+        to attempt to stop currently running resources).
+
+    force-start <resource id>
+        This command will force the specified resource to start on this node
+        ignoring the cluster recommendations and print the output from
+        starting the resource.  This is mainly used for debugging resources
+        that fail to start.
 
     move <resource id> [destination node]
         Move resource off current node (and optionally onto destination node
