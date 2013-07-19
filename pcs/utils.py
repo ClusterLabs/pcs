@@ -442,7 +442,9 @@ def is_corosync_node(node):
         return True
     return False
 
-    
+def is_resource(resource_id):
+    return does_exist("//primitive[@id='"+resource_id+"']")
+
 def is_stonith_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"' and @class='stonith']")
 

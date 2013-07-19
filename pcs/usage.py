@@ -314,6 +314,14 @@ Commands:
         Remove node from standby mode (the node specified will now be able to
         host resources
 
+    remote-node add <hostname> <resource_id> [options]
+        Enables the specified resource as a remote-node resource on the
+        specified hostname
+    
+    remote-node rm <hostname>
+        Disables any resources configured to be remote-node resource on the
+        specified hostname
+
     status
         View current cluster status (an alias of 'pcs status cluster')
 

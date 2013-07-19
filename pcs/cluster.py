@@ -71,6 +71,8 @@ def cluster_cmd(argv):
             disable_cluster_all()
         else:
             disable_cluster(argv)
+    elif (sub_cmd == "remote-node"):
+        cluster_remote_node(argv)
     elif (sub_cmd == "cib"):
         get_cib(argv)
     elif (sub_cmd == "push"):
@@ -630,6 +632,42 @@ def cluster_report(argv):
     if retval != 0:
         utils.err(newoutput)
     print newoutput
+
+def cluster_remote_node(argv):
+    if len(argv) < 1:
+        usage.cluster(["remote-node"])
+        sys.exit(1)
+
+    command = argv.pop(0)
+    if command == "add":
+        if len(argv) < 2:
+            usage.cluster(["remote-node"])
+            sys.exit(1)
+        hostname = argv.pop(0)
+        rsc = argv.pop(0)
+        if not utils.is_resource(rsc):
+            utils.err("unable to find resource '%s'", rsc)
+        resource.resource_update(rsc, ["meta", "remote-node="+hostname] + argv)
+
+    elif command == "rm":
+        if len(argv) < 1:
+            usage.cluster(["remote-node"])
+            sys.exit(1)
+        hostname = argv.pop(0)
+        dom = utils.get_cib_dom()
+        nvpairs = dom.getElementsByTagName("nvpair")
+        nvpairs_to_remove = []
+        for nvpair in nvpairs:
+            if nvpair.getAttribute("name") == "remote-node" and nvpair.getAttribute("value") == hostname:
+                for np in nvpair.parentNode.getElementsByTagName("nvpair"):
+                    if np.getAttribute("name").startswith("remote-"):
+                        nvpairs_to_remove.append(np)
+        for nvpair in nvpairs_to_remove[:]:
+            nvpair.parentNode.removeChild(nvpair)
+        utils.replace_cib_configuration(dom)
+    else:
+        usage.cluster(["remote-node"])
+        sys.exit(1)
 
 class StopClusterThread (threading.Thread):
     def __init__ (self,node):

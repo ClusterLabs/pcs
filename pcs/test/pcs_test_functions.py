@@ -29,6 +29,7 @@ def ac(a,b):
     if a != b:
         d = difflib.Differ()
         diff = d.compare(b.splitlines(1),a.splitlines(1))
+        print ""
         print "".join(diff)
         assert False,[a]
 
