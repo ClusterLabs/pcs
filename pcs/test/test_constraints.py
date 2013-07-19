@@ -138,7 +138,6 @@ class ConstraintTest(unittest.TestCase):
         assert output == "", [output]
 
         output, returnVal = pcs(temp_cib, "constraint location D3 rule -INFINITY: not_defined pingd or pingd lte 0")
-        print output
         assert returnVal == 0
         assert output == "", [output]
 
@@ -241,10 +240,12 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint --all")
-        assert r == 0 and o == 'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\n  Resource: D1\n    Location Constraint: Resource D1 (id:location-D1-rh7-1-INFINITY)\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-1) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-1-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-2) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-2-expr) \nOrdering Constraints:\nColocation Constraints:\n', [o]
+        assert r == 0
+        ac(o,'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\n  Resource: D1\n    Location Constraint: Resource D1 (id:location-D1-rh7-1-INFINITY)\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-1) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-1-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-2) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-2-expr) \nOrdering Constraints:\nColocation Constraints:\n')
         
         o, r = pcs(temp_cib, "constraint rule rm location-D1-rh7-1-INFINITY-rule-1")
-        assert r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n", o
+        assert r == 0
+        ac(o,"Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n")
         
         o, r = pcs(temp_cib, "constraint rule rm location-D1-rh7-1-INFINITY-rule-2")
         assert r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n", o

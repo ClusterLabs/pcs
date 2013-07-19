@@ -421,7 +421,6 @@ def location_show(argv):
     rschashon = {}
     rschashoff = {}
     ruleshash = defaultdict(list)
-    exphash = defaultdict(list)
     datespechash = defaultdict(list)
     all_loc_constraints = constraintsElement.getElementsByTagName('rsc_location')
 
@@ -432,19 +431,17 @@ def location_show(argv):
         lc_id = rsc_loc.getAttribute("id")
         lc_score = rsc_loc.getAttribute("score")
         lc_name = "Resource: " + lc_rsc
-        if "--all" in utils.pcs_options:
-            lc_name += " (id:" + lc_id + ")" 
 
         rules = rsc_loc.getElementsByTagName('rule')
         if len(rules) > 0:
             for rule in rules:
+                exphash = []
                 rule_score = rule.getAttribute("score")
                 rule_string = ""
                 for n,v in rule.attributes.items():
                     if n != "id":
                         rule_string += n + "=" + v + " " 
                 rule_id = rule.getAttribute("id")
-                ruleshash[lc_name].append([rule_id, rule_string]) 
                 for exp in rule.childNodes:
                     if exp.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                         continue
@@ -476,7 +473,8 @@ def location_show(argv):
                         exp_full_string = exp_string_start + " "
                     exp_full_string += exp_string
 
-                    exphash[rule_id].append([exp.getAttribute("id"),exp_full_string])
+                    exphash.append([exp.getAttribute("id"),exp_full_string])
+                ruleshash[lc_name].append([rule_id, rule_string, exphash]) 
 
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
 # rsc_location)
@@ -536,7 +534,7 @@ def location_show(argv):
                         print ""
                     else:
                         print "Score: "+ options[2]
-        show_location_rules(ruleshash,showDetail,exphash,datespechash)
+        show_location_rules(ruleshash,showDetail,datespechash)
     else:
         rsclist.sort()
         for rsc in rsclist:
@@ -566,18 +564,18 @@ def location_show(argv):
                 print ""
             miniruleshash={}
             miniruleshash["Resource: " + rsc] = ruleshash["Resource: " + rsc]
-            show_location_rules(miniruleshash,showDetail,exphash,datespechash, True)
+            show_location_rules(miniruleshash,showDetail,datespechash, True)
 
-def show_location_rules(ruleshash,showDetail,exphash,datespechash,noheader=False):
+def show_location_rules(ruleshash,showDetail,datespechash,noheader=False):
     for rsc in ruleshash:
         if not noheader:
             print "  " + rsc
-        for res_id,rule in ruleshash[rsc]:
+        for res_id,rule,exphash in ruleshash[rsc]:
             print "      Rule: " + rule,
             if showDetail:
                 print "(id:%s)" % (res_id),
             print ""
-            for exp_id,exp in exphash[res_id]:
+            for exp_id,exp in exphash:
                 print "        Expression: " + exp,
                 if showDetail:
                     print "(id:%s)" % (exp_id),
@@ -844,7 +842,6 @@ def constraint_rule(argv):
         constraint = None
 
         rule_type = "expression"
-        print argv
         if len(argv) != 0:
             if argv[1].find('=') == -1:
                 rule_type = argv[1]
