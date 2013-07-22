@@ -404,6 +404,14 @@ post '/remote/?:command?' do
   return remote(params,request)
 end
 
+get '/wizards/?:wizard?' do
+  return wizard(params, request, params[:wizard])
+end
+
+post '/wizards/?:wizard?' do
+  return wizard(params, request, params[:wizard])
+end
+
 get '*' do
   $logger.debug params[:splat]
   $logger.info "Redirecting '*'...\n"
