@@ -14,7 +14,7 @@ install:
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	chmod 755 ${DESTDIR}${PYTHON_SITELIB}/pcs/pcs.py
 	ln -fs ${PYTHON_SITELIB}/pcs/pcs.py ${DESTDIR}${PREFIX}/sbin/pcs
-
+	install -D pcs/bash_completion.d.pcs ${DESTDIR}/etc/bash_completion.d/pcs
 
 install_pcsd:
 	make -C pcsd build_gems
@@ -37,8 +37,11 @@ uninstall:
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
 	rm -rf ${DESTDIR}/var/lib/pcsd
 
-tarball:
+tarball: bash_completion
 	python setup.py sdist
 
 docs:
 	help2man -s 8 -N -h '--fullhelp' --output=pcs/pcs.8 --name='pacemaker/corosync configuration system' pcs/pcs.py
+
+bash_completion:
+	cd pcs ; python -c 'import usage;  usage.sub_generate_bash_completion()' > bash_completion.d.pcs ; cd ..

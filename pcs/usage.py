@@ -83,6 +83,102 @@ def sub_usage(args, output):
     else:
         return output
     
+def dict_depth(d, depth=0):
+    if not isinstance(d, dict) or not d:
+        return depth
+    return max(dict_depth(v, depth+1) for k, v in d.iteritems())
+
+def sub_gen_code(level,item,prev_level=[],spaces=""):
+    out = ""
+
+    if dict_depth(item) <= level:
+        return ""
+
+    out += 'case "${cur' + str(level) + '}" in\n'
+    next_level = []
+    for key,val in item.items():
+        if len(val) == 0:
+            continue
+        values = " ".join(val.keys())
+        out += "  " + key + ")\n"
+        if len(val) > 0 and level != 1:
+            out += sub_gen_code(level-1,item[key],[] ,spaces + "  ")
+        else:
+            out += "    " + 'COMPREPLY=($(compgen -W "' + values + '" -- ${cur}))\n'
+            out += "    return 0\n"
+        out += "    ;;\n"
+    out += "  *)\n"
+    out += "  ;;\n"
+    out += 'esac\n'
+    temp = out.split('\n')
+    new_out = ""
+    for l in temp:
+        new_out += spaces + l + "\n"
+    return new_out
+
+
+def sub_generate_bash_completion():
+    tree = {}
+    tree["resource"] = generate_tree(resource([],False))
+    tree["cluster"] = generate_tree(cluster([],False))
+    tree["stonith"] = generate_tree(stonith([],False))
+    tree["property"] = generate_tree(property([],False))
+    tree["constraint"] = generate_tree(constraint([],False))
+    tree["status"] = generate_tree(status([],False))
+    print """
+    _pcs()
+    {
+    local cur cur2 cur2 cur3
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    cur1="${COMP_WORDS[COMP_CWORD-1]}"
+    cur2="${COMP_WORDS[COMP_CWORD-2]}"
+    cur3="${COMP_WORDS[COMP_CWORD-3]}"
+
+    """
+    print sub_gen_code(3,tree,[])
+    print sub_gen_code(2,tree,[])
+    print sub_gen_code(1,tree,[])
+    print """
+    if [ $COMP_CWORD -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "resource cluster stonith property constraint status" -- $cur) )
+    fi
+    return 0
+
+    }
+    complete -F _pcs pcs
+    """
+
+
+def generate_tree(usage_txt):
+    ignore = True
+    ret_hash = {}
+    cur_stack = []
+    for l in usage_txt.split('\n'):
+        if l.startswith("Commands:"):
+            ignore = False
+            continue
+
+        if l.startswith("Examples:"):
+            break
+
+        if ignore == True:
+            continue
+        
+        if re.match("^    \w",l):
+            args = l.split()
+            arg = args.pop(0)
+            if not arg in ret_hash:
+                ret_hash[arg] = {}
+            cur_hash = ret_hash[arg]
+            for arg in args:
+                if arg.startswith('[') or arg.startswith('<'):
+                    break
+                if not arg in cur_hash:
+                    cur_hash[arg] = {}
+                cur_hash = cur_hash[arg]
+    return ret_hash
+
 def main(pout=True):
     output =  """
 Usage: pcs [-f file] [-h] [commands]...
