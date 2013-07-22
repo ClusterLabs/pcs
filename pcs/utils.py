@@ -672,7 +672,7 @@ def set_cib_property(prop, value):
     for child in cluster_property_set.getElementsByTagName("nvpair"):
         if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
             break
-        if (child.getAttribute("id") == "cib-bootstrap-options-" + prop):
+        if (child.getAttribute("name") == prop):
             child.parentNode.removeChild(child)
             break
 
