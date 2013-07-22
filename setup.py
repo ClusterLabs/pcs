@@ -9,6 +9,6 @@ setup(name='pcs',
     author_email='cfeist@redhat.com',
     url='http://github.com/feist/pcs',
     packages=['pcs'],
-    package_data={'pcs':['corosync.conf.template','corosync.conf.fedora.template']}, 
+    package_data={'pcs':['corosync.conf.template','corosync.conf.fedora.template','bash_completion.d.pcs']}, 
     py_modules=['pcs']
     )
