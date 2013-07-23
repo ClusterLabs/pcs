@@ -822,3 +822,11 @@ function get_cluster_name() {
 function get_cluster_remote_url() {
     return '/managec/' + Pcs.cluster_name + "/";
 }
+
+function checkBoxToggle(cb) {
+  cbs = $(cb).closest("tr").next().find(".node_list_check input[type=checkbox]")
+  if ($(cb).prop('checked'))
+    cbs.prop('checked',true);
+  else
+    cbs.prop('checked',false);
+}

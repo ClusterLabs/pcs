@@ -5,6 +5,9 @@
     </tr>
     <tr id="node_header_row" {{bindAttr style="Pcs.node_page"}}>
       <td id="remove_add" class="borderbottom">
+	<div>
+	  <input type="checkbox" onchange="checkBoxToggle(this)">
+	</div>
 	<div id="no_coro_support" onclick="alert('Corosync does not presently support adding and removing nodes in a live cluster.  To remove or add nodes, you must shut down all nodes in the cluster and use the pcs command.');">
 	  <div class="x sprites"></div><div class="link">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
 	  <div class="plus sprites"></div><div class="link">&nbsp;Add</div>
