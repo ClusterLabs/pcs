@@ -29,4 +29,8 @@ http://pkgs.fedoraproject.org/cgit/pcs.git/
 Current Fedora 18 .spec:
 http://pkgs.fedoraproject.org/cgit/pcs.git/tree/pcs.spec?h=f18
 
+You can also install pcsd which operates as a GUI and remote server for pcs.  To install pcsd run the following commands from the root of your pcs directory.
+# cd pcsd ; make get_gems ; cd ..
+# make install_pcsd
+
 If you have an questions or concerns please feel free to email cfeist@redhat.com or open a github issue on the pcs project.
