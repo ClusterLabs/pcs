@@ -341,6 +341,12 @@ post '/manage/existingcluster' do
   if status.has_key?("corosync_offline") and
     status.has_key?("corosync_online") then
     nodes = status["corosync_offline"] + status["corosync_online"]
+    pcs_config.clusters.each {|c|
+      if c.name == status["cluster_name"]
+      	redirect '/manage/?error=duplicatename&errorval='+c.name+'#manage'
+      	return
+      end
+    }
     pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
     pcs_config.save
     redirect '/manage#manage'

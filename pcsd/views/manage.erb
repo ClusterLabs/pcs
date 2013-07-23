@@ -103,6 +103,9 @@
   <% if @error == "badclustername" %>
     The cluster name, '<%=@errorval%>' has not yet been configured in pcsd.  Use 'Add Existing' to add a node which is part of the cluster.
   <% end %>
+  <% if @error == "duplicatename" %>
+    The cluster name, '<%=@errorval%>' has already been added to pcsd.  You may not add two clusters with the same name into pcsd.
+  <% end %>
 </div>
 <% if @error %>
   <script type="text/javascript">
