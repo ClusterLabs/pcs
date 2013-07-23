@@ -106,6 +106,9 @@
   <% if @error == "duplicatename" %>
     The cluster name, '<%=@errorval%>' has already been added to pcsd.  You may not add two clusters with the same name into pcsd.
   <% end %>
+  <% if @error == "duplicatenodename" %>
+    The node, '<%=@errorval%>' is already configured in pcsd.  You may not add a node to two different clusters in pcsd.
+  <% end %>
 </div>
 <% if @error %>
   <script type="text/javascript">

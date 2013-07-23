@@ -77,9 +77,7 @@ configure do
     $logger.level = Logger::INFO
   end
 
-  if not defined? @@cluster_name
-    @@cluster_name = get_cluster_version()
-  end
+  @@cluster_name = get_cluster_version()
 
   if not defined? @@cur_node_name
     @@cur_node_name = `hostname`.chomp
@@ -341,12 +339,11 @@ post '/manage/existingcluster' do
   if status.has_key?("corosync_offline") and
     status.has_key?("corosync_online") then
     nodes = status["corosync_offline"] + status["corosync_online"]
-    pcs_config.clusters.each {|c|
-      if c.name == status["cluster_name"]
-      	redirect '/manage/?error=duplicatename&errorval='+c.name+'#manage'
-      	return
-      end
-    }
+
+    if pcs_config.is_cluster_name_in_use(status["cluster_name"])
+      redirect '/manage/?error=duplicatename&errorval='+status["cluster_name"]+'#manage'
+    end
+
     pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
     pcs_config.save
     redirect '/manage#manage'
@@ -365,6 +362,16 @@ post '/manage/newcluster' do
       @nodes << v
     end
   }
+  if pcs_config.is_cluster_name_in_use(@cluster_name)
+    redirect '/manage/?error=duplicatename&errorval='+@cluster_name+'#manage'
+  end
+
+  @nodes.each {|n|
+    if pcs_config.is_node_in_use(n)
+      redirect '/manage/?error=duplicatenodename&errorval='+n+'#manage'
+    end
+  }
+
   pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
   pcs_config.save
 

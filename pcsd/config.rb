@@ -35,5 +35,23 @@ class PCSConfig
     @clusters.delete_if { |c| c.name == cluster_name }
   end
 
+  def is_cluster_name_in_use(cname)
+    @clusters.each {|c|
+      if c.name == cname
+      	return true
+      end
+    }
+    return false
+  end
+
+  def is_node_in_use(nodename)
+    @clusters.each {|c|
+      c.nodes.each {|n|
+      	return true if n == nodename
+      }
+    }
+    return false
+  end
+
 
 end
