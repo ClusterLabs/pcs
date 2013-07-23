@@ -63,8 +63,13 @@
 		    <div id="pacemaker_online_status" class="status">
 			Pacemaker Connected
 		    {{else}}
+		      {{#if Pcs.nodesController.cur_node.pacemaker_standby}}
+		    <div id="pacemaker_online_status" class="status-standby">
+			Pacemaker Standby
+		      {{else}}
 		    <div id="pacemaker_online_status" class="status-offline">
 			Pacemaker Not Connected
+		      {{/if}}
 		    {{/if}}
 		    </div>
 		  </td>
@@ -98,8 +103,14 @@
 		<div class="restart sprites" style="float: left"></div>
 		&nbsp;Restart
 	      </div>
-	      <!-- <div class="cancel sprites" style="float: left"></div>
-	      	      <div class="link">Leave Cluster</div> -->
+	      <div id="node_unstandby" class="link" {{bindAttr style="Pcs.nodesController.cur_node.unstandby_style"}}>
+		<div class="unstandby sprites" style="float: left"></div>
+		&nbsp;Unstandby
+	      </div>
+	      <div id="node_standby" class="link" {{bindAttr style="Pcs.nodesController.cur_node.standby_style"}}>
+		<div class="standby sprites" style="float: left"></div>
+		&nbsp;Standby
+	      </div>
 	      <div class="configure sprites" style="float: left"></div>
 	      <div class="link"><a href="#fencedevices" onclick="select_menu('FENCE DEVICES');return true;">Configure Fencing</a></div>
 	    </div>

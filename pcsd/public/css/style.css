@@ -586,6 +586,12 @@ tr td a.remove {
   color: #53b900;
 }
 
+.status-standby {
+  font-family: "Liberation";
+  font-size: 12px;
+  color: #ff6600;
+}
+
 .status-offline {
   font-family: "Liberation";
   font-size: 12px;
@@ -616,7 +622,8 @@ tr td a.remove {
 .plus { background-position: -48px -1px; }
 .check { background-position: -448px -1px; }
 .restart { background-position: -272px -17px; }
-.standby { background-position: -368px -16px; }
+.standby { background-position: -352px -16px; }
+.unstandby { background-position: -368px -16px; }
 .cancel { background-position: -160px -17px; }
 .configure { background-position: -64px -16px; }
 .arrow { background-position: -544px -16px; }

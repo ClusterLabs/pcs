@@ -267,9 +267,24 @@ Pcs.Clusternode = Ember.Object.extend({
     if (this.up) {
       return "";
     } else {
-      return "color:red";
+      if (this.pacemaker_standby)
+      	return "color: #ff6600";
+      else
+	return "color:red";
     }
-  }.property("up"),
+  }.property("up","pacemaker_standby"),
+  standby_style: function () {
+    if (this.pacemaker_standby)
+      return "display: none;";
+    else
+      return "";
+  }.property("pacemaker_standby"),
+  unstandby_style: function() {
+    if (this.pacemaker_standby)
+      return "";
+    else
+      return "display: none;";
+  }.property("pacemaker_standby"),
   location_constraints: null
 });
 
@@ -668,7 +683,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   }
 });
 
-Pcs.selectedNodeController = Ember.Object.create({
+Pcs.selectedNodeController = Ember.Object.createWithMixins({
   node: null,
   reset: function() {
     if (Pcs.nodesController)
@@ -694,12 +709,15 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
     var nodes = [];
     corosync_nodes_online = [];
     pacemaker_nodes_online = [];
+    pacemaker_nodes_standby = [];
     $.each(data, function(key, value) {
       nodes.push(key);
       if (value["corosync_online"])
 	corosync_nodes_online = corosync_nodes_online.concat(value["corosync_online"]);
       if (value["pacemaker_online"])
 	pacemaker_nodes_online = pacemaker_nodes_online.concat(value["pacemaker_online"]);
+      if (value["pacemaker_standby"])
+	pacemaker_nodes_standby = pacemaker_nodes_standby.concat(value["pacemaker_standby"]);
     });
     nodes.sort();
     var resources_on_nodes = {};
@@ -741,10 +759,17 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       } else {
 	corosync_online = false;
       }
+
       if ($.inArray(node_id, pacemaker_nodes_online) > -1) {
 	pacemaker_online = true;
       } else {
 	pacemaker_online = false;
+      }
+
+      if ($.inArray(node_id, pacemaker_nodes_standby) > -1) {
+	pacemaker_standby = true;
+      } else {
+	pacemaker_standby = false;
       }
 
       if (data[node_id]["noresponse"] == true) {
@@ -779,6 +804,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  node.set("pacemaker_daemon", data[node_id]["pacemaker"]);
 	  node.set("corosync", corosync_online);
 	  node.set("pacemaker", pacemaker_online);
+	  node.set("pacemaker_standby", pacemaker_standby);
 	  node.set("cur_node",false);
 	  node.set("running_resources", Pcs.getResourcesFromID($.unique(resources_on_nodes[node_id].sort().reverse())));
 	  node.set("location_constraints", lc_on_nodes[node_id].sort());
@@ -797,6 +823,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  pacemaker_daemon: data[node_id]["pacemaker"],
 	  corosync: corosync_online,
 	  pacemaker: pacemaker_online,
+	  pacemaker_standby: pacemaker_standby,
 	  cur_node: false,
 	  running_resources: Pcs.getResourcesFromID($.unique(resources_on_nodes[node_id].sort().reverse())),
 	  location_constraints: lc_on_nodes[node_id].sort(),

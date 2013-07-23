@@ -380,6 +380,16 @@ function setup_node_links() {
     fade_in_out("#node_restart");
     $.post('/remote/node_restart', {"name": $.trim(node)});
   });
+  $("#node_standby").click(function() {
+    node = $("#node_info_header_title_name").text();
+    fade_in_out("#node_standby");
+    $.post('/remote/node_standby', {"node": $.trim(node)});
+  });
+  $("#node_unstandby").click(function() {
+    node = $("#node_info_header_title_name").text();
+    fade_in_out("#node_unstandby");
+    $.post('/remote/node_unstandby', {"node": $.trim(node)});
+  });
 }
 
 function setup_resource_links(link_type) {

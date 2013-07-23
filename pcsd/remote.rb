@@ -33,6 +33,10 @@ def remote(params,request)
     return cluster_stop(params)
   when "node_restart"
     return node_restart(params)
+  when "node_standby"
+    return node_standby(params)
+  when "node_unstandby"
+    return node_unstandby(params)
   when "cluster_enable"
     return cluster_enable(params)
   when "cluster_disable"
@@ -110,6 +114,26 @@ def node_restart(params)
     output =  `/sbin/reboot`
     $logger.debug output
     return output
+  end
+end
+
+def node_standby(params)
+  if params[:name]
+    response = send_request_with_token(params[:name], 'node_standby', true)
+  else
+    $logger.info "Standby Node"
+    stdout, stderr, retval = run_cmd(PCS,"cluster","standby",params[:node])
+    return stdout
+  end
+end
+
+def node_unstandby(params)
+  if params[:name]
+    response = send_request_with_token(params[:name], 'node_unstandby', true)
+  else
+    $logger.info "Standby Node"
+    stdout, stderr, retval = run_cmd(PCS,"cluster","unstandby",params[:node])
+    return stdout
   end
 end
 
@@ -230,6 +254,7 @@ def node_status(params)
   corosync_offline = []
   pacemaker_online = []
   pacemaker_offline = []
+  pacemaker_standby = []
   in_pacemaker = false
   stdout, stderr, retval = run_cmd(PCS,"status","nodes","both")
   stdout.each {|l|
@@ -248,6 +273,10 @@ def node_status(params)
 
     if title == " Online"
       in_pacemaker ? pacemaker_online.concat(nodes.split(/ /)) : corosync_online.concat(nodes.split(/ /))
+    elsif title == " Standby"
+      if in_pacemaker
+      	pacemaker_standby.concat(nodes.split(/ /))
+      end
     else
       in_pacemaker ? pacemaker_offline.concat(nodes.split(/ /)) : corosync_offline.concat(nodes.split(/ /))
     end
@@ -274,6 +303,7 @@ def node_status(params)
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
  "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
  "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
+ "pacemaker_standby" => pacemaker_standby,
  "cluster_name" => @@cluster_name, "resources" => out_rl, "groups" => group_list,
  "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id}
   ret = JSON.generate(status)
