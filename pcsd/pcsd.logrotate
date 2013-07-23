@@ -1,0 +1,10 @@
+/var/log/pcsd/pcsd.log {
+    rotate 5
+    weekly
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    create 0600 root root
+}

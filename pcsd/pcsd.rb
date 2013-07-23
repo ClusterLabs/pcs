@@ -64,12 +64,12 @@ configure do
   SETTINGS_FILE = "pcs_settings.conf"
   $user_pass_file = "pcs_users.conf"
 
-  logger = File.open("/var/log/pcsd/pcsd-main.log", "a+", 0600)
+  logger = File.open("/var/log/pcsd/pcsd.log", "a+", 0600)
   STDOUT.reopen(logger)
   STDERR.reopen(logger)
   STDOUT.sync = true
   STDERR.sync = true
-  $logger = Logger.new('/var/log/pcsd/pcsd-main.log', 'daily')
+  $logger = Logger.new('/var/log/pcsd/pcsd.log')
   if ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true" then
     $logger.level = Logger::DEBUG
     $logger.info "PCSD Debugging enabled"
