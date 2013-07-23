@@ -352,6 +352,16 @@ Examples:
     pcs resource update ClusterIP ip=192.168.0.98 cidr_netmask=
 
     pcs resource delete ClusterIP
+
+Notes:
+    Starting resources on a cluster is (almost) always done by pacemaker and
+    not directly from pcs.  If your resource isn't starting, it's usually
+    due to either a misconfiguration of the resource (which you debug in
+    the system log), constraints preventing the resource from starting or
+    the resource being disabled.  You can use 'pcs resource force-start' to
+    test resource configuration, but it should *not* normally be used to start
+    resources in a cluster.
+
 """
     if pout:
         print sub_usage(args, output)
