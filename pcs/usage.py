@@ -128,7 +128,7 @@ def sub_generate_bash_completion():
     print """
     _pcs()
     {
-    local cur cur2 cur2 cur3
+    local cur cur1 cur2 cur3
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     cur1="${COMP_WORDS[COMP_CWORD-1]}"
