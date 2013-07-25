@@ -348,7 +348,41 @@ class ResourceAdditionTest(unittest.TestCase):
         assert r == 0
         ac(o,' Resource: A1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A1-monitor-interval-60s)\n Resource: A2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A2-monitor-interval-60s)\n Resource: A3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A3-monitor-interval-60s)\n Resource: A4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A4-monitor-interval-60s)\n Resource: A5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A5-monitor-interval-60s)\n')
 
+    def testGroupAdd(self):
+        o,r = pcs(temp_cib, "resource create A1 Dummy")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A2 Dummy")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A3 Dummy")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A4 Dummy")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A5 Dummy")
+        assert r == 0
 
+        o,r = pcs(temp_cib, "resource group add MyGroup A1 B1")
+        assert r == 1
+        ac(o,'Error: Unable to find resource: B1\n')
+
+        o,r = pcs(temp_cib, "resource show")
+        assert r == 0
+        ac(o,' A1\t(ocf::heartbeat:Dummy):\tStopped \n A2\t(ocf::heartbeat:Dummy):\tStopped \n A3\t(ocf::heartbeat:Dummy):\tStopped \n A4\t(ocf::heartbeat:Dummy):\tStopped \n A5\t(ocf::heartbeat:Dummy):\tStopped \n')
+
+        o,r = pcs(temp_cib, "resource group add MyGroup A1 A2 A3")
+        assert r == 0
+        ac(o,'')
+
+        o,r = pcs(temp_cib, "resource group add MyGroup A1 A2 A3")
+        assert r == 1
+        ac(o,'Error: A1 already exists in MyGroup\n')
+
+        o,r = pcs(temp_cib, "resource group add MyGroup2 A3 A4 A5")
+        assert r == 0
+        ac(o,'')
+
+        o,r = pcs(temp_cib, "resource show")
+        assert r == 0
+        ac(o,' Resource Group: MyGroup\n     A1\t(ocf::heartbeat:Dummy):\tStopped \n     A2\t(ocf::heartbeat:Dummy):\tStopped \n Resource Group: MyGroup2\n     A3\t(ocf::heartbeat:Dummy):\tStopped \n     A4\t(ocf::heartbeat:Dummy):\tStopped \n     A5\t(ocf::heartbeat:Dummy):\tStopped \n')
 
     def testGroupOrder(self):
         output, returnVal = pcs(temp_cib, "resource create A Dummy")

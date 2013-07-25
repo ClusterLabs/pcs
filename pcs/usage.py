@@ -291,8 +291,9 @@ Commands:
         constraints referencing the resource)
 
     group add <group name> <resource_id>...
-        Add the specified resource to the group (creating the group if it does
-        not exist
+        Add the specified resource to the group, creating the group if it does
+        not exist.  If the resource is present in another group it is moved
+        to the new group.
 
     group remove <group name>
         Remove the group (Note: this does not remove any resources from the

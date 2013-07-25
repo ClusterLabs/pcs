@@ -1130,11 +1130,7 @@ def resource_group_add(group_name, resource_ids):
         for resource in mygroup.getElementsByTagName("primitive"):
             # If resource already exists in group then we skip
             if resource.getAttribute("id") == resource_id:
-                print resource_id + " already exists in " + group_name + "\n"
-                already_exists = True
-                break
-        if already_exists == True:
-            continue
+                utils.err(resource_id + " already exists in " + group_name)
 
         resource_found = False
         for resource in resources_element.getElementsByTagName("primitive"):
@@ -1146,7 +1142,7 @@ def resource_group_add(group_name, resource_ids):
                 break
 
         if resource_found == False:
-            print "Unable to find resource: " + resource_id
+            utils.err("Unable to find resource: " + resource_id)
             continue
 
     if resources_to_move:
