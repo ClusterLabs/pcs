@@ -219,11 +219,14 @@ Commands:
         all configured resource options will be displayed
 
     enable <resource id>
-        Enable resource specified by resource_id
+        Allow the cluster to start the resource. Depending on the rest of the
+        configuration (constraints, options, failures, etc), the resource may
+        remain stopped.
 
     disable <resource id>
-        Disable resource specified by resource_id (this will cause the cluster
-        to attempt to stop currently running resources).
+        Attempt to stop the resource if it is running and forbid the cluster
+        from starting it again.  Depending on the rest of the configuration
+        (constraints, options, failures, etc), the resource may remain started
 
     force-start <resource id>
         This command will force the specified resource to start on this node
