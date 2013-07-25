@@ -40,6 +40,10 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "",[output]
 
+        output, returnVal = pcs(temp_cib, 'resource show apc-fencing')
+        assert returnVal == 1
+        assert output == 'Error: unable to find resource \'apc-fencing\'\n',[output]
+
         output, returnVal = pcs(temp_cib, 'stonith show apc-fencing')
         assert returnVal == 0
         assert output == ' Resource: apc-fencing (class=stonith type=fence_apc)\n  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05" \n  Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)\n',[output]

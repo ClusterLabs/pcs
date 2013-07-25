@@ -1210,7 +1210,7 @@ def resource_show(argv, stonith=False):
     resource_found = False
     for arg in argv:
         for child in resources.findall(".//*"):
-            if "id" in child.attrib and child.attrib["id"] == arg:
+            if "id" in child.attrib and child.attrib["id"] == arg and ((stonith and utils.is_stonith_resource(arg)) or (not stonith and not utils.is_stonith_resource(arg))):
                 print_node(child,1)
                 resource_found = True
                 break
