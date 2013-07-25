@@ -294,6 +294,10 @@ Commands:
         Add the specified resource to the group (creating the group if it does
         not exist
 
+    group remove <group name>
+        Remove the group (Note: this does not remove any resources from the
+        cluster)
+
     group remove_resource <group name> <resource_id> ...
         Remove the specified resource from the group (removing the group if
         it does not have any other resources)

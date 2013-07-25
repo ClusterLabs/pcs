@@ -313,6 +313,43 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output =="Removing Constraint - location-ClusterIP3-rh7-1-INFINITY\nDeleting Resource (and group) - ClusterIP3\n"
 
+        o,r = pcs(temp_cib, "resource create A1 Dummy")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A2 Dummy")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A3 Dummy")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A4 Dummy")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A5 Dummy")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource group add AGroup A1 A2 A3 A4 A5")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource show AGroup")
+        assert r == 0
+        ac(o,' Group: AGroup\n  Resource: A1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A1-monitor-interval-60s)\n  Resource: A2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A2-monitor-interval-60s)\n  Resource: A3 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A3-monitor-interval-60s)\n  Resource: A4 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A4-monitor-interval-60s)\n  Resource: A5 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A5-monitor-interval-60s)\n')
+
+
+        o,r = pcs(temp_cib, "resource group remove Noexist")
+        assert r == 1
+        ac(o,"Error: Group 'Noexist' does not exist\n")
+
+        o,r = pcs(temp_cib, "resource group remove AGroup")
+        assert r == 0
+        ac(o,'')
+
+        o,r = pcs(temp_cib, "resource show AGroup")
+        assert r == 1
+        ac(o,"Error: unable to find resource 'AGroup'\n")
+
+        o,r = pcs(temp_cib, "resource show A1 A2 A3 A4 A5")
+        assert r == 0
+        ac(o,' Resource: A1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A1-monitor-interval-60s)\n Resource: A2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A2-monitor-interval-60s)\n Resource: A3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A3-monitor-interval-60s)\n Resource: A4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A4-monitor-interval-60s)\n Resource: A5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A5-monitor-interval-60s)\n')
+
+
+
     def testGroupOrder(self):
         output, returnVal = pcs(temp_cib, "resource create A Dummy")
         output, returnVal = pcs(temp_cib, "resource create B Dummy")

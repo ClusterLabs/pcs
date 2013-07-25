@@ -782,25 +782,30 @@ def create_xml_element(tag, options, children = []):
 
 def resource_group(argv):
     if (len(argv) == 0):
-        usage.resource()
+        usage.resource("group")
         sys.exit(1)
 
     group_cmd = argv.pop(0)
     if (group_cmd == "add"):
         if (len(argv) < 2):
-            usage.resource()
+            usage.resource("group")
             sys.exit(1)
         group_name = argv.pop(0)
         resource_group_add(group_name, argv)
     elif (group_cmd == "remove_resource"):
         if (len(argv) < 2):
-            usage.resource()
+            usage.resource("group")
             sys.exit(1)
         group_name = argv.pop(0)
         resource_group_rm(group_name, argv)
     elif (group_cmd == "list"):
         resource_group_list(argv)
-
+    elif (group_cmd == "remove"):
+        if (len(argv) < 1):
+            usage.resource("group")
+            sys.exit(1)
+        group_name = argv.pop(0)
+        resource_group_rm(group_name, [], True)
     else:
         usage.resource()
         sys.exit(1)
@@ -1056,8 +1061,7 @@ def resource_remove(resource_id, output = True):
     return True
 
 # This removes a resource from a group, but keeps it in the config
-def resource_group_rm(group_name, resource_ids):
-    resource_id = resource_ids[0]
+def resource_group_rm(group_name, resource_ids, all_resources=False):
     dom = utils.get_cib_dom()
     dom = dom.getElementsByTagName("configuration")[0]
     group_match = None
@@ -1071,15 +1075,20 @@ def resource_group_rm(group_name, resource_ids):
         utils.err("Group '%s' does not exist" % group_name)
 
     resources_to_move = []
-    for resource_id in resource_ids:
-        found_resource = False
+
+    if all_resources:
         for resource in group_match.getElementsByTagName("primitive"):
-            if resource.getAttribute("id") == resource_id:
-                found_resource = True
-                resources_to_move.append(resource)
-                break
-        if not found_resource:
-            utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
+            resources_to_move.append(resource)
+    else:
+        for resource_id in resource_ids:
+            found_resource = False
+            for resource in group_match.getElementsByTagName("primitive"):
+                if resource.getAttribute("id") == resource_id:
+                    found_resource = True
+                    resources_to_move.append(resource)
+                    break
+            if not found_resource:
+                utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
 
     for resource in resources_to_move:
         parent = resource.parentNode
