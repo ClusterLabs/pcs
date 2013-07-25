@@ -1239,13 +1239,26 @@ def resource_enable(argv):
     if len(argv) < 1:
         utils.err("You must specify a resource to enable")
 
-    args = ["crm_resource", "-r", argv[0], "-m", "-d", "target-role"]
+    resource = argv[0]
+    args = ["crm_resource", "-r", resource, "-m", "-d", "target-role"]
     output, retval = utils.run(args)
     if retval != 0:
         print output,
         return False
-    else:
+
+    wait = "30"
+    if "--waitsecs" in utils.pcs_options or "--wait" in utils.pcs_options:
+        if "--waitsecs" in utils.pcs_options:
+            wait = utils.pcs_options["--waitsecs"]
+        if not wait.isdigit():
+            utils.err("%s is not a valid number of seconds to wait" % wait)
+            sys.exit(1)
+        did_start = utils.is_resource_started(resource,int(wait))
+
+    if did_start:
         return True
+    else:
+        utils.err("unable to start: '%s', please check logs for failure information" % resource)
 
 def resource_force_start(argv):
     if len(argv) < 1:

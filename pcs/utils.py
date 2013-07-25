@@ -9,6 +9,7 @@ import re
 import json
 import settings
 import signal
+import time
 
 
 # usefile & filename variables are set in pcs module
@@ -459,6 +460,22 @@ def is_valid_constraint_resource(resource_id):
             does_exist("//group[@id='"+resource_id+"']") or \
             does_exist("//clone[@id='"+resource_id+"']") or \
             does_exist("//master[@id='"+resource_id+"']")
+
+# Check if resoure is started for 'wait' seconds
+def is_resource_started(resource,wait):
+    expire_time = int(time.time()) + wait
+    while True:
+        state = getClusterState()
+        resources = state.getElementsByTagName("resource")
+        for res in resources:
+            if res.getAttribute("id") == resource:
+                if res.getAttribute("role") == "Started":
+                    return True
+                break
+        if (expire_time < int(time.time())):
+            break
+        time.sleep(1)
+    return False
 
 def does_resource_have_options(ra_type):
     if ra_type.startswith("ocf:") or ra_type.startswith("stonith:") or ra_type.find(':') == -1:
