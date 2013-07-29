@@ -718,3 +718,8 @@ li.menuheader {
 #add_resource td, #add_stonith td, #create_new_cluster_form td {
   color: white;
 }
+
+.wizard_header {
+  font-family: "Liberation"
+}
+}

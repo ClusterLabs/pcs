@@ -79,6 +79,10 @@ def remote(params,request)
     return update_cluster_settings(params)
   when "cluster_destroy"
     return cluster_destroy(params)
+  when "get_wizard"
+    return get_wizard(params)
+  when "wizard_submit"
+    return wizard_submit(params)
   else
     return [404, "Unknown Request"]
   end
@@ -475,7 +479,7 @@ def update_resource (params)
 	run_cmd(PCS, "resource", "group", "remove_resource", params[:_orig_resource_group], params[:resource_id])
       end
     else
-      run_cmd(PCS, "resource", "group", "add", params[:resource_group], params[:resource])
+      run_cmd(PCS, "resource", "group", "add", params[:resource_group], params[:resource_id])
     end
   end
 
@@ -683,6 +687,25 @@ def cluster_destroy(params)
   else
     return [400, "Error destroying cluster:\n#{out}\n#{errout}\n#{retval}\n"]
   end
+end
+
+def get_wizard(params)
+  wizard = PCSDWizard.getWizard(params["wizard"])
+  if wizard != nil
+    return erb wizard.collection_page
+  else
+    return "Error finding Wizard - #{params["wizard"]}"
+  end
+end
+
+def wizard_submit(params)
+  wizard = PCSDWizard.getWizard(params["wizard"])
+  if wizard != nil
+    return erb wizard.process_responses(params)
+  else
+    return "Error finding Wizard - #{params["wizard"]}"
+  end
+
 end
 
 def get_local_node_id

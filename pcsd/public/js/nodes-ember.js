@@ -25,6 +25,10 @@ Pcs = Ember.Application.createWithMixins({
     if (this.cur_page == "manage") return "display: table-row;";
     else return "display: none;";
   }.property("cur_page"),
+  wizards_page: function() {
+    if (this.cur_page == "wizards") return "display: table-row;";
+    else return "display: none;";
+  }.property("cur_page"),
 
   getResourcesFromID: function(resources) {
     retArray = [];
@@ -46,7 +50,6 @@ Pcs = Ember.Application.createWithMixins({
       hide_loading_screen();
       return;
     }
-    Ember.debug("Data refresh for: " + this.cluster_name);
     $.ajax({
       url:  "status_all",
 //      url: "/test_status.json",
@@ -92,12 +95,19 @@ Pcs.Router.map(function() {
   this.route("Nodes", { path: "nodes"});
 //  this.resource("Resource", {path: 'resources/:resource_id'});
   this.route("Manage", {path: "manage"});
+  this.route("Wizards", {path: "wizards"});
   this.route("Default Route", { path: "*x" });
 });
 
 Pcs.ManageRoute = Ember.Route.extend({
   setupController: function(controller, model) {
     select_menu("MANAGE");
+  }
+});
+
+Pcs.WizardsRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    select_menu("WIZARDS");
   }
 });
 
@@ -127,11 +137,9 @@ Pcs.FenceDevicesRoute = Ember.Route.extend({
 
 Pcs.NodesRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    Ember.debug("Nodes Route");
     select_menu("NODES");
   },
   model: function(params) {
-    Ember.debug("Router Nodes: " + params.node_id);
     Pcs.opening_node = params.node_id;
     return null;
   }
@@ -139,14 +147,12 @@ Pcs.NodesRoute = Ember.Route.extend({
 
 Pcs.ConfigurationRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    Ember.debug("Configuration Route");
     select_menu("CONFIGURE"); 
   }
 });
 
 Pcs.ResourcesRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    Ember.debug("Resources Route");
     select_menu("RESOURCES"); 
     if (model) {
       Pcs.resourcesController.set("cur_resource",model);

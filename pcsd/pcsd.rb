@@ -9,11 +9,14 @@ require 'cluster.rb'
 require 'config.rb'
 require 'pcs.rb'
 require 'auth.rb'
+require 'wizard.rb'
 require 'webrick'
 require 'pp'
 require 'webrick/https'
 require 'openssl'
 require 'logger'
+
+Dir["wizards/*.rb"].each {|file| require file}
 
 use Rack::CommonLogger
 
@@ -32,6 +35,7 @@ use Rack::Session::Cookie,
 
 #use Rack::SSL
 
+Dir["wizards/*.rb"].each {|file| also_reload file}
 also_reload 'resource.rb'
 also_reload 'remote.rb'
 also_reload 'fenceagent.rb'
@@ -39,6 +43,7 @@ also_reload 'cluster.rb'
 also_reload 'config.rb'
 also_reload 'pcs.rb'
 also_reload 'auth.rb'
+also_reload 'wizard.rb'
 
 #enable :sessions
 

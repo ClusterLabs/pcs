@@ -26,7 +26,6 @@ function menu_show(item,show) {
 // If initial is set to true, we load default (first item) on other pages
 // and load the default item on the specified page if item is set
 function select_menu(menu, item, initial) {
-  Ember.debug("SELECT MENU - "+ menu);
   if (menu == "NODES") {
     Pcs.set('cur_page',"nodes")
     if (item)
@@ -70,6 +69,12 @@ function select_menu(menu, item, initial) {
     menu_show("configure", false);
   }
 
+  if (menu == "WIZARDS") {
+    Pcs.set('cur_page',"wizards");
+    menu_show("wizards", true);
+  } else {
+    menu_show("wizards", false);
+  }
 }
 
 function create_group() {
@@ -839,4 +844,20 @@ function checkBoxToggle(cb) {
     cbs.prop('checked',true);
   else
     cbs.prop('checked',false);
+}
+
+function loadWizard(item) {
+  wizard_name = $(item).val();
+  data = {wizard: wizard_name};
+
+  $("#wizard_location").load(
+   get_cluster_remote_url() + 'get_wizard',
+   data);
+}
+
+function wizard_submit(form) {
+  data = $(form).serialize();
+  $("#wizard_location").load(
+    get_cluster_remote_url() + 'wizard_submit',
+    data);
 }
