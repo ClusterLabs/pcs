@@ -201,8 +201,9 @@ def resource_list_available(argv):
         if os.access(lsb_dir + agent, os.X_OK):
             ret += "lsb:" + agent + "\n"
 # systemd agents
-    agents, retval = utils.run(["systemctl", "list-unit-files", "--full"])
-    agents = agents.split("\n")
+    if not utils.is_rhel6():
+        agents, retval = utils.run(["systemctl", "list-unit-files", "--full"])
+        agents = agents.split("\n")
 
     for agent in agents:
         match = re.search(r'^([\S]*)\.service',agent)
