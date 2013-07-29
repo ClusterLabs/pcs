@@ -523,7 +523,7 @@ def is_valid_resource(resource, caseInsensitiveCheck=False):
                 all_files = [ f for f in os.listdir(filepath ) ]
                 for f in all_files:
                     if f.lower() == resource.lower() and os.path.isfile(filepath + f):
-                        return f
+                        return "ocf:" + provider + ":" + f
                 continue
 
             metadata = get_metadata(filepath + resource)
