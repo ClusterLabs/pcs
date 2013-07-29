@@ -1,0 +1,35 @@
+<! -- WTR -->
+<tr id="wizards_title_row" {{bindAttr style="Pcs.wizards_page"}}>
+  <td>
+    <form method=post onsubmit="wizard_submit(this); return false;">
+      <table>
+	<tr>
+	  <td id="page_header" colspan=3>
+	    WIZARDS
+	  </td>
+	</tr>
+	<tr><td colspan=3>Select a Wizard
+	    <select name="wizard" onchange="loadWizard(this)">
+	      <%=
+		opts = "<option value=\"0\">Please select a wizard...</option>"
+		PCSDWizard.getAllWizards.each {|wc| 
+		  w = Object.const_get(wc.to_s).new
+		  opts += "<option value='"+wc.to_s+"'>"+w.long_name+"</option>"
+		}
+		opts
+	      %>
+	    </select>
+	  </td>
+	</tr>
+	<tr id="wizards_header_row" {{bindAttr style="Pcs.wizards_page"}}><td colspan=3>
+	    <div id="wizard_location">
+	    </div>
+	</td></tr>
+	<tr><td colspan=3>
+	    <hr>
+	  </td>
+	</tr>
+      </table>
+    </form>
+  </td>
+</tr>
