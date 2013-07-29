@@ -884,7 +884,17 @@ def resource_clone_master_remove(argv):
             found = True
             break
 
-    if found == False:
+    if not found:
+        for cm in re.getElementsByTagName("clone") + re.getElementsByTagName("master"):
+            if cm.getAttribute("id") == name:
+                prim = cm.getElementsByTagName("primitive")
+                if len(prim) != 0:
+                    prim = prim[0]
+                    cm.parentNode.appendChild(prim)
+                    cm.parentNode.removeChild(cm)
+                    found = True
+
+    if not found:
         utils.err("could not find resource or group: %s" % name)
 
     xml_resource_string = re.toxml()
@@ -1011,6 +1021,15 @@ def resource_master_remove(argv):
     utils.replace_cib_configuration(dom)
 
 def resource_remove(resource_id, output = True):
+    if utils.does_exist('//master[@id="'+resource_id+'"]'):
+        utils.err("%s is not a resource (it can be removed with 'resource unmaster %s')" % (resource_id, resource_id))
+
+    if utils.does_exist('//group[@id="'+resource_id+'"]'):
+        utils.err("%s is not a resource (it can be removed with 'resource group remove %s')" % (resource_id, resource_id))
+
+    if utils.does_exist('//clone[@id="'+resource_id+'"]'):
+        utils.err("%s is not a resource (it can be removed with 'resource unclone %s')" % (resource_id, resource_id))
+
     group = utils.get_cib_xpath('//group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0
     master = utils.get_cib_xpath('//master/primitive[@id="'+resource_id+'"]/..')

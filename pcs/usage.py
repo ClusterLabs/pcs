@@ -289,9 +289,9 @@ Commands:
         Add (or remove with option= ) specified options to the specified
         resource, group, master/slave or clone.
 
-    delete <resource id | master/slave id>
-        Delete the specified resource or master/slave resource (including any
-        constraints referencing the resource)
+    delete <resource id>
+        Delete the specified resource (including any constraints referencing
+        the resource)
 
     group add <group name> <resource_id>...
         Add the specified resource to the group, creating the group if it does
