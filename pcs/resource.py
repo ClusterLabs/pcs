@@ -1275,10 +1275,10 @@ def resource_enable(argv):
             sys.exit(1)
         did_start = utils.is_resource_started(resource,int(wait))
 
-    if did_start:
-        return True
-    else:
-        utils.err("unable to start: '%s', please check logs for failure information" % resource)
+        if did_start:
+            return True
+        else:
+            utils.err("unable to start: '%s', please check logs for failure information" % resource)
 
 def resource_force_start(argv):
     if len(argv) < 1:
