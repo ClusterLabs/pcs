@@ -31,6 +31,19 @@ def main(argv):
                 new_argv.append(arg)
         argv = new_argv
 
+        # we want to support optional arguments for --wait, so if an argument
+        # is specified with --wait (ie. --wait=30) then we use them
+        waitsecs = "30"
+        new_argv = []
+        for arg in argv:
+            if arg.startswith("--wait="):
+                tempsecs = arg.replace("--wait=","")
+                if len(tempsecs) > 0 and tempsecs.isdigit():
+                    waitsecs = tempsecs
+                    arg = "--wait"
+            new_argv.append(arg)
+        argv = new_argv
+                    
         # pull out negative number arguments and add them back after getopt
         # Need to improve to not re-add arguments to '--' options
         prev_arg = ""
@@ -47,7 +60,7 @@ def main(argv):
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:V", ["local","start","all","clone","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp","off","from=","to=", "name=", "wait","waitsecs="])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:V", ["local","start","all","clone","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp","off","from=","to=", "name=", "wait"])
     except getopt.GetoptError, err:
         print err
         usage.main()
@@ -80,6 +93,8 @@ def main(argv):
         elif o == "--fullhelp":
             usage.full_usage()
             sys.exit()
+        elif o == "--wait":
+            utils.pcs_options[o] = waitsecs
 
     if len(argv) == 0:
         usage.main()

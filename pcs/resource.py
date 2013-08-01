@@ -1247,13 +1247,24 @@ def resource_disable(argv):
     if len(argv) < 1:
         utils.err("You must specify a resource to disable")
 
+    resource = argv[0]
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
     if retval != 0:
         print output,
         return False
-    else:
-        return True
+
+    if "--wait" in utils.pcs_options:
+        wait = utils.pcs_options["--wait"]
+        if not wait.isdigit():
+            utils.err("%s is not a valid number of seconds to wait" % wait)
+            sys.exit(1)
+        did_stop = utils.is_resource_started(resource,int(wait),True)
+
+        if did_stop:
+            return True
+        else:
+            utils.err("unable to stop: '%s', please check logs for failure information" % resource)
 
 def resource_enable(argv):
     if len(argv) < 1:
@@ -1266,10 +1277,8 @@ def resource_enable(argv):
         print output,
         return False
 
-    wait = "30"
-    if "--waitsecs" in utils.pcs_options or "--wait" in utils.pcs_options:
-        if "--waitsecs" in utils.pcs_options:
-            wait = utils.pcs_options["--waitsecs"]
+    if "--wait" in utils.pcs_options:
+        wait = utils.pcs_options["--wait"]
         if not wait.isdigit():
             utils.err("%s is not a valid number of seconds to wait" % wait)
             sys.exit(1)

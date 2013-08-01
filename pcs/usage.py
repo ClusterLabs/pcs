@@ -218,18 +218,20 @@ Commands:
         show the options for the configured resource.  If --all is specified
         all configured resource options will be displayed
 
-    enable <resource id> [--wait|--waitsecs=n]
+    enable <resource id> [--wait[=n]]
         Allow the cluster to start the resource. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resource may
-        remain stopped.  If --wait is specified pcs will wait up to 30 seconds
-        (or 'n' seconds if --waitsecs=n is used) for the resource to start and
-        then return 0 if the resource started 1 if the resource has not yet
-        started.
+        remain stopped.  If --wait is specified, pcs will wait up to 30 seconds
+        (or 'n' seconds) for the resource to start and then return 0 if the
+        resource is started, or 1 if the resource has not yet started.
 
-    disable <resource id>
+    disable <resource id> [--wait[=n]]
         Attempt to stop the resource if it is running and forbid the cluster
         from starting it again.  Depending on the rest of the configuration
-        (constraints, options, failures, etc), the resource may remain started
+        (constraints, options, failures, etc), the resource may remain
+        started.  If --wait is specified, pcs will wait up to 30 seconds (or
+        'n' seconds) for the resource to stop and then return 0 if the
+        resource is stopped or 1 if the resource has not stopped.
 
     force-start <resource id>
         This command will force the specified resource to start on this node

@@ -461,15 +461,15 @@ def is_valid_constraint_resource(resource_id):
             does_exist("//clone[@id='"+resource_id+"']") or \
             does_exist("//master[@id='"+resource_id+"']")
 
-# Check if resoure is started for 'wait' seconds
-def is_resource_started(resource,wait):
+# Check if resoure is started (or stopped) for 'wait' seconds
+def is_resource_started(resource,wait,stopped=False):
     expire_time = int(time.time()) + wait
     while True:
         state = getClusterState()
         resources = state.getElementsByTagName("resource")
         for res in resources:
             if res.getAttribute("id") == resource:
-                if res.getAttribute("role") == "Started":
+                if (res.getAttribute("role") == "Started" and not stopped) or (res.getAttribute("role") == "Stopped" and stopped):
                     return True
                 break
         if (expire_time < int(time.time())):
