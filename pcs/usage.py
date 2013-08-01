@@ -191,11 +191,11 @@ Options:
     --version   Print pcs version information
 
 Commands:
-    resource    Manage cluster resources
     cluster     Configure cluster options and nodes
+    resource    Manage cluster resources
     stonith     Configure fence devices
-    property    Set pacemaker properties
     constraint  Set resource constraints
+    property    Set pacemaker properties
     status      View cluster status
     config      Print full cluster configuration
 """
