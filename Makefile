@@ -9,7 +9,7 @@ ifndef PREFIX
   PREFIX=/usr
 endif
 
-install:
+install: bash_completion
 	python setup.py install --prefix ${DESTDIR}${PREFIX} ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	chmod 755 ${DESTDIR}${PYTHON_SITELIB}/pcs/pcs.py
