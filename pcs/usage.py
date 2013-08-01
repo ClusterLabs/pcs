@@ -233,7 +233,7 @@ Commands:
         'n' seconds) for the resource to stop and then return 0 if the
         resource is stopped or 1 if the resource has not stopped.
 
-    force-start <resource id>
+    debug-start <resource id>
         This command will force the specified resource to start on this node
         ignoring the cluster recommendations and print the output from
         starting the resource.  This is mainly used for debugging resources

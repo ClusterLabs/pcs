@@ -125,7 +125,7 @@ def resource_cmd(argv):
         resource_enable(argv)
     elif (sub_cmd == "disable"):
         resource_disable(argv)
-    elif (sub_cmd == "force-start"):
+    elif (sub_cmd == "debug-start"):
         resource_force_start(argv)
     elif (sub_cmd == "manage"):
         resource_manage(argv, True)
@@ -1291,7 +1291,7 @@ def resource_enable(argv):
 
 def resource_force_start(argv):
     if len(argv) < 1:
-        utils.err("You must specify a resource to force-start")
+        utils.err("You must specify a resource to debug-start")
 
     args = ["crm_resource", "-r", argv[0], "--force-start"]
     output, retval = utils.run(args)
