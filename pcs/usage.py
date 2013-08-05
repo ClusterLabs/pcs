@@ -292,6 +292,9 @@ Commands:
         Remove specified operation (note: you must specify the exact operation
         properties to properly remove an existing operation).
 
+    remove_operation <operation id>
+        Remove the specified operation id
+
     meta <resource/group/master/clone id> <meta options>
         Add (or remove with option= ) specified options to the specified
         resource, group, master/slave or clone.

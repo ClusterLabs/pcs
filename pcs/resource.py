@@ -604,14 +604,22 @@ def resource_operation_add(res_id, argv):
     utils.replace_cib_configuration(dom)
 
 def resource_operation_remove(res_id, argv):
-    if len(argv) < 1:
-        usage.resource()
-        sys.exit(1)
+# if no args, then we're removing an operation id
+    dom = utils.get_cib_dom()
+    if len(argv) == 0:
+        for operation in dom.getElementsByTagName("op"):
+            if operation.getAttribute("id") == res_id:
+                parent = operation.parentNode
+                parent.removeChild(operation)
+                if len(parent.getElementsByTagName("op")) == 0:
+                    parent.parentNode.removeChild(parent)
+                utils.replace_cib_configuration(dom)
+                return
+        utils.err("unable to find operation id: %s" % res_id)
 
     original_argv = " ".join(argv)
 
     op_name = argv.pop(0)
-    dom = utils.get_cib_dom()
     resource_found = False
 
     for resource in dom.getElementsByTagName("primitive"):
@@ -621,6 +629,10 @@ def resource_operation_remove(res_id, argv):
 
     if not resource_found:
         utils.err("Unable to find resource: %s" % res_id)
+
+    remove_all = False
+    if len(argv) == 0:
+        remove_all = True
 
     op_properties = convert_args_to_tuples(argv)
     op_properties.append(('name', op_name))
@@ -632,7 +644,13 @@ def resource_operation_remove(res_id, argv):
                 continue
             temp_properties.append((attrName,op.attributes.get(attrName).nodeValue))
 
-        if len(set(op_properties) ^ set(temp_properties)) == 0:
+        if remove_all:
+            found_match = True
+            parent = op.parentNode
+            parent.removeChild(op)
+            if len(parent.getElementsByTagName("op")) == 0:
+                parent.parentNode.removeChild(parent)
+        elif len(set(op_properties) ^ set(temp_properties)) == 0:
             found_match = True
             parent = op.parentNode
             parent.removeChild(op)
