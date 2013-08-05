@@ -330,10 +330,10 @@ Commands:
         Remove the master which contains the specified group or resource (the
         resource or group will not be removed)
 
-    manage <resource 1> [resource 2] ...
+    manage <resource id> ... [resource n]
         Set resources listed to managed mode (default)
 
-    unmanage <resource 1> [resource 2] ...
+    unmanage <resource id> ... [resource n]
         Set resources listed to unmanaged mode
 
     defaults [options]
@@ -344,34 +344,42 @@ Commands:
         Cleans up the resource in the lrmd (useful to reset the resource
         status and failcount)
 
-    failcount show <resource> [node]
+    failcount show <resource id> [node]
         Show current failcount for specified resource from all nodes or
         only on specified node
 
-    failcount reset <resource> [node]
+    failcount reset <resource id> [node]
         Reset failcount for specified resource on all nodes or only on
         specified node
 
 Examples:
+
     pcs resource show
+      Show all resources
 
     pcs resource show ClusterIP
+      Show options specific to the 'ClusterIP' resource
+
 
     pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
-               cidr_netmask=32 op monitor interval=30s
+               cidr_netmask=32 op monitor interval=30s nic=eth2
+      Create a new resource called 'ClusterIP' with options
 
     pcs resource create ClusterIP IPaddr2 ip=192.168.0.99 \\
-               cidr_netmask=32 op monitor interval=30s
+               cidr_netmask=32 op monitor interval=30s nic=eth2
+      Create a new resource called 'ClusterIP' with options
 
-    pcs resource update ClusterIP ip=192.168.0.98 cidr_netmask=
+    pcs resource update ClusterIP ip=192.168.0.98 nic=
+      Change the ip address of ClusterIP and remove the nic option
 
     pcs resource delete ClusterIP
+      Delete the ClusterIP resource
 
 Notes:
     Starting resources on a cluster is (almost) always done by pacemaker and
     not directly from pcs.  If your resource isn't starting, it's usually
     due to either a misconfiguration of the resource (which you debug in
-    the system log), constraints preventing the resource from starting or
+    the system log), or constraints preventing the resource from starting or
     the resource being disabled.  You can use 'pcs resource debug-start' to
     test resource configuration, but it should *not* normally be used to start
     resources in a cluster.
