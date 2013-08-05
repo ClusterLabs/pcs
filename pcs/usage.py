@@ -444,11 +444,11 @@ Commands:
 
     remote-node add <hostname> <resource id> [options]
         Enables the specified resource as a remote-node resource on the
-        specified hostname
+        specified hostname (hostname should be the same as 'uname -n')
     
     remote-node rm <hostname>
         Disables any resources configured to be remote-node resource on the
-        specified hostname
+        specified hostname (hostname should be the same as 'uname -n')
 
     status
         View current cluster status (an alias of 'pcs status cluster')
