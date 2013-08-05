@@ -213,10 +213,11 @@ Usage: pcs resource [commands]...
 Manage pacemaker resources
 
 Commands:
-    show [resource id] [--all]
+    show [resource id] [--all] [--groups]
         Show all currently configured resources or if a resource is specified
         show the options for the configured resource.  If --all is specified
-        all configured resource options will be displayed
+        all configured resource options will be displayed.  If --groups is
+        specified, only show groups (and their resources).
 
     enable <resource id> [--wait[=n]]
         Allow the cluster to start the resource. Depending on the rest of the
@@ -314,9 +315,6 @@ Commands:
         Remove the group (Note: this does not remove any resources from the
         cluster) or if resources are specified, remove the specified resources
         from the group
-
-    group list
-        List all currently configured resource groups
 
     clone <resource id | group name> [clone options]...
         Setup up the specified resource or group as a clone
