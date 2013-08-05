@@ -436,13 +436,13 @@ Commands:
 
     standby <node> | --all
         Put specified node into standby mode (the node specified will no longer
-        be able to host resources (if --all is specified all nodes will be put
-        into standby)
+        be able to host resources), if --all is specified all nodes will be put
+        into standby mode.
     
     unstandby <node> | --all
         Remove node from standby mode (the node specified will now be able to
-        host resources (if --all is specified all nodes will be put into
-        standby)
+        host resources), if --all is specified all nodes will be removed from
+        standby mode.
 
     remote-node add <hostname> <resource id> [options]
         Enables the specified resource as a remote-node resource on the
