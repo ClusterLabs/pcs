@@ -336,7 +336,7 @@ Commands:
     unmanage <resource 1> [resource 2] ...
         Set resources listed to unmanaged mode
 
-    rsc defaults [options]
+    defaults [options]
         Set default values for resources, if no options are passed, lists
         currently configured defaults
 

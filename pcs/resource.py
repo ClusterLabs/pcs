@@ -151,24 +151,11 @@ def resource_cmd(argv):
             else:
                 res_id = argv.pop(0)
                 resource_operation_remove(res_id, argv)
-    elif (sub_cmd == "rsc"):
-        if len(argv) < 1:
-            usage.resource()
-            sys.exit(1)
-        rsc_subcmd = argv.pop(0)
-        if (sub_cmd == "rsc" and rsc_subcmd == "defaults"):
-            if len(argv) == 0:
-                show_defaults("rsc_defaults")
-            else:
-                set_default("rsc_defaults", argv)
-        elif (sub_cmd == "op" and rsc_subcmd == "defaults"):
-            if len(argv) == 0:
-                show_defaults("op_defaults")
-            else:
-                set_default("op_defaults", argv)
+    elif (sub_cmd == "defaults"):
+        if len(argv) == 0:
+            show_defaults("rsc_defaults")
         else:
-            usage.resource()
-            sys.exit(1)
+            set_default("rsc_defaults", argv)
     elif (sub_cmd == "cleanup"):
         if len(argv) < 1:
             usage.resource()
