@@ -621,15 +621,16 @@ Commands:
         List all current location, order and colocation constraints, if --all
         is specified also list the constraint ids.
 
-    location <rsc> prefers <node[=score]>...
+    location <resource id> prefers <node[=score]>...
         Create a location constraint on a resource to prefer the specified
         node and score (default score: INFINITY)
 
-    location <rsc> avoids <node[=score]>...
+    location <resource id> avoids <node[=score]>...
         Create a location constraint on a resource to avoid the specified
         node and score (default score: INFINITY)
 
-    location <rsc> rule [rule_id] [role=<role>] <score>: <expression>
+    location <resource id> rule [rule_id] [role=master|slave]
+             <score>: <expression>
         Creates a location rule on the specified resource where the expression
         looks like one of the following:
           <expression> and|or <expression>
@@ -638,7 +639,7 @@ Commands:
           date [start=<start>] [end=<end>] operation=gt|lt|in-range
           date operation=date-spec <date spec options>...
 
-    location [show resources|nodes [specific nodes|resources]]
+    location [show resources|nodes [node id|resource id]...]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
         is specified location constraints are displayed per node.  If specific
@@ -657,7 +658,7 @@ Commands:
         List all current ordering constraints (if 'all' is specified show
         the internal constraint id's as well).
 
-    order [action] <first rsc> then [action] <then rsc> [options]
+    order [action] <resource id> then [action] <resource id> [options]
         Add an ordering constraint specifying actions (start,stop,promote,
         demote) and if no action is specified the default action will be
         start.
@@ -670,10 +671,11 @@ Commands:
     order rm <resource1> [resourceN]...
         Remove resource from any order list
 
-    order add <rsc1> <rsc2> [symmetrical|nonsymmetrical] [options]...
-        Specify that rsc1 should start before rsc2 and specify if
-        resources will be stopped in the reverse order they were started
-        (symmetrical) or not (nonsymmetrical).  Default is symmetrical.
+    order add <resource id 1> <resource id 2> [symmetrical|nonsymmetrical]
+              [options]
+        Specify that 'resource id 1' should start before 'resource id 2' and
+        specify if resources will be stopped in the reverse order they were
+        started (symmetrical) or not (nonsymmetrical).  Default is symmetrical.
         (For more advance pacemaker usage)
         Options are specified by option_name=option_value
 
@@ -681,16 +683,18 @@ Commands:
         List all current colocation constraints (if 'all' is specified show
         the internal constraint id's as well).
 
-    colocation add [role] <src rsc> with [role] <tgt rsc> [score] [options]
+    colocation add [master|slave] <src resource id> with [master|slave]
+                   <tgt resource id> [score] [options]
         Request <src resource> to run on the same node where pacemaker has
         determined <tgt resource> should run.  Positive values of score
         mean the resources should be run on the same node, negative values
         mean the resources should not be run on the same node.  Specifying
         'INFINITY' (or '-INFINITY') for the score force <src resource> to
         run (or not run) with <tgt resource>. (score defaults to "INFINITY")
-        A role can be master, slave or started (default).
+        A role can be master or slave (if no role is specified, it defaults to
+        'started').
 
-    colocation rm <source resource> <target resource>
+    colocation rm <source resource id> <target resource id>
         Remove colocation constraints with <source resource>
 
     rm [constraint id]...
