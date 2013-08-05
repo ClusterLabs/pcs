@@ -71,7 +71,9 @@ def resource_cmd(argv):
         resource_create(res_id, res_type, ra_values, op_values, meta_values, clone_opts)
     elif (sub_cmd == "move"):
         resource_move(argv)
-    elif (sub_cmd == "unmove"):
+    elif (sub_cmd == "ban"):
+        resource_move(argv,False,True)
+    elif (sub_cmd == "clear"):
         resource_move(argv,True)
     elif (sub_cmd == "standards"):
         resource_standards()
@@ -325,7 +327,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     elif "--master" in utils.pcs_options:
         resource_master_create([ra_id+"-master",ra_id])
 
-def resource_move(argv,unmove=False):
+def resource_move(argv,clear=False,ban=False):
     if len(argv) == 0:
         utils.err ("must specify resource to move/unmove")
 
@@ -339,21 +341,27 @@ def resource_move(argv,unmove=False):
     if not utils.does_exist("//primitive[@id='"+resource_id+"']") and not utils.does_exist("//group[@id='"+resource_id+"']"):
         utils.err("%s is not a valid resource" % resource_id)
 
-    if utils.is_resource_clone(resource_id):
+    if utils.is_resource_clone(resource_id) and not clear and not ban:
         utils.err("cannot move cloned resources")
 
-    if utils.is_resource_masterslave(resource_id):
+    if utils.is_resource_masterslave(resource_id) and not clear and not ban:
         utils.err("unable to move Master/Slave resources")
 
-    if unmove:
-        output,ret = utils.run(["crm_resource", "--resource", resource_id, "--un-move"])
+    if clear:
+        output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear"])
     else:
         if dest_node == None:
-            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move"])
+            if ban:
+                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--ban"])
+            else:
+                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move"])
         else:
-            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node])
+            if ban:
+                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--ban", "--node", dest_node])
+            else:
+                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node])
     if ret != 0:
-        utils.err ("error moving/unmoving resource\n" + output)
+        utils.err ("error moving/banning/clearing resource\n" + output)
 
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)

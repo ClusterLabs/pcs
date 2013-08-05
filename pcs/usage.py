@@ -242,9 +242,13 @@ Commands:
     move <resource id> [destination node]
         Move resource off current node (and optionally onto destination node
 
-    unmove <resource id>
-        Remove constraints created by the move command and allow the resource
-        to move back to its original location
+    ban <resource id> [node]
+        Prevent the resource id specified from running on the node (or on the
+        current node it is running on if no node is specified)
+
+    clear <resource id>
+        Remove constraints created by move and/or ban on the specified
+        resource
 
     list
         Show list of all available resources
