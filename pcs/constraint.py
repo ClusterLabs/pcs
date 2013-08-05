@@ -23,7 +23,7 @@ def constraint_cmd(argv):
 
         if (sub_cmd2 == "add"):
             location_add(argv)
-        elif (sub_cmd2 == "rm"):
+        elif (sub_cmd2 == "remove"):
             location_add(argv,True)
         elif (sub_cmd2 == "show"):
             location_show(argv)
@@ -43,7 +43,7 @@ def constraint_cmd(argv):
 
         if (sub_cmd2 == "list"):
             order_list(argv)
-        elif (sub_cmd2 == "rm"):
+        elif (sub_cmd2 == "remove"):
             order_rm(argv)
         elif (sub_cmd2 == "show"):
             order_show(argv)
@@ -57,7 +57,7 @@ def constraint_cmd(argv):
 
         if (sub_cmd2 == "add"):
             colocation_add(argv)
-        elif (sub_cmd2 == "rm"):
+        elif (sub_cmd2 == "remove"):
             colocation_rm(argv)
         elif (sub_cmd2 == "show"):
             colocation_show(argv)

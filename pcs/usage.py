@@ -650,7 +650,7 @@ Commands:
         Add a location constraint with the appropriate id, resource name,
         node name and score. (For more advanced pacemaker usage)
 
-    location rm <id> [<resource name> <node> <score>]
+    location remove <id> [<resource name> <node> <score>]
         Remove a location constraint with the appropriate id, resource name,
         node name and score. (For more advanced pacemaker usage)
 
@@ -668,7 +668,7 @@ Commands:
     order list <resource1> <resource2> [resourceN]...
         Require that resource be started in the order specified
 
-    order rm <resource1> [resourceN]...
+    order remove <resource1> [resourceN]...
         Remove resource from any order list
 
     colocation [show [all]]
@@ -686,7 +686,7 @@ Commands:
         A role can be master or slave (if no role is specified, it defaults to
         'started').
 
-    colocation rm <source resource id> <target resource id>
+    colocation remove <source resource id> <target resource id>
         Remove colocation constraints with <source resource>
 
     rm [constraint id]...
