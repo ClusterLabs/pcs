@@ -286,25 +286,25 @@ Commands:
         If you want to create multiple monitor operations you should use the
         add_operation & remove_operation commands.
 
-    add_operation <resource id> <operation action> [operation properties]
+    op add <resource id> <operation action> [operation properties]
         Add operation for specified resource
 
-    remove_operation <resource id> <operation action> [operation properties]
+    op remove <resource id> <operation action> [operation properties]
         Remove specified operation (note: you must specify the exact operation
         properties to properly remove an existing operation).
 
-    remove_operation <operation id>
+    op remove <operation id>
         Remove the specified operation id
+
+    op defaults [options]
+        Set default values for operations, if no options are passed, lists
+        currently configured defaults
 
     meta <resource id | group id | master id | clone id> <meta options>
         Add specified options to the specified resource, group, master/slave
         or clone.  Meta options should be in the format of name=value, options
         may be removed by setting an option without a value.
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
-
-    delete <resource id>
-        Delete the specified resource (including any constraints referencing
-        the resource)
 
     group add <group name> <resource id> [resource id] ... [resource id]
         Add the specified resource to the group, creating the group if it does
@@ -338,10 +338,6 @@ Commands:
 
     rsc defaults [options]
         Set default values for resources, if no options are passed, lists
-        currently configured defaults
-
-    op defaults [options]
-        Set default values for operations, if no options are passed, lists
         currently configured defaults
 
     cleanup <resource id>

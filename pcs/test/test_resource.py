@@ -209,22 +209,30 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource add_operation'
+        o,r = pcs(temp_cib, "resource add_operation")
+        assert r == 1
+        assert o == "Error: add_operation has been deprecated, please use 'op add'\n",[o]
+
+        o,r = pcs(temp_cib, "resource remove_operation")
+        assert r == 1
+        assert o == "Error: remove_operation has been deprecated, please use 'op remove'\n"
+
+        line = 'resource op add'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
-        line = 'resource remove_operation'
+        line = 'resource op remove'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
-        line = 'resource add_operation ClusterIP monitor interval=31s'
+        line = 'resource op add ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource add_operation ClusterIP monitor interval=31s'
+        line = 'resource op add ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
         assert output == "Error: identical operation already exists for ClusterIP\n"
@@ -239,32 +247,32 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource add_operation ClusterIP monitor interval=31s'
+        line = 'resource op add ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource add_operation ClusterIP monitor interval=32s'
+        line = 'resource op add ClusterIP monitor interval=32s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource remove_operation ClusterIP-name-monitor-interval-32s-xxxxx'
+        line = 'resource op remove ClusterIP-name-monitor-interval-32s-xxxxx'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
         assert output == "Error: unable to find operation id: ClusterIP-name-monitor-interval-32s-xxxxx\n"
 
-        line = 'resource remove_operation ClusterIP-name-monitor-interval-32s'
+        line = 'resource op remove ClusterIP-name-monitor-interval-32s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource remove_operation ClusterIP monitor interval=30s'
+        line = 'resource op remove ClusterIP monitor interval=30s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource remove_operation ClusterIP monitor interval=30s'
+        line = 'resource op remove ClusterIP monitor interval=30s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
         assert output == 'Error: Unable to find operation matching: monitor interval=30s\n'
@@ -273,7 +281,7 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         ac(output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=31s (ClusterIP-name-monitor-interval-31s)\n')
 
-        line = 'resource remove_operation ClusterIP monitor interval=31s'
+        line = 'resource op remove ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
@@ -282,17 +290,17 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n'
 
-        line = 'resource add_operation ClusterIP monitor interval=31s'
+        line = 'resource op add ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource add_operation ClusterIP monitor interval=32s'
+        line = 'resource op add ClusterIP monitor interval=32s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource remove_operation ClusterIP monitor'
+        line = 'resource op remove ClusterIP monitor'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""

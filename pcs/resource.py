@@ -88,17 +88,9 @@ def resource_cmd(argv):
         res_id = argv.pop(0)
         resource_update(res_id,argv)
     elif (sub_cmd == "add_operation"):
-        if len(argv) == 0:
-            usage.resource()
-            sys.exit(1)
-        res_id = argv.pop(0)
-        resource_operation_add(res_id,argv)
+        utils.err("add_operation has been deprecated, please use 'op add'")
     elif (sub_cmd == "remove_operation"):
-        if len(argv) == 0:
-            usage.resource()
-            sys.exit(1)
-        res_id = argv.pop(0)
-        resource_operation_remove(res_id,argv)
+        utils.err("remove_operation has been deprecated, please use 'op remove'")
     elif (sub_cmd == "meta"):
         if len(argv) < 2:
             usage.resource()
@@ -135,7 +127,31 @@ def resource_cmd(argv):
         resource_manage(argv, False)
     elif (sub_cmd == "failcount"):
         resource_failcount(argv)
-    elif (sub_cmd == "rsc" or sub_cmd == "op"):
+    elif (sub_cmd == "op"):
+        if len(argv) < 1:
+            usage.resource("op")
+            sys.exit(1)
+        op_subcmd = argv.pop(0)
+        if op_subcmd == "defaults":
+            if len(argv) == 0:
+                show_defaults("op_defaults")
+            else:
+                set_default("op_defaults", argv)
+        elif op_subcmd == "add":
+            if len(argv) == 0:
+                usage.resource("op")
+                sys.exit(1)
+            else:
+                res_id = argv.pop(0)
+                resource_operation_add(res_id, argv)
+        elif op_subcmd == "remove":
+            if len(argv) == 0:
+                usage.resource("op")
+                sys.exit(1)
+            else:
+                res_id = argv.pop(0)
+                resource_operation_remove(res_id, argv)
+    elif (sub_cmd == "rsc"):
         if len(argv) < 1:
             usage.resource()
             sys.exit(1)
