@@ -325,6 +325,9 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         resource_clone_create([ra_id] + clone_opts)
     elif "--master" in utils.pcs_options:
         resource_master_create([ra_id+"-master",ra_id])
+    elif "--group" in utils.pcs_options:
+        groupname = utils.pcs_options["--group"]
+        resource_group_add(groupname,[ra_id])
 
 def resource_move(argv,clear=False,ban=False):
     if len(argv) == 0:

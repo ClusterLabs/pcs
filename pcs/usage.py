@@ -250,25 +250,28 @@ Commands:
         Remove constraints created by move and/or ban on the specified
         resource
 
-    list [<class|provider|type>]
+    list [<standard|provider|type>]
         Show list of all available resources, optionally filtered by specified
-        type, class or provider
+        type, standard or provider
 
-    describe <class:provider:type|type>
+    describe <standard:provider:type|type>
         Show options for the specified resource
 
-    create <resource id> <class:provider:type|type> [resource options]
+    create <resource id> <standard:provider:type|type> [resource options]
            [op <operation action> <operation options> [<operation action>
-           <operation options>]...] [meta <meta options>...] [--clone|--master]
+           <operation options>]...] [meta <meta options>...]
+           [--clone <clone options> | --master <master options> |
+           --group <group name>]
         Create specified resource.  If --clone is used a clone resource is
-        created (with options specified by 'clone clone_option>=<value>...',
-        if --master is specified a master/slave resource is created.
+        created if --master is specified a master/slave resource is created.
+        If --group is specified the resource is added to the group named.
 
     standards
-        List available resource agent standards
+        List available resource agent standards supported by this installation.
+        (OCF, LSB, etc.)
 
     providers
-        List available resource agent providers
+        List available OCF resource agent providers
 
     agents [standard[:provider]]
         List available agents optionally filtered by standard and provider
@@ -286,7 +289,7 @@ Commands:
         Add operation for specified resource
 
     remove_operation <resource id> <operation action> [operation properties]
-        Remove specified operation (note: you must specify the exeact operation
+        Remove specified operation (note: you must specify the exact operation
         properties to properly remove an existing operation).
 
     meta <resource/group/master/clone id> <meta options>

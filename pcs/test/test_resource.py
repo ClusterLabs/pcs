@@ -363,6 +363,12 @@ class ResourceAdditionTest(unittest.TestCase):
         assert r == 0
         o,r = pcs(temp_cib, "resource create A5 Dummy")
         assert r == 0
+        o,r = pcs(temp_cib, "resource create A6 Dummy --group")
+        assert r == 1
+        o,r = pcs(temp_cib, "resource create A6 Dummy --group Dgroup")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A7 Dummy --group Dgroup")
+        assert r == 0
 
         o,r = pcs(temp_cib, "resource group add MyGroup A1 B1")
         assert r == 1
@@ -370,7 +376,13 @@ class ResourceAdditionTest(unittest.TestCase):
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
-        ac(o,' A1\t(ocf::heartbeat:Dummy):\tStopped \n A2\t(ocf::heartbeat:Dummy):\tStopped \n A3\t(ocf::heartbeat:Dummy):\tStopped \n A4\t(ocf::heartbeat:Dummy):\tStopped \n A5\t(ocf::heartbeat:Dummy):\tStopped \n')
+        ac(o,' A1\t(ocf::heartbeat:Dummy):\tStopped \n A2\t(ocf::heartbeat:Dummy):\tStopped \n A3\t(ocf::heartbeat:Dummy):\tStopped \n A4\t(ocf::heartbeat:Dummy):\tStopped \n A5\t(ocf::heartbeat:Dummy):\tStopped \n Resource Group: Dgroup\n     A6\t(ocf::heartbeat:Dummy):\tStopped \n     A7\t(ocf::heartbeat:Dummy):\tStopped \n')
+
+        o,r = pcs(temp_cib, "resource delete A6")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource delete A7")
+        assert r == 0
 
         o,r = pcs(temp_cib, "resource group add MyGroup A1 A2 A3")
         assert r == 0
