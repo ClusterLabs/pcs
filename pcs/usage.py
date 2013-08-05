@@ -423,16 +423,17 @@ Commands:
         (performs kill -9).
 
     enable [--all] [node] [...]
-        Configure corosync & pacemaker to run on startup on specified node(s),
-        if node is not specified then corosync & pacemaker are enabled on the
-        local node. If --all is specified then corosync & pacemaker are enabled
-        on all nodes.
+        Configure corosync & pacemaker to run on node boot on specified
+        node(s), if node is not specified then corosync & pacemaker are
+        enabled on the local node. If --all is specified then corosync &
+        pacemaker are enabled on all nodes.
 
     disable [--all] [node] [...]
-        Configure corosync & pacemaker to not run on startup on specified
-        node(s), if node is not specified then corosync & pacemaker are disabled
-        on the local node. If --all is specified then corosync & pacemaker are
-        disabled on all nodes. (Note: this is the default after installation)
+        Configure corosync & pacemaker to not run on node boot on specified
+        node(s), if node is not specified then corosync & pacemaker are
+        disabled on the local node. If --all is specified then corosync &
+        pacemaker are disabled on all nodes. (Note: this is the default after
+        installation)
 
     standby <node> | --all
         Put specified node into standby mode (the node specified will no longer
