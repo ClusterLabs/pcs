@@ -43,8 +43,6 @@ def constraint_cmd(argv):
 
         if (sub_cmd2 == "list"):
             order_list(argv)
-        elif (sub_cmd2 == "add"):
-            order_add(argv)
         elif (sub_cmd2 == "rm"):
             order_rm(argv)
         elif (sub_cmd2 == "show"):

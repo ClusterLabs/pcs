@@ -671,14 +671,6 @@ Commands:
     order rm <resource1> [resourceN]...
         Remove resource from any order list
 
-    order add <resource id 1> <resource id 2> [symmetrical|nonsymmetrical]
-              [options]
-        Specify that 'resource id 1' should start before 'resource id 2' and
-        specify if resources will be stopped in the reverse order they were
-        started (symmetrical) or not (nonsymmetrical).  Default is symmetrical.
-        (For more advance pacemaker usage)
-        Options are specified by option_name=option_value
-
     colocation [show [all]]
         List all current colocation constraints (if 'all' is specified show
         the internal constraint id's as well).
