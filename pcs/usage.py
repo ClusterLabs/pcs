@@ -418,7 +418,7 @@ Commands:
         If --all is specified then corosync & pacemaker are stopped on all
         nodes.
 
-    force_stop
+    kill
         Force corosync and pacemaker daemons to stop on the local node
         (performs kill -9).
 

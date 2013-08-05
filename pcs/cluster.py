@@ -55,8 +55,8 @@ def cluster_cmd(argv):
             stop_cluster_all()
         else:
             stop_cluster(argv)
-    elif (sub_cmd == "force_stop"):
-        force_stop_cluster(argv)
+    elif (sub_cmd == "kill"):
+        kill_cluster(argv)
     elif (sub_cmd == "standby"):
         node_standby(argv)
     elif (sub_cmd == "unstandby"):
@@ -387,7 +387,7 @@ def stop_cluster(argv):
             print output,
             utils.err("unable to stop corosync")
 
-def force_stop_cluster(argv):
+def kill_cluster(argv):
     daemons = ["crmd", "pengine", "attrd", "lrmd", "stonithd", "cib", "pacemakerd", "corosync"]
     output, retval = utils.run(["killall", "-9"] + daemons)
 #    if retval != 0:
