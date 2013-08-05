@@ -481,15 +481,9 @@ Commands:
         and sync the new corosync.conf to the new node.  If --start is specified
         also start corosync/pacemaker on the new node
 
-    localnode add <node>
-        Add the specified node to corosync.conf and corosync only on this node
-
     node remove <node>
         Shutdown specified node and remove it from pacemaker and corosync on
         all other nodes in the cluster
-
-    localnode remove <node>
-        Remove the specified node from corosync.conf & corosync on local node
 
     pacemaker remove <node>
         Remove specified node from running pacemaker configuration
