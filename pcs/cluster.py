@@ -311,24 +311,35 @@ def stop_cluster_all():
         thread.join()
 
 def node_standby(argv,standby=True):
-    if len(argv) == 0:
-        usage.cluster()
+    if len(argv) == 0 and "--all" not in utils.pcs_options:
+        if standby:
+            usage.cluster(["standby"])
+        else:
+            usage.cluster(["unstandby"])
         sys.exit(1)
 
     nodes = utils.getNodesFromCorosyncConf()
-    nodeFound = False
-    for node in nodes:
-        if node == argv[0]:
-            nodeFound = True
-            break
 
-    if not nodeFound:
-        utils.err("node '%s' does not appear to exist in configuration" % argv[0])
+    if "--all" not in utils.pcs_options:
+        nodeFound = False
+        for node in nodes:
+            if node == argv[0]:
+                nodeFound = True
+                break
 
-    if standby:
-        utils.run(["crm_standby", "-v", "on", "-N", argv[0]])
+        if not nodeFound:
+            utils.err("node '%s' does not appear to exist in configuration" % argv[0])
+
+        if standby:
+            utils.run(["crm_standby", "-v", "on", "-N", node])
+        else:
+            utils.run(["crm_standby", "-D", "-N", node])
     else:
-        utils.run(["crm_standby", "-D", "-N", argv[0]])
+        for node in nodes:
+            if standby:
+                utils.run(["crm_standby", "-v", "on", "-N", node])
+            else:
+                utils.run(["crm_standby", "-D", "-N", node])
 
 def enable_cluster(argv):
     if len(argv) > 0:

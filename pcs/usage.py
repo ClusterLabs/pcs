@@ -434,13 +434,15 @@ Commands:
         on the local node. If --all is specified then corosync & pacemaker are
         disabled on all nodes.
 
-    standby <node>
+    standby <node> | --all
         Put specified node into standby mode (the node specified will no longer
-        be able to host resources
+        be able to host resources (if --all is specified all nodes will be put
+        into standby)
     
-    unstandby <node>
+    unstandby <node> | --all
         Remove node from standby mode (the node specified will now be able to
-        host resources
+        host resources (if --all is specified all nodes will be put into
+        standby)
 
     remote-node add <hostname> <resource id> [options]
         Enables the specified resource as a remote-node resource on the
