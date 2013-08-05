@@ -675,14 +675,14 @@ Commands:
         List all current colocation constraints (if 'all' is specified show
         the internal constraint id's as well).
 
-    colocation add [master|slave] <src resource id> with [master|slave]
-                   <tgt resource id> [score] [options]
-        Request <src resource> to run on the same node where pacemaker has
-        determined <tgt resource> should run.  Positive values of score
+    colocation add [master|slave] <source resource id> with [master|slave]
+                   <target resource id> [score] [options]
+        Request <source resource> to run on the same node where pacemaker has
+        determined <target resource> should run.  Positive values of score
         mean the resources should be run on the same node, negative values
         mean the resources should not be run on the same node.  Specifying
-        'INFINITY' (or '-INFINITY') for the score force <src resource> to
-        run (or not run) with <tgt resource>. (score defaults to "INFINITY")
+        'INFINITY' (or '-INFINITY') for the score force <source resource> to
+        run (or not run) with <target resource>. (score defaults to "INFINITY")
         A role can be master or slave (if no role is specified, it defaults to
         'started').
 
@@ -728,7 +728,7 @@ Commands:
         View current cluster status
 
     corosync
-        View current corosync status
+        View current membership information as seen by corosync
 
     nodes [corosync|both|config]
         View current status of nodes from pacemaker. If 'corosync' is

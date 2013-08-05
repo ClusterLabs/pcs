@@ -89,6 +89,8 @@ def cluster_cmd(argv):
         cluster_destroy(argv)
     elif (sub_cmd == "verify"):
         cluster_verify(argv)
+    elif (sub_cmd == "pacemaker"):
+        cluster_pacemaker(argv)
     elif (sub_cmd == "report"):
         cluster_report(argv)
     else:
@@ -517,6 +519,18 @@ def cluster_get_corosync_conf(argv):
         utils.err(output)
     else:
         print output
+
+def cluster_pacemaker(argv):
+    if len(argv) < 2 or argv[0] != "remove":
+        usage.cluster(["pacemaker"])
+        sys.exit(1)
+
+    argv.pop(0)
+    node = argv.pop(0)
+    output, retval = utils.run(["crm_node", "--force","-R", node])
+    if retval != 0 and output != "":
+        print output
+        utils.err("unable to remove node from pacemaker")
 
 def print_config():
     print "Cluster Name: %s" % utils.getClusterName()
