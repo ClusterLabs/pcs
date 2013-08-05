@@ -663,7 +663,7 @@ def cluster_remote_node(argv):
             utils.err("unable to find resource '%s'", rsc)
         resource.resource_update(rsc, ["meta", "remote-node="+hostname] + argv)
 
-    elif command == "rm":
+    elif command == "remove":
         if len(argv) < 1:
             usage.cluster(["remote-node"])
             sys.exit(1)
