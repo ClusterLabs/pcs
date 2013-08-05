@@ -821,12 +821,6 @@ def resource_group(argv):
             sys.exit(1)
         group_name = argv.pop(0)
         resource_group_add(group_name, argv)
-    elif (group_cmd == "remove_resource"):
-        if (len(argv) < 2):
-            usage.resource("group")
-            sys.exit(1)
-        group_name = argv.pop(0)
-        resource_group_rm(group_name, argv)
     elif (group_cmd == "list"):
         resource_group_list(argv)
     elif (group_cmd == "remove"):
@@ -834,7 +828,7 @@ def resource_group(argv):
             usage.resource("group")
             sys.exit(1)
         group_name = argv.pop(0)
-        resource_group_rm(group_name, [], True)
+        resource_group_rm(group_name, argv)
     else:
         usage.resource()
         sys.exit(1)
@@ -1109,10 +1103,14 @@ def resource_remove(resource_id, output = True):
     return True
 
 # This removes a resource from a group, but keeps it in the config
-def resource_group_rm(group_name, resource_ids, all_resources=False):
+def resource_group_rm(group_name, resource_ids):
     dom = utils.get_cib_dom()
     dom = dom.getElementsByTagName("configuration")[0]
     group_match = None
+
+    all_resources = False
+    if len(resource_ids) == 0:
+        all_resources = True
 
     for group in dom.getElementsByTagName("group"):
         if group.getAttribute("id") == group_name:

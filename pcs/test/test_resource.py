@@ -374,6 +374,14 @@ class ResourceAdditionTest(unittest.TestCase):
         assert r == 1
         ac(o,"Error: Group 'Noexist' does not exist\n")
 
+        o,r = pcs(temp_cib, "resource group remove AGroup A1 A3")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "resource show")
+        assert r == 0
+        ac(o,' ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped \n Resource Group: TestGroup1\n     ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped \n Clone Set: ClusterIP4-clone [ClusterIP4]\n Master/Slave Set: Master [ClusterIP5]\n Resource Group: AGroup\n     A2\t(ocf::heartbeat:Dummy):\tStopped \n     A4\t(ocf::heartbeat:Dummy):\tStopped \n     A5\t(ocf::heartbeat:Dummy):\tStopped \n A1\t(ocf::heartbeat:Dummy):\tStopped \n A3\t(ocf::heartbeat:Dummy):\tStopped \n')
+
         o,r = pcs(temp_cib, "resource group remove AGroup")
         assert r == 0
         ac(o,'')

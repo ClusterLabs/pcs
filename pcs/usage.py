@@ -295,26 +295,25 @@ Commands:
     remove_operation <operation id>
         Remove the specified operation id
 
-    meta <resource/group/master/clone id> <meta options>
-        Add (or remove with option= ) specified options to the specified
-        resource, group, master/slave or clone.
+    meta <resource id | group id | master id | clone id> <meta options>
+        Add specified options to the specified resource, group, master/slave
+        or clone.  Meta options should be in the format of name=value, options
+        may be removed by setting an option without a value.
+        Example: pcs resource meta TestResource failure-timeout=50 stickiness=
 
     delete <resource id>
         Delete the specified resource (including any constraints referencing
         the resource)
 
-    group add <group name> <resource_id>...
+    group add <group name> <resource id> [resource id] ... [resource id]
         Add the specified resource to the group, creating the group if it does
         not exist.  If the resource is present in another group it is moved
         to the new group.
 
-    group remove <group name>
+    group remove <group name> [resource id] ... [resource id]
         Remove the group (Note: this does not remove any resources from the
-        cluster)
-
-    group remove_resource <group name> <resource_id> ...
-        Remove the specified resource from the group (removing the group if
-        it does not have any other resources)
+        cluster) or if resources are specified, remove the specified resources
+        from the group
 
     group list
         List all currently configured resource groups
@@ -441,7 +440,7 @@ Commands:
         Remove node from standby mode (the node specified will now be able to
         host resources
 
-    remote-node add <hostname> <resource_id> [options]
+    remote-node add <hostname> <resource id> [options]
         Enables the specified resource as a remote-node resource on the
         specified hostname
     
@@ -528,8 +527,8 @@ Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
 Commands:
-    show [stonith_id]
-        Show all currently configured stonith devices or if a stonith_id is
+    show [stonith id]
+        Show all currently configured stonith devices or if a stonith id is
         specified show the options for the configured stonith device.  If
         --all is specified all configured stonith options will be displayed
 
@@ -540,14 +539,14 @@ Commands:
     describe <stonith agent>
         Show options for specified stonith agent
 
-    create <stonith_id> <stonith device type> [stonith device options]
+    create <stonith id> <stonith device type> [stonith device options]
         Create stonith device with specified type and options
 
-    update <stonith_id> [stonith device options]
-        Add/Change options to specified resource_id
+    update <stonith id> [stonith device options]
+        Add/Change options to specified resource id
         
-    delete <stonith_id>
-        Remove stonith_id from configuration
+    delete <stonith id>
+        Remove stonith id from configuration
 
     level
         Lists all of the fencing levels currently configured
