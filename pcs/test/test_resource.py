@@ -88,9 +88,13 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 1
         assert output == "Error: Unable to find resource: bad_resource\n"
 
+        output, returnVal = pcs(temp_cib, "resource describe ocf:heartbeat:Dummy")
+        assert returnVal == 0
+        ac(output,"Resource options for: ocf:heartbeat:Dummy\n  state: Location to store the resource state in.\n  fake: Fake attribute that can be changed to cause a reload\n")
+
         output, returnVal = pcs(temp_cib, "resource describe Dummy")
         assert returnVal == 0
-        assert output == "Resource options for: Dummy\n  state: Location to store the resource state in.\n  fake: Fake attribute that can be changed to cause a reload\n",[output]
+        ac(output,"Resource options for: ocf:heartbeat:Dummy\n  state: Location to store the resource state in.\n  fake: Fake attribute that can be changed to cause a reload\nResource options for: ocf:pacemaker:Dummy\n  state: Location to store the resource state in.\n  fake: Fake attribute that can be changed to cause a reload\n  op_sleep: Number of seconds to sleep during operations. This can be used to\n            test how the cluster reacts to operation timeouts.\n")
 
     def testAddResources(self):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"

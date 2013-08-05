@@ -250,11 +250,9 @@ Commands:
         Remove constraints created by move and/or ban on the specified
         resource
 
-    list
-        Show list of all available resources
-
-    list <class|provider|type>
-        Show available resources filtered by specified type, class or provider
+    list [<class|provider|type>]
+        Show list of all available resources, optionally filtered by specified
+        type, class or provider
 
     describe <class:provider:type|type>
         Show options for the specified resource

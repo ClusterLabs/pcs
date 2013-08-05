@@ -237,7 +237,7 @@ def resource_list_options(resource):
             found_resource = True
         
         try:
-            print "Resource options for: %s" % resource
+            print "Resource options for: %s" % ("ocf:"+provider+":"+resource)
             dom = parseString(metadata)
             params = dom.documentElement.getElementsByTagName("parameter")
             for param in params:
@@ -250,7 +250,6 @@ def resource_list_options(resource):
                 print "  " + name + ": " + desc
         except xml.parsers.expat.ExpatError:
             utils.err ("Unable to parse xml for: %s" % (resource))
-        break
 
     if not found_resource:
         utils.err ("Unable to find resource: %s" % resource)
