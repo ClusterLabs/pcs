@@ -51,6 +51,8 @@ def full_status():
     print ""
     print "PCSD Status:"
     cluster.cluster_gui_status([],True)
+    print ""
+    utils.serviceStatus("  ")
 
 def actions_status(argv):
     print "Not Yet Implemented"

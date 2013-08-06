@@ -991,6 +991,17 @@ def err(errorText, exit_after_error=True):
     if exit_after_error:
         sys.exit(1)
 
+def serviceStatus(prefix):
+    if is_systemctl():
+        print "Daemon Status:"
+        daemons = ["corosync", "pacemaker", "pcsd"]
+        out, ret = run(["systemctl", "is-active"] + daemons)
+        status = out.split("\n")
+        out, ret = run(["systemctl", "is-enabled"]+ daemons)
+        enabled = out.split("\n")
+        for i in range(len(daemons)):
+            print prefix + daemons[i] + ": " + status[i] + "/" + enabled[i]
+
 def enableServices():
     if is_systemctl():
         run(["systemctl", "enable", "corosync.service"])

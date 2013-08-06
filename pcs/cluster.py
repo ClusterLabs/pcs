@@ -175,24 +175,24 @@ def cluster_gui_status(argv,dont_exit = False):
         nodes = utils.getNodesFromCorosyncConf()
         if len(nodes) == 0:
             utils.err("no nodes found in corosync.conf")
-        bad_nodes = check_nodes(nodes)
+        bad_nodes = check_nodes(nodes, "  ")
     else:
-        bad_nodes = check_nodes(argv)
+        bad_nodes = check_nodes(argv, "  ")
     if bad_nodes and not dont_exit:
         sys.exit(1)
 
 # Check and see if pcsd is running on the nodes listed
-def check_nodes(nodes):
+def check_nodes(nodes, prefix = ""):
     bad_nodes = False
     for node in nodes:
         status = utils.checkAuthorization(node)
         if status[0] == 0:
-            print node + ": Online"
+            print prefix + node + ": Online"
         elif status[0] == 3:
-            print node + ": Unable to authenticate"
+            print prefix + node + ": Unable to authenticate"
             bad_nodes = True
         else:
-            print node + ": Offline"
+            print prefix + node + ": Offline"
             bad_nodes = True
     return bad_nodes
     
