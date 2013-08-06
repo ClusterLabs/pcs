@@ -48,6 +48,9 @@ def full_status():
         print("WARNING: no stonith devices and stonith-enabled is not false")
 
     print output
+    print ""
+    print "PCSD Status:"
+    cluster.cluster_gui_status([],True)
 
 def actions_status(argv):
     print "Not Yet Implemented"

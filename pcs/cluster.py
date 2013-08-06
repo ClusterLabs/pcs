@@ -39,6 +39,9 @@ def cluster_cmd(argv):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     elif (sub_cmd == "status"):
         status.cluster_status(argv)
+        print ""
+        print "PCSD Status:"
+        cluster_gui_status([],True)
     elif (sub_cmd == "pcsd-status"):
         cluster_gui_status(argv)
     elif (sub_cmd == "auth"):
@@ -166,7 +169,7 @@ def auth_nodes(nodes):
 
 # If no arguments get current cluster node status, otherwise get listed
 # nodes status
-def cluster_gui_status(argv):
+def cluster_gui_status(argv,dont_exit = False):
     bad_nodes = False
     if len(argv) == 0:
         nodes = utils.getNodesFromCorosyncConf()
@@ -175,7 +178,7 @@ def cluster_gui_status(argv):
         bad_nodes = check_nodes(nodes)
     else:
         bad_nodes = check_nodes(argv)
-    if bad_nodes:
+    if bad_nodes and not dont_exit:
         sys.exit(1)
 
 # Check and see if pcsd is running on the nodes listed
