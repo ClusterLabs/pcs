@@ -235,6 +235,58 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Node: rh7-1\n  Level 1 - blah\n Node: rh7-9\n  Level 1 - F1\n',[output]
 
+        o,r = pcs(temp_cib, "stonith level remove 1")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "stonith level add 1 rh7-1 F1,F2")
+        o,r = pcs(temp_cib, "stonith level add 2 rh7-1 F1,F2")
+        o,r = pcs(temp_cib, "stonith level add 3 rh7-1 F1,F2")
+        o,r = pcs(temp_cib, "stonith level add 4 rh7-1 F1,F2")
+        o,r = pcs(temp_cib, "stonith level add 5 rh7-1 F1,F2")
+        o,r = pcs(temp_cib, "stonith level add 1 rh7-2 F3")
+        o,r = pcs(temp_cib, "stonith level add 2 rh7-2 F3")
+
+        o,r = pcs(temp_cib, "stonith level remove 5 rh7-1")
+        assert r == 0
+        assert o == ""
+        
+        o,r = pcs(temp_cib, "stonith level remove 4 rh7-1 F2")
+        assert r == 1
+        assert o == "Error: unable to remove fencing level, fencing level for node: rh7-1, at level: 4, with device: F2 doesn't exist\n"
+
+        o,r = pcs(temp_cib, "stonith level remove 4 rh7-1 F1")
+        assert r == 1
+        assert o == "Error: unable to remove fencing level, fencing level for node: rh7-1, at level: 4, with device: F1 doesn't exist\n"
+
+        o,r = pcs(temp_cib, "stonith level remove 4 rh7-1")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "stonith level remove 3")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "stonith level remove 2 F1 F2")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "stonith level")
+        assert r == 0
+        ac(o," Node: rh7-1\n  Level 1 - F1,F2\n Node: rh7-2\n  Level 1 - F3\n  Level 2 - F3\n")
+
+        o,r = pcs(temp_cib, "stonith level remove 2 F3")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "stonith level remove 1 rh7-1")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "stonith level")
+        assert r == 0
+        ac(o," Node: rh7-2\n  Level 1 - F3\n")
+
 if __name__ == "__main__":
     unittest.main()
 

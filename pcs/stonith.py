@@ -155,10 +155,19 @@ def stonith_level(argv):
             sys.exit(1)
         stonith_level_add(argv[0], argv[1], ",".join(argv[2:]))
     elif subcmd == "remove":
-        if len(argv) < 3:
+        if len(argv) < 1:
             usage.stonith(["level remove"])
             sys.exit(1)
-        stonith_level_rm(argv[0], argv[1], ",".join(argv[2:]))
+        
+        node = ""
+        devices = ""
+        if len(argv) == 2:
+            node = argv[1]
+        elif len(argv) > 2:
+            node = argv[1]
+            devices = ",".join(argv[2:])
+
+        stonith_level_rm(argv[0], node, devices)
     elif subcmd == "clear":
         if len(argv) == 0:
             stonith_level_clear()
@@ -204,6 +213,11 @@ def stonith_level_add(level, node, devices):
 def stonith_level_rm(level, node, devices):
     dom = utils.get_cib_dom()
 
+    if devices != "":
+        node_devices_combo  = node + "," + devices
+    else:
+        node_devices_combo = node
+
     ft = dom.getElementsByTagName("fencing-topology")
     if len(ft) == 0:
         utils.err("unable to remove fencing level, fencing level for node: %s, at level: %s, with device: %s doesn't exist" % (node,level,devices))
@@ -211,16 +225,37 @@ def stonith_level_rm(level, node, devices):
         ft = ft[0]
 
     fls = ft.getElementsByTagName("fencing-level")
-    found = False
-    for fl in fls:
-        if fl.getAttribute("target") == node and fl.getAttribute("index") == level and fl.getAttribute("devices") == devices:
-            found = True
-            break
+    fls_to_remove = []
 
-    if found == False:
-        utils.err("unable to remove fencing level, fencing level for node: %s, at level: %s, with device: %s doesn't exist" % (node,level,devices))
+    if node != "":
+        if devices != "":
+            found = False
+            for fl in fls:
+                if fl.getAttribute("target") == node and fl.getAttribute("index") == level and fl.getAttribute("devices") == devices:
+                    found = True
+                    break
 
-    fl.parentNode.removeChild(fl)
+                if fl.getAttribute("index") == level and fl.getAttribute("devices") == node_devices_combo:
+                    found = True
+                    break
+
+            if found == False:
+                utils.err("unable to remove fencing level, fencing level for node: %s, at level: %s, with device: %s doesn't exist" % (node,level,devices))
+
+            fl.parentNode.removeChild(fl)
+        else:
+            for fl in fls:
+                if fl.getAttribute("index") == level and (fl.getAttribute("target") == node or fl.getAttribute("devices") == node):
+                    fl.parentNode.removeChild(fl)
+    else:
+        for fl in fls:
+            if fl.getAttribute("index") == level:
+                parent = fl.parentNode
+                parent.removeChild(fl)
+                if len(parent.getElementsByTagName("fencing-level")) == 0:
+                    parent.parentNode.removeChild(parent)
+                    break
+
     utils.replace_cib_configuration(dom)
 
 def stonith_level_clear(node = None):

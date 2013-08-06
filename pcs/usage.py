@@ -553,9 +553,14 @@ Commands:
     level add <level> <node> <devices>
         Add the fencing level for the specified node with a comma separated
         list of devices (stonith ids) to attempt for that node at that level.
+        Fence levels are attempted in numerical order (starting with 1) if
+        a level succeeds (meaning all devices are successfully fenced in that
+        level) then no other levels are tried, and the node is considered
+        fenced.
 
-    level remove <level> <node> <devices>
-        Removes the fence level for the level, node and devices specified
+    level remove <level> [node id] [devices id] ... [device id]
+        Removes the fence level for the level, node and/or devices specified
+        If no nodes or devices are specified then the fence level is removed
 
     level clear [node]
         Clears the fence levels on the node specified or clears all fence
