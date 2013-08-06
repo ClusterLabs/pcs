@@ -4,7 +4,7 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
-from pcs_test_functions import pcs
+from pcs_test_functions import pcs,ac
 
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
@@ -95,9 +95,9 @@ class StonithTest(unittest.TestCase):
         assert output == ' Resource: F1 (class=stonith type=fence_apc)\n  Attributes: pcmk_host_list="nodea nodeb" \n  Operations: monitor interval=60s (F1-monitor-interval-60s)\n',[output]
 
     def testFenceLevels(self):
-        output, returnVal = pcs(temp_cib, "stonith level rm 1 rh7-2 F1")
+        output, returnVal = pcs(temp_cib, "stonith level remove 1 rh7-2 F1")
         assert returnVal == 1
-        assert output == 'Error: unable to remove fencing level, fencing level for node: rh7-2, at level: 1, with device: F1 doesn\'t exist\n',[output]
+        ac (output,'Error: unable to remove fencing level, fencing level for node: rh7-2, at level: 1, with device: F1 doesn\'t exist\n')
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
@@ -143,15 +143,19 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
+        output, returnVal = pcs(temp_cib, "stonith show")
+        assert returnVal == 0
+        ac(output,' F1\t(stonith:fence_apc):\tStopped \n F2\t(stonith:fence_apc):\tStopped \n F3\t(stonith:fence_apc):\tStopped \n F4\t(stonith:fence_apc):\tStopped \n F5\t(stonith:fence_apc):\tStopped \n Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 1 - F1\n  Level 2 - F2\n')
+
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
         assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 1 - F1\n  Level 2 - F2\n',[output]
 
-        output, returnVal = pcs(temp_cib, "stonith level rm 1 rh7-2 F1")
+        output, returnVal = pcs(temp_cib, "stonith level remove 1 rh7-2 F1")
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "stonith level rm 1 rh7-2 F1")
+        output, returnVal = pcs(temp_cib, "stonith level remove 1 rh7-2 F1")
         assert returnVal == 1
         assert output == 'Error: unable to remove fencing level, fencing level for node: rh7-2, at level: 1, with device: F1 doesn\'t exist\n',[output]
 
@@ -197,11 +201,11 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith level 1")
         assert returnVal == 1
-        assert output == "pcs stonith level: invalid option -- '1'\n\nUsage: pcs stonith s...\n    show [stonith_id]\n        Show all currently configured stonith devices or if a stonith_id is\n        specified show the options for the configured stonith device.  If\n        --all is specified all configured stonith options will be displayed\n\n",[output]
+        ac (output,"pcs stonith level: invalid option -- '1'\n\nUsage: pcs stonith s...\n    show [stonith id]\n        Show all currently configured stonith devices or if a stonith id is\n        specified show the options for the configured stonith device.  If\n        --all is specified all configured stonith options will be displayed\n\n")
 
         output, returnVal = pcs(temp_cib, "stonith level abcd")
         assert returnVal == 1
-        assert output == "pcs stonith level: invalid option -- 'abcd'\n\nUsage: pcs stonith s...\n    show [stonith_id]\n        Show all currently configured stonith devices or if a stonith_id is\n        specified show the options for the configured stonith device.  If\n        --all is specified all configured stonith options will be displayed\n\n",[output]
+        assert output == "pcs stonith level: invalid option -- 'abcd'\n\nUsage: pcs stonith s...\n    show [stonith id]\n        Show all currently configured stonith devices or if a stonith id is\n        specified show the options for the configured stonith device.  If\n        --all is specified all configured stonith options will be displayed\n\n",[output]
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 blah")
         assert returnVal == 1

@@ -71,6 +71,7 @@ def stonith_cmd(argv):
             sys.exit(1)
     elif (sub_cmd == "show"):
         resource.resource_show(argv, True)
+        stonith_level([])
     elif (sub_cmd == "level"):
         stonith_level(argv)
     elif (sub_cmd == "fence"):
