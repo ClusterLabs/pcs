@@ -558,15 +558,18 @@ Commands:
         level) then no other levels are tried, and the node is considered
         fenced.
 
-    level remove <level> [node id] [devices id] ... [device id]
+    level remove <level> [node id] [stonith id] ... [stonith id]
         Removes the fence level for the level, node and/or devices specified
         If no nodes or devices are specified then the fence level is removed
 
-    level clear [node|device id(s)]
-        Clears the fence levels on the node (or device id) specified or clears
-        all fence levels if a node/device id is not specified.  If more than
-        one device id is specified they must be separated by a comma and no
+    level clear [node|stonith id(s)]
+        Clears the fence levels on the node (or stonith id) specified or clears
+        all fence levels if a node/stonith id is not specified.  If more than
+        one stonith id is specified they must be separated by a comma and no
         spaces.  Example: pcs stonith level clear dev_a,dev_b
+
+    level verify
+        Verifies all fence devices and nodes specified in fence levels exist
 
     fence <node> [--off]
         Fence the node specified (if --off is specified, use the 'off' API

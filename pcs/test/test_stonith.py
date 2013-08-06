@@ -201,11 +201,13 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith level 1")
         assert returnVal == 1
-        ac (output,"pcs stonith level: invalid option -- '1'\n\nUsage: pcs stonith s...\n    show [stonith id]\n        Show all currently configured stonith devices or if a stonith id is\n        specified show the options for the configured stonith device.  If\n        --all is specified all configured stonith options will be displayed\n\n")
+        assert output.startswith("pcs stonith level: invalid option")
+#        ac (output,"pcs stonith level: invalid option -- '1'\n\nUsage: pcs stonith level...\n    level\n        Lists all of the fencing levels currently configured\n\n    level add <level> <node> <devices>\n        Add the fencing level for the specified node with a comma separated\n        list of devices (stonith ids) to attempt for that node at that level.\n        Fence levels are attempted in numerical order (starting with 1) if\n        a level succeeds (meaning all devices are successfully fenced in that\n        level) then no other levels are tried, and the node is considered\n        fenced.\n\n    level remove <level> [node id] [devices id] ... [device id]\n        Removes the fence level for the level, node and/or devices specified\n        If no nodes or devices are specified then the fence level is removed\n\n    level clear [node|device id(s)]\n        Clears the fence levels on the node (or device id) specified or clears\n        all fence levels if a node/device id is not specified.  If more than\n        one device id is specified they must be separated by a comma and no\n        spaces.  Example: pcs stonith level clear dev_a,dev_b\n\n    level verify\n        Verifies all fence devices and nodes specified in fence levels exist\n\n")
 
         output, returnVal = pcs(temp_cib, "stonith level abcd")
         assert returnVal == 1
-        assert output == "pcs stonith level: invalid option -- 'abcd'\n\nUsage: pcs stonith s...\n    show [stonith id]\n        Show all currently configured stonith devices or if a stonith id is\n        specified show the options for the configured stonith device.  If\n        --all is specified all configured stonith options will be displayed\n\n",[output]
+        assert output.startswith("pcs stonith level: invalid option")
+#        assert output == "pcs stonith level: invalid option -- 'abcd'\n\nUsage: pcs stonith level...\n    level\n        Lists all of the fencing levels currently configured\n\n    level add <level> <node> <devices>\n        Add the fencing level for the specified node with a comma separated\n        list of devices (stonith ids) to attempt for that node at that level.\n        Fence levels are attempted in numerical order (starting with 1) if\n        a level succeeds (meaning all devices are successfully fenced in that\n        level) then no other levels are tried, and the node is considered\n        fenced.\n\n    level remove <level> [node id] [devices id] ... [device id]\n        Removes the fence level for the level, node and/or devices specified\n        If no nodes or devices are specified then the fence level is removed\n\n    level clear [node|device id(s)]\n        Clears the fence levels on the node (or device id) specified or clears\n        all fence levels if a node/device id is not specified.  If more than\n        one device id is specified they must be separated by a comma and no\n        spaces.  Example: pcs stonith level clear dev_a,dev_b\n\n    level verify\n        Verifies all fence devices and nodes specified in fence levels exist\n\n",[output]
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 blah")
         assert returnVal == 1
@@ -310,6 +312,28 @@ class StonithTest(unittest.TestCase):
         o,r = pcs(temp_cib, "stonith level")
         assert r == 0
         ac(o," Node: rh7-2\n  Level 1 - F3\n")
+
+        o,r = pcs(temp_cib, "stonith level clear")
+        o,r = pcs(temp_cib, "stonith level")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level add 1 rh7-bad F1 --force")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level verify")
+        assert r == 1
+        ac(o,"Error: rh7-bad is not currently a node\n")
+
+        o,r = pcs(temp_cib, "stonith level clear")
+        o,r = pcs(temp_cib, "stonith level add 1 rh7-1 F1,FBad --force")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level verify")
+        assert r == 1
+        ac(o,"Error: FBad is not a stonith id\n")
 
 if __name__ == "__main__":
     unittest.main()

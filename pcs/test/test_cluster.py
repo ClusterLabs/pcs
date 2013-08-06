@@ -42,17 +42,17 @@ class ClusterTest(unittest.TestCase):
         assert r==0
         ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: remote-node=rh7-2 \n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 \n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
-        o,r = pcs(temp_cib, "cluster remote-node rm")
+        o,r = pcs(temp_cib, "cluster remote-node remove")
         assert r==1 and o.startswith("\nUsage: pcs cluster remote-node")
 
-        o,r = pcs(temp_cib, "cluster remote-node rm rh7-2")
+        o,r = pcs(temp_cib, "cluster remote-node remove rh7-2")
         assert r==0 and o==""
 
         o,r = pcs(temp_cib, "resource --all")
         assert r==0
         ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 \n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
-        o,r = pcs(temp_cib, "cluster remote-node rm rh7-1")
+        o,r = pcs(temp_cib, "cluster remote-node remove rh7-1")
         assert r==0 and o==""
 
         o,r = pcs(temp_cib, "resource --all")

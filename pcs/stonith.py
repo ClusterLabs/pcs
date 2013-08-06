@@ -173,9 +173,11 @@ def stonith_level(argv):
             stonith_level_clear()
         else:
             stonith_level_clear(argv[0])
+    elif subcmd == "verify":
+        stonith_level_verify()
     else:
         print "pcs stonith level: invalid option -- '%s'" % subcmd
-        usage.stonith("stonith level")
+        usage.stonith(["level"])
         sys.exit(1)
 
 def stonith_level_add(level, node, devices):
@@ -279,6 +281,20 @@ def stonith_level_clear(node = None):
                 fl.parentNode.removeChild(fl)
 
     utils.replace_cib_configuration(dom)
+
+def stonith_level_verify():
+    dom = utils.get_cib_dom()
+
+    fls = dom.getElementsByTagName("fencing-level")
+    for fl in fls:
+        node = fl.getAttribute("target")
+        level = fl.getAttribute("index")
+        devices = fl.getAttribute("devices")
+        for dev in devices.split(","):
+            if not utils.is_stonith_resource(dev):
+                utils.err("%s is not a stonith id" % dev)
+        if not utils.is_corosync_node(node):
+            utils.err("%s is not currently a node" % node)
 
 def stonith_level_show():
     dom = utils.get_cib_dom()
