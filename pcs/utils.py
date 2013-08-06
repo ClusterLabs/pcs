@@ -995,6 +995,7 @@ def enableServices():
     if is_systemctl():
         run(["systemctl", "enable", "corosync.service"])
         run(["systemctl", "enable", "pacemaker.service"])
+        run(["systemctl", "enable", "pcsd.service"])
     else:
         run(["chkconfig", "corosync", "on"])
         run(["chkconfig", "pacemaker", "on"])
@@ -1003,6 +1004,7 @@ def disableServices():
     if is_systemctl():
         run(["systemctl", "disable", "corosync.service"])
         run(["systemctl", "disable", "pacemaker.service"])
+        run(["systemctl", "disable", "pcsd.service"])
     else:
         run(["chkconfig", "corosync", "off"])
         run(["chkconfig", "pacemaker", "off"])
