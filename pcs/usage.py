@@ -571,8 +571,7 @@ Commands:
         failure can occur.
 
 Examples:
-    pcs stonith create MyStonith fence_virt pcmk_host_list=f1 \
-            op monitor interval=30s
+    pcs stonith create MyStonith fence_virt pcmk_host_list=f1
 """
     if pout:
         print sub_usage(args, output)
