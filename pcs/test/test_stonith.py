@@ -335,6 +335,10 @@ class StonithTest(unittest.TestCase):
         assert r == 1
         ac(o,"Error: FBad is not a stonith id\n")
 
+        o,r = pcs(temp_cib, "cluster verify")
+        assert r == 1
+        ac(o,"Error: FBad is not a stonith id\n")
+
 if __name__ == "__main__":
     unittest.main()
 

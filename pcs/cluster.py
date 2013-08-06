@@ -610,6 +610,7 @@ def cluster_verify(argv):
 
     if output != "":
         print output
+    stonith.stonith_level_verify()
     return retval
 
 def cluster_report(argv):
