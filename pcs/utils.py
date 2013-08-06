@@ -556,6 +556,23 @@ def get_stonith_metadata(fence_agent_script):
     else:
         return False
 
+def get_default_stonith_options():
+    (metadata, retval) = run([settings.stonithd_binary, "metadata"],True)
+    if retval == 0:
+        root = ET.fromstring(metadata)
+        params = root.findall(".//parameter")
+        default_params = []
+        for param in params:
+            adv_param = False
+            for short_desc in param.findall(".//shortdesc"):
+                if short_desc.text.startswith("Advanced use only"):
+                    adv_param = True
+            if adv_param == False:
+                default_params.append(param)
+        return default_params
+    else:
+        return []
+
 # Return matches from the CIB with the xpath_query
 def get_cib_xpath(xpath_query):
     args = ["cibadmin", "-Q", "--xpath", xpath_query]

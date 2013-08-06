@@ -133,6 +133,14 @@ def stonith_list_options(stonith_agent):
         desc = resource.format_desc(indent, desc)
         print "  " + name + ": " + desc
 
+    default_stonith_options = utils.get_default_stonith_options()
+    for do in default_stonith_options:
+        desc = "No description available"
+        if len(do.findall("shortdesc")) > 0:
+            if do.findall("shortdesc")[0].text:
+                desc = do.findall("shortdesc")[0].text
+        print "  " + do.attrib["name"] + ": " + desc
+
 def stonith_level(argv):
     if len(argv) == 0:
         stonith_level_show()
