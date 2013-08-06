@@ -275,9 +275,8 @@ def stonith_level_clear(node = None):
         if len(fls) == 0:
             return
         for fl in fls:
-            if fl.getAttribute("target") == node:
+            if fl.getAttribute("target") == node or fl.getAttribute("devices") == node:
                 fl.parentNode.removeChild(fl)
-
 
     utils.replace_cib_configuration(dom)
 

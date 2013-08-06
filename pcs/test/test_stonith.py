@@ -287,6 +287,30 @@ class StonithTest(unittest.TestCase):
         assert r == 0
         ac(o," Node: rh7-2\n  Level 1 - F3\n")
 
+        o,r = pcs(temp_cib, "stonith level add 1 rh7-1 F1,F2")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level clear F4")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level clear F2")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level")
+        assert r == 0
+        ac(o," Node: rh7-1\n  Level 1 - F1,F2\n Node: rh7-2\n  Level 1 - F3\n")
+
+        o,r = pcs(temp_cib, "stonith level clear F1,F2")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level")
+        assert r == 0
+        ac(o," Node: rh7-2\n  Level 1 - F3\n")
+
 if __name__ == "__main__":
     unittest.main()
 
