@@ -145,9 +145,9 @@ def stonith_level(argv):
             usage.stonith(["level add"])
             sys.exit(1)
         stonith_level_add(argv[0], argv[1], ",".join(argv[2:]))
-    elif subcmd == "rm":
+    elif subcmd == "remove":
         if len(argv) < 3:
-            usage.stonith(["level rm"])
+            usage.stonith(["level remove"])
             sys.exit(1)
         stonith_level_rm(argv[0], argv[1], ",".join(argv[2:]))
     elif subcmd == "clear":

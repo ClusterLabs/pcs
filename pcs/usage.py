@@ -554,7 +554,7 @@ Commands:
         Add the fencing level for the specified node with a comma separated
         list of devices (stonith ids) to attempt for that node at that level.
 
-    level rm <level> <node> <devices>
+    level remove <level> <node> <devices>
         Removes the fence level for the level, node and devices specified
 
     level clear [node]
