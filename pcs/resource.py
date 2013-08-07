@@ -1236,7 +1236,7 @@ def resource_show(argv, stonith=False):
         resource_group_list(argv)
         return
 
-    if "--all" in utils.pcs_options:
+    if "--full" in utils.pcs_options:
         root = utils.get_cib_etree()
         resources = root.find(".//resources")
         for child in resources:

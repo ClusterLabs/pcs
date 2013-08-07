@@ -553,6 +553,7 @@ def print_config():
     print ""
     print "Resources: "
     utils.pcs_options["--all"] = 1
+    utils.pcs_options["--full"] = 1
     resource.resource_show([])
     print ""
     print "Stonith Devices: "

@@ -64,7 +64,7 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == " Resource: test2 (class=stonith type=fence_ilo)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n",[output]
 
-        output, returnVal = pcs(temp_cib, "stonith show --all")
+        output, returnVal = pcs(temp_cib, "stonith show --full")
         assert returnVal == 0
         assert output == " Resource: test1 (class=stonith type=fence_noxist)\n  Operations: monitor interval=60s (test1-monitor-interval-60s)\n Resource: test2 (class=stonith type=fence_ilo)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n Resource: test3 (class=stonith type=fence_ilo)\n  Attributes: ipaddr=test login=testA \n  Operations: monitor interval=60s (test3-monitor-interval-60s)\n",[output]
 

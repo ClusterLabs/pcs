@@ -79,7 +79,7 @@ def constraint_cmd(argv):
         sys.exit(1)
 
 def colocation_show(argv):
-    if "--all" in utils.pcs_options:
+    if "--full" in utils.pcs_options:
         showDetail = True
     else:
         showDetail = False
@@ -227,7 +227,7 @@ def colocation_add(argv):
         print output
 
 def order_show(argv):
-    if "--all" in utils.pcs_options:
+    if "--full" in utils.pcs_options:
         showDetail = True
     else:
         showDetail = False
@@ -401,7 +401,7 @@ def location_show(argv):
     if (len(argv) != 0 and argv[0] == "nodes"):
         byNode = True
         showDetail = False
-    elif "--all" in utils.pcs_options:
+    elif "--full" in utils.pcs_options:
         byNode = False
         showDetail = True
     else:

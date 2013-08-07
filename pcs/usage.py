@@ -213,9 +213,9 @@ Usage: pcs resource [commands]...
 Manage pacemaker resources
 
 Commands:
-    show [resource id] [--all] [--groups]
+    show [resource id] [--full] [--groups]
         Show all currently configured resources or if a resource is specified
-        show the options for the configured resource.  If --all is specified
+        show the options for the configured resource.  If --full is specified
         all configured resource options will be displayed.  If --groups is
         specified, only show groups (and their resources).
 
@@ -526,10 +526,10 @@ Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
 Commands:
-    show [stonith id]
+    show [stonith id] [--full]
         Show all currently configured stonith devices or if a stonith id is
         specified show the options for the configured stonith device.  If
-        --all is specified all configured stonith options will be displayed
+        --full is specified all configured stonith options will be displayed
 
     list [filter]
         Show list of all available stonith agents (if filter is provided then
@@ -623,8 +623,8 @@ Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:
-    [list|show] --all
-        List all current location, order and colocation constraints, if --all
+    [list|show] --full
+        List all current location, order and colocation constraints, if --full
         is specified also list the constraint ids.
 
     location <resource id> prefers <node[=score]>...
