@@ -41,8 +41,8 @@ def constraint_cmd(argv):
         else:
             sub_cmd2 = argv.pop(0)
 
-        if (sub_cmd2 == "list"):
-            order_list(argv)
+        if (sub_cmd2 == "set"):
+            order_set(argv)
         elif (sub_cmd2 == "remove"):
             order_rm(argv)
         elif (sub_cmd2 == "show"):
@@ -234,9 +234,13 @@ def order_show(argv):
 
     (dom,constraintsElement) = getCurrentConstraints()
 
+    resource_order_sets = []
     print "Ordering Constraints:"
     for ord_loc in constraintsElement.getElementsByTagName('rsc_order'):
         oc_resource1 = ord_loc.getAttribute("first")
+        if oc_resource1 == "":
+            resource_order_sets.append(ord_loc)
+            continue
         oc_resource2 = ord_loc.getAttribute("then")
         first_action = ord_loc.getAttribute("first-action")
         then_action = ord_loc.getAttribute("then-action")
@@ -260,9 +264,54 @@ def order_show(argv):
             oc_id_out = " (id:"+oc_id+")"
         print "  " + first_action + oc_resource1 + " then " + then_action + oc_resource2 + score_text + oc_sym + oc_id_out
 
-def order_list(argv):
-    for i in range(0,len(argv)-1):
-        order_add([argv[i], argv[i+1], "INFINITY"])
+    if len(resource_order_sets) != 0:
+        print "  Resource Sets:"
+        for ro in resource_order_sets:
+            output = ""
+            for rs in ro.getElementsByTagName("resource_set"):
+                output += " set"
+                for rr in rs.getElementsByTagName("resource_ref"):
+                    output += " " + rr.getAttribute("id")
+                for name,value in rs.attributes.items():
+                    if name == "id":
+                        continue
+                    output += " " + name + "=" + value
+                if showDetail:
+                    output += " (id:"+rs.getAttribute("id")+")"
+            if showDetail:
+                output += " (id:" + ro.getAttribute("id") + ")"
+            print "   "+output
+
+def order_set(argv,retval = False):
+    current_set = []
+    current_nodes = []
+    for i in range(len(argv)):
+        if argv[i] == "set" and len(argv) >= i:
+            current_set = current_set + order_set(argv[i+1:], True)
+            break
+        current_nodes.append(argv[i])
+    current_set = [current_nodes] + current_set
+
+    if retval:
+        return current_set
+    else:
+        cib = utils.get_cib_etree()
+        constraints = cib.find(".//constraints")
+        if constraints == None:
+            constraints = ET.SubElement(cib, "constraints")
+        rsc_order = ET.SubElement(constraints,"rsc_order")
+        rsc_order.set("id", utils.find_unique_id(cib,"pcs_rsc_order"))
+        for o_set in current_set:
+            res_set = ET.SubElement(rsc_order,"resource_set")
+            res_set.set("id", utils.find_unique_id(cib,"pcs_rsc_set"))
+            for opts in o_set:
+                if opts.find("=") != -1:
+                    key,val = opts.split("=")
+                    res_set.set(key,val)
+                else:
+                    se = ET.SubElement(res_set,"resource_ref")
+                    se.set("id",opts)
+        utils.replace_cib_configuration(cib)
 
 def order_rm(argv):
     if len(argv) == 0:

@@ -671,11 +671,11 @@ Commands:
         Available options are kind=Optional/Mandatory/Serialize and
         symmetrical=true/false
 
-    order list <resource1> <resource2> [resourceN]...
-        Require that resource be started in the order specified
+    order set <resource1> <resource2> [resourceN]... [options]
+        Create an ordered set of resources
 
     order remove <resource1> [resourceN]...
-        Remove resource from any order list
+        Remove resource from any ordering constraint
 
     colocation [show [all]]
         List all current colocation constraints (if 'all' is specified show

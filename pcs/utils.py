@@ -619,16 +619,21 @@ def replace_cib_configuration(dom):
         new_dom = ET.tostring(dom)
     else:
         new_dom = dom.toxml()
-    output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-X", new_dom])
+    output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-V", "-X", new_dom])
     if retval != 0:
         err("Unable to update cib\n"+output)
 
 # Checks to see if id exists in the xml dom passed
 def does_id_exist(dom, check_id):
-    all_elem = dom.getElementsByTagName("*")
-    for elem in all_elem:
-        if elem.getAttribute("id") == check_id:
+    if type(dom) == xml.etree.ElementTree.Element:
+        elem = dom.find(".//*[@id='"+check_id+"']")
+        if elem != None:
             return True
+    else:
+        all_elem = dom.getElementsByTagName("*")
+        for elem in all_elem:
+            if elem.getAttribute("id") == check_id:
+                return True
     return False
 
 # Returns check_id if it doesn't exist in the dom, otherwise it adds an integer

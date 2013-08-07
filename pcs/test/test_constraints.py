@@ -224,7 +224,31 @@ class ConstraintTest(unittest.TestCase):
         o, r = pcs(temp_cib, "constraint")
         assert r == 0 and o == 'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  D4 with D5 (100)\n  M1 with M2 (rsc-role:Master) (with-rsc-role:Master)\n  M3 with M4\n  M5 with M6 (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7 with M8 (rsc-role:Started) (with-rsc-role:Master)\n  M9 with M10 (rsc-role:Slave) (with-rsc-role:Started)\n', [o]
         
+    def testOrderSets(self):
+        o, r = pcs(temp_cib, "constraint order set D5 D6 D7 sequential=false set D8 D9 sequential=true")
+        assert r == 0
+        ac(o,"")
 
+        o, r = pcs(temp_cib, "constraint order set D5 D6")
+        assert r == 0
+        ac(o,"")
+
+        o, r = pcs(temp_cib, "constraint order set D5 D6 set D7 D8 set D8 D9")
+        assert r == 0
+        ac(o,"")
+
+        o, r = pcs(temp_cib, "constraint order --full")
+        assert r == 0
+        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) (id:pcs_rsc_order)\n    set D5 D6 (id:pcs_rsc_set-2) (id:pcs_rsc_order-1)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_order-2)\n")
+
+        o, r = pcs(temp_cib, "constraint rm pcs_rsc_order-1")
+        assert r == 0
+        ac(o,"")
+
+        o, r = pcs(temp_cib, "constraint order --full")
+        assert r == 0
+        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) (id:pcs_rsc_order)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_order-2)\n")
+        
     def testLocationConstraintRule(self):
         print "WARNING RULES TEMPORARILY DISABLED"
         return
