@@ -241,7 +241,9 @@ Commands:
         that fail to start.
 
     move <resource id> [destination node]
-        Move resource off current node (and optionally onto destination node
+        Move resource off current node (and optionally onto destination 
+        node). If node is left out, the resource is migrated by creating a 
+        constraint which prevents it from running on the current node.
 
     ban <resource id> [node]
         Prevent the resource id specified from running on the node (or on the
