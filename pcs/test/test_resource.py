@@ -764,6 +764,19 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D0-monitor-interval-60s)\n Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
 
+    def testGroupCloneCreation(self):
+        o,r = pcs(temp_cib, "resource create D1 Dummy --group DGroup")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "resource clone DGroup")
+        assert r == 0
+        assert o == ""
+
+        o,r = pcs(temp_cib, "resource show")
+        assert r == 0
+        ac(o," Clone Set: DGroup-clone [DGroup]\n")
+
     def testResourceCloneCreation(self):
         output, returnVal  = pcs(temp_cib, "resource create D1 Dummy --clone")
         assert returnVal == 0

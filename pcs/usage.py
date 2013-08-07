@@ -316,7 +316,7 @@ Commands:
         cluster) or if resources are specified, remove the specified resources
         from the group
 
-    clone <resource id | group name> [clone options]...
+    clone <resource id | group id> [clone options]...
         Setup up the specified resource or group as a clone
 
     unclone <resource id | group name>
