@@ -485,9 +485,6 @@ Commands:
         Shutdown specified node and remove it from pacemaker and corosync on
         all other nodes in the cluster
 
-    pacemaker remove <node>
-        Remove specified node from running pacemaker configuration
-
     corosync <node>
         Get the corosync.conf from the specified node
 
