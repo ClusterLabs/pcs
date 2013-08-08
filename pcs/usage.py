@@ -241,7 +241,7 @@ Commands:
         that fail to start.
 
     move <resource id> [destination node]
-        Move resource off current node (and optionally onto destination node
+        Move resource off current node (and optionally onto destination node)
 
     ban <resource id> [node]
         Prevent the resource id specified from running on the node (or on the
