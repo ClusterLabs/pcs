@@ -671,8 +671,9 @@ Commands:
         Available options are kind=Optional/Mandatory/Serialize and
         symmetrical=true/false
 
-    order set <resource1> <resource2> [resourceN]... [options]
-        Create an ordered set of resources
+    order set <resource1> <resource2> [resourceN]... [options] [set
+              <resourceX> <resourceY> ...]
+        Create an ordered set of resources.
 
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
@@ -691,6 +692,10 @@ Commands:
         run (or not run) with <target resource>. (score defaults to "INFINITY")
         A role can be master or slave (if no role is specified, it defaults to
         'started').
+
+    colocation set <resource1> <resource2> [resourceN]... [options] ...
+               [set <resourceX> <resourceY> ...] [setoptions <name>=<value>...]
+        Create a colocation constraint with a resource set
 
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with <source resource>

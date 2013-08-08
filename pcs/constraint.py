@@ -59,6 +59,8 @@ def constraint_cmd(argv):
             colocation_add(argv)
         elif (sub_cmd2 == "remove"):
             colocation_rm(argv)
+        elif (sub_cmd2 == "set"):
+            colocation_set(argv)
         elif (sub_cmd2 == "show"):
             colocation_show(argv)
         else:
@@ -86,9 +88,13 @@ def colocation_show(argv):
 
     (dom,constraintsElement) = getCurrentConstraints()
 
+    resource_colocation_sets = []
     print "Colocation Constraints:"
     for co_loc in constraintsElement.getElementsByTagName('rsc_colocation'):
         co_resource1 = co_loc.getAttribute("rsc")
+        if co_resource1 == "":
+            resource_colocation_sets.append(co_loc)
+            continue
         co_resource2 = co_loc.getAttribute("with-rsc")
         co_id = co_loc.getAttribute("id")
         co_score = co_loc.getAttribute("score")
@@ -104,6 +110,7 @@ def colocation_show(argv):
             co_id_out += " (id:"+co_id+")"
 
         print "  " + co_resource1 + " with " + co_resource2 + score_text + co_id_out
+    print_sets(resource_colocation_sets, showDetail)
 
 def colocation_rm(argv):
     elementFound = False
@@ -226,6 +233,28 @@ def colocation_add(argv):
     if output != "":
         print output
 
+def colocation_set(argv):
+    setoptions = []
+    for i in range(len(argv)):
+        if argv[i] == "setoptions":
+            setoptions = argv[i+1:]
+            argv[i:] = []
+            break
+
+    current_set = set_args_into_array(argv)
+    cib = utils.get_cib_etree()
+    constraints = cib.find(".//constraints")
+    if constraints == None:
+        constraints = ET.SubElement(cib, "constraints")
+    rsc_colocation = ET.SubElement(constraints,"rsc_colocation")
+    rsc_colocation.set("id", utils.find_unique_id(cib,"pcs_rsc_colocation"))
+    for opt in setoptions:
+        if opt.find("=") != -1:
+            name,value = opt.split("=")
+            rsc_colocation.set(name,value)
+    set_add_resource_sets(rsc_colocation, current_set, cib)
+    utils.replace_cib_configuration(cib)
+
 def order_show(argv):
     if "--full" in utils.pcs_options:
         showDetail = True
@@ -263,10 +292,18 @@ def order_show(argv):
         if showDetail:
             oc_id_out = " (id:"+oc_id+")"
         print "  " + first_action + oc_resource1 + " then " + then_action + oc_resource2 + score_text + oc_sym + oc_id_out
+    print_sets(resource_order_sets,showDetail)
 
-    if len(resource_order_sets) != 0:
+def print_sets(sets,showDetail):
+    if len(sets) != 0:
         print "  Resource Sets:"
-        for ro in resource_order_sets:
+        for ro in sets:
+            ro_opts = ""
+            for name,value in ro.attributes.items():
+                if name == "id":
+                    continue
+                ro_opts += " " + name + "=" + value
+
             output = ""
             for rs in ro.getElementsByTagName("resource_set"):
                 output += " set"
@@ -278,40 +315,47 @@ def order_show(argv):
                     output += " " + name + "=" + value
                 if showDetail:
                     output += " (id:"+rs.getAttribute("id")+")"
+            if ro_opts != "":
+                output += " setoptions"+ro_opts
             if showDetail:
                 output += " (id:" + ro.getAttribute("id") + ")"
             print "   "+output
 
-def order_set(argv,retval = False):
+def set_args_into_array(argv):
     current_set = []
     current_nodes = []
     for i in range(len(argv)):
         if argv[i] == "set" and len(argv) >= i:
-            current_set = current_set + order_set(argv[i+1:], True)
+            current_set = current_set + set_args_into_array(argv[i+1:])
             break
         current_nodes.append(argv[i])
     current_set = [current_nodes] + current_set
 
-    if retval:
-        return current_set
-    else:
-        cib = utils.get_cib_etree()
-        constraints = cib.find(".//constraints")
-        if constraints == None:
-            constraints = ET.SubElement(cib, "constraints")
-        rsc_order = ET.SubElement(constraints,"rsc_order")
-        rsc_order.set("id", utils.find_unique_id(cib,"pcs_rsc_order"))
-        for o_set in current_set:
-            res_set = ET.SubElement(rsc_order,"resource_set")
-            res_set.set("id", utils.find_unique_id(cib,"pcs_rsc_set"))
-            for opts in o_set:
-                if opts.find("=") != -1:
-                    key,val = opts.split("=")
-                    res_set.set(key,val)
-                else:
-                    se = ET.SubElement(res_set,"resource_ref")
-                    se.set("id",opts)
-        utils.replace_cib_configuration(cib)
+    return current_set
+
+def set_add_resource_sets(elem, sets, cib):
+    for o_set in sets:
+        res_set = ET.SubElement(elem,"resource_set")
+        res_set.set("id", utils.find_unique_id(cib,"pcs_rsc_set"))
+        for opts in o_set:
+            if opts.find("=") != -1:
+                key,val = opts.split("=")
+                res_set.set(key,val)
+            else:
+                se = ET.SubElement(res_set,"resource_ref")
+                se.set("id",opts)
+
+    
+def order_set(argv):
+    current_set = set_args_into_array(argv)
+    cib = utils.get_cib_etree()
+    constraints = cib.find(".//constraints")
+    if constraints == None:
+        constraints = ET.SubElement(cib, "constraints")
+    rsc_order = ET.SubElement(constraints,"rsc_order")
+    rsc_order.set("id", utils.find_unique_id(cib,"pcs_rsc_order"))
+    set_add_resource_sets(rsc_order, current_set, cib)
+    utils.replace_cib_configuration(cib)
 
 def order_rm(argv):
     if len(argv) == 0:
