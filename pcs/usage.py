@@ -469,7 +469,7 @@ Commands:
         filename is provided, we save the cib to that file, otherwise the cib
         is printed
 
-    push cib <filename>
+    cib-push <filename>
         Push the raw xml from <filename> to the CIB (Cluster Information Base)
 
     edit

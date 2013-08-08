@@ -78,7 +78,7 @@ def cluster_cmd(argv):
         cluster_remote_node(argv)
     elif (sub_cmd == "cib"):
         get_cib(argv)
-    elif (sub_cmd == "push"):
+    elif (sub_cmd == "cib-push"):
         cluster_push(argv)
     elif (sub_cmd == "edit"):
         cluster_edit(argv)
@@ -399,8 +399,8 @@ def kill_cluster(argv):
 #        sys.exit(1)
 
 def cluster_push(argv):
-    if len(argv) == 2 and argv[0] == "cib":
-        filename = argv[1]
+    if len(argv) == 1:
+        filename = argv[0]
     else:
         usage.cluster()
         sys.exit(1)
