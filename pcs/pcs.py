@@ -116,7 +116,10 @@ def main(argv):
     elif (command == "status"):
         status.status_cmd(argv)
     elif (command == "config"):
-        cluster.print_config()
+        if "--help" in utils.pcs_options or "-h" in utils.pcs_options:
+            usage.main()
+        else:
+            cluster.print_config()
     else:
         usage.main()
         sys.exit(1)
