@@ -266,6 +266,13 @@ Commands:
         Create specified resource.  If --clone is used a clone resource is
         created if --master is specified a master/slave resource is created.
         If --group is specified the resource is added to the group named.
+        Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \\
+                     ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
+                     nic=eth2
+                 Create a new resource called 'ClusterIP' with IP address
+                 192.168.0.99, netmask of 32, monitored everything 30 seconds,
+                 on eth2.
+
 
     standards
         List available resource agent standards supported by this installation.
