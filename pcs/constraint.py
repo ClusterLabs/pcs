@@ -66,7 +66,7 @@ def constraint_cmd(argv):
         else:
             usage.constraint()
             sys.exit(1)
-    elif (sub_cmd == "rm"):
+    elif (sub_cmd == "remove"):
         constraint_rm(argv)
     elif (sub_cmd == "show" or sub_cmd == "list"):
         location_show(argv)
@@ -982,7 +982,7 @@ def constraint_rule(argv):
 
         utils.replace_cib_configuration(cib)
 
-    elif command == "rm":
+    elif command == "remove":
         temp_id = argv.pop(0)
         constraints = cib.find('.//constraints')
         loc_cons = cib.findall('.//rsc_location')

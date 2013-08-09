@@ -691,7 +691,7 @@ Commands:
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with <source resource>
 
-    rm [constraint id]...
+    remove [constraint id]...
         Remove constraint(s) with the specified id(s)
 
     ref [resource]...
@@ -703,7 +703,7 @@ Commands:
         INFINITY, if id is omitted one is generated from the constraint id.
         The <rule type> should be 'expression' or 'date_expression'
 
-    rule rm <rule id>
+    rule remove <rule id>
         Remove a rule if a rule id is specified, if rule is last rule in its
         constraint, the constraint will be removed
 """

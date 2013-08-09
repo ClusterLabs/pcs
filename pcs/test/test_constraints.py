@@ -193,7 +193,7 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
         
-        output, returnVal = pcs(temp_cib, "constraint rm blahblah")
+        output, returnVal = pcs(temp_cib, "constraint remove blahblah")
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
 
     def testColocationConstraints(self):
@@ -241,7 +241,7 @@ class ConstraintTest(unittest.TestCase):
         ac(o,"Colocation Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) setoptions score=INFINITY (id:pcs_rsc_colocation)\n    set D5 D6 (id:pcs_rsc_set-2) (id:pcs_rsc_colocation-1)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_colocation-2)\n")
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint rm pcs_rsc_colocation-1")
+        o, r = pcs(temp_cib, "constraint remove pcs_rsc_colocation-1")
         ac(o,"")
         assert r == 0
 
@@ -266,7 +266,7 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
         ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) (id:pcs_rsc_order)\n    set D5 D6 (id:pcs_rsc_set-2) (id:pcs_rsc_order-1)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_order-2)\n")
 
-        o, r = pcs(temp_cib, "constraint rm pcs_rsc_order-1")
+        o, r = pcs(temp_cib, "constraint remove pcs_rsc_order-1")
         assert r == 0
         ac(o,"")
 
@@ -296,17 +296,17 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
         ac(o,'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\n  Resource: D1\n    Location Constraint: Resource D1 (id:location-D1-rh7-1-INFINITY)\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-1) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-1-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-2) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-2-expr) \nOrdering Constraints:\nColocation Constraints:\n')
         
-        o, r = pcs(temp_cib, "constraint rule rm location-D1-rh7-1-INFINITY-rule-1")
+        o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule-1")
         assert r == 0
         ac(o,"Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n")
         
-        o, r = pcs(temp_cib, "constraint rule rm location-D1-rh7-1-INFINITY-rule-2")
+        o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule-2")
         assert r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n", o
 
         o, r = pcs(temp_cib, "constraint --all")
         assert r == 0 and o == 'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\n  Resource: D1\n    Location Constraint: Resource D1 (id:location-D1-rh7-1-INFINITY)\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-expr) \nOrdering Constraints:\nColocation Constraints:\n', [o]
 
-        o, r = pcs(temp_cib, "constraint rule rm location-D1-rh7-1-INFINITY-rule")
+        o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule")
         assert r == 0 and o == "Removing Constraint: location-D1-rh7-1-INFINITY\n", o
 
         o, r = pcs(temp_cib, "constraint --all")
