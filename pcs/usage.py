@@ -636,7 +636,7 @@ Commands:
           date [start=<start>] [end=<end>] operation=gt|lt|in-range
           date operation=date-spec <date spec options>...
 
-    location [show resources|nodes [node id|resource id]...]
+    location show [resources|nodes [node id|resource id]...]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
         is specified location constraints are displayed per node.  If specific
@@ -651,8 +651,8 @@ Commands:
         Remove a location constraint with the appropriate id, resource name,
         node name and score. (For more advanced pacemaker usage)
 
-    order [show [all]]
-        List all current ordering constraints (if 'all' is specified show
+    order show [--full]
+        List all current ordering constraints (if '--full' is specified show
         the internal constraint id's as well).
 
     order [action] <resource id> then [action] <resource id> [options]
