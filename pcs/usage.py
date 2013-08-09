@@ -324,11 +324,8 @@ Commands:
         resource or group will not be removed)
 
     master [<master/slave name>] <resource id | group name> [options]
-        Configure a resource or group as a multi-state (master/slave) resource
-
-    unmaster <resource id | group name>
-        Remove the master which contains the specified group or resource (the
-        resource or group will not be removed)
+        Configure a resource or group as a multi-state (master/slave) resource.
+        Note: to remove a master you must remove the resource.
 
     manage <resource id> ... [resource n]
         Set resources listed to managed mode (default)

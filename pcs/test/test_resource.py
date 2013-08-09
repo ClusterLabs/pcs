@@ -9,7 +9,7 @@ from pcs_test_functions import pcs,ac
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
 
-class ResourceAdditionTest(unittest.TestCase):
+class ResourceTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
 
@@ -494,9 +494,21 @@ class ResourceAdditionTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource delete Master")
         assert returnVal == 1
-        assert output == "Error: Master is not a resource (it can be removed with 'resource unmaster Master')\n"
+        assert output == "Error: Master is not a resource (it can be removed by removing the resource it constains)\n",[output]
 
-        output, returnVal = pcs(temp_cib, "resource unmaster Master")
+        output, returnVal = pcs(temp_cib, "resource delete ClusterIP5")
+        assert returnVal == 0
+        assert output == "Removing Constraint - location-ClusterIP5-rh7-1-INFINITY\nRemoving Constraint - location-ClusterIP5-rh7-2-INFINITY\nDeleting Resource - ClusterIP5\n",[output]
+
+        output, returnVal = pcs(temp_cib, "resource create ClusterIP5 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
         assert returnVal == 0
         assert output == ""
 
@@ -714,13 +726,16 @@ class ResourceAdditionTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Clone: D0-clone\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
 
-        output, returnVal = pcs(temp_cib, "resource unmaster D0")
+        output, returnVal = pcs(temp_cib, "resource delete D0")
         assert returnVal == 0
-        assert output == "", [output]
+        assert output == "Deleting Resource - D0\n", [output]
 
-        output, returnVal = pcs(temp_cib, "resource unmaster D2")
+        output, returnVal = pcs(temp_cib, "resource delete D2")
         assert returnVal == 0
-        assert output == "", [output]
+        assert output == "Deleting Resource - D2\n", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource create D0 Dummy")
+        output, returnVal  = pcs(temp_cib, "resource create D2 Dummy")
 
         output, returnVal = pcs(temp_cib, "resource show --full")
         assert returnVal == 0

@@ -113,8 +113,6 @@ def resource_cmd(argv):
         resource_clone_master_remove(argv)
     elif (sub_cmd == "master"):
         resource_master(argv)
-    elif (sub_cmd == "unmaster"):
-        resource_clone_master_remove(argv)
     elif (sub_cmd == "enable"):
         resource_enable(argv)
     elif (sub_cmd == "disable"):
@@ -1047,7 +1045,7 @@ def resource_master_remove(argv):
 
 def resource_remove(resource_id, output = True):
     if utils.does_exist('//master[@id="'+resource_id+'"]'):
-        utils.err("%s is not a resource (it can be removed with 'resource unmaster %s')" % (resource_id, resource_id))
+        utils.err("%s is not a resource (it can be removed by removing the resource it constains)" % (resource_id))
 
     if utils.does_exist('//group[@id="'+resource_id+'"]'):
         utils.err("%s is not a resource (it can be removed with 'resource group remove %s')" % (resource_id, resource_id))
