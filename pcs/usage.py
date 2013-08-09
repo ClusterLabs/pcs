@@ -669,8 +669,8 @@ Commands:
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
 
-    colocation [show [all]]
-        List all current colocation constraints (if 'all' is specified show
+    colocation show [--full]
+        List all current colocation constraints (if '--full' is specified show
         the internal constraint id's as well).
 
     colocation add [master|slave] <source resource id> with [master|slave]
