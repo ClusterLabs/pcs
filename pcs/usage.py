@@ -247,9 +247,9 @@ Commands:
         Prevent the resource id specified from running on the node (or on the
         current node it is running on if no node is specified)
 
-    clear <resource id>
+    clear <resource id> [node]
         Remove constraints created by move and/or ban on the specified
-        resource
+        resource (and node if specified)
 
     list [<standard|provider|type>]
         Show list of all available resources, optionally filtered by specified

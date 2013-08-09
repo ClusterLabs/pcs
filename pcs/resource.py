@@ -351,7 +351,10 @@ def resource_move(argv,clear=False,ban=False):
         utils.err("unable to move Master/Slave resources")
 
     if clear:
-        output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear"])
+        if dest_node:
+            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear", "--host", dest_node])
+        else:
+            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear"])
     else:
         if dest_node == None:
             if ban:
