@@ -634,14 +634,13 @@ Commands:
         node and score (default score: INFINITY)
 
     location <resource id> rule [rule_id] [role=master|slave]
-             <score>: <expression>
+             [score=<score>] <expression>
         Creates a location rule on the specified resource where the expression
         looks like one of the following:
-          <expression> and|or <expression>
           defined|not_defined <attribute>
           <attribute> lt|gt|lte|gte|eq|ne <value>
           date [start=<start>] [end=<end>] operation=gt|lt|in-range
-          date operation=date-spec <date spec options>...
+          date-spec <date spec options>...
 
     location show [resources|nodes [node id|resource id]...]
         List all the current location constraints, if 'resources' is specified

@@ -275,42 +275,45 @@ class ConstraintTest(unittest.TestCase):
         ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) (id:pcs_rsc_order)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_order-2)\n")
         
     def testLocationConstraintRule(self):
-        print "WARNING RULES TEMPORARILY DISABLED"
-        return
         o, r = pcs(temp_cib, "constraint location D1 prefers rh7-1")
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint location D2 prefers rh7-2")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY attribute=#uname operation=eq")
+        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY attribute=#uname operation=eq")
+        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY attribute=#uname operation=eq")
+        o, r = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint --all")
+        o, r = pcs(temp_cib, "constraint rule add location-D2-rh7-2-INFINITY date-spec hours=9-16 weekdays=1-5")
+        assert r == 0 and o == "", o
+
+        o, r = pcs(temp_cib, "constraint --full")
         assert r == 0
-        ac(o,'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\n  Resource: D1\n    Location Constraint: Resource D1 (id:location-D1-rh7-1-INFINITY)\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-1) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-1-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-2) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-2-expr) \nOrdering Constraints:\nColocation Constraints:\n')
+        ac(o,'Location Constraints:\n  Resource: D1\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: #uname eq rh7-1  (id:location-D1-rh7-1-INFINITY-rule-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-1) \n        Expression: #uname eq rh7-1  (id:location-D1-rh7-1-INFINITY-rule-1-expr) \n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-2) \n        Expression: #uname eq rh7-1  (id:location-D1-rh7-1-INFINITY-rule-2-expr) \n  Resource: D2\n      Rule: score=INFINITY  (id:location-D2-rh7-2-INFINITY-rule) \n        Expression:  (id:location-D2-rh7-2-INFINITY-rule-expr) \n          Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
         
         o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule-1")
-        assert r == 0
         ac(o,"Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n")
+        assert r == 0
         
         o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule-2")
         assert r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n", o
 
-        o, r = pcs(temp_cib, "constraint --all")
-        assert r == 0 and o == 'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\n  Resource: D1\n    Location Constraint: Resource D1 (id:location-D1-rh7-1-INFINITY)\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: attribute=#uname operation=eq  (id:location-D1-rh7-1-INFINITY-rule-expr) \nOrdering Constraints:\nColocation Constraints:\n', [o]
+        o, r = pcs(temp_cib, "constraint --full")
+        assert r == 0
+        ac (o,'Location Constraints:\n  Resource: D1\n      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule) \n        Expression: #uname eq rh7-1  (id:location-D1-rh7-1-INFINITY-rule-expr) \n  Resource: D2\n      Rule: score=INFINITY  (id:location-D2-rh7-2-INFINITY-rule) \n        Expression:  (id:location-D2-rh7-2-INFINITY-rule-expr) \n          Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
 
         o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule")
         assert r == 0 and o == "Removing Constraint: location-D1-rh7-1-INFINITY\n", o
 
-        o, r = pcs(temp_cib, "constraint --all")
-        assert r == 0 and o == 'Location Constraints:\n  Resource: D2\n    Enabled on: rh7-2 (score:INFINITY) (id:location-D2-rh7-2-INFINITY)\nOrdering Constraints:\nColocation Constraints:\n', [o]
+        o, r = pcs(temp_cib, "constraint --full")
+        assert r == 0
+        ac (o,'Location Constraints:\n  Resource: D2\n      Rule: score=INFINITY  (id:location-D2-rh7-2-INFINITY-rule) \n        Expression:  (id:location-D2-rh7-2-INFINITY-rule-expr) \n          Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
 
 if __name__ == "__main__":
     unittest.main()

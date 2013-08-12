@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import re
 import json
 import settings
+import resource
 import signal
 import time
 
@@ -635,6 +636,86 @@ def does_id_exist(dom, check_id):
             if elem.getAttribute("id") == check_id:
                 return True
     return False
+
+# Adds the specified rule to the element in the dom
+def rule_add(elem, argv):
+    rule_type = "expression"
+    if len(argv) != 0:
+        if argv[0] == "date":
+            rule_type = "date_expression"
+
+    if rule_type != "expression" and rule_type != "date_expression":
+        err("rule_type must either be expression or date_expression")
+
+    args = resource.convert_args_to_tuples(argv)
+    dict_args = dict()
+    for k,v in args:
+        dict_args[k] = v
+#    if rule_type == "expression": 
+#        if "operation" not in dict_args or "attribute" not in dict_args:
+#            err("with rule_type: expression you must specify an attribute and operation")
+#    elif rule_type == "date_expression":
+#        if "operation" not in dict_args or ("start" not in dict_args and "stop" not in dict_args):
+#            err("with rule_type: date_expression you must specify an operation and a start/end")
+
+
+    exp_arg = []
+    for arg in argv:
+        if arg.find('=') == -1:
+            exp_arg.append(arg)
+        
+    date_spec = False
+
+    if len(exp_arg) >= 1:
+        if exp_arg[0] == "date":
+            args.append(("operation",exp_arg[1]))
+            rule_type = "date_expression"
+        elif exp_arg[0] == "date-spec":
+            args.append(("operation","date_spec"))
+            rule_type = "date_expression"
+            date_spec = True
+        elif exp_arg[1] in ["lt","gt","lte","gte","eq","ne"] and len(exp_arg) >= 3:
+            args.append(("attribute",exp_arg[0]))
+            args.append(("operation",exp_arg[1]))
+            args.append(("value",exp_arg[2]))
+        elif exp_arg[0] in ["defined","not_defined"]:
+            args.append(("attribute",exp_arg[1]))
+            args.append(("operation",exp_arg[0]))
+            
+    rule = ET.SubElement(elem,"rule")
+    expression = ET.SubElement(rule,rule_type)
+    if date_spec:
+        subexpression = ET.SubElement(expression,"date_spec")
+
+
+    for arg in args:
+        if arg[0] == "id" or arg[0] == "score":
+            rule.set(arg[0], arg[1])
+        else:
+            if date_spec:
+                if arg[0] == "operation":
+                    expression.set(arg[0],arg[1])
+                else:
+                    subexpression.set(arg[0],arg[1])
+            else:
+                expression.set(arg[0],arg[1])
+
+    if rule.get("score") == None and rule.get("score-attribute") == None:
+        rule.set("score", "INFINITY")
+
+    dom = get_cib_dom()
+    if rule.get("id") == None:
+        rule.set("id", find_unique_id(dom,elem.get("id") + "-rule"))
+    if expression.get("id") == None:
+        expression.set("id", find_unique_id(dom,rule.get("id") + "-expr"))
+    if date_spec and subexpression.get("id") == None:
+        subexpression.set("id", find_unique_id(dom, expression.get("id")+"-datespec"))
+    if "score" in elem.attrib:
+        del elem.attrib["score"]
+    if "node" in elem.attrib:
+        del elem.attrib["node"]
+    return elem
+
 
 # Returns check_id if it doesn't exist in the dom, otherwise it adds an integer
 # to the end of the id and increments it until a unique id is found

@@ -667,6 +667,7 @@ def show_location_rules(ruleshash,showDetail,datespechash,noheader=False):
                 print "(id:%s)" % (res_id),
             print ""
             for exp_id,exp in exphash:
+                exp = exp.replace("operation=date_spec ","")
                 print "        Expression: " + exp,
                 if showDetail:
                     print "(id:%s)" % (exp_id),
@@ -932,14 +933,6 @@ def constraint_rule(argv):
         constraint_id = argv.pop(0)
         constraint = None
 
-        rule_type = "expression"
-        if len(argv) != 0:
-            if argv[1].find('=') == -1:
-                rule_type = argv[1]
-
-        if rule_type != "expression" and rule_type != "date_expression":
-            utils.err("rule_type must either be expression or date_expression")
-
         for a in cib.findall(".//configuration//"):
             if a.get("id") == constraint_id and a.tag == "rsc_location":
                 found = True
@@ -948,38 +941,7 @@ def constraint_rule(argv):
         if not found:
             utils.err("Unable to find constraint: " + constraint_id)
 
-        rule = ET.SubElement(constraint,"rule")
-        expression = ET.SubElement(rule,rule_type)
-        args = resource.convert_args_to_tuples(argv)
-        dict_args = dict()
-        for k,v in args:
-            dict_args[k] = v
-        if rule_type == "expression": 
-            if "operation" not in dict_args or "attribute" not in dict_args:
-                utils.err("with rule_type: expression you must specify an attribute and operation")
-        elif rule_type == "date_expression":
-            if "operation" not in dict_args or ("start" not in dict_args and "stop" not in dict_args):
-                utils.err("with rule_type: date_expression you must specify an operation and a start/end")
-
-        for arg in args:
-            if arg[0] == "id" or arg[0] == "score":
-                rule.set(arg[0], arg[1])
-            else:
-                expression.set(arg[0],arg[1])
-
-        if rule.get("score") == None and rule.get("score-attribute") == None:
-            rule.set("score", "INFINITY")
-
-        dom = utils.get_cib_dom()
-        if rule.get("id") == None:
-            rule.set("id", utils.find_unique_id(dom,constraint.get("id") + "-rule"))
-        if expression.get("id") == None:
-            expression.set("id", utils.find_unique_id(dom,rule.get("id") + "-expr"))
-        if "score" in constraint.attrib:
-            del constraint.attrib["score"]
-        if "node" in constraint.attrib:
-            del constraint.attrib["node"]
-
+        utils.rule_add(constraint, argv) 
         utils.replace_cib_configuration(cib)
 
     elif command == "remove":
