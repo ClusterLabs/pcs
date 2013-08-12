@@ -769,19 +769,18 @@ def location_rule(argv):
         sys.exit(1)
     
     res_name = argv.pop(0)
+    argv.pop(0)
 
-    (dom, constraintsElement) = getCurrentConstraints()
+    cib = utils.get_cib_etree()
+    constraints = cib.find(".//constraints")
+    lc = ET.SubElement(constraints,"rsc_location")
+    lc_id = utils.find_unique_id(cib, "location-" + res_name)
+    lc.set("id", lc_id)
+    lc.set("rsc", res_name)
 
-    lc = dom.createElement("rsc_location")
-    lc_id = utils.find_unique_id(dom, "location-" + res_name)
-    lc.setAttribute("id", lc_id)
-    lc.setAttribute("rsc", res_name)
+    utils.rule_add(lc, argv)
 
-    rule = utils.getRule(dom, lc, argv)
-    lc.appendChild(rule)
-    constraintsElement.appendChild(lc)
-
-    utils.replace_cib_configuration(dom)
+    utils.replace_cib_configuration(cib)
     
 # Grabs the current constraints and returns the dom and constraint element
 def getCurrentConstraints():

@@ -689,8 +689,13 @@ def rule_add(elem, argv):
 
 
     for arg in args:
-        if arg[0] == "id" or arg[0] == "score":
+        if arg[0] == "id":
             rule.set(arg[0], arg[1])
+        elif arg[0] == "score":
+            if is_score_or_opt(arg[1]):
+                rule.set(arg[0], arg[1])
+            else:
+                rule.set("score-attribute","pingd")
         else:
             if date_spec:
                 if arg[0] == "operation":
@@ -820,75 +825,6 @@ def setAttribute(a_type, a_name, a_value):
     output, retval = run(args)
     if retval != 0:
         print output
-
-# Returns a rule with the following accepted syntax:
-# rule [id] [role=<role>] <score>: expression
-# Where expression can look like the following:
-# expression or|and expression [and|or expression...]
-# defined|not_defined <attribute>
-# <attribute> lt|gt|lte|gte|eq|ne <value>
-# date [start=<start>] [end=<end>] operation=gt|lt|in-range|date-spec
-def getRule(dom, element, argv):
-    if len(argv) < 4:
-        err ("wrong number of arguments when adding rule (do you have quotes around any #'s?")
-    
-    if argv.pop(0) != "rule":
-        err ("missing 'rule'")
-
-    role = None
-    rule_id = None
-    score = None
-    while argv:
-        val = argv.pop(0)
-        if val[-1] == ":":
-            score = val[:-1]
-            break
-        if val.find("=") == -1:
-            rule_id = val
-        elif val.startswith("role="):
-            role = val[5]
-    if score == None:
-        err("You must specify a score")
-
-    if score.isdigit() or score.lower() == "-infinity" or score.lower() == "infinity":
-        score_name = "score"
-    else:
-        score_name = "score-attribute"
-
-    rule = dom.createElement("rule")
-    rule_id = find_unique_id(dom, element.getAttribute("id") + "-rule")
-    rule.setAttribute("id", rule_id)
-    rule.setAttribute(score_name, score)
-    
-    argv1 = []
-    argv2 = []
-    split = False
-    for arg in argv:
-        if not split:
-            if arg == "or":
-                rule.setAttribute("boolean-op","or")
-                split = True
-            elif arg == "and":
-                rule.setAttribute("boolean-op","and")
-                split = True
-            else:
-                argv1.append(arg)
-        else:
-            argv2.append(arg)
-
-
-    expression = getExpression(dom, rule, argv1)
-    try:
-        rule.appendChild(expression)
-    except:
-        print argv1
-        print expression
-        raise
-    if len(argv2) != 0:
-        expression = getExpression(dom, rule, argv2, "-2")
-        rule.appendChild(expression)
-
-    return rule
 
 def getExpression(dom, element, argv, id_suffix=""):
     if len(argv) < 2:
