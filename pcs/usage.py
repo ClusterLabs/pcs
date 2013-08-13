@@ -273,6 +273,8 @@ Commands:
                  192.168.0.99, netmask of 32, monitored everything 30 seconds,
                  on eth2.
 
+    delete <resource id>
+        Deletes the resource specified
 
     standards
         List available resource agent standards supported by this installation.
