@@ -23,8 +23,6 @@ def status_cmd(argv):
         cluster_status(argv)
     elif (sub_cmd == "nodes"):
         nodes_status(argv)
-    elif (sub_cmd == "actions"):
-        actions_status(argv)
     elif (sub_cmd == "pcsd"):
         cluster.cluster_gui_status(argv)
     elif (sub_cmd == "xml"):
@@ -53,9 +51,6 @@ def full_status():
     cluster.cluster_gui_status([],True)
     print ""
     utils.serviceStatus("  ")
-
-def actions_status(argv):
-    print "Not Yet Implemented"
 
 # Parse crm_mon for status
 def nodes_status(argv):

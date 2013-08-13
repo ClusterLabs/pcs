@@ -744,9 +744,6 @@ Commands:
         is specified, print nodes from both corosync & pacemaker.  If 'config'
         is specified, print nodes from corosync & pacemaker configuration.
 
-    actions
-        View failed actions
-
     pcsd <node> ...
         Show the current status of pcsd on the specified nodes
 
