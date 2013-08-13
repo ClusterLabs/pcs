@@ -241,6 +241,14 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)\n              monitor interval=31s (ClusterIP-name-monitor-interval-31s)\n', [output]
 
+        o, r = pcs(temp_cib, "resource create OPTest Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1")
+        ac(o,"")
+        assert r == 0
+        
+        o, r = pcs(temp_cib, "resource show OPTest")
+        ac(o," Resource: OPTest (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (OPTest-monitor-interval-30s)\n              OCF_CHECK_LEVEL=1 \n              monitor interval=25s (OPTest-monitor-interval-25s)\n              OCF_CHECK_LEVEL=1\n")
+        assert r == 0
+
     def testRemoveOperation(self):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 

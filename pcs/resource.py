@@ -731,13 +731,30 @@ def convert_args_to_operations(op_values_list, ra_id):
         op_name = op_values.pop(0)
         tuples = convert_args_to_tuples(op_values)
         op_attrs = []
+        nvpair_attrs = []
+        instance_attrs = []
+        op_id = ra_id+"-"+op_name
+        temp_op_id = ""
+# If interval is specified, use that in the op_name, otherwise all attributes
+        interval_found = False
         for (a,b) in tuples:
-            op_attrs.append((a,b))
+            if a != "OCF_CHECK_LEVEL":
+                temp_op_id += "-"+a+"-"+b
+            if a == "interval":
+                temp_op_id = "-"+a+"-"+b
+                break
+        op_id += temp_op_id
 
-        op_attrs.append(("id",ra_id+"-"+op_name+"-"+a+"-"+b))
-        op_attrs.append((a,b))
+        for (a,b) in tuples:
+            if a == "OCF_CHECK_LEVEL":
+                nvpair_attrs = [("nvpair", [("name","OCF_CHECK_LEVEL"),("value",b),("id", op_id + "-OCF_CHECK_LEVEL-" + b)],[])]
+                instance_attrs = [("instance_attributes", [("id","params-"+ op_id + "-OCF_CHECK_LEVEL-" + b)],nvpair_attrs)]
+            else:
+                op_attrs.append((a,b))
+
+        op_attrs.append(("id",op_id))
         op_attrs.append(("name",op_name))
-        ops = ("op",op_attrs,[])
+        ops = ("op",op_attrs,instance_attrs)
         ret_ops.append(ops)
     ret = [("operations", [], ret_ops)]
     return ret
@@ -1506,6 +1523,10 @@ def print_operations(node, spaces):
             output += attr + "=" + val + " "
         output += "(" + op.attrib["id"] + ")"
         output += "\n"
+        for child in op.findall(".//nvpair"):
+            output += (' ' * indent)
+            output += child.get("name") + "=" + child.get("value") + " "
+            output += "\n"
 
     output = output.rstrip()
     if output != "":
