@@ -17,7 +17,7 @@ install: bash_completion
 	chmod 755 ${DESTDIR}${PYTHON_SITELIB}/pcs/pcs.py
 	ln -fs ${PYTHON_SITELIB}/pcs/pcs.py ${DESTDIR}${PREFIX}/sbin/pcs
 	install -D pcs/bash_completion.d.pcs ${DESTDIR}/etc/bash_completion.d/pcs
-	install -m644 -D pcs/pcs.8 ${DESTDIR/${MANDIR}/man8/pcs.8
+	install -m644 -D pcs/pcs.8 ${DESTDIR}/${MANDIR}/man8/pcs.8
 
 install_pcsd:
 	make -C pcsd build_gems
