@@ -932,7 +932,7 @@ def constraint_rule(argv):
         constraint_id = argv.pop(0)
         constraint = None
 
-        for a in cib.findall(".//configuration//"):
+        for a in cib.findall(".//configuration//*"):
             if a.get("id") == constraint_id and a.tag == "rsc_location":
                 found = True
                 constraint = a

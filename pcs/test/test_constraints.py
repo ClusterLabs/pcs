@@ -66,31 +66,31 @@ class ConstraintTest(unittest.TestCase):
 
         line = "resource create M3 Dummy --master"
         output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        assert returnVal == 0 and output == "",[returnVal, output]
 
         line = "resource create M4 Dummy --master"
         output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        assert returnVal == 0 and output == "",[returnVal, output]
 
         line = "resource create M5 Dummy --master"
         output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        assert returnVal == 0 and output == "",[returnVal, output]
 
         line = "resource create M6 Dummy --master"
         output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        assert returnVal == 0 and output == "",[returnVal, output]
 
         line = "resource create M7 Dummy --master"
         output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        assert returnVal == 0 and output == "",[returnVal, output]
 
         line = "resource create M8 Dummy --master"
         output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        assert returnVal == 0 and output == "",[returnVal, output]
 
         line = "resource create M9 Dummy --master"
         output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
+        assert returnVal == 0 and output == "",[returnVal, output]
 
         line = "resource create M10 Dummy --master"
         output, returnVal = pcs(temp_cib, line)
@@ -114,7 +114,6 @@ class ConstraintTest(unittest.TestCase):
 
     def testConstraintRules(self):
         output, returnVal = pcs(temp_cib, "constraint location D1 rule score=222 '#uname' eq c00n03")
-        print output
         assert returnVal == 0
         assert output == "", [output]
 
@@ -127,7 +126,6 @@ class ConstraintTest(unittest.TestCase):
         assert output == "", [output]
 
         output, returnVal = pcs(temp_cib, "constraint location D4 rule score=INFINITY date start=2005-001 gt")
-        print output
         assert returnVal == 0
         assert output == "", [output]
 

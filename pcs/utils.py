@@ -616,7 +616,7 @@ def get_cib_etree():
 
 # Replace only configuration section of cib with dom passed
 def replace_cib_configuration(dom):
-    if type(dom) == xml.etree.ElementTree.Element:
+    if dom.__class__ == xml.etree.ElementTree.Element or dom.__class__ == xml.etree.ElementTree._ElementInterface:
         new_dom = ET.tostring(dom)
     else:
         new_dom = dom.toxml()
@@ -626,10 +626,10 @@ def replace_cib_configuration(dom):
 
 # Checks to see if id exists in the xml dom passed
 def does_id_exist(dom, check_id):
-    if type(dom) == xml.etree.ElementTree.Element:
-        elem = dom.find(".//*[@id='"+check_id+"']")
-        if elem != None:
-            return True
+    if dom.__class__ == xml.etree.ElementTree.Element or dom.__class__ == xml.etree.ElementTree._ElementInterface:
+        for elem in dom.findall(".//*"):
+            if elem.get("id") == check_id:
+                return True
     else:
         all_elem = dom.getElementsByTagName("*")
         for elem in all_elem:
