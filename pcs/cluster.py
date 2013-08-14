@@ -252,11 +252,24 @@ def corosync_setup(argv,returnConfig=False):
         if retval != 0:
             print output
             utils.err("error creating cluster: %s" % cluster_name)
+        output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--addfencedev", "pcmk-redirect", "agent=fence_pcmk"])
+        if retval != 0:
+            print output
+            utils.err("error creating fence dev: %s" % cluster_name)
+
         for node in nodes:
             output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--addnode", node])
             if retval != 0:
                 print output
                 utils.err("error adding node: %s" % node)
+            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--addmethod", "pcmk-method", node])
+            if retval != 0:
+                print output
+                utils.err("error adding fence method: %s" % node)
+            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--addfenceinst", "pcmk-redirect", node, "pcmk-method", "port="+node])
+            if retval != 0:
+                print output
+                utils.err("error adding fence instance: %s" % node)
 
     if "--start" in utils.pcs_options:
         start_cluster([])
