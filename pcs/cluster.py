@@ -248,6 +248,9 @@ def corosync_setup(argv,returnConfig=False):
 
         utils.setCorosyncConf(corosync_config)
     else:
+        if os.path.exists("/etc/cluster/cluster.conf") and not "--force" in utils.pcs_options:
+            print "Error: /etc/cluster/cluster.conf already exists, use --force to overwrite"
+            sys.exit(1)
         output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--createcluster", cluster_name])
         if retval != 0:
             print output
@@ -292,6 +295,12 @@ def start_cluster(argv):
 
     print "Starting Cluster..."
     if utils.is_rhel6():
+#   Verify that CMAN_QUORUM_TIMEOUT is set, if not, then we set it to 0
+        retval, output = commands.getstatusoutput('source /etc/sysconfig/cman ; [ -z "$CMAN_QUORUM_TIMEOUT" ]')
+        if retval == 0:
+            with open("/etc/sysconfig/cman", "a") as cman_conf_file:
+                cman_conf_file.write("\nCMAN_QUORUM_TIMEOUT=0\n")
+
         output, retval = utils.run(["service", "cman","start"])
         if retval != 0:
             print output
