@@ -16,6 +16,7 @@ import socket
 import tempfile
 import datetime
 import threading
+import commands
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
