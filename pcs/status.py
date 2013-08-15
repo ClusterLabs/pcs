@@ -47,9 +47,10 @@ def full_status():
 
     print output
     print ""
-    print "PCSD Status:"
-    cluster.cluster_gui_status([],True)
-    print ""
+    if not utils.is_rhel6():
+        print "PCSD Status:"
+        cluster.cluster_gui_status([],True)
+        print ""
     utils.serviceStatus("  ")
 
 # Parse crm_mon for status
