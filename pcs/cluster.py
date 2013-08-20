@@ -596,7 +596,10 @@ def cluster_destroy(argv):
         os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
 
         print "Removing all cluster configuration files..."
-        os.system("rm /etc/corosync/corosync.conf")
+        if utils.is_rhel6():
+            os.system("rm /etc/cluster/cluster.conf")
+        else:
+            os.system("rm /etc/corosync/corosync.conf")
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
