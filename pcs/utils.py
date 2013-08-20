@@ -3,7 +3,7 @@ import sys
 import pcs
 import xml.dom.minidom
 import urllib,urllib2
-from xml.dom.minidom import parseString
+from xml.dom.minidom import parseString,parse
 import xml.etree.ElementTree as ET
 import re
 import json
@@ -954,16 +954,24 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
     return bad_parameters 
 
 def getClusterName():
-    try:
-        f = open(settings.corosync_conf_file,'r')
-    except IOError as e:
-        return ""
+    if is_rhel6():
+        try:
+            dom = parse(settings.cluster_conf_file)
+        except (IOError,xml.parsers.expat.ExpatError):
+            return ""
 
-    p = re.compile('cluster_name: *(.*)')
-    for line in f:
-        m = p.match(line)
-        if m:
-            return m.group(1)
+        return dom.documentElement.getAttribute("name")
+    else:
+        try:
+            f = open(settings.corosync_conf_file,'r')
+        except IOError as e:
+            return ""
+
+        p = re.compile('cluster_name: *(.*)')
+        for line in f:
+            m = p.match(line)
+            if m:
+                return m.group(1)
 
     return ""
 

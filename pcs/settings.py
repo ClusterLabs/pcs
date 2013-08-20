@@ -1,6 +1,7 @@
 pacemaker_binaries = "/usr/sbin/"
 corosync_binaries = "/usr/sbin/"
 corosync_conf_file = "/etc/corosync/corosync.conf"
+cluster_conf_file = "/etc/cluster/cluster.conf"
 fence_agent_binaries = "/usr/sbin/"
 pengine_binary = "/usr/libexec/pacemaker/pengine"
 crmd_binary = "/usr/libexec/pacemaker/crmd"
