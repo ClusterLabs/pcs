@@ -800,6 +800,47 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         ac(o," Clone Set: DGroup-clone [DGroup]\n")
 
+    def testGroupRemoveWithConstraints(self):
+        # Load nodes into cib so move will work
+        utils.usefile = True
+        utils.filename = temp_cib
+
+        o,r = utils.run(["cibadmin","-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create D1 Dummy --group DGroup")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource create D2 Dummy --group DGroup")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource show")
+        assert r == 0
+        ac(o," Resource Group: DGroup\n     D1\t(ocf::heartbeat:Dummy):\tStopped \n     D2\t(ocf::heartbeat:Dummy):\tStopped \n")
+
+        o,r = pcs(temp_cib, "resource move DGroup rh7-1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "constraint")
+        assert r == 0
+        ac(o,"Location Constraints:\n  Resource: DGroup\n    Enabled on: rh7-1\nOrdering Constraints:\nColocation Constraints:\n")
+
+        o,r = pcs(temp_cib, "resource delete D1")
+        ac(o,"Deleting Resource - D1\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource delete D2")
+        ac(o,"Removing Constraint - cli-prefer-DGroup\nDeleting Resource (and group) - D2\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource show")
+        assert r == 0
+        ac(o,"NO resources configured\n")
+
     def testResourceCloneCreation(self):
         output, returnVal  = pcs(temp_cib, "resource create D1 Dummy --clone")
         assert returnVal == 0

@@ -1110,9 +1110,19 @@ def resource_remove(resource_id, output = True):
         if top_master != "":
             to_remove = top_master
             msg = "and group and M/S"
+            to_remove_dom = parseString(to_remove).getElementsByTagName("master")
+            to_remove_id = to_remove_dom[0].getAttribute("id")
         else:
             to_remove = group
             msg = "and group"
+            to_remove_dom = parseString(to_remove).getElementsByTagName("group")
+            to_remove_id = to_remove_dom[0].getAttribute("id")
+
+        constraints = constraint.find_constraints_containing(to_remove_id)
+        for c in constraints:
+            if output == True:
+                print "Removing Constraint - " + c
+            constraint.constraint_rm([c])
         args = ["cibadmin", "-o", "resources", "-D", "--xml-text", to_remove]
         if output == True:
             print "Deleting Resource ("+msg+") - " + resource_id
@@ -1161,6 +1171,14 @@ def resource_group_rm(group_name, resource_ids):
         parent = resource.parentNode
         resource.parentNode.removeChild(resource)
         parent.parentNode.appendChild(resource)
+
+    constraints_element = dom.getElementsByTagName("constraints")
+    if len(constraints_element) > 0:
+        constraints_element = constraints_element[0]
+    constraints = constraint.find_constraints_containing(group_name)
+    for c in constraints:
+        print "Removing Constraints - " + c
+        constraint.constraint_rm([c], True, constraints_element)
 
     if len(group_match.getElementsByTagName("primitive")) == 0:
         group_match.parentNode.removeChild(group_match)
