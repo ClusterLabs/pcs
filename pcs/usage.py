@@ -542,7 +542,7 @@ Commands:
         Create stonith device with specified type and options
 
     update <stonith id> [stonith device options]
-        Add/Change options to specified resource id
+        Add/Change options to specified stonith id
         
     delete <stonith id>
         Remove stonith id from configuration
