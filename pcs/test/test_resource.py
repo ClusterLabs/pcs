@@ -353,6 +353,26 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)\n              start interval=30s timeout=180s (ClusterIP-start-interval-30s-timeout-180s)\n',[output]
 
+    def testGroupDeleteTest(self):
+        o,r = pcs(temp_cib, "resource create A1 Dummy --group AGroup")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A2 Dummy --group AGroup")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A3 Dummy --group AGroup")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource show")
+        assert r == 0
+        ac(o," Resource Group: AGroup\n     A1\t(ocf::heartbeat:Dummy):\tStopped \n     A2\t(ocf::heartbeat:Dummy):\tStopped \n     A3\t(ocf::heartbeat:Dummy):\tStopped \n")
+
+        o,r = pcs(temp_cib, "resource delete AGroup")
+        ac(o,"Removing group: AGroup (and all resources within group)\nDeleting Resource - A1\nDeleting Resource - A2\nDeleting Resource (and group) - A3\n")
+        assert r == 0
+        
+        o,r = pcs(temp_cib, "resource show")
+        assert r == 0
+        ac(o,"NO resources configured\n")
+
     def testGroupRemoveTest(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP3 prefers rh7-1")

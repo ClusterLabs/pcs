@@ -1068,7 +1068,12 @@ def resource_remove(resource_id, output = True):
         utils.err("%s is not a resource (it can be removed by removing the resource it constains)" % (resource_id))
 
     if utils.does_exist('//group[@id="'+resource_id+'"]'):
-        utils.err("%s is not a resource (it can be removed with 'resource group remove %s')" % (resource_id, resource_id))
+        print "Removing group: " + resource_id + " (and all resources within group)"
+        group = utils.get_cib_xpath('//group[@id="'+resource_id+'"]')
+        group_dom = parseString(group)
+        for res in group_dom.documentElement.getElementsByTagName("primitive"):
+            resource_remove(res.getAttribute("id"))
+        sys.exit(0)
 
     if utils.does_exist('//clone[@id="'+resource_id+'"]'):
         utils.err("%s is not a resource (it can be removed with 'resource unclone %s')" % (resource_id, resource_id))
