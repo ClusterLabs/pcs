@@ -262,10 +262,11 @@ end
 
 def getResourceAgents(resource_agent = nil)
   resource_agent_list = {}
-  agents = Dir.glob(HEARTBEAT_AGENTS_DIR + '*')
+  agents = Dir.glob(OCF_ROOT + '/resource.d/*/*')
   agents.each { |a|
     ra = ResourceAgent.new
-    ra.name = "ocf::heartbeat:" + a.sub(/.*\//,"")
+    x = /.*\/([^\/]*)\/([^\/]*)$/.match(a)
+    ra.name = "ocf::" + x[1] + ":" + x[2]
 
     if resource_agent and a.sub(/.*\//,"") == resource_agent.sub(/.*:/,"")
       required_options, optional_options = getResourceMetadata(a)
