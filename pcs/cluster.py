@@ -448,7 +448,7 @@ def cluster_edit(argv):
         if newcib == cib:
             print "CIB not updated, no changes detected"
         else:
-            cluster_push(["cib",tempcib.name])
+            cluster_push([tempcib.name])
 
     else:
         utils.err("$EDITOR environment variable is not set")
