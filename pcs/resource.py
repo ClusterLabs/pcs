@@ -142,7 +142,7 @@ def resource_cmd(argv):
             else:
                 res_id = argv.pop(0)
                 resource_operation_add(res_id, argv)
-        elif op_subcmd == "remove":
+        elif op_subcmd in ["remove","delete"]:
             if len(argv) == 0:
                 usage.resource("op")
                 sys.exit(1)
@@ -844,7 +844,7 @@ def resource_group(argv):
         resource_group_add(group_name, argv)
     elif (group_cmd == "list"):
         resource_group_list(argv)
-    elif (group_cmd == "remove"):
+    elif (group_cmd in ["remove","delete"]):
         if (len(argv) < 1):
             usage.resource("group")
             sys.exit(1)
@@ -922,6 +922,7 @@ def resource_clone_master_remove(argv):
             clone = res.parentNode
             if clone.tagName != "clone" and clone.tagName != "master":
                 utils.err("%s is not in a clone or master/slave" % name)
+            constraint.remove_constraints_containing(clone.getAttribute("id"))
             clone.parentNode.appendChild(res)
             clone.parentNode.removeChild(clone)
             found = True
@@ -933,6 +934,7 @@ def resource_clone_master_remove(argv):
                 prim = cm.getElementsByTagName("primitive")
                 if len(prim) != 0:
                     prim = prim[0]
+                    constraint.remove_constraints_containing(name)
                     cm.parentNode.appendChild(prim)
                     cm.parentNode.removeChild(cm)
                     found = True
@@ -1055,10 +1057,7 @@ def resource_master_remove(argv):
         constraints_element = constraints_element[0]
         constraints = []
         for resource_id in resources_to_cleanup:
-            constraints = constraints + constraint.find_constraints_containing(resource_id)
-        for c in constraints:
-            print "Removing Constraint - " + c
-            constraint.constraint_rm([c], True, constraints_element)
+            constraint.remove_constraints_containing(resource_id, constraints_element)
     master.parentNode.removeChild(master)
     print "Removing Master - " + master_id
     utils.replace_cib_configuration(dom)
@@ -1092,11 +1091,7 @@ def resource_remove(resource_id, output = True):
     if (group != ""):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
 
-    constraints = constraint.find_constraints_containing(resource_id)
-    for c in constraints:
-        if output == True:
-            print "Removing Constraint - " + c
-        constraint.constraint_rm([c])
+    constraint.remove_constraints_containing(resource_id,output)
 
     if (group == "" or num_resources_in_group > 1):
         if clone != "":
@@ -1117,17 +1112,15 @@ def resource_remove(resource_id, output = True):
             msg = "and group and M/S"
             to_remove_dom = parseString(to_remove).getElementsByTagName("master")
             to_remove_id = to_remove_dom[0].getAttribute("id")
+            constraint.remove_constraints_containing(to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id"))
         else:
             to_remove = group
             msg = "and group"
             to_remove_dom = parseString(to_remove).getElementsByTagName("group")
             to_remove_id = to_remove_dom[0].getAttribute("id")
 
-        constraints = constraint.find_constraints_containing(to_remove_id)
-        for c in constraints:
-            if output == True:
-                print "Removing Constraint - " + c
-            constraint.constraint_rm([c])
+        constraint.remove_constraints_containing(to_remove_id,output)
+
         args = ["cibadmin", "-o", "resources", "-D", "--xml-text", to_remove]
         if output == True:
             print "Deleting Resource ("+msg+") - " + resource_id
@@ -1156,6 +1149,9 @@ def resource_group_rm(group_name, resource_ids):
     if not group_match:
         utils.err("Group '%s' does not exist" % group_name)
 
+    if group_match.parentNode.tagName == "master" and group_match.getElementsByTagName("primitive").length > 1:
+        utils.err("Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete %s'." % group_name)
+
     resources_to_move = []
 
     if all_resources:
@@ -1180,10 +1176,7 @@ def resource_group_rm(group_name, resource_ids):
     constraints_element = dom.getElementsByTagName("constraints")
     if len(constraints_element) > 0:
         constraints_element = constraints_element[0]
-    constraints = constraint.find_constraints_containing(group_name)
-    for c in constraints:
-        print "Removing Constraints - " + c
-        constraint.constraint_rm([c], True, constraints_element)
+    constraints = constraint.remove_constraints_containing(group_name,True,constraints_element)
 
     if len(group_match.getElementsByTagName("primitive")) == 0:
         group_match.parentNode.removeChild(group_match)

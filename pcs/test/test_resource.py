@@ -719,6 +719,27 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == 'Deleting Resource (and group and M/S) - D1\n', [output]
 
+    def testUncloneWithConstraints(self):
+        o,r = pcs(temp_cib, "resource create D0 Dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource clone D0")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "constraint location D0-clone prefers rh7-1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "constraint")
+        ac(o,"Location Constraints:\n  Resource: D0-clone\n    Enabled on: rh7-1\nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource unclone D0-clone")
+        ac(o,"")
+        assert r == 0
+
     def testCloneMaster(self):
         output, returnVal  = pcs(temp_cib, "resource create D0 Dummy")
         assert returnVal == 0
@@ -917,6 +938,72 @@ class ResourceTest(unittest.TestCase):
         output,returnVal = pcs(temp_cib, "resource --full")
         assert returnVal == 0
         assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
+
+    def testGroupRemoveWithConstraints(self):
+        o,r = pcs(temp_cib, "resource create A Dummy --group AG")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create B Dummy --group AG")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "constraint location AG prefers rh7-1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource group remove AG")
+        ac(o,"Removing Constraint - location-AG-rh7-1-INFINITY\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o, " Resource: A (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A-monitor-interval-60s)\n Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (B-monitor-interval-60s)\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create A1 Dummy --group AA")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource create A2 Dummy --group AA")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource master AA")
+        assert r == 0
+        o,r = pcs(temp_cib, "constraint location AA prefers rh7-1")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource delete A1")
+        ac(o,"Deleting Resource - A1\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource delete A2")
+        ac(o,"Deleting Resource (and group and M/S) - A2\n")
+        assert r == 0
+
+    def testMasteredGroup(self):
+        o,r = pcs(temp_cib, "resource create A Dummy --group AG")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create B Dummy --group AG")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create C Dummy --group AG")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource master AGMaster AG")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource group remove AG")
+        ac(o,"Error: Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete AG'.\n")
+        assert r == 1
+
+        o,r = pcs(temp_cib, "resource delete B")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource delete C")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource group remove AG")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource show --full")
+        ac(o," Master: AGMaster\n  Resource: A (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A-monitor-interval-60s)\n")
+        assert r == 0
 
 if __name__ == "__main__":
     unittest.main()

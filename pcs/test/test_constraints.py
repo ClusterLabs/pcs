@@ -247,6 +247,22 @@ class ConstraintTest(unittest.TestCase):
         o, r = pcs(temp_cib, "constraint colocation --full")
         ac(o,"Colocation Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) setoptions score=INFINITY (id:pcs_rsc_colocation)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_colocation-2)\n")
         assert r == 0
+
+        o, r = pcs(temp_cib, "resource delete D5")
+        ac(o,"Removing D5 from set pcs_rsc_set\nRemoving D5 from set pcs_rsc_set-3\nDeleting Resource - D5\n")
+        assert r == 0
+        
+        o, r = pcs(temp_cib, "resource delete D6")
+        ac(o,"Removing D6 from set pcs_rsc_set\nRemoving D6 from set pcs_rsc_set-3\nRemoving set pcs_rsc_set-3\nDeleting Resource - D6\n")
+        assert r == 0
+        
+        o, r = pcs(temp_cib, "constraint ref D7")
+        ac(o,"Resource: D7\n  pcs_rsc_colocation\n  pcs_rsc_colocation-2\n")
+        assert r == 0
+        
+        o, r = pcs(temp_cib, "constraint ref D8")
+        ac(o,"Resource: D8\n  pcs_rsc_colocation\n  pcs_rsc_colocation-2\n")
+        assert r == 0
         
     def testOrderSets(self):
         o, r = pcs(temp_cib, "constraint order set D5 D6 D7 sequential=false set D8 D9 sequential=true")
@@ -273,6 +289,14 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
         ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) (id:pcs_rsc_order)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_order-2)\n")
         
+        o, r = pcs(temp_cib, "resource delete D5")
+        ac(o,"Removing D5 from set pcs_rsc_set\nRemoving D5 from set pcs_rsc_set-3\nDeleting Resource - D5\n")
+        assert r == 0
+        
+        o, r = pcs(temp_cib, "resource delete D6")
+        ac(o,"Removing D6 from set pcs_rsc_set\nRemoving D6 from set pcs_rsc_set-3\nRemoving set pcs_rsc_set-3\nDeleting Resource - D6\n")
+        assert r == 0
+
     def testLocationConstraintRule(self):
         o, r = pcs(temp_cib, "constraint location D1 prefers rh7-1")
         assert r == 0 and o == "", o

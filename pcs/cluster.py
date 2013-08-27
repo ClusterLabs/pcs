@@ -475,7 +475,7 @@ def cluster_node(argv):
 
     if argv[0] == "add":
         add_node = True
-    elif argv[0] == "remove":
+    elif argv[0] in ["remove","delete"]:
         add_node = False
     else:
         usage.cluster();
@@ -532,7 +532,7 @@ def cluster_localnode(argv):
             print "%s: successfully added!" % node
         else:
             utils.err("unable to add %s" % node)
-    elif argv[0] == "remove":
+    elif argv[0] in ["remove","delete"]:
         node = argv[1]
         success = utils.removeNodeFromCorosync(node)
         if success:
@@ -691,7 +691,7 @@ def cluster_remote_node(argv):
             utils.err("unable to find resource '%s'", rsc)
         resource.resource_update(rsc, ["meta", "remote-node="+hostname] + argv)
 
-    elif command == "remove":
+    elif command in ["remove","delete"]:
         if len(argv) < 1:
             usage.cluster(["remote-node"])
             sys.exit(1)

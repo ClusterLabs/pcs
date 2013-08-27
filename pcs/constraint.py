@@ -23,7 +23,7 @@ def constraint_cmd(argv):
 
         if (sub_cmd2 == "add"):
             location_add(argv)
-        elif (sub_cmd2 == "remove"):
+        elif (sub_cmd2 in ["remove","delete"]):
             location_add(argv,True)
         elif (sub_cmd2 == "show"):
             location_show(argv)
@@ -43,7 +43,7 @@ def constraint_cmd(argv):
 
         if (sub_cmd2 == "set"):
             order_set(argv)
-        elif (sub_cmd2 == "remove"):
+        elif (sub_cmd2 in ["remove","delete"]):
             order_rm(argv)
         elif (sub_cmd2 == "show"):
             order_show(argv)
@@ -57,7 +57,7 @@ def constraint_cmd(argv):
 
         if (sub_cmd2 == "add"):
             colocation_add(argv)
-        elif (sub_cmd2 == "remove"):
+        elif (sub_cmd2 in ["remove","delete"]):
             colocation_rm(argv)
         elif (sub_cmd2 == "set"):
             colocation_set(argv)
@@ -66,7 +66,7 @@ def constraint_cmd(argv):
         else:
             usage.constraint()
             sys.exit(1)
-    elif (sub_cmd == "remove"):
+    elif (sub_cmd in ["remove","delete"]):
         constraint_rm(argv)
     elif (sub_cmd == "show" or sub_cmd == "list"):
         location_show(argv)
@@ -846,16 +846,53 @@ def constraint_ref(argv):
 
     for arg in argv:
         print "Resource: %s" % arg
-        constraints = find_constraints_containing(arg)
-        if len(constraints) == 0:
+        constraints,set_constraints = find_constraints_containing(arg)
+        if len(constraints) == 0 and len(set_constraints) == 0:
             print "  No Matches."
         else:
             for constraint in constraints:
                 print "  " + constraint
+            for constraint in set_constraints:
+                print "  " + constraint
+
+def remove_constraints_containing(resource_id,output=False,constraints_element = None):
+    constraints,set_constraints = find_constraints_containing(resource_id)
+    for c in constraints:
+        if output == True:
+            print "Removing Constraint - " + c
+        if constraints_element != None:
+            constraint_rm([c], True, constraints_element)
+        else:
+            constraint_rm([c])
+
+    if len(set_constraints) != 0:
+        (dom, constraintsElement) = getCurrentConstraints()
+        for c in constraintsElement.getElementsByTagName("resource_ref")[:]:
+            # If resource id is in a set, remove it from the set, if the set
+            # is empty, then we remove the set, if the parent of the set
+            # is empty then we remove it
+            if c.getAttribute("id") == resource_id:
+                pn = c.parentNode
+                pn.removeChild(c)
+                if output == True:
+                    print "Removing %s from set %s" % (resource_id,pn.getAttribute("id"))
+                if pn.getElementsByTagName("resource_ref").length == 0:
+                    print "Removing set %s" % pn.getAttribute("id")
+                    pn2 = pn.parentNode
+                    pn2.removeChild(pn)
+                    if pn2.getElementsByTagName("resource_set").length == 0:
+                        pn2.parentNode.removeChild(pn2)
+                        print "Removing constraint %s" % pn2.getAttribute("id")
+        xml_constraint_string = constraintsElement.toxml()
+        args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
+        output,retval = utils.run(args)
+        if output != "":
+            print output
 
 def find_constraints_containing(resource_id):
     dom = utils.get_cib_dom()
     constraints_found = []
+    set_constraints = []
 
     resources = dom.getElementsByTagName("primitive")
     resource_match = None
@@ -866,11 +903,11 @@ def find_constraints_containing(resource_id):
 
     if resource_match:
         if resource_match.parentNode.tagName == "master" or resource_match.parentNode.tagName == "clone":
-            constraints_found = find_constraints_containing(resource_match.parentNode.getAttribute("id"))
+            constraints_found,set_constraints = find_constraints_containing(resource_match.parentNode.getAttribute("id"))
 
     constraints = dom.getElementsByTagName("constraints")
     if len(constraints) == 0:
-        return []
+        return [],[]
     else:
         constraints = constraints[0]
 
@@ -883,7 +920,15 @@ def find_constraints_containing(resource_id):
             if c.getAttribute(attr) == resource_id:
                 constraints_found.append(c.getAttribute("id"))
                 break
-    return constraints_found
+
+    setConstraints = constraints.getElementsByTagName("resource_ref")
+    for c in setConstraints:
+        if c.getAttribute("id") == resource_id:
+            set_constraints.append(c.parentNode.parentNode.getAttribute("id"))
+
+    # Remove duplicates
+    set_constraints = list(set(set_constraints))
+    return constraints_found,set_constraints
 
 # Re-assign any constraints referencing a resource to its parent (a clone
 # or master)
@@ -943,7 +988,7 @@ def constraint_rule(argv):
         utils.rule_add(constraint, argv) 
         utils.replace_cib_configuration(cib)
 
-    elif command == "remove":
+    elif command in ["remove","delete"]:
         temp_id = argv.pop(0)
         constraints = cib.find('.//constraints')
         loc_cons = cib.findall('.//rsc_location')
