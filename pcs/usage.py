@@ -335,7 +335,7 @@ Commands:
 
     master [<master/slave name>] <resource id | group name> [options]
         Configure a resource or group as a multi-state (master/slave) resource.
-        Note: to remove a master you must remove the resource.
+        Note: to remove a master you must remove the resource/group it contains.
 
     manage <resource id> ... [resource n]
         Set resources listed to managed mode (default)
