@@ -376,7 +376,7 @@ def resource_status(params)
 end
 
 def resource_stop(params)
-  stdout, stderr, retval = run_cmd(PCS,"resource","stop", params[:resource])
+  stdout, stderr, retval = run_cmd(PCS,"resource","disable", params[:resource])
   if retval == 0
     return JSON.generate({"success" => "true"})
   else
@@ -385,7 +385,7 @@ def resource_stop(params)
 end
 
 def resource_start(params)
-  stdout, stderr, retval = run_cmd(PCS,"resource","start", params[:resource])
+  stdout, stderr, retval = run_cmd(PCS,"resource","enable", params[:resource])
   if retval == 0
     return JSON.generate({"success" => "true"})
   else
