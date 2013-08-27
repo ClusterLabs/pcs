@@ -219,6 +219,32 @@ Commands:
         all configured resource options will be displayed.  If --groups is
         specified, only show groups (and their resources).
 
+
+    list [<standard|provider|type>]
+        Show list of all available resources, optionally filtered by specified
+        type, standard or provider
+
+    describe <standard:provider:type|type>
+        Show options for the specified resource
+
+    create <resource id> <standard:provider:type|type> [resource options]
+           [op <operation action> <operation options> [<operation action>
+           <operation options>]...] [meta <meta options>...]
+           [--clone <clone options> | --master <master options> |
+           --group <group name>]
+        Create specified resource.  If --clone is used a clone resource is
+        created if --master is specified a master/slave resource is created.
+        If --group is specified the resource is added to the group named.
+        Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \\
+                     ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
+                     nic=eth2
+                 Create a new resource called 'ClusterIP' with IP address
+                 192.168.0.99, netmask of 32, monitored everything 30 seconds,
+                 on eth2.
+
+    delete <resource id>
+        Deletes the resource specified
+
     enable <resource id> [--wait[=n]]
         Allow the cluster to start the resource. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resource may
@@ -250,31 +276,6 @@ Commands:
     clear <resource id> [node]
         Remove constraints created by move and/or ban on the specified
         resource (and node if specified)
-
-    list [<standard|provider|type>]
-        Show list of all available resources, optionally filtered by specified
-        type, standard or provider
-
-    describe <standard:provider:type|type>
-        Show options for the specified resource
-
-    create <resource id> <standard:provider:type|type> [resource options]
-           [op <operation action> <operation options> [<operation action>
-           <operation options>]...] [meta <meta options>...]
-           [--clone <clone options> | --master <master options> |
-           --group <group name>]
-        Create specified resource.  If --clone is used a clone resource is
-        created if --master is specified a master/slave resource is created.
-        If --group is specified the resource is added to the group named.
-        Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \\
-                     ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
-                     nic=eth2
-                 Create a new resource called 'ClusterIP' with IP address
-                 192.168.0.99, netmask of 32, monitored everything 30 seconds,
-                 on eth2.
-
-    delete <resource id>
-        Deletes the resource specified
 
     standards
         List available resource agent standards supported by this installation.

@@ -47,6 +47,18 @@ Print full cluster configuration
 show [resource id] [\-\-full] [\-\-groups]
 Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).
 .TP
+list [<standard|provider|type>]
+Show list of all available resources, optionally filtered by specified type, standard or provider
+.TP
+describe <standard:provider:type|type>
+Show options for the specified resource
+.TP
+create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\-\-clone <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name>]
+Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \e nic=eth2 Create a new resource called 'ClusterIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
+.TP
+delete <resource id>
+Deletes the resource specified
+.TP
 enable <resource id> [\-\-wait[=n]]
 Allow the cluster to start the resource. Depending on the rest of the configuration (constraints, options, failures, etc), the resource may remain stopped.  If \fB\-\-wait\fR is specified, pcs will wait up to 30 seconds (or 'n' seconds) for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.
 .TP
@@ -64,18 +76,6 @@ Prevent the resource id specified from running on the node (or on the current no
 .TP
 clear <resource id> [node]
 Remove constraints created by move and/or ban on the specified resource (and node if specified)
-.TP
-list [<standard|provider|type>]
-Show list of all available resources, optionally filtered by specified type, standard or provider
-.TP
-describe <standard:provider:type|type>
-Show options for the specified resource
-.TP
-create <resource id> <standard:provider:type|type> [resource options]
-[op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\-\-clone <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name>] Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \e nic=eth2 Create a new resource called 'ClusterIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
-.TP
-delete <resource id>
-Deletes the resource specified
 .TP
 standards
 List available resource agent standards supported by this installation. (OCF, LSB, etc.)
