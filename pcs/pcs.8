@@ -56,8 +56,8 @@ Show options for the specified resource
 create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\-\-clone <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name>]
 Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \e nic=eth2 Create a new resource called 'ClusterIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
 .TP
-delete <resource id>
-Deletes the resource specified
+delete <resource id|group id>
+Deletes the resource or group (and all grouped resources).
 .TP
 enable <resource id> [\-\-wait[=n]]
 Allow the cluster to start the resource. Depending on the rest of the configuration (constraints, options, failures, etc), the resource may remain stopped.  If \fB\-\-wait\fR is specified, pcs will wait up to 30 seconds (or 'n' seconds) for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.
