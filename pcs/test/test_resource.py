@@ -406,11 +406,11 @@ class ResourceTest(unittest.TestCase):
         ac(o,' Group: AGroup\n  Resource: A1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A1-monitor-interval-60s)\n  Resource: A2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A2-monitor-interval-60s)\n  Resource: A3 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A3-monitor-interval-60s)\n  Resource: A4 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A4-monitor-interval-60s)\n  Resource: A5 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A5-monitor-interval-60s)\n')
 
 
-        o,r = pcs(temp_cib, "resource group remove Noexist")
+        o,r = pcs(temp_cib, "resource ungroup Noexist")
         assert r == 1
         ac(o,"Error: Group 'Noexist' does not exist\n")
 
-        o,r = pcs(temp_cib, "resource group remove AGroup A1 A3")
+        o,r = pcs(temp_cib, "resource ungroup AGroup A1 A3")
         assert r == 0
         assert o == ""
 
@@ -418,7 +418,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         ac(o,' ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped \n Resource Group: TestGroup1\n     ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped \n Clone Set: ClusterIP4-clone [ClusterIP4]\n Master/Slave Set: Master [ClusterIP5]\n Resource Group: AGroup\n     A2\t(ocf::heartbeat:Dummy):\tStopped \n     A4\t(ocf::heartbeat:Dummy):\tStopped \n     A5\t(ocf::heartbeat:Dummy):\tStopped \n A1\t(ocf::heartbeat:Dummy):\tStopped \n A3\t(ocf::heartbeat:Dummy):\tStopped \n')
 
-        o,r = pcs(temp_cib, "resource group remove AGroup")
+        o,r = pcs(temp_cib, "resource ungroup AGroup")
         assert r == 0
         ac(o,'')
 
@@ -950,7 +950,7 @@ class ResourceTest(unittest.TestCase):
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource group remove AG")
+        o,r = pcs(temp_cib, "resource ungroup AG")
         ac(o,"Removing Constraint - location-AG-rh7-1-INFINITY\n")
         assert r == 0
 
@@ -988,7 +988,7 @@ class ResourceTest(unittest.TestCase):
         o,r = pcs(temp_cib, "resource master AGMaster AG")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource group remove AG")
+        o,r = pcs(temp_cib, "resource ungroup AG")
         ac(o,"Error: Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete AG'.\n")
         assert r == 1
 
@@ -997,7 +997,7 @@ class ResourceTest(unittest.TestCase):
         o,r = pcs(temp_cib, "resource delete C")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource group remove AG")
+        o,r = pcs(temp_cib, "resource ungroup AG")
         ac(o,"")
         assert r == 0
 

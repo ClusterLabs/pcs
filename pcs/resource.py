@@ -107,6 +107,8 @@ def resource_cmd(argv):
         resource_show(argv)
     elif (sub_cmd == "group"):
         resource_group(argv)
+    elif (sub_cmd == "ungroup"):
+        resource_group(["remove"] + argv)
     elif (sub_cmd == "clone"):
         resource_clone(argv)
     elif (sub_cmd == "unclone"):
