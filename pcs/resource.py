@@ -877,6 +877,10 @@ def resource_clone_create(argv, update = False):
     if element == None:
         utils.err("unable to find group or resource: %s" % name)
 
+    # If element is currently in a group and it's the last member, we get rid of the group
+    if element.parentNode.tagName == "group" and element.parentNode.getElementsByTagName("primitive").length <= 1:
+        element.parentNode.parentNode.removeChild(element.parentNode)
+
     if update == True:
         if element.parentNode.tagName != "clone":
             utils.err("%s is not currently a clone" % name)
@@ -992,6 +996,11 @@ def resource_master_create(argv, update=False):
                 break
         if not rg_found:
             utils.err("Unable to find resource or group with id %s" % rg_id)
+        # If the resource elements parent is a group, and it's the last
+        # element in the group, we remove the group
+        if resource.parentNode.tagName == "group" and resource.parentNode.getElementsByTagName("primitive").length <= 1:
+            resource.parentNode.parentNode.removeChild(resource.parentNode)
+        
         master_element = dom.createElement("master")
         master_element.setAttribute("id", master_id)
         resource.parentNode.removeChild(resource)

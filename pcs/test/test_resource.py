@@ -740,6 +740,55 @@ class ResourceTest(unittest.TestCase):
         ac(o,"")
         assert r == 0
 
+    def testCloneGroupMember(self):
+        o,r = pcs(temp_cib, "resource create D0 Dummy --group AG")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create D1 Dummy --group AG")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource clone D0")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource")
+        ac(o," Resource Group: AG\n     D1\t(ocf::heartbeat:Dummy):\tStopped \n Clone Set: D0-clone [D0]\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource clone D1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource")
+        ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create D2 Dummy --group AG2")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create D3 Dummy --group AG2")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource master D2")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource")
+        ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n Resource Group: AG2\n     D3\t(ocf::heartbeat:Dummy):\tStopped \n Master/Slave Set: D2-master [D2]\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource master D3")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource")
+        ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n Master/Slave Set: D2-master [D2]\n Master/Slave Set: D3-master [D3]\n")
+        assert r == 0
+
     def testCloneMaster(self):
         output, returnVal  = pcs(temp_cib, "resource create D0 Dummy")
         assert returnVal == 0
