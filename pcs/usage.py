@@ -267,15 +267,21 @@ Commands:
         that fail to start.
 
     move <resource id> [destination node]
-        Move resource off current node (and optionally onto destination node)
+        Move resource off current node (and optionally onto destination node).
+        If --master is used the scope of the command is limited to the
+        master role. 
 
     ban <resource id> [node]
         Prevent the resource id specified from running on the node (or on the
-        current node it is running on if no node is specified)
+        current node it is running on if no node is specified).
+        If --master is used the scope of the command is limited to the
+        master role. 
 
-    clear <resource id> [node]
+    clear <resource id> [node] [--master]
         Remove constraints created by move and/or ban on the specified
-        resource (and node if specified)
+        resource (and node if specified).
+        If --master is used the scope of the command is limited to the
+        master role. 
 
     standards
         List available resource agent standards supported by this installation.

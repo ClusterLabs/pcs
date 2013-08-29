@@ -333,6 +333,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         resource_group_add(groupname,[ra_id])
 
 def resource_move(argv,clear=False,ban=False):
+    other_options = []
     if len(argv) == 0:
         utils.err ("must specify resource to move/unmove")
 
@@ -352,22 +353,24 @@ def resource_move(argv,clear=False,ban=False):
     if utils.is_resource_masterslave(resource_id) and not clear and not ban:
         utils.err("unable to move Master/Slave resources")
 
+    if "--master" in utils.pcs_options:
+        other_options.append("--master")
     if clear:
         if dest_node:
-            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear", "--host", dest_node])
+            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear", "--host", dest_node] + other_options)
         else:
-            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear"])
+            output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear"] + other_options)
     else:
         if dest_node == None:
             if ban:
-                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--ban"])
+                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--ban"] + other_options)
             else:
-                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move"])
+                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move"] + other_options)
         else:
             if ban:
-                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--ban", "--node", dest_node])
+                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--ban", "--node", dest_node] + other_options)
             else:
-                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node])
+                output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node] + other_options)
     if ret != 0:
         utils.err ("error moving/banning/clearing resource\n" + output)
 
