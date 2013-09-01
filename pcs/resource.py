@@ -790,8 +790,8 @@ def convert_args_to_instance_variables(ra_values, ra_id):
 def convert_args_to_tuples(ra_values):
     ret = []
     for ra_val in ra_values:
-        if ra_val.count("=") == 1:
-            split_val = ra_val.split("=")
+        if ra_val.count("=") != 0:
+            split_val = ra_val.split("=", 1)
             ret.append((split_val[0],split_val[1]))
     return ret
 
