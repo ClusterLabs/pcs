@@ -249,7 +249,7 @@ Pcs.Resource = Ember.Object.extend({
       return "display:none;"
     else
       return ""
-  }.property("cur_resource"),
+  }.property("cur_resource")
 });
 
 Pcs.Clusternode = Ember.Object.extend({

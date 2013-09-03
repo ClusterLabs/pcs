@@ -156,7 +156,7 @@ function disable_spaces(item) {
 }
 
 function load_resource_form(item, ra, stonith) {
-  data = { new: true, resourcename: ra};
+  data = { "new": true, resourcename: ra};
   if (!stonith)
     command = "resource_metadata";
   else
