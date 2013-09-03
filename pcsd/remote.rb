@@ -190,14 +190,14 @@ def check_gui_status(params)
   node_results = {}
   if params[:nodes] != nil and params[:nodes] != ""
     node_array = params[:nodes].split(",")
-   Open3.popen3(PCS, "cluster", "pcsd-status", *node_array) { |stdin, stdout, stderr, wait_thr|
-     exit_status = wait_thr.value
-     stdout.readlines.each {|l|
-       l = l.chomp
-       out = l.split(/: /)
-       node_results[out[0]] = out[1]
-     }
-   }
+    Open3.popen3(PCS, "cluster", "pcsd-status", *node_array) { |stdin, stdout, stderr, wait_thr|
+      exit_status = wait_thr.value
+      stdout.readlines.each {|l|
+	l = l.chomp
+	out = l.split(/: /)
+	node_results[out[0].strip] = out[1]
+      }
+    }
   end
   return JSON.generate(node_results)
 end
