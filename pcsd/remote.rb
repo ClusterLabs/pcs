@@ -433,7 +433,7 @@ def fence_device_form(params)
   end
 
   if @cur_resource
-    @cur_resource.options = getResourceOptions(@cur_resource.id)
+    @cur_resource.options = getResourceOptions(@cur_resource.id,true)
     @resource_agents = getFenceAgents(@cur_resource.agentname)
     @existing_resource = true
     @fenceagent = @resource_agents[@cur_resource.agentname.gsub(/.*:/,"")]
@@ -504,7 +504,20 @@ def update_fence_device (params)
   pp params
   param_line = getParamLine(params)
   pp param_line
-  run_cmd(PCS, "stonith", "update", params[:resource_id], *(param_line.split(" ")))
+
+  param_line = getParamLine(params)
+  if not params[:resource_id]
+    out, stderr, retval = run_cmd(PCS, "stonith", "create", params[:name], params[:resource_type],
+	    *(param_line.split(" ")))
+    if retval != 0
+      return [404,JSON.generate({"error" => "true"})]
+    end
+    return
+  end
+
+  if param_line.length != 0
+    run_cmd(PCS, "stonith", "update", params[:resource_id], *(param_line.split(" ")))
+  end
 end
 
 def get_avail_resource_agents (params)

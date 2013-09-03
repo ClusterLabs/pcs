@@ -81,12 +81,16 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
   [resource_list, group_list, 0]
 end
 
-def getResourceOptions(resource_id)
+def getResourceOptions(resource_id,stonith=false)
   # Strip ':' from resource name (for clones & master/slave)
   resource_id = resource_id.sub(/(.*):.*/,'\1')
 
   ret = {}
-  resource_options = `#{PCS} resource show #{resource_id}`
+  if stonith
+    resource_options = `#{PCS} stonith show #{resource_id}`
+  else
+    resource_options = `#{PCS} resource show #{resource_id}`
+  end
   resource_options.each_line { |line|
     keyval = line.strip.split(/: /,2)
     if keyval[0] == "Attributes" then

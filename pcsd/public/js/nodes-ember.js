@@ -84,6 +84,9 @@ Pcs = Ember.Application.createWithMixins({
 
 Pcs.Router.map(function() {
   this.route("Configuration", { path: "configure"});
+  this.resource("Fence Devices", {path: "fencedevices/:stonith_id"}, function () {
+    this.route('new');
+  });
   this.route("Fence Devices", { path: "fencedevices"});
   this.resource("Resources", {path: "resources/:resource_id"}, function () {
     this.route('new');
@@ -132,6 +135,15 @@ Pcs.DefaultRouteRoute = Ember.Route.extend({
 Pcs.FenceDevicesRoute = Ember.Route.extend({
   setupController: function(controller, model) {
     select_menu("FENCE DEVICES");
+    if (model) {
+      Pcs.resourcesController.set("cur_resource",model);
+      Pcs.resourcesController.update_cur_resource();
+    }
+  },
+  model: function(params) {
+    Ember.debug("Router FD: " + params.stonith_id);
+    Pcs.opening_resource = params.stonith_id;
+    return null;
   }
 });
 
@@ -365,11 +377,11 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
     load_agent_form(resource_row, true);
     if (!dont_update_hash)
-      window.location.hash = "#fencedevices#" + $(resource_row).attr("nodeID");
+      window.location.hash = "/fencedevices/" + $(resource_row).attr("nodeID");
 
     // If we're not on the stonith page, we don't update the cur_resource
     if (Pcs.cur_page != "stonith")
-      Pcs.resourcesController.cur_resource = temp_cur_resource;
+      Pcs.resourcesController.set('cur_resource',temp_cur_resource);
   },
 
   add_loc_constraint: function(res_id, constraint_id, node_id, score, stickyness) {
