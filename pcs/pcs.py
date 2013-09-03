@@ -55,7 +55,8 @@ def main(argv):
                     modified_argv.append(arg)
             else:
                 if prev_arg != "-f" and prev_arg != "-p" and prev_arg != "-u"\
-                        and prev_arg != "--corosync_conf" and prev_arg != "--name":
+                        and prev_arg != "--corosync_conf" and prev_arg != "--name"\
+                        and prev_arg != "--group":
                     real_argv.append(arg)
                 modified_argv.append(arg)
             prev_arg = arg

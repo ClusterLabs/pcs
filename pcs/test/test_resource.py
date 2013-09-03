@@ -789,6 +789,23 @@ class ResourceTest(unittest.TestCase):
         ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n Master/Slave Set: D2-master [D2]\n Master/Slave Set: D3-master [D3]\n")
         assert r == 0
 
+    def testResourceCreationWithGroupOperations(self):
+        o,r = pcs(temp_cib, "resource create D1 Dummy --group AG2 op monitor interval=32s")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create D3 Dummy op monitor interval=34s --group AG2 ")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create D4 Dummy op monitor interval=35s --group=AG2 ")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o," Group: AG2\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=32s (D1-monitor-interval-32s)\n  Resource: D3 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=34s (D3-monitor-interval-34s)\n  Resource: D4 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=35s (D4-monitor-interval-35s)\n")
+        assert r == 0
+
     def testCloneMaster(self):
         output, returnVal  = pcs(temp_cib, "resource create D0 Dummy")
         assert returnVal == 0
