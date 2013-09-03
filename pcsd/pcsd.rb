@@ -380,7 +380,7 @@ post '/manage/newcluster' do
   pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
   pcs_config.save
 
-  run_cmd(PCS, "cluster", "setup", "--start", @cluster_name, *@nodes)
+  run_cmd(PCS, "cluster", "setup", "--start", "--name",@cluster_name, *@nodes)
   redirect '/manage#manage'
 end
 
