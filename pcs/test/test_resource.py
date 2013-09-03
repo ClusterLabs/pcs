@@ -557,11 +557,11 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
         output, returnVal = pcs(temp_cib, "resource unmanage D1")
-        assert returnVal == 1
-        assert output == "Error: D1 is already unmanaged\n",[output]
+        assert returnVal == 0
+        assert output == "",[output]
         output, returnVal = pcs(temp_cib, "resource manage D2")
-        assert returnVal == 1
-        assert output == "Error: D2 is already managed\n",[output]
+        assert returnVal == 0
+        assert output == "",[output]
         output, returnVal = pcs(temp_cib, "resource manage D1")
         assert returnVal == 0
         assert output == "",[output]
@@ -594,8 +594,8 @@ class ResourceTest(unittest.TestCase):
         assert output == ""
 
         output, returnVal = pcs(temp_cib, "resource unmanage C2Master-master")
+        ac(output,"")
         assert returnVal == 0
-        assert output == ""
 
         output, returnVal = pcs(temp_cib, "resource manage C2Master-master")
         assert returnVal == 0
@@ -621,24 +621,81 @@ class ResourceTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "resource show D1")
         assert returnVal == 0
         assert output == ' Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: is-managed=false \n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n',[output]
+
         output, returnVal = pcs(temp_cib, "resource manage noexist")
         assert returnVal == 1
         assert output == "Error: noexist doesn't exist.\n",[output]
+
         output, returnVal = pcs(temp_cib, "resource manage DGroup")
-        assert returnVal == 1
-        assert output == 'Error: DGroup is already managed\n',[output]
+        assert returnVal == 0
+        assert output == '',[output]
+
         output, returnVal = pcs(temp_cib, "resource unmanage DGroup")
         assert returnVal == 0
         assert output == '',[output]
+
         output, returnVal = pcs(temp_cib, "resource show DGroup")
         assert returnVal == 0
-        assert output == ' Group: DGroup\n  Meta Attrs: is-managed=false \n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n',[output]
+        ac (output,' Group: DGroup\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n')
+
         output, returnVal = pcs(temp_cib, "resource manage DGroup")
         assert returnVal == 0
         assert output == '',[output]
+
         output, returnVal = pcs(temp_cib, "resource show DGroup")
         assert returnVal == 0
         assert output == ' Group: DGroup\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n',[output]
+
+    def testGroupManage(self):
+        o,r = pcs(temp_cib, "resource create D1 Dummy --group AG")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource create D2 Dummy --group AG")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+
+        o,r = pcs(temp_cib, "resource unmanage AG")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+
+        o,r = pcs(temp_cib, "resource manage AG")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+
+        o,r = pcs(temp_cib, "resource unmanage D2")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+
+        o,r = pcs(temp_cib, "resource manage AG")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+
+        o,r = pcs(temp_cib, "resource unmanage D2")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource unmanage D1")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+
+        os.system("CIB_file="+temp_cib+" crm_resource --resource AG --set-parameter is-managed --meta --parameter-value false")
+
+        o,r = pcs(temp_cib, "resource manage AG")
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
     def testBadInstanceVariables(self):
         output, returnVal = pcs(temp_cib, "resource create D0 Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")

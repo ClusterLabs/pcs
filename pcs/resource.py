@@ -1386,21 +1386,48 @@ def resource_manage(argv, set_managed):
     for resource in argv:
         if not utils.does_exist("(//primitive|//group|//master|//clone)[@id='"+resource+"']"):
             utils.err("%s doesn't exist." % resource)
-        exists = utils.does_exist("(//primitive|//group|//master|//clone)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']")
-        if set_managed and not exists:
-            utils.err("%s is already managed" % resource)
-        elif not set_managed and exists:
-            utils.err("%s is already unmanaged" % resource)
 
+    dom = utils.get_cib_dom()
     for resource in argv:
+        isGroup = False
+        isResource = False
+        for el in dom.getElementsByTagName("group") + dom.getElementsByTagName("master") + dom.getElementsByTagName("clone"):
+            if el.getAttribute("id") == resource:
+                group = el
+                isGroup = True
+                break
+
+        if isGroup:
+            res_to_manage = []
+            for el in group.getElementsByTagName("primitive"):
+                res_to_manage.append(el.getAttribute("id"))
+        else:
+            for el in dom.getElementsByTagName("primitive"):
+                if el.getAttribute("id") == resource:
+                    isResource = True
+                    break
+
         if not set_managed:
-            (output, retval) =  utils.set_unmanaged(resource)
+            if isResource:
+                (output, retval) =  utils.set_unmanaged(resource)
+            elif isGroup:
+                for res in res_to_manage:
+                    (output, retval) =  utils.set_unmanaged(res)
+                    retval = 0
+            else:
+                utils.err("unable to find resource/group: %s")
+
             if retval != 0:
                 utils.err("error attempting to unmanage resource: %s" % output)
         else:
             xpath = "(//primitive|//group)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
             my_xml = utils.get_cib_xpath(xpath)
             utils.remove_from_cib(my_xml)
+            if isGroup:
+                for res in res_to_manage:
+                    xpath = "(//primitive|//group)[@id='"+res+"']/meta_attributes/nvpair[@name='is-managed']" 
+                    my_xml = utils.get_cib_xpath(xpath)
+                    utils.remove_from_cib(my_xml)
 
 def resource_failcount(argv):
     if len(argv) < 2:
