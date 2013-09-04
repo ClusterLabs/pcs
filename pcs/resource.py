@@ -1347,8 +1347,7 @@ def resource_disable(argv):
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
     if retval != 0:
-        print output,
-        return False
+        utils.err(output)
 
     if "--wait" in utils.pcs_options:
         wait = utils.pcs_options["--wait"]
@@ -1370,8 +1369,7 @@ def resource_enable(argv):
     args = ["crm_resource", "-r", resource, "-m", "-d", "target-role"]
     output, retval = utils.run(args)
     if retval != 0:
-        print output,
-        return False
+        utils.err (output)
 
     if "--wait" in utils.pcs_options:
         wait = utils.pcs_options["--wait"]

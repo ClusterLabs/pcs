@@ -1140,6 +1140,38 @@ class ResourceTest(unittest.TestCase):
         ac(o," Master: AGMaster\n  Resource: A (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A-monitor-interval-60s)\n")
         assert r == 0
 
+    def testResourceEnable(self):
+        o,r = pcs(temp_cib, "resource create D1 Dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource disable D1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource show D1 --full")
+        ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: target-role=Stopped \n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource enable D1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource show D1 --full")
+        ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource enable NoExist")
+        ac(o,"Error: Resource 'NoExist' not found: No such device or address\nError performing operation: No such device or address\n\n")
+        assert r == 1
+
+        o,r = pcs(temp_cib, "resource disable NoExist")
+        ac(o,"Error: Resource 'NoExist' not found: No such device or address\nError performing operation: No such device or address\n\n")
+        assert r == 1
+
+
+
+
 if __name__ == "__main__":
     unittest.main()
 
