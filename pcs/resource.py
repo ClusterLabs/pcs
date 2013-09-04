@@ -599,6 +599,12 @@ def resource_operation_add(res_id, argv):
     op_id = utils.find_unique_id(dom, op_id)
     op.setAttribute("id", op_id)
 
+    if op.getAttribute("interval") == "":
+        if op.getAttribute("name") == "monitor":
+            op.setAttribte("interval","30s")
+        else:
+            op.setAttribute("interval","0s")
+
     operations = resource.getElementsByTagName("operations")
     if len(operations) == 0:
         operations = dom.createElement("operations")
@@ -740,15 +746,24 @@ def convert_args_to_operations(op_values_list, ra_id):
         instance_attrs = []
         op_id = ra_id+"-"+op_name
         temp_op_id = ""
-# If interval is specified, use that in the op_name, otherwise all attributes
+        # If interval is specified, use that in the op_name, otherwise all attributes
         interval_found = False
         for (a,b) in tuples:
             if a != "OCF_CHECK_LEVEL":
                 temp_op_id += "-"+a+"-"+b
             if a == "interval":
                 temp_op_id = "-"+a+"-"+b
+                interval_found = True
                 break
         op_id += temp_op_id
+
+        # If no interval is found, we add one, 30s for monitor,
+        # 0s for everything else
+        if not interval_found:
+            if op_name == "monitor":
+                tuples = tuples + [("interval","30s")]
+            else:
+                tuples = tuples + [("interval","0s")]
 
         for (a,b) in tuples:
             if a == "OCF_CHECK_LEVEL":

@@ -207,7 +207,7 @@ class ResourceTest(unittest.TestCase):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
-        assert output == ""
+        ac(output,"")
 
         o,r = pcs(temp_cib, "resource add_operation")
         assert r == 1
@@ -247,6 +247,18 @@ class ResourceTest(unittest.TestCase):
         
         o, r = pcs(temp_cib, "resource show OPTest")
         ac(o," Resource: OPTest (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (OPTest-monitor-interval-30s)\n              OCF_CHECK_LEVEL=1 \n              monitor interval=25s (OPTest-monitor-interval-25s)\n              OCF_CHECK_LEVEL=1\n")
+        assert r == 0
+
+        o, r = pcs(temp_cib, "resource create OPTest2 Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1 op start timeout=30s")
+        ac(o,"")
+        assert r == 0
+        
+        o, r = pcs(temp_cib, "resource op add OPTest2 start timeout=1800s")
+        ac(o,"")
+        assert r == 0
+        
+        o, r = pcs(temp_cib, "resource show OPTest2")
+        ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (OPTest2-monitor-interval-30s)\n              OCF_CHECK_LEVEL=1 \n              monitor interval=25s (OPTest2-monitor-interval-25s)\n              OCF_CHECK_LEVEL=1 \n              start interval=0s timeout=30s (OPTest2-start-timeout-30s)\n              start interval=0s timeout=1800s (OPTest2-name-start-timeout-1800s)\n")
         assert r == 0
 
     def testRemoveOperation(self):
