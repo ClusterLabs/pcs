@@ -557,10 +557,28 @@ def resource_update(res_id,args):
         op.setAttribute("name",op_name)
         op_id = res_id + "-" + op_name
         op_vars = convert_args_to_tuples(element)
+        iv = None
         for (key,val) in op_vars:
-            op.setAttribute(key,val)
-            op_id += "-" + key + "-" + val
+            if key == "OCF_CHECK_LEVEL":
+                iv = dom.createElement("nvpair")
+                iv.setAttribute("name","OCF_CHECK_LEVEL")
+                iv.setAttribute("value",val)
+            else:
+                op.setAttribute(key,val)
+                op_id += "-" + key + "-" + val
+        if iv != None:
+            iv.setAttribute("id",op_id+"-OCF_CHECK_LEVEL-"+iv.getAttribute("value"))
+            ia = dom.createElement("instance_attributes")
+            ia.setAttribute("id","params-" +iv.getAttribute("id"))
+            ia.appendChild(iv)
+            op.appendChild(ia)
+
         op.setAttribute("id", op_id)
+        if op.getAttribute("interval") == "":
+            if op.getAttribute("name") == "monitor":
+                op.setAttribute("interval","30s")
+            else:
+                op.setAttribute("interval","0s")
         operations.appendChild(op)
         
     if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
