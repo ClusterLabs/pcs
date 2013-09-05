@@ -203,9 +203,13 @@ def corosync_setup(argv,returnConfig=False):
         exit(1)
     if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options and fedora_config:
         sync_start(argv)
+        if "--enable" in utils.pcs_options:
+            enable_cluster(argv[1:])
         return
     elif not returnConfig and not "--local" in utils.pcs_options and fedora_config:
         sync(argv)
+        if "--enable" in utils.pcs_options:
+            enable_cluster(argv[1:])
         return
     else:
         nodes = argv[1:]
@@ -277,6 +281,8 @@ def corosync_setup(argv,returnConfig=False):
 
     if "--start" in utils.pcs_options:
         start_cluster([])
+    if "--enable" in utils.pcs_options:
+        enableCluster([])
 
 def get_local_network():
     args = ["/sbin/ip", "route"]
@@ -369,7 +375,7 @@ def enable_cluster(argv):
     if len(argv) > 0:
         for node in argv:
             utils.enableCluster(node)
-            return
+        return
 
     utils.enableServices()
 
@@ -594,6 +600,7 @@ def cluster_destroy(argv):
         print os.system("service corosync stop")
         print "Killing any remaining services..."
         os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
+        utils.disableServices()
 
         print "Removing all cluster configuration files..."
         if utils.is_rhel6():

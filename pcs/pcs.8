@@ -141,8 +141,8 @@ Reset failcount for specified resource on all nodes or only on specified node
 auth [node] [...] [\-u username] [\-p password]
 Authenticate pcs to pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified (authorization tokens are stored in ~/.pcs/token)
 .TP
-setup [\-\-start] [\-\-local] \fB\-\-name\fR <cluster name> <node1> [node2] [..]
-Configure corosync and sync configuration out to listed nodes \fB\-\-local\fR will only perform changes on the local node \fB\-\-start\fR will also start the cluster on the specified nodes
+setup [\-\-start] [\-\-local] [\-\-enable] \fB\-\-name\fR <cluster name> <node1> [node2] [..]
+Configure corosync and sync configuration out to listed nodes \fB\-\-local\fR will only perform changes on the local node, \fB\-\-start\fR will also start the cluster on the specified nodes, \fB\-\-enable\fR will enable corosync and pacemaker on node startup
 .TP
 start [\-\-all] [node] [...]
 Start corosync & pacemaker on specified node(s), if a node is not specified then corosync & pacemaker are started on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are started on all nodes.
