@@ -355,7 +355,10 @@ Commands:
 
     cleanup <resource id>
         Cleans up the resource in the lrmd (useful to reset the resource
-        status and failcount)
+        status and failcount).  This tells the cluster to forget the
+        operation history of a resource and re-detect its current state.
+        This can be useful to purge knowledge of past failures that have
+        since been resolved.
 
     failcount show <resource id> [node]
         Show current failcount for specified resource from all nodes or
@@ -363,7 +366,9 @@ Commands:
 
     failcount reset <resource id> [node]
         Reset failcount for specified resource on all nodes or only on
-        specified node
+        specified node.  This tells the cluster to forget how many times
+        a resource has failed in teh past.  This may allow the resource to
+        be started or moved to a more preferred location.
 
 Examples:
 
