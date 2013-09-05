@@ -77,16 +77,16 @@ def setCorosyncConfig(node,config):
         err("Unable to set corosync config")
 
 def startCluster(node):
-    sendHTTPRequest(node, 'remote/cluster_start')
+    return sendHTTPRequest(node, 'remote/cluster_start', None, False, True)
 
 def stopCluster(node):
-    sendHTTPRequest(node, 'remote/cluster_stop')
+    return sendHTTPRequest(node, 'remote/cluster_stop', None, False, True)
 
 def enableCluster(node):
-    sendHTTPRequest(node, 'remote/cluster_enable')
+    return sendHTTPRequest(node, 'remote/cluster_enable', None, False, True)
 
 def disableCluster(node):
-    sendHTTPRequest(node, 'remote/cluster_disable')
+    return sendHTTPRequest(node, 'remote/cluster_disable', None, False, True)
 
 def destroyCluster(node):
     sendHTTPRequest(node, 'remote/cluster_destroy')
@@ -125,7 +125,7 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 # 1 = HTTP Error
 # 2 = No response,
 # 3 = Auth Error
-def sendHTTPRequest(host, request, data = None, printResult = True):
+def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess = True):
     url = 'https://' + host + ':2224/' + request
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
     tokens = readTokens()
@@ -138,7 +138,7 @@ def sendHTTPRequest(host, request, data = None, printResult = True):
     try:
         result = opener.open(url,data)
         html = result.read()
-        if printResult:
+        if printResult or printSuccess:
             print host + ": " + html.strip()
         if "--debug" in pcs_options:
             print "Response Code: 0"

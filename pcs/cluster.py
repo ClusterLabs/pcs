@@ -162,8 +162,7 @@ def auth_nodes(nodes):
             utils.updateToken(node,username,password)
             print "%s: Authorized" % (node)
         else:
-            print "Unable to communicate with %s" % (node)
-            exit(1)
+            utils.err("Unable to communicate with %s" % (node))
 
 
 # If no arguments get current cluster node status, otherwise get listed
@@ -296,9 +295,16 @@ def get_local_network():
 
 def start_cluster(argv):
     if len(argv) > 0:
+        failure = False
+        errors = ""
         for node in argv:
-            utils.startCluster(node)
-            return
+            (retval, err) =  utils.startCluster(node)
+            if retval != 0:
+                failure = True
+                errors = errors + err+"\n"
+        if failure:
+            utils.err("unable to start all nodes\n" + errors.rstrip())
+        return
 
     print "Starting Cluster..."
     if utils.is_rhel6():
@@ -373,17 +379,31 @@ def node_standby(argv,standby=True):
 
 def enable_cluster(argv):
     if len(argv) > 0:
+        failure = False
+        errors = ""
         for node in argv:
-            utils.enableCluster(node)
+            (retval, err) = utils.enableCluster(node)
+            if retval != 0:
+                failure = True
+                errors = errors + err+"\n"
+        if failure:
+            utils.err("unable to enable all nodes\n" + errors.rstrip())
         return
 
     utils.enableServices()
 
 def disable_cluster(argv):
     if len(argv) > 0:
+        failure = False
+        errors = ""
         for node in argv:
-            utils.disableCluster(node)
-            return
+            (retval, err) = utils.disableCluster(node)
+            if retval != 0:
+                failure = True
+                errors = errors + err+"\n"
+        if failure:
+            utils.err("unable to disable all nodes\n" + errors.rstrip())
+        return
 
     utils.disableServices()
 
@@ -397,9 +417,16 @@ def disable_cluster_all():
 
 def stop_cluster(argv):
     if len(argv) > 0:
+        failure = False
+        errors = ""
         for node in argv:
-            utils.stopCluster(node)
-            return
+            (retval, err) = utils.stopCluster(node)
+            if retval != 0:
+                failure = True
+                errors = errors + err+"\n"
+        if failure:
+            utils.err("unable to stop all nodes\n" + errors.rstrip())
+        return
 
     print "Stopping Cluster..."
     output, retval = utils.run(["service", "pacemaker","stop"])
