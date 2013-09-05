@@ -257,8 +257,12 @@ class ResourceTest(unittest.TestCase):
         ac(o,"")
         assert r == 0
         
+        o, r = pcs(temp_cib, "resource op add OPTest2 monitor timeout=1800s")
+        ac(o,"")
+        assert r == 0
+        
         o, r = pcs(temp_cib, "resource show OPTest2")
-        ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (OPTest2-monitor-interval-30s)\n              OCF_CHECK_LEVEL=1 \n              monitor interval=25s (OPTest2-monitor-interval-25s)\n              OCF_CHECK_LEVEL=1 \n              start interval=0s timeout=30s (OPTest2-start-timeout-30s)\n              start interval=0s timeout=1800s (OPTest2-name-start-timeout-1800s)\n")
+        ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (OPTest2-monitor-interval-30s)\n              OCF_CHECK_LEVEL=1 \n              monitor interval=25s (OPTest2-monitor-interval-25s)\n              OCF_CHECK_LEVEL=1 \n              start interval=0s timeout=30s (OPTest2-start-timeout-30s)\n              start interval=0s timeout=1800s (OPTest2-name-start-timeout-1800s)\n              monitor interval=30s timeout=1800s (OPTest2-name-monitor-timeout-1800s)\n")
         assert r == 0
 
     def testRemoveOperation(self):

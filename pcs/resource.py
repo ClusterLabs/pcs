@@ -601,7 +601,7 @@ def resource_operation_add(res_id, argv):
 
     if op.getAttribute("interval") == "":
         if op.getAttribute("name") == "monitor":
-            op.setAttribte("interval","30s")
+            op.setAttribute("interval","30s")
         else:
             op.setAttribute("interval","0s")
 
