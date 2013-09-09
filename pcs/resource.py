@@ -560,9 +560,11 @@ def resource_update(res_id,args):
         iv = None
         for (key,val) in op_vars:
             if key == "OCF_CHECK_LEVEL":
-                iv = dom.createElement("nvpair")
-                iv.setAttribute("name","OCF_CHECK_LEVEL")
-                iv.setAttribute("value",val)
+                remove_ocf_check_levels(op)
+                if val != "":
+                    iv = dom.createElement("nvpair")
+                    iv.setAttribute("name","OCF_CHECK_LEVEL")
+                    iv.setAttribute("value",val)
             else:
                 op.setAttribute(key,val)
                 op_id += "-" + key + "-" + val
@@ -576,7 +578,7 @@ def resource_update(res_id,args):
         op.setAttribute("id", op_id)
         if op.getAttribute("interval") == "":
             if op.getAttribute("name") == "monitor":
-                op.setAttribute("interval","30s")
+                op.setAttribute("interval","60s")
             else:
                 op.setAttribute("interval","0s")
         operations.appendChild(op)
@@ -585,6 +587,12 @@ def resource_update(res_id,args):
         instance_attributes.parentNode.removeChild(instance_attributes)
 
     utils.replace_cib_configuration(dom)
+
+# Removes all OCF_CHECK_LEVEL nvpairs
+def remove_ocf_check_levels(dom):
+    for np in dom.getElementsByTagName("nvpair")[:]:
+        if np.getAttribute("name") == "OCF_CHECK_LEVEL":
+            np.parentNode.removeChild(np)
 
 def resource_operation_add(res_id, argv):
     if len(argv) < 1:
@@ -610,16 +618,30 @@ def resource_operation_add(res_id, argv):
 
     op = dom.createElement("op")
     op_id = res_id + "-"
-    for prop in op_properties:
-        op.setAttribute(prop[0], prop[1])
-        op_id += prop[0] + "-" + prop[1] + "-"
+    iv = None
+    for (key,val) in op_properties:
+        if key == "OCF_CHECK_LEVEL":
+                iv = dom.createElement("nvpair")
+                iv.setAttribute("name","OCF_CHECK_LEVEL")
+                iv.setAttribute("value",val)
+        else:
+            op.setAttribute(key, val)
+            op_id += key + "-" + val + "-"
     op_id = op_id[:-1]
     op_id = utils.find_unique_id(dom, op_id)
+
+    if iv != None:
+        iv.setAttribute("id",op_id+"-OCF_CHECK_LEVEL-"+iv.getAttribute("value"))
+        ia = dom.createElement("instance_attributes")
+        ia.setAttribute("id","params-" +iv.getAttribute("id"))
+        ia.appendChild(iv)
+        op.appendChild(ia)
+
     op.setAttribute("id", op_id)
 
     if op.getAttribute("interval") == "":
         if op.getAttribute("name") == "monitor":
-            op.setAttribute("interval","30s")
+            op.setAttribute("interval","60s")
         else:
             op.setAttribute("interval","0s")
 
@@ -775,11 +797,11 @@ def convert_args_to_operations(op_values_list, ra_id):
                 break
         op_id += temp_op_id
 
-        # If no interval is found, we add one, 30s for monitor,
+        # If no interval is found, we add one, 60s for monitor,
         # 0s for everything else
         if not interval_found:
             if op_name == "monitor":
-                tuples = tuples + [("interval","30s")]
+                tuples = tuples + [("interval","60s")]
             else:
                 tuples = tuples + [("interval","0s")]
 
@@ -1609,12 +1631,11 @@ def print_operations(node, spaces):
             if attr in ["id","name"] :
                 continue
             output += attr + "=" + val + " "
+        for child in op.findall(".//nvpair"):
+            output += child.get("name") + "=" + child.get("value") + " "
+
         output += "(" + op.attrib["id"] + ")"
         output += "\n"
-        for child in op.findall(".//nvpair"):
-            output += (' ' * indent)
-            output += child.get("name") + "=" + child.get("value") + " "
-            output += "\n"
 
     output = output.rstrip()
     if output != "":
