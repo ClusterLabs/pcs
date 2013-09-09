@@ -521,11 +521,12 @@ def is_valid_resource(resource, caseInsensitiveCheck=False):
         for provider in providers:
             filepath = "/usr/lib/ocf/resource.d/" + provider + "/"
             if caseInsensitiveCheck:
-                all_files = [ f for f in os.listdir(filepath ) ]
-                for f in all_files:
-                    if f.lower() == resource.lower() and os.path.isfile(filepath + f):
-                        return "ocf:" + provider + ":" + f
-                continue
+                if os.path.isdir(filepath):
+                    all_files = [ f for f in os.listdir(filepath ) ]
+                    for f in all_files:
+                        if f.lower() == resource.lower() and os.path.isfile(filepath + f):
+                            return "ocf:" + provider + ":" + f
+                    continue
 
             metadata = get_metadata(filepath + resource)
             if metadata == False:
