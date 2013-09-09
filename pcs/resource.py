@@ -306,6 +306,15 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     if not is_monitor_present:
         op_values.append(['monitor','interval=60s'])
 
+    # Verify all op values are recognized
+    if "--force" not in utils.pcs_options:
+        for op_opts in op_values:
+            for opt in op_opts[1:]:
+                if opt.find('=') != -1:
+                    k,v = opt.split('=',1)
+                    if not utils.is_valid_op_attr(k):
+                        utils.err("%s is not a valid op option (use --force to override)" % k)
+
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
     primitive_values = get_full_ra_type(ra_type)
     primitive_values.insert(0,("id",ra_id))
@@ -557,6 +566,13 @@ def resource_update(res_id,args):
         op.setAttribute("name",op_name)
         op_id = res_id + "-" + op_name
         op_vars = convert_args_to_tuples(element)
+
+        # Verify all op values are recognized
+        if "--force" not in utils.pcs_options:
+            for k,v in op_vars:
+                if not utils.is_valid_op_attr(k):
+                    utils.err("%s is not a valid op option (use --force to override)" % k)
+
         iv = None
         for (key,val) in op_vars:
             if key == "OCF_CHECK_LEVEL":
@@ -619,6 +635,13 @@ def resource_operation_add(res_id, argv):
     op = dom.createElement("op")
     op_id = res_id + "-"
     iv = None
+
+    # Verify all op values are recognized
+    if "--force" not in utils.pcs_options:
+        for k,v in op_properties:
+            if not utils.is_valid_op_attr(k):
+                utils.err("%s is not a valid op option (use --force to override)" % k)
+
     for (key,val) in op_properties:
         if key == "OCF_CHECK_LEVEL":
                 iv = dom.createElement("nvpair")

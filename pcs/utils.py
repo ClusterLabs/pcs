@@ -992,6 +992,12 @@ def write_empty_cib(cibfile):
     f.write(empty_xml)
     f.close()
 
+# Returns true if we have a valid op attribute
+def is_valid_op_attr(attr):
+    if attr in ["id","name","interval","description","start-delay","interval-origin","timeout","enabled", "record-pending", "role", "requires","on-fail", "OCF_CHECK_LEVEL"]:
+        return True
+    return False
+
 # Test if 'var' is a score or option (contains an '=')
 def is_score_or_opt(var):
     if var == "INFINITY" or var == "-INFINITY" or var.isdigit():

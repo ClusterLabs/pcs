@@ -206,8 +206,8 @@ class ResourceTest(unittest.TestCase):
     def testAddOperation(self):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
-        assert returnVal == 0
         ac(output,"")
+        assert returnVal == 0
 
         o,r = pcs(temp_cib, "resource add_operation")
         assert r == 1
@@ -400,8 +400,8 @@ class ResourceTest(unittest.TestCase):
     def testUpdateOpration(self):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
-        assert returnVal == 0
         assert output == ""
+        assert returnVal == 0
 
         line = 'resource update ClusterIP op monitor interval=32s'
         output, returnVal = pcs(temp_cib, line) 
@@ -1237,8 +1237,34 @@ class ResourceTest(unittest.TestCase):
         ac(o,"Error: Resource 'NoExist' not found: No such device or address\nError performing operation: No such device or address\n\n")
         assert r == 1
 
+    def testOPOption(self):
+        o,r = pcs(temp_cib, "resource create A Dummy op monitor interval=30s blah=blah")
+        ac(o,"Error: blah is not a valid op option (use --force to override)\n")
+        assert r == 1
 
+        o,r = pcs(temp_cib, "resource create A Dummy op monitor interval=30s op monitor interval=40s blah=blah")
+        ac(o,"Error: blah is not a valid op option (use --force to override)\n")
+        assert r == 1
 
+        o,r = pcs(temp_cib, "resource create B Dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource update B Dummy op monitor interval=30s blah=blah")
+        ac(o,"Error: blah is not a valid op option (use --force to override)\n")
+        assert r == 1
+
+        o,r = pcs(temp_cib, "resource create C Dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource op add C monitor interval=30s blah=blah")
+        ac(o,"Error: blah is not a valid op option (use --force to override)\n")
+        assert r == 1
+
+        o,r = pcs(temp_cib, "resource show --full")
+        ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (B-monitor-interval-60s)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
+        assert r == 0
 
 if __name__ == "__main__":
     unittest.main()
