@@ -264,6 +264,12 @@ def corosync_setup(argv,returnConfig=False):
             print output
             utils.err("error creating fence dev: %s" % cluster_name)
 
+        if len(nodes) == 2:
+            output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--setcman", "two_node=1", "expected_votes=1"])
+            if retval != 0:
+                print output
+                utils.err("error adding node: %s" % node)
+
         for node in nodes:
             output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--addnode", node])
             if retval != 0:
