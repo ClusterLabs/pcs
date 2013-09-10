@@ -556,9 +556,11 @@ def resource_update(res_id,args):
             continue
         op_name = element.pop(0)
         op = dom.createElement("op")
+        updating_op = False
         for existing_op in operations.getElementsByTagName("op"):
             if existing_op.getAttribute("name") == op_name:
                 op = existing_op
+                updating_op = True
                 for key in op.attributes.keys():
                     op.removeAttribute(key)
                 break
@@ -597,7 +599,8 @@ def resource_update(res_id,args):
                 op.setAttribute("interval","60s")
             else:
                 op.setAttribute("interval","0s")
-        operations.appendChild(op)
+        if not updating_op:
+            operations.appendChild(op)
         
     if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
         instance_attributes.parentNode.removeChild(instance_attributes)

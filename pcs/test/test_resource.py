@@ -329,6 +329,46 @@ class ResourceTest(unittest.TestCase):
         ac(o,"Error: identical operation already exists for OPTest7\n")
         assert r == 1
 
+        o,r = pcs("resource create OCFTest1 Dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource op add OCFTest1 monitor interval=31s")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource op add OCFTest1 monitor interval=30s OCF_CHECK_LEVEL=15")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource show OCFTest1")
+        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-name-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-name-monitor-interval-30s)\n")
+        assert r == 0
+
+        o,r = pcs("resource update OCFTest1 op monitor interval=61s OCF_CHECK_LEVEL=5")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource show OCFTest1")
+        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=61s OCF_CHECK_LEVEL=5 (OCFTest1-monitor-interval-61s)\n              monitor interval=31s (OCFTest1-name-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-name-monitor-interval-30s)\n")
+        assert r == 0
+
+        o,r = pcs("resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource show OCFTest1")
+        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=4 (OCFTest1-monitor)\n              monitor interval=31s (OCFTest1-name-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-name-monitor-interval-30s)\n")
+        assert r == 0
+
+        o,r = pcs("resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4 interval=35s")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource show OCFTest1")
+        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=35s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-35s)\n              monitor interval=31s (OCFTest1-name-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-name-monitor-interval-30s)\n")
+        assert r == 0
+
     def testRemoveOperation(self):
         line = "resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
