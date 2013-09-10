@@ -266,12 +266,12 @@ Commands:
         starting the resource.  This is mainly used for debugging resources
         that fail to start.
 
-    move <resource id> [destination node]
+    move <resource id> [destination node] [--master]
         Move resource off current node (and optionally onto destination node).
         If --master is used the scope of the command is limited to the
         master role. 
 
-    ban <resource id> [node]
+    ban <resource id> [node] [--master]
         Prevent the resource id specified from running on the node (or on the
         current node it is running on if no node is specified).
         If --master is used the scope of the command is limited to the
