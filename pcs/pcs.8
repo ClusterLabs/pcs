@@ -268,7 +268,15 @@ location <resource id> avoids <node[=score]>...
 Create a location constraint on a resource to avoid the specified node and score (default score: INFINITY)
 .TP
 location <resource id> rule [rule_id] [role=master|slave]
-[score=<score>] <expression> Creates a location rule on the specified resource where the expression looks like one of the following: defined|not_defined <attribute> <attribute> lt|gt|lte|gte|eq|ne <value> date [start=<start>] [end=<end>] operation=gt|lt|in\-range date\-spec <date spec options>...
+[score=<score>] <expression> Creates a location rule on the specified resource where the expression looks like one of the following:
+.br
+  defined|not_defined <attribute>
+.br
+  <attribute> lt|gt|lte|gte|eq|ne <value>
+.br
+  date [start=<start>] [end=<end>] operation=gt|lt|in\-range
+.br
+  date\-spec <date spec options>...
 .TP
 location show [resources|nodes [node id|resource id]...]
 List all the current location constraints, if 'resources' is specified location constraints are displayed per resource (default), if 'nodes' is specified location constraints are displayed per node.  If specific nodes or resources are specified then we only show information about them
