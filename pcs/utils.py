@@ -640,6 +640,7 @@ def does_id_exist(dom, check_id):
 
 # Adds the specified rule to the element in the dom
 def rule_add(elem, argv):
+# Check if valid rule argv
     rule_type = "expression"
     if len(argv) != 0:
         if argv[0] == "date":
@@ -665,6 +666,9 @@ def rule_add(elem, argv):
         if arg.find('=') == -1:
             exp_arg.append(arg)
         
+    if exp_arg[0] not in ["defined","not_defined", "date", "date-spec"] and len(exp_arg) >= 2 and exp_arg[1] not in ["lt","gt","lte","gte","eq","ne"]:
+        err("'%s' is not a valid rule expression" % " ".join(exp_arg))
+
     date_spec = False
 
     if len(exp_arg) >= 1:
@@ -697,6 +701,8 @@ def rule_add(elem, argv):
                 rule.set(arg[0], arg[1])
             else:
                 rule.set("score-attribute","pingd")
+        elif arg[0] == "role":
+                rule.set(arg[0], arg[1])
         else:
             if date_spec:
                 if arg[0] == "operation":

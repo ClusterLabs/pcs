@@ -134,8 +134,8 @@ class ConstraintTest(unittest.TestCase):
         assert output == "", [output]
 
         output, returnVal = pcs(temp_cib, "constraint location D6 rule score=INFINITY date-spec operation=date_spec years=2005")
-        assert returnVal == 0
         assert output == "", [output]
+        assert returnVal == 0
 
 # We don't support and/or yet
 #        output, returnVal = pcs(temp_cib, "constraint location D3 rule score=-INFINITY not_defined pingd or pingd lte 0")
@@ -337,6 +337,31 @@ class ConstraintTest(unittest.TestCase):
         o, r = pcs(temp_cib, "constraint --full")
         assert r == 0
         ac (o,'Location Constraints:\n  Resource: D2\n      Rule: score=INFINITY  (id:location-D2-rh7-2-INFINITY-rule) \n        Expression:  (id:location-D2-rh7-2-INFINITY-rule-expr) \n          Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
+
+    def testLocationBadRules(self):
+        o,r = pcs("resource create stateful0 Dummy --master")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint location stateful0 rule role=master '#uname' eq rh7-1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint --full")
+        ac(o,"Location Constraints:\n  Resource: stateful0\n      Rule: score=INFINITY role=master  (id:location-stateful0-rule) \n        Expression: #uname eq rh7-1  (id:location-stateful0-rule-expr) \nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
+
+        o,r = pcs("resource create stateful1 Dummy --master")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint location stateful1 rule rulename '#uname' eq rh7-1")
+        ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression\n")
+        assert r == 1
+
+        o,r = pcs("constraint location stateful1 rule role=master rulename '#uname' eq rh7-1")
+        ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression\n")
+        assert r == 1
 
 if __name__ == "__main__":
     unittest.main()

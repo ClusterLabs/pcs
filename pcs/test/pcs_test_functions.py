@@ -7,7 +7,10 @@ import utils
 pcs_location = "../pcs.py"
 
 # Run pcs with -f on specified file
-def pcs(testfile, args):
+def pcs(testfile, args = ""):
+    if args == "":
+        args = testfile
+        testfile = "temp.xml"
     arg_split = args.split()
     arg_split_temp = []
     in_quote = False

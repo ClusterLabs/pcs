@@ -649,8 +649,7 @@ Commands:
         Create a location constraint on a resource to avoid the specified
         node and score (default score: INFINITY)
 
-    location <resource id> rule [rule_id] [role=master|slave]
-             [score=<score>] <expression>
+    location <resource id> rule [role=master|slave] [score=<score>] <expression>
         Creates a location rule on the specified resource where the expression
         looks like one of the following:
           defined|not_defined <attribute>
