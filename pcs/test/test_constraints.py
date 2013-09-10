@@ -40,70 +40,6 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D7 Dummy"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create D8 Dummy"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create D9 Dummy"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create D0 Dummy"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create M1 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create M2 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create M3 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M4 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M5 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M6 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M7 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M8 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M9 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == "",[returnVal, output]
-
-        line = "resource create M10 Dummy --master"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource group add G1 D0"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource group add G2 D1 D2"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0 and output == ""
-
         line = "resource clone D3"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
@@ -196,6 +132,46 @@ class ConstraintTest(unittest.TestCase):
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
 
     def testColocationConstraints(self):
+        line = "resource create M1 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M2 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create M3 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == "",[returnVal, output]
+
+        line = "resource create M4 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == "",[returnVal, output]
+
+        line = "resource create M5 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == "",[returnVal, output]
+
+        line = "resource create M6 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == "",[returnVal, output]
+
+        line = "resource create M7 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == "",[returnVal, output]
+
+        line = "resource create M8 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == "",[returnVal, output]
+
+        line = "resource create M9 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == "",[returnVal, output]
+
+        line = "resource create M10 Dummy --master"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
         o, r = pcs(temp_cib, "constraint colocation add D1 D3")
         assert r == 0 and o == "", o
 
@@ -224,6 +200,18 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0 and o == 'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  D4 with D5 (100)\n  M1 with M2 (rsc-role:Master) (with-rsc-role:Master)\n  M3 with M4\n  M5 with M6 (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7 with M8 (rsc-role:Started) (with-rsc-role:Master)\n  M9 with M10 (rsc-role:Slave) (with-rsc-role:Started)\n', [o]
         
     def testColocationSets(self):
+        line = "resource create D7 Dummy"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D8 Dummy"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D9 Dummy"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
         o, r = pcs(temp_cib, "constraint colocation set D5 D6 D7 sequential=false set D8 D9 sequential=true setoptions score=INFINITY ")
         ac(o,"")
         assert r == 0
@@ -265,6 +253,18 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
         
     def testOrderSets(self):
+        line = "resource create D7 Dummy"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D8 Dummy"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D9 Dummy"
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0 and output == ""
+
         o, r = pcs(temp_cib, "constraint order set D5 D6 D7 sequential=false set D8 D9 sequential=true")
         ac(o,"")
         assert r == 0
