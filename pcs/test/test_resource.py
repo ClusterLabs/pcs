@@ -1065,7 +1065,7 @@ class ResourceTest(unittest.TestCase):
 
         output, returnVal  = pcs(temp_cib, "resource move D2")
         assert returnVal == 1
-        assert output == "Error: unable to move Master/Slave resources\n", [output]
+        assert output == "Error: unable to move Master/Slave resources (without --master)\n", [output]
 
         output, returnVal  = pcs(temp_cib, "resource --full")
         assert returnVal == 0

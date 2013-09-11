@@ -345,6 +345,14 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
         ac (o,'Location Constraints:\n  Resource: D2\n      Rule: score=INFINITY  (id:location-D2-rh7-2-INFINITY-rule) \n        Expression:  (id:location-D2-rh7-2-INFINITY-rule-expr) \n          Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
 
+        o,r = pcs("constraint location D1 rule role=master")
+        ac (o,"Error: no rule expression was specified\n")
+        assert r == 1
+
+        o,r = pcs("constraint location non-existant-resource rule role=master '#uname' eq rh7-1")
+        ac (o,"Error: 'non-existant-resource' is not a resource\n")
+        assert r == 1
+
     def testLocationBadRules(self):
         o,r = pcs("resource create stateful0 Dummy --master")
         ac(o,"")

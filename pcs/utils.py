@@ -665,6 +665,8 @@ def rule_add(elem, argv):
     for arg in argv:
         if arg.find('=') == -1:
             exp_arg.append(arg)
+    if len(exp_arg) == 0:
+        err("no rule expression was specified")
         
     if exp_arg[0] not in ["defined","not_defined", "date", "date-spec"] and len(exp_arg) >= 2 and exp_arg[1] not in ["lt","gt","lte","gte","eq","ne"]:
         err("'%s' is not a valid rule expression" % " ".join(exp_arg))
