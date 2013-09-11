@@ -714,7 +714,7 @@ Commands:
         Remove colocation constraints with <source resource>
 
     remove [constraint id]...
-        Remove constraint(s) with the specified id(s)
+        Remove constraint(s) or constraint rules with the specified id(s)
 
     ref [resource]...
         List constraints referencing specified resource

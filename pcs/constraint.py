@@ -827,6 +827,15 @@ def constraint_rm(argv,returnStatus=False, constraintsElement=None):
             constraintsElement.removeChild(co)
             elementFound = True
 
+    if not elementFound:
+        for rule in constraintsElement.getElementsByTagName("rule")[:]:
+            if rule.getAttribute("id") == c_id:
+                elementFound = True
+                parent = rule.parentNode
+                parent.removeChild(rule)
+                if len(parent.getElementsByTagName("rule")) == 0:
+                    parent.parentNode.removeChild(parent)
+
     if elementFound == True:
         if use_cibadmin:
             xml_constraint_string = constraintsElement.toxml()
