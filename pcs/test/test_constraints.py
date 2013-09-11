@@ -84,7 +84,7 @@ class ConstraintTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "constraint --full")
         assert returnVal == 0
-        ac (output,'Location Constraints:\n  Resource: D1\n      Rule: score=222  (id:location-D1-rule) \n        Expression: #uname eq c00n03  (id:location-D1-rule-expr) \n  Resource: D2\n      Rule: score=-INFINITY  (id:location-D2-rule) \n        Expression: #uname eq c00n04  (id:location-D2-rule-expr) \n  Resource: D3\n      Rule: score-attribute=pingd  (id:location-D3-rule) \n        Expression: defined pingd  (id:location-D3-rule-expr) \n  Resource: D4\n      Rule: score=INFINITY  (id:location-D4-rule) \n        Expression: start=2005-001 operation=gt  (id:location-D4-rule-expr) \n  Resource: D5\n      Rule: score=INFINITY  (id:location-D5-rule) \n        Expression: start=2005-001 operation=in_range end=2006-001  (id:location-D5-rule-expr) \n  Resource: D6\n      Rule: score=INFINITY  (id:location-D6-rule) \n        Expression:  (id:location-D6-rule-expr) \n          Date Spec: years=2005  (id:location-D6-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
+        ac (output,'Location Constraints:\n  Resource: D1\n    Constraint: location-D1\n      Rule: score=222  (id:location-D1-rule) \n        Expression: #uname eq c00n03  (id:location-D1-rule-expr) \n  Resource: D2\n    Constraint: location-D2\n      Rule: score=-INFINITY  (id:location-D2-rule) \n        Expression: #uname eq c00n04  (id:location-D2-rule-expr) \n  Resource: D3\n    Constraint: location-D3\n      Rule: score-attribute=pingd  (id:location-D3-rule) \n        Expression: defined pingd  (id:location-D3-rule-expr) \n  Resource: D4\n    Constraint: location-D4\n      Rule: score=INFINITY  (id:location-D4-rule) \n        Expression: start=2005-001 operation=gt  (id:location-D4-rule-expr) \n  Resource: D5\n    Constraint: location-D5\n      Rule: score=INFINITY  (id:location-D5-rule) \n        Expression: start=2005-001 operation=in_range end=2006-001  (id:location-D5-rule-expr) \n  Resource: D6\n    Constraint: location-D6\n      Rule: score=INFINITY  (id:location-D6-rule) \n        Expression:  (id:location-D6-rule-expr) \n          Date Spec: years=2005  (id:location-D6-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
 
         o,r = pcs("constraint remove location-D4-rule")
         ac(o,"")
@@ -92,7 +92,7 @@ class ConstraintTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "constraint --full")
         assert returnVal == 0
-        ac (output,'Location Constraints:\n  Resource: D1\n      Rule: score=222  (id:location-D1-rule) \n        Expression: #uname eq c00n03  (id:location-D1-rule-expr) \n  Resource: D2\n      Rule: score=-INFINITY  (id:location-D2-rule) \n        Expression: #uname eq c00n04  (id:location-D2-rule-expr) \n  Resource: D3\n      Rule: score-attribute=pingd  (id:location-D3-rule) \n        Expression: defined pingd  (id:location-D3-rule-expr) \n  Resource: D5\n      Rule: score=INFINITY  (id:location-D5-rule) \n        Expression: start=2005-001 operation=in_range end=2006-001  (id:location-D5-rule-expr) \n  Resource: D6\n      Rule: score=INFINITY  (id:location-D6-rule) \n        Expression:  (id:location-D6-rule-expr) \n          Date Spec: years=2005  (id:location-D6-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
+        ac (output,'Location Constraints:\n  Resource: D1\n    Constraint: location-D1\n      Rule: score=222  (id:location-D1-rule) \n        Expression: #uname eq c00n03  (id:location-D1-rule-expr) \n  Resource: D2\n    Constraint: location-D2\n      Rule: score=-INFINITY  (id:location-D2-rule) \n        Expression: #uname eq c00n04  (id:location-D2-rule-expr) \n  Resource: D3\n    Constraint: location-D3\n      Rule: score-attribute=pingd  (id:location-D3-rule) \n        Expression: defined pingd  (id:location-D3-rule-expr) \n  Resource: D5\n    Constraint: location-D5\n      Rule: score=INFINITY  (id:location-D5-rule) \n        Expression: start=2005-001 operation=in_range end=2006-001  (id:location-D5-rule-expr) \n  Resource: D6\n    Constraint: location-D6\n      Rule: score=INFINITY  (id:location-D6-rule) \n        Expression:  (id:location-D6-rule-expr) \n          Date Spec: years=2005  (id:location-D6-rule-expr-datespec) \nOrdering Constraints:\nColocation Constraints:\n')
 
     def testEmptyConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint")
@@ -363,7 +363,7 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\n  Resource: stateful0\n      Rule: score=INFINITY role=master  (id:location-stateful0-rule) \n        Expression: #uname eq rh7-1  (id:location-stateful0-rule-expr) \nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: stateful0\n    Constraint: location-stateful0\n      Rule: score=INFINITY role=master  (id:location-stateful0-rule) \n        Expression: #uname eq rh7-1  (id:location-stateful0-rule-expr) \nOrdering Constraints:\nColocation Constraints:\n")
         assert r == 0
 
         o,r = pcs("resource create stateful1 Dummy --master")
