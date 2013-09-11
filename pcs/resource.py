@@ -359,8 +359,8 @@ def resource_move(argv,clear=False,ban=False):
     if utils.is_resource_clone(resource_id) and not clear and not ban:
         utils.err("cannot move cloned resources")
 
-    if utils.is_resource_masterslave(resource_id) and not clear and not ban:
-        utils.err("unable to move Master/Slave resources")
+    if utils.is_resource_masterslave(resource_id) and not clear and not ban and not "--master" in utils.pcs_options:
+        utils.err("unable to move Master/Slave resources (without --master)")
 
     if "--master" in utils.pcs_options:
         other_options.append("--master")
