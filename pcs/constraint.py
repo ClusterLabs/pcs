@@ -533,6 +533,7 @@ def location_show(argv):
                     if n != "id":
                         rule_string += n + "=" + v + " " 
                 rule_id = rule.getAttribute("id")
+                constraint_id = rule.parentNode.getAttribute("id")
                 for exp in rule.childNodes:
                     if exp.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                         continue
@@ -565,7 +566,7 @@ def location_show(argv):
                     exp_full_string += exp_string
 
                     exphash.append([exp.getAttribute("id"),exp_full_string])
-                ruleshash[lc_name].append([rule_id, rule_string, exphash]) 
+                ruleshash[lc_name].append([rule_id, rule_string, exphash, constraint_id]) 
 
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
 # rsc_location)
@@ -659,24 +660,30 @@ def location_show(argv):
 
 def show_location_rules(ruleshash,showDetail,datespechash,noheader=False):
     for rsc in ruleshash:
+        constrainthash= defaultdict(list)
         if not noheader:
             print "  " + rsc
-        for res_id,rule,exphash in ruleshash[rsc]:
-            print "      Rule: " + rule,
-            if showDetail:
-                print "(id:%s)" % (res_id),
-            print ""
-            for exp_id,exp in exphash:
-                exp = exp.replace("operation=date_spec ","")
-                print "        Expression: " + exp,
+        for res_id,rule,exphash,constraint_id in ruleshash[rsc]:
+            constrainthash[constraint_id].append([res_id,rule,exphash])
+
+        for constraint_id in constrainthash.keys():
+            print "    Constraint: " + constraint_id
+            for res_id, rule, exphash in constrainthash[constraint_id]:
+                print "      Rule: " + rule,
                 if showDetail:
-                    print "(id:%s)" % (exp_id),
+                    print "(id:%s)" % (res_id),
                 print ""
-                for ds_id, ds in datespechash[exp_id]:
-                    print "          Date Spec: " + ds,
+                for exp_id,exp in exphash:
+                    exp = exp.replace("operation=date_spec ","")
+                    print "        Expression: " + exp,
                     if showDetail:
-                        print "(id:%s)" % (ds_id),
+                        print "(id:%s)" % (exp_id),
                     print ""
+                    for ds_id, ds in datespechash[exp_id]:
+                        print "          Date Spec: " + ds,
+                        if showDetail:
+                            print "(id:%s)" % (ds_id),
+                        print ""
 
 
 def location_prefer(argv):
