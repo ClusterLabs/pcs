@@ -287,7 +287,7 @@ def corosync_setup(argv,returnConfig=False):
     if "--start" in utils.pcs_options:
         start_cluster([])
     if "--enable" in utils.pcs_options:
-        enableCluster([])
+        enable_cluster([])
 
 def get_local_network():
     args = ["/sbin/ip", "route"]
