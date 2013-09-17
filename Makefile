@@ -41,7 +41,8 @@ uninstall:
 	rm -rf ${DESTDIR}/var/lib/pcsd
 
 tarball: bash_completion
-	python setup.py sdist
+	python setup.py sdist --formats=tar
+	python maketarballs.py
 
 newversion:
 	python newversion.py
