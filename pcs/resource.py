@@ -1159,7 +1159,8 @@ def resource_master_remove(argv):
 
 def resource_remove(resource_id, output = True):
     if utils.does_exist('//master[@id="'+resource_id+'"]'):
-        utils.err("%s is not a resource (it can be removed by removing the resource it constains)" % (resource_id))
+        master = parseString(utils.get_cib_xpath('//master[@id="'+resource_id+'"]'))
+        resource_id = master.getElementsByTagName("primitive")[0].getAttribute("id")
 
     if utils.does_exist('//group[@id="'+resource_id+'"]'):
         print "Removing group: " + resource_id + " (and all resources within group)"
@@ -1176,7 +1177,8 @@ def resource_remove(resource_id, output = True):
         sys.exit(0)
 
     if utils.does_exist('//clone[@id="'+resource_id+'"]'):
-        utils.err("%s is not a resource (it can be removed with 'resource unclone %s')" % (resource_id, resource_id))
+        clone = parseString(utils.get_cib_xpath('//clone[@id="'+resource_id+'"]'))
+        resource_id = clone.getElementsByTagName("primitive")[0].getAttribute("id")
 
     group = utils.get_cib_xpath('//group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0

@@ -486,7 +486,7 @@ class ResourceTest(unittest.TestCase):
         ac(o," Resource Group: AGroup\n     A1\t(ocf::heartbeat:Dummy):\tStopped \n     A2\t(ocf::heartbeat:Dummy):\tStopped \n     A3\t(ocf::heartbeat:Dummy):\tStopped \n")
 
         o,r = pcs(temp_cib, "resource delete AGroup")
-        ac(o,"Removing group: AGroup (and all resources within group)\nDeleting Resource - A1\nDeleting Resource - A2\nDeleting Resource (and group) - A3\n")
+        ac(o,"Removing group: AGroup (and all resources within group)\nStopping all resources in group: AGroup...\nDeleting Resource - A1\nDeleting Resource - A2\nDeleting Resource (and group) - A3\n")
         assert r == 0
         
         o,r = pcs(temp_cib, "resource show")
@@ -630,6 +630,27 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         ac (output,'Cluster Name: test99\nCorosync Nodes:\n rh7-1 rh7-2 \nPacemaker Nodes:\n \n\nResources: \n Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)\n Group: TestGroup1\n  Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)\n Group: TestGroup2\n  Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)\n  Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)\n Clone: ClusterIP4-clone\n  Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)\n Master: Master\n  Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)\n\nStonith Devices: \nFencing Levels: \n\nLocation Constraints:\nOrdering Constraints:\nColocation Constraints:\n\nCluster Properties:\n')
 
+    def testCloneRemove(self):
+        o,r = pcs("resource create D1 Dummy --clone")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs("constraint location D1 prefers rh7-1")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs("resource --full")
+        assert r == 0
+        ac(o," Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n")
+
+        o,r = pcs("resource delete D1-clone")
+        assert r == 0
+        ac(o,"Removing Constraint - location-D1-rh7-1-INFINITY\nDeleting Resource - D1\n")
+
+        o,r = pcs("resource --full")
+        assert r == 0
+        ac(o,"")
+
     def testMasterSlaveRemove(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
@@ -641,8 +662,20 @@ class ResourceTest(unittest.TestCase):
         assert output == ""
 
         output, returnVal = pcs(temp_cib, "resource delete Master")
-        assert returnVal == 1
-        assert output == "Error: Master is not a resource (it can be removed by removing the resource it constains)\n",[output]
+        assert returnVal == 0
+        ac(output,"Removing Constraint - location-ClusterIP5-rh7-1-INFINITY\nRemoving Constraint - location-ClusterIP5-rh7-2-INFINITY\nDeleting Resource - ClusterIP5\n")
+
+        output, returnVal = pcs(temp_cib, "resource create ClusterIP5 Dummy")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
+        assert returnVal == 0
+        assert output == ""
+
+        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
+        assert returnVal == 0
+        assert output == ""
 
         output, returnVal = pcs(temp_cib, "resource delete ClusterIP5")
         assert returnVal == 0

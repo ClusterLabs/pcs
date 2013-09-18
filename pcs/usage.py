@@ -242,8 +242,9 @@ Commands:
                  192.168.0.99, netmask of 32, monitored everything 30 seconds,
                  on eth2.
 
-    delete <resource id|group id>
-        Deletes the resource or group (and all grouped resources).
+    delete <resource id|group id|master id|clone id>
+        Deletes the resource, group, master or clone (and all resources within
+        the group/master/clone).
 
     enable <resource id> [--wait[=n]]
         Allow the cluster to start the resource. Depending on the rest of the
