@@ -1100,6 +1100,14 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 1
         assert output == "Error: unable to move Master/Slave resources (without --master)\n", [output]
 
+        output, returnVal  = pcs(temp_cib, "resource move D2 --master")
+        ac(output,"Error: when specifying --master you must use the master id (instead of the resource id).\n")
+        assert returnVal == 1
+
+        output, returnVal  = pcs(temp_cib, "resource move D2-master --master")
+        ac(output,"Error: error moving/banning/clearing resource\nResource 'D2-master' not moved: currently promoted in 0 locations.\nYou can prevent 'D2-master' from being promoted at a specific location with: --ban --master --host <name>\nError performing operation: Invalid argument\n\n")
+        assert returnVal == 1
+
         output, returnVal  = pcs(temp_cib, "resource --full")
         assert returnVal == 0
         assert output == ' Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D0-monitor-interval-60s)\n Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]

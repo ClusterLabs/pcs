@@ -69,13 +69,13 @@ debug\-start <resource id>
 This command will force the specified resource to start on this node ignoring the cluster recommendations and print the output from starting the resource.  This is mainly used for debugging resources that fail to start.
 .TP
 move <resource id> [destination node] [--master]
-Move resource off current node (and optionally onto destination node). If --master is used the scope of the command is limited to the master role.
+Move resource off current node (and optionally onto destination node). If --master is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
 .TP
 ban <resource id> [node] [--master]
-Prevent the resource id specified from running on the node (or on the current node it is running on if no node is specified). If --master is used the scope of the command is limited to the master role.
+Prevent the resource id specified from running on the node (or on the current node it is running on if no node is specified). If --master is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
 .TP
 clear <resource id> [node] [--master]
-Remove constraints created by move and/or ban on the specified resource (and node if specified). If --master is used the scope of the command is limited to the master role.
+Remove constraints created by move and/or ban on the specified resource (and node if specified). If --master is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
 .TP
 standards
 List available resource agent standards supported by this installation. (OCF, LSB, etc.)
