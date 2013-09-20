@@ -1098,7 +1098,7 @@ class ResourceTest(unittest.TestCase):
 
         output, returnVal  = pcs(temp_cib, "resource move D2")
         assert returnVal == 1
-        assert output == "Error: unable to move Master/Slave resources (without --master)\n", [output]
+        assert output == "Error: to move Master/Slave resources you must use --master and the master id\n", [output]
 
         output, returnVal  = pcs(temp_cib, "resource move D2 --master")
         ac(output,"Error: when specifying --master you must use the master id (instead of the resource id).\n")

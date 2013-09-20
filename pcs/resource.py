@@ -360,7 +360,7 @@ def resource_move(argv,clear=False,ban=False):
         utils.err("cannot move cloned resources")
 
     if utils.is_resource_masterslave(resource_id) and not clear and not ban and not "--master" in utils.pcs_options:
-        utils.err("unable to move Master/Slave resources (without --master)")
+        utils.err("to move Master/Slave resources you must use --master and the master id")
 
     if "--master" in utils.pcs_options and not utils.does_exist("//master[@id='"+resource_id+"']"):
         utils.err("when specifying --master you must use the master id (instead of the resource id).")
