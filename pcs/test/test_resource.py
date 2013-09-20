@@ -1347,6 +1347,24 @@ class ResourceTest(unittest.TestCase):
         ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (B-monitor-interval-60s)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
         assert r == 0
 
+    def testCloneMasterBadResources(self):
+        self.setupClusterA(temp_cib)
+        o,r = pcs("resource clone ClusterIP4")
+        ac(o,"Error: ClusterIP4 is already a clone resource\n")
+        assert r == 1
+
+        o,r = pcs("resource clone ClusterIP5")
+        ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
+        assert r == 1
+
+        o,r = pcs("resource master ClusterIP4")
+        ac(o,"Error: ClusterIP4 is already a clone resource\n")
+        assert r == 1
+
+        o,r = pcs("resource master ClusterIP5")
+        ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
+        assert r == 1
+
 if __name__ == "__main__":
     unittest.main()
 

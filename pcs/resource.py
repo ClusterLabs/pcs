@@ -964,6 +964,12 @@ def resource_clone_create(argv, update = False):
     if element == None:
         utils.err("unable to find group or resource: %s" % name)
 
+    if utils.is_resource_clone(name):
+        utils.err("%s is already a clone resource" % name)
+
+    if utils.is_resource_masterslave(name):
+        utils.err("%s is already a master/slave resource" % name)
+
     # If element is currently in a group and it's the last member, we get rid of the group
     if element.parentNode.tagName == "group" and element.parentNode.getElementsByTagName("primitive").length <= 1:
         element.parentNode.parentNode.removeChild(element.parentNode)
@@ -975,9 +981,6 @@ def resource_clone_create(argv, update = False):
         for ma in clone.getElementsByTagName("meta_attributes"):
             clone.removeChild(ma)
     else:
-        for c in re.getElementsByTagName("clone"):
-            if c.getAttribute("id") == name + "-clone":
-                utils.err("clone already exists for: %s" % name)
         clone = dom.createElement("clone")
         clone.setAttribute("id",name + "-clone")
         clone.appendChild(element)
@@ -1074,6 +1077,13 @@ def resource_master_create(argv, update=False):
         rg_id = argv.pop(0)
         if utils.does_id_exist(dom, master_id):
             utils.err("%s already exists in the cib" % master_id)
+
+        if utils.is_resource_clone(rg_id):
+            utils.err("%s is already a clone resource" % rg_id)
+
+        if utils.is_resource_masterslave(rg_id):
+            utils.err("%s is already a master/slave resource" % rg_id)
+
         resources = dom.getElementsByTagName("resources")[0]
         rg_found = False
         for resource in (resources.getElementsByTagName("primitive") +
