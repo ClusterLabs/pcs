@@ -98,6 +98,19 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "constraint")
         assert returnVal == 0 and output == "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n", output
 
+    def testMultipleOrderConstraints(self):
+        o,r = pcs("constraint order stop D1 then stop D2")
+        ac(o,"Adding D1 D2 (kind: Mandatory) (Options: first-action=stop then-action=stop)\n")
+        assert r == 0
+
+        o,r = pcs("constraint order start D1 then start D2")
+        ac(o,"Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)\n")
+        assert r == 0
+
+        o,r = pcs("constraint --full")
+        ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\n")
+        assert r == 0
+
     def testAllConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output

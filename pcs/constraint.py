@@ -464,8 +464,7 @@ def order_add(argv,returnElementOnly=False):
     print "Adding " + resource1 + " " + resource2 + " ("+scorekind+")" + options
 
     order_id = "order-" + resource1 + "-" + resource2 + "-" + id_suffix
-    if utils.does_id_exist(utils.get_cib_dom(), order_id):
-        utils.err("Unable to create constraint, similar constraint already exists: %s" % order_id)
+    order_id = utils.find_unique_id(utils.get_cib_dom(), order_id)
 
     (dom,constraintsElement) = getCurrentConstraints()
     element = dom.createElement("rsc_order")
