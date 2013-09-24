@@ -707,7 +707,7 @@ Commands:
         A role can be master or slave (if no role is specified, it defaults to
         'started').
 
-    colocation set <resource1> <resource2> [resourceN]... [options] ...
+    colocation set <resource1> <resource2> [resourceN]... [setoptions] ...
                [set <resourceX> <resourceY> ...] [setoptions <name>=<value>...]
         Create a colocation constraint with a resource set
 

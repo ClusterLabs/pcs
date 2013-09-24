@@ -305,7 +305,7 @@ List all current colocation constraints (if '\-\-full' is specified show the int
 colocation add [master|slave] <source resource id> with [master|slave]
 <target resource id> [score] [options] Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score force <source resource> to run (or not run) with <target resource>. (score defaults to "INFINITY") A role can be master or slave (if no role is specified, it defaults to 'started').
 .TP
-colocation set <resource1> <resource2> [resourceN]... [options] ...
+colocation set <resource1> <resource2> [resourceN]... [setoptions] ...
 [set <resourceX> <resourceY> ...] [setoptions <name>=<value>...] Create a colocation constraint with a resource set
 .TP
 colocation remove <source resource id> <target resource id>
