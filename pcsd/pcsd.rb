@@ -51,6 +51,7 @@ before do
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
+  @@cluster_name = get_cluster_version()
 end
 
 configure do
@@ -82,7 +83,6 @@ configure do
     $logger.level = Logger::INFO
   end
 
-  @@cluster_name = get_cluster_version()
 
   if not defined? @@cur_node_name
     @@cur_node_name = `hostname`.chomp
