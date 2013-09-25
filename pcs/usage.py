@@ -721,7 +721,7 @@ Commands:
         List constraints referencing specified resource
 
     rule add <constraint id> [<rule type>] [score=<score>] [id=<rule id>]
-        <expression|expression|date options>...
+        <expression|date_expression|date_spec>...
         Add a rule to a constraint, if score is omitted it defaults to
         INFINITY, if id is omitted one is generated from the constraint id.
         The <rule type> should be 'expression' or 'date_expression'
