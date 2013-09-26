@@ -115,17 +115,19 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
 
-        output, returnVal = pcs(temp_cib, "constraint order D4 then D5")
-        assert returnVal == 0 and output == "Adding D4 D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n", output
+        output, returnVal = pcs(temp_cib, "constraint order Master then D5")
+        assert returnVal == 0 and output == "Adding Master D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n", output
 
-        output, returnVal = pcs(temp_cib, "constraint colocation add D4 with D5")
+        output, returnVal = pcs(temp_cib, "constraint colocation add Master with D5")
         assert returnVal == 0 and output == "", output
 
         output, returnVal = pcs(temp_cib, "constraint --full")
-        assert returnVal == 0 and output == "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start D4 then start D5 (Mandatory) (id:order-D4-D5-mandatory)\nColocation Constraints:\n  D4 with D5 (INFINITY) (id:colocation-D4-D5-INFINITY)\n", output
+        assert returnVal == 0
+        ac (output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (INFINITY) (id:colocation-Master-D5-INFINITY)\n")
 
         output, returnVal = pcs(temp_cib, "constraint show --full")
-        assert returnVal == 0 and output == "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start D4 then start D5 (Mandatory) (id:order-D4-D5-mandatory)\nColocation Constraints:\n  D4 with D5 (INFINITY) (id:colocation-D4-D5-INFINITY)\n", output
+        assert returnVal == 0
+        ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (INFINITY) (id:colocation-Master-D5-INFINITY)\n")
 
     def testLocationConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
@@ -198,26 +200,26 @@ class ConstraintTest(unittest.TestCase):
         o, r = pcs(temp_cib, "constraint colocation add D1 D2 100")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add D4 with D5 100")
+        o, r = pcs(temp_cib, "constraint colocation add Master with D5 100")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add master M1 with master M2")
+        o, r = pcs(temp_cib, "constraint colocation add master M1-master with master M2-master")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add M3 with M4")
+        o, r = pcs(temp_cib, "constraint colocation add M3-master with M4-master")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add slave M5 with started M6 500")
+        o, r = pcs(temp_cib, "constraint colocation add slave M5-master with started M6-master 500")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add M7 with Master M8")
+        o, r = pcs(temp_cib, "constraint colocation add M7-master with Master M8-master")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add Slave M9 with M10")
+        o, r = pcs(temp_cib, "constraint colocation add Slave M9-master with M10-master")
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint")
-        assert r == 0 and o == 'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  D4 with D5 (100)\n  M1 with M2 (rsc-role:Master) (with-rsc-role:Master)\n  M3 with M4\n  M5 with M6 (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7 with M8 (rsc-role:Started) (with-rsc-role:Master)\n  M9 with M10 (rsc-role:Slave) (with-rsc-role:Started)\n', [o]
+        assert r == 0 and o == 'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  Master with D5 (100)\n  M1-master with M2-master (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master\n  M5-master with M6-master (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (rsc-role:Slave) (with-rsc-role:Started)\n', [o]
         
     def testColocationSets(self):
         line = "resource create D7 Dummy"
@@ -390,6 +392,41 @@ class ConstraintTest(unittest.TestCase):
         o,r = pcs("constraint location stateful1 rule role=master rulename '#uname' eq rh7-1")
         ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression\n")
         assert r == 1
+
+    def testMasterSlaveConstraint(self):
+        os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
+
+        o,r = pcs("resource create dummy1 dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource create stateful1 stateful --master")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint order stateful1 then dummy1")
+        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        assert r == 1
+
+        o,r = pcs("constraint order dummy1 then stateful1")
+        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        assert r == 1
+
+        o,r = pcs("constraint colocation add stateful1 with dummy1")
+        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        assert r == 1
+
+        o,r = pcs("constraint colocation add dummy1 with stateful1")
+        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        assert r == 1
+
+        o,r = pcs("constraint order dummy1 then stateful1")
+        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        assert r == 1
+
+        o,r = pcs("constraint --full")
+        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
 
 if __name__ == "__main__":
     unittest.main()

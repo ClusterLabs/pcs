@@ -203,6 +203,10 @@ def colocation_add(argv):
     if not utils.is_valid_constraint_resource(resource2):
         utils.err("Resource '" + resource2 + "' does not exist")
 
+    if utils.is_resource_masterslave(resource1):
+        utils.err(resource1 + " is a master/slave resource, you must use the master id: "+utils.get_resource_master_id(resource1)+ " when adding constraints")
+    if utils.is_resource_masterslave(resource2):
+        utils.err(resource2 + " is a master/slave resource, you must use the master id: "+utils.get_resource_master_id(resource2)+ " when adding constraints")
     score,nv_pairs = parse_score_options(argv)
 
     (dom,constraintsElement) = getCurrentConstraints()
@@ -410,6 +414,11 @@ def order_start(argv):
         usage.constraint()
         sys.exit(1)
     resource2 = argv.pop(0)
+
+    if utils.is_resource_masterslave(resource1):
+        utils.err(resource1 + " is a master/slave resource, you must use the master id: "+utils.get_resource_master_id(resource1)+ " when adding constraints")
+    if utils.is_resource_masterslave(resource2):
+        utils.err(resource2 + " is a master/slave resource, you must use the master id: "+utils.get_resource_master_id(resource2)+ " when adding constraints")
 
     order_options = []
     if len(argv) != 0:

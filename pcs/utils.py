@@ -456,6 +456,15 @@ def is_resource_clone(resource_id):
 def is_resource_masterslave(resource_id):
     return does_exist("//master//primitive[@id='"+resource_id+"']")
 
+def get_resource_master_id(resource_id):
+    dom = get_cib_dom()
+    primitives = dom.getElementsByTagName("primitive")
+    for p in primitives:
+        if p.getAttribute("id") == resource_id:
+            if p.parentNode.tagName == "master":
+                return p.parentNode.getAttribute("id")
+    return None
+
 def is_valid_constraint_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"']") or \
             does_exist("//group[@id='"+resource_id+"']") or \
