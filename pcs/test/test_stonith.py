@@ -339,6 +339,31 @@ class StonithTest(unittest.TestCase):
         assert r == 1
         ac(o,"Error: FBad is not a stonith id\n")
 
+    def testNoStonithWarning(self):
+        o,r = pcs("status")
+        assert "WARNING: no stonith devices and " in o
+        assert r == 0
+
+        o,r = pcs("stonith create test_stonith fence_apc")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("status")
+        assert "WARNING: no stonith devices and " not in o
+        assert r == 0
+
+        o,r = pcs("stonith delete test_stonith")
+        ac(o,"Deleting Resource - test_stonith\n")
+        assert r == 0
+
+        o,r = pcs("stonith create test_stonith fence_apc --clone")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("status")
+        assert "WARNING: no stonith devices and " not in o
+        assert r == 0
+
 if __name__ == "__main__":
     unittest.main()
 

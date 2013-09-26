@@ -925,6 +925,11 @@ def stonithCheck():
         if p.attrib["class"] == "stonith":
             return False
 
+    primitives = et.findall("configuration/resources/clone/primitive")
+    for p in primitives:
+        if p.attrib["class"] == "stonith":
+            return False
+
     return True
 
 def getResourceType(resource):
