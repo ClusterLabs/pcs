@@ -54,7 +54,7 @@ describe <standard:provider:type|type>
 Show options for the specified resource
 .TP
 create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\-\-clone <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name>]
-Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \e nic=eth2 Create a new resource called 'ClusterIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
+Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s \e Create a new resource called 'ClusterIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
 .TP
 delete <resource id|group id|master id|clone id>
 Deletes the resource, group, master or clone (and all resources within the group/master/clone).
@@ -359,10 +359,10 @@ Show options specific to the 'ClusterIP' resource
 .B # pcs resource show ClusterIP
 .TP
 Create a new resource called 'ClusterIP' with options
-.B # pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s nic=eth2
+.B # pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
 .TP
 Create a new resource called 'ClusterIP' with options
-.B # pcs resource create ClusterIP IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s nic=eth2
+.B # pcs resource create ClusterIP IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
 .TP
 Change the ip address of ClusterIP and remove the nic option
 .B # pcs resource update ClusterIP ip=192.168.0.98 nic=

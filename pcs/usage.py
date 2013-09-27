@@ -386,11 +386,11 @@ Examples:
 
 
     pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
-               cidr_netmask=32 op monitor interval=30s nic=eth2
+               cidr_netmask=32 nic=eth2 op monitor interval=30s 
       Create a new resource called 'ClusterIP' with options
 
     pcs resource create ClusterIP IPaddr2 ip=192.168.0.99 \\
-               cidr_netmask=32 op monitor interval=30s nic=eth2
+               cidr_netmask=32 nic=eth2 op monitor interval=30s
       Create a new resource called 'ClusterIP' with options
 
     pcs resource update ClusterIP ip=192.168.0.98 nic=
