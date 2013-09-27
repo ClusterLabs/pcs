@@ -659,7 +659,7 @@ Commands:
           date [start=<start>] [end=<end>] operation=gt|lt|in-range
           date-spec <date spec options>...
 
-    location show [resources|nodes [node id|resource id]...]
+    location show [resources|nodes [node id|resource id]...] [--full]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
         is specified location constraints are displayed per node.  If specific
