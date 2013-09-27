@@ -329,6 +329,10 @@ Commands:
         not exist.  If the resource is present in another group it is moved
         to the new group.
 
+    group remove <group name> <resource id> [resource id] ... [resource id]
+        Remove the specified resource(s) from the group, removing the group if
+        it no resources remain.
+
     ungroup <group name> [resource id] ... [resource id]
         Remove the group (Note: this does not remove any resources from the
         cluster) or if resources are specified, remove the specified resources
