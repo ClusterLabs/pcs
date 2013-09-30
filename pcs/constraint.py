@@ -529,6 +529,7 @@ def location_show(argv):
         lc_rsc = rsc_loc.getAttribute("rsc")
         lc_id = rsc_loc.getAttribute("id")
         lc_score = rsc_loc.getAttribute("score")
+        lc_role = rsc_loc.getAttribute("role")
         lc_name = "Resource: " + lc_rsc
 
         rules = rsc_loc.getElementsByTagName('rule')
@@ -598,14 +599,14 @@ def location_show(argv):
             rschash = rschashoff
 
         if lc_node in nodeshash:
-            nodeshash[lc_node].append((lc_id,lc_rsc,lc_score))
+            nodeshash[lc_node].append((lc_id,lc_rsc,lc_score, lc_role))
         else:
-            nodeshash[lc_node] = [(lc_id, lc_rsc,lc_score)]
+            nodeshash[lc_node] = [(lc_id, lc_rsc,lc_score, lc_role)]
 
         if lc_rsc in rschash:
-            rschash[lc_rsc].append((lc_id,lc_node,lc_score))
+            rschash[lc_rsc].append((lc_id,lc_node,lc_score, lc_role))
         else:
-            rschash[lc_rsc] = [(lc_id,lc_node,lc_score)]
+            rschash[lc_rsc] = [(lc_id,lc_node,lc_score, lc_role)]
 
     nodelist = list(set(nodehashon.keys() + nodehashoff.keys()))
     rsclist = list(set(rschashon.keys() + rschashoff.keys()))
@@ -621,6 +622,8 @@ def location_show(argv):
                 print "    Allowed to run:"
                 for options in nodehashon[node]:
                     print "      " + options[1] +  " (" + options[0] + ")",
+                    if (options[3] != ""):
+                        print "(role: "+options[3]+")",
                     if (options[2] == "INFINITY"):
                         print ""
                     else:
@@ -630,6 +633,8 @@ def location_show(argv):
                 print "    Not allowed to run:"
                 for options in nodehashoff[node]:
                     print "      " + options[1] +  " (" + options[0] + ")",
+                    if (options[3] != ""):
+                        print "(role: "+options[3]+")",
                     if (options[2] == "-INFINITY"):
                         print ""
                     else:
@@ -650,6 +655,8 @@ def location_show(argv):
                     print options[1],
                     if options[2] != "INFINITY" or showDetail:
                         print "(score:"+options[2]+")",
+                    if (options[3] != ""):
+                        print "(role: "+options[3]+")",
                     if showDetail:
                         print "(id:"+options[0]+")",
                     print
@@ -659,9 +666,11 @@ def location_show(argv):
                     print options[1],
                     if options[2] != "-INFINITY" or showDetail:
                         print "(score:"+options[2]+")",
+                    if (options[3] != ""):
+                        print "(role: "+options[3]+")",
                     if showDetail:
                         print "(id:"+options[0]+")",
-                print ""
+                    print 
             miniruleshash={}
             miniruleshash["Resource: " + rsc] = ruleshash["Resource: " + rsc]
             show_location_rules(miniruleshash,showDetail,datespechash, True)

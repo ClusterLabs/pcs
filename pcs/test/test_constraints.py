@@ -428,6 +428,15 @@ class ConstraintTest(unittest.TestCase):
         ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n")
         assert r == 0
 
+    def testMissingRole(self):
+        os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
+        o,r = pcs("resource create stateful0 Stateful --master")
+        os.system("CIB_file="+temp_cib+" cibadmin -R --scope constraints --xml-text '<constraints><rsc_location id=\"cli-prefer-stateful0-master\" role=\"Master\" rsc=\"stateful0-master\" node=\"rh7-1\" score=\"INFINITY\"/><rsc_location id=\"cli-ban-stateful0-master-on-rh7-1\" rsc=\"stateful0-master\" role=\"Slave\" node=\"rh7-1\" score=\"-INFINITY\"/></constraints>'")
+
+        o,r = pcs("constraint")
+        ac(o,"Location Constraints:\n  Resource: stateful0-master\n    Enabled on: rh7-1 (role: Master)\n    Disabled on: rh7-1 (role: Slave)\nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
+
 if __name__ == "__main__":
     unittest.main()
 
