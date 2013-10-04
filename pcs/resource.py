@@ -280,7 +280,6 @@ def format_desc(indent, desc):
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
-
 # If we're not using --force, try to change the case of ra_type to match any
 # installed resources
     if not "--force" in utils.pcs_options:
@@ -315,6 +314,12 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                     if not utils.is_valid_op_attr(k):
                         utils.err("%s is not a valid op option (use --force to override)" % k)
 
+# If it's a master all meta values go to the master
+    master_meta_values = []
+    if "--master" in utils.pcs_options:
+        master_meta_values = meta_values
+        meta_values = []
+
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
     primitive_values = get_full_ra_type(ra_type)
     primitive_values.insert(0,("id",ra_id))
@@ -336,7 +341,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
         resource_clone_create([ra_id] + clone_opts)
     elif "--master" in utils.pcs_options:
-        resource_master_create([ra_id+"-master",ra_id])
+        resource_master_create([ra_id+"-master",ra_id]+ master_meta_values)
     elif "--group" in utils.pcs_options:
         groupname = utils.pcs_options["--group"]
         resource_group_add(groupname,[ra_id])

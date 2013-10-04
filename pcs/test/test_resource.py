@@ -850,6 +850,17 @@ class ResourceTest(unittest.TestCase):
         o,r = pcs(temp_cib, "resource --full")
         ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
+    def testMasterMetaCreate(self):
+        o,r = pcs('resource create F0 Dummy op monitor interval=10s role=Master op monitor interval=20s role=Slave --master meta notify=true')
+        print o
+        print r
+        ac (o,"")
+        assert r==0
+
+        o,r = pcs("resource --full")
+        ac (o," Master: F0-master\n  Meta Attrs: notify=true \n  Resource: F0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=10s role=Master (F0-monitor-interval-10s)\n               monitor interval=20s role=Slave (F0-monitor-interval-20s)\n")
+        assert r==0
+
     def testBadInstanceVariables(self):
         output, returnVal = pcs(temp_cib, "resource create D0 Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
         assert returnVal == 1
