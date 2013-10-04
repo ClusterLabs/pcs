@@ -627,8 +627,9 @@ Commands:
         '--force' is used.  If --node is used a node attribute is set on
         the specified node.
 
-    unset <property>
-        Remove property from configuration
+    unset [--node name] <property>
+        Remove property from configuration (or remove attribute from
+        specified node if --node is used).
 
 Examples:
     pcs property set stonith-enabled=false

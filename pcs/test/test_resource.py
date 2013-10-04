@@ -852,8 +852,6 @@ class ResourceTest(unittest.TestCase):
 
     def testMasterMetaCreate(self):
         o,r = pcs('resource create F0 Dummy op monitor interval=10s role=Master op monitor interval=20s role=Slave --master meta notify=true')
-        print o
-        print r
         ac (o,"")
         assert r==0
 

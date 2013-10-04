@@ -797,6 +797,30 @@ def is_valid_property(prop):
 
     return False
 
+def get_node_attributes():
+    node_config = get_cib_xpath("//nodes")
+    nas = {}
+    if (node_config == ""):
+        err("unable to get crm_config, is pacemaker running?")
+    dom = parseString(node_config).documentElement
+    for node in dom.getElementsByTagName("node"):
+        nodename = node.getAttribute("uname")
+        for nvp in node.getElementsByTagName("nvpair"):
+            if node not in nas:
+                nas[nodename] = []
+            nas[nodename].append(nvp.getAttribute("name") + "=" + nvp.getAttribute("value"))
+    return nas
+
+def set_node_attribute(prop, value, node):
+    if (value == ""):
+        o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--delete"])
+    else:
+        o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--update",value])
+
+    if r != 0:
+        err("unable to set attribute %s\n%s" % (prop,o))
+
+
 # If the property exists, remove it and replace it with the new property
 # If the value is blank, then we just remove it
 def set_cib_property(prop, value):
@@ -916,6 +940,11 @@ def getClusterState():
         err("error running crm_mon, is pacemaker running?")
     dom = parseString(output)
     return dom
+
+def getNodeAttributes():
+    dom = get_cib_dom()
+    nodes = dom.getElementsByTagName("node")
+
 
 # Returns true if stonith-enabled is not false/off & no stonith devices exist
 # So if the cluster can't start due to missing stonith devices return true
