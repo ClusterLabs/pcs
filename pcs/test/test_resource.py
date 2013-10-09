@@ -1383,6 +1383,10 @@ class ResourceTest(unittest.TestCase):
         ac(o,"")
         assert r == 0
 
+    def testVirtualDomainResource(self):
+        o,r = pcs("resource describe VirtualDomain")
+        assert r == 0
+
 if __name__ == "__main__":
     unittest.main()
 

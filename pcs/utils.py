@@ -553,7 +553,7 @@ def get_metadata(resource_agent_script):
     if (not os.path.isfile(resource_agent_script)) or (not os.access(resource_agent_script, os.X_OK)):
         return False
 
-    (metadata, retval) = run([resource_agent_script, "meta-data"])
+    (metadata, retval) = run([resource_agent_script, "meta-data"],True)
     if retval == 0:
         return metadata
     else:
