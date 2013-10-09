@@ -394,7 +394,7 @@ def subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 # Run command, with environment and return (output, retval)
-def run(args, ignore_stderr=False):
+def run(args, ignore_stderr=False, string_for_stdin=None):
     env_var = os.environ
     if usefile:
         env_var["CIB_file"] = filename
@@ -415,16 +415,17 @@ def run(args, ignore_stderr=False):
         if "--debug" in pcs_options:
             print "Running: " + " ".join(args)
         if ignore_stderr:
-            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var, preexec_fn=subprocess_setup)
+            p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var, preexec_fn=subprocess_setup)
         else:
-            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var, preexec_fn=subprocess_setup)
-        output,stderror = p.communicate()
+            p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var, preexec_fn=subprocess_setup)
+        output,stderror = p.communicate(string_for_stdin)
         returnVal = p.returncode
         if "--debug" in pcs_options:
             print "Return Value: " + str(returnVal)
             print "--Debug Output Start--\n" + output
             print "--Debug Output End--\n"
-    except OSError:
+    except OSError as e:
+        print e.strerror
         err("unable to locate command: " + args[0])
 
     return output, returnVal
@@ -630,7 +631,7 @@ def replace_cib_configuration(dom):
         new_dom = ET.tostring(dom)
     else:
         new_dom = dom.toxml()
-    output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-V", "-X", new_dom])
+    output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-V", "--xml-pipe"],False,new_dom)
     if retval != 0:
         err("Unable to update cib\n"+output)
 

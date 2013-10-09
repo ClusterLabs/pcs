@@ -1374,6 +1374,15 @@ class ResourceTest(unittest.TestCase):
         ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
         assert r == 1
 
+    def testMasterLargeFile(self):
+        o,r = pcs("largefile.xml","resource")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("largefile.xml","resource master lxc-ms-master-4")
+        ac(o,"")
+        assert r == 0
+
 if __name__ == "__main__":
     unittest.main()
 
