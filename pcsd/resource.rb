@@ -57,21 +57,29 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
   if get_all_options
     stdout, stderror, retval = run_cmd("cibadmin", "-Q")
     cib_output = stdout
-    resources_attr_map = {}
+    resources_inst_attr_map = {}
+    resources_meta_attr_map = {}
     begin
       doc = REXML::Document.new(cib_output.join("\n"))
 
       doc.elements.each('//primitive') do |r|
-	resources_attr_map[r.attributes["id"]] = {}
+	resources_inst_attr_map[r.attributes["id"]] = {}
+	resources_meta_attr_map[r.attributes["id"]] = {}
 	r.each_recursive do |ia|
 	  if ia.node_type == :element and ia.name == "nvpair"
-	    resources_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
+	    if ia.parent.name == "instance_attributes"
+	      resources_inst_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
+	    elsif ia.parent.name == "meta_attributes"
+	      resources_meta_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
+	    end
 	  end
 	end
       end
 
       resource_list.each {|r|
-	r.options = resources_attr_map[r.id]
+	r.options = resources_inst_attr_map[r.id]
+	r.instance_attr = resources_inst_attr_map[r.id]
+	r.meta_attr = resources_meta_attr_map[r.id]
       }
     rescue REXML::ParseException
       $logger.info("ERROR: Parse Exception parsing cibadmin -Q")
@@ -285,7 +293,8 @@ end
 class Resource 
   attr_accessor :id, :name, :type, :agent, :agentname, :role, :active,
     :orphaned, :managed, :failed, :failure_ignored, :nodes, :location,
-    :options, :group, :clone, :stonith, :ms
+    :options, :group, :clone, :stonith, :ms, :operations,
+    :instance_attr, :meta_attr
   def initialize(e, group = nil, clone = false, ms = false)
     @id = e.attributes["id"]
     @agentname = e.attributes["resource_agent"]
@@ -298,6 +307,9 @@ class Resource
     @clone = clone
     @ms = ms
     @stonith = false
+    @instance_attr = {}
+    @meta_attr = {}
+    @operations = {}
     e.elements.each do |n| 
       node = Node.new
       node.name = n.attributes["name"]
@@ -308,6 +320,14 @@ class Resource
       @location = @nodes[0].name
     else
       @location = ""
+    end
+  end
+
+  def disabled
+    if meta_attr["target-role"] and meta_attr["target-role"] = "Stopped"
+      return true
+    else
+      return false
     end
   end
 end

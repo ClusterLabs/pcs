@@ -52,12 +52,17 @@
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
 		  {{#if Pcs.resourcesController.cur_resource.failed}}
-		      <div id="res_status" class="status-offline">Failed</div>
+		    <div id="res_status" class="status-offline">Failed</div>
                   {{else}}
 		  {{#if Pcs.resourcesController.cur_resource.active}}
-		      <div id="res_status" class="status">Running</div>
+		    <div id="res_status" class="status">Running</div>
 		  {{else}}
-		      <div id="res_status" class="status-offline">Inactive</div>
+		    <div id="res_status" class="status-offline">
+		      Inactive
+		      {{#if Pcs.resourcesController.cur_resource.disabled}}
+		        (Disabled)
+		      {{/if}}
+		     </div>
 		  {{/if}}
 		  {{/if}}
 		  </td>

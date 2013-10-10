@@ -599,6 +599,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  resource = pre_existing_resource;
 	  resource.set("agentname", value["agentname"]);
 	  resource.set("active", value["active"]);
+	  resource.set("disabled", value["disabled"]);
 	  resource.set("nodes", value["nodes"]);
 	  resource.set("group", value["group"]);
 	  resource.set("clone", value["clone"]);
@@ -617,6 +618,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  name: value["id"],
 	  agentname: value["agentname"],
 	  active: value["active"],
+	  disabled: value["disabled"],
 	  nodes: value["nodes"],
 	  group: value["group"],
 	  clone: value["clone"],
