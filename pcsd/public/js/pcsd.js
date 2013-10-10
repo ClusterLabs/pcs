@@ -839,7 +839,7 @@ function get_cluster_remote_url() {
 }
 
 function checkBoxToggle(cb) {
-  cbs = $(cb).closest("tr").next().find(".node_list_check input[type=checkbox]")
+  cbs = $(cb).closest("tr").parent().find(".node_list_check input[type=checkbox]")
   if ($(cb).prop('checked'))
     cbs.prop('checked',true);
   else
