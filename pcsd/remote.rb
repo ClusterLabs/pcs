@@ -476,7 +476,7 @@ def update_resource (params)
   if params[:resource_group]
     if params[:resource_group] == ""
       if params[:_orig_resource_group] != ""
-	run_cmd(PCS, "resource", "group", "remove_resource", params[:_orig_resource_group], params[:resource_id])
+	run_cmd(PCS, "resource", "group", "remove", params[:_orig_resource_group], params[:resource_id])
       end
     else
       run_cmd(PCS, "resource", "group", "add", params[:resource_group], params[:resource_id])
