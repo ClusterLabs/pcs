@@ -462,8 +462,12 @@ def update_resource (params)
 
     if params[:resource_clone] and params[:resource_clone] != ""
       name = resource_group ? resource_group : params[:name]
-      run_cmd(PCS, "resource", "clone", "create", name)
+      run_cmd(PCS, "resource", "clone", name)
+    elsif params[:resource_ms] and params[:resource_ms] != ""
+      name = resource_group ? resource_group : params[:name]
+      run_cmd(PCS, "resource", "master", name)
     end
+
     return JSON.generate({})
   end
 
@@ -512,7 +516,7 @@ def update_fence_device (params)
     out, stderr, retval = run_cmd(PCS, "stonith", "create", params[:name], params[:resource_type],
 	    *(param_line.split(" ")))
     if retval != 0
-      return [404,JSON.generate({"error" => "true"})]
+      return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
     end
     return
   end
