@@ -42,8 +42,7 @@ def getAllSettings()
   return {"error" => "Unable to get configuration settings"}
 end
 
-# stickyness is ignored for now
-def add_location_constraint(resource, node, score, stickyness)
+def add_location_constraint(resource, node, score)
   if score == ""
     score = "INFINITY"
   end

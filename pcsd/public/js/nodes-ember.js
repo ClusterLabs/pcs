@@ -384,7 +384,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       Pcs.resourcesController.set('cur_resource',temp_cur_resource);
   },
 
-  add_loc_constraint: function(res_id, constraint_id, node_id, score, stickyness) {
+  add_loc_constraint: function(res_id, constraint_id, node_id, score) {
     new_loc_constraint = {}
     new_loc_constraint["id"] = constraint_id;
     new_loc_constraint["rsc"] = res_id;

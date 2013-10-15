@@ -192,13 +192,13 @@
 	      <tr><td>
 		  <div id="locationdep">
 		    <table class="datatable">
-		      <tr><th>NAME</th><th>Score</th><th>Stickyness</th></tr>
+		      <tr><th>NAME</th><th>Score</th></tr>
 		    {{#if Pcs.nodesController.cur_node.location_constraints}}
 		    {{#each Pcs.nodesController.cur_node.location_constraints}}
 		      <tr><td>{{rsc}}</td><td>{{score}}</td><td></td></tr>
 		    {{/each}}
 		    {{else}}
-			<tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+			<tr><td style="color: gray;">NONE</td><td></td></tr>
 		    {{/if}}
 		    </table>
 		  </div>

@@ -634,7 +634,7 @@ def add_constraint_remote(params)
   case params["c_type"]
   when "loc"
     retval = add_location_constraint(params["res_id"], params["node_id"],
-				     params["score"], params["stickyness"])
+				     params["score"])
   when "ord"
     resA = params["res_id"]
     resB = params["target_res_id"]
