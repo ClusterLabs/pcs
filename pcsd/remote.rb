@@ -452,7 +452,7 @@ def update_resource (params)
     out, stderr, retval = run_cmd(PCS, "resource", "create", params[:name], params[:resource_type],
 	    *(param_line.split(" ")))
     if retval != 0
-      return [404,JSON.generate({"error" => "true"})]
+      return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
     end
     if params[:resource_group] and params[:resource_group] != ""
       run_cmd(PCS, "resource","group", "add", params[:resource_group],
@@ -464,7 +464,7 @@ def update_resource (params)
       name = resource_group ? resource_group : params[:name]
       run_cmd(PCS, "resource", "clone", "create", name)
     end
-    return
+    return JSON.generate({})
   end
 
   if param_line.length != 0

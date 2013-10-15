@@ -129,14 +129,19 @@ function create_resource(form, update, stonith) {
     type: "POST",
     url: url,
     data: dataString,
-    success: function() {
-      if (!update) {
-	if (stonith)
-	  $('#add_stonith').dialog('close');
-	else
-	  $('#add_resource').dialog('close');
+    dataType: "json",
+    success: function(returnValue) {
+      if (returnValue["error"] == "true")
+	alert(returnValue["stderr"]);
+      else {
+	if (!update) {
+	  if (stonith)
+	    $('#add_stonith').dialog('close');
+	  else
+	    $('#add_resource').dialog('close');
+	}
+	Pcs.update();
       }
-      Pcs.update();
     },
     error: function() {
       if (update)
