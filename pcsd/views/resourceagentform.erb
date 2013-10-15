@@ -33,7 +33,7 @@
       <% if @new_resource %>
 	<tr>
 	  <td class="reg">
-	    Resource Name
+	    Resource ID
 	  </td>
 	  <td>
 	    <input style="margin-right: 50px;" type="text" name="name" size="35" class="text_field">
@@ -72,8 +72,8 @@
 	  </td>
 	</tr>
       <% } %>
-      <tr class="stop"><td class="center" style="padding-top:20px;" colspan=2>
-	  <input type=submit class="text_field" onclick="create_resource($(this).parents('form'),<%=@existing_resource ? 'true':'false'%>); return false;" value="<%= @existing_resource ? "Apply Changes" : "Create Resource" %>">
+      <tr class="stop"><td class="center" style="padding-top:20px;height:26px;" colspan=2>
+	  <input class="apply_changes" type=submit class="text_field" onclick="$(this).hide();create_resource($(this).parents('form'),<%=@existing_resource ? 'true':'false'%>); return false;" value="<%= @existing_resource ? "Apply Changes" : "Create Resource" %>">
 	</td>
       </tr>
     </table>

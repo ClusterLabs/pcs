@@ -120,6 +120,7 @@ function create_group() {
 // if stonith is set to true we update/create a stonith agent
 function create_resource(form, update, stonith) {
   dataString = $(form).serialize();
+  var resourceID = $(form).find("[name='name']").val(); 
   url = get_cluster_remote_url() + $(form).attr("action");
   var name;
   if (stonith)
@@ -131,16 +132,19 @@ function create_resource(form, update, stonith) {
     data: dataString,
     dataType: "json",
     success: function(returnValue) {
-      if (returnValue["error"] == "true")
+      $('input.apply_changes').show();
+      if (returnValue["error"] == "true") {
 	alert(returnValue["stderr"]);
-      else {
+      } else {
+	Pcs.update();
 	if (!update) {
 	  if (stonith)
 	    $('#add_stonith').dialog('close');
 	  else
 	    $('#add_resource').dialog('close');
+	} else { 
+	  reload_current_resource(this);
 	}
-	Pcs.update();
       }
     },
     error: function() {
@@ -148,6 +152,7 @@ function create_resource(form, update, stonith) {
 	alert("Unable to update " + name);
       else
 	alert("Unable to add " + name);
+      $('#apply_changes').fadeIn();
     }
   });
 }
@@ -617,6 +622,20 @@ function hover_over(o) {
 function hover_out(o) {
   $(o).find('td').last().css('display','none');
   $(o).removeClass("node_selected");
+}
+
+function reload_current_resource(item) {
+  load_row_by_id($(this).parents("form").find("[name='resource_id']").val());
+}
+
+function load_row_by_id(resource_id) {
+  row = $("[nodeid='"+resource_id+"']");
+  if (row.parents("#resource_list"))
+    load_row(row, Pcs.resourcesController, 'cur_resource', '#resource_info_div', 'cur_resource_res');
+  else if (row.parents("#stonith_list"))
+    load_row(row, Pcs.resourcesController, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
+  else
+    alert("Unable to make " + resource_id + " active, doesn't appear to be resource or stonith");
 }
 
 function load_row(node_row, ac, cur_elem, containing_elem, also_set){

@@ -280,6 +280,8 @@ def format_desc(indent, desc):
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
+    if len(ra_id) == 0:
+        utils.err ("resource id cannot be empty")
 # If we're not using --force, try to change the case of ra_type to match any
 # installed resources
     if not "--force" in utils.pcs_options:
