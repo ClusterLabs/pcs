@@ -34,6 +34,8 @@ def getFenceAgentMetadata(fenceagentname)
     end
   }
   options_required["pcmk_host_list"] = ""
+  options_required["pcmk_host_map"] = ""
+  options_required["pcmk_host_check"] = ""
   [options_required, options_optional]
 end
 
