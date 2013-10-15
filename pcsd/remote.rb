@@ -503,6 +503,7 @@ def update_resource (params)
     run_cmd(PCS, "resource", "unclone", params[:resource_id].sub(/:.*/,''))
   end
 
+  return JSON.generate({})
 end
 
 def update_fence_device (params)
