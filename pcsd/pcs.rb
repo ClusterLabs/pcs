@@ -82,7 +82,7 @@ def add_colocation_constraint(resourceA, resourceB, score)
 end
 
 def remove_constraint(constraint_id)
-  stdout, stderror, retval = run_cmd(PCS, "constraint", "rm", constraint_id)
+  stdout, stderror, retval = run_cmd(PCS, "constraint", "remove", constraint_id)
   $logger.info stdout
   return retval
 end
