@@ -616,12 +616,10 @@ function show_hide_constraint_tables(element) {
 }
 
 function hover_over(o) {
-  $(o).find('td').last().css('display','');
   $(o).addClass("node_selected");
 }
 
 function hover_out(o) {
-  $(o).find('td').last().css('display','none');
   $(o).removeClass("node_selected");
 }
 
