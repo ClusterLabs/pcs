@@ -280,7 +280,7 @@
       </div>
     </div>
     <div id="add_group" style="display: none;">
-      <form method=POST action="/resource_group_add">
+      <form method=POST onkeypress="if (event.keyCode == 13) {$(this).parent().parent().find('.ui-dialog-buttonpane button:eq(1)').trigger('click');return false;} " action="/resource_group_add">
 	<p style="font-size:12px;">Group Name:</p><input name="resource_group" type=text>
 	<input id="resources_to_add_to_group"  type=hidden name="resources" value="">
       </form>

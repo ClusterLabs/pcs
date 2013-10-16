@@ -92,6 +92,9 @@ function create_group() {
     $("#add_group").dialog({title: 'Create Group',
       modal: true, resizable: false, 
       buttons: {
+	Cancel: function() {
+	  $(this).dialog("close");
+	},
 	"Create Group": function() {
 	  var data = $('#add_group > form').serialize();
 	  var url = get_cluster_remote_url() + "add_group";
@@ -108,10 +111,8 @@ function create_group() {
 	      $("#add_group").dialog("close");
 	    }
 	  });
-	},
-      Cancel: function() {
-	$(this).dialog("close");
-      }}
+	}
+      }
     });
   }
 }
