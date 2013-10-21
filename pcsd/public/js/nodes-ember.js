@@ -359,13 +359,13 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     if (resource_row.length == 0)
       return;
     var temp_cur_resource = Pcs.resourcesController.cur_resource;
-    load_row(resource_row, this, 'cur_resource', "#resource_info_div", 'cur_resource_res');
     load_agent_form(resource_row, false);
     if (!dont_update_hash)
       window.location.hash = "/resources/" + $(resource_row).attr("nodeID");
 
     // If we're not on the resource page, we don't update the cur_resource
-    if (Pcs.cur_page != "resources") {
+    if (Pcs.cur_page == "resources") {
+      load_row(resource_row, this, 'cur_resource', "#resource_info_div", 'cur_resource_res');
       Pcs.resourcesController.set('cur_resource',temp_cur_resource);
     }
   },
@@ -374,14 +374,16 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     if (resource_row.length == 0)
       return;
     var temp_cur_resource = Pcs.resourcesController.cur_resource;
-    load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
+
     load_agent_form(resource_row, true);
     if (!dont_update_hash)
       window.location.hash = "/fencedevices/" + $(resource_row).attr("nodeID");
 
     // If we're not on the stonith page, we don't update the cur_resource
-    if (Pcs.cur_page != "stonith")
+    if (Pcs.cur_page == "stonith") {
+      load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
       Pcs.resourcesController.set('cur_resource',temp_cur_resource);
+    }
   },
 
   add_loc_constraint: function(res_id, constraint_id, node_id, score) {
@@ -694,8 +696,9 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  break;
 	}
       }
-      if (Pcs.cur_page == "resources")
+      if (Pcs.cur_page == "resources") {
 	self.set("cur_resource", self.cur_resource_res);
+      }
       if (Pcs.cur_page == "stonith") {
 	self.set("cur_resource", self.cur_resource_ston);
       }
