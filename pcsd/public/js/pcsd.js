@@ -492,7 +492,7 @@ function add_existing_dialog() {
   // If you hit enter it triggers the first button: Add Existing
   $('#add_existing_cluster').keypress(function(e) {
     if (e.keyCode == $.ui.keyCode.ENTER) {
-      $(this).parent().find("button:eq(0)").trigger("click");
+      $(this).parent().find("button:eq(1)").trigger("click");
       return false;
     }
   });
@@ -508,9 +508,15 @@ function update_existing_cluster_dialog(data) {
   for (var i in data) {
     if (data[i] == "Online") {
       $('#add_existing_cluster_form').submit();
+      $('#add_existing_cluster_error_msg').hide();
+      $('#unable_to_connect_error_msg_ae').hide();
       return;
     }
     break;
+  }
+  if (data.length > 0) {
+    $('#add_existing_cluster_error_msg').html(i + ": " + data[i]);
+    $('#add_existing_cluster_error_msg').show();
   }
   $('#unable_to_connect_error_msg_ae').show();
 }
