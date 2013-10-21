@@ -45,13 +45,17 @@ also_reload 'pcs.rb'
 also_reload 'auth.rb'
 also_reload 'wizard.rb'
 
-#enable :sessions
+enable :sessions
 
 before do
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
   @@cluster_name = get_cluster_version()
+  @errorval = session[:errorval]
+  @error = session[:error]
+  session[:errorval] = nil
+  session[:error] = nil
 end
 
 configure do
@@ -290,8 +294,6 @@ get '/manage/?' do
   @manage = true
   pcs_config = PCSConfig.new
   @clusters = pcs_config.clusters
-  @error = params[:error]
-  @errorval = params[:errorval]
   @load_data = true
   erb :manage, :layout => :main
 end
@@ -346,7 +348,9 @@ post '/manage/existingcluster' do
     nodes = status["corosync_offline"] + status["corosync_online"]
 
     if pcs_config.is_cluster_name_in_use(status["cluster_name"])
-      redirect '/manage/?error=duplicatename&errorval='+status["cluster_name"]+'#manage'
+      session[:error] = "duplicatename"
+      session[:errorval] = status["cluster_name"]
+      redirect '/manage/#manage'
     end
 
     pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
