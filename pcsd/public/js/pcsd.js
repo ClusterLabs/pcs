@@ -643,7 +643,7 @@ function load_row_by_id(resource_id) {
     alert("Unable to make " + resource_id + " active, doesn't appear to be resource or stonith");
 }
 
-function load_row(node_row, ac, cur_elem, containing_elem, also_set){
+function load_row(node_row, ac, cur_elem, containing_elem, also_set, initial_load){
   hover_over(node_row);
   $(node_row).siblings().each(function(key,sib) {
     hover_out(sib);
@@ -653,7 +653,7 @@ function load_row(node_row, ac, cur_elem, containing_elem, also_set){
     node_name = $(node_row).attr("nodeID");
     $.each(self.content, function(key, node) {
       if (node.name == node_name) {
-	self.set(cur_elem,node);
+	if (!initial_load) {self.set(cur_elem,node);}
 	node.set(cur_elem, true);
 	if (also_set)
 	  self.set(also_set, node);
@@ -668,7 +668,6 @@ function load_row(node_row, ac, cur_elem, containing_elem, also_set){
 	  self.content[key].set(cur_elem,false);
       }
     });
-    Pcs.resourcesController.update_cur_resource();
     $(containing_elem).fadeTo(500,1);
   });
 }

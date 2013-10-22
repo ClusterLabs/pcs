@@ -135,10 +135,6 @@ Pcs.DefaultRouteRoute = Ember.Route.extend({
 Pcs.FenceDevicesRoute = Ember.Route.extend({
   setupController: function(controller, model) {
     select_menu("FENCE DEVICES");
-    if (model) {
-      Pcs.resourcesController.set("cur_resource",model);
-      Pcs.resourcesController.update_cur_resource();
-    }
   },
   model: function(params) {
     Ember.debug("Router FD: " + params.stonith_id);
@@ -166,10 +162,6 @@ Pcs.ConfigurationRoute = Ember.Route.extend({
 Pcs.ResourcesRoute = Ember.Route.extend({
   setupController: function(controller, model) {
     select_menu("RESOURCES"); 
-    if (model) {
-      Pcs.resourcesController.set("cur_resource",model);
-      Pcs.resourcesController.update_cur_resource();
-    }
   },
   model: function(params) {
     Ember.debug("Router Resource: " + params.resource_id);
@@ -363,11 +355,10 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     if (!dont_update_hash)
       window.location.hash = "/resources/" + $(resource_row).attr("nodeID");
 
-    // If we're not on the resource page, we don't update the cur_resource
-    if (Pcs.cur_page == "resources") {
-      load_row(resource_row, this, 'cur_resource', "#resource_info_div", 'cur_resource_res');
-      Pcs.resourcesController.set('cur_resource',temp_cur_resource);
-    }
+    if (Pcs.cur_page == "resources")
+      load_row(resource_row, this, 'cur_resource', "#resource_info_div", 'cur_resource_res', false);
+    else
+      load_row(resource_row, this, 'cur_resource', "#resource_info_div", 'cur_resource_res', true);
   },
 
   load_stonith: function(resource_row, dont_update_hash) {
@@ -379,11 +370,10 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     if (!dont_update_hash)
       window.location.hash = "/fencedevices/" + $(resource_row).attr("nodeID");
 
-    // If we're not on the stonith page, we don't update the cur_resource
-    if (Pcs.cur_page == "stonith") {
-      load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
-      Pcs.resourcesController.set('cur_resource',temp_cur_resource);
-    }
+    if (Pcs.cur_page == "stonith")
+      load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston', false);
+    else
+      load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston', true);
   },
 
   add_loc_constraint: function(res_id, constraint_id, node_id, score) {
@@ -641,9 +631,12 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       } else {
 	cur_res_name = cur_res_holder;
       }
+
       if (resource.name == cur_res_name) {
 	resource.set("cur_resource",true);
 	self.set("cur_resource", resource);
+	if (Pcs.cur_page == "resources") { self.set("cur_resource_res", resource);}
+	if (Pcs.cur_page == "stonith") { self.set("cur_resource_stonith", resource);}
       }
 
       if (resource.name == cur_res_holder_res) {
@@ -681,26 +674,33 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       self.content.removeObject(v);
     });
 
-    if (self.content && self.content.length > 0 && self.cur_resource == null) {
-      for (var i=0; i< self.content.length; i++) {
-	if (self.content[i].stonith) {
-	  self.set("cur_resource_ston", self.content[i]);
-	  self.content[i].set("cur_resource",true);
-	  break;
+    // Set defaults if not resources are set
+    if (self.content && self.content.length > 0) {
+      if (self.cur_resource_ston == null) {
+	for (var i=0; i< self.content.length; i++) {
+	  if (self.content[i].stonith) {
+	    self.set("cur_resource_ston", self.content[i]);
+	    self.content[i].set("cur_resource",true);
+	    break;
+	  }
 	}
       }
-      for (var i=0; i< self.content.length; i++) {
-	if (!self.content[i].stonith) {
-	  self.set("cur_resource_res", self.content[i]);
-	  self.content[i].set("cur_resource",true);
-	  break;
+      if (self.cur_resource_res == null) {
+	for (var i=0; i< self.content.length; i++) {
+	  if (!self.content[i].stonith) {
+	    self.set("cur_resource_res", self.content[i]);
+	    self.content[i].set("cur_resource",true);
+	    break;
+	  }
 	}
       }
-      if (Pcs.cur_page == "resources") {
-	self.set("cur_resource", self.cur_resource_res);
-      }
-      if (Pcs.cur_page == "stonith") {
-	self.set("cur_resource", self.cur_resource_ston);
+      if (self.cur_resource == null) {
+	if (Pcs.cur_page == "resources") {
+	  self.set("cur_resource", self.cur_resource_res);
+	}
+	if (Pcs.cur_page == "stonith") {
+	  self.set("cur_resource", self.cur_resource_ston);
+	}
       }
     }
   }
