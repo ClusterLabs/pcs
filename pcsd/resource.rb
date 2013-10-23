@@ -55,7 +55,7 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
   resource_list.sort_by!{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
   if get_all_options
-    stdout, stderror, retval = run_cmd("cibadmin", "-Ql")
+    stdout, stderror, retval = run_cmd("cibadmin", "-Q")
     cib_output = stdout
     resources_inst_attr_map = {}
     resources_meta_attr_map = {}

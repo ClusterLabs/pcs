@@ -419,10 +419,12 @@ function setup_resource_links(link_type) {
   $("#resource_stop_link").click(function () {
     fade_in_out("#resource_stop_link");
     $.post(get_cluster_remote_url() + 'resource_stop',"resource="+curResource());
+    Pcs.resourcesController.cur_resource.set("disabled",true);
   });
   $("#resource_start_link").click(function () {
     fade_in_out("#resource_start_link");
     $.post(get_cluster_remote_url() + 'resource_start',"resource="+curResource());
+    Pcs.resourcesController.cur_resource.set("disabled",false);
   });
   $("#resource_move_link").click(function () {
     alert("Not Yet Implemented");
