@@ -90,7 +90,7 @@ end
 
 def cluster_start(params)
   if params[:name]
-    response = send_request_with_token(params[:name], 'cluster_start', true)
+    code, response = send_request_with_token(params[:name], 'cluster_start', true)
   else
     $logger.info "Starting Daemons"
     output =  `#{PCS} cluster start`
@@ -101,7 +101,7 @@ end
 
 def cluster_stop(params)
   if params[:name]
-    response = send_request_with_token(params[:name], 'cluster_stop', true)
+    code, response = send_request_with_token(params[:name], 'cluster_stop', true)
   else
     $logger.info "Starting Daemons"
     output =  `#{PCS} cluster stop`
@@ -112,7 +112,7 @@ end
 
 def node_restart(params)
   if params[:name]
-    response = send_request_with_token(params[:name], 'node_restart', true)
+    code, response = send_request_with_token(params[:name], 'node_restart', true)
   else
     $logger.info "Restarting Node"
     output =  `/sbin/reboot`
@@ -123,7 +123,7 @@ end
 
 def node_standby(params)
   if params[:name]
-    response = send_request_with_token(params[:name], 'node_standby', true)
+    code, response = send_request_with_token(params[:name], 'node_standby', true)
   else
     $logger.info "Standby Node"
     stdout, stderr, retval = run_cmd(PCS,"cluster","standby",params[:node])
@@ -133,7 +133,7 @@ end
 
 def node_unstandby(params)
   if params[:name]
-    response = send_request_with_token(params[:name], 'node_unstandby', true)
+    code, response = send_request_with_token(params[:name], 'node_unstandby', true)
   else
     $logger.info "Standby Node"
     stdout, stderr, retval = run_cmd(PCS,"cluster","unstandby",params[:node])
@@ -143,7 +143,7 @@ end
 
 def cluster_enable(params)
   if params[:name]
-    response = send_request_with_token(params[:name], 'cluster_enable', true)
+    code, response = send_request_with_token(params[:name], 'cluster_enable', true)
   else
     success = enable_cluster()
     if not success
@@ -155,7 +155,7 @@ end
 
 def cluster_disable(params)
   if params[:name]
-    response = send_request_with_token(params[:name], 'cluster_disable', true)
+    code, response = send_request_with_token(params[:name], 'cluster_disable', true)
   else
     success = disable_cluster()
     if not success
@@ -330,7 +330,7 @@ def status_all(params, nodes = [])
   threads = []
   nodes.each {|node|
     threads << Thread.new {
-      response = send_request_with_token(node, 'status')
+      code, response = send_request_with_token(node, 'status')
       begin
 	final_response[node] = JSON.parse(response)
       rescue JSON::ParserError => e
@@ -538,6 +538,7 @@ def get_avail_fence_agents(params)
 end
 
 def resource_metadata (params)
+  return 200 if not params[:resourcename] or params[:resourcename] == ""
   @resource = ResourceAgent.new(params[:resourcename])
   @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
   @new_resource = params[:new]
@@ -547,6 +548,7 @@ def resource_metadata (params)
 end
 
 def fence_device_metadata (params)
+  return 200 if not params[:resourcename] or params[:resourcename] == ""
   @fenceagent = FenceAgent.new(params[:resourcename])
   @fenceagent.required_options, @fenceagent.optional_options = getFenceAgentMetadata(params[:resourcename])
   @new_fenceagent = params[:new]

@@ -329,7 +329,7 @@ end
 post '/managec/:cluster/?*' do
   raw_data = request.env["rack.input"].read
   if params[:cluster]
-    send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), true, params, false, raw_data)
+    return send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), true, params, false, raw_data)
   end
 end
 
@@ -342,7 +342,8 @@ end
 post '/manage/existingcluster' do
   pcs_config = PCSConfig.new
   node = params['node-name']
-  status =  JSON.parse(send_request_with_token(node, 'status'))
+  code, result = send_request_with_token(node, 'status')
+  status = JSON.parse(result)
   if status.has_key?("corosync_offline") and
     status.has_key?("corosync_online") then
     nodes = status["corosync_offline"] + status["corosync_online"]

@@ -43,16 +43,18 @@ def getAllSettings()
 end
 
 def add_location_constraint(resource, node, score)
-  if score == ""
-    score = "INFINITY"
+  if node == ""
+    return "Bad node"
   end
-  id = "loc_" + node + "_" + resource
-  $logger.info [PCS, "constraint", "location", "add", id, resource, node, score]
-  Open3.popen3(PCS, "constraint", "location", "add", id, resource,
-	       node, score) { |stdin, stdout, stderror, waitth|
-    $logger.info stdout.readlines()
-    return waitth.value
-  }
+
+  if score == ""
+    nodescore = node
+  else
+    nodescore = node +"="+score
+  end
+
+  stdout, stderr, retval = run_cmd(PCS,"constraint","location",resource,"prefers",nodescore)
+  return retval
 end
 
 def add_order_constraint(resourceA, resourceB, score, symmetrical = true)
@@ -117,16 +119,17 @@ end
 
 def send_cluster_request_with_token(cluster_name, request, post=false, data={}, remote=true, raw_data=nil)
   out = ""
+  code = 0
   nodes = get_cluster_nodes(cluster_name)
 
   for node in nodes
-    out = send_request_with_token(node,request, post, data, remote=true, raw_data)
+    code, out = send_request_with_token(node,request, post, data, remote=true, raw_data)
     if out != '{"noresponse":true}'
       $logger.info request
       break
     end
   end
-  return out
+  return code,out
 end
 
 def send_request_with_token(node,request, post=false, data={}, remote=true, raw_data = nil)
@@ -157,11 +160,10 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
       http.read_timeout = 5
       http.request(req)
     end
-    output = res
-    return output.body
+    return res.code.to_i, res.body
   rescue Exception => e
     $logger.info "No response from: " + node
-    return '{"noresponse":true}'
+    return 400,'{"noresponse":true}'
   end
 end
 
@@ -215,7 +217,7 @@ def get_nodes()
 end
 
 def get_resource_agents_avail()
-  result = send_cluster_request_with_token(params[:cluster], 'get_avail_resource_agents')
+  code, result = send_cluster_request_with_token(params[:cluster], 'get_avail_resource_agents')
   ra = JSON.parse(result)
   if (ra["noresponse"] == true)
     return {}
@@ -225,7 +227,8 @@ def get_resource_agents_avail()
 end
 
 def get_stonith_agents_avail()
-  sa = JSON.parse(send_cluster_request_with_token(params[:cluster], 'get_avail_fence_agents'))
+  code, result = send_cluster_request_with_token(params[:cluster], 'get_avail_fence_agents')
+  sa = JSON.parse(result)
   if (sa["noresponse"] == true)
     return {}
   else
