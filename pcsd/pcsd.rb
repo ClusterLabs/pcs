@@ -573,7 +573,7 @@ class ConfigOption
   end
 
   def self.loadValues(cos)
-    cib, stderr, retval = run_cmd(CIBADMIN, "-Q")
+    cib, stderr, retval = run_cmd(CIBADMIN, "-Ql")
     if retval != 0
       $logger.info "Error: unable to load cib"
       $logger.info cib.join("")

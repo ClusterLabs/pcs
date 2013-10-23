@@ -55,7 +55,11 @@
 		    <div id="res_status" class="status-offline">Failed</div>
                   {{else}}
 		  {{#if Pcs.resourcesController.cur_resource.active}}
-		    <div id="res_status" class="status">Running</div>
+		    <div id="res_status" class="status">Running
+		      {{#if Pcs.resourcesController.cur_resource.disabled}}
+		        (Disabled)
+		      {{/if}}
+		    </div>
 		  {{else}}
 		    <div id="res_status" class="status-offline">
 		      Inactive
