@@ -14,6 +14,7 @@ import settings
 usefile = False
 filename = ""
 def main(argv):
+    utils.subprocess_setup()
     global filename, usefile
     utils.pcs_options = {}
     modified_argv = []
