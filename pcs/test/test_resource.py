@@ -1383,6 +1383,23 @@ class ResourceTest(unittest.TestCase):
 #        ac(o,"")
 #        assert r == 0
 
+    def groupMSAndClone(self):
+        o,r = pcs("resource create D1 Dummy --clone")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource create D2 Dummy --master")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource group add DG D1")
+        ac(o,"Error: cannot group clone resources\n")
+        assert r == 1
+
+        o,r = pcs("resource group add DG D2")
+        ac(o,"Error: cannot group master/slave resources\n")
+        assert r == 1
+
     def testVirtualDomainResource(self):
         o,r = pcs("resource describe VirtualDomain")
         assert r == 0
