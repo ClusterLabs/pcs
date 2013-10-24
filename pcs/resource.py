@@ -1222,6 +1222,14 @@ def resource_remove(resource_id, output = True):
 
     constraint.remove_constraints_containing(resource_id,output)
 
+    if not "--force" in utils.pcs_options and not utils.is_resource_started(resource_id, 0, True):
+        sys.stdout.write("Attempting to stop: "+ resource_id + "...")
+        sys.stdout.flush()
+        resource_disable([resource_id])
+        if not utils.is_resource_started(resource_id, 15, True):
+            utils.err("Unable to stop: %s before deleting (re-run with --force to force deletion)" % resource_id)
+        print "Stopped"
+
     if (group == "" or num_resources_in_group > 1):
         if clone != "":
             args = ["cibadmin", "-o", "resources", "-D", "--xml-text", clone]
@@ -1229,13 +1237,6 @@ def resource_remove(resource_id, output = True):
             args = ["cibadmin", "-o", "resources", "-D", "--xml-text", master]
         else:
             args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
-        if not "--force" in utils.pcs_options and not utils.is_resource_started(resource_id, 0, True):
-            sys.stdout.write("Attempting to stop: "+ resource_id + "...")
-            sys.stdout.flush()
-            resource_disable([resource_id])
-            if not utils.is_resource_started(resource_id, 15, True):
-                utils.err("Unable to stop: %s before deleting (re-run with --force to force deletion)" % resource_id)
-            print "Stopped"
         if output == True:
             print "Deleting Resource - " + resource_id
         output,retVal = utils.run(args)
