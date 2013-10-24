@@ -620,14 +620,14 @@ Commands:
         is specified, current configured properties will be shown with unset
         properties and their defaults
 
-    set [--force] [--node name] <property>=[<value>]
+    set [--force] [--node <nodename>] <property>=[<value>]
         Set specific pacemaker properties (if the value is blank then the
         property is removed from the configuration).  If a property is not
         recognized by pcs the property will not be created unless the
         '--force' is used.  If --node is used a node attribute is set on
         the specified node.
 
-    unset [--node name] <property>
+    unset [--node <nodename>] <property>
         Remove property from configuration (or remove attribute from
         specified node if --node is used).
 

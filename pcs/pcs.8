@@ -254,10 +254,10 @@ Confirm that the host specified is currently down WARNING: if this node is not a
 list|show [property] [\-\-all | \fB\-\-defaults]\fR
 List property settings (Default: all properties) If \fB\-\-defaults\fR is specified will show all property defaults, if \fB\-\-all\fR is specified, current configured properties will be shown with unset properties and their defaults
 .TP
-set [\-\-force] <property>=[<value>]
+set [\-\-force] [\-\-node <nodename>] <property>=[<value>]
 Set specific pacemaker properties (if the value is blank then the property is removed from the configuration).  If a property is not recognized by pcs the property will not be created unless the '\-\-force' is used. If --node is used a node attribute is set on the specified node.
 .TP
-unset <property>
+unset [\-\-node <nodename>] <property>
 Remove property from configuration (or remove attribute from specified node if --node is used).
 .SS "constraint"
 .TP
