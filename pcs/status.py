@@ -5,6 +5,7 @@ import xml.dom.minidom
 import re
 import resource
 import cluster
+import settings
 from xml.dom.minidom import parseString
 
 def status_cmd(argv):
@@ -39,19 +40,21 @@ def full_status():
     if (retval != 0):
         utils.err("cluster is not currently running on this node")
 
-    cluster_name = utils.getClusterName()
-    print "Cluster name: %s" % cluster_name
+    if not utils.usefile or "--corosync_conf" in utils.pcs_options:
+        cluster_name = utils.getClusterName()
+        print "Cluster name: %s" % cluster_name
 
     if utils.stonithCheck():
         print("WARNING: no stonith devices and stonith-enabled is not false")
 
     print output
-    print ""
-    if not utils.is_rhel6():
-        print "PCSD Status:"
-        cluster.cluster_gui_status([],True)
-        print ""
-    utils.serviceStatus("  ")
+
+    if not utils.usefile:
+        if not utils.is_rhel6():
+            print "PCSD Status:"
+            cluster.cluster_gui_status([],True)
+            print ""
+        utils.serviceStatus("  ")
 
 # Parse crm_mon for status
 def nodes_status(argv):
