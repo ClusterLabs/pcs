@@ -124,8 +124,9 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
 
   for node in nodes
     code, out = send_request_with_token(node,request, post, data, remote=true, raw_data)
+    $logger.info "Node: #{node} Request: #{request} Out: #{out}"
     if out != '{"noresponse":true}'
-      $logger.info request
+      $logger.info "No response: Node: #{node} Request: #{request}"
       break
     end
   end
@@ -143,7 +144,7 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
       uri = URI.parse("https://#{node}:2224/" + request)
     end
 
-    p "Sending Request: " + uri.to_s
+    logger.info "Sending Request: " + uri.to_s
     if post
       req = Net::HTTP::Post.new(uri.path)
       raw_data ? req.body = raw_data : req.set_form_data(data)
@@ -157,12 +158,12 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
     myhttp.use_ssl = true
     myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
     res = myhttp.start do |http|
-      http.read_timeout = 5
+      http.read_timeout = 10 
       http.request(req)
     end
     return res.code.to_i, res.body
   rescue Exception => e
-    $logger.info "No response from: " + node
+    $logger.info "No response from: #{node} request: #{request}"
     return 400,'{"noresponse":true}'
   end
 end

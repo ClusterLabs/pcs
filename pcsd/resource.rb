@@ -324,7 +324,7 @@ class Resource
   end
 
   def disabled
-    if meta_attr["target-role"] and meta_attr["target-role"] = "Stopped"
+    if meta_attr and meta_attr["target-role"] and meta_attr["target-role"] = "Stopped"
       return true
     else
       return false
