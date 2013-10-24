@@ -1350,6 +1350,10 @@ def resource_group_add(group_name, resource_ids):
             if resource.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                 continue
             if resource.getAttribute("id") == resource_id:
+                if resource.parentNode.tagName == "master":
+                    utils.err("cannot group master/slave resources")
+                if resource.parentNode.tagName == "clone":
+                    utils.err("cannot group clone resources")
                 resources_to_move.append(resource)
                 resource_found = True
                 break
