@@ -342,8 +342,14 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
 
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
         resource_clone_create([ra_id] + clone_opts)
+        if "--group" in utils.pcs_options:
+            print "Warning: --group ignored when creating a clone"
+        if "--master" in utils.pcs_options:
+            print "Warning: --master ignored when creating a clone"
     elif "--master" in utils.pcs_options:
         resource_master_create([ra_id+"-master",ra_id]+ master_meta_values)
+        if "--group" in utils.pcs_options:
+            print "Warning: --group ignored when creating a master"
     elif "--group" in utils.pcs_options:
         groupname = utils.pcs_options["--group"]
         resource_group_add(groupname,[ra_id])

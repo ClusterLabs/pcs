@@ -1400,6 +1400,17 @@ class ResourceTest(unittest.TestCase):
         ac(o,"Error: cannot group master/slave resources\n")
         assert r == 1
 
+        o,r = pcs("resource create D3 Dummy --master --group xxx --clone")
+        ac(o,"Warning: --group ignored when creating a clone\nWarning: --master ignored when creating a clone\n")
+        assert r == 0
+
+        o,r = pcs("resource create D4 Dummy --master --group xxx")
+        ac(o,"Warning: --group ignored when creating a master\n")
+        assert r == 0
+
+
+
+
     def testVirtualDomainResource(self):
         o,r = pcs("resource describe VirtualDomain")
         assert r == 0
