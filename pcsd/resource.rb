@@ -44,7 +44,7 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
       if e.parent.parent.attributes["multi_state"] == "true"
       	ms = true
       end
-      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.parent.attributes["id"] + "/" + e.parent.attributes["id"]),!ms, ms)
+      !get_fence_devices && resource_list.push(Resource.new(e,e.parent.parent.attributes["id"] + "/" + e.parent.attributes["id"],!ms, ms))
     end
   end
 
