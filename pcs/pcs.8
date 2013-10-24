@@ -65,8 +65,8 @@ Allow the cluster to start the resource. Depending on the rest of the configurat
 disable <resource id> [\-\-wait[=n]]
 Attempt to stop the resource if it is running and forbid the cluster from starting it again.  Depending on the rest of the configuration (constraints, options, failures, etc), the resource may remain started.  If \fB\-\-wait\fR is specified, pcs will wait up to 30 seconds (or 'n' seconds) for the resource to stop and then return 0 if the resource is stopped or 1 if the resource has not stopped.
 .TP
-debug\-start <resource id>
-This command will force the specified resource to start on this node ignoring the cluster recommendations and print the output from starting the resource.  This is mainly used for debugging resources that fail to start.
+debug\-start <resource id> [\-\-full]
+This command will force the specified resource to start on this node ignoring the cluster recommendations and print the output from starting the resource. Using --full will give more detailed output. This is mainly used for debugging resources that fail to start.
 .TP
 move <resource id> [destination node] [--master]
 Move resource off current node (and optionally onto destination node). If --master is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).

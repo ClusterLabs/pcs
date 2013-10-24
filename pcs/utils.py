@@ -414,10 +414,17 @@ def run(args, ignore_stderr=False, string_for_stdin=None):
     try:
         if "--debug" in pcs_options:
             print "Running: " + " ".join(args)
-        if ignore_stderr:
-            p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var, preexec_fn=subprocess_setup)
+
+        # Some commands react differently if you give them anything via stdin
+        if string_for_stdin != None:
+            stdin_pipe = subprocess.PIPE
         else:
-            p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var, preexec_fn=subprocess_setup)
+            stdin_pipe = None
+
+        if ignore_stderr:
+            p = subprocess.Popen(args, stdin=stdin_pipe, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env = env_var, preexec_fn=subprocess_setup)
+        else:
+            p = subprocess.Popen(args, stdin=stdin_pipe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env = env_var, preexec_fn=subprocess_setup)
         output,stderror = p.communicate(string_for_stdin)
         returnVal = p.returncode
         if "--debug" in pcs_options:

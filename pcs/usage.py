@@ -261,11 +261,11 @@ Commands:
         'n' seconds) for the resource to stop and then return 0 if the
         resource is stopped or 1 if the resource has not stopped.
 
-    debug-start <resource id>
+    debug-start <resource id> [--full]
         This command will force the specified resource to start on this node
         ignoring the cluster recommendations and print the output from
-        starting the resource.  This is mainly used for debugging resources
-        that fail to start.
+        starting the resource.  Using --full will give more detailed output.
+        This is mainly used for debugging resources that fail to start.
 
     move <resource id> [destination node] [--master]
         Move resource off current node (and optionally onto destination node).

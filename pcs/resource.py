@@ -1489,6 +1489,9 @@ def resource_force_start(argv):
         utils.err("You must specify a resource to debug-start")
 
     args = ["crm_resource", "-r", argv[0], "--force-start"]
+    if "--full" in utils.pcs_options:
+        args = args + ["-V"]
+
     output, retval = utils.run(args)
     print output,
 
