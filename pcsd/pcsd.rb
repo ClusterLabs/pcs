@@ -302,6 +302,8 @@ get '/managec/:cluster/main' do
   @@cluster_name = params[:cluster]
 #  @resources, @groups = getResourcesGroups
   @load_data = true
+  pcs_config = PCSConfig.new
+  @clusters = pcs_config.clusters
   @resources = []
   @groups = []
   @nodes = get_cluster_nodes(params[:cluster])

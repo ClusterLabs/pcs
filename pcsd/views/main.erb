@@ -68,21 +68,29 @@
 	      <table>
 		<tr>
 		  <td colspan=2 style="padding-bottom:8px;">
-		    <div style="float:left">
-		      <div style="float:right;" id="dropdownl" onclick="window.location='/manage#manage'">
-			<%=@manage ? "Select Cluster" : "Cluster:" + @@cluster_name%><span style="float:right;" class="downarrow sprites"></span>
+		      <div style="float:left">
+			<div class="menuheader">
+			<div id="dropdownr" class="label"  style="width: 130px" onclick="window.location='/manage#manage'"><%=@manage ? "Select Cluster" : "Cluster: " + @@cluster_name%><div style="float:right;" class="downarrow sprites"></div></div>
+			<div style="width:100%;" class="menu">
+			  <% if not @manage %>
+			    <a href="/manage#manage" class="menu-item">Manage&nbsp;Clusters&nbsp;&nbsp;</a>
+			  <% end %>
+			<% @clusters.each { |c| %>
+			  <a href="<%=c.ui_address%>" class="menu-item">xx<%=c.name%>&nbsp;&nbsp;</a>
+			<% } %>
+			</div>
+			</div>
 		      </div>
-		    </div>
 		  </td>
 		  <td colspan=4 style="padding-bottom:8px;">
 		    <% if session[:username] %>
 		      <div style="float:right">
-			<li class="menuheader">
-			<div class="label"><%=session[:username]%><div style="float:right;" class="downarrow sprites"></div></div>
-			<div class="menu">
-			  <a href="/logout" class="menu-item">Logout</a>
+			<div class="menuheader">
+			<div id="dropdownr" class="label"><%=session[:username]%><div style="float:right;" class="downarrow sprites"></div></div>
+			<div style="width:100%" class="menu">
+			  <a href="/logout" class="menu-item">Logout&nbsp;&nbsp;</a>
 			</div>
-			</li>
+			</div>
 			<!--		      <div id="dropdownr">
 			  <%=session[:username]%><div style="float:right;" class="downarrow sprites"></div>
 			</div> -->

@@ -130,6 +130,7 @@ div.first a {
   padding: 2px 5px 2px 5px;
   border-radius: 5px;
   -moz-border-radius: 5px;
+  cursor: pointer;
 }
 
 #menu_controls #dropdownl {
@@ -142,6 +143,7 @@ div.first a {
   padding: 2px 5px 2px 5px;
   border-radius: 5px;
   -moz-border-radius: 5px;
+  cursor: pointer;
 }
 
 #menu_list a, #menu_list span{
@@ -652,13 +654,14 @@ tr td a.remove {
   display: none;
   width: auto;
   position: absolute;
-#  top: 22px;
+//  top: 22px;
   border-radius: 0 0 5px 5px;
   z-index: 10;
   padding-bottom: 5px;
   box-shadow: 0 5px 14px #dadada;
   text-align: right;
 }
+
 .menuheader:hover .menu {
   display: block;
   position: absolute;
@@ -670,8 +673,7 @@ tr td a.remove {
 }
 
 .menu a {
-  width: 80px; /* HACK: must be the same width as the widest menu header */
-#  color: #777;
+// color: #777;
   text-decoration: none;
   font-size: 13px;
   border-radius: 0;
@@ -679,20 +681,31 @@ tr td a.remove {
   display: block;
   position: relative;
   line-height: 24px;
-#  border-top: 1px rgba(0,0,0,0) solid;
+//  border-top: 1px rgba(0,0,0,0) solid;
   padding-left: 30px;
-  padding-right: 10px;
-#  padding-top: 3px;
+  padding-right: 6px;
+//  padding-top: 3px;
   padding-bottom: 3px;
   font-family: "Overpass";
   float: left;
 }
 
+a.menu-item {
+  float:right;
+  width: 100%;
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
 .menu-item:hover {
+  width: 100%;
   background: -webkit-linear-gradient(top,  #4db5f1 0%, #127AB4 100%);
   color: white;
   border-top: 1px #47ace5 solid;
   cursor: pointer;
+  font-family: "Overpass";
+  font-size: 11px;
+  font-weight: bold;
 }
 
 li.menuheader {
