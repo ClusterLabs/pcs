@@ -158,7 +158,7 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
     myhttp.use_ssl = true
     myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
     res = myhttp.start do |http|
-      http.read_timeout = 10 
+      http.read_timeout = 30 
       http.request(req)
     end
     return res.code.to_i, res.body

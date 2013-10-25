@@ -569,6 +569,7 @@ def remove_resource (params)
   if errors == ""
     return 200
   else
+    logger.info("Remove resource errors:\n"+errors)
     return [500, errors]
   end
 end

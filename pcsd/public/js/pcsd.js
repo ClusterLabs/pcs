@@ -756,7 +756,7 @@ function remove_resource(ids) {
     type: 'POST',
     url: get_cluster_remote_url() + 'remove_resource',
     data: data,
-    timeout: pcs_timeout,
+    timeout: pcs_timeout*3,
     success: function () {
       Pcs.update();
     },
