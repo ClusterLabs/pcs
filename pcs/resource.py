@@ -1331,6 +1331,9 @@ def resource_group_add(group_name, resource_ids):
     resources_element = top_element.getElementsByTagName("resources")[0]
     group_found = False
 
+    if group_name == "":
+        utils.err("group name cannot be empty")
+
     for resource in top_element.getElementsByTagName("primitive"):
         if resource.getAttribute("id") == group_name:
             utils.err("Error: %s is already a resource" % group_name)
@@ -1382,7 +1385,7 @@ def resource_group_add(group_name, resource_ids):
         args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
         output,retval = utils.run(args)
         if retval != 0:
-            print output,
+            utils.err(output)
     else:
         utils.err("No resources to add.")
 

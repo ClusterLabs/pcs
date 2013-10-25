@@ -106,8 +106,8 @@ function create_group() {
 	      Pcs.update();
 	      $("#add_group").dialog("close");
 	    },
-	    error: function() {
-	      alert("Unable to create group");
+	    error: function (xhr, status, error) {
+	      alert(xhr.responseText);
 	      $("#add_group").dialog("close");
 	    }
 	  });

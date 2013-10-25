@@ -673,7 +673,12 @@ end
 def add_group(params)
   rg = params["resource_group"]
   resources = params["resources"]
-  run_cmd(PCS, "resource", "group", "add", rg, *(resources.split(" ")))
+  output, errout, retval = run_cmd(PCS, "resource", "group", "add", rg, *(resources.split(" ")))
+  if retval == 0
+    return 200
+  else
+    return 400, errout
+  end
 end
 
 def update_cluster_settings(params)
