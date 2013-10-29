@@ -184,6 +184,7 @@ def cluster_gui_status(argv,dont_exit = False):
 def cluster_certkey(argv):
     if len(argv) != 2:
         usage.cluster(["certkey"])
+        exit(1)
 
     certfile = argv[0]
     keyfile = argv[1]
