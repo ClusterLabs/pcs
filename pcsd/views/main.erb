@@ -68,6 +68,7 @@
 	      <table>
 		<tr>
 		  <td colspan=2 style="padding-bottom:8px;">
+		      <% if @clusters != nil %>
 		      <div style="float:left">
 			<div class="menuheader">
 			<div id="dropdownr" class="label"  style="width: 130px" onclick="window.location='/manage#manage'"><%=@manage ? "Select Cluster" : "Cluster: " + @@cluster_name%><div style="float:right;" class="downarrow sprites"></div></div>
@@ -81,6 +82,7 @@
 			</div>
 			</div>
 		      </div>
+		      <% end %>
 		  </td>
 		  <td colspan=4 style="padding-bottom:8px;">
 		    <% if session[:username] %>
