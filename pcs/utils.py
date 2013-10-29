@@ -203,6 +203,10 @@ def setCorosyncConf(corosync_config, conf_file=None):
     except IOError:
         err("unable to write corosync configuration file, try running as root.")
 
+def reloadCorosync():
+    output, retval = run(["corosync-cfgtool", "-R"])
+    return output, retval
+
 def getCorosyncActiveNodes():
     args = ["corosync-cmapctl"]
     nodes = []

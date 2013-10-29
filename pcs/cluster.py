@@ -91,6 +91,8 @@ def cluster_cmd(argv):
         cluster_localnode(argv)
     elif (sub_cmd == "corosync"):
         cluster_get_corosync_conf(argv)
+    elif (sub_cmd == "reload"):
+        cluster_reload(argv)
     elif (sub_cmd == "destroy"):
         cluster_destroy(argv)
     elif (sub_cmd == "verify"):
@@ -640,6 +642,16 @@ def cluster_get_corosync_conf(argv):
         utils.err(output)
     else:
         print output
+
+def cluster_reload(argv):
+    if len(argv) != 1 or argv[0] != "corosync":
+        usage.cluster(["reload"])
+        exit(1)
+
+    output, retval = utils.reloadCorosync()
+    if retval != 0 or "invalid option" in output:
+        utils.err(output.rstrip())
+    print "Corosync reloaded"
 
 def print_config():
     print "Cluster Name: %s" % utils.getClusterName()

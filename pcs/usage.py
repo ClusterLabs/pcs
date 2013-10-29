@@ -517,6 +517,9 @@ Commands:
     corosync <node>
         Get the corosync.conf from the specified node
 
+    reload corosync
+        Reload the corosync configuration on the current node
+
     destroy [--all]
         Permanently destroy the cluster on the current node, killing all
         corosync/pacemaker processes removing all cib files and the
