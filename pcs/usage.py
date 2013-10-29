@@ -486,6 +486,9 @@ Commands:
         Get current status of pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified
 
+    certkey <certificate file> <key file>
+        Load custom certificate and key files for use in pcsd
+
     sync
         Sync corosync configuration to all nodes found from current
         corosync.conf file

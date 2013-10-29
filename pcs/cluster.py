@@ -45,6 +45,8 @@ def cluster_cmd(argv):
         cluster_gui_status([],True)
     elif (sub_cmd == "pcsd-status"):
         cluster_gui_status(argv)
+    elif (sub_cmd == "certkey"):
+        cluster_certkey(argv)
     elif (sub_cmd == "auth"):
         cluster_auth(argv)
     elif (sub_cmd == "token"):
@@ -178,6 +180,50 @@ def cluster_gui_status(argv,dont_exit = False):
         bad_nodes = check_nodes(argv, "  ")
     if bad_nodes and not dont_exit:
         sys.exit(1)
+
+def cluster_certkey(argv):
+    if len(argv) != 2:
+        usage.cluster(["certkey"])
+
+    certfile = argv[0]
+    keyfile = argv[1]
+
+    try:
+        with open(certfile, 'r') as myfile:
+            cert = myfile.read()
+    except IOError as e:
+        utils.err(e)
+
+    try:
+        with open(keyfile, 'r') as myfile:
+            key = myfile.read()
+    except IOError as e:
+        utils.err(e)
+
+    if not "--force" in utils.pcs_options and (os.path.exists(settings.pcsd_cert_location) or os.path.exists(settings.pcsd_key_location)):
+        utils.err("certificate and/or key already exists, your must use --force to overwrite")
+
+    try:
+        try:
+            os.chmod(settings.pcsd_cert_location, 0700)
+        except OSError: # If the file doesn't exist, we don't care
+            pass
+
+        try:
+            os.chmod(settings.pcsd_key_location, 0700)
+        except OSError: # If the file doesn't exist, we don't care
+            pass
+
+        with os.fdopen(os.open(settings.pcsd_cert_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0700), 'wb') as myfile:
+            myfile.write(cert)
+
+        with os.fdopen(os.open(settings.pcsd_key_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0700), 'wb') as myfile:
+            myfile.write(key)
+
+    except IOError as e:
+        utils.err(e)
+
+    print "Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect"
 
 # Check and see if pcsd is running on the nodes listed
 def check_nodes(nodes, prefix = ""):
