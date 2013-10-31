@@ -1008,7 +1008,7 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
 
     root = ET.fromstring(metadata)
     actions = root.find("parameters")
-    valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument"]
+    valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
     bad_parameters = []
     for action in actions.findall("parameter"):
         valid_parameters.append(action.attrib["name"])
