@@ -573,6 +573,13 @@ Commands:
     delete <stonith id>
         Remove stonith id from configuration
 
+    cleanup <stonith id>
+        Cleans up the stonith device in the lrmd (useful to reset the 
+        status and failcount).  This tells the cluster to forget the
+        operation history of a stonith device and re-detect its current state.
+        This can be useful to purge knowledge of past failures that have
+        since been resolved.
+
     level
         Lists all of the fencing levels currently configured
 
