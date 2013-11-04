@@ -197,12 +197,12 @@ Pcs.Resource = Ember.Object.extend({
     return this.active;
   }.property("active"),
   resource_name_style: function() {
-    if (this.active) {
+    if (this.active && !this.failed) {
       return "";
     } else {
       return "color:red";
     }
-  }.property("active"),
+  }.property("active", "failed"),
 
   trclass: function(){
     if (this.cur_resource == true)
