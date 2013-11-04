@@ -124,7 +124,7 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
 
   for node in nodes
     code, out = send_request_with_token(node,request, post, data, remote=true, raw_data)
-    $logger.info "Node: #{node} Request: #{request} Out: #{out}"
+    $logger.info "Node: #{node} Request: #{request}"
     if out != '{"noresponse":true}'
       $logger.info "No response: Node: #{node} Request: #{request}"
       break

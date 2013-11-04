@@ -216,7 +216,7 @@
 	      <tr>
 		<td class="bold">Type:</td>
 		<td class="reg">
-		{{Pcs.resourcesController.cur_resource.res_type}}
+		{{Pcs.resourcesController.cur_resource.agentname}}
 		</td>
 	      </tr>
 	    </table>
@@ -237,28 +237,35 @@
     </table>
     <div id="add_resource" style="display: none;">
       <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
-	<% if false %>
 	<tr>
-	  <td class="bold">Class</td>
+	  <td class="bold">Class/Provider</td>
 	  <td>
-	    <select>
-	      <option value="OCF">OCF</option>
-	    </select>
-	  </td>
-	  <td style="padding-left:10px;" class="bold">Provider</td>
-	  <td>
-	    <select>
-	      <option value="heartbeat">heartbeat</option>
+	    <%
+	      class_providers = []
+	      @resource_agents.keys.each {|k|
+		class_providers << k[0,k.rindex(':')]
+	      }
+	      class_providers.uniq!
+	      class_providers.sort!
+	    %>
+	    <select id="resource_class_provider_selector">
+	      <% class_providers.each {|cp| %>
+		<option <%= "selected" if cp == "ocf:heartbeat" %> value="<%=cp%>"><%=cp%></option>
+	      <% } %>
 	    </select>
 	  </td>
 	</tr>
-	<% end %>
 	<tr>
 	  <td class="bold">Type</td>
 	  <td>
+	    <select id="all_ra_types" style="display:none;">
+	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |key| %>
+		<option width=250px  value="<%=key%>"><%=key[(key.rindex(':')+1)..-1]%></option>
+	      <% } %>
+	    </select>
 	    <select id="add_ra_type" onchange="load_resource_form($('#new_resource_agent'), this.value);">
-	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
-		<option width=250px <%= @resource_agents[name]["type"] == "IPaddr2" ? "selected" : "" %> value="<%=@resource_agents[name]["type"]%>"><%=@resource_agents[name]["type"]%></option>
+	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |key| %>
+		<option width=250px <%= key == "ocf::heartbeat:IPaddr2" ? "selected" : "" %> value="<%=key%>"><%=key%></option>
 	      <% } %>
 	    </select>
 	  </td>

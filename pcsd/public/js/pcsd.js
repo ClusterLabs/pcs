@@ -889,3 +889,24 @@ function wizard_submit(form) {
     get_cluster_remote_url() + 'wizard_submit',
     data);
 }
+
+function update_resource_type_options() {
+  var cp = $("#resource_class_provider_selector").val();
+  var target = $("#add_ra_type");
+  var source = $("#all_ra_types");
+
+  target.empty();
+  source.find("option").each(function(i,v) {
+    if ($(v).val().indexOf(cp) == 0) {
+      new_option = $(v).clone();
+      target.append(new_option);
+    }
+  });
+}
+
+function setup_resource_class_provider_selection() {
+  $("#resource_class_provider_selector").change(function() {
+    update_resource_type_options();
+  });
+  $("#resource_class_provider_selector").change();
+}

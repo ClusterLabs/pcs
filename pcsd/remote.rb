@@ -409,7 +409,7 @@ def resource_form(params)
   if @cur_resource
     @cur_resource.options = getResourceOptions(@cur_resource.id)
     @resource_agents = getResourceAgents(@cur_resource.agentname)
-    @resource = @resource_agents[@cur_resource.agentname]
+    @resource = @resource_agents[@cur_resource.agentname.gsub('::',':')]
     if @resource
       erb :resourceagentform
     else
@@ -539,8 +539,15 @@ end
 
 def resource_metadata (params)
   return 200 if not params[:resourcename] or params[:resourcename] == ""
+  resource_name = params[:resourcename][params[:resourcename].rindex(':')+1..-1]
+  class_provider = params[:resourcename][0,params[:resourcename].rindex(':')]
+
   @resource = ResourceAgent.new(params[:resourcename])
-  @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
+  if class_provider == "ocf:heartbeat"
+    @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + resource_name)
+  elsif class_provider == "ocf:pacemaker"
+    @resource.required_options, @resource.optional_options = getResourceMetadata(PACEMAKER_AGENTS_DIR + resource_name)
+  end
   @new_resource = params[:new]
   @resources, @groups = getResourcesGroups
   

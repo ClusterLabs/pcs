@@ -61,6 +61,7 @@ end
 configure do
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
+  PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
   PENGINE = "/usr/libexec/pacemaker/pengine"
   if Dir.pwd == "/var/lib/pcsd"
     PCS = "/sbin/pcs" 

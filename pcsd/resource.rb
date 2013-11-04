@@ -274,14 +274,23 @@ end
 
 def getResourceAgents(resource_agent = nil)
   resource_agent_list = {}
-  agents = Dir.glob(OCF_ROOT + '/resource.d/*/*')
+  stdout, stderr, retval = run_cmd(PCS, "resource", "list", "--nodesc")
+  if retval != 0
+    logger.error("Error running 'pcs resource list --nodesc")
+    logger.error(stdout + stderr)
+    return {}
+  end
+
+  agents = stdout
+
   agents.each { |a|
     ra = ResourceAgent.new
-    x = /.*\/([^\/]*)\/([^\/]*)$/.match(a)
-    ra.name = "ocf::" + x[1] + ":" + x[2]
+    ra.name = a.chomp
 
-    if resource_agent and a.sub(/.*\//,"") == resource_agent.sub(/.*:/,"")
-      required_options, optional_options = getResourceMetadata(a)
+    if resource_agent and (a.start_with?("ocf:heartbeat:") or a.start_with?("ocf:pacemaker:"))
+      split_agent = ra.name.split(/:/)
+      path = OCF_ROOT + '/resource.d/' + split_agent[1] + "/" + split_agent[2]
+      required_options, optional_options = getResourceMetadata(path)
       ra.required_options = required_options
       ra.optional_options = optional_options
     end
@@ -351,6 +360,10 @@ class ResourceAgent
 
   def type
     name.gsub(/.*:/,"")
+  end
+
+  def name
+    @name
   end
 
   def to_json(options = {})
