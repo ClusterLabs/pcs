@@ -735,4 +735,7 @@ li.menuheader {
 .wizard_header {
   font-family: "Liberation"
 }
+
+.hover-pointer {
+  cursor: pointer;
 }
