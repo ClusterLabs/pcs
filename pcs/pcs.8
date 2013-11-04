@@ -47,8 +47,8 @@ Print full cluster configuration
 show [resource id] [\-\-full] [\-\-groups]
 Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).
 .TP
-list [<standard|provider|type>]
-Show list of all available resources, optionally filtered by specified type, standard or provider
+list [<standard|provider|type>] [\-\-nodesc]
+Show list of all available resources, optionally filtered by specified type, standard or provider. If --nodesc is used then descriptions of resources are not printed.
 .TP
 describe <standard:provider:type|type>
 Show options for the specified resource

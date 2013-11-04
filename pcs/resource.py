@@ -186,6 +186,11 @@ def resource_list_available(argv):
             full_res_name = "ocf:" + provider + ":" + resource
             if full_res_name.lower().count(filter_string.lower()) == 0:
                 continue
+
+            if "--nodesc" in utils.pcs_options:
+                ret += full_res_name + "\n"
+                continue
+
             metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
             if metadata == False:
                 continue

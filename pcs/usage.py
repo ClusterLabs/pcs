@@ -220,9 +220,10 @@ Commands:
         specified, only show groups (and their resources).
 
 
-    list [<standard|provider|type>]
+    list [<standard|provider|type>] [--nodesc]
         Show list of all available resources, optionally filtered by specified
-        type, standard or provider
+        type, standard or provider.  If --nodesc is used then descriptions
+        of resources are not printed.
 
     describe <standard:provider:type|type>
         Show options for the specified resource
