@@ -1,4 +1,4 @@
-PCSD_GEMS=sinatra sinatra-contrib json highline rack rack-protection tilt eventmachine rack-test backports sinatra-sugar monkey-lib rpam-ruby19
+PCSD_GEMS=sinatra sinatra-contrib json highline rack rack-protection tilt eventmachine rack-test backports sinatra-sugar monkey-lib rpam-ruby19 multi_json
 
 tarball:
 	rm -f dist/pcsd.tar.gz
