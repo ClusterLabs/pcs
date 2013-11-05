@@ -507,10 +507,10 @@ def update_resource (params)
 end
 
 def update_fence_device (params)
-  p "Updating fence device"
-  pp params
+  logger.info "Updating fence device"
+  logger.info params
   param_line = getParamLine(params)
-  pp param_line
+  logger.info param_line
 
   param_line = getParamLine(params)
   if not params[:resource_id]
@@ -519,7 +519,7 @@ def update_fence_device (params)
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
     end
-    return
+    return "{}"
   end
 
   if param_line.length != 0
