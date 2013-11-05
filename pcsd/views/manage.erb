@@ -46,16 +46,14 @@
 	<% @clusters.each do |c| %>
 	  <div id="cluster_info_<%=c.name%>" style="display:none;">
 	    <table>
-	      <tr><td><b>Cluster:</b></td><td><%=c.name%></td></tr>
-	      <tr><td><b>Nodes:</b></td>
-		<td>
-		  <table>
-		    <% c.nodes.each { |n| %>
-		      <tr><td></td><td><%=n%></td></tr>
-		    <% } %>
-		  </table>
-		</td>
-	      </tr>
+	      <tr><td style="text-align:right"><b>Cluster:</b>&nbsp;</td><td><%=c.name%></td></tr>
+	      <% first = true %>
+	      <% c.nodes.each { |n| %>
+		<%= '<tr><td style="text-align:right"><b>Nodes:</b>&nbsp;</td>' if first %>
+		<%= "<tr><td></td>" if not first %>
+		  <td><%=n%></td></tr>
+		<% first = false %>
+	      <% } %>
 	    </table>
 	  </div>
 	<% end %>
