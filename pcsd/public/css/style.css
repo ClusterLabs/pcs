@@ -623,6 +623,7 @@ tr td a.remove {
 .xdark { background-position: -32px -17px; }
 .plus { background-position: -48px -1px; }
 .check { background-position: -448px -1px; }
+.checkdark { background-position: -448px -17px; }
 .restart { background-position: -272px -17px; }
 .standby { background-position: -352px -16px; }
 .unstandby { background-position: -368px -16px; }

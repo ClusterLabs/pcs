@@ -45,6 +45,8 @@ def remote(params,request)
     return resource_start(params)
   when "resource_stop"
     return resource_stop(params)
+  when "resource_cleanup"
+    return resource_cleanup(params)
   when "check_gui_status"
     return check_gui_status(params)
   when "add_node"
@@ -379,6 +381,15 @@ end
 
 def resource_stop(params)
   stdout, stderr, retval = run_cmd(PCS,"resource","disable", params[:resource])
+  if retval == 0
+    return JSON.generate({"success" => "true"})
+  else
+    return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
+  end
+end
+
+def resource_cleanup(params)
+  stdout, stderr, retval = run_cmd(PCS,"resource","cleanup", params[:resource])
   if retval == 0
     return JSON.generate({"success" => "true"})
   else

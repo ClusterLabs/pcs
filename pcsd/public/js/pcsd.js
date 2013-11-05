@@ -124,9 +124,12 @@ function create_resource(form, update, stonith) {
   var resourceID = $(form).find("[name='name']").val(); 
   url = get_cluster_remote_url() + $(form).attr("action");
   var name;
+
   if (stonith)
     name = "fence device";
-    else name = "resource"
+  else
+    name = "resource"
+
   $.ajax({
     type: "POST",
     url: url,
@@ -425,6 +428,10 @@ function setup_resource_links(link_type) {
     fade_in_out("#resource_start_link");
     $.post(get_cluster_remote_url() + 'resource_start',"resource="+curResource());
     Pcs.resourcesController.cur_resource.set("disabled",false);
+  });
+  $("#resource_cleanup_link").click(function () {
+    fade_in_out("#resource_cleanup_link");
+    $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curResource());
   });
   $("#resource_move_link").click(function () {
     alert("Not Yet Implemented");
