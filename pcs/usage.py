@@ -131,9 +131,9 @@ def sub_generate_bash_completion():
     local cur cur1 cur2 cur3
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    cur1="${COMP_WORDS[COMP_CWORD-1]}"
-    cur2="${COMP_WORDS[COMP_CWORD-2]}"
-    cur3="${COMP_WORDS[COMP_CWORD-3]}"
+    if [ "$COMP_CWORD" -gt "0" ]; then cur1="${COMP_WORDS[COMP_CWORD-1]}";fi
+    if [ "$COMP_CWORD" -gt "1" ]; then cur2="${COMP_WORDS[COMP_CWORD-2]}";fi
+    if [ "$COMP_CWORD" -gt "2" ]; then cur3="${COMP_WORDS[COMP_CWORD-3]}";fi
 
     """
     print sub_gen_code(3,tree,[])
