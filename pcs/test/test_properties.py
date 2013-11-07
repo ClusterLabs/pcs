@@ -98,6 +98,9 @@ class PropertyTest(unittest.TestCase):
         ac(o,"Cluster Properties:\nNode Attributes:\n rh7-2: IP=192.168.2.2\n")
         assert r==0
 
+        o,r = pcs("property unset --node=rh7-1 IP")
+        ac(o,"Error: attribute: 'IP' doesn't exist for node: 'rh7-1'\n")
+        assert r==1
 
 
 if __name__ == "__main__":

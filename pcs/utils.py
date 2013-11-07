@@ -825,6 +825,9 @@ def get_node_attributes():
 
 def set_node_attribute(prop, value, node):
     if (value == ""):
+        o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--query"])
+        if r != 0:
+            err("attribute: '%s' doesn't exist for node: '%s'" % (prop,node))
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--delete"])
     else:
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--update",value])
