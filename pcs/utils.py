@@ -1084,7 +1084,7 @@ def is_rhel6():
     except IOError as e:
         return False
 
-    if re.search(r'Red Hat Enterprise Linux Server release 6\.', issue):
+    if re.search(r'(Red Hat Enterprise Linux Server|CentOS|Scientific Linux) release 6\.', issue):
         return True
     else:
         return False
