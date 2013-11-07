@@ -48,6 +48,14 @@ class ClusterTest(unittest.TestCase):
         o,r = pcs(temp_cib, "cluster remote-node remove rh7-2")
         assert r==0 and o==""
 
+        o,r = pcs(temp_cib, "cluster remote-node add rh7-2 NOTARESOURCE")
+        assert r==1
+        ac(o,"Error: unable to find resource 'NOTARESOURCE'\n")
+
+        o,r = pcs(temp_cib, "cluster remote-node remove rh7-2")
+        assert r==1
+        ac(o,"Error: unable to remove: cannot find remote-node 'rh7-2'\n")
+
         o,r = pcs(temp_cib, "resource --full")
         assert r==0
         ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: remote-node=rh7-1 remote-port=100 remote-addr=400 remote-connect-timeout=50 \n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")

@@ -787,7 +787,7 @@ def cluster_remote_node(argv):
         hostname = argv.pop(0)
         rsc = argv.pop(0)
         if not utils.is_resource(rsc):
-            utils.err("unable to find resource '%s'", rsc)
+            utils.err("unable to find resource '%s'" % rsc)
         resource.resource_update(rsc, ["meta", "remote-node="+hostname] + argv)
 
     elif command in ["remove","delete"]:
@@ -803,6 +803,10 @@ def cluster_remote_node(argv):
                 for np in nvpair.parentNode.getElementsByTagName("nvpair"):
                     if np.getAttribute("name").startswith("remote-"):
                         nvpairs_to_remove.append(np)
+
+        if len(nvpairs_to_remove) == 0:
+            utils.err("unable to remove: cannot find remote-node '%s'" % hostname)
+
         for nvpair in nvpairs_to_remove[:]:
             nvpair.parentNode.removeChild(nvpair)
         utils.replace_cib_configuration(dom)
