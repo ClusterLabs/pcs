@@ -433,6 +433,10 @@ function setup_resource_links(link_type) {
     fade_in_out("#resource_cleanup_link");
     $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curResource());
   });
+  $("#stonith_cleanup_link").click(function () {
+    fade_in_out("#stonith_cleanup_link");
+    $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curResource());
+  });
   $("#resource_move_link").click(function () {
     alert("Not Yet Implemented");
   });
