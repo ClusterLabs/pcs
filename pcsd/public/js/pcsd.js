@@ -147,7 +147,7 @@ function create_resource(form, update, stonith) {
 	  else
 	    $('#add_resource').dialog('close');
 	} else { 
-	  reload_current_resource(this);
+	  reload_current_resource();
 	}
       }
     },
@@ -642,15 +642,15 @@ function hover_out(o) {
   $(o).removeClass("node_selected");
 }
 
-function reload_current_resource(item) {
-  load_row_by_id($(this).parents("form").find("[name='resource_id']").val());
+function reload_current_resource() {
+  load_row_by_id(Pcs.resourcesController.cur_resource.name);
 }
 
 function load_row_by_id(resource_id) {
   row = $("[nodeid='"+resource_id+"']");
-  if (row.parents("#resource_list"))
+  if (row.parents("#resource_list").length != 0)
     load_row(row, Pcs.resourcesController, 'cur_resource', '#resource_info_div', 'cur_resource_res');
-  else if (row.parents("#stonith_list"))
+  else if (row.parents("#stonith_list").length != 0)
     load_row(row, Pcs.resourcesController, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
   else
     alert("Unable to make " + resource_id + " active, doesn't appear to be resource or stonith");
