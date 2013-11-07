@@ -534,8 +534,12 @@ def update_fence_device (params)
   end
 
   if param_line.length != 0
-    run_cmd(PCS, "stonith", "update", params[:resource_id], *(param_line.split(" ")))
+    out, stderr, retval = run_cmd(PCS, "stonith", "update", params[:resource_id], *(param_line.split(" ")))
+    if retval != 0
+      return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
+    end
   end
+  return "{}"
 end
 
 def get_avail_resource_agents (params)
