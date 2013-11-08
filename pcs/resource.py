@@ -231,6 +231,7 @@ def resource_list_available(argv):
 
 def resource_list_options(resource):
     found_resource = False
+    resource = get_full_ra_type(resource,True)
     if "ocf:" in resource:
         resource_split = resource.split(":",3)
         providers = [resource_split[1]]
@@ -245,9 +246,30 @@ def resource_list_options(resource):
             found_resource = True
         
         try:
-            print "Resource options for: %s" % ("ocf:"+provider+":"+resource)
+            short_desc = ""
+            long_desc = ""
             dom = parseString(metadata)
+            long_descs = dom.documentElement.getElementsByTagName("longdesc")
+            for ld in long_descs:
+                if ld.parentNode.tagName == "resource-agent":
+                    long_desc = ld.firstChild.data
+                    break
+
+            short_descs = dom.documentElement.getElementsByTagName("shortdesc")
+            for sd in short_descs:
+                if sd.parentNode.tagName == "resource-agent":
+                    short_desc = sd.firstChild.data
+                    break
+            
+            title_1 = "ocf:%s:%s - " % (provider, resource)
+            print title_1 + format_desc(len(title_1),short_desc)
+            print 
+            print " " + format_desc(1,long_desc)
+            print
+
             params = dom.documentElement.getElementsByTagName("parameter")
+            if len(params) > 0:
+                print "Resource options:"
             for param in params:
                 name = param.getAttribute("name")
                 if param.getAttribute("required") == "1":
