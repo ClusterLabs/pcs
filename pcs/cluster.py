@@ -409,7 +409,7 @@ def node_standby(argv,standby=True):
             usage.cluster(["unstandby"])
         sys.exit(1)
 
-    nodes = utils.getNodesFromCorosyncConf()
+    nodes = utils.getNodesFromPacemaker()
 
     if "--all" not in utils.pcs_options:
         nodeFound = False
