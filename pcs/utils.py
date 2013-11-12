@@ -490,7 +490,8 @@ def is_resource_started(resource,wait,stopped=False):
         state = getClusterState()
         resources = state.getElementsByTagName("resource")
         for res in resources:
-            if res.getAttribute("id") == resource:
+            # If resource is a clone it can have an id of '<resource name>:N'
+            if res.getAttribute("id") == resource or res.getAttribute("id").startswith(resource+":"):
                 if (res.getAttribute("role") == "Started" and not stopped) or (res.getAttribute("role") == "Stopped" and stopped):
                     return True
                 break
