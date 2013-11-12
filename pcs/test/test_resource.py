@@ -1412,8 +1412,18 @@ class ResourceTest(unittest.TestCase):
         ac(o,"Warning: --group ignored when creating a master\n")
         assert r == 0
 
+    def testResourceCloneGroup(self):
+        o,r = pcs("resource create dummy0 Dummy --group group")
+        ac(o,"")
+        assert r == 0
 
+        o,r = pcs("resource clone group")
+        ac(o,"")
+        assert r == 0
 
+        o,r = pcs("resource delete dummy0")
+        ac(o,"Deleting Resource (and group and clone) - dummy0\n")
+        assert r == 0
 
     def testVirtualDomainResource(self):
         o,r = pcs("resource describe VirtualDomain")

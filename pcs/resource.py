@@ -1273,10 +1273,17 @@ def resource_remove(resource_id, output = True):
             utils.err("unable to remove resource: %s, it may still be referenced in constraints." % resource_id)
     else:
         top_master = utils.get_cib_xpath('//master/group/primitive[@id="'+resource_id+'"]/../..')
+        top_clone = utils.get_cib_xpath('//clone/group/primitive[@id="'+resource_id+'"]/../..')
         if top_master != "":
             to_remove = top_master
             msg = "and group and M/S"
             to_remove_dom = parseString(to_remove).getElementsByTagName("master")
+            to_remove_id = to_remove_dom[0].getAttribute("id")
+            constraint.remove_constraints_containing(to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id"))
+        elif top_clone != "":
+            to_remove = top_clone
+            msg = "and group and clone"
+            to_remove_dom = parseString(to_remove).getElementsByTagName("clone")
             to_remove_id = to_remove_dom[0].getAttribute("id")
             constraint.remove_constraints_containing(to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id"))
         else:
