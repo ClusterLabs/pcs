@@ -183,7 +183,10 @@ function load_resource_form(item, ra, stonith) {
 
 function verify_remove(rem_type, error_message, ok_message, title_message, resource_id, post_location) {
   if (!error_message)
-    error_message = "You must select at least one resource.";
+    if (rem_type == "resource")
+      error_message = "You must select at least one resource.";
+    else
+      error_message = "You must select at least one fence device.";
   if (!ok_message)
     ok_message = "Remove resource(s)";
   if (!title_message)
