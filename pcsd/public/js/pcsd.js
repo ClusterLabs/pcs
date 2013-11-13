@@ -106,6 +106,7 @@ function create_group() {
 	    success: function() {
 	      Pcs.update();
 	      $("#add_group").dialog("close");
+	      reload_current_resource();
 	    },
 	    error: function (xhr, status, error) {
 	      alert(xhr.responseText);
@@ -654,11 +655,13 @@ function reload_current_resource() {
 
 function load_row_by_id(resource_id) {
   row = $("[nodeid='"+resource_id+"']");
-  if (row.parents("#resource_list").length != 0)
+  if (row.parents("#resource_list").length != 0) {
+    load_agent_form(row, false);
     load_row(row, Pcs.resourcesController, 'cur_resource', '#resource_info_div', 'cur_resource_res');
-  else if (row.parents("#stonith_list").length != 0)
+  } else if (row.parents("#stonith_list").length != 0) {
+    load_agent_form(row, true);
     load_row(row, Pcs.resourcesController, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
-  else
+  } else
     alert("Unable to make " + resource_id + " active, doesn't appear to be resource or stonith");
 }
 
