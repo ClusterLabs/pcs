@@ -102,6 +102,22 @@ class PropertyTest(unittest.TestCase):
         ac(o,"Error: attribute: 'IP' doesn't exist for node: 'rh7-1'\n")
         assert r==1
 
+        o,r = pcs("property unset --node=rh7-1 IP --force")
+        ac(o,"")
+        assert r==0
+
+    def testBadProperties(self):
+        o,r = pcs("property set xxxx=zzzz")
+        assert r==1
+        ac(o,"Error: unknown cluster property: 'xxxx', (use --force to override)\n")
+
+        o,r = pcs("property unset zzzzz")
+        assert r==1
+        ac(o,"Error: can't remove property property: 'zzzzz' that doesn't exist\n")
+
+        o,r = pcs("property unset zzzz --force")
+        assert r==0
+        ac(o,"")
 
 if __name__ == "__main__":
     unittest.main()

@@ -827,7 +827,7 @@ def get_node_attributes():
 def set_node_attribute(prop, value, node):
     if (value == ""):
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--query"])
-        if r != 0:
+        if r != 0 and "--force" not in pcs_options:
             err("attribute: '%s' doesn't exist for node: '%s'" % (prop,node))
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--delete"])
     else:
@@ -843,6 +843,7 @@ def set_cib_property(prop, value):
     crm_config = get_cib_xpath("//crm_config")
     if (crm_config == ""):
         err("unable to get crm_config, is pacemaker running?")
+    property_found = False
     document = parseString(crm_config)
     crm_config = document.documentElement
     cluster_property_set = crm_config.getElementsByTagName("cluster_property_set")
@@ -857,6 +858,7 @@ def set_cib_property(prop, value):
             break
         if (child.getAttribute("name") == prop):
             child.parentNode.removeChild(child)
+            property_found = True
             break
 
 # If the value is empty we don't add it to the cluster
@@ -866,6 +868,8 @@ def set_cib_property(prop, value):
         new_property.setAttribute("name",prop)
         new_property.setAttribute("value",value)
         cluster_property_set.appendChild(new_property)
+    elif not property_found and "--force" not in pcs_options:
+        err("can't remove property property: '%s' that doesn't exist" % (prop))
 
 
     args = ["cibadmin", "-c", "-R", "--xml-text", crm_config.toxml()]
