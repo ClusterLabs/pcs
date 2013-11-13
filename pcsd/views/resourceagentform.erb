@@ -27,6 +27,14 @@
 	    <input type=checkbox name="resource_ms" <%= "checked" if @cur_resource && @cur_resource.ms %>>
 	  </td>
 	</tr>
+	<% if not @existing_resource %>
+	  <tr>
+	    <td nowrap><div class="bold">Disabled:</div></td>
+	    <td>
+	      <input type=checkbox name="disabled">
+	    </td>
+	  </tr>
+      <% end %>
       </table>
     </div>
     <table style="clear:left; float:left; margin-top: 25px;">
