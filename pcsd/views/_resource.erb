@@ -110,7 +110,7 @@
 	      </table>
 	      <% if @myView == "resource" %>
 	      <table style="clear:left;float:left">
-		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Location Preferences ({{Pcs.resourcesController.cur_resource.location_constraints.length}}{{#unless Pcs.resourcesController.cur_resource.location_constraints.length}}0{{/unless}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Location Preferences ({{#if Pcs.resourcesController.cur_resource.location_constraints}}{{Pcs.resourcesController.cur_resource.location_constraints.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
@@ -140,7 +140,7 @@
 		</tr>
 	      </table>
 	      <table style="clear:left;float:left;">
-		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Ordering Preferences ({{Pcs.resourcesController.cur_resource.ordering_constraints.length}}{{#unless Pcs.resourcesController.cur_resource.ordering_constraints.length}}0{{/unless}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Ordering Preferences ({{#if Pcs.resourcesController.cur_resource.ordering_constraints.length}}{{Pcs.resourcesController.cur_resource.ordering_constraints.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
@@ -174,7 +174,7 @@
 		</tr>
 	      </table>
 	      <table style="clear:left;float:left">
-		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Colocation Preferences ({{Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{#unless Pcs.resourcesController.cur_resource.colocation_constraints.length}}0{{/unless}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Colocation Preferences ({{#if Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
