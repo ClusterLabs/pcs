@@ -226,9 +226,11 @@ function verify_remove(rem_type, error_message, ok_message, title_message, resou
     nodes_to_remove++;
   } else {
     $("#"+rem_type+"_list :checked").each(function (index,element) {
-      if ($(element).is(':visible')) {
-	list_of_nodes += "<li>" + $(element).parent().parent().attr("nodeID")+"</li>";
-	nodes_to_remove++;
+      if ($(element).parent().parent().attr("nodeID")) {
+	if ($(element).is(':visible')) {
+	  list_of_nodes += "<li>" + $(element).parent().parent().attr("nodeID")+"</li>";
+	  nodes_to_remove++;
+	}
       }
     });
   }
