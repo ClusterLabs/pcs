@@ -62,8 +62,8 @@ def add_order_constraint(resourceA, resourceB, score, symmetrical = true)
   if score != ""
     score = "score=" + score
   end
-  $logger.info [PCS, "constraint", "order", "add", resourceA, resourceB, score, sym]
-  Open3.popen3(PCS, "constraint", "order", "add", resourceA,
+  $logger.info [PCS, "constraint", "order",  resourceA, "then", resourceB, score, sym]
+  Open3.popen3(PCS, "constraint", "order", resourceA, "then",
 	       resourceB, score, sym) { |stdin, stdout, stderror, waitth|
     $logger.info stdout.readlines()
     return waitth.value
