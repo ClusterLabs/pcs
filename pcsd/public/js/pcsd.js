@@ -81,9 +81,10 @@ function create_group() {
   var num_nodes = 0;
   var node_names = "";
   $("#resource_list :checked").parent().parent().each(function (index,element) {
-    num_nodes++;
-    if (element.getAttribute("nodeID"))
-	node_names += element.getAttribute("nodeID") + " "
+    if (element.getAttribute("nodeID")) {
+      num_nodes++;
+      node_names += element.getAttribute("nodeID") + " "
+    }
   });
 
   if (num_nodes == 0) {
