@@ -67,7 +67,7 @@ def writeTokens(tokens):
 
 # Set the corosync.conf file on the specified node
 def getCorosyncConfig(node):
-    retval, output = sendHTTPRequest(node, 'remote/get_corosync_conf', None, False)
+    retval, output = sendHTTPRequest(node, 'remote/get_corosync_conf', None, False, False)
     return retval,output
 
 def setCorosyncConfig(node,config):
