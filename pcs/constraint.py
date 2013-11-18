@@ -246,12 +246,18 @@ def colocation_set(argv):
             break
 
     current_set = set_args_into_array(argv)
+    colocation_id = "pcs_rsc_colocation"
+    for a in argv:
+        if a.find('=') == -1:
+            colocation_id = colocation_id + "_" + a
+
     cib = utils.get_cib_etree()
     constraints = cib.find(".//constraints")
     if constraints == None:
         constraints = ET.SubElement(cib, "constraints")
     rsc_colocation = ET.SubElement(constraints,"rsc_colocation")
-    rsc_colocation.set("id", utils.find_unique_id(cib,"pcs_rsc_colocation"))
+    rsc_colocation.set("id", utils.find_unique_id(cib,colocation_id))
+    rsc_colocation.set("score","INFINITY")
     for opt in setoptions:
         if opt.find("=") != -1:
             name,value = opt.split("=")
@@ -338,9 +344,10 @@ def set_args_into_array(argv):
     return current_set
 
 def set_add_resource_sets(elem, sets, cib):
+
     for o_set in sets:
+        set_id = "pcs_rsc_set"
         res_set = ET.SubElement(elem,"resource_set")
-        res_set.set("id", utils.find_unique_id(cib,"pcs_rsc_set"))
         for opts in o_set:
             if opts.find("=") != -1:
                 key,val = opts.split("=")
@@ -348,16 +355,23 @@ def set_add_resource_sets(elem, sets, cib):
             else:
                 se = ET.SubElement(res_set,"resource_ref")
                 se.set("id",opts)
-
+                set_id = set_id + "_" + opts
+            res_set.set("id", utils.find_unique_id(cib,set_id))
     
 def order_set(argv):
     current_set = set_args_into_array(argv)
+
+    order_id = "pcs_rsc_order"
+    for a in argv:
+        if a.find('=') == -1:
+            order_id = order_id + "_" + a
+
     cib = utils.get_cib_etree()
     constraints = cib.find(".//constraints")
     if constraints == None:
         constraints = ET.SubElement(cib, "constraints")
     rsc_order = ET.SubElement(constraints,"rsc_order")
-    rsc_order.set("id", utils.find_unique_id(cib,"pcs_rsc_order"))
+    rsc_order.set("id", utils.find_unique_id(cib,order_id))
     set_add_resource_sets(rsc_order, current_set, cib)
     utils.replace_cib_configuration(cib)
 

@@ -6,7 +6,7 @@ sys.path.insert(0,parentdir)
 import utils
 from pcs_test_functions import pcs,ac
 
-empty_cib = "empty.xml"
+empty_cib = "empty-withnodes.xml"
 temp_cib = "temp.xml"
 
 class ClusterTest(unittest.TestCase):
@@ -15,8 +15,8 @@ class ClusterTest(unittest.TestCase):
 
     def testNodeStandby(self):
         output, returnVal = pcs(temp_cib, "cluster standby rh7-1") 
+        ac(output, "")
         assert returnVal == 0
-        assert output == ""
 
         output, returnVal = pcs(temp_cib, "cluster standby nonexistant-node") 
         assert returnVal == 1

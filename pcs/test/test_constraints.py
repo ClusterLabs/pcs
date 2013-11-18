@@ -247,31 +247,31 @@ class ConstraintTest(unittest.TestCase):
         ac(o,"")
 
         o, r = pcs(temp_cib, "constraint colocation --full")
-        ac(o,"Colocation Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) setoptions score=INFINITY (id:pcs_rsc_colocation)\n    set D5 D6 (id:pcs_rsc_set-2) (id:pcs_rsc_colocation-1)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_colocation-2)\n")
+        ac(o,"Colocation Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set_D5_D6_D7-1) set D8 D9 sequential=true (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_D7_set_D8_D9)\n    set D5 D6 (id:pcs_rsc_set_D5_D6) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6)\n    set D5 D6 (id:pcs_rsc_set_D5_D6-1) set D7 D8 (id:pcs_rsc_set_D7_D8) set D8 D9 (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9)\n")
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint remove pcs_rsc_colocation-1")
+        o, r = pcs(temp_cib, "constraint remove pcs_rsc_colocation_D5_D6")
         ac(o,"")
         assert r == 0
 
         o, r = pcs(temp_cib, "constraint colocation --full")
-        ac(o,"Colocation Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) setoptions score=INFINITY (id:pcs_rsc_colocation)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_colocation-2)\n")
+        ac(o,"Colocation Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set_D5_D6_D7-1) set D8 D9 sequential=true (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_D7_set_D8_D9)\n    set D5 D6 (id:pcs_rsc_set_D5_D6-1) set D7 D8 (id:pcs_rsc_set_D7_D8) set D8 D9 (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9)\n")
         assert r == 0
 
         o, r = pcs(temp_cib, "resource delete D5")
-        ac(o,"Removing D5 from set pcs_rsc_set\nRemoving D5 from set pcs_rsc_set-3\nDeleting Resource - D5\n")
+        ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7-1\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
         assert r == 0
         
         o, r = pcs(temp_cib, "resource delete D6")
-        ac(o,"Removing D6 from set pcs_rsc_set\nRemoving D6 from set pcs_rsc_set-3\nRemoving set pcs_rsc_set-3\nDeleting Resource - D6\n")
+        ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7-1\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
         assert r == 0
         
         o, r = pcs(temp_cib, "constraint ref D7")
-        ac(o,"Resource: D7\n  pcs_rsc_colocation\n  pcs_rsc_colocation-2\n")
+        ac(o,"Resource: D7\n  pcs_rsc_colocation_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9\n")
         assert r == 0
         
         o, r = pcs(temp_cib, "constraint ref D8")
-        ac(o,"Resource: D8\n  pcs_rsc_colocation\n  pcs_rsc_colocation-2\n")
+        ac(o,"Resource: D8\n  pcs_rsc_colocation_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9\n")
         assert r == 0
         
     def testOrderSets(self):
@@ -301,22 +301,22 @@ class ConstraintTest(unittest.TestCase):
 
         o, r = pcs(temp_cib, "constraint order --full")
         assert r == 0
-        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) (id:pcs_rsc_order)\n    set D5 D6 (id:pcs_rsc_set-2) (id:pcs_rsc_order-1)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_order-2)\n")
+        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set_D5_D6_D7-1) set D8 D9 sequential=true (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)\n    set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_D5_D6)\n    set D5 D6 (id:pcs_rsc_set_D5_D6-1) set D7 D8 (id:pcs_rsc_set_D7_D8) set D8 D9 (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)\n")
 
-        o, r = pcs(temp_cib, "constraint remove pcs_rsc_order-1")
+        o, r = pcs(temp_cib, "constraint remove pcs_rsc_order_D5_D6")
         assert r == 0
         ac(o,"")
 
         o, r = pcs(temp_cib, "constraint order --full")
         assert r == 0
-        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set) set D8 D9 sequential=true (id:pcs_rsc_set-1) (id:pcs_rsc_order)\n    set D5 D6 (id:pcs_rsc_set-3) set D7 D8 (id:pcs_rsc_set-4) set D8 D9 (id:pcs_rsc_set-5) (id:pcs_rsc_order-2)\n")
+        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set_D5_D6_D7-1) set D8 D9 sequential=true (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)\n    set D5 D6 (id:pcs_rsc_set_D5_D6-1) set D7 D8 (id:pcs_rsc_set_D7_D8) set D8 D9 (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)\n")
         
         o, r = pcs(temp_cib, "resource delete D5")
-        ac(o,"Removing D5 from set pcs_rsc_set\nRemoving D5 from set pcs_rsc_set-3\nDeleting Resource - D5\n")
+        ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7-1\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
         assert r == 0
         
         o, r = pcs(temp_cib, "resource delete D6")
-        ac(o,"Removing D6 from set pcs_rsc_set\nRemoving D6 from set pcs_rsc_set-3\nRemoving set pcs_rsc_set-3\nDeleting Resource - D6\n")
+        ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7-1\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
         assert r == 0
 
     def testLocationConstraintRule(self):
