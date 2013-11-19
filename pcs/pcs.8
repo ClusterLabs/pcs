@@ -162,11 +162,11 @@ Configure corosync & pacemaker to run on node boot on specified node(s), if node
 disable [\-\-all] [node] [...]
 Configure corosync & pacemaker to not run on node boot on specified node(s), if node is not specified then corosync & pacemaker are disabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are disabled on all nodes. (Note: this is the default after installation)
 .TP
-standby <node> | \fB\-\-all\fR
-Put specified node into standby mode (the node specified will no longer be able to host resources), if --all is specified all nodes will be put into standby mode.
+standby [<node>] | \fB\-\-all\fR
+Put specified node into standby mode (the node specified will no longer be able to host resources), if no node or options are specified the current node will be put into standby mode, if --all is specified all nodes will be put into standby mode.
 .TP
-unstandby <node> | \fB\-\-all\fR
-Remove node from standby mode (the node specified will now be able to host resources), if \fB\-\-all\fR is specified all nodes will be removed from standby mode.
+unstandby [<node>] | \fB\-\-all\fR
+Remove node from standby mode (the node specified will now be able to host resources), if no node or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode.
 .TP
 remote-node add <hostname> <resource id> [options]
 Enables the specified resource as a remote-node resource on the specified hostname (hostname should be the same as 'uname -n')

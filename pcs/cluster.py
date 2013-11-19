@@ -402,12 +402,11 @@ def stop_cluster_all():
         thread.join()
 
 def node_standby(argv,standby=True):
+    # If we didn't specify any arguments, use the current node name
     if len(argv) == 0 and "--all" not in utils.pcs_options:
-        if standby:
-            usage.cluster(["standby"])
-        else:
-            usage.cluster(["unstandby"])
-        sys.exit(1)
+        p = subprocess.Popen(["uname","-n"], stdout=subprocess.PIPE)
+        cur_node = p.stdout.readline().rstrip()
+        argv = [cur_node]
 
     nodes = utils.getNodesFromPacemaker()
 
