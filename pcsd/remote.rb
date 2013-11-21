@@ -3,6 +3,7 @@ require 'net/http'
 require 'uri'
 require 'pcs.rb'
 require 'resource.rb'
+require 'open3'
 
 # Commands for remote access
 def remote(params,request)
@@ -347,7 +348,40 @@ def status_all(params, nodes = [])
 end
 
 def auth(params,request)
-  return PCSAuth.validUser(params['username'],params['password'], true, request)
+  token =  PCSAuth.validUser(params['username'],params['password'], true, request)
+  # If we authorized to this machine, attempt to authorize everywhere
+  node_list = []
+  if token and params["bidirectional"]
+    params.each { |k,v|
+      if k.start_with?("node-")
+	node_list.push(v)
+      end
+    }
+    if node_list.length > 0
+      pcs_auth(node_list, params['username'], params['password'], params["force"] == "1")
+    end
+  end
+  return token
+end
+
+# We can't pass username/password on the command line for security purposes
+def pcs_auth(nodes, username, password, force=False)
+  command = [PCS, "cluster", "auth", "--local"] + nodes
+  command += ["--force"] if force
+  Open3.popen3(*command) {|stdin, stdout, stderr, wait_thr|
+    begin
+      while line = stdout.readpartial(4096)
+	if line =~ /Username: \Z/
+	  stdin.write(username + "\n")
+	end
+
+	if line =~ /Password: \Z/
+	  stdin.write(password + "\n")
+	end
+      end
+    rescue EOFError
+    end
+  }
 end
 
 # If we get here, we're already authorized

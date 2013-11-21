@@ -25,12 +25,25 @@ def checkStatus(node):
     return out
 
 # Check and see if we're authorized (faster than a status check)
-def checkAuthorization(node):
-    out = sendHTTPRequest(node, 'remote/check_auth', None, False)
+def checkAuthorization(node,nodes):
+    out = sendHTTPRequest(node, 'remote/check_auth', None, False, False)
     return out
 
-def updateToken(node,username,password):
-    data = urllib.urlencode({'username':username, 'password':password})
+def updateToken(node,nodes,username,password):
+    count = 0
+    orig_data = {}
+    for n in nodes:
+        orig_data["node-"+str(count)] = n
+        count = count + 1
+    orig_data["username"] = username
+    orig_data["password"] = password
+    if "--local" not in pcs_options and node != os.uname()[1]:
+        orig_data["bidirectional"] = 1
+
+    if "--force" in pcs_options:
+        orig_data["force"] = 1
+
+    data = urllib.urlencode(orig_data)
     out = sendHTTPRequest(node, 'remote/auth', data, False)
     if out[0] != 0:
         err("unable to connect to pcsd on %s\n" % node + out[1])

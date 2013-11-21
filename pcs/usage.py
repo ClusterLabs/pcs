@@ -421,10 +421,13 @@ Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
 
 Commands:
-    auth [node] [...] [-u username] [-p password]
+    auth [node] [...] [-u username] [-p password] [--force] [--local]
         Authenticate pcs to pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified (authorization
-        tokens are stored in ~/.pcs/token)
+        tokens are stored in ~/.pcs/token).  By default all nodes are also
+        authenticated to each other, using --local only authenticates the
+        local node (and does not authenticate the remote nodes with each
+        other).  Using --force forces re-authentication to occur.
 
     setup [--start] [--local] [--enable] --name <cluster name> <node1>
                                                                [node2] [..]

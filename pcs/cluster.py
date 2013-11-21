@@ -155,16 +155,23 @@ def auth_nodes(nodes):
         password = None
 
     for node in nodes:
-        status = utils.checkAuthorization(node)
-        if status[0] == 0:
-            print node + ": Already authorized"
-        elif status[0] == 3:
+        status = utils.checkAuthorization(node, nodes)
+        if status[0] == 3 or "--force" in utils.pcs_options:
             if username == None:
-                username = raw_input("Username: ")
+                sys.stdout.write('Username: ')
+                sys.stdout.flush()
+                username = raw_input("")
             if password == None:
-                password = getpass.getpass("Password: ")
-            utils.updateToken(node,username,password)
+                if sys.stdout.isatty():
+                    password = getpass.getpass("Password: ")
+                else:
+                    sys.stdout.write('Password: ')
+                    sys.stdout.flush()
+                    password = raw_input("")
+            utils.updateToken(node,nodes,username,password)
             print "%s: Authorized" % (node)
+        elif status[0] == 0:
+            print node + ": Already authorized"
         else:
             utils.err("Unable to communicate with %s" % (node))
 

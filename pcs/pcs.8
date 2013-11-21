@@ -141,8 +141,8 @@ failcount reset <resource id> [node]
 Reset failcount for specified resource on all nodes or only on specified node. This tells the cluster to forget how many times a resource has failed in the past.  This may allow the resource to be started or moved to a more preferred location.
 .SS "cluster"
 .TP
-auth [node] [...] [\-u username] [\-p password]
-Authenticate pcs to pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified (authorization tokens are stored in ~/.pcs/token)
+auth [node] [...] [\-u username] [\-p password] [\-\-local] [\-\-force]
+Authenticate pcs to pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified (authorization tokens are stored in ~/.pcs/token).  By default all nodes are also authenticated to each other, using --local only authenticates the local node (and does not authenticate the remote nodes with each other).  Using --force forces re-authentication to occur.
 .TP
 setup [\-\-start] [\-\-local] [\-\-enable] \fB\-\-name\fR <cluster name> <node1> [node2] [..]
 Configure corosync and sync configuration out to listed nodes \fB\-\-local\fR will only perform changes on the local node, \fB\-\-start\fR will also start the cluster on the specified nodes, \fB\-\-enable\fR will enable corosync and pacemaker on node startup
