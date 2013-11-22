@@ -55,7 +55,7 @@
 
       <input type="hidden" name="resource_type" value="<%=@resource.name%>">
       <% @resource.required_options.each { |name, desc|  %>
-	<tr title="<%=desc[1]%>">
+	<tr title="<%=h(desc[1])%>">
 	  <td class="reg">
 	    <%= name %>
 	  </td>
@@ -71,7 +71,7 @@
 	</td>
       </tr>
       <% @resource.optional_options.each { |name, desc|  %>
-	<tr title="<%=desc[1]%>" style="display:none;">
+	<tr title="<%=h(desc[1])%>" style="display:none;">
 	  <td class="reg">
 	    <%= name %>
 	  </td>
