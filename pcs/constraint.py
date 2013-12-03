@@ -807,7 +807,7 @@ def location_rule(argv):
         sys.exit(1)
     
     res_name = argv.pop(0)
-    if not utils.is_resource(res_name):
+    if not utils.is_resource(res_name) and not utils.is_group(res_name):
         utils.err("'%s' is not a resource" % res_name)
 
     argv.pop(0)

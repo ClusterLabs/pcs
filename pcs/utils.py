@@ -469,6 +469,9 @@ def is_corosync_node(node):
         return True
     return False
 
+def is_group(group_id):
+    return does_exist("//group[@id='"+group_id+"']")
+
 def is_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"']")
 
