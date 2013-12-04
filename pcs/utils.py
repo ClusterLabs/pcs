@@ -463,6 +463,12 @@ def does_exist(xpath_query):
         return False
     return True
 
+def is_pacemaker_node(node):
+    p_nodes = getNodesFromPacemaker()
+    if node in p_nodes:
+        return True
+    return False
+
 def is_corosync_node(node):
     c_nodes = getNodesFromCorosyncConf()
     if node in c_nodes:
