@@ -111,7 +111,84 @@ class ClusterTest(unittest.TestCase):
             data = f.read()
             assert data == 'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n  node {\n        ring0_addr: rh7-3\n        nodeid: 3\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\n\n}\n\nlogging {\nto_syslog: yes\n}\n',[data]
 
+    def testUIDGID(self):
+        if utils.is_rhel6():
+            os.system("cp /etc/cluster/cluster.conf cluster.conf.testbak")
+            o,r = pcs("cluster uidgid")
+            assert r == 0
+            ac(o, "No uidgids configured in cluster.conf\n")
 
+            o,r = pcs("cluster uidgid blah")
+            assert r == 1
+            assert o.startswith("\nUsage:")
+
+            o,r = pcs("cluster uidgid rm")
+            assert r == 1
+            assert o.startswith("\nUsage:")
+
+            o,r = pcs("cluster uidgid add")
+            assert r == 1
+            assert o.startswith("\nUsage:")
+
+            o,r = pcs("cluster uidgid add blah")
+            assert r == 1
+            ac(o, "Error: uidgid options must be of the form uid=<uid> gid=<gid>\n")
+
+            o,r = pcs("cluster uidgid rm blah")
+            assert r == 1
+            ac(o, "Error: uidgid options must be of the form uid=<uid> gid=<gid>\n")
+
+            o,r = pcs("cluster uidgid add uid=zzz")
+            assert r == 0
+            ac(o, "")
+
+            o,r = pcs("cluster uidgid add uid=zzz")
+            assert r == 1
+            ac(o, "Error: unable to add uidgid\nError: uidgid entry already exists with uid=zzz, gid=\n")
+
+            o,r = pcs("cluster uidgid add gid=yyy")
+            assert r == 0
+            ac(o, "")
+
+            o,r = pcs("cluster uidgid add uid=aaa gid=bbb")
+            assert r == 0
+            ac(o, "")
+
+            o,r = pcs("cluster uidgid")
+            assert r == 0
+            ac(o, "UID/GID: gid=, uid=zzz\nUID/GID: gid=yyy, uid=\nUID/GID: gid=bbb, uid=aaa\n")
+
+            o,r = pcs("cluster uidgid rm gid=bbb")
+            assert r == 1
+            ac(o, "Error: unable to remove uidgid\nError: unable to find uidgid with uid=, gid=bbb\n")
+
+            o,r = pcs("cluster uidgid rm uid=aaa gid=bbb")
+            assert r == 0
+            ac(o, "")
+
+            o,r = pcs("cluster uidgid")
+            assert r == 0
+            ac(o, "UID/GID: gid=, uid=zzz\nUID/GID: gid=yyy, uid=\n")
+
+            o,r = pcs("cluster uidgid rm uid=zzz")
+            assert r == 0
+            ac(o, "")
+
+            o,r = pcs("config")
+            assert r == 0
+            assert o.find("UID/GID: gid=yyy, uid=") != -1
+
+            o,r = pcs("cluster uidgid rm gid=yyy")
+            assert r == 0
+            ac(o, "")
+
+            o,r = pcs("config")
+            assert r == 0
+            assert o.find("No uidgids") == -1
+        else:
+            o,r = pcs("cluster uidgid")
+            assert r == 1
+            ac(o, "Error: this command is only valid on RHEL6 clusters\n")
 
 if __name__ == "__main__":
     unittest.main()

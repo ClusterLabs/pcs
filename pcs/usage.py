@@ -520,6 +520,18 @@ Commands:
         Shutdown specified node and remove it from pacemaker and corosync on
         all other nodes in the cluster
 
+    uidgid
+        List the current configured uids and gids of users allowed to connect
+        to corosync (RHEL6 cman clusters only)
+
+    uidgid add [uid=<uid>] [gid=<gid>]
+        Add the specified uid and/or gid to the list of users/groups
+        allowed to connect to corosync (RHEL6 cman clusters only)
+
+    uidgid rm [uid=<uid>] [gid=<gid>]
+        Remove the specified uid and/or gid from the list of users/groups
+        allowed to connect to corosync (RHEL6 cman clusters only)
+
     corosync <node>
         Get the corosync.conf from the specified node
 
