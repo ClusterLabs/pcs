@@ -374,7 +374,7 @@ Commands:
     failcount reset <resource id> [node]
         Reset failcount for specified resource on all nodes or only on
         specified node.  This tells the cluster to forget how many times
-        a resource has failed in teh past.  This may allow the resource to
+        a resource has failed in the past.  This may allow the resource to
         be started or moved to a more preferred location.
 
 Examples:
