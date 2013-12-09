@@ -30,6 +30,18 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 1
         assert output == "Error: resource option(s): 'bad_argument', are not recognized for resource type: 'stonith:fence_ilo' (use --force to override)\n",[output]
 
+        output, returnVal = pcs(temp_cib, "stonith create test9 fence_ilo pcmk_status_action=xxx")
+        assert returnVal == 0
+        assert output == "",[output]
+
+        output, returnVal = pcs(temp_cib, "stonith show test9")
+        assert returnVal == 0
+        ac(output, ' Resource: test9 (class=stonith type=fence_ilo)\n  Attributes: pcmk_status_action=xxx \n  Operations: monitor interval=60s (test9-monitor-interval-60s)\n')
+
+        output, returnVal = pcs(temp_cib, "stonith delete test9")
+        assert returnVal == 0
+        assert output == "Deleting Resource - test9\n",[output]
+
         output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo ipaddr=test")
         assert returnVal == 0
         assert output == "",[output]

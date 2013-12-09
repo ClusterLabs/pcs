@@ -1039,6 +1039,11 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
     root = ET.fromstring(metadata)
     actions = root.find("parameters")
     valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
+    valid_parameters = valid_parameters + ["stonith-timeout", "priority"]
+    for a in ["off","on","status","list","metadata","monitor", "reboot"]:
+        valid_parameters.append("pcmk_" + a + "_action")
+        valid_parameters.append("pcmk_" + a + "_timeout")
+        valid_parameters.append("pcmk_" + a + "_retries")
     bad_parameters = []
     for action in actions.findall("parameter"):
         valid_parameters.append(action.attrib["name"])
