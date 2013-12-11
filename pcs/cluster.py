@@ -639,10 +639,7 @@ def cluster_localnode(argv):
         usage.cluster()
         exit(1)
 
-def cluster_uidgid(argv, silent_list = False):
-    if not utils.is_rhel6():
-        utils.err("this command is only valid on RHEL6 clusters")
-
+def cluster_uidgid_rhel6(argv, silent_list = False):
     if not os.path.isfile("/etc/cluster/cluster.conf"):
         utils.err("the /etc/cluster/cluster.conf file doesn't exist on this machine, create a cluster before running this command")
 
@@ -692,6 +689,61 @@ def cluster_uidgid(argv, silent_list = False):
         usage.cluster(["uidgid"])
         exit(1)
 
+def cluster_uidgid(argv, silent_list = False):
+    if utils.is_rhel6():
+        cluster_uidgid_rhel6(argv, silent_list)
+        return
+
+    if len(argv) == 0:
+        found = False
+        uid_gid_files = os.listdir(settings.corosync_uidgid_dir)
+        for ug_file in uid_gid_files:
+            uid_gid_dict = utils.read_uid_gid_file(ug_file)
+            if "uid" in uid_gid_dict or "gid" in uid_gid_dict:
+                line = "UID/GID: uid="
+                if "uid" in uid_gid_dict:
+                    line += uid_gid_dict["uid"]
+                line += " gid="
+                if "gid" in uid_gid_dict:
+                    line += uid_gid_dict["gid"]
+
+                print line
+                found = True
+        if not found and not silent_list:
+            print "No uidgids configured in cluster.conf"
+        return
+
+    command = argv.pop(0)
+    uid=""
+    gid=""
+
+    if (command == "add" or command == "rm") and len(argv) > 0:
+        for arg in argv:
+            if arg.find('=') == -1:
+                utils.err("uidgid options must be of the form uid=<uid> gid=<gid>")
+
+            (k,v) = arg.split('=',1)
+            if k != "uid" and k != "gid":
+                utils.err("%s is not a valid key, you must use uid or gid" %k)
+
+            if k == "uid":
+                uid = v
+            if k == "gid":
+                gid = v
+        if uid == "" and gid == "":
+            utils.err("you must set either uid or gid")
+
+        if command == "add":
+            utils.write_uid_gid_file(uid,gid)
+        elif command == "rm":
+            retval = utils.remove_uid_gid_file(uid,gid)
+            if retval == False:
+                utils.err("no uidgid files with uid=%s and gid=%s found" % (uid,gid))
+         
+    else:
+        usage.cluster(["uidgid"])
+        exit(1)
+
 def cluster_get_corosync_conf(argv):
     if len(argv) != 1:
         usage.cluster()
@@ -735,9 +787,7 @@ def print_config():
     print ""
     del utils.pcs_options["--all"]
     prop.list_property([])
-    if utils.is_rhel6():
-        print ""
-        cluster_uidgid([], True)
+    cluster_uidgid([], True)
 
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker

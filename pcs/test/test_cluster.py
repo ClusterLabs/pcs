@@ -68,6 +68,9 @@ class ClusterTest(unittest.TestCase):
         ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
     def testCreation(self):
+        if utils.is_rhel6():
+            return
+
         output, returnVal = pcs(temp_cib, "cluster") 
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs cluster [commands]...")
@@ -80,8 +83,8 @@ class ClusterTest(unittest.TestCase):
 # node and make sure that it's unset, then remove a node and make sure it's
 # set again
         output, returnVal = pcs(temp_cib, "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2")
-        assert returnVal == 0
         assert output == ""
+        assert returnVal == 0
 
         with open("corosync.conf.tmp") as f:
             data = f.read()
@@ -187,8 +190,52 @@ class ClusterTest(unittest.TestCase):
             assert o.find("No uidgids") == -1
         else:
             o,r = pcs("cluster uidgid")
+            assert r == 0
+            ac(o, "No uidgids configured in cluster.conf\n")
+
+            o,r = pcs("cluster uidgid add")
             assert r == 1
-            ac(o, "Error: this command is only valid on RHEL6 clusters\n")
+            assert o.startswith("\nUsage:")
+
+            o,r = pcs("cluster uidgid rm")
+            assert r == 1
+            assert o.startswith("\nUsage:")
+
+            o,r = pcs("cluster uidgid xx")
+            assert r == 1
+            assert o.startswith("\nUsage:")
+
+            o,r = pcs("cluster uidgid add uid=testuid gid=testgid")
+            assert r == 0
+            ac(o, "")
+
+            o,r = pcs("cluster uidgid add uid=testuid gid=testgid")
+            assert r == 1
+            ac(o, "Error: uidgid file with uid=testuid and gid=testgid already exists\n")
+
+            o,r = pcs("cluster uidgid rm uid=testuid2 gid=testgid2")
+            assert r == 1
+            ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n")
+
+            o,r = pcs("cluster uidgid rm uid=testuid gid=testgid2")
+            assert r == 1
+            ac(o, "Error: no uidgid files with uid=testuid and gid=testgid2 found\n")
+
+            o,r = pcs("cluster uidgid rm uid=testuid2 gid=testgid")
+            assert r == 1
+            ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid found\n")
+
+            o,r = pcs("cluster uidgid")
+            assert r == 0
+            ac(o, "UID/GID: uid=testuid gid=testgid\n")
+
+            o,r = pcs("cluster uidgid rm uid=testuid gid=testgid")
+            assert r == 0
+            ac(o, "")
+
+            o,r = pcs("cluster uidgid")
+            assert r == 0
+            ac(o, "No uidgids configured in cluster.conf\n")
 
 if __name__ == "__main__":
     unittest.main()

@@ -57,6 +57,76 @@ def updateToken(node,nodes,username,password):
 
     return True
 
+# Reads in uid file and returns dict of values {'uid':'theuid', 'gid':'thegid'}
+def read_uid_gid_file(filename):
+    uidgid = {}
+    with open(settings.corosync_uidgid_dir + filename, "r") as myfile:
+        data = myfile.read().split('\n')
+    in_uidgid = False
+    for line in data:
+        line = re.sub(r'#.*','', line)
+        if not in_uidgid:
+            if re.search(r'uidgid.*{',line):
+                in_uidgid = True
+            else:
+                continue
+        matches = re.search(r'uid:\s*(\S+)', line)
+        if matches:
+            uidgid["uid"] = matches.group(1)
+
+        matches = re.search(r'gid:\s*(\S+)', line)
+        if matches:
+            uidgid["gid"] = matches.group(1)
+
+    return uidgid
+
+def write_uid_gid_file(uid,gid):
+    orig_filename = "pcs-uidgid-%s-%s" % (uid,gid)
+    filename = orig_filename
+    counter = 0
+    if len(find_uid_gid_files(uid,gid)) != 0:
+        err("uidgid file with uid=%s and gid=%s already exists" % (uid,gid))
+
+    while os.path.exists(settings.corosync_uidgid_dir + filename):
+        counter = counter + 1
+        filename = orig_filename + "-" + str(counter)
+
+    data = "uidgid {\n  uid: %s\ngid: %s\n}\n" % (uid,gid)
+    with open(settings.corosync_uidgid_dir + filename,'w') as uidgid_file:
+        uidgid_file.write(data)
+
+def find_uid_gid_files(uid,gid):
+    if uid == "" and gid == "":
+        return []
+
+    found_files = []
+    uid_gid_files = os.listdir(settings.corosync_uidgid_dir)
+    for uidgid_file in uid_gid_files:
+        uid_gid_dict = read_uid_gid_file(uidgid_file)
+        if ("uid" in uid_gid_dict and uid == "") or ("uid" not in uid_gid_dict and uid != ""):
+            continue
+        if ("gid" in uid_gid_dict and gid == "") or ("gid" not in uid_gid_dict and gid != ""):
+            continue
+        if "uid" in uid_gid_dict and uid != uid_gid_dict["uid"]:
+            continue
+        if "gid" in uid_gid_dict and gid != uid_gid_dict["gid"]:
+            continue
+
+        found_files.append(uidgid_file)
+
+    return found_files
+# Removes all uid/gid files with the specified uid/gid, returns false if we
+# couldn't find one
+def remove_uid_gid_file(uid,gid):
+    if uid == "" and gid == "":
+        return False
+
+    file_removed = False
+    for uidgid_file in find_uid_gid_files(uid,gid):
+        os.remove(settings.corosync_uidgid_dir + uidgid_file)
+        file_removed = True
+
+    return file_removed
 # Returns a dictionary {'nodeA':'tokenA'}
 def readTokens():
     tokenfile = os.path.expanduser("~/.pcs/tokens")
