@@ -304,7 +304,7 @@ get '/manage/?' do
 end
 
 get '/managec/:cluster/main' do
-  @@cluster_name = params[:cluster]
+  @cluster_name = params[:cluster]
 #  @resources, @groups = getResourcesGroups
   @load_data = true
   pcs_config = PCSConfig.new

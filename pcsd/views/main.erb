@@ -71,15 +71,22 @@
 		      <% if @clusters != nil %>
 		      <div style="float:left">
 			<div class="menuheader">
-			<div id="dropdownr" class="label"  style="width: 130px" onclick="window.location='/manage#manage'"><%=@manage ? "Select Cluster" : "Cluster: " + @@cluster_name%><div style="float:right;" class="downarrow sprites"></div></div>
-			<div style="width:100%;" class="menu">
-			  <% if not @manage %>
-			    <a href="/manage#manage" class="menu-item">Manage&nbsp;Clusters&nbsp;&nbsp;</a>
-			  <% end %>
-			<% @clusters.each { |c| %>
-			  <a href="<%=c.ui_address%>" class="menu-item"><%=c.name%>&nbsp;&nbsp;</a>
-			<% } %>
-			</div>
+			  <div id="dropdownr" class="label"  style="white-space:nowrap" onclick="window.location='/manage#manage'">
+			    <table style="background: #000000">
+			    <tr><td>
+			    <%=@manage ? "Select Cluster" : "Cluster: " + @cluster_name%>
+			    </td>
+			    <td><div style="float:right;" class="downarrow sprites"></div></td>
+			    </tr></table>
+			  </div>
+			  <div style="width:100%;" class="menu">
+			    <% if not @manage %>
+			      <a href="/manage#manage" class="menu-item">Manage&nbsp;Clusters&nbsp;&nbsp;</a>
+			    <% end %>
+			  <% @clusters.each { |c| %>
+			    <a href="<%=c.ui_address%>" class="menu-item"><%=c.name%>&nbsp;&nbsp;</a>
+			  <% } %>
+			  </div>
 			</div>
 		      </div>
 		      <% end %>
