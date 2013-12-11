@@ -44,7 +44,7 @@ def updateToken(node,nodes,username,password):
         orig_data["force"] = 1
 
     data = urllib.urlencode(orig_data)
-    out = sendHTTPRequest(node, 'remote/auth', data, False)
+    out = sendHTTPRequest(node, 'remote/auth', data, False, False)
     if out[0] != 0:
         err("unable to connect to pcsd on %s\n" % node + out[1])
     token = out[1]
