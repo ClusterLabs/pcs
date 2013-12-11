@@ -89,8 +89,8 @@ configure do
   end
 
 
-  if not defined? @@cur_node_name
-    @@cur_node_name = `hostname`.chomp
+  if not defined? $cur_node_name
+    $cur_node_name = `hostname`.chomp
   end
 end
 

@@ -242,7 +242,7 @@ def create_cluster(params)
 end
 
 def node_status(params)
-  if params[:node] != nil and params[:node] != "" and params[:node] != @@cur_node_name
+  if params[:node] != nil and params[:node] != "" and params[:node] != $cur_node_name
     return send_request_with_token(params[:node],"status?hello=1")
   end
 
