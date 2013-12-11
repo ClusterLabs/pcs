@@ -313,7 +313,7 @@ def node_status(params)
  "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
  "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
  "pacemaker_standby" => pacemaker_standby,
- "cluster_name" => @@cluster_name, "resources" => out_rl, "groups" => group_list,
+ "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
  "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id}
   ret = JSON.generate(status)
   getAllConstraints()

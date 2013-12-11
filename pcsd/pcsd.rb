@@ -51,7 +51,7 @@ before do
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
-  @@cluster_name = get_cluster_version()
+  $cluster_name = get_cluster_version()
   @errorval = session[:errorval]
   @error = session[:error]
   session[:errorval] = nil
