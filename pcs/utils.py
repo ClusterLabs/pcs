@@ -25,7 +25,7 @@ def checkStatus(node):
     return out
 
 # Check and see if we're authorized (faster than a status check)
-def checkAuthorization(node,nodes):
+def checkAuthorization(node):
     out = sendHTTPRequest(node, 'remote/check_auth', None, False, False)
     return out
 

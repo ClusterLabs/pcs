@@ -157,7 +157,7 @@ def auth_nodes(nodes):
         password = None
 
     for node in nodes:
-        status = utils.checkAuthorization(node, nodes)
+        status = utils.checkAuthorization(node)
         if status[0] == 3 or "--force" in utils.pcs_options:
             if username == None:
                 sys.stdout.write('Username: ')
