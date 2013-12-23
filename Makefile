@@ -4,6 +4,9 @@ endif
 ifeq ($(PYTHON_SITELIB), /usr/lib/python2.6/dist-packages)
   EXTRA_SETUP_OPTS="--install-layout=deb"
 endif
+ifeq ($(PYTHON_SITELIB), /usr/lib/python2.7/dist-packages)
+  EXTRA_SETUP_OPTS="--install-layout=deb"
+endif
 
 MANDIR=/usr/share/man
 
