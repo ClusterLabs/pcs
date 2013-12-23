@@ -24,7 +24,7 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith create test2 fence_ilo")
         assert returnVal == 0
-        assert output == ""
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, action' for resource type: stonith:fence_ilo\n")
 
         output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo bad_argument=test")
         assert returnVal == 1
@@ -32,7 +32,7 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith create test9 fence_ilo pcmk_status_action=xxx")
         assert returnVal == 0
-        assert output == "",[output]
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, action' for resource type: stonith:fence_ilo\n")
 
         output, returnVal = pcs(temp_cib, "stonith show test9")
         assert returnVal == 0
@@ -44,13 +44,13 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo ipaddr=test")
         assert returnVal == 0
-        assert output == "",[output]
+        ac(output,"Warning: missing required option(s): 'login, action' for resource type: stonith:fence_ilo\n")
 
 # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are allowed for
 # stonith agents
         output, returnVal = pcs(temp_cib, 'stonith create apc-fencing fence_apc params ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"')
         assert returnVal == 0
-        assert output == "",[output]
+        ac(output,"Warning: missing required option(s): 'port' for resource type: stonith:fence_apc\n")
 
         output, returnVal = pcs(temp_cib, 'resource show apc-fencing')
         assert returnVal == 1
@@ -82,7 +82,7 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, 'stonith create test-fencing fence_apc pcmk_host_list="rhel7-node1 rhel7-node2" op monitor interval=61s')
         assert returnVal == 0
-        assert output == ""
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
 
         output, returnVal = pcs(temp_cib, 'config show')
         assert returnVal == 0
@@ -100,7 +100,7 @@ class StonithTest(unittest.TestCase):
     def testPcmkHostList(self):
         output, returnVal = pcs(temp_cib, "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb'")
         assert returnVal == 0
-        assert output == ""
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
 
         output, returnVal = pcs(temp_cib, "stonith show F1")
         assert returnVal == 0
@@ -117,23 +117,23 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb'")
         assert returnVal == 0
-        assert output == ""
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
 
         output, returnVal = pcs(temp_cib, "stonith create F2 fence_apc 'pcmk_host_list=nodea nodeb'")
         assert returnVal == 0
-        assert output == ""
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
 
         output, returnVal = pcs(temp_cib, "stonith create F3 fence_apc 'pcmk_host_list=nodea nodeb'")
         assert returnVal == 0
-        assert output == ""
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
 
         output, returnVal = pcs(temp_cib, "stonith create F4 fence_apc 'pcmk_host_list=nodea nodeb'")
         assert returnVal == 0
-        assert output == ""
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
 
         output, returnVal = pcs(temp_cib, "stonith create F5 fence_apc 'pcmk_host_list=nodea nodeb'")
         assert returnVal == 0
-        assert output == ""
+        ac(output,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 F3,F4")
         assert returnVal == 0
@@ -357,7 +357,7 @@ class StonithTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("stonith create test_stonith fence_apc")
-        ac(o,"")
+        ac(o,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
         assert r == 0
 
         o,r = pcs("status")
@@ -369,7 +369,7 @@ class StonithTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("stonith create test_stonith fence_apc --clone")
-        ac(o,"")
+        ac(o,"Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc\n")
         assert r == 0
 
         o,r = pcs("status")

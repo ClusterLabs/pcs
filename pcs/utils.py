@@ -1108,6 +1108,7 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
 
     root = ET.fromstring(metadata)
     actions = root.find("parameters")
+    missing_required_parameters = []
     valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
     valid_parameters = valid_parameters + ["stonith-timeout", "priority"]
     for a in ["off","on","status","list","metadata","monitor", "reboot"]:
@@ -1117,10 +1118,15 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
     bad_parameters = []
     for action in actions.findall("parameter"):
         valid_parameters.append(action.attrib["name"])
+        if "required" in action.attrib and action.attrib["required"] == "1":
+            missing_required_parameters.append(action.attrib["name"])
     for key,value in ra_values:
         if key not in valid_parameters:
             bad_parameters.append(key)
-    return bad_parameters 
+        if key in missing_required_parameters:
+            missing_required_parameters.remove(key)
+
+    return bad_parameters, missing_required_parameters 
 
 def getClusterName():
     if is_rhel6():

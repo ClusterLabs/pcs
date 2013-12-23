@@ -69,7 +69,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         ac(o,'')
 
-        o,r = pcs(temp_cib, "resource create D3 ipaddr2")
+        o,r = pcs(temp_cib, "resource create D3 ipaddr2 ip=1.1.1.1")
         assert r == 0
         ac(o,'')
 
@@ -1427,6 +1427,31 @@ class ResourceTest(unittest.TestCase):
 
     def testVirtualDomainResource(self):
         o,r = pcs("resource describe VirtualDomain")
+        assert r == 0
+
+    def testResourceMissingValues(self):
+        o,r = pcs("resource create myip IPaddr2")
+        ac(o,"Warning: missing required option(s): 'ip' for resource type: ocf:heartbeat:IPaddr2\n")
+        assert r == 0
+
+        o,r = pcs("resource create myip2 IPaddr2 ip=3.3.3.3")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource create myfs Filesystem")
+        ac(o,"Warning: missing required option(s): 'device, directory, fstype' for resource type: ocf:heartbeat:Filesystem\n")
+        assert r == 0
+
+        o,r = pcs("resource create myfs2 Filesystem device=x directory=y")
+        ac(o,"Warning: missing required option(s): 'fstype' for resource type: ocf:heartbeat:Filesystem\n")
+        assert r == 0
+
+        o,r = pcs("resource create myfs3 Filesystem device=x directory=y fstype=z")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource --full")
+        ac(o," Resource: myip (class=ocf provider=heartbeat type=IPaddr2)\n  Operations: monitor interval=60s (myip-monitor-interval-60s)\n Resource: myip2 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=3.3.3.3 \n  Operations: monitor interval=60s (myip2-monitor-interval-60s)\n Resource: myfs (class=ocf provider=heartbeat type=Filesystem)\n  Operations: monitor interval=60s (myfs-monitor-interval-60s)\n Resource: myfs2 (class=ocf provider=heartbeat type=Filesystem)\n  Attributes: device=x directory=y \n  Operations: monitor interval=60s (myfs2-monitor-interval-60s)\n Resource: myfs3 (class=ocf provider=heartbeat type=Filesystem)\n  Attributes: device=x directory=y fstype=z \n  Operations: monitor interval=60s (myfs3-monitor-interval-60s)\n")
         assert r == 0
 
 if __name__ == "__main__":

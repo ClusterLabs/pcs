@@ -356,10 +356,12 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
     if not "--force" in utils.pcs_options and utils.does_resource_have_options(ra_type):
         params = convert_args_to_tuples(ra_values)
-        bad_opts = utils.validInstanceAttributes(ra_id, params , get_full_ra_type(ra_type, True))
+        bad_opts, missing_req_opts = utils.validInstanceAttributes(ra_id, params , get_full_ra_type(ra_type, True))
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
                     % (", ".join(bad_opts), get_full_ra_type(ra_type, True)))
+        if len(missing_req_opts) != 0:
+            print "Warning: missing required option(s): '%s' for resource type: %s" % (", ".join(missing_req_opts),get_full_ra_type(ra_type,True))
     xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes + op_attributes + meta_attributes)
     args = ["cibadmin"]
     args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
@@ -540,7 +542,7 @@ def resource_update(res_id,args):
             resource_type = resClass + ":" + resType
         else:
             resource_type = resClass + ":" + resProvider + ":" + resType
-        bad_opts = utils.validInstanceAttributes(res_id, params, resource_type)
+        bad_opts, missing_req_opts = utils.validInstanceAttributes(res_id, params, resource_type)
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
                     % (", ".join(bad_opts), utils.getResourceType(resource)))
