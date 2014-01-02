@@ -236,10 +236,10 @@ Commands:
         Create specified resource.  If --clone is used a clone resource is
         created if --master is specified a master/slave resource is created.
         If --group is specified the resource is added to the group named.
-        Example: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \\
+        Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \\
                      ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
                      nic=eth2
-                 Create a new resource called 'ClusterIP' with IP address
+                 Create a new resource called 'VirtualIP' with IP address
                  192.168.0.99, netmask of 32, monitored everything 30 seconds,
                  on eth2.
 
@@ -382,23 +382,23 @@ Examples:
     pcs resource show
       Show all resources
 
-    pcs resource show ClusterIP
-      Show options specific to the 'ClusterIP' resource
+    pcs resource show VirtualIP
+      Show options specific to the 'VirtualIP' resource
 
 
-    pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
+    pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
                cidr_netmask=32 nic=eth2 op monitor interval=30s 
-      Create a new resource called 'ClusterIP' with options
+      Create a new resource called 'VirtualIP' with options
 
-    pcs resource create ClusterIP IPaddr2 ip=192.168.0.99 \\
+    pcs resource create VirtualIP IPaddr2 ip=192.168.0.99 \\
                cidr_netmask=32 nic=eth2 op monitor interval=30s
-      Create a new resource called 'ClusterIP' with options
+      Create a new resource called 'VirtualIP' with options
 
-    pcs resource update ClusterIP ip=192.168.0.98 nic=
-      Change the ip address of ClusterIP and remove the nic option
+    pcs resource update VirtualIP ip=192.168.0.98 nic=
+      Change the ip address of VirtualIP and remove the nic option
 
-    pcs resource delete ClusterIP
-      Delete the ClusterIP resource
+    pcs resource delete VirtualIP
+      Delete the VirtualIP resource
 
 Notes:
     Starting resources on a cluster is (almost) always done by pacemaker and
