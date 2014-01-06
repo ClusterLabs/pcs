@@ -1111,6 +1111,7 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
     missing_required_parameters = []
     valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
     valid_parameters = valid_parameters + ["stonith-timeout", "priority"]
+    valid_parameters = valid_parameters + ["pcmk_reboot_action", "pcmk_poweroff_action", "pcmk_list_action", "pcmk_monitor_action", "pcmk_status_action"]
     for a in ["off","on","status","list","metadata","monitor", "reboot"]:
         valid_parameters.append("pcmk_" + a + "_action")
         valid_parameters.append("pcmk_" + a + "_timeout")
