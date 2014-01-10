@@ -430,11 +430,12 @@ Commands:
         other).  Using --force forces re-authentication to occur.
 
     setup [--start] [--local] [--enable] --name <cluster name> <node1>
-                                                               [node2] [..]
+            [node2] [..] [--transport <transport>]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes
         --enable will enable corosync and pacemaker on node startup
+        --transport allows specification of corosync transport (default: udpu)
 
     start [--all] [node] [...]
         Start corosync & pacemaker on specified node(s), if a node is not

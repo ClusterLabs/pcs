@@ -258,6 +258,7 @@ def corosync_setup(argv,returnConfig=False):
     if len(argv) < 2:
         usage.cluster()
         exit(1)
+
     if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options and fedora_config:
         sync_start(argv)
         if "--enable" in utils.pcs_options:
@@ -302,9 +303,14 @@ def corosync_setup(argv,returnConfig=False):
         if len(nodes) == 2:
             two_node_section = "two_node: 1"
 
+        transport = "udpu"
+        if "--transport" in utils.pcs_options:
+            transport = utils.pcs_options["--transport"]
+
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
         corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
         corosync_config = corosync_config.replace("@@two_node",two_node_section)
+        corosync_config = corosync_config.replace("@@transport",transport)
         if returnConfig:
             return corosync_config
 

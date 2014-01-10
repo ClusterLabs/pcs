@@ -2,7 +2,7 @@ totem {
 version: 2
 secauth: off
 cluster_name: @@cluster_name
-transport: udpu
+transport: @@transport
 }
 
 nodelist {

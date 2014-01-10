@@ -57,12 +57,13 @@ def main(argv):
             else:
                 if prev_arg != "-f" and prev_arg != "-p" and prev_arg != "-u"\
                         and prev_arg != "--corosync_conf" and prev_arg != "--name"\
-                        and prev_arg != "--group" and prev_arg != "--node":
+                        and prev_arg != "--group" and prev_arg != "--node"\
+                        and prev_arg != "--transport":
                     real_argv.append(arg)
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:V", ["local","start","all","clone","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp","off","from=","to=", "name=", "wait", "group=","groups","full","enable","node=","nodesc"])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:V", ["local","start","all","clone","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp","off","from=","to=", "name=", "wait", "group=","groups","full","enable","node=","nodesc","transport="])
     except getopt.GetoptError, err:
         print err
         usage.main()

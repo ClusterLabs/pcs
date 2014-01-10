@@ -114,6 +114,15 @@ class ClusterTest(unittest.TestCase):
             data = f.read()
             assert data == 'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n  node {\n        ring0_addr: rh7-3\n        nodeid: 3\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\n\n}\n\nlogging {\nto_syslog: yes\n}\n',[data]
 
+## Test to make transport is set
+        output, returnVal = pcs(temp_cib, "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --transport udp")
+        assert output == ""
+        assert returnVal == 0
+
+        with open("corosync.conf.tmp") as f:
+            data = f.read()
+            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
+
     def testUIDGID(self):
         if utils.is_rhel6():
             os.system("cp /etc/cluster/cluster.conf cluster.conf.testbak")
