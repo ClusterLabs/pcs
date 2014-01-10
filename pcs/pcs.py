@@ -45,8 +45,15 @@ def main(argv):
             new_argv.append(arg)
         argv = new_argv
                     
+        pcs_short_options = "hf:p:u:V"
+        pcs_short_options_with_args = []
+        for c in pcs_short_options:
+            if c == ":":
+                pcs_short_options_with_args.append(prev_char)
+            prev_char = c
+
+        pcs_long_options = ["local","start","all","clone","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp","off","from=","to=", "name=", "wait", "group=","groups","full","enable","node=","nodesc","transport=", "addr0=","addr1=","bcast0=","bcast1=","mcast0=","mcast1=","mcastport0=","mcastport1=","ttl0=","ttl1=","rrpmode=", "broadcast0", "broadcast1"]
         # pull out negative number arguments and add them back after getopt
-        # Need to improve to not re-add arguments to '--' options
         prev_arg = ""
         for arg in argv:
             if len(arg) > 0 and arg[0] == "-":
@@ -55,15 +62,14 @@ def main(argv):
                 else:
                     modified_argv.append(arg)
             else:
-                if prev_arg != "-f" and prev_arg != "-p" and prev_arg != "-u"\
-                        and prev_arg != "--corosync_conf" and prev_arg != "--name"\
-                        and prev_arg != "--group" and prev_arg != "--node"\
-                        and prev_arg != "--transport":
+                # If previous argument required an argument, then this arg
+                # should not be added back in
+                if not prev_arg or (not (prev_arg[0] == "-" and prev_arg[1:] in pcs_short_options) and not (prev_arg[0:2] == "--" and (prev_arg[2:] + "=") in pcs_long_options)):
                     real_argv.append(arg)
                 modified_argv.append(arg)
             prev_arg = arg
 
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, "hf:p:u:V", ["local","start","all","clone","master","force","corosync_conf=", "defaults","debug","version","help","fullhelp","off","from=","to=", "name=", "wait", "group=","groups","full","enable","node=","nodesc","transport="])
+        pcs_options, argv = getopt.gnu_getopt(modified_argv, pcs_short_options, pcs_long_options)
     except getopt.GetoptError, err:
         print err
         usage.main()
