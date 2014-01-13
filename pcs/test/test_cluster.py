@@ -173,6 +173,10 @@ class ClusterTest(unittest.TestCase):
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\nrrp_mode: passive\n  interface {\n    ringnumber: 0\n    bindnetaddr: 1.1.1.0\n    broadcast: yes\n  }\n  interface {\n    ringnumber: 1\n    bindnetaddr: 1.1.2.0\n    broadcast: yes\n  }\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cnam rh7-1 rh7-2 --addr0 1.1.1.0 --addr0 1.1.2.0")
+        assert r == 1
+        ac(o, "Error: --addr0 can only be used once\n")
+
     def testUIDGID(self):
         if utils.is_rhel6():
             os.system("cp /etc/cluster/cluster.conf cluster.conf.testbak")

@@ -79,10 +79,8 @@ def main(argv):
         if not o in utils.pcs_options:
             utils.pcs_options[o] = a
         else:
-            if type(utils.pcs_options[o]) is list:
-                utils.pcs_options[o].append(a)
-            else:
-                utils.pcs_options[o] = [utils.pcs_options[o], a]
+            # If any options are a list then they've been entered twice which isn't valid
+            utils.err("%s can only be used once" % o)
         if o == "-h" or o == "--help":
             if len(argv) == 0:
                 usage.main()
