@@ -431,9 +431,9 @@ Commands:
 
     setup [--start] [--local] [--enable] --name <cluster name> <node1>
             [node2] [..] [--transport <transport>] [--rrpmode active|passive]
-            [--addr0 <addr> [[[--mcast0 <address>] [--mcastport0 <port>]
+            [--addr0 <addr/net> [[[--mcast0 <address>] [--mcastport0 <port>]
                             [--ttl0 <ttl>]] | [--broadcast0]]
-            [--addr1 <addr> [[[--mcast1 <address>] [--mcastport1 <port>]
+            [--addr1 <addr/net> [[[--mcast1 <address>] [--mcastport1 <port>]
                             [--ttl1 <ttl>]] | [--broadcast1]]]]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
@@ -441,10 +441,12 @@ Commands:
         --enable will enable corosync and pacemaker on node startup
         --transport allows specification of corosync transport (default: udpu)
         Using --addr0 and --addr1 will allow you to configure rrp mode for
-        corosync.  --mcast0 defaults to 239.255.1.1 and --mcast1 defaults to
-        239.255.2.1, --mcastport0/1 default to 5405 and ttl defaults to 1.
-        If --broadcast is specified, --mcast0/1, --mcastport0/1 & --ttl0/1 are
-        ignored.
+        corosync.  It's recommended to use a network (instead of IP address)
+        for --addr0 and --addr1 so the same corosync.conf file can be used
+        around the cluster.  --mcast0 defaults to 239.255.1.1 and --mcast1
+        defaults to 239.255.2.1, --mcastport0/1 default to 5405 and ttl
+        defaults to 1. If --broadcast is specified, --mcast0/1, --mcastport0/1
+        & --ttl0/1 are ignored.
 
     start [--all] [node] [...]
         Start corosync & pacemaker on specified node(s), if a node is not
