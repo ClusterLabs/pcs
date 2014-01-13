@@ -276,13 +276,13 @@ def corosync_setup(argv,returnConfig=False):
 # Verify that all nodes are resolvable otherwise problems may occur
     for node in nodes:
         try:
-            socket.gethostbyname(node)
+            socket.getaddrinfo(node,None)
         except socket.error:
             print "Warning: Unable to resolve hostname: %s" % node
             failure = True
 
-    if failure:
-        utils.err("Unable to resolve all hostnames.")
+    if failure and "--force" not in utils.pcs_options:
+        utils.err("Unable to resolve all hostnames (use --force to override).")
 
     if fedora_config == True:
         f = open(COROSYNC_CONFIG_FEDORA_TEMPLATE, 'r')

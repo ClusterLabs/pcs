@@ -177,6 +177,14 @@ class ClusterTest(unittest.TestCase):
         assert r == 1
         ac(o, "Error: --addr0 can only be used once\n")
 
+        o,r = pcs("cluster setup --local --name cname nonexistant-address")
+        assert r == 1
+        ac(o,"Error: Unable to resolve all hostnames (use --force to override).\nWarning: Unable to resolve hostname: nonexistant-address\n")
+
+        o,r = pcs("cluster setup --local --name cname nonexistant-address --force")
+        assert r == 0
+        ac(o,"Warning: Unable to resolve hostname: nonexistant-address\n")
+
     def testUIDGID(self):
         if utils.is_rhel6():
             os.system("cp /etc/cluster/cluster.conf cluster.conf.testbak")
