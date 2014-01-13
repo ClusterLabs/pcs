@@ -309,7 +309,7 @@ def corosync_setup(argv,returnConfig=False):
 
         ir = ""
 
-        rrpmode = "active"
+        rrpmode = "passive"
 
         if "--addr0" in utils.pcs_options:
             if "--rrpmode" in utils.pcs_options:
