@@ -308,7 +308,7 @@ Commands:
     op add <resource id> <operation action> [operation properties]
         Add operation for specified resource
 
-    op remove <resource id> <operation action> [operation properties]
+    op remove <resource id> <operation action> <operation properties>
         Remove specified operation (note: you must specify the exact operation
         properties to properly remove an existing operation).
 
