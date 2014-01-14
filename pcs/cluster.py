@@ -274,12 +274,23 @@ def corosync_setup(argv,returnConfig=False):
         cluster_name = argv[0]
 
 # Verify that all nodes are resolvable otherwise problems may occur
+    udpu_rrp = False
     for node in nodes:
         try:
-            socket.getaddrinfo(node,None)
+            if ":" in node:
+                socket.getaddrinfo(node.split(":")[0],None)
+                socket.getaddrinfo(node.split(":")[1],None)
+                udpu_rrp = True
+            else:
+                socket.getaddrinfo(node,None)
         except socket.error:
             print "Warning: Unable to resolve hostname: %s" % node
             failure = True
+
+    if udpu_rrp:
+        for node in nodes:
+            if ":" not in node:
+                utils.err("if one node is configured for RRP, all nodes must configured for RRP")
 
     if failure and "--force" not in utils.pcs_options:
         utils.err("Unable to resolve all hostnames (use --force to override).")
@@ -294,7 +305,11 @@ def corosync_setup(argv,returnConfig=False):
         new_nodes_section = ""
         for node in nodes:
             new_nodes_section += "  node {\n"
-            new_nodes_section += "        ring0_addr: %s\n" % (node)
+            if udpu_rrp:
+                new_nodes_section += "        ring0_addr: %s\n" % (node.split(":")[0])
+                new_nodes_section += "        ring1_addr: %s\n" % (node.split(":")[1])
+            else:
+                new_nodes_section += "        ring0_addr: %s\n" % (node)
             new_nodes_section += "        nodeid: %d\n" % (i)
             new_nodes_section += "       }\n"
             i = i+1
@@ -309,16 +324,19 @@ def corosync_setup(argv,returnConfig=False):
 
         ir = ""
 
-        rrpmode = "passive"
-
-        if "--addr0" in utils.pcs_options:
+        if "--rrpmode" in utils.pcs_options or udpu_rrp or "--addr0" in utils.pcs_options:
+            rrpmode = "passive"
             if "--rrpmode" in utils.pcs_options:
                 rrpmode = utils.pcs_options["--rrpmode"]
-            ir = "rrp_mode: " + rrpmode + "\n"
-            ir += utils.generate_rrp_corosync_config(0)
+            ir += "rrp_mode: " + rrpmode + "\n"
 
-            if "--addr1" in utils.pcs_options:
-                ir += utils.generate_rrp_corosync_config(1)
+        if transport == "udp":
+
+            if "--addr0" in utils.pcs_options:
+                ir += utils.generate_rrp_corosync_config(0)
+
+                if "--addr1" in utils.pcs_options:
+                    ir += utils.generate_rrp_corosync_config(1)
 
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
         corosync_config = corosync_config.replace("@@cluster_name",cluster_name)

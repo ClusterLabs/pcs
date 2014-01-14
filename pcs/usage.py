@@ -429,8 +429,8 @@ Commands:
         local node (and does not authenticate the remote nodes with each
         other).  Using --force forces re-authentication to occur.
 
-    setup [--start] [--local] [--enable] --name <cluster name> <node1>
-            [node2] [..] [--transport <transport>] [--rrpmode active|passive]
+    setup [--start] [--local] [--enable] --name <cluster name> <node1[:node1-altaddr]>
+            [node2[:node2-altaddr]] [..] [--transport <udpu|udp>] [--rrpmode active|passive]
             [--addr0 <addr/net> [[[--mcast0 <address>] [--mcastport0 <port>]
                             [--ttl0 <ttl>]] | [--broadcast0]]
             [--addr1 <addr/net> [[[--mcast1 <address>] [--mcastport1 <port>]
@@ -440,13 +440,21 @@ Commands:
         --start will also start the cluster on the specified nodes
         --enable will enable corosync and pacemaker on node startup
         --transport allows specification of corosync transport (default: udpu)
-        Using --addr0 and --addr1 will allow you to configure rrp mode for
-        corosync.  It's recommended to use a network (instead of IP address)
-        for --addr0 and --addr1 so the same corosync.conf file can be used
-        around the cluster.  --mcast0 defaults to 239.255.1.1 and --mcast1
-        defaults to 239.255.2.1, --mcastport0/1 default to 5405 and ttl
-        defaults to 1. If --broadcast is specified, --mcast0/1, --mcastport0/1
-        & --ttl0/1 are ignored.
+
+        Configuring Redundant Ring Protocol (RRP)
+
+        When using udpu (the default) specifying nodes, specify the ring 0
+        address first followed by a ':' and then the ring 1 address.
+
+        Example: pcs cluster setup --name cname nodeA-0:nodeA-1 nodeB-0:nodeB-1
+
+        When using udp, using --addr0 and --addr1 will allow you to configure
+        rrp mode for corosync.  It's recommended to use a network (instead of
+        IP address) for --addr0 and --addr1 so the same corosync.conf file can
+        be used around the cluster.  --mcast0 defaults to 239.255.1.1 and
+        --mcast1 defaults to 239.255.2.1, --mcastport0/1 default to 5405 and
+        ttl defaults to 1. If --broadcast is specified, --mcast0/1,
+        --mcastport0/1 & --ttl0/1 are ignored.
 
     start [--all] [node] [...]
         Start corosync & pacemaker on specified node(s), if a node is not
@@ -766,7 +774,7 @@ Commands:
     remove [constraint id]...
         Remove constraint(s) or constraint rules with the specified id(s)
 
-    ref [resource]...
+    ref <resource>...
         List constraints referencing specified resource
 
     rule add <constraint id> [<rule type>] [score=<score>] [id=<rule id>]
