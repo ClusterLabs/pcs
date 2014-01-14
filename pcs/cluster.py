@@ -318,6 +318,17 @@ def corosync_setup(argv,returnConfig=False):
         if len(nodes) == 2:
             two_node_section = "two_node: 1"
 
+        quorum_options = ""
+        if "--wait_for_all" in utils.pcs_options:
+            quorum_options += "wait_for_all: " + utils.pcs_options["--wait_for_all"] + "\n"
+        if "--auto_tie_breaker" in utils.pcs_options:
+            quorum_options += "auto_tie_breaker: " + utils.pcs_options["--auto_tie_breaker"] + "\n"
+        if "--last_node_standing" in utils.pcs_options:
+            quorum_options += "last_node_standing: " + utils.pcs_options["--last_node_standing"] + "\n"
+        if "--last_node_standing_window" in utils.pcs_options:
+            quorum_options += "last_node_standing_window: " + utils.pcs_options["--last_node_standing_window"] + "\n"
+
+
         transport = "udpu"
         if "--transport" in utils.pcs_options:
             transport = utils.pcs_options["--transport"]
@@ -340,6 +351,7 @@ def corosync_setup(argv,returnConfig=False):
 
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
         corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
+        corosync_config = corosync_config.replace("@@quorum_options\n",quorum_options)
         corosync_config = corosync_config.replace("@@two_node",two_node_section)
         corosync_config = corosync_config.replace("@@transport",transport)
         corosync_config = corosync_config.replace("@@interfaceandrrpmode\n",ir)

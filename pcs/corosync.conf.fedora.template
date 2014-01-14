@@ -11,6 +11,7 @@ nodelist {
 
 quorum {
 provider: corosync_votequorum
+@@quorum_options
 @@two_node
 }
 
