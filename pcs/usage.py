@@ -429,8 +429,8 @@ Commands:
         local node (and does not authenticate the remote nodes with each
         other).  Using --force forces re-authentication to occur.
 
-    setup [--start] [--local] [--enable] --name <cluster name> <node1[:node1-altaddr]>
-            [node2[:node2-altaddr]] [..] [--transport <udpu|udp>] [--rrpmode active|passive]
+    setup [--start] [--local] [--enable] --name <cluster name> <node1[,node1-altaddr]>
+            [node2[,node2-altaddr]] [..] [--transport <udpu|udp>] [--rrpmode active|passive]
             [--addr0 <addr/net> [[[--mcast0 <address>] [--mcastport0 <port>]
                             [--ttl0 <ttl>]] | [--broadcast0]]
             [--addr1 <addr/net> [[[--mcast1 <address>] [--mcastport1 <port>]
@@ -449,9 +449,9 @@ Commands:
         Configuring Redundant Ring Protocol (RRP)
 
         When using udpu (the default) specifying nodes, specify the ring 0
-        address first followed by a ':' and then the ring 1 address.
+        address first followed by a ',' and then the ring 1 address.
 
-        Example: pcs cluster setup --name cname nodeA-0:nodeA-1 nodeB-0:nodeB-1
+        Example: pcs cluster setup --name cname nodeA-0,nodeA-1 nodeB-0,nodeB-1
 
         When using udp, using --addr0 and --addr1 will allow you to configure
         rrp mode for corosync.  It's recommended to use a network (instead of

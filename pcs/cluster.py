@@ -277,9 +277,9 @@ def corosync_setup(argv,returnConfig=False):
     udpu_rrp = False
     for node in nodes:
         try:
-            if ":" in node:
-                socket.getaddrinfo(node.split(":")[0],None)
-                socket.getaddrinfo(node.split(":")[1],None)
+            if "," in node:
+                socket.getaddrinfo(node.split(",")[0],None)
+                socket.getaddrinfo(node.split(",")[1],None)
                 udpu_rrp = True
             else:
                 socket.getaddrinfo(node,None)
@@ -289,7 +289,7 @@ def corosync_setup(argv,returnConfig=False):
 
     if udpu_rrp:
         for node in nodes:
-            if ":" not in node:
+            if "," not in node:
                 utils.err("if one node is configured for RRP, all nodes must configured for RRP")
 
     if failure and "--force" not in utils.pcs_options:
@@ -306,8 +306,8 @@ def corosync_setup(argv,returnConfig=False):
         for node in nodes:
             new_nodes_section += "  node {\n"
             if udpu_rrp:
-                new_nodes_section += "        ring0_addr: %s\n" % (node.split(":")[0])
-                new_nodes_section += "        ring1_addr: %s\n" % (node.split(":")[1])
+                new_nodes_section += "        ring0_addr: %s\n" % (node.split(",")[0])
+                new_nodes_section += "        ring1_addr: %s\n" % (node.split(",")[1])
             else:
                 new_nodes_section += "        ring0_addr: %s\n" % (node)
             new_nodes_section += "        nodeid: %d\n" % (i)
