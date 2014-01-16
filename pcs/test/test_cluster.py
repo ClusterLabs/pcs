@@ -166,14 +166,14 @@ class ClusterTest(unittest.TestCase):
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\nrrp_mode: active\n  interface {\n    ringnumber: 0\n    bindnetaddr: 1.1.1.0\n    broadcast: yes\n  }\n  interface {\n    ringnumber: 1\n    bindnetaddr: 1.1.2.0\n    mcastaddr: 239.255.2.1\n    mcastport: 5405\n  }\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1:192.168.99.1 rh7-2:192.168.99.2")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\nrrp_mode: passive\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        ring1_addr: 192.168.99.1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        ring1_addr: 192.168.99.2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1:192.168.99.1 rh7-2")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2")
         ac(o,"Error: if one node is configured for RRP, all nodes must configured for RRP\n")
         assert r == 1
 
@@ -204,6 +204,11 @@ class ClusterTest(unittest.TestCase):
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\nwait_for_all: 1\nauto_tie_breaker: 1\nlast_node_standing: 1\nlast_node_standing_window: 12000\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
+
+        o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1")
+        assert r == 1
+        ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
+
 # Reset local corosync.conf
         o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 

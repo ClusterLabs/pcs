@@ -1244,7 +1244,7 @@ def resource_remove(resource_id, output = True):
         resource_disable([resource_id])
         for res in group_dom.documentElement.getElementsByTagName("primitive"):
             res_id = res.getAttribute("id")
-            if not "--force" in utils.pcs_options and not utils.is_resource_started(res_id, 15, True):
+            if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(res_id, 15, True):
                 utils.err("Unable to stop group: %s before deleting (re-run with --force to force deletion)" % resource_id)
         for res in group_dom.documentElement.getElementsByTagName("primitive"):
             resource_remove(res.getAttribute("id"))
@@ -1270,7 +1270,7 @@ def resource_remove(resource_id, output = True):
 
     constraint.remove_constraints_containing(resource_id,output)
 
-    if not "--force" in utils.pcs_options and not utils.is_resource_started(resource_id, 0, True):
+    if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(resource_id, 0, True):
         sys.stdout.write("Attempting to stop: "+ resource_id + "...")
         sys.stdout.flush()
         resource_disable([resource_id])
