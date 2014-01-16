@@ -204,6 +204,11 @@ class ClusterTest(unittest.TestCase):
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\nwait_for_all: 1\nauto_tie_breaker: 1\nlast_node_standing: 1\nlast_node_standing_window: 12000\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
+
+        o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1")
+        assert r == 1
+        ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
+
 # Reset local corosync.conf
         o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 

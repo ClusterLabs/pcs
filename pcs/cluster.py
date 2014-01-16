@@ -335,6 +335,9 @@ def corosync_setup(argv,returnConfig=False):
 
         ir = ""
 
+        if transport == "udpu" and ("--addr0" in utils.pcs_options or "--addr1" in utils.pcs_options):
+            utils.err("--addr0 and --addr1 can only be used with --transport=udp")
+
         if "--rrpmode" in utils.pcs_options or udpu_rrp or "--addr0" in utils.pcs_options:
             rrpmode = "passive"
             if "--rrpmode" in utils.pcs_options:
