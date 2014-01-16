@@ -23,10 +23,10 @@ class ClusterTest(unittest.TestCase):
         assert output == "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
 
     def testRemoteNode(self):
-        o,r = pcs(temp_cib, "resource create D1 Dummy")
+        o,r = pcs(temp_cib, "resource create D1 Dummy --no-default-ops")
         assert r==0 and o==""
 
-        o,r = pcs(temp_cib, "resource create D2 Dummy")
+        o,r = pcs(temp_cib, "resource create D2 Dummy --no-default-ops")
         assert r==0 and o==""
 
         o,r = pcs(temp_cib, "cluster remote-node rh7-2 D1")

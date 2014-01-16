@@ -322,10 +322,27 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     if utils.does_exist('//resources/descendant::primitive[@id="'+ra_id+'"]'):
         utils.err("unable to create resource/fence device '%s', '%s' already exists on this system" % (ra_id,ra_id))
 
-    # If the user doesn't specify a monitor attribute, we default to 60s automatically for them
-    is_monitor_present = False
     if len(op_values[0]) == 0:
         op_values = []
+
+    default_op_values = utils.get_default_op_values(ra_type)
+
+    # If the user specifies an operation value and we find a similar one in
+    # the default operations we remove if from the default operations
+    if "--no-default-ops" not in utils.pcs_options: 
+        updated_default_op_values = []
+        for def_op in default_op_values:
+            match = False
+            for op in op_values:
+                if op[0] != def_op[0]:
+                    continue
+                match = True
+            if match == False:
+                updated_default_op_values.append(def_op)
+
+        op_values = updated_default_op_values + op_values
+
+    is_monitor_present = False
     for op in op_values:
         if len(op) > 0:
             if op[0] == "monitor":

@@ -603,6 +603,36 @@ def does_resource_have_options(ra_type):
         return True
     return False
 
+# Given a resource agent (ocf:heartbeat:XXX) return an list of default
+# operations or an empty list if unable to find any default operations
+def get_default_op_values(ra_type):
+    allowable_operations = ["monitor","start","stop","promote","demote"]
+    ra_split = ra_type.split(':')
+    if len(ra_split) != 3:
+        return []
+
+    ra_path = "/usr/lib/ocf/resource.d/" + ra_split[1] + "/" + ra_split[2]
+    metadata = get_metadata(ra_path)
+
+    if metadata == False:
+        return []
+
+    return_list = []
+    root = ET.fromstring(metadata)
+    actions = root.findall(".//actions/action")
+    for action in actions:
+        if action.attrib["name"] in allowable_operations:
+            new_operation = []
+            new_operation.append(action.attrib["name"])
+            for attrib in action.attrib:
+                value = action.attrib[attrib]
+                if attrib == "name" or (attrib == "depth" and value == "0"):
+                    continue
+                new_operation.append(attrib + "=" + value)
+            return_list.append(new_operation)
+
+    return return_list
+
 # Check and see if the specified resource (or stonith) type is present on the
 # file system and properly responds to a meta-data request
 def is_valid_resource(resource, caseInsensitiveCheck=False):
