@@ -177,7 +177,11 @@
 		      <tr><th>NAME</th></tr>
 		      {{#if Pcs.nodesController.cur_node.running_resources}}
 		        {{#each res in Pcs.nodesController.cur_node.running_resources}}
-			<tr><td>{{#link-to 'Resources.index' res}}{{res.name}} ({{res.res_type}}){{/link-to}}</td></tr>
+			<tr><td>
+			    {{#unless res.stonith}}
+			      {{#link-to 'Resources.index' res}}{{res.name}} ({{res.res_type}}){{/link-to}}
+			    {{/unless}}
+			</td></tr>
 		        {{/each}}
 		      {{else}}
 			<tr><td style="color: gray;">NONE</td></tr>
