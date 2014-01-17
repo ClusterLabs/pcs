@@ -8,7 +8,7 @@
 	<% else %>
             {{#if stonith}}
         <% end %>
-	    <tr {{bindAttr onmouseover="onmouseover"}} {{bindAttr onmouseout="onmouseout"}} {{bindAttr class="trclass"}} {{bindAttr nodeID="name"}} onclick='Pcs.resourcesController.load_<%=@myView%>(this);'>
+	    <tr {{bind-attr onmouseover="onmouseover"}} {{bind-attr onmouseout="onmouseout"}} {{bind-attr class="trclass"}} {{bind-attr nodeID="name"}} onclick='Pcs.resourcesController.load_<%=@myView%>(this);'>
 
 	    <td class="node_list_check">
             {{view Ember.Checkbox checkedBinding="checked" class="node_list_check"}}
@@ -16,7 +16,7 @@
 	    <td class="node_list_sprite">
 	      <div class="check sprites"></div>
 	    </td>
-	    <td class="resource_name" {{bindAttr style="resource_name_style"}} nowrap>
+	    <td class="resource_name" {{bind-attr style="resource_name_style"}} nowrap>
 		{{full_name}}
 		{{#if group}}
 		({{group}})
@@ -26,7 +26,7 @@
 		{{agentname}}
 	    </td>
 	    <td>
-		<div {{bindAttr style="showArrow"}} class="arrow sprites"></div>
+		<div {{bind-attr style="showArrow"}} class="arrow sprites"></div>
 	    </td>
 	    </tr>
 	<% if @myView == "resource" %>

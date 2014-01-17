@@ -1,4 +1,4 @@
-<tr id="configure_title_row" {{bindAttr style="Pcs.configure_page"}}><td id="page_header" colspan=3>
+<tr id="configure_title_row" {{bind-attr style="Pcs.configure_page"}}><td id="page_header" colspan=3>
     <table id="config_options"><tr>
 	<td>CLUSTER PROPERTIES</td>
 	<!--
@@ -10,10 +10,10 @@
 -->
     </tr></table>
   </tr>
-  <tr id="configure_header_row" {{bindAttr style="Pcs.configure_page"}}><td colspan=3>
+  <tr id="configure_header_row" {{bind-attr style="Pcs.configure_page"}}><td colspan=3>
       <hr>
   </td></tr>
-  <tr id="configure_list_row" {{bindAttr style="Pcs.configure_page"}}>
+  <tr id="configure_list_row" {{bind-attr style="Pcs.configure_page"}}>
     <td id="config" colspan=3>
       <form>
 	<% @config_options.each { |page, options| %>

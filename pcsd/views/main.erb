@@ -11,8 +11,8 @@
   </script>
   <script src="/js/jquery-1.9.1.min.js"></script>
   <script src="/js/jquery-ui-1.10.1.custom.min.js"></script>
-  <script src="/js/handlebars-1.0.0-rc.3.js"></script>
-  <script src="/js/ember-1.0.0-rc.3.js"></script>
+  <script src="/js/handlebars-v1.2.1.js"></script>
+  <script src="/js/ember-1.3.1.js"></script>
   <script src="/js/pcsd.js"></script>
   <script type="text/javascript">
     var origMainTRHeight = 0;
@@ -109,11 +109,11 @@
 		</tr>
 		<% if !@manage %>
 		<tr>
-		  <td class="menuitem first">{{#linkTo "Nodes" }}NODES{{/linkTo}}</td>
-		  <td class="menuitem">{{#linkTo "Resources" }}RESOURCES{{/linkTo}}</td>
-		  <td class="menuitem">{{#linkTo "Fence Devices" }}FENCE DEVICES{{/linkTo}}</td>
-		  <td class="menuitem">{{#linkTo "Configuration" }}CLUSTER PROPERTIES{{/linkTo}}</td>
-		  <!--<td class="menuitem">{{#linkTo "Wizards" }}WIZARDS{{/linkTo}}</td>-->
+		  <td class="menuitem first">{{#link-to "Nodes" }}NODES{{/link-to}}</td>
+		  <td class="menuitem">{{#link-to "Resources" }}RESOURCES{{/link-to}}</td>
+		  <td class="menuitem">{{#link-to "Fence Devices" }}FENCE DEVICES{{/link-to}}</td>
+		  <td class="menuitem">{{#link-to "Configuration" }}CLUSTER PROPERTIES{{/link-to}}</td>
+		  <!--<td class="menuitem">{{#link-to "Wizards" }}WIZARDS{{/link-to}}</td>-->
 		</tr>
 	      <% else %>
 		<tr height="37px">

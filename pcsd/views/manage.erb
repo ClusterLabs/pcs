@@ -1,5 +1,5 @@
 <table id="main">
-  <tr id="cluster_title_row" {{bindAttr style=Pcs.manage_page}}><td id="page_header" colspan=3 style="vertical-align:middle;">
+  <tr id="cluster_title_row" {{bind-attr style=Pcs.manage_page}}><td id="page_header" colspan=3 style="vertical-align:middle;">
       <table id="manage_cluster_commands"><tr>
 	  <td>
 	    MANAGE CLUSTERS
@@ -29,11 +29,11 @@
       </table>
     </td>
   </tr>
-  <tr id="cluster_header_row" {{bindAttr style="Pcs.manage_page"}}>
+  <tr id="cluster_header_row" {{bind-attr style="Pcs.manage_page"}}>
     <td class="borderbottom" colspan=3>
     </td>
   </tr>
-  <tr id="cluster_list_row" {{bindAttr style="Pcs.manage_page"}}>
+  <tr id="cluster_list_row" {{bind-attr style="Pcs.manage_page"}}>
     <td id="cluster_list" class="node_list" style="width:400px;">
       <%= erb :_cluster_list %>
     </td>

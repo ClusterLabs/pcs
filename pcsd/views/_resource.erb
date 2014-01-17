@@ -1,9 +1,9 @@
 <% @pageName = @myView == "resource" ? "Resource" : "Fence Device" %>
-<tr id="<%=@myView%>_title_row" {{bindAttr style="Pcs.<%=@myView%>_page"}}><td id="page_header" colspan=3>
+<tr id="<%=@myView%>_title_row" {{bind-attr style="Pcs.<%=@myView%>_page"}}><td id="page_header" colspan=3>
 <%= @myView == "resource" ? "RESOURCES" : "FENCE DEVICES" %>
     </td>
   </tr>
-  <tr id="<%=@myView%>_header_row" {{bindAttr style="Pcs.<%=@myView%>_page"}}>
+  <tr id="<%=@myView%>_header_row" {{bind-attr style="Pcs.<%=@myView%>_page"}}>
     <td id="remove_add" class="borderbottom">
       <div class="x sprites"><a href="#" class="x sprites"></a></div><div class=link">&nbsp;
 	<% if @myView == "resource" %>
@@ -28,7 +28,7 @@
       <div style="float: left">&nbsp;Edit <%= @pageName%>&nbsp;</div><div class="check sprites"></div>
     </td>
   </tr>
-  <tr id="<%=@myView%>_list_row" {{bindAttr style="Pcs.<%=@myView%>_page"}}>
+  <tr id="<%=@myView%>_list_row" {{bind-attr style="Pcs.<%=@myView%>_page"}}>
     <td id="<%=@myView%>_list" class="node_list">
       <%= erb :_resource_list %>
     </td>
@@ -50,7 +50,7 @@
 	    <div id="node_sub_info">
 	      <table>
 		<tr>
-		  <td><input disabled style="margin-right: 50px;" type="text" {{bindAttr value="Pcs.resourcesController.cur_resource.name"}} size="35" class="text_field"></td>
+		  <td><input disabled style="margin-right: 50px;" type="text" {{bind-attr value="Pcs.resourcesController.cur_resource.name"}} size="35" class="text_field"></td>
 		  <td><div style="margin-right: 8px;" class="check sprites"></div></td>
 		  <td>
 		  {{#if Pcs.resourcesController.cur_resource.failed}}
@@ -119,7 +119,7 @@
 			<tr>
 			  <td>{{node}}</td>
 			  <td>{{score}}</td>
-			  <td {{bindAttr constraint_id="id"}} style="text-align:center">
+			  <td {{bind-attr constraint_id="id"}} style="text-align:center">
 			    {{#unless temp}}
 				<a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
 			    {{/unless}}
@@ -154,7 +154,7 @@
 			    {{/if}}
 
 			    <td>{{score}}</td>
-			    <td {{bindAttr constraint_id="id"}} style="text-align:center">
+			    <td {{bind-attr constraint_id="id"}} style="text-align:center">
 				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
 			    </td>
 			  </tr>
@@ -183,7 +183,7 @@
 			  <tr><td>{{other_rsc}}</td>
 			    <td>{{together}}</td>
 			    <td>{{score}}</td>
-			    <td {{bindAttr constraint_id="id"}} style="text-align:center">
+			    <td {{bind-attr constraint_id="id"}} style="text-align:center">
 				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
 			    </td>
 			  </tr>
