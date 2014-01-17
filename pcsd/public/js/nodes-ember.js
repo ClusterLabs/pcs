@@ -161,7 +161,11 @@ Pcs.ConfigurationRoute = Ember.Route.extend({
 
 Pcs.ResourcesRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    select_menu("RESOURCES",model.name); 
+    if (model) {
+      select_menu("RESOURCES",model.name); 
+    } else {
+      select_menu("RESOURCES"); 
+    }
   },
   model: function(params) {
     Pcs.opening_resource = params.resource_id;
