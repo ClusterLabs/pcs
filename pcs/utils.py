@@ -997,7 +997,7 @@ def set_cib_property(prop, value):
         new_property.setAttribute("value",value)
         cluster_property_set.appendChild(new_property)
     elif not property_found and "--force" not in pcs_options:
-        err("can't remove property property: '%s' that doesn't exist" % (prop))
+        err("can't remove property: '%s' that doesn't exist" % (prop))
 
 
     args = ["cibadmin", "-c", "-R", "--xml-text", crm_config.toxml()]

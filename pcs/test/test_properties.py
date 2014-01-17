@@ -113,7 +113,7 @@ class PropertyTest(unittest.TestCase):
 
         o,r = pcs("property unset zzzzz")
         assert r==1
-        ac(o,"Error: can't remove property property: 'zzzzz' that doesn't exist\n")
+        ac(o,"Error: can't remove property: 'zzzzz' that doesn't exist\n")
 
         o,r = pcs("property unset zzzz --force")
         assert r==0
