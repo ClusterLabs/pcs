@@ -108,17 +108,15 @@ def cluster_cmd(argv):
 # Create config and then send it to all of the nodes and start
 # corosync & pacemaker on the nodes
 # partial_argv is an array of args passed to corosync configure sync_start
-def sync_start(partial_argv):
+def sync_start(partial_argv, nodes):
     argv = partial_argv[:]
-    nodes = partial_argv[1:]
     config = corosync_setup(argv,True)
     for node in nodes:
         utils.setCorosyncConfig(node,config)
         utils.startCluster(node)
 
-def sync(partial_argv):
+def sync(partial_argv,nodes):
     argv = partial_argv[:]
-    nodes = partial_argv[1:]
     config = corosync_setup(argv,True)
     sync_nodes(nodes,config)
 
@@ -255,19 +253,28 @@ def check_nodes(nodes, prefix = ""):
 def corosync_setup(argv,returnConfig=False):
     fedora_config = not utils.is_rhel6()
     failure = False
+    primary_nodes = []
+
+    # If node contains a ',' we only care about the first address
+    for node in argv[1:]:
+        if "," in node:
+            primary_nodes.append(node.split(',')[0])
+        else:
+            primary_nodes.append(node)
+
     if len(argv) < 2:
         usage.cluster()
         exit(1)
 
     if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options and fedora_config:
-        sync_start(argv)
+        sync_start(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
-            enable_cluster(argv[1:])
+            enable_cluster(primary_nodes)
         return
     elif not returnConfig and not "--local" in utils.pcs_options and fedora_config:
-        sync(argv)
+        sync(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
-            enable_cluster(argv[1:])
+            enable_cluster(primary_nodes)
         return
     else:
         nodes = argv[1:]
