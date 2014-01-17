@@ -640,6 +640,8 @@ def is_valid_resource(resource, caseInsensitiveCheck=False):
     stonith_resource = False
     if resource.startswith("ocf:"):
         resource_split = resource.split(":",3)
+        if len(resource_split) != 3:
+            err("ocf resource definition (" + resource + ") does not match the ocf:provider:name pattern")
         providers = [resource_split[1]]
         resource = resource_split[2]
     elif resource.startswith("stonith:"):
