@@ -29,6 +29,15 @@ def checkAuthorization(node):
     out = sendHTTPRequest(node, 'remote/check_auth', None, False, False)
     return out
 
+def tokenFile():
+    if 'PCS_TOKEN_FILE' in os.environ:
+        return os.environ['PCS_TOKEN_FILE']
+    else:
+        if os.getuid() == 0:
+            return "/var/lib/pcsd/tokens"
+        else:
+            return os.path.expanduser("~/.pcs/tokens")
+
 def updateToken(node,nodes,username,password):
     count = 0
     orig_data = {}
@@ -129,10 +138,7 @@ def remove_uid_gid_file(uid,gid):
     return file_removed
 # Returns a dictionary {'nodeA':'tokenA'}
 def readTokens():
-    if 'PCS_TOKEN_FILE' in os.environ:
-        tokenfile = os.environ['PCS_TOKEN_FILE']
-    else:
-        tokenfile = os.path.expanduser("~/.pcs/tokens")
+    tokenfile = tokenFile()
     if (os.path.isfile(tokenfile) == False):
         return {}
     try:
@@ -143,13 +149,10 @@ def readTokens():
 
 # Takes a dictionary {'nodeA':'tokenA'}
 def writeTokens(tokens):
-    if 'PCS_TOKEN_FILE' in os.environ:
-        tokenfile = os.environ['PCS_TOKEN_FILE']
-    else:
-        tokenfile = os.path.expanduser("~/.pcs/tokens")
+    tokenfile = tokenFile()
     if (os.path.isfile(tokenfile) == False) and 'PCS_TOKEN_FILE' not in os.environ:
-        if not os.path.exists(os.path.expanduser("~/.pcs")):
-            os.mkdir(os.path.expanduser("~/.pcs"),0700);
+        if not os.path.exists(os.path.dirname(tokenfile)):
+            os.makedirs(os.path.dirname(tokenfile),0700);
     f = os.fdopen (os.open(tokenfile, os.O_WRONLY | os.O_CREAT, 0600), 'w')
     f.write(json.dumps(tokens))
     f.close()
