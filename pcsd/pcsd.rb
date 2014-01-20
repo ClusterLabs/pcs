@@ -355,15 +355,21 @@ post '/manage/existingcluster' do
     status.has_key?("corosync_online") then
     nodes = status["corosync_offline"] + status["corosync_online"]
 
+    if status["cluster_name"] == ""
+      session[:error] = "noname"
+      session[:errorval] = node
+      redirect '/manage'
+    end
+
     if pcs_config.is_cluster_name_in_use(status["cluster_name"])
       session[:error] = "duplicatename"
       session[:errorval] = status["cluster_name"]
-      redirect '/manage/#manage'
+      redirect '/manage'
     end
 
     pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
     pcs_config.save
-    redirect '/manage#manage'
+    redirect '/manage'
   else
     redirect '/manage/?error=notauthorized#manage'
   end

@@ -240,6 +240,30 @@ end
 def get_cluster_version()
   stdout, stderror, retval = run_cmd("corosync-cmapctl","totem.cluster_name")
   if retval != 0
+    # Cluster probably isn't running, try to get cluster name from
+    # corosync.conf
+    begin
+      corosync_conf = File.open("/etc/corosync/corosync.conf").read
+    rescue
+      return ""
+    end
+    in_totem = false
+    current_level = 0
+    corosync_conf.each_line do |line|
+      if line =~ /totem\s*{/
+        in_totem = true
+      end
+      if in_totem
+        md = /cluster_name:\s*(\w+)/.match(line)
+        if md
+          return md[1]
+        end
+      end
+      if in_totem and line =~ /}/
+        in_totem = false
+      end
+    end
+
     return ""
   else
     return stdout.join().gsub(/.*= /,"").strip
