@@ -171,11 +171,11 @@ post '/login' do
       session.delete("pre_login_path")
       pp "Pre Login Path: " + plp
       if plp == "" or plp == "/"
-      	plp = plp + "#manage"
+      	plp = '/manage'
       end
       redirect plp
     else
-      redirect '/#manage'
+      redirect '/manage'
     end
   else
     redirect '/login?badlogin=1'
@@ -403,7 +403,7 @@ post '/manage/newcluster' do
   pcs_config.save
 
   run_cmd(PCS, "cluster", "setup", "--start", "--name",@cluster_name, *@nodes)
-  redirect '/manage#manage'
+  redirect '/manage'
 end
 
 post '/manage/removecluster' do
@@ -415,7 +415,7 @@ post '/manage/removecluster' do
     end
   }
   pcs_config.save
-  redirect '/manage#manage'
+  redirect '/manage'
 end
 
 post '/resource_cmd/rm_constraint' do
@@ -433,7 +433,7 @@ end
 
 get '/' do
   $logger.info "Redirecting '/'...\n"
-  redirect '/manage#manage'
+  redirect '/manage'
 end
 
 get '/remote/?:command?' do
@@ -453,9 +453,11 @@ post '/wizards/?:wizard?' do
 end
 
 get '*' do
+  $logger.debug "Bad URL"
   $logger.debug params[:splat]
   $logger.info "Redirecting '*'...\n"
-  return "Bad URL"
+  redirect '/manage'
+  redirect "Bad URL"
   call(env.merge("PATH_INFO" => '/nodes'))
 end
 

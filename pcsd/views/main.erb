@@ -71,7 +71,7 @@
 		      <% if @clusters != nil %>
 		      <div style="float:left">
 			<div class="menuheader">
-			  <div id="dropdownr" class="label"  style="white-space:nowrap" onclick="window.location='/manage#manage'">
+			  <div id="dropdownr" class="label"  style="white-space:nowrap" onclick="window.location='/manage'">
 			    <table style="background: #000000">
 			    <tr><td>
 			    <%=@manage ? "Select Cluster" : "Cluster: " + @cluster_name%>
@@ -81,7 +81,7 @@
 			  </div>
 			  <div style="width:100%;" class="menu">
 			    <% if not @manage %>
-			      <a href="/manage#manage" class="menu-item">Manage&nbsp;Clusters&nbsp;&nbsp;</a>
+			      <a href="/manage" class="menu-item">Manage&nbsp;Clusters&nbsp;&nbsp;</a>
 			    <% end %>
 			  <% @clusters.each { |c| %>
 			    <a href="<%=c.ui_address%>" class="menu-item"><%=c.name%>&nbsp;&nbsp;</a>
@@ -137,7 +137,6 @@
   </div>
 </div>
     </script>
-
 <!--  <div id="footer">
     <div id="copyright">&copy 2012</div>&nbsp;<a href="http://www.redhat.com">Red Hat, Inc.</a>  <a href="http://access.redhat.com/">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Red Hat Customer Portal</a>
     <div id="help"><a href="#">Help</a></div>
@@ -161,4 +160,20 @@ $(function() {
 });
 
   </script>
+<% if @error %>
+  <script type="text/javascript">
+    $(function() {
+      $("#manage_error").dialog({
+	title: "Bad Cluster/Node Name",
+	buttons: {
+	  Ok: function() {
+	    $(this).dialog("close");
+	  }
+	},
+	autoOpen:true
+      });
+    });
+  </script>
+<% end %>
+
   </html>

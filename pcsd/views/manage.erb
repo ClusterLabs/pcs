@@ -8,21 +8,21 @@
 	  <td>
 	      <a href="#" class="x sprites"></a>
 	    <div class="link">
-	      <a id="manage_remove_cluster" href="#manage" onclick="verify_remove('cluster','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
+	      <a id="manage_remove_cluster" href="#" onclick="verify_remove('cluster','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
 	    </div>
 	  </td>
 	  <td>
-	    <a href="#manage" class="plus sprites"></a>
+	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_add_cluster" href="#manage" onclick="add_existing_dialog();">
+	      <a id="manage_add_cluster" href="#" onclick="add_existing_dialog();">
 		Add Existing
 	      </a>
 	    </div>
 	  </td>
 	  <td>
-	    <a href="#manage" class="plus sprites"></a>
+	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_create_cluster" href="#manage" onclick="create_cluster_dialog();">Create New</a>
+	      <a id="manage_create_cluster" href="#" onclick="create_cluster_dialog();">Create New</a>
 	    </div>
 	  </td>
 	</tr>
@@ -114,18 +114,3 @@
     The node, '<%=@errorval%>' is already configured in pcsd.  You may not add a node to two different clusters in pcsd.
   <% end %>
 </div>
-<% if @error %>
-  <script type="text/javascript">
-    $(function() {
-      $("#manage_error").dialog({
-	title: "Bad Cluster Name",
-	buttons: {
-	  Ok: function() {
-	    $(this).dialog("close");
-	  }
-	},
-	autoOpen:true
-      });
-    });
-  </script>
-<% end %>
