@@ -386,12 +386,16 @@ post '/manage/newcluster' do
     end
   }
   if pcs_config.is_cluster_name_in_use(@cluster_name)
-    redirect '/manage/?error=duplicatename&errorval='+@cluster_name+'#manage'
+    session[:error] = "duplicatename"
+    session[:errorval] = @cluster_name
+    redirect '/manage'
   end
 
   @nodes.each {|n|
     if pcs_config.is_node_in_use(n)
-      redirect '/manage/?error=duplicatenodename&errorval='+n+'#manage'
+      session[:error] = "duplicatenodename"
+      session[:errorval] = n
+      redirect '/manage'
     end
   }
 
