@@ -170,12 +170,12 @@ end
 
 def add_node(new_nodename)
   out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
-  return retval, out.join("\n")
+  return retval, out.join("\n") + stderror.join("\n")
 end
 
 def remove_node(new_nodename)
   out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
-  return retval, out
+  return retval, out + stderror
 end
 
 def get_corosync_nodes()

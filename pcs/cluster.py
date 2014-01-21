@@ -662,7 +662,6 @@ def cluster_node(argv):
     else:
         nodesRemoved = False
         stop_cluster([node])
-        output, retval = utils.run(["crm_node", "--force","-R", node])
 
         for my_node in utils.getNodesFromCorosyncConf():
             retval, output = utils.removeLocalNode(my_node,node)
@@ -676,6 +675,8 @@ def cluster_node(argv):
                     print >> sys.stderr, "%s: Error executing command occured: %s" % (my_node, "".join(output[1]))
         if nodesRemoved == False:
             utils.err("Unable to update any nodes")
+
+        output, retval = utils.run(["crm_node", "--force","-R", node])
 
 def cluster_localnode(argv):
     if len(argv) != 2:
