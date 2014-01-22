@@ -34,7 +34,7 @@ Pcs = Ember.Application.createWithMixins({
     retArray = [];
     for (var i=0; i < resources.length; i++) {
       $.each(this.resourcesController.content, function(ind,v) { 
-      	if (v.name == resources[i]) {
+	if (v.name == resources[i] && v.stonith == false) {
       	  retArray.push(v);
 	}
       });
