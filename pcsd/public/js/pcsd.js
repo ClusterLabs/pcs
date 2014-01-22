@@ -206,11 +206,11 @@ function load_resource_form(item, ra, stonith) {
 
 function verify_node_remove() {
   var buttonOpts = {};
+  var ids = []
+  $.each($('.node_list_check :checked'), function (i,e) {
+    ids.push($(e).parent().parent().attr("nodeID"));
+  });
   buttonOpts["Remove Node(s)"] = function() {
-    ids = []
-    $.each($('.node_list_check :checked'), function (i,e) {
-      ids.push($(e).parent().parent().attr("nodeID"));
-    });
     if (ids.length > 0) {
       remove_nodes(ids);
     }
@@ -225,6 +225,11 @@ function verify_node_remove() {
   });
   list_of_nodes += "</ul>";
   $("#nodes_to_remove").html(list_of_nodes);
+  if (ids.length == 0) {
+    alert("You must select at least one node to remove");
+    return;
+  }
+
   $("#remove_node").dialog({title: "Remove Node",
     modal: true, resizable: false,
     buttons: buttonOpts
