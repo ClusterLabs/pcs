@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='pcs',
-    version='0.9.111',
+    version='0.9.112',
     description='Pacemaker Configuration System',
     author='Chris Feist',
     author_email='cfeist@redhat.com',
