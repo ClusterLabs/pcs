@@ -40,13 +40,15 @@ webrick_options = {
 
 server = ::Rack::Handler::WEBrick
 trap(:INT) do
-  exit
+  puts "Shutting down (INT)"
   server.shutdown
+  #exit
 end
 
 trap(:TERM) do
-  exit
+  puts "Shutting down (TERM)"
   server.shutdown
+  #exit
 end
 
 require 'pcsd'
