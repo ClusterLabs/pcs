@@ -8,9 +8,9 @@
 	<div>
 	  <input type="checkbox" onchange="checkBoxToggle(this)">
 	</div>
-	<div id="no_coro_support" onclick="alert('Corosync does not presently support adding and removing nodes in a live cluster.  To remove or add nodes, you must shut down all nodes in the cluster and use the pcs command.');">
-	  <div class="x sprites"></div><div class="link">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
-	  <div class="plus sprites"></div><div class="link">&nbsp;Add</div>
+	<div id="no_coro_support">
+	  <div class="x sprites"></div><div class="link" onclick="verify_node_remove();return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+	  <div class="plus sprites"></div><div class="link" onclick="$('#add_node').dialog({title: 'Add Node', modal:true, width: 'auto'});return false;">&nbsp;Add</div>
 	</div>
       </td>
       <td class="borderbottom">&nbsp;</td>
@@ -222,3 +222,26 @@
 <% @myView = "resource" %>
 <%= erb :_resource %>
 </table>
+<div id="add_node" style="display: none;">
+  <form method=POST action="/add_node_all">
+    <table id="add_node_selector">
+      <tr>
+	<td>Node Name:</td>
+	<td><input type=text name=new_nodename></td>
+      </tr>
+      <tr>
+	<td>Auto Start:</td>
+	<td><input type="checkbox" name="auto_start" value="1" checked></td>
+      </tr>
+      <tr>
+	<td colspan=2 style="text-align:center;padding-top:20px;">
+	  <input class="create_node" type=submit onclick="$(this).hide();create_node($(this).parents('form')); return false;" value="Add Node">
+	</td>
+      </tr>
+    </table>
+  </form>
+</div>
+<div id="remove_node" style="display:none;">
+  <p style="font-size:12px;">Are you sure you want to remove the following nodes(s)?</p>
+  <span id="nodes_to_remove"></span>
+</div>

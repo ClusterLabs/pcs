@@ -339,6 +339,7 @@ def getCorosyncActiveNodes():
 # Add node specified to corosync.conf and reload corosync.conf (if running)
 def addNodeToCorosync(node):
 # Before adding, make sure node isn't already in corosync.conf
+    used_node_ids = []
     num_nodes_in_conf = 0
     for c_node in getNodesFromCorosyncConf():
         if c_node == node:
@@ -348,7 +349,7 @@ def addNodeToCorosync(node):
         if c_node == node:
             err("Node already exists in running corosync")
     corosync_conf = getCorosyncConf()
-    new_nodeid = getHighestnodeid(corosync_conf) + 1
+    new_nodeid = getNextNodeID(corosync_conf)
     nl_re = re.compile(r"nodelist\s*{")
     results = nl_re.search(corosync_conf)
     if results:
@@ -411,7 +412,7 @@ def removeNodeFromCorosync(node):
         if corosync_conf[x].find("node {") != -1:
 
             match = False
-            if (rrp and corosync_conf[x+1].find("ring0_addr: "+node0 ) != -1 and corosync_conf[x+2].find("ring1_addr: "+node1 ) != -1) or (not rrp and corosync_conf[x+1].find("ring0_addr: "+node0)):
+            if (rrp and corosync_conf[x+1].find("ring0_addr: "+node0 ) != -1 and corosync_conf[x+2].find("ring1_addr: "+node1 ) != -1) or (not rrp and corosync_conf[x+1].find("ring0_addr: "+node0) != -1):
                 match = True
 
             if match:
@@ -482,15 +483,24 @@ def rmQuorumOption(corosync_conf,option):
 
     return output.rstrip('\n') + "\n"
 
-def getHighestnodeid(corosync_conf):
+def getNextNodeID(corosync_conf):
+    currentNodes = []
     highest = 0
     corosync_conf = getCorosyncConf()
     p = re.compile(r"nodeid:\s*([0-9]+)")
     mall = p.findall(corosync_conf)
     for m in mall:
+        currentNodes.append(int(m))
         if int(m) > highest:
             highest = int(m)
-    return highest
+
+    cur_test_id = highest
+    while cur_test_id >= 1:
+        if cur_test_id not in currentNodes:
+            return cur_test_id
+        cur_test_id = cur_test_id - 1
+
+    return highest + 1
 
 # Restore default behavior before starting subprocesses
 def subprocess_setup():

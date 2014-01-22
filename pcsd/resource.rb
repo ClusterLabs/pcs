@@ -55,7 +55,7 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
   resource_list.sort_by!{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
   if get_all_options
-    stdout, stderror, retval = run_cmd("cibadmin", "-Q")
+    stdout, stderror, retval = run_cmd("cibadmin", "-Q", "-l")
     cib_output = stdout
     resources_inst_attr_map = {}
     resources_meta_attr_map = {}
@@ -113,7 +113,7 @@ def getResourceOptions(resource_id,stonith=false)
 end
 
 def getAllConstraints()
-  stdout, stderror, retval = run_cmd("cibadmin", "-Q", "--xpath", "//constraints")
+  stdout, stderror, retval = run_cmd("cibadmin", "-Q", "-l", "--xpath", "//constraints")
   constraints = {}
   if retval != 0
     return {}

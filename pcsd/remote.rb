@@ -50,8 +50,12 @@ def remote(params,request)
     return resource_cleanup(params)
   when "check_gui_status"
     return check_gui_status(params)
+  when "add_node_all"
+    return remote_add_node(params,true)
   when "add_node"
-    return remote_add_node(params)
+    return remote_add_node(params,false)
+  when "remove_nodes"
+    return remote_remove_nodes(params)
   when "remove_node"
     return remote_remove_node(params)
   when "resource_form"
@@ -205,10 +209,14 @@ def check_gui_status(params)
   return JSON.generate(node_results)
 end
 
-def remote_add_node(params)
-  pp params
+def remote_add_node(params,all = false)
+  auto_start = false
+  if params[:auto_start] and params[:auto_start] == "1"
+    auto_start = true
+  end
+
   if params[:new_nodename] != nil
-    retval, output =  add_node(params[:new_nodename])
+    retval, output =  add_node(params[:new_nodename],all,auto_start)
   end
 
   if retval == 0
@@ -218,8 +226,18 @@ def remote_add_node(params)
   return JSON.generate([retval,output])
 end
 
+def remote_remove_nodes(params)
+  count = 0
+  out = ""
+  while params["nodename-" + count.to_s]
+    retval, output = remove_node(params["nodename-"+count.to_s],true)
+    out = out + output.join("\n")
+    count = count + 1
+  end
+  return out
+end
+
 def remote_remove_node(params)
-  pp params
   if params[:remove_nodename] != nil
     retval, output = remove_node(params[:remove_nodename])
   else
@@ -316,14 +334,15 @@ def node_status(params)
  "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
  "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id}
   ret = JSON.generate(status)
-  getAllConstraints()
   return ret
 end
 
 def status_all(params, nodes = [])
-  if nodes.length == 0
-    nodes = get_corosync_nodes()
+  corosync_nodes = get_corosync_nodes()
+  if corosync_nodes.length != 0
+    nodes = corosync_nodes
   end
+  nodes.uniq!
 
   if nodes == nil
     return JSON.generate({"error" => "true"})

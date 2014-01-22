@@ -120,6 +120,26 @@ function create_group() {
   }
 }
 
+function create_node(form) {
+  dataString = $(form).serialize();
+  var nodeName = $(form).find("[name='new_nodename']").val();
+  url = get_cluster_remote_url() + $(form).attr("action");
+  $.ajax({
+    type: "POST",
+    url: url,
+    data: dataString,
+    dataType: "json",
+    success: function(returnValue) {
+      $('input.create_node').show();
+      Pcs.update();
+      $('#add_node').dialog('close');
+    },
+    error: function() {
+      alert("Error: unable to add node " + nodeName);
+      $('input.create_node').show();
+    }
+  });
+}
 // If update is set to true we update the resource instead of create it
 // if stonith is set to true we update/create a stonith agent
 function create_resource(form, update, stonith) {
@@ -181,6 +201,33 @@ function load_resource_form(item, ra, stonith) {
   
   item.load(get_cluster_remote_url() + command, data, function() {
     disable_spaces(this);
+  });
+}
+
+function verify_node_remove() {
+  var buttonOpts = {};
+  buttonOpts["Remove Node(s)"] = function() {
+    ids = []
+    $.each($('.node_list_check :checked'), function (i,e) {
+      ids.push($(e).parent().parent().attr("nodeID"));
+    });
+    if (ids.length > 0) {
+      remove_nodes(ids);
+    }
+  }
+  buttonOpts["Cancel"] = function() {
+    $(this).dialog("close");
+  };
+
+  list_of_nodes = "<ul>";
+  $('.node_list_check :checked').each(function (i,e) {
+    list_of_nodes += "<li>" + $(e).parent().parent().attr("nodeID") + "</li>";
+  });
+  list_of_nodes += "</ul>";
+  $("#nodes_to_remove").html(list_of_nodes);
+  $("#remove_node").dialog({title: "Remove Node",
+    modal: true, resizable: false,
+    buttons: buttonOpts
   });
 }
 
@@ -761,6 +808,28 @@ function remove_cluster(ids) {
       }
     });
   }
+}
+
+function remove_nodes(ids) {
+  var data = {};
+  for (var i=0; i<ids.length; i++) {
+    data["nodename-"+i] = ids[i];
+  }
+
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'remove_nodes',
+    data: data,
+    timeoute: pcs_timeout*3,
+    success: function() {
+      $("#remove_node").dialog("close");
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      $("#remove_node").dialog("close");
+      alert("Unable to remove nodes: " + res + " ("+error+")");
+    }
+  });
 }
 
 function remove_resource(ids) {

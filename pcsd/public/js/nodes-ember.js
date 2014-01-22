@@ -879,6 +879,22 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       self.set("cur_node", self.content[0]);
       self.content[0].set("cur_node",true);
     }
+
+    nodesToRemove = [];
+    $.each(self.content, function (key, node) {
+      found = false;
+      $.each(nodes, function (k,v) {
+	if (v == node.name)
+	  found = true;
+      });
+      if (!found) {
+	nodesToRemove.push(node);
+      }
+    });
+
+    $.each(nodesToRemove, function(k,v) {
+      self.content.removeObject(v);
+    });
   }
 });
 

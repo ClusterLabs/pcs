@@ -168,20 +168,32 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
   end
 end
 
-def add_node(new_nodename)
-  out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
+def add_node(new_nodename,all = false, auto_start=true)
+  if all
+    if auto_start
+      out, stderror, retval = run_cmd(PCS, "cluster", "node", "add", new_nodename, "--start")
+    else
+      out, stderror, retval = run_cmd(PCS, "cluster", "node", "add", new_nodename)
+    end
+  else
+    out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
+  end
   return retval, out.join("\n") + stderror.join("\n")
 end
 
-def remove_node(new_nodename)
-  out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
+def remove_node(new_nodename, all = false)
+  if all
+    out, stderror, retval = run_cmd(PCS, "cluster", "node", "remove", new_nodename)
+  else
+    out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
+  end
   return retval, out + stderror
 end
 
 def get_corosync_nodes()
   stdout, stderror, retval = run_cmd(PCS, "status", "nodes", "corosync")
   if retval != 0
-    return nil
+    return []
   end
 
   stdout.each {|x| x.strip!}
