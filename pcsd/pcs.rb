@@ -177,10 +177,9 @@ def add_node(new_nodename,all = false, auto_start=true)
     end
   else
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
-    pcs_config = PCSConfig.new
-    pcs_config.update($cluster_name,get_corosync_nodes())
-    pcs_config.save
   end
+  pcs_config = PCSConfig.new
+  pcs_config.update($cluster_name,get_corosync_nodes())
   return retval, out.join("\n") + stderror.join("\n")
 end
 
@@ -189,10 +188,9 @@ def remove_node(new_nodename, all = false)
     out, stderror, retval = run_cmd(PCS, "cluster", "node", "remove", new_nodename)
   else
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
-    pcs_config = PCSConfig.new
-    pcs_config.update($cluster_name,get_corosync_nodes())
-    pcs_config.save
   end
+  pcs_config = PCSConfig.new
+  pcs_config.update($cluster_name,get_corosync_nodes())
   return retval, out + stderror
 end
 
