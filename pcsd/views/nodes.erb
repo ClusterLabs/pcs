@@ -6,7 +6,7 @@
     <tr id="node_header_row" {{bind-attr style="Pcs.node_page"}}>
       <td id="remove_add" class="borderbottom">
 	<div>
-	  <input type="checkbox" onchange="checkBoxToggle(this)">
+	  <input type="checkbox" onchange="checkBoxToggle($(this), true);">
 	</div>
 	<div id="no_coro_support">
 	  <div class="x sprites"></div><div class="link" onclick="verify_node_remove();return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>

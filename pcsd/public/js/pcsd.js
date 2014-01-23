@@ -961,8 +961,12 @@ function get_cluster_remote_url() {
     return '/managec/' + Pcs.cluster_name + "/";
 }
 
-function checkBoxToggle(cb) {
-  cbs = $(cb).closest("tr").parent().find(".node_list_check input[type=checkbox]")
+function checkBoxToggle(cb,nodes) {
+  if (nodes) {
+    cbs = $('#node_list table').find(".node_list_check input[type=checkbox]");
+  } else {
+    cbs = $(cb).closest("tr").parent().find(".node_list_check input[type=checkbox]")
+  }
   if ($(cb).prop('checked'))
     cbs.prop('checked',true);
   else
