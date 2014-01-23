@@ -181,7 +181,7 @@ def disableCluster(node):
     return sendHTTPRequest(node, 'remote/cluster_disable', None, False, True)
 
 def destroyCluster(node):
-    sendHTTPRequest(node, 'remote/cluster_destroy')
+    return sendHTTPRequest(node, 'remote/cluster_destroy')
 
 def addLocalNode(node,node_to_add):
     data = urllib.urlencode({'new_nodename':node_to_add})

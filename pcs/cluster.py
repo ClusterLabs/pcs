@@ -538,6 +538,19 @@ def disable_cluster_all():
     for node in utils.getNodesFromCorosyncConf():
         utils.disableCluster(node)
 
+def destroy_cluster(argv):
+    if len(argv) > 0:
+        failure = False
+        errors = ""
+        for node in argv:
+            retval, err = utils.destroyCluster(node)
+            if retval != 0:
+                failure = True
+                error = errors + err+"\n"
+        if failure:
+            utils.err("unable to destroy cluster\n" + errors.rstrip())
+        return
+
 def stop_cluster(argv):
     if len(argv) > 0:
         failure = False
@@ -661,9 +674,11 @@ def cluster_node(argv):
             utils.err("Unable to update any nodes")
     else:
         nodesRemoved = False
-        stop_cluster([node])
+        destroy_cluster([node])
 
         for my_node in utils.getNodesFromCorosyncConf():
+            if my_node == node:
+                continue
             retval, output = utils.removeLocalNode(my_node,node)
             if retval != 0:
                 print >> sys.stderr, "Error: unable to remove %s on %s - %s" % (node,my_node,output.strip())
