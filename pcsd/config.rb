@@ -17,6 +17,16 @@ class PCSConfig
     }
   end
 
+  def update(cluster_name, node_list)
+    @clusters.each {|c|
+      if c.name == cluster_name
+        c.nodes = node_list
+        self.save
+        break
+      end
+    }
+  end
+
   def save
     out_cluster_array = []
     @clusters.each { |c|
@@ -52,6 +62,4 @@ class PCSConfig
     }
     return false
   end
-
-
 end
