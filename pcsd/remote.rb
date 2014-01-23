@@ -338,12 +338,6 @@ def node_status(params)
 end
 
 def status_all(params, nodes = [])
-  corosync_nodes = get_corosync_nodes()
-  if corosync_nodes.length != 0
-    nodes = corosync_nodes
-  end
-  nodes.uniq!
-
   if nodes == nil
     return JSON.generate({"error" => "true"})
   end
