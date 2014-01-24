@@ -134,8 +134,8 @@ function create_node(form) {
       Pcs.update();
       $('#add_node').dialog('close');
     },
-    error: function() {
-      alert("Error: unable to add node " + nodeName);
+    error: function(error) {
+      alert(error.responseText);
       $('input.create_node').show();
     }
   });

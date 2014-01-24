@@ -183,6 +183,22 @@ def disableCluster(node):
 def destroyCluster(node):
     return sendHTTPRequest(node, 'remote/cluster_destroy')
 
+def canAddNodeToCluster(node):
+    retval, output = sendHTTPRequest(node, 'remote/node_available', [], False, False)
+    if retval == 0:
+        try:
+            myout = json.loads(output)
+            if "notauthorized" in myout and myout["notauthorized"] == "true":
+                return (False, "unable to authenticate to node")
+            if "node_available" in myout and myout["node_available"] == True:
+                return (True,"")
+            else:
+                return (False,"node is already in a cluster")
+        except ValueError:
+            return (False, "response parsing error")
+
+    return (False,"error checking node availability")
+
 def addLocalNode(node,node_to_add):
     data = urllib.urlencode({'new_nodename':node_to_add})
     retval, output = sendHTTPRequest(node, 'remote/add_node', data, False, False)

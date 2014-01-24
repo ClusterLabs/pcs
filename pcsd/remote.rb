@@ -50,6 +50,8 @@ def remote(params,request)
     return resource_cleanup(params)
   when "check_gui_status"
     return check_gui_status(params)
+  when "node_available"
+    return remote_node_available(params)
   when "add_node_all"
     return remote_add_node(params,true)
   when "add_node"
@@ -209,6 +211,13 @@ def check_gui_status(params)
   return JSON.generate(node_results)
 end
 
+def remote_node_available(params)
+  if File.exist?("/etc/corosync/corosync.conf") or File.exist?("/var/lib/pacemaker/cib/cib.xml")
+    return JSON.generate({node_available: false})
+  end
+  return JSON.generate({node_available: true})
+end
+
 def remote_add_node(params,all = false)
   auto_start = false
   if params[:auto_start] and params[:auto_start] == "1"
@@ -220,10 +229,10 @@ def remote_add_node(params,all = false)
   end
 
   if retval == 0
-    return JSON.generate([retval,get_corosync_conf([])])
+    return [200,JSON.generate([retval,get_corosync_conf([])])]
   end
 
-  return JSON.generate([retval,output])
+  return [400,output]
 end
 
 def remote_remove_nodes(params)

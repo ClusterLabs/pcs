@@ -303,6 +303,12 @@ def corosync_setup(argv,returnConfig=False):
         utils.err("Unable to resolve all hostnames (use --force to override).")
 
     if fedora_config == True:
+        if os.path.exists("/etc/corosync/corosync.conf") and not "--force" in utils.pcs_options:
+            utils.err("/etc/corosync/corosync.conf already exists, use --force to overwrite")
+        if os.path.exists("/var/lib/pacemaker/cib/cib.xml") and not "--force" in utils.pcs_options:
+            utils.err("/var/lib/pacemaker/cib/cib.xml already exists, use --force to overwrite")
+        cluster_destroy([])
+
         f = open(COROSYNC_CONFIG_FEDORA_TEMPLATE, 'r')
 
         corosync_config = f.read()
@@ -659,6 +665,10 @@ def cluster_node(argv):
 
     if add_node == True:
         corosync_conf = None
+        (canAdd, error) =  utils.canAddNodeToCluster(node)
+        if not canAdd:
+            utils.err("Unable to add '%s' to cluster: %s" % (node,error))
+
         for my_node in utils.getNodesFromCorosyncConf():
             retval, output = utils.addLocalNode(my_node,node)
             if retval != 0:
@@ -878,17 +888,17 @@ def cluster_destroy(argv):
             thread.join()
     else:
         print "Shutting down pacemaker/corosync services..."
-        print os.system("service pacemaker stop")
-        print os.system("service corosync stop")
+        os.system("service pacemaker stop")
+        os.system("service corosync stop")
         print "Killing any remaining services..."
         os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
         utils.disableServices()
 
         print "Removing all cluster configuration files..."
         if utils.is_rhel6():
-            os.system("rm /etc/cluster/cluster.conf")
+            os.system("rm -f /etc/cluster/cluster.conf")
         else:
-            os.system("rm /etc/corosync/corosync.conf")
+            os.system("rm -f /etc/corosync/corosync.conf")
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
