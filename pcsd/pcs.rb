@@ -171,13 +171,14 @@ end
 def add_node(new_nodename,all = false, auto_start=true)
   if all
     if auto_start
-      out, stderror, retval = run_cmd(PCS, "cluster", "node", "add", new_nodename, "--start")
+      out, stderror, retval = run_cmd(PCS, "cluster", "node", "add", new_nodename, "--start", "--enable")
     else
       out, stderror, retval = run_cmd(PCS, "cluster", "node", "add", new_nodename)
     end
   else
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
   end
+  $logger.info("Adding #{new_nodename} from pcs_settings.conf")
   pcs_config = PCSConfig.new
   pcs_config.update($cluster_name,get_corosync_nodes())
   return retval, out.join("\n") + stderror.join("\n")
@@ -189,6 +190,7 @@ def remove_node(new_nodename, all = false)
   else
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
   end
+  $logger.info("Removing #{new_nodename} from pcs_settings.conf")
   pcs_config = PCSConfig.new
   pcs_config.update($cluster_name,get_corosync_nodes())
   return retval, out + stderror
