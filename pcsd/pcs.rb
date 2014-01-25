@@ -122,13 +122,28 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
   code = 0
   nodes = get_cluster_nodes(cluster_name)
 
+  # If we're removing nodes, we don't send this to one of the nodes we're
+  # removing, unless we're removing all nodes
+
+  $logger.info("SCRWT: " + request)
+  if request == "/remove_nodes"
+    new_nodes = nodes.dup
+    data.each {|k,v|
+      if new_nodes.include? v
+        new_nodes.delete v
+      end
+    }
+    if new_nodes.length > 0
+      nodes = new_nodes
+    end
+  end
   for node in nodes
     code, out = send_request_with_token(node,request, post, data, remote=true, raw_data)
     $logger.info "Node: #{node} Request: #{request}"
     if out != '{"noresponse":true}'
-      $logger.info "No response: Node: #{node} Request: #{request}"
       break
     end
+    $logger.info "No response: Node: #{node} Request: #{request}"
   end
   return code,out
 end
