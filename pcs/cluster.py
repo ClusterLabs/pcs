@@ -686,9 +686,9 @@ def cluster_node(argv):
             utils.err("Unable to update any nodes")
     else:
         nodesRemoved = False
+        c_nodes = utils.getNodesFromCorosyncConf()
         destroy_cluster([node])
-
-        for my_node in utils.getNodesFromCorosyncConf():
+        for my_node in c_nodes:
             if my_node == node:
                 continue
             retval, output = utils.removeLocalNode(my_node,node)
