@@ -537,10 +537,11 @@ Commands:
         Edit the cib in the editor specified by the $EDITOR environment
         variable and push out any changes upon saving
 
-    node add <node> [--start]
+    node add <node> [--start] [--enable]
         Add the node to corosync.conf and corosync on all nodes in the cluster
         and sync the new corosync.conf to the new node.  If --start is specified
-        also start corosync/pacemaker on the new node
+        also start corosync/pacemaker on the new node, if --enable is specified
+        enable corosync/pacemaker on new node
 
     node remove <node>
         Shutdown specified node and remove it from pacemaker and corosync on

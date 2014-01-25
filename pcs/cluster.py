@@ -678,6 +678,8 @@ def cluster_node(argv):
                 corosync_conf = output
         if corosync_conf != None:
             utils.setCorosyncConfig(node, corosync_conf)
+            if "--enable" in utils.pcs_options:
+                utils.enableCluster(node)
             if "--start" in utils.pcs_options:
                 utils.startCluster(node)
         else:
