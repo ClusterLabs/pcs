@@ -804,7 +804,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	pcsd_daemon = true
       }
 
-      if (data[node_id]["notauthorized"] == "true") {
+      if (data[node_id]["notauthorized"] == "true" || data[node_id]["notoken"] == true) {
 	authorized = false;
       } else {
 	authorized = true;

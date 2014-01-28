@@ -152,6 +152,10 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
   start = Time.now
   begin
     retval, token = get_node_token(node)
+    if retval != 0
+      return 400,'{"notoken":true}'
+    end
+
     token = token[0].strip
     if remote
       uri = URI.parse("https://#{node}:2224/remote/" + request)
