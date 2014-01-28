@@ -192,7 +192,7 @@ Pcs.Resource = Ember.Object.extend({
     if (this.clone)
       return this.name + " (Clone)";
     return this.name;
-  }.property("name"),
+  }.property("name","ms","clone"),
   cur_resource: false,
   checked: false,
   nodes_running: [],
