@@ -361,9 +361,10 @@ def addNodeToCorosync(node):
         if c_node == node:
             err("node already exists in corosync.conf")
         num_nodes_in_conf = num_nodes_in_conf + 1
-    for c_node in getCorosyncActiveNodes():
-        if c_node == node:
-            err("Node already exists in running corosync")
+    if "--corosync_conf" not in pcs_options:
+        for c_node in getCorosyncActiveNodes():
+            if c_node == node:
+                err("Node already exists in running corosync")
     corosync_conf = getCorosyncConf()
     new_nodeid = getNextNodeID(corosync_conf)
     nl_re = re.compile(r"nodelist\s*{")

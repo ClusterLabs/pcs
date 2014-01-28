@@ -12,6 +12,7 @@ temp_cib = "temp.xml"
 class ResourceTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
+        shutil.copy("corosync.conf.orig", "corosync.conf")
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self,temp_cib):
@@ -1118,7 +1119,7 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 1
 
         output, returnVal  = pcs(temp_cib, "resource move D2-master --master")
-        ac(output,"Error: error moving/banning/clearing resource\nResource 'D2-master' not moved: currently promoted in 0 locations.\nYou can prevent 'D2-master' from being promoted at a specific location with: --ban --master --host <name>\nError performing operation: Invalid argument\n\n")
+        ac(output,"Error: error moving/banning/clearing resource\nResource 'D2-master' not moved: active in 0 locations (promoted in 0).\nYou can prevent 'D2-master' from running on a specific location with: --ban --host <name>\nYou can prevent 'D2-master' from being promoted at a specific location with: --ban --master --host <name>\nError performing operation: Invalid argument\n\n")
         assert returnVal == 1
 
         output, returnVal  = pcs(temp_cib, "resource --full")

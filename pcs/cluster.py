@@ -303,11 +303,12 @@ def corosync_setup(argv,returnConfig=False):
         utils.err("Unable to resolve all hostnames (use --force to override).")
 
     if fedora_config == True:
-        if os.path.exists("/etc/corosync/corosync.conf") and not "--force" in utils.pcs_options:
-            utils.err("/etc/corosync/corosync.conf already exists, use --force to overwrite")
+        if os.path.exists(settings.corosync_conf_file) and not "--force" in utils.pcs_options:
+            utils.err("%s already exists, use --force to overwrite" % settings.corosync_conf_file)
         if os.path.exists("/var/lib/pacemaker/cib/cib.xml") and not "--force" in utils.pcs_options:
             utils.err("/var/lib/pacemaker/cib/cib.xml already exists, use --force to overwrite")
-        cluster_destroy([])
+        if "--corosync_conf" not in utils.pcs_options:
+            cluster_destroy([])
 
         f = open(COROSYNC_CONFIG_FEDORA_TEMPLATE, 'r')
 

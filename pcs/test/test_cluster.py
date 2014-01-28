@@ -82,8 +82,8 @@ class ClusterTest(unittest.TestCase):
 # Setup a 2 node cluster and make sure the two node config is set, then add a
 # node and make sure that it's unset, then remove a node and make sure it's
 # set again
-        output, returnVal = pcs(temp_cib, "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2")
-        assert output == ""
+        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2")
+        ac (output,"")
         assert returnVal == 0
 
         with open("corosync.conf.tmp") as f:
@@ -91,8 +91,8 @@ class ClusterTest(unittest.TestCase):
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
         output, returnVal = pcs(temp_cib, "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3")
+        ac(output,"rh7-3: successfully added!\n")
         assert returnVal == 0
-        assert output == "rh7-3: successfully added!\n",output
 
         with open("corosync.conf.tmp") as f:
             data = f.read()
@@ -127,9 +127,9 @@ class ClusterTest(unittest.TestCase):
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        output, returnVal = pcs(temp_cib, "cluster setup --local --corosync_conf=corosync.conf2.tmp --name cname rh7-1 rh7-2 rh7-3")
+        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf2.tmp --name cname rh7-1 rh7-2 rh7-3")
+        ac(output,"")
         assert returnVal == 0
-        assert output == ""
 
         with open("corosync.conf2.tmp") as f:
             data = f.read()
@@ -137,7 +137,11 @@ class ClusterTest(unittest.TestCase):
 
 ## Test to make transport is set
         output, returnVal = pcs(temp_cib, "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --transport udp")
-        assert output == ""
+        ac(output,"Error: corosync.conf.tmp already exists, use --force to overwrite\n")
+        assert returnVal == 1
+
+        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --transport udp")
+        ac(output,"")
         assert returnVal == 0
 
         with open("corosync.conf.tmp") as f:
@@ -153,49 +157,49 @@ class ClusterTest(unittest.TestCase):
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cnam\ntransport: udpu\nip_version: ipv6\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
     def testRRPConfig(self):
-        o,r = pcs("cluster setup --transport udp --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0")
+        o,r = pcs("cluster setup --transport udp --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\nrrp_mode: passive\n  interface {\n    ringnumber: 0\n    bindnetaddr: 1.1.1.0\n    mcastaddr: 239.255.1.1\n    mcastport: 5405\n  }\n  interface {\n    ringnumber: 1\n    bindnetaddr: 1.1.2.0\n    mcastaddr: 239.255.2.1\n    mcastport: 5405\n  }\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --transport udp --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9")
+        o,r = pcs("cluster setup --transport udp --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\nrrp_mode: passive\n  interface {\n    ringnumber: 0\n    bindnetaddr: 1.1.1.0\n    mcastaddr: 8.8.8.8\n    mcastport: 5405\n  }\n  interface {\n    ringnumber: 1\n    bindnetaddr: 1.1.2.0\n    mcastaddr: 9.9.9.9\n    mcastport: 5405\n  }\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --transport udp --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0")
+        o,r = pcs("cluster setup --transport udp --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\nrrp_mode: passive\n  interface {\n    ringnumber: 0\n    bindnetaddr: 1.1.1.0\n    mcastaddr: 239.255.1.1\n    mcastport: 9999\n  }\n  interface {\n    ringnumber: 1\n    bindnetaddr: 1.1.2.0\n    mcastaddr: 239.255.2.1\n    mcastport: 9998\n  }\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\nrrp_mode: passive\n  interface {\n    ringnumber: 0\n    bindnetaddr: 1.1.1.0\n    mcastaddr: 239.255.1.1\n    mcastport: 5405\n    ttl: 4\n  }\n  interface {\n    ringnumber: 1\n    bindnetaddr: 1.1.2.0\n    mcastaddr: 239.255.2.1\n    mcastport: 5405\n    ttl: 5\n  }\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\nrrp_mode: active\n  interface {\n    ringnumber: 0\n    bindnetaddr: 1.1.1.0\n    mcastaddr: 239.255.1.1\n    mcastport: 5405\n  }\n  interface {\n    ringnumber: 1\n    bindnetaddr: 1.1.2.0\n    mcastaddr: 239.255.2.1\n    mcastport: 5405\n  }\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\nrrp_mode: active\n  interface {\n    ringnumber: 0\n    bindnetaddr: 1.1.1.0\n    broadcast: yes\n  }\n  interface {\n    ringnumber: 1\n    bindnetaddr: 1.1.2.0\n    mcastaddr: 239.255.2.1\n    mcastport: 5405\n  }\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
@@ -218,7 +222,7 @@ class ClusterTest(unittest.TestCase):
         assert r == 0
         ac(o,"Warning: Unable to resolve hostname: nonexistant-address\n")
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_node_standing=4 --last_node_standing_window=5")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_node_standing=4 --last_node_standing_window=5")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
@@ -227,14 +231,14 @@ class ClusterTest(unittest.TestCase):
 # Reset local corosync.conf
         o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_node_standing=1 --last_node_standing_window=12000")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_node_standing=1 --last_node_standing_window=12000")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\nwait_for_all: 1\nauto_tie_breaker: 1\nlast_node_standing: 1\nlast_node_standing_window: 12000\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
-        o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1")
+        o,r = pcs("cluster setup --force --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1")
         assert r == 1
         ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
 
