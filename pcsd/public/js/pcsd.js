@@ -1001,6 +1001,7 @@ function update_resource_type_options() {
       target.append(new_option);
     }
   });
+  target.change();
 }
 
 function setup_resource_class_provider_selection() {
