@@ -28,6 +28,7 @@ end
 
 webrick_options = {
   :Port               => 2224,
+  :BindAddress        => "::",
   :SSLEnable          => true,
   :SSLVerifyClient    => OpenSSL::SSL::VERIFY_NONE,
   :SSLCertificate     => OpenSSL::X509::Certificate.new(File.open(CRT_FILE).read),
