@@ -364,6 +364,11 @@ def corosync_setup(argv,returnConfig=False):
 
                 if "--addr1" in utils.pcs_options:
                     ir += utils.generate_rrp_corosync_config(1)
+        if "--ipv6" in utils.pcs_options:
+            ip_version = "ip_version: ipv6\n"
+        else:
+            ip_version = ""
+
 
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
         corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
@@ -371,6 +376,7 @@ def corosync_setup(argv,returnConfig=False):
         corosync_config = corosync_config.replace("@@two_node",two_node_section)
         corosync_config = corosync_config.replace("@@transport",transport)
         corosync_config = corosync_config.replace("@@interfaceandrrpmode\n",ir)
+        corosync_config = corosync_config.replace("@@ip_version\n",ip_version)
         if returnConfig:
             return corosync_config
 

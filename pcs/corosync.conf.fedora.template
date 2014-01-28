@@ -4,6 +4,7 @@ secauth: off
 cluster_name: @@cluster_name
 transport: @@transport
 @@interfaceandrrpmode
+@@ip_version
 }
 
 nodelist {

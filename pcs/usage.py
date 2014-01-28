@@ -438,6 +438,7 @@ Commands:
                             [--ttl1 <ttl>]] | [--broadcast1]]]]
             [--wait_for_all=<0|1>] [--auto_tie_breaker=<0|1>]
             [--last_node_standing=<0|1> [--last_node_standing_window=<time in ms>]]
+            [--ipv6]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes
@@ -446,6 +447,7 @@ Commands:
         The --wait_for_all, --auto_tie_breaker, --last_node_standing,
         --last_node_standing_window options are all documented in corosync's
         votequorum(5) man page.
+        --ipv6 will configure corosync to use ipv6 (instead of ipv4)
 
         Configuring Redundant Ring Protocol (RRP)
 
