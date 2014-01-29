@@ -621,18 +621,22 @@ def resource_update(res_id,args):
         op_name = element.pop(0)
         op_role = ""
         op_vars = convert_args_to_tuples(element)
+
         for k,v in op_vars:
             if k == "role":
                 op_role = v
                 break
-        op_name_role = "%s:%s" % (op_name, op_role)
+
+        # verify op_role is valid
+        if op_role not in ["","Stopped","Started","Slave","Master"] and "--force" not in utils.pcs_options:
+            utils.err("role must be: Stopped, Started, Slave or Master (use --force to override)")
+
         op = dom.createElement("op")
         updating_op = False
         for existing_op in operations.getElementsByTagName("op"):
             existing_op_name = existing_op.getAttribute("name")
             existing_op_role = existing_op.getAttribute("role")
-            existing_op_name_role = "%s:%s" % (existing_op_name, existing_op_role)
-            if op_name_role == existing_op_name_role:
+            if existing_op_role == op_role and existing_op_name == op_name:
                 op = existing_op
                 updating_op = True
                 for key in op.attributes.keys():

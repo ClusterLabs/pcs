@@ -1361,6 +1361,19 @@ class ResourceTest(unittest.TestCase):
         ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (B-monitor-interval-60s)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
         assert r == 0
 
+        o,r = pcs(temp_cib, "resource update B Dummy op monitor interval=30s monitor interval=31s role=master")
+        ac(o,"Error: role must be: Stopped, Started, Slave or Master (use --force to override)\n")
+        assert r == 1
+
+        o,r = pcs(temp_cib, "resource update B Dummy op monitor interval=30s monitor interval=31s role=Master")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource show --full")
+        ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (B-monitor-interval-30s)\n              monitor interval=31s role=Master (B-monitor-interval-31s-role-Master)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
+        assert r == 0
+
+
     def testCloneMasterBadResources(self):
         self.setupClusterA(temp_cib)
         o,r = pcs("resource clone ClusterIP4")
