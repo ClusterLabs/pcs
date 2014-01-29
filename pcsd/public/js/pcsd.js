@@ -1,4 +1,4 @@
-var pcs_timeout = 6000;
+var pcs_timeout = 30000;
 
 function curResource() {
   return Pcs.resourcesController.cur_resource.name
