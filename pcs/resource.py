@@ -619,10 +619,20 @@ def resource_update(res_id,args):
         if len(element) <= 1:
             continue
         op_name = element.pop(0)
+        op_role = ""
+        op_vars = convert_args_to_tuples(element)
+        for k,v in op_vars:
+            if k == "role":
+                op_role = v
+                break
+        op_name_role = "%s:%s" % (op_name, op_role)
         op = dom.createElement("op")
         updating_op = False
         for existing_op in operations.getElementsByTagName("op"):
-            if existing_op.getAttribute("name") == op_name:
+            existing_op_name = existing_op.getAttribute("name")
+            existing_op_role = existing_op.getAttribute("role")
+            existing_op_name_role = "%s:%s" % (existing_op_name, existing_op_role)
+            if op_name_role == existing_op_name_role:
                 op = existing_op
                 updating_op = True
                 for key in op.attributes.keys():
@@ -631,7 +641,6 @@ def resource_update(res_id,args):
 
         op.setAttribute("name",op_name)
         op_id = res_id + "-" + op_name
-        op_vars = convert_args_to_tuples(element)
 
         # Verify all op values are recognized
         if "--force" not in utils.pcs_options:
