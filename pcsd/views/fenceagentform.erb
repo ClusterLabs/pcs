@@ -19,17 +19,17 @@
 
       <input type="hidden" name="resource_type" value="<%=@fenceagent.name%>">
       <% @fenceagent.required_options.each { |name, desc|  %>
-	<tr>
+	<tr title="<%=h(desc[1])%>">
 	  <td class="reg">
 	    &nbsp;<%= name %>
 	  </td>
 	  <td>
-	    <input style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if (@existing_resource and @cur_resource and @cur_resource.options)%>" size="35" class="text_field">
+	    <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if (@existing_resource and @cur_resource and @cur_resource.options)%>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
       <tr>
-	<td class="reg" onclick="show_hide_constraints(this)">
+	<td id="<%= @new_fenceagent ? "optional_args_new" : "optional_args_existing" %>" class="reg" onclick="show_hide_constraints(this)">
 	  <span class="rightarrow sprites"></span><span class="downarrow sprites" style="display: none;"></span></td>
 	<td class="reg">
 	  Optional Arguments
