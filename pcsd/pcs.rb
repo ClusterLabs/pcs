@@ -163,7 +163,7 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
       uri = URI.parse("https://#{node}:2224/" + request)
     end
 
-    logger.info "Sending Request: " + uri.to_s
+    $logger.info "Sending Request: " + uri.to_s
     if post
       req = Net::HTTP::Post.new(uri.path)
       raw_data ? req.body = raw_data : req.set_form_data(data)

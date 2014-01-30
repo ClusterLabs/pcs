@@ -20,6 +20,8 @@ def remote(params,request)
     return resource_status(params)
   when "create_cluster"
     return create_cluster(params)
+  when "get_cib"
+    return get_cib(params)
   when "get_corosync_conf"
     return get_corosync_conf(params)
   when "set_corosync_conf"
@@ -171,6 +173,15 @@ def cluster_disable(params)
       return JSON.generate({"error" => "true"})
     end
     return "Cluster Disabled"
+  end
+end
+
+def get_cib(parasm)
+  cib, stderr, retval = run_cmd(CIBADMIN, "-Ql")
+  if retval != 0
+    return [400, "Unable to get CIB: " + cib + stderr]
+  else
+    return [200, cib]
   end
 end
 

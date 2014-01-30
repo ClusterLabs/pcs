@@ -317,7 +317,7 @@ get '/managec/:cluster/main' do
   end
   @resource_agents = get_resource_agents_avail() 
   @stonith_agents = get_stonith_agents_avail() 
-  @config_options = getConfigOptions2()
+  @config_options = getConfigOptions2(@cluster_name)
 
   erb :nodes, :layout => :main
 end
@@ -489,7 +489,7 @@ def getLocationDeps(cur_node)
   [deps_allow, deps_disallow]
 end
 
-def getConfigOptions2()
+def getConfigOptions2(cluster_name)
   config_options = {}
   general_page = []
 #  general_page << ConfigOption.new("Cluster Delay Time", "cluster-delay",  "int", 4, "Seconds") 
@@ -520,7 +520,7 @@ def getConfigOptions2()
   allconfigoptions = []
   config_options.each { |i,k| k.each { |j| allconfigoptions << j } }
   ConfigOption.getDefaultValues(allconfigoptions)
-  ConfigOption.loadValues(allconfigoptions)
+  ConfigOption.loadValues(allconfigoptions,cluster_name)
   return config_options
 end
 
@@ -591,16 +591,16 @@ class ConfigOption
     @options = options
   end
 
-  def self.loadValues(cos)
-    cib, stderr, retval = run_cmd(CIBADMIN, "-Ql")
-    if retval != 0
+  def self.loadValues(cos,cluster_name)
+    code,output = send_cluster_request_with_token(cluster_name, "get_cib")
+    $logger.info(code)
+    if code != 200
       $logger.info "Error: unable to load cib"
-      $logger.info cib.join("")
-      $logger.info stderr.join("")
+      $logger.info output
       return
     end
 
-    doc = REXML::Document.new(cib.join(""))
+    doc = REXML::Document.new(output)
 
     cos.each {|co|
       prop_found = false
