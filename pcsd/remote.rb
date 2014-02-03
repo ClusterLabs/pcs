@@ -18,6 +18,8 @@ def remote(params,request)
     return check_auth(params, request)
   when "resource_status"
     return resource_status(params)
+  when "setup_cluster"
+    return setup_cluster(params)
   when "create_cluster"
     return create_cluster(params)
   when "get_cib"
@@ -179,7 +181,7 @@ end
 def get_cib(parasm)
   cib, stderr, retval = run_cmd(CIBADMIN, "-Ql")
   if retval != 0
-    return [400, "Unable to get CIB: " + cib + stderr]
+    return [400, "Unable to get CIB: " + cib.to_s + stderr.to_s]
   else
     return [200, cib]
   end
@@ -269,6 +271,12 @@ def remote_remove_node(params)
   end
 
   return JSON.generate([retval,output])
+end
+
+def setup_cluster(params)
+  $logger.info("Setting up cluster: " + params.inspect)
+  nodes = params[:nodes].split(',')
+  run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes)
 end
 
 def create_cluster(params)

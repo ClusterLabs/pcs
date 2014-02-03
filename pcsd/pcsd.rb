@@ -402,7 +402,9 @@ post '/manage/newcluster' do
   pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
   pcs_config.save
 
-  run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",@cluster_name, *@nodes)
+  $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
+  code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {clustername: @cluster_name, nodes: @nodes.join(',')})
+
   redirect '/manage'
 end
 
