@@ -323,7 +323,7 @@ get '/managec/:cluster/main' do
 end
 
 get '/managec/:cluster/status_all' do
-  status_all("",get_cluster_nodes(params[:cluster]))
+  status_all(params,get_cluster_nodes(params[:cluster]))
 end
 
 get '/managec/:cluster/?*' do

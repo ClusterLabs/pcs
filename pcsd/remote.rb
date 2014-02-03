@@ -376,8 +376,28 @@ def status_all(params, nodes = [])
     }
   }
   threads.each { |t| t.join }
-  return JSON.generate(final_response)
 
+  # Get full list of nodes and see if we need to update the configuration
+  node_list = []
+  final_response.each { |fr,n|
+    node_list += n["corosync_offline"]
+    node_list += n["corosync_online"]
+    node_list += n["pacemaker_offline"]
+    node_list += n["pacemaker_online"]
+  }
+
+  node_list.uniq!
+  if node_list.length > 0
+    config = PCSConfig.new
+    old_node_list = config.get_nodes(params[:cluster])
+    if old_node_list & node_list != old_node_list or old_node_list.size!=node_list.size
+      $logger.info("Updating node list for: " + params[:cluster] + " " + old_node_list.inspect + "->" + node_list.inspect)
+      config.update(params[:cluster], node_list)
+      return status_all(params, node_list)
+    end
+  end
+  $logger.debug("NODE LIST: " + node_list.inspect)
+  return JSON.generate(final_response)
 end
 
 def auth(params,request)

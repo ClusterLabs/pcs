@@ -99,9 +99,6 @@ def get_cluster_nodes(cluster_name)
   clusters = pcs_config.clusters
   cluster = nil
   for c in clusters
-    pp c.nodes
-    pp c.name
-    pp cluster_name
     if c.name == cluster_name
       cluster = c
       break

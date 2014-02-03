@@ -62,4 +62,13 @@ class PCSConfig
     }
     return false
   end
+
+  def get_nodes(clustername)
+    @clusters.each {|c|
+      if c.name == clustername
+        return c.nodes
+      end
+    }
+    return nil
+  end
 end
