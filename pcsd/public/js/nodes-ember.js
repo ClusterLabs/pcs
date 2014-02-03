@@ -116,7 +116,7 @@ Pcs.WizardsRoute = Ember.Route.extend({
 
 Pcs.IndexRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    if (window.location.pathname == "/manage")
+    if (window.location.pathname == "/manage" || window.location.pathname == "/manage/")
       select_menu("MANAGE");
     else
       select_menu("NODES");
