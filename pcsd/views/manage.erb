@@ -113,4 +113,7 @@
   <% if @error == "duplicatenodename" %>
     The node, '<%=@errorval%>' is already configured in pcsd.  You may not add a node to two different clusters in pcsd.
   <% end %>
+  <% if @error == "unabletocreate" %>
+    Unable to create new cluster because cluster already exists on one or more of the nodes.  Run 'pcs cluster destroy' on all nodes to remove current cluster configuration.<br><br>(<%=@errorval%>)
+  <% end %>
 </div>

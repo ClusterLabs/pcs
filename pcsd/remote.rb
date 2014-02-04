@@ -276,7 +276,11 @@ end
 def setup_cluster(params)
   $logger.info("Setting up cluster: " + params.inspect)
   nodes = params[:nodes].split(',')
-  run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes)
+  stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes)
+  if retval != 0
+    return [400, stdout.join("\n") + stderr.join("\n")]
+  end
+  return 200
 end
 
 def create_cluster(params)

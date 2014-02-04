@@ -399,11 +399,16 @@ post '/manage/newcluster' do
     end
   }
 
-  pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
-  pcs_config.save
-
   $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
   code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {clustername: @cluster_name, nodes: @nodes.join(',')})
+
+  if code == 200
+    pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
+    pcs_config.save
+  else
+    session[:error] = "unabletocreate"
+    session[:errorval] = out
+  end
 
   redirect '/manage'
 end
