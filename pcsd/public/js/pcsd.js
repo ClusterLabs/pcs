@@ -258,7 +258,7 @@ function verify_remove(rem_type, error_message, ok_message, title_message, resou
 	remove_resource([resource_id]);
     } else {
       ids = []
-      $.each($('#'+rem_type+'_list :checked'), function (i,e) {
+      $.each($('#'+rem_type+'_list .node_list_check :checked'), function (i,e) {
 	ids.push($(e).parent().parent().attr("nodeID"))
       });
       if (ids.length > 0) {
