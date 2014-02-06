@@ -178,6 +178,7 @@ post '/login' do
       redirect '/manage'
     end
   else
+    session["bad_login_name"] = params['username']
     redirect '/login?badlogin=1'
   end
 end
