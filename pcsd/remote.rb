@@ -658,9 +658,9 @@ def resource_metadata (params)
 
   @resource = ResourceAgent.new(params[:resourcename])
   if class_provider == "ocf:heartbeat"
-    @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + resource_name)
+    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + resource_name)
   elsif class_provider == "ocf:pacemaker"
-    @resource.required_options, @resource.optional_options = getResourceMetadata(PACEMAKER_AGENTS_DIR + resource_name)
+    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(PACEMAKER_AGENTS_DIR + resource_name)
   end
   @new_resource = params[:new]
   @resources, @groups = getResourcesGroups

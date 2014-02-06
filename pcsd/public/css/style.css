@@ -635,6 +635,7 @@ tr td a.remove {
 .previewmap { background-position: -400px -1px; }
 .downarrow { background-position: -528px -1px; }
 .rightarrow { background-position: -544px -1px; }
+.infoicon {background-position: -256px -1px; }
 
 .menuheader { position: relative; }
 .menuheader .label {

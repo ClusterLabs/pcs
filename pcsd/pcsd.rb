@@ -263,7 +263,7 @@ end
 get '/resources/metadata/:resourcename/?:new?' do
   return ""
   @resource = ResourceAgent.new(params[:resourcename])
-  @resource.required_options, @resource.optional_options = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
+  @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
   @new_resource = params[:new]
   @resources, @groups = getResourcesGroups
   

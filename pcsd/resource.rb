@@ -241,6 +241,15 @@ def getResourceMetadata(resourcepath)
   doc = REXML::Document.new(metadata)
   options_required = {}
   options_optional = {}
+  long_desc = ""
+  short_desc = ""
+  doc.elements.each('resource-agent/longdesc') {|ld|
+    long_desc = ld.text
+  }
+  doc.elements.each('resource-agent/shortdesc') {|ld|
+    short_desc = ld.text
+  }
+
   doc.elements.each('resource-agent/parameters/parameter') { |param|
     temp_array = []
     if param.attributes["required"] == "1"
@@ -269,7 +278,7 @@ def getResourceMetadata(resourcepath)
       options_optional[param.attributes["name"]] = temp_array
     end
   }
-  [options_required, options_optional]
+  [options_required, options_optional, [short_desc,long_desc]]
 end
 
 def getResourceAgents(resource_agent = nil)
@@ -290,9 +299,10 @@ def getResourceAgents(resource_agent = nil)
     if resource_agent and (a.start_with?("ocf:heartbeat:") or a.start_with?("ocf:pacemaker:"))
       split_agent = ra.name.split(/:/)
       path = OCF_ROOT + '/resource.d/' + split_agent[1] + "/" + split_agent[2]
-      required_options, optional_options = getResourceMetadata(path)
+      required_options, optional_options, resource_info = getResourceMetadata(path)
       ra.required_options = required_options
       ra.optional_options = optional_options
+      ra.info = resource_info
     end
     resource_agent_list[ra.name] = ra
   }
@@ -342,7 +352,7 @@ class Resource
 end
 
 class ResourceAgent
-  attr_accessor :name, :resource_class, :required_options, :optional_options
+  attr_accessor :name, :resource_class, :required_options, :optional_options, :info
   def initialize(name=nil, required_options={}, optional_options={}, resource_class=nil)
     @name = name
     @required_options = required_options
@@ -368,5 +378,19 @@ class ResourceAgent
 
   def to_json(options = {})
     JSON.generate({"type" => type})
+  end
+
+  def long_desc 
+    if info && info.length >= 2
+      return info[1]
+    end
+    return ""
+  end
+
+  def short_desc
+    if info && info.length >= 1
+      return info[0]
+    end
+    return ""
   end
 end
