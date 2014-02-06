@@ -496,6 +496,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   update: function(data) {
     var self = this;
     var resources = {};
+    var resource_clone_nodes = {};
     var ord_con = {}
     var loc_con = {}
     var col_con = {}
@@ -505,7 +506,21 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     $.each(data, function(key, value) {
       if (value["resources"]) {
 	$.each(value["resources"], function(k2, v2) {
+	  // Use resource_clone_nodes to handle resources with multiple ndoes
+	  if (!(v2["id"] in resource_clone_nodes)) {
+	    resource_clone_nodes[v2["id"]] = [];
+	  }
+
+	  if ("nodes" in v2) {
+	    $.each(v2["nodes"], function(node_num, node_name) {
+	      if ($.inArray(node_name, resource_clone_nodes[v2["id"]]) == -1) {
+		resource_clone_nodes[v2["id"]].push(node_name);
+	      }
+	    });
+	  }
+
 	  resources[v2["id"]] = v2;
+	  resources[v2["id"]]["nodes"] = resource_clone_nodes[v2["id"]].sort();
 	});
       }
 
@@ -596,6 +611,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  resource.set("active", value["active"]);
 	  resource.set("disabled", value["disabled"]);
 	  resource.set("nodes", value["nodes"]);
+	  resource.set("node_list", value["nodes"].join(", "));
 	  resource.set("group", value["group"]);
 	  resource.set("clone", value["clone"]);
 	  resource.set("ms", value["ms"]);
@@ -615,6 +631,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  active: value["active"],
 	  disabled: value["disabled"],
 	  nodes: value["nodes"],
+	  node_list: value["nodes"].join(", "),
 	  group: value["group"],
 	  clone: value["clone"],
 	  ms: value["ms"],
