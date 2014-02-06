@@ -166,17 +166,19 @@ end
 post '/login' do
   if PCSAuth.validUser(params['username'],params['password'])
     session["username"] = params['username']
-    if session["pre_login_path"]
-      plp = session["pre_login_path"]
-      session.delete("pre_login_path")
-      pp "Pre Login Path: " + plp
-      if plp == "" or plp == "/"
-      	plp = '/manage'
-      end
-      redirect plp
-    else
+# Temporarily ignore pre_login_path until we come up with a list of valid
+# paths to redirect to (to prevent status_all issues)
+#    if session["pre_login_path"]
+#      plp = session["pre_login_path"]
+#      session.delete("pre_login_path")
+#      pp "Pre Login Path: " + plp
+#      if plp == "" or plp == "/"
+#      	plp = '/manage'
+#      end
+#      redirect plp
+#    else
       redirect '/manage'
-    end
+#    end
   else
     session["bad_login_name"] = params['username']
     redirect '/login?badlogin=1'
