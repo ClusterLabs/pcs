@@ -29,7 +29,7 @@ install_pcsd:
 	cp -r pcsd ${DESTDIR}${PREFIX}/lib/
 	install -m 644 -D pcsd/pcsd.conf ${DESTDIR}/etc/sysconfig/pcsd
 	install -d ${DESTDIR}/usr/lib/systemd/system/
-	install  pcsd/pcsd.service ${DESTDIR}/usr/lib/systemd/system/
+	install -m 644 pcsd/pcsd.service ${DESTDIR}/usr/lib/systemd/system/
 	install -d ${DESTDIR}/etc/pam.d
 	install  pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
