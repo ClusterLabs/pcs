@@ -743,6 +743,7 @@ function load_row(node_row, ac, cur_elem, containing_elem, also_set, initial_loa
 	  self.content[key].set(cur_elem,false);
       }
     });
+    Pcs.resourcesController.update_cur_resource();
     $(containing_elem).fadeTo(500,1);
   });
 }
