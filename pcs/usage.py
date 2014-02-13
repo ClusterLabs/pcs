@@ -724,6 +724,7 @@ Commands:
           <attribute> lt|gt|lte|gte|eq|ne <value>
           date [start=<start>] [end=<end>] operation=gt|lt|in-range
           date-spec <date spec options>...
+          <expression> and|or <expression>
 
     location show [resources|nodes [node id|resource id]...] [--full]
         List all the current location constraints, if 'resources' is specified

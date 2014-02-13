@@ -857,26 +857,46 @@ def rule_add(elem, argv):
     if len(exp_arg) == 0:
         err("no rule expression was specified")
         
+    rule_boolean = ""
+    if ("or" in exp_arg and "and" not in exp_arg):
+        rule_boolean = "or"
+    elif ("or" not in exp_arg and "and" in exp_arg):
+        rule_boolean = "and"
+
     if exp_arg[0] not in ["defined","not_defined", "date", "date-spec"] and len(exp_arg) >= 2 and exp_arg[1] not in ["lt","gt","lte","gte","eq","ne"]:
         err("'%s' is not a valid rule expression" % " ".join(exp_arg))
 
     date_spec = False
 
-    if len(exp_arg) >= 1:
-        if exp_arg[0] == "date":
-            args.append(("operation",exp_arg[1]))
-            rule_type = "date_expression"
-        elif exp_arg[0] == "date-spec":
-            args.append(("operation","date_spec"))
-            rule_type = "date_expression"
-            date_spec = True
-        elif exp_arg[1] in ["lt","gt","lte","gte","eq","ne"] and len(exp_arg) >= 3:
-            args.append(("attribute",exp_arg[0]))
-            args.append(("operation",exp_arg[1]))
-            args.append(("value",exp_arg[2]))
-        elif exp_arg[0] in ["defined","not_defined"]:
-            args.append(("attribute",exp_arg[1]))
-            args.append(("operation",exp_arg[0]))
+    new_exp_arg = [[]]
+    count = 0
+    for item in exp_arg:
+        if item != "or" and item != "and":
+            new_exp_arg[count].append(item)
+        else:
+            new_exp_arg.append([])
+            count = count + 1
+
+    for exp_arg in new_exp_arg:
+        if len(exp_arg) >= 1:
+            if exp_arg[0] == "date":
+                args.append(("operation",exp_arg[1]))
+                rule_type = "date_expression"
+            elif exp_arg[0] == "date-spec":
+                args.append(("operation","date_spec"))
+                rule_type = "date_expression"
+                date_spec = True
+            elif exp_arg[1] in ["lt","gt","lte","gte","eq","ne"] and len(exp_arg) >= 3:
+                args.append(("attribute",exp_arg[0]))
+                args.append(("operation",exp_arg[1]))
+                args.append(("value",exp_arg[2]))
+            elif exp_arg[0] in ["defined","not_defined"]:
+                args.append(("attribute",exp_arg[1]))
+                args.append(("operation",exp_arg[0]))
+        if rule_boolean != "":
+            args.append(rule_boolean)
+    if args[-1] == "or" or args[-1] == "and":
+        args.pop(-1)
             
     rule = ET.SubElement(elem,"rule")
     expression = ET.SubElement(rule,rule_type)
@@ -885,6 +905,11 @@ def rule_add(elem, argv):
 
 
     for arg in args:
+        if arg == "or" or arg == "and":
+            expression = ET.SubElement(rule,rule_type)
+            if date_spec:
+                subexpression = ET.SubElement(expression,"date_spec")
+            continue
         if arg[0] == "id":
             rule.set(arg[0], arg[1])
         elif arg[0] == "score":
@@ -906,11 +931,18 @@ def rule_add(elem, argv):
     if rule.get("score") == None and rule.get("score-attribute") == None:
         rule.set("score", "INFINITY")
 
+    if rule_boolean != "":
+        rule.set("boolean-op", rule_boolean)
+
     dom = get_cib_dom()
     if rule.get("id") == None:
         rule.set("id", find_unique_id(dom,elem.get("id") + "-rule"))
-    if expression.get("id") == None:
-        expression.set("id", find_unique_id(dom,rule.get("id") + "-expr"))
+
+    count = 1
+    for exp_child in rule:
+        if exp_child.get("id") == None:
+            exp_child.set("id", find_unique_id(dom,rule.get("id") + "-expr-"+str(count)))
+            count = count + 1
     if date_spec and subexpression.get("id") == None:
         subexpression.set("id", find_unique_id(dom, expression.get("id")+"-datespec"))
     if "score" in elem.attrib:
