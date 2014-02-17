@@ -86,6 +86,8 @@ def remote(params,request)
     return add_constraint(params)
   when "add_constraint_remote"
     return add_constraint_remote(params)
+  when "add_meta_attr_remote"
+    return add_meta_attr_remote(params)
   when "add_group"
     return add_group(params)
   when "update_cluster_settings"
@@ -347,15 +349,17 @@ def node_status(params)
   resource_list.each {|r|
     out_nodes = []
     oConstraints = []
+    meta_attributes = []
+    r.meta_attr.each_pair {|k,v| meta_attributes << {key: k, value: v}}
     r.nodes.each{|n|
       out_nodes.push(n.name)
     }
     out_rl.push({:id => r.id, :agentname => r.agentname, :active => r.active,
-		:nodes => out_nodes, :group => r.group, :clone => r.clone,
-		:failed => r.failed, :orphaned => r.orphaned, :options => r.options,
-    		:stonith => r.stonith, :ms => r.ms, :disabled => r.disabled,
-    		:operations => r.operations, :instance_attr => r.instance_attr,
-    		:meta_attr => r.meta_attr})
+                 :nodes => out_nodes, :group => r.group, :clone => r.clone,
+                 :failed => r.failed, :orphaned => r.orphaned, :options => r.options,
+                 :stonith => r.stonith, :ms => r.ms, :disabled => r.disabled,
+                 :operations => r.operations, :instance_attr => r.instance_attr,
+                 :meta_attr => meta_attributes})
   }
   constraints = getAllConstraints()
   cluster_settings = getAllSettings()
@@ -751,6 +755,15 @@ def add_constraint(params)
 	end
       end
     }
+  end
+end
+
+def add_meta_attr_remote(params)
+  retval = add_meta_attr(params["res_id"], params["key"],params["value"])
+  if retval == 0
+    return [200, "Successfully added meta attribute"]
+  else
+    return [400, "Error adding meta attribute"]
   end
 end
 

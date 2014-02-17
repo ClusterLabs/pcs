@@ -203,6 +203,34 @@
 		  </td>
 		</tr>
 	      </table>
+	      <table style="clear:left;float:left">
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Meta Attributes ({{#if Pcs.resourcesController.cur_resource.meta_attr.length}}{{Pcs.resourcesController.cur_resource.meta_attr.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+		<tr><td>
+		    <div id="locationdep">
+		      <table class="datatable">
+			<tr><th>Meta Attribute</th><th>Value</th></tr>
+			{{#each Pcs.resourcesController.cur_resource.meta_attr}}
+			<tr><td>{{this.key}}</td>
+			    <td>{{this.value}}</td>
+			    <td {{bind-attr meta_attr_key="this.key"}}  style="text-align:center">
+				  <a onclick="remove_meta_attr($(this).parent());return false;" href="#" class="remove">X</a>
+			    </td>
+			  </tr>
+                        {{/each}}
+ 			{{#unless Pcs.resourcesController.cur_resource.meta_attr}}
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+ 			{{/unless}}
+			<tr id="new_meta_col">
+			  <td><input type="text" name="new_meta_key" size="20"></td>
+			  <td><input type="text" name="new_meta_value" size="20"></td>
+			  <td><button type="button" onclick="add_meta_attr('#new_meta_col');" name="add">Add</button></td>
+			</tr>
+
+		      </table>
+		    </div>
+		  </td>
+		</tr>
+	      </table>
 	    </div>
 	  <% end %>
 

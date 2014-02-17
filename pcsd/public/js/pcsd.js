@@ -862,6 +862,51 @@ function remove_resource(ids) {
   });
 }
 
+function remove_meta_attr(parent_id) {
+  var data = {};
+  data["res_id"] = Pcs.resourcesController.cur_resource.name
+  data["key"] = parent_id.attr("meta_attr_key");
+  data["value"] = "";
+  fade_in_out(parent_id.parent());
+
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_meta_attr_remote',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+      Pcs.resourcesController.add_meta_attr(data["res_id"], data["key"], data["value"]);
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert("Unable to add meta attribute: ("+error+")");
+    }
+  });
+}
+
+function add_meta_attr(parent_id) {
+  var data = {};
+  data["res_id"] = Pcs.resourcesController.cur_resource.name
+  data["key"] = $(parent_id + " input[name='new_meta_key']").val();
+  data["value"] = $(parent_id + " input[name='new_meta_value']").val();
+  fade_in_out($(parent_id));
+
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_meta_attr_remote',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+      $(parent_id + " input").val("");
+      Pcs.resourcesController.add_meta_attr(data["res_id"], data["key"], data["value"]);
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert("Unable to add meta attribute: ("+error+")");
+    }
+  });
+}
+
 function add_constraint(parent_id, c_type) {
   var data = {};
   data["res_id"] = Pcs.resourcesController.cur_resource.name

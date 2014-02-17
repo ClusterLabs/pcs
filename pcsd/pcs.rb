@@ -42,6 +42,11 @@ def getAllSettings()
   return {"error" => "Unable to get configuration settings"}
 end
 
+def add_meta_attr(resource, key, value)
+  stdout, stderr, retval = run_cmd(PCS,"resource","meta",resource,key.to_s + "=" + value.to_s)
+  return retval
+end
+
 def add_location_constraint(resource, node, score)
   if node == ""
     return "Bad node"

@@ -379,6 +379,30 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston', true);
   },
 
+  add_meta_attr: function(res_id, mkey, mvalue) {
+    $.each(this.content, function(key, value) {
+      if (value.name == res_id) {
+	var meta_attrs = [];
+	if (value.meta_attr) {
+	  meta_attrs = value.meta_attr;
+	}
+
+	var found = false;
+	$.each(meta_attrs, function (index,attr) {
+	  if (attr.key == mkey) {
+	    attr.value = mvalue;
+	    found = true;
+	  }
+	});
+
+	if (!found) {
+	  meta_attrs.pushObject({key: mkey, value: mvalue})
+	}
+	value.set("meta_attr", meta_attrs);
+      }
+    });
+  },
+
   add_loc_constraint: function(res_id, constraint_id, node_id, score) {
     new_loc_constraint = {}
     new_loc_constraint["id"] = constraint_id;
@@ -622,6 +646,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  resource.set("ordering_constraints", res_ord_constraints[value["id"]]);
 	  resource.set("colocation_constraints", res_col_constraints[value["id"]]);
 	  resource.set("stonith", value["stonith"]);
+	  resource.set("meta_attr", value["meta_attr"]);
 	}
       });
       if (found == false) {
@@ -641,7 +666,8 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  location_constraints: res_loc_constraints[value["id"]],
 	  ordering_constraints: res_ord_constraints[value["id"]],
 	  colocation_constraints: res_col_constraints[value["id"]],
-	  stonith: value["stonith"]
+	  stonith: value["stonith"],
+	  meta_attr: value["meta_attr"]
 	});
       }
       var pathname = window.location.pathname.split('/');
