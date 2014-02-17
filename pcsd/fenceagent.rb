@@ -25,6 +25,9 @@ def getFenceAgentMetadata(fenceagentname)
   doc = REXML::Document.new(metadata)
   options_required = {}
   options_optional = {}
+  options_optional["pcmk_host_list"] = ""
+  options_optional["pcmk_host_map"] = ""
+  options_optional["pcmk_host_check"] = ""
   doc.elements.each('resource-agent/parameters/parameter') { |param|
     temp_array = []
     next if param.attributes["name"] == "action"
@@ -44,9 +47,6 @@ def getFenceAgentMetadata(fenceagentname)
       options_optional[param.attributes["name"]] = temp_array
     end
   }
-  options_required["pcmk_host_list"] = ""
-  options_required["pcmk_host_map"] = ""
-  options_required["pcmk_host_check"] = ""
   [options_required, options_optional]
 end
 
