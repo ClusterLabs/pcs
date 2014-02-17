@@ -4,11 +4,11 @@
       <table>
         <tr>
           <td><div class="bold">Description:</div></td>
-          <td><span style="float:left;"><%=@resource.short_desc%>&nbsp;</span>&nbsp;<span onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span></td>
+          <td><span class="reg" style="float:left;"><%=@resource.short_desc%>&nbsp;</span>&nbsp;<span onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span></td>
         </tr>
         <tr>
           <td></td>
-          <td><div class="long_desc_div" style="display:none;max-width:350px;"><%= @resource.long_desc%></div></td>
+          <td><div class="long_desc_div reg" style="display:none;max-width:350px;"><%= @resource.long_desc%></div></td>
         </tr>
         <tr>
 	  <td nowrap><div class="bold">Resource Group:</div></td>
