@@ -437,15 +437,15 @@ Commands:
             [--addr1 <addr/net> [[[--mcast1 <address>] [--mcastport1 <port>]
                             [--ttl1 <ttl>]] | [--broadcast1]]]]
             [--wait_for_all=<0|1>] [--auto_tie_breaker=<0|1>]
-            [--last_node_standing=<0|1> [--last_node_standing_window=<time in ms>]]
+            [--last_man_standing=<0|1> [--last_man_standing_window=<time in ms>]]
             [--ipv6]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes
         --enable will enable corosync and pacemaker on node startup
         --transport allows specification of corosync transport (default: udpu)
-        The --wait_for_all, --auto_tie_breaker, --last_node_standing,
-        --last_node_standing_window options are all documented in corosync's
+        The --wait_for_all, --auto_tie_breaker, --last_man_standing,
+        --last_man_standing_window options are all documented in corosync's
         votequorum(5) man page.
         --ipv6 will configure corosync to use ipv6 (instead of ipv4)
 

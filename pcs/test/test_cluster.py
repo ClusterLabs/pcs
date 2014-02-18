@@ -222,21 +222,21 @@ class ClusterTest(unittest.TestCase):
         assert r == 0
         ac(o,"Warning: Unable to resolve hostname: nonexistant-address\n")
 
-        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_node_standing=4 --last_node_standing_window=5")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
-            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\nwait_for_all: 2\nauto_tie_breaker: 3\nlast_node_standing: 4\nlast_node_standing_window: 5\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
+            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\nwait_for_all: 2\nauto_tie_breaker: 3\nlast_man_standing: 4\nlast_man_standing_window: 5\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 # Reset local corosync.conf
         o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 
-        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_node_standing=1 --last_node_standing_window=12000")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
-            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\nwait_for_all: 1\nauto_tie_breaker: 1\nlast_node_standing: 1\nlast_node_standing_window: 12000\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
+            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\nwait_for_all: 1\nauto_tie_breaker: 1\nlast_man_standing: 1\nlast_man_standing_window: 12000\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
         o,r = pcs("cluster setup --force --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1")
         assert r == 1
