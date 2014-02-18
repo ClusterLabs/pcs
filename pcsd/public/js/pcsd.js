@@ -602,7 +602,8 @@ function update_create_cluster_dialog(nodes) {
     }
   }
 
-  var bad_nodes = 0;
+  var cant_connect_nodes = 0;
+  var cant_auth_nodes = 0;
   var good_nodes = 0;
   var cluster_name = $('input[name^="clustername"]').val()
     $('#create_new_cluster input[name^="node-"]').each(function() {
@@ -613,8 +614,13 @@ function update_create_cluster_dialog(nodes) {
       for (var i = 0; i < keys.length; i++) {
 	if ($(this).val() == keys[i]) {
 	  if (nodes[keys[i]] != "Online") {
-	    $(this).parent().prev().css("background-color", "red");
-	    bad_nodes++;
+	    if (nodes[keys[i]] == "Unable to authenticate") {
+	      $(this).parent().prev().css("background-color", "orange");
+	      cant_auth_nodes++;
+	    } else {
+	      $(this).parent().prev().css("background-color", "red");
+	      cant_connect_nodes++;
+	    }
 	  } else {
 	    $(this).parent().prev().css("background-color", "");
 	    good_nodes++;
@@ -622,13 +628,13 @@ function update_create_cluster_dialog(nodes) {
 	}
       }
     });
-  if (bad_nodes != 0) {
+  if (cant_connect_nodes != 0 || cant_auth_nodes != 0) {
     $("#unable_to_connect_error_msg").show();
   } else {
     $("#unable_to_connect_error_msg").hide();
   }
 
-  if (good_nodes == 0 && bad_nodes == 0) {
+  if (good_nodes == 0 && cant_connect_nodes == 0 && cant_auth_nodes == 0) {
     $("#at_least_one_node_error_msg").show();
   } else {
     $("#at_least_one_node_error_msg").hide();
@@ -641,7 +647,7 @@ function update_create_cluster_dialog(nodes) {
   }
 
 
-  if (good_nodes != 0 && bad_nodes == 0 && cluster_name != "") {
+  if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes == 0 && cluster_name != "") {
     $('#create_new_cluster_form').submit();
   }
 
