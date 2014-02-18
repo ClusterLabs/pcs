@@ -308,6 +308,24 @@ Pcs.Clusternode = Ember.Object.extend({
     else
       return "display: none;";
   }.property("pacemaker_standby"),
+  corosync_startup: function() {
+    if (this.corosync_enabled)
+      return "Enabled";
+    else
+      return "Disabled";
+  }.property("corosync_enabled"),
+  pacemaker_startup: function() {
+    if (this.pacemaker_enabled)
+      return "Enabled";
+    else
+      return "Disabled";
+  }.property("pacemaker_enabled"),
+  pcsd_startup: function() {
+    if (this.pcsd_enabled)
+      return "Enabled";
+    else
+      return "Disabled";
+  }.property("pcsd_enabled"),
   location_constraints: null
 });
 
@@ -880,7 +898,10 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  node.set("up",up_status);
 	  node.set("pcsd",pcsd_daemon && authorized);
 	  node.set("corosync_daemon", data[node_id]["corosync"]);
+	  node.set("corosync_enabled", data[node_id]["corosync_enabled"]);
 	  node.set("pacemaker_daemon", data[node_id]["pacemaker"]);
+	  node.set("pacemaker_enabled", data[node_id]["pacemaker_enabled"]);
+	  node.set("pcsd_enabled", data[node_id]["pcsd_enabled"]);
 	  node.set("corosync", corosync_online);
 	  node.set("pacemaker", pacemaker_online);
 	  node.set("pacemaker_standby", pacemaker_standby);
@@ -899,7 +920,10 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  up: up_status,
 	  pcsd: pcsd_daemon && authorized,
 	  corosync_daemon: data[node_id]["corosync"],
+	  corosync_enabled: data[node_id]["corosync_enabled"],
 	  pacemaker_daemon: data[node_id]["pacemaker"],
+	  pacemaker_enabled: data[node_id]["pacemaker_enabled"],
+	  pcsd_enabled: data[node_id]["pcsd_enabled"],
 	  corosync: corosync_online,
 	  pacemaker: pacemaker_online,
 	  pacemaker_standby: pacemaker_standby,

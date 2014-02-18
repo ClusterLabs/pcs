@@ -325,8 +325,15 @@ def node_status(params)
 
   `systemctl status corosync.service`
   corosync_status = $?.success?
+  `systemctl is-enabled corosync.service`
+  corosync_enabled = $?.success?
   `systemctl status pacemaker.service`
   pacemaker_status = $?.success?
+  `systemctl is-enabled pacemaker.service`
+  pacemaker_enabled = $?.success?
+
+  `systemctl is-enabled pcsd.service`
+  pcsd_enabled = $?.success?
 
   corosync_online = []
   corosync_offline = []
@@ -383,11 +390,13 @@ def node_status(params)
   constraints = getAllConstraints()
   cluster_settings = getAllSettings()
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
- "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
- "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
- "pacemaker_standby" => pacemaker_standby,
- "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
- "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id}
+            "corosync_enabled" => corosync_enabled, "pacemaker_enabled" => pacemaker_enabled,
+            "pcsd_enabled" => pcsd_enabled,
+            "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
+            "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
+            "pacemaker_standby" => pacemaker_standby,
+            "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
+            "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id}
   ret = JSON.generate(status)
   return ret
 end

@@ -133,37 +133,37 @@
 		      <tr><th>NAME</th><th>STATUS</th></tr>
 		      <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
 {{#if Pcs.nodesController.cur_node.pacemaker_daemon}}
-<div id="pacemaker_status" style="float:left" class="status">Running
+<span id="pacemaker_status" style="float:left" class="status">Running ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
 {{else}}
 {{#if Pcs.nodesController.cur_node.pcsd}}
-<div id="pacemaker_status" style="float:left" class="status-offline">Stopped
+<span id="pacemaker_status" style="float:left" class="status-offline">Stopped ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
 {{else}}
-<div id="pacemaker_status" style="float:left" class="status-unknown">Unknown
+<span id="pacemaker_status" style="float:left" class="status-unknown">Unknown ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
 {{/if}}
 {{/if}}
-</div></td></tr>
+</td></tr>
 		      <tr><td>corosync</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
 {{#if Pcs.nodesController.cur_node.corosync_daemon}}
-<div id="corosync_status" style="float:left" class="status">Running
+<span id="corosync_status" style="float:left" class="status">Running ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
 {{else}}
 {{#if Pcs.nodesController.cur_node.pcsd}}
-<div id="corosync_status" style="float:left" class="status-offline">Stopped
+<span id="corosync_status" style="float:left" class="status-offline">Stopped ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
 {{else}}
-<div id="corosync_status" style="float:left" class="status-unknown">Unknown
+<span id="corosync_status" style="float:left" class="status-unknown">Unknown ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
 {{/if}}
 {{/if}}
-</div></td></tr>
+</td></tr>
 		      <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
 {{#if Pcs.nodesController.cur_node.pcsd}}
-  <div id="pcsd_status" style="float:left" class="status">Running
+<span id="pcsd_status" style="float:left" class="status">Running ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
 {{else}}
   {{#if Pcs.nodesController.cur_node.authorized}}
-    <div id="pcsd_status" style="float:left" class="status-offline">Stopped
+  <span id="pcsd_status" style="float:left" class="status-offline">Stopped ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
   {{else}}
-    <div id="pcsd_status" style="float:left" class="status-offline">Running (not Authorized)
+  <span id="pcsd_status" style="float:left" class="status-offline">Running (not Authorized) ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
   {{/if}}
 {{/if}}
-</div></td></tr>
+</td></tr>
 		    </table>
 		  </div>
 		</td>
