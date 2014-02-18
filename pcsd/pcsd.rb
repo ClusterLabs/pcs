@@ -383,9 +383,13 @@ post '/manage/newcluster' do
   @manage = true
   @cluster_name = params[:clustername]
   @nodes = []
+  options = {}
   params.each {|k,v|
     if k.start_with?("node-") and v != ""
       @nodes << v
+    end
+    if k.start_with?("config-") and v != ""
+      options[k.sub("config-","")] = v
     end
   }
   if pcs_config.is_cluster_name_in_use(@cluster_name)
@@ -403,7 +407,7 @@ post '/manage/newcluster' do
   }
 
   $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
-  code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {clustername: @cluster_name, nodes: @nodes.join(',')})
+  code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {clustername: @cluster_name, nodes: @nodes.join(','), options: options.to_json})
 
   if code == 200
     pcs_config.clusters << Cluster.new(@cluster_name, @nodes)

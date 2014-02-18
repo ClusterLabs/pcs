@@ -97,6 +97,19 @@
       <tr><td align=center style="color: red" colspan=2"><span id="at_least_one_node_error_msg" style="display:none;">At least one valid node must be entered.</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="bad_cluster_name_error_msg" style="display:none;">You may not leave the cluster name field blank</span></td></tr>
     </table>
+    <span onclick='$(".advanced_open").toggle();$("#advanced_cluster_create_options").toggle();'><span class="advanced_open rightarrow sprites"></span><span class="advanced_open downarrow sprites" style="display:none;"></span>Advanced Options:</span>
+    <div id="advanced_cluster_create_options" style="display:none;">
+      <table>
+	<tr>
+	  <td>Transport:</td>
+	  <td><select name="transport"><option value="udp" selected>UDP</option><option value="udpu">UDPU</option></select></td>
+	</tr>
+	<tr><td>Wait for All</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
+	<tr><td>Auto Tie Breaker</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
+	<tr><td>Last Man Standing</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
+	<tr><td>Last Man Standing Window</td><td><input type=input size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
+      </table>
+    </div>
   </form>
 </div>
 <div id="manage_error" style="display: none;">

@@ -278,7 +278,18 @@ end
 def setup_cluster(params)
   $logger.info("Setting up cluster: " + params.inspect)
   nodes = params[:nodes].split(',')
-  stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes)
+  options = []
+  myoptions = JSON.parse(params[:options])
+  myoptions.each { |o,v|
+    if ["wait_for_all", "last_man_standing", "auto_tie_breaker"].include?(o)
+      options << "--" + o + "=1"
+    end
+
+    if o == "last_man_standing_window" and v != "10000"
+      options << "--" + o + "=" + v
+    end
+  }
+  stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes, *options)
   if retval != 0
     return [400, stdout.join("\n") + stderr.join("\n")]
   end
