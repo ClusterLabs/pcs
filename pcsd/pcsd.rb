@@ -421,7 +421,6 @@ post '/manage/newcluster' do
 end
 
 post '/manage/removecluster' do
-  pp "REMOVE CLUSTER"
   pcs_config = PCSConfig.new
   params.each { |k,v|
     if k.start_with?("clusterid-")

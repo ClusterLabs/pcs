@@ -18,6 +18,12 @@ class PCSConfig
   end
 
   def update(cluster_name, node_list)
+    if node_list.length == 0
+      @clusters.delete_if{|c|c.name == cluster_name}
+      $logger.info("Removing cluster: #{cluster_name}")
+      self.save
+      return
+    end
     @clusters.each {|c|
       if c.name == cluster_name
         c.nodes = node_list

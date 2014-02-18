@@ -258,6 +258,10 @@ def remote_remove_nodes(params)
     out = out + output.join("\n")
     count = count + 1
   end
+  config = PCSConfig.new
+  if config.get_nodes($cluster_name) == nil or config.get_nodes($cluster_name).length == 0
+    return [200,"No More Nodes"]
+  end
   return out
 end
 

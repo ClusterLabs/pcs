@@ -833,9 +833,13 @@ function remove_nodes(ids) {
     url: get_cluster_remote_url() + 'remove_nodes',
     data: data,
     timeoute: pcs_timeout*3,
-    success: function() {
+    success: function(data,textStatus) {
       $("#remove_node").dialog("close");
-      Pcs.update();
+      if (data == "No More Nodes") {
+	window.location.href = "/manage";
+      }	else {
+	Pcs.update();
+      }
     },
     error: function (xhr, status, error) {
       $("#remove_node").dialog("close");
