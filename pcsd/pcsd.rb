@@ -100,7 +100,7 @@ set :run, false
 helpers do
   def protected!
     if not PCSAuth.isLoggedIn(session, request.cookies)
-      if request.path.start_with?('/remote')
+      if request.path.start_with?('/remote') or request.path.match("/managec/\\w*/status_all")
 	$logger.info "ERROR: Request without authentication"
 	halt [401, '{"notauthorized":"true"}']
       else

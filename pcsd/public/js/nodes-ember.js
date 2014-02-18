@@ -74,7 +74,17 @@ Pcs = Ember.Application.createWithMixins({
 	clearTimeout(Pcs.update_timeout);
 	Pcs.update_timeout = window.setTimeout(Pcs.update,20000);
       },
-      error: function(a,b,c) {
+      error: function(jqhxr,b,c) {
+	if (jqhxr.responseText) {
+	  try {
+	    var obj = $.parseJSON(jqhxr.responseText);
+	    if (obj.notauthorized == "true") {
+	      location.reload();
+	    }
+	  } catch(e) {
+	    console.log("Error: Unable to parse json for status_all")
+	  }
+	}
 	hide_loading_screen();
       }
 
