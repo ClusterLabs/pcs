@@ -288,6 +288,10 @@ def setup_cluster(params)
     if o == "last_man_standing_window" and v != "10000"
       options << "--" + o + "=" + v
     end
+
+    if o == "transport" and v == "udp"
+      options << "--transport=udp"
+    end
   }
   stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes, *options)
   if retval != 0

@@ -101,13 +101,13 @@
     <div id="advanced_cluster_create_options" style="display:none;">
       <table>
 	<tr>
-	  <td>Transport:</td>
-	  <td><select name="transport"><option value="udp" selected>UDP</option><option value="udpu">UDPU</option></select></td>
+	  <td align=right>Transport:</td>
+	  <td><select name="config-transport"><option value="udpu" selected>UDPU (default)</option><option value="udp">UDP</option></select></td>
 	</tr>
-	<tr><td>Wait for All</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
-	<tr><td>Auto Tie Breaker</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
-	<tr><td>Last Man Standing</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
-	<tr><td>Last Man Standing Window</td><td><input type=input size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
+	<tr><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
+	<tr><td align=right>Auto Tie Breaker:</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
+	<tr><td align=right>Last Man Standing:</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
+	<tr><td align=right>Last Man Standing Window:</td><td><input type=input size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
       </table>
     </div>
   </form>
