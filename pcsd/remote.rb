@@ -389,6 +389,9 @@ def status_all(params, nodes = [])
 	final_response[node] = {"bad_json" => true}
 	$logger.info("ERROR: Parse Error when parsing status JSON from #{node}")
       end
+      if final_response[node] and final_response[node]["notoken"] == true
+        $logger.error("ERROR: bad token for #{node}")
+      end
     }
   }
   threads.each { |t| t.join }
@@ -396,10 +399,10 @@ def status_all(params, nodes = [])
   # Get full list of nodes and see if we need to update the configuration
   node_list = []
   final_response.each { |fr,n|
-    node_list += n["corosync_offline"]
-    node_list += n["corosync_online"]
-    node_list += n["pacemaker_offline"]
-    node_list += n["pacemaker_online"]
+    node_list += n["corosync_offline"] if n["corosync_offline"]
+    node_list += n["corosync_online"] if n["corosync_online"]
+    node_list += n["pacemaker_offline"] if n["pacemaker_offline"]
+    node_list += n["pacemaker_online"] if n["pacemaker_online"]
   }
 
   node_list.uniq!
