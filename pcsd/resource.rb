@@ -244,34 +244,34 @@ def getResourceMetadata(resourcepath)
   long_desc = ""
   short_desc = ""
   doc.elements.each('resource-agent/longdesc') {|ld|
-    long_desc = ld.text
+    long_desc = ld.text.strip
   }
   doc.elements.each('resource-agent/shortdesc') {|ld|
-    short_desc = ld.text
+    short_desc = ld.text.strip
   }
 
   doc.elements.each('resource-agent/parameters/parameter') { |param|
     temp_array = []
     if param.attributes["required"] == "1"
       if param.elements["shortdesc"]
-	temp_array << param.elements["shortdesc"].text
+	temp_array << param.elements["shortdesc"].text.strip
       else
       	temp_array << ""
       end
       if param.elements["longdesc"]
-	temp_array << param.elements["longdesc"].text
+	temp_array << param.elements["longdesc"].text.strip
       else
       	temp_array << ""
       end
       options_required[param.attributes["name"]] = temp_array
     else
       if param.elements["shortdesc"]
-	temp_array << param.elements["shortdesc"].text
+	temp_array << param.elements["shortdesc"].text.strip
       else
       	temp_array << ""
       end
       if param.elements["longdesc"]
-	temp_array << param.elements["longdesc"].text
+	temp_array << param.elements["longdesc"].text.strip
       else
       	temp_array << ""
       end
