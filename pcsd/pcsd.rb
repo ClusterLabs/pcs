@@ -100,7 +100,15 @@ set :run, false
 helpers do
   def protected!
     if not PCSAuth.isLoggedIn(session, request.cookies)
-      if request.path.start_with?('/remote') or request.path.match("/managec/\\w*/status_all")
+      # If we're on /managec/<cluster_name>/main we redirect
+      match_expr = "/managec/(.*)/(.*)"
+      mymatch = request.path.match(match_expr)
+      on_managec_main = false
+      if mymatch.length >= 3 and mymatch[2] == "main"
+        on_managec_main = true
+      end
+
+      if request.path.start_with?('/remote') or (request.path.match(match_expr) and not on_managec_main)
 	$logger.info "ERROR: Request without authentication"
 	halt [401, '{"notauthorized":"true"}']
       else
