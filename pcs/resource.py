@@ -616,11 +616,18 @@ def resource_update(res_id,args):
         operations = operations[0]
 
     for element in op_values:
-        if len(element) <= 1:
+        if len(element) < 1:
             continue
+
         op_name = element.pop(0)
         op_role = ""
         op_vars = convert_args_to_tuples(element)
+
+        if op_name.find('=') != -1:
+            utils.err("%s does not appear to be a valid operation action" % op_name)
+
+        if len(element) == 0:
+            continue
 
         for k,v in op_vars:
             if k == "role":

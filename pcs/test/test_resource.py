@@ -476,7 +476,7 @@ class ResourceTest(unittest.TestCase):
         line = 'resource show ClusterIP --full'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
-        assert output == ' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)\n              start interval=30s timeout=180s (ClusterIP-start-interval-30s-timeout-180s)\n',[output]
+        ac(output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)\n              start interval=30s timeout=180s (ClusterIP-start-interval-30s-timeout-180s)\n')
 
     def testGroupDeleteTest(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A1 Dummy --group AGroup")
@@ -1373,6 +1373,9 @@ class ResourceTest(unittest.TestCase):
         ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (B-monitor-interval-30s)\n              monitor interval=31s role=Master (B-monitor-interval-31s-role-Master)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
         assert r == 0
 
+        o,r = pcs(temp_cib, "resource update B dummy op interval=5s")
+        ac(o,"Error: interval=5s does not appear to be a valid operation action\n")
+        assert r == 1
 
     def testCloneMasterBadResources(self):
         self.setupClusterA(temp_cib)
