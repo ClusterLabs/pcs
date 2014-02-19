@@ -104,7 +104,7 @@ helpers do
       match_expr = "/managec/(.*)/(.*)"
       mymatch = request.path.match(match_expr)
       on_managec_main = false
-      if mymatch.length >= 3 and mymatch[2] == "main"
+      if mymatch and mymatch.length >= 3 and mymatch[2] == "main"
         on_managec_main = true
       end
 
