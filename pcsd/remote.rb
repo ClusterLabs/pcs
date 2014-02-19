@@ -731,7 +731,7 @@ def remove_resource (params)
   errors = ""
   params.each { |k,v|
     if k.index("resid-") == 0
-      out, errout, retval = run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
+      out, errout, retval = run_cmd(PCS, "--force", "resource", "delete", k.gsub("resid-",""))
       if retval != 0
 	errors += "Unable to remove: " + k.gsub("resid-","") + "\n"
       end
