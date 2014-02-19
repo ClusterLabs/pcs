@@ -95,7 +95,7 @@ def stonith_list_available(argv):
         filter_string = ""
 
     bad_fence_devices = ["kdump_send", "legacy", "na", "nss_wrapper",
-            "pcmk", "vmware_helper", "ack_manual", "virtd"]
+            "pcmk", "vmware_helper", "ack_manual", "virtd", "sanlockd"]
     fence_devices = sorted(glob.glob(utils.fence_bin + "fence_*"))
     for bfd in bad_fence_devices:
         try:
