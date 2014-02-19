@@ -4,7 +4,7 @@
       <table>
         <tr>
           <td><div class="bold">Description:</div></td>
-          <td><span class="reg" style="float:left;"><%=@resource.short_desc%>&nbsp;</span>&nbsp;<span onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span></td>
+	  <td><span class="reg" style="float:left;"><%=@resource.short_desc%>&nbsp;</span>&nbsp;<span title="<%=@resource.long_desc%>" onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span></td>
         </tr>
         <tr>
           <td></td>
