@@ -547,7 +547,7 @@ end
 def resource_form(params)
   @resources, @groups, retval = getResourcesGroups()
   if retval != 0
-    return "Unable to get options, pacemaker is not running on node"
+    return [200,'{"noresponse":true}']
   end
   @existing_resource = true
   @resources.each do |r|
@@ -572,7 +572,7 @@ end
 def fence_device_form(params)
   @resources, @groups, retval = getResourcesGroups(true)
   if retval != 0
-    return "Unable to get options, pacemaker is not running on node"
+    return [200,'{"noresponse":true}']
   end
 
   @cur_resource = nil
