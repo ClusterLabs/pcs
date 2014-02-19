@@ -7,6 +7,9 @@ require 'open3'
 
 # Commands for remote access
 def remote(params,request)
+  `systemctl status pacemaker.service`
+  pacemaker_status = $?.success?
+
   case (params[:command])
   when "status"
     return node_status(params)
@@ -16,8 +19,6 @@ def remote(params,request)
     return auth(params,request)
   when "check_auth"
     return check_auth(params, request)
-  when "resource_status"
-    return resource_status(params)
   when "setup_cluster"
     return setup_cluster(params)
   when "create_cluster"
@@ -46,12 +47,8 @@ def remote(params,request)
     return cluster_enable(params)
   when "cluster_disable"
     return cluster_disable(params)
-  when "resource_start"
-    return resource_start(params)
-  when "resource_stop"
-    return resource_stop(params)
-  when "resource_cleanup"
-    return resource_cleanup(params)
+  when "resource_status"
+    return resource_status(params)
   when "check_gui_status"
     return check_gui_status(params)
   when "node_available"
@@ -64,6 +61,26 @@ def remote(params,request)
     return remote_remove_nodes(params)
   when "remove_node"
     return remote_remove_node(params)
+  when "cluster_destroy"
+    return cluster_destroy(params)
+  when "get_wizard"
+    return get_wizard(params)
+  when "wizard_submit"
+    return wizard_submit(params)
+  end
+
+  if not pacemaker_status
+    return [200,'{"pacemaker_not_running":true}']
+  end
+  # Anything below this line will not be run if pacemaker is not started
+
+  case (params[:command])
+  when "resource_start"
+    return resource_start(params)
+  when "resource_stop"
+    return resource_stop(params)
+  when "resource_cleanup"
+    return resource_cleanup(params)
   when "resource_form"
     return resource_form(params)
   when "fence_device_form"
@@ -92,12 +109,6 @@ def remote(params,request)
     return add_group(params)
   when "update_cluster_settings"
     return update_cluster_settings(params)
-  when "cluster_destroy"
-    return cluster_destroy(params)
-  when "get_wizard"
-    return get_wizard(params)
-  when "wizard_submit"
-    return wizard_submit(params)
   else
     return [404, "Unknown Request"]
   end
