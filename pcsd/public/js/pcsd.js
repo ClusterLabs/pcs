@@ -477,7 +477,7 @@ function setup_resource_links(link_type) {
     verify_remove("resource", null, "Remove resource", "Resource Removal", curResource(), "/resourcerm");
   });
   $("#stonith_delete_link").click(function () {
-    verify_remove("stonith", null, "Remove fence device", "Fence Device Removal", curStonith(), "/fencerm")
+    verify_remove("stonith", null, "Remove device(s)", "Fence Device Removal", curStonith(), "/fencerm")
   });
   $("#resource_stop_link").click(function () {
     fade_in_out("#resource_stop_link");
