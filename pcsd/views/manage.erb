@@ -100,15 +100,76 @@
     <span onclick='$(".advanced_open").toggle();$("#advanced_cluster_create_options").toggle();'><span class="advanced_open rightarrow sprites"></span><span class="advanced_open downarrow sprites" style="display:none;"></span>Advanced Options:</span>
     <div id="advanced_cluster_create_options" style="display:none;">
       <table>
+	<% transport_desc = "\
+Enables either udpu (unicast) or udp (multicase) cluster communication (default: udpu)"%>
+	<% wait_for_all_desc = "\
+Enables Wait For All (WFA) feature (default: off).
+
+The general behaviour of votequorum is to switch a cluster \
+from inquorate to quorate as soon as possible. For example,\
+in an 8 node cluster, where every node has 1 vote, \
+expected_votes is set to 8 and quorum is (50% + 1) 5. As soon \
+as 5 (or more) nodes are visible to each other, the partition \
+of 5 (or more) becomes quorate and can start operating.
+
+When WFA is enabled, the cluster will be quorate for the first time \
+only after all nodes have been visible at least once at the same time. 
+
+This feature has the advantage of avoiding some startup race \
+conditions, with the cost that all nodes need to be up at the \
+same time at least once before the cluster can operate. 
+
+A common startup race condition based on the above example is that as \
+soon as 5 nodes become quorate, with the other 3 still offline, the \
+remaining 3 nodes will be fenced.
+
+It is very useful when combined with Last Man Standing." %>
+	<% auto_tie_desc = "\
+Enables Auto Tie Breaker (ATB) feature (default: off).
+
+The general behaviour of votequorum allows a simultaneous node failure \
+up to 50% - 1 node, assuming each node has 1 vote.
+
+When ATB is enabled, the cluster can suffer up to 50% of the nodes \
+failing at the same time, in a deterministic fashion. The cluster \
+partition, or the set of nodes that are still in contact with the \
+node that has the lowest nodeid will remain quorate. The other nodes \
+will be inquorate." %>
+	<% last_man_desc = "\
+Enables Last Man Standing (LMS) feature (default: off).
+
+The general behaviour of votequorum is to set expected_votes and \
+quorum at startup (unless modified by the user at runtime, see below) \
+and use those values during the whole lifetime of the cluster.
+
+Using for example an 8 node cluster where each node has 1 vote, \
+expected_votes is set to 8 and quorum to 5. This condition allows a \
+total failure of 3 nodes. If a 4th node fails, the cluster becomes \
+inquorate and it will stop providing services.
+
+Enabling LMS allows the cluster to dynamically recalculate \
+expected_votes and quorum under specific circumstances. It is essential \
+to enable WFA when using LMS in High Availability clusters.
+
+Using the above 8 node cluster example, with LMS enabled the cluster \
+can retain quorum and continue operating by losing, in a cascade \
+fashion, up to 6 nodes with only 2 remaining active." %>
+	<% last_man_window_desc = "\
+Tunes Last Man Standing Window (default: 10000ms)
+
+The window of time between when a node (or group of nodes die) and quorum \
+is recalculated if the 'Last Man Standing' option is enabled." %>
+	<% use_ipv6_desc = "\
+Enables IPv6 for cluster communication (default: off)" %>
 	<tr>
-	  <td align=right>Transport:</td>
+	  <td title="<%= h(transport_desc) %>" align=right>Transport:</td>
 	  <td><select name="config-transport"><option value="udpu" selected>UDPU (default)</option><option value="udp">UDP</option></select></td>
 	</tr>
-	<tr><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
-	<tr><td align=right>Auto Tie Breaker:</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
-	<tr><td align=right>Last Man Standing:</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
-	<tr><td align=right>Last Man Standing Window:</td><td><input type=input size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
-	<tr><td align=right>Use IPv6</td><td><input type=checkbox name="config-ipv6"></td></tr>
+	<tr title="<%= h(wait_for_all_desc) %>"><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
+	<tr title="<%= h(auto_tie_desc) %>"><td align=right>Auto Tie Breaker:</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
+	<tr title="<%= h(last_man_desc) %>"><td align=right>Last Man Standing:</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
+	<tr title="<%= h(last_man_window_desc) %>"><td align=right>Last Man Standing Window:</td><td><input type=input size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
+	<tr title="<%= h(use_ipv6_desc) %>"><td align=right>Use IPv6</td><td><input type=checkbox name="config-ipv6"></td></tr>
       </table>
     </div>
   </form>
