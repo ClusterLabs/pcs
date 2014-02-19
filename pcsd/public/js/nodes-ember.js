@@ -363,7 +363,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   cur_resource_res: null,
   cur_resource_ston: null,
   cur_resource_info_style: function () {
-    if (typeof self.cur_resource != 'undefined')
+    if (typeof this.cur_resource != 'undefined' && this.cur_resource != null)
       return "";
     else
       return "opacity:0";
@@ -387,7 +387,6 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   load_resource: function(resource_row, dont_update_hash) {
     if (resource_row.length == 0)
       return;
-    var temp_cur_resource = Pcs.resourcesController.cur_resource;
     load_agent_form(resource_row, false);
     if (!dont_update_hash)
       window.location.hash = "/resources/" + $(resource_row).attr("nodeID");
@@ -401,7 +400,6 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   load_stonith: function(resource_row, dont_update_hash) {
     if (resource_row.length == 0)
       return;
-    var temp_cur_resource = Pcs.resourcesController.cur_resource;
 
     load_agent_form(resource_row, true);
     if (!dont_update_hash)
