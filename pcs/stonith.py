@@ -106,23 +106,25 @@ def stonith_list_available(argv):
     for fd in fence_devices:
         if fd.count(filter_string) == 0:
             continue
-        metadata = utils.get_stonith_metadata(fd)
-        if metadata == False:
-            print >> sys.stderr, "Error: no metadata for %s" % fd
-            continue
-        fd = fd[10:]
-        try:
-            dom = parseString(metadata)
-        except Exception:
-            print >> sys.stderr, "Error: unable to parse metadata for fence agent: %s" % (fd)
-            continue
-        ra = dom.documentElement
-        shortdesc = ra.getAttribute("shortdesc")
 
         sd = ""
-        if len(shortdesc) > 0:
-            sd = " - " +  resource.format_desc(fd.__len__() + 3, shortdesc)
-        print fd + sd
+        fd_name = fd[10:]
+        if not "--nodesc" in utils.pcs_options:
+            metadata = utils.get_stonith_metadata(fd)
+            if metadata == False:
+                print >> sys.stderr, "Error: no metadata for %s" % fd
+                continue
+            try:
+                dom = parseString(metadata)
+            except Exception:
+                print >> sys.stderr, "Error: unable to parse metadata for fence agent: %s" % (fd_name)
+                continue
+            ra = dom.documentElement
+            shortdesc = ra.getAttribute("shortdesc")
+
+            if len(shortdesc) > 0:
+                sd = " - " +  resource.format_desc(fd_name.__len__() + 3, shortdesc)
+        print fd_name + sd
 
 def stonith_list_options(stonith_agent):
     metadata = utils.get_stonith_metadata(utils.fence_bin + stonith_agent)

@@ -604,9 +604,10 @@ Commands:
         specified show the options for the configured stonith device.  If
         --full is specified all configured stonith options will be displayed
 
-    list [filter]
+    list [filter] [--nodesc]
         Show list of all available stonith agents (if filter is provided then
-        only stonith agents matching the filter will be shown)
+        only stonith agents matching the filter will be shown). If --nodesc is
+        used then descriptions of stonith agents are not printed.
 
     describe <stonith agent>
         Show options for specified stonith agent

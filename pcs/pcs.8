@@ -244,8 +244,8 @@ Create a tarball containing everything needed when reporting cluster problems.  
 show [stonith id] [\-\-full]
 Show all currently configured stonith devices or if a stonith id is specified show the options for the configured stonith device.  If \fB\-\-full\fR is specified all configured stonith options will be displayed
 .TP
-list [filter]
-Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown)
+list [filter] [\-\-nodesc]
+Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If --nodesc is used then descriptions of stontih agents are not printed.
 .TP
 describe <stonith agent>
 Show options for specified stonith agent
