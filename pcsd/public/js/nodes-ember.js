@@ -362,6 +362,12 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   cur_resource: null,
   cur_resource_res: null,
   cur_resource_ston: null,
+  cur_resource_info_style: function () {
+    if (typeof self.cur_resource != 'undefined')
+      return "";
+    else
+      return "opacity:0";
+  }.property("cur_resource"),
   init: function(){
     this._super();
   },
