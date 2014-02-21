@@ -1577,7 +1577,21 @@ def resource_force_start(argv):
     if len(argv) < 1:
         utils.err("You must specify a resource to debug-start")
 
-    args = ["crm_resource", "-r", argv[0], "--force-start"]
+    resource = argv[0]
+
+    if utils.is_group(resource):
+        group_resources = utils.get_group_children(resource)
+        utils.err("unable to debug-start a group, try one of the group's resource(s) (%s)" % ",".join(group_resources))
+
+    if utils.is_clone(resource):
+        clone_resource = utils.get_clone_ms_resource(resource)
+        utils.err("unable to debug-start a clone, try the clone's resource: %s" % clone_resource)
+
+    if utils.is_master(resource):
+        master_resource = utils.get_clone_ms_resource(resource,True)
+        utils.err("unable to debug-start a master, try the master's resource: %s" % master_resource)
+
+    args = ["crm_resource", "-r", resource, "--force-start"]
     if "--full" in utils.pcs_options:
         args = args + ["-V"]
 

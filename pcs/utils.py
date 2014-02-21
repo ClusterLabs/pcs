@@ -588,6 +588,40 @@ def is_corosync_node(node):
         return True
     return False
 
+def get_group_children(group_id):
+    child_resources = []
+    dom = get_cib_dom()
+    groups = dom.getElementsByTagName("group")
+    for g in groups:
+        if g.getAttribute("id") == group_id:
+            for child in g.childNodes:
+                if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
+                    continue
+                if child.tagName == "primitive":
+                    child_resources.append(child.getAttribute("id"))
+    return child_resources
+
+def get_clone_ms_resource(clone_id,master=False):
+    dom = get_cib_dom()
+    if master:
+        clones = dom.getElementsByTagName("master")
+    else:
+        clones = dom.getElementsByTagName("clone")
+    for c in clones:
+        if c.getAttribute("id") == clone_id:
+            for child in c.childNodes:
+                if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
+                    continue
+                if child.tagName == "primitive":
+                    return child.getAttribute("id")
+    return ""
+
+def is_master(ms_id):
+    return does_exist("//master[@id='"+ms_id+"']")
+
+def is_clone(clone_id):
+    return does_exist("//clone[@id='"+clone_id+"']")
+
 def is_group(group_id):
     return does_exist("//group[@id='"+group_id+"']")
 

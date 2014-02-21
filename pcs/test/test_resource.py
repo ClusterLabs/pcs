@@ -1137,8 +1137,36 @@ class ResourceTest(unittest.TestCase):
 
         o,r = pcs("resource move group1-master --master")
         ac(o,"Error: error moving/banning/clearing resource\nResource 'group1-master' not moved: active in 0 locations (promoted in 0).\nYou can prevent 'group1-master' from running on a specific location with: --ban --host <name>\nYou can prevent 'group1-master' from being promoted at a specific location with: --ban --master --host <name>\nError performing operation: Invalid argument\n\n")
+        assert r == 1
+
+    def testDebugStartCloneGroup(self):
+        o,r = pcs("resource create D0 Dummy --group DGroup")
+        ac(o,"")
         assert r == 0
 
+        o,r = pcs("resource create D1 Dummy --group DGroup")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource create D2 Dummy --clone")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource create D3 Dummy --master")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource debug-start DGroup")
+        ac(o,"Error: unable to debug-start a group, try one of the group's resource(s) (D0,D1)\n")
+        assert r == 1
+
+        o,r = pcs("resource debug-start D2-clone")
+        ac(o,"Error: unable to debug-start a clone, try the clone's resource: D2\n")
+        assert r == 1
+
+        o,r = pcs("resource debug-start D3-master")
+        ac(o,"Error: unable to debug-start a master, try the master's resource: D3\n")
+        assert r == 1
 
     def testGroupCloneCreation(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group DGroup")
