@@ -19,7 +19,7 @@
 	<% @config_options.each { |page, options| %>
 	  <table>
 	    <% options.each {|co| %>
-	      <tr>
+              <tr title="<%= h(co.desc)%>">
 		<td class="label"><%= co.name %>:</td>
 		<td><%= co.html %><span class="units"><%= co.units %></span></td>
 	      </tr>

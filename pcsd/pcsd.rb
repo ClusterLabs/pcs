@@ -524,18 +524,24 @@ def getConfigOptions2(cluster_name)
   config_options["general"] = general_page
 
   pacemaker_page = []
-  pacemaker_page << ConfigOption.new("Batch Limit", "batch-limit",  "int", 4, "jobs")
-  pacemaker_page << ConfigOption.new("No Quorum Policy", "no-quorum-policy",  "dropdown","" ,"", {"ignore" => "Ignore","freeze" => "Freeze", "stop" => "Stop", "suicide" => "Suicide"})
-  pacemaker_page << ConfigOption.new("Symmetric", "symmetric-cluster", "check")
-  pacemaker_page << ConfigOption.new("Stonith Enabled", "stonith-enabled", "check")
-  pacemaker_page << ConfigOption.new("Stonith Action", "stonith-action",  "dropdown","" ,"", {"reboot" => "Reboot","poweroff" => "Poweroff"}) 
-  pacemaker_page << ConfigOption.new("Cluster Delay", "cluster-delay",  "int", 4) 
-  pacemaker_page << ConfigOption.new("Stop Orphan Resources", "stop-orphan-resources", "check")
-  pacemaker_page << ConfigOption.new("Stop Orphan Actions", "stop-orphan-actions", "check")
-  pacemaker_page << ConfigOption.new("Start Failure is Fatal", "start-failure-is-fatal", "check")
-  pacemaker_page << ConfigOption.new("PE Error Storage", "pe-error-series-max", "int", "4")
-  pacemaker_page << ConfigOption.new("PE Warning Storage", "pe-warn-series-max", "int", "4")
-  pacemaker_page << ConfigOption.new("PE Input Storage", "pe-input-series-max", "int", "4")
+  pacemaker_page << ConfigOption.new("Batch Limit", "batch-limit",  "int", 4, "jobs", {},  'The number of jobs that pacemaker is allowed to execute in parallel. The "correct" value will depend on the speed and load of your network and cluster nodes.')
+  pacemaker_page << ConfigOption.new("No Quorum Policy", "no-quorum-policy",  "dropdown","" ,"", {"ignore" => "Ignore","freeze" => "Freeze", "stop" => "Stop", "suicide" => "Suicide"}, 'What to do when the cluster does not have quorum. Allowed values:
+  * ignore - continue all resource management
+  * freeze - continue resource management, but don\'t recover resources from nodes not in the affected partition
+  * stop - stop all resources in the affected cluster partition
+  * suicide - fence all nodes in the affected cluster partition')
+  pacemaker_page << ConfigOption.new("Symmetric", "symmetric-cluster", "check",nil ,nil,nil,'Can all resources run on any node by default?')
+  pacemaker_page << ConfigOption.new("Stonith Enabled", "stonith-enabled", "check",nil,nil,nil,'Should failed nodes and nodes with resources that can\'t be stopped be shot? If you value your data, set up a STONITH device and enable this.
+If checked, the cluster will refuse to start resources unless one or more STONITH resources have been configured also.')
+  pacemaker_page << ConfigOption.new("Stonith Action", "stonith-action",  "dropdown","" ,"", {"reboot" => "Reboot","off" => "Off", "poweroff" => "Poweroff"},'Action to send to STONITH device. Allowed values: reboot, off. The value poweroff is also allowed, but is only used for legacy devices.') 
+  pacemaker_page << ConfigOption.new("Cluster Delay", "cluster-delay",  "int", 4,nil,nil,'Round trip delay over the network (excluding action execution). The "correct" value will depend on the speed and load of your network and cluster nodes.') 
+  pacemaker_page << ConfigOption.new("Stop Orphan Resources", "stop-orphan-resources", "check",nil,nil,nil,'Should deleted resources be stopped?')
+  pacemaker_page << ConfigOption.new("Stop Orphan Actions", "stop-orphan-actions", "check",nil,nil,nil,'Should deleted actions be cancelled?'
+                                    )
+  pacemaker_page << ConfigOption.new("Start Failure is Fatal", "start-failure-is-fatal", "check",nil,nil,nil,'When unchecked, the cluster will instead use the resource\'s failcount and value for resource-failure-stickiness.')
+  pacemaker_page << ConfigOption.new("PE Error Storage", "pe-error-series-max", "int", "4",nil,nil,'The number of policy engine (PE) inputs resulting in ERRORs to save. Used when reporting problems.')
+  pacemaker_page << ConfigOption.new("PE Warning Storage", "pe-warn-series-max", "int", "4",nil,nil,'The number of PE inputs resulting in WARNINGs to save. Used when reporting problems.')
+  pacemaker_page << ConfigOption.new("PE Input Storage", "pe-input-series-max", "int", "4",nil,nil,'The number of "normal" PE inputs to save. Used when reporting problems.')
   config_options["pacemaker"] = pacemaker_page
 
   allconfigoptions = []
@@ -602,14 +608,15 @@ end
 
 
 class ConfigOption
-  attr_accessor :name, :configname, :type, :size, :units, :options, :default, :value
-  def initialize(name, configname, type="str", size = 10, units = "", options = [])
+  attr_accessor :name, :configname, :type, :size, :units, :options, :default, :value, :desc
+  def initialize(name, configname, type="str", size = 10, units = "", options = [], desc = "")
     @name = name
     @configname = configname
     @type = type
     @size = size
     @units = units
     @options = options
+    @desc = desc
   end
 
   def self.loadValues(cos,cluster_name)
