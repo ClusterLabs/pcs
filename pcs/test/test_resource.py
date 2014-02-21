@@ -1126,6 +1126,20 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D0-monitor-interval-60s)\n Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
 
+    def testMasterOfGroupMove(self):
+        o,r = pcs("resource create stateful Stateful --group group1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource master group1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource move group1-master --master")
+        ac(o,"Error: error moving/banning/clearing resource\nResource 'group1-master' not moved: active in 0 locations (promoted in 0).\nYou can prevent 'group1-master' from running on a specific location with: --ban --host <name>\nYou can prevent 'group1-master' from being promoted at a specific location with: --ban --master --host <name>\nError performing operation: Invalid argument\n\n")
+        assert r == 0
+
+
     def testGroupCloneCreation(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group DGroup")
         assert r == 0
