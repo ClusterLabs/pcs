@@ -1583,6 +1583,7 @@ def resource_force_start(argv):
 
     output, retval = utils.run(args)
     print output,
+    sys.exit(retval)
 
 def resource_manage(argv, set_managed):
     if len(argv) == 0:
