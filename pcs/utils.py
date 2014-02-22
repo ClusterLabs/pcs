@@ -625,6 +625,9 @@ def is_clone(clone_id):
 def is_group(group_id):
     return does_exist("//group[@id='"+group_id+"']")
 
+def is_group_clone(group_id):
+    return does_exist("//clone//group[@id='"+group_id+"']")
+
 def is_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"']")
 

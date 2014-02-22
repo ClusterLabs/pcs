@@ -1181,6 +1181,10 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         ac(o," Clone Set: DGroup-clone [DGroup]\n")
 
+        o,r = pcs(temp_cib, "resource clone DGroup")
+        ac(o,"Error: cannot clone a group that has already been cloned\n")
+        assert r == 1
+
     def testGroupRemoveWithConstraints(self):
         # Load nodes into cib so move will work
         utils.usefile = True
