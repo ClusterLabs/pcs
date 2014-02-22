@@ -389,6 +389,22 @@ def order_rm(argv):
                 constraintsElement.removeChild(ord_loc)
                 elementFound = True
 
+        resource_refs_to_remove = []
+        for ord_set in constraintsElement.getElementsByTagName('resource_ref'):
+            if ord_set.getAttribute("id") == resource:
+                resource_refs_to_remove.append(ord_set)
+                elementFound = True
+
+        for res_ref in resource_refs_to_remove:
+            res_set = res_ref.parentNode
+            res_order = res_set.parentNode
+
+            res_ref.parentNode.removeChild(res_ref)
+            if len(res_set.getElementsByTagName('resource_ref')) <= 0:
+                res_set.parentNode.removeChild(res_set)
+                if len(res_order.getElementsByTagName('resource_set')) <= 0:
+                    res_order.parentNode.removeChild(res_order)
+
     if elementFound == True:
         xml_constraint_string = constraintsElement.toxml()
         args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]

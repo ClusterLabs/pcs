@@ -293,6 +293,73 @@ class ConstraintTest(unittest.TestCase):
         ac(o,"Resource: D8\n  pcs_rsc_colocation_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9\n")
         assert r == 0
         
+    def testOrderSetsRemoval(self):
+        o,r = pcs("resource create T0 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource create T1 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource create T2 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource create T3 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource create T4 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource create T5 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource create T6 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource create T7 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource create T8 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("constraint order set T0 T1 T2")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("constraint order set T2 T3")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint order remove T1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint order")
+        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set T0 T2\n    set T2 T3\n")
+        assert r == 0
+
+        o,r = pcs("constraint order remove T2")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint order")
+        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set T0\n    set T3\n")
+        assert r == 0
+
+        o,r = pcs("constraint order remove T0")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint order")
+        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set T3\n")
+        assert r == 0
+
+        o,r = pcs("constraint order remove T3")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint order")
+        ac(o,"Ordering Constraints:\n")
+        assert r == 0
+
     def testOrderSets(self):
         line = "resource create D7 Dummy"
         output, returnVal = pcs(temp_cib, line)
