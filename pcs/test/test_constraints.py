@@ -333,7 +333,7 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("constraint order remove T1")
-        ac(o,"No matching resources found in ordering list\n")
+        ac(o,"Error: No matching resources found in ordering list\n")
         assert r == 1
 
         o,r = pcs("constraint order")
