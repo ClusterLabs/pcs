@@ -900,7 +900,7 @@ def rule_add(elem, argv):
     elif ("or" not in exp_arg and "and" in exp_arg):
         rule_boolean = "and"
 
-    if exp_arg[0] not in ["defined","not_defined", "date", "date-spec"] and len(exp_arg) >= 2 and exp_arg[1] not in ["lt","gt","lte","gte","eq","ne"]:
+    if not ((exp_arg[0] in ["defined","not_defined", "date", "date-spec"]) or (len(exp_arg) >= 2 and exp_arg[1] in ["lt","gt","lte","gte","eq","ne"])):
         err("'%s' is not a valid rule expression" % " ".join(exp_arg))
 
     date_spec = False
@@ -923,7 +923,7 @@ def rule_add(elem, argv):
                 args.append(("operation","date_spec"))
                 rule_type = "date_expression"
                 date_spec = True
-            elif exp_arg[1] in ["lt","gt","lte","gte","eq","ne"] and len(exp_arg) >= 3:
+            elif len(exp_arg) >= 2 and exp_arg[1] in ["lt","gt","lte","gte","eq","ne"] and len(exp_arg) >= 3:
                 args.append(("attribute",exp_arg[0]))
                 args.append(("operation",exp_arg[1]))
                 args.append(("value",exp_arg[2]))

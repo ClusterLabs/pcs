@@ -483,6 +483,10 @@ class ConstraintTest(unittest.TestCase):
         ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression\n")
         assert r == 1
 
+        o,r = pcs("constraint location stateful1 rule role=master 25")
+        ac(o,"Error: '25' is not a valid rule expression\n")
+        assert r == 1
+
     def testMasterSlaveConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
 
