@@ -412,7 +412,7 @@ def order_rm(argv):
         if output != "":
             print output
     else:
-        print "No matching resources found in ordering list"
+        utils.err("No matching resources found in ordering list")
 
 def order_start(argv):
     if len(argv) < 3:
