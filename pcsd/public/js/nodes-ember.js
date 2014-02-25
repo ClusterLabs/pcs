@@ -351,6 +351,7 @@ Pcs.settingsController = Ember.ArrayController.create({
 
 Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   content: [],
+  parentIDMapping: {},
   sortProperties: ['name'],
   sortAscending: true,
   no_resources: function () {
@@ -559,6 +560,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     var res_loc_constraints = {};
     var res_ord_constraints = {};
     var res_col_constraints = {};
+    self.parentIDMapping = {};
     $.each(data, function(key, value) {
       if (value["resources"]) {
 	$.each(value["resources"], function(k2, v2) {
@@ -576,6 +578,12 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  }
 
 	  resources[v2["id"]] = v2;
+	  if ((msg_id = v2["group"]) || (msg_id = v2["clone_id"]) || (msg_id = v2["ms_id"])) {
+	    self.parentIDMapping[msg_id] = self.parentIDMapping[msg_id] || [];
+	    if (self.parentIDMapping[msg_id].indexOf(v2["id"]) == -1) {
+	      self.parentIDMapping[msg_id].push(v2["id"]);
+	    }
+	  }
 	  resources[v2["id"]]["nodes"] = resource_clone_nodes[v2["id"]].sort();
 	});
       }
@@ -600,9 +608,14 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     });
 
     $.each(loc_con, function (key, value) {
-      if (value["rsc"] in res_loc_constraints)
-	res_loc_constraints[value["rsc"]].push(value);
-      else res_loc_constraints[value["rsc"]] = [value];
+      res_loc_constraints[value["rsc"]] = res_loc_constraints[value["rsc"]] || [];
+      res_loc_constraints[value["rsc"]].push(value);
+      if (self.parentIDMapping[value["rsc"]]) {
+	$.each(self.parentIDMapping[value["rsc"]], function(index,map) {
+	  res_loc_constraints[map] = res_loc_constraints[map] || [];
+	  res_loc_constraints[map].push(value);
+	});
+      }
     });
 
     var cur_res_holder = "";
@@ -635,6 +648,19 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       if (value["then"] in res_ord_constraints)
 	res_ord_constraints[value["then"]].push(then);
       else res_ord_constraints[value["then"]] = [then];
+
+      if (self.parentIDMapping[value["first"]]) {
+	$.each(self.parentIDMapping[value["first"]], function(index,map) {
+	  res_ord_constraints[map] = res_ord_constraints[map] || [];
+	  res_ord_constraints[map].push(first);
+	});
+      }
+      if (self.parentIDMapping[value["then"]]) {
+	$.each(self.parentIDMapping[value["then"]], function(index,map) {
+	  res_ord_constraints[map] = res_ord_constraints[map] || [];
+	  res_ord_constraints[map].push(then);
+	});
+      }
     });
 
     $.each(col_con, function (key, value) {
@@ -653,6 +679,19 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       if (value["with-rsc"] in res_col_constraints)
 	res_col_constraints[value["with-rsc"]].push(second);
       else res_col_constraints[value["with-rsc"]] = [second];
+
+      if (self.parentIDMapping[value["rsc"]]) {
+	$.each(self.parentIDMapping[value["rsc"]], function(index,map) {
+	  res_col_constraints[map] = res_col_constraints[map] || [];
+	  res_col_constraints[map].push(first);
+	});
+      }
+      if (self.parentIDMapping[value["with-rsc"]]) {
+	$.each(self.parentIDMapping[value["with-rsc"]], function(index,map) {
+	  res_col_constraints[map] = res_col_constraints[map] || [];
+	  res_col_constraints[map].push(second);
+	});
+      }
     });
 
 //    self.set('content',[]);

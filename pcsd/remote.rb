@@ -391,12 +391,13 @@ def node_status(params)
     out_nodes = []
     oConstraints = []
     meta_attributes = []
-    r.meta_attr.each_pair {|k,v| meta_attributes << {key: k, value: v}}
+    r.meta_attr.each_pair {|k,v| meta_attributes << {key: k, value: v[1], id:v[0], parent:v[2]}}
     r.nodes.each{|n|
       out_nodes.push(n.name)
     }
     out_rl.push({:id => r.id, :agentname => r.agentname, :active => r.active,
                  :nodes => out_nodes, :group => r.group, :clone => r.clone,
+                 :clone_id => r.clone_id, :ms_id => r.ms_id,
                  :failed => r.failed, :orphaned => r.orphaned, :options => r.options,
                  :stonith => r.stonith, :ms => r.ms, :disabled => r.disabled,
                  :operations => r.operations, :instance_attr => r.instance_attr,

@@ -70,10 +70,18 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
 	    if ia.parent.name == "instance_attributes"
 	      resources_inst_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
 	    elsif ia.parent.name == "meta_attributes"
-	      resources_meta_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
+	      resources_meta_attr_map[r.attributes["id"]][ia.attributes["name"]] = [ia.attributes["id"],ia.attributes["value"],ia.parent.parent.attributes["id"]]
 	    end
 	  end
+	  if ["group","clone","master"].include?(r.parent.name)
+	    r.parent.elements.each('./meta_attributes/nvpair') do |ma|
+	      resources_meta_attr_map[r.attributes["id"]][ma.attributes["name"]] ||= []
+	      resources_meta_attr_map[r.attributes["id"]][ma.attributes["name"]] = [ma.attributes["id"],ma.attributes["value"],ma.parent.parent.attributes["id"]]
+            end
+          end
+
 	end
+
       end
 
       resource_list.each {|r|
@@ -313,7 +321,7 @@ class Resource
   attr_accessor :id, :name, :type, :agent, :agentname, :role, :active,
     :orphaned, :managed, :failed, :failure_ignored, :nodes, :location,
     :options, :group, :clone, :stonith, :ms, :operations,
-    :instance_attr, :meta_attr
+    :instance_attr, :meta_attr, :clone_id, :ms_id
   def initialize(e, group = nil, clone = false, ms = false)
     @id = e.attributes["id"]
     @agentname = e.attributes["resource_agent"]
@@ -325,6 +333,8 @@ class Resource
     @group = group
     @clone = clone
     @ms = ms
+    @clone_id = nil
+    @ms_id = nil
     @stonith = false
     @instance_attr = {}
     @meta_attr = {}
@@ -340,6 +350,9 @@ class Resource
     else
       @location = ""
     end
+
+    @clone_id = e.parent.attributes["id"] if @clone
+    @ms_id = e.parent.attributes["id"] if @ms
   end
 
   def disabled

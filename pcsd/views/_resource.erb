@@ -212,7 +212,7 @@
 			{{#each Pcs.resourcesController.cur_resource.meta_attr}}
 			<tr><td>{{this.key}}</td>
 			    <td>{{this.value}}</td>
-			    <td {{bind-attr meta_attr_key="this.key"}}  style="text-align:center">
+			    <td {{bind-attr meta_attr_key="this.key"}} {{bind-attr meta_attr_res="this.parent"}} style="text-align:center">
 				  <a onclick="remove_meta_attr($(this).parent());return false;" href="#" class="remove">X</a>
 			    </td>
 			  </tr>

@@ -874,7 +874,7 @@ function remove_resource(ids) {
 
 function remove_meta_attr(parent_id) {
   var data = {};
-  data["res_id"] = Pcs.resourcesController.cur_resource.name
+  data["res_id"] = parent_id.attr("meta_attr_res");
   data["key"] = parent_id.attr("meta_attr_key");
   data["value"] = "";
   fade_in_out(parent_id.parent());
