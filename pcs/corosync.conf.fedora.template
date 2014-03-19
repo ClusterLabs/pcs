@@ -3,6 +3,7 @@ version: 2
 secauth: off
 cluster_name: @@cluster_name
 transport: @@transport
+@@totem_options
 @@interfaceandrrpmode
 @@ip_version
 }

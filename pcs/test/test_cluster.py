@@ -245,6 +245,14 @@ class ClusterTest(unittest.TestCase):
 # Reset local corosync.conf
         o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 
+    def testTotemOptions(self):
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004")
+        ac(o,"")
+        assert r == 0
+        with open("corosync.conf.tmp") as f:
+            data = f.read()
+            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\ntoken: 20000\njoin: 20001\nconsensus: 20002\nmiss_count_const: 20003\nfail_recv_const: 20004\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
+
     def testUIDGID(self):
         if utils.is_rhel6():
             os.system("cp /etc/cluster/cluster.conf cluster.conf.testbak")

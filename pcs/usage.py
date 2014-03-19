@@ -438,7 +438,9 @@ Commands:
                             [--ttl1 <ttl>]] | [--broadcast1]]]]
             [--wait_for_all=<0|1>] [--auto_tie_breaker=<0|1>]
             [--last_man_standing=<0|1> [--last_man_standing_window=<time in ms>]]
-            [--ipv6]
+            [--ipv6] [--token <timeout>] [--join <timeout>]
+            [--consensus <timeout>] [--miss_count_const <count>]
+            [--fail_recv_const <failures>]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
         --start will also start the cluster on the specified nodes
@@ -448,6 +450,19 @@ Commands:
         --last_man_standing_window options are all documented in corosync's
         votequorum(5) man page.
         --ipv6 will configure corosync to use ipv6 (instead of ipv4)
+        --token <timeout> sets time in milliseconds until a token loss is
+            declared after not receiving a token (default 1000 ms)
+        --join <timeout> sets time in milliseconds to wait for join mesages
+            (default 50 ms)
+        --consensus <timeout> sets time in milliseconds to wait for consensus
+            to be achieved before starting a new round of membership configuration
+            (default 1200 ms)
+        --miss_count_const <count> sets the maximum number of times on
+            receipt of a token a message is checked for retransmission before
+            a retransmission occurs (default 5 messages)
+        --fail_recv_const <failures> specifies how many rotations of the token
+            without receiving any messages when messages should be received
+            may occur before a new configuration is formed (default 2500 failures)
 
         Configuring Redundant Ring Protocol (RRP)
 

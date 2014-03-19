@@ -371,6 +371,18 @@ def corosync_setup(argv,returnConfig=False):
             ip_version = ""
 
 
+        totem_options = ""
+        if "--token" in utils.pcs_options:
+            totem_options += "token: " + utils.pcs_options["--token"] + "\n"
+        if "--join" in utils.pcs_options:
+            totem_options += "join: " + utils.pcs_options["--join"] + "\n"
+        if "--consensus" in utils.pcs_options:
+            totem_options += "consensus: " + utils.pcs_options["--consensus"] + "\n"
+        if "--miss_count_const" in utils.pcs_options:
+            totem_options += "miss_count_const: " + utils.pcs_options["--miss_count_const"] + "\n"
+        if "--fail_recv_const" in utils.pcs_options:
+            totem_options += "fail_recv_const: " + utils.pcs_options["--fail_recv_const"] + "\n"
+
         corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
         corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
         corosync_config = corosync_config.replace("@@quorum_options\n",quorum_options)
@@ -378,6 +390,7 @@ def corosync_setup(argv,returnConfig=False):
         corosync_config = corosync_config.replace("@@transport",transport)
         corosync_config = corosync_config.replace("@@interfaceandrrpmode\n",ir)
         corosync_config = corosync_config.replace("@@ip_version\n",ip_version)
+        corosync_config = corosync_config.replace("@@totem_options\n",totem_options)
         if returnConfig:
             return corosync_config
 
