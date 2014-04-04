@@ -433,14 +433,25 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
+        line = 'resource op add ClusterIP stop timeout=34s'
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0
+        assert output == ""
+
+        line = 'resource op add ClusterIP start timeout=33s'
+        output, returnVal = pcs(temp_cib, line)
+        assert returnVal == 0
+        assert output == ""
+
         line = 'resource op remove ClusterIP monitor'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
+        ac(output,"")
         assert returnVal == 0
         assert output == ""
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 0
-        assert output == ' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n'
+        ac (output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: stop interval=0s timeout=34s (ClusterIP-name-stop-timeout-34s)\n              start interval=0s timeout=33s (ClusterIP-name-start-timeout-33s)\n')
 
     def testUpdateOpration(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"

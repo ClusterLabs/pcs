@@ -809,7 +809,7 @@ def resource_operation_remove(res_id, argv):
                 continue
             temp_properties.append((attrName,op.attributes.get(attrName).nodeValue))
 
-        if remove_all:
+        if remove_all and op.attributes["name"].value == op_name:
             found_match = True
             parent = op.parentNode
             parent.removeChild(op)
