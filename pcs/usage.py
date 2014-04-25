@@ -232,10 +232,11 @@ Commands:
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
            [--clone <clone options> | --master <master options> |
-           --group <group name>]
+           --group <group name>] [--disabled]
         Create specified resource.  If --clone is used a clone resource is
         created if --master is specified a master/slave resource is created.
         If --group is specified the resource is added to the group named.
+        If --disabled is specified the resource is not started automatically.
         Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \\
                      ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
                      nic=eth2

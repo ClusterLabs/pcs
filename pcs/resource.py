@@ -360,6 +360,12 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                     if not utils.is_valid_op_attr(k):
                         utils.err("%s is not a valid op option (use --force to override)" % k)
 
+    if "--disabled" in utils.pcs_options:
+        meta_values = [
+            meta for meta in meta_values if not meta.startswith("target-role=")
+        ]
+        meta_values.append("target-role=Stopped")
+
 # If it's a master all meta values go to the master
     master_meta_values = []
     if "--master" in utils.pcs_options:
