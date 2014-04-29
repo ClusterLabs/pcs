@@ -1543,6 +1543,8 @@ def resource_disable(argv):
         utils.err("You must specify a resource to disable")
 
     resource = argv[0]
+    if not is_managed(resource):
+        print "Warning: '%s' is unmanaged" % resource
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
     if retval != 0:
@@ -1565,6 +1567,8 @@ def resource_enable(argv):
         utils.err("You must specify a resource to enable")
 
     resource = argv[0]
+    if not is_managed(resource):
+        print "Warning: '%s' is unmanaged" % resource
     args = ["crm_resource", "-r", resource, "-m", "-d", "target-role"]
     output, retval = utils.run(args)
     if retval != 0:
@@ -1658,6 +1662,29 @@ def resource_manage(argv, set_managed):
                     xpath = "(//primitive|//group)[@id='"+res+"']/meta_attributes/nvpair[@name='is-managed']" 
                     my_xml = utils.get_cib_xpath(xpath)
                     utils.remove_from_cib(my_xml)
+
+def is_managed(resource_id):
+    state_dom = utils.getClusterState()
+    for resource_el in state_dom.getElementsByTagName("resource"):
+        if resource_el.getAttribute("id") == resource_id:
+            if resource_el.getAttribute("managed") == "false":
+                return False
+            return True
+    for resource_el in state_dom.getElementsByTagName("group"):
+        if resource_el.getAttribute("id") == resource_id:
+            for primitive_el in resource_el.getElementsByTagName("resource"):
+                if primitive_el.getAttribute("managed") == "false":
+                    return False
+            return True
+    for resource_el in state_dom.getElementsByTagName("clone"):
+        if resource_el.getAttribute("id") == resource_id:
+            if resource_el.getAttribute("managed") == "false":
+                return False
+            for primitive_el in resource_el.getElementsByTagName("resource"):
+                if resource_el.getAttribute("managed") == "false":
+                    return False
+            return True
+    utils.err("unable to find a resource/clone/master/group: %s" % resource_id)
 
 def resource_failcount(argv):
     if len(argv) < 2:
