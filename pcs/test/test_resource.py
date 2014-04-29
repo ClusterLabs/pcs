@@ -1386,12 +1386,82 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs(temp_cib, "resource enable NoExist")
-        ac(o,"Error: Resource 'NoExist' not found: No such device or address\nError performing operation: No such device or address\n\n")
+        ac(o,"Error: unable to find a resource/clone/master/group: NoExist\n")
         assert r == 1
 
         o,r = pcs(temp_cib, "resource disable NoExist")
-        ac(o,"Error: Resource 'NoExist' not found: No such device or address\nError performing operation: No such device or address\n\n")
+        ac(o,"Error: unable to find a resource/clone/master/group: NoExist\n")
         assert r == 1
+
+        o,r = pcs(temp_cib, "resource create --no-default-ops D2 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource unmanage D2")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource disable D2")
+        ac(o,"Warning: 'D2' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource enable D2")
+        ac(o,"Warning: 'D2' is unmanaged\n")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "property set is-managed-default=false")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource disable D1")
+        ac(o,"Warning: 'D1' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource enable D1")
+        ac(o,"Warning: 'D1' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "property set is-managed-default=")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create --no-default-ops D3 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource group add DG D3")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource unmanage DG")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource disable D3")
+        ac(o,"Warning: 'D3' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource enable D3")
+        ac(o,"Warning: 'D3' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource disable DG")
+        ac(o,"Warning: 'DG' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource enable DG")
+        ac(o,"Warning: 'DG' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource manage DG")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs(temp_cib, "resource create --no-default-ops D4 Dummy")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs("resource group add DG D4")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource unmanage D4")
+        ac(o,"")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource disable DG")
+        ac(o,"Warning: 'DG' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource enable DG")
+        ac(o,"Warning: 'DG' is unmanaged\n")
+        assert r == 0
+        o,r = pcs(temp_cib, "resource manage D4")
+        ac(o,"")
+        assert r == 0
 
     def testOPOption(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy op monitor interval=30s blah=blah")
