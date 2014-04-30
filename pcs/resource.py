@@ -1681,7 +1681,7 @@ def is_managed(resource_id):
             if resource_el.getAttribute("managed") == "false":
                 return False
             for primitive_el in resource_el.getElementsByTagName("resource"):
-                if resource_el.getAttribute("managed") == "false":
+                if primitive_el.getAttribute("managed") == "false":
                     return False
             return True
     utils.err("unable to find a resource/clone/master/group: %s" % resource_id)
