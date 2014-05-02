@@ -567,6 +567,14 @@ def run(args, ignore_stderr=False, string_for_stdin=None):
 
     return output, returnVal
 
+def map_for_error_list(callab, iterab):
+    error_list = []
+    for item in iterab:
+        (retval, err) = callab(item)
+        if retval != 0:
+            error_list.append(err)
+    return error_list
+
 # Check is something exists in the CIB, if it does return it, if not, return
 #  an empty string
 def does_exist(xpath_query):

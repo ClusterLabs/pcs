@@ -484,8 +484,13 @@ def start_cluster_all():
         threads[node] = StartClusterThread(node)
         threads[node].start()
 
+    error_list = []
     for thread in threads.values():
         thread.join()
+        if thread.retval != 0:
+            error_list.append(thread.error)
+    if len(error_list) > 0:
+        utils.err("unable to start all nodes\n" + "\n".join(error_list))
 
 def stop_cluster_all():
     threads = {}
@@ -493,8 +498,13 @@ def stop_cluster_all():
         threads[node] = StopClusterThread(node)
         threads[node].start()
 
+    error_list = []
     for thread in threads.values():
         thread.join()
+        if thread.retval != 0:
+            error_list.append(thread.error)
+    if len(error_list) > 0:
+        utils.err("unable to stop all nodes\n" + "\n".join(error_list))
 
 def node_standby(argv,standby=True):
     # If we didn't specify any arguments, use the current node name
@@ -557,12 +567,20 @@ def disable_cluster(argv):
     utils.disableServices()
 
 def enable_cluster_all():
-    for node in utils.getNodesFromCorosyncConf():
-        utils.enableCluster(node)
+    error_list = utils.map_for_error_list(
+        utils.enableCluster,
+        utils.getNodesFromCorosyncConf()
+    )
+    if len(error_list) > 0:
+        utils.err("unable to enable all nodes\n" + "\n".join(error_list))
 
 def disable_cluster_all():
-    for node in utils.getNodesFromCorosyncConf():
-        utils.disableCluster(node)
+    error_list = utils.map_for_error_list(
+        utils.disableCluster,
+        utils.getNodesFromCorosyncConf()
+    )
+    if len(error_list) > 0:
+        utils.err("unable to disable all nodes\n" + "\n".join(error_list))
 
 def destroy_cluster(argv):
     if len(argv) > 0:
@@ -1040,19 +1058,23 @@ class StopClusterThread (threading.Thread):
     def __init__ (self,node):
         self.node = node
         threading.Thread.__init__(self)
+        self.retval = 0
+        self.error = ""
         self.output = ""
 
     def run(self):
-        utils.stopCluster(self.node)
+        (self.retval, self.error) = utils.stopCluster(self.node)
 
 class StartClusterThread (threading.Thread):
     def __init__ (self,node):
         self.node = node
         threading.Thread.__init__(self)
+        self.retval = 0
+        self.error = ""
         self.output = ""
 
     def run(self):
-        utils.startCluster(self.node)
+        (self.retval, self.error) = utils.startCluster(self.node)
 
 class DestroyClusterThread (threading.Thread):
     def __init__ (self,node):
