@@ -820,9 +820,16 @@ def cluster_uidgid(argv, silent_list = False):
         exit(1)
 
 def cluster_get_corosync_conf(argv):
-    if len(argv) != 1:
+    if utils.is_rhel6():
+        utils.err("corosync.conf is not supported on RHEL6")
+
+    if len(argv) > 1:
         usage.cluster()
         exit(1)
+
+    if len(argv) == 0:
+        print utils.getCorosyncConf()
+        return
 
     node = argv[0]
     retval, output = utils.getCorosyncConfig(node)

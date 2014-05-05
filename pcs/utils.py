@@ -297,8 +297,8 @@ def getCorosyncConf(conf=None):
         conf = settings.corosync_conf_file
     try:
         out = open(conf).read()
-    except IOError:
-        return ""
+    except IOError as e:
+        err("Unable to read %s: %s" % (conf, e.strerror))
     return out
 
 def setCorosyncConf(corosync_config, conf_file=None):
