@@ -273,6 +273,13 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
         return (2,"Unable to connect to %s (%s)" % (host, e.reason))
 
 def getNodesFromCorosyncConf():
+    if is_rhel6():
+        dom = parse(settings.cluster_conf_file)
+        return [
+            node_el.getAttribute("name")
+            for node_el in dom.getElementsByTagName("clusternode")
+        ]
+
     nodes = []
     lines = getCorosyncConf().strip().split('\n')
     preg = re.compile(r'.*ring0_addr: (.*)')
@@ -316,6 +323,17 @@ def reloadCorosync():
     return output, retval
 
 def getCorosyncActiveNodes():
+    if is_rhel6():
+        output, retval = run(["cman_tool", "nodes", "-F", "type,name"])
+        if retval != 0:
+            return []
+        nodestatus_re = re.compile(r"^(.)\s+([^\s]+)\s*$", re.M)
+        return [
+            node_name
+            for node_status, node_name in nodestatus_re.findall(output)
+                if node_status == "M"
+        ]
+
     args = ["corosync-cmapctl"]
     nodes = []
     output,retval = run(args)
@@ -536,7 +554,7 @@ def run(args, ignore_stderr=False, string_for_stdin=None):
                 err("Unable to write to file: " + filename)
 
     command = args[0]
-    if command[0:3] == "crm" or command == "cibadmin":
+    if command[0:3] == "crm" or command == "cibadmin" or command == "cman_tool":
         args[0] = settings.pacemaker_binaries + command
     if command[0:8] == "corosync":
         args[0] = settings.corosync_binaries + command
