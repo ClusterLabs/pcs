@@ -1344,7 +1344,7 @@ def is_valid_op_attr(attr):
 
 # Test if 'var' is a score or option (contains an '=')
 def is_score_or_opt(var):
-    if var == "INFINITY" or var == "-INFINITY" or var.isdigit():
+    if var == "INFINITY" or var == "-INFINITY" or (var[0] == "-" and var[1:].isdigit()) or var.isdigit():
         return True
     elif var.find('=') != -1:
         return True

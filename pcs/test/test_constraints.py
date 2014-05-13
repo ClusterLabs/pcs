@@ -219,6 +219,9 @@ class ConstraintTest(unittest.TestCase):
         o, r = pcs(temp_cib, "constraint colocation add D1 D2 100")
         assert r == 0 and o == "", o
 
+        o, r = pcs(temp_cib, "constraint colocation add D1 D2 -100")
+        assert r == 0 and o == "", o
+
         o, r = pcs(temp_cib, "constraint colocation add Master with D5 100")
         assert r == 0 and o == "", o
 
@@ -238,7 +241,8 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint")
-        assert r == 0 and o == 'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  Master with D5 (100)\n  M1-master with M2-master (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master\n  M5-master with M6-master (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (rsc-role:Slave) (with-rsc-role:Started)\n', [o]
+        assert r == 0
+        ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  D1 with D2 (-100)\n  Master with D5 (100)\n  M1-master with M2-master (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master\n  M5-master with M6-master (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (rsc-role:Slave) (with-rsc-role:Started)\n')
         
     def testColocationSets(self):
         line = "resource create D7 Dummy"
