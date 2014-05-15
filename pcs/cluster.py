@@ -15,7 +15,6 @@ import settings
 import socket
 import tempfile
 import datetime
-import threading
 import commands
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
@@ -445,15 +444,7 @@ def get_local_network():
 
 def start_cluster(argv):
     if len(argv) > 0:
-        failure = False
-        errors = ""
-        for node in argv:
-            (retval, err) =  utils.startCluster(node)
-            if retval != 0:
-                failure = True
-                errors = errors + err+"\n"
-        if failure:
-            utils.err("unable to start all nodes\n" + errors.rstrip())
+        start_cluster_nodes(argv)
         return
 
     print "Starting Cluster..."
@@ -479,30 +470,18 @@ def start_cluster(argv):
         utils.err("unable to start pacemaker")
 
 def start_cluster_all():
-    threads = {}
-    for node in utils.getNodesFromCorosyncConf():
-        threads[node] = StartClusterThread(node)
-        threads[node].start()
+    start_cluster_nodes(utils.getNodesFromCorosyncConf())
 
-    error_list = []
-    for thread in threads.values():
-        thread.join()
-        if thread.retval != 0:
-            error_list.append(thread.error)
+def start_cluster_nodes(nodes):
+    error_list = utils.map_for_error_list(utils.startCluster, nodes)
     if len(error_list) > 0:
         utils.err("unable to start all nodes\n" + "\n".join(error_list))
 
 def stop_cluster_all():
-    threads = {}
-    for node in utils.getNodesFromCorosyncConf():
-        threads[node] = StopClusterThread(node)
-        threads[node].start()
+    stop_cluster_nodes(utils.getNodesFromCorosyncConf())
 
-    error_list = []
-    for thread in threads.values():
-        thread.join()
-        if thread.retval != 0:
-            error_list.append(thread.error)
+def stop_cluster_nodes(nodes):
+    error_list = utils.map_for_error_list(utils.stopCluster, nodes)
     if len(error_list) > 0:
         utils.err("unable to stop all nodes\n" + "\n".join(error_list))
 
@@ -538,74 +517,44 @@ def node_standby(argv,standby=True):
 
 def enable_cluster(argv):
     if len(argv) > 0:
-        failure = False
-        errors = ""
-        for node in argv:
-            (retval, err) = utils.enableCluster(node)
-            if retval != 0:
-                failure = True
-                errors = errors + err+"\n"
-        if failure:
-            utils.err("unable to enable all nodes\n" + errors.rstrip())
+        enable_cluster_nodes(argv)
         return
 
     utils.enableServices()
 
 def disable_cluster(argv):
     if len(argv) > 0:
-        failure = False
-        errors = ""
-        for node in argv:
-            (retval, err) = utils.disableCluster(node)
-            if retval != 0:
-                failure = True
-                errors = errors + err+"\n"
-        if failure:
-            utils.err("unable to disable all nodes\n" + errors.rstrip())
+        disable_cluster_nodes(argv)
         return
 
     utils.disableServices()
 
 def enable_cluster_all():
-    error_list = utils.map_for_error_list(
-        utils.enableCluster,
-        utils.getNodesFromCorosyncConf()
-    )
+    enable_cluster_nodes(utils.getNodesFromCorosyncConf())
+
+def disable_cluster_all():
+    disable_cluster_nodes(utils.getNodesFromCorosyncConf())
+
+def enable_cluster_nodes(nodes):
+    error_list = utils.map_for_error_list(utils.enableCluster, nodes)
     if len(error_list) > 0:
         utils.err("unable to enable all nodes\n" + "\n".join(error_list))
 
-def disable_cluster_all():
-    error_list = utils.map_for_error_list(
-        utils.disableCluster,
-        utils.getNodesFromCorosyncConf()
-    )
+def disable_cluster_nodes(nodes):
+    error_list = utils.map_for_error_list(utils.disableCluster, nodes)
     if len(error_list) > 0:
         utils.err("unable to disable all nodes\n" + "\n".join(error_list))
 
 def destroy_cluster(argv):
     if len(argv) > 0:
-        failure = False
-        errors = ""
-        for node in argv:
-            retval, err = utils.destroyCluster(node)
-            if retval != 0:
-                failure = True
-                error = errors + err+"\n"
-        if failure:
-            utils.err("unable to destroy cluster\n" + errors.rstrip())
+        error_list = utils.map_for_error_list(utils.destroyCluster, argv)
+        if len(error_list) > 0:
+            utils.err("unable to destroy cluster\n" + "\n".join(error_list))
         return
 
 def stop_cluster(argv):
     if len(argv) > 0:
-        failure = False
-        errors = ""
-        for node in argv:
-            (retval, err) = utils.stopCluster(node)
-            if retval != 0:
-                failure = True
-                errors = errors + err+"\n"
-        if failure:
-            utils.err("unable to stop all nodes\n" + errors.rstrip())
+        stop_cluster_nodes(argv)
         return
 
     print "Stopping Cluster..."
@@ -919,13 +868,7 @@ def print_config():
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(argv):
     if "--all" in utils.pcs_options:
-        threads = {}
-        for node in utils.getNodesFromCorosyncConf():
-            threads[node] = DestroyClusterThread(node)
-            threads[node].start()
-
-        for thread in threads.values():
-            thread.join()
+        destroy_cluster(utils.getNodesFromCorosyncConf())
     else:
         print "Shutting down pacemaker/corosync services..."
         os.system("service pacemaker stop")
@@ -1053,36 +996,5 @@ def cluster_remote_node(argv):
     else:
         usage.cluster(["remote-node"])
         sys.exit(1)
-
-class StopClusterThread (threading.Thread):
-    def __init__ (self,node):
-        self.node = node
-        threading.Thread.__init__(self)
-        self.retval = 0
-        self.error = ""
-        self.output = ""
-
-    def run(self):
-        (self.retval, self.error) = utils.stopCluster(self.node)
-
-class StartClusterThread (threading.Thread):
-    def __init__ (self,node):
-        self.node = node
-        threading.Thread.__init__(self)
-        self.retval = 0
-        self.error = ""
-        self.output = ""
-
-    def run(self):
-        (self.retval, self.error) = utils.startCluster(self.node)
-
-class DestroyClusterThread (threading.Thread):
-    def __init__ (self,node):
-        self.node = node
-        threading.Thread.__init__(self)
-        self.output = ""
-
-    def run(self):
-        utils.destroyCluster(self.node)
 
 
