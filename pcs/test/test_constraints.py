@@ -495,6 +495,18 @@ class ConstraintTest(unittest.TestCase):
         ac(o,"Error: '25' is not a valid rule expression\n")
         assert r == 1
 
+        o,r = pcs("constraint location D1 prefers rh7-1=foo")
+        ac(o,"Error: invalid score 'foo', use integer or INFINITY or -INFINITY\n")
+        assert r == 1
+
+        o,r = pcs("constraint location D1 avoids rh7-1=")
+        ac(o,"Error: invalid score '', use integer or INFINITY or -INFINITY\n")
+        assert r == 1
+
+        o,r = pcs("constraint location add location1 D1 rh7-1 bar")
+        ac(o,"Error: invalid score 'bar', use integer or INFINITY or -INFINITY\n")
+        assert r == 1
+
     def testMasterSlaveConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
 

@@ -1370,11 +1370,18 @@ def is_valid_op_attr(attr):
 
 # Test if 'var' is a score or option (contains an '=')
 def is_score_or_opt(var):
-    if var == "INFINITY" or var == "-INFINITY" or (var[0] == "-" and var[1:].isdigit()) or var.isdigit():
+    if is_score(var):
         return True
     elif var.find('=') != -1:
         return True
     return False
+
+def is_score(var):
+    return (
+        var == "INFINITY" or var == "-INFINITY"
+        or
+        var.isdigit() or (len(var) > 1 and var[0] == "-" and var[1:].isdigit())
+    )
 
 def is_systemctl():
     if os.path.exists('/usr/bin/systemctl'):

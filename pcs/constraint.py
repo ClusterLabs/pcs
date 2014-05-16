@@ -749,6 +749,8 @@ def location_prefer(argv):
                 score = "-INFINITY"
         else:
             score = nodeconf_a[1]
+            if not utils.is_score(score):
+                utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
             if not prefer:
                 if score[0] == "-":
                     score = score[1:]
@@ -777,6 +779,8 @@ def location_add(argv,rm=False):
         # If resource doesn't exist, we error out
         if not utils.is_valid_constraint_resource(resource_name):
             utils.err("Resource " + resource_name + "' does not exist")
+        if not utils.is_score(score):
+            utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
 
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
