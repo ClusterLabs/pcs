@@ -1060,7 +1060,7 @@ def resource_clone_create(argv, update = False, passed_dom = None):
     if element == None:
         utils.err("unable to find group or resource: %s" % name)
 
-    if utils.is_resource_clone(name):
+    if utils.is_resource_clone(name) and not update:
         utils.err("%s is already a clone resource" % name)
 
     if utils.is_group_clone(name):
@@ -1073,28 +1073,43 @@ def resource_clone_create(argv, update = False, passed_dom = None):
     if element.parentNode.tagName == "group" and element.parentNode.getElementsByTagName("primitive").length <= 1:
         element.parentNode.parentNode.removeChild(element.parentNode)
 
+    meta = None
     if update == True:
         if element.parentNode.tagName != "clone":
             utils.err("%s is not currently a clone" % name)
         clone = element.parentNode
-        for ma in clone.getElementsByTagName("meta_attributes"):
-            clone.removeChild(ma)
+        for child in clone.childNodes:
+            if (
+                child.nodeType == child.ELEMENT_NODE
+                and
+                child.tagName == "meta_attributes"
+            ):
+                meta = child
+                break
     else:
         clone = dom.createElement("clone")
         clone.setAttribute("id",name + "-clone")
         clone.appendChild(element)
         re.appendChild(clone)
+    if meta is None:
+        meta = dom.createElement("meta_attributes")
+        meta.setAttribute("id",name + "-clone-meta")
+        clone.appendChild(meta)
 
-    meta = dom.createElement("meta_attributes")
-    meta.setAttribute("id",name + "-clone-meta")
     args = convert_args_to_tuples(argv)
     for arg in args:
+        if update:
+            for nvpair in meta.getElementsByTagName("nvpair"):
+                if nvpair.getAttribute("name") == arg[0]:
+                    meta.removeChild(nvpair)
+                    break
+            if arg[1] == "":
+                continue
         nvpair = dom.createElement("nvpair")
         nvpair.setAttribute("id", name+"-"+arg[0])
         nvpair.setAttribute("name", arg[0])
         nvpair.setAttribute("value", arg[1])
         meta.appendChild(nvpair)
-    clone.appendChild(meta)
 
     if passed_dom:
         return dom

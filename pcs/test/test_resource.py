@@ -1317,6 +1317,39 @@ class ResourceTest(unittest.TestCase):
         ac(output, '')
         assert returnVal == 0
 
+    def testResourceCloneUpdate(self):
+        o, r  = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --clone")
+        assert r == 0
+        ac(o, "")
+
+        o, r  = pcs(temp_cib, "resource --full")
+        assert r == 0
+        ac(o, ' Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n')
+
+        o, r = pcs(temp_cib, 'resource update D1-clone foo=bar')
+        assert r == 0
+        ac(o, "")
+
+        o, r  = pcs(temp_cib, "resource --full")
+        assert r == 0
+        ac(o, ' Clone: D1-clone\n  Meta Attrs: foo=bar \n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n')
+
+        o, r = pcs(temp_cib, 'resource update D1-clone bar=baz')
+        assert r == 0
+        ac(o, "")
+
+        o, r  = pcs(temp_cib, "resource --full")
+        assert r == 0
+        ac(o, ' Clone: D1-clone\n  Meta Attrs: foo=bar bar=baz \n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n')
+
+        o, r = pcs(temp_cib, 'resource update D1-clone foo=')
+        assert r == 0
+        ac(o, "")
+
+        o, r  = pcs(temp_cib, "resource --full")
+        assert r == 0
+        ac(o, ' Clone: D1-clone\n  Meta Attrs: bar=baz \n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n')
+
     def testGroupRemoveWithConstraints2(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy --group AG")
         assert r == 0
