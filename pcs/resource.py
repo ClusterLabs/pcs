@@ -309,8 +309,11 @@ def format_desc(indent, desc):
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
     if len(ra_id) == 0:
         utils.err ("resource id cannot be empty")
-# If we're not using --force, try to change the case of ra_type to match any
-# installed resources
+
+    dom = utils.get_cib_dom()
+
+    # If we're not using --force, try to change the case of ra_type to match any
+    # installed resources
     if not "--force" in utils.pcs_options:
         new_ra_type = utils.is_valid_resource(ra_type, True)
         if new_ra_type != True and new_ra_type != False:
@@ -321,6 +324,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
 
     if utils.does_exist('//resources/descendant::primitive[@id="'+ra_id+'"]'):
         utils.err("unable to create resource/fence device '%s', '%s' already exists on this system" % (ra_id,ra_id))
+
 
     if len(op_values[0]) == 0:
         op_values = []
@@ -385,26 +389,27 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                     % (", ".join(bad_opts), get_full_ra_type(ra_type, True)))
         if len(missing_req_opts) != 0:
             print "Warning: missing required option(s): '%s' for resource type: %s" % (", ".join(missing_req_opts),get_full_ra_type(ra_type,True))
-    xml_resource_string = create_xml_string("primitive", primitive_values, instance_attributes + op_attributes + meta_attributes)
-    args = ["cibadmin"]
-    args = args  + ["-o", "resources", "-C", "-X", xml_resource_string]
-    output,retval = utils.run(args)
-    if retval != 0:
-        utils.err ("Unable to create resource/fence device\n" + output)
+
+    resource_elem = create_xml_element("primitive", primitive_values, instance_attributes + op_attributes + meta_attributes)
+    dom.getElementsByTagName("resources")[0].appendChild(resource_elem)
 
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
-        resource_clone_create([ra_id] + clone_opts)
+        dom = resource_clone_create([ra_id] + clone_opts, False, dom)
         if "--group" in utils.pcs_options:
             print "Warning: --group ignored when creating a clone"
         if "--master" in utils.pcs_options:
             print "Warning: --master ignored when creating a clone"
     elif "--master" in utils.pcs_options:
-        resource_master_create([ra_id+"-master",ra_id]+ master_meta_values)
+        dom = resource_master_create([ra_id+"-master",ra_id]+ master_meta_values, False, dom)
         if "--group" in utils.pcs_options:
             print "Warning: --group ignored when creating a master"
     elif "--group" in utils.pcs_options:
         groupname = utils.pcs_options["--group"]
-        resource_group_add(groupname,[ra_id])
+        dom = resource_group_add(groupname,[ra_id],dom)
+
+    args = ["cibadmin"]
+    args = args  + ["-o", "resources", "-C", "-X", dom.toxml()]
+    output,retval = utils.run(args)
 
 def resource_move(argv,clear=False,ban=False):
     other_options = []
@@ -989,10 +994,6 @@ def get_full_ra_type(ra_type, return_string = False):
         return([("class",ra_def[0]),("type",ra_def[2]),("provider",ra_def[1])])
 
 
-def create_xml_string(tag, options, children = []):
-    element = create_xml_element(tag,options, children).toxml()
-    return element
-
 def create_xml_element(tag, options, children = []):
     impl = getDOMImplementation()
     newdoc = impl.createDocument(None, tag, None)
@@ -1038,10 +1039,15 @@ def resource_clone(argv):
     resource_clone_create(argv)
     constraint.constraint_resource_update(res)
 
-def resource_clone_create(argv, update = False):
+def resource_clone_create(argv, update = False, passed_dom = None):
     name = argv.pop(0)
     element = None
-    dom = utils.get_cib_dom()
+
+    if passed_dom:
+        dom = passed_dom
+    else:
+        dom = utils.get_cib_dom()
+
     re = dom.documentElement.getElementsByTagName("resources")[0]
     for res in re.getElementsByTagName("primitive") + re.getElementsByTagName("group"):
         if res.getAttribute("id") == name:
@@ -1086,6 +1092,10 @@ def resource_clone_create(argv, update = False):
         nvpair.setAttribute("value", arg[1])
         meta.appendChild(nvpair)
     clone.appendChild(meta)
+
+    if passed_dom:
+        return dom
+
     xml_resource_string = re.toxml()
     args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
     output, retval = utils.run(args)
@@ -1138,7 +1148,7 @@ def resource_clone_master_remove(argv):
 def resource_master(argv):
     resource_master_create(argv)
 
-def resource_master_create(argv, update=False):
+def resource_master_create(argv, update=False, passed_dom = None):
     non_option_args_count = 0
     for arg in argv:
         if arg.find("=") == -1:
@@ -1148,7 +1158,11 @@ def resource_master_create(argv, update=False):
         usage.resource()
         sys.exit(1)
 
-    dom = utils.get_cib_dom()
+    if passed_dom:
+        dom = passed_dom
+    else:
+        dom = utils.get_cib_dom()
+
     if non_option_args_count == 1 and not update:
         argv.insert(0,argv[0]+"-master")
 
@@ -1220,6 +1234,10 @@ def resource_master_create(argv, update=False):
             meta.appendChild(nvpair)
         if len(meta.getElementsByTagName("nvpair")) == 0:
             master_element.removeChild(meta)
+
+    if passed_dom:
+        return dom
+
     utils.replace_cib_configuration(dom)
     if not update:
         constraint.constraint_resource_update(rg_id)
@@ -1407,8 +1425,12 @@ def resource_group_rm(group_name, resource_ids):
     return True
 
 
-def resource_group_add(group_name, resource_ids):
-    dom = utils.get_cib_dom()
+def resource_group_add(group_name, resource_ids, passed_dom = None):
+    if passed_dom:
+        dom = passed_dom
+    else:
+        dom = utils.get_cib_dom()
+
     top_element = dom.documentElement
     resources_element = top_element.getElementsByTagName("resources")[0]
     group_found = False
@@ -1429,7 +1451,6 @@ def resource_group_add(group_name, resource_ids):
         mygroup = dom.createElement("group")
         mygroup.setAttribute("id", group_name)
         resources_element.appendChild(mygroup)
-
 
     resources_to_move = []
     for resource_id in resource_ids:
@@ -1463,6 +1484,8 @@ def resource_group_add(group_name, resource_ids):
             if oldParent.tagName == "group" and len(oldParent.getElementsByTagName("primitive")) == 0:
                 oldParent.parentNode.removeChild(oldParent)
         
+        if passed_dom:
+            return dom
         xml_resource_string = resources_element.toxml()
         args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
         output,retval = utils.run(args)

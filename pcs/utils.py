@@ -839,7 +839,7 @@ def get_cib_xpath(xpath_query):
 # Returns output, retval
 def add_to_cib(scope, xml):
     args = ["cibadmin"]
-    args = args  + ["-o", "resources", "-C", "-X", xml]
+    args = args  + ["-o", scope, "-C", "-X", xml]
     return run(args)
 
 def remove_from_cib(xml):
