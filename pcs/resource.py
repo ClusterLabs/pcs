@@ -867,7 +867,16 @@ def resource_meta(res_id, argv):
     else:
         meta_attributes = meta_attributes[0]
 
-    meta_attrs = convert_args_to_tuples(argv)
+    update_meta_attributes(
+        meta_attributes,
+        convert_args_to_tuples(argv),
+        res_id + "-meta_attributes-"
+    )
+
+    utils.replace_cib_configuration(dom)
+
+def update_meta_attributes(meta_attributes, meta_attrs, id_prefix):
+    dom = meta_attributes.ownerDocument
     for (key,val) in meta_attrs:
         meta_found = False
         for ma in meta_attributes.getElementsByTagName("nvpair"):
@@ -880,12 +889,11 @@ def resource_meta(res_id, argv):
                 break
         if not meta_found:
             ma = dom.createElement("nvpair")
-            ma.setAttribute("id", res_id + "-meta_attributes-" + key)
+            ma.setAttribute("id", id_prefix + key)
             ma.setAttribute("name", key)
             ma.setAttribute("value", val)
             meta_attributes.appendChild(ma)
-
-    utils.replace_cib_configuration(dom)
+    return meta_attributes
 
 # Takes in a resource id and an array of arrays with operation values starting
 # with the operation name, followed by options
@@ -1096,20 +1104,7 @@ def resource_clone_create(argv, update = False, passed_dom = None):
         meta.setAttribute("id",name + "-clone-meta")
         clone.appendChild(meta)
 
-    args = convert_args_to_tuples(argv)
-    for arg in args:
-        if update:
-            for nvpair in meta.getElementsByTagName("nvpair"):
-                if nvpair.getAttribute("name") == arg[0]:
-                    meta.removeChild(nvpair)
-                    break
-            if arg[1] == "":
-                continue
-        nvpair = dom.createElement("nvpair")
-        nvpair.setAttribute("id", name+"-"+arg[0])
-        nvpair.setAttribute("name", arg[0])
-        nvpair.setAttribute("value", arg[1])
-        meta.appendChild(nvpair)
+    update_meta_attributes(meta, convert_args_to_tuples(argv), name + "-")
 
     if passed_dom:
         return dom
@@ -1228,18 +1223,11 @@ def resource_master_create(argv, update=False, passed_dom = None):
             meta.setAttribute("id", master_id + "-meta_attributes")
             master_element.appendChild(meta)
 
-        for arg in convert_args_to_tuples(argv):
-            for nvpair in meta.getElementsByTagName("nvpair"):
-                if nvpair.getAttribute("name") == arg[0]:
-                    meta.removeChild(nvpair)
-                    break
-            if arg[1] == "":
-                continue
-            nvpair = dom.createElement("nvpair")
-            nvpair.setAttribute("id", meta.getAttribute("id") + "-" + arg[0])
-            nvpair.setAttribute("name", arg[0])
-            nvpair.setAttribute("value", arg[1])
-            meta.appendChild(nvpair)
+        update_meta_attributes(
+            meta,
+            convert_args_to_tuples(argv),
+            meta.getAttribute("id") + "-"
+        )
         if len(meta.getElementsByTagName("nvpair")) == 0:
             master_element.removeChild(meta)
 
