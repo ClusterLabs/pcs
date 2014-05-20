@@ -407,9 +407,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         groupname = utils.pcs_options["--group"]
         dom = resource_group_add(groupname,[ra_id],dom)
 
-    args = ["cibadmin"]
-    args = args  + ["-o", "resources", "-C", "-X", dom.toxml()]
-    output,retval = utils.run(args)
+    utils.replace_cib_configuration(dom)
 
 def resource_move(argv,clear=False,ban=False):
     other_options = []
@@ -914,6 +912,9 @@ def convert_args_to_operations(op_values_list, ra_id):
                 temp_op_id += "-"+a+"-"+b
             if a == "interval":
                 temp_op_id = "-"+a+"-"+b
+                for (a2,b2) in tuples:
+                    if a2 == "role":
+                        temp_op_id += "-"+a2+"-"+b2
                 interval_found = True
                 break
         op_id += temp_op_id
