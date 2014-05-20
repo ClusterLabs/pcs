@@ -1068,11 +1068,12 @@ def resource_clone_create(argv, update = False, passed_dom = None):
     if element == None:
         utils.err("unable to find group or resource: %s" % name)
 
-    if utils.is_resource_clone(name) and not update:
-        utils.err("%s is already a clone resource" % name)
+    if not update:
+        if utils.is_resource_clone(name):
+            utils.err("%s is already a clone resource" % name)
 
-    if utils.is_group_clone(name):
-        utils.err("cannot clone a group that has already been cloned")
+        if utils.is_group_clone(name):
+            utils.err("cannot clone a group that has already been cloned")
 
     if utils.is_resource_masterslave(name):
         utils.err("%s is already a master/slave resource" % name)
