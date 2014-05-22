@@ -454,6 +454,8 @@ def resource_move(argv,clear=False,ban=False):
             else:
                 output,ret = utils.run(["crm_resource", "--resource", resource_id, "--move", "--node", dest_node] + other_options)
     if ret != 0:
+        if "Resource '"+resource_id+"' not moved: active in 0 locations." in output:
+            utils.err("You must specify a node when moving/banning a stopped resource")
         utils.err ("error moving/banning/clearing resource\n" + output)
 
 def resource_standards(return_output=False):
