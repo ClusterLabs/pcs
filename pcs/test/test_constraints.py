@@ -142,11 +142,11 @@ class ConstraintTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "constraint --full")
         assert returnVal == 0
-        ac (output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (INFINITY) (id:colocation-Master-D5-INFINITY)\n")
+        ac (output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\n")
 
         output, returnVal = pcs(temp_cib, "constraint show --full")
         assert returnVal == 0
-        ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (INFINITY) (id:colocation-Master-D5-INFINITY)\n")
+        ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\n")
 
     def testLocationConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
@@ -246,7 +246,7 @@ class ConstraintTest(unittest.TestCase):
 
         o, r = pcs(temp_cib, "constraint")
         assert r == 0
-        ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3\n  D1 with D2 (100)\n  D1 with D2 (-100)\n  Master with D5 (100)\n  M1-master with M2-master (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master\n  M5-master with M6-master (500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (rsc-role:Slave) (with-rsc-role:Started)\n')
+        ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3 (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\n')
         
     def testColocationSets(self):
         line = "resource create D7 Dummy"

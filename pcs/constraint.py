@@ -98,7 +98,7 @@ def colocation_show(argv):
         co_resource2 = co_loc.getAttribute("with-rsc")
         co_id = co_loc.getAttribute("id")
         co_score = co_loc.getAttribute("score")
-        score_text = "" if (co_score == "INFINITY") and not showDetail else " (" + co_score + ")"
+        score_text = " (score:" + co_score + ")"
         co_id_out = ""
         for attr in co_loc.attributes.items():
             name = attr[0]
