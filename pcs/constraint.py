@@ -654,10 +654,7 @@ def location_show(argv):
                     print "      " + options[1] +  " (" + options[0] + ")",
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
-                    if (options[2] == "INFINITY"):
-                        print ""
-                    else:
-                        print "Score: "+ options[2]
+                    print "Score: "+ options[2]
 
             if (node in nodehashoff):
                 print "    Not allowed to run:"
@@ -665,10 +662,7 @@ def location_show(argv):
                     print "      " + options[1] +  " (" + options[0] + ")",
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
-                    if (options[2] == "-INFINITY"):
-                        print ""
-                    else:
-                        print "Score: "+ options[2]
+                    print "Score: "+ options[2]
         show_location_rules(ruleshash,showDetail,datespechash)
     else:
         rsclist.sort()
@@ -683,8 +677,7 @@ def location_show(argv):
                         continue
                     print "    Enabled on:",
                     print options[1],
-                    if options[2] != "INFINITY" or showDetail:
-                        print "(score:"+options[2]+")",
+                    print "(score:"+options[2]+")",
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
                     if showDetail:
@@ -694,8 +687,7 @@ def location_show(argv):
                 print "    Disabled on:",
                 for options in rschashoff[rsc]:
                     print options[1],
-                    if options[2] != "-INFINITY" or showDetail:
-                        print "(score:"+options[2]+")",
+                    print "(score:"+options[2]+")",
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
                     if showDetail:

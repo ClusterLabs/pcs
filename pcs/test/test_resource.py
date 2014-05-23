@@ -972,7 +972,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint")
-        ac(o,"Location Constraints:\n  Resource: D0-clone\n    Enabled on: rh7-1\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: D0-clone\n    Enabled on: rh7-1 (score:INFINITY)\nOrdering Constraints:\nColocation Constraints:\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource unclone D0-clone")

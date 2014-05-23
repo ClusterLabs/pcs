@@ -161,6 +161,10 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, "constraint location D5 avoids node2")
         assert returnVal == 0 and output == "", output
 
+        output, returnVal = pcs(temp_cib, "constraint")
+        assert returnVal == 0
+        ac(output, "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY)\n    Disabled on: node2 (score:-INFINITY)\nOrdering Constraints:\nColocation Constraints:\n")
+
         output, returnVal = pcs(temp_cib, "constraint location add location-D5-node1-INFINITY ")
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs constraint"), output
@@ -532,7 +536,7 @@ class ConstraintTest(unittest.TestCase):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope constraints --xml-text '<constraints><rsc_location id=\"cli-prefer-stateful0-master\" role=\"Master\" rsc=\"stateful0-master\" node=\"rh7-1\" score=\"INFINITY\"/><rsc_location id=\"cli-ban-stateful0-master-on-rh7-1\" rsc=\"stateful0-master\" role=\"Slave\" node=\"rh7-1\" score=\"-INFINITY\"/></constraints>'")
 
         o,r = pcs("constraint")
-        ac(o,"Location Constraints:\n  Resource: stateful0-master\n    Enabled on: rh7-1 (role: Master)\n    Disabled on: rh7-1 (role: Slave)\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: stateful0-master\n    Enabled on: rh7-1 (score:INFINITY) (role: Master)\n    Disabled on: rh7-1 (score:-INFINITY) (role: Slave)\nOrdering Constraints:\nColocation Constraints:\n")
         assert r == 0
 
 if __name__ == "__main__":
