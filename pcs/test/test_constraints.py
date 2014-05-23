@@ -127,7 +127,7 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\n")
         assert r == 0
 
     def testAllConstraints(self):
@@ -142,11 +142,11 @@ class ConstraintTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "constraint --full")
         assert returnVal == 0
-        ac (output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\n")
+        ac (output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\n")
 
         output, returnVal = pcs(temp_cib, "constraint show --full")
         assert returnVal == 0
-        ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\n")
+        ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\n")
 
     def testLocationConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")

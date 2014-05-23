@@ -295,10 +295,11 @@ def order_show(argv):
         if ord_loc.getAttribute("symmetrical") == "false":
             oc_sym = " (non-symmetrical)"
         if oc_kind != "":
-            oc_score = oc_kind
-        if oc_kind == "" and oc_score == "":
-            oc_score = "Mandatory"
-        score_text = "" if (oc_score == "INFINITY" or oc_score == "Mandatory") and not showDetail else " (" + oc_score + ")"
+            score_text = " (kind:" + oc_kind + ")"
+        elif oc_kind == "" and oc_score == "":
+            score_text = " (kind:Mandatory)"
+        else:
+            score_text = " (score:" + oc_score + ")"
         if showDetail:
             oc_id_out = " (id:"+oc_id+")"
         print "  " + first_action + oc_resource1 + " then " + then_action + oc_resource2 + score_text + oc_sym + oc_id_out
