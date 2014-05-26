@@ -4,7 +4,7 @@
 pcs \- pacemaker/corosync configuration system
 .SH SYNOPSIS
 .B pcs
-[\fI-f file\fR] [\fI-h\fR] [\fIcommands\fR]...
+[\fI\-f file\fR] [\fI\-h\fR] [\fIcommands\fR]...
 .SH DESCRIPTION
 Control and configure pacemaker and corosync.
 .SH OPTIONS
@@ -44,38 +44,38 @@ config
 Print full cluster configuration
 .SS "resource"
 .TP
-show [resource id] [\-\-full] [\-\-groups]
+show [resource id] [\fB\-\-full\fR] [\fB\-\-groups\fR]
 Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).
 .TP
-list [<standard|provider|type>] [\-\-nodesc]
-Show list of all available resources, optionally filtered by specified type, standard or provider. If --nodesc is used then descriptions of resources are not printed.
+list [<standard|provider|type>] [\fB\-\-nodesc\fR]
+Show list of all available resources, optionally filtered by specified type, standard or provider. If \fB\-\-nodesc\fR is used then descriptions of resources are not printed.
 .TP
 describe <standard:provider:type|type>
 Show options for the specified resource
 .TP
-create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\-\-clone <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name>] [\fB\-\-disabled\fR]
+create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name>] [\fB\-\-disabled\fR]
 Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. If \fB\-\-disabled\fR is specified the resource is not started automatically. Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s \e Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
 .TP
 delete <resource id|group id|master id|clone id>
 Deletes the resource, group, master or clone (and all resources within the group/master/clone).
 .TP
-enable <resource id> [\-\-wait[=n]]
+enable <resource id> [\fB\-\-wait\fR[=n]]
 Allow the cluster to start the resource. Depending on the rest of the configuration (constraints, options, failures, etc), the resource may remain stopped.  If \fB\-\-wait\fR is specified, pcs will wait up to 30 seconds (or 'n' seconds) for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.
 .TP
-disable <resource id> [\-\-wait[=n]]
+disable <resource id> [\fB\-\-wait\fR[=n]]
 Attempt to stop the resource if it is running and forbid the cluster from starting it again.  Depending on the rest of the configuration (constraints, options, failures, etc), the resource may remain started.  If \fB\-\-wait\fR is specified, pcs will wait up to 30 seconds (or 'n' seconds) for the resource to stop and then return 0 if the resource is stopped or 1 if the resource has not stopped.
 .TP
-debug\-start <resource id> [\-\-full]
-This command will force the specified resource to start on this node ignoring the cluster recommendations and print the output from starting the resource. Using --full will give more detailed output. This is mainly used for debugging resources that fail to start.
+debug\-start <resource id> [\fB\-\-full\fR]
+This command will force the specified resource to start on this node ignoring the cluster recommendations and print the output from starting the resource. Using \fB\-\-full\fR will give more detailed output. This is mainly used for debugging resources that fail to start.
 .TP
-move <resource id> [destination node] [--master]
-Move resource off current node (and optionally onto destination node). If --master is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
+move <resource id> [destination node] [\fB\-\-master\fR]
+Move resource off current node (and optionally onto destination node). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
 .TP
-ban <resource id> [node] [--master]
-Prevent the resource id specified from running on the node (or on the current node it is running on if no node is specified). If --master is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
+ban <resource id> [node] [\fB\-\-master\fR]
+Prevent the resource id specified from running on the node (or on the current node it is running on if no node is specified). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
 .TP
-clear <resource id> [node] [--master]
-Remove constraints created by move and/or ban on the specified resource (and node if specified). If --master is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
+clear <resource id> [node] [\fB\-\-master\fR]
+Remove constraints created by move and/or ban on the specified resource (and node if specified). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
 .TP
 standards
 List available resource agent standards supported by this installation. (OCF, LSB, etc.)
@@ -86,8 +86,8 @@ List available OCF resource agent providers
 agents [standard[:provider]]
 List available agents optionally filtered by standard and provider
 .TP
-update <resource id> [resource options] [op [<operation action>
-<operation options>]...] [meta <meta operations>...] Add/Change options to specified resource, clone or multi\-state resource.  If an operation (op) is specified it will update the first found operation with the same action on the specified resource, if no operation with that action exists then a new operation will be created (WARNING: all current options on the update op will be reset if not specified). If you want to create multiple monitor operations you should use the add_operation & remove_operation commands.
+update <resource id> [resource options] [op [<operation action> <operation options>]...] [meta <meta operations>...]
+Add/Change options to specified resource, clone or multi\-state resource.  If an operation (op) is specified it will update the first found operation with the same action on the specified resource, if no operation with that action exists then a new operation will be created (WARNING: all current options on the update op will be reset if not specified). If you want to create multiple monitor operations you should use the add_operation & remove_operation commands.
 .TP
 op add <resource id> <operation action> [operation properties]
 Add operation for specified resource
@@ -141,23 +141,23 @@ failcount reset <resource id> [node]
 Reset failcount for specified resource on all nodes or only on specified node. This tells the cluster to forget how many times a resource has failed in the past.  This may allow the resource to be started or moved to a more preferred location.
 .SS "cluster"
 .TP
-auth [node] [...] [\-u username] [\-p password] [\-\-local] [\-\-force]
-Authenticate pcs to pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified (authorization tokens are stored in ~/.pcs/tokens or /var/lib/pcsd/tokens for root).  By default all nodes are also authenticated to each other, using --local only authenticates the local node (and does not authenticate the remote nodes with each other).  Using --force forces re-authentication to occur.
+auth [node] [...] [\fB\-u\fR username] [\fB\-p\fR password] [\fB\-\-local\fR] [\fB\-\-force\fR]
+Authenticate pcs to pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified (authorization tokens are stored in ~/.pcs/tokens or /var/lib/pcsd/tokens for root).  By default all nodes are also authenticated to each other, using \fB\-\-local\fR only authenticates the local node (and does not authenticate the remote nodes with each other).  Using \fB\-\-force\fR forces re-authentication to occur.
 .TP
-setup [\-\-start] [\-\-local] [\-\-enable] \-\-name\fR <cluster name> <node1[,node1-altaddr]> [node2[,node2-altaddr]] [..] [--transport <udpu|udp>] [--rrpmode active|passive] [--addr0 <addr/net> [[[--mcast0 <address>] [--mcastport0 <port>] [--ttl0 <ttl>]] | [--broadcast0]] [--addr1 <addr/net> [[[--mcast1 <address>] [--mcastport1 <port>] [--ttl1 <ttl>]] | [--broadcast1]]]] [--wait_for_all=<0|1>] [--auto_tie_breaker=<0|1>] [--last_man_standing=<0|1> [--last_man_standing_window=<time in ms>]] [--token <timeout>] [--join <timeout>] [--consensus <timeout>] [--miss_count_const <count>] [--fail_recv_const <failures>]
-Configure corosync and sync configuration out to listed nodes. \-\-local\fR will only perform changes on the local node, \-\-start\fR will also start the cluster on the specified nodes, \-\-enable\fR will enable corosync and pacemaker on node startup, --transport allows specification of corosync transport (default: udpu). The --wait_for_all, --auto_tie_breaker, --last_man_standing, --last_man_standing_window options are all documented in corosync's votequorum(5) man page. --ipv6 will configure corosync to use ipv6 (instead of ipv4)
+setup [\fB\-\-start\fR] [\fB\-\-local\fR] [\fB\-\-enable\fR] \fB\-\-name\fR <cluster name> <node1[,node1-altaddr]> [node2[,node2-altaddr]] [..] [\fB\-\-transport\fR <udpu|udp>] [\fB\-\-rrpmode\fR active|passive] [\fB\-\-addr0\fR <addr/net> [[[\fB\-\-mcast0\fR <address>] [\fB\-\-mcastport0\fR <port>] [\fB\-\-ttl0\fR <ttl>]] | [\fB\-\-broadcast0\fR]] [\fB\-\-addr1\fR <addr/net> [[[\fB\-\-mcast1\fR <address>] [\fB\-\-mcastport1\fR <port>] [\fB\-\-ttl1\fR <ttl>]] | [\fB\-\-broadcast1\fR]]]] [\fB\-\-wait_for_all\fR=<0|1>] [\fB\-\-auto_tie_breaker\fR=<0|1>] [\fB\-\-last_man_standing\fR=<0|1> [\fB\-\-last_man_standing_window\fR=<time in ms>]] [\fB\-\-token\fR <timeout>] [\fB\-\-join\fR <timeout>] [\fB\-\-consensus\fR <timeout>] [\fB\-\-miss_count_const\fR <count>] [\fB\-\-fail_recv_const\fR <failures>]
+Configure corosync and sync configuration out to listed nodes. \fB\-\-local\fR will only perform changes on the local node, \fB\-\-start\fR will also start the cluster on the specified nodes, \fB\-\-enable\fR will enable corosync and pacemaker on node startup, \fB\-\-transport\fR allows specification of corosync transport (default: udpu). The \fB\-\-wait_for_all\fR, \fB\-\-auto_tie_breaker\fR, \fB\-\-last_man_standing\fR, \fB\-\-last_man_standing_window\fR options are all documented in corosync's votequorum(5) man page. \fB\-\-ipv6\fR will configure corosync to use ipv6 (instead of ipv4)
 
---ipv6 will configure corosync to use ipv6 (instead of ipv4)
+\fB\-\-ipv6\fR will configure corosync to use ipv6 (instead of ipv4)
 
---token <timeout> sets time in milliseconds until a token loss is declared after not receiving a token (default 1000 ms)
+\fB\-\-token\fR <timeout> sets time in milliseconds until a token loss is declared after not receiving a token (default 1000 ms)
 
---join <timeout> sets time in milliseconds to wait for join mesages (default 50 ms)
+\fB\-\-join\fR <timeout> sets time in milliseconds to wait for join mesages (default 50 ms)
 
---consensus <timeout> sets time in milliseconds to wait for consensus to be achieved before starting a new round of membership configuration (default 1200 ms)
+\fB\-\-consensus\fR <timeout> sets time in milliseconds to wait for consensus to be achieved before starting a new round of membership configuration (default 1200 ms)
 
---miss_count_const <count> sets the maximum number of times on receipt of a token a message is checked for retransmission before a retransmission occurs (default 5 messages)
+\fB\-\-miss_count_const\fR <count> sets the maximum number of times on receipt of a token a message is checked for retransmission before a retransmission occurs (default 5 messages)
 
---fail_recv_const <failures> specifies how many rotations of the token without receiving any messages when messages should be received may occur before a new configuration is formed (default 2500 failures)
+\fB\-\-fail_recv_const\fR <failures> specifies how many rotations of the token without receiving any messages when messages should be received may occur before a new configuration is formed (default 2500 failures)
 
 
 Configuring Redundant Ring Protocol (RRP)
@@ -165,33 +165,33 @@ Configuring Redundant Ring Protocol (RRP)
 When using udpu (the default) specifying nodes, specify the ring 0
 address first followed by a ',' and then the ring 1 address.
 
-Example: pcs cluster setup --name cname nodeA-0,nodeA-1 nodeB-0,nodeB-1
+Example: pcs cluster setup \-\-name cname nodeA-0,nodeA-1 nodeB-0,nodeB-1
 
-When using udp, using --addr0 and --addr1 will allow you to configure
+When using udp, using \fB\-\-addr0\fR and \fB\-\-addr1\fR will allow you to configure
 rrp mode for corosync.  It's recommended to use a network (instead of
-IP address) for --addr0 and --addr1 so the same corosync.conf file can
-be used around the cluster.  --mcast0 defaults to 239.255.1.1 and
---mcast1 defaults to 239.255.2.1, --mcastport0/1 default to 5405 and
-ttl defaults to 1. If --broadcast is specified, --mcast0/1,
---mcastport0/1 & --ttl0/1 are ignored.
+IP address) for \fB\-\-addr0\fR and \fB\-\-addr1\fR so the same corosync.conf file can
+be used around the cluster.  \fB\-\-mcast0\fR defaults to 239.255.1.1 and
+\fB\-\-mcast1\fR defaults to 239.255.2.1, \fB\-\-mcastport0/1\fR default to 5405 and
+ttl defaults to 1. If \fB\-\-broadcast\fR is specified, \fB\-\-mcast0/1\fR,
+\fB\-\-mcastport0/1\fR & \fB\-\-ttl0/1\fR are ignored.
 .TP
-start [\-\-all] [node] [...]
+start [\fB\-\-all\fR] [node] [...]
 Start corosync & pacemaker on specified node(s), if a node is not specified then corosync & pacemaker are started on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are started on all nodes.
 .TP
-stop [\-\-all] [node] [...]
+stop [\fB\-\-all\fR] [node] [...]
 Stop corosync & pacemaker on specified node(s), if a node is not specified then corosync & pacemaker are stopped on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are stopped on all nodes.
 .TP
 kill
-Force corosync and pacemaker daemons to stop on the local node (performs kill \fB\-9\fR).
+Force corosync and pacemaker daemons to stop on the local node (performs kill \-9).
 .TP
-enable [\-\-all] [node] [...]
+enable [\fB\-\-all\fR] [node] [...]
 Configure corosync & pacemaker to run on node boot on specified node(s), if node is not specified then corosync & pacemaker are enabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are enabled on all nodes.
 .TP
-disable [\-\-all] [node] [...]
+disable [\fB\-\-all\fR] [node] [...]
 Configure corosync & pacemaker to not run on node boot on specified node(s), if node is not specified then corosync & pacemaker are disabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are disabled on all nodes. (Note: this is the default after installation)
 .TP
 standby [<node>] | \fB\-\-all\fR
-Put specified node into standby mode (the node specified will no longer be able to host resources), if no node or options are specified the current node will be put into standby mode, if --all is specified all nodes will be put into standby mode.
+Put specified node into standby mode (the node specified will no longer be able to host resources), if no node or options are specified the current node will be put into standby mode, if \fB\-\-all\fR is specified all nodes will be put into standby mode.
 .TP
 unstandby [<node>] | \fB\-\-all\fR
 Remove node from standby mode (the node specified will now be able to host resources), if no node or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode.
@@ -223,8 +223,8 @@ Push the raw xml from <filename> to the CIB (Cluster Information Base)
 edit
 Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving
 .TP
-node add <node> [\-\-start] [\-\-enable]
-Add the node to corosync.conf and corosync on all nodes in the cluster and sync the new corosync.conf to the new node.  If \fB\-\-start\fR is specified also start corosync/pacemaker on the new node, if --enable is specified enable corosync/pacemaker on new node
+node add <node> [\fB\-\-start\fR] [\fB\-\-enable\fR]
+Add the node to corosync.conf and corosync on all nodes in the cluster and sync the new corosync.conf to the new node.  If \fB\-\-start\fR is specified also start corosync/pacemaker on the new node, if \fB\-\-enable\fR is specified enable corosync/pacemaker on new node
 .TP
 node remove <node>
 Shutdown specified node and remove it from pacemaker and corosync on all other nodes in the cluster
@@ -244,21 +244,21 @@ Get the corosync.conf from the specified node or from the current node if node n
 reload corosync
 Reload the corosync configuration on the current node
 .TP
-destroy [\-\-all]
-Permanently destroy the cluster on the current node, killing all corosync/pacemaker processes removing all cib files and the corosync.conf file.  Using '\-\-all' will attempt to destroy the cluster on all nodes configure in the corosync.conf file WARNING: This command permantly removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster.
+destroy [\fB\-\-all\fR]
+Permanently destroy the cluster on the current node, killing all corosync/pacemaker processes removing all cib files and the corosync.conf file.  Using \fB\-\-all\fR will attempt to destroy the cluster on all nodes configure in the corosync.conf file.  WARNING: This command permantly removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster.
 .TP
-verify [\-V] [filename]
-Checks the pacemaker configuration (cib) for syntax and common conceptual errors.  If no filename is specified the check is performmed on the currently running cluster.  If '\-V' is used more verbose output will be printed
+verify [\fB\-V\fR] [filename]
+Checks the pacemaker configuration (cib) for syntax and common conceptual errors.  If no filename is specified the check is performmed on the currently running cluster.  If \fB\-V\fR is used more verbose output will be printed
 .TP
-report [\-\-from "YYYY\-M\-D H:M:S" [\-\-to "YYYY\-M\-D" H:M:S"]] dest
-Create a tarball containing everything needed when reporting cluster problems.  If '\-\-from' and '\-\-to' are not used, the report will include the past 24 hours
+report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D" H:M:S"]] dest
+Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours
 .SS "stonith"
 .TP
-show [stonith id] [\-\-full]
+show [stonith id] [\fB\-\-full\fR]
 Show all currently configured stonith devices or if a stonith id is specified show the options for the configured stonith device.  If \fB\-\-full\fR is specified all configured stonith options will be displayed
 .TP
-list [filter] [\-\-nodesc]
-Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If --nodesc is used then descriptions of stontih agents are not printed.
+list [filter] [\fB\-\-nodesc\fR]
+Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of stontih agents are not printed.
 .TP
 describe <stonith agent>
 Show options for specified stonith agent
@@ -290,21 +290,21 @@ Clears the fence levels on the node (or stonith id) specified or clears all fenc
 level verify
 Verifies all fence devices and nodes specified in fence levels exist
 .TP
-fence <node> [\-\-off]
+fence <node> [\fB\-\-off\fR]
 Fence the node specified (if \fB\-\-off\fR is specified, use the 'off' API call to stonith which will turn the node off instead of rebooting it)
 .TP
 confirm <node>
-Confirm that the host specified is currently down WARNING: if this node is not actually down data corruption/cluster failure can occur.
+Confirm that the host specified is currently down.  WARNING: if this node is not actually down data corruption/cluster failure can occur.
 .SS "property"
 .TP
-list|show [<property> | \-\-all | \-\-defaults]
-List property settings (default: lists configured properties) If \fB\-\-defaults\fR is specified will show all property defaults, if \fB\-\-all\fR is specified, current configured properties will be shown with unset properties and their defaults
+list|show [<property> | \fB\-\-all\fR | \fB\-\-defaults\fR]
+List property settings (default: lists configured properties).  If \fB\-\-defaults\fR is specified will show all property defaults, if \fB\-\-all\fR is specified, current configured properties will be shown with unset properties and their defaults.
 .TP
-set [\-\-force] [\-\-node <nodename>] <property>=[<value>]
-Set specific pacemaker properties (if the value is blank then the property is removed from the configuration).  If a property is not recognized by pcs the property will not be created unless the '\-\-force' is used. If --node is used a node attribute is set on the specified node.
+set [\fB\-\-force\fR] [\fB\-\-node\fR <nodename>] <property>=[<value>]
+Set specific pacemaker properties (if the value is blank then the property is removed from the configuration).  If a property is not recognized by pcs the property will not be created unless the \fB\-\-force\fR is used. If \fB\-\-node\fR is used a node attribute is set on the specified node.
 .TP
-unset [\-\-node <nodename>] <property>
-Remove property from configuration (or remove attribute from specified node if --node is used).
+unset [\fB\-\-node\fR <nodename>] <property>
+Remove property from configuration (or remove attribute from specified node if \fB\-\-node\fR is used).
 .SS "constraint"
 .TP
 [list|show] \fB\-\-full\fR
@@ -329,8 +329,8 @@ Creates a location rule on the specified resource where the expression looks lik
 .br
   <expression> and|or <expression>
 .TP
-location show [resources|nodes [node id|resource id]...] [--full]
-List all the current location constraints, if 'resources' is specified location constraints are displayed per resource (default), if 'nodes' is specified location constraints are displayed per node.  If specific nodes or resources are specified then we only show information about them
+location show [resources|nodes [node id|resource id]...] [\fB\-\-full\fR]
+List all the current location constraints, if 'resources' is specified location constraints are displayed per resource (default), if 'nodes' is specified location constraints are displayed per node.  If specific nodes or resources are specified then we only show information about them.  If \fB\-\-full\fR is specified show the internal constraint id's as well.
 .TP
 location add <id> <resource name> <node> <score>
 Add a location constraint with the appropriate id, resource name, node name and score. (For more advanced pacemaker usage)
@@ -338,26 +338,26 @@ Add a location constraint with the appropriate id, resource name, node name and 
 location remove <id> [<resource name> <node> <score>]
 Remove a location constraint with the appropriate id, resource name, node name and score. (For more advanced pacemaker usage)
 .TP
-order show [\-\-full]
-List all current ordering constraints (if '\-\-full' is specified show the internal constraint id's as well).
+order show [\fB\-\-full\fR]
+List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 order [action] <resource id> then [action] <resource id> [options]
-Add an ordering constraint specifying actions (start,stop,promote, demote) and if no action is specified the default action will be start. Available options are kind=Optional/Mandatory/Serialize and symmetrical=true/false
+Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start. Available options are kind=Optional/Mandatory/Serialize and symmetrical=true/false
 .TP
-order set <resource1> <resource2> [resourceN]... [options] [set
-<resourceX> <resourceY> ...] Create an ordered set of resources.
+order set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ...]
+Create an ordered set of resources.
 .TP
 order remove <resource1> [resourceN]...
 Remove resource from any ordering constraint
 .TP
-colocation show [\-\-full]
-List all current colocation constraints (if '\-\-full' is specified show the internal constraint id's as well).
+colocation show [\fB\-\-full\fR]
+List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
-colocation add [master|slave] <source resource id> with [master|slave]
-<target resource id> [score] [options] Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score force <source resource> to run (or not run) with <target resource>. (score defaults to "INFINITY") A role can be master or slave (if no role is specified, it defaults to 'started').
+colocation add [master|slave] <source resource id> with [master|slave] <target resource id> [score] [options]
+Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score force <source resource> to run (or not run) with <target resource>. (score defaults to "INFINITY") A role can be master or slave (if no role is specified, it defaults to 'started').
 .TP
-colocation set <resource1> <resource2> [resourceN]... [setoptions] ...
-[set <resourceX> <resourceY> ...] [setoptions <name>=<value>...] Create a colocation constraint with a resource set
+colocation set <resource1> <resource2> [resourceN]... [setoptions] ... [set <resourceX> <resourceY> ...] [setoptions <name>=<value>...]
+Create a colocation constraint with a resource set
 .TP
 colocation remove <source resource id> <target resource id>
 Remove colocation constraints with <source resource>
@@ -368,8 +368,8 @@ Remove constraint(s) or constraint rules with the specified id(s)
 ref <resource>...
 List constraints referencing specified resource
 .TP
-rule add <constraint id> [<rule type>] [score=<score>] [id=<rule id>]
-<expression|date_expression|date_spec>... Add a rule to a constraint, if score is omitted it defaults to INFINITY, if id is omitted one is generated from the constraint id. The <rule type> should be 'expression' or 'date_expression'
+rule add <constraint id> [<rule type>] [score=<score>] [id=<rule id>] <expression|date_expression|date_spec>...
+Add a rule to a constraint, if score is omitted it defaults to INFINITY, if id is omitted one is generated from the constraint id. The <rule type> should be 'expression' or 'date_expression'
 .TP
 rule remove <rule id>
 Remove a rule if a rule id is specified, if rule is last rule in its constraint, the constraint will be removed
