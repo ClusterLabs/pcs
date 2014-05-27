@@ -1099,12 +1099,7 @@ def resource_clone_create(argv, update = False, passed_dom = None):
     if passed_dom:
         return dom
 
-    xml_resource_string = re.toxml()
-    args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
-    output, retval = utils.run(args)
-
-    if retval != 0:
-        utils.err("unable to create clone\n" + output)
+    utils.replace_cib_configuration(dom)
 
 def resource_clone_master_remove(argv):
     if len(argv) != 1:
@@ -1121,7 +1116,7 @@ def resource_clone_master_remove(argv):
             clone = res.parentNode
             if clone.tagName != "clone" and clone.tagName != "master":
                 utils.err("%s is not in a clone or master/slave" % name)
-            constraint.remove_constraints_containing(clone.getAttribute("id"))
+            constraint.remove_constraints_containing(clone.getAttribute("id"), passed_dom=dom)
             clone.parentNode.appendChild(res)
             clone.parentNode.removeChild(clone)
             found = True
@@ -1133,7 +1128,7 @@ def resource_clone_master_remove(argv):
                 prim = cm.getElementsByTagName("primitive")
                 if len(prim) != 0:
                     prim = prim[0]
-                    constraint.remove_constraints_containing(name)
+                    constraint.remove_constraints_containing(name, passed_dom=dom)
                     cm.parentNode.appendChild(prim)
                     cm.parentNode.removeChild(cm)
                     found = True
@@ -1141,12 +1136,7 @@ def resource_clone_master_remove(argv):
     if not found:
         utils.err("could not find resource or group: %s" % name)
 
-    xml_resource_string = re.toxml()
-    args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
-    output, retval = utils.run(args)
-
-    if retval != 0:
-        utils.err("unable to remove clone\n" + output)
+    utils.replace_cib_configuration(dom)
     
 def resource_master(argv):
     resource_master_create(argv)
@@ -1489,11 +1479,7 @@ def resource_group_add(group_name, resource_ids, passed_dom = None):
         
         if passed_dom:
             return dom
-        xml_resource_string = resources_element.toxml()
-        args = ["cibadmin", "-o", "resources", "-R", "-X", xml_resource_string]
-        output,retval = utils.run(args)
-        if retval != 0:
-            utils.err(output)
+        utils.replace_cib_configuration(dom)
     else:
         utils.err("No resources to add.")
 

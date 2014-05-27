@@ -562,6 +562,9 @@ def run(args, ignore_stderr=False, string_for_stdin=None):
     try:
         if "--debug" in pcs_options:
             print "Running: " + " ".join(args)
+            if string_for_stdin:
+                print "--Debug Input Start--\n" + string_for_stdin
+                print "--Debug Input End--\n"
 
         # Some commands react differently if you give them anything via stdin
         if string_for_stdin != None:

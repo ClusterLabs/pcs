@@ -8,10 +8,13 @@ from pcs_test_functions import pcs,ac
 
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
+large_cib = "large.xml"
+temp_large_cib = "temp-large.xml"
 
 class ResourceTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
+        shutil.copy(large_cib, temp_large_cib)
         shutil.copy("corosync.conf.orig", "corosync.conf")
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
@@ -136,6 +139,10 @@ class ResourceTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
+
+        output, returnVal = pcs(temp_large_cib, "resource create dummy0 Dummy")
+        assert returnVal == 0
+        ac(output, '')
 
 # Verify all resource have been added
         output, returnVal = pcs(temp_cib, "resource show")
@@ -617,6 +624,10 @@ class ResourceTest(unittest.TestCase):
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
         ac(o,' Resource Group: MyGroup\n     A1\t(ocf::heartbeat:Dummy):\tStopped \n     A2\t(ocf::heartbeat:Dummy):\tStopped \n Resource Group: MyGroup2\n     A3\t(ocf::heartbeat:Dummy):\tStopped \n     A4\t(ocf::heartbeat:Dummy):\tStopped \n     A5\t(ocf::heartbeat:Dummy):\tStopped \n')
+
+        output, returnVal = pcs(temp_large_cib, "resource group add dummyGroup dummy1")
+        assert returnVal == 0
+        ac(output, '')
 
     def testGroupOrder(self):
         output, returnVal = pcs(temp_cib, "resource create --no-default-ops A Dummy")
@@ -1297,6 +1308,14 @@ class ResourceTest(unittest.TestCase):
         output,returnVal = pcs(temp_cib, "resource --full")
         assert returnVal == 0
         assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
+
+        output, returnVal = pcs(temp_large_cib, "resource clone dummy1")
+        assert returnVal == 0
+        ac(output, '')
+
+        output, returnVal = pcs(temp_large_cib, "resource unclone dummy1")
+        assert returnVal == 0
+        ac(output, '')
 
     def testGroupRemoveWithConstraints(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy --group AG")

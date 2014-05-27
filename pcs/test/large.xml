@@ -1,0 +1,2763 @@
+<cib admin_epoch="0" cib-last-written="Thu Aug 23 16:49:17 2012" crm_feature_set="3.0.6" dc-uuid="2" epoch="808" have-quorum="0" num_updates="1" update-client="crmd" update-origin="rh7-3" validate-with="pacemaker-1.2">
+  <configuration>
+    <crm_config/>
+    <nodes>
+      <node id="1" uname="rh7-1"/>
+      <node id="2" uname="rh7-2"/>
+    </nodes>
+    <resources>
+      <primitive class="ocf" id="dummy1" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy1-instance_attributes"/>
+        <operations>
+          <op id="dummy1-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy1-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy1-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy1-meta_attributes">
+          <nvpair id="dummy1-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy2" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy2-instance_attributes"/>
+        <operations>
+          <op id="dummy2-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy2-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy2-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy2-meta_attributes">
+          <nvpair id="dummy2-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy3" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy3-instance_attributes"/>
+        <operations>
+          <op id="dummy3-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy3-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy3-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy3-meta_attributes">
+          <nvpair id="dummy3-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy4" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy4-instance_attributes"/>
+        <operations>
+          <op id="dummy4-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy4-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy4-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy4-meta_attributes">
+          <nvpair id="dummy4-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy5" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy5-instance_attributes"/>
+        <operations>
+          <op id="dummy5-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy5-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy5-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy5-meta_attributes">
+          <nvpair id="dummy5-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy6" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy6-instance_attributes"/>
+        <operations>
+          <op id="dummy6-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy6-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy6-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy6-meta_attributes">
+          <nvpair id="dummy6-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy7" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy7-instance_attributes"/>
+        <operations>
+          <op id="dummy7-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy7-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy7-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy7-meta_attributes">
+          <nvpair id="dummy7-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy8" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy8-instance_attributes"/>
+        <operations>
+          <op id="dummy8-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy8-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy8-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy8-meta_attributes">
+          <nvpair id="dummy8-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy9" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy9-instance_attributes"/>
+        <operations>
+          <op id="dummy9-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy9-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy9-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy9-meta_attributes">
+          <nvpair id="dummy9-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy10" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy10-instance_attributes"/>
+        <operations>
+          <op id="dummy10-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy10-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy10-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy10-meta_attributes">
+          <nvpair id="dummy10-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy11" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy11-instance_attributes"/>
+        <operations>
+          <op id="dummy11-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy11-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy11-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy11-meta_attributes">
+          <nvpair id="dummy11-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy12" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy12-instance_attributes"/>
+        <operations>
+          <op id="dummy12-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy12-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy12-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy12-meta_attributes">
+          <nvpair id="dummy12-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy13" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy13-instance_attributes"/>
+        <operations>
+          <op id="dummy13-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy13-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy13-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy13-meta_attributes">
+          <nvpair id="dummy13-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy14" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy14-instance_attributes"/>
+        <operations>
+          <op id="dummy14-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy14-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy14-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy14-meta_attributes">
+          <nvpair id="dummy14-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy15" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy15-instance_attributes"/>
+        <operations>
+          <op id="dummy15-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy15-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy15-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy15-meta_attributes">
+          <nvpair id="dummy15-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy16" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy16-instance_attributes"/>
+        <operations>
+          <op id="dummy16-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy16-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy16-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy16-meta_attributes">
+          <nvpair id="dummy16-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy17" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy17-instance_attributes"/>
+        <operations>
+          <op id="dummy17-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy17-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy17-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy17-meta_attributes">
+          <nvpair id="dummy17-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy18" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy18-instance_attributes"/>
+        <operations>
+          <op id="dummy18-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy18-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy18-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy18-meta_attributes">
+          <nvpair id="dummy18-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy19" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy19-instance_attributes"/>
+        <operations>
+          <op id="dummy19-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy19-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy19-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy19-meta_attributes">
+          <nvpair id="dummy19-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy20" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy20-instance_attributes"/>
+        <operations>
+          <op id="dummy20-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy20-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy20-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy20-meta_attributes">
+          <nvpair id="dummy20-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy21" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy21-instance_attributes"/>
+        <operations>
+          <op id="dummy21-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy21-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy21-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy21-meta_attributes">
+          <nvpair id="dummy21-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy22" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy22-instance_attributes"/>
+        <operations>
+          <op id="dummy22-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy22-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy22-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy22-meta_attributes">
+          <nvpair id="dummy22-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy23" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy23-instance_attributes"/>
+        <operations>
+          <op id="dummy23-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy23-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy23-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy23-meta_attributes">
+          <nvpair id="dummy23-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy24" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy24-instance_attributes"/>
+        <operations>
+          <op id="dummy24-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy24-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy24-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy24-meta_attributes">
+          <nvpair id="dummy24-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy25" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy25-instance_attributes"/>
+        <operations>
+          <op id="dummy25-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy25-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy25-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy25-meta_attributes">
+          <nvpair id="dummy25-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy26" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy26-instance_attributes"/>
+        <operations>
+          <op id="dummy26-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy26-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy26-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy26-meta_attributes">
+          <nvpair id="dummy26-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy27" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy27-instance_attributes"/>
+        <operations>
+          <op id="dummy27-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy27-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy27-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy27-meta_attributes">
+          <nvpair id="dummy27-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy28" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy28-instance_attributes"/>
+        <operations>
+          <op id="dummy28-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy28-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy28-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy28-meta_attributes">
+          <nvpair id="dummy28-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy29" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy29-instance_attributes"/>
+        <operations>
+          <op id="dummy29-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy29-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy29-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy29-meta_attributes">
+          <nvpair id="dummy29-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy30" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy30-instance_attributes"/>
+        <operations>
+          <op id="dummy30-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy30-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy30-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy30-meta_attributes">
+          <nvpair id="dummy30-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy31" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy31-instance_attributes"/>
+        <operations>
+          <op id="dummy31-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy31-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy31-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy31-meta_attributes">
+          <nvpair id="dummy31-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy32" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy32-instance_attributes"/>
+        <operations>
+          <op id="dummy32-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy32-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy32-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy32-meta_attributes">
+          <nvpair id="dummy32-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy33" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy33-instance_attributes"/>
+        <operations>
+          <op id="dummy33-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy33-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy33-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy33-meta_attributes">
+          <nvpair id="dummy33-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy34" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy34-instance_attributes"/>
+        <operations>
+          <op id="dummy34-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy34-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy34-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy34-meta_attributes">
+          <nvpair id="dummy34-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy35" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy35-instance_attributes"/>
+        <operations>
+          <op id="dummy35-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy35-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy35-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy35-meta_attributes">
+          <nvpair id="dummy35-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy36" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy36-instance_attributes"/>
+        <operations>
+          <op id="dummy36-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy36-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy36-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy36-meta_attributes">
+          <nvpair id="dummy36-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy37" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy37-instance_attributes"/>
+        <operations>
+          <op id="dummy37-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy37-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy37-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy37-meta_attributes">
+          <nvpair id="dummy37-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy38" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy38-instance_attributes"/>
+        <operations>
+          <op id="dummy38-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy38-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy38-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy38-meta_attributes">
+          <nvpair id="dummy38-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy39" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy39-instance_attributes"/>
+        <operations>
+          <op id="dummy39-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy39-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy39-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy39-meta_attributes">
+          <nvpair id="dummy39-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy40" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy40-instance_attributes"/>
+        <operations>
+          <op id="dummy40-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy40-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy40-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy40-meta_attributes">
+          <nvpair id="dummy40-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy41" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy41-instance_attributes"/>
+        <operations>
+          <op id="dummy41-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy41-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy41-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy41-meta_attributes">
+          <nvpair id="dummy41-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy42" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy42-instance_attributes"/>
+        <operations>
+          <op id="dummy42-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy42-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy42-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy42-meta_attributes">
+          <nvpair id="dummy42-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy43" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy43-instance_attributes"/>
+        <operations>
+          <op id="dummy43-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy43-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy43-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy43-meta_attributes">
+          <nvpair id="dummy43-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy44" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy44-instance_attributes"/>
+        <operations>
+          <op id="dummy44-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy44-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy44-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy44-meta_attributes">
+          <nvpair id="dummy44-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy45" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy45-instance_attributes"/>
+        <operations>
+          <op id="dummy45-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy45-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy45-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy45-meta_attributes">
+          <nvpair id="dummy45-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy46" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy46-instance_attributes"/>
+        <operations>
+          <op id="dummy46-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy46-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy46-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy46-meta_attributes">
+          <nvpair id="dummy46-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy47" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy47-instance_attributes"/>
+        <operations>
+          <op id="dummy47-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy47-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy47-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy47-meta_attributes">
+          <nvpair id="dummy47-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy48" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy48-instance_attributes"/>
+        <operations>
+          <op id="dummy48-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy48-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy48-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy48-meta_attributes">
+          <nvpair id="dummy48-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy49" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy49-instance_attributes"/>
+        <operations>
+          <op id="dummy49-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy49-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy49-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy49-meta_attributes">
+          <nvpair id="dummy49-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy50" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy50-instance_attributes"/>
+        <operations>
+          <op id="dummy50-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy50-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy50-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy50-meta_attributes">
+          <nvpair id="dummy50-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy51" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy51-instance_attributes"/>
+        <operations>
+          <op id="dummy51-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy51-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy51-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy51-meta_attributes">
+          <nvpair id="dummy51-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy52" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy52-instance_attributes"/>
+        <operations>
+          <op id="dummy52-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy52-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy52-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy52-meta_attributes">
+          <nvpair id="dummy52-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy53" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy53-instance_attributes"/>
+        <operations>
+          <op id="dummy53-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy53-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy53-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy53-meta_attributes">
+          <nvpair id="dummy53-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy54" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy54-instance_attributes"/>
+        <operations>
+          <op id="dummy54-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy54-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy54-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy54-meta_attributes">
+          <nvpair id="dummy54-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy55" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy55-instance_attributes"/>
+        <operations>
+          <op id="dummy55-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy55-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy55-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy55-meta_attributes">
+          <nvpair id="dummy55-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy56" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy56-instance_attributes"/>
+        <operations>
+          <op id="dummy56-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy56-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy56-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy56-meta_attributes">
+          <nvpair id="dummy56-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy57" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy57-instance_attributes"/>
+        <operations>
+          <op id="dummy57-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy57-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy57-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy57-meta_attributes">
+          <nvpair id="dummy57-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy58" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy58-instance_attributes"/>
+        <operations>
+          <op id="dummy58-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy58-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy58-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy58-meta_attributes">
+          <nvpair id="dummy58-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy59" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy59-instance_attributes"/>
+        <operations>
+          <op id="dummy59-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy59-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy59-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy59-meta_attributes">
+          <nvpair id="dummy59-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy60" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy60-instance_attributes"/>
+        <operations>
+          <op id="dummy60-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy60-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy60-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy60-meta_attributes">
+          <nvpair id="dummy60-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy61" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy61-instance_attributes"/>
+        <operations>
+          <op id="dummy61-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy61-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy61-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy61-meta_attributes">
+          <nvpair id="dummy61-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy62" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy62-instance_attributes"/>
+        <operations>
+          <op id="dummy62-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy62-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy62-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy62-meta_attributes">
+          <nvpair id="dummy62-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy63" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy63-instance_attributes"/>
+        <operations>
+          <op id="dummy63-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy63-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy63-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy63-meta_attributes">
+          <nvpair id="dummy63-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy64" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy64-instance_attributes"/>
+        <operations>
+          <op id="dummy64-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy64-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy64-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy64-meta_attributes">
+          <nvpair id="dummy64-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy65" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy65-instance_attributes"/>
+        <operations>
+          <op id="dummy65-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy65-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy65-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy65-meta_attributes">
+          <nvpair id="dummy65-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy66" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy66-instance_attributes"/>
+        <operations>
+          <op id="dummy66-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy66-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy66-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy66-meta_attributes">
+          <nvpair id="dummy66-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy67" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy67-instance_attributes"/>
+        <operations>
+          <op id="dummy67-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy67-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy67-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy67-meta_attributes">
+          <nvpair id="dummy67-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy68" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy68-instance_attributes"/>
+        <operations>
+          <op id="dummy68-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy68-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy68-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy68-meta_attributes">
+          <nvpair id="dummy68-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy69" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy69-instance_attributes"/>
+        <operations>
+          <op id="dummy69-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy69-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy69-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy69-meta_attributes">
+          <nvpair id="dummy69-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy70" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy70-instance_attributes"/>
+        <operations>
+          <op id="dummy70-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy70-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy70-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy70-meta_attributes">
+          <nvpair id="dummy70-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy71" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy71-instance_attributes"/>
+        <operations>
+          <op id="dummy71-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy71-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy71-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy71-meta_attributes">
+          <nvpair id="dummy71-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy72" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy72-instance_attributes"/>
+        <operations>
+          <op id="dummy72-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy72-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy72-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy72-meta_attributes">
+          <nvpair id="dummy72-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy73" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy73-instance_attributes"/>
+        <operations>
+          <op id="dummy73-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy73-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy73-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy73-meta_attributes">
+          <nvpair id="dummy73-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy74" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy74-instance_attributes"/>
+        <operations>
+          <op id="dummy74-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy74-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy74-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy74-meta_attributes">
+          <nvpair id="dummy74-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy75" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy75-instance_attributes"/>
+        <operations>
+          <op id="dummy75-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy75-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy75-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy75-meta_attributes">
+          <nvpair id="dummy75-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy76" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy76-instance_attributes"/>
+        <operations>
+          <op id="dummy76-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy76-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy76-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy76-meta_attributes">
+          <nvpair id="dummy76-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy77" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy77-instance_attributes"/>
+        <operations>
+          <op id="dummy77-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy77-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy77-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy77-meta_attributes">
+          <nvpair id="dummy77-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy78" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy78-instance_attributes"/>
+        <operations>
+          <op id="dummy78-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy78-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy78-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy78-meta_attributes">
+          <nvpair id="dummy78-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy79" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy79-instance_attributes"/>
+        <operations>
+          <op id="dummy79-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy79-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy79-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy79-meta_attributes">
+          <nvpair id="dummy79-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy80" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy80-instance_attributes"/>
+        <operations>
+          <op id="dummy80-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy80-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy80-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy80-meta_attributes">
+          <nvpair id="dummy80-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy81" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy81-instance_attributes"/>
+        <operations>
+          <op id="dummy81-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy81-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy81-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy81-meta_attributes">
+          <nvpair id="dummy81-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy82" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy82-instance_attributes"/>
+        <operations>
+          <op id="dummy82-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy82-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy82-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy82-meta_attributes">
+          <nvpair id="dummy82-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy83" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy83-instance_attributes"/>
+        <operations>
+          <op id="dummy83-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy83-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy83-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy83-meta_attributes">
+          <nvpair id="dummy83-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy84" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy84-instance_attributes"/>
+        <operations>
+          <op id="dummy84-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy84-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy84-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy84-meta_attributes">
+          <nvpair id="dummy84-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy85" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy85-instance_attributes"/>
+        <operations>
+          <op id="dummy85-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy85-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy85-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy85-meta_attributes">
+          <nvpair id="dummy85-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy86" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy86-instance_attributes"/>
+        <operations>
+          <op id="dummy86-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy86-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy86-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy86-meta_attributes">
+          <nvpair id="dummy86-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy87" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy87-instance_attributes"/>
+        <operations>
+          <op id="dummy87-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy87-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy87-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy87-meta_attributes">
+          <nvpair id="dummy87-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy88" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy88-instance_attributes"/>
+        <operations>
+          <op id="dummy88-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy88-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy88-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy88-meta_attributes">
+          <nvpair id="dummy88-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy89" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy89-instance_attributes"/>
+        <operations>
+          <op id="dummy89-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy89-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy89-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy89-meta_attributes">
+          <nvpair id="dummy89-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy90" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy90-instance_attributes"/>
+        <operations>
+          <op id="dummy90-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy90-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy90-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy90-meta_attributes">
+          <nvpair id="dummy90-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy91" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy91-instance_attributes"/>
+        <operations>
+          <op id="dummy91-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy91-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy91-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy91-meta_attributes">
+          <nvpair id="dummy91-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy92" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy92-instance_attributes"/>
+        <operations>
+          <op id="dummy92-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy92-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy92-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy92-meta_attributes">
+          <nvpair id="dummy92-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy93" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy93-instance_attributes"/>
+        <operations>
+          <op id="dummy93-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy93-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy93-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy93-meta_attributes">
+          <nvpair id="dummy93-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy94" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy94-instance_attributes"/>
+        <operations>
+          <op id="dummy94-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy94-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy94-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy94-meta_attributes">
+          <nvpair id="dummy94-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy95" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy95-instance_attributes"/>
+        <operations>
+          <op id="dummy95-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy95-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy95-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy95-meta_attributes">
+          <nvpair id="dummy95-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy96" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy96-instance_attributes"/>
+        <operations>
+          <op id="dummy96-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy96-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy96-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy96-meta_attributes">
+          <nvpair id="dummy96-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy97" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy97-instance_attributes"/>
+        <operations>
+          <op id="dummy97-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy97-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy97-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy97-meta_attributes">
+          <nvpair id="dummy97-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy98" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy98-instance_attributes"/>
+        <operations>
+          <op id="dummy98-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy98-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy98-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy98-meta_attributes">
+          <nvpair id="dummy98-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy99" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy99-instance_attributes"/>
+        <operations>
+          <op id="dummy99-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy99-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy99-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy99-meta_attributes">
+          <nvpair id="dummy99-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy100" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy100-instance_attributes"/>
+        <operations>
+          <op id="dummy100-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy100-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy100-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy100-meta_attributes">
+          <nvpair id="dummy100-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy101" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy101-instance_attributes"/>
+        <operations>
+          <op id="dummy101-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy101-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy101-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy101-meta_attributes">
+          <nvpair id="dummy101-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy102" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy102-instance_attributes"/>
+        <operations>
+          <op id="dummy102-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy102-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy102-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy102-meta_attributes">
+          <nvpair id="dummy102-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy103" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy103-instance_attributes"/>
+        <operations>
+          <op id="dummy103-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy103-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy103-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy103-meta_attributes">
+          <nvpair id="dummy103-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy104" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy104-instance_attributes"/>
+        <operations>
+          <op id="dummy104-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy104-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy104-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy104-meta_attributes">
+          <nvpair id="dummy104-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy105" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy105-instance_attributes"/>
+        <operations>
+          <op id="dummy105-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy105-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy105-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy105-meta_attributes">
+          <nvpair id="dummy105-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy106" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy106-instance_attributes"/>
+        <operations>
+          <op id="dummy106-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy106-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy106-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy106-meta_attributes">
+          <nvpair id="dummy106-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy107" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy107-instance_attributes"/>
+        <operations>
+          <op id="dummy107-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy107-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy107-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy107-meta_attributes">
+          <nvpair id="dummy107-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy108" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy108-instance_attributes"/>
+        <operations>
+          <op id="dummy108-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy108-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy108-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy108-meta_attributes">
+          <nvpair id="dummy108-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy109" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy109-instance_attributes"/>
+        <operations>
+          <op id="dummy109-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy109-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy109-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy109-meta_attributes">
+          <nvpair id="dummy109-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy110" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy110-instance_attributes"/>
+        <operations>
+          <op id="dummy110-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy110-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy110-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy110-meta_attributes">
+          <nvpair id="dummy110-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy111" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy111-instance_attributes"/>
+        <operations>
+          <op id="dummy111-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy111-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy111-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy111-meta_attributes">
+          <nvpair id="dummy111-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy112" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy112-instance_attributes"/>
+        <operations>
+          <op id="dummy112-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy112-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy112-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy112-meta_attributes">
+          <nvpair id="dummy112-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy113" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy113-instance_attributes"/>
+        <operations>
+          <op id="dummy113-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy113-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy113-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy113-meta_attributes">
+          <nvpair id="dummy113-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy114" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy114-instance_attributes"/>
+        <operations>
+          <op id="dummy114-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy114-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy114-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy114-meta_attributes">
+          <nvpair id="dummy114-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy115" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy115-instance_attributes"/>
+        <operations>
+          <op id="dummy115-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy115-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy115-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy115-meta_attributes">
+          <nvpair id="dummy115-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy116" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy116-instance_attributes"/>
+        <operations>
+          <op id="dummy116-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy116-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy116-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy116-meta_attributes">
+          <nvpair id="dummy116-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy117" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy117-instance_attributes"/>
+        <operations>
+          <op id="dummy117-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy117-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy117-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy117-meta_attributes">
+          <nvpair id="dummy117-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy118" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy118-instance_attributes"/>
+        <operations>
+          <op id="dummy118-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy118-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy118-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy118-meta_attributes">
+          <nvpair id="dummy118-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy119" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy119-instance_attributes"/>
+        <operations>
+          <op id="dummy119-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy119-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy119-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy119-meta_attributes">
+          <nvpair id="dummy119-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy120" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy120-instance_attributes"/>
+        <operations>
+          <op id="dummy120-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy120-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy120-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy120-meta_attributes">
+          <nvpair id="dummy120-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy121" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy121-instance_attributes"/>
+        <operations>
+          <op id="dummy121-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy121-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy121-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy121-meta_attributes">
+          <nvpair id="dummy121-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy122" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy122-instance_attributes"/>
+        <operations>
+          <op id="dummy122-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy122-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy122-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy122-meta_attributes">
+          <nvpair id="dummy122-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy123" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy123-instance_attributes"/>
+        <operations>
+          <op id="dummy123-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy123-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy123-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy123-meta_attributes">
+          <nvpair id="dummy123-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy124" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy124-instance_attributes"/>
+        <operations>
+          <op id="dummy124-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy124-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy124-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy124-meta_attributes">
+          <nvpair id="dummy124-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy125" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy125-instance_attributes"/>
+        <operations>
+          <op id="dummy125-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy125-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy125-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy125-meta_attributes">
+          <nvpair id="dummy125-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy126" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy126-instance_attributes"/>
+        <operations>
+          <op id="dummy126-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy126-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy126-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy126-meta_attributes">
+          <nvpair id="dummy126-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy127" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy127-instance_attributes"/>
+        <operations>
+          <op id="dummy127-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy127-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy127-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy127-meta_attributes">
+          <nvpair id="dummy127-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy128" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy128-instance_attributes"/>
+        <operations>
+          <op id="dummy128-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy128-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy128-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy128-meta_attributes">
+          <nvpair id="dummy128-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy129" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy129-instance_attributes"/>
+        <operations>
+          <op id="dummy129-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy129-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy129-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy129-meta_attributes">
+          <nvpair id="dummy129-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy130" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy130-instance_attributes"/>
+        <operations>
+          <op id="dummy130-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy130-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy130-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy130-meta_attributes">
+          <nvpair id="dummy130-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy131" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy131-instance_attributes"/>
+        <operations>
+          <op id="dummy131-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy131-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy131-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy131-meta_attributes">
+          <nvpair id="dummy131-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy132" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy132-instance_attributes"/>
+        <operations>
+          <op id="dummy132-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy132-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy132-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy132-meta_attributes">
+          <nvpair id="dummy132-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy133" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy133-instance_attributes"/>
+        <operations>
+          <op id="dummy133-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy133-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy133-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy133-meta_attributes">
+          <nvpair id="dummy133-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy134" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy134-instance_attributes"/>
+        <operations>
+          <op id="dummy134-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy134-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy134-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy134-meta_attributes">
+          <nvpair id="dummy134-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy135" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy135-instance_attributes"/>
+        <operations>
+          <op id="dummy135-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy135-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy135-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy135-meta_attributes">
+          <nvpair id="dummy135-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy136" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy136-instance_attributes"/>
+        <operations>
+          <op id="dummy136-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy136-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy136-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy136-meta_attributes">
+          <nvpair id="dummy136-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy137" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy137-instance_attributes"/>
+        <operations>
+          <op id="dummy137-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy137-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy137-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy137-meta_attributes">
+          <nvpair id="dummy137-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy138" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy138-instance_attributes"/>
+        <operations>
+          <op id="dummy138-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy138-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy138-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy138-meta_attributes">
+          <nvpair id="dummy138-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy139" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy139-instance_attributes"/>
+        <operations>
+          <op id="dummy139-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy139-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy139-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy139-meta_attributes">
+          <nvpair id="dummy139-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy140" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy140-instance_attributes"/>
+        <operations>
+          <op id="dummy140-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy140-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy140-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy140-meta_attributes">
+          <nvpair id="dummy140-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy141" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy141-instance_attributes"/>
+        <operations>
+          <op id="dummy141-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy141-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy141-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy141-meta_attributes">
+          <nvpair id="dummy141-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy142" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy142-instance_attributes"/>
+        <operations>
+          <op id="dummy142-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy142-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy142-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy142-meta_attributes">
+          <nvpair id="dummy142-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy143" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy143-instance_attributes"/>
+        <operations>
+          <op id="dummy143-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy143-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy143-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy143-meta_attributes">
+          <nvpair id="dummy143-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy144" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy144-instance_attributes"/>
+        <operations>
+          <op id="dummy144-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy144-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy144-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy144-meta_attributes">
+          <nvpair id="dummy144-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy145" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy145-instance_attributes"/>
+        <operations>
+          <op id="dummy145-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy145-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy145-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy145-meta_attributes">
+          <nvpair id="dummy145-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy146" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy146-instance_attributes"/>
+        <operations>
+          <op id="dummy146-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy146-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy146-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy146-meta_attributes">
+          <nvpair id="dummy146-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy147" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy147-instance_attributes"/>
+        <operations>
+          <op id="dummy147-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy147-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy147-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy147-meta_attributes">
+          <nvpair id="dummy147-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy148" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy148-instance_attributes"/>
+        <operations>
+          <op id="dummy148-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy148-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy148-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy148-meta_attributes">
+          <nvpair id="dummy148-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy149" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy149-instance_attributes"/>
+        <operations>
+          <op id="dummy149-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy149-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy149-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy149-meta_attributes">
+          <nvpair id="dummy149-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy150" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy150-instance_attributes"/>
+        <operations>
+          <op id="dummy150-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy150-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy150-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy150-meta_attributes">
+          <nvpair id="dummy150-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy151" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy151-instance_attributes"/>
+        <operations>
+          <op id="dummy151-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy151-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy151-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy151-meta_attributes">
+          <nvpair id="dummy151-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy152" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy152-instance_attributes"/>
+        <operations>
+          <op id="dummy152-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy152-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy152-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy152-meta_attributes">
+          <nvpair id="dummy152-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy153" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy153-instance_attributes"/>
+        <operations>
+          <op id="dummy153-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy153-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy153-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy153-meta_attributes">
+          <nvpair id="dummy153-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy154" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy154-instance_attributes"/>
+        <operations>
+          <op id="dummy154-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy154-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy154-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy154-meta_attributes">
+          <nvpair id="dummy154-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy155" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy155-instance_attributes"/>
+        <operations>
+          <op id="dummy155-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy155-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy155-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy155-meta_attributes">
+          <nvpair id="dummy155-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy156" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy156-instance_attributes"/>
+        <operations>
+          <op id="dummy156-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy156-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy156-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy156-meta_attributes">
+          <nvpair id="dummy156-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy157" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy157-instance_attributes"/>
+        <operations>
+          <op id="dummy157-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy157-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy157-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy157-meta_attributes">
+          <nvpair id="dummy157-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy158" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy158-instance_attributes"/>
+        <operations>
+          <op id="dummy158-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy158-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy158-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy158-meta_attributes">
+          <nvpair id="dummy158-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy159" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy159-instance_attributes"/>
+        <operations>
+          <op id="dummy159-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy159-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy159-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy159-meta_attributes">
+          <nvpair id="dummy159-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy160" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy160-instance_attributes"/>
+        <operations>
+          <op id="dummy160-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy160-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy160-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy160-meta_attributes">
+          <nvpair id="dummy160-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy161" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy161-instance_attributes"/>
+        <operations>
+          <op id="dummy161-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy161-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy161-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy161-meta_attributes">
+          <nvpair id="dummy161-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy162" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy162-instance_attributes"/>
+        <operations>
+          <op id="dummy162-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy162-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy162-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy162-meta_attributes">
+          <nvpair id="dummy162-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy163" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy163-instance_attributes"/>
+        <operations>
+          <op id="dummy163-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy163-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy163-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy163-meta_attributes">
+          <nvpair id="dummy163-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy164" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy164-instance_attributes"/>
+        <operations>
+          <op id="dummy164-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy164-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy164-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy164-meta_attributes">
+          <nvpair id="dummy164-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy165" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy165-instance_attributes"/>
+        <operations>
+          <op id="dummy165-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy165-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy165-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy165-meta_attributes">
+          <nvpair id="dummy165-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy166" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy166-instance_attributes"/>
+        <operations>
+          <op id="dummy166-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy166-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy166-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy166-meta_attributes">
+          <nvpair id="dummy166-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy167" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy167-instance_attributes"/>
+        <operations>
+          <op id="dummy167-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy167-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy167-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy167-meta_attributes">
+          <nvpair id="dummy167-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy168" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy168-instance_attributes"/>
+        <operations>
+          <op id="dummy168-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy168-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy168-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy168-meta_attributes">
+          <nvpair id="dummy168-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy169" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy169-instance_attributes"/>
+        <operations>
+          <op id="dummy169-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy169-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy169-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy169-meta_attributes">
+          <nvpair id="dummy169-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy170" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy170-instance_attributes"/>
+        <operations>
+          <op id="dummy170-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy170-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy170-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy170-meta_attributes">
+          <nvpair id="dummy170-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy171" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy171-instance_attributes"/>
+        <operations>
+          <op id="dummy171-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy171-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy171-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy171-meta_attributes">
+          <nvpair id="dummy171-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy172" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy172-instance_attributes"/>
+        <operations>
+          <op id="dummy172-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy172-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy172-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy172-meta_attributes">
+          <nvpair id="dummy172-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy173" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy173-instance_attributes"/>
+        <operations>
+          <op id="dummy173-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy173-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy173-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy173-meta_attributes">
+          <nvpair id="dummy173-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy174" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy174-instance_attributes"/>
+        <operations>
+          <op id="dummy174-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy174-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy174-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy174-meta_attributes">
+          <nvpair id="dummy174-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy175" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy175-instance_attributes"/>
+        <operations>
+          <op id="dummy175-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy175-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy175-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy175-meta_attributes">
+          <nvpair id="dummy175-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy176" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy176-instance_attributes"/>
+        <operations>
+          <op id="dummy176-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy176-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy176-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy176-meta_attributes">
+          <nvpair id="dummy176-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy177" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy177-instance_attributes"/>
+        <operations>
+          <op id="dummy177-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy177-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy177-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy177-meta_attributes">
+          <nvpair id="dummy177-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy178" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy178-instance_attributes"/>
+        <operations>
+          <op id="dummy178-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy178-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy178-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy178-meta_attributes">
+          <nvpair id="dummy178-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy179" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy179-instance_attributes"/>
+        <operations>
+          <op id="dummy179-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy179-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy179-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy179-meta_attributes">
+          <nvpair id="dummy179-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy180" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy180-instance_attributes"/>
+        <operations>
+          <op id="dummy180-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy180-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy180-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy180-meta_attributes">
+          <nvpair id="dummy180-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy181" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy181-instance_attributes"/>
+        <operations>
+          <op id="dummy181-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy181-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy181-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy181-meta_attributes">
+          <nvpair id="dummy181-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy182" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy182-instance_attributes"/>
+        <operations>
+          <op id="dummy182-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy182-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy182-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy182-meta_attributes">
+          <nvpair id="dummy182-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy183" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy183-instance_attributes"/>
+        <operations>
+          <op id="dummy183-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy183-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy183-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy183-meta_attributes">
+          <nvpair id="dummy183-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy184" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy184-instance_attributes"/>
+        <operations>
+          <op id="dummy184-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy184-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy184-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy184-meta_attributes">
+          <nvpair id="dummy184-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy185" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy185-instance_attributes"/>
+        <operations>
+          <op id="dummy185-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy185-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy185-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy185-meta_attributes">
+          <nvpair id="dummy185-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy186" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy186-instance_attributes"/>
+        <operations>
+          <op id="dummy186-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy186-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy186-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy186-meta_attributes">
+          <nvpair id="dummy186-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy187" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy187-instance_attributes"/>
+        <operations>
+          <op id="dummy187-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy187-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy187-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy187-meta_attributes">
+          <nvpair id="dummy187-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy188" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy188-instance_attributes"/>
+        <operations>
+          <op id="dummy188-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy188-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy188-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy188-meta_attributes">
+          <nvpair id="dummy188-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy189" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy189-instance_attributes"/>
+        <operations>
+          <op id="dummy189-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy189-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy189-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy189-meta_attributes">
+          <nvpair id="dummy189-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy190" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy190-instance_attributes"/>
+        <operations>
+          <op id="dummy190-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy190-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy190-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy190-meta_attributes">
+          <nvpair id="dummy190-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy191" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy191-instance_attributes"/>
+        <operations>
+          <op id="dummy191-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy191-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy191-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy191-meta_attributes">
+          <nvpair id="dummy191-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy192" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy192-instance_attributes"/>
+        <operations>
+          <op id="dummy192-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy192-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy192-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy192-meta_attributes">
+          <nvpair id="dummy192-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy193" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy193-instance_attributes"/>
+        <operations>
+          <op id="dummy193-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy193-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy193-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy193-meta_attributes">
+          <nvpair id="dummy193-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy194" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy194-instance_attributes"/>
+        <operations>
+          <op id="dummy194-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy194-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy194-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy194-meta_attributes">
+          <nvpair id="dummy194-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy195" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy195-instance_attributes"/>
+        <operations>
+          <op id="dummy195-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy195-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy195-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy195-meta_attributes">
+          <nvpair id="dummy195-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy196" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy196-instance_attributes"/>
+        <operations>
+          <op id="dummy196-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy196-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy196-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy196-meta_attributes">
+          <nvpair id="dummy196-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy197" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy197-instance_attributes"/>
+        <operations>
+          <op id="dummy197-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy197-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy197-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy197-meta_attributes">
+          <nvpair id="dummy197-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy198" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy198-instance_attributes"/>
+        <operations>
+          <op id="dummy198-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy198-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy198-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy198-meta_attributes">
+          <nvpair id="dummy198-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy199" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy199-instance_attributes"/>
+        <operations>
+          <op id="dummy199-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy199-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy199-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy199-meta_attributes">
+          <nvpair id="dummy199-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy200" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy200-instance_attributes"/>
+        <operations>
+          <op id="dummy200-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy200-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy200-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy200-meta_attributes">
+          <nvpair id="dummy200-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy201" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy201-instance_attributes"/>
+        <operations>
+          <op id="dummy201-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy201-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy201-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy201-meta_attributes">
+          <nvpair id="dummy201-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy202" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy202-instance_attributes"/>
+        <operations>
+          <op id="dummy202-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy202-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy202-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy202-meta_attributes">
+          <nvpair id="dummy202-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy203" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy203-instance_attributes"/>
+        <operations>
+          <op id="dummy203-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy203-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy203-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy203-meta_attributes">
+          <nvpair id="dummy203-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy204" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy204-instance_attributes"/>
+        <operations>
+          <op id="dummy204-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy204-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy204-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy204-meta_attributes">
+          <nvpair id="dummy204-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy205" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy205-instance_attributes"/>
+        <operations>
+          <op id="dummy205-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy205-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy205-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy205-meta_attributes">
+          <nvpair id="dummy205-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy206" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy206-instance_attributes"/>
+        <operations>
+          <op id="dummy206-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy206-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy206-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy206-meta_attributes">
+          <nvpair id="dummy206-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy207" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy207-instance_attributes"/>
+        <operations>
+          <op id="dummy207-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy207-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy207-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy207-meta_attributes">
+          <nvpair id="dummy207-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy208" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy208-instance_attributes"/>
+        <operations>
+          <op id="dummy208-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy208-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy208-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy208-meta_attributes">
+          <nvpair id="dummy208-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy209" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy209-instance_attributes"/>
+        <operations>
+          <op id="dummy209-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy209-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy209-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy209-meta_attributes">
+          <nvpair id="dummy209-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy210" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy210-instance_attributes"/>
+        <operations>
+          <op id="dummy210-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy210-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy210-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy210-meta_attributes">
+          <nvpair id="dummy210-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy211" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy211-instance_attributes"/>
+        <operations>
+          <op id="dummy211-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy211-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy211-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy211-meta_attributes">
+          <nvpair id="dummy211-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy212" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy212-instance_attributes"/>
+        <operations>
+          <op id="dummy212-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy212-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy212-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy212-meta_attributes">
+          <nvpair id="dummy212-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy213" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy213-instance_attributes"/>
+        <operations>
+          <op id="dummy213-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy213-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy213-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy213-meta_attributes">
+          <nvpair id="dummy213-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy214" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy214-instance_attributes"/>
+        <operations>
+          <op id="dummy214-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy214-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy214-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy214-meta_attributes">
+          <nvpair id="dummy214-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy215" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy215-instance_attributes"/>
+        <operations>
+          <op id="dummy215-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy215-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy215-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy215-meta_attributes">
+          <nvpair id="dummy215-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy216" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy216-instance_attributes"/>
+        <operations>
+          <op id="dummy216-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy216-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy216-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy216-meta_attributes">
+          <nvpair id="dummy216-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy217" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy217-instance_attributes"/>
+        <operations>
+          <op id="dummy217-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy217-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy217-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy217-meta_attributes">
+          <nvpair id="dummy217-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy218" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy218-instance_attributes"/>
+        <operations>
+          <op id="dummy218-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy218-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy218-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy218-meta_attributes">
+          <nvpair id="dummy218-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy219" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy219-instance_attributes"/>
+        <operations>
+          <op id="dummy219-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy219-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy219-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy219-meta_attributes">
+          <nvpair id="dummy219-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy220" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy220-instance_attributes"/>
+        <operations>
+          <op id="dummy220-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy220-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy220-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy220-meta_attributes">
+          <nvpair id="dummy220-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy221" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy221-instance_attributes"/>
+        <operations>
+          <op id="dummy221-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy221-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy221-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy221-meta_attributes">
+          <nvpair id="dummy221-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy222" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy222-instance_attributes"/>
+        <operations>
+          <op id="dummy222-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy222-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy222-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy222-meta_attributes">
+          <nvpair id="dummy222-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy223" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy223-instance_attributes"/>
+        <operations>
+          <op id="dummy223-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy223-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy223-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy223-meta_attributes">
+          <nvpair id="dummy223-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy224" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy224-instance_attributes"/>
+        <operations>
+          <op id="dummy224-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy224-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy224-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy224-meta_attributes">
+          <nvpair id="dummy224-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy225" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy225-instance_attributes"/>
+        <operations>
+          <op id="dummy225-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy225-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy225-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy225-meta_attributes">
+          <nvpair id="dummy225-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy226" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy226-instance_attributes"/>
+        <operations>
+          <op id="dummy226-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy226-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy226-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy226-meta_attributes">
+          <nvpair id="dummy226-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy227" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy227-instance_attributes"/>
+        <operations>
+          <op id="dummy227-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy227-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy227-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy227-meta_attributes">
+          <nvpair id="dummy227-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy228" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy228-instance_attributes"/>
+        <operations>
+          <op id="dummy228-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy228-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy228-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy228-meta_attributes">
+          <nvpair id="dummy228-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy229" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy229-instance_attributes"/>
+        <operations>
+          <op id="dummy229-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy229-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy229-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy229-meta_attributes">
+          <nvpair id="dummy229-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy230" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy230-instance_attributes"/>
+        <operations>
+          <op id="dummy230-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy230-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy230-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy230-meta_attributes">
+          <nvpair id="dummy230-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy231" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy231-instance_attributes"/>
+        <operations>
+          <op id="dummy231-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy231-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy231-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy231-meta_attributes">
+          <nvpair id="dummy231-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy232" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy232-instance_attributes"/>
+        <operations>
+          <op id="dummy232-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy232-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy232-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy232-meta_attributes">
+          <nvpair id="dummy232-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy233" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy233-instance_attributes"/>
+        <operations>
+          <op id="dummy233-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy233-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy233-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy233-meta_attributes">
+          <nvpair id="dummy233-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy234" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy234-instance_attributes"/>
+        <operations>
+          <op id="dummy234-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy234-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy234-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy234-meta_attributes">
+          <nvpair id="dummy234-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy235" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy235-instance_attributes"/>
+        <operations>
+          <op id="dummy235-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy235-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy235-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy235-meta_attributes">
+          <nvpair id="dummy235-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy236" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy236-instance_attributes"/>
+        <operations>
+          <op id="dummy236-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy236-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy236-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy236-meta_attributes">
+          <nvpair id="dummy236-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy237" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy237-instance_attributes"/>
+        <operations>
+          <op id="dummy237-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy237-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy237-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy237-meta_attributes">
+          <nvpair id="dummy237-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy238" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy238-instance_attributes"/>
+        <operations>
+          <op id="dummy238-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy238-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy238-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy238-meta_attributes">
+          <nvpair id="dummy238-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy239" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy239-instance_attributes"/>
+        <operations>
+          <op id="dummy239-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy239-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy239-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy239-meta_attributes">
+          <nvpair id="dummy239-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy240" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy240-instance_attributes"/>
+        <operations>
+          <op id="dummy240-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy240-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy240-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy240-meta_attributes">
+          <nvpair id="dummy240-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy241" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy241-instance_attributes"/>
+        <operations>
+          <op id="dummy241-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy241-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy241-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy241-meta_attributes">
+          <nvpair id="dummy241-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy242" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy242-instance_attributes"/>
+        <operations>
+          <op id="dummy242-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy242-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy242-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy242-meta_attributes">
+          <nvpair id="dummy242-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy243" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy243-instance_attributes"/>
+        <operations>
+          <op id="dummy243-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy243-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy243-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy243-meta_attributes">
+          <nvpair id="dummy243-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy244" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy244-instance_attributes"/>
+        <operations>
+          <op id="dummy244-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy244-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy244-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy244-meta_attributes">
+          <nvpair id="dummy244-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy245" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy245-instance_attributes"/>
+        <operations>
+          <op id="dummy245-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy245-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy245-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy245-meta_attributes">
+          <nvpair id="dummy245-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy246" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy246-instance_attributes"/>
+        <operations>
+          <op id="dummy246-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy246-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy246-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy246-meta_attributes">
+          <nvpair id="dummy246-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy247" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy247-instance_attributes"/>
+        <operations>
+          <op id="dummy247-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy247-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy247-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy247-meta_attributes">
+          <nvpair id="dummy247-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy248" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy248-instance_attributes"/>
+        <operations>
+          <op id="dummy248-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy248-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy248-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy248-meta_attributes">
+          <nvpair id="dummy248-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy249" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy249-instance_attributes"/>
+        <operations>
+          <op id="dummy249-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy249-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy249-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy249-meta_attributes">
+          <nvpair id="dummy249-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+      <primitive class="ocf" id="dummy250" provider="heartbeat" type="Dummy">
+        <instance_attributes id="dummy250-instance_attributes"/>
+        <operations>
+          <op id="dummy250-start-timeout-20" interval="0s" name="start" timeout="20"/>
+          <op id="dummy250-stop-timeout-20" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy250-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+        <meta_attributes id="dummy250-meta_attributes">
+          <nvpair id="dummy250-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+      </primitive>
+    </resources>
+    <constraints/>
+  </configuration>
+  <status/>
+</cib>

@@ -837,20 +837,23 @@ def location_rule(argv):
     utils.replace_cib_configuration(cib)
     
 # Grabs the current constraints and returns the dom and constraint element
-def getCurrentConstraints():
-    current_constraints_xml = utils.get_cib_xpath('//constraints')
+def getCurrentConstraints(passed_dom=None):
+    if passed_dom:
+        dom = passed_dom
+    else:
+        current_constraints_xml = utils.get_cib_xpath('//constraints')
+        if current_constraints_xml == "":
+            utils.err("unable to process cib")
+        # Verify current constraint doesn't already exist
+        # If it does we replace it with the new constraint
+        dom = parseString(current_constraints_xml)
 
-    if current_constraints_xml == "":
-        utils.err("unable to process cib")
-    # Verify current constraint doesn't already exist
-    # If it does we replace it with the new constraint
-    dom = parseString(current_constraints_xml)
     constraintsElement = dom.getElementsByTagName('constraints')[0]
     return (dom, constraintsElement)
 
 # If returnStatus is set, then we don't error out, we just print the error
 # and return false
-def constraint_rm(argv,returnStatus=False, constraintsElement=None):
+def constraint_rm(argv,returnStatus=False, constraintsElement=None, passed_dom=None):
     if len(argv) < 1:
         usage.constraint()
         sys.exit(1)
@@ -869,7 +872,7 @@ def constraint_rm(argv,returnStatus=False, constraintsElement=None):
     elementFound = False
 
     if not constraintsElement:
-        (dom, constraintsElement) = getCurrentConstraints()
+        (dom, constraintsElement) = getCurrentConstraints(passed_dom)
         use_cibadmin = True
     else:
         use_cibadmin = False
@@ -891,6 +894,8 @@ def constraint_rm(argv,returnStatus=False, constraintsElement=None):
                     parent.parentNode.removeChild(parent)
 
     if elementFound == True:
+        if passed_dom:
+            return dom
         if use_cibadmin:
             xml_constraint_string = constraintsElement.toxml()
             args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
@@ -918,18 +923,18 @@ def constraint_ref(argv):
             for constraint in set_constraints:
                 print "  " + constraint
 
-def remove_constraints_containing(resource_id,output=False,constraints_element = None):
-    constraints,set_constraints = find_constraints_containing(resource_id)
+def remove_constraints_containing(resource_id,output=False,constraints_element = None, passed_dom=None):
+    constraints,set_constraints = find_constraints_containing(resource_id, passed_dom)
     for c in constraints:
         if output == True:
             print "Removing Constraint - " + c
         if constraints_element != None:
-            constraint_rm([c], True, constraints_element)
+            constraint_rm([c], True, constraints_element, passed_dom=passed_dom)
         else:
-            constraint_rm([c])
+            constraint_rm([c], passed_dom=passed_dom)
 
     if len(set_constraints) != 0:
-        (dom, constraintsElement) = getCurrentConstraints()
+        (dom, constraintsElement) = getCurrentConstraints(passed_dom)
         for c in constraintsElement.getElementsByTagName("resource_ref")[:]:
             # If resource id is in a set, remove it from the set, if the set
             # is empty, then we remove the set, if the parent of the set
@@ -946,14 +951,19 @@ def remove_constraints_containing(resource_id,output=False,constraints_element =
                     if pn2.getElementsByTagName("resource_set").length == 0:
                         pn2.parentNode.removeChild(pn2)
                         print "Removing constraint %s" % pn2.getAttribute("id")
+        if passed_dom:
+            return dom
         xml_constraint_string = constraintsElement.toxml()
         args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
         output,retval = utils.run(args)
         if output != "":
             print output
 
-def find_constraints_containing(resource_id):
-    dom = utils.get_cib_dom()
+def find_constraints_containing(resource_id, passed_dom=None):
+    if passed_dom:
+        dom = passed_dom
+    else:
+        dom = utils.get_cib_dom()
     constraints_found = []
     set_constraints = []
 
@@ -966,7 +976,7 @@ def find_constraints_containing(resource_id):
 
     if resource_match:
         if resource_match.parentNode.tagName == "master" or resource_match.parentNode.tagName == "clone":
-            constraints_found,set_constraints = find_constraints_containing(resource_match.parentNode.getAttribute("id"))
+            constraints_found,set_constraints = find_constraints_containing(resource_match.parentNode.getAttribute("id"), dom)
 
     constraints = dom.getElementsByTagName("constraints")
     if len(constraints) == 0:
