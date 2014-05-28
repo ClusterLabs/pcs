@@ -8,6 +8,8 @@ from pcs_test_functions import pcs,ac
 
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
+large_cib = "large.xml"
+temp_large_cib = "temp-large.xml"
 
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
@@ -172,9 +174,24 @@ class ConstraintTest(unittest.TestCase):
     def testConstraintRemoval(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
+
+        output, returnVal = pcs(temp_cib, "constraint location D6 prefers node1")
+        assert returnVal == 0 and output == "", output
         
         output, returnVal = pcs(temp_cib, "constraint remove blahblah")
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
+
+        output, returnVal = pcs(temp_cib, "constraint location show --full")
+        ac(output, "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\n  Resource: D6\n    Enabled on: node1 (score:INFINITY) (id:location-D6-node1-INFINITY)\n")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint remove location-D5-node1-INFINITY location-D6-node1-INFINITY")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint location show --full")
+        ac(output, "Location Constraints:\n")
+        assert returnVal == 0
 
     def testColocationConstraints(self):
         line = "resource create M1 Dummy --master"
@@ -550,6 +567,49 @@ class ConstraintTest(unittest.TestCase):
         o,r = pcs("constraint")
         ac(o,"Location Constraints:\n  Resource: stateful0-master\n    Enabled on: rh7-1 (score:INFINITY) (role: Master)\n    Disabled on: rh7-1 (score:-INFINITY) (role: Slave)\nOrdering Constraints:\nColocation Constraints:\n")
         assert r == 0
+
+    def testManyConstraints(self):
+        shutil.copy(large_cib, temp_large_cib)
+
+        output, returnVal = pcs(temp_large_cib, "constraint location dummy prefers rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint location show resources dummy --full")
+        ac(output, "Location Constraints:\n  Resource: dummy\n    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)\n")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint location remove location-dummy-rh7-1-INFINITY")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint colocation add dummy1 with dummy2")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint colocation remove dummy1 dummy2")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint order dummy1 then dummy2")
+        ac(output, "Adding dummy1 dummy2 (kind: Mandatory) (Options: first-action=start then-action=start)\n")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint order remove dummy1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint location dummy prefers rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint location show resources dummy --full")
+        ac(output, "Location Constraints:\n  Resource: dummy\n    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)\n")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "constraint remove location-dummy-rh7-1-INFINITY")
+        ac(output, "")
+        assert returnVal == 0
 
 if __name__ == "__main__":
     unittest.main()

@@ -132,11 +132,7 @@ def colocation_rm(argv):
             elementFound = True
 
     if elementFound == True:
-        xml_constraint_string = constraintsElement.toxml()
-        args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
-        output,retval = utils.run(args)
-        if output != "":
-            print output
+        utils.replace_cib_configuration(dom)
     else:
         print "No matching resources found in ordering list"
 
@@ -231,11 +227,7 @@ def colocation_add(argv):
     for nv_pair in nv_pairs:
         element.setAttribute(nv_pair[0], nv_pair[1])
     constraintsElement.appendChild(element)
-    xml_constraint_string = constraintsElement.toxml()
-    args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
-    output,retval = utils.run(args)
-    if output != "":
-        print output
+    utils.replace_cib_configuration(dom)
 
 def colocation_set(argv):
     setoptions = []
@@ -407,11 +399,7 @@ def order_rm(argv):
                     res_order.parentNode.removeChild(res_order)
 
     if elementFound == True:
-        xml_constraint_string = constraintsElement.toxml()
-        args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
-        output,retval = utils.run(args)
-        if output != "":
-            print output
+        utils.replace_cib_configuration(dom)
     else:
         utils.err("No matching resources found in ordering list")
 
@@ -518,13 +506,7 @@ def order_add(argv,returnElementOnly=False):
     constraintsElement.appendChild(element)
 
     if returnElementOnly == False:
-        xml_constraint_string = constraintsElement.toxml()
-        args = ["cibadmin", "-o", "constraints", "-R", "--xml-text", xml_constraint_string]
-        output,retval = utils.run(args)
-        if output != "":
-            print output
-        if retval != 0:
-            sys.exit(1)
+        utils.replace_cib_configuration(dom)
     else:
         return element.toxml()
 
@@ -807,12 +789,8 @@ def location_add(argv,rm=False):
         element.setAttribute("node",node)
         element.setAttribute("score",score)
         constraintsElement.appendChild(element)
-    xml_constraint_string = constraintsElement.toxml()
 
-    args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
-    output,retval = utils.run(args)
-    if output != "":
-        print output
+    utils.replace_cib_configuration(dom)
 
 def location_rule(argv):
     if len(argv) < 3:
@@ -861,7 +839,7 @@ def constraint_rm(argv,returnStatus=False, constraintsElement=None, passed_dom=N
     bad_constraint = False
     if len(argv) != 1:
         for arg in argv:
-            if not constraint_rm([arg],True):
+            if not constraint_rm([arg],True, passed_dom=passed_dom):
                 bad_constraint = True
         if bad_constraint:
             sys.exit(1)
@@ -897,15 +875,15 @@ def constraint_rm(argv,returnStatus=False, constraintsElement=None, passed_dom=N
         if passed_dom:
             return dom
         if use_cibadmin:
-            xml_constraint_string = constraintsElement.toxml()
-            args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
-            output,retval = utils.run(args)
-            if output != "":
-                print output
+            utils.replace_cib_configuration(dom)
+        if returnStatus:
+            return True
     else:
         print >> sys.stderr, "Error: Unable to find constraint - '%s'" % c_id
-        if not returnStatus:
-            sys.exit(1)
+        if returnStatus:
+            return False
+        sys.exit(1)
+
 
 def constraint_ref(argv):
     if len(argv) == 0:
@@ -953,11 +931,7 @@ def remove_constraints_containing(resource_id,output=False,constraints_element =
                         print "Removing constraint %s" % pn2.getAttribute("id")
         if passed_dom:
             return dom
-        xml_constraint_string = constraintsElement.toxml()
-        args = ["cibadmin", "-c", "-R", "--xml-text", xml_constraint_string]
-        output,retval = utils.run(args)
-        if output != "":
-            print output
+        utils.replace_cib_configuration(dom)
 
 def find_constraints_containing(resource_id, passed_dom=None):
     if passed_dom:
@@ -1030,8 +1004,7 @@ def constraint_resource_update(old_id):
                     constraint.setAttribute(attr, new_id)
 
 
-        update = dom.getElementsByTagName("constraints")[0].toxml()
-        output, retval = utils.run(["cibadmin", "--replace", "-o", "constraints", "-X", update])
+        utils.replace_cib_configuration(dom)
 
 def constraint_rule(argv):
     if len(argv) < 2:

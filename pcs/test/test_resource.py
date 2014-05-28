@@ -1211,7 +1211,7 @@ class ResourceTest(unittest.TestCase):
         ac(o,"Error: cannot clone a group that has already been cloned\n")
         assert r == 1
 
-    def testGroupRemoveWithConstraints(self):
+    def testGroupRemoveWithConstraints1(self):
         # Load nodes into cib so move will work
         utils.usefile = True
         utils.filename = temp_cib
@@ -1238,7 +1238,7 @@ class ResourceTest(unittest.TestCase):
 
         o,r = pcs(temp_cib, "constraint")
         assert r == 0
-        ac(o,"Location Constraints:\n  Resource: DGroup\n    Enabled on: rh7-1\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: DGroup\n    Enabled on: rh7-1 (score:INFINITY) (role: Started)\nOrdering Constraints:\nColocation Constraints:\n")
 
         o,r = pcs(temp_cib, "resource delete D1")
         ac(o,"Deleting Resource - D1\n")
@@ -1310,14 +1310,14 @@ class ResourceTest(unittest.TestCase):
         assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
 
         output, returnVal = pcs(temp_large_cib, "resource clone dummy1")
-        assert returnVal == 0
         ac(output, '')
+        assert returnVal == 0
 
         output, returnVal = pcs(temp_large_cib, "resource unclone dummy1")
-        assert returnVal == 0
         ac(output, '')
+        assert returnVal == 0
 
-    def testGroupRemoveWithConstraints(self):
+    def testGroupRemoveWithConstraints2(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy --group AG")
         assert r == 0
 
