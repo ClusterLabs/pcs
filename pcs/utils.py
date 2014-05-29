@@ -838,13 +838,6 @@ def get_cib_xpath(xpath_query):
         return ""
     return output
 
-# Create an object in the cib
-# Returns output, retval
-def add_to_cib(scope, xml):
-    args = ["cibadmin"]
-    args = args  + ["-o", scope, "-C", "-X", xml]
-    return run(args)
-
 def remove_from_cib(xml):
     args = ["cibadmin"]
     args = args + ["-D", "-X", xml]
@@ -1136,11 +1129,7 @@ def set_cib_property(prop, value):
     elif not property_found and "--force" not in pcs_options:
         err("can't remove property: '%s' that doesn't exist" % (prop))
 
-
-    args = ["cibadmin", "-c", "-R", "--xml-text", crm_config.toxml()]
-    output, retVal = run(args)
-    if output != "":
-        print output
+    replace_cib_configuration(crm_config)
 
 def setAttribute(a_type, a_name, a_value):
     args = ["crm_attribute", "--type", a_type, "--attr-name", a_name,
