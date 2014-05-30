@@ -686,23 +686,61 @@ def is_master(ms_id):
 def is_clone(clone_id):
     return does_exist("//clone[@id='"+clone_id+"']")
 
+# deprecated, use dom_get_group
 def is_group(group_id):
     return does_exist("//group[@id='"+group_id+"']")
 
+def dom_get_group(dom, group_id):
+    for group in dom.getElementsByTagName("group"):
+        if group.getAttribute("id") == group_id:
+            return group
+    return None
+
+# deprecated, use dom_get_group_clone
 def is_group_clone(group_id):
     return does_exist("//clone//group[@id='"+group_id+"']")
 
+def dom_get_group_clone(dom, group_id):
+    for clone in dom.getElementsByTagName("clone"):
+        group = dom_get_group(clone, group_id)
+        if group:
+            return group
+    return None
+
+# deprecated, use dom_get_resource
 def is_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"']")
+
+def dom_get_resource(dom, resource_id):
+    for primitive in dom.getElementsByTagName("primitive"):
+        if primitive.getAttribute("id") == resource_id:
+            return primitive
+    return None
 
 def is_stonith_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"' and @class='stonith']")
 
+# deprecated, use dom_get_resource_clone
 def is_resource_clone(resource_id):
     return does_exist("//clone//primitive[@id='"+resource_id+"']")
 
+def dom_get_resource_clone(dom, resource_id):
+    for clone in dom.getElementsByTagName("clone"):
+        resource = dom_get_resource(clone, resource_id)
+        if resource:
+            return resource
+    return None
+
+# deprecated, use dom_get_resource_masterslave
 def is_resource_masterslave(resource_id):
     return does_exist("//master//primitive[@id='"+resource_id+"']")
+
+def dom_get_resource_masterslave(dom, resource_id):
+    for master in dom.getElementsByTagName("master"):
+        resource = dom_get_resource(master, resource_id)
+        if resource:
+            return resource
+    return None
 
 def get_resource_master_id(resource_id):
     dom = get_cib_dom()

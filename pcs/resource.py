@@ -110,7 +110,9 @@ def resource_cmd(argv):
     elif (sub_cmd == "ungroup"):
         resource_group(["remove"] + argv)
     elif (sub_cmd == "clone"):
-        resource_clone(argv)
+        utils.replace_cib_configuration(
+            resource_clone(utils.get_cib_dom(), argv)
+        )
     elif (sub_cmd == "unclone"):
         resource_clone_master_remove(argv)
     elif (sub_cmd == "master"):
@@ -394,7 +396,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     dom.getElementsByTagName("resources")[0].appendChild(resource_elem)
 
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
-        dom = resource_clone_create([ra_id] + clone_opts, False, dom)
+        dom = resource_clone_create(dom, [ra_id] + clone_opts)
         if "--group" in utils.pcs_options:
             print "Warning: --group ignored when creating a clone"
         if "--master" in utils.pcs_options:
@@ -540,7 +542,11 @@ def resource_update(res_id,args):
         if clone:
             for a in c.childNodes:
                 if a.localName == "primitive" or a.localName == "group":
-                    return resource_clone_create([a.getAttribute("id")] + args, True)
+                    return utils.replace_cib_configuration(
+                        resource_clone_create(
+                            dom, [a.getAttribute("id")] + args, True
+                          )
+                    )
 
         master = None
         for m in dom.getElementsByTagName("master"):
@@ -1042,40 +1048,31 @@ def resource_group(argv):
         usage.resource()
         sys.exit(1)
 
-def resource_clone(argv):
+def resource_clone(cib_dom, argv):
     if len(argv) < 1:
         usage.resource()
         sys.exit(1)
     res = argv[0]
-    resource_clone_create(argv)
-    constraint.constraint_resource_update(res)
+    cib_dom = resource_clone_create(cib_dom, argv)
+    cib_dom = constraint.constraint_resource_update(res, cib_dom)
+    return cib_dom
 
-def resource_clone_create(argv, update = False, passed_dom = None):
+def resource_clone_create(cib_dom, argv, update_existing=False):
     name = argv.pop(0)
-    element = None
 
-    if passed_dom:
-        dom = passed_dom
-    else:
-        dom = utils.get_cib_dom()
-
-    re = dom.documentElement.getElementsByTagName("resources")[0]
-    for res in re.getElementsByTagName("primitive") + re.getElementsByTagName("group"):
-        if res.getAttribute("id") == name:
-            element = res
-            break
-
-    if element == None:
+    re = cib_dom.getElementsByTagName("resources")[0]
+    element = utils.dom_get_resource(re, name) or utils.dom_get_group(re, name)
+    if not element:
         utils.err("unable to find group or resource: %s" % name)
 
-    if not update:
-        if utils.is_resource_clone(name):
+    if not update_existing:
+        if utils.dom_get_resource_clone(cib_dom, name):
             utils.err("%s is already a clone resource" % name)
 
-        if utils.is_group_clone(name):
+        if utils.dom_get_group_clone(cib_dom, name):
             utils.err("cannot clone a group that has already been cloned")
 
-    if utils.is_resource_masterslave(name):
+    if utils.dom_get_resource_masterslave(cib_dom, name):
         utils.err("%s is already a master/slave resource" % name)
 
     # If element is currently in a group and it's the last member, we get rid of the group
@@ -1083,7 +1080,7 @@ def resource_clone_create(argv, update = False, passed_dom = None):
         element.parentNode.parentNode.removeChild(element.parentNode)
 
     meta = None
-    if update == True:
+    if update_existing:
         if element.parentNode.tagName != "clone":
             utils.err("%s is not currently a clone" % name)
         clone = element.parentNode
@@ -1096,21 +1093,18 @@ def resource_clone_create(argv, update = False, passed_dom = None):
                 meta = child
                 break
     else:
-        clone = dom.createElement("clone")
+        clone = cib_dom.createElement("clone")
         clone.setAttribute("id",name + "-clone")
         clone.appendChild(element)
         re.appendChild(clone)
     if meta is None:
-        meta = dom.createElement("meta_attributes")
+        meta = cib_dom.createElement("meta_attributes")
         meta.setAttribute("id",name + "-clone-meta")
         clone.appendChild(meta)
 
     update_meta_attributes(meta, convert_args_to_tuples(argv), name + "-")
 
-    if passed_dom:
-        return dom
-
-    utils.replace_cib_configuration(dom)
+    return cib_dom
 
 def resource_clone_master_remove(argv):
     if len(argv) != 1:

@@ -1207,6 +1207,10 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         assert o == ""
 
+        o,r = pcs(temp_cib, "resource clone DGroup1")
+        ac(o,"Error: unable to find group or resource: DGroup1\n")
+        assert r == 1
+
         o,r = pcs(temp_cib, "resource clone DGroup")
         assert r == 0
         assert o == ""

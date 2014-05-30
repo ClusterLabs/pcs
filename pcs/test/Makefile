@@ -8,6 +8,7 @@ ifneq ($(python_version_major_minor),2.6)
 endif
 
 test:
+	python test_utils.py ${pyunit_flags}
 	python test_cluster.py ${pyunit_flags}
 	python test_resource.py ${pyunit_flags}
 	python test_constraints.py ${pyunit_flags}

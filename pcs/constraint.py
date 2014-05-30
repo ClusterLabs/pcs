@@ -979,8 +979,8 @@ def find_constraints_containing(resource_id, passed_dom=None):
 
 # Re-assign any constraints referencing a resource to its parent (a clone
 # or master)
-def constraint_resource_update(old_id):
-    dom = utils.get_cib_dom()
+def constraint_resource_update(old_id, passed_dom=None):
+    dom = utils.get_cib_dom() if passed_dom is None else passed_dom
     resources = dom.getElementsByTagName("primitive")
     found_resource = None
     for res in resources:
@@ -1003,8 +1003,11 @@ def constraint_resource_update(old_id):
                 if constraint.getAttribute(attr) == old_id:
                     constraint.setAttribute(attr, new_id)
 
+        if passed_dom is None:
+            utils.replace_cib_configuration(dom)
 
-        utils.replace_cib_configuration(dom)
+    if passed_dom:
+        return dom
 
 def constraint_rule(argv):
     if len(argv) < 2:
