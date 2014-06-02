@@ -755,6 +755,9 @@ def location_add(argv,rm=False):
         node = ""
         score = ""
     else:
+        id_valid, id_error = utils.validate_xml_id(constraint_id, 'constraint id')
+        if not id_valid:
+            utils.err(id_error)
         resource_name = argv.pop(0)
         node = argv.pop(0)
         score = argv.pop(0)

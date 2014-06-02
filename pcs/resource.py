@@ -309,8 +309,9 @@ def format_desc(indent, desc):
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
-    if len(ra_id) == 0:
-        utils.err ("resource id cannot be empty")
+    ra_id_valid, ra_id_error = utils.validate_xml_id(ra_id, 'resource name')
+    if not ra_id_valid:
+        utils.err(ra_id_error)
 
     dom = utils.get_cib_dom()
 
@@ -1426,8 +1427,9 @@ def resource_group_add(group_name, resource_ids, passed_dom = None):
     resources_element = top_element.getElementsByTagName("resources")[0]
     group_found = False
 
-    if group_name == "":
-        utils.err("group name cannot be empty")
+    name_valid, name_error = utils.validate_xml_id(group_name, 'group name')
+    if not name_valid:
+        utils.err(name_error)
 
     for resource in top_element.getElementsByTagName("primitive"):
         if resource.getAttribute("id") == group_name:

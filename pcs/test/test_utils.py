@@ -101,7 +101,76 @@ class UtilsTest(unittest.TestCase):
             cloned_group_ids, all_ids - cloned_group_ids
         )
 
+    def testValidateXmlId(self):
+        self.assertEquals((True, ""), utils.validate_xml_id("dummy"))
+        self.assertEquals((True, ""), utils.validate_xml_id("DUMMY"))
+        self.assertEquals((True, ""), utils.validate_xml_id("dUmMy"))
+        self.assertEquals((True, ""), utils.validate_xml_id("dummy0"))
+        self.assertEquals((True, ""), utils.validate_xml_id("dum0my"))
+        self.assertEquals((True, ""), utils.validate_xml_id("dummy-"))
+        self.assertEquals((True, ""), utils.validate_xml_id("dum-my"))
+        self.assertEquals((True, ""), utils.validate_xml_id("dummy."))
+        self.assertEquals((True, ""), utils.validate_xml_id("dum.my"))
+        self.assertEquals((True, ""), utils.validate_xml_id("_dummy"))
+        self.assertEquals((True, ""), utils.validate_xml_id("dummy_"))
+        self.assertEquals((True, ""), utils.validate_xml_id("dum_my"))
 
+        self.assertEquals(
+            (False, "test id cannot be empty"),
+            utils.validate_xml_id("", "test id")
+        )
+
+        msg = "invalid test id '%s', '%s' is not a valid first character for a test id"
+        self.assertEquals(
+            (False, msg % ("0", "0")),
+            utils.validate_xml_id("0", "test id")
+        )
+        self.assertEquals(
+            (False, msg % ("-", "-")),
+            utils.validate_xml_id("-", "test id")
+        )
+        self.assertEquals(
+            (False, msg % (".", ".")),
+            utils.validate_xml_id(".", "test id")
+        )
+        self.assertEquals(
+            (False, msg % (":", ":")),
+            utils.validate_xml_id(":", "test id")
+        )
+        self.assertEquals(
+            (False, msg % ("0dummy", "0")),
+            utils.validate_xml_id("0dummy", "test id")
+        )
+        self.assertEquals(
+            (False, msg % ("-dummy", "-")),
+            utils.validate_xml_id("-dummy", "test id")
+        )
+        self.assertEquals(
+            (False, msg % (".dummy", ".")),
+            utils.validate_xml_id(".dummy", "test id")
+        )
+        self.assertEquals(
+            (False, msg % (":dummy", ":")),
+            utils.validate_xml_id(":dummy", "test id")
+        )
+
+        msg = "invalid test id '%s', '%s' is not a valid character for a test id"
+        self.assertEquals(
+            (False, msg % ("dum:my", ":")),
+            utils.validate_xml_id("dum:my", "test id")
+        )
+        self.assertEquals(
+            (False, msg % ("dummy:", ":")),
+            utils.validate_xml_id("dummy:", "test id")
+        )
+        self.assertEquals(
+            (False, msg % ("dum?my", "?")),
+            utils.validate_xml_id("dum?my", "test id")
+        )
+        self.assertEquals(
+            (False, msg % ("dummy?", "?")),
+            utils.validate_xml_id("dummy?", "test id")
+        )
 
 if __name__ == "__main__":
     unittest.main()

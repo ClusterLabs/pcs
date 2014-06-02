@@ -1043,6 +1043,9 @@ def rule_add(elem, argv):
                 subexpression = ET.SubElement(expression,"date_spec")
             continue
         if arg[0] == "id":
+            id_valid, id_error = validate_xml_id(arg[1], 'rule id')
+            if not id_valid:
+                err(id_error)
             rule.set(arg[0], arg[1])
         elif arg[0] == "score":
             if is_score_or_opt(arg[1]):
@@ -1447,6 +1450,29 @@ def is_score(var):
         or
         var.isdigit() or (len(var) > 1 and var[0] == "-" and var[1:].isdigit())
     )
+
+def validate_xml_id(var, description="id"):
+    # see NCName definition
+    # http://www.w3.org/TR/REC-xml-names/#NT-NCName
+    # http://www.w3.org/TR/REC-xml/#NT-Name
+    if len(var) < 1:
+        return False, "%s cannot be empty" % description
+    first_char_re = re.compile("[a-zA-Z_]")
+    if not first_char_re.match(var[0]):
+        return (
+            False,
+            "invalid %s '%s', '%s' is not a valid first character for a %s"
+                % (description, var, var[0], description)
+        )
+    char_re = re.compile("[a-zA-Z0-9_.-]")
+    for char in var[1:]:
+        if not char_re.match(char):
+            return (
+                False,
+                "invalid %s '%s', '%s' is not a valid character for a %s"
+                    % (description, var, char, description)
+            )
+    return True, ""
 
 def is_systemctl():
     if os.path.exists('/usr/bin/systemctl'):

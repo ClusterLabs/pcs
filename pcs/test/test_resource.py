@@ -169,6 +169,10 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == " Resource: bad_resource2 (class=ocf provider=heartbeat type=idontexist2)\n  Attributes: test4=bad3 \n  Operations: monitor interval=60s (bad_resource2-monitor-interval-60s)\n",[output]
 
+        output, returnVal = pcs(temp_cib, "resource create dum:my Dummy")
+        assert returnVal == 1
+        ac(output, "Error: invalid resource name 'dum:my', ':' is not a valid character for a resource name\n")
+
     def testDeleteResources(self):
 # Verify deleting resources works
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
@@ -628,6 +632,10 @@ class ResourceTest(unittest.TestCase):
         output, returnVal = pcs(temp_large_cib, "resource group add dummyGroup dummy1")
         assert returnVal == 0
         ac(output, '')
+
+        output, returnVal = pcs(temp_cib, "resource group add group:dummy dummy1")
+        assert returnVal == 1
+        ac(output, "Error: invalid group name 'group:dummy', ':' is not a valid character for a group name\n")
 
     def testGroupOrder(self):
         output, returnVal = pcs(temp_cib, "resource create --no-default-ops A Dummy")

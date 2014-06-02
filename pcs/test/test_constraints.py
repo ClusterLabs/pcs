@@ -483,6 +483,14 @@ class ConstraintTest(unittest.TestCase):
         ac (o,"Error: 'non-existant-resource' is not a resource\n")
         assert r == 1
 
+        output, returnVal = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY '#uname' eq rh7-2")
+        ac(output, "Error: Unable to find constraint: location-D1-rh7-1-INFINITY\n")
+        assert returnVal == 1
+
+        output, returnVal = pcs(temp_cib, "constraint rule add location-D2-rh7-2-INFINITY id=123 #uname eq rh7-2")
+        ac(output, "Error: invalid rule id '123', '1' is not a valid first character for a rule id\n")
+        assert returnVal == 1
+
     def testLocationBadRules(self):
         o,r = pcs("resource create stateful0 Dummy --master")
         ac(o,"")
@@ -523,6 +531,10 @@ class ConstraintTest(unittest.TestCase):
         o,r = pcs("constraint location add location1 D1 rh7-1 bar")
         ac(o,"Error: invalid score 'bar', use integer or INFINITY or -INFINITY\n")
         assert r == 1
+
+        output, returnVal = pcs(temp_cib, "constraint location add loc:dummy D1 rh7-1 100")
+        assert returnVal == 1
+        ac(output, "Error: invalid constraint id 'loc:dummy', ':' is not a valid character for a constraint id\n")
 
     def testMasterSlaveConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
