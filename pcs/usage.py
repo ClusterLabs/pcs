@@ -750,14 +750,22 @@ Commands:
         Create a location constraint on a resource to avoid the specified
         node and score (default score: INFINITY)
 
-    location <resource id> rule [role=master|slave] [score=<score>] <expression>
+    location <resource id> rule [id=<rule id>] [role=master|slave]
+             [score=<score>|score-attribute=<attribute>] <expression>
         Creates a location rule on the specified resource where the expression
         looks like one of the following:
           defined|not_defined <attribute>
-          <attribute> lt|gt|lte|gte|eq|ne <value>
-          date [start=<start>] [end=<end>] operation=gt|lt|in-range
+          <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          date gt|lt <date>
+          date in_range <date> to <date>
+          date in_range <date> to duration <duration options>...
           date-spec <date spec options>...
           <expression> and|or <expression>
+          ( <expression> )
+        where duration options and date spec options are: hours, monthdays,
+        weekdays, yeardays, months, weeks, years, weekyears, moon
+        If score is ommited it defaults to INFINITY. If id is ommited one is
+        generated from the resource id.
 
     location show [resources|nodes [node id|resource id]...] [--full]
         List all the current location constraints, if 'resources' is specified
@@ -827,11 +835,22 @@ Commands:
     ref <resource>...
         List constraints referencing specified resource
 
-    rule add <constraint id> [<rule type>] [score=<score>] [id=<rule id>]
-        <expression|date_expression|date_spec>...
-        Add a rule to a constraint, if score is omitted it defaults to
-        INFINITY, if id is omitted one is generated from the constraint id.
-        The <rule type> should be 'expression' or 'date_expression'
+    rule add <constraint id> [id=<rule id>] [role=master|slave]
+             [score=<score>|score-attribute=<attribute>] <expression>
+        Add a rule to a constraint where the expression looks like one of
+        the following:
+          defined|not_defined <attribute>
+          <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          date gt|lt <date>
+          date in_range <date> to <date>
+          date in_range <date> to duration <duration options>...
+          date-spec <date spec options>...
+          <expression> and|or <expression>
+          ( <expression> )
+        where duration options and date spec options are: hours, monthdays,
+        weekdays, yeardays, months, weeks, years, weekyears, moon
+        If score is ommited it defaults to INFINITY. If id is ommited one is
+        generated from the constraint id.
 
     rule remove <rule id>
         Remove a rule if a rule id is specified, if rule is last rule in its

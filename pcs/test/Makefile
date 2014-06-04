@@ -11,6 +11,7 @@ test:
 	python test_utils.py ${pyunit_flags}
 	python test_cluster.py ${pyunit_flags}
 	python test_resource.py ${pyunit_flags}
+	python test_rule.py ${pyunit_flags}
 	python test_constraints.py ${pyunit_flags}
 	python test_stonith.py ${pyunit_flags}
 	python test_properties.py ${pyunit_flags}

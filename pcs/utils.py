@@ -634,7 +634,7 @@ def run(args, ignore_stderr=False, string_for_stdin=None):
                 err("Unable to write to file: " + filename)
 
     command = args[0]
-    if command[0:3] == "crm" or command == "cibadmin" or command == "cman_tool":
+    if command[0:3] == "crm" or command in ["cibadmin", "cman_tool", "iso8601"]:
         args[0] = settings.pacemaker_binaries + command
     if command[0:8] == "corosync":
         args[0] = settings.corosync_binaries + command
@@ -824,6 +824,12 @@ def dom_get_resource_remote_node_name(dom_resource):
         for nvpair in meta.getElementsByTagName("nvpair"):
             if nvpair.getAttribute("name") == "remote-node":
                 return nvpair.getAttribute("value")
+    return None
+
+def dom_get_element_with_id(dom, tag_name, element_id):
+    for elem in dom.getElementsByTagName(tag_name):
+        if elem.hasAttribute("id") and elem.getAttribute("id") == element_id:
+            return elem
     return None
 
 # Check if resoure is started (or stopped) for 'wait' seconds
@@ -1033,134 +1039,6 @@ def does_id_exist(dom, check_id):
                 return True
     return False
 
-# Adds the specified rule to the element in the dom
-def rule_add(elem, argv):
-# Check if valid rule argv
-    rule_type = "expression"
-    if len(argv) != 0:
-        if argv[0] == "date":
-            rule_type = "date_expression"
-
-    if rule_type != "expression" and rule_type != "date_expression":
-        err("rule_type must either be expression or date_expression")
-
-    args = resource.convert_args_to_tuples(argv)
-    dict_args = dict()
-    for k,v in args:
-        dict_args[k] = v
-#    if rule_type == "expression": 
-#        if "operation" not in dict_args or "attribute" not in dict_args:
-#            err("with rule_type: expression you must specify an attribute and operation")
-#    elif rule_type == "date_expression":
-#        if "operation" not in dict_args or ("start" not in dict_args and "stop" not in dict_args):
-#            err("with rule_type: date_expression you must specify an operation and a start/end")
-
-
-    exp_arg = []
-    for arg in argv:
-        if arg.find('=') == -1:
-            exp_arg.append(arg)
-    if len(exp_arg) == 0:
-        err("no rule expression was specified")
-        
-    rule_boolean = ""
-    if ("or" in exp_arg and "and" not in exp_arg):
-        rule_boolean = "or"
-    elif ("or" not in exp_arg and "and" in exp_arg):
-        rule_boolean = "and"
-
-    if not ((exp_arg[0] in ["defined","not_defined", "date", "date-spec"]) or (len(exp_arg) >= 2 and exp_arg[1] in ["lt","gt","lte","gte","eq","ne"])):
-        err("'%s' is not a valid rule expression" % " ".join(exp_arg))
-
-    date_spec = False
-
-    new_exp_arg = [[]]
-    count = 0
-    for item in exp_arg:
-        if item != "or" and item != "and":
-            new_exp_arg[count].append(item)
-        else:
-            new_exp_arg.append([])
-            count = count + 1
-
-    for exp_arg in new_exp_arg:
-        if len(exp_arg) >= 1:
-            if exp_arg[0] == "date":
-                args.append(("operation",exp_arg[1]))
-                rule_type = "date_expression"
-            elif exp_arg[0] == "date-spec":
-                args.append(("operation","date_spec"))
-                rule_type = "date_expression"
-                date_spec = True
-            elif len(exp_arg) >= 2 and exp_arg[1] in ["lt","gt","lte","gte","eq","ne"] and len(exp_arg) >= 3:
-                args.append(("attribute",exp_arg[0]))
-                args.append(("operation",exp_arg[1]))
-                args.append(("value",exp_arg[2]))
-            elif exp_arg[0] in ["defined","not_defined"]:
-                args.append(("attribute",exp_arg[1]))
-                args.append(("operation",exp_arg[0]))
-        if rule_boolean != "":
-            args.append(rule_boolean)
-    if args[-1] == "or" or args[-1] == "and":
-        args.pop(-1)
-            
-    rule = ET.SubElement(elem,"rule")
-    expression = ET.SubElement(rule,rule_type)
-    if date_spec:
-        subexpression = ET.SubElement(expression,"date_spec")
-
-
-    for arg in args:
-        if arg == "or" or arg == "and":
-            expression = ET.SubElement(rule,rule_type)
-            if date_spec:
-                subexpression = ET.SubElement(expression,"date_spec")
-            continue
-        if arg[0] == "id":
-            id_valid, id_error = validate_xml_id(arg[1], 'rule id')
-            if not id_valid:
-                err(id_error)
-            rule.set(arg[0], arg[1])
-        elif arg[0] == "score":
-            if is_score_or_opt(arg[1]):
-                rule.set(arg[0], arg[1])
-            else:
-                rule.set("score-attribute","pingd")
-        elif arg[0] == "role":
-                rule.set(arg[0], arg[1])
-        else:
-            if date_spec:
-                if arg[0] == "operation":
-                    expression.set(arg[0],arg[1])
-                else:
-                    subexpression.set(arg[0],arg[1])
-            else:
-                expression.set(arg[0],arg[1])
-
-    if rule.get("score") == None and rule.get("score-attribute") == None:
-        rule.set("score", "INFINITY")
-
-    if rule_boolean != "":
-        rule.set("boolean-op", rule_boolean)
-
-    dom = get_cib_dom()
-    if rule.get("id") == None:
-        rule.set("id", find_unique_id(dom,elem.get("id") + "-rule"))
-
-    count = 1
-    for exp_child in rule:
-        if exp_child.get("id") == None:
-            exp_child.set("id", find_unique_id(dom,rule.get("id") + "-expr-"+str(count)))
-            count = count + 1
-    if date_spec and subexpression.get("id") == None:
-        subexpression.set("id", find_unique_id(dom, expression.get("id")+"-datespec"))
-    if "score" in elem.attrib:
-        del elem.attrib["score"]
-    if "node" in elem.attrib:
-        del elem.attrib["node"]
-    return elem
-
-
 # Returns check_id if it doesn't exist in the dom, otherwise it adds an integer
 # to the end of the id and increments it until a unique id is found
 def find_unique_id(dom, check_id):
@@ -1291,52 +1169,6 @@ def setAttribute(a_type, a_name, a_value):
     output, retval = run(args)
     if retval != 0:
         print output
-
-def getExpression(dom, element, argv, id_suffix=""):
-    if len(argv) < 2:
-        return None
-
-    unary_expression = False
-    if len(argv) == 2 and (argv[0] == "defined" or argv[0] == "not_defined"):
-        expression = dom.createElement("expression")
-        unary_expression = True
-        expression.setAttribute("operation", argv[0])
-        expression.setAttribute("attribute",argv[1])
-        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-expr"))
-        return expression
-    elif argv[0] == "date":
-        expression = dom.createElement("date_expression")
-        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-rule" + id_suffix))
-        date_expression = True
-        argv.pop(0)
-        count = 0
-        for i in range(0,len(argv)):
-            val = argv[i].split('=')
-            expression.setAttribute(val[0], val[1])
-            if val[0] == "operation" and val[1] == "date_spec":
-                date_spec = getDateSpec(dom, expression, argv[(i+1):])
-                expression.appendChild(date_spec)
-                break
-        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-dateexpr" + id_suffix))
-        return expression
-    elif len(argv) == 3 and argv[1] in ["lt","gt","lte","gte","eq","ne"]:
-        expression = dom.createElement("expression")
-        expression.setAttribute("attribute", argv[0])
-        expression.setAttribute("operation", argv[1])
-        expression.setAttribute("value", argv[2])
-        expression.setAttribute("id", find_unique_id (dom, element.getAttribute("id") + "-expr" + id_suffix))
-        return expression
-    else:
-        return None
-
-
-def getDateSpec(dom, element, argv):
-    date_spec = dom.createElement("date_spec")
-    for val in argv:
-        if val.find('=') != -1:
-            date_spec.setAttribute(val.split('=')[0],val.split('=')[1])
-    date_spec.setAttribute("id", find_unique_id(dom,element.getAttribute("id") + "-datespec"))
-    return date_spec
 
 def getTerminalSize(fd=1):
     """
@@ -1551,6 +1383,11 @@ def validate_xml_id(var, description="id"):
                     % (description, var, char, description)
             )
     return True, ""
+
+def is_iso8601_date(var):
+    # using pacemaker tool to check if a value is a valid pacemaker iso8601 date
+    output, retVal = run(["iso8601", "-d", var])
+    return retVal == 0
 
 def is_systemctl():
     if os.path.exists('/usr/bin/systemctl'):

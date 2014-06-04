@@ -359,18 +359,26 @@ Create a location constraint on a resource to prefer the specified node and scor
 location <resource id> avoids <node[=score]>...
 Create a location constraint on a resource to avoid the specified node and score (default score: INFINITY)
 .TP
-location <resource id> rule [role=master|slave] [score=<score>] <expression>
+location <resource id> rule [id=<rule id>] [role=master|slave] [score=<score>|score-attribute=<attribute>] <expression>
 Creates a location rule on the specified resource where the expression looks like one of the following:
 .br
   defined|not_defined <attribute>
 .br
-  <attribute> lt|gt|lte|gte|eq|ne <value>
+  <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
 .br
-  date [start=<start>] [end=<end>] operation=gt|lt|in\-range
+  date gt|lt <date>
+.br
+  date in_range <date> to <date>
+.br
+  date in_range <date> to duration <duration options>...
 .br
   date\-spec <date spec options>...
 .br
   <expression> and|or <expression>
+.br
+  ( <expression> )
+.br
+where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. If score is ommited it defaults to INFINITY. If id is ommited one is generated from the resource id.
 .TP
 location show [resources|nodes [node id|resource id]...] [\fB\-\-full\fR]
 List all the current location constraints, if 'resources' is specified location constraints are displayed per resource (default), if 'nodes' is specified location constraints are displayed per node.  If specific nodes or resources are specified then we only show information about them.  If \fB\-\-full\fR is specified show the internal constraint id's as well.
@@ -411,8 +419,26 @@ Remove constraint(s) or constraint rules with the specified id(s)
 ref <resource>...
 List constraints referencing specified resource
 .TP
-rule add <constraint id> [<rule type>] [score=<score>] [id=<rule id>] <expression|date_expression|date_spec>...
-Add a rule to a constraint, if score is omitted it defaults to INFINITY, if id is omitted one is generated from the constraint id. The <rule type> should be 'expression' or 'date_expression'
+rule add <constraint id> [id=<rule id>] [role=master|slave] [score=<score>|score-attribute=<attribute>] <expression>
+Add a rule to a constraint where the expression looks like one of the following:
+.br
+  defined|not_defined <attribute>
+.br
+  <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+.br
+  date gt|lt <date>
+.br
+  date in_range <date> to <date>
+.br
+  date in_range <date> to duration <duration options>...
+.br
+  date\-spec <date spec options>...
+.br
+  <expression> and|or <expression>
+.br
+  ( <expression> )
+.br
+where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon If score is ommited it defaults to INFINITY. If id is ommited one is generated from the constraint id.
 .TP
 rule remove <rule id>
 Remove a rule if a rule id is specified, if rule is last rule in its constraint, the constraint will be removed

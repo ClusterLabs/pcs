@@ -1407,9 +1407,9 @@ Colocation Constraints:
 Location Constraints:
   Resource: dummy
     Constraint: cli-prefer-dummy
-      Rule: score=INFINITY boolean-op=and  (id:cli-prefer-rule-dummy) 
-        Expression: #uname eq rh7-1 type=string  (id:cli-prefer-expr-dummy) 
-        Expression: operation=lt end={datetime}  (id:cli-prefer-lifetime-end-dummy) 
+      Rule: score=INFINITY boolean-op=and  (id:cli-prefer-rule-dummy)
+        Expression: #uname eq string rh7-1  (id:cli-prefer-expr-dummy)
+        Expression: date lt {datetime}  (id:cli-prefer-lifetime-end-dummy)
 Ordering Constraints:
 Colocation Constraints:
 """)
@@ -1438,9 +1438,9 @@ Colocation Constraints:
 Location Constraints:
   Resource: dummy
     Constraint: cli-ban-dummy-on-rh7-1
-      Rule: score=-INFINITY boolean-op=and  (id:cli-ban-dummy-on-rh7-1-rule) 
-        Expression: #uname eq rh7-1 type=string  (id:cli-ban-dummy-on-rh7-1-expr) 
-        Expression: operation=lt end={datetime}  (id:cli-ban-dummy-on-rh7-1-lifetime) 
+      Rule: score=-INFINITY boolean-op=and  (id:cli-ban-dummy-on-rh7-1-rule)
+        Expression: #uname eq string rh7-1  (id:cli-ban-dummy-on-rh7-1-expr)
+        Expression: date lt {datetime}  (id:cli-ban-dummy-on-rh7-1-lifetime)
 Ordering Constraints:
 Colocation Constraints:
 """)

@@ -2,6 +2,7 @@ import sys
 import usage
 import utils
 import resource
+import rule as rule_utils
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import getDOMImplementation
@@ -564,7 +565,6 @@ def location_show(argv):
     rschashon = {}
     rschashoff = {}
     ruleshash = defaultdict(list)
-    datespechash = defaultdict(list)
     all_loc_constraints = constraintsElement.getElementsByTagName('rsc_location')
 
     print "Location Constraints:"
@@ -576,50 +576,9 @@ def location_show(argv):
         lc_role = rsc_loc.getAttribute("role")
         lc_name = "Resource: " + lc_rsc
 
-        rules = rsc_loc.getElementsByTagName('rule')
-        if len(rules) > 0:
-            for rule in rules:
-                exphash = []
-                rule_score = rule.getAttribute("score")
-                rule_string = ""
-                for n,v in rule.attributes.items():
-                    if n != "id":
-                        rule_string += n + "=" + v + " " 
-                rule_id = rule.getAttribute("id")
-                constraint_id = rule.parentNode.getAttribute("id")
-                for exp in rule.childNodes:
-                    if exp.nodeType == xml.dom.minidom.Node.TEXT_NODE:
-                        continue
-                    exp_string = ""
-                    exp_string_start = ""
-                    if exp.tagName == "expression":
-                        if "value" in exp.attributes.keys():
-                            exp_string_start = exp.getAttribute("attribute") + " " + exp.getAttribute("operation") + " " + exp.getAttribute("value")
-                        else:
-                            exp_string_start = exp.getAttribute("operation") + " " + exp.getAttribute("attribute")
-
-                    for n,v in exp.attributes.items():
-                        if exp.tagName == "expression" and (n == "attribute" or n == "operation" or n == "value"):
-                            continue
-                        if n != "id":
-                            exp_string += n + "=" + v + " " 
-                        if n == "operation" and v == "date_spec":
-                            for ds in exp.childNodes:
-                                if ds.nodeType == xml.dom.minidom.Node.TEXT_NODE:
-                                    continue
-                                ds_string = ""
-                                for n2,v2 in ds.attributes.items():
-                                    if n2 != "id":
-                                        ds_string += n2 + "=" + v2+ " "
-                                datespechash[exp.getAttribute("id")].append([ds.getAttribute("id"),ds_string])
-
-                    exp_full_string = ""
-                    if exp_string_start != "":
-                        exp_full_string = exp_string_start + " "
-                    exp_full_string += exp_string
-
-                    exphash.append([exp.getAttribute("id"),exp_full_string])
-                ruleshash[lc_name].append([rule_id, rule_string, exphash, constraint_id]) 
+        for child in rsc_loc.childNodes:
+            if child.nodeType == child.ELEMENT_NODE and child.tagName == "rule":
+                ruleshash[lc_name].append(child)
 
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
 # rsc_location)
@@ -677,7 +636,7 @@ def location_show(argv):
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
                     print "Score: "+ options[2]
-        show_location_rules(ruleshash,showDetail,datespechash)
+        show_location_rules(ruleshash,showDetail)
     else:
         rsclist.sort()
         for rsc in rsclist:
@@ -709,35 +668,23 @@ def location_show(argv):
                     print 
             miniruleshash={}
             miniruleshash["Resource: " + rsc] = ruleshash["Resource: " + rsc]
-            show_location_rules(miniruleshash,showDetail,datespechash, True)
+            show_location_rules(miniruleshash,showDetail, True)
 
-def show_location_rules(ruleshash,showDetail,datespechash,noheader=False):
+def show_location_rules(ruleshash,showDetail,noheader=False):
     for rsc in ruleshash:
         constrainthash= defaultdict(list)
         if not noheader:
             print "  " + rsc
-        for res_id,rule,exphash,constraint_id in ruleshash[rsc]:
-            constrainthash[constraint_id].append([res_id,rule,exphash])
+        for rule in ruleshash[rsc]:
+            constraint_id = rule.parentNode.getAttribute("id")
+            constrainthash[constraint_id].append(rule)
 
         for constraint_id in constrainthash.keys():
             print "    Constraint: " + constraint_id
-            for res_id, rule, exphash in constrainthash[constraint_id]:
-                print "      Rule: " + rule,
-                if showDetail:
-                    print "(id:%s)" % (res_id),
-                print ""
-                for exp_id,exp in exphash:
-                    exp = exp.replace("operation=date_spec ","")
-                    print "        Expression: " + exp,
-                    if showDetail:
-                        print "(id:%s)" % (exp_id),
-                    print ""
-                    for ds_id, ds in datespechash[exp_id]:
-                        print "          Date Spec: " + ds,
-                        if showDetail:
-                            print "(id:%s)" % (ds_id),
-                        print ""
-
+            for rule in constrainthash[constraint_id]:
+                print rule_utils.ExportDetailed().get_string(
+                    rule, showDetail, "      "
+                )
 
 def location_prefer(argv):
     rsc = argv.pop(0)
@@ -837,14 +784,15 @@ def location_rule(argv):
 
     argv.pop(0)
 
-    cib = utils.get_cib_etree()
-    constraints = cib.find(".//constraints")
-    lc = ET.SubElement(constraints,"rsc_location")
+    cib = utils.get_cib_dom()
+    constraints = cib.getElementsByTagName("constraints")[0]
+    lc = cib.createElement("rsc_location")
+    constraints.appendChild(lc)
     lc_id = utils.find_unique_id(cib, "location-" + res_name)
-    lc.set("id", lc_id)
-    lc.set("rsc", res_name)
+    lc.setAttribute("id", lc_id)
+    lc.setAttribute("rsc", res_name)
 
-    utils.rule_add(lc, argv)
+    rule_utils.dom_rule_add(lc, argv)
 
     utils.replace_cib_configuration(cib)
     
@@ -1068,24 +1016,22 @@ def constraint_rule(argv):
 
     constraint_id = None
     rule_id = None
-    cib = utils.get_cib_etree()
 
     if command == "add":
         constraint_id = argv.pop(0)
-        constraint = None
-
-        for a in cib.findall(".//configuration//*"):
-            if a.get("id") == constraint_id and a.tag == "rsc_location":
-                found = True
-                constraint = a
-
-        if not found:
+        cib = utils.get_cib_dom()
+        constraint = utils.dom_get_element_with_id(
+            cib.getElementsByTagName("constraints")[0],
+            "rsc_location",
+            constraint_id
+        )
+        if not constraint:
             utils.err("Unable to find constraint: " + constraint_id)
-
-        utils.rule_add(constraint, argv) 
+        rule_utils.dom_rule_add(constraint, argv)
         utils.replace_cib_configuration(cib)
 
     elif command in ["remove","delete"]:
+        cib = utils.get_cib_etree()
         temp_id = argv.pop(0)
         constraints = cib.find('.//constraints')
         loc_cons = cib.findall('.//rsc_location')
