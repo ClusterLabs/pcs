@@ -4,6 +4,18 @@ require 'securerandom'
 require 'rpam'
 
 class PCSAuth
+  # Ruby 1.8.7 doesn't implement SecureRandom.uuid
+  def self.uuid
+    if defined? SecureRandom.uuid
+      return SecureRandom.uuid
+    else
+      ary = SecureRandom.random_bytes(16).unpack("NnnnnN")
+      ary[2] = (ary[2] & 0x0fff) | 0x4000
+      ary[3] = (ary[3] & 0x3fff) | 0x8000
+      return "%08x-%04x-%04x-%04x-%04x%08x" % ary
+    end
+  end
+
   def self.validUser(username, password, generate_token = false, request = nil)
     if username != "hacluster"
       return nil
@@ -13,7 +25,7 @@ class PCSAuth
     end
 
     if generate_token
-      token = SecureRandom.uuid
+      token = PCSAuth.uuid
       begin
       	password_file = File.open($user_pass_file, File::RDWR|File::CREAT)
 	password_file.flock(File::LOCK_EX)
@@ -67,7 +79,7 @@ class PCSAuth
       users = []
     end
 
-    token = SecureRandom.uuid
+    token = PCSAuth.uuid
 
     users.delete_if{|u| u["username"] == username}
     users << {"username" => username, "password" => password, "token" => token}

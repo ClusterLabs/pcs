@@ -1,8 +1,18 @@
+require 'rubygems'
 require 'webrick'
 require 'webrick/https'
 require 'openssl'
 require 'logger'
 require 'rack'
+
+def is_rhel6()
+  if File.open('/etc/system-release').read =~ /(Red Hat Enterprise Linux Server|CentOS|Scientific Linux) release 6\./
+    return true
+  else
+    return false
+  end
+end
+
 
 CRT_FILE = "/var/lib/pcsd/pcsd.crt"
 KEY_FILE = "/var/lib/pcsd/pcsd.key"

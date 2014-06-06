@@ -7,8 +7,7 @@ require 'open3'
 
 # Commands for remote access
 def remote(params,request)
-  `systemctl status pacemaker.service`
-  pacemaker_status = $?.success?
+  pacemaker_status = pacemaker_running?
 
   case (params[:command])
   when "status"
@@ -239,9 +238,9 @@ end
 
 def remote_node_available(params)
   if File.exist?("/etc/corosync/corosync.conf") or File.exist?("/var/lib/pacemaker/cib/cib.xml")
-    return JSON.generate({node_available: false})
+    return JSON.generate({:node_available => false})
   end
-  return JSON.generate({node_available: true})
+  return JSON.generate({:node_available => true})
 end
 
 def remote_add_node(params,all = false)
@@ -312,7 +311,8 @@ def setup_cluster(params)
       options << "--ipv6"
     end
   }
-  stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes, *options)
+  nodes_options = nodes + options
+  stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodesoptions)
   if retval != 0
     return [400, stdout.join("\n") + stderr.join("\n")]
   end
@@ -338,17 +338,11 @@ def node_status(params)
   dd, hh = hh.divmod(24)
   uptime = "%d days, %02d:%02d:%02d" % [dd, hh, mm, ss]
 
-  `systemctl status corosync.service`
-  corosync_status = $?.success?
-  `systemctl is-enabled corosync.service`
-  corosync_enabled = $?.success?
-  `systemctl status pacemaker.service`
-  pacemaker_status = $?.success?
-  `systemctl is-enabled pacemaker.service`
-  pacemaker_enabled = $?.success?
-
-  `systemctl is-enabled pcsd.service`
-  pcsd_enabled = $?.success?
+  corosync_status = corosync_running?
+  corosync_enabled = corosync_enabled?
+  pacemaker_status = pacemaker_running?
+  pacemaker_enabled = pacemaker_enabled?
+  pcsd_enabled = pcsd_enabled?
 
   corosync_online = []
   corosync_offline = []
@@ -391,7 +385,7 @@ def node_status(params)
     out_nodes = []
     oConstraints = []
     meta_attributes = []
-    r.meta_attr.each_pair {|k,v| meta_attributes << {key: k, value: v[1], id:v[0], parent:v[2]}}
+    r.meta_attr.each_pair {|k,v| meta_attributes << {:key => k, :value => v[1], :id => v[0], :parent => v[2]}}
     r.nodes.each{|n|
       out_nodes.push(n.name)
     }

@@ -34,6 +34,7 @@ install_pcsd:
 	install  pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	install -m 644 -D pcsd/pcsd.logrotate ${DESTDIR}/etc/logrotate.d/pcsd
+	install -m 755 -D pcsd/pcsd ${DESTDIR}/${initdir}/pcsd
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/sbin/pcs

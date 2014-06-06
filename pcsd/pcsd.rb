@@ -59,6 +59,8 @@ before do
 end
 
 configure do
+  ISRHEL6 = is_rhel6
+
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
   PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
@@ -69,7 +71,11 @@ configure do
     PCS = "../pcs/pcs" 
   end
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
-  COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
+  if ISRHEL6
+    COROSYNC_CMAPCTL = "/usr/sbin/corosync-objctl"
+  else
+    COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
+  end
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   CIBADMIN = "/usr/sbin/cibadmin"
   SETTINGS_FILE = "pcs_settings.conf"
@@ -88,6 +94,11 @@ configure do
     $logger.level = Logger::INFO
   end
 
+  if ISRHEL6
+    $logger.debug "Detected RHEL 6"
+  else
+    $logger.debug "Did not detect RHEL 6"
+  end
 
   if not defined? $cur_node_name
     $cur_node_name = `hostname`.chomp
@@ -415,7 +426,7 @@ post '/manage/newcluster' do
   }
 
   $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
-  code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {clustername: @cluster_name, nodes: @nodes.join(','), options: options.to_json})
+  code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes.join(','), :options => options.to_json})
 
   if code == 200
     pcs_config.clusters << Cluster.new(@cluster_name, @nodes)

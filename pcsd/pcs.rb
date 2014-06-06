@@ -1,5 +1,6 @@
 # Wrapper for PCS command
 #
+require 'popen4'
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -276,8 +277,8 @@ def get_stonith_agents_avail()
 end
 
 def get_cluster_version()
-  stdout, stderror, retval = run_cmd("corosync-cmapctl","totem.cluster_name")
-  if retval != 0
+  stdout, stderror, retval = run_cmd(COROSYNC_CMAPCTL,"totem.cluster_name")
+  if retval != 0 and not ISRHEL6
     # Cluster probably isn't running, try to get cluster name from
     # corosync.conf
     begin
@@ -288,7 +289,7 @@ def get_cluster_version()
     in_totem = false
     current_level = 0
     corosync_conf.each_line do |line|
-      if line =~ /totem\s*{/
+      if line =~ /totem\s*\{/
         in_totem = true
       end
       if in_totem
@@ -297,7 +298,7 @@ def get_cluster_version()
           return md[1]
         end
       end
-      if in_totem and line =~ /}/
+      if in_totem and line =~ /\}/
         in_totem = false
       end
     end
@@ -320,16 +321,64 @@ def disable_cluster()
   return true
 end
 
+def corosync_running?()
+  if not ISRHEL6
+    `systemctl status corosync.service`
+  else
+    `service corosync status`
+  end
+  return $?.success?
+end
+
+def corosync_enabled?()
+  if not ISRHEL6
+    `systemctl is-enabled corosync.service`
+  else
+    `chkconfig corosync`
+  end
+  return $?.success?
+end
+
+def pacemaker_running?()
+  if not ISRHEL6
+    `systemctl status pacemaker.service`
+  else
+    `service pacemaker status`
+  end
+  return $?.success?
+end
+
+def pacemaker_enabled?()
+  if not ISRHEL6
+    `systemctl is-enabled pacemaker.service`
+  else
+    `chkconfig pacemaker`
+  end
+  return $?.success?
+end
+
+def pcsd_enabled?()
+  if not ISRHEL6
+    `systemctl is-enabled pcsd.service`
+  else
+    `chkconfig pcsd`
+  end
+  return $?.success?
+end
+
 def run_cmd(*args)
   $logger.info("Running: " + args.join(" "))
   start = Time.now
-  stdin, stdout, stderror, waitth = Open3.popen3(*args)
-  out = stdout.readlines()
-  errout = stderror.readlines()
-  retval = waitth.value.exitstatus
-  duration = Time.now - start
+  out = ""
+  errout = ""
+  status = POpen4::popen4(*args) do |stdout, stderror, stdin, pid|
+    out = stdout.readlines()
+    errout = stderror.readlines()
+    duration = Time.now - start
+    $logger.debug(out)
+    $logger.debug("Duration: " + duration.to_s + "s")
+  end
+  retval = status.exitstatus
   $logger.debug("Return Value: " + retval.to_s)
-  $logger.debug(out)
-  $logger.debug("Duration: " + duration.to_s + "s")
   return out, errout, retval
 end
