@@ -274,7 +274,10 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
 
 def getNodesFromCorosyncConf():
     if is_rhel6():
-        dom = parse(settings.cluster_conf_file)
+        try:
+            dom = parse(settings.cluster_conf_file)
+        except IOError:
+            err("Unable to open cluster.conf file to get nodes list")
         return [
             node_el.getAttribute("name")
             for node_el in dom.getElementsByTagName("clusternode")
