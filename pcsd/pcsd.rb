@@ -66,7 +66,7 @@ configure do
   PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
   PENGINE = "/usr/libexec/pacemaker/pengine"
   if Dir.pwd == "/var/lib/pcsd"
-    PCS = "/sbin/pcs" 
+    PCS = "/usr/sbin/pcs" 
   else
     PCS = "../pcs/pcs" 
   end
