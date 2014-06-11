@@ -1682,7 +1682,7 @@ def resource_manage(argv, set_managed):
 def is_managed(resource_id):
     state_dom = utils.getClusterState()
     for resource_el in state_dom.getElementsByTagName("resource"):
-        if resource_el.getAttribute("id") == resource_id:
+        if resource_el.getAttribute("id") in [resource_id, resource_id + ":0"]:
             if resource_el.getAttribute("managed") == "false":
                 return False
             return True

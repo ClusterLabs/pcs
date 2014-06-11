@@ -682,6 +682,14 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         ac(o,"")
 
+        o, r = pcs("resource create d99 Dummy clone globally-unique=true")
+        ac(o, "")
+        assert r == 0
+
+        o, r = pcs("resource delete d99")
+        ac(o, "Deleting Resource - d99\n")
+        assert r == 0
+
     def testMasterSlaveRemove(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
