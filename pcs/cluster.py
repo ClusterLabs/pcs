@@ -112,6 +112,9 @@ def sync_start(partial_argv, nodes):
     config = corosync_setup(argv,True)
     for node in nodes:
         utils.setCorosyncConfig(node,config)
+    print "Starting cluster on nodes: " + ", ".join(nodes) + "..."
+
+    for node in nodes:
         utils.startCluster(node)
 
 def sync(partial_argv,nodes):
@@ -265,12 +268,12 @@ def corosync_setup(argv,returnConfig=False):
         usage.cluster()
         exit(1)
 
-    if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options and fedora_config:
+    if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options:# and fedora_config:
         sync_start(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_nodes)
         return
-    elif not returnConfig and not "--local" in utils.pcs_options and fedora_config:
+    elif not returnConfig and not "--local" in utils.pcs_options:# and fedora_config:
         sync(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_nodes)
@@ -395,37 +398,48 @@ def corosync_setup(argv,returnConfig=False):
 
         utils.setCorosyncConf(corosync_config)
     else:
-        if os.path.exists("/etc/cluster/cluster.conf") and not "--force" in utils.pcs_options:
+        cluster_conf_location = "/etc/cluster/cluster.conf"
+        if returnConfig:
+            cc_temp = tempfile.NamedTemporaryFile('w+b', -1, ".pcs")
+            cluster_conf_location = cc_temp.name
+
+        if os.path.exists("/etc/cluster/cluster.conf") and not "--force" in utils.pcs_options and not returnConfig:
             print "Error: /etc/cluster/cluster.conf already exists, use --force to overwrite"
             sys.exit(1)
-        output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--createcluster", cluster_name])
+        output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--createcluster", cluster_name])
         if retval != 0:
             print output
             utils.err("error creating cluster: %s" % cluster_name)
-        output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--addfencedev", "pcmk-redirect", "agent=fence_pcmk"])
+        output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addfencedev", "pcmk-redirect", "agent=fence_pcmk"])
         if retval != 0:
             print output
             utils.err("error creating fence dev: %s" % cluster_name)
 
         if len(nodes) == 2:
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--setcman", "two_node=1", "expected_votes=1"])
+            output, retval = utils.run(["/usr/sbin/ccs", "-f", cluster_conf_location, "--setcman", "two_node=1", "expected_votes=1"])
             if retval != 0:
                 print output
                 utils.err("error adding node: %s" % node)
 
         for node in nodes:
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--addnode", node])
+            output, retval = utils.run(["/usr/sbin/ccs", "-f", cluster_conf_location, "--addnode", node])
             if retval != 0:
                 print output
                 utils.err("error adding node: %s" % node)
-            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--addmethod", "pcmk-method", node])
+            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addmethod", "pcmk-method", node])
             if retval != 0:
                 print output
                 utils.err("error adding fence method: %s" % node)
-            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", "/etc/cluster/cluster.conf", "--addfenceinst", "pcmk-redirect", node, "pcmk-method", "port="+node])
+            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addfenceinst", "pcmk-redirect", node, "pcmk-method", "port="+node])
             if retval != 0:
                 print output
                 utils.err("error adding fence instance: %s" % node)
+        if returnConfig:
+            cc_temp.seek(0)
+            cluster_conf_data = cc_temp.read()
+            cc_temp.close()
+            return cluster_conf_data
+
 
     if "--start" in utils.pcs_options:
         start_cluster([])

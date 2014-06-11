@@ -77,6 +77,7 @@ configure do
     COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
   end
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
+  CLUSTER_CONF = "/etc/cluster/cluster.conf"
   CIBADMIN = "/usr/sbin/cibadmin"
   SETTINGS_FILE = "pcs_settings.conf"
   $user_pass_file = "pcs_users.conf"

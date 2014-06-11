@@ -163,10 +163,16 @@ def getCorosyncConfig(node):
     return retval,output
 
 def setCorosyncConfig(node,config):
-    data = urllib.urlencode({'corosync_conf':config})
-    (status, data) = sendHTTPRequest(node, 'remote/set_corosync_conf', data)
-    if status != 0:
-        err("Unable to set corosync config")
+    if is_rhel6:
+        data = urllib.urlencode({'cluster_conf':config})
+        (status, data) = sendHTTPRequest(node, 'remote/set_cluster_conf', data)
+        if status != 0:
+            err("Unable to set cluster.conf")
+    else:
+        data = urllib.urlencode({'corosync_conf':config})
+        (status, data) = sendHTTPRequest(node, 'remote/set_corosync_conf', data)
+        if status != 0:
+            err("Unable to set corosync config")
 
 def startCluster(node):
     return sendHTTPRequest(node, 'remote/cluster_start', None, False, True)

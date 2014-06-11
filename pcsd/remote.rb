@@ -26,6 +26,12 @@ def remote(params,request)
     return get_cib(params)
   when "get_corosync_conf"
     return get_corosync_conf(params)
+  when "set_cluster_conf"
+    if set_cluster_conf(params)
+      return "Updated cluster.conf..."
+    else
+      return "Failed to update cluster.conf..."
+    end
   when "set_corosync_conf"
     if set_corosync_conf(params)
       return "Succeeded"
@@ -204,6 +210,24 @@ def get_corosync_conf(params)
   return f.read
 end
 
+def set_cluster_conf(params)
+  if params[:cluster_conf] != nil and params[:cluster_conf] != ""
+    begin
+      FileUtils.cp(CLUSTER_CONF, CLUSTER_CONF + "." + Time.now.to_i.to_s)
+    rescue => e
+      $logger.debug "Exception trying to backup cluster.conf: " + e.inspect.to_s
+    end
+    File.open("/etc/cluster/cluster.conf",'w') {|f|
+      f.write(params[:cluster_conf])
+    }
+    return true
+  else
+    $logger.info "Invalid cluster.conf file"
+    return false
+  end
+end
+
+
 def set_corosync_conf(params)
   if params[:corosync_conf] != nil and params[:corosync_conf] != ""
     begin
@@ -215,8 +239,8 @@ def set_corosync_conf(params)
     }
     return true
   else
-    return false
     $logger.info "Invalid corosync.conf file"
+    return false
   end
 end
 

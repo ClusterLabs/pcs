@@ -1,6 +1,6 @@
 # Wrapper for PCS command
 #
-require 'popen4'
+require 'open4'
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -371,9 +371,10 @@ def run_cmd(*args)
   start = Time.now
   out = ""
   errout = ""
-  status = POpen4::popen4(*args) do |stdout, stderror, stdin, pid|
+  status = Open4::popen4(*args) do |pid, stdin, stdout, stderr|
+      $logger.info("HER")
     out = stdout.readlines()
-    errout = stderror.readlines()
+    errout = stderr.readlines()
     duration = Time.now - start
     $logger.debug(out)
     $logger.debug("Duration: " + duration.to_s + "s")
