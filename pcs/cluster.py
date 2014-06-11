@@ -185,7 +185,10 @@ def cluster_gui_status(argv,dont_exit = False):
     if len(argv) == 0:
         nodes = utils.getNodesFromCorosyncConf()
         if len(nodes) == 0:
-            utils.err("no nodes found in corosync.conf")
+            if utils.is_rhel6():
+                utils.err("no nodes found in cluster.conf")
+            else:
+                utils.err("no nodes found in corosync.conf")
         bad_nodes = check_nodes(nodes, "  ")
     else:
         bad_nodes = check_nodes(argv, "  ")
