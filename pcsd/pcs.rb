@@ -372,7 +372,6 @@ def run_cmd(*args)
   out = ""
   errout = ""
   status = Open4::popen4(*args) do |pid, stdin, stdout, stderr|
-      $logger.info("HER")
     out = stdout.readlines()
     errout = stderr.readlines()
     duration = Time.now - start
