@@ -23,7 +23,7 @@ def main(argv):
         # we change --cloneopt to "clone" for backwards compatibility
         new_argv = []
         for arg in argv:
-            if arg == "--cloneopt":
+            if arg == "--cloneopt" or arg == "--clone":
                 new_argv.append("clone")
             elif arg.startswith("--cloneopt="):
                 new_argv.append("clone")

@@ -1269,9 +1269,13 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "", [output]
 
+        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D3 Dummy --clone globaly-unique=true")
+        assert returnVal == 0
+        assert output == "", [output]
+
         output, returnVal  = pcs(temp_cib, "resource --full")
         assert returnVal == 0
-        assert output == ' Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Clone: D2-clone\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
+        ac(output,' Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Clone: D2-clone\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n Clone: D3-clone\n  Meta Attrs: globaly-unique=true \n  Resource: D3 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D3-monitor-interval-60s)\n')
 
         output, returnVal  = pcs(temp_cib, "resource delete D1")
         assert returnVal == 0
@@ -1281,21 +1285,25 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "Deleting Resource - D2\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops --clone dlm ocf:pacemaker:controld op monitor interval=10s --cloneopt meta interleave=true clone-node-max=1 ordered=true")
+        output, returnVal  = pcs(temp_cib, "resource delete D3")
         assert returnVal == 0
+        assert output == "Deleting Resource - D3\n", [output]
+
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:controld op monitor interval=10s --clone meta interleave=true clone-node-max=1 ordered=true")
         assert output == "", [output]
+        assert returnVal == 0
 
         output,returnVal = pcs(temp_cib, "resource --full")
         assert returnVal == 0
-        assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
+        ac(output," Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n")
 
         output, returnVal  = pcs(temp_cib, "resource delete dlm")
         assert returnVal == 0
         assert output == "Deleting Resource - dlm\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops --clone dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
-        assert returnVal == 0
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
         assert output == "", [output]
+        assert returnVal == 0
 
         output,returnVal = pcs(temp_cib, "resource --full")
         assert returnVal == 0
