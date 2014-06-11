@@ -1515,6 +1515,19 @@ class ResourceTest(unittest.TestCase):
         ac(o,"")
         assert r == 0
 
+        output, retVal = pcs(temp_cib, "resource create dummy0 Dummy --group group0")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource clone group0")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show group0-clone")
+        ac(output," Clone: group0-clone\n  Group: group0\n   Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)\n    Operations: start interval=0s timeout=20 (dummy0-start-timeout-20)\n                stop interval=0s timeout=20 (dummy0-stop-timeout-20)\n                monitor interval=10 timeout=20 (dummy0-monitor-interval-10)\n")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource disable group0")
+        ac(output, "")
+        assert retVal == 0
+
     def testOPOption(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy op monitor interval=30s blah=blah")
         ac(o,"Error: blah is not a valid op option (use --force to override)\n")

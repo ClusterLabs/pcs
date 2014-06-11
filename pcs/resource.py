@@ -1687,7 +1687,7 @@ def is_managed(resource_id):
                 return False
             return True
     for resource_el in state_dom.getElementsByTagName("group"):
-        if resource_el.getAttribute("id") == resource_id:
+        if resource_el.getAttribute("id") in [resource_id, resource_id + ":0"]:
             for primitive_el in resource_el.getElementsByTagName("resource"):
                 if primitive_el.getAttribute("managed") == "false":
                     return False
