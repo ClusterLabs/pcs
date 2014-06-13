@@ -60,6 +60,7 @@ end
 
 configure do
   ISRHEL6 = is_rhel6
+  DISABLE_GUI = false
 
   OCF_ROOT = "/usr/lib/ocf"
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
@@ -175,300 +176,6 @@ helpers do
   end
 end
 
-
-get('/login'){ erb :login, :layout => :main }
-
-get '/logout' do 
-  session.clear
-  erb :login, :layout => :main
-end
-
-post '/login' do
-  if PCSAuth.validUser(params['username'],params['password'])
-    session["username"] = params['username']
-# Temporarily ignore pre_login_path until we come up with a list of valid
-# paths to redirect to (to prevent status_all issues)
-#    if session["pre_login_path"]
-#      plp = session["pre_login_path"]
-#      session.delete("pre_login_path")
-#      pp "Pre Login Path: " + plp
-#      if plp == "" or plp == "/"
-#      	plp = '/manage'
-#      end
-#      redirect plp
-#    else
-      redirect '/manage'
-#    end
-  else
-    session["bad_login_name"] = params['username']
-    redirect '/login?badlogin=1'
-  end
-end
-
-post '/fencerm' do
-  params.each { |k,v|
-    if k.index("resid-") == 0
-      run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
-    end
-  }
-  redirect "/fencedevices/"
-end
-
-get '/configure/?:page?' do
-  @config_options = getConfigOptions(params[:page])
-  @configuremenuclass = "class=\"active\""
-  erb :configure, :layout => :main
-end
-
-get '/fencedevices2/?:fencedevice?' do
-  @resources, @groups = getResourcesGroups(true)
-  pp @resources
-
-  if @resources.length == 0
-    @cur_resource = nil
-    @resource_agents = getFenceAgents()
-  else
-    @cur_resource = @resources[0]
-    if params[:fencedevice]
-      @resources.each do |fd|
-	if fd.id == params[:fencedevice]
-	  @cur_resource = fd
-	  break
-	end
-      end
-    end
-    @cur_resource.options = getResourceOptions(@cur_resource.id)
-    @resource_agents = getFenceAgents(@cur_resource.agentname)
-  end
-  erb :fencedevices, :layout => :main
-end
-
-['/resources2/?:resource?', '/resource_list/?:resource?'].each do |path|
-  get path do
-    @load_data = true
-    @resources, @groups = getResourcesGroups
-    @resourcemenuclass = "class=\"active\""
-
-    if @resources.length == 0
-      @cur_resource = nil
-      @resource_agents = getResourceAgents()
-    else
-      @cur_resource = @resources[0]
-      @cur_resource.options = getResourceOptions(@cur_resource.id)
-      if params[:resource]
-	@resources.each do |r|
-	  if r.id == params[:resource]
-	    @cur_resource = r
-	    @cur_resource.options = getResourceOptions(r.id)
-	    break
-	  end
-	end
-      end
-      @resource_agents = getResourceAgents(@cur_resource.agentname)
-      @ord_dep_before, @ord_dep_after  = getOrderingConstraints(@cur_resource.id)
-      @colo_dep_together, @colo_dep_apart = getColocationConstraints(@cur_resource.id)
-      @enabled_nodes, @disabled_nodes = getLocationConstraints(@cur_resource.id)
-    end
-
-    @nodes_online, @nodes_offline = get_nodes
-
-    if path.start_with? '/resource_list'
-      erb :_resource_list
-    else
-      erb :resource, :layout => :main
-    end
-  end
-end
-
-get '/resources/metadata/:resourcename/?:new?' do
-  return ""
-  @resource = ResourceAgent.new(params[:resourcename])
-  @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
-  @new_resource = params[:new]
-  @resources, @groups = getResourcesGroups
-  
-  erb :resourceagentform
-end
-
-get '/fencedevices/metadata/:fencedevicename/?:new?' do
-  return ""
-  @fenceagent = FenceAgent.new(params[:fencedevicename])
-  @fenceagent.required_options, @fenceagent.optional_options = getFenceAgentMetadata(params[:fencedevicename])
-  @new_fenceagent = params[:new]
-  
-  erb :fenceagentform
-end
-
-get '/nodes/?:node?' do
-  setup()
-  @load_data = true
-#  @nodemenuclass = "class=\"active\""
-  @resources, @groups = getResourcesGroups
-#  @resources_running = []
-#  @resources.each { |r|
-#    @cur_node && r.nodes && r.nodes.each {|n|
-#      if n.name == @cur_node.id
-#	@resources_running << r
-#      end
-#    }
-#  }
-  @resource_agents = getResourceAgents()
-  @stonith_agents = getFenceAgents()
-#  @nodes = @nodes.sort_by{|k,v|k}
-  erb :nodes, :layout => :main
-end
-
-get '/manage/?' do
-  @manage = true
-  pcs_config = PCSConfig.new
-  @clusters = pcs_config.clusters
-  @load_data = true
-  erb :manage, :layout => :main
-end
-
-get '/managec/:cluster/main' do
-  @cluster_name = params[:cluster]
-#  @resources, @groups = getResourcesGroups
-  @load_data = true
-  pcs_config = PCSConfig.new
-  @clusters = pcs_config.clusters
-  @resources = []
-  @groups = []
-  @nodes = get_cluster_nodes(params[:cluster])
-  if @nodes == []
-    redirect '/manage/?error=badclustername&errorval=' + params[:cluster] + '#manage'
-  end
-  @resource_agents = get_resource_agents_avail() 
-  @stonith_agents = get_stonith_agents_avail() 
-  @config_options = getConfigOptions2(@cluster_name)
-
-  erb :nodes, :layout => :main
-end
-
-get '/managec/:cluster/status_all' do
-  status_all(params,get_cluster_nodes(params[:cluster]))
-end
-
-get '/managec/:cluster/?*' do
-  raw_data = request.env["rack.input"].read
-  if params[:cluster]
-    send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, false, raw_data)
-  end
-end
-
-post '/managec/:cluster/?*' do
-  raw_data = request.env["rack.input"].read
-  if params[:cluster]
-    return send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), true, params, false, raw_data)
-  end
-end
-
-get '/manage/:node/?*' do
-  if params[:node]
-    return send_request_with_token(params[:node], params[:splat].join("/"), false, {}, false)
-  end
-end
-
-post '/manage/existingcluster' do
-  pcs_config = PCSConfig.new
-  node = params['node-name']
-  code, result = send_request_with_token(node, 'status')
-  status = JSON.parse(result)
-  if status.has_key?("corosync_offline") and
-    status.has_key?("corosync_online") then
-    nodes = status["corosync_offline"] + status["corosync_online"]
-
-    if status["cluster_name"] == ""
-      session[:error] = "noname"
-      session[:errorval] = node
-      redirect '/manage'
-    end
-
-    if pcs_config.is_cluster_name_in_use(status["cluster_name"])
-      session[:error] = "duplicatename"
-      session[:errorval] = status["cluster_name"]
-      redirect '/manage'
-    end
-
-    pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
-    pcs_config.save
-    redirect '/manage'
-  else
-    redirect '/manage/?error=notauthorized#manage'
-  end
-end
-
-post '/manage/newcluster' do
-  pcs_config = PCSConfig.new
-  @manage = true
-  @cluster_name = params[:clustername]
-  @nodes = []
-  options = {}
-  params.each {|k,v|
-    if k.start_with?("node-") and v != ""
-      @nodes << v
-    end
-    if k.start_with?("config-") and v != ""
-      options[k.sub("config-","")] = v
-    end
-  }
-  if pcs_config.is_cluster_name_in_use(@cluster_name)
-    session[:error] = "duplicatename"
-    session[:errorval] = @cluster_name
-    redirect '/manage'
-  end
-
-  @nodes.each {|n|
-    if pcs_config.is_node_in_use(n)
-      session[:error] = "duplicatenodename"
-      session[:errorval] = n
-      redirect '/manage'
-    end
-  }
-
-  $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
-  code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes.join(','), :options => options.to_json})
-
-  if code == 200
-    pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
-    pcs_config.save
-  else
-    session[:error] = "unabletocreate"
-    session[:errorval] = out
-  end
-
-  redirect '/manage'
-end
-
-post '/manage/removecluster' do
-  pcs_config = PCSConfig.new
-  params.each { |k,v|
-    if k.start_with?("clusterid-")
-      pcs_config.remove_cluster(k.sub("clusterid-",""))
-    end
-  }
-  pcs_config.save
-  redirect '/manage'
-end
-
-post '/resource_cmd/rm_constraint' do
-  if params[:constraint_id]
-    retval = remove_constraint(params[:constraint_id])
-    if retval == 0
-      return "Constraint #{params[:constraint_id]} removed"
-    else
-      return [400, "Error removing constraint: #{params[:constraint_id]}"]
-    end
-  else
-    return [400,"Bad Constraint Options"]
-  end
-end
-
-get '/' do
-  $logger.info "Redirecting '/'...\n"
-  redirect '/manage'
-end
-
 get '/remote/?:command?' do
   return remote(params,request)
 end
@@ -477,21 +184,324 @@ post '/remote/?:command?' do
   return remote(params,request)
 end
 
-get '/wizards/?:wizard?' do
-  return wizard(params, request, params[:wizard])
-end
+if not DISABLE_GUI
+  get('/login'){ erb :login, :layout => :main }
 
-post '/wizards/?:wizard?' do
-  return wizard(params, request, params[:wizard])
-end
+  get '/logout' do 
+    session.clear
+    erb :login, :layout => :main
+  end
 
-get '*' do
-  $logger.debug "Bad URL"
-  $logger.debug params[:splat]
-  $logger.info "Redirecting '*'...\n"
-  redirect '/manage'
-  redirect "Bad URL"
-  call(env.merge("PATH_INFO" => '/nodes'))
+  post '/login' do
+    if PCSAuth.validUser(params['username'],params['password'])
+      session["username"] = params['username']
+      # Temporarily ignore pre_login_path until we come up with a list of valid
+      # paths to redirect to (to prevent status_all issues)
+      #    if session["pre_login_path"]
+      #      plp = session["pre_login_path"]
+      #      session.delete("pre_login_path")
+      #      pp "Pre Login Path: " + plp
+      #      if plp == "" or plp == "/"
+      #      	plp = '/manage'
+      #      end
+      #      redirect plp
+      #    else
+      redirect '/manage'
+      #    end
+    else
+      session["bad_login_name"] = params['username']
+      redirect '/login?badlogin=1'
+    end
+  end
+
+  post '/fencerm' do
+    params.each { |k,v|
+      if k.index("resid-") == 0
+        run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
+      end
+    }
+    redirect "/fencedevices/"
+  end
+
+  get '/configure/?:page?' do
+    @config_options = getConfigOptions(params[:page])
+    @configuremenuclass = "class=\"active\""
+    erb :configure, :layout => :main
+  end
+
+  get '/fencedevices2/?:fencedevice?' do
+    @resources, @groups = getResourcesGroups(true)
+    pp @resources
+
+    if @resources.length == 0
+      @cur_resource = nil
+      @resource_agents = getFenceAgents()
+    else
+      @cur_resource = @resources[0]
+      if params[:fencedevice]
+        @resources.each do |fd|
+          if fd.id == params[:fencedevice]
+            @cur_resource = fd
+            break
+          end
+        end
+      end
+      @cur_resource.options = getResourceOptions(@cur_resource.id)
+      @resource_agents = getFenceAgents(@cur_resource.agentname)
+    end
+    erb :fencedevices, :layout => :main
+  end
+
+  ['/resources2/?:resource?', '/resource_list/?:resource?'].each do |path|
+    get path do
+      @load_data = true
+      @resources, @groups = getResourcesGroups
+      @resourcemenuclass = "class=\"active\""
+
+      if @resources.length == 0
+        @cur_resource = nil
+        @resource_agents = getResourceAgents()
+      else
+        @cur_resource = @resources[0]
+        @cur_resource.options = getResourceOptions(@cur_resource.id)
+        if params[:resource]
+          @resources.each do |r|
+            if r.id == params[:resource]
+              @cur_resource = r
+              @cur_resource.options = getResourceOptions(r.id)
+              break
+            end
+          end
+        end
+        @resource_agents = getResourceAgents(@cur_resource.agentname)
+        @ord_dep_before, @ord_dep_after  = getOrderingConstraints(@cur_resource.id)
+        @colo_dep_together, @colo_dep_apart = getColocationConstraints(@cur_resource.id)
+        @enabled_nodes, @disabled_nodes = getLocationConstraints(@cur_resource.id)
+      end
+
+      @nodes_online, @nodes_offline = get_nodes
+
+      if path.start_with? '/resource_list'
+        erb :_resource_list
+      else
+        erb :resource, :layout => :main
+      end
+    end
+  end
+
+  get '/resources/metadata/:resourcename/?:new?' do
+    return ""
+    @resource = ResourceAgent.new(params[:resourcename])
+    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
+    @new_resource = params[:new]
+    @resources, @groups = getResourcesGroups
+
+    erb :resourceagentform
+  end
+
+  get '/fencedevices/metadata/:fencedevicename/?:new?' do
+    return ""
+    @fenceagent = FenceAgent.new(params[:fencedevicename])
+    @fenceagent.required_options, @fenceagent.optional_options = getFenceAgentMetadata(params[:fencedevicename])
+    @new_fenceagent = params[:new]
+
+    erb :fenceagentform
+  end
+
+  get '/nodes/?:node?' do
+    setup()
+    @load_data = true
+    #  @nodemenuclass = "class=\"active\""
+    @resources, @groups = getResourcesGroups
+    #  @resources_running = []
+    #  @resources.each { |r|
+    #    @cur_node && r.nodes && r.nodes.each {|n|
+    #      if n.name == @cur_node.id
+    #	@resources_running << r
+    #      end
+    #    }
+    #  }
+    @resource_agents = getResourceAgents()
+    @stonith_agents = getFenceAgents()
+    #  @nodes = @nodes.sort_by{|k,v|k}
+    erb :nodes, :layout => :main
+  end
+
+  get '/manage/?' do
+    @manage = true
+    pcs_config = PCSConfig.new
+    @clusters = pcs_config.clusters
+    @load_data = true
+    erb :manage, :layout => :main
+  end
+
+  get '/managec/:cluster/main' do
+    @cluster_name = params[:cluster]
+    #  @resources, @groups = getResourcesGroups
+    @load_data = true
+    pcs_config = PCSConfig.new
+    @clusters = pcs_config.clusters
+    @resources = []
+    @groups = []
+    @nodes = get_cluster_nodes(params[:cluster])
+    if @nodes == []
+      redirect '/manage/?error=badclustername&errorval=' + params[:cluster] + '#manage'
+    end
+    @resource_agents = get_resource_agents_avail() 
+    @stonith_agents = get_stonith_agents_avail() 
+    @config_options = getConfigOptions2(@cluster_name)
+
+    erb :nodes, :layout => :main
+  end
+
+  get '/managec/:cluster/status_all' do
+    status_all(params,get_cluster_nodes(params[:cluster]))
+  end
+
+  get '/managec/:cluster/?*' do
+    raw_data = request.env["rack.input"].read
+    if params[:cluster]
+      send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, false, raw_data)
+    end
+  end
+
+  post '/managec/:cluster/?*' do
+    raw_data = request.env["rack.input"].read
+    if params[:cluster]
+      return send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), true, params, false, raw_data)
+    end
+  end
+
+  get '/manage/:node/?*' do
+    if params[:node]
+      return send_request_with_token(params[:node], params[:splat].join("/"), false, {}, false)
+    end
+  end
+
+  post '/manage/existingcluster' do
+    pcs_config = PCSConfig.new
+    node = params['node-name']
+    code, result = send_request_with_token(node, 'status')
+    status = JSON.parse(result)
+    if status.has_key?("corosync_offline") and
+      status.has_key?("corosync_online") then
+      nodes = status["corosync_offline"] + status["corosync_online"]
+
+      if status["cluster_name"] == ""
+        session[:error] = "noname"
+        session[:errorval] = node
+        redirect '/manage'
+      end
+
+      if pcs_config.is_cluster_name_in_use(status["cluster_name"])
+        session[:error] = "duplicatename"
+        session[:errorval] = status["cluster_name"]
+        redirect '/manage'
+      end
+
+      pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
+      pcs_config.save
+      redirect '/manage'
+    else
+      redirect '/manage/?error=notauthorized#manage'
+    end
+  end
+
+  post '/manage/newcluster' do
+    pcs_config = PCSConfig.new
+    @manage = true
+    @cluster_name = params[:clustername]
+    @nodes = []
+    options = {}
+    params.each {|k,v|
+      if k.start_with?("node-") and v != ""
+        @nodes << v
+      end
+      if k.start_with?("config-") and v != ""
+        options[k.sub("config-","")] = v
+      end
+    }
+    if pcs_config.is_cluster_name_in_use(@cluster_name)
+      session[:error] = "duplicatename"
+      session[:errorval] = @cluster_name
+      redirect '/manage'
+    end
+
+    @nodes.each {|n|
+      if pcs_config.is_node_in_use(n)
+        session[:error] = "duplicatenodename"
+        session[:errorval] = n
+        redirect '/manage'
+      end
+    }
+
+    $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
+    code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes.join(','), :options => options.to_json})
+
+    if code == 200
+      pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
+      pcs_config.save
+    else
+      session[:error] = "unabletocreate"
+      session[:errorval] = out
+    end
+
+    redirect '/manage'
+  end
+
+  post '/manage/removecluster' do
+    pcs_config = PCSConfig.new
+    params.each { |k,v|
+      if k.start_with?("clusterid-")
+        pcs_config.remove_cluster(k.sub("clusterid-",""))
+      end
+    }
+    pcs_config.save
+    redirect '/manage'
+  end
+
+  post '/resource_cmd/rm_constraint' do
+    if params[:constraint_id]
+      retval = remove_constraint(params[:constraint_id])
+      if retval == 0
+        return "Constraint #{params[:constraint_id]} removed"
+      else
+        return [400, "Error removing constraint: #{params[:constraint_id]}"]
+      end
+    else
+      return [400,"Bad Constraint Options"]
+    end
+  end
+
+  get '/' do
+    $logger.info "Redirecting '/'...\n"
+    redirect '/manage'
+  end
+
+  get '/wizards/?:wizard?' do
+    return wizard(params, request, params[:wizard])
+  end
+
+  post '/wizards/?:wizard?' do
+    return wizard(params, request, params[:wizard])
+  end
+
+  get '*' do
+    $logger.debug "Bad URL"
+    $logger.debug params[:splat]
+    $logger.info "Redirecting '*'...\n"
+    redirect '/manage'
+    redirect "Bad URL"
+    call(env.merge("PATH_INFO" => '/nodes'))
+  end
+else
+  get '*' do
+    $logger.debug "ERROR: GUI Disabled, Bad URL"
+    $logger.debug params[:splat]
+    $logger.info "Redirecting '*'...\n"
+    return "PCSD GUI is disabled"
+  end
+
 end
 
 def getLocationDeps(cur_node)
