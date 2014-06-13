@@ -665,26 +665,41 @@ def get_group_children(group_id):
                     child_resources.append(child.getAttribute("id"))
     return child_resources
 
-def get_clone_ms_resource(clone_id,master=False):
-    dom = get_cib_dom()
-    if master:
-        clones = dom.getElementsByTagName("master")
-    else:
-        clones = dom.getElementsByTagName("clone")
-    for c in clones:
-        if c.getAttribute("id") == clone_id:
-            for child in c.childNodes:
-                if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
-                    continue
-                if child.tagName == "primitive":
-                    return child.getAttribute("id")
-    return ""
+def dom_get_clone_ms_resource(dom, clone_ms_id):
+    clone_ms = (
+        dom_get_clone(dom, clone_ms_id)
+        or
+        dom_get_master(dom, clone_ms_id)
+    )
+    if clone_ms:
+        for child in clone_ms.childNodes:
+            if (
+                child.nodeType == xml.dom.minidom.Node.ELEMENT_NODE
+                and
+                child.tagName in ["group", "primitive"]
+            ):
+                return child
+    return None
 
+# deprecated, use dom_get_master
 def is_master(ms_id):
     return does_exist("//master[@id='"+ms_id+"']")
 
+def dom_get_master(dom, master_id):
+    for master in dom.getElementsByTagName("master"):
+        if master.getAttribute("id") == master_id:
+            return master
+    return None
+
+# deprecated, use dom_get_clone
 def is_clone(clone_id):
     return does_exist("//clone[@id='"+clone_id+"']")
+
+def dom_get_clone(dom, clone_id):
+    for clone in dom.getElementsByTagName("clone"):
+        if clone.getAttribute("id") == clone_id:
+            return clone
+    return None
 
 # deprecated, use dom_get_group
 def is_group(group_id):

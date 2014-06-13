@@ -1716,6 +1716,83 @@ class ResourceTest(unittest.TestCase):
         ac(o," Resource: X0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: start interval=0s timeout=20 (X0-start-timeout-20)\n              stop interval=0s timeout=20 (X0-stop-timeout-20)\n              monitor interval=10 timeout=20 (X0-monitor-interval-10)\n Resource: X1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: start interval=0s timeout=20 (X1-start-timeout-20)\n              stop interval=0s timeout=20 (X1-stop-timeout-20)\n              monitor interval=90s (X1-monitor-interval-90s)\n Resource: X2 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=1.1.1.1 \n  Operations: start interval=0s timeout=20s (X2-start-timeout-20s)\n              stop interval=0s timeout=20s (X2-stop-timeout-20s)\n              monitor interval=10s timeout=20s (X2-monitor-interval-10s)\n Resource: X3 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=1.1.1.1 \n  Operations: monitor interval=1s (X3-monitor-interval-1s)\n              start interval=0s timeout=1s (X3-start-timeout-1s)\n              stop interval=0s timeout=1s (X3-stop-timeout-1s)\n")
         assert r == 0
 
+    def testClonedMasteredGroup(self):
+        output, retVal = pcs(temp_cib, "resource create dummy1 Dummy --no-default-ops --group dummies")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource create dummy2 Dummy --no-default-ops --group dummies")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource create dummy3 Dummy --no-default-ops --group dummies")
+        ac(output, "")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource clone dummies")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show dummies-clone")
+        ac(output, " Clone: dummies-clone\n  Group: dummies\n   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy1-monitor-interval-60s)\n   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy2-monitor-interval-60s)\n   Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy3-monitor-interval-60s)\n")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource unclone dummies-clone")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show")
+        ac(output, " Resource Group: dummies\n     dummy1\t(ocf::heartbeat:Dummy):\tStopped \n     dummy2\t(ocf::heartbeat:Dummy):\tStopped \n     dummy3\t(ocf::heartbeat:Dummy):\tStopped \n")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource clone dummies")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show dummies-clone")
+        ac(output, " Clone: dummies-clone\n  Group: dummies\n   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy1-monitor-interval-60s)\n   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy2-monitor-interval-60s)\n   Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy3-monitor-interval-60s)\n")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource delete dummies-clone")
+        ac(output, "Removing group: dummies (and all resources within group)\nStopping all resources in group: dummies...\nDeleting Resource - dummy1\nDeleting Resource - dummy2\nDeleting Resource (and group and clone) - dummy3\n")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show")
+        ac(output, "NO resources configured\n")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource create dummy1 Dummy --no-default-ops --group dummies")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource create dummy2 Dummy --no-default-ops --group dummies")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource create dummy3 Dummy --no-default-ops --group dummies")
+        ac(output, "")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource master dummies")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show dummies-master")
+        ac(output, " Master: dummies-master\n  Group: dummies\n   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy1-monitor-interval-60s)\n   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy2-monitor-interval-60s)\n   Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy3-monitor-interval-60s)\n")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource unclone dummies-master")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show")
+        ac(output, " Resource Group: dummies\n     dummy1\t(ocf::heartbeat:Dummy):\tStopped \n     dummy2\t(ocf::heartbeat:Dummy):\tStopped \n     dummy3\t(ocf::heartbeat:Dummy):\tStopped \n")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource master dummies")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show dummies-master")
+        ac(output, " Master: dummies-master\n  Group: dummies\n   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy1-monitor-interval-60s)\n   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy2-monitor-interval-60s)\n   Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)\n    Operations: monitor interval=60s (dummy3-monitor-interval-60s)\n")
+        assert retVal == 0
+
+        output, retVal = pcs(temp_cib, "resource delete dummies-master")
+        ac(output, "Removing group: dummies (and all resources within group)\nStopping all resources in group: dummies...\nDeleting Resource - dummy1\nDeleting Resource - dummy2\nDeleting Resource (and group and M/S) - dummy3\n")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show")
+        ac(output, "NO resources configured\n")
+        assert retVal == 0
+
 
 if __name__ == "__main__":
     unittest.main()

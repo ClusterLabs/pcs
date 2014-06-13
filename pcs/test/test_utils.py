@@ -9,7 +9,10 @@ import utils
 class UtilsTest(unittest.TestCase):
     def testDomGetResources(self):
         def assert_element_id(node, node_id):
-            self.assertTrue(isinstance(node, xml.dom.minidom.Element))
+            self.assertTrue(
+                isinstance(node, xml.dom.minidom.Element),
+                "element with id '%s' not found" % node_id
+            )
             self.assertEquals(node.getAttribute("id"), node_id)
 
         def test_dom_get(method, dom, ok_ids, bad_ids):
@@ -28,6 +31,10 @@ class UtilsTest(unittest.TestCase):
         )
         self.assertFalse(utils.dom_get_group(cib_dom, "myGroup"))
         self.assertFalse(utils.dom_get_group_clone(cib_dom, "myClonedGroup"))
+        self.assertFalse(utils.dom_get_clone(cib_dom, "myClone"))
+        self.assertFalse(utils.dom_get_master(cib_dom, "myMaster"))
+        self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myClone"))
+        self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myMaster"))
 
         new_resources = xml.dom.minidom.parseString("""
             <resources>
@@ -56,6 +63,13 @@ class UtilsTest(unittest.TestCase):
                           </primitive>
                       </group>
                   </clone>
+                  <master id="myGroupMaster">
+                      <group id="myMasteredGroup">
+                          <primitive id="myMasteredGroupedResource"
+                                class="ocf" provider="heartbeat" type="Dummy">
+                          </primitive>
+                      </group>
+                  </master>
             </resources>
         """).documentElement
         resources = cib_dom.getElementsByTagName("resources")[0]
@@ -66,12 +80,14 @@ class UtilsTest(unittest.TestCase):
             "myClone", "myClonedResource",
             "myMaster", "myMasteredResource",
             "myGroup", "myGroupedResource",
-            "myGroupClone", "myClonedGroup", "myClonedGroupedResource"
+            "myGroupClone", "myClonedGroup", "myClonedGroupedResource",
+            "myGroupMaster", "myMasteredGroup", "myMasteredGroupedResource",
         ])
 
         resource_ids = set([
-            "myResource", "myClonedResource", "myGroupedResource",
-            "myMasteredResource", "myClonedGroupedResource"
+            "myResource",
+            "myClonedResource", "myGroupedResource", "myMasteredResource",
+            "myClonedGroupedResource", "myMasteredGroupedResource"
         ])
         test_dom_get(
             utils.dom_get_resource, cib_dom,
@@ -84,13 +100,13 @@ class UtilsTest(unittest.TestCase):
             cloned_ids, all_ids - cloned_ids
         )
 
-        mastered_ids = set(["myMasteredResource"])
+        mastered_ids = set(["myMasteredResource", "myMasteredGroupedResource"])
         test_dom_get(
             utils.dom_get_resource_masterslave, cib_dom,
             mastered_ids, all_ids - mastered_ids
         )
 
-        group_ids = set(["myGroup", "myClonedGroup"])
+        group_ids = set(["myGroup", "myClonedGroup", "myMasteredGroup"])
         test_dom_get(
             utils.dom_get_group, cib_dom, group_ids, all_ids - group_ids
         )
@@ -99,6 +115,36 @@ class UtilsTest(unittest.TestCase):
         test_dom_get(
             utils.dom_get_group_clone, cib_dom,
             cloned_group_ids, all_ids - cloned_group_ids
+        )
+
+        clone_ids = set(["myClone", "myGroupClone"])
+        test_dom_get(
+            utils.dom_get_clone, cib_dom,
+            clone_ids, all_ids - clone_ids
+        )
+
+        master_ids = set(["myMaster", "myGroupMaster"])
+        test_dom_get(
+            utils.dom_get_master, cib_dom,
+            master_ids, all_ids - master_ids
+        )
+
+
+        assert_element_id(
+            utils.dom_get_clone_ms_resource(cib_dom, "myClone"),
+            "myClonedResource"
+        )
+        assert_element_id(
+            utils.dom_get_clone_ms_resource(cib_dom, "myGroupClone"),
+            "myClonedGroup"
+        )
+        assert_element_id(
+            utils.dom_get_clone_ms_resource(cib_dom, "myMaster"),
+            "myMasteredResource"
+        )
+        assert_element_id(
+            utils.dom_get_clone_ms_resource(cib_dom, "myGroupMaster"),
+            "myMasteredGroup"
         )
 
     def testValidateXmlId(self):

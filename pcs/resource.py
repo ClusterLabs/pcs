@@ -1129,15 +1129,13 @@ def resource_clone_master_remove(argv):
             break
 
     if not found:
-        for cm in re.getElementsByTagName("clone") + re.getElementsByTagName("master"):
-            if cm.getAttribute("id") == name:
-                prim = cm.getElementsByTagName("primitive")
-                if len(prim) != 0:
-                    prim = prim[0]
-                    constraint.remove_constraints_containing(name, passed_dom=dom)
-                    cm.parentNode.appendChild(prim)
-                    cm.parentNode.removeChild(cm)
-                    found = True
+        cloned = utils.dom_get_clone_ms_resource(re, name)
+        if cloned:
+            constraint.remove_constraints_containing(name, passed_dom=dom)
+            cm = cloned.parentNode
+            cm.parentNode.appendChild(cloned)
+            cm.parentNode.removeChild(cm)
+            found = True
 
     if not found:
         utils.err("could not find resource or group: %s" % name)
@@ -1271,9 +1269,10 @@ def resource_master_remove(argv):
     utils.replace_cib_configuration(dom)
 
 def resource_remove(resource_id, output = True):
-    if utils.does_exist('//master[@id="'+resource_id+'"]'):
-        master = parseString(utils.get_cib_xpath('//master[@id="'+resource_id+'"]'))
-        resource_id = master.getElementsByTagName("primitive")[0].getAttribute("id")
+    dom = utils.get_cib_dom()
+    cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
+    if cloned_resource:
+        resource_id = cloned_resource.getAttribute("id")
 
     if utils.does_exist('//group[@id="'+resource_id+'"]'):
         print "Removing group: " + resource_id + " (and all resources within group)"
@@ -1288,10 +1287,6 @@ def resource_remove(resource_id, output = True):
         for res in group_dom.documentElement.getElementsByTagName("primitive"):
             resource_remove(res.getAttribute("id"))
         sys.exit(0)
-
-    if utils.does_exist('//clone[@id="'+resource_id+'"]'):
-        clone = parseString(utils.get_cib_xpath('//clone[@id="'+resource_id+'"]'))
-        resource_id = clone.getElementsByTagName("primitive")[0].getAttribute("id")
 
     group = utils.get_cib_xpath('//group/primitive[@id="'+resource_id+'"]/..')
     num_resources_in_group = 0
@@ -1608,13 +1603,15 @@ def resource_force_start(argv):
         group_resources = utils.get_group_children(resource)
         utils.err("unable to debug-start a group, try one of the group's resource(s) (%s)" % ",".join(group_resources))
 
-    if utils.is_clone(resource):
-        clone_resource = utils.get_clone_ms_resource(resource)
-        utils.err("unable to debug-start a clone, try the clone's resource: %s" % clone_resource)
+    dom = utils.get_cib_dom()
 
-    if utils.is_master(resource):
-        master_resource = utils.get_clone_ms_resource(resource,True)
-        utils.err("unable to debug-start a master, try the master's resource: %s" % master_resource)
+    if utils.dom_get_clone(dom, resource):
+        clone_resource = utils.dom_get_clone_ms_resource(dom, resource)
+        utils.err("unable to debug-start a clone, try the clone's resource: %s" % clone_resource.getAttribute("id"))
+
+    if utils.dom_get_master(dom, resource):
+        master_resource = utils.dom_get_clone_ms_resource(dom, resource)
+        utils.err("unable to debug-start a master, try the master's resource: %s" % master_resource.getAttribute("id"))
 
     args = ["crm_resource", "-r", resource, "--force-start"]
     if "--full" in utils.pcs_options:
