@@ -392,6 +392,8 @@ def corosync_setup(argv,returnConfig=False):
         totem_options = ""
         if "--token" in utils.pcs_options:
             totem_options += "token: " + utils.pcs_options["--token"] + "\n"
+        if "--token_coefficient" in utils.pcs_options:
+            totem_options += "token_coefficient: " + utils.pcs_options["--token_coefficient"] + "\n"
         if "--join" in utils.pcs_options:
             totem_options += "join: " + utils.pcs_options["--join"] + "\n"
         if "--consensus" in utils.pcs_options:
