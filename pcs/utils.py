@@ -1418,17 +1418,25 @@ def serviceStatus(prefix):
             print prefix + daemons[i] + ": " + status[i] + "/" + enabled[i]
 
 def enableServices():
-    if is_systemctl():
-        run(["systemctl", "enable", "corosync.service"])
-        run(["systemctl", "enable", "pacemaker.service"])
-    else:
-        run(["chkconfig", "corosync", "on"])
+    if is_rhel6():
         run(["chkconfig", "pacemaker", "on"])
+    else:
+        if is_systemctl():
+            run(["systemctl", "enable", "corosync.service"])
+            run(["systemctl", "enable", "pacemaker.service"])
+        else:
+            run(["chkconfig", "corosync", "on"])
+            run(["chkconfig", "pacemaker", "on"])
 
 def disableServices():
-    if is_systemctl():
-        run(["systemctl", "disable", "corosync.service"])
-        run(["systemctl", "disable", "pacemaker.service"])
-    else:
-        run(["chkconfig", "corosync", "off"])
+    if is_rhel6():
         run(["chkconfig", "pacemaker", "off"])
+        run(["chkconfig", "corosync", "off"]) # Left here for users of old pcs
+                                              # which enabled corosync
+    else:
+        if is_systemctl():
+            run(["systemctl", "disable", "corosync.service"])
+            run(["systemctl", "disable", "pacemaker.service"])
+        else:
+            run(["chkconfig", "corosync", "off"])
+            run(["chkconfig", "pacemaker", "off"])
