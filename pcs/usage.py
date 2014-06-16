@@ -439,8 +439,8 @@ Commands:
                             [--ttl1 <ttl>]] | [--broadcast1]]]]
             [--wait_for_all=<0|1>] [--auto_tie_breaker=<0|1>]
             [--last_man_standing=<0|1> [--last_man_standing_window=<time in ms>]]
-            [--ipv6] [--token <timeout>] [--join <timeout>]
-            [--consensus <timeout>] [--miss_count_const <count>]
+            [--ipv6] [--token <timeout>] [--token_coefficient <timeout>]
+            [--join <timeout>] [--consensus <timeout>] [--miss_count_const <count>]
             [--fail_recv_const <failures>]
         Configure corosync and sync configuration out to listed nodes
         --local will only perform changes on the local node
@@ -453,6 +453,9 @@ Commands:
         --ipv6 will configure corosync to use ipv6 (instead of ipv4)
         --token <timeout> sets time in milliseconds until a token loss is
             declared after not receiving a token (default 1000 ms)
+        --token_coefficient <timeout> sets time in milliseconds used for clusters
+            with at least 3 nodes as a coefficient for real token timeout calculation
+            (token + (number_of_nodes - 2) * token_coefficient) (default 650 ms)
         --join <timeout> sets time in milliseconds to wait for join mesages
             (default 50 ms)
         --consensus <timeout> sets time in milliseconds to wait for consensus
