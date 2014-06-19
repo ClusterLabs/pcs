@@ -10,6 +10,7 @@ def full_usage():
     out += strip_extras(stonith([],False))
     out += strip_extras(property([],False))
     out += strip_extras(constraint([],False))
+    out += strip_extras(acl([],False))
     out += strip_extras(status([],False))
     print out.strip()
     print "Examples:\n" + examples.replace(" \ ","")
@@ -196,6 +197,7 @@ Commands:
     stonith     Configure fence devices
     constraint  Set resource constraints
     property    Set pacemaker properties
+    acl         Set pacemaker access control lists
     status      View cluster status
     config      Print full cluster configuration
 """
@@ -814,6 +816,60 @@ Commands:
     rule remove <rule id>
         Remove a rule if a rule id is specified, if rule is last rule in its
         constraint, the constraint will be removed
+"""
+    if pout:
+        print sub_usage(args, output)
+    else:
+        return output
+
+def acl(args = [], pout = True):
+    output = """
+Usage: pcs acl [commands]...
+View and modify current cluster access control lists
+Commands:
+
+    [show]
+        List all current access control lists
+
+    role create <role name> [description=<description>] ((read | write | deny)
+                                                (xpath <query> | id <id>))...
+        Create a role with the name and (optional) description specified.
+        Each role can also have an unlimited number of permissions
+        (read/write/deny) applied to either an xpath query or the id
+        of a specific element in the cib
+
+    role delete <role name>
+        Delete the role specified and remove it from any users/groups it was
+        assigned to
+
+    role assign <role name> [to] <username/group>
+        Assign a role to a user or group already created with 'pcs acl
+        user/group create'
+
+    role unassign <role name> [from] <username/group>
+        Remove a role from the specified user
+
+    user create <username> <role name> [<role name>]...
+        Create an ACL for the user specified and assign roles to the user
+
+    user delete <username>
+        Remove the user specified (and roles assigned will be unassigned for
+        the specified user)
+
+    group create <group> <role name> [<role name>]...
+        Create an ACL for the group specified and assign roles to the group
+
+    group delete <group>
+        Remove the group specified (and roles assigned will be unassigned for
+        the specified group)
+
+    permission add <role name> ((read | write | deny) (xpath <query> |
+                                                                id <id>))...
+        Add the listed permissions to the role specified
+
+    permission delete <permission id>
+        Remove the permission id specified (permission id's are listed in
+        parenthesis after permissions in 'pcs acl' output)
 """
     if pout:
         print sub_usage(args, output)

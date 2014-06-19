@@ -37,6 +37,9 @@ Set resource constraints
 property
 Set pacemaker properties
 .TP
+acl
+Set pacemaker access control lists
+.TP
 status
 View cluster status
 .TP
@@ -295,6 +298,43 @@ Fence the node specified (if \fB\-\-off\fR is specified, use the 'off' API call 
 .TP
 confirm <node>
 Confirm that the host specified is currently down.  WARNING: if this node is not actually down data corruption/cluster failure can occur.
+.SS "acl"
+.TP
+[show]
+List all current access control lists
+.TP
+role create <role name> [description=<description>] ((read | write | deny) (xpath <query> | id <id>))...
+Create a role with the name and (optional) description specified.
+Each role can also have an unlimited number of permissions
+(read/write/deny) applied to either an xpath query or the id
+of a specific element in the cib
+.TP
+role delete <role name>
+Delete the role specified and remove it from any users/groups it was assigned to
+.TP
+role assign <role name> [to] <username/group>
+Assign a role to a user or group already created with 'pcs acl user/group create'
+.TP
+role unassign <role name> [from] <username/group>
+Remove a role from the specified user
+.TP
+user create <username> <role name> [<role name>]...
+Create an ACL for the user specified and assign roles to the user
+.TP
+user delete <username>
+Remove the user specified (and roles assigned will be unassigned for the specified user)
+.TP
+group create <group> <role name> [<role name>]...
+Create an ACL for the group specified and assign roles to the group
+.TP
+group delete <group>
+Remove the group specified (and roles assigned will be unassigned for the specified group)
+.TP
+permission add <role name> ((read | write | deny) (xpath <query> | id <id>))...
+Add the listed permissions to the role specified
+.TP
+permission delete <permission id>
+Remove the permission id specified (permission id's are listed in parenthesis after permissions in 'pcs acl' output)
 .SS "property"
 .TP
 list|show [<property> | \fB\-\-all\fR | \fB\-\-defaults\fR]

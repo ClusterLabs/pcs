@@ -7,6 +7,7 @@ import resource
 import stonith
 import prop
 import constraint
+import acl
 import utils
 import status
 import settings
@@ -120,6 +121,8 @@ def main(argv):
         prop.property_cmd(argv)
     elif (command == "constraint"):
         constraint.constraint_cmd(argv)
+    elif (command == "acl"):
+        acl.acl_cmd(argv)
     elif (command == "status"):
         status.status_cmd(argv)
     elif (command == "config"):
