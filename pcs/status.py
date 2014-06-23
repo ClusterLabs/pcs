@@ -35,7 +35,10 @@ def status_cmd(argv):
         sys.exit(1)
 
 def full_status():
-    (output, retval) = utils.run(["crm_mon", "-1", "-r"])
+    if "--full" in utils.pcs_options:
+        (output, retval) = utils.run(["crm_mon", "-1", "-r", "-R"])
+    else:
+        (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
     if (retval != 0):
         utils.err("cluster is not currently running on this node")

@@ -881,8 +881,9 @@ def status(args = [], pout = True):
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    [status]
-        View all information about the cluster and resources
+    [status] [--full]
+        View all information about the cluster and resources (--full provides
+        more details)
 
     resources
         View current status of cluster resources
