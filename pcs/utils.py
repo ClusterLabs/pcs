@@ -794,18 +794,23 @@ def get_default_op_values(ra_type):
         return []
 
     return_list = []
-    root = ET.fromstring(metadata)
-    actions = root.findall(".//actions/action")
-    for action in actions:
-        if action.attrib["name"] in allowable_operations:
-            new_operation = []
-            new_operation.append(action.attrib["name"])
-            for attrib in action.attrib:
-                value = action.attrib[attrib]
-                if attrib == "name" or (attrib == "depth" and value == "0"):
-                    continue
-                new_operation.append(attrib + "=" + value)
-            return_list.append(new_operation)
+    try:
+        root = ET.fromstring(metadata)
+        actions = root.findall(".//actions/action")
+        for action in actions:
+            if action.attrib["name"] in allowable_operations:
+                new_operation = []
+                new_operation.append(action.attrib["name"])
+                for attrib in action.attrib:
+                    value = action.attrib[attrib]
+                    if attrib == "name" or (attrib == "depth" and value == "0"):
+                        continue
+                    new_operation.append(attrib + "=" + value)
+                return_list.append(new_operation)
+    except xml.parsers.expat.ExpatError as e:
+        err("Unable to parse xml for '%s': %s" % (ra_type, e))
+    except xml.etree.ElementTree.ParseError as e:
+        err("Unable to parse xml for '%s': %s" % (ra_type, e))
 
     return return_list
 
@@ -1344,8 +1349,6 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
     if metadata == False:
         err("Unable to find resource: ocf:%s:%s" % (resProvider, resType))
 
-    root = ET.fromstring(metadata)
-    actions = root.find("parameters")
     missing_required_parameters = []
     valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
     valid_parameters = valid_parameters + ["stonith-timeout", "priority"]
@@ -1355,10 +1358,16 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
         valid_parameters.append("pcmk_" + a + "_timeout")
         valid_parameters.append("pcmk_" + a + "_retries")
     bad_parameters = []
-    for action in actions.findall("parameter"):
-        valid_parameters.append(action.attrib["name"])
-        if "required" in action.attrib and action.attrib["required"] == "1":
-            missing_required_parameters.append(action.attrib["name"])
+    try:
+        actions = ET.fromstring(metadata).find("parameters")
+        for action in actions.findall("parameter"):
+            valid_parameters.append(action.attrib["name"])
+            if "required" in action.attrib and action.attrib["required"] == "1":
+                missing_required_parameters.append(action.attrib["name"])
+    except xml.parsers.expat.ExpatError as e:
+        err("Unable to parse xml for '%s': %s" % (resource_type, e))
+    except xml.etree.ElementTree.ParseError as e:
+        err("Unable to parse xml for '%s': %s" % (resource_type, e))
     for key,value in ra_values:
         if key not in valid_parameters:
             bad_parameters.append(key)

@@ -280,8 +280,8 @@ def resource_list_options(resource):
                 indent = name.__len__() + 4
                 desc = format_desc(indent, desc)
                 print "  " + name + ": " + desc
-        except xml.parsers.expat.ExpatError:
-            utils.err ("Unable to parse xml for: %s" % (resource))
+        except xml.parsers.expat.ExpatError as e:
+            utils.err("Unable to parse xml for '%s': %s" % (resource, e))
 
     if not found_resource:
         utils.err ("Unable to find resource: %s" % resource)
