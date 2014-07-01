@@ -1,0 +1,10 @@
+<cib epoch="557" num_updates="122" admin_epoch="0" validate-with="pacemaker-2.0" crm_feature_set="3.0.9" update-origin="rh7-3" update-client="crmd" cib-last-written="Thu Aug 23 16:49:17 2012" have-quorum="0" dc-uuid="2">
+  <configuration>
+    <crm_config/>
+    <nodes>
+    </nodes>
+    <resources/>
+    <constraints/>
+  </configuration>
+  <status/>
+</cib>

@@ -4,17 +4,16 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
+import subprocess
+import re
 from pcs_test_functions import pcs,ac
 
-empty_cib = "empty.xml"
+empty_cib = "empty-1.2.xml"
 temp_cib = "temp.xml"
-large_cib = "large.xml"
-temp_large_cib = "temp-large.xml"
 
 class ACLTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
-        shutil.copy(large_cib, temp_large_cib)
         shutil.copy("corosync.conf.orig", "corosync.conf")
 
     def testUserGroupCreateDeleteWithRoles(self):
@@ -274,5 +273,16 @@ class ACLTest(unittest.TestCase):
         assert r == 0
 
 if __name__ == "__main__":
-    unittest.main()
+    p = subprocess.Popen(["crm_mon","--version"], stdout=subprocess.PIPE)
+    (stdout, stderr) = p.communicate()
+    pacemaker_version =  stdout.split("\n")[0]
+    r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
+    m = r.match(pacemaker_version)
+    major = int(m.group(1))
+    minor = int(m.group(2))
+    rev = int(m.group(3))
 
+    if major > 1 or (major == 1 and minor > 1) or (major == 1 and minor == 1 and rev >= 11):
+        unittest.main()
+    else:
+        print "ERROR: Pacemaker version: %s is too old to test acls" % pacemaker_version

@@ -13,3 +13,4 @@ test:
 	python test_constraints.py ${pyunit_flags}
 	python test_stonith.py ${pyunit_flags}
 	python test_properties.py ${pyunit_flags}
+	python test_acl.py ${pyunit_flags}
