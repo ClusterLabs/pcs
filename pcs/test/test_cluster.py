@@ -4,7 +4,7 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
-from pcs_test_functions import pcs,ac
+from pcs_test_functions import pcs,ac,isMinimumPacemakerVersion
 
 empty_cib = "empty-withnodes.xml"
 temp_cib = "temp.xml"
@@ -149,6 +149,9 @@ class ClusterTest(unittest.TestCase):
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
     def testIPV6(self):
+        if utils.is_rhel6():
+            print "WARNING: not testing IPV6 due to RHEL6"
+            return
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cnam rh7-1 rh7-2 --ipv6")
         ac(o,"")
         assert r == 0
@@ -157,6 +160,9 @@ class ClusterTest(unittest.TestCase):
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cnam\ntransport: udpu\nip_version: ipv6\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
     def testRRPConfig(self):
+        if utils.is_rhel6():
+            print "WARNING: not testing RRPConfig due to RHEL6"
+            return
         o,r = pcs("cluster setup --transport udp --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0")
         ac(o,"")
         assert r == 0
@@ -246,6 +252,10 @@ class ClusterTest(unittest.TestCase):
         o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 
     def testTotemOptions(self):
+        if utils.is_rhel6():
+            print "WARNING: Not testing totem options due to RHEL6"
+            return
+
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004")
         ac(o,"")
         assert r == 0
@@ -375,6 +385,28 @@ class ClusterTest(unittest.TestCase):
             o,r = pcs("cluster uidgid")
             assert r == 0
             ac(o, "No uidgids configured in cluster.conf\n")
+
+    def testClusterUpgrade(self):
+        if not isMinimumPacemakerVersion(1,1,11):
+            print "WARNING: Unable to test cluster upgrade because pacemaker is older than 1.1.11"
+            return
+        with open(temp_cib) as myfile:
+            data = myfile.read()
+            assert data.find("pacemaker-1.2") != -1
+            assert data.find("pacemaker-2.0") == -1
+
+        o,r = pcs("cluster cib-upgrade")
+        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        assert r == 0
+
+        with open(temp_cib) as myfile:
+            data = myfile.read()
+            assert data.find("pacemaker-1.2") == -1
+            assert data.find("pacemaker-2.0") != -1
+
+        o,r = pcs("cluster cib-upgrade")
+        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        assert r == 0
 
 if __name__ == "__main__":
     unittest.main()

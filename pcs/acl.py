@@ -7,6 +7,11 @@ def acl_cmd(argv):
         argv = ["show"]
 
     sub_cmd = argv.pop(0)
+
+    # If we're using help or show we don't upgrade, otherwise upgrade if necessary
+    if sub_cmd not in ["help","show"]:
+        utils.checkAndUpgradeCIB(2,0,0)
+
     if (sub_cmd == "help"):
         usage.acl(argv)
     elif (sub_cmd == "show"):

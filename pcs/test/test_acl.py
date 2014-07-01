@@ -4,10 +4,9 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
-import subprocess
-import re
-from pcs_test_functions import pcs,ac
+from pcs_test_functions import pcs,ac,isMinimumPacemakerVersion
 
+old_cib = "empty.xml"
 empty_cib = "empty-1.2.xml"
 temp_cib = "temp.xml"
 
@@ -15,6 +14,28 @@ class ACLTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy("corosync.conf.orig", "corosync.conf")
+
+    def testAutoUpgradeofCIB(self):
+        old_temp_cib = temp_cib + "-old"
+        shutil.copy(old_cib, old_temp_cib)
+
+        o,r = pcs(old_temp_cib, "acl show")
+        ac(o,"")
+        assert r == 0
+
+        with open(old_temp_cib) as myfile:
+            data = myfile.read()
+            assert data.find("pacemaker-1.2") != -1
+            assert data.find("pacemaker-2.0") == -1
+
+        o,r = pcs(old_temp_cib, "acl role create test_role read xpath my_xpath")
+        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        assert r == 0
+
+        with open(old_temp_cib) as myfile:
+            data = myfile.read()
+            assert data.find("pacemaker-1.2") == -1
+            assert data.find("pacemaker-2.0") != -1
 
     def testUserGroupCreateDeleteWithRoles(self):
         o,r = pcs("acl role create role1 read xpath /xpath1/ write xpath /xpath2/")
@@ -273,16 +294,7 @@ class ACLTest(unittest.TestCase):
         assert r == 0
 
 if __name__ == "__main__":
-    p = subprocess.Popen(["crm_mon","--version"], stdout=subprocess.PIPE)
-    (stdout, stderr) = p.communicate()
-    pacemaker_version =  stdout.split("\n")[0]
-    r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
-    m = r.match(pacemaker_version)
-    major = int(m.group(1))
-    minor = int(m.group(2))
-    rev = int(m.group(3))
-
-    if major > 1 or (major == 1 and minor > 1) or (major == 1 and minor == 1 and rev >= 11):
+    if isMinimumPacemakerVersion(1,1,11):
         unittest.main()
     else:
-        print "ERROR: Pacemaker version: %s is too old to test acls" % pacemaker_version
+        print "WARNING: Pacemaker version is too old (must be >= 1.1.11) to test acls"

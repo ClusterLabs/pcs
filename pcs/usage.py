@@ -553,6 +553,9 @@ Commands:
     cib-push <filename>
         Push the raw xml from <filename> to the CIB (Cluster Information Base)
 
+    cib-upgrade
+        Upgrade the cib to the latest version
+
     edit
         Edit the cib in the editor specified by the $EDITOR environment
         variable and push out any changes upon saving

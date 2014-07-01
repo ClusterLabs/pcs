@@ -82,6 +82,8 @@ def cluster_cmd(argv):
         get_cib(argv)
     elif (sub_cmd == "cib-push"):
         cluster_push(argv)
+    elif (sub_cmd == "cib-upgrade"):
+        cluster_upgrade()
     elif (sub_cmd == "edit"):
         cluster_edit(argv)
     elif (sub_cmd == "node"):
@@ -609,6 +611,12 @@ def cluster_push(argv):
         utils.err("unable to push cib\n" + output)
     else:
         print "CIB updated"
+
+def cluster_upgrade():
+    output, retval = utils.run(["cibadmin", "--upgrade", "--force"])
+    if retval != 0:
+        utils.err("unable to upgrade cluster: %s" % output)
+    print "Cluster CIB has been upgraded to latest version"
 
 def cluster_edit(argv):
     if 'EDITOR' in os.environ:

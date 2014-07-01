@@ -11,6 +11,7 @@ import settings
 import resource
 import signal
 import time
+import cluster
 
 
 # usefile & filename variables are set in pcs module
@@ -18,6 +19,31 @@ usefile = False
 filename = ""
 pcs_options = {}
 fence_bin = settings.fence_agent_binaries
+
+def getValidateWithVersion(dom):
+    cib = dom.getElementsByTagName("cib")
+    if len(cib) != 1:
+        err("Bad cib")
+
+    cib = cib[0]
+
+    version = cib.getAttribute("validate-with")
+    r = re.compile(r"pacemaker-(\d+)\.(\d+)\.?(\d+)?")
+    m = r.match(version)
+    major = int(m.group(1))
+    minor = int(m.group(2))
+    rev = int(m.group(3) or 0)
+    return (major,minor,rev)
+
+# Check the current pacemaker version in cib and upgrade it if necessary
+# Returns False if not upgraded and True if upgraded
+def checkAndUpgradeCIB(major,minor,rev):
+    cmajor, cminor, crev = getValidateWithVersion(get_cib_dom())
+    if cmajor > major or (cmajor == major and cminor > minor) or (cmajor == major and cminor == minor and crev >= rev):
+        return False
+    else:
+        cluster.cluster_upgrade()
+        return True
 
 # Check status of node
 def checkStatus(node):

@@ -1,5 +1,7 @@
 import os,sys
 import difflib
+import subprocess
+import re
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
@@ -38,4 +40,18 @@ def ac(a,b):
         print ""
         print "".join(diff)
         assert False,[a]
+
+def isMinimumPacemakerVersion(cmajor,cminor,crev):
+    p = subprocess.Popen(["crm_mon","--version"], stdout=subprocess.PIPE)
+    (stdout, stderr) = p.communicate()
+    pacemaker_version =  stdout.split("\n")[0]
+    r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
+    m = r.match(pacemaker_version)
+    major = int(m.group(1))
+    minor = int(m.group(2))
+    rev = int(m.group(3))
+
+    if major > cmajor or (major == cmajor and minor > cminor) or (major == cmajor and minor == cminor and rev >= crev):
+        return True
+    return False
 
