@@ -1,5 +1,7 @@
 import os,sys
 import shutil
+import re
+import datetime
 import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
@@ -1134,6 +1136,137 @@ class ResourceTest(unittest.TestCase):
         output, returnval = pcs(temp_cib, "resource update D2")
         assert returnVal == 0
         assert output == "", [output]
+
+    def testResourceMoveBanClear(self):
+        # Load nodes into cib so move will work
+        utils.usefile = True
+        utils.filename = temp_cib
+
+        output, returnVal = utils.run(["cibadmin", "-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy Dummy"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move dummy")
+        ac(output, """\
+Error: You must specify a node when moving/banning a stopped resource
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move dummy rh7-1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: dummy
+    Enabled on: rh7-1 (score:INFINITY) (role: Started) (id:cli-prefer-dummy)
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear dummy")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+Colocation Constraints:
+""")
+
+        output, returnVal = pcs(temp_cib, "resource ban dummy rh7-1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: dummy
+    Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-dummy-on-rh7-1)
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear dummy")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+Colocation Constraints:
+""")
+
+        output, returnVal = pcs(
+            temp_cib, "resource move dummy rh7-1 lifetime=1H"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\dZ", "{datetime}", output)
+        ac(output, """\
+Location Constraints:
+  Resource: dummy
+    Constraint: cli-prefer-dummy
+      Rule: score=INFINITY boolean-op=and  (id:cli-prefer-rule-dummy) 
+        Expression: #uname eq rh7-1 type=string  (id:cli-prefer-expr-dummy) 
+        Expression: operation=lt end={datetime}  (id:cli-prefer-lifetime-end-dummy) 
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear dummy")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+Colocation Constraints:
+""")
+
+        output, returnVal = pcs(
+            temp_cib, "resource ban dummy rh7-1 lifetime=P1H"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        output = re.sub("\d{4}-\d\d-\d\d \d\d:\d\d:\d\dZ", "{datetime}", output)
+        ac(output, """\
+Location Constraints:
+  Resource: dummy
+    Constraint: cli-ban-dummy-on-rh7-1
+      Rule: score=-INFINITY boolean-op=and  (id:cli-ban-dummy-on-rh7-1-rule) 
+        Expression: #uname eq rh7-1 type=string  (id:cli-ban-dummy-on-rh7-1-expr) 
+        Expression: operation=lt end={datetime}  (id:cli-ban-dummy-on-rh7-1-lifetime) 
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+
+        output, returnVal = pcs(temp_cib, "resource ban dummy rh7-1 rh7-1")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource ban dummy rh7-1 lifetime=1H lifetime=1H"
+        )
+        self.assertEquals(1, returnVal)
 
     def testNoMoveMSClone(self):
         output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")

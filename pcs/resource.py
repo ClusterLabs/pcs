@@ -419,10 +419,30 @@ def resource_move(argv,clear=False,ban=False):
 
     resource_id = argv.pop(0)
 
-    if len(argv) >= 1:
-        dest_node = argv.pop(0)
-    else:
-        dest_node = None
+    if (clear and len(argv) > 1) or len(argv) > 2:
+        usage.resource()
+        sys.exit(1)
+
+    dest_node = None
+    lifetime = None
+    while argv:
+        arg = argv.pop(0)
+        if arg.startswith("lifetime="):
+            if lifetime:
+                usage.resource()
+                sys.exit(1)
+            lifetime = arg.split("=")[1]
+            if lifetime and lifetime[0].isdigit():
+                lifetime = "P" + lifetime
+        elif not dest_node:
+            dest_node = arg
+        else:
+            usage.resource()
+            sys.exit(1)
+
+    if clear and lifetime:
+        usage.resource()
+        sys.exit(1)
 
     if not utils.does_exist("//primitive[@id='"+resource_id+"']") and not utils.does_exist("//group[@id='"+resource_id+"']") and not utils.does_exist("//master[@id='"+resource_id+"']"):
         utils.err("%s is not a valid resource" % resource_id)
@@ -440,6 +460,8 @@ def resource_move(argv,clear=False,ban=False):
 
     if "--master" in utils.pcs_options:
         other_options.append("--master")
+    if lifetime is not None:
+        other_options.append("--lifetime=%s" % lifetime)
     if clear:
         if dest_node:
             output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear", "--host", dest_node] + other_options)

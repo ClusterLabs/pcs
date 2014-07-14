@@ -271,16 +271,18 @@ Commands:
         starting the resource.  Using --full will give more detailed output.
         This is mainly used for debugging resources that fail to start.
 
-    move <resource id> [destination node] [--master]
+    move <resource id> [destination node] [--master] [lifetime=<lifetime>]
         Move resource off current node (and optionally onto destination node).
         If --master is used the scope of the command is limited to the
-        master role and you must use the master id (instead of the resource id). 
+        master role and you must use the master id (instead of the resource id).
+        If lifetime is not specified it defaults to infinite.
 
-    ban <resource id> [node] [--master]
+    ban <resource id> [node] [--master] [lifetime=<lifetime>]
         Prevent the resource id specified from running on the node (or on the
         current node it is running on if no node is specified).
         If --master is used the scope of the command is limited to the
-        master role and you must use the master id (instead of the resource id). 
+        master role and you must use the master id (instead of the resource id).
+        If lifetime is not specified it defaults to infinite.
 
     clear <resource id> [node] [--master]
         Remove constraints created by move and/or ban on the specified

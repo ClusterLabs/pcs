@@ -71,11 +71,11 @@ Attempt to stop the resource if it is running and forbid the cluster from starti
 debug\-start <resource id> [\fB\-\-full\fR]
 This command will force the specified resource to start on this node ignoring the cluster recommendations and print the output from starting the resource. Using \fB\-\-full\fR will give more detailed output. This is mainly used for debugging resources that fail to start.
 .TP
-move <resource id> [destination node] [\fB\-\-master\fR]
-Move resource off current node (and optionally onto destination node). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
+move <resource id> [destination node] [\fB\-\-master\fR] [lifetime=<lifetime>]
+Move resource off current node (and optionally onto destination node). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id). If lifetime is not specified it defaults to infinite.
 .TP
-ban <resource id> [node] [\fB\-\-master\fR]
-Prevent the resource id specified from running on the node (or on the current node it is running on if no node is specified). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
+ban <resource id> [node] [\fB\-\-master\fR] [lifetime=<lifetime>]
+Prevent the resource id specified from running on the node (or on the current node it is running on if no node is specified). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id). If lifetime is not specified it defaults to infinite.
 .TP
 clear <resource id> [node] [\fB\-\-master\fR]
 Remove constraints created by move and/or ban on the specified resource (and node if specified). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
