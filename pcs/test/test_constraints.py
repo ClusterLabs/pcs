@@ -278,7 +278,7 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        o, r = pcs(temp_cib, "constraint colocation set D5 D6 D7 sequential=false set D8 D9 sequential=true setoptions score=INFINITY ")
+        o, r = pcs(temp_cib, "constraint colocation set D5 D6 D7 sequential=false require-all=true set D8 D9 sequential=true require-all=false action=start role=Stopped setoptions score=INFINITY ")
         ac(o,"")
         assert r == 0
 
@@ -286,12 +286,18 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
         ac(o,"")
 
-        o, r = pcs(temp_cib, "constraint colocation set D5 D6 set D7 D8 set D8 D9")
+        o, r = pcs(temp_cib, "constraint colocation set D5 D6 action=stop role=Started set D7 D8 action=promote role=Slave set D8 D9 action=demote role=Master")
         assert r == 0
         ac(o,"")
 
         o, r = pcs(temp_cib, "constraint colocation --full")
-        ac(o,"Colocation Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set_D5_D6_D7-1) set D8 D9 sequential=true (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_D7_set_D8_D9)\n    set D5 D6 (id:pcs_rsc_set_D5_D6) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6)\n    set D5 D6 (id:pcs_rsc_set_D5_D6-1) set D7 D8 (id:pcs_rsc_set_D7_D8) set D8 D9 (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9)\n")
+        ac(o, """\
+Colocation Constraints:
+  Resource Sets:
+    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_D7_set_D8_D9)
+    set D5 D6 (id:pcs_rsc_set_D5_D6) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6)
+    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9)
+""")
         assert r == 0
 
         o, r = pcs(temp_cib, "constraint remove pcs_rsc_colocation_D5_D6")
@@ -299,15 +305,20 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
 
         o, r = pcs(temp_cib, "constraint colocation --full")
-        ac(o,"Colocation Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set_D5_D6_D7-1) set D8 D9 sequential=true (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_D7_set_D8_D9)\n    set D5 D6 (id:pcs_rsc_set_D5_D6-1) set D7 D8 (id:pcs_rsc_set_D7_D8) set D8 D9 (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9)\n")
+        ac(o, """\
+Colocation Constraints:
+  Resource Sets:
+    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_D7_set_D8_D9)
+    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9)
+""")
         assert r == 0
 
         o, r = pcs(temp_cib, "resource delete D5")
-        ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7-1\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
+        ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
         assert r == 0
         
         o, r = pcs(temp_cib, "resource delete D6")
-        ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7-1\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
+        ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
         assert r == 0
         
         o, r = pcs(temp_cib, "constraint ref D7")
@@ -318,6 +329,38 @@ class ConstraintTest(unittest.TestCase):
         ac(o,"Resource: D8\n  pcs_rsc_colocation_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9\n")
         assert r == 0
         
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 sequential=foo")
+        ac(output, "Error: invalid value 'foo' of option 'sequential', allowed values are: true, false\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 require-all=foo")
+        ac(output, "Error: invalid value 'foo' of option 'require-all', allowed values are: true, false\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 role=foo")
+        ac(output, "Error: invalid value 'foo' of option 'role', allowed values are: Stopped, Started, Master, Slave\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 action=foo")
+        ac(output, "Error: invalid value 'foo' of option 'action', allowed values are: start, promote, demote, stop\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 foo=bar")
+        ac(output, "Error: invalid option 'foo', allowed options are: action, role, sequential, require-all\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions foo=bar")
+        ac(output, "Error: invalid option 'foo', allowed options are: score, score-attribute, score-attribute-mangle\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions score=foo")
+        ac(output, "Error: invalid score 'foo', use integer or INFINITY or -INFINITY\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions score=100 score-attribute=foo")
+        ac(output, "Error: you cannot specify multiple score options\n")
+        self.assertEquals(1, retValue)
+
     def testOrderSetsRemoval(self):
         o,r = pcs("resource create T0 Dummy")
         ac(o,"")
@@ -402,7 +445,7 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        o, r = pcs(temp_cib, "constraint order set D5 D6 D7 sequential=false set D8 D9 sequential=true")
+        o, r = pcs(temp_cib, "constraint order set D5 D6 D7 sequential=false require-all=true set D8 D9 sequential=true require-all=false action=start role=Stopped")
         ac(o,"")
         assert r == 0
 
@@ -410,13 +453,19 @@ class ConstraintTest(unittest.TestCase):
         assert r == 0
         ac(o,"")
 
-        o, r = pcs(temp_cib, "constraint order set D5 D6 set D7 D8 set D8 D9")
+        o, r = pcs(temp_cib, "constraint order set D5 D6 action=stop role=Started set D7 D8 action=promote role=Slave set D8 D9 action=demote role=Master")
         assert r == 0
         ac(o,"")
 
         o, r = pcs(temp_cib, "constraint order --full")
         assert r == 0
-        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set_D5_D6_D7-1) set D8 D9 sequential=true (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)\n    set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_D5_D6)\n    set D5 D6 (id:pcs_rsc_set_D5_D6-1) set D7 D8 (id:pcs_rsc_set_D7_D8) set D8 D9 (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)\n")
+        ac(o,"""\
+Ordering Constraints:
+  Resource Sets:
+    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)
+    set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_D5_D6)
+    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)
+""")
 
         o, r = pcs(temp_cib, "constraint remove pcs_rsc_order_D5_D6")
         assert r == 0
@@ -424,15 +473,40 @@ class ConstraintTest(unittest.TestCase):
 
         o, r = pcs(temp_cib, "constraint order --full")
         assert r == 0
-        ac(o,"Ordering Constraints:\n  Resource Sets:\n    set D5 D6 D7 sequential=false (id:pcs_rsc_set_D5_D6_D7-1) set D8 D9 sequential=true (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)\n    set D5 D6 (id:pcs_rsc_set_D5_D6-1) set D7 D8 (id:pcs_rsc_set_D7_D8) set D8 D9 (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)\n")
+        ac(o,"""\
+Ordering Constraints:
+  Resource Sets:
+    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)
+    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)
+""")
         
         o, r = pcs(temp_cib, "resource delete D5")
-        ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7-1\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
+        ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
         assert r == 0
         
         o, r = pcs(temp_cib, "resource delete D6")
-        ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7-1\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
+        ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
         assert r == 0
+
+        output, retValue = pcs(temp_cib, "constraint order set D1 D2 sequential=foo")
+        ac(output, "Error: invalid value 'foo' of option 'sequential', allowed values are: true, false\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint order set D1 D2 require-all=foo")
+        ac(output, "Error: invalid value 'foo' of option 'require-all', allowed values are: true, false\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint order set D1 D2 role=foo")
+        ac(output, "Error: invalid value 'foo' of option 'role', allowed values are: Stopped, Started, Master, Slave\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint order set D1 D2 action=foo")
+        ac(output, "Error: invalid value 'foo' of option 'action', allowed values are: start, promote, demote, stop\n")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint order set D1 D2 foo=bar")
+        ac(output, "Error: invalid option 'foo', allowed options are: action, role, sequential, require-all\n")
+        self.assertEquals(1, retValue)
 
     def testLocationConstraintRule(self):
         o, r = pcs(temp_cib, "constraint location D1 prefers rh7-1")

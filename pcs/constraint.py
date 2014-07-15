@@ -250,9 +250,24 @@ def colocation_set(argv):
     rsc_colocation = ET.SubElement(constraints,"rsc_colocation")
     rsc_colocation.set("id", utils.find_unique_id(cib,colocation_id))
     rsc_colocation.set("score","INFINITY")
+    score_options = ("score", "score-attribute", "score-attribute-mangle")
+    score_specified = False
     for opt in setoptions:
         if opt.find("=") != -1:
             name,value = opt.split("=")
+            if name not in score_options:
+                utils.err(
+                    "invalid option '%s', allowed options are: %s"
+                    % (name, ", ".join(score_options))
+                )
+            if score_specified:
+                utils.err("you cannot specify multiple score options")
+            score_specified = True
+            if name == "score" and not utils.is_score(value):
+                utils.err(
+                    "invalid score '%s', use integer or INFINITY or -INFINITY"
+                    % value
+                )
             rsc_colocation.set(name,value)
     set_add_resource_sets(rsc_colocation, current_set, cib)
     utils.replace_cib_configuration(cib)
@@ -337,6 +352,12 @@ def set_args_into_array(argv):
     return current_set
 
 def set_add_resource_sets(elem, sets, cib):
+    allowed_options = {
+        "sequential": ("true", "false"),
+        "require-all": ("true", "false"),
+        "action" : ("start", "promote", "demote", "stop"),
+        "role" : ("Stopped", "Started", "Master", "Slave"),
+    }
 
     for o_set in sets:
         set_id = "pcs_rsc_set"
@@ -344,12 +365,22 @@ def set_add_resource_sets(elem, sets, cib):
         for opts in o_set:
             if opts.find("=") != -1:
                 key,val = opts.split("=")
+                if key not in allowed_options:
+                    utils.err(
+                        "invalid option '%s', allowed options are: %s"
+                        % (key, ", ".join(allowed_options.keys()))
+                    )
+                if val not in allowed_options[key]:
+                    utils.err(
+                        "invalid value '%s' of option '%s', allowed values are: %s"
+                        % (val, key, ", ".join(allowed_options[key]))
+                    )
                 res_set.set(key,val)
             else:
                 se = ET.SubElement(res_set,"resource_ref")
                 se.set("id",opts)
                 set_id = set_id + "_" + opts
-            res_set.set("id", utils.find_unique_id(cib,set_id))
+        res_set.set("id", utils.find_unique_id(cib,set_id))
     
 def order_set(argv):
     current_set = set_args_into_array(argv)

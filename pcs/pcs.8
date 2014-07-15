@@ -387,8 +387,8 @@ List all current ordering constraints (if \fB\-\-full\fR is specified show the i
 order [action] <resource id> then [action] <resource id> [options]
 Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start. Available options are kind=Optional/Mandatory/Serialize and symmetrical=true/false
 .TP
-order set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ...]
-Create an ordered set of resources.
+order set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]]
+Create an ordered set of resources. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
 .TP
 order remove <resource1> [resourceN]...
 Remove resource from any ordering constraint
@@ -399,8 +399,8 @@ List all current colocation constraints (if \fB\-\-full\fR is specified show the
 colocation add [master|slave] <source resource id> with [master|slave] <target resource id> [score] [options]
 Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score force <source resource> to run (or not run) with <target resource>. (score defaults to "INFINITY") A role can be master or slave (if no role is specified, it defaults to 'started').
 .TP
-colocation set <resource1> <resource2> [resourceN]... [setoptions] ... [set <resourceX> <resourceY> ...] [setoptions <name>=<value>...]
-Create a colocation constraint with a resource set
+colocation set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]] [setoptions [constraint_options]]
+Create a colocation constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Available constraint_options are score, score-attribute and score-attribute-mangle.
 .TP
 colocation remove <source resource id> <target resource id>
 Remove colocation constraints with <source resource>

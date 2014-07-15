@@ -778,8 +778,10 @@ Commands:
         symmetrical=true/false
 
     order set <resource1> <resource2> [resourceN]... [options] [set
-              <resourceX> <resourceY> ...]
+              <resourceX> <resourceY> ... [options]]
         Create an ordered set of resources.
+        Available options are sequential=true/false, require-all=true/false,
+        action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
 
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
@@ -799,9 +801,14 @@ Commands:
         A role can be master or slave (if no role is specified, it defaults to
         'started').
 
-    colocation set <resource1> <resource2> [resourceN]... [setoptions] ...
-               [set <resourceX> <resourceY> ...] [setoptions <name>=<value>...]
-        Create a colocation constraint with a resource set
+    colocation set <resource1> <resource2> [resourceN]... [options]
+               [set <resourceX> <resourceY> ... [options]]
+               [setoptions [constraint_options]]
+        Create a colocation constraint with a resource set.
+        Available options are sequential=true/false, require-all=true/false,
+        action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
+        Available constraint_options are score, score-attribute and
+        score-attribute-mangle.
 
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with <source resource>
