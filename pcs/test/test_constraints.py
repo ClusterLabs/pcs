@@ -697,6 +697,123 @@ Ordering Constraints:
         ac(output, "")
         assert returnVal == 0
 
+    def testRemoteNodeConstraintsRemove(self):
+        output, returnVal = pcs(
+            temp_cib,
+            'resource create vm-guest1 VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "constraint location D1 prefers node1=100"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "constraint location D1 prefers guest1=200"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "constraint location D2 avoids node2=300"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "constraint location D2 avoids guest1=400"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: D1
+    Enabled on: node1 (score:100) (id:location-D1-node1-100)
+    Enabled on: guest1 (score:200) (id:location-D1-guest1-200)
+  Resource: D2
+    Disabled on: node2 (score:-300) (id:location-D2-node2--300)
+    Disabled on: guest1 (score:-400) (id:location-D2-guest1--400)
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource delete vm-guest1")
+        ac(output, """\
+Removing Constraint - location-D1-guest1-200
+Removing Constraint - location-D2-guest1--400
+Deleting Resource - vm-guest1
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: D1
+    Enabled on: node1 (score:100) (id:location-D1-node1-100)
+  Resource: D2
+    Disabled on: node2 (score:-300) (id:location-D2-node2--300)
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            'resource create vm-guest1 VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "constraint location D1 prefers guest1=200"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "constraint location D2 avoids guest1=400"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: D1
+    Enabled on: node1 (score:100) (id:location-D1-node1-100)
+    Enabled on: guest1 (score:200) (id:location-D1-guest1-200)
+  Resource: D2
+    Disabled on: node2 (score:-300) (id:location-D2-node2--300)
+    Disabled on: guest1 (score:-400) (id:location-D2-guest1--400)
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "cluster remote-node remove guest1"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: D1
+    Enabled on: node1 (score:100) (id:location-D1-node1-100)
+  Resource: D2
+    Disabled on: node2 (score:-300) (id:location-D2-node2--300)
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
 if __name__ == "__main__":
     unittest.main()
 

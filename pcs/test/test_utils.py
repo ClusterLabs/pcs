@@ -147,6 +147,57 @@ class UtilsTest(unittest.TestCase):
             "myMasteredGroup"
         )
 
+    def testDomGetResourceRemoteNodeName(self):
+        dom = xml.dom.minidom.parse("empty.xml")
+        new_resources = xml.dom.minidom.parseString("""
+            <resources>
+                <primitive id="dummy1"
+                        class="ocf" provider="heartbeat" type="Dummy">
+                </primitive>
+                <primitive class="ocf" id="vm-guest1" provider="heartbeat"
+                        type="VirtualDomain">
+                    <instance_attributes id="vm-guest1-instance_attributes">
+                        <nvpair id="vm-guest1-instance_attributes-hypervisor"
+                            name="hypervisor" value="qemu:///system"/>
+                        <nvpair id="vm-guest1-instance_attributes-config"
+                            name="config" value="/root/guest1.xml"/>
+                    </instance_attributes>
+                    <meta_attributes id="vm-guest1-meta_attributes">
+                        <nvpair id="vm-guest1-meta_attributes-remote-node"
+                            name="remote-node" value="guest1"/>
+                    </meta_attributes>
+                </primitive>
+                <primitive id="dummy2"
+                        class="ocf" provider="heartbeat" type="Dummy">
+                    <instance_attributes id="vm-guest1-meta_attributes">
+                        <nvpair id="dummy2-remote-node"
+                            name="remote-node" value="guest2"/>
+                    </instance_attributes>
+                </primitive>
+            </resources>
+        """).documentElement
+        resources = dom.getElementsByTagName("resources")[0]
+        resources.parentNode.replaceChild(new_resources, resources)
+
+        self.assertEquals(
+            None,
+            utils.dom_get_resource_remote_node_name(
+                utils.dom_get_resource(dom, "dummy1")
+            )
+        )
+        self.assertEquals(
+            None,
+            utils.dom_get_resource_remote_node_name(
+                utils.dom_get_resource(dom, "dummy2")
+            )
+        )
+        self.assertEquals(
+            "guest1",
+            utils.dom_get_resource_remote_node_name(
+                utils.dom_get_resource(dom, "vm-guest1")
+            )
+        )
+
     def testValidateXmlId(self):
         self.assertEquals((True, ""), utils.validate_xml_id("dummy"))
         self.assertEquals((True, ""), utils.validate_xml_id("DUMMY"))

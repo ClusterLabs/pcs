@@ -1036,6 +1036,7 @@ def cluster_remote_node(argv):
 
         for nvpair in nvpairs_to_remove[:]:
             nvpair.parentNode.removeChild(nvpair)
+        dom = constraint.remove_constraints_containing_node(dom, hostname)
         utils.replace_cib_configuration(dom)
     else:
         usage.cluster(["remote-node"])

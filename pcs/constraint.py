@@ -698,8 +698,8 @@ def location_show(argv):
                         print "(id:"+options[0]+")",
                     print
             if (rsc in rschashoff):
-                print "    Disabled on:",
                 for options in rschashoff[rsc]:
+                    print "    Disabled on:",
                     print options[1],
                     print "(score:"+options[2]+")",
                     if (options[3] != ""):
@@ -1010,6 +1010,20 @@ def find_constraints_containing(resource_id, passed_dom=None):
     # Remove duplicates
     set_constraints = list(set(set_constraints))
     return constraints_found,set_constraints
+
+def remove_constraints_containing_node(dom, node, output=False):
+    for constraint in find_constraints_containing_node(dom, node):
+        if output:
+            print "Removing Constraint - %s" % constraint.getAttribute("id")
+        constraint.parentNode.removeChild(constraint)
+    return dom
+
+def find_constraints_containing_node(dom, node):
+    return [
+        constraint
+        for constraint in dom.getElementsByTagName("rsc_location")
+            if constraint.getAttribute("node") == node
+    ]
 
 # Re-assign any constraints referencing a resource to its parent (a clone
 # or master)

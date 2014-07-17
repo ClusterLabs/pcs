@@ -817,6 +817,15 @@ def is_valid_constraint_resource(resource_id):
             does_exist("//clone[@id='"+resource_id+"']") or \
             does_exist("//master[@id='"+resource_id+"']")
 
+def dom_get_resource_remote_node_name(dom_resource):
+    if dom_resource.tagName != "primitive":
+        return None
+    for meta in dom_resource.getElementsByTagName("meta_attributes"):
+        for nvpair in meta.getElementsByTagName("nvpair"):
+            if nvpair.getAttribute("name") == "remote-node":
+                return nvpair.getAttribute("value")
+    return None
+
 # Check if resoure is started (or stopped) for 'wait' seconds
 def is_resource_started(resource,wait,stopped=False):
     expire_time = int(time.time()) + wait

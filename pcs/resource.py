@@ -1325,6 +1325,15 @@ def resource_remove(resource_id, output = True):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
 
     constraint.remove_constraints_containing(resource_id,output)
+    resource_el = utils.dom_get_resource(dom, resource_id)
+    if resource_el:
+        remote_node = utils.dom_get_resource_remote_node_name(resource_el)
+        if remote_node:
+            dom = constraint.remove_constraints_containing_node(
+                dom, remote_node, output
+            )
+            utils.replace_cib_configuration(dom)
+            dom = utils.get_cib_dom()
 
     if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(resource_id, 0, True):
         sys.stdout.write("Attempting to stop: "+ resource_id + "...")
