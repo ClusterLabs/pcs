@@ -726,6 +726,20 @@ def dom_get_clone_ms_resource(dom, clone_ms_id):
                 return child
     return None
 
+def dom_get_resource_clone_ms_parent(dom, resource_id):
+    resource = (
+        dom_get_resource(dom, resource_id)
+        or
+        dom_get_group(dom, resource_id)
+    )
+    clone = resource
+    while True:
+        if not isinstance(clone, xml.dom.minidom.Element):
+            return None
+        if clone.tagName in ["clone", "master"]:
+            return clone
+        clone = clone.parentNode
+
 # deprecated, use dom_get_master
 def is_master(ms_id):
     return does_exist("//master[@id='"+ms_id+"']")
@@ -767,6 +781,13 @@ def dom_get_group_clone(dom, group_id):
             return group
     return None
 
+def dom_get_group_masterslave(dom, group_id):
+    for master in dom.getElementsByTagName("master"):
+        group = dom_get_group(master, group_id)
+        if group:
+            return group
+    return None
+
 # deprecated, use dom_get_resource
 def is_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"']")
@@ -802,6 +823,7 @@ def dom_get_resource_masterslave(dom, resource_id):
             return resource
     return None
 
+# deprecated, use dom_get_resource_clone_ms_parent
 def get_resource_master_id(resource_id):
     dom = get_cib_dom()
     primitives = dom.getElementsByTagName("primitive")
@@ -811,11 +833,48 @@ def get_resource_master_id(resource_id):
                 return p.parentNode.getAttribute("id")
     return None
 
-def is_valid_constraint_resource(resource_id):
-    return does_exist("//primitive[@id='"+resource_id+"']") or \
-            does_exist("//group[@id='"+resource_id+"']") or \
-            does_exist("//clone[@id='"+resource_id+"']") or \
-            does_exist("//master[@id='"+resource_id+"']")
+def validate_constraint_resource(dom, resource_id):
+    resource_el = (
+        dom_get_clone(dom, resource_id)
+        or
+        dom_get_master(dom, resource_id)
+    )
+    if resource_el:
+        # clone and master is always valid
+        return True, ""
+
+    resource_el = (
+        dom_get_resource(dom, resource_id)
+        or
+        dom_get_group(dom, resource_id)
+    )
+    if not resource_el:
+        return False, "Resource '%s' does not exist" % resource_id
+
+    if "--force" in pcs_options:
+        return True, ""
+
+    clone_el = dom_get_resource_clone_ms_parent(dom, resource_id)
+    if not clone_el:
+        # primitive and group is valid if not in clone nor master
+        return True, ""
+
+    if clone_el.tagName == "clone":
+        return (
+            False,
+            "%s is a clone resource, you should use the clone id: %s "
+                "when adding constraints. Use --force to override."
+            % (resource_id, clone_el.getAttribute("id"))
+        )
+    if clone_el.tagName == "master":
+        return (
+            False,
+            "%s is a master/slave resource, you should use the master id: %s "
+                "when adding constraints. Use --force to override."
+            % (resource_id, clone_el.getAttribute("id"))
+        )
+    return True, ""
+
 
 def dom_get_resource_remote_node_name(dom_resource):
     if dom_resource.tagName != "primitive":

@@ -8,28 +8,11 @@ import utils
 
 class UtilsTest(unittest.TestCase):
 
-    def testDomGetResources(self):
-        def test_dom_get(method, dom, ok_ids, bad_ids):
-            for element_id in ok_ids:
-                self.assert_element_id(method(dom, element_id), element_id)
-            for element_id in bad_ids:
-                self.assertFalse(method(dom, element_id))
+    def get_cib_empty(self):
+        return xml.dom.minidom.parse("empty.xml")
 
-        cib_dom = xml.dom.minidom.parse("empty.xml")
-        self.assertFalse(utils.dom_get_resource(cib_dom, "myResource"))
-        self.assertFalse(
-            utils.dom_get_resource_clone(cib_dom, "myClonedResource")
-        )
-        self.assertFalse(
-            utils.dom_get_resource_masterslave(cib_dom, "myMasteredResource")
-        )
-        self.assertFalse(utils.dom_get_group(cib_dom, "myGroup"))
-        self.assertFalse(utils.dom_get_group_clone(cib_dom, "myClonedGroup"))
-        self.assertFalse(utils.dom_get_clone(cib_dom, "myClone"))
-        self.assertFalse(utils.dom_get_master(cib_dom, "myMaster"))
-        self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myClone"))
-        self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myMaster"))
-
+    def get_cib_resources(self):
+        cib_dom = self.get_cib_empty()
         new_resources = xml.dom.minidom.parseString("""
             <resources>
                   <primitive id="myResource"
@@ -68,7 +51,40 @@ class UtilsTest(unittest.TestCase):
         """).documentElement
         resources = cib_dom.getElementsByTagName("resources")[0]
         resources.parentNode.replaceChild(new_resources, resources)
+        return cib_dom
 
+    def testDomGetResources(self):
+        def test_dom_get(method, dom, ok_ids, bad_ids):
+            for element_id in ok_ids:
+                self.assert_element_id(method(dom, element_id), element_id)
+            for element_id in bad_ids:
+                self.assertFalse(method(dom, element_id))
+
+        cib_dom = self.get_cib_empty()
+        self.assertFalse(utils.dom_get_resource(cib_dom, "myResource"))
+        self.assertFalse(
+            utils.dom_get_resource_clone(cib_dom, "myClonedResource")
+        )
+        self.assertFalse(
+            utils.dom_get_resource_masterslave(cib_dom, "myMasteredResource")
+        )
+        self.assertFalse(utils.dom_get_group(cib_dom, "myGroup"))
+        self.assertFalse(utils.dom_get_group_clone(cib_dom, "myClonedGroup"))
+        self.assertFalse(
+            utils.dom_get_group_masterslave(cib_dom, "myMasteredGroup")
+        )
+        self.assertFalse(utils.dom_get_clone(cib_dom, "myClone"))
+        self.assertFalse(utils.dom_get_master(cib_dom, "myMaster"))
+        self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myClone"))
+        self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myMaster"))
+        self.assertFalse(
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myClonedResource")
+        )
+        self.assertFalse(
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myMasteredResource")
+        )
+
+        cib_dom = self.get_cib_resources()
         all_ids = set([
             "none", "myResource",
             "myClone", "myClonedResource",
@@ -117,6 +133,12 @@ class UtilsTest(unittest.TestCase):
             clone_ids, all_ids - clone_ids
         )
 
+        mastered_group_ids = set(["myMasteredGroup"])
+        test_dom_get(
+            utils.dom_get_group_masterslave, cib_dom,
+            mastered_group_ids, all_ids - mastered_group_ids
+        )
+
         master_ids = set(["myMaster", "myGroupMaster"])
         test_dom_get(
             utils.dom_get_master, cib_dom,
@@ -139,6 +161,51 @@ class UtilsTest(unittest.TestCase):
         self.assert_element_id(
             utils.dom_get_clone_ms_resource(cib_dom, "myGroupMaster"),
             "myMasteredGroup"
+        )
+
+        self.assert_element_id(
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myClonedResource"),
+            "myClone"
+        )
+        self.assert_element_id(
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myClonedGroup"),
+            "myGroupClone"
+        )
+        self.assert_element_id(
+            utils.dom_get_resource_clone_ms_parent(
+                cib_dom, "myClonedGroupedResource"
+            ),
+            "myGroupClone"
+        )
+        self.assert_element_id(
+            utils.dom_get_resource_clone_ms_parent(
+                cib_dom, "myMasteredResource"
+            ),
+            "myMaster"
+        )
+        self.assert_element_id(
+            utils.dom_get_resource_clone_ms_parent(
+                cib_dom, "myMasteredGroup"
+            ),
+            "myGroupMaster"
+        )
+        self.assert_element_id(
+            utils.dom_get_resource_clone_ms_parent(
+                cib_dom, "myMasteredGroupedResource"
+            ),
+            "myGroupMaster"
+        )
+        self.assertEquals(
+            None,
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myResource")
+        )
+        self.assertEquals(
+            None,
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myGroup")
+        )
+        self.assertEquals(
+            None,
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myGroupedResource")
         )
 
     def testDomGetResourceRemoteNodeName(self):
@@ -233,6 +300,102 @@ class UtilsTest(unittest.TestCase):
                 "cc",
                 "cc2"
             )
+        )
+
+    def testValidateConstraintResource(self):
+        dom = self.get_cib_resources()
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myClone")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myGroupClone")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myMaster")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myGroupMaster")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myResource")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myGroup")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myGroupedResource")
+        )
+
+        self.assertEquals(
+            (False, "Resource 'myNonexistent' does not exist"),
+            utils.validate_constraint_resource(dom, "myNonexistent")
+        )
+
+        message = (
+            "%s is a clone resource, you should use the clone id: "
+            "%s when adding constraints. Use --force to override."
+        )
+        self.assertEquals(
+            (False, message % ("myClonedResource", "myClone")),
+            utils.validate_constraint_resource(dom, "myClonedResource")
+        )
+        self.assertEquals(
+            (False, message % ("myClonedGroup", "myGroupClone")),
+            utils.validate_constraint_resource(dom, "myClonedGroup")
+        )
+        self.assertEquals(
+            (False, message % ("myClonedGroupedResource", "myGroupClone")),
+            utils.validate_constraint_resource(dom, "myClonedGroupedResource")
+        )
+
+        message = (
+            "%s is a master/slave resource, you should use the master id: "
+            "%s when adding constraints. Use --force to override."
+        )
+        self.assertEquals(
+            (False, message % ("myMasteredResource", "myMaster")),
+            utils.validate_constraint_resource(dom, "myMasteredResource")
+        )
+        self.assertEquals(
+            (False, message % ("myMasteredGroup", "myGroupMaster")),
+            utils.validate_constraint_resource(dom, "myMasteredGroup")
+        )
+        self.assertEquals(
+            (False, message % ("myMasteredGroupedResource", "myGroupMaster")),
+            utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
+        )
+
+        utils.pcs_options["--force"] = True
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myClonedResource")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myClonedGroup")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myClonedGroupedResource")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myMasteredResource")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myMasteredGroup")
+        )
+        self.assertEquals(
+            (True, ""),
+            utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
         )
 
     def testValidateXmlId(self):

@@ -194,16 +194,18 @@ def colocation_add(argv):
         resource1 = argv.pop(0)
         resource2 = argv.pop(0)
 
-    if not utils.is_valid_constraint_resource(resource1):
-        utils.err("Resource '" + resource1 + "' does not exist")
+    cib_dom = utils.get_cib_dom()
+    resource_valid, resource_error = utils.validate_constraint_resource(
+        cib_dom, resource1
+    )
+    if not resource_valid:
+        utils.err(resource_error)
+    resource_valid, resource_error = utils.validate_constraint_resource(
+        cib_dom, resource2
+    )
+    if not resource_valid:
+        utils.err(resource_error)
 
-    if not utils.is_valid_constraint_resource(resource2):
-        utils.err("Resource '" + resource2 + "' does not exist")
-
-    if utils.is_resource_masterslave(resource1):
-        utils.err(resource1 + " is a master/slave resource, you must use the master id: "+utils.get_resource_master_id(resource1)+ " when adding constraints")
-    if utils.is_resource_masterslave(resource2):
-        utils.err(resource2 + " is a master/slave resource, you must use the master id: "+utils.get_resource_master_id(resource2)+ " when adding constraints")
     score,nv_pairs = parse_score_options(argv)
 
     (dom,constraintsElement) = getCurrentConstraints()
@@ -244,13 +246,11 @@ def colocation_set(argv):
         if a.find('=') == -1:
             colocation_id = colocation_id + "_" + a
 
-    cib = utils.get_cib_etree()
-    constraints = cib.find(".//constraints")
-    if constraints == None:
-        constraints = ET.SubElement(cib, "constraints")
-    rsc_colocation = ET.SubElement(constraints,"rsc_colocation")
-    rsc_colocation.set("id", utils.find_unique_id(cib,colocation_id))
-    rsc_colocation.set("score","INFINITY")
+    cib, constraints = getCurrentConstraints(utils.get_cib_dom())
+    rsc_colocation = cib.createElement("rsc_colocation")
+    constraints.appendChild(rsc_colocation)
+    rsc_colocation.setAttribute("id", utils.find_unique_id(cib, colocation_id))
+    rsc_colocation.setAttribute("score", "INFINITY")
     score_options = ("score", "score-attribute", "score-attribute-mangle")
     score_specified = False
     for opt in setoptions:
@@ -269,7 +269,7 @@ def colocation_set(argv):
                     "invalid score '%s', use integer or INFINITY or -INFINITY"
                     % value
                 )
-            rsc_colocation.set(name,value)
+            rsc_colocation.setAttribute(name, value)
     set_add_resource_sets(rsc_colocation, current_set, cib)
     utils.replace_cib_configuration(cib)
 
@@ -362,7 +362,8 @@ def set_add_resource_sets(elem, sets, cib):
 
     for o_set in sets:
         set_id = "pcs_rsc_set"
-        res_set = ET.SubElement(elem,"resource_set")
+        res_set = cib.createElement("resource_set")
+        elem.appendChild(res_set)
         for opts in o_set:
             if opts.find("=") != -1:
                 key,val = opts.split("=")
@@ -376,12 +377,18 @@ def set_add_resource_sets(elem, sets, cib):
                         "invalid value '%s' of option '%s', allowed values are: %s"
                         % (val, key, ", ".join(allowed_options[key]))
                     )
-                res_set.set(key,val)
+                res_set.setAttribute(key, val)
             else:
-                se = ET.SubElement(res_set,"resource_ref")
-                se.set("id",opts)
+                res_valid, res_error = utils.validate_constraint_resource(
+                    cib, opts
+                )
+                if not res_valid:
+                    utils.err(res_error)
+                se = cib.createElement("resource_ref")
+                res_set.appendChild(se)
+                se.setAttribute("id", opts)
                 set_id = set_id + "_" + opts
-        res_set.set("id", utils.find_unique_id(cib,set_id))
+        res_set.setAttribute("id", utils.find_unique_id(cib, set_id))
     
 def order_set(argv):
     current_set = set_args_into_array(argv)
@@ -391,12 +398,10 @@ def order_set(argv):
         if a.find('=') == -1:
             order_id = order_id + "_" + a
 
-    cib = utils.get_cib_etree()
-    constraints = cib.find(".//constraints")
-    if constraints == None:
-        constraints = ET.SubElement(cib, "constraints")
-    rsc_order = ET.SubElement(constraints,"rsc_order")
-    rsc_order.set("id", utils.find_unique_id(cib,order_id))
+    cib, constraints = getCurrentConstraints(utils.get_cib_dom())
+    rsc_order = cib.createElement("rsc_order")
+    constraints.appendChild(rsc_order)
+    rsc_order.setAttribute("id", utils.find_unique_id(cib, order_id))
     set_add_resource_sets(rsc_order, current_set, cib)
     utils.replace_cib_configuration(cib)
 
@@ -466,11 +471,6 @@ def order_start(argv):
         sys.exit(1)
     resource2 = argv.pop(0)
 
-    if utils.is_resource_masterslave(resource1):
-        utils.err(resource1 + " is a master/slave resource, you must use the master id: "+utils.get_resource_master_id(resource1)+ " when adding constraints")
-    if utils.is_resource_masterslave(resource2):
-        utils.err(resource2 + " is a master/slave resource, you must use the master id: "+utils.get_resource_master_id(resource2)+ " when adding constraints")
-
     order_options = []
     if len(argv) != 0:
         order_options = order_options + argv[:]
@@ -487,11 +487,17 @@ def order_add(argv,returnElementOnly=False):
     resource1 = argv.pop(0)
     resource2 = argv.pop(0)
 
-    if not utils.is_valid_constraint_resource(resource1):
-        utils.err("Resource '" + resource1 + "' does not exist")
-
-    if not utils.is_valid_constraint_resource(resource2):
-        utils.err("Resource '" + resource2 + "' does not exist")
+    cib_dom = utils.get_cib_dom()
+    resource_valid, resource_error = utils.validate_constraint_resource(
+        cib_dom, resource1
+    )
+    if not resource_valid:
+        utils.err(resource_error)
+    resource_valid, resource_error = utils.validate_constraint_resource(
+        cib_dom, resource2
+    )
+    if not resource_valid:
+        utils.err(resource_error)
 
     sym = "true" if (len(argv) == 0 or argv[0] != "nonsymmetrical") else "false"
 
@@ -524,7 +530,7 @@ def order_add(argv,returnElementOnly=False):
     print "Adding " + resource1 + " " + resource2 + " ("+scorekind+")" + options
 
     order_id = "order-" + resource1 + "-" + resource2 + "-" + id_suffix
-    order_id = utils.find_unique_id(utils.get_cib_dom(), order_id)
+    order_id = utils.find_unique_id(cib_dom, order_id)
 
     (dom,constraintsElement) = getCurrentConstraints()
     element = dom.createElement("rsc_order")
@@ -739,9 +745,11 @@ def location_add(argv,rm=False):
         resource_name = argv.pop(0)
         node = argv.pop(0)
         score = argv.pop(0)
-        # If resource doesn't exist, we error out
-        if not utils.is_valid_constraint_resource(resource_name):
-            utils.err("Resource " + resource_name + "' does not exist")
+        resource_valid, resource_error = utils.validate_constraint_resource(
+            utils.get_cib_dom(), resource_name
+        )
+        if not resource_valid:
+            utils.err(resource_error)
         if not utils.is_score(score):
             utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
 
@@ -779,8 +787,11 @@ def location_rule(argv):
         sys.exit(1)
     
     res_name = argv.pop(0)
-    if not utils.is_resource(res_name) and not utils.is_group(res_name):
-        utils.err("'%s' is not a resource" % res_name)
+    resource_valid, resource_error = utils.validate_constraint_resource(
+        utils.get_cib_dom(), res_name
+    )
+    if not resource_valid:
+        utils.err(resource_error)
 
     argv.pop(0)
 
@@ -977,17 +988,11 @@ def find_constraints_containing_node(dom, node):
 # or master)
 def constraint_resource_update(old_id, passed_dom=None):
     dom = utils.get_cib_dom() if passed_dom is None else passed_dom
-    resources = dom.getElementsByTagName("primitive")
-    found_resource = None
-    for res in resources:
-        if res.getAttribute("id") == old_id:
-            found_resource = res
-            break
 
     new_id = None
-    if found_resource:
-        if found_resource.parentNode.tagName == "master" or found_resource.parentNode.tagName == "clone":
-            new_id = found_resource.parentNode.getAttribute("id")
+    clone_ms_parent = utils.dom_get_resource_clone_ms_parent(dom, old_id)
+    if clone_ms_parent:
+        new_id = clone_ms_parent.getAttribute("id")
 
     if new_id:
         constraints = dom.getElementsByTagName("rsc_location")

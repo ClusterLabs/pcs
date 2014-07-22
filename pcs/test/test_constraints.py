@@ -66,11 +66,11 @@ class ConstraintTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n", [output]
 
-        output, returnVal = pcs(temp_cib, "constraint location D3 rule score=pingd defined pingd")
+        output, returnVal = pcs(temp_cib, "constraint location D3 rule score=pingd defined pingd --force")
         assert returnVal == 0
         assert output == "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n", [output]
 
-        output, returnVal = pcs(temp_cib, "constraint location D4 rule score=INFINITY date start=2005-001 gt")
+        output, returnVal = pcs(temp_cib, "constraint location D4 rule score=INFINITY date start=2005-001 gt --force")
         assert returnVal == 0
         assert output == "", [output]
 
@@ -82,11 +82,11 @@ class ConstraintTest(unittest.TestCase):
         assert output == "", [output]
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_cib, "constraint location D3 rule score=-INFINITY not_defined pingd or pingd lte 0")
+        output, returnVal = pcs(temp_cib, "constraint location D3 rule score=-INFINITY not_defined pingd or pingd lte 0 --force")
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "constraint location D3 rule score=-INFINITY not_defined pingd and pingd lte 0")
+        output, returnVal = pcs(temp_cib, "constraint location D3 rule score=-INFINITY not_defined pingd and pingd lte 0 --force")
         assert returnVal == 0
         assert output == "", [output]
 
@@ -317,7 +317,7 @@ Colocation Constraints:
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        o, r = pcs(temp_cib, "constraint colocation add D1 D3")
+        o, r = pcs(temp_cib, "constraint colocation add D1 D3-clone")
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint colocation add D1 D2 100")
@@ -346,7 +346,7 @@ Colocation Constraints:
 
         o, r = pcs(temp_cib, "constraint")
         assert r == 0
-        ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3 (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\n')
+        ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3-clone (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\n')
         
     def testColocationSets(self):
         line = "resource create D7 Dummy"
@@ -676,7 +676,7 @@ Colocation Constraints:
         assert r == 1
 
         o,r = pcs("constraint location non-existant-resource rule role=master '#uname' eq rh7-1")
-        ac (o,"Error: 'non-existant-resource' is not a resource\n")
+        ac (o,"Error: Resource 'non-existant-resource' does not exist\n")
         assert r == 1
 
         output, returnVal = pcs(temp_cib, "constraint rule add location-D1-rh7-1-INFINITY '#uname' eq rh7-2")
@@ -692,7 +692,7 @@ Colocation Constraints:
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location stateful0 rule role=master '#uname' eq rh7-1")
+        o,r = pcs("constraint location stateful0 rule role=master '#uname' eq rh7-1 --force")
         ac(o,"")
         assert r == 0
 
@@ -712,15 +712,15 @@ Colocation Constraints:
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint location stateful1 rule rulename '#uname' eq rh7-1")
+        o,r = pcs("constraint location stateful1 rule rulename '#uname' eq rh7-1 --force")
         ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n")
         assert r == 1
 
-        o,r = pcs("constraint location stateful1 rule role=master rulename '#uname' eq rh7-1")
+        o,r = pcs("constraint location stateful1 rule role=master rulename '#uname' eq rh7-1 --force")
         ac(o,"Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n")
         assert r == 1
 
-        o,r = pcs("constraint location stateful1 rule role=master 25")
+        o,r = pcs("constraint location stateful1 rule role=master 25 --force")
         ac(o,"Error: '25' is not a valid rule expression: missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', 'defined', 'not_defined', 'date-spec'\n")
         assert r == 1
 
@@ -751,28 +751,223 @@ Colocation Constraints:
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("constraint order stateful1 then dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        o,r = pcs("resource create stateful2 stateful --group statefulG")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource master statefulG")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint location stateful1 prefers rh7-1")
+        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint order dummy1 then stateful1")
-        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        o,r = pcs("constraint location statefulG prefers rh7-1")
+        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint location stateful1 rule #uname eq rh7-1")
+        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint location statefulG rule #uname eq rh7-1")
+        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint order stateful1 then dummy1")
+        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint order dummy1 then statefulG")
+        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint order set stateful1 dummy1")
+        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint order set dummy1 statefulG")
+        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs("constraint colocation add stateful1 with dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint colocation add dummy1 with stateful1")
-        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        o,r = pcs("constraint colocation add dummy1 with statefulG")
+        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
-        o,r = pcs("constraint order dummy1 then stateful1")
-        ac(o,"Error: stateful1 is a master/slave resource, you must use the master id: stateful1-master when adding constraints\n")
+        o,r = pcs("constraint colocation set dummy1 stateful1")
+        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint colocation set statefulG dummy1")
+        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
         assert r == 1
 
         o,r = pcs("constraint --full")
         ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
+
+        o,r = pcs("constraint location stateful1 prefers rh7-1 --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint location statefulG rule #uname eq rh7-1 --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint order stateful1 then dummy1 --force")
+        ac(o,"Adding stateful1 dummy1 (kind: Mandatory) (Options: first-action=start then-action=start)\n")
+        assert r == 0
+
+        o,r = pcs("constraint order set stateful1 dummy1 --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint colocation add stateful1 with dummy1 --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint colocation set stateful1 dummy1 --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint --full")
+        ac(o, """\
+Location Constraints:
+  Resource: stateful1
+    Enabled on: rh7-1 (score:INFINITY) (id:location-stateful1-rh7-1-INFINITY)
+  Resource: statefulG
+    Constraint: location-statefulG
+      Rule: score=INFINITY  (id:location-statefulG-rule)
+        Expression: #uname eq rh7-1  (id:location-statefulG-rule-expr)
+Ordering Constraints:
+  start stateful1 then start dummy1 (kind:Mandatory) (id:order-stateful1-dummy1-mandatory)
+  Resource Sets:
+    set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1) (id:pcs_rsc_order_stateful1_dummy1)
+Colocation Constraints:
+  stateful1 with dummy1 (score:INFINITY) (id:colocation-stateful1-dummy1-INFINITY)
+  Resource Sets:
+    set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1-1) setoptions score=INFINITY (id:pcs_rsc_colocation_stateful1_dummy1)
+""")
+        assert r == 0
+
+    def testCloneConstraint(self):
+        os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
+
+        o,r = pcs("resource create dummy1 dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource create dummy Dummy --clone")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource create dummy2 Dummy --group dummyG")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource clone dummyG")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint location dummy prefers rh7-1")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint location dummyG prefers rh7-1")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint location dummy rule #uname eq rh7-1")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint location dummyG rule #uname eq rh7-1")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint order dummy then dummy1")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint order dummy1 then dummyG")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint order set dummy1 dummy")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint order set dummyG dummy1")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint colocation add dummy with dummy1")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint colocation add dummy1 with dummyG")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint colocation set dummy1 dummy")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint colocation set dummy1 dummyG")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        assert r == 1
+
+        o,r = pcs("constraint --full")
+        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
+
+        o,r = pcs("constraint location dummy prefers rh7-1 --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint location dummyG rule #uname eq rh7-1 --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint order dummy then dummy1 --force")
+        ac(o,"Adding dummy dummy1 (kind: Mandatory) (Options: first-action=start then-action=start)\n")
+        assert r == 0
+
+        o,r = pcs("constraint order set dummy1 dummy --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint colocation add dummy with dummy1 --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint colocation set dummy1 dummy --force")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint --full")
+        ac(o, """\
+Location Constraints:
+  Resource: dummy
+    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
+  Resource: dummyG
+    Constraint: location-dummyG
+      Rule: score=INFINITY  (id:location-dummyG-rule)
+        Expression: #uname eq rh7-1  (id:location-dummyG-rule-expr)
+Ordering Constraints:
+  start dummy then start dummy1 (kind:Mandatory) (id:order-dummy-dummy1-mandatory)
+  Resource Sets:
+    set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy) (id:pcs_rsc_order_dummy1_dummy)
+Colocation Constraints:
+  dummy with dummy1 (score:INFINITY) (id:colocation-dummy-dummy1-INFINITY)
+  Resource Sets:
+    set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy)
+""")
         assert r == 0
 
     def testMissingRole(self):
@@ -825,6 +1020,170 @@ Colocation Constraints:
 
         output, returnVal = pcs(temp_large_cib, "constraint remove location-dummy-rh7-1-INFINITY")
         ac(output, "")
+        assert returnVal == 0
+
+    def testConstraintResourceCloneUpdate(self):
+        output, returnVal = pcs(temp_cib, "constraint location D1 prefers rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D5")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint order D1 then D5")
+        ac(output, """\
+Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint order D6 then D1")
+        ac(output, """\
+Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        assert returnVal == 0
+
+        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource clone D1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: D1-clone
+    Enabled on: rh7-1 (score:INFINITY) (id:location-D1-rh7-1-INFINITY)
+Ordering Constraints:
+  start D1-clone then start D5 (kind:Mandatory) (id:order-D1-D5-mandatory)
+  start D6 then start D1-clone (kind:Mandatory) (id:order-D6-D1-mandatory)
+Colocation Constraints:
+  D1-clone with D5 (score:INFINITY) (id:colocation-D1-D5-INFINITY)
+""")
+        assert returnVal == 0
+
+    def testConstraintResourceMasterUpdate(self):
+        output, returnVal = pcs(temp_cib, "constraint location D1 prefers rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint colocation add D1 with D5")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint order D1 then D5")
+        ac(output, """\
+Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint order D6 then D1")
+        ac(output, """\
+Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        assert returnVal == 0
+
+        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource master D1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: D1-master
+    Enabled on: rh7-1 (score:INFINITY) (id:location-D1-rh7-1-INFINITY)
+Ordering Constraints:
+  start D1-master then start D5 (kind:Mandatory) (id:order-D1-D5-mandatory)
+  start D6 then start D1-master (kind:Mandatory) (id:order-D6-D1-mandatory)
+Colocation Constraints:
+  D1-master with D5 (score:INFINITY) (id:colocation-D1-D5-INFINITY)
+""")
+        assert returnVal == 0
+
+    def testConstraintGroupCloneUpdate(self):
+        output, returnVal = pcs(temp_cib, "resource group add DG D1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint location DG prefers rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint colocation add DG with D5")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint order DG then D5")
+        ac(output, """\
+Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint order D6 then DG")
+        ac(output, """\
+Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        assert returnVal == 0
+
+        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource clone DG")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: DG-clone
+    Enabled on: rh7-1 (score:INFINITY) (id:location-DG-rh7-1-INFINITY)
+Ordering Constraints:
+  start DG-clone then start D5 (kind:Mandatory) (id:order-DG-D5-mandatory)
+  start D6 then start DG-clone (kind:Mandatory) (id:order-D6-DG-mandatory)
+Colocation Constraints:
+  DG-clone with D5 (score:INFINITY) (id:colocation-DG-D5-INFINITY)
+""")
+        assert returnVal == 0
+
+    def testConstraintGroupMasterUpdate(self):
+        output, returnVal = pcs(temp_cib, "resource group add DG D1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint location DG prefers rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint colocation add DG with D5")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint order DG then D5")
+        ac(output, """\
+Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint order D6 then DG")
+        ac(output, """\
+Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        assert returnVal == 0
+
+        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource master DG")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: DG-master
+    Enabled on: rh7-1 (score:INFINITY) (id:location-DG-rh7-1-INFINITY)
+Ordering Constraints:
+  start DG-master then start D5 (kind:Mandatory) (id:order-DG-D5-mandatory)
+  start D6 then start DG-master (kind:Mandatory) (id:order-D6-DG-mandatory)
+Colocation Constraints:
+  DG-master with D5 (score:INFINITY) (id:colocation-DG-D5-INFINITY)
+""")
         assert returnVal == 0
 
     def testRemoteNodeConstraintsRemove(self):

@@ -863,7 +863,11 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         ac(o,"")
 
-        o,r = pcs("constraint location D1 prefers rh7-1")
+        o,r = pcs("constraint location D1-clone prefers rh7-1")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs("constraint location D1 prefers rh7-1 --force")
         assert r == 0
         ac(o,"")
 
@@ -873,7 +877,11 @@ class ResourceTest(unittest.TestCase):
 
         o,r = pcs("resource delete D1-clone")
         assert r == 0
-        ac(o,"Removing Constraint - location-D1-rh7-1-INFINITY\nDeleting Resource - D1\n")
+        ac(o, """\
+Removing Constraint - location-D1-clone-rh7-1-INFINITY
+Removing Constraint - location-D1-rh7-1-INFINITY
+Deleting Resource - D1
+""")
 
         o,r = pcs("resource --full")
         assert r == 0
@@ -889,17 +897,21 @@ class ResourceTest(unittest.TestCase):
 
     def testMasterSlaveRemove(self):
         self.setupClusterA(temp_cib)
-        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
+        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1 --force")
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-2")
+        output, returnVal = pcs(temp_cib, "constraint location Master prefers rh7-2")
         assert returnVal == 0
         assert output == ""
 
         output, returnVal = pcs(temp_cib, "resource delete Master")
         assert returnVal == 0
-        ac(output,"Removing Constraint - location-ClusterIP5-rh7-1-INFINITY\nRemoving Constraint - location-ClusterIP5-rh7-2-INFINITY\nDeleting Resource - ClusterIP5\n")
+        ac(output, """\
+Removing Constraint - location-Master-rh7-2-INFINITY
+Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
+Deleting Resource - ClusterIP5
+""")
 
         output, returnVal = pcs(temp_cib, "resource create --no-default-ops ClusterIP5 Dummy")
         assert returnVal == 0
@@ -1723,7 +1735,7 @@ Colocation Constraints:
         assert r == 0
         o,r = pcs(temp_cib, "resource master AA")
         assert r == 0
-        o,r = pcs(temp_cib, "constraint location AA prefers rh7-1")
+        o,r = pcs(temp_cib, "constraint location AA-master prefers rh7-1")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource delete A1")
@@ -1731,7 +1743,10 @@ Colocation Constraints:
         assert r == 0
 
         o,r = pcs(temp_cib, "resource delete A2")
-        ac(o,"Deleting Resource (and group and M/S) - A2\n")
+        ac(o,"""\
+Removing Constraint - location-AA-master-rh7-1-INFINITY
+Deleting Resource (and group and M/S) - A2
+""")
         assert r == 0
 
     def testMasteredGroup(self):
