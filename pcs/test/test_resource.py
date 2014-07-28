@@ -794,6 +794,30 @@ class ResourceTest(unittest.TestCase):
         self.assertEquals(1, r)
         ac(o, "Error: cannot put resource before itself\n")
 
+        o, r = pcs(temp_cib, "resource group add A7 A6")
+        ac(o, "Error: 'A7' is already a resource\n")
+        self.assertEquals(1, r)
+
+        o, r = pcs(temp_cib, "resource create --no-default-ops A0 Dummy --clone")
+        self.assertEquals(0, r)
+        ac(o, "")
+
+        o, r = pcs(temp_cib, "resource group add A0-clone A6")
+        ac(o, "Error: 'A0-clone' is already a clone resource\n")
+        self.assertEquals(1, r)
+
+        o, r = pcs(temp_cib, "resource unclone A0-clone")
+        self.assertEquals(0, r)
+        ac(o, "")
+
+        o, r = pcs(temp_cib, "resource master A0")
+        self.assertEquals(0, r)
+        ac(o, "")
+
+        o, r = pcs(temp_cib, "resource group add A0-master A6")
+        ac(o, "Error: 'A0-master' is already a master/slave resource\n")
+        self.assertEquals(1, r)
+
         output, returnVal = pcs(temp_large_cib, "resource group add dummyGroup dummy1")
         assert returnVal == 0
         ac(output, '')

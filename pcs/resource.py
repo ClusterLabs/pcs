@@ -408,7 +408,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
             print "Warning: --group ignored when creating a master"
     elif "--group" in utils.pcs_options:
         groupname = utils.pcs_options["--group"]
-        dom = resource_group_add(groupname,[ra_id],dom)
+        dom = resource_group_add(dom, groupname, [ra_id])
 
     utils.replace_cib_configuration(dom)
 
@@ -1058,7 +1058,9 @@ def resource_group(argv):
             usage.resource("group")
             sys.exit(1)
         group_name = argv.pop(0)
-        resource_group_add(group_name, argv)
+        utils.replace_cib_configuration(
+            resource_group_add(utils.get_cib_dom(), group_name, argv)
+        )
     elif (group_cmd == "list"):
         resource_group_list(argv)
     elif (group_cmd in ["remove","delete"]):
@@ -1443,31 +1445,22 @@ def resource_group_rm(group_name, resource_ids):
     return True
 
 
-def resource_group_add(group_name, resource_ids, passed_dom = None):
-    if passed_dom:
-        dom = passed_dom
-    else:
-        dom = utils.get_cib_dom()
-
-    top_element = dom.documentElement
-    resources_element = top_element.getElementsByTagName("resources")[0]
-    group_found = False
+def resource_group_add(cib_dom, group_name, resource_ids):
+    resources_element = cib_dom.getElementsByTagName("resources")[0]
 
     name_valid, name_error = utils.validate_xml_id(group_name, 'group name')
     if not name_valid:
         utils.err(name_error)
 
-    for resource in top_element.getElementsByTagName("primitive"):
-        if resource.getAttribute("id") == group_name:
-            utils.err("Error: %s is already a resource" % group_name)
-
-    for group in top_element.getElementsByTagName("group"):
-        if group.getAttribute("id") == group_name:
-            group_found = True
-            mygroup = group
-
-    if group_found == False:
-        mygroup = dom.createElement("group")
+    mygroup = utils.dom_get_group(resources_element, group_name)
+    if not mygroup:
+        if utils.dom_get_resource(resources_element, group_name):
+            utils.err("'%s' is already a resource" % group_name)
+        if utils.dom_get_clone(resources_element, group_name):
+            utils.err("'%s' is already a clone resource" % group_name)
+        if utils.dom_get_master(resources_element, group_name):
+            utils.err("'%s' is already a master/slave resource" % group_name)
+        mygroup = cib_dom.createElement("group")
         mygroup.setAttribute("id", group_name)
         resources_element.appendChild(mygroup)
 
@@ -1530,10 +1523,7 @@ def resource_group_add(group_name, resource_ids, passed_dom = None):
                 mygroup.appendChild(resource)
             if oldParent.tagName == "group" and len(oldParent.getElementsByTagName("primitive")) == 0:
                 oldParent.parentNode.removeChild(oldParent)
-        
-        if passed_dom:
-            return dom
-        utils.replace_cib_configuration(dom)
+        return cib_dom
     else:
         utils.err("No resources to add.")
 
