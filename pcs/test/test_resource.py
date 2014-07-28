@@ -631,6 +631,169 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         ac(o,' Resource Group: MyGroup\n     A1\t(ocf::heartbeat:Dummy):\tStopped \n     A2\t(ocf::heartbeat:Dummy):\tStopped \n Resource Group: MyGroup2\n     A3\t(ocf::heartbeat:Dummy):\tStopped \n     A4\t(ocf::heartbeat:Dummy):\tStopped \n     A5\t(ocf::heartbeat:Dummy):\tStopped \n')
 
+        o, r = pcs(temp_cib, "resource create --no-default-ops A6 Dummy")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource create --no-default-ops A7 Dummy")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup A6 --after A1")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup A7 --before A1")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource show")
+        ac(o, """\
+ Resource Group: MyGroup
+     A7\t(ocf::heartbeat:Dummy):\tStopped 
+     A1\t(ocf::heartbeat:Dummy):\tStopped 
+     A6\t(ocf::heartbeat:Dummy):\tStopped 
+     A2\t(ocf::heartbeat:Dummy):\tStopped 
+ Resource Group: MyGroup2
+     A3\t(ocf::heartbeat:Dummy):\tStopped 
+     A4\t(ocf::heartbeat:Dummy):\tStopped 
+     A5\t(ocf::heartbeat:Dummy):\tStopped 
+""")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup2 A6 --before A5")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup2 A7 --after A5")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource show")
+        ac(o, """\
+ Resource Group: MyGroup
+     A1\t(ocf::heartbeat:Dummy):\tStopped 
+     A2\t(ocf::heartbeat:Dummy):\tStopped 
+ Resource Group: MyGroup2
+     A3\t(ocf::heartbeat:Dummy):\tStopped 
+     A4\t(ocf::heartbeat:Dummy):\tStopped 
+     A6\t(ocf::heartbeat:Dummy):\tStopped 
+     A5\t(ocf::heartbeat:Dummy):\tStopped 
+     A7\t(ocf::heartbeat:Dummy):\tStopped 
+""")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup A6 A7 --before A2")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource show")
+        ac(o, """\
+ Resource Group: MyGroup
+     A1\t(ocf::heartbeat:Dummy):\tStopped 
+     A6\t(ocf::heartbeat:Dummy):\tStopped 
+     A7\t(ocf::heartbeat:Dummy):\tStopped 
+     A2\t(ocf::heartbeat:Dummy):\tStopped 
+ Resource Group: MyGroup2
+     A3\t(ocf::heartbeat:Dummy):\tStopped 
+     A4\t(ocf::heartbeat:Dummy):\tStopped 
+     A5\t(ocf::heartbeat:Dummy):\tStopped 
+""")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup2 A6 A7 --after A4")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource show")
+        ac(o, """\
+ Resource Group: MyGroup
+     A1\t(ocf::heartbeat:Dummy):\tStopped 
+     A2\t(ocf::heartbeat:Dummy):\tStopped 
+ Resource Group: MyGroup2
+     A3\t(ocf::heartbeat:Dummy):\tStopped 
+     A4\t(ocf::heartbeat:Dummy):\tStopped 
+     A6\t(ocf::heartbeat:Dummy):\tStopped 
+     A7\t(ocf::heartbeat:Dummy):\tStopped 
+     A5\t(ocf::heartbeat:Dummy):\tStopped 
+""")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup A6 --before A0")
+        ac(o, "Error: there is no resource 'A0' in the group 'MyGroup'\n")
+        self.assertEquals(1, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup A6 --after A0")
+        ac(o, "Error: there is no resource 'A0' in the group 'MyGroup'\n")
+        self.assertEquals(1, r)
+
+        o, r = pcs(
+            temp_cib,
+            "resource group add MyGroup A6 --after A1 --before A2"
+        )
+        ac(o, "Error: you cannot specify both --before and --after\n")
+        self.assertEquals(1, r)
+
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A8 Dummy --group MyGroup --before A1"
+        )
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A9 Dummy --group MyGroup --after A1"
+        )
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource show")
+        ac(o, """\
+ Resource Group: MyGroup
+     A8\t(ocf::heartbeat:Dummy):\tStopped 
+     A1\t(ocf::heartbeat:Dummy):\tStopped 
+     A9\t(ocf::heartbeat:Dummy):\tStopped 
+     A2\t(ocf::heartbeat:Dummy):\tStopped 
+ Resource Group: MyGroup2
+     A3\t(ocf::heartbeat:Dummy):\tStopped 
+     A4\t(ocf::heartbeat:Dummy):\tStopped 
+     A6\t(ocf::heartbeat:Dummy):\tStopped 
+     A7\t(ocf::heartbeat:Dummy):\tStopped 
+     A5\t(ocf::heartbeat:Dummy):\tStopped 
+""")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup A1 --before A8")
+        self.assertEquals(0, r)
+        ac(o, "")
+
+        o, r = pcs(temp_cib, "resource group add MyGroup2 A3 --after A6")
+        self.assertEquals(0, r)
+        ac(o, "")
+
+        o, r = pcs(temp_cib, "resource show")
+        ac(o, """\
+ Resource Group: MyGroup
+     A1\t(ocf::heartbeat:Dummy):\tStopped 
+     A8\t(ocf::heartbeat:Dummy):\tStopped 
+     A9\t(ocf::heartbeat:Dummy):\tStopped 
+     A2\t(ocf::heartbeat:Dummy):\tStopped 
+ Resource Group: MyGroup2
+     A4\t(ocf::heartbeat:Dummy):\tStopped 
+     A6\t(ocf::heartbeat:Dummy):\tStopped 
+     A3\t(ocf::heartbeat:Dummy):\tStopped 
+     A7\t(ocf::heartbeat:Dummy):\tStopped 
+     A5\t(ocf::heartbeat:Dummy):\tStopped 
+""")
+        self.assertEquals(0, r)
+
+        o, r = pcs(temp_cib, "resource group add MyGroup2 A3 --after A3")
+        self.assertEquals(1, r)
+        ac(o, "Error: cannot put resource after itself\n")
+
+        o, r = pcs(temp_cib, "resource group add MyGroup2 A3 --before A3")
+        self.assertEquals(1, r)
+        ac(o, "Error: cannot put resource before itself\n")
+
         output, returnVal = pcs(temp_large_cib, "resource group add dummyGroup dummy1")
         assert returnVal == 0
         ac(output, '')

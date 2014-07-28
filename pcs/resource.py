@@ -1471,13 +1471,35 @@ def resource_group_add(group_name, resource_ids, passed_dom = None):
         mygroup.setAttribute("id", group_name)
         resources_element.appendChild(mygroup)
 
+    after = before = None
+    if "--after" in utils.pcs_options and "--before" in utils.pcs_options:
+        utils.err("you cannot specify both --before and --after")
+    if "--after" in utils.pcs_options:
+        after = utils.dom_get_resource(mygroup, utils.pcs_options["--after"])
+        if not after:
+            utils.err(
+                "there is no resource '%s' in the group '%s'"
+                % (utils.pcs_options["--after"], group_name)
+            )
+    if "--before" in utils.pcs_options:
+        before = utils.dom_get_resource(mygroup, utils.pcs_options["--before"])
+        if not before:
+            utils.err(
+                "there is no resource '%s' in the group '%s'"
+                % (utils.pcs_options["--before"], group_name)
+            )
+
     resources_to_move = []
     for resource_id in resource_ids:
-        already_exists = False
-        for resource in mygroup.getElementsByTagName("primitive"):
-            # If resource already exists in group then we skip
-            if resource.getAttribute("id") == resource_id:
-                utils.err(resource_id + " already exists in " + group_name)
+        if (
+            utils.dom_get_resource(mygroup, resource_id)
+            and not after and not before
+        ):
+            utils.err(resource_id + " already exists in " + group_name)
+        if after and after.getAttribute("id") == resource_id:
+            utils.err("cannot put resource after itself")
+        if before and before.getAttribute("id") == resource_id:
+            utils.err("cannot put resource before itself")
 
         resource_found = False
         for resource in resources_element.getElementsByTagName("primitive"):
@@ -1499,7 +1521,13 @@ def resource_group_add(group_name, resource_ids, passed_dom = None):
     if resources_to_move:
         for resource in resources_to_move:
             oldParent = resource.parentNode
-            mygroup.appendChild(resource)
+            if after and after.nextSibling:
+                mygroup.insertBefore(resource, after.nextSibling)
+                after = resource
+            elif before:
+                mygroup.insertBefore(resource, before)
+            else:
+                mygroup.appendChild(resource)
             if oldParent.tagName == "group" and len(oldParent.getElementsByTagName("primitive")) == 0:
                 oldParent.parentNode.removeChild(oldParent)
         

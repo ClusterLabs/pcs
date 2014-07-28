@@ -236,10 +236,13 @@ Commands:
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
            [--clone <clone options> | --master <master options> |
-           --group <group name>] [--disabled]
+           --group <group name> [--before <resource id> | --after <resource id>]
+           ] [--disabled]
         Create specified resource.  If --clone is used a clone resource is
         created if --master is specified a master/slave resource is created.
-        If --group is specified the resource is added to the group named.
+        If --group is specified the resource is added to the group named.  You
+        can use --before or --after to specify the position of the added
+        resource relatively to some resource already existing in the group.
         If --disabled is specified the resource is not started automatically.
         Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \\
                      ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
@@ -333,9 +336,12 @@ Commands:
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
 
     group add <group name> <resource id> [resource id] ... [resource id]
+              [--before <resource id> | --after <resource id>]
         Add the specified resource to the group, creating the group if it does
         not exist.  If the resource is present in another group it is moved
-        to the new group.
+        to the new group.  You can use --before or --after to specify
+        the position of the added resources relatively to some resource already
+        existing in the group.
 
     group remove <group name> <resource id> [resource id] ... [resource id]
         Remove the specified resource(s) from the group, removing the group if

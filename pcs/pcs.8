@@ -56,8 +56,8 @@ Show list of all available resources, optionally filtered by specified type, sta
 describe <standard:provider:type|type>
 Show options for the specified resource
 .TP
-create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name>] [\fB\-\-disabled\fR]
-Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. If \fB\-\-disabled\fR is specified the resource is not started automatically. Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s \e Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
+create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]] [\fB\-\-disabled\fR]
+Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created.  If \fB\-\-group\fR is specified the resource is added to the group named.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group.  If \fB\-\-disabled\fR is specified the resource is not started automatically. Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s \e Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
 .TP
 delete <resource id|group id|master id|clone id>
 Deletes the resource, group, master or clone (and all resources within the group/master/clone).
@@ -107,8 +107,8 @@ Set default values for operations, if no options are passed, lists currently con
 meta <resource id | group id | master id | clone id> <meta options>
 Add specified options to the specified resource, group, master/slave or clone.  Meta options should be in the format of name=value, options may be removed by setting an option without a value. Example: pcs resource meta TestResource failure\-timeout=50 stickiness=
 .TP
-group add <group name> <resource id> [resource id] ... [resource id]
-Add the specified resource to the group, creating the group if it does not exist.  If the resource is present in another group it is moved to the new group.
+group add <group name> <resource id> [resource id] ... [resource id] [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]
+Add the specified resource to the group, creating the group if it does not exist.  If the resource is present in another group it is moved to the new group.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resources relatively to some resource already existing in the group.
 .TP
 group remove <group name> <resource id> [resource id] ... [resource id]
 Remove the specified resource(s) from the group, removing the group if it no resources remain.
