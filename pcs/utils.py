@@ -11,6 +11,8 @@ import settings
 import resource
 import signal
 import time
+import cStringIO
+import tarfile
 import cluster
 
 
@@ -91,6 +93,9 @@ def updateToken(node,nodes,username,password):
 
     return True
 
+def get_uid_gid_file_name(uid, gid):
+    return "pcs-uidgid-%s-%s" % (uid, gid)
+
 # Reads in uid file and returns dict of values {'uid':'theuid', 'gid':'thegid'}
 def read_uid_gid_file(filename):
     uidgid = {}
@@ -115,7 +120,7 @@ def read_uid_gid_file(filename):
     return uidgid
 
 def write_uid_gid_file(uid,gid):
-    orig_filename = "pcs-uidgid-%s-%s" % (uid,gid)
+    orig_filename = get_uid_gid_file_name(uid,gid)
     filename = orig_filename
     counter = 0
     if len(find_uid_gid_files(uid,gid)) != 0:
@@ -1621,3 +1626,26 @@ def write_file(path, data):
     except EnvironmentError as e:
         return False, "unable to write to '%s': %s" % (path, e)
     return True, ""
+
+def tar_add_file_data(
+    tarball, data, name, mode=None, uid=None, gid=None, uname=None, gname=None,
+    mtime=None
+):
+    info = tarfile.TarInfo(name)
+    info.size = len(data)
+    info.type = tarfile.REGTYPE
+    info.mtime = int(time.time()) if mtime is None else mtime
+    if mode is not None:
+        info.mode = mode
+    if uid is not None:
+        info.uid = uid
+    if gid is not None:
+        info.gid = gid
+    if uname is not None:
+        info.uname = uname
+    if gname is not None:
+        info.gname = gname
+    data_io = cStringIO.StringIO(data)
+    tarball.addfile(info, data_io)
+    data_io.close()
+
