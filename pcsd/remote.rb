@@ -206,7 +206,11 @@ def get_cib(parasm)
 end
 
 def get_corosync_conf(params)
-  f = File.open("/etc/corosync/corosync.conf",'r')
+  if ISRHEL6
+    f = File.open("/etc/cluster/cluster.conf",'r')
+  else
+    f = File.open("/etc/corosync/corosync.conf",'r')
+  end
   return f.read
 end
 
@@ -261,7 +265,7 @@ def check_gui_status(params)
 end
 
 def remote_node_available(params)
-  if File.exist?("/etc/corosync/corosync.conf") or File.exist?("/var/lib/pacemaker/cib/cib.xml")
+  if (not ISRHEL6 and File.exist?(COROSYNC_CONF)) or (ISRHEL6 and File.exist?(CLUSTER_CONF)) or File.exist?("/var/lib/pacemaker/cib/cib.xml")
     return JSON.generate({:node_available => false})
   end
   return JSON.generate({:node_available => true})

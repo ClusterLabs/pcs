@@ -723,14 +723,22 @@ def cluster_localnode(argv):
         exit(1)
     elif argv[0] == "add":
         node = argv[1]
-        success = utils.addNodeToCorosync(node)
+        if not utils.is_rhel6():
+            success = utils.addNodeToCorosync(node)
+        else:
+            success = utils.addNodeToClusterConf(node)
+
         if success:
             print "%s: successfully added!" % node
         else:
             utils.err("unable to add %s" % node)
     elif argv[0] in ["remove","delete"]:
         node = argv[1]
-        success = utils.removeNodeFromCorosync(node)
+        if not utils.is_rhel6():
+            success = utils.removeNodeFromCorosync(node)
+        else:
+            success = utils.removeNodeFromClusterConf(node)
+
         if success:
             print "%s: successfully removed!" % node
         else:
