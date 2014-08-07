@@ -792,6 +792,10 @@ def cluster_uidgid_rhel6(argv, silent_list = False):
             output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--rmuidgid", "uid="+uid, "gid="+gid])
             if retval != 0:
                 utils.err("unable to remove uidgid\n" + output.rstrip())
+
+        # If we make a change, we sync out the changes to all nodes unless we're using -f
+        if not utils.usefile:
+            sync_nodes(utils.getNodesFromCorosyncConf(), utils.getCorosyncConf())
          
     else:
         usage.cluster(["uidgid"])
