@@ -336,7 +336,10 @@ def getNodesFromPacemaker():
 
 def getCorosyncConf(conf=None):
     if not conf:
-        conf = settings.corosync_conf_file
+        if is_rhel6():
+            conf = settings.cluster_conf_file
+        else:
+            conf = settings.corosync_conf_file
     try:
         out = open(conf).read()
     except IOError as e:
