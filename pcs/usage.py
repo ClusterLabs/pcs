@@ -101,6 +101,7 @@ def sub_gen_code(level,item,prev_level=[],spaces=""):
         if len(val) == 0:
             continue
         values = " ".join(val.keys())
+        values = values.replace("|"," ")
         out += "  " + key + ")\n"
         if len(val) > 0 and level != 1:
             out += sub_gen_code(level-1,item[key],[] ,spaces + "  ")
