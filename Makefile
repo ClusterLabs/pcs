@@ -11,7 +11,7 @@ endif
 MANDIR=/usr/share/man
 
 ifndef PREFIX
-  PREFIX=/usr
+  PREFIX=$(shell python -c "import sys; print(sys.prefix)")
 endif
 
 install: bash_completion
