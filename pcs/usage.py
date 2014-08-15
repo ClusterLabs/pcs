@@ -125,6 +125,7 @@ def sub_generate_bash_completion():
     tree["cluster"] = generate_tree(cluster([],False))
     tree["stonith"] = generate_tree(stonith([],False))
     tree["property"] = generate_tree(property([],False))
+    tree["acl"] = generate_tree(acl([],False))
     tree["constraint"] = generate_tree(constraint([],False))
     tree["status"] = generate_tree(status([],False))
     print """
@@ -143,7 +144,7 @@ def sub_generate_bash_completion():
     print sub_gen_code(1,tree,[])
     print """
     if [ $COMP_CWORD -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "resource cluster stonith property constraint status" -- $cur) )
+        COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config" -- $cur) )
     fi
     return 0
 
