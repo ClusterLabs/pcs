@@ -1164,7 +1164,7 @@ def get_node_attributes():
     for node in dom.getElementsByTagName("node"):
         nodename = node.getAttribute("uname")
         for nvp in node.getElementsByTagName("nvpair"):
-            if node not in nas:
+            if nodename not in nas:
                 nas[nodename] = []
             nas[nodename].append(nvp.getAttribute("name") + "=" + nvp.getAttribute("value"))
     return nas
