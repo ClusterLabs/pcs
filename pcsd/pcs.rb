@@ -43,6 +43,11 @@ def getAllSettings()
   return {"error" => "Unable to get configuration settings"}
 end
 
+def add_node_attr(node, key, value)
+  sdtout, strerr, retval = run_cmd(PCS, "property", "set", "--node", node, key.to_s + '=' + value.to_s)
+  return retval
+end
+
 def add_meta_attr(resource, key, value)
   stdout, stderr, retval = run_cmd(PCS,"resource","meta",resource,key.to_s + "=" + value.to_s)
   return retval
@@ -307,6 +312,35 @@ def get_cluster_version()
   else
     return stdout.join().gsub(/.*= /,"").strip
   end
+end
+
+def get_node_attributes()
+  stdout, stderr, retval = run_cmd(PCS, "property", "list")
+  if retval != 0
+    return {}
+  end
+
+  attrs = {}
+  found = false
+  stdout.each { |line|
+    if not found
+      if line.strip.start_with?("Node Attributes:")
+        found = true
+      end
+      next
+    end
+    if not line.start_with?(" ")
+      break
+    end
+    sline = line.split(":", 2)
+    nodename = sline[0].strip
+    attrs[nodename] = []
+    sline[1].strip.split(" ").each { |attr|
+      key, val = attr.split("=", 2)
+      attrs[nodename] << {:key => key, :value => val}
+    }
+  }
+  return attrs
 end
 
 def enable_cluster()

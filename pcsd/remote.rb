@@ -114,6 +114,8 @@ def remote(params,request)
     return add_group(params)
   when "update_cluster_settings"
     return update_cluster_settings(params)
+  when "add_node_attr_remote"
+    return add_node_attr_remote(params)
   else
     return [404, "Unknown Request"]
   end
@@ -427,6 +429,7 @@ def node_status(params)
   }
   constraints = getAllConstraints()
   cluster_settings = getAllSettings()
+  node_attributes = get_node_attributes()[$cur_node_name]
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
             "corosync_enabled" => corosync_enabled, "pacemaker_enabled" => pacemaker_enabled,
             "pcsd_enabled" => pcsd_enabled,
@@ -434,7 +437,8 @@ def node_status(params)
             "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
             "pacemaker_standby" => pacemaker_standby,
             "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
-            "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id}
+            "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id,
+            "node_attr" => node_attributes}
   ret = JSON.generate(status)
   return ret
 end
@@ -824,6 +828,15 @@ def add_constraint(params)
 	end
       end
     }
+  end
+end
+
+def add_node_attr_remote(params)
+  retval = add_node_attr(params["node"], params["key"], params["value"])
+  if retval == 0
+    return [200, "Successfully added attribute to node"]
+  else
+    return [400, "Error adding attribute to node"]
   end
 end
 

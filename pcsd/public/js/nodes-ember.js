@@ -844,6 +844,44 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       window.location.hash = "/nodes/" + $(node_row).attr("nodeID");
   },
 
+  add_node_attr: function(node, mkey, mvalue){
+    $.each(this.content, function(key, value) {
+      if (value.name == node) {
+        var node_attrs = [];
+        if (value.node_attr) {
+          node_attrs = value.node_attr;
+        }
+
+        var found = false;
+        $.each(node_attrs, function (index,attr) {
+          if (attr.key == mkey) {
+            attr.value = mvalue;
+            found = true;
+          }
+        });
+
+        if (!found) {
+          node_attrs.pushObject({key: mkey, value: mvalue})
+        }
+        value.set("node_attr", node_attrs);
+      }
+    });
+  },
+
+  remove_node_attr: function(node, key){
+    $.each(this.content, function(key, value) {
+      if (value.name == node) {
+        if (value.node_attr) {
+          value.set("node_attr", $.grep(value.node_attr, function (value2, key2) {
+            if (key == key2)
+              return false;
+            return true;
+          }));
+        }
+      }
+    });
+  },
+
   update: function(data){
     var self = this;
     var nodes = [];
@@ -953,6 +991,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  node.set("location_constraints", lc_on_nodes[node_id].sort());
 	  node.set("uptime", data[node_id]["uptime"]);
 	  node.set("node_id", data[node_id]["node_id"]);
+      node.set("node_attr", data[node_id]["node_attr"]);
 	}
       });
 
@@ -974,7 +1013,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  running_resources: Pcs.getResourcesFromID($.unique(resources_on_nodes[node_id].sort().reverse())),
 	  location_constraints: lc_on_nodes[node_id].sort(),
 	  uptime: data[node_id]["uptime"],
-	  node_id: data[node_id]["node_id"]
+	  node_id: data[node_id]["node_id"],
+      node_attr: data[node_id]["node_attr"]
 	});
       }
       var pathname = window.location.pathname.split('/');

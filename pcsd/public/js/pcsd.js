@@ -872,6 +872,51 @@ function remove_resource(ids) {
   });
 }
 
+function remove_node_attr(parent_id) {
+  var data = {};
+  data["node"] = Pcs.nodesController.cur_node.name;
+  data["key"] = parent_id.attr("node_attr_key");
+  data["value"] = ""; // empty value will remove attribute
+  fade_in_out(parent_id.parent());
+
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_node_attr_remote',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+      Pcs.nodesController.remove_node_attr(data["res_id"], data["key"]);
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert("Unable to add meta attribute: ("+error+")");
+    }
+  });
+}
+
+function add_node_attr(parent_id) {
+  var data = {};
+  data["node"] = Pcs.nodesController.cur_node.name;
+  data["key"] = $(parent_id + " input[name='new_node_attr_key']").val();
+  data["value"] = $(parent_id + " input[name='new_node_attr_value']").val();
+  fade_in_out($(parent_id));
+
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_node_attr_remote',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+      $(parent_id + " input").val("");
+      Pcs.nodesController.add_node_attr(data["res_id"], data["key"], data["value"]);
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert("Unable to add node attribute: ("+error+")");
+    }
+  });
+}
+
 function remove_meta_attr(parent_id) {
   var data = {};
   data["res_id"] = parent_id.attr("meta_attr_res");
