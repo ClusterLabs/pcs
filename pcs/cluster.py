@@ -363,6 +363,10 @@ def corosync_setup(argv,returnConfig=False):
             rrpmode = "passive"
             if "--rrpmode" in utils.pcs_options:
                 rrpmode = utils.pcs_options["--rrpmode"]
+            if rrpmode == "active" and "--force" not in utils.pcs_options:
+                utils.err("using a RRP mode of 'active' is not supported or tested, use --force to override")
+            elif rrpmode != "passive" and "--force" not in utils.pcs_options:
+                utils.err("%s is an unknown RRP mode, use --force to override" % rrpmode)
             ir += "rrp_mode: " + rrpmode + "\n"
 
         if transport == "udp":

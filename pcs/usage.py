@@ -459,6 +459,9 @@ Commands:
         --start will also start the cluster on the specified nodes
         --enable will enable corosync and pacemaker on node startup
         --transport allows specification of corosync transport (default: udpu)
+        --rrpmode allows you to set the RRP mode of the system. Currently only
+            'passive' is supported or tested (using 'active' is not
+            recommended)
         The --wait_for_all, --auto_tie_breaker, --last_man_standing,
         --last_man_standing_window options are all documented in corosync's
         votequorum(5) man page.

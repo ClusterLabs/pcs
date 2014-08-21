@@ -248,6 +248,23 @@ class ClusterTest(unittest.TestCase):
         assert r == 1
         ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
 
+        os.remove("corosync.conf.tmp")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp")
+        assert r == 1
+        ac("Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n",o)
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp")
+        assert r == 1
+        ac("Error: blah is an unknown RRP mode, use --force to override\n", o)
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp")
+        assert r == 0
+        ac("", o)
+
+        os.remove("corosync.conf.tmp")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp")
+        assert r == 0
+        ac("", o)
 # Reset local corosync.conf
         o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 
