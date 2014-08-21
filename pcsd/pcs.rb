@@ -77,14 +77,17 @@ def add_location_constraint_rule(resource, rule, score)
   return retval, stderr.join(' ')
 end
 
-def add_order_constraint(resourceA, resourceB, score, symmetrical = true)
+def add_order_constraint(resourceA, resourceB, actionA, actionB, score, symmetrical=true)
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
   if score != ""
     score = "score=" + score
   end
-  $logger.info [PCS, "constraint", "order",  resourceA, "then", resourceB, score, sym]
-  Open3.popen3(PCS, "constraint", "order", resourceA, "then",
-	       resourceB, score, sym) { |stdin, stdout, stderror, waitth|
+  command = [
+    PCS, "constraint", "order", actionA, resourceA, "then", actionB, resourceB,
+    score, sym
+  ]
+  $logger.info command
+  Open3.popen3(*command) { |stdin, stdout, stderror, waitth|
     $logger.info stdout.readlines()
     return waitth.value
   }

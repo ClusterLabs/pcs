@@ -882,7 +882,7 @@ def add_constraint(params)
 	  else
 	    sym = false
 	  end
-	  add_order_constraint(v.split(/-/,2)[1], params[:cur_resource], score, sym)
+	  add_order_constraint(v.split(/-/,2)[1], params[:cur_resource], 'start', 'start', score, sym)
 	elsif v.start_with?("after-")
 	  score = "INFINITY"
 	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
@@ -890,7 +890,7 @@ def add_constraint(params)
 	  else
 	    sym = false
 	  end
-	  add_order_constraint(params[:cur_resource], v.split(/-/,2)[1], score, sym)
+	  add_order_constraint(params[:cur_resource], v.split(/-/,2)[1], 'start', 'start', score, sym)
 	end
       end
     }
@@ -943,11 +943,14 @@ def add_constraint_remote(params)
   when "ord"
     resA = params["res_id"]
     resB = params["target_res_id"]
+    actionA = params['res_action']
+    actionB = params['target_action']
     if params["order"] == "before"
       resA, resB = resB, resA
+      actionA, actionB = actionB, actionA
     end
 
-    retval = add_order_constraint(resA, resB, params["score"])
+    retval = add_order_constraint(resA, resB, actionA, actionB, params["score"])
   when "col"
     resA = params["res_id"]
     resB = params["target_res_id"]
@@ -962,7 +965,7 @@ def add_constraint_remote(params)
 
     retval = add_colocation_constraint(resA, resB, score)
   else
-    return [400, "Unknown constraint type: #{params["ctype"]}"]
+    return [400, "Unknown constraint type: #{params['c_type']}"]
   end
 
   if retval == 0

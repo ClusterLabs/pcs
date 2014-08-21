@@ -1031,6 +1031,8 @@ function add_constraint(parent_id, c_type) {
   data["score"] = $(parent_id + " input[name='score']").val();
   data["target_res_id"] = $(parent_id + " input[name='target_res_id']").val();
   data["order"] = $(parent_id + " select[name='order']").val();
+  data["target_action"] = $(parent_id + " select[name='target_action']").val();
+  data["res_action"] = $(parent_id + " select[name='res_action']").val();
   data["colocation_type"] = $(parent_id + " select[name='colocate']").val();
   data["c_type"] = c_type;
   fade_in_out($(parent_id));
@@ -1050,9 +1052,11 @@ function add_constraint(parent_id, c_type) {
 	Pcs.resourcesController.add_loc_constraint(data["res_id"],"temp-cons-id",
 						   data["node_id"], data["score"]);
       else if (c_type == "ord")
-	Pcs.resourcesController.add_ord_constraint(data["res_id"],"temp-cons-id",
-						   data["target_res_id"],
-						   data["order"], data["score"]);
+        Pcs.resourcesController.add_ord_constraint(
+          data["res_id"], "temp-cons-id", data["target_res_id"],
+          data['res_action'], data['target_action'], data["order"],
+          data["score"]
+        );
       else if (c_type == "col")
 	Pcs.resourcesController.add_col_constraint(data["res_id"],"temp-cons-id",
 						   data["target_res_id"],

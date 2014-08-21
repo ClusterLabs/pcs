@@ -154,15 +154,18 @@
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Resource</th><th>Before/After</th><th>Score</th><th>Remove</th></tr>
+			<tr><th>Resource</th><th>Action</th><th>Before/After</th><th>Action</th><th>Score</th><th>Remove</th></tr>
 		        {{#each Pcs.resourcesController.cur_resource.ordering_constraints}}	
 			  <tr><td>{{other_rsc}}</td>
 			    {{#if before}}
-			    <td>Starts before {{then}}</td>
+			      <td>{{#if first-action}}{{first-action}}s{{else}}starts{{/if}}</td>
+			      <td>before {{then}}</td>
+			      <td>{{#if then-action}}{{then-action}}s{{else}}starts{{/if}}</td>
 			    {{else}}
-			    <td>Starts after {{first}}</td>
+			      <td>{{#if then-action}}{{then-action}}s{{else}}starts{{/if}}</td>
+			      <td>after {{first}}</td>
+			      <td>{{#if first-action}}{{first-action}}s{{else}}starts{{/if}}</td>
 			    {{/if}}
-
 			    <td>{{score}}</td>
 			    <td {{bind-attr constraint_id="id"}} style="text-align:center">
 				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
@@ -170,11 +173,33 @@
 			  </tr>
  			{{/each}}
 			{{#unless Pcs.resourcesController.cur_resource.ordering_constraints}}
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td><td></td><td></td></tr>
 			{{/unless}}
 			<tr id="new_res_orc">
 			  <td><input type="text" name="target_res_id"></td>
-			  <td><select name="order"><option value="after">After<option value="before">Before</select></td>
+			  <td>
+			    <select name="target_action">
+			      <option value="start">starts</option>
+			      <option value="promote">promotes</option>
+			      <option value="demote">demotes</option>
+			      <option value="stop">stops</option>
+			    </select>
+			  </td>
+			  <td>
+			    <select name="order">
+			      <option value="after">after</option>
+			      <option value="before">before</option>
+			    </select>
+			    {{Pcs.resourcesController.cur_resource.name}}
+			  </td>
+			  <td>
+			    <select name="res_action">
+			      <option value="start">starts</option>
+			      <option value="promote">promotes</option>
+			      <option value="demote">demotes</option>
+			      <option value="stop">stops</option>
+			    </select>
+			  </td>
 			  <td><input type="text" name="score" size="5"></td>
 			  <td><button type="button" onclick="add_constraint('#new_res_orc','ord');" name="add">Add</button></td>
 			</tr>
