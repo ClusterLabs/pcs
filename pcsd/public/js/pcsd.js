@@ -1027,6 +1027,7 @@ function add_constraint(parent_id, c_type) {
   var data = {};
   data["res_id"] = Pcs.resourcesController.cur_resource.name
   data["node_id"] = $(parent_id + " input[name='node_id']").val();
+  data["rule"] = $(parent_id + " input[name='node_id']").val();
   data["score"] = $(parent_id + " input[name='score']").val();
   data["target_res_id"] = $(parent_id + " input[name='target_res_id']").val();
   data["order"] = $(parent_id + " select[name='order']").val();
@@ -1036,7 +1037,11 @@ function add_constraint(parent_id, c_type) {
 
   $.ajax({ 
     type: 'POST',
-    url: get_cluster_remote_url() + 'add_constraint_remote',
+    url: get_cluster_remote_url() + (
+      data['node_id'] && (data['node_id'].trim().indexOf(' ') != -1)
+      ? 'add_constraint_rule_remote'
+      : 'add_constraint_remote'
+    ),
     data: data,
     timeout: pcs_timeout,
     success: function() {
@@ -1055,11 +1060,16 @@ function add_constraint(parent_id, c_type) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      alert("Unable to add constraints: ("+error+")");
+      var message = "Unable to add constraints: (" + error + ")";
+      var error_prefix = 'Error adding constraint rule: ';
+      if (xhr.responseText.indexOf(error_prefix) == 0) {
+        message += "\n" + xhr.responseText.slice(error_prefix.length);
+      }
+      alert(message);
     }
   });
 }
-  
+
 function remove_constraint(id) {
   fade_in_out($("[constraint_id='"+id+"']").parent());
   $.ajax({
@@ -1072,6 +1082,22 @@ function remove_constraint(id) {
     },
     error: function (xhr, status, error) {
       alert("Error removing constraint: ("+error+")");
+    }
+  });
+}
+
+function remove_constraint_rule(id) {
+  fade_in_out($("[rule_id='"+id+"']").parent());
+  $.ajax({
+    type: 'POST',
+    url: '/resource_cmd/rm_constraint_rule',
+    data: {"rule_id": id},
+    timeout: pcs_timeout,
+    success: function (data) {
+      Pcs.resourcesController.remove_constraint(id);
+    },
+    error: function (xhr, status, error) {
+      alert("Error removing constraint rule: ("+error+")");
     }
   });
 }

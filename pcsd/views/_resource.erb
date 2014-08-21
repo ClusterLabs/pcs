@@ -114,9 +114,18 @@
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Node</th><th>Score</th><th>Remove</th></tr>
+			<tr><th>Node/Rule</th><th>Score</th><th>Remove</th></tr>
 			{{#each Pcs.resourcesController.cur_resource.location_constraints}}
 			<tr>
+			{{#if rule_string}}
+			  <td style="white-space: normal;">{{rule_string}}</td>
+			  <td>{{score}}</td>
+			  <td {{bind-attr rule_id="id"}} style="text-align:center">
+			    {{#unless temp}}
+				<a onclick="remove_constraint_rule($(this).parent().attr('rule_id'));return false;" href="#" class="remove">X</a>
+			    {{/unless}}
+			  </td>
+			{{else}}
 			  <td>{{node}}</td>
 			  <td>{{score}}</td>
 			  <td {{bind-attr constraint_id="id"}} style="text-align:center">
@@ -124,6 +133,7 @@
 				<a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
 			    {{/unless}}
 			  </td>
+			{{/if}}
 			</tr>
 		        {{/each}}
                         {{#unless Pcs.resourcesController.cur_resource.location_constraints}}

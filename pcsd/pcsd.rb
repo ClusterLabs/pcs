@@ -480,6 +480,19 @@ if not DISABLE_GUI
     end
   end
 
+  post '/resource_cmd/rm_constraint_rule' do
+    if params[:rule_id]
+      retval = remove_constraint_rule(params[:rule_id])
+      if retval == 0
+        return "Constraint rule #{params[:rule_id]} removed"
+      else
+        return [400, "Error removing constraint rule: #{params[:rule_id]}"]
+      end
+    else
+      return [400, "Bad Constraint Rule Options"]
+    end
+  end
+
   get '/' do
     $logger.info "Redirecting '/'...\n"
     redirect '/manage'

@@ -1,6 +1,7 @@
 # Wrapper for PCS command
 #
 require 'open4'
+require 'shellwords'
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -68,6 +69,14 @@ def add_location_constraint(resource, node, score)
   return retval
 end
 
+def add_location_constraint_rule(resource, rule, score)
+  cmd = [PCS, "constraint", "location", resource, "rule"]
+  cmd << "score=#{score}" if score != ""
+  cmd.concat(rule.shellsplit())
+  stdout, stderr, retval = run_cmd(*cmd)
+  return retval, stderr.join(' ')
+end
+
 def add_order_constraint(resourceA, resourceB, score, symmetrical = true)
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
   if score != ""
@@ -95,6 +104,14 @@ end
 
 def remove_constraint(constraint_id)
   stdout, stderror, retval = run_cmd(PCS, "constraint", "remove", constraint_id)
+  $logger.info stdout
+  return retval
+end
+
+def remove_constraint_rule(rule_id)
+  stdout, stderror, retval = run_cmd(
+    PCS, "constraint", "rule", "remove", rule_id
+  )
   $logger.info stdout
   return retval
 end
