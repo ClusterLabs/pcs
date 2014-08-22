@@ -340,7 +340,7 @@ def setup_cluster(params)
     end
   }
   nodes_options = nodes + options
-  stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodesoptions)
+  stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes_options)
   if retval != 0
     return [400, stdout.join("\n") + stderr.join("\n")]
   end
