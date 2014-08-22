@@ -189,7 +189,7 @@ def getCorosyncConfig(node):
     return retval,output
 
 def setCorosyncConfig(node,config):
-    if is_rhel6:
+    if is_rhel6():
         data = urllib.urlencode({'cluster_conf':config})
         (status, data) = sendHTTPRequest(node, 'remote/set_cluster_conf', data)
         if status != 0:
