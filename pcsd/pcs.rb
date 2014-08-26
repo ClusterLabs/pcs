@@ -93,6 +93,12 @@ def add_order_constraint(resourceA, resourceB, actionA, actionB, score, symmetri
   }
 end
 
+def add_order_set_constraint(resource_list)
+  command = [PCS, "constraint", "order", "set"] + resource_list
+  stdout, stderr, retval = run_cmd(*command)
+  return retval
+end
+
 def add_colocation_constraint(resourceA, resourceB, score)
   if score == "" or score == nil
     score = "INFINITY"

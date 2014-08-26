@@ -515,6 +515,42 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     });
   },
 
+  add_ord_set_constraint: function(res_id_list, constraint_id, set_id) {
+    var new_constraint = {};
+    new_constraint['id'] = constraint_id;
+    new_constraint['sets'] = [{
+      'id': set_id,
+      'resources': res_id_list,
+    }];
+
+    $.each(this.content, function(key, value) {
+      if (res_id_list.indexOf(value.name) != -1) {
+        if (value.get('ordering_set_constraints')) {
+          var res_id = value.name;
+          var res_ord_set_constraints = {};
+          $.each(value.get('ordering_set_constraints'), function(key, value) {
+            if (res_id in res_ord_set_constraints) {
+              res_ord_set_constraints[res_id].push(value);
+            }
+            else {
+              res_ord_set_constraints[res_id] = [value]
+            }
+          });
+          if (res_id in res_ord_set_constraints) {
+            res_ord_set_constraints[res_id].push(new_constraint);
+          }
+          else {
+            res_ord_set_constraints[res_id] = [new_constraint];
+          }
+          value.set('ordering_set_constraints', res_ord_set_constraints[res_id]);
+        }
+        else {
+          value.set('ordering_set_constraints', [new_constraint]);
+        }
+      }
+    });
+  },
+
   add_col_constraint: function(res_id, constraint_id, target_res_id, colocation_type, score) {
     new_col_constraint = {}
     new_col_constraint["id"] = constraint_id;
@@ -547,27 +583,24 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
   },
   remove_constraint: function(constraint_id) {
     $.each(this.content, function(key, value) {
-      if (value.location_constraints) {
-	value.set("location_constraints", $.grep(value.location_constraints, function (value2, key) {
-	  if (value2.id == constraint_id)
-	    return false
-	  return true;
-	}));
-      }
-      if (value.ordering_constraints) {
-	value.set("ordering_constraints", $.grep(value.ordering_constraints, function (value2, key) {
-	  if (value2.id == constraint_id)
-	    return false
-	  return true;
-	}));
-      }
-      if (value.colocation_constraints) {
-	value.set("colocation_constraints", $.grep(value.colocation_constraints, function (value2, key) {
-	  if (value2.id == constraint_id)
-	    return false
-	  return true;
-	}));
-      }
+      $.each(
+        [
+          "location_constraints",
+          "ordering_constraints", "ordering_set_constraints",
+          "colocation_constraints",
+        ],
+        function(constraint_key, constraint_type) {
+          if (value[constraint_type]) {
+            value.set(
+              constraint_type,
+              $.grep(
+                value[constraint_type],
+                function(value2, key) { return value2.id != constraint_id; }
+              )
+            );
+          }
+        }
+      );
     });
   },
 
@@ -579,8 +612,10 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     var ord_con = {}
     var loc_con = {}
     var col_con = {}
+    var ord_set_con = {}
     var res_loc_constraints = {};
     var res_ord_constraints = {};
+    var res_ord_set_constraints = {};
     var res_col_constraints = {};
     self.parentIDMapping = {};
     $.each(data, function(key, value) {
@@ -618,7 +653,12 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	}
 	if (value["constraints"]["rsc_order"]) {
 	  $.each(value["constraints"]["rsc_order"], function (key, value) {
-	    ord_con[value["id"]] = value;
+	    if (value["sets"]) {
+	      ord_set_con[value["id"]] = value;
+	    }
+	    else {
+	      ord_con[value["id"]] = value;
+	    }
 	  });
 	}
 	if (value["constraints"]["rsc_colocation"]) {
@@ -685,6 +725,21 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       }
     });
 
+    $.each(ord_set_con, function(key, set_con) {
+      $.each(set_con["sets"], function(key, set) {
+        $.each(set["resources"], function(key, resource) {
+          res_ord_set_constraints[resource] = res_ord_set_constraints[resource] || [];
+          res_ord_set_constraints[resource].push(set_con);
+          if (self.parentIDMapping[resource]) {
+            $.each(self.parentIDMapping[resource], function(index, map) {
+              res_ord_set_constraints[map] = res_ord_set_constraints[map] || [];
+              res_ord_set_constraints[map].push(set_con);
+            });
+          }
+        })
+      })
+    });
+
     $.each(col_con, function (key, value) {
       if (value["score"] == "INFINITY")
 	value["together"] = "Together";
@@ -737,6 +792,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  resource.set("options", value["options"]);
 	  resource.set("location_constraints", res_loc_constraints[value["id"]]);
 	  resource.set("ordering_constraints", res_ord_constraints[value["id"]]);
+	  resource.set("ordering_set_constraints", res_ord_set_constraints[value["id"]]);
 	  resource.set("colocation_constraints", res_col_constraints[value["id"]]);
 	  resource.set("stonith", value["stonith"]);
 	  resource.set("meta_attr", value["meta_attr"]);
@@ -758,6 +814,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  options: value["options"],
 	  location_constraints: res_loc_constraints[value["id"]],
 	  ordering_constraints: res_ord_constraints[value["id"]],
+	  ordering_set_constraints: res_ord_set_constraints[value["id"]],
 	  colocation_constraints: res_col_constraints[value["id"]],
 	  stonith: value["stonith"],
 	  meta_attr: value["meta_attr"]

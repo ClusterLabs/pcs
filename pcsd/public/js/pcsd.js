@@ -1074,6 +1074,33 @@ function add_constraint(parent_id, c_type) {
   });
 }
 
+function add_constraint_set(parent_id, c_type) {
+  var data = {}
+  var resources = $(parent_id + " input[name='resource_ids']").val() || "";
+  data["resources"] = resources.trim().split(/\s+/);
+  data["c_type"] = c_type;
+  fade_in_out($(parent_id))
+
+  $.ajax({
+    type: "POST",
+    url: get_cluster_remote_url() + "add_constraint_set_remote",
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+      $(parent_id + " input").val("");
+      if (c_type == "ord") {
+        Pcs.resourcesController.add_ord_set_constraint(
+          data["resources"], "temp-cons-id", "temp-cons-set-id"
+        );
+      }
+      Pcs.update();
+    },
+    error: function (xhr, status, error){
+      alert("Inable to add constraints: ("+error+")");
+    },
+  });
+}
+
 function remove_constraint(id) {
   fade_in_out($("[constraint_id='"+id+"']").parent());
   $.ajax({

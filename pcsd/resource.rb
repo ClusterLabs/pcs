@@ -129,7 +129,7 @@ def getAllConstraints()
   doc = REXML::Document.new(stdout.join("\n"))
   constraints = {}
   doc.elements.each('constraints/*') do |e|
-    if e.has_elements?()
+    if e.name == 'rsc_location' and e.has_elements?()
       rule_export = RuleToExpression.new()
       e.elements.each('rule') { |rule|
         rule_info = {
@@ -145,6 +145,24 @@ def getAllConstraints()
           constraints[e.name] = [rule_info]
         end
       }
+    elsif e.has_elements?()
+      constraint_info = {}
+      e.attributes.each { |name, value| constraint_info[name] = value }
+      constraint_info['sets'] = []
+      e.elements.each('resource_set') { |set_el|
+        set_info = {}
+        set_el.attributes.each { |name, value| set_info[name] = value }
+        set_info['resources'] = []
+        set_el.elements.each('resource_ref') { |res_el|
+          set_info['resources'] << res_el.attributes['id']
+        }
+        constraint_info['sets'] << set_info
+      }
+      if constraints[e.name]
+        constraints[e.name] << constraint_info
+      else
+        constraints[e.name] = [constraint_info]
+      end
     else
       if constraints[e.name]
         constraints[e.name] << e.attributes

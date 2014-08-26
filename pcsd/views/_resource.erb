@@ -208,6 +208,37 @@
 		  </td>
 		</tr>
 	      </table>
+        <table style="clear:left;float:left;">
+          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Ordering Set Preferences ({{#if Pcs.resourcesController.cur_resource.ordering_set_constraints.length}}{{Pcs.resourcesController.cur_resource.ordering_set_constraints.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+          <tr><td>
+            <div id="locationdep">
+              <table class="datatable">
+                <tr>
+                  <th>Preference name/Set of resources</th>
+                  <th>Remove</th>
+                </tr>
+                {{#each Pcs.resourcesController.cur_resource.ordering_set_constraints}}
+                <tr>
+                  <td>{{id}}</td>
+                  <td {{bind-attr constraint_id="id"}} style="text-align:center;">
+                    <a onclick="remove_constraint($(this).parent().attr('constraint_id')); return false;" href="#" class="remove">X</a>
+                  </td>
+                </tr>
+                {{#each sets}}
+                <tr>
+                  <td style="padding-left:2em;">Set:{{#each rsc in resources}} {{rsc}}{{/each}}</td>
+                  <td></td>
+                </tr>
+                {{/each}}
+                {{/each}}
+                <tr id="new_res_orc_set">
+                  <td><input type="text" name="resource_ids"></td>
+                  <td><button type="button" onclick="add_constraint_set('#new_res_orc_set', 'ord');" name="add">Add</button></td>
+                </tr>
+              </table>
+            </div>
+          </td></tr>
+        </table>
 	      <table style="clear:left;float:left">
 		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Resource Colocation Preferences ({{#if Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
 		<tr><td>

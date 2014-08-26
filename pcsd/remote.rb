@@ -115,6 +115,8 @@ def remote(params,request)
     return add_constraint_remote(params)
   when "add_constraint_rule_remote"
     return add_constraint_rule_remote(params)
+  when "add_constraint_set_remote"
+    return add_constraint_set_remote(params)
   when "add_meta_attr_remote"
     return add_meta_attr_remote(params)
   when "add_group"
@@ -988,6 +990,21 @@ def add_constraint_rule_remote(params)
     return [200, "Successfully added constraint rule"]
   else
     return [400, "Error adding constraint rule: #{error}"]
+  end
+end
+
+def add_constraint_set_remote(params)
+  case params["c_type"]
+  when "ord"
+    retval, error = add_order_set_constraint(params["resources"])
+  else
+    return [400, "Unknown constraint type: #{params["c_type"]}"]
+  end
+
+  if retval == 0
+    return [200, "Successfully added set constraint"]
+  else
+    return [400, "Error adding set constraint"]
   end
 end
 
