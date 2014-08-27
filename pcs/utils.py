@@ -1460,7 +1460,11 @@ def is_rhel6():
     except IOError as e:
         return False
 
-    if re.search(r'(Red Hat Enterprise Linux Server|CentOS|Scientific Linux) release 6\.', issue):
+# Since there are so many RHEL 6 variants, this check looks for the first
+# number in /etc/system-release followed by a period and number, and if it's 6.N,
+# it returns true.
+    match = re.search(r'(\d)\.\d', issue)
+    if match and match.group(1) == "6":
         return True
     else:
         return False
