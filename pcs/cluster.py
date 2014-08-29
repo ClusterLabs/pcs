@@ -16,6 +16,7 @@ import socket
 import tempfile
 import datetime
 import commands
+from xml.dom.minidom import parse
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -84,6 +85,10 @@ def cluster_cmd(argv):
         cluster_push(argv)
     elif (sub_cmd == "cib-upgrade"):
         cluster_upgrade()
+    elif (sub_cmd == "cib-revisions"):
+        cluster_cib_revisions(argv)
+    elif (sub_cmd == "cib-rollback"):
+        cluster_cib_rollback(argv)
     elif (sub_cmd == "edit"):
         cluster_edit(argv)
     elif (sub_cmd == "node"):
@@ -658,6 +663,47 @@ def get_cib(argv):
                 utils.err("No data in the CIB")
         except IOError as e:
             utils.err("Unable to write to file '%s', %s" % (filename, e.strerror))
+
+def cluster_cib_revisions(argv):
+    try:
+        file_list = os.listdir(settings.cib_dir)
+    except OSError as e:
+        utils.err("unable to list CIB revisions: %s" % e)
+    cib_list = []
+    cib_name_re = re.compile("^cib-\d+\.raw$")
+    for filename in file_list:
+        if not cib_name_re.match(filename):
+            continue
+        file_path = os.path.join(settings.cib_dir, filename)
+        try:
+            if os.path.isfile(file_path):
+                cib_list.append((int(os.path.getmtime(file_path)), filename))
+        except OSError:
+            pass
+    cib_list.sort()
+    if not cib_list:
+        print "No CIB revisions available"
+        return
+    for cib_info in cib_list:
+        print datetime.datetime.fromtimestamp(cib_info[0]), cib_info[1]
+    print
+    print(
+        "You can inspect a CIB revision using the '-f' switch, e.g. "
+        "'pcs -f %(path)s status' or 'pcs -f %(path)s constraint'"
+        % {"path": os.path.join(settings.cib_dir, "<cib-revision>")}
+    )
+
+def cluster_cib_rollback(argv):
+    if len(argv) != 1:
+        usage.cluster(["cib-rollback"])
+        sys.exit(1)
+
+    cib_path = os.path.join(settings.cib_dir, argv[0])
+    try:
+        snapshot_dom = parse(cib_path)
+    except Exception as e:
+        utils.err("unable to read CIB from '%s': %s" % (cib_path, e))
+    utils.replace_cib_configuration(snapshot_dom)
 
 def cluster_node(argv):
     if len(argv) != 2:

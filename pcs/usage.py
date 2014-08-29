@@ -569,6 +569,13 @@ Commands:
     cib-upgrade
         Upgrade the cib to the latest version
 
+    cib-revisions
+        List available CIB revisions.
+
+    cib-rollback <cib-revision>
+        Rollback the CIB to specified revision.  Use the cib-revisions command
+        to get a list of available revisions.
+
     edit
         Edit the cib in the editor specified by the $EDITOR environment
         variable and push out any changes upon saving
