@@ -63,4 +63,9 @@ trap(:TERM) do
 end
 
 require 'pcsd'
-server.run(Sinatra::Application , webrick_options) 
+begin
+  server.run(Sinatra::Application, webrick_options)
+rescue Errno::EAFNOSUPPORT
+  webrick_options[:BindAddress] = '0.0.0.0'
+  server.run(Sinatra::Application, webrick_options)
+end
