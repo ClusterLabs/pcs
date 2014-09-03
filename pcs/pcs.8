@@ -44,7 +44,7 @@ status
 View cluster status
 .TP
 config
-Print full cluster configuration
+View and manage cluster configuration
 .SS "resource"
 .TP
 show [resource id] [\fB\-\-full\fR] [\fB\-\-groups\fR]
@@ -473,6 +473,16 @@ Show the current status of pcsd on the specified nodes
 .TP
 xml
 View xml version of status (output from crm_mon \fB\-r\fR \fB\-1\fR \fB\-X\fR)
+.SS "config"
+.TP
+[show]
+View full cluster configuration
+.TP
+backup [filename]
+Creates the tarball containing the cluster configuration files.  If filename is not specified the standard output will be used.
+.TP
+restore [\fB\-\-local\fR] [filename]
+Restores the cluster configuration files on all nodes from the backup.  If filename is not specified the standard input will be used.  If \fB\-\-local\fR is specified only the files on the current node will be restored.
 .SH EXAMPLES
 .TP
 Show all resources

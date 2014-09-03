@@ -935,29 +935,6 @@ def cluster_reload(argv):
         utils.err(output.rstrip())
     print "Corosync reloaded"
 
-def print_config():
-    print "Cluster Name: %s" % utils.getClusterName()
-    status.nodes_status(["config"])
-    print ""
-    print ""
-    print "Resources: "
-    utils.pcs_options["--all"] = 1
-    utils.pcs_options["--full"] = 1
-    resource.resource_show([])
-    print ""
-    print "Stonith Devices: "
-    resource.resource_show([], True)
-    print "Fencing Levels: "
-    print ""
-    stonith.stonith_level_show()
-    constraint.location_show([])
-    constraint.order_show([])
-    constraint.colocation_show([])
-    print ""
-    del utils.pcs_options["--all"]
-    prop.list_property([])
-    cluster_uidgid([], True)
-
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(argv):
@@ -1091,5 +1068,4 @@ def cluster_remote_node(argv):
     else:
         usage.cluster(["remote-node"])
         sys.exit(1)
-
 

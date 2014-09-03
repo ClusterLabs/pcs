@@ -47,8 +47,7 @@ def checkAndUpgradeCIB(major,minor,rev):
 
 # Check status of node
 def checkStatus(node):
-    out = sendHTTPRequest(node, 'remote/status', None, False)
-    return out
+    return sendHTTPRequest(node, 'remote/status', None, False, False)
 
 # Check and see if we're authorized (faster than a status check)
 def checkAuthorization(node):
@@ -215,6 +214,10 @@ def disableCluster(node):
 def destroyCluster(node):
     return sendHTTPRequest(node, 'remote/cluster_destroy')
 
+def restoreConfig(node, tarball_data):
+    data = urllib.urlencode({"tarball": tarball_data})
+    return sendHTTPRequest(node, "remote/config_restore", data, False, True)
+
 def canAddNodeToCluster(node):
     retval, output = sendHTTPRequest(node, 'remote/node_available', [], False, False)
     if retval == 0:
@@ -304,10 +307,13 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
             print "Unable to connect to %s (%s)" % (host, e.reason)
         return (2,"Unable to connect to %s (%s)" % (host, e.reason))
 
-def getNodesFromCorosyncConf():
+def getNodesFromCorosyncConf(conf_text=None):
     if is_rhel6():
         try:
-            dom = parse(settings.cluster_conf_file)
+            dom = (
+                parse(settings.cluster_conf_file) if conf_text is None
+                else parseString(conf_text)
+            )
         except IOError:
             err("Unable to open cluster.conf file to get nodes list")
         return [
@@ -316,7 +322,8 @@ def getNodesFromCorosyncConf():
         ]
 
     nodes = []
-    lines = getCorosyncConf().strip().split('\n')
+    corosync_conf = getCorosyncConf() if conf_text is None else conf_text
+    lines = corosync_conf.strip().split('\n')
     preg = re.compile(r'.*ring0_addr: (.*)')
     for line in lines:
         match = preg.match(line)
@@ -889,6 +896,20 @@ def dom_get_element_with_id(dom, tag_name, element_id):
     for elem in dom.getElementsByTagName(tag_name):
         if elem.hasAttribute("id") and elem.getAttribute("id") == element_id:
             return elem
+    return None
+
+def dom_get_children_by_tag_name(dom_el, tag_name):
+    return [
+        node
+        for node in dom_el.childNodes
+        if node.nodeType == xml.dom.minidom.Node.ELEMENT_NODE
+            and node.tagName == tag_name
+   ]
+
+def dom_get_child_by_tag_name(dom_el, tag_name):
+    children = dom_get_children_by_tag_name(dom_el, tag_name)
+    if children:
+        return children[0]
     return None
 
 # Check if resoure is started (or stopped) for 'wait' seconds
@@ -1508,3 +1529,19 @@ def disableServices():
         else:
             run(["chkconfig", "corosync", "off"])
             run(["chkconfig", "pacemaker", "off"])
+
+def write_file(path, data):
+    if os.path.exists(path):
+        if not "--force" in pcs_options:
+            return False, "'%s' already exists, use --force to overwrite" % path
+        else:
+            try:
+                os.remove(path)
+            except EnvironmentError as e:
+                return False, "unable to remove '%s': %s" % (path, e)
+    try:
+        with open(path, "w") as outfile:
+            outfile.write(data)
+    except EnvironmentError as e:
+        return False, "unable to write to '%s': %s" % (path, e)
+    return True, ""

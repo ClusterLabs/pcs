@@ -186,3 +186,25 @@ def xml_status():
     if (retval != 0):
         utils.err("running crm_mon, is pacemaker running?")
     print output
+
+def is_cman_running():
+    if utils.is_systemctl():
+        output, retval = utils.run(["systemctl", "status", "cman.service"])
+    else:
+        output, retval = utils.run(["service", "cman", "status"])
+    return retval == 0
+
+def is_corosyc_running():
+    if utils.is_systemctl():
+        output, retval = utils.run(["systemctl", "status", "corosync.service"])
+    else:
+        output, retval = utils.run(["service", "corosync", "status"])
+    return retval == 0
+
+def is_pacemaker_running():
+    if utils.is_systemctl():
+        output, retval = utils.run(["systemctl", "status", "pacemaker.service"])
+    else:
+        output, retval = utils.run(["service", "pacemaker", "status"])
+    return retval == 0
+

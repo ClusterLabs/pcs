@@ -12,6 +12,7 @@ def full_usage():
     out += strip_extras(constraint([],False))
     out += strip_extras(acl([],False))
     out += strip_extras(status([],False))
+    out += strip_extras(config([],False))
     print out.strip()
     print "Examples:\n" + examples.replace(" \ ","")
 
@@ -128,6 +129,7 @@ def sub_generate_bash_completion():
     tree["acl"] = generate_tree(acl([],False))
     tree["constraint"] = generate_tree(constraint([],False))
     tree["status"] = generate_tree(status([],False))
+    tree["config"] = generate_tree(config([],False))
     print """
     _pcs()
     {
@@ -201,7 +203,7 @@ Commands:
     property    Set pacemaker properties
     acl         Set pacemaker access control lists
     status      View cluster status
-    config      Print full cluster configuration
+    config      View and manage cluster configuration
 """
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -957,6 +959,30 @@ Commands:
 
     xml
         View xml version of status (output from crm_mon -r -1 -X)
+"""
+    if pout:
+        print sub_usage(args, output)
+    else:
+        return output
+
+def config(args=[], pout=True):
+    output = """
+Usage: pcs config [commands]...
+View and manage cluster configuration
+
+Commands:
+    [show]
+        View full cluster configuration
+
+    backup [filename]
+        Creates the tarball containing the cluster configuration files.
+        If filename is not specified the standard output will be used.
+
+    restore [--local] [filename]
+        Restores the cluster configuration files on all nodes from the backup.
+        If filename is not specified the standard input will be used.
+        If --local is specified only the files on the current node will
+        be restored.
 """
     if pout:
         print sub_usage(args, output)

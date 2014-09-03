@@ -4,6 +4,7 @@ require 'uri'
 require 'pcs.rb'
 require 'resource.rb'
 require 'open3'
+require 'open4'
 
 # Commands for remote access
 def remote(params,request)
@@ -42,6 +43,10 @@ def remote(params,request)
     return cluster_start(params)
   when "cluster_stop"
     return cluster_stop(params)
+  when "config_backup"
+    return config_backup(params)
+  when "config_restore"
+    return config_restore(params)
   when "node_restart"
     return node_restart(params)
   when "node_standby"
@@ -140,6 +145,54 @@ def cluster_stop(params)
     output =  `#{PCS} cluster stop`
     $logger.debug output
     return output
+  end
+end
+
+def config_backup(params)
+  if params[:name]
+    code, response = send_request_with_token(
+        params[:name], 'config_backup', true
+    )
+  else
+    $logger.info "Backup node configuration"
+    stdout, stderr, retval = run_cmd(PCS, "config", "backup")
+    if retval == 0
+        $logger.info "Backup successful"
+        return [200, stdout]
+    end
+    $logger.info "Error during backup: #{stderr.join(' ').strip()}"
+    return [400, "Unable to backup node: #{stderr.join(' ')}"]
+  end
+end
+
+def config_restore(params)
+  if params[:name]
+    code, response = send_request_with_token(
+        params[:name], 'config_restore', true, {:tarball => params[:tarball]}
+    )
+  else
+    $logger.info "Restore node configuration"
+    if params[:tarball] != nil and params[:tarball] != ""
+      out = ""
+      errout = ""
+      status = Open4::popen4(PCS, "config", "restore", "--local") { |pid, stdin, stdout, stderr|
+        stdin.print(params[:tarball])
+        stdin.close()
+        out = stdout.readlines()
+        errout = stderr.readlines()
+      }
+      retval = status.exitstatus
+      if retval == 0
+        $logger.info "Restore successful"
+        return "Succeeded"
+      else
+        $logger.info "Error during restore: #{errout.join(' ').strip()}"
+        return errout.length > 0 ? errout.join(' ').strip() : "Error"
+      end
+    else
+      $logger.info "Error: Invalid tarball"
+      return "Error: Invalid tarball"
+    end
   end
 end
 
@@ -372,6 +425,7 @@ def node_status(params)
   corosync_enabled = corosync_enabled?
   pacemaker_status = pacemaker_running?
   pacemaker_enabled = pacemaker_enabled?
+  cman_status = cman_running?
   pcsd_enabled = pcsd_enabled?
 
   corosync_online = []
@@ -431,6 +485,7 @@ def node_status(params)
   cluster_settings = getAllSettings()
   node_attributes = get_node_attributes()[$cur_node_name]
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
+            "cman" => cman_status,
             "corosync_enabled" => corosync_enabled, "pacemaker_enabled" => pacemaker_enabled,
             "pcsd_enabled" => pcsd_enabled,
             "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
@@ -953,6 +1008,22 @@ def wizard_submit(params)
 end
 
 def get_local_node_id
+  if ISRHEL6
+    out, errout, retval = run_cmd(COROSYNC_CMAPCTL, "cluster.cman")
+    if retval != 0
+      return ""
+    end
+    match = /cluster\.nodename=(.*)/.match(out.join("\n"))
+    if not match
+      return ""
+    end
+    local_node_name = match[1]
+    out, errout, retval = run_cmd(CMAN_TOOL, "nodes", "-F", "id", "-n", local_node_name)
+    if retval != 0
+      return ""
+    end
+    return out[0].strip()
+  end
   out, errout, retval = run_cmd(COROSYNC_CMAPCTL, "-g", "runtime.votequorum.this_node_id")
   if retval != 0
     return ""

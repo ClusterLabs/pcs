@@ -11,6 +11,7 @@ import acl
 import utils
 import status
 import settings
+import config
 
 usefile = False
 filename = ""
@@ -126,10 +127,7 @@ def main(argv):
     elif (command == "status"):
         status.status_cmd(argv)
     elif (command == "config"):
-        if "--help" in utils.pcs_options or "-h" in utils.pcs_options or (len(argv) > 0 and argv[0] == "help"):
-            usage.main()
-        else:
-            cluster.print_config()
+        config.config_cmd(argv)
     else:
         usage.main()
         sys.exit(1)

@@ -391,6 +391,15 @@ def pacemaker_enabled?()
   return $?.success?
 end
 
+def cman_running?()
+  if not ISRHEL6
+    `systemctl status cman.service`
+  else
+    `service cman status`
+  end
+  return $?.success?
+end
+
 def pcsd_enabled?()
   if not ISRHEL6
     `systemctl is-enabled pcsd.service`

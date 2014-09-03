@@ -77,6 +77,7 @@ configure do
   else
     COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
   end
+  CMAN_TOOL = "/usr/sbin/cman_tool"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   CLUSTER_CONF = "/etc/cluster/cluster.conf"
   CIBADMIN = "/usr/sbin/cibadmin"
