@@ -317,8 +317,10 @@ def corosync_setup(argv,returnConfig=False):
     if fedora_config == True:
         if os.path.exists(settings.corosync_conf_file) and not "--force" in utils.pcs_options:
             utils.err("%s already exists, use --force to overwrite" % settings.corosync_conf_file)
-        if os.path.exists("/var/lib/pacemaker/cib/cib.xml") and not "--force" in utils.pcs_options:
-            utils.err("/var/lib/pacemaker/cib/cib.xml already exists, use --force to overwrite")
+        if not ("--corosync_conf" in utils.pcs_options and "--local" in utils.pcs_options):
+            cib_path = os.path.join(settings.cib_dir, "cib.xml")
+            if os.path.exists(cib_path) and not "--force" in utils.pcs_options:
+                utils.err("%s already exists, use --force to overwrite" % cib_path)
         if "--corosync_conf" not in utils.pcs_options:
             cluster_destroy([])
 

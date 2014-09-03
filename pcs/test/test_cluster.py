@@ -220,11 +220,11 @@ class ClusterTest(unittest.TestCase):
         assert r == 1
         ac(o, "Error: --addr0 can only be used once\n")
 
-        o,r = pcs("cluster setup --local --name cname nonexistant-address")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname nonexistant-address")
         assert r == 1
         ac(o,"Error: Unable to resolve all hostnames (use --force to override).\nWarning: Unable to resolve hostname: nonexistant-address\n")
 
-        o,r = pcs("cluster setup --local --name cname nonexistant-address --force")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname nonexistant-address --force")
         assert r == 0
         ac(o,"Warning: Unable to resolve hostname: nonexistant-address\n")
 
@@ -234,8 +234,6 @@ class ClusterTest(unittest.TestCase):
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\nwait_for_all: 2\nauto_tie_breaker: 3\nlast_man_standing: 4\nlast_man_standing_window: 5\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
-# Reset local corosync.conf
-        o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000")
         ac(o,"")
@@ -265,8 +263,6 @@ class ClusterTest(unittest.TestCase):
         o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp")
         assert r == 0
         ac("", o)
-# Reset local corosync.conf
-        o,r = pcs("cluster setup --local --name test99 rh7-1 rh7-2")
 
     def testTotemOptions(self):
         if utils.is_rhel6():
