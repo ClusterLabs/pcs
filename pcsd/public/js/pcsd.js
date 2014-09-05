@@ -1045,7 +1045,7 @@ function add_meta_attr(parent_id) {
   });
 }
 
-function add_constraint(parent_id, c_type) {
+function add_constraint(parent_id, c_type, force) {
   var data = {};
   data["res_id"] = Pcs.resourcesController.cur_resource.name
   data["node_id"] = $(parent_id + " input[name='node_id']").val();
@@ -1057,6 +1057,9 @@ function add_constraint(parent_id, c_type) {
   data["res_action"] = $(parent_id + " select[name='res_action']").val();
   data["colocation_type"] = $(parent_id + " select[name='colocate']").val();
   data["c_type"] = c_type;
+  if (force) {
+    data["force"] = force;
+  }
   fade_in_out($(parent_id));
 
   $.ajax({ 
@@ -1087,16 +1090,24 @@ function add_constraint(parent_id, c_type) {
     },
     error: function (xhr, status, error) {
       var message = "Unable to add constraints: (" + error + ")";
-      var error_prefix = 'Error adding constraint rule: ';
+      var error_prefix = 'Error adding constraint: ';
       if (xhr.responseText.indexOf(error_prefix) == 0) {
         message += "\n" + xhr.responseText.slice(error_prefix.length);
       }
-      alert(message);
+      if (message.indexOf('--force') == -1) {
+        alert(message);
+      }
+      else {
+        message = message.replace(', use --force to override', '');
+        if (confirm(message + "\n\nDo you want to force the operation?")) {
+          add_constraint(parent_id, c_type, true);
+        }
+      }
     }
   });
 }
 
-function add_constraint_set(parent_id, c_type) {
+function add_constraint_set(parent_id, c_type, force) {
   var data = {'resources': []};
   $(parent_id + " input[name='resource_ids[]']").each(function(index, element) {
     var resources = element.value.trim();
@@ -1105,6 +1116,9 @@ function add_constraint_set(parent_id, c_type) {
     }
   });
   data["c_type"] = c_type;
+  if (force) {
+    data["force"] = force;
+  }
   if (data['resources'].length < 1) {
     return;
   }
@@ -1125,7 +1139,20 @@ function add_constraint_set(parent_id, c_type) {
       Pcs.update();
     },
     error: function (xhr, status, error){
-      alert("Unable to add constraints: ("+error+")");
+      var message = "Unable to add constraints: (" + error + ")";
+      var error_prefix = 'Error adding constraint: ';
+      if (xhr.responseText.indexOf(error_prefix) == 0) {
+        message += "\n" + xhr.responseText.slice(error_prefix.length);
+      }
+      if (message.indexOf('--force') == -1) {
+        alert(message);
+      }
+      else {
+        message = message.replace(', use --force to override', '');
+        if (confirm(message + "\n\nDo you want to force the operation?")) {
+          add_constraint_set(parent_id, c_type, true);
+        }
+      }
     },
   });
 }

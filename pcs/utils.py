@@ -950,6 +950,15 @@ def dom_get_child_by_tag_name(dom_el, tag_name):
         return children[0]
     return None
 
+def dom_attrs_to_list(dom_el, with_id=False):
+    attributes = [
+        "%s=%s" % (name, value)
+        for name, value in dom_el.attributes.items() if name != "id"
+    ]
+    if with_id:
+        attributes.append("(id:%s)" % (dom_el.getAttribute("id")))
+    return attributes
+
 # Check if resoure is started (or stopped) for 'wait' seconds
 def is_resource_started(resource,wait,stopped=False):
     expire_time = int(time.time()) + wait

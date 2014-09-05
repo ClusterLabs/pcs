@@ -1592,6 +1592,66 @@ class TokenPreprocessorTest(unittest.TestCase):
             self.preprocessor.run(["(aA(", "(", "(bB)cC)"])
         )
 
+class ExportAsExpressionTest(unittest.TestCase):
+
+    def test_success(self):
+        self.assertXmlExport(
+            """
+            <rule id="location-dummy-rule" score="INFINITY">
+                <expression attribute="#uname" id="location-dummy-rule-expr"
+                    operation="eq" value="node1"/>
+            </rule>
+            """,
+            "#uname eq node1",
+            "#uname eq string node1"
+        )
+        self.assertXmlExport(
+            """
+            <rule id="location-dummy-rule" score="INFINITY">
+                <expression attribute="foo" id="location-dummy-rule-expr"
+                    operation="gt" type="version" value="1.2.3"/>
+            </rule>
+            """,
+            "foo gt version 1.2.3",
+            "foo gt version 1.2.3"
+        )
+        self.assertXmlExport(
+            """
+<rule boolean-op="or" id="complexRule" score="INFINITY">
+    <rule boolean-op="and" id="complexRule-rule-1" score="0">
+        <date_expression id="complexRule-rule-1-expr" operation="date_spec">
+            <date_spec id="complexRule-rule-1-expr-datespec" weekdays="1-5" hours="12-23"/>
+        </date_expression>
+        <date_expression id="complexRule-rule-1-expr-1" operation="in_range" start="2014-07-26">
+            <duration id="complexRule-rule-1-expr-1-duration" months="1"/>
+        </date_expression>
+    </rule>
+    <rule boolean-op="and" id="complexRule-rule" score="0">
+        <expression attribute="foo" id="complexRule-rule-expr-1" operation="gt" type="version" value="1.2"/>
+        <expression attribute="#uname" id="complexRule-rule-expr" operation="eq" value="node3 4"/>
+    </rule>
+</rule>
+            """,
+            "(date-spec hours=12-23 weekdays=1-5 and date in_range 2014-07-26 to duration months=1) or (foo gt version 1.2 and #uname eq \"node3 4\")",
+            "(#uname eq string \"node3 4\" and foo gt version 1.2) or (date in_range 2014-07-26 to duration months=1 and date-spec hours=12-23 weekdays=1-5)"
+        )
+
+    def assertXmlExport(self, rule_xml, export, export_normalized):
+        ac(
+            export + "\n",
+            rule.ExportAsExpression().get_string(
+                xml.dom.minidom.parseString(rule_xml).documentElement,
+                normalize=False
+            ) + "\n"
+        )
+        ac(
+            export_normalized + "\n",
+            rule.ExportAsExpression().get_string(
+                xml.dom.minidom.parseString(rule_xml).documentElement,
+                normalize=True
+            ) + "\n"
+        )
+
 
 class DomRuleAddTest(unittest.TestCase):
 

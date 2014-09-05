@@ -66,18 +66,21 @@ def add_location_constraint(resource, node, score)
   end
 
   stdout, stderr, retval = run_cmd(PCS,"constraint","location",resource,"prefers",nodescore)
-  return retval
+  return retval, stderr.join(' ')
 end
 
-def add_location_constraint_rule(resource, rule, score)
+def add_location_constraint_rule(resource, rule, score, force=false)
   cmd = [PCS, "constraint", "location", resource, "rule"]
   cmd << "score=#{score}" if score != ""
   cmd.concat(rule.shellsplit())
+  cmd << '--force' if force
   stdout, stderr, retval = run_cmd(*cmd)
   return retval, stderr.join(' ')
 end
 
-def add_order_constraint(resourceA, resourceB, actionA, actionB, score, symmetrical=true)
+def add_order_constraint(
+    resourceA, resourceB, actionA, actionB, score, symmetrical=true, force=false
+)
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
   if score != ""
     score = "score=" + score
@@ -86,32 +89,37 @@ def add_order_constraint(resourceA, resourceB, actionA, actionB, score, symmetri
     PCS, "constraint", "order", actionA, resourceA, "then", actionB, resourceB,
     score, sym
   ]
+  command << '--force' if force
   $logger.info command
   Open3.popen3(*command) { |stdin, stdout, stderror, waitth|
     $logger.info stdout.readlines()
-    return waitth.value
+    return waitth.value, stderror.readlines().join(' ')
   }
 end
 
-def add_order_set_constraint(resource_set_list)
+def add_order_set_constraint(resource_set_list, force=false)
   command = [PCS, "constraint", "order"]
   resource_set_list.each { |resource_set|
     command << "set"
     command.concat(resource_set)
   }
+  command << '--force' if force
   stdout, stderr, retval = run_cmd(*command)
-  return retval
+  return retval, stderr.join(' ')
 end
 
-def add_colocation_constraint(resourceA, resourceB, score)
+def add_colocation_constraint(resourceA, resourceB, score, force=false)
   if score == "" or score == nil
     score = "INFINITY"
   end
-  $logger.info [PCS, "constraint", "colocation", "add", resourceA, resourceB, score]
-  Open3.popen3(PCS, "constraint", "colocation", "add", resourceA,
-	       resourceB, score) { |stdin, stdout, stderror, waitth|
+  command = [
+    PCS, "constraint", "colocation", "add", resourceA, resourceB, score,
+  ]
+  command << '--force' if force
+  $logger.info command
+  Open3.popen3(*command) { |stdin, stdout, stderror, waitth|
     $logger.info stdout.readlines()
-    return waitth.value
+    return waitth.value, stderror.readlines().join(' ')
   }
 end
 

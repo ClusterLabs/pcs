@@ -91,6 +91,9 @@ def dom_rule_add(dom_element, argv):
 
 class ExportDetailed(object):
 
+    def __init__(self):
+        self.show_detail = False
+
     def get_string(self, rule, show_detail, indent=""):
         self.show_detail = show_detail
         return indent + ("\n" + indent).join(self.list_rule(rule))
@@ -169,10 +172,7 @@ class ExportDetailed(object):
             return ["Expression: " + " ".join(exp_parts)]
 
     def list_attributes(self, element):
-        attributes = [
-            "%s=%s" % (name, value)
-            for name, value in element.attributes.items() if name != "id"
-        ]
+        attributes = utils.dom_attrs_to_list(element, with_id=False)
         if self.show_detail:
             attributes.append(" (id:%s)" % (element.getAttribute("id")))
         return attributes
@@ -181,6 +181,84 @@ class ExportDetailed(object):
         for part in source:
             target.append(indent + part)
         return target
+
+class ExportAsExpression(object):
+
+    def __init__(self):
+        self.normalize = False
+
+    def get_string(self, rule, normalize=False):
+        self.normalize = normalize
+        return self.string_rule(rule)
+
+    def string_rule(self, rule):
+        boolean_op = rule.getAttribute("boolean-op") or "or"
+        rule_parts = []
+        for child in rule.childNodes:
+            if child.nodeType == xml.dom.minidom.Node.TEXT_NODE:
+                continue
+            if child.tagName == "expression":
+                rule_parts.append(self.string_expression(child))
+            elif child.tagName == "date_expression":
+                rule_parts.append(self.string_date_expression(child))
+            elif child.tagName == "rule":
+                rule_parts.append("(%s)" % self.string_rule(child))
+        if self.normalize:
+            rule_parts.sort()
+        return (" %s " % boolean_op).join(rule_parts)
+
+    def string_expression(self, expression):
+        if "value" in expression.attributes.keys():
+            exp_parts = [
+                expression.getAttribute("attribute"),
+                expression.getAttribute("operation")
+            ]
+            if expression.hasAttribute("type"):
+                exp_parts.append(expression.getAttribute("type"))
+            elif self.normalize:
+                exp_parts.append("string")
+            value = expression.getAttribute("value")
+            if " " in value:
+                value = '"%s"' % value
+            exp_parts.append(value)
+        else:
+            exp_parts = [
+                expression.getAttribute("operation"),
+                expression.getAttribute("attribute")
+            ]
+        return " ".join(exp_parts)
+
+    def string_date_expression(self, expression):
+        operation = expression.getAttribute("operation")
+        if operation == "date_spec":
+            exp_parts = ["date-spec"] + self.list_attributes(
+                expression.getElementsByTagName("date_spec")[0]
+            )
+            return " ".join(exp_parts)
+        elif operation == "in_range":
+            exp_parts = ["date", "in_range"]
+            if expression.hasAttribute("start"):
+                exp_parts.extend([expression.getAttribute("start"), "to"])
+            if expression.hasAttribute("end"):
+                exp_parts.append(expression.getAttribute("end"))
+            durations = expression.getElementsByTagName("duration")
+            if durations:
+                exp_parts.append("duration")
+                exp_parts.extend(self.list_attributes(durations[0]))
+            return " ".join(exp_parts)
+        else:
+            exp_parts = ["date", expression.getAttribute("operation")]
+            if expression.hasAttribute("start"):
+                exp_parts.append(expression.getAttribute("start"))
+            if expression.hasAttribute("end"):
+                exp_parts.append(expression.getAttribute("end"))
+            return " ".join(exp_parts)
+
+    def list_attributes(self, element):
+        attributes = utils.dom_attrs_to_list(element, with_id=False)
+        if self.normalize:
+            attributes.sort()
+        return attributes
 
 
 # generic parser

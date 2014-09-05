@@ -883,8 +883,9 @@ end
 def add_constraint_remote(params)
   case params["c_type"]
   when "loc"
-    retval = add_location_constraint(params["res_id"], params["node_id"],
-				     params["score"])
+    retval, error = add_location_constraint(
+      params["res_id"], params["node_id"], params["score"]
+    )
   when "ord"
     resA = params["res_id"]
     resB = params["target_res_id"]
@@ -895,7 +896,9 @@ def add_constraint_remote(params)
       actionA, actionB = actionB, actionA
     end
 
-    retval = add_order_constraint(resA, resB, actionA, actionB, params["score"])
+    retval, error = add_order_constraint(
+      resA, resB, actionA, actionB, params["score"], true, params["force"]
+    )
   when "col"
     resA = params["res_id"]
     resB = params["target_res_id"]
@@ -908,7 +911,9 @@ def add_constraint_remote(params)
       end
     end
 
-    retval = add_colocation_constraint(resA, resB, score)
+    retval, error = add_colocation_constraint(
+      resA, resB, score, params["force"]
+    )
   else
     return [400, "Unknown constraint type: #{params['c_type']}"]
   end
@@ -916,38 +921,40 @@ def add_constraint_remote(params)
   if retval == 0
     return [200, "Successfully added constraint"]
   else
-    return [400, "Error adding constraint"]
+    return [400, "Error adding constraint: #{error}"]
   end
 end
 
 def add_constraint_rule_remote(params)
   if params["c_type"] == "loc"
     retval, error = add_location_constraint_rule(
-      params["res_id"], params["rule"], params["score"]
+      params["res_id"], params["rule"], params["score"], params["force"]
     )
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]
   end
 
   if retval == 0
-    return [200, "Successfully added constraint rule"]
+    return [200, "Successfully added constraint"]
   else
-    return [400, "Error adding constraint rule: #{error}"]
+    return [400, "Error adding constraint: #{error}"]
   end
 end
 
 def add_constraint_set_remote(params)
   case params["c_type"]
   when "ord"
-    retval, error = add_order_set_constraint(params["resources"].values)
+    retval, error = add_order_set_constraint(
+      params["resources"].values, params["force"]
+    )
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]
   end
 
   if retval == 0
-    return [200, "Successfully added set constraint"]
+    return [200, "Successfully added constraint"]
   else
-    return [400, "Error adding set constraint"]
+    return [400, "Error adding constraint: #{error}"]
   end
 end
 

@@ -9,6 +9,11 @@ from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
 from collections import defaultdict
 
+OPTIONS_ACTION = ("start", "promote", "demote", "stop")
+DEFAULT_ACTION = "start"
+OPTIONS_ROLE = ("Stopped", "Started", "Master", "Slave")
+DEFAULT_ROLE = "Started"
+
 def constraint_cmd(argv):
     if len(argv) == 0:
         argv = ["list"]
@@ -92,26 +97,28 @@ def colocation_show(argv):
     resource_colocation_sets = []
     print "Colocation Constraints:"
     for co_loc in constraintsElement.getElementsByTagName('rsc_colocation'):
-        co_resource1 = co_loc.getAttribute("rsc")
-        if co_resource1 == "":
+        if not co_loc.getAttribute("rsc"):
             resource_colocation_sets.append(co_loc)
-            continue
-        co_resource2 = co_loc.getAttribute("with-rsc")
-        co_id = co_loc.getAttribute("id")
-        co_score = co_loc.getAttribute("score")
-        score_text = " (score:" + co_score + ")"
-        co_id_out = ""
-        for attr in co_loc.attributes.items():
-            name = attr[0]
-            value = attr[1]
-            if name != "rsc" and name != "with-rsc" and name != "id" and name != "score":
-                co_id_out += " (" + name+":"+value+")"
-
-        if showDetail:
-            co_id_out += " (id:"+co_id+")"
-
-        print "  " + co_resource1 + " with " + co_resource2 + score_text + co_id_out
+        else:
+            print "  " + colocation_el_to_string(co_loc, showDetail)
     print_sets(resource_colocation_sets, showDetail)
+
+def colocation_el_to_string(co_loc, showDetail=False):
+    co_resource1 = co_loc.getAttribute("rsc")
+    co_resource2 = co_loc.getAttribute("with-rsc")
+    co_id = co_loc.getAttribute("id")
+    co_score = co_loc.getAttribute("score")
+    score_text = "(score:" + co_score + ")"
+    attrs_list = [
+        "(%s:%s)" % (attr[0], attr[1])
+        for attr in co_loc.attributes.items()
+        if attr[0] not in ("rsc", "with-rsc", "id", "score")
+    ]
+    if showDetail:
+        attrs_list.append("(id:%s)" % co_id)
+    return " ".join(
+        [co_resource1, "with", co_resource2, score_text] + attrs_list
+    )
 
 def colocation_rm(argv):
     elementFound = False
@@ -208,15 +215,15 @@ def colocation_add(argv):
 
     score,nv_pairs = parse_score_options(argv)
 
-    (dom,constraintsElement) = getCurrentConstraints()
+    (dom,constraintsElement) = getCurrentConstraints(cib_dom)
     cl_id = utils.find_unique_id(dom, "colocation-" + resource1 + "-" +
             resource2 + "-" + score)
 
 # If one role is specified, the other should default to "started"
     if role1 != "" and role2 == "":
-        role2 = "Started"
+        role2 = DEFAULT_ROLE
     if role2 != "" and role1 == "":
-        role1 = "Started"
+        role1 = DEFAULT_ROLE
 
     element = dom.createElement("rsc_colocation")
     element.setAttribute("id",cl_id)
@@ -229,8 +236,36 @@ def colocation_add(argv):
         element.setAttribute("with-rsc-role", role2)
     for nv_pair in nv_pairs:
         element.setAttribute(nv_pair[0], nv_pair[1])
+    if "--force" not in utils.pcs_options:
+        duplicates = colocation_find_duplicates(constraintsElement, element)
+        if duplicates:
+            utils.err(
+                "duplicate constraint already exists, use --force to override\n"
+                + "\n".join([
+                    "  " + colocation_el_to_string(dup, True)
+                    for dup in duplicates
+                ])
+            )
     constraintsElement.appendChild(element)
     utils.replace_cib_configuration(dom)
+
+def colocation_find_duplicates(dom, constraint_el):
+    def normalize(const_el):
+        return (
+            const_el.getAttribute("rsc"),
+            const_el.getAttribute("with-rsc"),
+            const_el.getAttribute("rsc-role").capitalize() or DEFAULT_ROLE,
+            const_el.getAttribute("with-rsc-role").capitalize() or DEFAULT_ROLE,
+        )
+
+    normalized_el = normalize(constraint_el)
+    return [
+        other_el
+        for other_el in dom.getElementsByTagName("rsc_colocation")
+        if not other_el.getElementsByTagName("resource_set")
+            and constraint_el is not other_el
+            and normalized_el == normalize(other_el)
+    ]
 
 def colocation_set(argv):
     setoptions = []
@@ -248,7 +283,6 @@ def colocation_set(argv):
 
     cib, constraints = getCurrentConstraints(utils.get_cib_dom())
     rsc_colocation = cib.createElement("rsc_colocation")
-    constraints.appendChild(rsc_colocation)
     rsc_colocation.setAttribute("id", utils.find_unique_id(cib, colocation_id))
     rsc_colocation.setAttribute("score", "INFINITY")
     score_options = ("score", "score-attribute", "score-attribute-mangle")
@@ -271,6 +305,7 @@ def colocation_set(argv):
                 )
             rsc_colocation.setAttribute(name, value)
     set_add_resource_sets(rsc_colocation, current_set, cib)
+    constraints.appendChild(rsc_colocation)
     utils.replace_cib_configuration(cib)
 
 def order_show(argv):
@@ -284,61 +319,60 @@ def order_show(argv):
     resource_order_sets = []
     print "Ordering Constraints:"
     for ord_loc in constraintsElement.getElementsByTagName('rsc_order'):
-        oc_resource1 = ord_loc.getAttribute("first")
-        if oc_resource1 == "":
+        if not ord_loc.getAttribute("first"):
             resource_order_sets.append(ord_loc)
-            continue
-        oc_resource2 = ord_loc.getAttribute("then")
-        first_action = ord_loc.getAttribute("first-action")
-        then_action = ord_loc.getAttribute("then-action")
-        if first_action != "":
-            first_action = first_action + " "
-        if then_action != "":
-            then_action = then_action + " "
-        oc_id = ord_loc.getAttribute("id")
-        oc_score = ord_loc.getAttribute("score")
-        oc_kind = ord_loc.getAttribute("kind")
-        oc_sym = ""
-        oc_id_out = ""
-        if ord_loc.getAttribute("symmetrical") == "false":
-            oc_sym = " (non-symmetrical)"
-        if oc_kind != "":
-            score_text = " (kind:" + oc_kind + ")"
-        elif oc_kind == "" and oc_score == "":
-            score_text = " (kind:Mandatory)"
         else:
-            score_text = " (score:" + oc_score + ")"
-        if showDetail:
-            oc_id_out = " (id:"+oc_id+")"
-        print "  " + first_action + oc_resource1 + " then " + then_action + oc_resource2 + score_text + oc_sym + oc_id_out
+            print "  " + order_el_to_string(ord_loc, showDetail)
     print_sets(resource_order_sets,showDetail)
+
+def order_el_to_string(ord_loc, showDetail=False):
+    oc_resource1 = ord_loc.getAttribute("first")
+    oc_resource2 = ord_loc.getAttribute("then")
+    first_action = ord_loc.getAttribute("first-action")
+    then_action = ord_loc.getAttribute("then-action")
+    oc_id = ord_loc.getAttribute("id")
+    oc_score = ord_loc.getAttribute("score")
+    oc_kind = ord_loc.getAttribute("kind")
+    oc_sym = ""
+    oc_id_out = ""
+    if ord_loc.getAttribute("symmetrical") == "false":
+        oc_sym = "(non-symmetrical)"
+    if oc_kind != "":
+        score_text = "(kind:" + oc_kind + ")"
+    elif oc_kind == "" and oc_score == "":
+        score_text = "(kind:Mandatory)"
+    else:
+        score_text = "(score:" + oc_score + ")"
+    if showDetail:
+        oc_id_out = "(id:"+oc_id+")"
+    return " ".join(filter(None, [
+        first_action, oc_resource1, "then", then_action, oc_resource2,
+        score_text, oc_sym, oc_id_out
+    ]))
 
 def print_sets(sets,showDetail):
     if len(sets) != 0:
         print "  Resource Sets:"
         for ro in sets:
-            ro_opts = ""
-            for name,value in ro.attributes.items():
-                if name == "id":
-                    continue
-                ro_opts += " " + name + "=" + value
+            print "    " + set_constraint_el_to_string(ro, showDetail)
 
-            output = ""
-            for rs in ro.getElementsByTagName("resource_set"):
-                output += " set"
-                for rr in rs.getElementsByTagName("resource_ref"):
-                    output += " " + rr.getAttribute("id")
-                for name,value in rs.attributes.items():
-                    if name == "id":
-                        continue
-                    output += " " + name + "=" + value
-                if showDetail:
-                    output += " (id:"+rs.getAttribute("id")+")"
-            if ro_opts != "":
-                output += " setoptions"+ro_opts
-            if showDetail:
-                output += " (id:" + ro.getAttribute("id") + ")"
-            print "   "+output
+def set_constraint_el_to_string(constraint_el, showDetail=False):
+    set_list = []
+    for set_el in constraint_el.getElementsByTagName("resource_set"):
+        set_list.append("set " + " ".join(
+            [
+                res_el.getAttribute("id")
+                for res_el in set_el.getElementsByTagName("resource_ref")
+            ]
+            +
+            utils.dom_attrs_to_list(set_el, showDetail)
+        ))
+    constraint_opts = utils.dom_attrs_to_list(constraint_el, False)
+    if constraint_opts:
+        constraint_opts.insert(0, "setoptions")
+    if showDetail:
+        constraint_opts.append("(id:%s)" % constraint_el.getAttribute("id"))
+    return " ".join(set_list + constraint_opts)
 
 def set_args_into_array(argv):
     current_set = []
@@ -356,8 +390,8 @@ def set_add_resource_sets(elem, sets, cib):
     allowed_options = {
         "sequential": ("true", "false"),
         "require-all": ("true", "false"),
-        "action" : ("start", "promote", "demote", "stop"),
-        "role" : ("Stopped", "Started", "Master", "Slave"),
+        "action" : OPTIONS_ACTION,
+        "role" : OPTIONS_ROLE,
     }
 
     for o_set in sets:
@@ -389,7 +423,36 @@ def set_add_resource_sets(elem, sets, cib):
                 se.setAttribute("id", opts)
                 set_id = set_id + "_" + opts
         res_set.setAttribute("id", utils.find_unique_id(cib, set_id))
-    
+    if "--force" not in utils.pcs_options:
+        duplicates = set_constraint_find_duplicates(cib, elem)
+        if duplicates:
+            utils.err(
+                "duplicate constraint already exists, use --force to override\n"
+                + "\n".join([
+                    "  " + set_constraint_el_to_string(dup, True)
+                    for dup in duplicates
+                ])
+            )
+
+def set_constraint_find_duplicates(dom, constraint_el):
+    def normalize(constraint_el):
+        return [
+            [
+                ref_el.getAttribute("id")
+                for ref_el in set_el.getElementsByTagName("resource_ref")
+            ]
+            for set_el in constraint_el.getElementsByTagName("resource_set")
+        ]
+
+    normalized_el = normalize(constraint_el)
+    return [
+        other_el
+        for other_el in dom.getElementsByTagName(constraint_el.tagName)
+        if other_el.getElementsByTagName("resource_set")
+            and constraint_el is not other_el
+            and normalized_el == normalize(other_el)
+    ]
+
 def order_set(argv):
     current_set = set_args_into_array(argv)
 
@@ -400,9 +463,9 @@ def order_set(argv):
 
     cib, constraints = getCurrentConstraints(utils.get_cib_dom())
     rsc_order = cib.createElement("rsc_order")
-    constraints.appendChild(rsc_order)
     rsc_order.setAttribute("id", utils.find_unique_id(cib, order_id))
     set_add_resource_sets(rsc_order, current_set, cib)
+    constraints.appendChild(rsc_order)
     utils.replace_cib_configuration(cib)
 
 def order_rm(argv):
@@ -445,10 +508,10 @@ def order_start(argv):
         usage.constraint()
         sys.exit(1)
 
-    first_action = "start"
-    then_action = "start"
+    first_action = DEFAULT_ACTION
+    then_action = DEFAULT_ACTION
     action = argv[0]
-    if action == "start" or action == "promote" or action == "stop" or action == "demote":
+    if action in OPTIONS_ACTION:
             first_action = action
             argv.pop(0)
 
@@ -462,7 +525,7 @@ def order_start(argv):
         sys.exit(1)
 
     action = argv[0]
-    if action == "start" or action == "promote" or action == "stop" or action == "demote":
+    if action in OPTIONS_ACTION:
             then_action = action
             argv.pop(0)
 
@@ -527,8 +590,6 @@ def order_add(argv,returnElementOnly=False):
             id_suffix = opt[1]
             break
 
-    print "Adding " + resource1 + " " + resource2 + " ("+scorekind+")" + options
-
     order_id = "order-" + resource1 + "-" + resource2 + "-" + id_suffix
     order_id = utils.find_unique_id(cib_dom, order_id)
 
@@ -542,11 +603,39 @@ def order_add(argv,returnElementOnly=False):
     if (sym == "false"):
         element.setAttribute("symmetrical", "false")
     constraintsElement.appendChild(element)
+    if "--force" not in utils.pcs_options:
+        duplicates = order_find_duplicates(constraintsElement, element)
+        if duplicates:
+            utils.err(
+                "duplicate constraint already exists, use --force to override\n"
+                + "\n".join([
+                    "  " + order_el_to_string(dup, True) for dup in duplicates
+                ])
+            )
+    print "Adding " + resource1 + " " + resource2 + " ("+scorekind+")" + options
 
     if returnElementOnly == False:
         utils.replace_cib_configuration(dom)
     else:
         return element.toxml()
+
+def order_find_duplicates(dom, constraint_el):
+    def normalize(constraint_el):
+        return (
+            constraint_el.getAttribute("first"),
+            constraint_el.getAttribute("then"),
+            constraint_el.getAttribute("first-action").lower() or DEFAULT_ACTION,
+            constraint_el.getAttribute("then-action").lower() or DEFAULT_ACTION,
+        )
+
+    normalized_el = normalize(constraint_el)
+    return [
+        other_el
+        for other_el in dom.getElementsByTagName("rsc_order")
+        if not other_el.getElementsByTagName("resource_set")
+            and constraint_el is not other_el
+            and normalized_el == normalize(other_el)
+    ]
 
 # Show the currently configured location constraints by node or resource
 def location_show(argv):
@@ -795,8 +884,7 @@ def location_rule(argv):
 
     argv.pop(0)
 
-    cib = utils.get_cib_dom()
-    constraints = cib.getElementsByTagName("constraints")[0]
+    cib, constraints = getCurrentConstraints(utils.get_cib_dom())
     lc = cib.createElement("rsc_location")
     constraints.appendChild(lc)
     lc_id = utils.find_unique_id(cib, "location-" + res_name)
@@ -804,9 +892,44 @@ def location_rule(argv):
     lc.setAttribute("rsc", res_name)
 
     rule_utils.dom_rule_add(lc, argv)
-
+    location_rule_check_duplicates(constraints, lc)
     utils.replace_cib_configuration(cib)
-    
+
+def location_rule_check_duplicates(dom, constraint_el):
+    if "--force" not in utils.pcs_options:
+        duplicates = location_rule_find_duplicates(dom, constraint_el)
+        if duplicates:
+            lines = []
+            for dup in duplicates:
+                lines.append("  Constraint: %s" % dup.getAttribute("id"))
+                for dup_rule in utils.dom_get_children_by_tag_name(dup, "rule"):
+                    lines.append(rule_utils.ExportDetailed().get_string(
+                        dup_rule, True, "    "
+                    ))
+            utils.err(
+                "duplicate constraint already exists, use --force to override\n"
+                + "\n".join(lines)
+            )
+
+def location_rule_find_duplicates(dom, constraint_el):
+    def normalize(constraint_el):
+        return (
+            constraint_el.getAttribute("rsc"),
+            [
+                rule_utils.ExportAsExpression().get_string(rule_el, True)
+                for rule_el in constraint_el.getElementsByTagName("rule")
+            ]
+        )
+
+    normalized_el = normalize(constraint_el)
+    return [
+        other_el
+        for other_el in dom.getElementsByTagName("rsc_location")
+        if other_el.getElementsByTagName("rule")
+            and constraint_el is not other_el
+            and normalized_el == normalize(other_el)
+    ]
+
 # Grabs the current constraints and returns the dom and constraint element
 def getCurrentConstraints(passed_dom=None):
     if passed_dom:
@@ -1033,6 +1156,7 @@ def constraint_rule(argv):
         if not constraint:
             utils.err("Unable to find constraint: " + constraint_id)
         rule_utils.dom_rule_add(constraint, argv)
+        location_rule_check_duplicates(cib, constraint)
         utils.replace_cib_configuration(cib)
 
     elif command in ["remove","delete"]:

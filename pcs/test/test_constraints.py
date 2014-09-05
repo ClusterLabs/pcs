@@ -323,7 +323,7 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "constraint colocation add D1 D2 100")
         assert r == 0 and o == "", o
 
-        o, r = pcs(temp_cib, "constraint colocation add D1 D2 -100")
+        o, r = pcs(temp_cib, "constraint colocation add D1 D2 -100 --force")
         assert r == 0 and o == "", o
 
         o, r = pcs(temp_cib, "constraint colocation add Master with D5 100")
@@ -1302,6 +1302,357 @@ Ordering Constraints:
 Colocation Constraints:
 """)
         self.assertEquals(0, returnVal)
+
+    def testDuplicateOrder(self):
+        output, returnVal = pcs("constraint order D1 then D2")
+        ac(output, """\
+Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order D1 then D2")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs("constraint order D1 then D2 --force")
+        ac(output, """\
+Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order start D1 then start D2")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory)
+  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order start D1 then start D2 --force"
+        )
+        ac(output, """\
+Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order start D2 then start D5")
+        ac(output, """\
+Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order start D2 then start D5")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  start D2 then start D5 (kind:Mandatory) (id:order-D2-D5-mandatory)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order start D2 then start D5 --force"
+        )
+        ac(output, """\
+Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order stop D5 then stop D6")
+        ac(output, """\
+Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order stop D5 then stop D6")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs("constraint order stop D5 then stop D6 --force")
+        ac(output, """\
+Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory)
+  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)
+  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-2)
+  start D2 then start D5 (kind:Mandatory) (id:order-D2-D5-mandatory)
+  start D2 then start D5 (kind:Mandatory) (id:order-D2-D5-mandatory-1)
+  stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory)
+  stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory-1)
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+    def testDuplicateColocation(self):
+        output, returnVal = pcs("constraint colocation add D1 with D2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint colocation add D1 with D2")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs("constraint colocation add D1 with D2 50")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add D1 with D2 50 --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add started D1 with started D2"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
+  D1 with D2 (score:50) (id:colocation-D1-D2-50)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add started D1 with started D2 --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add started D2 with started D5"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add stopped D2 with stopped D5"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add stopped D2 with stopped D5"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  D2 with D5 (score:INFINITY) (rsc-role:Stopped) (with-rsc-role:Stopped) (id:colocation-D2-D5-INFINITY-1)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add stopped D2 with stopped D5 --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+Colocation Constraints:
+  D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
+  D1 with D2 (score:50) (id:colocation-D1-D2-50)
+  D1 with D2 (score:INFINITY) (rsc-role:Started) (with-rsc-role:Started) (id:colocation-D1-D2-INFINITY-1)
+  D2 with D5 (score:INFINITY) (rsc-role:Started) (with-rsc-role:Started) (id:colocation-D2-D5-INFINITY)
+  D2 with D5 (score:INFINITY) (rsc-role:Stopped) (with-rsc-role:Stopped) (id:colocation-D2-D5-INFINITY-1)
+  D2 with D5 (score:INFINITY) (rsc-role:Stopped) (with-rsc-role:Stopped) (id:colocation-D2-D5-INFINITY-2)
+""")
+
+    def testDuplicateSetConstraints(self):
+        output, returnVal = pcs("constraint order set D1 D2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order set D1 D2")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_D1_D2)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs("constraint order set D1 D2 --force")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order set D1 D2 set D5 D6")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order set D1 D2 set D5 D6")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_D1_D2_set_D5_D6)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs("constraint order set D1 D2 set D5 D6 --force")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+
+        output, returnVal = pcs("constraint colocation set D1 D2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint colocation set D1 D2")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs("constraint colocation set D1 D2 --force")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint colocation set D1 D2 set D5 D6")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint colocation set D1 D2 set D5 D6")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2_set_D5_D6)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation set D1 D2 set D5 D6 --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+
+        output, returnVal = pcs("constraint colocation set D6 D1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint order set D6 D1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+  Resource Sets:
+    set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_D1_D2)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-1) (id:pcs_rsc_order_D1_D2-1)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_D1_D2_set_D5_D6)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-3) set D5 D6 (id:pcs_rsc_set_D5_D6-1) (id:pcs_rsc_order_D1_D2_set_D5_D6-1)
+    set D6 D1 (id:pcs_rsc_set_D6_D1-1) (id:pcs_rsc_order_D6_D1)
+Colocation Constraints:
+  Resource Sets:
+    set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-5) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2-1)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2_set_D5_D6)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-7) set D5 D6 (id:pcs_rsc_set_D5_D6-3) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2_set_D5_D6-1)
+    set D6 D1 (id:pcs_rsc_set_D6_D1) setoptions score=INFINITY (id:pcs_rsc_colocation_D6_D1)
+""")
+
+    def testDuplicateLocationRules(self):
+        output, returnVal = pcs("constraint location D1 rule #uname eq node1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint location D1 rule #uname eq node1")
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  Constraint: location-D1
+    Rule: score=INFINITY  (id:location-D1-rule)
+      Expression: #uname eq node1  (id:location-D1-rule-expr)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint location D1 rule #uname eq node1 --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint location D2 rule #uname eq node1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint location D2 rule #uname eq node1 or #uname eq node2"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint location D2 rule #uname eq node1 or #uname eq node2"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  Constraint: location-D2-1
+    Rule: score=INFINITY boolean-op=or  (id:location-D2-1-rule)
+      Expression: #uname eq node1  (id:location-D2-1-rule-expr)
+      Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint location D2 rule #uname eq node2 or #uname eq node1"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  Constraint: location-D2-1
+    Rule: score=INFINITY boolean-op=or  (id:location-D2-1-rule)
+      Expression: #uname eq node1  (id:location-D2-1-rule-expr)
+      Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint location D2 rule #uname eq node2 or #uname eq node1 --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: D1
+    Constraint: location-D1-1
+      Rule: score=INFINITY  (id:location-D1-1-rule)
+        Expression: #uname eq node1  (id:location-D1-1-rule-expr)
+    Constraint: location-D1
+      Rule: score=INFINITY  (id:location-D1-rule)
+        Expression: #uname eq node1  (id:location-D1-rule-expr)
+  Resource: D2
+    Constraint: location-D2-1
+      Rule: score=INFINITY boolean-op=or  (id:location-D2-1-rule)
+        Expression: #uname eq node1  (id:location-D2-1-rule-expr)
+        Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
+    Constraint: location-D2-2
+      Rule: score=INFINITY boolean-op=or  (id:location-D2-2-rule)
+        Expression: #uname eq node2  (id:location-D2-2-rule-expr)
+        Expression: #uname eq node1  (id:location-D2-2-rule-expr-1)
+    Constraint: location-D2
+      Rule: score=INFINITY  (id:location-D2-rule)
+        Expression: #uname eq node1  (id:location-D2-rule-expr)
+Ordering Constraints:
+Colocation Constraints:
+""")
 
 if __name__ == "__main__":
     unittest.main()
