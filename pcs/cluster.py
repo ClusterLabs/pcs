@@ -723,43 +723,67 @@ def cluster_node(argv):
         sys.exit(1)
 
     node = argv[1]
-    status,output = utils.checkAuthorization(node)
+    if "," in node:
+        node0 = node.split(",")[0]
+        node1 = node.split(",")[1]
+    else:
+        node0 = node
+        node1 = None
+
+    status,output = utils.checkAuthorization(node0)
     if status == 2:
-        utils.err("pcsd is not running on %s" % node)
+        utils.err("pcsd is not running on %s" % node0)
     elif status == 3:
-        utils.err("%s is not yet authenticated (try pcs cluster auth %s)" % (node, node))
+        utils.err(
+            "%s is not yet authenticated (try pcs cluster auth %s)"
+            % (node0, node0)
+        )
 
     if add_node == True:
+        if node1 is None and utils.need_ring1_address(utils.getCorosyncConf()):
+            utils.err(
+                "cluster is configured for RRP, "
+                "you have to specify ring 1 address for the node"
+            )
+        elif (
+            node1 is not None
+            and
+            not utils.need_ring1_address(utils.getCorosyncConf())
+        ):
+            utils.err(
+                "cluster is not configured for RRP, "
+                "you must not specify ring 1 address for the node"
+            )
         corosync_conf = None
-        (canAdd, error) =  utils.canAddNodeToCluster(node)
+        (canAdd, error) =  utils.canAddNodeToCluster(node0)
         if not canAdd:
-            utils.err("Unable to add '%s' to cluster: %s" % (node,error))
+            utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
 
         for my_node in utils.getNodesFromCorosyncConf():
-            retval, output = utils.addLocalNode(my_node,node)
+            retval, output = utils.addLocalNode(my_node, node0, node1)
             if retval != 0:
-                print >> sys.stderr, "Error: unable to add %s on %s - %s" % (node,my_node,output.strip())
+                print >> sys.stderr, "Error: unable to add %s on %s - %s" % (node0, my_node, output.strip())
             else:
                 print "%s: Corosync updated" % my_node
                 corosync_conf = output
         if corosync_conf != None:
-            utils.setCorosyncConfig(node, corosync_conf)
+            utils.setCorosyncConfig(node0, corosync_conf)
             if "--enable" in utils.pcs_options:
-                utils.enableCluster(node)
+                utils.enableCluster(node0)
             if "--start" in utils.pcs_options:
-                utils.startCluster(node)
+                utils.startCluster(node0)
         else:
             utils.err("Unable to update any nodes")
     else:
         nodesRemoved = False
         c_nodes = utils.getNodesFromCorosyncConf()
-        destroy_cluster([node])
+        destroy_cluster([node0])
         for my_node in c_nodes:
-            if my_node == node:
+            if my_node == node0:
                 continue
-            retval, output = utils.removeLocalNode(my_node,node)
+            retval, output = utils.removeLocalNode(my_node, node0)
             if retval != 0:
-                print >> sys.stderr, "Error: unable to remove %s on %s - %s" % (node,my_node,output.strip())
+                print >> sys.stderr, "Error: unable to remove %s on %s - %s" % (node0,my_node,output.strip())
             else:
                 if output[0] == 0:
                     print "%s: Corosync updated" % my_node
@@ -769,7 +793,7 @@ def cluster_node(argv):
         if nodesRemoved == False:
             utils.err("Unable to update any nodes")
 
-        output, retval = utils.run(["crm_node", "--force","-R", node])
+        output, retval = utils.run(["crm_node", "--force", "-R", node0])
 
 def cluster_localnode(argv):
     if len(argv) != 2:

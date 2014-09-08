@@ -333,7 +333,11 @@ def remote_add_node(params,all = false)
   end
 
   if params[:new_nodename] != nil
-    retval, output =  add_node(params[:new_nodename],all,auto_start)
+    node = params[:new_nodename]
+    if params[:new_ring1addr] != nil
+      node += ',' + params[:new_ring1addr]
+    end
+    retval, output = add_node(node, all, auto_start)
   end
 
   if retval == 0
