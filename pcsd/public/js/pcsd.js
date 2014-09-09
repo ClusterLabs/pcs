@@ -605,6 +605,9 @@ function update_create_cluster_dialog(nodes) {
   var cant_connect_nodes = 0;
   var cant_auth_nodes = 0;
   var good_nodes = 0;
+  var addr1_match = 1;
+  var ring0_nodes = [];
+  var ring1_nodes = [];
   var cluster_name = $('input[name^="clustername"]').val()
     $('#create_new_cluster input[name^="node-"]').each(function() {
       if ($(this).val() == "") {
@@ -628,6 +631,33 @@ function update_create_cluster_dialog(nodes) {
 	}
       }
     });
+
+  if ($("#create_new_cluster select[name='config-transport']").val() == "udpu") {
+    $('#create_new_cluster input[name^="node-"]').each(function() {
+      if ($(this).val().trim() != "") {
+        ring0_nodes.push($(this).attr("name"));
+      }
+    });
+    $('#create_new_cluster input[name^="ring1-node-"]').each(function() {
+      if ($(this).val().trim() != "") {
+        ring1_nodes.push($(this).attr("name").substr("ring1-".length));
+      }
+    });
+    if (ring1_nodes.length > 0) {
+      if (ring0_nodes.length != ring1_nodes.length) {
+        addr1_match = 0
+      }
+      else {
+        for (var i = 0; i < ring0_nodes.length; i++) {
+          if (ring0_nodes[i] != ring1_nodes[i]) {
+            addr1_match = 0;
+            break;
+          }
+        }
+      }
+    }
+  }
+
   if (cant_connect_nodes != 0 || cant_auth_nodes != 0) {
     $("#unable_to_connect_error_msg").show();
   } else {
@@ -646,8 +676,14 @@ function update_create_cluster_dialog(nodes) {
     $("#bad_cluster_name_error_msg").hide();
   }
 
+  if (addr1_match == 0) {
+    $("#addr0_addr1_mismatch_error_msg").show();
+  }
+  else {
+    $("#addr0_addr1_mismatch_error_msg").hide();
+  }
 
-  if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes == 0 && cluster_name != "") {
+  if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes == 0 && cluster_name != "" && addr1_match == 1) {
     $('#create_new_cluster_form').submit();
   }
 
@@ -678,15 +714,40 @@ function create_cluster_dialog() {
 
 function create_cluster_add_nodes() {
   node_list = $("#create_new_cluster_form tr").has("input[name^='node-']");;
+  var ring1_node_list = $("#create_new_cluster_form tr").has(
+    "input[name^='ring1-node-']"
+  );
   cur_num_nodes = node_list.length;
+
   first_node = node_list.eq(0);
   new_node = first_node.clone();
   $("input",new_node).attr("name", "node-"+(cur_num_nodes+1));
   $("input",new_node).val("");
   $("td", new_node).first().text("Node " + (cur_num_nodes+1)+ ":");
   new_node.insertAfter(node_list.last());
+
+  var ring1_first_node = ring1_node_list.eq(0);
+  var ring1_new_node = ring1_first_node.clone();
+  $("input", ring1_new_node).attr("name", "ring1-node-" + (cur_num_nodes + 1));
+  $("input", ring1_new_node).val("");
+  $("td", ring1_new_node).first().text(
+    "Node " + (cur_num_nodes+1) + " (Ring 1):"
+  );
+  ring1_new_node.insertAfter(ring1_node_list.last());
+
   if (node_list.length == 7)
     $("#create_new_cluster_form tr").has("input[name^='node-']").last().next().remove();
+}
+
+function create_cluster_display_rrp(transport) {
+  if(transport == 'udp') {
+    $('#rrp_udp_transport').show();
+    $('#rrp_udpu_transport').hide();
+  }
+  else {
+    $('#rrp_udp_transport').hide();
+    $('#rrp_udpu_transport').show();
+  };
 }
 
 function show_hide_constraints(element) {

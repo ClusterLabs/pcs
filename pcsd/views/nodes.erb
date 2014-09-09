@@ -257,6 +257,12 @@
 	<td>Node Name:</td>
 	<td><input type=text name=new_nodename></td>
       </tr>
+      {{#if Pcs.need_ring1_address}}
+      <tr>
+        <td>Ring1 address:</td>
+        <td><input type=text name=new_ring1addr></td>
+      </tr>
+      {{/if}}
       <tr>
 	<td>Auto Start/Enable:</td>
 	<td><input type="checkbox" name="auto_start" value="1" checked></td>

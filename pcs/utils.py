@@ -388,7 +388,7 @@ def getCorosyncActiveNodes():
     if retval != 0:
         return []
 
-    nodename_re = re.compile(r"^nodelist\.node\.(\d+)\.ring\d+_addr.*= (.*)", re.M)
+    nodename_re = re.compile(r"^nodelist\.node\.(\d+)\.ring0_addr.*= (.*)", re.M)
     nodestatus_re = re.compile(r"^runtime\.totem\.pg\.mrp\.srp\.members\.(\d+).status.*= (.*)", re.M)
     nodenameid_mapping_re = re.compile(r"nodelist\.node\.(\d+)\.nodeid.*= (\d+)", re.M)
     

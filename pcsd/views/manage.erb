@@ -96,6 +96,7 @@
       <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg" style="display:none;">Unable to contact nodes highlighted in red.<br><span style="color:orange;">Unable to authenticate to nodes highlighted in orange.</span><br>Please make sure pcsd is started on all nodes.</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="at_least_one_node_error_msg" style="display:none;">At least one valid node must be entered.</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="bad_cluster_name_error_msg" style="display:none;">You may not leave the cluster name field blank</span></td></tr>
+      <tr><td align=center style="color: red" colspan=2"><span id="addr0_addr1_mismatch_error_msg" style="display:none;">Ring 1 addresses do not match to Ring 0 addresses</span></td></tr>
     </table>
     <span onclick='$(".advanced_open").toggle();$("#advanced_cluster_create_options").toggle();'><span class="advanced_open rightarrow sprites"></span><span class="advanced_open downarrow sprites" style="display:none;"></span>Advanced Options:</span>
     <div id="advanced_cluster_create_options" style="display:none;">
@@ -161,16 +162,91 @@ The window of time between when a node (or group of nodes die) and quorum \
 is recalculated if the 'Last Man Standing' option is enabled." %>
 	<% use_ipv6_desc = "\
 Enables IPv6 for cluster communication (default: off)" %>
-	<tr>
-	  <td title="<%= h(transport_desc) %>" align=right>Transport:</td>
-	  <td><select name="config-transport"><option value="udpu" selected>UDPU (default)</option><option value="udp">UDP</option></select></td>
-	</tr>
+        <% rrp_addr_0_1_desc = "\
+Enables Redundant Ring Protocol (RRP) (default: off)
+
+Specify ring 0 and ring 1 network address if you want to use RRP." %>
+        <% rrp_broadcast_0_1_desc = "\
+Enables broadcast communication in the ring (default: off)" %>
+        <% rrp_mcast_0_1_desc = "\
+Optionally specify ring multicast address." %>
+        <% rrp_mcastport_0_1_desc = "\
+Optionally specify ring multicast port." %>
+        <% rrp_ttl_0_1_desc = "\
+Optionally specify ring TTL." %>
+        <% rrp_addr1_desc = "\
+Enables Redundant Ring Protocol (RRP) (default: off)
+
+Specify ring 1 address for each node if you want to use RRP." %>
+        <tr>
+          <td title="<%= h(transport_desc) %>" align=right>Transport:</td>
+          <td>
+            <select name="config-transport" onchange="create_cluster_display_rrp(this.value);">
+                <option value="udpu" selected>UDPU (default)</option>
+                <option value="udp">UDP</option>
+            </select>
+          </td>
+        </tr>
 	<tr title="<%= h(wait_for_all_desc) %>"><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
 	<tr title="<%= h(auto_tie_desc) %>"><td align=right>Auto Tie Breaker:</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
 	<tr title="<%= h(last_man_desc) %>"><td align=right>Last Man Standing:</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
 	<tr title="<%= h(last_man_window_desc) %>"><td align=right>Last Man Standing Window:</td><td><input type=input size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
 	<tr title="<%= h(use_ipv6_desc) %>"><td align=right>Use IPv6</td><td><input type=checkbox name="config-ipv6"></td></tr>
       </table>
+      <div id="rrp_udp_transport" style="display: none;">
+        <br>
+        Redundant Ring Protocol settings for UDP transport:
+        <table>
+          <tr>
+              <td></td>
+              <td align="center">Ring 0</td>
+              <td align="center">Ring 1</td>
+          </tr>
+          <tr title="<%= h(rrp_addr_0_1_desc) %>">
+              <td align="right">Address:</td>
+              <td><input type="text"name="config-addr0"></td>
+              <td><input type="text"name="config-addr1"></td>
+          </tr>
+          <tr title="<%= h(rrp_broadcast_0_1_desc) %>">
+              <td align="right">Use Broadcast:</td>
+              <td><input type="checkbox"name="config-broadcast0"></td>
+              <td><input type="checkbox"name="config-broadcast1"></td>
+          </tr>
+          <tr title="<%= h(rrp_mcast_0_1_desc) %>" class="transport_udp_only">
+              <td align="right">Multicast Address:</td>
+              <td><input type="text"name="config-mcast0" value="239.255.1.1"></td>
+              <td><input type="text"name="config-mcast1" value="239.255.2.1"></td>
+          </tr>
+          <tr title="<%= h(rrp_mcastport_0_1_desc) %>" class="transport_udp_only">
+              <td align="right">Multicast Port:</td>
+              <td><input type="text"name="config-mcastport0" value="5405"></td>
+              <td><input type="text"name="config-mcastport1" value="5405"></td>
+          </tr>
+          <tr title="<%= h(rrp_ttl_0_1_desc) %>" class="transport_udp_only">
+              <td align="right">TTL:</td>
+              <td><input type="text"name="config-ttl0"></td>
+              <td><input type="text"name="config-ttl1"></td>
+          </tr>
+        </table>
+      </div>
+      <div id="rrp_udpu_transport">
+        <br>
+        Redundant Ring Protocol settings for UDPU transport:
+        <table title="<%= h(rrp_addr1_desc) %>">
+          <tr>
+            <td align=right>Node 1 (Ring 1):</td>
+            <td><input size="50" name="ring1-node-1" type="text"></input></td>
+          </tr>
+          <tr>
+            <td align=right>Node 2 (Ring 1):</td>
+            <td><input size="50" name="ring1-node-2" type="text"></input></td>
+          </tr>
+          <tr>
+            <td align=right>Node 3 (Ring 1):</td>
+            <td><input size="50" name="ring1-node-3" type="text"></input></td>
+          </tr>
+        </table>
+      </div>
     </div>
   </form>
 </div>

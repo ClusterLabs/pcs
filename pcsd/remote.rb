@@ -378,9 +378,11 @@ end
 
 def setup_cluster(params)
   $logger.info("Setting up cluster: " + params.inspect)
-  nodes = params[:nodes].split(',')
+  nodes_rrp = params[:nodes].split(';')
   options = []
   myoptions = JSON.parse(params[:options])
+  transport_udp = false
+  options_udp = []
   myoptions.each { |o,v|
     if ["wait_for_all", "last_man_standing", "auto_tie_breaker"].include?(o)
       options << "--" + o + "=1"
@@ -392,13 +394,29 @@ def setup_cluster(params)
 
     if o == "transport" and v == "udp"
       options << "--transport=udp"
+      transport_udp = true
+    end
+
+    if ["addr0", "addr1", "mcast0", "mcast1", "mcastport0", "mcastport1", "ttl0", "ttl1"].include?(o)
+      options_udp << "--" + o + "=" + v
+    end
+
+    if ["broadcast0", "broadcast1"].include?(o)
+      options_udp << "--" + o
     end
 
     if o == "ipv6"
       options << "--ipv6"
     end
   }
+  if transport_udp
+    nodes = []
+    nodes_rrp.each { |node| nodes << node.split(',')[0] }
+  else
+    nodes = nodes_rrp
+  end
   nodes_options = nodes + options
+  nodes_options += options_udp if transport_udp
   stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes_options)
   if retval != 0
     return [400, stdout.join("\n") + stderr.join("\n")]
@@ -497,7 +515,9 @@ def node_status(params)
             "pacemaker_standby" => pacemaker_standby,
             "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
             "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id,
-            "node_attr" => node_attributes}
+            "node_attr" => node_attributes,
+            "need_ring1_address" => need_ring1_address?,
+           }
   ret = JSON.generate(status)
   return ret
 end
@@ -1033,5 +1053,23 @@ def get_local_node_id
     return ""
   else
     return out[0].split(/ = /)[1].strip()
+  end
+end
+
+def need_ring1_address?
+  out, errout, retval = run_cmd(COROSYNC_CMAPCTL)
+  if retval != 0
+    return false
+  else
+    udpu_transport = false
+    rrp = false
+    out.each { |line|
+      if /^totem\.transport.*= udpu$/.match(line)
+        udpu_transport = true
+      elsif /^totem\.rrp_mode.*= passive$/.match(line) or /^totem\.rrp_mode.*= active$/.match(line)
+        rrp = true
+      end
+    }
+    return (rrp and udpu_transport)
   end
 end

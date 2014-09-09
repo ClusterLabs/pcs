@@ -59,6 +59,14 @@ Pcs = Ember.Application.createWithMixins({
 	Pcs.nodesController.update(data);
 	Pcs.settingsController.update(data);
 	Pcs.set("cluster_settings",data[Object.keys(data)[0]].cluster_settings);
+        Pcs.set('need_ring1_address', false)
+        $.each(data, function(node, node_data) {
+          $.each(node_data, function(key, value) {
+            if (key == 'need_ring1_address' && value) {
+              Pcs.set('need_ring1_address', true);
+            }
+          });
+        });
 	Ember.run.next(this,disable_checkbox_clicks);
 	if (first_run) {
 	    Ember.run.next(this,function () {
