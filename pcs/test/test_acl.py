@@ -26,7 +26,7 @@ class ACLTest(unittest.TestCase):
         with open(old_temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") != -1
-            assert data.find("pacemaker-2.0") == -1
+            assert data.find("pacemaker-2.") == -1
 
         o,r = pcs(old_temp_cib, "acl role create test_role read xpath my_xpath")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
@@ -35,7 +35,7 @@ class ACLTest(unittest.TestCase):
         with open(old_temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") == -1
-            assert data.find("pacemaker-2.0") != -1
+            assert data.find("pacemaker-2.") != -1
 
     def testUserGroupCreateDeleteWithRoles(self):
         o,r = pcs("acl role create role1 read xpath /xpath1/ write xpath /xpath2/")

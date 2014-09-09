@@ -20,12 +20,14 @@ class PropertyTest(unittest.TestCase):
 
     def testDefaults(self):
         output, returnVal = pcs(temp_cib, "property --defaults")
+        prop_defaults = output
         assert returnVal == 0, 'Unable to list resources'
-        assert output == 'Cluster Properties:\n batch-limit: 30\n cluster-delay: 60s\n cluster-infrastructure: heartbeat\n cluster-recheck-interval: 15min\n crmd-finalization-timeout: 30min\n crmd-integration-timeout: 3min\n crmd-transition-delay: 0s\n dc-deadtime: 20s\n dc-version: none\n default-action-timeout: 20s\n default-resource-stickiness: 0\n election-timeout: 2min\n enable-startup-probes: true\n expected-quorum-votes: 2\n is-managed-default: true\n maintenance-mode: false\n migration-limit: -1\n no-quorum-policy: stop\n node-health-green: 0\n node-health-red: -INFINITY\n node-health-strategy: none\n node-health-yellow: 0\n pe-error-series-max: -1\n pe-input-series-max: 4000\n pe-warn-series-max: 5000\n placement-strategy: default\n remove-after-stop: false\n shutdown-escalation: 20min\n start-failure-is-fatal: true\n startup-fencing: true\n stonith-action: reboot\n stonith-enabled: true\n stonith-timeout: 60s\n stop-all-resources: false\n stop-orphan-actions: true\n stop-orphan-resources: true\n symmetric-cluster: true\n', [output]
+        assert output.startswith('Cluster Properties:\n batch-limit')
 
         output, returnVal = pcs(temp_cib, "property --all")
         assert returnVal == 0, 'Unable to list resources'
-        assert output == 'Cluster Properties:\n batch-limit: 30\n cluster-delay: 60s\n cluster-infrastructure: heartbeat\n cluster-recheck-interval: 15min\n crmd-finalization-timeout: 30min\n crmd-integration-timeout: 3min\n crmd-transition-delay: 0s\n dc-deadtime: 20s\n dc-version: none\n default-action-timeout: 20s\n default-resource-stickiness: 0\n election-timeout: 2min\n enable-startup-probes: true\n expected-quorum-votes: 2\n is-managed-default: true\n maintenance-mode: false\n migration-limit: -1\n no-quorum-policy: stop\n node-health-green: 0\n node-health-red: -INFINITY\n node-health-strategy: none\n node-health-yellow: 0\n pe-error-series-max: -1\n pe-input-series-max: 4000\n pe-warn-series-max: 5000\n placement-strategy: default\n remove-after-stop: false\n shutdown-escalation: 20min\n start-failure-is-fatal: true\n startup-fencing: true\n stonith-action: reboot\n stonith-enabled: true\n stonith-timeout: 60s\n stop-all-resources: false\n stop-orphan-actions: true\n stop-orphan-resources: true\n symmetric-cluster: true\n', [output]
+        assert output.startswith('Cluster Properties:\n batch-limit')
+        ac(output,prop_defaults)
 
         output, returnVal = pcs(temp_cib, "property set blahblah=blah")
         assert returnVal == 1
@@ -45,11 +47,14 @@ class PropertyTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "property --defaults")
         assert returnVal == 0, 'Unable to list resources'
-        assert output == 'Cluster Properties:\n batch-limit: 30\n cluster-delay: 60s\n cluster-infrastructure: heartbeat\n cluster-recheck-interval: 15min\n crmd-finalization-timeout: 30min\n crmd-integration-timeout: 3min\n crmd-transition-delay: 0s\n dc-deadtime: 20s\n dc-version: none\n default-action-timeout: 20s\n default-resource-stickiness: 0\n election-timeout: 2min\n enable-startup-probes: true\n expected-quorum-votes: 2\n is-managed-default: true\n maintenance-mode: false\n migration-limit: -1\n no-quorum-policy: stop\n node-health-green: 0\n node-health-red: -INFINITY\n node-health-strategy: none\n node-health-yellow: 0\n pe-error-series-max: -1\n pe-input-series-max: 4000\n pe-warn-series-max: 5000\n placement-strategy: default\n remove-after-stop: false\n shutdown-escalation: 20min\n start-failure-is-fatal: true\n startup-fencing: true\n stonith-action: reboot\n stonith-enabled: true\n stonith-timeout: 60s\n stop-all-resources: false\n stop-orphan-actions: true\n stop-orphan-resources: true\n symmetric-cluster: true\n', [output]
+        assert output.startswith('Cluster Properties:\n batch-limit')
+        ac(output,prop_defaults)
 
         output, returnVal = pcs(temp_cib, "property --all")
         assert returnVal == 0, 'Unable to list resources'
-        assert output == 'Cluster Properties:\n batch-limit: 30\n blahblah: blah\n cluster-delay: 60s\n cluster-infrastructure: heartbeat\n cluster-recheck-interval: 15min\n crmd-finalization-timeout: 30min\n crmd-integration-timeout: 3min\n crmd-transition-delay: 0s\n dc-deadtime: 20s\n dc-version: none\n default-action-timeout: 20s\n default-resource-stickiness: 0\n election-timeout: 2min\n enable-startup-probes: true\n expected-quorum-votes: 2\n is-managed-default: true\n maintenance-mode: false\n migration-limit: -1\n no-quorum-policy: stop\n node-health-green: 0\n node-health-red: -INFINITY\n node-health-strategy: none\n node-health-yellow: 0\n pe-error-series-max: -1\n pe-input-series-max: 4000\n pe-warn-series-max: 5000\n placement-strategy: default\n remove-after-stop: false\n shutdown-escalation: 20min\n start-failure-is-fatal: true\n startup-fencing: true\n stonith-action: reboot\n stonith-enabled: false\n stonith-timeout: 60s\n stop-all-resources: false\n stop-orphan-actions: true\n stop-orphan-resources: true\n symmetric-cluster: true\n', [output]
+        assert "blahblah: blah" in output
+        assert "stonith-enabled: false" in output
+        assert output.startswith('Cluster Properties:\n batch-limit')
 
     def testNodeProperties(self):
         utils.usefile = True

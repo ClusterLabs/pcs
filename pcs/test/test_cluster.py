@@ -406,7 +406,7 @@ class ClusterTest(unittest.TestCase):
         with open(temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") != -1
-            assert data.find("pacemaker-2.0") == -1
+            assert data.find("pacemaker-2.") == -1
 
         o,r = pcs("cluster cib-upgrade")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
@@ -415,7 +415,7 @@ class ClusterTest(unittest.TestCase):
         with open(temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") == -1
-            assert data.find("pacemaker-2.0") != -1
+            assert data.find("pacemaker-2.") != -1
 
         o,r = pcs("cluster cib-upgrade")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
