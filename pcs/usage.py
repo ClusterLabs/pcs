@@ -473,7 +473,7 @@ Commands:
         --token_coefficient <timeout> sets time in milliseconds used for clusters
             with at least 3 nodes as a coefficient for real token timeout calculation
             (token + (number_of_nodes - 2) * token_coefficient) (default 650 ms)
-        --join <timeout> sets time in milliseconds to wait for join mesages
+        --join <timeout> sets time in milliseconds to wait for join messages
             (default 50 ms)
         --consensus <timeout> sets time in milliseconds to wait for consensus
             to be achieved before starting a new round of membership configuration

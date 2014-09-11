@@ -162,6 +162,24 @@ The window of time between when a node (or group of nodes die) and quorum \
 is recalculated if the 'Last Man Standing' option is enabled." %>
 	<% use_ipv6_desc = "\
 Enables IPv6 for cluster communication (default: off)" %>
+        <% token_timeout = "\
+Sets time in milliseconds until a token loss is declared after not receiving \
+a token." %>
+        <% token_coefficient = "\
+Sets time in milliseconds used for clusters with at least 3 nodes \
+as a coefficient for real token timeout calculation \
+(token + (number_of_nodes - 2) * token_coefficient)" %>
+        <% join_timeout = "\
+Sets time in milliseconds to wait for join messages." %>
+        <% consensus_timeout = "\
+Sets time in milliseconds to wait for consensus to be achieved before starting \
+a new round of membership configuration." %>
+        <% miss_count_const = "\
+Sets the maximum number of times on receipt of a token a message is checked \
+for retransmission before a retransmission occurs." %>
+        <% fail_recv_const = "\
+Specifies how many rotations of the token without receiving any messages when \
+messages should be received may occur before a new configuration is formed." %>
         <% rrp_addr_0_1_desc = "\
 Enables Redundant Ring Protocol (RRP) (default: off)
 
@@ -190,8 +208,32 @@ Specify ring 1 address for each node if you want to use RRP." %>
 	<tr title="<%= h(wait_for_all_desc) %>"><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
 	<tr title="<%= h(auto_tie_desc) %>"><td align=right>Auto Tie Breaker:</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
 	<tr title="<%= h(last_man_desc) %>"><td align=right>Last Man Standing:</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
-	<tr title="<%= h(last_man_window_desc) %>"><td align=right>Last Man Standing Window:</td><td><input type=input size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
+	<tr title="<%= h(last_man_window_desc) %>"><td align=right>Last Man Standing Window:</td><td><input type=text size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
 	<tr title="<%= h(use_ipv6_desc) %>"><td align=right>Use IPv6</td><td><input type=checkbox name="config-ipv6"></td></tr>
+        <tr title="<%= h(token_timeout) %>">
+          <td align="right">Token Timeout:</td>
+          <td><input type="text" size="5" name="config-token" value="1000">ms</td>
+        </tr>
+        <tr title="<%= h(token_coefficient) %>">
+          <td align="right">Token Timeout Coefficient:</td>
+          <td><input type="text" size="5" name="config-token_coefficient" value="650">ms</td>
+        </tr>
+        <tr title="<%= h(join_timeout) %>">
+          <td align="right">Join Timeout:</td>
+          <td><input type="text" size="5" name="config-join" value="50">ms</td>
+        </tr>
+        <tr title="<%= h(consensus_timeout) %>">
+          <td align="right">Consensus Timeout:</td>
+          <td><input type="text" size="5" name="config-consensus" value="1200">ms</td>
+        </tr>
+        <tr title="<%= h(miss_count_const) %>">
+          <td align="right">Missed Messages Count:</td>
+          <td><input type="text" size="5" name="config-miss_count_const" value="5"></td>
+        </tr>
+        <tr title="<%= h(fail_recv_const) %>">
+          <td align="right">Failures Count:</td>
+          <td><input type="text" size="5" name="config-fail_recv_const" value="2500"></td>
+        </tr>
       </table>
       <div id="rrp_udp_transport" style="display: none;">
         <br>

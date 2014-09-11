@@ -392,6 +392,11 @@ def setup_cluster(params)
       options << "--" + o + "=" + v
     end
 
+    options << "--" + o + "=" + v if [
+        "token", "token_coefficient", "join", "consensus", "miss_count_const",
+        "fail_recv_const",
+      ].include?(o)
+
     if o == "transport" and v == "udp"
       options << "--transport=udp"
       transport_udp = true
