@@ -351,6 +351,146 @@ class StonithTest(unittest.TestCase):
         assert r == 1
         ac(o,"Error: FBad is not a stonith id\n")
 
+    def testStonithDeleteRemovesLevel(self):
+        output, returnVal = pcs(temp_cib, "stonith create n1-ipmi fence_ilo")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+Warning: missing required option(s): 'ipaddr, login, action' for resource type: stonith:fence_ilo
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith create n2-ipmi fence_ilo")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+Warning: missing required option(s): 'ipaddr, login, action' for resource type: stonith:fence_ilo
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith create n1-apc1 fence_apc")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith create n1-apc2 fence_apc")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith create n2-apc1 fence_apc")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith create n2-apc2 fence_apc")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith create n2-apc3 fence_apc")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+Warning: missing required option(s): 'ipaddr, login, port, action' for resource type: stonith:fence_apc
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 n1-ipmi")
+        self.assertEquals(returnVal, 0)
+        ac(output, "")
+
+        output, returnVal = pcs(
+            temp_cib, "stonith level add 2 rh7-1 n1-apc1,n1-apc2,n2-apc2"
+        )
+        self.assertEquals(returnVal, 0)
+        ac(output, "")
+
+        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-2 n2-ipmi")
+        self.assertEquals(returnVal, 0)
+        ac(output, "")
+
+        output, returnVal = pcs(
+            temp_cib, "stonith level add 2 rh7-2 n2-apc1,n2-apc2,n2-apc3"
+        )
+        self.assertEquals(returnVal, 0)
+        ac(output, "")
+
+        output, returnVal = pcs(temp_cib, "stonith")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+ n1-ipmi\t(stonith:fence_ilo):\tStopped 
+ n2-ipmi\t(stonith:fence_ilo):\tStopped 
+ n1-apc1\t(stonith:fence_apc):\tStopped 
+ n1-apc2\t(stonith:fence_apc):\tStopped 
+ n2-apc1\t(stonith:fence_apc):\tStopped 
+ n2-apc2\t(stonith:fence_apc):\tStopped 
+ n2-apc3\t(stonith:fence_apc):\tStopped 
+ Node: rh7-1
+  Level 1 - n1-ipmi
+  Level 2 - n1-apc1,n1-apc2,n2-apc2
+ Node: rh7-2
+  Level 1 - n2-ipmi
+  Level 2 - n2-apc1,n2-apc2,n2-apc3
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith delete n2-apc2")
+        self.assertEquals(returnVal, 0)
+        ac(output, "Deleting Resource - n2-apc2\n")
+
+        output, returnVal = pcs(temp_cib, "stonith")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+ n1-ipmi\t(stonith:fence_ilo):\tStopped 
+ n2-ipmi\t(stonith:fence_ilo):\tStopped 
+ n1-apc1\t(stonith:fence_apc):\tStopped 
+ n1-apc2\t(stonith:fence_apc):\tStopped 
+ n2-apc1\t(stonith:fence_apc):\tStopped 
+ n2-apc3\t(stonith:fence_apc):\tStopped 
+ Node: rh7-1
+  Level 1 - n1-ipmi
+  Level 2 - n1-apc1,n1-apc2
+ Node: rh7-2
+  Level 1 - n2-ipmi
+  Level 2 - n2-apc1,n2-apc3
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith delete n2-apc1")
+        self.assertEquals(returnVal, 0)
+        ac(output, "Deleting Resource - n2-apc1\n")
+
+        output, returnVal = pcs(temp_cib, "stonith")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+ n1-ipmi\t(stonith:fence_ilo):\tStopped 
+ n2-ipmi\t(stonith:fence_ilo):\tStopped 
+ n1-apc1\t(stonith:fence_apc):\tStopped 
+ n1-apc2\t(stonith:fence_apc):\tStopped 
+ n2-apc3\t(stonith:fence_apc):\tStopped 
+ Node: rh7-1
+  Level 1 - n1-ipmi
+  Level 2 - n1-apc1,n1-apc2
+ Node: rh7-2
+  Level 1 - n2-ipmi
+  Level 2 - n2-apc3
+""")
+
+        output, returnVal = pcs(temp_cib, "stonith delete n2-apc3")
+        self.assertEquals(returnVal, 0)
+        ac(output, "Deleting Resource - n2-apc3\n")
+
+        output, returnVal = pcs(temp_cib, "stonith")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+ n1-ipmi\t(stonith:fence_ilo):\tStopped 
+ n2-ipmi\t(stonith:fence_ilo):\tStopped 
+ n1-apc1\t(stonith:fence_apc):\tStopped 
+ n1-apc2\t(stonith:fence_apc):\tStopped 
+ Node: rh7-1
+  Level 1 - n1-ipmi
+  Level 2 - n1-apc1,n1-apc2
+ Node: rh7-2
+  Level 1 - n2-ipmi
+""")
+
     def testNoStonithWarning(self):
         o,r = pcs("status")
         assert "WARNING: no stonith devices and " in o
