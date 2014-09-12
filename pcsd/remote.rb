@@ -109,8 +109,6 @@ def remote(params,request)
     return get_avail_fence_agents(params)
   when "remove_resource"
     return remove_resource(params)
-  when "add_constraint"
-    return add_constraint(params)
   when "add_constraint_remote"
     return add_constraint_remote(params)
   when "add_constraint_rule_remote"
@@ -857,65 +855,6 @@ def remove_resource (params)
   else
     logger.info("Remove resource errors:\n"+errors)
     return [500, errors]
-  end
-end
-
-def add_constraint(params)
-  if params[:location_constraint]
-    params.each {|k,v|
-      if k.start_with?("deny-") and v == "on"
-	score = "-INFINITY"
-	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
-      elsif k.start_with?("allow-") and v == "on"
-	score = "INFINITY"
-	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
-      elsif k.start_with?("score-") and v != ""
-	score = v
-	add_location_constraint(params[:cur_resource], k.split(/-/,2)[1], score)
-      end
-    }
-  elsif params[:order_constraint]
-    params.each {|k,v|
-      if k.start_with?("order-") and v != ""
-	if v.start_with?("before-")
-	  score = "INFINITY"
-	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
-	    sym = true
-	  else
-	    sym = false
-	  end
-	  add_order_constraint(v.split(/-/,2)[1], params[:cur_resource], 'start', 'start', score, sym)
-	elsif v.start_with?("after-")
-	  score = "INFINITY"
-	  if params["symmetrical-" + v.split(/-/,2)[1]] == "on"
-	    sym = true
-	  else
-	    sym = false
-	  end
-	  add_order_constraint(params[:cur_resource], v.split(/-/,2)[1], 'start', 'start', score, sym)
-	end
-      end
-    }
-  elsif params[:colocation_constraint]
-    params.each {|k,v|
-      if k.start_with?("order-") and v != ""
-	if v.start_with?("together-")
-	  if params["score-" + v.split(/-/,2)[1]] != nil
-	    score = params["score-" + v.split(/-/,2)[1]]
-	  else
-	    score = "INFINITY"
-	  end
-	  add_colocation_constraint(params[:cur_resource], v.split(/-/,2)[1], score)
-	elsif v.start_with?("apart-")
-	  if params["score-" + v.split(/-/,2)[1]] != nil
-	    score = params["score-" + v.split(/-/,2)[1]]
-	  else
-	    score = "-INFINITY"
-	  end
-	  add_colocation_constraint(params[:cur_resource], v.split(/-/,2)[1], score)
-	end
-      end
-    }
   end
 end
 
