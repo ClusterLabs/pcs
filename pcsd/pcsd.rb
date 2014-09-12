@@ -62,6 +62,7 @@ end
 
 configure do
   ISRHEL6 = is_rhel6
+  ISSYSTEMCTL = is_systemctl
   DISABLE_GUI = false
 
   OCF_ROOT = "/usr/lib/ocf"

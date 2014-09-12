@@ -13,6 +13,13 @@ def is_rhel6()
   end
 end
 
+def is_systemctl()
+  if File.exist?('/usr/bin/systemctl')
+    return true
+  else
+    return false
+  end
+end
 
 CRT_FILE = "/var/lib/pcsd/pcsd.crt"
 KEY_FILE = "/var/lib/pcsd/pcsd.key"
@@ -45,10 +52,13 @@ webrick_options = {
   :SSLPrivateKey      => OpenSSL::PKey::RSA.new(File.open(KEY_FILE).read()),
   :SSLCertName        => [[ "CN", server_name ]],
   :SSLOptions         => OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3,
-  :StartCallback => Proc.new {
-  	`python /usr/lib/pcsd/systemd-notify-fix.py`
-  }
 }
+
+if is_systemctl
+  webrick_options[:StartCallback] = Proc.new {
+    `python /usr/lib/pcsd/systemd-notify-fix.py`
+  }
+end
 
 server = ::Rack::Handler::WEBrick
 trap(:INT) do

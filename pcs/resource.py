@@ -227,7 +227,7 @@ def resource_list_available(argv):
         if os.access(lsb_dir + agent, os.X_OK):
             ret += "lsb:" + agent + "\n"
 # systemd agents
-    if not utils.is_rhel6():
+    if utils.is_systemctl():
         agents, retval = utils.run(["systemctl", "list-unit-files", "--full"])
         agents = agents.split("\n")
 

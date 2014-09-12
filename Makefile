@@ -8,10 +8,23 @@ ifeq ($(PYTHON_SITELIB), /usr/lib/python2.7/dist-packages)
   EXTRA_SETUP_OPTS="--install-layout=deb"
 endif
 
+IS_SYSTEMCTL=false
+ifeq ("$(wildcard /usr/bin/systemctl)","/usr/bin/systemctl")
+  IS_SYSTEMCTL=true
+else
+  ifeq ("$(wildcard /bin/systemctl)","/usr/bin/systemctl")
+    IS_SYSTEMCTL=true
+  endif
+endif
+
 MANDIR=/usr/share/man
 
 ifndef PREFIX
   PREFIX=$(shell prefix=`python -c "import sys; print(sys.prefix)"` || prefix="/usr"; echo $$prefix)
+endif
+
+ifndef initdir
+  initdir=/etc/init.d
 endif
 
 install: bash_completion
@@ -28,13 +41,16 @@ install_pcsd:
 	mkdir -p ${DESTDIR}${PREFIX}/lib/
 	cp -r pcsd ${DESTDIR}${PREFIX}/lib/
 	install -m 644 -D pcsd/pcsd.conf ${DESTDIR}/etc/sysconfig/pcsd
-	install -d ${DESTDIR}/usr/lib/systemd/system/
-	install -m 644 pcsd/pcsd.service ${DESTDIR}/usr/lib/systemd/system/
 	install -d ${DESTDIR}/etc/pam.d
 	install  pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	install -m 644 -D pcsd/pcsd.logrotate ${DESTDIR}/etc/logrotate.d/pcsd
-#	install -m 755 -D pcsd/pcsd ${DESTDIR}/${initdir}/pcsd
+ifeq ($(IS_SYSTEMCTL),true)
+	install -d ${DESTDIR}/usr/lib/systemd/system/
+	install -m 644 pcsd/pcsd.service ${DESTDIR}/usr/lib/systemd/system/
+else
+	install -m 755 -D pcsd/pcsd ${DESTDIR}/${initdir}/pcsd
+endif
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/sbin/pcs
