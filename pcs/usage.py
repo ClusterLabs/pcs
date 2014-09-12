@@ -561,7 +561,7 @@ Commands:
 
     sync
         Sync corosync configuration to all nodes found from current
-        corosync.conf file (cluster.conf on RHEL6)
+        corosync.conf file (cluster.conf on systems running Corosync 1.x)
 
     cib [filename]
         Get the raw xml from the CIB (Cluster Information Base).  If a

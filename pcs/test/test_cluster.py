@@ -68,7 +68,7 @@ class ClusterTest(unittest.TestCase):
         ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
     def testCreation(self):
-        if utils.is_rhel6():
+        if not utils.is_rhel7_compat():
             return
 
         output, returnVal = pcs(temp_cib, "cluster") 
@@ -149,8 +149,8 @@ class ClusterTest(unittest.TestCase):
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udp\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
     def testIPV6(self):
-        if utils.is_rhel6():
-            print "WARNING: not testing IPV6 due to RHEL6"
+        if not utils.is_rhel7_compat():
+            print "WARNING: not testing IPV6 due to RHEL7 incompatibility"
             return
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cnam rh7-1 rh7-2 --ipv6")
         ac(o,"")
@@ -160,8 +160,8 @@ class ClusterTest(unittest.TestCase):
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cnam\ntransport: udpu\nip_version: ipv6\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
     def testRRPConfig(self):
-        if utils.is_rhel6():
-            print "WARNING: not testing RRPConfig due to RHEL6"
+        if not utils.is_rhel7_compat():
+            print "WARNING: not testing RRPConfig due to RHEL7 incompatibility"
             return
         o,r = pcs("cluster setup --transport udp --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0")
         ac(o,"")
@@ -265,8 +265,8 @@ class ClusterTest(unittest.TestCase):
         ac("", o)
 
     def testTotemOptions(self):
-        if utils.is_rhel6():
-            print "WARNING: Not testing totem options due to RHEL6"
+        if not utils.is_rhel7_compat():
+            print "WARNING: Not testing totem options due to RHEL7 incompatibility"
             return
 
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005")
@@ -277,7 +277,7 @@ class ClusterTest(unittest.TestCase):
             ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: test99\ntransport: udpu\ntoken: 20000\ntoken_coefficient: 20005\njoin: 20001\nconsensus: 20002\nmiss_count_const: 20003\nfail_recv_const: 20004\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
 
     def testUIDGID(self):
-        if utils.is_rhel6():
+        if not utils.is_rhel7_compat():
             os.system("cp /etc/cluster/cluster.conf cluster.conf.testbak")
             o,r = pcs("cluster uidgid")
             assert r == 0

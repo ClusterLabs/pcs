@@ -136,7 +136,7 @@ def config_restore_remote(infile_name, infile_obj):
     config_backup_check_version(extracted["version.txt"])
 
     node_list = utils.getNodesFromCorosyncConf(
-        extracted["cluster.conf" if utils.is_rhel6() else "corosync.conf"]
+        extracted["cluster.conf" if not utils.is_rhel7_compat() else "corosync.conf"]
     )
     if not node_list:
         utils.err("no nodes found in the tarball")
@@ -253,7 +253,7 @@ def config_backup_path_list():
             "required": True,
         },
     }
-    if utils.is_rhel6():
+    if not utils.is_rhel7_compat():
         file_list["cluster.conf"] = {
             "path": settings.cluster_conf_file,
             "required": True,

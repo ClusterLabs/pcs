@@ -192,7 +192,7 @@ def cluster_gui_status(argv,dont_exit = False):
     if len(argv) == 0:
         nodes = utils.getNodesFromCorosyncConf()
         if len(nodes) == 0:
-            if utils.is_rhel6():
+            if not utils.is_rhel7_compat():
                 utils.err("no nodes found in cluster.conf")
             else:
                 utils.err("no nodes found in corosync.conf")
@@ -263,7 +263,7 @@ def check_nodes(nodes, prefix = ""):
     return bad_nodes
     
 def corosync_setup(argv,returnConfig=False):
-    fedora_config = not utils.is_rhel6()
+    fedora_config = utils.is_rhel7_compat()
     failure = False
     primary_nodes = []
 
@@ -480,7 +480,7 @@ def start_cluster(argv):
         return
 
     print "Starting Cluster..."
-    if utils.is_rhel6():
+    if not utils.is_rhel7_compat():
 #   Verify that CMAN_QUORUM_TIMEOUT is set, if not, then we set it to 0
         retval, output = commands.getstatusoutput('source /etc/sysconfig/cman ; [ -z "$CMAN_QUORUM_TIMEOUT" ]')
         if retval == 0:
@@ -594,7 +594,7 @@ def stop_cluster(argv):
     if retval != 0:
         print output,
         utils.err("unable to stop pacemaker")
-    if utils.is_rhel6():
+    if not utils.is_rhel7_compat():
         output, retval = utils.run(["service", "cman","stop"])
         if retval != 0:
             print output,
@@ -801,7 +801,7 @@ def cluster_localnode(argv):
         exit(1)
     elif argv[0] == "add":
         node = argv[1]
-        if not utils.is_rhel6():
+        if utils.is_rhel7_compat():
             success = utils.addNodeToCorosync(node)
         else:
             success = utils.addNodeToClusterConf(node)
@@ -812,7 +812,7 @@ def cluster_localnode(argv):
             utils.err("unable to add %s" % node)
     elif argv[0] in ["remove","delete"]:
         node = argv[1]
-        if not utils.is_rhel6():
+        if utils.is_rhel7_compat():
             success = utils.removeNodeFromCorosync(node)
         else:
             success = utils.removeNodeFromClusterConf(node)
@@ -825,7 +825,7 @@ def cluster_localnode(argv):
         usage.cluster()
         exit(1)
 
-def cluster_uidgid_rhel6(argv, silent_list = False):
+def cluster_uidgid_cman(argv, silent_list = False):
     if not os.path.isfile("/etc/cluster/cluster.conf"):
         utils.err("the /etc/cluster/cluster.conf file doesn't exist on this machine, create a cluster before running this command")
 
@@ -880,8 +880,8 @@ def cluster_uidgid_rhel6(argv, silent_list = False):
         exit(1)
 
 def cluster_uidgid(argv, silent_list = False):
-    if utils.is_rhel6():
-        cluster_uidgid_rhel6(argv, silent_list)
+    if not utils.is_rhel7_compat():
+        cluster_uidgid_cman(argv, silent_list)
         return
 
     if len(argv) == 0:
@@ -935,8 +935,8 @@ def cluster_uidgid(argv, silent_list = False):
         exit(1)
 
 def cluster_get_corosync_conf(argv):
-    if utils.is_rhel6():
-        utils.err("corosync.conf is not supported on RHEL6")
+    if not utils.is_rhel7_compat():
+        utils.err("corosync.conf is not supported on CMAN clusters")
 
     if len(argv) > 1:
         usage.cluster()
@@ -977,7 +977,7 @@ def cluster_destroy(argv):
         utils.disableServices()
 
         print "Removing all cluster configuration files..."
-        if utils.is_rhel6():
+        if not utils.is_rhel7_compat():
             os.system("rm -f /etc/cluster/cluster.conf")
         else:
             os.system("rm -f /etc/corosync/corosync.conf")

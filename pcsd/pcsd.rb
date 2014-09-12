@@ -1,3 +1,5 @@
+require 'bundler/setup'
+Bundler.setup(:default)
 require 'sinatra'
 require 'sinatra/reloader' if development?  #require 'rack/ssl'
 require 'open3'
@@ -59,7 +61,8 @@ before do
 end
 
 configure do
-  ISRHEL6 = is_rhel6
+  ISRHEL7_COMPAT = is_rhel7_compat
+  ISSYSTEMCTL = is_systemctl
   DISABLE_GUI = false
 
   OCF_ROOT = "/usr/lib/ocf"
@@ -72,7 +75,7 @@ configure do
     PCS = "../pcs/pcs" 
   end
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
-  if ISRHEL6
+  if not ISRHEL7_COMPAT
     COROSYNC_CMAPCTL = "/usr/sbin/corosync-objctl"
   else
     COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
@@ -97,10 +100,10 @@ configure do
     $logger.level = Logger::INFO
   end
 
-  if ISRHEL6
-    $logger.debug "Detected RHEL 6"
+  if not ISRHEL7_COMPAT
+    $logger.debug "Did not detect RHEL 7 compatible"
   else
-    $logger.debug "Did not detect RHEL 6"
+    $logger.debug "Detected RHEL 7 compatible"
   end
 
   if not defined? $cur_node_name

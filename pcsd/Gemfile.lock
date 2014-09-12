@@ -1,9 +1,16 @@
+GIT
+  remote: https://github.com/deriamis/rpam-ruby19-feist.git
+  revision: fd4098174044bd390ac3f75ee42e6425f649e68a
+  specs:
+    rpam-ruby19-feist (1.2.2.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
     backports (3.6.0)
     eventmachine (1.0.3)
     highline (1.6.20)
+    json (1.4.6)
     monkey-lib (0.5.4)
       backports
     multi_json (1.10.1)
@@ -25,6 +32,8 @@ GEM
       rack-test
       sinatra (~> 1.4.0)
       tilt (~> 1.3)
+    sinatra-reloader (1.0)
+      sinatra-contrib
     sinatra-sugar (0.5.1)
       monkey-lib (~> 0.5.0)
       sinatra (~> 1.0)
@@ -37,6 +46,7 @@ DEPENDENCIES
   backports
   eventmachine
   highline
+  json
   monkey-lib
   multi_json
   open4
@@ -44,7 +54,9 @@ DEPENDENCIES
   rack-protection
   rack-test
   rpam-ruby19
+  rpam-ruby19-feist!
   sinatra
   sinatra-contrib
+  sinatra-reloader
   sinatra-sugar
   tilt
