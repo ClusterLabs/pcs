@@ -622,7 +622,7 @@ Commands:
 
     sync
         Sync corosync configuration to all nodes found from current
-        corosync.conf file (cluster.conf on RHEL6)
+        corosync.conf file (cluster.conf on systems running Corosync 1.x)
 
     quorum unblock
         Cancel waiting for all nodes when establishing quorum.  Useful in

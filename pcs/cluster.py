@@ -1251,7 +1251,7 @@ def cluster_uidgid(argv, silent_list = False):
 
 def cluster_get_corosync_conf(argv):
     if utils.is_rhel6():
-        utils.err("corosync.conf is not supported on RHEL6")
+        utils.err("corosync.conf is not supported on CMAN clusters")
 
     if len(argv) > 1:
         usage.cluster()
