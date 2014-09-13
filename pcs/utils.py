@@ -679,7 +679,7 @@ def run(args, ignore_stderr=False, string_for_stdin=None):
                 err("Unable to write to file: " + filename)
 
     command = args[0]
-    if command[0:3] == "crm" or command in ["cibadmin", "cman_tool", "iso8601"]:
+    if command[0:3] == "crm" or command in ["pacemakerd", "cibadmin", "cman_tool", "iso8601"]:
         args[0] = settings.pacemaker_binaries + command
     if command[0:8] == "corosync":
         args[0] = settings.corosync_binaries + command
@@ -1517,12 +1517,12 @@ def is_systemctl():
 def is_rhel7_compat():
     is_compatible = True
 # We want to make sure we're running Corosync 2.3
-    out, ret = run(['/usr/sbin/corosync', '-v'])
+    out, ret = run(['corosync', '-v'])
     match = re.search(r'(\d)\.(\d)', out)
     if not (match and match.group(1) == "2" and match.group(2) == "3"):
         is_compatible = False
 # We also need Pacemaker 1.1 (sorry, RHEL 5 folks!)
-    out, ret = run(['/usr/sbin/pacemakerd', '-$'])
+    out, ret = run(['pacemakerd', '-$'])
     match = re.search(r'(\d)\.(\d)', out)
     if not (match and match.group(1) == "1" and match.group(2) == "1"):
         is_compatible = False
