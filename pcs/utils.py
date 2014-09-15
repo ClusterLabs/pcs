@@ -1212,6 +1212,16 @@ def is_valid_property(prop):
         if p.getAttribute("name") == prop:
             return True
 
+    output, retval = run([settings.cib_binary, "metadata"])
+    if retval != 0:
+        err("unable to run cib\n" + output)
+
+    dom = parseString(output)
+    properties = dom.getElementsByTagName("parameter");
+    for p in properties:
+        if p.getAttribute("name") == prop:
+            return True
+
     return False
 
 def get_node_attributes():

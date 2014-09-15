@@ -98,8 +98,13 @@ def get_default_properties():
         utils.err("unable to get crmd metadata\n"+output)
     crmd_root = ET.fromstring(output)
     
+    (output, retVal) = utils.run([settings.cib_binary, "metadata"])
+    if retVal != 0:
+        utils.err("unable to get cib metadata\n"+output)
+    cib_root = ET.fromstring(output)
+
     parameters = {}
-    for root in [pe_root, crmd_root]:
+    for root in [pe_root, crmd_root, cib_root]:
         for param in root.getiterator('parameter'):
             name = param.attrib["name"]
             content = param.find("content")
