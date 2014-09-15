@@ -17,6 +17,7 @@ import tempfile
 import datetime
 import commands
 from xml.dom.minidom import parse
+import json
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -51,6 +52,8 @@ def cluster_cmd(argv):
         cluster_auth(argv)
     elif (sub_cmd == "token"):
         cluster_token(argv)
+    elif (sub_cmd == "token-nodes"):
+        cluster_token_nodes(argv)
     elif (sub_cmd == "start"):
         if "--all" in utils.pcs_options:
             start_cluster_all()
@@ -152,6 +155,9 @@ def cluster_token(argv):
     else:
         utils.err("No authorization token for: %s" % (node))
 
+def cluster_token_nodes(argv):
+    print "\n".join(sorted(utils.readTokens().keys()))
+
 def auth_nodes(nodes):
     if "-u" in utils.pcs_options:
         username = utils.pcs_options["-u"]
@@ -163,9 +169,20 @@ def auth_nodes(nodes):
     else:
         password = None
 
+    set_nodes = set(nodes)
     for node in nodes:
         status = utils.checkAuthorization(node)
-        if status[0] == 3 or "--force" in utils.pcs_options:
+        need_auth = status[0] == 3 or "--force" in utils.pcs_options
+        mutually_authorized = False
+        if status[0] == 0:
+            try:
+                auth_status = json.loads(status[1])
+                if auth_status["success"]:
+                    if set_nodes == set(auth_status["node_list"]):
+                        mutually_authorized = True
+            except ValueError, KeyError:
+                pass
+        if need_auth or not mutually_authorized:
             if username == None:
                 sys.stdout.write('Username: ')
                 sys.stdout.flush()
@@ -179,10 +196,10 @@ def auth_nodes(nodes):
                     password = raw_input("")
             utils.updateToken(node,nodes,username,password)
             print "%s: Authorized" % (node)
-        elif status[0] == 0:
+        elif mutually_authorized:
             print node + ": Already authorized"
         else:
-            utils.err("Unable to communicate with %s" % (node))
+            utils.err("Unable to communicate with %s" % (node), False)
 
 
 # If no arguments get current cluster node status, otherwise get listed

@@ -130,6 +130,11 @@ def get_node_token(node)
   return retval, out
 end
 
+def get_token_node_list()
+  out, stderror, retval = run_cmd(PCS, "cluster", "token-nodes")
+  return retval, out
+end
+
 # Gets all of the nodes specified in the pcs config file for the cluster
 def get_cluster_nodes(cluster_name)
   pcs_config = PCSConfig.new
