@@ -107,10 +107,15 @@ def stonith_list_available(argv):
         except ValueError:
             continue
 
-    for fd in fence_devices:
-        if fd.count(filter_string) == 0:
-            continue
+    if not fence_devices:
+        utils.err(
+            "No stonith agents available. Do you have fence agents installed?"
+        )
+    fence_devices_filtered = [fd for fd in fence_devices if filter_string in fd]
+    if not fence_devices_filtered:
+        utils.err("No stonith agents matching the filter.")
 
+    for fd in fence_devices_filtered:
         sd = ""
         fd_name = fd[10:]
         if not "--nodesc" in utils.pcs_options:

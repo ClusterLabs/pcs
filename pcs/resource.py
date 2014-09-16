@@ -222,11 +222,20 @@ def resource_list_available(argv):
         if match:
             ret += "systemd:" + match.group(1) + "\n"
 
+    if not ret:
+        utils.err(
+            "No resource agents available. "
+            "Do you have resource agents installed?"
+        )
     if filter_string != "":
         rlines = ret.split("\n")
+        found = False
         for rline in rlines:
             if rline.lower().find(filter_string.lower()) != -1:
                 print rline
+                found = True
+        if not found:
+            utils.err("No resource agents matching the filter.")
     else:
         print ret,
 
