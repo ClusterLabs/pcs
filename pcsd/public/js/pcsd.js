@@ -204,6 +204,28 @@ function load_resource_form(item, ra, stonith) {
   });
 }
 
+function update_resource_form_groups(form, group_list) {
+  var select = $(form).find("select[name='resource_group']").first();
+  if (select.length < 1) {
+    return;
+  }
+  var selected = select.val();
+  var selected_valid = false;
+  var select_new = select.clone();
+  select_new.empty();
+  select_new.append('<option value="">None</options>');
+  $.each(group_list, function(index, group) {
+    select_new.append('<option value="' + group + '">' + group + '</options>');
+    if (selected == group) {
+      selected_valid = true;
+    }
+  });
+  if (selected_valid) {
+    select_new.val(selected);
+  }
+  select.replaceWith(select_new);
+}
+
 function verify_node_remove() {
   var buttonOpts = {};
   var ids = []

@@ -617,6 +617,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     var res_ord_constraints = {};
     var res_ord_set_constraints = {};
     var res_col_constraints = {};
+    var group_list = [];
     self.parentIDMapping = {};
     $.each(data, function(key, value) {
       if (value["resources"]) {
@@ -645,6 +646,14 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	});
       }
 
+      if (value["groups"]) {
+        $.each(value["groups"], function(index, group) {
+          if (group_list.indexOf(group) == -1) {
+            group_list.push(group);
+          }
+        });
+      }
+
       if (value["constraints"]) {
 	if (value["constraints"]["rsc_location"]) {
 	  $.each(value["constraints"]["rsc_location"], function (key, value) {
@@ -668,6 +677,8 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	}
       }
     });
+
+    update_resource_form_groups($("#new_resource_agent"), group_list.sort());
 
     $.each(loc_con, function (key, value) {
       res_loc_constraints[value["rsc"]] = res_loc_constraints[value["rsc"]] || [];
