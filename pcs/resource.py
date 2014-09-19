@@ -400,7 +400,11 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
                     % (", ".join(bad_opts), get_full_ra_type(ra_type, True)))
         if len(missing_req_opts) != 0:
-            print "Warning: missing required option(s): '%s' for resource type: %s" % (", ".join(missing_req_opts),get_full_ra_type(ra_type,True))
+            utils.err(
+                "missing required option(s): '%s' for resource type: %s"
+                    " (use --force to override)"
+                % (", ".join(missing_req_opts), get_full_ra_type(ra_type, True))
+            )
 
     resource_elem = create_xml_element("primitive", primitive_values, instance_attributes + op_attributes + meta_attributes)
     dom.getElementsByTagName("resources")[0].appendChild(resource_elem)

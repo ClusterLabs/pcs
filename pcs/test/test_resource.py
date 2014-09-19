@@ -2007,7 +2007,11 @@ Deleting Resource (and group and M/S) - A2
 
     def testResourceMissingValues(self):
         o,r = pcs("resource create --no-default-ops myip IPaddr2")
-        ac(o,"Warning: missing required option(s): 'ip' for resource type: ocf:heartbeat:IPaddr2\n")
+        ac(o,"Error: missing required option(s): 'ip' for resource type: ocf:heartbeat:IPaddr2 (use --force to override)\n")
+        assert r == 1
+
+        o,r = pcs("resource create --no-default-ops myip IPaddr2 --force")
+        ac(o,"")
         assert r == 0
 
         o,r = pcs("resource create --no-default-ops myip2 IPaddr2 ip=3.3.3.3")
@@ -2015,11 +2019,15 @@ Deleting Resource (and group and M/S) - A2
         assert r == 0
 
         o,r = pcs("resource create --no-default-ops myfs Filesystem")
-        ac(o,"Warning: missing required option(s): 'device, directory, fstype' for resource type: ocf:heartbeat:Filesystem\n")
+        ac(o,"Error: missing required option(s): 'device, directory, fstype' for resource type: ocf:heartbeat:Filesystem (use --force to override)\n")
+        assert r == 1
+
+        o,r = pcs("resource create --no-default-ops myfs Filesystem --force")
+        ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create --no-default-ops myfs2 Filesystem device=x directory=y")
-        ac(o,"Warning: missing required option(s): 'fstype' for resource type: ocf:heartbeat:Filesystem\n")
+        o,r = pcs("resource create --no-default-ops myfs2 Filesystem device=x directory=y --force")
+        ac(o,"")
         assert r == 0
 
         o,r = pcs("resource create --no-default-ops myfs3 Filesystem device=x directory=y fstype=z")

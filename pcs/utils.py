@@ -1366,6 +1366,7 @@ def getResourceType(resource):
 # ra_values is an array of 2 item tuples (key, value)
 # resource is a python minidom element of the resource from the cib
 def validInstanceAttributes(res_id, ra_values, resource_type):
+    ra_values = dict(ra_values)
     found = False
     resSplit = resource_type.split(":")
     if len(resSplit) == 2:
@@ -1397,11 +1398,22 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
         err("Unable to parse xml for '%s': %s" % (resource_type, e))
     except xml.etree.ElementTree.ParseError as e:
         err("Unable to parse xml for '%s': %s" % (resource_type, e))
-    for key,value in ra_values:
+    for key,value in ra_values.items():
         if key not in valid_parameters:
             bad_parameters.append(key)
         if key in missing_required_parameters:
             missing_required_parameters.remove(key)
+
+    if missing_required_parameters:
+        if resClass == "stonith" and "port" in missing_required_parameters:
+            if (
+                "pcmk_host_argument" in ra_values
+                or
+                "pcmk_host_map" in ra_values
+                or
+                "pcmk_host_list" in ra_values
+            ):
+                missing_required_parameters.remove("port")
 
     return bad_parameters, missing_required_parameters 
 
