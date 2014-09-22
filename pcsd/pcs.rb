@@ -93,8 +93,12 @@ def add_order_constraint(resourceA, resourceB, actionA, actionB, score, symmetri
   }
 end
 
-def add_order_set_constraint(resource_list)
-  command = [PCS, "constraint", "order", "set"] + resource_list
+def add_order_set_constraint(resource_set_list)
+  command = [PCS, "constraint", "order"]
+  resource_set_list.each { |resource_set|
+    command << "set"
+    command.concat(resource_set)
+  }
   stdout, stderr, retval = run_cmd(*command)
   return retval
 end

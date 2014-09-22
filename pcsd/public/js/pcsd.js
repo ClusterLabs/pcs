@@ -1097,10 +1097,17 @@ function add_constraint(parent_id, c_type) {
 }
 
 function add_constraint_set(parent_id, c_type) {
-  var data = {}
-  var resources = $(parent_id + " input[name='resource_ids']").val() || "";
-  data["resources"] = resources.trim().split(/\s+/);
+  var data = {'resources': []};
+  $(parent_id + " input[name='resource_ids[]']").each(function(index, element) {
+    var resources = element.value.trim();
+    if (resources.length > 0) {
+      data['resources'].push(resources.split(/\s+/));
+    }
+  });
   data["c_type"] = c_type;
+  if (data['resources'].length < 1) {
+    return;
+  }
   fade_in_out($(parent_id))
 
   $.ajax({
@@ -1109,7 +1116,7 @@ function add_constraint_set(parent_id, c_type) {
     data: data,
     timeout: pcs_timeout,
     success: function() {
-      $(parent_id + " input").val("");
+      reset_constraint_set_form(parent_id);
       if (c_type == "ord") {
         Pcs.resourcesController.add_ord_set_constraint(
           data["resources"], "temp-cons-id", "temp-cons-set-id"
@@ -1118,9 +1125,21 @@ function add_constraint_set(parent_id, c_type) {
       Pcs.update();
     },
     error: function (xhr, status, error){
-      alert("Inable to add constraints: ("+error+")");
+      alert("Unable to add constraints: ("+error+")");
     },
   });
+}
+
+function new_constraint_set_row(parent_id) {
+  $(parent_id + " td").first().append(
+    '<br>Set: <input type="text" name="resource_ids[]">'
+  );
+}
+
+function reset_constraint_set_form(parent_id) {
+  $(parent_id + " td").first().html(
+    'Set: <input type="text" name="resource_ids[]">'
+  );
 }
 
 function remove_constraint(id) {

@@ -939,7 +939,7 @@ end
 def add_constraint_set_remote(params)
   case params["c_type"]
   when "ord"
-    retval, error = add_order_set_constraint(params["resources"])
+    retval, error = add_order_set_constraint(params["resources"].values)
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]
   end

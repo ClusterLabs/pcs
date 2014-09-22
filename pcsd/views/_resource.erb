@@ -214,8 +214,8 @@
             <div id="locationdep">
               <table class="datatable">
                 <tr>
-                  <th>Preference name/Set of resources</th>
-                  <th>Remove</th>
+                  <th>Preference Name/Set of Resources</th>
+                  <th style="text-align: center;">Remove</th>
                 </tr>
                 {{#each Pcs.resourcesController.cur_resource.ordering_set_constraints}}
                 <tr>
@@ -231,9 +231,17 @@
                 </tr>
                 {{/each}}
                 {{/each}}
-                <tr id="new_res_orc_set">
-                  <td><input type="text" name="resource_ids"></td>
-                  <td><button type="button" onclick="add_constraint_set('#new_res_orc_set', 'ord');" name="add">Add</button></td>
+                {{#unless Pcs.resourcesController.cur_resource.ordering_set_constraints}}
+                  <tr><td style="color: gray;">NONE</td><td></td></tr>
+                {{/unless}}
+                <tr id="new_res_orc_set" title="Enter the resources you want to be in one set into the 'Set' field separated by space.
+Use the 'New Set' button to create more sets.
+Use the 'Add' button to submit the form.">
+                  <td>Set: <input type="text" name="resource_ids[]"></td>
+                  <td style="vertical-align: bottom;">
+                    <button type="button" onclick="new_constraint_set_row('#new_res_orc_set');" name="new-row">New Set</button>
+                    <button type="button" onclick="add_constraint_set('#new_res_orc_set', 'ord');" name="add">Add</button>
+                  </td>
                 </tr>
               </table>
             </div>
