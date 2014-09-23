@@ -305,36 +305,36 @@ class UtilsTest(unittest.TestCase):
     def testValidateConstraintResource(self):
         dom = self.get_cib_resources()
         self.assertEquals(
-            (True, ""),
+            (True, "", "myClone"),
             utils.validate_constraint_resource(dom, "myClone")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myGroupClone"),
             utils.validate_constraint_resource(dom, "myGroupClone")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myMaster"),
             utils.validate_constraint_resource(dom, "myMaster")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myGroupMaster"),
             utils.validate_constraint_resource(dom, "myGroupMaster")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myResource"),
             utils.validate_constraint_resource(dom, "myResource")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myGroup"),
             utils.validate_constraint_resource(dom, "myGroup")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myGroupedResource"),
             utils.validate_constraint_resource(dom, "myGroupedResource")
         )
 
         self.assertEquals(
-            (False, "Resource 'myNonexistent' does not exist"),
+            (False, "Resource 'myNonexistent' does not exist", None),
             utils.validate_constraint_resource(dom, "myNonexistent")
         )
 
@@ -343,15 +343,27 @@ class UtilsTest(unittest.TestCase):
             "%s when adding constraints. Use --force to override."
         )
         self.assertEquals(
-            (False, message % ("myClonedResource", "myClone")),
+            (
+                False,
+                message % ("myClonedResource", "myClone"),
+                "myClone"
+            ),
             utils.validate_constraint_resource(dom, "myClonedResource")
         )
         self.assertEquals(
-            (False, message % ("myClonedGroup", "myGroupClone")),
+            (
+                False,
+                message % ("myClonedGroup", "myGroupClone"),
+                "myGroupClone"
+            ),
             utils.validate_constraint_resource(dom, "myClonedGroup")
         )
         self.assertEquals(
-            (False, message % ("myClonedGroupedResource", "myGroupClone")),
+            (
+                False,
+                message % ("myClonedGroupedResource", "myGroupClone"),
+                "myGroupClone"
+            ),
             utils.validate_constraint_resource(dom, "myClonedGroupedResource")
         )
 
@@ -360,41 +372,53 @@ class UtilsTest(unittest.TestCase):
             "%s when adding constraints. Use --force to override."
         )
         self.assertEquals(
-            (False, message % ("myMasteredResource", "myMaster")),
+            (
+                False,
+                message % ("myMasteredResource", "myMaster"),
+                "myMaster"
+            ),
             utils.validate_constraint_resource(dom, "myMasteredResource")
         )
         self.assertEquals(
-            (False, message % ("myMasteredGroup", "myGroupMaster")),
+            (
+                False,
+                message % ("myMasteredGroup", "myGroupMaster"),
+                "myGroupMaster"
+            ),
             utils.validate_constraint_resource(dom, "myMasteredGroup")
         )
         self.assertEquals(
-            (False, message % ("myMasteredGroupedResource", "myGroupMaster")),
+            (
+                False,
+                message % ("myMasteredGroupedResource", "myGroupMaster"),
+                "myGroupMaster"
+            ),
             utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
         )
 
         utils.pcs_options["--force"] = True
         self.assertEquals(
-            (True, ""),
+            (True, "", "myClone"),
             utils.validate_constraint_resource(dom, "myClonedResource")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myGroupClone"),
             utils.validate_constraint_resource(dom, "myClonedGroup")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myGroupClone"),
             utils.validate_constraint_resource(dom, "myClonedGroupedResource")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myMaster"),
             utils.validate_constraint_resource(dom, "myMasteredResource")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myGroupMaster"),
             utils.validate_constraint_resource(dom, "myMasteredGroup")
         )
         self.assertEquals(
-            (True, ""),
+            (True, "", "myGroupMaster"),
             utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
         )
 

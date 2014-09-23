@@ -65,12 +65,15 @@ def add_location_constraint(resource, node, score)
     nodescore = node +"="+score
   end
 
-  stdout, stderr, retval = run_cmd(PCS,"constraint","location",resource,"prefers",nodescore)
+  stdout, stderr, retval = run_cmd(
+    PCS, "constraint", "location", resource, "prefers", nodescore,
+    "--autocorrect"
+  )
   return retval, stderr.join(' ')
 end
 
 def add_location_constraint_rule(resource, rule, score, force=false)
-  cmd = [PCS, "constraint", "location", resource, "rule"]
+  cmd = [PCS, "constraint", "location", "--autocorrect", resource, "rule"]
   cmd << "score=#{score}" if score != ""
   cmd.concat(rule.shellsplit())
   cmd << '--force' if force
@@ -87,7 +90,7 @@ def add_order_constraint(
   end
   command = [
     PCS, "constraint", "order", actionA, resourceA, "then", actionB, resourceB,
-    score, sym
+    score, sym, "--autocorrect"
   ]
   command << '--force' if force
   $logger.info command
@@ -98,7 +101,7 @@ def add_order_constraint(
 end
 
 def add_order_set_constraint(resource_set_list, force=false)
-  command = [PCS, "constraint", "order"]
+  command = [PCS, "constraint", "order", "--autocorrect"]
   resource_set_list.each { |resource_set|
     command << "set"
     command.concat(resource_set)
@@ -114,6 +117,7 @@ def add_colocation_constraint(resourceA, resourceB, score, force=false)
   end
   command = [
     PCS, "constraint", "colocation", "add", resourceA, resourceB, score,
+    "--autocorrect"
   ]
   command << '--force' if force
   $logger.info command

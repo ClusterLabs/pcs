@@ -878,6 +878,7 @@ def get_resource_master_id(resource_id):
                 return p.parentNode.getAttribute("id")
     return None
 
+# returns tuple (is_valid, error_message, correct_resource_id_if_exists)
 def validate_constraint_resource(dom, resource_id):
     resource_el = (
         dom_get_clone(dom, resource_id)
@@ -886,7 +887,7 @@ def validate_constraint_resource(dom, resource_id):
     )
     if resource_el:
         # clone and master is always valid
-        return True, ""
+        return True, "", resource_id
 
     resource_el = (
         dom_get_resource(dom, resource_id)
@@ -894,31 +895,37 @@ def validate_constraint_resource(dom, resource_id):
         dom_get_group(dom, resource_id)
     )
     if not resource_el:
-        return False, "Resource '%s' does not exist" % resource_id
-
-    if "--force" in pcs_options:
-        return True, ""
+        return False, "Resource '%s' does not exist" % resource_id, None
 
     clone_el = dom_get_resource_clone_ms_parent(dom, resource_id)
     if not clone_el:
         # primitive and group is valid if not in clone nor master
-        return True, ""
+        return True, "", resource_id
+
+    if "--force" in pcs_options:
+        return (
+            True,
+            "",
+            clone_el.getAttribute("id") if clone_el else resource_id
+        )
 
     if clone_el.tagName == "clone":
         return (
             False,
             "%s is a clone resource, you should use the clone id: %s "
                 "when adding constraints. Use --force to override."
-            % (resource_id, clone_el.getAttribute("id"))
+                % (resource_id, clone_el.getAttribute("id")),
+            clone_el.getAttribute("id")
         )
     if clone_el.tagName == "master":
         return (
             False,
             "%s is a master/slave resource, you should use the master id: %s "
                 "when adding constraints. Use --force to override."
-            % (resource_id, clone_el.getAttribute("id"))
+                % (resource_id, clone_el.getAttribute("id")),
+            clone_el.getAttribute("id")
         )
-    return True, ""
+    return True, "", resource_id
 
 
 def dom_get_resource_remote_node_name(dom_resource):

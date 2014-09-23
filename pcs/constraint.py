@@ -202,16 +202,20 @@ def colocation_add(argv):
         resource2 = argv.pop(0)
 
     cib_dom = utils.get_cib_dom()
-    resource_valid, resource_error = utils.validate_constraint_resource(
-        cib_dom, resource1
-    )
+    resource_valid, resource_error, correct_id \
+        = utils.validate_constraint_resource(cib_dom, resource1)
     if not resource_valid:
-        utils.err(resource_error)
-    resource_valid, resource_error = utils.validate_constraint_resource(
-        cib_dom, resource2
-    )
+        if "--autocorrect" in utils.pcs_options and correct_id:
+            resource1 = correct_id
+        else:
+            utils.err(resource_error)
+    resource_valid, resource_error, correct_id \
+        = utils.validate_constraint_resource(cib_dom, resource2)
     if not resource_valid:
-        utils.err(resource_error)
+        if "--autocorrect" in utils.pcs_options and correct_id:
+            resource2 = correct_id
+        else:
+            utils.err(resource_error)
 
     score,nv_pairs = parse_score_options(argv)
 
@@ -413,11 +417,13 @@ def set_add_resource_sets(elem, sets, cib):
                     )
                 res_set.setAttribute(key, val)
             else:
-                res_valid, res_error = utils.validate_constraint_resource(
-                    cib, opts
-                )
+                res_valid, res_error, correct_id \
+                    = utils.validate_constraint_resource(cib, opts)
                 if not res_valid:
-                    utils.err(res_error)
+                    if "--autocorrect" in utils.pcs_options and correct_id:
+                        opts = correct_id
+                    else:
+                        utils.err(res_error)
                 se = cib.createElement("resource_ref")
                 res_set.appendChild(se)
                 se.setAttribute("id", opts)
@@ -551,16 +557,20 @@ def order_add(argv,returnElementOnly=False):
     resource2 = argv.pop(0)
 
     cib_dom = utils.get_cib_dom()
-    resource_valid, resource_error = utils.validate_constraint_resource(
-        cib_dom, resource1
-    )
+    resource_valid, resource_error, correct_id \
+        = utils.validate_constraint_resource(cib_dom, resource1)
     if not resource_valid:
-        utils.err(resource_error)
-    resource_valid, resource_error = utils.validate_constraint_resource(
-        cib_dom, resource2
-    )
+        if "--autocorrect" in utils.pcs_options and correct_id:
+            resource1 = correct_id
+        else:
+            utils.err(resource_error)
+    resource_valid, resource_error, correct_id \
+        = utils.validate_constraint_resource(cib_dom, resource2)
     if not resource_valid:
-        utils.err(resource_error)
+        if "--autocorrect" in utils.pcs_options and correct_id:
+            resource2 = correct_id
+        else:
+            utils.err(resource_error)
 
     sym = "true" if (len(argv) == 0 or argv[0] != "nonsymmetrical") else "false"
 
@@ -834,11 +844,15 @@ def location_add(argv,rm=False):
         resource_name = argv.pop(0)
         node = argv.pop(0)
         score = argv.pop(0)
-        resource_valid, resource_error = utils.validate_constraint_resource(
-            utils.get_cib_dom(), resource_name
-        )
+        resource_valid, resource_error, correct_id \
+            = utils.validate_constraint_resource(
+                utils.get_cib_dom(), resource_name
+            )
         if not resource_valid:
-            utils.err(resource_error)
+            if "--autocorrect" in utils.pcs_options and correct_id:
+                resource_name = correct_id
+            else:
+                utils.err(resource_error)
         if not utils.is_score(score):
             utils.err("invalid score '%s', use integer or INFINITY or -INFINITY" % score)
 
@@ -876,11 +890,13 @@ def location_rule(argv):
         sys.exit(1)
     
     res_name = argv.pop(0)
-    resource_valid, resource_error = utils.validate_constraint_resource(
-        utils.get_cib_dom(), res_name
-    )
+    resource_valid, resource_error, correct_id \
+        = utils.validate_constraint_resource(utils.get_cib_dom(), res_name)
     if not resource_valid:
-        utils.err(resource_error)
+        if "--autocorrect" in utils.pcs_options and correct_id:
+            res_name = correct_id
+        else:
+            utils.err(resource_error)
 
     argv.pop(0)
 
