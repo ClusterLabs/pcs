@@ -1091,7 +1091,11 @@ function add_constraint(parent_id, c_type, force) {
     error: function (xhr, status, error) {
       var message = "Unable to add constraints: (" + error + ")";
       var error_prefix = 'Error adding constraint: ';
-      if (xhr.responseText.indexOf(error_prefix) == 0) {
+      if (
+        xhr.responseText.indexOf(error_prefix) == 0
+        &&
+        xhr.responseText.indexOf('cib_replace failed') == -1
+      ) {
         message += "\n" + xhr.responseText.slice(error_prefix.length);
       }
       if (message.indexOf('--force') == -1) {
@@ -1141,7 +1145,11 @@ function add_constraint_set(parent_id, c_type, force) {
     error: function (xhr, status, error){
       var message = "Unable to add constraints: (" + error + ")";
       var error_prefix = 'Error adding constraint: ';
-      if (xhr.responseText.indexOf(error_prefix) == 0) {
+      if (
+        xhr.responseText.indexOf(error_prefix) == 0
+        &&
+        xhr.responseText.indexOf('cib_replace failed') == -1
+      ) {
         message += "\n" + xhr.responseText.slice(error_prefix.length);
       }
       if (message.indexOf('--force') == -1) {

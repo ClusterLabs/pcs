@@ -740,6 +740,9 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       $.each(set_con["sets"], function(key, set) {
         $.each(set["resources"], function(key, resource) {
           res_ord_set_constraints[resource] = res_ord_set_constraints[resource] || [];
+          if (res_ord_set_constraints[resource].indexOf(set_con) != -1) {
+            return;
+          }
           res_ord_set_constraints[resource].push(set_con);
           if (self.parentIDMapping[resource]) {
             $.each(self.parentIDMapping[resource], function(index, map) {
