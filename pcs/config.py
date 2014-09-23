@@ -1,8 +1,11 @@
 import sys
 import os
+import re
+import datetime
 import cStringIO
 import tarfile
 import json
+from xml.dom.minidom import parse
 
 import settings
 import utils
@@ -28,6 +31,16 @@ def config_cmd(argv):
         config_backup(argv)
     elif sub_cmd == "restore":
         config_restore(argv)
+    elif sub_cmd == "checkpoint":
+        if not argv:
+            config_checkpoint_list()
+        elif argv[0] == "view":
+            config_checkpoint_view(argv[1:])
+        elif argv[0] == "restore":
+            config_checkpoint_restore(argv[1:])
+        else:
+            usage.config(["checkpoint"])
+            sys.exit(1)
     else:
         usage.config()
         sys.exit(1)
@@ -37,6 +50,10 @@ def config_show(argv):
     status.nodes_status(["config"])
     print ""
     print ""
+    config_show_cib()
+    cluster.cluster_uidgid([], True)
+
+def config_show_cib():
     print "Resources: "
     utils.pcs_options["--all"] = 1
     utils.pcs_options["--full"] = 1
@@ -53,7 +70,6 @@ def config_show(argv):
     print ""
     del utils.pcs_options["--all"]
     prop.list_property([])
-    cluster.cluster_uidgid([], True)
 
 def config_backup(argv):
     if len(argv) > 1:
@@ -297,4 +313,56 @@ def config_backup_add_version_to_tarball(tarball, version=None):
 
 def config_backup_version():
     return 1
+
+def config_checkpoint_list():
+    try:
+        file_list = os.listdir(settings.cib_dir)
+    except OSError as e:
+        utils.err("unable to list checkpoints: %s" % e)
+    cib_list = []
+    cib_name_re = re.compile("^cib-(\d+)\.raw$")
+    for filename in file_list:
+        match = cib_name_re.match(filename)
+        if not match:
+            continue
+        file_path = os.path.join(settings.cib_dir, filename)
+        try:
+            if os.path.isfile(file_path):
+                cib_list.append(
+                    (int(os.path.getmtime(file_path)), match.group(1))
+                )
+        except OSError:
+            pass
+    cib_list.sort()
+    if not cib_list:
+        print "No checkpoints available"
+        return
+    for cib_info in cib_list:
+        print(
+            "checkpoint %s: date %s"
+            % (cib_info[1], datetime.datetime.fromtimestamp(cib_info[0]))
+        )
+
+def config_checkpoint_view(argv):
+    if len(argv) != 1:
+        usage.config(["checkpoint", "view"])
+        sys.exit(1)
+
+    utils.usefile = True
+    utils.filename = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
+    if not os.path.isfile(utils.filename):
+        utils.err("unable to read the checkpoint")
+    config_show_cib()
+
+def config_checkpoint_restore(argv):
+    if len(argv) != 1:
+        usage.config(["checkpoint", "restore"])
+        sys.exit(1)
+
+    cib_path = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
+    try:
+        snapshot_dom = parse(cib_path)
+    except Exception as e:
+        utils.err("unable to read the checkpoint: %s" % e)
+    utils.replace_cib_configuration(snapshot_dom)
 

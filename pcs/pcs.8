@@ -228,12 +228,6 @@ Push the raw xml from <filename> to the CIB (Cluster Information Base)
 cib\-upgrade
 Upgrade the cib to the latest version
 .TP
-cib-revisions
-List available CIB revisions.
-.TP
-cib-rollback <cib-revision>
-Rollback the CIB to specified revision.  Use the cib-revisions command to get a list of available revisions.
-.TP
 edit
 Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving
 .TP
@@ -485,6 +479,15 @@ Creates the tarball containing the cluster configuration files.  If filename is 
 .TP
 restore [\fB\-\-local\fR] [filename]
 Restores the cluster configuration files on all nodes from the backup.  If filename is not specified the standard input will be used.  If \fB\-\-local\fR is specified only the files on the current node will be restored.
+.TP
+checkpoint
+List all available configuration checkpoints.
+.TP
+checkpoint view <checkpoint_number>
+Show specified configuration checkpoint.
+.TP
+checkpoint restore <checkpoint_number>
+Restore cluster configuration to specified checkpoint.
 .SH EXAMPLES
 .TP
 Show all resources

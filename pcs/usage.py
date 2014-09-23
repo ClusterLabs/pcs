@@ -574,13 +574,6 @@ Commands:
     cib-upgrade
         Upgrade the cib to the latest version
 
-    cib-revisions
-        List available CIB revisions.
-
-    cib-rollback <cib-revision>
-        Rollback the CIB to specified revision.  Use the cib-revisions command
-        to get a list of available revisions.
-
     edit
         Edit the cib in the editor specified by the $EDITOR environment
         variable and push out any changes upon saving
@@ -988,6 +981,15 @@ Commands:
         If filename is not specified the standard input will be used.
         If --local is specified only the files on the current node will
         be restored.
+
+    checkpoint
+        List all available configuration checkpoints.
+
+    checkpoint view <checkpoint_number>
+        Show specified configuration checkpoint.
+
+    checkpoint restore <checkpoint_number>
+        Restore cluster configuration to specified checkpoint.
 """
     if pout:
         print sub_usage(args, output)
