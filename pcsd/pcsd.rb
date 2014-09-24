@@ -290,25 +290,6 @@ if not DISABLE_GUI
     end
   end
 
-  get '/resources/metadata/:resourcename/?:new?' do
-    return ""
-    @resource = ResourceAgent.new(params[:resourcename])
-    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + params[:resourcename])
-    @new_resource = params[:new]
-    @resources, @groups = getResourcesGroups
-
-    erb :resourceagentform
-  end
-
-  get '/fencedevices/metadata/:fencedevicename/?:new?' do
-    return ""
-    @fenceagent = FenceAgent.new(params[:fencedevicename])
-    @fenceagent.required_options, @fenceagent.optional_options = getFenceAgentMetadata(params[:fencedevicename])
-    @new_fenceagent = params[:new]
-
-    erb :fenceagentform
-  end
-
   get '/nodes/?:node?' do
     setup()
     @load_data = true
