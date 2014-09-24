@@ -156,7 +156,7 @@ Using the above 8 node cluster example, with LMS enabled the cluster \
 can retain quorum and continue operating by losing, in a cascade \
 fashion, up to 6 nodes with only 2 remaining active." %>
 	<% last_man_window_desc = "\
-Tunes Last Man Standing Window (default: 10000ms)
+Tunes Last Man Standing Window (default: 10000 ms)
 
 The window of time between when a node (or group of nodes die) and quorum \
 is recalculated if the 'Last Man Standing' option is enabled." %>
@@ -164,22 +164,23 @@ is recalculated if the 'Last Man Standing' option is enabled." %>
 Enables IPv6 for cluster communication (default: off)" %>
         <% token_timeout = "\
 Sets time in milliseconds until a token loss is declared after not receiving \
-a token." %>
+a token (default: 1000 ms)" %>
         <% token_coefficient = "\
 Sets time in milliseconds used for clusters with at least 3 nodes \
 as a coefficient for real token timeout calculation \
-(token + (number_of_nodes - 2) * token_coefficient)" %>
+(token + (number_of_nodes - 2) * token_coefficient) (default: 650 ms)" %>
         <% join_timeout = "\
-Sets time in milliseconds to wait for join messages." %>
+Sets time in milliseconds to wait for join messages (default: 50 ms)" %>
         <% consensus_timeout = "\
 Sets time in milliseconds to wait for consensus to be achieved before starting \
-a new round of membership configuration." %>
+a new round of membership configuration (default: 1200 ms)" %>
         <% miss_count_const = "\
 Sets the maximum number of times on receipt of a token a message is checked \
-for retransmission before a retransmission occurs." %>
+for retransmission before a retransmission occurs (default: 5)" %>
         <% fail_recv_const = "\
 Specifies how many rotations of the token without receiving any messages when \
-messages should be received may occur before a new configuration is formed." %>
+messages should be received may occur before a new configuration is formed \
+(default: 2500)" %>
         <% rrp_addr_0_1_desc = "\
 Enables Redundant Ring Protocol (RRP) (default: off)
 
@@ -187,11 +188,19 @@ Specify ring 0 and ring 1 network address if you want to use RRP." %>
         <% rrp_broadcast_0_1_desc = "\
 Enables broadcast communication in the ring (default: off)" %>
         <% rrp_mcast_0_1_desc = "\
-Optionally specify ring multicast address." %>
+Optionally specify ring multicast address \
+(default: 239.255.1.1 for ring 0 and 239.255.2.1 for ring 1)" %>
         <% rrp_mcastport_0_1_desc = "\
-Optionally specify ring multicast port." %>
+Optionally specify ring multicast UDP port (default: 5405)
+
+Please note the cluster uses two UDP ports, 'Multicast Port' for multicast \
+receives and 'Multicast Port' - 1 for multicast sends." %>
         <% rrp_ttl_0_1_desc = "\
-Optionally specify ring TTL." %>
+Optionally specify ring TTL (default: 1)
+
+If you run your cluster on a routed network then the default of 1 will be too \
+small. This option provides a way to increase this up to 255. The valid range \
+is 0..255. Note that this is only valid on multicast transport types." %>
         <% rrp_addr1_desc = "\
 Enables Redundant Ring Protocol (RRP) (default: off)
 
@@ -208,31 +217,31 @@ Specify ring 1 address for each node if you want to use RRP." %>
 	<tr title="<%= h(wait_for_all_desc) %>"><td align=right>Wait for All:</td><td><input type=checkbox name="config-wait_for_all"></td></tr>
 	<tr title="<%= h(auto_tie_desc) %>"><td align=right>Auto Tie Breaker:</td><td><input type=checkbox name="config-auto_tie_breaker"></td></tr>
 	<tr title="<%= h(last_man_desc) %>"><td align=right>Last Man Standing:</td><td><input type=checkbox name="config-last_man_standing"></td></tr>
-	<tr title="<%= h(last_man_window_desc) %>"><td align=right>Last Man Standing Window:</td><td><input type=text size=5 name="config-last_man_standing_window" value=10000>ms</td></tr>
-	<tr title="<%= h(use_ipv6_desc) %>"><td align=right>Use IPv6</td><td><input type=checkbox name="config-ipv6"></td></tr>
+	<tr title="<%= h(last_man_window_desc) %>"><td align=right>Last Man Standing Window:</td><td><input type=text size=5 name="config-last_man_standing_window"> ms</td></tr>
+	<tr title="<%= h(use_ipv6_desc) %>"><td align=right>Use IPv6:</td><td><input type=checkbox name="config-ipv6"></td></tr>
         <tr title="<%= h(token_timeout) %>">
           <td align="right">Token Timeout:</td>
-          <td><input type="text" size="5" name="config-token" value="1000">ms</td>
+          <td><input type="text" size="5" name="config-token"> ms</td>
         </tr>
         <tr title="<%= h(token_coefficient) %>">
           <td align="right">Token Timeout Coefficient:</td>
-          <td><input type="text" size="5" name="config-token_coefficient" value="650">ms</td>
+          <td><input type="text" size="5" name="config-token_coefficient"> ms</td>
         </tr>
         <tr title="<%= h(join_timeout) %>">
           <td align="right">Join Timeout:</td>
-          <td><input type="text" size="5" name="config-join" value="50">ms</td>
+          <td><input type="text" size="5" name="config-join"> ms</td>
         </tr>
         <tr title="<%= h(consensus_timeout) %>">
           <td align="right">Consensus Timeout:</td>
-          <td><input type="text" size="5" name="config-consensus" value="1200">ms</td>
+          <td><input type="text" size="5" name="config-consensus"> ms</td>
         </tr>
         <tr title="<%= h(miss_count_const) %>">
           <td align="right">Missed Messages Count:</td>
-          <td><input type="text" size="5" name="config-miss_count_const" value="5"></td>
+          <td><input type="text" size="5" name="config-miss_count_const"></td>
         </tr>
         <tr title="<%= h(fail_recv_const) %>">
           <td align="right">Failures Count:</td>
-          <td><input type="text" size="5" name="config-fail_recv_const" value="2500"></td>
+          <td><input type="text" size="5" name="config-fail_recv_const"></td>
         </tr>
       </table>
       <div id="rrp_udp_transport" style="display: none;">
@@ -246,28 +255,28 @@ Specify ring 1 address for each node if you want to use RRP." %>
           </tr>
           <tr title="<%= h(rrp_addr_0_1_desc) %>">
               <td align="right">Address:</td>
-              <td><input type="text"name="config-addr0"></td>
-              <td><input type="text"name="config-addr1"></td>
+              <td><input type="text" name="config-addr0"></td>
+              <td><input type="text" name="config-addr1"></td>
           </tr>
           <tr title="<%= h(rrp_broadcast_0_1_desc) %>">
               <td align="right">Use Broadcast:</td>
-              <td><input type="checkbox"name="config-broadcast0"></td>
-              <td><input type="checkbox"name="config-broadcast1"></td>
+              <td><input type="checkbox" name="config-broadcast0"></td>
+              <td><input type="checkbox" name="config-broadcast1"></td>
           </tr>
           <tr title="<%= h(rrp_mcast_0_1_desc) %>" class="transport_udp_only">
               <td align="right">Multicast Address:</td>
-              <td><input type="text"name="config-mcast0" value="239.255.1.1"></td>
-              <td><input type="text"name="config-mcast1" value="239.255.2.1"></td>
+              <td><input type="text" name="config-mcast0"></td>
+              <td><input type="text" name="config-mcast1"></td>
           </tr>
           <tr title="<%= h(rrp_mcastport_0_1_desc) %>" class="transport_udp_only">
               <td align="right">Multicast Port:</td>
-              <td><input type="text"name="config-mcastport0" value="5405"></td>
-              <td><input type="text"name="config-mcastport1" value="5405"></td>
+              <td><input type="text" name="config-mcastport0"></td>
+              <td><input type="text" name="config-mcastport1"></td>
           </tr>
           <tr title="<%= h(rrp_ttl_0_1_desc) %>" class="transport_udp_only">
               <td align="right">TTL:</td>
-              <td><input type="text"name="config-ttl0"></td>
-              <td><input type="text"name="config-ttl1"></td>
+              <td><input type="text" name="config-ttl0"></td>
+              <td><input type="text" name="config-ttl1"></td>
           </tr>
         </table>
       </div>

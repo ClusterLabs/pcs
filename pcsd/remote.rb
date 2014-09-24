@@ -390,13 +390,9 @@ def setup_cluster(params)
       options << "--" + o + "=1"
     end
 
-    if o == "last_man_standing_window" and v != "10000"
-      options << "--" + o + "=" + v
-    end
-
     options << "--" + o + "=" + v if [
         "token", "token_coefficient", "join", "consensus", "miss_count_const",
-        "fail_recv_const",
+        "fail_recv_const", "last_man_standing_window",
       ].include?(o)
 
     if o == "transport" and v == "udp"
