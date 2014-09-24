@@ -44,6 +44,22 @@
 	  </td>
 	</tr>
       <% } %>
+      <tr class="stop">
+    <td id="<%= @new_fenceagent ? "advanced_fenceargs_new" : "advanced_fenceargs_existing" %>" class="reg" onclick="show_hide_constraints(this)" colspan=2>
+      <span class="rightarrow sprites"></span><span class="downarrow sprites" style="display: none;"></span>
+      <div class="bold">Advanced Arguments:</div>
+    </td>
+      </tr>
+      <% @fenceagent.advanced_options.each { |name, desc|  %>
+    <tr style="display: none;">
+      <td class="reg">
+        &nbsp;<%= name %>
+      </td>
+      <td>
+            <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if @existing_resource and @cur_resource and @cur_resource.options%>" size="35" class="text_field">
+      </td>
+    </tr>
+      <% } %>
       <tr class="stop"><td class="center" style="padding-top:20px;" colspan=2>
 	  <input type=submit class="text_field apply_changes" onclick="$(this).hide();create_resource($(this).parents('form'),<%=@existing_resource ? 'true':'false'%>,true); return false;" value="<%= @existing_resource ? "Apply Changes" : "Create Fence Instance" %>">
 	</td>

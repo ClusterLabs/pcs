@@ -7,9 +7,10 @@ def getFenceAgents(fence_agent = nil)
     next if fa.name == "fence_ack_manual"
 
     if fence_agent and a.sub(/.*\//,"") == fence_agent.sub(/.*:/,"")
-      required_options, optional_options = getFenceAgentMetadata(fa.name)
+      required_options, optional_options, advanced_options = getFenceAgentMetadata(fa.name)
       fa.required_options = required_options
       fa.optional_options = optional_options
+      fa.advanced_options = advanced_options
     end
     fence_agent_list[fa.name] = fa
   }
@@ -25,9 +26,19 @@ def getFenceAgentMetadata(fenceagentname)
   doc = REXML::Document.new(metadata)
   options_required = {}
   options_optional = {}
-  options_optional["pcmk_host_list"] = ""
-  options_optional["pcmk_host_map"] = ""
-  options_optional["pcmk_host_check"] = ""
+  options_advanced = {
+      "timeout" => "",
+      "priority" => "",
+      "pcmk_host_argument" => "",
+      "pcmk_host_map" => "",
+      "pcmk_host_list" => "",
+      "pcmk_host_check" => ""
+  }
+  for a in ["reboot", "list", "status", "monitor", "off"]
+    options_advanced["pcmk_" + a + "_action"] = ""
+    options_advanced["pcmk_" + a + "_timeout"] = ""
+    options_advanced["pcmk_" + a + "_retries"] = ""
+  end
   doc.elements.each('resource-agent/parameters/parameter') { |param|
     temp_array = []
     next if param.attributes["name"] == "action"
@@ -47,17 +58,18 @@ def getFenceAgentMetadata(fenceagentname)
       options_optional[param.attributes["name"]] = temp_array
     end
   }
-  [options_required, options_optional]
+  [options_required, options_optional, options_advanced]
 end
 
 class FenceAgent
-  attr_accessor :name, :resource_class, :required_options, :optional_options
-  def initialize(name=nil, required_options={}, optional_options={}, resource_class=nil)
+  attr_accessor :name, :resource_class, :required_options, :optional_options, :advanced_options
+  def initialize(name=nil, required_options={}, optional_options={}, resource_class=nil, advanced_options={})
     @name = name
     @required_options = {}
     @optional_options = {}
     @required_options = required_options
     @optional_options = optional_options
+    @advanced_options = advanced_options
     @resource_class = nil
   end
 
