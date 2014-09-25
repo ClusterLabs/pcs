@@ -508,7 +508,7 @@ def node_status(params)
   }
   constraints = getAllConstraints()
   cluster_settings = getAllSettings()
-  node_attributes = get_node_attributes()[$cur_node_name]
+  node_attributes = get_node_attributes()
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
             "cman" => cman_status,
             "corosync_enabled" => corosync_enabled, "pacemaker_enabled" => pacemaker_enabled,
