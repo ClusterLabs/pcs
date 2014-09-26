@@ -105,6 +105,12 @@ def cluster_cmd(argv):
         cluster_verify(argv)
     elif (sub_cmd == "report"):
         cluster_report(argv)
+    elif (sub_cmd == "quorum"):
+        if argv and argv[0] == "unblock":
+            cluster_quorum_unblock(argv[1:])
+        else:
+            usage.cluster(["quorum"])
+            sys.exit(1)
     else:
         usage.cluster()
         sys.exit(1)
@@ -1067,4 +1073,45 @@ def cluster_remote_node(argv):
     else:
         usage.cluster(["remote-node"])
         sys.exit(1)
+
+def cluster_quorum_unblock(argv):
+    if len(argv) > 0:
+        usage.cluster(["quorum", "unblock"])
+        sys.exit(1)
+
+    if utils.is_rhel6():
+        utils.err("operation is not supported on CMAN based clusters")
+
+    output, retval = utils.run(
+        ["corosync-cmapctl", "-g", "runtime.votequorum.wait_for_all_status"]
+    )
+    if retval != 0:
+        utils.err("unable to check quorum status")
+    if output.split("=")[-1].strip() != "1":
+        utils.err("cluster is not waiting for nodes to establish quorum")
+
+    unjoined_nodes = (
+        set(utils.getNodesFromCorosyncConf())
+        -
+        set(utils.getCorosyncActiveNodes())
+    )
+    if not unjoined_nodes:
+        utils.err("no unjoined nodes found")
+    for node in unjoined_nodes:
+        stonith.stonith_confirm([node])
+
+    output, retval = utils.run(
+        ["corosync-cmapctl", "-s", "quorum.cancel_wait_for_all", "u8", "1"]
+    )
+    if retval != 0:
+        utils.err("unable to cancel waiting for nodes")
+    print "Quorum unblocked"
+
+    startup_fencing = prop.get_set_properties().get("startup-fencing", "")
+    utils.set_cib_property(
+        "startup-fencing",
+        "false" if startup_fencing.lower() != "false" else "true"
+    )
+    utils.set_cib_property("startup-fencing", startup_fencing)
+    print "Waiting for nodes canceled"
 

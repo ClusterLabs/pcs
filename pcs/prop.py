@@ -64,15 +64,10 @@ def list_property(argv):
         properties = {}
         
     if "--defaults" not in utils.pcs_options:
-        (output, retVal) = utils.run(["cibadmin","-Q","--scope", "crm_config"])
-        if retVal != 0:
-            utils.err("unable to get crm_config\n"+output)
-        dom = parseString(output)
-        de = dom.documentElement
-        crm_config_properties = de.getElementsByTagName("nvpair")
-        for prop in crm_config_properties:
-            if print_all == True or (argv[0] == prop.getAttribute("name")):
-                properties[prop.getAttribute("name")] = prop.getAttribute("value")
+        properties = get_set_properties(
+            None if print_all else argv[0],
+            properties
+        )
 
     print "Cluster Properties:"
     for prop,val in sorted(properties.iteritems()):
@@ -115,3 +110,17 @@ def get_default_properties():
 
             parameters[name] =  default
     return parameters
+
+def get_set_properties(prop_name=None, defaults=None):
+    properties = {} if defaults is None else dict(defaults)
+    (output, retVal) = utils.run(["cibadmin","-Q","--scope", "crm_config"])
+    if retVal != 0:
+        utils.err("unable to get crm_config\n"+output)
+    dom = parseString(output)
+    de = dom.documentElement
+    crm_config_properties = de.getElementsByTagName("nvpair")
+    for prop in crm_config_properties:
+        if prop_name is None or (prop_name == prop.getAttribute("name")):
+            properties[prop.getAttribute("name")] = prop.getAttribute("value")
+    return properties
+

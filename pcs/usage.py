@@ -563,6 +563,12 @@ Commands:
         Sync corosync configuration to all nodes found from current
         corosync.conf file (cluster.conf on RHEL6)
 
+    quorum unblock
+        Cancel waiting for all nodes when establishing quorum.  Usefull in
+        situations where you know the cluster is inquorate, but you are
+        confident that the cluster should proceed with resource management
+        regardless.
+
     cib [filename]
         Get the raw xml from the CIB (Cluster Information Base).  If a
         filename is provided, we save the cib to that file, otherwise the cib
