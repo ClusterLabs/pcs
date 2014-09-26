@@ -282,7 +282,7 @@ Use the 'Add' button to submit the form.">
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Meta Attribute</th><th>Value</th></tr>
+			<tr><th>Meta Attribute</th><th>Value</th><th>Remove</th></tr>
 			{{#each Pcs.resourcesController.cur_resource.meta_attr}}
 			<tr><td>{{this.key}}</td>
 			    <td>{{this.value}}</td>
@@ -292,7 +292,7 @@ Use the 'Add' button to submit the form.">
 			  </tr>
                         {{/each}}
  			{{#unless Pcs.resourcesController.cur_resource.meta_attr}}
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
  			{{/unless}}
 			<tr id="new_meta_col">
 			  <td><input type="text" name="new_meta_key" size="20"></td>
