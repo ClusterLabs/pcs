@@ -776,6 +776,11 @@ function show_hide_constraints(element) {
   //$(element).parent().siblings().each (function(index,element) {
   $(element).parent().nextUntil(".stop").toggle();
   $(element).children("span, p").toggle();
+    // force Firefox to redraw div
+  if ($("#resource_info_div")[0].style.display == "block")
+    $("#resource_info_div")[0].style.display = "table";
+  else
+    $("#resource_info_div")[0].style.display = "block";
 }
 
 function show_hide_constraint_tables(element) {
