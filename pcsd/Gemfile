@@ -11,6 +11,12 @@ gem 'rack-test'
 gem 'backports'
 gem 'sinatra-sugar'
 gem 'monkey-lib'
-gem 'rpam-ruby19'
+gem 'rpam-ruby19', :platform => :ruby_19
+gem 'rpam-ruby19-feist', :platform => :ruby_18, :git => 'https://github.com/deriamis/rpam-ruby19-feist.git'
 gem 'multi_json'
 gem 'open4'
+gem 'json'
+
+group :development do
+  gem 'sinatra-reloader'
+end

@@ -5,14 +5,27 @@ require 'openssl'
 require 'logger'
 require 'rack'
 
-def is_rhel6()
-  if File.open('/etc/system-release').read =~ /(Red Hat Enterprise Linux Server|CentOS|Scientific Linux) release 6\./
+def is_rhel7_compat()
+  is_compatible = true
+
+  if not IO.popen('/usr/sbin/corosync -v').read =~ /version '2.3/
+    is_compatible = false
+  end
+
+  if not IO.popen('/usr/sbin/pacemakerd -$').read =~ /Pacemaker 1.1/
+    is_compatible = false
+  end
+
+  return is_compatible
+end
+
+def is_systemctl()
+  if File.exist?('/usr/bin/systemctl')
     return true
   else
     return false
   end
 end
-
 
 CRT_FILE = "/var/lib/pcsd/pcsd.crt"
 KEY_FILE = "/var/lib/pcsd/pcsd.key"
@@ -44,10 +57,13 @@ webrick_options = {
   :SSLCertificate     => OpenSSL::X509::Certificate.new(File.open(CRT_FILE).read),
   :SSLPrivateKey      => OpenSSL::PKey::RSA.new(File.open(KEY_FILE).read()),
   :SSLCertName        => [[ "CN", server_name ]],
-  :StartCallback => Proc.new {
+}
+
+if is_systemctl
+  webrick_options[:StartCallback] = Proc.new {
   	`python /usr/lib/pcsd/systemd-notify-fix.py`
   }
-}
+end
 
 server = ::Rack::Handler::WEBrick
 trap(:INT) do
@@ -63,6 +79,7 @@ trap(:TERM) do
 end
 
 require 'pcsd'
+WEBrick::Daemon.start if not is_systemctl
 begin
   server.run(Sinatra::Application, webrick_options)
 rescue Errno::EAFNOSUPPORT

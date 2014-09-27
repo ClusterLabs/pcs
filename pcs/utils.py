@@ -188,7 +188,7 @@ def getCorosyncConfig(node):
     return retval,output
 
 def setCorosyncConfig(node,config):
-    if is_rhel6():
+    if not is_rhel7_compat():
         data = urllib.urlencode({'cluster_conf':config})
         (status, data) = sendHTTPRequest(node, 'remote/set_cluster_conf', data)
         if status != 0:
@@ -311,7 +311,7 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
         return (2,"Unable to connect to %s (%s)" % (host, e.reason))
 
 def getNodesFromCorosyncConf(conf_text=None):
-    if is_rhel6():
+    if not is_rhel7_compat():
         try:
             dom = (
                 parse(settings.cluster_conf_file) if conf_text is None
@@ -346,7 +346,7 @@ def getNodesFromPacemaker():
 
 def getCorosyncConf(conf=None):
     if not conf:
-        if is_rhel6():
+        if not is_rhel7_compat():
             conf = settings.cluster_conf_file
         else:
             conf = settings.corosync_conf_file
@@ -371,7 +371,7 @@ def reloadCorosync():
     return output, retval
 
 def getCorosyncActiveNodes():
-    if is_rhel6():
+    if not is_rhel7_compat():
         output, retval = run(["cman_tool", "nodes", "-F", "type,name"])
         if retval != 0:
             return []
@@ -679,7 +679,7 @@ def run(args, ignore_stderr=False, string_for_stdin=None):
                 err("Unable to write to file: " + filename)
 
     command = args[0]
-    if command[0:3] == "crm" or command in ["cibadmin", "cman_tool", "iso8601"]:
+    if command[0:3] == "crm" or command in ["pacemakerd", "cibadmin", "cman_tool", "iso8601"]:
         args[0] = settings.pacemaker_binaries + command
     if command[0:8] == "corosync":
         args[0] = settings.corosync_binaries + command
@@ -1459,7 +1459,7 @@ def generate_rrp_corosync_config(interface):
     return ir
 
 def getClusterName():
-    if is_rhel6():
+    if not is_rhel7_compat():
         try:
             dom = parse(settings.cluster_conf_file)
         except (IOError,xml.parsers.expat.ExpatError):
@@ -1551,20 +1551,20 @@ def is_systemctl():
     else:
         return False
 
-def is_rhel6():
-    try:
-        issue = open('/etc/system-release').read()
-    except IOError as e:
-        return False
-
-# Since there are so many RHEL 6 variants, this check looks for the first
-# number in /etc/system-release followed by a period and number, and if it's 6.N,
-# it returns true.
-    match = re.search(r'(\d)\.\d', issue)
-    if match and match.group(1) == "6":
-        return True
-    else:
-        return False
+   
+def is_rhel7_compat():
+    is_compatible = True
+# We want to make sure we're running Corosync 2.3
+    out, ret = run(['corosync', '-v'])
+    match = re.search(r'(\d)\.(\d)', out)
+    if not (match and match.group(1) == "2" and match.group(2) == "3"):
+        is_compatible = False
+# We also need Pacemaker 1.1 (sorry, RHEL 5 folks!)
+    out, ret = run(['pacemakerd', '-$'])
+    match = re.search(r'(\d)\.(\d)', out)
+    if not (match and match.group(1) == "1" and match.group(2) == "1"):
+        is_compatible = False
+    return is_compatible
 
 def err(errorText, exit_after_error=True):
     sys.stderr.write("Error: %s\n" % errorText)
@@ -1583,7 +1583,7 @@ def serviceStatus(prefix):
             print prefix + daemons[i] + ": " + status[i] + "/" + enabled[i]
 
 def enableServices():
-    if is_rhel6():
+    if not is_rhel7_compat():
         run(["chkconfig", "pacemaker", "on"])
     else:
         if is_systemctl():
@@ -1594,7 +1594,7 @@ def enableServices():
             run(["chkconfig", "pacemaker", "on"])
 
 def disableServices():
-    if is_rhel6():
+    if not is_rhel7_compat():
         run(["chkconfig", "pacemaker", "off"])
         run(["chkconfig", "corosync", "off"]) # Left here for users of old pcs
                                               # which enabled corosync

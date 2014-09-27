@@ -330,7 +330,7 @@ end
 
 def get_cluster_version()
   stdout, stderror, retval = run_cmd(COROSYNC_CMAPCTL,"totem.cluster_name")
-  if retval != 0 and not ISRHEL6
+  if retval != 0 and ISRHEL7_COMPAT
     # Cluster probably isn't running, try to get cluster name from
     # corosync.conf
     begin
@@ -403,7 +403,7 @@ def disable_cluster()
 end
 
 def corosync_running?()
-  if not ISRHEL6
+  if ISSYSTEMCTL
     `systemctl status corosync.service`
   else
     `service corosync status`
@@ -412,7 +412,7 @@ def corosync_running?()
 end
 
 def corosync_enabled?()
-  if not ISRHEL6
+  if ISSYSTEMCTL
     `systemctl is-enabled corosync.service`
   else
     `chkconfig corosync`
@@ -421,7 +421,7 @@ def corosync_enabled?()
 end
 
 def pacemaker_running?()
-  if not ISRHEL6
+  if ISSYSTEMCTL
     `systemctl status pacemaker.service`
   else
     `service pacemaker status`
@@ -430,7 +430,7 @@ def pacemaker_running?()
 end
 
 def pacemaker_enabled?()
-  if not ISRHEL6
+  if ISSYSTEMCTL
     `systemctl is-enabled pacemaker.service`
   else
     `chkconfig pacemaker`
@@ -439,7 +439,7 @@ def pacemaker_enabled?()
 end
 
 def cman_running?()
-  if not ISRHEL6
+  if ISSYSTEMCTL
     `systemctl status cman.service`
   else
     `service cman status`
@@ -448,7 +448,7 @@ def cman_running?()
 end
 
 def pcsd_enabled?()
-  if not ISRHEL6
+  if ISSYSTEMCTL
     `systemctl is-enabled pcsd.service`
   else
     `chkconfig pcsd`

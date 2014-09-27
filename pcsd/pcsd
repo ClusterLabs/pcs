@@ -20,7 +20,8 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-exec="/usr/bin/ruby"
+exec="/usr/bin/bundle"
+args="exec /usr/bin/ruby -I/usr/lib/pcsd /usr/lib/pcsd/ssl.rb"
 prog="pcsd"
 config="/var/lib/pcsd"
 
@@ -32,8 +33,9 @@ start() {
     [ -x $exec ] || exit 5
     echo -n $"Starting $prog: "
     export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
+    export BUNDLE_GEMFILE=/usr/lib/pcsd/Gemfile
     cd /var/lib/pcsd
-    daemon $exec -I/usr/lib/pcsd /usr/lib/pcsd/ssl.rb
+    daemon $exec $args
     # if not running, start it up here, usually something like "daemon $exec"
     retval=$?
     echo
