@@ -110,7 +110,7 @@
 	      </table>
 	      <% if @myView == "resource" %>
 	      <table style="clear:left;float:left">
-		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Location Preferences ({{#if Pcs.resourcesController.cur_resource.location_constraints}}{{Pcs.resourcesController.cur_resource.location_constraints.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="location_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Location Preferences ({{#if Pcs.resourcesController.cur_resource.location_constraints}}{{Pcs.resourcesController.cur_resource.location_constraints.length}}{{else}}0{{/if}})</td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
@@ -150,7 +150,7 @@
 		</tr>
 	      </table>
 	      <table style="clear:left;float:left;">
-		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Ordering Preferences ({{#if Pcs.resourcesController.cur_resource.ordering_constraints.length}}{{Pcs.resourcesController.cur_resource.ordering_constraints.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="ordering_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Ordering Preferences ({{#if Pcs.resourcesController.cur_resource.ordering_constraints.length}}{{Pcs.resourcesController.cur_resource.ordering_constraints.length}}{{else}}0{{/if}})</td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
@@ -209,7 +209,7 @@
 		</tr>
 	      </table>
         <table style="clear:left;float:left;">
-          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Ordering Set Preferences ({{#if Pcs.resourcesController.cur_resource.ordering_set_constraints.length}}{{Pcs.resourcesController.cur_resource.ordering_set_constraints.length}}{{else}}0{{/if}})</td></tr>
+          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="ordering_set_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Ordering Set Preferences ({{#if Pcs.resourcesController.cur_resource.ordering_set_constraints.length}}{{Pcs.resourcesController.cur_resource.ordering_set_constraints.length}}{{else}}0{{/if}})</td></tr>
           <tr><td>
             <div id="locationdep">
               <table class="datatable">
@@ -248,7 +248,7 @@ Use the 'Add' button to submit the form.">
           </td></tr>
         </table>
 	      <table style="clear:left;float:left">
-		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Colocation Preferences ({{#if Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="colocation_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Colocation Preferences ({{#if Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{Pcs.resourcesController.cur_resource.colocation_constraints.length}}{{else}}0{{/if}})</td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
@@ -278,7 +278,7 @@ Use the 'Add' button to submit the form.">
 		</tr>
 	      </table>
 	      <table style="clear:left;float:left">
-		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Meta Attributes ({{#if Pcs.resourcesController.cur_resource.meta_attr.length}}{{Pcs.resourcesController.cur_resource.meta_attr.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="meta_attr"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Meta Attributes ({{#if Pcs.resourcesController.cur_resource.meta_attr.length}}{{Pcs.resourcesController.cur_resource.meta_attr.length}}{{else}}0{{/if}})</td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">

@@ -580,6 +580,7 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
 	  value.set("cur_resource", false);
       });
     }
+    this.auto_show_hide_constraints();
   },
     
   load_resource: function(resource_row, dont_update_hash) {
@@ -607,6 +608,21 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
       load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston', false);
     else
       load_row(resource_row, this, 'cur_resource', "#stonith_info_div", 'cur_resource_ston', true);
+  },
+
+  auto_show_hide_constraints: function() {
+    var cont = ["location_constraints", "ordering_constraints", "ordering_set_constraints", "colocation_constraints", "meta_attr"];
+    cont.forEach(function(name) {
+    var elem = $("#" + name)[0];
+    var resource = Pcs.resourcesController.get("cur_resource_res");
+      if (elem && resource) {
+        var visible = $(elem).children("span")[0].style.display != 'none';
+        if (visible && (!resource.get(name) || resource[name].length == 0))
+          show_hide_constraints(elem);
+        else if (!visible && resource.get(name) && resource[name].length > 0)
+          show_hide_constraints(elem);
+      }
+    });
   },
 
   add_meta_attr: function(res_id, mkey, mvalue) {
