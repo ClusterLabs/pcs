@@ -976,6 +976,120 @@ Colocation Constraints:
 """)
         self.assertEquals(0, returnVal)
 
+        output, returnVal = pcs(
+            "constraint location stateful1 rule #uname eq rh7-1 --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  Constraint: location-stateful1-master
+    Rule: score=INFINITY  (id:location-stateful1-master-rule)
+      Expression: #uname eq rh7-1  (id:location-stateful1-master-rule-expr)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint location stateful1 rule #uname eq rh7-1 --autocorrect --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order stateful1 then dummy1 --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  start stateful1-master then start dummy1 (kind:Mandatory) (id:order-stateful1-master-dummy1-mandatory)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order stateful1 then dummy1 --autocorrect --force"
+        )
+        ac(output, """\
+Adding stateful1-master dummy1 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order set stateful1 dummy1 --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1) (id:pcs_rsc_order_stateful1_dummy1)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order set stateful1 dummy1 --autocorrect --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add stateful1 with dummy1 --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  stateful1-master with dummy1 (score:INFINITY) (id:colocation-stateful1-master-dummy1-INFINITY)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add stateful1 with dummy1 --autocorrect --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation set dummy1 stateful1 --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_stateful1)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation set dummy1 stateful1 --autocorrect --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: stateful1-master
+    Enabled on: rh7-1 (score:INFINITY) (id:location-stateful1-rh7-1-INFINITY)
+    Constraint: location-stateful1-master-1
+      Rule: score=INFINITY  (id:location-stateful1-master-1-rule)
+        Expression: #uname eq rh7-1  (id:location-stateful1-master-1-rule-expr)
+    Constraint: location-stateful1-master
+      Rule: score=INFINITY  (id:location-stateful1-master-rule)
+        Expression: #uname eq rh7-1  (id:location-stateful1-master-rule-expr)
+  Resource: statefulG-master
+    Enabled on: rh7-1 (score:INFINITY) (id:location-statefulG-rh7-1-INFINITY)
+    Constraint: location-statefulG-master
+      Rule: score=INFINITY  (id:location-statefulG-master-rule)
+        Expression: #uname eq rh7-1  (id:location-statefulG-master-rule-expr)
+Ordering Constraints:
+  start stateful1-master then start dummy1 (kind:Mandatory) (id:order-stateful1-master-dummy1-mandatory)
+  start dummy1 then start statefulG-master (kind:Mandatory) (id:order-dummy1-statefulG-master-mandatory)
+  start stateful1-master then start dummy1 (kind:Mandatory) (id:order-stateful1-master-dummy1-mandatory-1)
+  Resource Sets:
+    set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1) (id:pcs_rsc_order_stateful1_dummy1)
+    set dummy1 statefulG-master (id:pcs_rsc_set_dummy1_statefulG-master) (id:pcs_rsc_order_dummy1_statefulG)
+    set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1-1) (id:pcs_rsc_order_stateful1_dummy1-1)
+Colocation Constraints:
+  stateful1-master with dummy1 (score:INFINITY) (id:colocation-stateful1-master-dummy1-INFINITY)
+  dummy1 with statefulG-master (score:INFINITY) (id:colocation-dummy1-statefulG-master-INFINITY)
+  stateful1-master with dummy1 (score:INFINITY) (id:colocation-stateful1-master-dummy1-INFINITY-1)
+  Resource Sets:
+    set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_stateful1)
+    set statefulG-master dummy1 (id:pcs_rsc_set_statefulG-master_dummy1) setoptions score=INFINITY (id:pcs_rsc_colocation_statefulG_dummy1)
+    set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_stateful1-1)
+""")
+        self.assertEquals(0, returnVal)
+
     def testCloneConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
 
@@ -1209,6 +1323,120 @@ Colocation Constraints:
   Resource Sets:
     set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy)
     set dummy1 dummyG-clone (id:pcs_rsc_set_dummy1_dummyG-clone) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummyG)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint location dummy rule #uname eq rh7-1 --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  Constraint: location-dummy-clone
+    Rule: score=INFINITY  (id:location-dummy-clone-rule)
+      Expression: #uname eq rh7-1  (id:location-dummy-clone-rule-expr)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint location dummy rule #uname eq rh7-1 --autocorrect --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order dummy then dummy1 --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  start dummy-clone then start dummy1 (kind:Mandatory) (id:order-dummy-clone-dummy1-mandatory)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order dummy then dummy1 --autocorrect --force"
+        )
+        ac(output, """\
+Adding dummy-clone dummy1 (kind: Mandatory) (Options: first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order set dummy1 dummy --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone) (id:pcs_rsc_order_dummy1_dummy)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint order set dummy1 dummy --autocorrect --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add dummy with dummy1 --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  dummy-clone with dummy1 (score:INFINITY) (id:colocation-dummy-clone-dummy1-INFINITY)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation add dummy with dummy1 --autocorrect --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation set dummy1 dummy --autocorrect"
+        )
+        ac(output, """\
+Error: duplicate constraint already exists, use --force to override
+  set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            "constraint colocation set dummy1 dummy --autocorrect --force"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs("constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: dummy-clone
+    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
+    Constraint: location-dummy-clone-1
+      Rule: score=INFINITY  (id:location-dummy-clone-1-rule)
+        Expression: #uname eq rh7-1  (id:location-dummy-clone-1-rule-expr)
+    Constraint: location-dummy-clone
+      Rule: score=INFINITY  (id:location-dummy-clone-rule)
+        Expression: #uname eq rh7-1  (id:location-dummy-clone-rule-expr)
+  Resource: dummyG-clone
+    Enabled on: rh7-1 (score:INFINITY) (id:location-dummyG-rh7-1-INFINITY)
+    Constraint: location-dummyG-clone
+      Rule: score=INFINITY  (id:location-dummyG-clone-rule)
+        Expression: #uname eq rh7-1  (id:location-dummyG-clone-rule-expr)
+Ordering Constraints:
+  start dummy-clone then start dummy1 (kind:Mandatory) (id:order-dummy-clone-dummy1-mandatory)
+  start dummy1 then start dummyG-clone (kind:Mandatory) (id:order-dummy1-dummyG-clone-mandatory)
+  start dummy-clone then start dummy1 (kind:Mandatory) (id:order-dummy-clone-dummy1-mandatory-1)
+  Resource Sets:
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone) (id:pcs_rsc_order_dummy1_dummy)
+    set dummyG-clone dummy1 (id:pcs_rsc_set_dummyG-clone_dummy1) (id:pcs_rsc_order_dummyG_dummy1)
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-2) (id:pcs_rsc_order_dummy1_dummy-1)
+Colocation Constraints:
+  dummy-clone with dummy1 (score:INFINITY) (id:colocation-dummy-clone-dummy1-INFINITY)
+  dummy1 with dummyG-clone (score:INFINITY) (id:colocation-dummy1-dummyG-clone-INFINITY)
+  dummy-clone with dummy1 (score:INFINITY) (id:colocation-dummy-clone-dummy1-INFINITY-1)
+  Resource Sets:
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy)
+    set dummy1 dummyG-clone (id:pcs_rsc_set_dummy1_dummyG-clone) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummyG)
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-3) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy-1)
 """)
         self.assertEquals(0, returnVal)
 
