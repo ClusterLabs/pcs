@@ -1113,5 +1113,5 @@ def cluster_quorum_unblock(argv):
         "false" if startup_fencing.lower() != "false" else "true"
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
-    print "Waiting for nodes canceled"
+    print "Waiting for nodes cancelled"
 
