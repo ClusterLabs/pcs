@@ -121,6 +121,8 @@ def remote(params,request)
     return add_group(params)
   when "update_cluster_settings"
     return update_cluster_settings(params)
+  when "add_fence_level_remote"
+    return add_fence_level_remote(params)
   when "add_node_attr_remote"
     return add_node_attr_remote(params)
   else
@@ -509,6 +511,7 @@ def node_status(params)
   constraints = getAllConstraints()
   cluster_settings = getAllSettings()
   node_attributes = get_node_attributes()
+  fence_levels = get_fence_levels()
   status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
             "cman" => cman_status,
             "corosync_enabled" => corosync_enabled, "pacemaker_enabled" => pacemaker_enabled,
@@ -518,7 +521,7 @@ def node_status(params)
             "pacemaker_standby" => pacemaker_standby,
             "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
             "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id,
-            "node_attr" => node_attributes,
+            "node_attr" => node_attributes, "fence_levels" => fence_levels,
             "need_ring1_address" => need_ring1_address?,
            }
   ret = JSON.generate(status)
@@ -855,6 +858,15 @@ def remove_resource (params)
   else
     logger.info("Remove resource errors:\n"+errors)
     return [500, errors]
+  end
+end
+
+def add_fence_level_remote(params)
+  retval = add_fence_level(params["level"], params["devices"], params["node"], params["remove"])
+  if retval == 0
+    return [200, "Successfully added fence level"]
+  else
+    return [400, "Error adding fence level"]
   end
 end
 

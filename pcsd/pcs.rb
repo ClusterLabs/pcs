@@ -44,8 +44,18 @@ def getAllSettings()
   return {"error" => "Unable to get configuration settings"}
 end
 
+def add_fence_level (level, devices, node, remove = false)
+  if not remove
+    stdout, stderr, retval = run_cmd(PCS, "stonith", "level", "add", level, node, devices)
+    return retval
+  else
+    stdout, stderr, retval = run_cmd(PCS, "stonith", "level", "remove", level, node, devices)
+    return retval
+  end
+end
+
 def add_node_attr(node, key, value)
-  sdtout, strerr, retval = run_cmd(PCS, "property", "set", "--node", node, key.to_s + '=' + value.to_s)
+  stdout, stderr, retval = run_cmd(PCS, "property", "set", "--node", node, key.to_s + '=' + value.to_s)
   return retval
 end
 
@@ -388,6 +398,26 @@ def get_node_attributes()
     }
   }
   return attrs
+end
+
+def get_fence_levels()
+  stdout, stderr, retval = run_cmd(PCS, "stonith", "level")
+  if retval != 0 or stdout == ""
+    return {}
+  end
+
+  fence_levels = {}
+  node = ""
+  stdout.each {|line|
+    if line.start_with?(" Node: ")
+      node = line.split(":",2)[1].strip
+      next
+    end
+    fence_levels[node] ||= []
+    md = / Level (\S+) - (.*)$/.match(line)
+    fence_levels[node] << {"level" => md[1], "devices" => md[2]}
+  }
+  return fence_levels
 end
 
 def enable_cluster()

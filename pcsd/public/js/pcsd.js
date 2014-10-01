@@ -960,6 +960,37 @@ function remove_resource(ids) {
   });
 }
 
+function add_remove_fence_level(parent_id,remove) {
+  var data = {};
+  if (remove == true) {
+    data["remove"] = true;
+    data["level"] = parent_id.attr("fence_level");
+    data["node"] = Pcs.nodesController.cur_node.name;
+    data["devices"] = parent_id.attr("fence_devices");
+  } else {
+    data["level"] = parent_id.find("input[name='new_level_level']").val();
+    data["devices"] = parent_id.find("select[name='new_level_value']").val();
+    data["node"] = Pcs.nodesController.cur_node.name;
+  }
+  fade_in_out(parent_id.parent());
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_fence_level_remote',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+//      Pcs.nodesController.remove_fence_level();
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      if (remove)
+        alert("Unable to remove fence level: ("+error+")");
+      else
+        alert("Unable to add fence level: ("+error+")");
+    }
+  });
+}
+
 function remove_node_attr(parent_id) {
   var data = {};
   data["node"] = Pcs.nodesController.cur_node.name;

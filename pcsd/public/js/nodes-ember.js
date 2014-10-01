@@ -377,6 +377,14 @@ Pcs.resourcesController = Ember.ArrayController.createWithMixins({
     else
       return "opacity:0";
   }.property("cur_resource"),
+  stonith_resource_list: function () {
+    var list = [];
+    this.content.map(function (item) {
+      if (item.stonith)
+        list.push(item.name);
+    });
+    return list;
+  }.property("@each.content"),
   init: function(){
     this._super();
   },
@@ -1085,6 +1093,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  node.set("uptime", data[node_id]["uptime"]);
 	  node.set("node_id", data[node_id]["node_id"]);
 	  node.set("node_attr", data[node_id]["node_attr"][node_id]);
+	  node.set("fence_levels", data[node_id]["fence_levels"][node_id]);
 	}
       });
 
@@ -1107,7 +1116,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  location_constraints: lc_on_nodes[node_id].sort(),
 	  uptime: data[node_id]["uptime"],
 	  node_id: data[node_id]["node_id"],
-	  node_attr: data[node_id]["node_attr"][node_id]
+	  node_attr: data[node_id]["node_attr"][node_id],
+	  fence_levels: data[node_id]["fence_levels"][node_id]
 	});
       }
       var pathname = window.location.pathname.split('/');
