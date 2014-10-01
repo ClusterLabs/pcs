@@ -570,20 +570,27 @@ Commands:
         confident that the cluster should proceed with resource management
         regardless.
 
-    cib [filename]
+    cib [filename] [scope=<scope>]
         Get the raw xml from the CIB (Cluster Information Base).  If a
         filename is provided, we save the cib to that file, otherwise the cib
-        is printed
+        is printed.  Specify scope to get a specific section of the CIB.  Valid
+        values of the scope are: nodes, resources, constraints, crm_config,
+        rsc_defaults, op_defaults, status.
 
-    cib-push <filename>
-        Push the raw xml from <filename> to the CIB (Cluster Information Base)
+    cib-push <filename> [scope=<scope>]
+        Push the raw xml from <filename> to the CIB (Cluster Information Base).
+        Specify scope to push a specific section of the CIB.  Valid values
+        of the scope are: nodes, resources, constraints, crm_config,
+        rsc_defaults, op_defaults.
 
     cib-upgrade
         Upgrade the cib to the latest version
 
-    edit
+    edit [scope=<scope>]
         Edit the cib in the editor specified by the $EDITOR environment
-        variable and push out any changes upon saving
+        variable and push out any changes upon saving.  Specify scope to edit
+        a specific section of the CIB.  Valid values of the scope are:
+        nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.
 
     node add <node[,node-altaddr]> [--start] [--enable]
         Add the node to corosync.conf and corosync on all nodes in the cluster

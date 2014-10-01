@@ -1135,8 +1135,11 @@ def remove_from_cib(xml):
     args = args + ["-D", "-X", xml]
     return run(args)
 
-def get_cib():
-    output, retval = run(["cibadmin", "-l", "-Q"])
+def get_cib(scope=None):
+    command = ["cibadmin", "-l", "-Q"]
+    if scope:
+        command.append("--scope=%s" % scope)
+    output, retval = run(command)
     if retval != 0:
         err("unable to get cib")
     return output
@@ -1164,6 +1167,12 @@ def replace_cib_configuration(dom):
     output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-V", "--xml-pipe"],False,new_dom)
     if retval != 0:
         err("Unable to update cib\n"+output)
+
+def is_valid_cib_scope(scope):
+    return scope in [
+        "configuration", "nodes", "resources", "constraints", "crm_config",
+        "rsc_defaults", "op_defaults", "status",
+    ]
 
 # Checks to see if id exists in the xml dom passed
 def does_id_exist(dom, check_id):

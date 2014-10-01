@@ -632,12 +632,33 @@ def kill_cluster(argv):
 #        sys.exit(1)
 
 def cluster_push(argv):
-    if len(argv) == 1:
-        filename = argv[0]
-    else:
-        usage.cluster()
+    if len(argv) > 2:
+        usage.cluster(["cib-push"])
         sys.exit(1)
-    output, retval = utils.run(["cibadmin", "--replace", "--xml-file", filename])
+
+    filename = None
+    scope = None
+    for arg in argv:
+        if "=" not in arg:
+            filename = arg
+        else:
+            arg_name, arg_value = arg.split("=", 1)
+            if arg_name == "scope":
+                if not utils.is_valid_cib_scope(arg_value):
+                    utils.err("invalid CIB scope '%s'" % arg_value)
+                else:
+                    scope = arg_value
+            else:
+                usage.cluster(["cib-push"])
+                sys.exit(1)
+    if not filename:
+        usage.cluster(["cib-push"])
+        sys.exit(1)
+
+    command = ["cibadmin", "--replace", "--xml-file", filename]
+    if scope:
+        command.append("--scope=%s" % scope)
+    output, retval = utils.run(command)
     if retval != 0:
         utils.err("unable to push cib\n" + output)
     else:
@@ -651,9 +672,31 @@ def cluster_upgrade():
 
 def cluster_edit(argv):
     if 'EDITOR' in os.environ:
+        if len(argv) > 1:
+            usage.cluster(["edit"])
+            sys.exit(1)
+
+        scope = None
+        scope_arg = ""
+        for arg in argv:
+            if "=" not in arg:
+                usage.cluster(["edit"])
+                sys.exit(1)
+            else:
+                arg_name, arg_value = arg.split("=", 1)
+                if arg_name == "scope":
+                    if not utils.is_valid_cib_scope(arg_value):
+                        utils.err("invalid CIB scope '%s'" % arg_value)
+                    else:
+                        scope_arg = arg
+                        scope = arg_value
+                else:
+                    usage.cluster(["edit"])
+                    sys.exit(1)
+
         editor = os.environ['EDITOR']
         tempcib = tempfile.NamedTemporaryFile('w+b',-1,".pcs")
-        cib = utils.get_cib()
+        cib = utils.get_cib(scope)
         tempcib.write(cib)
         tempcib.flush()
         try:
@@ -666,21 +709,40 @@ def cluster_edit(argv):
         if newcib == cib:
             print "CIB not updated, no changes detected"
         else:
-            cluster_push([tempcib.name])
+            cluster_push(filter(None, [tempcib.name, scope_arg]))
 
     else:
         utils.err("$EDITOR environment variable is not set")
 
 def get_cib(argv):
-    if len(argv) == 0:
-        print utils.get_cib(),
+    if len(argv) > 2:
+        usage.cluster(["cib"])
+        sys.exit(1)
+
+    filename = None
+    scope = None
+    for arg in argv:
+        if "=" not in arg:
+            filename = arg
+        else:
+            arg_name, arg_value = arg.split("=", 1)
+            if arg_name == "scope":
+                if not utils.is_valid_cib_scope(arg_value):
+                    utils.err("invalid CIB scope '%s'" % arg_value)
+                else:
+                    scope = arg_value
+            else:
+                usage.cluster(["cib"])
+                sys.exit(1)
+
+    if not filename:
+        print utils.get_cib(scope),
     else:
-        filename = argv[0]
         try:
             f = open(filename, 'w')
-            output = utils.get_cib()
+            output = utils.get_cib(scope)
             if output != "":
-                    f.write(utils.get_cib())
+                    f.write(output)
             else:
                 utils.err("No data in the CIB")
         except IOError as e:

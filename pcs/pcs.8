@@ -222,17 +222,17 @@ Sync corosync configuration to all nodes found from current corosync.conf file (
 quorum unblock
 Cancel waiting for all nodes when establishing quorum.  Usefull in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.
 .TP
-cib [filename]
-Get the raw xml from the CIB (Cluster Information Base).  If a filename is provided, we save the cib to that file, otherwise the cib is printed
+cib [filename] [scope=<scope>]
+Get the raw xml from the CIB (Cluster Information Base).  If a filename is provided, we save the cib to that file, otherwise the cib is printed.  Specify scope to get a specific section of the CIB.  Valid values of the scope are: nodes, resources, constraints, crm_config, rsc_defaults, op_defaults, status.
 .TP
-cib\-push <filename>
-Push the raw xml from <filename> to the CIB (Cluster Information Base)
+cib-push <filename> [scope=<scope>]
+Push the raw xml from <filename> to the CIB (Cluster Information Base).  Specify scope to push a specific section of the CIB.  Valid values of the scope are: nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.
 .TP
 cib\-upgrade
 Upgrade the cib to the latest version
 .TP
-edit
-Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving
+edit [scope=<scope>]
+Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving.  Specify scope to edit a specific section of the CIB.  Valid values of the scope are: nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.
 .TP
 node add <node[,node\-altaddr]> [\fB\-\-start\fR] [\fB\-\-enable\fR]
 Add the node to corosync.conf and corosync on all nodes in the cluster and sync the new corosync.conf to the new node.  If \fB\-\-start\fR is specified also start corosync/pacemaker on the new node, if \fB\-\-enable\fR is specified enable corosync/pacemaker on new node.  When using Redundant Ring Protocol (RRP) with udpu transport, specify the ring 0 address first followed by a ',' and then the ring 1 address.
