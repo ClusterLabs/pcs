@@ -80,11 +80,11 @@ def stonith_cmd(argv):
     elif (sub_cmd == "fence"):
         stonith_fence(argv)
     elif (sub_cmd == "cleanup"):
-        if len(argv) < 1:
-            usage.stonith(["cleanup"])
-            sys.exit(1)
-        res_id = argv.pop(0)
-        resource.resource_cleanup(res_id)
+        if len(argv) == 0:
+            resource.resource_cleanup_all()
+        else:
+            res_id = argv.pop(0)
+            resource.resource_cleanup(res_id)
     elif (sub_cmd == "confirm"):
         stonith_confirm(argv)
     else:

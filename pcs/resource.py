@@ -159,11 +159,11 @@ def resource_cmd(argv):
         else:
             set_default("rsc_defaults", argv)
     elif (sub_cmd == "cleanup"):
-        if len(argv) < 1:
-            usage.resource()
-            sys.exit(1)
-        res_id = argv.pop(0)
-        resource_cleanup(res_id)
+        if len(argv) == 0:
+            resource_cleanup_all()
+        else:
+            res_id = argv.pop(0)
+            resource_cleanup(res_id)
     else:
         usage.resource()
         sys.exit(1)
@@ -1933,3 +1933,10 @@ def resource_cleanup(res_id):
         utils.err("Unable to cleanup resource: %s" % res_id + "\n" + output)
     else:
         print "Resource: %s successfully cleaned up" % res_id
+
+def resource_cleanup_all():
+    (output, retval) = utils.run(["crm_resource", "-C"])
+    if retval != 0:
+        utils.err("Unexpected error occured. 'crm_resource -C' err_code: %s\n%s" % (retval, output))
+    else:
+        print "All resources/stonith devices successfully cleaned up"
