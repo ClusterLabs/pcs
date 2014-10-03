@@ -1009,16 +1009,16 @@ Commands:
     checkpoint restore <checkpoint_number>
         Restore cluster configuration to specified checkpoint.
 
-    import-cman [--interactive] [input=filename] [output=filename]
+    import-cman output=<filename> [input=<filename>] [--interactive]
             [output-format=corosync.conf|cluster.conf]
         Converts CMAN cluster configuration to Pacemaker cluster configuration.
-        If --interactive is specified user will be prompted to solve
-        incompatibilities manually.  If no input is specified
-        /etc/cluster/cluster.conf will be used.  If no output is specified
-        configuration will be sent to the cluster nodes, otherwise you can use
-        the 'pcs config restore' command to send the configuration
-        to the nodes manually.  You can force to create output containing
-        either cluster.conf or corosync.conf using the output-format option.
+        Converted configuration will be saved to 'output' file.  To send
+        the configuration to the cluster nodes the 'pcs config restore'
+        command can be used.  If --interactive is specified you will be
+        prompted to solve incompatibilities manually.  If no input is specified
+        /etc/cluster/cluster.conf will be used.  You can force to create output
+        containing either cluster.conf or corosync.conf using the output-format
+        option.
 """
     if pout:
         print sub_usage(args, output)

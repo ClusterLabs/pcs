@@ -442,7 +442,7 @@ def config_import_cman(argv):
                 invalid_args = True
         else:
             invalid_args = True
-    if invalid_args:
+    if invalid_args or not dry_run_output:
         usage.config(["import-cman"])
         sys.exit(1)
     debug = "--debug" in utils.pcs_options
