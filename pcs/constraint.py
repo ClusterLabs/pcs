@@ -13,6 +13,8 @@ OPTIONS_ACTION = ("start", "promote", "demote", "stop")
 DEFAULT_ACTION = "start"
 OPTIONS_ROLE = ("Stopped", "Started", "Master", "Slave")
 DEFAULT_ROLE = "Started"
+OPTIONS_KIND = ("Optional", "Mandatory", "Serialize")
+OPTIONS_SYMMETRICAL = ("true", "false")
 
 def constraint_cmd(argv):
     if len(argv) == 0:
@@ -216,10 +218,28 @@ def colocation_add(argv):
         utils.err(resource_error)
 
     score,nv_pairs = parse_score_options(argv)
+    id_in_nvpairs = None
+    for name, value in nv_pairs:
+        if name == "id":
+            id_valid, id_error = utils.validate_xml_id(value, 'constraint id')
+            if not id_valid:
+                utils.err(id_error)
+            if utils.does_id_exist(cib_dom, value):
+                utils.err(
+                    "id '%s' is already in use, please specify another one"
+                    % value
+                )
+            id_in_nvpairs = True
+    if not id_in_nvpairs:
+        nv_pairs.append((
+            "id",
+            utils.find_unique_id(
+                cib_dom,
+                "colocation-%s-%s-%s" % (resource1, resource2, score)
+            )
+        ))
 
     (dom,constraintsElement) = getCurrentConstraints(cib_dom)
-    cl_id = utils.find_unique_id(dom, "colocation-" + resource1 + "-" +
-            resource2 + "-" + score)
 
 # If one role is specified, the other should default to "started"
     if role1 != "" and role2 == "":
@@ -228,7 +248,6 @@ def colocation_add(argv):
         role1 = DEFAULT_ROLE
 
     element = dom.createElement("rsc_colocation")
-    element.setAttribute("id",cl_id)
     element.setAttribute("rsc",resource1)
     element.setAttribute("with-rsc",resource2)
     element.setAttribute("score",score)
@@ -278,34 +297,55 @@ def colocation_set(argv):
             break
 
     current_set = set_args_into_array(argv)
-    colocation_id = "pcs_rsc_colocation"
-    for a in argv:
-        if a.find('=') == -1:
-            colocation_id = colocation_id + "_" + a
-
     cib, constraints = getCurrentConstraints(utils.get_cib_dom())
-    rsc_colocation = cib.createElement("rsc_colocation")
-    rsc_colocation.setAttribute("id", utils.find_unique_id(cib, colocation_id))
-    rsc_colocation.setAttribute("score", "INFINITY")
+
+    attributes = []
     score_options = ("score", "score-attribute", "score-attribute-mangle")
     score_specified = False
+    id_specified = False
     for opt in setoptions:
-        if opt.find("=") != -1:
-            name,value = opt.split("=")
-            if name not in score_options:
+        if "=" not in opt:
+            utils.err("missing value of '%s' option" % opt)
+        name, value = opt.split("=", 1)
+        if name == "id":
+            id_valid, id_error = utils.validate_xml_id(value, 'constraint id')
+            if not id_valid:
+                utils.err(id_error)
+            if utils.does_id_exist(cib, value):
                 utils.err(
-                    "invalid option '%s', allowed options are: %s"
-                    % (name, ", ".join(score_options))
+                    "id '%s' is already in use, please specify another one"
+                    % value
                 )
+            id_specified = True
+            attributes.append((name, value))
+        elif name in score_options:
             if score_specified:
                 utils.err("you cannot specify multiple score options")
-            score_specified = True
             if name == "score" and not utils.is_score(value):
                 utils.err(
                     "invalid score '%s', use integer or INFINITY or -INFINITY"
                     % value
                 )
-            rsc_colocation.setAttribute(name, value)
+            score_specified = True
+            attributes.append((name, value))
+        else:
+            utils.err(
+                "invalid option '%s', allowed options are: %s"
+                % (name, ", ".join(score_options + ("id",)))
+            )
+
+    if not score_specified:
+        attributes.append(("score", "INFINITY"))
+    if not id_specified:
+        colocation_id = "pcs_rsc_colocation"
+        for a in argv:
+            if "=" not in a:
+                colocation_id += "_" + a
+        attributes.append(("id", utils.find_unique_id(cib, colocation_id)))
+
+    rsc_colocation = cib.createElement("rsc_colocation")
+    for name, value in attributes:
+        rsc_colocation.setAttribute(name, value)
     set_add_resource_sets(rsc_colocation, current_set, cib)
     constraints.appendChild(rsc_colocation)
     utils.replace_cib_configuration(cib)
@@ -457,16 +497,64 @@ def set_constraint_find_duplicates(dom, constraint_el):
     ]
 
 def order_set(argv):
+    setoptions = []
+    for i in range(len(argv)):
+        if argv[i] == "setoptions":
+            setoptions = argv[i+1:]
+            argv[i:] = []
+            break
+
     current_set = set_args_into_array(argv)
-
-    order_id = "pcs_rsc_order"
-    for a in argv:
-        if a.find('=') == -1:
-            order_id = order_id + "_" + a
-
     cib, constraints = getCurrentConstraints(utils.get_cib_dom())
+
+    attributes = []
+    id_specified = False
+    for opt in setoptions:
+        if "=" not in opt:
+            utils.err("missing value of '%s' option" % opt)
+        name, value = opt.split("=", 1)
+        if name == "id":
+            id_valid, id_error = utils.validate_xml_id(value, 'constraint id')
+            if not id_valid:
+                utils.err(id_error)
+            if utils.does_id_exist(cib, value):
+                utils.err(
+                    "id '%s' is already in use, please specify another one"
+                    % value
+                )
+            id_specified = True
+            attributes.append((name, value))
+        elif name == "kind":
+            normalized_value = value.lower().capitalize()
+            if normalized_value not in OPTIONS_KIND:
+                utils.err(
+                    "invalid kind value '%s', allowed values are: %s"
+                    % (value, ", ".join(OPTIONS_KIND))
+                )
+            attributes.append((name, normalized_value))
+        elif name == "symmetrical":
+            if value.lower() not in OPTIONS_SYMMETRICAL:
+                utils.err(
+                    "invalid symmetrical value '%s', allowed values are: %s"
+                    % (value, ", ".join(OPTIONS_SYMMETRICAL))
+                )
+            attributes.append((name, value.lower()))
+        else:
+            utils.err(
+                "invalid option '%s', allowed options are: %s"
+                % (name, "kind, symmetrical, id")
+            )
+
+    if not id_specified:
+        order_id = "pcs_rsc_order"
+        for a in argv:
+            if "=" not in a:
+                order_id += "_" + a
+        attributes.append(("id", utils.find_unique_id(cib, order_id)))
+
     rsc_order = cib.createElement("rsc_order")
-    rsc_order.setAttribute("id", utils.find_unique_id(cib, order_id))
+    for name, value in attributes:
+        rsc_order.setAttribute(name, value)
     set_add_resource_sets(rsc_order, current_set, cib)
     constraints.appendChild(rsc_order)
     utils.replace_cib_configuration(cib)
@@ -567,21 +655,47 @@ def order_add(argv,returnElementOnly=False):
     elif not resource_valid:
         utils.err(resource_error)
 
-    sym = "true" if (len(argv) == 0 or argv[0] != "nonsymmetrical") else "false"
-
     order_options = []
-    if len(argv) != 0:
-        if argv[0] == "nonsymmetrical" or argv[0] == "symmetrical":
-            argv.pop(0)
-        for arg in argv:
-            if arg.count("=") == 1:
-                mysplit = arg.split("=")
-                order_options.append((mysplit[0],mysplit[1]))
+    id_specified = False
+    sym = None
+    for arg in argv:
+        if arg == "symmetrical":
+            sym = "true"
+        elif arg == "nonsymmetrical":
+            sym = "false"
+        elif "=" in arg:
+            name, value = arg.split("=", 1)
+            if name == "id":
+                id_valid, id_error = utils.validate_xml_id(value, 'constraint id')
+                if not id_valid:
+                    utils.err(id_error)
+                if utils.does_id_exist(cib_dom, value):
+                    utils.err(
+                        "id '%s' is already in use, please specify another one"
+                        % value
+                    )
+                id_specified = True
+                order_options.append((name, value))
+            elif name == "symmetrical":
+                if value.lower() in OPTIONS_SYMMETRICAL:
+                    sym = value.lower()
+                else:
+                    utils.err(
+                        "invalid symmetrical value '%s', allowed values are: %s"
+                        % (value, ", ".join(OPTIONS_SYMMETRICAL))
+                    )
+            else:
+                order_options.append((name, value))
+    if sym:
+        order_options.append(("symmetrical", sym))
 
-    if len(argv) != 0:
-        options = " (Options: " + " ".join(argv)+")"
-    else:
-        options = ""
+    options = ""
+    if order_options:
+        options = " (Options: %s)" % " ".join([
+            "%s=%s" % (name, value)
+                for name, value in order_options
+                    if name not in ("kind", "score")
+        ])
 
     scorekind = "kind: Mandatory"
     id_suffix = "mandatory"
@@ -595,18 +709,17 @@ def order_add(argv,returnElementOnly=False):
             id_suffix = opt[1]
             break
 
-    order_id = "order-" + resource1 + "-" + resource2 + "-" + id_suffix
-    order_id = utils.find_unique_id(cib_dom, order_id)
+    if not id_specified:
+        order_id = "order-" + resource1 + "-" + resource2 + "-" + id_suffix
+        order_id = utils.find_unique_id(cib_dom, order_id)
+        order_options.append(("id", order_id))
 
     (dom,constraintsElement) = getCurrentConstraints()
     element = dom.createElement("rsc_order")
-    element.setAttribute("id",order_id)
     element.setAttribute("first",resource1)
     element.setAttribute("then",resource2)
     for order_opt in order_options:
         element.setAttribute(order_opt[0], order_opt[1])
-    if (sym == "false"):
-        element.setAttribute("symmetrical", "false")
     constraintsElement.appendChild(element)
     if "--force" not in utils.pcs_options:
         duplicates = order_find_duplicates(constraintsElement, element)
@@ -880,7 +993,7 @@ def location_add(argv,rm=False):
 
 def location_rule(argv):
     if len(argv) < 3:
-        usage.constraint("location rule")
+        usage.constraint(["location", "rule"])
         sys.exit(1)
     
     res_name = argv.pop(0)
@@ -891,16 +1004,30 @@ def location_rule(argv):
     elif not resource_valid:
         utils.err(resource_error)
 
-    argv.pop(0)
+    argv.pop(0) # pop "rule"
 
+    options, rule_argv = rule_utils.parse_argv(argv, {"constraint-id": None,})
     cib, constraints = getCurrentConstraints(utils.get_cib_dom())
     lc = cib.createElement("rsc_location")
     constraints.appendChild(lc)
-    lc_id = utils.find_unique_id(cib, "location-" + res_name)
-    lc.setAttribute("id", lc_id)
+    if options.get("constraint-id"):
+        id_valid, id_error = utils.validate_xml_id(
+            options["constraint-id"], 'constraint id'
+        )
+        if not id_valid:
+            utils.err(id_error)
+        if utils.does_id_exist(cib, options["constraint-id"]):
+            utils.err(
+                "id '%s' is already in use, please specify another one"
+                % options["constraint-id"]
+            )
+        lc.setAttribute("id", options["constraint-id"])
+        del options["constraint-id"]
+    else:
+        lc.setAttribute("id", utils.find_unique_id(cib, "location-" + res_name))
     lc.setAttribute("rsc", res_name)
 
-    rule_utils.dom_rule_add(lc, argv)
+    rule_utils.dom_rule_add(lc, options, rule_argv)
     location_rule_check_duplicates(constraints, lc)
     utils.replace_cib_configuration(cib)
 
@@ -1164,7 +1291,8 @@ def constraint_rule(argv):
         )
         if not constraint:
             utils.err("Unable to find constraint: " + constraint_id)
-        rule_utils.dom_rule_add(constraint, argv)
+        options, rule_argv = rule_utils.parse_argv(argv)
+        rule_utils.dom_rule_add(constraint, options, rule_argv)
         location_rule_check_duplicates(cib, constraint)
         utils.replace_cib_configuration(cib)
 

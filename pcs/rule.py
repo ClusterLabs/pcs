@@ -4,13 +4,15 @@ import utils
 
 # main functions
 
-def dom_rule_add(dom_element, argv):
+def parse_argv(argv, extra_options=None):
     options = {
         "id": None,
         "role": None,
         "score": None,
         "score-attribute": None
     }
+    if extra_options:
+        options.update(dict(extra_options))
 
     # parse options
     while argv:
@@ -24,11 +26,13 @@ def dom_rule_add(dom_element, argv):
         if not found:
             argv.insert(0, option)
             break
+    return options, argv
 
+def dom_rule_add(dom_element, options, rule_argv):
     # validate options
-    if options["score"] and options["score-attribute"]:
+    if options.get("score") and options.get("score-attribute"):
         utils.err("can not specify both score and score-attribute")
-    if options["score"] and not utils.is_score(options["score"]):
+    if options.get("score") and not utils.is_score(options["score"]):
         # preserving legacy behaviour
         print (
             "Warning: invalid score '%s', setting score-attribute=pingd instead"
@@ -36,11 +40,11 @@ def dom_rule_add(dom_element, argv):
         )
         options["score-attribute"] = "pingd"
         options["score"] = None
-    if options["role"] and options["role"] not in ["master", "slave"]:
+    if options.get("role") and options["role"] not in ["master", "slave"]:
         utils.err(
             "invalid role '%s', use 'master' or 'slave'" % options["role"]
         )
-    if options["id"]:
+    if options.get("id"):
         id_valid, id_error = utils.validate_xml_id(options["id"], 'rule id')
         if not id_valid:
             utils.err(id_error)
@@ -51,29 +55,29 @@ def dom_rule_add(dom_element, argv):
             )
 
     # parse rule
-    if not argv:
+    if not rule_argv:
         utils.err("no rule expression was specified")
     try:
         dom_rule = CibBuilder().build(
             dom_element,
-            RuleParser().parse(TokenPreprocessor().run(argv)),
-            options["id"]
+            RuleParser().parse(TokenPreprocessor().run(rule_argv)),
+            options.get("id")
         )
     except SyntaxError as e:
         utils.err(
             "'%s' is not a valid rule expression: %s"
-            % (" ".join(argv), e)
+            % (" ".join(rule_argv), e)
         )
     except UnexpectedEndOfInput as e:
         utils.err(
             "'%s' is not a valid rule expression: unexpected end of rule"
-            % " ".join(argv)
+            % " ".join(rule_argv)
         )
     except (ParserException, CibBuilderException) as e:
-        utils.err("'%s' is not a valid rule expression" % " ".join(argv))
+        utils.err("'%s' is not a valid rule expression" % " ".join(rule_argv))
 
     # add options into rule xml
-    if not options["score"] and not options["score-attribute"]:
+    if not options.get("score") and not options.get("score-attribute"):
         options["score"] = "INFINITY"
     for name, value in options.iteritems():
         if name != "id" and value is not None:

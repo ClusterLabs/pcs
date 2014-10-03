@@ -433,7 +433,7 @@ Colocation Constraints:
         self.assertEquals(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions foo=bar")
-        ac(output, "Error: invalid option 'foo', allowed options are: score, score-attribute, score-attribute-mangle\n")
+        ac(output, "Error: invalid option 'foo', allowed options are: score, score-attribute, score-attribute-mangle, id\n")
         self.assertEquals(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions score=foo")
@@ -443,6 +443,10 @@ Colocation Constraints:
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions score=100 score-attribute=foo")
         ac(output, "Error: you cannot specify multiple score options\n")
         self.assertEquals(1, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions score-attribute=foo")
+        ac(output, "")
+        self.assertEquals(0, retValue)
 
     def testOrderSetsRemoval(self):
         o,r = pcs("resource create T0 Dummy")
@@ -590,6 +594,52 @@ Ordering Constraints:
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 foo=bar")
         ac(output, "Error: invalid option 'foo', allowed options are: action, role, sequential, require-all\n")
         self.assertEquals(1, retValue)
+
+        output, retValue = pcs(
+            temp_cib,
+            "constraint order set D1 D2 setoptions foo=bar"
+        )
+        ac(output, """\
+Error: invalid option 'foo', allowed options are: kind, symmetrical, id
+""")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(
+            temp_cib,
+            "constraint order set D1 D2 setoptions kind=foo"
+        )
+        ac(output, """\
+Error: invalid kind value 'foo', allowed values are: Optional, Mandatory, Serialize
+""")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(
+            temp_cib,
+            "constraint order set D1 D2 setoptions symmetrical=foo"
+        )
+        ac(output, """\
+Error: invalid symmetrical value 'foo', allowed values are: true, false
+""")
+        self.assertEquals(1, retValue)
+
+        output, retValue = pcs(
+            temp_cib,
+            "constraint order set D1 D2 setoptions symmetrical=false kind=mandatory"
+        )
+        ac(output, "")
+        self.assertEquals(0, retValue)
+
+        output, retValue = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+  Resource Sets:
+    set D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)
+    set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)
+    set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions symmetrical=false kind=Mandatory (id:pcs_rsc_order_D1_D2)
+Colocation Constraints:
+""")
+        self.assertEquals(0, retValue)
 
     def testLocationConstraintRule(self):
         o, r = pcs(temp_cib, "constraint location D1 prefers rh7-1")
@@ -2123,6 +2173,198 @@ Location Constraints:
 Ordering Constraints:
 Colocation Constraints:
 """)
+        self.assertEquals(0, returnVal)
+
+    def testConstraintsCustomId(self):
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation add D1 with D2 id=1id"
+        )
+        ac(output, """\
+Error: invalid constraint id '1id', '1' is not a valid first character for a constraint id
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation add D1 with D2 id=id1"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation add D1 with D2 id=id1"
+        )
+        ac(output, """\
+Error: id 'id1' is already in use, please specify another one
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation add D2 with D1 100 id=id2"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation set D1 D2 setoptions id=3id"
+        )
+        ac(output, """\
+Error: invalid constraint id '3id', '3' is not a valid first character for a constraint id
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation set D1 D2 setoptions id=id3"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation set D1 D2 setoptions id=id3"
+        )
+        ac(output, """\
+Error: id 'id3' is already in use, please specify another one
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint colocation set D2 D1 setoptions score=100 id=id4"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint order set D1 D2 setoptions id=5id"
+        )
+        ac(output, """\
+Error: invalid constraint id '5id', '5' is not a valid first character for a constraint id
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint order set D1 D2 setoptions id=id5"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint order set D1 D2 setoptions id=id5"
+        )
+        ac(output, """\
+Error: id 'id5' is already in use, please specify another one
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint order set D2 D1 setoptions kind=Mandatory id=id6"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint order D1 then D2 id=7id"
+        )
+        ac(output, """\
+Error: invalid constraint id '7id', '7' is not a valid first character for a constraint id
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint order D1 then D2 id=id7"
+        )
+        ac(output, """\
+Adding D1 D2 (kind: Mandatory) (Options: id=id7 first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint order D1 then D2 id=id7"
+        )
+        ac(output, """\
+Error: id 'id7' is already in use, please specify another one
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint order D2 then D1 kind=Optional id=id8"
+        )
+        ac(output, """\
+Adding D2 D1 (kind: Optional) (Options: id=id8 first-action=start then-action=start)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint location D1 rule constraint-id=9id defined pingd"
+        )
+        ac(output, """\
+Error: invalid constraint id '9id', '9' is not a valid first character for a constraint id
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint location D1 rule constraint-id=id9 defined pingd"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint location D1 rule constraint-id=id9 defined pingd"
+        )
+        ac(output, """\
+Error: id 'id9' is already in use, please specify another one
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "constraint location D2 rule score=100 constraint-id=id10 id=rule1 defined pingd"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: D1
+    Constraint: id9
+      Rule: score=INFINITY  (id:id9-rule)
+        Expression: defined pingd  (id:id9-rule-expr)
+  Resource: D2
+    Constraint: id10
+      Rule: score=100  (id:rule1)
+        Expression: defined pingd  (id:rule1-expr)
+Ordering Constraints:
+  start D1 then start D2 (kind:Mandatory) (id:id7)
+  start D2 then start D1 (kind:Optional) (id:id8)
+  Resource Sets:
+    set D1 D2 (id:pcs_rsc_set_D1_D2-1) (id:id5)
+    set D2 D1 (id:pcs_rsc_set_D2_D1-1) setoptions kind=Mandatory (id:id6)
+Colocation Constraints:
+  D1 with D2 (score:INFINITY) (id:id1)
+  D2 with D1 (score:100) (id:id2)
+  Resource Sets:
+    set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions score=INFINITY (id:id3)
+    set D2 D1 (id:pcs_rsc_set_D2_D1) setoptions score=100 (id:id4)
+""")
+        self.assertEquals(0, returnVal)
 
 if __name__ == "__main__":
     unittest.main()

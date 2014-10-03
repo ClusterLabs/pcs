@@ -364,7 +364,7 @@ Create a location constraint on a resource to prefer the specified node and scor
 location <resource id> avoids <node[=score]>...
 Create a location constraint on a resource to avoid the specified node and score (default score: INFINITY)
 .TP
-location <resource id> rule [id=<rule id>] [role=master|slave] [score=<score>|score-attribute=<attribute>] <expression>
+location <resource id> rule [id=<rule id>] [role=master|slave] [constraint-id=<id>] [score=<score>|score-attribute=<attribute>] <expression>
 Creates a location rule on the specified resource where the expression looks like one of the following:
 .br
   defined|not_defined <attribute>
@@ -398,10 +398,10 @@ order show [\fB\-\-full\fR]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 order [action] <resource id> then [action] <resource id> [options]
-Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start. Available options are kind=Optional/Mandatory/Serialize and symmetrical=true/false
+Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start. Available options are kind=Optional/Mandatory/Serialize, symmetrical=true/false and id=<constraint-id>.
 .TP
-order set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]]
-Create an ordered set of resources. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
+order set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]] [setoptions [constraint_options]]
+Create an ordered set of resources. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.  Available constraint_options are id=<constraint-id>, kind=Optional/Mandatory/Serialize and symmetrical=true/false.
 .TP
 order remove <resource1> [resourceN]...
 Remove resource from any ordering constraint
@@ -409,11 +409,11 @@ Remove resource from any ordering constraint
 colocation show [\fB\-\-full\fR]
 List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
-colocation add [master|slave] <source resource id> with [master|slave] <target resource id> [score] [options]
+colocation add [master|slave] <source resource id> with [master|slave] <target resource id> [score] [options] [id=constraint-id]
 Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score force <source resource> to run (or not run) with <target resource>. (score defaults to "INFINITY") A role can be master or slave (if no role is specified, it defaults to 'started').
 .TP
 colocation set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]] [setoptions [constraint_options]]
-Create a colocation constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Available constraint_options are score, score-attribute and score-attribute-mangle.
+Create a colocation constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Available constraint_options are id, score, score-attribute and score-attribute-mangle.
 .TP
 colocation remove <source resource id> <target resource id>
 Remove colocation constraints with <source resource>

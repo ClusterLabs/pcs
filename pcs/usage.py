@@ -775,7 +775,8 @@ Commands:
         node and score (default score: INFINITY)
 
     location <resource id> rule [id=<rule id>] [role=master|slave]
-             [score=<score>|score-attribute=<attribute>] <expression>
+             [constraint-id=<id>] [score=<score>|score-attribute=<attribute>]
+             <expression>
         Creates a location rule on the specified resource where the expression
         looks like one of the following:
           defined|not_defined <attribute>
@@ -811,17 +812,20 @@ Commands:
         the internal constraint id's as well).
 
     order [action] <resource id> then [action] <resource id> [options]
-        Add an ordering constraint specifying actions (start,stop,promote,
+        Add an ordering constraint specifying actions (start, stop, promote,
         demote) and if no action is specified the default action will be
         start.
-        Available options are kind=Optional/Mandatory/Serialize and
-        symmetrical=true/false
+        Available options are kind=Optional/Mandatory/Serialize,
+        symmetrical=true/false and id=<constraint-id>.
 
     order set <resource1> <resource2> [resourceN]... [options] [set
               <resourceX> <resourceY> ... [options]]
+              [setoptions [constraint_options]]
         Create an ordered set of resources.
         Available options are sequential=true/false, require-all=true/false,
         action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
+        Available constraint_options are id=<constraint-id>,
+        kind=Optional/Mandatory/Serialize and symmetrical=true/false.
 
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
@@ -831,7 +835,7 @@ Commands:
         the internal constraint id's as well).
 
     colocation add [master|slave] <source resource id> with [master|slave]
-                   <target resource id> [score] [options]
+                   <target resource id> [score] [options] [id=constraint-id]
         Request <source resource> to run on the same node where pacemaker has
         determined <target resource> should run.  Positive values of score
         mean the resources should be run on the same node, negative values
@@ -847,7 +851,7 @@ Commands:
         Create a colocation constraint with a resource set.
         Available options are sequential=true/false, require-all=true/false,
         action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
-        Available constraint_options are score, score-attribute and
+        Available constraint_options are id, score, score-attribute and
         score-attribute-mangle.
 
     colocation remove <source resource id> <target resource id>

@@ -1926,7 +1926,8 @@ Location Constraints:
             cib_dom.createElement("rsc_location")
         )
         constraint_el.setAttribute("id", "location-dummy")
-        rule.dom_rule_add(constraint_el, rule_expression)
+        options, rule_argv = rule.parse_argv(rule_expression)
+        rule.dom_rule_add(constraint_el, options, rule_argv)
         ac(
             constraint_el.toprettyxml(indent="    "),
             rule_xml.lstrip().rstrip(" ")
