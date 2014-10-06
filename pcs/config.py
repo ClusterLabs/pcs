@@ -12,9 +12,13 @@ import grp
 import time
 
 logging.basicConfig() # clufter needs logging set before imported
-import clufter.format_manager
-import clufter.filter_manager
-import clufter.command_manager
+try:
+    import clufter.format_manager
+    import clufter.filter_manager
+    import clufter.command_manager
+    no_clufter = False
+except ImportError:
+    no_clufter = True
 
 import settings
 import utils
@@ -411,6 +415,8 @@ def config_checkpoint_restore(argv):
     utils.replace_cib_configuration(snapshot_dom)
 
 def config_import_cman(argv):
+    if no_clufter:
+        utils.err("Unable to perform a cman cluster conversion due to missing python-clufter package")
     # prepare convertor options
     cluster_conf = settings.cluster_conf_file
     dry_run_output = None
