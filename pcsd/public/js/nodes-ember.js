@@ -935,6 +935,32 @@ Pcs.selectedNodeController = Ember.Object.createWithMixins({
 Pcs.nodesController = Ember.ArrayController.createWithMixins({
   content: [],
   cur_node: null,
+  cur_node_attr: function () {
+    var ret_val = [];
+    var nc = this;
+    $.each(this.content, function(node, value) {
+      if ("node_attrs" in value && nc.cur_node && value["node_attrs"]) {
+        if (nc.cur_node.name in value["node_attrs"]) {
+          ret_val = ret_val.concat(value["node_attrs"][nc.cur_node.name]);
+        }
+        return false;
+      }
+    });
+    return ret_val;
+  }.property("cur_node", "content.@each.node_attrs"),
+  cur_node_fence_levels: function () {
+    var ret_val = [];
+    var nc = this;
+    $.each(this.content, function(node, value) {
+      if ("fence_levels" in value && nc.cur_node && value["fence_levels"]) {
+        if (nc.cur_node.name in value["fence_levels"]) {
+          ret_val = ret_val.concat(value["fence_levels"][nc.cur_node.name]);
+        }
+        return false;
+      }
+    });
+    return ret_val;
+  }.property("cur_node", "content.@each.fence_levels"),
   init: function(){
     this._super();
   },
@@ -943,44 +969,6 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
     load_row(node_row, this, 'cur_node', '#node_info_div');
     if (!dont_update_hash)
       window.location.hash = "/nodes/" + $(node_row).attr("nodeID");
-  },
-
-  add_node_attr: function(node, mkey, mvalue){
-    $.each(this.content, function(key, value) {
-      if (value.name == node) {
-        var node_attrs = [];
-        if (value.node_attr) {
-          node_attrs = value.node_attr;
-        }
-
-        var found = false;
-        $.each(node_attrs, function (index,attr) {
-          if (attr.key == mkey) {
-            attr.value = mvalue;
-            found = true;
-          }
-        });
-
-        if (!found) {
-          node_attrs.pushObject({key: mkey, value: mvalue})
-        }
-        value.set("node_attr", node_attrs);
-      }
-    });
-  },
-
-  remove_node_attr: function(node, key){
-    $.each(this.content, function(key, value) {
-      if (value.name == node) {
-        if (value.node_attr) {
-          value.set("node_attr", $.grep(value.node_attr, function (value2, key2) {
-            if (key == key2)
-              return false;
-            return true;
-          }));
-        }
-      }
-    });
   },
 
   update: function(data){
@@ -1092,8 +1080,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  node.set("location_constraints", lc_on_nodes[node_id].sort());
 	  node.set("uptime", data[node_id]["uptime"]);
 	  node.set("node_id", data[node_id]["node_id"]);
-	  node.set("node_attr", data[node_id]["node_attr"][node_id]);
-	  node.set("fence_levels", data[node_id]["fence_levels"][node_id]);
+	  node.set("node_attrs", data[node_id]["node_attr"]);
+	  node.set("fence_levels", data[node_id]["fence_levels"]);
 	}
       });
 
@@ -1116,8 +1104,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 	  location_constraints: lc_on_nodes[node_id].sort(),
 	  uptime: data[node_id]["uptime"],
 	  node_id: data[node_id]["node_id"],
-	  node_attr: data[node_id]["node_attr"][node_id],
-	  fence_levels: data[node_id]["fence_levels"][node_id]
+	  node_attrs: data[node_id]["node_attr"],
+	  fence_levels: data[node_id]["fence_levels"]
 	});
       }
       var pathname = window.location.pathname.split('/');

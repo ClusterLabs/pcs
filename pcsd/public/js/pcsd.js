@@ -968,8 +968,8 @@ function add_remove_fence_level(parent_id,remove) {
     data["node"] = Pcs.nodesController.cur_node.name;
     data["devices"] = parent_id.attr("fence_devices");
   } else {
-    data["level"] = parent_id.find("input[name='new_level_level']").val();
-    data["devices"] = parent_id.find("select[name='new_level_value']").val();
+    data["level"] = parent_id.parent().find("input[name='new_level_level']").val();
+    data["devices"] = parent_id.parent().find("select[name='new_level_value']").val();
     data["node"] = Pcs.nodesController.cur_node.name;
   }
   fade_in_out(parent_id.parent());
@@ -980,13 +980,16 @@ function add_remove_fence_level(parent_id,remove) {
     timeout: pcs_timeout,
     success: function() {
 //      Pcs.nodesController.remove_fence_level();
+      if (!remove)
+	$(parent_id.parent()).find("input").val("");
+	$(parent_id.parent()).find("select").val("");
       Pcs.update();
     },
     error: function (xhr, status, error) {
       if (remove)
-        alert("Unable to remove fence level: ("+error+")");
+        alert("Unable to remove fence level: ("+xhr.responseText+")");
       else
-        alert("Unable to add fence level: ("+error+")");
+        alert("Unable to add fence level: ("+xhr.responseText+")");
     }
   });
 }
@@ -1004,7 +1007,7 @@ function remove_node_attr(parent_id) {
     data: data,
     timeout: pcs_timeout,
     success: function() {
-      Pcs.nodesController.remove_node_attr(data["res_id"], data["key"]);
+//      Pcs.nodesController.remove_node_attr(data["res_id"], data["key"]);
       Pcs.update();
     },
     error: function (xhr, status, error) {
@@ -1027,7 +1030,7 @@ function add_node_attr(parent_id) {
     timeout: pcs_timeout,
     success: function() {
       $(parent_id + " input").val("");
-      Pcs.nodesController.add_node_attr(data["res_id"], data["key"], data["value"]);
+//      Pcs.nodesController.add_node_attr(data["res_id"], data["key"], data["value"]);
       Pcs.update();
     },
     error: function (xhr, status, error) {

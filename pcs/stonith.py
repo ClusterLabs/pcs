@@ -353,8 +353,7 @@ def stonith_level_show():
 
     for node in nodes:
         print " Node: " + node
-        node_levels[node].sort()
-        for level in node_levels[node]:
+        for level in sorted(node_levels[node], key=lambda x: int(x[0])):
             print "  Level " + level[0] + " - " + level[1]
 
 

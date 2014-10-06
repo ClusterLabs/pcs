@@ -210,12 +210,12 @@
 	      </tr>
 	    </table>
         <table style="clear:left;float:left;margin-top:25px;">
-          <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Node Attributes ({{#if Pcs.nodesController.cur_node.node_attr.length}}{{Pcs.nodesController.cur_node.node_attr.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+          <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Node Attributes ({{#if Pcs.nodesController.cur_node_attr.length}}{{Pcs.nodesController.cur_node_attr.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
           <tr><td>
             <div id="locationdep">
               <table class="datatable">
                 <tr><th>Attribute</th><th>Value</th><th>Remove</th></tr>
-                {{#each Pcs.nodesController.cur_node.node_attr}}
+                {{#each Pcs.nodesController.cur_node_attr}}
                 <tr><td>{{this.key}}</td>
                   <td>{{this.value}}</td>
                   <td {{bind-attr node_attr_key="this.key"}} {{bind-attr node_attr_parent="this.parent"}} style="text-align:center">
@@ -223,7 +223,7 @@
                   </td>
                 </tr>
                 {{/each}}
-                {{#unless Pcs.nodesController.cur_node.node_attr}}
+                {{#unless Pcs.nodesController.cur_node_attr}}
                 <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
                 {{/unless}}
                 <tr id="new_node_attr_col">
@@ -237,41 +237,41 @@
           </td>
           </tr>
         </table>
-	<table style="clear:left;float:left;margin-top:25px;">
-	  <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Fence Levels ({{#if Pcs.nodesController.cur_node.fence_levels.length}}{{Pcs.nodesController.cur_node.fence_levels.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
-	  <tr><td>
-	      <div id="fencelevels">
-		<table class="datatable">
-		  <tr><th>Level</th><th>Fence Devices</th><th>Remove</th></tr>
-		  {{#each Pcs.nodesController.cur_node.fence_levels}}
-		  <tr>
-		    <td>{{this.level}}</td>
-		    <td>{{this.devices}}</td>
-		    <td {{bind-attr fence_level="this.level" fence_devices="this.devices"}}  style="text-align:center">
-		      <a onclick="add_remove_fence_level($(this).parent(),true);return false;" href="#" class="remove">X</a>
-		    </td>
-		  </tr>
-		  {{/each}}
-		  {{#unless Pcs.nodesController.cur_node.fence_levels}}
-		  <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
-		  {{/unless}}
-		  <tr id="new_fence_level_col">
-		    <td><input type="text" name="new_level_level" size="2"></td>
-		    <td><select name="new_level_value">
-			<option></option>
-			{{#each Pcs.resourcesController.stonith_resource_list}}
-			<option {{bind-attr value="this"}}>{{this}}</option>
-			{{/each }}
-		    </select></td>
-		    <td><button type="button" onclick="add_remove_fence_level($('#new_fence_level_col'));" name="add">Add</button></td>
-		  </tr>
-		</table>
-	      </div>
-	    </td>
-	  </tr>
-	</table>
-	  </td>
-	</tr>
+       <table style="clear:left;float:left;margin-top:25px;">
+         <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Fence Levels ({{#if Pcs.nodesController.cur_node_fence_levels.length}}{{Pcs.nodesController.cur_node_fence_levels.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+         <tr><td>
+             <div id="fencelevels">
+               <table class="datatable">
+                 <tr><th>Level</th><th>Fence Devices</th><th>Remove</th></tr>
+                 {{#each Pcs.nodesController.cur_node_fence_levels}}
+                 <tr>
+                   <td>{{this.level}}</td>
+                   <td>{{this.devices}}</td>
+                   <td {{bind-attr fence_level="this.level" fence_devices="this.devices"}}  style="text-align:center">
+                     <a onclick="add_remove_fence_level($(this).parent(),true);return false;" href="#" class="remove">X</a>
+                   </td>
+                 </tr>
+                 {{/each}}
+                 {{#unless Pcs.nodesController.cur_node_fence_levels}}
+                 <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+                 {{/unless}}
+                 <tr id="new_fence_level_col">
+                   <td><input type="text" name="new_level_level" size="2"></td>
+                   <td><select name="new_level_value">
+                       <option></option>
+                       {{#each Pcs.resourcesController.stonith_resource_list}}
+                       <option {{bind-attr value="this"}}>{{this}}</option>
+                       {{/each }}
+                   </select></td>
+                   <td><button type="button" onclick="add_remove_fence_level($(this).parent());" name="add">Add</button></td>
+                 </tr>
+               </table>
+             </div>
+           </td>
+         </tr>
+       </table>
+     </td>
+   </tr>
       </div>
   </div>
   </td>
@@ -287,8 +287,8 @@
   <form method=POST action="/add_node_all">
     <table id="add_node_selector">
       <tr>
-	<td>Node Name:</td>
-	<td><input type=text name=new_nodename></td>
+        <td>Node Name:</td>
+        <td><input type=text name=new_nodename></td>
       </tr>
       {{#if Pcs.need_ring1_address}}
       <tr>
@@ -297,13 +297,13 @@
       </tr>
       {{/if}}
       <tr>
-	<td>Auto Start/Enable:</td>
-	<td><input type="checkbox" name="auto_start" value="1" checked></td>
+        <td>Auto Start/Enable:</td>
+        <td><input type="checkbox" name="auto_start" value="1" checked></td>
       </tr>
       <tr>
-	<td colspan=2 style="text-align:center;padding-top:20px;">
-	  <input class="create_node" type=submit onclick="$(this).hide();create_node($(this).parents('form')); return false;" value="Add Node">
-	</td>
+        <td colspan=2 style="text-align:center;padding-top:20px;">
+          <input class="create_node" type=submit onclick="$(this).hide();create_node($(this).parents('form')); return false;" value="Add Node">
+        </td>
       </tr>
     </table>
   </form>
