@@ -491,6 +491,7 @@ def node_status(params)
   stonith_resource_list, stonith_group_list = getResourcesGroups(true,true)
   stonith_resource_list.each {|sr| sr.stonith = true}
   resource_list = resource_list + stonith_resource_list
+  acls = get_acls()
   out_rl = []
   resource_list.each {|r|
     out_nodes = []
@@ -522,7 +523,7 @@ def node_status(params)
             "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
             "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id,
             "node_attr" => node_attributes, "fence_levels" => fence_levels,
-            "need_ring1_address" => need_ring1_address?,
+            "need_ring1_address" => need_ring1_address?, "acls" => acls
            }
   ret = JSON.generate(status)
   return ret

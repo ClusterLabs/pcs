@@ -420,6 +420,56 @@ def get_fence_levels()
   return fence_levels
 end
 
+def get_acls()
+  stdout, stderr, retval = run_cmd(PCS, "acl", "show")
+  if retval != 0 or stdout == ""
+    return []
+  end
+
+  ret_val = {}
+  state = nil
+  user = ""
+  role = ""
+
+  stdout.each do |line|
+    if m = /^User: (.*)$/.match(line)
+      user = m[1]
+      state = "user"
+      ret_val[state] ||= {}
+      next
+    elsif m = /^Group: (.*)$/.match(line)
+      user = m[1]
+      state = "group"
+      ret_val[state] ||= {}
+      next
+    elsif m = /^Role: (.*)$/.match(line)
+      role = m[1]
+      state = "role"
+      ret_val[state] ||= {}
+      next
+    end
+
+    case state
+    when "user", "group"
+      m = /^  Roles: (.*)$/.match(line)
+      ret_val[state][user] ||= []
+      m[1].scan(/\S+/).each {|urole|
+        ret_val[state][user] << urole
+      }
+    when "role"
+      ret_val[state][role] ||= {}
+      ret_val[state][role]["permissions"] ||= []
+      ret_val[state][role]["description"] ||= ""
+      if m = /^  Description: (.*)$/.match(line)
+        ret_val[state][role]["description"] = m[1]
+      elsif m = /^  Permission: (.*)$/.match(line)
+        ret_val[state][role]["permissions"] << m[1]
+      end
+    end
+  end
+  return ret_val
+end
+
 def enable_cluster()
   stdout, stderror, retval = run_cmd(PCS, "cluster", "enable")
   return false if retval != 0
