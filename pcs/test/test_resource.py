@@ -1467,6 +1467,82 @@ Colocation Constraints:
         )
         self.assertEquals(1, returnVal)
 
+        output, returnVal = pcs(temp_cib, "resource move dummy rh7-1 --master")
+        ac(output, """\
+Error: when specifying --master you must use the master id
+""")
+        self.assertEquals(1, returnVal)
+
+    def testCloneMoveBanClear(self):
+        # Load nodes into cib so move will work
+        utils.usefile = True
+        utils.filename = temp_cib
+        output, returnVal = utils.run(["cibadmin", "-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops D1 Dummy --clone"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops D2 Dummy --group DG"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clone DG")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D1")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D1-clone")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move D2")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource move DG-clone")
+        ac(output, "Error: cannot move cloned resources\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+  Resource: DG-clone
+    Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-DG-clone-on-rh7-1)
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clear DG-clone")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "constraint --full")
+        ac(output, """\
+Location Constraints:
+Ordering Constraints:
+Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
     def testNoMoveMSClone(self):
         output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")
         assert returnVal == 0
@@ -1481,6 +1557,10 @@ Colocation Constraints:
         assert output == "", [output]
 
         output, returnVal  = pcs(temp_cib, "resource move D1")
+        assert returnVal == 1
+        assert output == "Error: cannot move cloned resources\n", [output]
+
+        output, returnVal  = pcs(temp_cib, "resource move D1-clone")
         assert returnVal == 1
         assert output == "Error: cannot move cloned resources\n", [output]
 

@@ -457,19 +457,62 @@ def resource_move(argv,clear=False,ban=False):
         usage.resource()
         sys.exit(1)
 
-    if not utils.does_exist("//primitive[@id='"+resource_id+"']") and not utils.does_exist("//group[@id='"+resource_id+"']") and not utils.does_exist("//master[@id='"+resource_id+"']"):
+    dom = utils.get_cib_dom()
+    if (
+        not utils.dom_get_resource(dom, resource_id)
+        and
+        not utils.dom_get_group(dom, resource_id)
+        and
+        not utils.dom_get_master(dom, resource_id)
+        and
+        not utils.dom_get_clone(dom, resource_id)
+    ):
         utils.err("%s is not a valid resource" % resource_id)
 
-    if utils.is_resource_clone(resource_id) and not clear and not ban:
+    if (
+        not clear and not ban
+        and
+        (
+            utils.dom_get_clone(dom, resource_id)
+            or
+            utils.dom_get_resource_clone(dom, resource_id)
+            or
+            utils.dom_get_group_clone(dom, resource_id)
+        )
+    ):
         utils.err("cannot move cloned resources")
 
-    if utils.is_resource_masterslave(resource_id) and not clear and not ban and not "--master" in utils.pcs_options:
-        master_id = utils.get_resource_master_id(resource_id)
-        utils.err("to move Master/Slave resources you must use --master and the master id (%s)" % master_id)
+    if (
+        not clear and not ban
+        and
+        "--master" not in utils.pcs_options
+        and
+        (
+            utils.dom_get_resource_masterslave(dom, resource_id)
+            or
+            utils.dom_get_group_masterslave(dom, resource_id)
+        )
+    ):
+        master = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
+        utils.err(
+            "to move Master/Slave resources you must use --master "
+                "and the master id (%s)"
+            % master.getAttribute("id")
+        )
 
-    if "--master" in utils.pcs_options and not utils.does_exist("//master[@id='"+resource_id+"']"):
-        master_id = utils.get_resource_master_id(resource_id)
-        utils.err("when specifying --master you must use the master id (%s)" % master_id)
+    if (
+        "--master" in utils.pcs_options
+        and
+        not utils.dom_get_master(dom, resource_id)
+    ):
+        master_clone = utils.dom_get_resource_clone_ms_parent(dom, resource_id)
+        if master_clone and master_clone.tagName == "master":
+            utils.err(
+                "when specifying --master you must use the master id (%s)"
+                % master_clone.getAttribute("id")
+            )
+        else:
+            utils.err("when specifying --master you must use the master id")
 
     if "--master" in utils.pcs_options:
         other_options.append("--master")
