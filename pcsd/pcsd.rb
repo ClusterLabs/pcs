@@ -1,5 +1,6 @@
 require 'sinatra'
 require 'sinatra/reloader' if development?  #require 'rack/ssl'
+require 'sinatra/cookies'
 require 'open3'
 require 'rexml/document'
 require 'resource.rb'

@@ -17,9 +17,9 @@ class PCSAuth
   end
 
   def self.validUser(username, password, generate_token = false, request = nil)
-    if username != "hacluster"
-      return nil
-    end
+#    if username != "hacluster"
+#      return nil
+#    end
     if not Rpam.auth(username,password, :service => "pcsd")
       return nil
     end

@@ -535,7 +535,7 @@ def node_status(params)
             "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
             "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id,
             "node_attr" => node_attributes, "fence_levels" => fence_levels,
-            "need_ring1_address" => need_ring1_address?, "acls" => acls
+            "need_ring1_address" => need_ring1_address?, "acls" => acls, "username" => cookies[:CIB_user]
            }
   ret = JSON.generate(status)
   return ret
