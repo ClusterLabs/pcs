@@ -566,7 +566,11 @@ def run_cmd(*args)
   start = Time.now
   out = ""
   errout = ""
-  ENV['CIB_user'] = "testuser"
+  if session[:username] == "hacluster"
+    ENV['CIB_user'] = cookies[:CIB_user]
+  else
+    ENV['CIB_user'] = session[:username]
+  end
   status = Open4::popen4(*args) do |pid, stdin, stdout, stderr|
     out = stdout.readlines()
     errout = stderr.readlines()
