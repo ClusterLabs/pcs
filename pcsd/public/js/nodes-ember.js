@@ -396,13 +396,12 @@ Pcs.aclsController = Ember.ArrayController.createWithMixins({
     return [];
   }.property("groups"),
   load_role: function(role_row, dont_update_hash) {
-    load_row(role_row, this, 'cur_role', '#acl_info');
+    load_row(role_row, this, 'cur_role', '#node_info');
     if (!dont_update_hash) {
       window.location.hash = "/acls/" + $(role_row).attr("nodeID");
     }
   },
   update: function(data) {
-    console.log("UPDATE");
     var self = this;
     self.set('content',[]);
     var my_groups = {}, my_users = {}, my_roles = {};
@@ -454,12 +453,13 @@ Pcs.aclsController = Ember.ArrayController.createWithMixins({
       }
       if (role_data["permissions"]) {
         $.each(role_data["permissions"], function(key, permission) {
-          var parsed = permission.match(/(\S+)\s+(\S+)\s+(.+)/);
+          var parsed = permission.match(/(\S+)\s+(\S+)\s+(.+)\((.*)\)/);
           role["permissions"] = role["permissions"] || [];
           role["permissions"].push({
             type: parsed[1],
             xpath_id: parsed[2],
             query_id: parsed[3],
+            permission_id: parsed[4],
           });
         });
       }

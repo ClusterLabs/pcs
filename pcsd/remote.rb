@@ -125,6 +125,8 @@ def remote(params,request)
     return add_fence_level_remote(params)
   when "add_node_attr_remote"
     return add_node_attr_remote(params)
+  when "remove_acl"
+    return remove_acl_remote(params)
   else
     return [404, "Unknown Request"]
   end
@@ -887,6 +889,22 @@ def add_node_attr_remote(params)
     return [200, "Successfully added attribute to node"]
   else
     return [400, "Error adding attribute to node"]
+  end
+end
+
+def remove_acl_remote(params)
+  if params["item"] == "permission"
+    retval = remove_acl_permission(params["acl_perm_id"])
+  elsif params["item"] == "usergroup"
+    retval = remove_acl_usergroup(params["role_id"],params["usergroup_id"])
+  else
+    retval = "Error: Unknown removal request"
+  end
+
+  if retval == ""
+    return [200, "Successfully removed permission from role"]
+  else
+    return [400, retval]
   end
 end
 

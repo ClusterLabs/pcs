@@ -151,6 +151,22 @@ def remove_constraint_rule(rule_id)
   return retval
 end
 
+def remove_acl_permission(acl_perm_id)
+  stdout, stderror, retval = run_cmd(PCS, "acl", "permission", "delete", acl_perm_id.to_s)
+  if retval != 0
+    return stderror.join("\n").chomp
+  end
+  return ""
+end
+
+def remove_acl_usergroup(role_id, usergroup_id)
+  stdout, stderror, retval = run_cmd(PCS, "acl", "role", "unassign", role_id.to_s, usergroup_id.to_s)
+  if retval != 0
+    return stderror.join("\n").chomp
+  end
+  return ""
+end
+
 def get_node_token(node)
   out, stderror, retval = run_cmd(PCS, "cluster", "token", node)
   return retval, out

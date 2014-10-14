@@ -1239,6 +1239,36 @@ function remove_constraint(id) {
   });
 }
 
+function remove_acl_item(id,item) {
+  fade_in_out(id);
+  var data = {};
+  switch (item) {
+    case "perm":
+      data["item"] = "permission";
+      data["acl_perm_id"] = id.attr("acl_perm_id");
+      break;
+    case "usergroup":
+      data["item"] = "usergroup";
+      data["usergroup_id"] = id.attr("usergroup_id")
+      data["role_id"] = id.attr("role_id")
+      break;
+  }
+
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'remove_acl',
+    data: data,
+    timeout: pcs_timeout,
+    success: function (data) {
+      Pcs.update();
+//      Pcs.resourcesController.remove_constraint(id);
+    },
+    error: function (xhr, status, error) {
+      alert(xhr.responseText);
+    }
+  });
+}
+
 function remove_constraint_rule(id) {
   fade_in_out($("[rule_id='"+id+"']").parent());
   $.ajax({
