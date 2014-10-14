@@ -69,6 +69,13 @@ function select_menu(menu, item, initial) {
     menu_show("configure", false);
   }
 
+  if (menu == "ACLS") {
+    Pcs.set('cur_page',"acls");
+    menu_show("acls", true);
+  } else {
+    menu_show("acls", false);
+  }
+
   if (menu == "WIZARDS") {
     Pcs.set('cur_page',"wizards");
     menu_show("wizards", true);

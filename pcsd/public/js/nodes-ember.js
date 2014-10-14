@@ -21,6 +21,10 @@ Pcs = Ember.Application.createWithMixins({
     if (this.cur_page == "configure") return "display: table-row;";
     else return "display: none;";
   }.property("cur_page"),
+  acls_page: function() {
+    if (this.cur_page == "acls") return "display: table-row;";
+    else return "display: none;";
+  }.property("cur_page"),
   manage_page: function() {
     if (this.cur_page == "manage") return "display: table-row;";
     else return "display: none;";
@@ -58,6 +62,7 @@ Pcs = Ember.Application.createWithMixins({
 	Pcs.resourcesController.update(data);
 	Pcs.nodesController.update(data);
 	Pcs.settingsController.update(data);
+	Pcs.aclsController.update(data);
 	Pcs.set("cluster_settings",data[Object.keys(data)[0]].cluster_settings);
         Pcs.set('need_ring1_address', false)
         $.each(data, function(node, node_data) {
@@ -102,6 +107,7 @@ Pcs = Ember.Application.createWithMixins({
 
 Pcs.Router.map(function() {
   this.route("Configuration", { path: "configure"});
+  this.route("ACLs", {path: "acls"});
   this.resource("Fence Devices", {path: "fencedevices/:stonith_id"}, function () {
     this.route('new');
   });
@@ -168,6 +174,12 @@ Pcs.NodesRoute = Ember.Route.extend({
   model: function(params) {
     Pcs.opening_node = params.node_id;
     return null;
+  }
+});
+
+Pcs.ACLsRoute = Ember.Route.extend({
+  setupController: function(controller, model) {
+    select_menu("ACLS");
   }
 });
 
@@ -335,6 +347,47 @@ Pcs.Clusternode = Ember.Object.extend({
       return "Disabled";
   }.property("pcsd_enabled"),
   location_constraints: null
+});
+
+Pcs.aclsController = Ember.ArrayController.createWithMixins({
+  content: [],
+  role_list: function() {
+    if (this.get("roles"))
+      return Object.keys(this.get("roles"));
+    return [];
+  }.property("roles"),
+  user_list: function() {
+    if (this.get("users"))
+      return Object.keys(this.get("users"));
+    return [];
+  }.property("users"),
+  group_list: function() {
+    if (this.get("groups"))
+      return Object.keys(this.get("groups"));
+    return [];
+  }.property("groups"),
+  update: function(data) {
+    console.log("UPDATE");
+    var self = this;
+    self.set('content',[]);
+    var my_groups = {}, my_users = {}, my_roles = {};
+    $.each(data, function(key, value) {
+      if (value["acls"]) {
+	$.each(value["acls"]["group"], function (k2,v2) {
+	  my_groups[k2] = v2;
+        });
+        $.each(value["acls"]["user"], function (k2,v2) {
+	  my_users[k2] = v2;
+        });
+        $.each(value["acls"]["role"], function (k2,v2) {
+	  my_roles[k2] = v2;
+        });
+      }
+    });
+    self.set('roles',my_roles);
+    self.set('users',my_users);
+    self.set('groups',my_groups);
+  }
 });
 
 Pcs.settingsController = Ember.ArrayController.create({
