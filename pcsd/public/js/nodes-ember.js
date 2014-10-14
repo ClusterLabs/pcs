@@ -5,6 +5,7 @@ Pcs = Ember.Application.createWithMixins({
   cur_page: "",
   opening_resource: "",
   opening_node: "",
+  opening_aclrole: "",
   resource_page: function() {
     if (this.cur_page == "resources") return "display: table-row;";
     else return "display: none;";
@@ -78,6 +79,7 @@ Pcs = Ember.Application.createWithMixins({
 	      Pcs.resourcesController.load_resource($('#resource_list_row').find('.node_selected').first(),true);
 	      Pcs.resourcesController.load_stonith($('#stonith_list_row').find('.node_selected').first(),true);
 	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first(),true);
+        Pcs.aclsController.load_role($('#acls_list_row').find('.node_selected').first(), true);
 	    });
 	    Pcs.selectedNodeController.reset();
 	    setup_node_links();
@@ -107,6 +109,9 @@ Pcs = Ember.Application.createWithMixins({
 
 Pcs.Router.map(function() {
   this.route("Configuration", { path: "configure"});
+  this.resource("ACLs", {path: "acls/:aclrole_id"}, function () {
+    this.route("new");
+  });
   this.route("ACLs", {path: "acls"});
   this.resource("Fence Devices", {path: "fencedevices/:stonith_id"}, function () {
     this.route('new');
@@ -180,6 +185,10 @@ Pcs.NodesRoute = Ember.Route.extend({
 Pcs.ACLsRoute = Ember.Route.extend({
   setupController: function(controller, model) {
     select_menu("ACLS");
+  },
+  model: function(params) {
+    Pcs.opening_aclrole = params.aclrole_id;
+    return null;
   }
 });
 
@@ -349,8 +358,28 @@ Pcs.Clusternode = Ember.Object.extend({
   location_constraints: null
 });
 
+Pcs.Aclrole = Ember.Object.extend({
+  name: null,
+  cur_role: false,
+  description: "",
+  user_list: null,
+  group_list: null,
+  trclass: function() {
+    if (this.cur_role) {
+      return "node_selected";
+    }
+  }.property("cur_role"),
+  onmouseover: function() {
+    return this.cur_role ? "" : "hover_over(this);"
+  }.property("cur_role"),
+  onmouseout: function() {
+    return this.cur_role ? "" : "hover_out(this);"
+  }.property("cur_role"),
+});
+
 Pcs.aclsController = Ember.ArrayController.createWithMixins({
   content: [],
+  cur_role: null,
   role_list: function() {
     if (this.get("roles"))
       return Object.keys(this.get("roles"));
@@ -366,27 +395,119 @@ Pcs.aclsController = Ember.ArrayController.createWithMixins({
       return Object.keys(this.get("groups"));
     return [];
   }.property("groups"),
+  load_role: function(role_row, dont_update_hash) {
+    load_row(role_row, this, 'cur_role', '#acl_info');
+    if (!dont_update_hash) {
+      window.location.hash = "/acls/" + $(role_row).attr("nodeID");
+    }
+  },
   update: function(data) {
     console.log("UPDATE");
     var self = this;
     self.set('content',[]);
     var my_groups = {}, my_users = {}, my_roles = {};
+    var cur_role_holder = "";
+    var cur_role_name = "";
     $.each(data, function(key, value) {
       if (value["acls"]) {
-	$.each(value["acls"]["group"], function (k2,v2) {
-	  my_groups[k2] = v2;
-        });
-        $.each(value["acls"]["user"], function (k2,v2) {
-	  my_users[k2] = v2;
-        });
-        $.each(value["acls"]["role"], function (k2,v2) {
-	  my_roles[k2] = v2;
-        });
+        if (value["acls"]["group"]) {
+          $.each(value["acls"]["group"], function (k2,v2) {
+            my_groups[k2] = v2;
+          });
+        }
+        if (value["acls"]["user"]) {
+          $.each(value["acls"]["user"], function (k2,v2) {
+            my_users[k2] = v2;
+          });
+        }
+        if (value["acls"]["role"]) {
+          $.each(value["acls"]["role"], function (k2,v2) {
+            my_roles[k2] = v2;
+          });
+        }
       }
     });
     self.set('roles',my_roles);
     self.set('users',my_users);
     self.set('groups',my_groups);
+
+    cur_role_holder = self.cur_role ? self.cur_role.name : "";
+
+    $.each(my_roles, function(role_name, role_data) {
+      var found = false;
+      var role = null;
+      $.each(self.content, function(key, pre_existing_role) {
+        if(pre_existing_role && pre_existing_role.name == role_name) {
+          found = true;
+          role = pre_existing_role;
+          role.set("name", role_name);
+          role.set("cur_role", false);
+          role.set("description", role_data["description"]);
+        }
+      });
+      if (!found) {
+        role = Pcs.Aclrole.create({
+          name: role_name,
+          cur_role: false,
+          description: role_data["description"],
+        });
+      }
+      if (role_data["permissions"]) {
+        $.each(role_data["permissions"], function(key, permission) {
+          var parsed = permission.match(/(\S+)\s+(\S+)\s+(.+)/);
+          role["permissions"] = role["permissions"] || [];
+          role["permissions"].push({
+            type: parsed[1],
+            xpath_id: parsed[2],
+            query_id: parsed[3],
+          });
+        });
+      }
+
+      if (cur_role_holder == "") {
+        cur_role_name = Pcs.opening_aclrole;
+      }
+      else {
+        cur_role_name = cur_role_holder;
+      }
+      if (role.name == cur_role_name) {
+        role.set("cur_role", true);
+        self.set("cur_role", role);
+      }
+
+      if (!found) {
+        self.pushObject(role);
+      }
+    });
+
+    $.each(my_users, function(user_name, role_list) {
+      $.each(role_list, function(key1, role_name) {
+        $.each(self.content, function(key2, existing_role) {
+          if (existing_role.name == role_name) {
+            if (!existing_role.user_list) {
+              existing_role.user_list = [user_name];
+            }
+            else if (existing_role.user_list.indexOf(user_name) == -1) {
+              existing_role.user_list.push(user_name);
+            }
+          }
+        });
+      });
+    });
+    $.each(my_groups, function(group_name, role_list) {
+      $.each(role_list, function(key1, role_name) {
+        $.each(self.content, function(key2, existing_role) {
+          if (existing_role.name == role_name) {
+            if (!existing_role.group_list) {
+              existing_role.group_list = [group_name];
+            }
+            else if (existing_role.group_list.indexOf(group_name) == -1) {
+              existing_role.group_list.push(group_name);
+            }
+          }
+        });
+      });
+    });
   }
 });
 

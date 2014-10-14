@@ -11,7 +11,7 @@
         <th><input type="checkbox" onchange="checkBoxToggle(this,false)"></th><th></th><th>ROLE&nbsp;NAME</th>
       </tr>
       {{#each role in Pcs.aclsController.role_list}}
-      <tr>
+      <tr {{bind-attr onmouseover="onmouseover"}} {{bind-attr onmouseout="onmouseout"}} {{bind-attr class="trclass"}} {{bind-attr nodeID="role"}} onclick='Pcs.aclsController.load_role(this);'>
         <td class="node_list_check">
           {{view Ember.Checkbox checkedBinding="checked" class="node_list_check"}}
         </td>
@@ -26,16 +26,30 @@
   </td>
   <td id="acl_info" colspan=2>
     <table>
-      <tr><td>Role Name:</td><td><input type="text"></td></tr>
-      <tr><td>Role Description:</td><td><input type="text"></td></tr>
+      <tr><td>Role Name:</td><td><input type="text" {{bind-attr value="Pcs.aclsController.cur_role.name"}}></td></tr>
+      <tr><td>Role Description:</td><td><input type="text" {{bind-attr value="Pcs.aclsController.cur_role.description"}}></td></tr>
     </table>
     <table>
-      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Permissions (n)</td></tr>
+      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Permissions ({{Pcs.aclsController.role_list.length}})</td></tr>
       <tr><td colspan=2>
           <div id="">
             <table class="datatable">
-              <tr><th>Role Name</th><th>Description</th><th>Type</th><th>XPath/ID</th><th>Query/ID</th></tr>
-              <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+              <tr><th>Role Name</th><th>Description</th><th>Type</th><th>XPath/ID</th><th>Query/ID</th><th>Remove</th></tr>
+              {{#each role in Pcs.aclsController}}
+                {{#each perm in role.permissions}}
+                  <tr>
+                    <td>{{role.name}}</td>
+                    <td>{{role.description}}</td>
+                    <td>{{perm.type}}</td>
+                    <td>{{perm.xpath_id}}</td>
+                    <td>{{perm.query_id}}</td>
+                    <td></td>
+                  </tr>
+                {{/each}}
+              {{/each}}
+              {{#unless Pcs.aclsController}}
+                <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+              {{/unless}}
               <tr id="new_acl">
                 <td><input type="text" name="role_id"></td>
                 <td><input type="text"  name="role_description"></td>
@@ -48,12 +62,20 @@
           </div>
         </td>
       </tr>
-      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Users Assigned (n)</td></tr>
+      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Users Assigned ({{#if Pcs.aclsController.cur_role.user_list}}{{Pcs.aclsController.cur_role.user_list.length}}{{else}}0{{/if}})</td></tr>
       <tr><td colspan=2>
           <div id="">
             <table class="datatable">
-              <tr><th>User Name</th></tr>
-              <tr><td style="color: gray;">NONE</td></tr>
+              <tr><th>User Name</th><th>Remove</th></tr>
+              {{#each user in Pcs.aclsController.cur_role.user_list}}
+                <tr>
+                  <td>{{user}}</td>
+                  <td></td>
+                </tr>
+              {{/each}}
+              {{#unless Pcs.aclsController.cur_role.user_list}}
+                <tr><td style="color: gray;">NONE</td></tr>
+              {{/unless}}
               <tr id="new_acl">
                 <td><input type="text" name="role_assign_user"></td>
                 <td><button type="button" onclick="" name="add">Add</button></td>
@@ -62,12 +84,20 @@
           </div>
         </td>
       </tr>
-      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Groups Assigned (n)</td></tr>
+      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Groups Assigned ({{#if Pcs.aclsController.cur_role.group_list}}{{Pcs.aclsController.cur_role.group_list.length}}{{else}}0{{/if}})</td></tr>
       <tr><td colspan=2>
           <div id="">
             <table class="datatable">
-              <tr><th>Group</th></tr>
-              <tr><td style="color: gray;">NONE</td></tr>
+              <tr><th>Group</th><th>Remove</th></tr>
+              {{#each group in Pcs.aclsController.cur_role.group_list}}
+                <tr>
+                  <td>{{group}}</td>
+                  <td></td>
+                </tr>
+              {{/each}}
+              {{#unless Pcs.aclsController.cur_role.group_list}}
+                <tr><td style="color: gray;">NONE</td></tr>
+              {{/unless}}
               <tr id="new_acl">
                 <td><input type="text" name="role_assign_user"></td>
                 <td><button type="button" onclick="" name="add">Add</button></td>
