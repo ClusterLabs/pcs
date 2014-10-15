@@ -57,6 +57,7 @@ before do
   @error = session[:error]
   session[:errorval] = nil
   session[:error] = nil
+  $session = session
 end
 
 configure do
@@ -567,6 +568,7 @@ If checked, the cluster will refuse to start resources unless one or more STONIT
   pacemaker_page << ConfigOption.new("PE Error Storage", "pe-error-series-max", "int", "4",nil,nil,'The number of policy engine (PE) inputs resulting in ERRORs to save. Used when reporting problems.')
   pacemaker_page << ConfigOption.new("PE Warning Storage", "pe-warn-series-max", "int", "4",nil,nil,'The number of PE inputs resulting in WARNINGs to save. Used when reporting problems.')
   pacemaker_page << ConfigOption.new("PE Input Storage", "pe-input-series-max", "int", "4",nil,nil,'The number of "normal" PE inputs to save. Used when reporting problems.')
+  pacemaker_page << ConfigOption.new("Enable ACLs", "enable-acl", "check", nil,nil,nil,'Should pacemaker use ACLs to determine access to cluster')
   config_options["pacemaker"] = pacemaker_page
 
   allconfigoptions = []
@@ -720,7 +722,7 @@ class ConfigOption
       }
       return ret
     when "check"
-      ret = "<input type=checkbox name=\"#{paramname}\" " + checked(nil) + ">"
+      ret = "<input type=checkbox name=\"#{paramname}\" " + self.checked(nil) + ">"+value.to_s
       ret += "<input type=hidden name=\"#{hidden_paramname}\" value=\"off\">"
       return ret
     when "dropdown"

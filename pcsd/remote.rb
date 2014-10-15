@@ -257,7 +257,7 @@ def cluster_disable(params)
   end
 end
 
-def get_cib(parasm)
+def get_cib(params)
   cib, stderr, retval = run_cmd(CIBADMIN, "-Ql")
   if retval != 0
     return [400, "Unable to get CIB: " + cib.to_s + stderr.to_s]
@@ -1009,8 +1009,6 @@ end
 def update_cluster_settings(params)
   settings = params["config"]
   hidden_settings = params["hidden"]
-  p "Settings"
-  pp settings
   output = ""
   hidden_settings.each{|name,val|
     found = false
@@ -1025,9 +1023,12 @@ def update_cluster_settings(params)
     end
   }
 
-
   settings.each{|name,val|
-    run_cmd(PCS, "property", "set", name + "=" + val)
+    if name == "enable-acl"
+      run_cmd(PCS, "property", "set", name + "=" + val, "--force")
+    else
+      run_cmd(PCS, "property", "set", name + "=" + val)
+    end
   }
   return [200, "Update Successful"]
 end
