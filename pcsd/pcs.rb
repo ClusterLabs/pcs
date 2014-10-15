@@ -567,7 +567,7 @@ def run_cmd(*args)
   out = ""
   errout = ""
   if $session[:username] == "hacluster"
-    ENV['CIB_user'] = cookies[:CIB_user]
+    ENV['CIB_user'] = $cookies[:CIB_user]
   else
     ENV['CIB_user'] = $session[:username]
   end

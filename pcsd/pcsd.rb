@@ -52,12 +52,13 @@ before do
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
+  $session = session
+  $cookies = cookies
   $cluster_name = get_cluster_version()
   @errorval = session[:errorval]
   @error = session[:error]
   session[:errorval] = nil
   session[:error] = nil
-  $session = session
 end
 
 configure do
@@ -722,7 +723,7 @@ class ConfigOption
       }
       return ret
     when "check"
-      ret = "<input type=checkbox name=\"#{paramname}\" " + self.checked(nil) + ">"+value.to_s
+      ret = "<input type=checkbox name=\"#{paramname}\" " + self.checked(nil) + ">"
       ret += "<input type=hidden name=\"#{hidden_paramname}\" value=\"off\">"
       return ret
     when "dropdown"
