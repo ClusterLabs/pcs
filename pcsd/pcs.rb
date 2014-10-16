@@ -151,6 +151,27 @@ def remove_constraint_rule(rule_id)
   return retval
 end
 
+def add_acl_permission(acl_role_id, perm_type, xpath_id, query_id)
+  stdout, stderror, retval = run_cmd(
+    PCS, "acl", "permission", "add", acl_role_id.to_s, perm_type.to_s,
+    xpath_id.to_s, query_id.to_s
+  )
+  if retval != 0
+    return stderror.join("\n").strip
+  end
+  return ""
+end
+
+def add_acl_usergroup(acl_role_id, usergroup)
+  stdout, stderror, retval = run_cmd(
+    PCS, "acl", "role", "assign", acl_role_id.to_s, usergroup.to_s
+  )
+  if retval != 0
+    return stderror.join("\n").strip
+  end
+  return ""
+end
+
 def remove_acl_permission(acl_perm_id)
   stdout, stderror, retval = run_cmd(PCS, "acl", "permission", "delete", acl_perm_id.to_s)
   if retval != 0

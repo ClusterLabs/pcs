@@ -125,6 +125,8 @@ def remote(params,request)
     return add_fence_level_remote(params)
   when "add_node_attr_remote"
     return add_node_attr_remote(params)
+  when "add_acl"
+    return add_acl_remote(params)
   when "remove_acl"
     return remove_acl_remote(params)
   else
@@ -889,6 +891,27 @@ def add_node_attr_remote(params)
     return [200, "Successfully added attribute to node"]
   else
     return [400, "Error adding attribute to node"]
+  end
+end
+
+def add_acl_remote(params)
+  if params["item"] == "permission"
+    retval = add_acl_permission(
+      params["role_id"], params["type"], params["xpath_id"], params["query_id"]
+    )
+  elsif params["item"] == "usergroup"
+    retval = add_acl_usergroup(params["role_id"], params["usergroup"])
+  else
+    retval = "Error: Unknown adding request"
+  end
+
+  if retval == ""
+    return [200, "Successfully added permission to role"]
+  else
+    return [
+      400,
+      retval.include?("cib_replace failed") ? "Error adding permission" : retval
+    ]
   end
 end
 

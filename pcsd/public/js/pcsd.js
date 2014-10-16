@@ -1255,6 +1255,37 @@ function remove_constraint_rule(id) {
   });
 }
 
+function add_acl_item(parent_id, item_type) {
+  var data = {};
+  data["role_id"] = Pcs.aclsController.cur_role.name;
+  switch (item_type) {
+    case "perm":
+      data["item"] = "permission";
+      data["type"] = $(parent_id + " select[name='role_type']").val();
+      data["xpath_id"] = $(parent_id + " select[name='role_xpath_id']").val();
+      data["query_id"] = $(parent_id + " input[name='role_query_id']").val().trim();
+      break;
+    case "usergroup":
+      data["item"] = "usergroup";
+      data["usergroup"] = $(parent_id + " input[name='role_assign_user']").val().trim();
+      break;
+  }
+  fade_in_out($(parent_id));
+  $.ajax({
+    type: "POST",
+    url: get_cluster_remote_url() + 'add_acl',
+    data: data,
+    timeout: pcs_timeout,
+    success: function(data) {
+      $(parent_id + " input").val("");
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert(xhr.responseText);
+    }
+  });
+}
+
 function remove_acl_item(id,item) {
   fade_in_out(id);
   var data = {};
