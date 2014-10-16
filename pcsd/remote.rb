@@ -937,8 +937,10 @@ def add_acl_remote(params)
     retval = add_acl_permission(
       params["role_id"], params["type"], params["xpath_id"], params["query_id"]
     )
-  elsif params["item"] == "usergroup"
-    retval = add_acl_usergroup(params["role_id"], params["usergroup"])
+  elsif (params["item"] == "user") or (params["item"] == "group")
+    retval = add_acl_usergroup(
+      params["role_id"], params["item"], params["usergroup"]
+    )
   else
     retval = "Error: Unknown adding request"
   end

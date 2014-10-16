@@ -1335,8 +1335,9 @@ function add_acl_item(parent_id, item_type) {
       data["xpath_id"] = $(parent_id + " select[name='role_xpath_id']").val();
       data["query_id"] = $(parent_id + " input[name='role_query_id']").val().trim();
       break;
-    case "usergroup":
-      data["item"] = "usergroup";
+    case "user":
+    case "group":
+      data["item"] = item_type;
       data["usergroup"] = $(parent_id + " input[name='role_assign_user']").val().trim();
       break;
   }

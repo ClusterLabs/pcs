@@ -174,9 +174,20 @@ def add_acl_permission(acl_role_id, perm_type, xpath_id, query_id)
   return ""
 end
 
-def add_acl_usergroup(acl_role_id, usergroup)
+def add_acl_usergroup(acl_role_id, user_group, name)
+  if (user_group == "user") or (user_group == "group")
+    stdout, stderr, retval = run_cmd(
+      PCS, "acl", user_group, "create", name.to_s, acl_role_id.to_s
+    )
+    if retval == 0
+      return ""
+    end
+    if stderr.join("\n").strip.downcase != "error: #{name.to_s.downcase} already exists in cib"
+      return stderror.join("\n").strip
+    end
+  end
   stdout, stderror, retval = run_cmd(
-    PCS, "acl", "role", "assign", acl_role_id.to_s, usergroup.to_s
+    PCS, "acl", "role", "assign", acl_role_id.to_s, name.to_s
   )
   if retval != 0
     return stderror.join("\n").strip
