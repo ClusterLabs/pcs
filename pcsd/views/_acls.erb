@@ -2,29 +2,42 @@
     ACLS
   </td>
 </tr>
-<tr><td>HI</td></tr>
-<tr {{bind-attr style="Pcs.acls_page"}}><td class="borderbottom">&nbsp;</td><td class="borderbottom">&nbsp;</td></tr>
+<tr {{bind-attr style="Pcs.acls_page"}}>
+  <td id="remove_add" class="borderbottom">
+  </td>
+  <td class="borderbottom">&nbsp;</td>
+  <td id="tab_name" width="125">
+    <div style="float: left">&nbsp;Edit ACL Role&nbsp;</div>
+    <div class="check sprites"></div>
+  </td>
+</tr>
 <tr id="acls_list_row" {{bind-attr style="Pcs.acls_page"}}>
   <td id="acls_roles_list" class="node_list">
     <table cellpadding=0 cellspacing=0 width=100%>
       <tr>
-        <th><input type="checkbox" onchange="checkBoxToggle(this,false)"></th><th></th><th>ROLE&nbsp;NAME</th>
+        <th><input type="checkbox" onchange="checkBoxToggle(this,false)"></th>
+        <th></th>
+        <th>ROLE&nbsp;NAME</th>
+        <th></th>
       </tr>
-      {{#each role in Pcs.aclsController.role_list}}
-      <tr {{bind-attr onmouseover="onmouseover"}} {{bind-attr onmouseout="onmouseout"}} {{bind-attr class="trclass"}} {{bind-attr nodeID="role"}} onclick='Pcs.aclsController.load_role(this);'>
+      {{#each Pcs.aclsController}}
+      <tr {{bind-attr onmouseover="onmouseover"}} {{bind-attr onmouseout="onmouseout"}} {{bind-attr class="trclass"}} {{bind-attr nodeID="name"}} onclick='Pcs.aclsController.load_role(this);'>
         <td class="node_list_check">
           {{view Ember.Checkbox checkedBinding="checked" class="node_list_check"}}
         </td>
         <td class="node_list_sprite">
           <div class="check sprites"></div>
         </td>
-        <td width="99%">{{role}}</td>
+        <td width="99%">{{name}}</td>
+        <td>
+          <div {{bind-attr style="showArrow"}} class="arrow sprites"></div>
+        </td>
       </tr>
       {{/each}}
-
     </table>
   </td>
   <td id="node_info" colspan=2>
+    <div id="role_info_div">
     <table>
       <tr><td>Role Name:</td><td><input disabled type="text" size="40" {{bind-attr value="Pcs.aclsController.cur_role.name"}}></td></tr>
       <tr><td>Role Description:</td><td><input disabled type="text" size="40" {{bind-attr value="Pcs.aclsController.cur_role.description"}}></td></tr>
@@ -48,7 +61,7 @@
               {{#unless Pcs.aclsController}}
                 <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
               {{/unless}}
-              <tr id="new_acl">
+              <tr id="new_acl_perm">
                 <td><select name="role_type"><option>read</option><option>write</option><option>deny</option></select></td>
                 <td><select name="role_xpath_id"><option>XPath</option><option>ID</option></td>
                 <td><input type="text" name="role_query_id"></td>
@@ -58,6 +71,8 @@
           </div>
         </td>
       </tr>
+    </table>
+    <table>
       <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Users Assigned ({{#if Pcs.aclsController.cur_role.user_list}}{{Pcs.aclsController.cur_role.user_list.length}}{{else}}0{{/if}})</td></tr>
       <tr><td colspan=2>
           <div id="">
@@ -72,9 +87,9 @@
                 </tr>
               {{/each}}
               {{#unless Pcs.aclsController.cur_role.user_list}}
-                <tr><td style="color: gray;">NONE</td></tr>
+                <tr><td style="color: gray;">NONE</td><td></td></tr>
               {{/unless}}
-              <tr id="new_acl">
+              <tr id="new_acl_user">
                 <td><input type="text" name="role_assign_user"></td>
                 <td><button type="button" onclick="" name="add">Add</button></td>
               </tr>
@@ -82,6 +97,8 @@
           </div>
         </td>
       </tr>
+    </table>
+    <table>
       <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Groups Assigned ({{#if Pcs.aclsController.cur_role.group_list}}{{Pcs.aclsController.cur_role.group_list.length}}{{else}}0{{/if}})</td></tr>
       <tr><td colspan=2>
           <div id="">
@@ -96,9 +113,9 @@
               </tr>
               {{/each}}
               {{#unless Pcs.aclsController.cur_role.group_list}}
-                <tr><td style="color: gray;">NONE</td></tr>
+                <tr><td style="color: gray;">NONE</td><td></td></tr>
               {{/unless}}
-              <tr id="new_acl">
+              <tr id="new_acl_group">
                 <td><input type="text" name="role_assign_user"></td>
                 <td><button type="button" onclick="" name="add">Add</button></td>
               </tr>
@@ -107,5 +124,6 @@
         </td>
       </tr>
     </table>
+    </div>
   </td>
 </tr>

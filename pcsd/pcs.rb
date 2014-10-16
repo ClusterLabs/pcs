@@ -461,16 +461,19 @@ def get_acls()
       user = m[1]
       state = "user"
       ret_val[state] ||= {}
+      ret_val[state][user] ||= []
       next
     elsif m = /^Group: (.*)$/.match(line)
       user = m[1]
       state = "group"
       ret_val[state] ||= {}
+      ret_val[state][user] ||= []
       next
     elsif m = /^Role: (.*)$/.match(line)
       role = m[1]
       state = "role"
       ret_val[state] ||= {}
+      ret_val[state][role] ||= {}
       next
     end
 

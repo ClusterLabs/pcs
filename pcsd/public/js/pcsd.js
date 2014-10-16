@@ -927,7 +927,7 @@ function remove_nodes(ids) {
     type: 'POST',
     url: get_cluster_remote_url() + 'remove_nodes',
     data: data,
-    timeoute: pcs_timeout*3,
+    timeout: pcs_timeout*3,
     success: function(data,textStatus) {
       $("#remove_node").dialog("close");
       if (data == "No More Nodes") {
@@ -1239,6 +1239,22 @@ function remove_constraint(id) {
   });
 }
 
+function remove_constraint_rule(id) {
+  fade_in_out($("[rule_id='"+id+"']").parent());
+  $.ajax({
+    type: 'POST',
+    url: '/resource_cmd/rm_constraint_rule',
+    data: {"rule_id": id},
+    timeout: pcs_timeout,
+    success: function (data) {
+      Pcs.resourcesController.remove_constraint(id);
+    },
+    error: function (xhr, status, error) {
+      alert("Error removing constraint rule: ("+error+")");
+    }
+  });
+}
+
 function remove_acl_item(id,item) {
   fade_in_out(id);
   var data = {};
@@ -1265,22 +1281,6 @@ function remove_acl_item(id,item) {
     },
     error: function (xhr, status, error) {
       alert(xhr.responseText);
-    }
-  });
-}
-
-function remove_constraint_rule(id) {
-  fade_in_out($("[rule_id='"+id+"']").parent());
-  $.ajax({
-    type: 'POST',
-    url: '/resource_cmd/rm_constraint_rule',
-    data: {"rule_id": id},
-    timeout: pcs_timeout,
-    success: function (data) {
-      Pcs.resourcesController.remove_constraint(id);
-    },
-    error: function (xhr, status, error) {
-      alert("Error removing constraint rule: ("+error+")");
     }
   });
 }

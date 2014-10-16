@@ -361,19 +361,21 @@ Pcs.Clusternode = Ember.Object.extend({
 Pcs.Aclrole = Ember.Object.extend({
   name: null,
   cur_role: false,
+  checked: false,
   description: "",
   user_list: null,
   group_list: null,
   trclass: function() {
-    if (this.cur_role) {
-      return "node_selected";
-    }
+    return this.cur_role ? "node_selected" : "";
   }.property("cur_role"),
   onmouseover: function() {
     return this.cur_role ? "" : "hover_over(this);"
   }.property("cur_role"),
   onmouseout: function() {
     return this.cur_role ? "" : "hover_out(this);"
+  }.property("cur_role"),
+  showArrow: function(){
+    return this.cur_role ? "" : "display:none";
   }.property("cur_role"),
 });
 
@@ -396,7 +398,7 @@ Pcs.aclsController = Ember.ArrayController.createWithMixins({
     return [];
   }.property("groups"),
   load_role: function(role_row, dont_update_hash) {
-    load_row(role_row, this, 'cur_role', '#node_info');
+    load_row(role_row, this, 'cur_role', '#role_info_div');
     if (!dont_update_hash) {
       window.location.hash = "/acls/" + $(role_row).attr("nodeID");
     }
@@ -479,6 +481,11 @@ Pcs.aclsController = Ember.ArrayController.createWithMixins({
         self.pushObject(role);
       }
     });
+
+    if (self.content && self.content.length > 0 && self.cur_role == null) {
+      self.set("cur_role", self.content[0]);
+      self.content[0].set("cur_role", true);
+    }
 
     $.each(my_users, function(user_name, role_list) {
       $.each(role_list, function(key1, role_name) {
