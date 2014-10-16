@@ -1398,10 +1398,12 @@ def getResourceType(resource):
 def validInstanceAttributes(res_id, ra_values, resource_type):
     ra_values = dict(ra_values)
     found = False
+    stonithDevice = False
     resSplit = resource_type.split(":")
     if len(resSplit) == 2:
         (resClass, resType) = resSplit
         metadata = get_stonith_metadata(fence_bin + resType)
+        stonithDevice = True
     else:
         (resClass, resProvider, resType) = resource_type.split(":")
         metadata = get_metadata("/usr/lib/ocf/resource.d/" + resProvider + "/" + resType)
@@ -1423,7 +1425,16 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
         for action in actions.findall("parameter"):
             valid_parameters.append(action.attrib["name"])
             if "required" in action.attrib and action.attrib["required"] == "1":
-                missing_required_parameters.append(action.attrib["name"])
+# If a default value is set, then the attribute isn't really required (for 'action' on stonith devices only)
+                default_exists = False
+                if action.attrib["name"] == "action" and stonithDevice:
+                    for ch in action:
+                        if ch.tag == "content" and "default" in ch.attrib:
+                            default_exists = True
+                            break
+
+                if not default_exists:
+                    missing_required_parameters.append(action.attrib["name"])
     except xml.parsers.expat.ExpatError as e:
         err("Unable to parse xml for '%s': %s" % (resource_type, e))
     except xml.etree.ElementTree.ParseError as e:

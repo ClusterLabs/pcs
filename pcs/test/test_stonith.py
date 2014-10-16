@@ -24,7 +24,7 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith create test2 fence_ilo")
         assert returnVal == 1
-        ac(output,"Error: missing required option(s): 'ipaddr, login, action' for resource type: stonith:fence_ilo (use --force to override)\n")
+        ac(output,"Error: missing required option(s): 'ipaddr, login' for resource type: stonith:fence_ilo (use --force to override)\n")
 
         output, returnVal = pcs(temp_cib, "stonith create test2 fence_ilo --force")
         assert returnVal == 0
@@ -36,7 +36,7 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith create test9 fence_ilo pcmk_status_action=xxx")
         assert returnVal == 1
-        ac(output,"Error: missing required option(s): 'ipaddr, login, action' for resource type: stonith:fence_ilo (use --force to override)\n")
+        ac(output,"Error: missing required option(s): 'ipaddr, login' for resource type: stonith:fence_ilo (use --force to override)\n")
 
         output, returnVal = pcs(temp_cib, "stonith create test9 fence_ilo pcmk_status_action=xxx --force")
         assert returnVal == 0
@@ -52,7 +52,7 @@ class StonithTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo ipaddr=test")
         assert returnVal == 1
-        ac(output,"Error: missing required option(s): 'login, action' for resource type: stonith:fence_ilo (use --force to override)\n")
+        ac(output,"Error: missing required option(s): 'login' for resource type: stonith:fence_ilo (use --force to override)\n")
 
         output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo ipaddr=test --force")
         assert returnVal == 0

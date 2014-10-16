@@ -41,7 +41,6 @@ def getFenceAgentMetadata(fenceagentname)
   end
   doc.elements.each('resource-agent/parameters/parameter') { |param|
     temp_array = []
-    next if param.attributes["name"] == "action"
     if param.elements["shortdesc"]
       temp_array << param.elements["shortdesc"].text
     else
@@ -52,7 +51,7 @@ def getFenceAgentMetadata(fenceagentname)
     else
       temp_array << ""
     end
-    if param.attributes["required"] == "1"
+    if param.attributes["required"] == "1" and param.attributes["name"] != "action"
       options_required[param.attributes["name"]] = temp_array
     else
       options_optional[param.attributes["name"]] = temp_array
