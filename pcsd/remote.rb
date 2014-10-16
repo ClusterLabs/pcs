@@ -125,6 +125,10 @@ def remote(params,request)
     return add_fence_level_remote(params)
   when "add_node_attr_remote"
     return add_node_attr_remote(params)
+  when "add_acl_role"
+    return add_acl_role_remote(params)
+  when "remove_acl_roles"
+    return remove_acl_roles_remote(params)
   when "add_acl"
     return add_acl_remote(params)
   when "remove_acl"
@@ -891,6 +895,40 @@ def add_node_attr_remote(params)
     return [200, "Successfully added attribute to node"]
   else
     return [400, "Error adding attribute to node"]
+  end
+end
+
+def add_acl_role_remote(params)
+  retval = add_acl_role(params["name"], params["description"])
+  if retval == ""
+    return [200, "Successfully added ACL role"]
+  else
+    return [
+      400,
+      retval.include?("cib_replace failed") ? "Error adding ACL role" : retval
+    ]
+  end
+end
+
+def remove_acl_roles_remote(params)
+  errors = ""
+  params.each { |name, value|
+    if name.index("role-") == 0
+      out, errout, retval = run_cmd(PCS, "acl", "role", "delete", value.to_s)
+      if retval != 0
+        errors += "Unable to remove role #{value}"
+        unless errout.include?("cib_replace failure")
+          errors += ": #{errout.join(" ").strip()}"
+        end
+        errors += "\n"
+        $logger.info errors
+      end
+    end
+  }
+  if errors == ""
+    return [200, "Successfully removed ACL roles"]
+  else
+    return [400, errors]
   end
 end
 

@@ -1255,6 +1255,76 @@ function remove_constraint_rule(id) {
   });
 }
 
+function add_acl_role(form) {
+  var data = {}
+  data["name"] = $(form).find("input[name='name']").val().trim();
+  data["description"] = $(form).find("input[name='description']").val().trim();
+  $.ajax({
+    type: "POST",
+    url: get_cluster_remote_url() + "add_acl_role",
+    data: data,
+    success: function(data) {
+      Pcs.update();
+      $(form).find("input").val("");
+      $("#add_acl_role").dialog("close");
+    },
+    error: function(xhr, status, error) {
+      alert(xhr.responseText);
+    }
+  });
+}
+
+function verify_acl_role_remove() {
+  var buttonOpts = {};
+  var ids = [];
+  var html_roles = "";
+  $.each($('.node_list_check :checked'), function (i,e) {
+    var role_id = $(e).parent().parent().attr("nodeID");
+    ids.push(role_id);
+    html_roles += "<li>" + role_id + "</li>";
+  });
+  if (ids.length == 0) {
+    alert("You must select at least one role to remove");
+    return;
+  }
+  buttonOpts["Remove Role(s)"] = function() {
+    if (ids.length > 0) {
+      remove_acl_roles(ids);
+    }
+  }
+  buttonOpts["Cancel"] = function() {
+    $(this).dialog("close");
+  };
+  $("#roles_to_remove").html("<ul>" + html_roles + "<ul>");
+  $("#remove_acl_roles").dialog({
+    title: "Remove ACL Role",
+    modal: true,
+    resizable: false,
+    buttons: buttonOpts
+  });
+}
+
+function remove_acl_roles(ids) {
+  var data = {};
+  for (var i = 0; i < ids.length; i++) {
+    data["role-" + i] = ids[i];
+  }
+  $.ajax({
+    type: "POST",
+    url: get_cluster_remote_url() + "remove_acl_roles",
+    data: data,
+    timeout: pcs_timeout*3,
+    success: function(data,textStatus) {
+      $("#remove_acl_roles").dialog("close");
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      $("#remove_acl_roles").dialog("close");
+      alert(xhr.responseText);
+    }
+  });
+}
+
 function add_acl_item(parent_id, item_type) {
   var data = {};
   data["role_id"] = Pcs.aclsController.cur_role.name;

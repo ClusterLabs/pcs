@@ -51,13 +51,13 @@ def acl_role(argv):
     command = argv.pop(0)
     if command == "create":
         role_name = argv.pop(0)
-        if len(argv) < 3:
-            usage.acl("role create")
-            sys.exit(1)
-        if argv[0].startswith('description=') and len(argv[0]) > 12:
+        if argv and argv[0].startswith('description=') and len(argv[0]) > 12:
             description = argv.pop(0)[12:]
         else:
             description = ""
+        id_valid, id_error = utils.validate_xml_id(role_name, 'ACL role')
+        if not id_valid:
+            utils.err(id_error)
         if utils.does_id_exist(dom,role_name):
             utils.err(role_name + " already exists")
 
@@ -267,7 +267,7 @@ def acl_permission(argv):
             se = dom.createElement("acl_permission")
             se.setAttribute("id", utils.find_unique_id(dom, role_id + "-" + kind))
             se.setAttribute("kind", kind)
-            xp_id = argv.pop(0)
+            xp_id = argv.pop(0).lower()
             if xp_id == "xpath":
                 xpath_query = argv.pop(0)
                 se.setAttribute("xpath",xpath_query)

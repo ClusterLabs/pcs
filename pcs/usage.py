@@ -898,8 +898,8 @@ Commands:
     [show]
         List all current access control lists
 
-    role create <role name> [description=<description>] ((read | write | deny)
-                                                (xpath <query> | id <id>))...
+    role create <role name> [description=<description>] [((read | write | deny)
+                                                (xpath <query> | id <id>))...]
         Create a role with the name and (optional) description specified.
         Each role can also have an unlimited number of permissions
         (read/write/deny) applied to either an xpath query or the id

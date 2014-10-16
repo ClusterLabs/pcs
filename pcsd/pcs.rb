@@ -151,6 +151,18 @@ def remove_constraint_rule(rule_id)
   return retval
 end
 
+def add_acl_role(name, description)
+  cmd = [PCS, "acl", "role", "create", name.to_s]
+  if description.to_s != ""
+    cmd << "description=#{description.to_s}"
+  end
+  stdout, stderror, retval = run_cmd(*cmd)
+  if retval != 0
+    return stderror.join("\n").strip
+  end
+  return ""
+end
+
 def add_acl_permission(acl_role_id, perm_type, xpath_id, query_id)
   stdout, stderror, retval = run_cmd(
     PCS, "acl", "permission", "add", acl_role_id.to_s, perm_type.to_s,

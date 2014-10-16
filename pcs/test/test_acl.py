@@ -196,9 +196,13 @@ class ACLTest(unittest.TestCase):
         ac(o,"")
 
     def testRoleCreateDelete(self):
-        o,r = pcs("acl role create role1")
-        assert o.startswith("\nUsage")
-        assert r == 1
+        o,r = pcs("acl role create role0")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("acl role create role0d description='empty role'")
+        ac(o,"")
+        assert r == 0
 
         o,r = pcs("acl role create role1 read xpath /xpath/")
         ac(o,"")
@@ -213,7 +217,7 @@ class ACLTest(unittest.TestCase):
         ac(o,"")
 
         o,r = pcs("acl")
-        ac(o,"Role: role1\n  Permission: read xpath /xpath/ (role1-read)\nRole: role2\n  Description: with description\n  Permission: read xpath /xpath/ (role2-read)\nRole: role3\n  Permission: read xpath /xpath_query/ (role3-read)\n  Permission: write xpath /xpath_query2/ (role3-write)\n  Permission: deny xpath /xpath_query3/ (role3-deny)\n")
+        ac(o,"Role: role0\nRole: role0d\n  Description: empty role\nRole: role1\n  Permission: read xpath /xpath/ (role1-read)\nRole: role2\n  Description: with description\n  Permission: read xpath /xpath/ (role2-read)\nRole: role3\n  Permission: read xpath /xpath_query/ (role3-read)\n  Permission: write xpath /xpath_query2/ (role3-write)\n  Permission: deny xpath /xpath_query3/ (role3-deny)\n")
         assert r == 0
 
         o,r = pcs("acl role delete role2")
@@ -221,7 +225,7 @@ class ACLTest(unittest.TestCase):
         ac(o,"")
 
         o,r = pcs("acl")
-        ac(o,"Role: role1\n  Permission: read xpath /xpath/ (role1-read)\nRole: role3\n  Permission: read xpath /xpath_query/ (role3-read)\n  Permission: write xpath /xpath_query2/ (role3-write)\n  Permission: deny xpath /xpath_query3/ (role3-deny)\n")
+        ac(o,"Role: role0\nRole: role0d\n  Description: empty role\nRole: role1\n  Permission: read xpath /xpath/ (role1-read)\nRole: role3\n  Permission: read xpath /xpath_query/ (role3-read)\n  Permission: write xpath /xpath_query2/ (role3-write)\n  Permission: deny xpath /xpath_query3/ (role3-deny)\n")
         assert r == 0
 
         o,r = pcs("acl role delete role2")
@@ -233,6 +237,14 @@ class ACLTest(unittest.TestCase):
         ac(o,"")
 
         o,r = pcs("acl role delete role3")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs("acl role delete role0")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs("acl role delete role0d")
         assert r == 0
         ac(o,"")
 
