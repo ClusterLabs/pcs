@@ -297,7 +297,7 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
     end
     $logger.info("Request: " + uri.to_s + " (" + (Time.now-start).to_s + "s)")
     req.add_field("Cookie","token="+token)
-    req.add_field("Cookie","CIB_user="+$session[:username])
+    req.add_field("Cookie","CIB_user="+$session[:username].to_s)
     myhttp = Net::HTTP.new(uri.host, uri.port)
     myhttp.use_ssl = true
     myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
