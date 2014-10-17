@@ -66,6 +66,7 @@ configure do
   HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
   PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
   PENGINE = "/usr/libexec/pacemaker/pengine"
+  CRM_NODE = "/usr/sbin/crm_node"
   if Dir.pwd == "/var/lib/pcsd"
     PCS = "/usr/sbin/pcs" 
   else

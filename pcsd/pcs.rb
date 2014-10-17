@@ -279,6 +279,14 @@ def remove_node(new_nodename, all = false)
   return retval, out + stderror
 end
 
+def get_current_node_name()
+  stdout, stderror, retval = run_cmd(CRM_NODE, "-n")
+  if retval == 0 and stdout.length > 0
+    return stdout[0].chomp()
+  end
+  return ""
+end
+
 def get_corosync_nodes()
   stdout, stderror, retval = run_cmd(PCS, "status", "nodes", "corosync")
   if retval != 0

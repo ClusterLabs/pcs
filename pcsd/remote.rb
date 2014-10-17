@@ -354,11 +354,21 @@ end
 def remote_remove_nodes(params)
   count = 0
   out = ""
+  node_list = []
   while params["nodename-" + count.to_s]
-    retval, output = remove_node(params["nodename-"+count.to_s],true)
-    out = out + output.join("\n")
+    node_list << params["nodename-" + count.to_s]
     count = count + 1
   end
+
+  cur_node = get_current_node_name()
+  if i = node_list.index(cur_node)
+    node_list.push(node_list.delete_at(i))
+  end
+
+  node_list.each {|node|
+    retval, output = remove_node(node,true)
+    out = out + output.join("\n")
+  }
   config = PCSConfig.new
   if config.get_nodes($cluster_name) == nil or config.get_nodes($cluster_name).length == 0
     return [200,"No More Nodes"]
