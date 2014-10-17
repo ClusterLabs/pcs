@@ -44,6 +44,7 @@ webrick_options = {
   :SSLCertificate     => OpenSSL::X509::Certificate.new(File.open(CRT_FILE).read),
   :SSLPrivateKey      => OpenSSL::PKey::RSA.new(File.open(KEY_FILE).read()),
   :SSLCertName        => [[ "CN", server_name ]],
+  :SSLOptions         => OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3,
   :StartCallback => Proc.new {
   	`python /usr/lib/pcsd/systemd-notify-fix.py`
   }
