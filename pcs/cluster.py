@@ -268,8 +268,20 @@ def cluster_certkey(argv):
 # Check and see if pcsd is running on the nodes listed
 def check_nodes(nodes, prefix = ""):
     bad_nodes = False
+    pm_nodes = utils.getPacemakerNodesID()
+    cs_nodes = utils.getCorosyncNodesID()
     for node in nodes:
         status = utils.checkAuthorization(node)
+
+        if node not in pm_nodes.values():
+            for n_id, n in cs_nodes.items():
+                if node == n and n_id in pm_nodes:
+                    real_node_name = pm_nodes[n_id]
+                    if real_node_name == "(null)":
+                        real_node_name = "*Unknown*"
+                    node = real_node_name +  " (" + node + ")"
+                    break
+
         if status[0] == 0:
             print prefix + node + ": Online"
         elif status[0] == 3:

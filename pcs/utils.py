@@ -1384,6 +1384,54 @@ def stonithCheck():
 
     return True
 
+def getCorosyncNodesID():
+    cs_nodes = {}
+    (output, retval) = run(['corosync-cmapctl', '-b', 'nodelist.node'])
+    if retval != 0:
+        err("unable to get list of corosync nodes")
+
+    node_list_node_mapping = {}
+    for line in output.rstrip().split("\n"):
+        m = re.match("nodelist.node.(\d+).nodeid.*= (.*)",line)
+        if m:
+            node_list_node_mapping[m.group(1)] = m.group(2)
+
+    for line in output.rstrip().split("\n"):
+        m = re.match("nodelist.node.(\d+).ring0_addr.*= (.*)",line)
+        if m:
+            cs_nodes[node_list_node_mapping[m.group(1)]] = m.group(2)
+    return cs_nodes
+
+# Warning, if a node has never started the hostname may be '(null)'
+def getPacemakerNodesID():
+    (output, retval) = run(['crm_node', '-l'])
+    if retval != 0:
+        err("unable to get list of pacemaker nodes")
+
+    pm_nodes = {}
+    for line in output.rstrip().split("\n"):
+        node_info = line.rstrip().split(" ",1)
+        pm_nodes[node_info[0]] = node_info[1]
+
+    return pm_nodes
+
+def corosyncPacemakerNodeCheck():
+    pm_nodes = getPacemakerNodesID()
+    cs_nodes = getCorosyncNodesID()
+
+    for node_id in pm_nodes:
+        if pm_nodes[node_id] == "(null)":
+            continue
+
+        if node_id not in cs_nodes:
+            continue
+
+        if pm_nodes[node_id] == cs_nodes[node_id]:
+            continue
+
+        return True
+    return False
+
 def getResourceType(resource):
     resClass = resource.getAttribute("class")
     resProvider = resource.getAttribute("provider")
