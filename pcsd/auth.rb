@@ -55,15 +55,21 @@ class PCSAuth
 
     users.each {|u|
       if u["token"] == token
-	return true
+	return u["username"]
       end
     }
     return false
   end
 
   def self.isLoggedIn(session, cookies)
-    return true if validToken(cookies["token"])
-    session["username"] != nil
+    if username = validToken(cookies["token"])
+      if username == "hacluster" and $cookies.key?(:CIB_user) and $cookies.key?(:CIB_user) != ""
+        $session[:username] = $cookies[:CIB_user]
+      end
+      return true
+    else
+      return session[:username] != nil
+    end
   end
 
   # Always an admin until we implement groups

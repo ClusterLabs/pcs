@@ -594,7 +594,7 @@ def status_all(params, nodes = [])
 end
 
 def auth(params,request)
-  token =  PCSAuth.validUser(params['username'],params['password'], true, request)
+  token = PCSAuth.validUser(params['username'],params['password'], true, request)
   # If we authorized to this machine, attempt to authorize everywhere
   node_list = []
   if token and params["bidirectional"]

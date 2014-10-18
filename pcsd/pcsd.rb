@@ -49,11 +49,11 @@ also_reload 'wizard.rb'
 enable :sessions
 
 before do
+  $session = session
+  $cookies = cookies
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
-  $session = session
-  $cookies = cookies
   $cluster_name = get_cluster_version()
   @errorval = session[:errorval]
   @error = session[:error]

@@ -2,6 +2,7 @@
 #
 require 'open4'
 require 'shellwords'
+require 'cgi'
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -295,9 +296,9 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
       req = Net::HTTP::Get.new(uri.path)
       req.set_form_data(data)
     end
-    $logger.info("Request: " + uri.to_s + " (" + (Time.now-start).to_s + "s)")
-    req.add_field("Cookie","token="+token)
-    req.add_field("Cookie","CIB_user="+$session[:username].to_s)
+    cookies_to_send = [CGI::Cookie.new("name" => 'token', "value" => token).to_s]
+    cookies_to_send << CGI::Cookie.new("name" =>  "CIB_user", "value" => $session[:username].to_s).to_s
+    req.add_field("Cookie",cookies_to_send.join(";"))
     myhttp = Net::HTTP.new(uri.host, uri.port)
     myhttp.use_ssl = true
     myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -618,6 +619,7 @@ def run_cmd(*args)
   else
     ENV['CIB_user'] = $session[:username]
   end
+  $logger.debug("CIB USER: #{ENV['CIB_user'].to_s}")
   status = Open4::popen4(*args) do |pid, stdin, stdout, stderr|
     out = stdout.readlines()
     errout = stderr.readlines()
