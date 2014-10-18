@@ -1226,6 +1226,10 @@ def is_valid_property(prop):
     if retval != 0:
         err("unable to run pengine\n" + output)
 
+# whitelisted properties
+    if prop in ["enable-acl"]:
+        return True
+
     dom = parseString(output)
     properties = dom.getElementsByTagName("parameter");
     for p in properties:
