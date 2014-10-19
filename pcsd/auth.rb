@@ -17,12 +17,24 @@ class PCSAuth
   end
 
   def self.validUser(username, password, generate_token = false, request = nil)
-#    if username != "hacluster"
-#      return nil
-#    end
+    $logger.info("Attempting login by '#{username}'")
     if not Rpam.auth(username,password, :service => "pcsd")
+      $logger.info("Failed login by '#{username}' (bad username or password)")
       return nil
     end
+
+    stdout, stderr, retval = run_cmd("id", "-Gn", username)
+    if retval != 0
+      $logger.info("Failed login by '#{username}' (unable to determine groups user is a member of)")
+      return nil
+    end
+
+    if not stdout[0].match(/\bhaclient\b/)
+      $logger.info("Failed login by '#{username}' (user is not a member of haclient)")
+      return nil
+    end
+
+    $logger.info("Successful login by '#{username}'")
 
     if generate_token
       token = PCSAuth.uuid
