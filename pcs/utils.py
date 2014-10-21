@@ -1388,11 +1388,14 @@ def stonithCheck():
 
     return True
 
-def getCorosyncNodesID():
+def getCorosyncNodesID(allow_failure=False):
     cs_nodes = {}
     (output, retval) = run(['corosync-cmapctl', '-b', 'nodelist.node'])
     if retval != 0:
-        err("unable to get list of corosync nodes")
+        if allow_failure:
+            return {}
+        else:
+            err("unable to get list of corosync nodes")
 
     node_list_node_mapping = {}
     for line in output.rstrip().split("\n"):
@@ -1407,10 +1410,13 @@ def getCorosyncNodesID():
     return cs_nodes
 
 # Warning, if a node has never started the hostname may be '(null)'
-def getPacemakerNodesID():
+def getPacemakerNodesID(allow_failure=False):
     (output, retval) = run(['crm_node', '-l'])
     if retval != 0:
-        err("unable to get list of pacemaker nodes")
+        if allow_failure:
+            return {}
+        else:
+            err("unable to get list of pacemaker nodes")
 
     pm_nodes = {}
     for line in output.rstrip().split("\n"):

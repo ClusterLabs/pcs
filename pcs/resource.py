@@ -164,6 +164,8 @@ def resource_cmd(argv):
         else:
             res_id = argv.pop(0)
             resource_cleanup(res_id)
+    elif (sub_cmd == "history"):
+        resource_history(argv)
     else:
         usage.resource()
         sys.exit(1)
@@ -1983,3 +1985,30 @@ def resource_cleanup_all():
         utils.err("Unexpected error occured. 'crm_resource -C' err_code: %s\n%s" % (retval, output))
     else:
         print "All resources/stonith devices successfully cleaned up"
+
+def resource_history(args):
+    dom = utils.get_cib_dom()
+    resources = {}
+    calls = {}
+    lrm_res = dom.getElementsByTagName("lrm_resource")
+    for res in lrm_res:
+        res_id = res.getAttribute("id")
+        if res_id not in resources:
+            resources[res_id] = {}
+        for rsc_op in res.getElementsByTagName("lrm_rsc_op"):
+            resources[res_id][rsc_op.getAttribute("call-id")] = [res_id, rsc_op]
+    
+    for res in sorted(resources):
+        print "Resource: %s" % res
+        for cid in sorted(resources[res]):
+            (last_date,retval) = utils.run(["date","-d", "@" + resources[res][cid][1].getAttribute("last-rc-change")])
+            last_date = last_date.rstrip()
+            rc_code = resources[res][cid][1].getAttribute("rc-code")
+            operation = resources[res][cid][1].getAttribute("operation") 
+            if rc_code != "0":
+                print "  Failed on %s" % last_date
+            elif operation == "stop":
+                print "  Stopped on node xx on %s" % last_date
+            elif operation == "start":
+                print "  Started on node xx %s" % last_date
+
