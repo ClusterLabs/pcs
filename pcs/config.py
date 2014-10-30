@@ -353,11 +353,11 @@ def config_backup_check_version(version):
         utils.err("Cannot determine version of the backup")
 
 def config_backup_add_version_to_tarball(tarball, version=None):
-    version = version if version is not None else str(config_backup_version())
-    version_info = tarfile.TarInfo("version.txt")
-    version_info.size = len(version)
-    version_info.type = tarfile.REGTYPE
-    tarball.addfile(version_info, cStringIO.StringIO(version))
+    return utils.tar_add_file_data(
+        tarball,
+        version if version is not None else str(config_backup_version()),
+        "version.txt"
+    )
 
 def config_backup_version():
     return 1
