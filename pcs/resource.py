@@ -1370,10 +1370,9 @@ def resource_remove(resource_id, output = True):
             resource_remove(res.getAttribute("id"))
         sys.exit(0)
 
-    group = utils.get_cib_xpath('//group/primitive[@id="'+resource_id+'"]/..')
+    group_xpath = '//group/primitive[@id="'+resource_id+'"]/..'
+    group = utils.get_cib_xpath(group_xpath)
     num_resources_in_group = 0
-    master = utils.get_cib_xpath('//master/primitive[@id="'+resource_id+'"]/..')
-    clone = utils.get_cib_xpath('//clone/primitive[@id="'+resource_id+'"]/..')
 
     if not utils.does_exist('//resources/descendant::primitive[@id="'+resource_id+'"]'):
         if utils.does_exist('//resources/master[@id="'+resource_id+'"]'):
@@ -1404,10 +1403,12 @@ def resource_remove(resource_id, output = True):
         print "Stopped"
 
     if (group == "" or num_resources_in_group > 1):
-        if clone != "":
-            args = ["cibadmin", "-o", "resources", "-D", "--xml-text", clone]
-        elif master != "":
-            args = ["cibadmin", "-o", "resources", "-D", "--xml-text", master]
+        master_xpath = '//master/primitive[@id="'+resource_id+'"]/..'
+        clone_xpath = '//clone/primitive[@id="'+resource_id+'"]/..'
+        if utils.get_cib_xpath(clone_xpath) != "":
+            args = ["cibadmin", "-o", "resources", "-D", "--xpath", clone_xpath]
+        elif utils.get_cib_xpath(master_xpath) != "":
+            args = ["cibadmin", "-o", "resources", "-D", "--xpath", master_xpath]
         else:
             args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
         if output == True:
@@ -1416,29 +1417,31 @@ def resource_remove(resource_id, output = True):
         if retVal != 0:
             utils.err("unable to remove resource: %s, it may still be referenced in constraints." % resource_id)
     else:
-        top_master = utils.get_cib_xpath('//master/group/primitive[@id="'+resource_id+'"]/../..')
-        top_clone = utils.get_cib_xpath('//clone/group/primitive[@id="'+resource_id+'"]/../..')
+        top_master_xpath = '//master/group/primitive[@id="'+resource_id+'"]/../..'
+        top_clone_xpath = '//clone/group/primitive[@id="'+resource_id+'"]/../..'
+        top_master = utils.get_cib_xpath(top_master_xpath)
+        top_clone = utils.get_cib_xpath(top_clone_xpath)
         if top_master != "":
-            to_remove = top_master
+            to_remove_xpath = top_master_xpath
             msg = "and group and M/S"
-            to_remove_dom = parseString(to_remove).getElementsByTagName("master")
+            to_remove_dom = parseString(top_master).getElementsByTagName("master")
             to_remove_id = to_remove_dom[0].getAttribute("id")
             constraint.remove_constraints_containing(to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id"))
         elif top_clone != "":
-            to_remove = top_clone
+            to_remove_xpath = top_clone_xpath
             msg = "and group and clone"
-            to_remove_dom = parseString(to_remove).getElementsByTagName("clone")
+            to_remove_dom = parseString(top_clone).getElementsByTagName("clone")
             to_remove_id = to_remove_dom[0].getAttribute("id")
             constraint.remove_constraints_containing(to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id"))
         else:
-            to_remove = group
+            to_remove_xpath = group_xpath
             msg = "and group"
-            to_remove_dom = parseString(to_remove).getElementsByTagName("group")
+            to_remove_dom = parseString(group).getElementsByTagName("group")
             to_remove_id = to_remove_dom[0].getAttribute("id")
 
         constraint.remove_constraints_containing(to_remove_id,output)
 
-        args = ["cibadmin", "-o", "resources", "-D", "--xml-text", to_remove]
+        args = ["cibadmin", "-o", "resources", "-D", "--xpath", to_remove_xpath]
         if output == True:
             print "Deleting Resource ("+msg+") - " + resource_id
         cmdoutput,retVal = utils.run(args)
@@ -1771,13 +1774,11 @@ def resource_manage(argv, set_managed):
                 utils.err("error attempting to unmanage resource: %s" % output)
         else:
             xpath = "(//primitive|//group)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
-            my_xml = utils.get_cib_xpath(xpath)
-            utils.remove_from_cib(my_xml)
+            utils.run(["cibadmin", "-D", "--xpath", xpath])
             if isGroup:
                 for res in res_to_manage:
                     xpath = "(//primitive|//group)[@id='"+res+"']/meta_attributes/nvpair[@name='is-managed']" 
-                    my_xml = utils.get_cib_xpath(xpath)
-                    utils.remove_from_cib(my_xml)
+                    utils.run(["cibadmin", "-D", "--xpath", xpath])
 
 def is_managed(resource_id):
     state_dom = utils.getClusterState()

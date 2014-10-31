@@ -1130,11 +1130,6 @@ def get_cib_xpath(xpath_query):
         return ""
     return output
 
-def remove_from_cib(xml):
-    args = ["cibadmin"]
-    args = args + ["-D", "-X", xml]
-    return run(args)
-
 def get_cib(scope=None):
     command = ["cibadmin", "-l", "-Q"]
     if scope:

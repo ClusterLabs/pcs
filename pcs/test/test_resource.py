@@ -826,6 +826,21 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 1
         ac(output, "Error: invalid group name 'group:dummy', ':' is not a valid character for a group name\n")
 
+    def testGroupLargeResourceRemove(self):
+        output, returnVal = pcs(
+            temp_large_cib, "resource group add dummies dummylarge"
+        )
+        ac(output, '')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "resource delete dummies")
+        ac(output, """\
+Removing group: dummies (and all resources within group)
+Stopping all resources in group: dummies...
+Deleting Resource (and group) - dummylarge
+""")
+        assert returnVal == 0
+
     def testGroupOrder(self):
         output, returnVal = pcs(temp_cib, "resource create --no-default-ops A Dummy")
         output, returnVal = pcs(temp_cib, "resource create --no-default-ops B Dummy")
@@ -895,6 +910,33 @@ Deleting Resource - D1
         ac(o, "Deleting Resource - d99\n")
         assert r == 0
 
+        output, returnVal = pcs(temp_large_cib, "resource clone dummylarge")
+        ac(output, '')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "resource delete dummylarge")
+        ac(output, 'Deleting Resource - dummylarge\n')
+        assert returnVal == 0
+
+    def testCloneGroupLargeResourceRemove(self):
+        output, returnVal = pcs(
+            temp_large_cib, "resource group add dummies dummylarge"
+        )
+        ac(output, '')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "resource clone dummies")
+        ac(output, '')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "resource delete dummies")
+        ac(output, """\
+Removing group: dummies (and all resources within group)
+Stopping all resources in group: dummies...
+Deleting Resource (and group and clone) - dummylarge
+""")
+        assert returnVal == 0
+
     def testMasterSlaveRemove(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1 --force")
@@ -944,6 +986,33 @@ Deleting Resource - ClusterIP5
         output, returnVal = pcs(temp_cib, "config")
         assert returnVal == 0
         ac(output,'Cluster Name: test99\nCorosync Nodes:\n rh7-1 rh7-2 \nPacemaker Nodes:\n \n\nResources: \n Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)\n Group: TestGroup1\n  Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)\n Group: TestGroup2\n  Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)\n  Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)\n Clone: ClusterIP4-clone\n  Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)\n   Attributes: ip=192.168.0.99 cidr_netmask=32 \n   Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)\n Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)\n\nStonith Devices: \nFencing Levels: \n\nLocation Constraints:\n  Resource: ClusterIP5\n    Enabled on: rh7-1 (score:INFINITY) (id:location-ClusterIP5-rh7-1-INFINITY)\n    Enabled on: rh7-2 (score:INFINITY) (id:location-ClusterIP5-rh7-2-INFINITY)\nOrdering Constraints:\nColocation Constraints:\n\nCluster Properties:\n')
+
+        output, returnVal = pcs(temp_large_cib, "resource master dummylarge")
+        ac(output, '')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "resource delete dummylarge")
+        ac(output, 'Deleting Resource - dummylarge\n')
+        assert returnVal == 0
+
+    def testMasterSlaveGroupLargeResourceRemove(self):
+        output, returnVal = pcs(
+            temp_large_cib, "resource group add dummies dummylarge"
+        )
+        ac(output, '')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "resource master dummies")
+        ac(output, '')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_large_cib, "resource delete dummies")
+        ac(output, """\
+Removing group: dummies (and all resources within group)
+Stopping all resources in group: dummies...
+Deleting Resource (and group and M/S) - dummylarge
+""")
+        assert returnVal == 0
 
     def testResourceManage(self):
         output, returnVal = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")
