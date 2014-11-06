@@ -36,7 +36,7 @@ def main(argv):
 
         # we want to support optional arguments for --wait, so if an argument
         # is specified with --wait (ie. --wait=30) then we use them
-        waitsecs = "30"
+        waitsecs = None
         new_argv = []
         for arg in argv:
             if arg.startswith("--wait="):

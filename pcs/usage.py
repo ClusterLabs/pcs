@@ -239,13 +239,17 @@ Commands:
            <operation options>]...] [meta <meta options>...]
            [--clone <clone options> | --master <master options> |
            --group <group name> [--before <resource id> | --after <resource id>]
-           ] [--disabled]
+           ] [--disabled] [--wait[=n]]
         Create specified resource.  If --clone is used a clone resource is
         created if --master is specified a master/slave resource is created.
         If --group is specified the resource is added to the group named.  You
         can use --before or --after to specify the position of the added
         resource relatively to some resource already existing in the group.
         If --disabled is specified the resource is not started automatically.
+        If --wait is specified, pcs will wait up to 'n' seconds for the resource
+        to start and then return 0 if the resource is started, or 1 if the
+        resource has not yet started. If 'n' is not specified, default resource
+        timeout will be used.
         Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \\
                      ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
                      nic=eth2
@@ -260,17 +264,17 @@ Commands:
     enable <resource id> [--wait[=n]]
         Allow the cluster to start the resource. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resource may
-        remain stopped.  If --wait is specified, pcs will wait up to 30 seconds
-        (or 'n' seconds) for the resource to start and then return 0 if the
-        resource is started, or 1 if the resource has not yet started.
+        remain stopped.  If --wait is specified, pcs will wait up to 'n' seconds
+        (or resource timeout seconds) for the resource to start and then return
+        0 if the resource is started, or 1 if the resource has not yet started.
 
     disable <resource id> [--wait[=n]]
         Attempt to stop the resource if it is running and forbid the cluster
         from starting it again.  Depending on the rest of the configuration
         (constraints, options, failures, etc), the resource may remain
-        started.  If --wait is specified, pcs will wait up to 30 seconds (or
-        'n' seconds) for the resource to stop and then return 0 if the
-        resource is stopped or 1 if the resource has not stopped.
+        started.  If --wait is specified, pcs will wait up to 'n' seconds (or
+        resource timeout seconds) for the resource to stop and then return 0
+        if the resource is stopped or 1 if the resource has not stopped.
 
     debug-start <resource id> [--full]
         This command will force the specified resource to start on this node

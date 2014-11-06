@@ -320,6 +320,24 @@ def format_desc(indent, desc):
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
+    if "--wait" in utils.pcs_options:
+        if "--disabled" in utils.pcs_options:
+            utils.err("Cannot use '--wait' together with '--disabled'")
+        if "target-role=Stopped" in meta_values:
+            utils.err("Cannot use '--wait' together with 'target-role=Stopped'")
+
+    wait = False
+    wait_timeout = None
+    if "--wait" in utils.pcs_options:
+        wait = True
+        if utils.pcs_options["--wait"] is not None:
+            wait_timeout = utils.pcs_options["--wait"]
+            if not wait_timeout.isdigit():
+                utils.err(
+                    "%s is not a valid number of seconds to wait"
+                    % wait_timeout
+                )
+
     ra_id_valid, ra_id_error = utils.validate_xml_id(ra_id, 'resource name')
     if not ra_id_valid:
         utils.err(ra_id_error)
@@ -384,6 +402,16 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         ]
         meta_values.append("target-role=Stopped")
 
+    if wait and wait_timeout is None:
+        for op in op_values:
+            if op[0] == "start":
+                for op_setting in op[1:]:
+                    match = re.match("timeout=(.+)", op_setting)
+                    if match:
+                        wait_timeout = utils.get_timeout_seconds(match.group(1))
+        if wait_timeout is None:
+            wait_timeout = utils.get_default_op_timeout()
+
 # If it's a master all meta values go to the master
     master_meta_values = []
     if "--master" in utils.pcs_options:
@@ -425,7 +453,27 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         groupname = utils.pcs_options["--group"]
         dom = resource_group_add(dom, groupname, [ra_id])
 
+    if wait:
+        rsc_op_list = utils.dom_get_lrm_rsc_op(dom, ra_id)
+        if not rsc_op_list:
+            last_call_id = 0
+        else:
+            last_call_id = rsc_op_list[-1].getAttribute("call-id")
+
     utils.replace_cib_configuration(dom)
+
+    if wait:
+        running, message = utils.is_resource_started(
+            ra_id, int(wait_timeout), last_call_id=last_call_id
+        )
+        if running:
+            print message
+        else:
+            utils.err(
+                "unable to start: '%s', please check logs for failure "
+                    "information\n%s"
+                % (ra_id, message)
+            )
 
 def resource_move(argv,clear=False,ban=False):
     other_options = []
@@ -1364,7 +1412,7 @@ def resource_remove(resource_id, output = True):
         resource_disable([resource_id])
         for res in group_dom.documentElement.getElementsByTagName("primitive"):
             res_id = res.getAttribute("id")
-            if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(res_id, 15, True):
+            if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(res_id, 15, True)[0]:
                 utils.err("Unable to stop group: %s before deleting (re-run with --force to force deletion)" % resource_id)
         for res in group_dom.documentElement.getElementsByTagName("primitive"):
             resource_remove(res.getAttribute("id"))
@@ -1394,11 +1442,11 @@ def resource_remove(resource_id, output = True):
             utils.replace_cib_configuration(dom)
             dom = utils.get_cib_dom()
 
-    if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(resource_id, 0, True):
+    if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(resource_id, 0, True)[0]:
         sys.stdout.write("Attempting to stop: "+ resource_id + "...")
         sys.stdout.flush()
         resource_disable([resource_id])
-        if not utils.is_resource_started(resource_id, 15, True):
+        if not utils.is_resource_started(resource_id, 15, True)[0]:
             utils.err("Unable to stop: %s before deleting (re-run with --force to force deletion)" % resource_id)
         print "Stopped"
 
@@ -1662,22 +1710,45 @@ def resource_disable(argv):
     resource = argv[0]
     if not is_managed(resource):
         print "Warning: '%s' is unmanaged" % resource
+
+    if "--wait" in utils.pcs_options:
+        cib_dom = utils.get_cib_dom()
+        resource_wait = utils.dom_get_clone_ms_resource(cib_dom, resource)
+        if resource_wait is not None and resource_wait.tagName == "primitive":
+            resource_wait = resource_wait.getAttribute("id")
+        else:
+            resource_wait = resource
+        wait = utils.pcs_options["--wait"]
+        if wait is None:
+            wait = utils.get_resource_op_timeout(cib_dom, resource_wait, "stop")
+        elif not wait.isdigit():
+            utils.err("%s is not a valid number of seconds to wait" % wait)
+            sys.exit(1)
+
+        rsc_op_list = utils.dom_get_lrm_rsc_op(cib_dom, resource_wait)
+        if not rsc_op_list:
+            last_call_id = 0
+        else:
+            last_call_id = rsc_op_list[-1].getAttribute("call-id")
+
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
     if retval != 0:
         utils.err(output)
 
     if "--wait" in utils.pcs_options:
-        wait = utils.pcs_options["--wait"]
-        if not wait.isdigit():
-            utils.err("%s is not a valid number of seconds to wait" % wait)
-            sys.exit(1)
-        did_stop = utils.is_resource_started(resource,int(wait),True)
-
+        did_stop, message = utils.is_resource_started(
+            resource_wait, int(wait), True, last_call_id
+        )
         if did_stop:
+            print message
             return True
         else:
-            utils.err("unable to stop: '%s', please check logs for failure information" % resource)
+            utils.err(
+                "unable to stop: '%s', please check logs for failure "
+                    "information\n%s"
+                % (resource, message)
+            )
 
 def resource_enable(argv):
     if len(argv) < 1:
@@ -1686,22 +1757,45 @@ def resource_enable(argv):
     resource = argv[0]
     if not is_managed(resource):
         print "Warning: '%s' is unmanaged" % resource
+
+    if "--wait" in utils.pcs_options:
+        cib_dom = utils.get_cib_dom()
+        resource_wait = utils.dom_get_clone_ms_resource(cib_dom, resource)
+        if resource_wait is not None and resource_wait.tagName == "primitive":
+            resource_wait = resource_wait.getAttribute("id")
+        else:
+            resource_wait = resource
+        wait = utils.pcs_options["--wait"]
+        if wait is None:
+            wait = utils.get_resource_op_timeout(cib_dom, resource_wait, "start")
+        elif not wait.isdigit():
+            utils.err("%s is not a valid number of seconds to wait" % wait)
+            sys.exit(1)
+
+        rsc_op_list = utils.dom_get_lrm_rsc_op(cib_dom, resource_wait)
+        if not rsc_op_list:
+            last_call_id = 0
+        else:
+            last_call_id = rsc_op_list[-1].getAttribute("call-id")
+
     args = ["crm_resource", "-r", resource, "-m", "-d", "target-role"]
     output, retval = utils.run(args)
     if retval != 0:
         utils.err (output)
 
     if "--wait" in utils.pcs_options:
-        wait = utils.pcs_options["--wait"]
-        if not wait.isdigit():
-            utils.err("%s is not a valid number of seconds to wait" % wait)
-            sys.exit(1)
-        did_start = utils.is_resource_started(resource,int(wait))
-
+        did_start, message = utils.is_resource_started(
+            resource_wait, int(wait), last_call_id=last_call_id
+        )
         if did_start:
+            print message
             return True
         else:
-            utils.err("unable to start: '%s', please check logs for failure information" % resource)
+            utils.err(
+                "unable to start: '%s', please check logs for failure "
+                    "information\n%s"
+                % (resource, message)
+            )
 
 def resource_force_start(argv):
     if len(argv) < 1:

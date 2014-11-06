@@ -14,6 +14,7 @@ import time
 import cStringIO
 import tarfile
 import cluster
+import prop
 
 
 # usefile & filename variables are set in pcs module
@@ -962,6 +963,16 @@ def dom_get_child_by_tag_name(dom_el, tag_name):
         return children[0]
     return None
 
+def dom_get_parent_by_tag_name(dom_el, tag_name):
+    parent = dom_el.parentNode
+    while parent:
+        if not isinstance(parent, xml.dom.minidom.Element):
+            return None
+        if parent.tagName == tag_name:
+            return parent
+        parent = parent.parentNode
+    return None
+
 def dom_attrs_to_list(dom_el, with_id=False):
     attributes = [
         "%s=%s" % (name, value)
@@ -972,7 +983,7 @@ def dom_attrs_to_list(dom_el, with_id=False):
     return attributes
 
 # Check if resoure is started (or stopped) for 'wait' seconds
-def is_resource_started(resource,wait,stopped=False):
+def is_resource_started(resource, wait, stopped=False, last_call_id=None):
     expire_time = int(time.time()) + wait
     while True:
         state = getClusterState()
@@ -980,13 +991,129 @@ def is_resource_started(resource,wait,stopped=False):
         for res in resources:
             # If resource is a clone it can have an id of '<resource name>:N'
             if res.getAttribute("id") == resource or res.getAttribute("id").startswith(resource+":"):
-                if (res.getAttribute("role") == "Started" and not stopped) or (res.getAttribute("role") == "Stopped" and stopped):
-                    return True
+                if stopped:
+                    if (
+                        res.getAttribute("role") == "Stopped"
+                        and
+                        res.getAttribute("failed") != "true"
+                    ):
+                        return True, "Resource '%s' has been stopped" % resource
+                    elif last_call_id is not None:
+                        failures = get_lrm_rsc_op_failures(
+                            dom_get_lrm_rsc_op(
+                                get_cib_dom(), resource, "stop", last_call_id
+                            )
+                        )
+                        if failures:
+                            return False, "\n".join(failures)
+                else:
+                    if (
+                        res.getAttribute("role") in ("Started", "Master")
+                        and
+                        res.getAttribute("failed") != "true"
+                    ):
+                        return (
+                            True,
+                            resource_running_on(resource, state)["message"]
+                        )
+                    elif last_call_id is not None:
+                        failures = get_lrm_rsc_op_failures(
+                            dom_get_lrm_rsc_op(
+                                get_cib_dom(), resource, "start", last_call_id
+                            )
+                        )
+                        if failures:
+                            return False, "\n".join(failures)
                 break
         if (expire_time < int(time.time())):
             break
         time.sleep(1)
-    return False
+    return False, "waiting timed out"
+
+def dom_get_lrm_rsc_op(cib, resource, op=None, last_call_id=None):
+    lrm_rsc_op_list = []
+    for lrm_resource in cib.getElementsByTagName("lrm_resource"):
+        if lrm_resource.getAttribute("id") != resource:
+            continue
+        for lrm_rsc_op in lrm_resource.getElementsByTagName("lrm_rsc_op"):
+            if op is not None and lrm_rsc_op.getAttribute("operation") != op:
+                continue
+            if (
+                last_call_id is not None
+                and
+                int(lrm_rsc_op.getAttribute("call-id")) <= int(last_call_id)
+            ):
+                continue
+            lrm_rsc_op_list.append(lrm_rsc_op)
+    lrm_rsc_op_list.sort(key=lambda x: int(x.getAttribute("call-id")))
+    return lrm_rsc_op_list
+
+def get_lrm_rsc_op_failures(lrm_rsc_op_list):
+    failures = []
+    for rsc_op in lrm_rsc_op_list:
+        if rsc_op.getAttribute("rc-code") == "0":
+            continue
+        reason = rsc_op.getAttribute("exit-reason")
+        if not reason:
+            reason = "failed"
+        node = rsc_op.getAttribute("on_node")
+        if not node:
+            state = dom_get_parent_by_tag_name(rsc_op, "node_state")
+            if state:
+                node = state.getAttribute("uname")
+        if node:
+            failures.append("%s: %s" % (node, reason))
+        else:
+            failures.append(reason)
+    return failures
+
+def resource_running_on(resource, passed_state=None):
+    nodes_started = []
+    nodes_master = []
+    nodes_slave = []
+    state = passed_state if passed_state else getClusterState()
+    resources = state.getElementsByTagName("resource")
+    for res in resources:
+        # If resource is a clone it can have an id of '<resource name>:N'
+        # If resource is a clone it will be found more than once - cannot break
+        if (
+            res.getAttribute("id") == resource
+            or
+            res.getAttribute("id").startswith(resource+":")
+        ):
+            for node in res.getElementsByTagName("node"):
+                node_name = node.getAttribute("name")
+                if res.getAttribute("role") == "Started":
+                    nodes_started.append(node_name)
+                elif res.getAttribute("role") == "Master":
+                    nodes_master.append(node_name)
+                elif res.getAttribute("role") == "Slave":
+                    nodes_slave.append(node_name)
+    if not nodes_started and not nodes_master and not nodes_slave:
+        message = "Resource '%s' is not running on any node" % resource
+    else:
+        message_parts = []
+        for alist, label in (
+            (nodes_started, "running"),
+            (nodes_master, "master"),
+            (nodes_slave, "slave")
+        ):
+            if alist:
+                message_parts.append(
+                    "%s on node%s %s"
+                    % (
+                        label,
+                        "s" if len(alist) > 1 else "",
+                        ", ".join(alist)
+                    )
+                )
+        message = "Resource '%s' is %s." % (resource, "; ".join(message_parts))
+    return {
+        "message": message,
+        "nodes_started": nodes_started,
+        "nodes_master": nodes_master,
+        "nodes_slave": nodes_slave,
+    }
 
 def does_resource_have_options(ra_type):
     if ra_type.startswith("ocf:") or ra_type.startswith("stonith:") or ra_type.find(':') == -1:
@@ -1027,6 +1154,61 @@ def get_default_op_values(ra_type):
         err("Unable to parse xml for '%s': %s" % (ra_type, e))
 
     return return_list
+
+def get_timeout_seconds(timeout):
+    if timeout.isdigit():
+        return int(timeout)
+    if timeout.endswith("s") and timeout[:-1].isdigit():
+        return int(timeout[:-1])
+    if timeout.endswith("min") and timeout[:-3].isdigit():
+        return int(timeout[:-3]) * 60
+    return None
+
+def get_default_op_timeout():
+    output, retVal = run([
+        "crm_attribute", "--type", "op_defaults", "--name", "timeout",
+        "--query", "--quiet"
+    ])
+    if retVal == 0 and output.strip():
+        timeout = get_timeout_seconds(output)
+        if timeout is not None:
+            return timeout
+
+    properties = prop.get_set_properties(defaults=prop.get_default_properties())
+    if properties["default-action-timeout"]:
+        timeout = get_timeout_seconds(properties["default-action-timeout"])
+        if timeout is not None:
+            return timeout
+
+    return settings.default_wait
+
+def get_resource_op_timeout(cib_dom, resource, operation):
+    resource_el = dom_get_resource(cib_dom, resource)
+    if resource_el:
+        for op_el in resource_el.getElementsByTagName("op"):
+            if op_el.getAttribute("name") == operation:
+                timeout = get_timeout_seconds(op_el.getAttribute("timeout"))
+                if timeout is not None:
+                    return timeout
+
+        defaults = get_default_op_values(
+            "%s:%s:%s"
+            % (
+                resource_el.getAttribute("class"),
+                resource_el.getAttribute("provider"),
+                resource_el.getAttribute("type"),
+            )
+        )
+        for op in defaults:
+            if op[0] == operation:
+                for op_setting in op[1:]:
+                    match = re.match("timeout=(.+)", op_setting)
+                    if match:
+                        timeout = get_timeout_seconds(match.group(1))
+                        if timeout is not None:
+                            return timeout
+
+    return get_default_op_timeout()
 
 # Check and see if the specified resource (or stonith) type is present on the
 # file system and properly responds to a meta-data request

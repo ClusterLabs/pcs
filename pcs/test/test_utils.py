@@ -1,10 +1,15 @@
 import os
 import sys
+import shutil
 import unittest
 import xml.dom.minidom
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
+from pcs_test_functions import pcs
 import utils
+
+empty_cib = "empty.xml"
+temp_cib = "temp.xml"
 
 class UtilsTest(unittest.TestCase):
 
@@ -302,6 +307,39 @@ class UtilsTest(unittest.TestCase):
             )
         )
 
+    def test_dom_get_parent_by_tag_name(self):
+        dom = xml.dom.minidom.parseString("""
+            <aa id="aa1">
+                <bb id="bb1"/>
+                <bb id="bb2">
+                    <cc id="cc1"/>
+                </bb>
+                <bb id="bb3">
+                    <cc id="cc2"/>
+                </bb>
+                <dd id="dd1" />
+            </aa>
+        """).documentElement
+        bb1 = utils.dom_get_element_with_id(dom, "bb", "bb1")
+        cc1 = utils.dom_get_element_with_id(dom, "cc", "cc1")
+
+        self.assert_element_id(
+            utils.dom_get_parent_by_tag_name(bb1, "aa"),
+            "aa1"
+        )
+        self.assert_element_id(
+            utils.dom_get_parent_by_tag_name(cc1, "aa"),
+            "aa1"
+        )
+        self.assert_element_id(
+            utils.dom_get_parent_by_tag_name(cc1, "bb"),
+            "bb2"
+        )
+
+        self.assertEquals(None, utils.dom_get_parent_by_tag_name(bb1, "cc"))
+        self.assertEquals(None, utils.dom_get_parent_by_tag_name(cc1, "dd"))
+        self.assertEquals(None, utils.dom_get_parent_by_tag_name(cc1, "ee"))
+
     def testValidateConstraintResource(self):
         dom = self.get_cib_resources()
         self.assertEquals(
@@ -506,6 +544,332 @@ class UtilsTest(unittest.TestCase):
         self.assertFalse(utils.is_iso8601_date("2014-13-03"))
         self.assertFalse(utils.is_iso8601_date("2014-W27-8"))
         self.assertFalse(utils.is_iso8601_date("2014-367"))
+
+    def test_get_timeout_seconds(self):
+        self.assertEquals(utils.get_timeout_seconds("10"), 10)
+        self.assertEquals(utils.get_timeout_seconds("10s"), 10)
+        self.assertEquals(utils.get_timeout_seconds("10min"), 600)
+
+        self.assertEquals(utils.get_timeout_seconds("1a1s"), None)
+        self.assertEquals(utils.get_timeout_seconds("10m"), None)
+        self.assertEquals(utils.get_timeout_seconds("10mim"), None)
+        self.assertEquals(utils.get_timeout_seconds("aaa"), None)
+        self.assertEquals(utils.get_timeout_seconds(""), None)
+
+    def test_get_default_op_timeout(self):
+        shutil.copy(empty_cib, temp_cib)
+        utils.usefile = True
+        utils.filename = temp_cib
+
+        self.assertEquals(utils.get_default_op_timeout(), 20)
+        output, retVal = pcs(temp_cib, "property set default-action-timeout=25")
+        self.assertEquals(retVal, 0)
+        self.assertEquals(utils.get_default_op_timeout(), 25)
+        output, retVal = pcs(temp_cib, "property unset default-action-timeout")
+        self.assertEquals(retVal, 0)
+        self.assertEquals(utils.get_default_op_timeout(), 20)
+
+        utils.usefile = False
+        utils.filename = ""
+
+    def test_get_resource_op_timeout(self):
+        shutil.copy(empty_cib, temp_cib)
+        utils.usefile = True
+        utils.filename = temp_cib
+
+        output, retVal = pcs(temp_cib, "property set default-action-timeout=25")
+        self.assertEquals(retVal, 0)
+        output, retVal = pcs(
+            temp_cib,
+            "resource create dummy Dummy op start timeout=33s --no-default-ops"
+        )
+        self.assertEquals(retVal, 0)
+        dom = xml.dom.minidom.parse(temp_cib)
+
+        self.assertEquals(
+            utils.get_resource_op_timeout(dom, "dummy", "start"),
+            33
+        )
+        self.assertEquals(
+            utils.get_resource_op_timeout(dom, "dummy", "stop"),
+            20
+        )
+        self.assertEquals(
+            utils.get_resource_op_timeout(dom, "dummy0", "start"),
+            25
+        )
+
+        utils.usefile = False
+        utils.filename = ""
+
+    def get_cib_status_lrm(self):
+        cib_dom = self.get_cib_empty()
+        new_status = xml.dom.minidom.parseString("""
+<status>
+  <node_state id="1" uname="rh70-node1">
+    <lrm id="1">
+      <lrm_resources>
+        <lrm_resource id="dummy" type="Dummy" class="ocf" provider="heartbeat">
+          <lrm_rsc_op id="dummy_monitor_30000" operation="monitor" call-id="34"
+            rc-code="1" on_node="Xrh70-node1X" exit-reason="test" />
+          <lrm_rsc_op id="dummy_stop_0" operation="stop" call-id="32"
+            rc-code="0" />
+          <lrm_rsc_op id="dummy_start_0" operation="start" call-id="33"
+            rc-code="0" />
+        </lrm_resource>
+      </lrm_resources>
+    </lrm>
+  </node_state>
+  <node_state id="2" uname="rh70-node2">
+    <lrm id="2">
+      <lrm_resources>
+        <lrm_resource id="dummy" type="Dummy" class="ocf" provider="heartbeat">
+          <lrm_rsc_op id="dummy_monitor_0" operation="monitor" call-id="5"
+            rc-code="1" />
+        </lrm_resource>
+        <lrm_resource id="dummy1" type="Dummy" class="ocf" provider="heartbeat">
+          <lrm_rsc_op id="dummy1_monitor_0" operation="monitor" call-id="3"
+            rc-code="0" />
+        </lrm_resource>
+      </lrm_resources>
+    </lrm>
+  </node_state>
+</status>
+        """).documentElement
+        status = cib_dom.getElementsByTagName("status")[0]
+        status.parentNode.replaceChild(new_status, status)
+        return cib_dom
+
+    def test_dom_get_lrm_rsc_op(self):
+        dom = self.get_cib_status_lrm()
+
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy")
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(
+            op_id_list,
+            ["dummy_monitor_0", "dummy_stop_0", "dummy_start_0",
+                "dummy_monitor_30000",]
+        )
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", "monitor")
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(
+            op_id_list,
+            ["dummy_monitor_0", "dummy_monitor_30000",]
+        )
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", last_call_id=30)
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(
+            op_id_list,
+            ["dummy_stop_0", "dummy_start_0", "dummy_monitor_30000",]
+        )
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", "monitor", 30)
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(
+            op_id_list,
+            ["dummy_monitor_30000",]
+        )
+
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", last_call_id=340)
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(op_id_list, [])
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", last_call_id=34)
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(op_id_list, [])
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy0", "monitor", 30)
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(op_id_list, [])
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy0", "monitor")
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(op_id_list, [])
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy0", last_call_id=30)
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(op_id_list, [])
+        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy0")
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(op_id_list, [])
+
+    def test_get_lrm_rsc_op_failures(self):
+        dom = self.get_cib_status_lrm()
+
+        failures = utils.get_lrm_rsc_op_failures(
+            utils.dom_get_lrm_rsc_op(dom, "dummy")
+        )
+        self.assertEquals(
+            failures,
+            ["rh70-node2: failed", "Xrh70-node1X: test"]
+        )
+
+        failures = utils.get_lrm_rsc_op_failures(
+            utils.dom_get_lrm_rsc_op(dom, "dummy", "start")
+        )
+        self.assertEquals(failures, [])
+        failures = utils.get_lrm_rsc_op_failures(
+            utils.dom_get_lrm_rsc_op(dom, "dummy0")
+        )
+        self.assertEquals(failures, [])
+
+    def test_resource_running_on(self):
+        status = xml.dom.minidom.parseString("""
+<crm_mon>
+    <summary />
+    <nodes />
+    <resources>
+        <resource id="myResource" role="Started">
+            <node name="rh70-node1" />
+        </resource>
+        <clone id="myClone">
+            <resource id="myClonedResource" role="Started">
+                <node name="rh70-node1" />
+            </resource>
+            <resource id="myClonedResource" role="Started">
+                <node name="rh70-node2" />
+            </resource>
+            <resource id="myClonedResource" role="Started">
+                <node name="rh70-node3" />
+            </resource>
+        </clone>
+        <clone id="myMaster">
+            <resource id="myMasteredResource" role="Master">
+                <node name="rh70-node1" />
+            </resource>
+            <resource id="myMasteredResource:1" role="Slave">
+                <node name="rh70-node2" />
+            </resource>
+            <resource id="myMasteredResource" role="Slave">
+                <node name="rh70-node3" />
+            </resource>
+        </clone>
+        <group id="myGroup">
+             <resource id="myGroupedResource" role="Started">
+                 <node name="rh70-node2" />
+             </resource>
+        </group>
+        <clone id="myGroupClone">
+            <group id="myClonedGroup:0">
+                 <resource id="myClonedGroupedResource" role="Started">
+                     <node name="rh70-node1" />
+                 </resource>
+            </group>
+            <group id="myClonedGroup:1">
+                 <resource id="myClonedGroupedResource" role="Started">
+                     <node name="rh70-node2" />
+                 </resource>
+            </group>
+            <group id="myClonedGroup:2">
+                 <resource id="myClonedGroupedResource" role="Started">
+                     <node name="rh70-node3" />
+                 </resource>
+            </group>
+        </clone>
+        <clone id="myGroupMaster">
+            <group id="myMasteredGroup:0">
+                 <resource id="myMasteredGroupedResource" role="Slave">
+                     <node name="rh70-node1" />
+                 </resource>
+            </group>
+            <group id="myMasteredGroup:1">
+                 <resource id="myMasteredGroupedResource" role="Master">
+                     <node name="rh70-node2" />
+                 </resource>
+            </group>
+            <group id="myMasteredGroup:2">
+                 <resource id="myMasteredGroupedResource" role="Slave">
+                     <node name="rh70-node3" />
+                 </resource>
+            </group>
+        </clone>
+        <resource id="myStoppedResource" role="Stopped">
+        </resource>
+    </resources>
+</crm_mon>
+        """).documentElement
+
+        self.assertEquals(
+            utils.resource_running_on("myResource", status),
+            {
+                'message':
+                    "Resource 'myResource' is running on node rh70-node1.",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': ["rh70-node1"],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myClonedResource", status),
+            {
+                'message':
+                    "Resource 'myClonedResource' is running on nodes "
+                        "rh70-node1, rh70-node2, rh70-node3.",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myMasteredResource", status),
+            {
+                'message':
+                    "Resource 'myMasteredResource' is master on node "
+                        "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                'nodes_master': ["rh70-node1"],
+                'nodes_slave': ["rh70-node2", "rh70-node3"],
+                'nodes_started': [],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myGroupedResource", status),
+            {
+                'message':
+                    "Resource 'myGroupedResource' is running on node "
+                        "rh70-node2.",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': ["rh70-node2"],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myClonedGroupedResource", status),
+            {
+                'message':
+                    "Resource 'myClonedGroupedResource' is running on nodes "
+                        "rh70-node1, rh70-node2, rh70-node3.",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myMasteredGroupedResource", status),
+            {
+                'message':
+                    "Resource 'myMasteredGroupedResource' is master on node "
+                        "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                'nodes_master': ["rh70-node2"],
+                'nodes_slave': ["rh70-node1", "rh70-node3"],
+                'nodes_started': [],
+            }
+        )
+
+        self.assertEquals(
+            utils.resource_running_on("notMyResource", status),
+            {
+                'message':
+                    "Resource 'notMyResource' is not running on any node",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': [],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myStoppedResource", status),
+            {
+                'message':
+                    "Resource 'myStoppedResource' is not running on any node",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': [],
+            }
+        )
 
     def assert_element_id(self, node, node_id):
         self.assertTrue(
