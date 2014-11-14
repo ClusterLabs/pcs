@@ -85,7 +85,13 @@ end
 
 def add_location_constraint_rule(resource, rule, score, force=false)
   cmd = [PCS, "constraint", "location", "--autocorrect", resource, "rule"]
-  cmd << "score=#{score}" if score != ""
+  if score != ''
+    if is_score(score.upcase)
+      cmd << "score=#{score.upcase}"
+    else
+      cmd << "score-attribute=#{score}"
+    end
+  end
   cmd.concat(rule.shellsplit())
   cmd << '--force' if force
   stdout, stderr, retval = run_cmd(*cmd)
@@ -630,4 +636,8 @@ def run_cmd(*args)
   retval = status.exitstatus
   $logger.debug("Return Value: " + retval.to_s)
   return out, errout, retval
+end
+
+def is_score(score)
+  return !!/^[+-]?((INFINITY)|(\d+))$/.match(score)
 end

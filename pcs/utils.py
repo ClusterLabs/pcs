@@ -23,6 +23,8 @@ filename = ""
 pcs_options = {}
 fence_bin = settings.fence_agent_binaries
 
+score_regexp = re.compile(r'^[+-]?((INFINITY)|(\d+))$')
+
 def getValidateWithVersion(dom):
     cib = dom.getElementsByTagName("cib")
     if len(cib) != 1:
@@ -1771,11 +1773,7 @@ def is_score_or_opt(var):
     return False
 
 def is_score(var):
-    return (
-        var == "INFINITY" or var == "-INFINITY"
-        or
-        var.isdigit() or (len(var) > 1 and var[0] == "-" and var[1:].isdigit())
-    )
+    return score_regexp.match(var) is not None
 
 def validate_xml_id(var, description="id"):
     # see NCName definition

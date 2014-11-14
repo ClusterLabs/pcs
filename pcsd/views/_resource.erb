@@ -119,7 +119,7 @@
 			<tr>
 			{{#if rule_string}}
 			  <td style="white-space: normal;">{{rule_string}}</td>
-			  <td>{{score}}</td>
+			  <td>{{#if score-attribute}}{{score-attribute}}{{else}}{{score}}{{/if}}</td>
 			  <td {{bind-attr rule_id="id"}} style="text-align:center">
 			    {{#unless temp}}
 				<a onclick="remove_constraint_rule($(this).parent().attr('rule_id'));return false;" href="#" class="remove">X</a>
