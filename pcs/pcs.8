@@ -68,6 +68,13 @@ Allow the cluster to start the resource. Depending on the rest of the configurat
 disable <resource id> [\fB\-\-wait\fR[=n]]
 Attempt to stop the resource if it is running and forbid the cluster from starting it again.  Depending on the rest of the configuration (constraints, options, failures, etc), the resource may remain started.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds (or resource timeout seconds) for the resource to stop and then return 0 if the resource is stopped or 1 if the resource has not stopped.
 .TP
+restart <resource id> [node] [\fB\-\-wait\fR=n]
+Restart the resource specified. If a node is specified and if the
+resource is a clone or master/slave it will be restarted only on
+the node specified.  If \fB\-\-timeout\fR is specified, then we will wait
+up to 'n' seconds for the resource to be restarted and return 0 if
+the restart was successful or 1 if it was not.
+.TP
 debug\-start <resource id> [\fB\-\-full\fR]
 This command will force the specified resource to start on this node ignoring the cluster recommendations and print the output from starting the resource. Using \fB\-\-full\fR will give more detailed output. This is mainly used for debugging resources that fail to start.
 .TP

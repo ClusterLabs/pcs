@@ -121,6 +121,8 @@ def resource_cmd(argv):
         resource_enable(argv)
     elif (sub_cmd == "disable"):
         resource_disable(argv)
+    elif (sub_cmd == "restart"):
+        resource_restart(argv)
     elif (sub_cmd == "debug-start"):
         resource_force_start(argv)
     elif (sub_cmd == "manage"):
@@ -1796,6 +1798,38 @@ def resource_enable(argv):
                     "information\n%s"
                 % (resource, message)
             )
+
+def resource_restart(argv):
+    if len(argv) < 1:
+        utils.err("You must specify a resource to restart")
+
+    dom = utils.get_cib_dom()
+    node = None
+    resource = argv.pop(0)
+
+    real_res = utils.dom_get_resource_clone_ms_parent(dom, resource)
+    if real_res:
+        print "Warning: using %s... (if a resource is a clone or master/slave you must use the clone or master/slave name" % real_res.getAttribute("id")
+        resource = real_res.getAttribute("id")
+
+    args = ["crm_resource", "--restart", "--resource", resource]
+    if len(argv) > 0:
+        node = argv.pop(0)
+        if not utils.dom_get_clone(dom,resource) and not utils.dom_get_master(dom,resource):
+            utils.err("can only restart on a specific node for a clone or master/slave resource")
+        args.extend(["--node", node])
+
+    if "--wait" in utils.pcs_options:
+        if utils.pcs_options["--wait"]:
+            args.extend(["--timeout", utils.pcs_options["--wait"]])
+        else:
+            utils.err("You must specify the number of seconds to wait")
+
+    output, retval = utils.run(args)
+    if retval != 0:
+        utils.err(output)
+
+    print "%s successfully restarted" % resource
 
 def resource_force_start(argv):
     if len(argv) < 1:

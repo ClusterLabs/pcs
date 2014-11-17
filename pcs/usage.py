@@ -276,6 +276,13 @@ Commands:
         resource timeout seconds) for the resource to stop and then return 0
         if the resource is stopped or 1 if the resource has not stopped.
 
+    restart <resource id> [node] [--wait=n]
+        Restart the resource specified. If a node is specified and if the
+        resource is a clone or master/slave it will be restarted only on
+        the node specified.  If --timeout is specified, then we will wait
+        up to 'n' seconds for the resource to be restarted and return 0 if
+        the restart was successful or 1 if it was not.
+
     debug-start <resource id> [--full]
         This command will force the specified resource to start on this node
         ignoring the cluster recommendations and print the output from
