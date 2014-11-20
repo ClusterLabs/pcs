@@ -1268,9 +1268,13 @@ def resource_clone(argv):
         if not utils.is_resource_started(res, 0)[0]:
             utils.err("Cannot use '--wait' on non-running resources")
         wait = True
+        wait_op = "start"
+        for arg in argv:
+            if arg.lower() == "target-role=stopped":
+                wait_op = "stop"
         timeout = utils.pcs_options["--wait"]
         if timeout is None:
-            timeout = utils.get_resource_op_timeout(cib_dom, res, "start")
+            timeout = utils.get_resource_op_timeout(cib_dom, res, wait_op)
         elif not timeout.isdigit():
             utils.err("You must specify the number of seconds to wait")
 
@@ -1283,13 +1287,16 @@ def resource_clone(argv):
             utils.dom_get_clone(cib_dom, res + "-clone"),
             len(utils.getNodesFromPacemaker())
         )
-        running, message = utils.is_resource_started(
-            res, int(timeout), count=count
+        success, message = utils.is_resource_started(
+            res, int(timeout), wait_op == "stop", count=count
         )
-        if running:
+        if success:
             print message
         else:
-            utils.err("Unable to start clones of '%s': %s" % (res, message))
+            utils.err(
+                "Unable to %s clones of '%s': %s"
+                % (wait_op, res, message)
+            )
 
 def resource_clone_create(cib_dom, argv, update_existing=False):
     name = argv.pop(0)
@@ -1418,9 +1425,13 @@ def resource_master(argv):
         if not utils.is_resource_started(res_id, 0)[0]:
             utils.err("Cannot use '--wait' on non-running resources")
         wait = True
+        wait_op = "promote"
+        for arg in argv:
+            if arg.lower() == "target-role=stopped":
+                wait_op = "stop"
         timeout = utils.pcs_options["--wait"]
         if timeout is None:
-            timeout = utils.get_resource_op_timeout(cib_dom, res_id, "promote")
+            timeout = utils.get_resource_op_timeout(cib_dom, res_id, wait_op)
         elif not timeout.isdigit():
             utils.err("You must specify the number of seconds to wait")
 
@@ -1433,13 +1444,13 @@ def resource_master(argv):
             utils.dom_get_master(cib_dom, master_id),
             len(utils.getNodesFromPacemaker())
         )
-        running, message = utils.is_resource_started(
-            res_id, int(timeout), count=count
+        success, message = utils.is_resource_started(
+            res_id, int(timeout), wait_op == "stop", count=count
         )
-        if running:
+        if success:
             print message
         else:
-            utils.err("unable to promote '%s': %s" % (res_id, message))
+            utils.err("unable to %s '%s': %s" % (wait_op, res_id, message))
 
 def resource_master_create(dom, argv, update=False, master_id=None):
     if update:
