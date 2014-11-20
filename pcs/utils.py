@@ -939,9 +939,12 @@ def validate_constraint_resource(dom, resource_id):
 def dom_get_resource_remote_node_name(dom_resource):
     if dom_resource.tagName != "primitive":
         return None
+    return dom_get_meta_attr_value(dom_resource, "remote-node")
+
+def dom_get_meta_attr_value(dom_resource, meta_name):
     for meta in dom_resource.getElementsByTagName("meta_attributes"):
         for nvpair in meta.getElementsByTagName("nvpair"):
-            if nvpair.getAttribute("name") == "remote-node":
+            if nvpair.getAttribute("name") == meta_name:
                 return nvpair.getAttribute("value")
     return None
 
@@ -985,10 +988,22 @@ def dom_attrs_to_list(dom_el, with_id=False):
     return attributes
 
 # Check if resoure is started (or stopped) for 'wait' seconds
-def is_resource_started(resource, wait, stopped=False, last_call_id=None):
+def is_resource_started(
+    resource, wait, stopped=False, last_call_id=None, count=None
+):
     expire_time = int(time.time()) + wait
     while True:
         state = getClusterState()
+        # group is started if the last resource in it is started
+        groups = state.getElementsByTagName("group")
+        for gr in groups:
+            # If resource is a clone it can have an id of '<resource name>:N'
+            if (
+                gr.getAttribute("id") == resource
+                or
+                gr.getAttribute("id").startswith(resource+":")
+            ):
+                resource = gr.getElementsByTagName("resource")[-1].getAttribute("id")
         resources = state.getElementsByTagName("resource")
         for res in resources:
             # If resource is a clone it can have an id of '<resource name>:N'
@@ -1014,10 +1029,15 @@ def is_resource_started(resource, wait, stopped=False, last_call_id=None):
                         and
                         res.getAttribute("failed") != "true"
                     ):
-                        return (
-                            True,
-                            resource_running_on(resource, state)["message"]
-                        )
+                        running_on = resource_running_on(resource, state)
+                        if (
+                            count is None
+                            or
+                            len(running_on["nodes_master"]) == count
+                            or
+                            len(running_on["nodes_started"]) == count
+                        ):
+                            return True, running_on["message"]
                     elif last_call_id is not None:
                         failures = get_lrm_rsc_op_failures(
                             dom_get_lrm_rsc_op(
@@ -1079,9 +1099,13 @@ def resource_running_on(resource, passed_state=None):
         # If resource is a clone it can have an id of '<resource name>:N'
         # If resource is a clone it will be found more than once - cannot break
         if (
-            res.getAttribute("id") == resource
-            or
-            res.getAttribute("id").startswith(resource+":")
+            (
+                res.getAttribute("id") == resource
+                or
+                res.getAttribute("id").startswith(resource+":")
+            )
+            and
+            res.getAttribute("failed") != "true"
         ):
             for node in res.getElementsByTagName("node"):
                 node_name = node.getAttribute("name")
@@ -1101,6 +1125,7 @@ def resource_running_on(resource, passed_state=None):
             (nodes_slave, "slave")
         ):
             if alist:
+                alist.sort()
                 message_parts.append(
                     "%s on node%s %s"
                     % (
@@ -1116,6 +1141,31 @@ def resource_running_on(resource, passed_state=None):
         "nodes_master": nodes_master,
         "nodes_slave": nodes_slave,
     }
+
+# get count of expected running instances of a resource
+# counts promoted instances for master/slave resource
+def count_expected_resource_instances(res_el, node_count):
+    if res_el.tagName in ["primitive", "group"]:
+        return 1
+    unique = dom_get_meta_attr_value(res_el, "globally-unique") == "true"
+    clone_max = dom_get_meta_attr_value(res_el, "clone-max")
+    clone_max = int(clone_max) if clone_max else node_count
+    clone_node_max = dom_get_meta_attr_value(res_el, "clone-node-max")
+    clone_node_max = int(clone_node_max) if clone_node_max else 1
+    if res_el.tagName == "master":
+        master_max = dom_get_meta_attr_value(res_el, "master-max")
+        master_max = int(master_max) if master_max else 1
+        master_node_max = dom_get_meta_attr_value(res_el, "master-node-max")
+        master_node_max = int(master_node_max) if master_node_max else 1
+        if unique:
+            return min(clone_max, master_max, node_count * clone_node_max)
+        else:
+            return min(clone_max, master_max, node_count)
+    else:
+        if unique:
+            return min(clone_max, node_count * clone_node_max)
+        else:
+            return min(clone_max, node_count)
 
 def does_resource_have_options(ra_type):
     if ra_type.startswith("ocf:") or ra_type.startswith("stonith:") or ra_type.find(':') == -1:

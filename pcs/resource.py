@@ -110,9 +110,7 @@ def resource_cmd(argv):
     elif (sub_cmd == "ungroup"):
         resource_group(["remove"] + argv)
     elif (sub_cmd == "clone"):
-        utils.replace_cib_configuration(
-            resource_clone(utils.get_cib_dom(), argv)
-        )
+        resource_clone(argv)
     elif (sub_cmd == "unclone"):
         resource_clone_master_remove(argv)
     elif (sub_cmd == "master"):
@@ -448,7 +446,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         if "--master" in utils.pcs_options:
             print "Warning: --master ignored when creating a clone"
     elif "--master" in utils.pcs_options:
-        dom = resource_master_create([ra_id+"-master",ra_id]+ master_meta_values, False, dom)
+        dom = resource_master_create(dom, [ra_id] + master_meta_values)
         if "--group" in utils.pcs_options:
             print "Warning: --group ignored when creating a master"
     elif "--group" in utils.pcs_options:
@@ -686,7 +684,9 @@ def resource_update(res_id,args):
                 break
 
         if master:
-            return resource_master_create([res_id] + args, True)
+            return utils.replace_cib_configuration(
+                resource_master_create(dom, [res_id] + args, True)
+            )
 
         utils.err ("Unable to find resource: %s" % res_id)
 
@@ -1181,14 +1181,43 @@ def resource_group(argv):
         usage.resource()
         sys.exit(1)
 
-def resource_clone(cib_dom, argv):
+def resource_clone(argv):
     if len(argv) < 1:
         usage.resource()
         sys.exit(1)
+
     res = argv[0]
+    cib_dom = utils.get_cib_dom()
+
+    wait = False
+    if "--wait" in utils.pcs_options:
+        if utils.usefile:
+            utils.err("Cannot use '-f' together with '--wait'")
+        if not utils.is_resource_started(res, 0)[0]:
+            utils.err("Cannot use '--wait' on non-running resources")
+        wait = True
+        timeout = utils.pcs_options["--wait"]
+        if timeout is None:
+            timeout = utils.get_resource_op_timeout(cib_dom, res, "start")
+        elif not timeout.isdigit():
+            utils.err("You must specify the number of seconds to wait")
+
     cib_dom = resource_clone_create(cib_dom, argv)
     cib_dom = constraint.constraint_resource_update(res, cib_dom)
-    return cib_dom
+    utils.replace_cib_configuration(cib_dom)
+
+    if wait:
+        count = utils.count_expected_resource_instances(
+            utils.dom_get_clone(cib_dom, res + "-clone"),
+            len(utils.getNodesFromPacemaker())
+        )
+        running, message = utils.is_resource_started(
+            res, int(timeout), count=count
+        )
+        if running:
+            print message
+        else:
+            utils.err("Unable to start clones of '%s': %s" % (res, message))
 
 def resource_clone_create(cib_dom, argv, update_existing=False):
     name = argv.pop(0)
@@ -1249,53 +1278,102 @@ def resource_clone_master_remove(argv):
     re = dom.documentElement.getElementsByTagName("resources")[0]
 
     found = False
-    for res in re.getElementsByTagName("primitive") + re.getElementsByTagName("group"):
-        if res.getAttribute("id") == name:
-            clone = res.parentNode
-            if clone.tagName != "clone" and clone.tagName != "master":
-                utils.err("%s is not in a clone or master/slave" % name)
-            constraint.remove_constraints_containing(clone.getAttribute("id"), passed_dom=dom)
-            clone.parentNode.appendChild(res)
-            clone.parentNode.removeChild(clone)
-            found = True
-            break
+    resource = (
+        utils.dom_get_resource(re, name)
+        or
+        utils.dom_get_group(re, name)
+        or
+        utils.dom_get_clone_ms_resource(re, name)
+    )
+    if not resource:
+        utils.err("could not find resource: %s" % name)
+    clone = resource.parentNode
+    resource_id = resource.getAttribute("id")
+    clone_id = clone.getAttribute("id")
 
-    if not found:
-        cloned = utils.dom_get_clone_ms_resource(re, name)
-        if cloned:
-            constraint.remove_constraints_containing(name, passed_dom=dom)
-            cm = cloned.parentNode
-            cm.parentNode.appendChild(cloned)
-            cm.parentNode.removeChild(cm)
-            found = True
+    wait = False
+    if "--wait" in utils.pcs_options:
+        if utils.usefile:
+            utils.err("Cannot use '-f' together with '--wait'")
+        if not utils.is_resource_started(resource_id, 0)[0]:
+            utils.err("Cannot use '--wait' on non-running resources")
+        wait = True
+        timeout = utils.pcs_options["--wait"]
+        if timeout is None:
+            timeout = utils.get_resource_op_timeout(dom, resource_id, "stop")
+        elif not timeout.isdigit():
+            utils.err("You must specify the number of seconds to wait")
 
-    if not found:
-        utils.err("could not find resource or group: %s" % name)
-
+    constraint.remove_constraints_containing(
+        clone.getAttribute("id"), passed_dom=dom
+    )
+    clone.parentNode.appendChild(resource)
+    clone.parentNode.removeChild(clone)
     utils.replace_cib_configuration(dom)
-    
-def resource_master(argv):
-    resource_master_create(argv)
 
-def resource_master_create(argv, update=False, passed_dom = None):
+    if wait:
+        running, message = utils.is_resource_started(
+            resource_id, int(timeout), count=1
+        )
+        if running:
+            print message
+        else:
+            utils.err(
+                "Unable to start single instance of '%s': %s"
+                % (resource_id, message)
+            )
+
+def resource_master(argv):
     non_option_args_count = 0
     for arg in argv:
         if arg.find("=") == -1:
             non_option_args_count += 1
-    
-    if (non_option_args_count < 1):
+    if non_option_args_count < 1:
         usage.resource()
         sys.exit(1)
-
-    if passed_dom:
-        dom = passed_dom
+    if non_option_args_count == 1:
+        res_id = argv[0]
+        master_id = res_id + "-master"
     else:
-        dom = utils.get_cib_dom()
+        master_id = argv.pop(0)
+        res_id = argv[0]
+    cib_dom = utils.get_cib_dom()
 
-    if non_option_args_count == 1 and not update:
-        argv.insert(0,argv[0]+"-master")
+    wait = False
+    if "--wait" in utils.pcs_options:
+        if utils.usefile:
+            utils.err("Cannot use '-f' together with '--wait'")
+        if not utils.is_resource_started(res_id, 0)[0]:
+            utils.err("Cannot use '--wait' on non-running resources")
+        wait = True
+        timeout = utils.pcs_options["--wait"]
+        if timeout is None:
+            timeout = utils.get_resource_op_timeout(cib_dom, res_id, "promote")
+        elif not timeout.isdigit():
+            utils.err("You must specify the number of seconds to wait")
 
-    master_id = argv.pop(0)
+    cib_dom = resource_master_create(cib_dom, argv, False, master_id)
+    cib_dom = constraint.constraint_resource_update(res_id, cib_dom)
+    utils.replace_cib_configuration(cib_dom)
+
+    if wait:
+        count = utils.count_expected_resource_instances(
+            utils.dom_get_master(cib_dom, master_id),
+            len(utils.getNodesFromPacemaker())
+        )
+        running, message = utils.is_resource_started(
+            res_id, int(timeout), count=count
+        )
+        if running:
+            print message
+        else:
+            utils.err("unable to promote '%s': %s" % (res_id, message))
+
+def resource_master_create(dom, argv, update=False, master_id=None):
+    if update:
+        master_id = argv.pop(0)
+    elif not master_id:
+        master_id = argv[0] + "-master"
 
     if (update):
         master_found = False
@@ -1356,13 +1434,7 @@ def resource_master_create(argv, update=False, passed_dom = None):
         )
         if len(meta.getElementsByTagName("nvpair")) == 0:
             master_element.removeChild(meta)
-
-    if passed_dom:
-        return dom
-
-    utils.replace_cib_configuration(dom)
-    if not update:
-        constraint.constraint_resource_update(rg_id)
+    return dom
 
 def resource_master_remove(argv):
     if len(argv) < 1:

@@ -365,15 +365,28 @@ Commands:
         cluster) or if resources are specified, remove the specified resources
         from the group
 
-    clone <resource id | group id> [clone options]...
-        Setup up the specified resource or group as a clone
+    clone <resource id | group id> [clone options]... [--wait[=n]]
+        Setup up the specified resource or group as a clone.  If --wait is
+        specified, pcs will wait up to 'n' seconds for the resource clones
+        to start and then return 0 if the clones are started, or 1 if
+        the clones has not yet started.  If 'n' is not specified, default
+        resource timeout will be used.
 
-    unclone <resource id | group name>
+    unclone <resource id | group name> [--wait[=n]]
         Remove the clone which contains the specified group or resource (the
-        resource or group will not be removed)
+        resource or group will not be removed).  If --wait is specified, pcs
+        will wait up to 'n' seconds for the resource clones to stop and then
+        return 0 if the resource is running as one instance, or 1 if
+        the resource clones has not yet stopped.  If 'n' is not specified,
+        default resource timeout will be used.
 
     master [<master/slave name>] <resource id | group name> [options]
+           [--wait[=n]]
         Configure a resource or group as a multi-state (master/slave) resource.
+        If --wait is specified, pcs will wait up to 'n' seconds for the resource
+        to be promoted and then return 0 if the resource is promoted, or 1 if
+        the resource has not yet been promoted.  If 'n' is not specified,
+        default resource timeout will be used.
         Note: to remove a master you must remove the resource/group it contains.
 
     manage <resource id> ... [resource n]

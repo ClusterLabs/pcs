@@ -264,6 +264,63 @@ class UtilsTest(unittest.TestCase):
             )
         )
 
+    def test_dom_get_meta_attr_value(self):
+        dom = xml.dom.minidom.parse("empty.xml")
+        new_resources = xml.dom.minidom.parseString("""
+            <resources>
+                <primitive id="dummy1"
+                        class="ocf" provider="heartbeat" type="Dummy">
+                </primitive>
+                <primitive class="ocf" id="vm-guest1" provider="heartbeat"
+                        type="VirtualDomain">
+                    <instance_attributes id="vm-guest1-instance_attributes">
+                        <nvpair id="vm-guest1-instance_attributes-hypervisor"
+                            name="hypervisor" value="qemu:///system"/>
+                        <nvpair id="vm-guest1-instance_attributes-config"
+                            name="config" value="/root/guest1.xml"/>
+                    </instance_attributes>
+                    <meta_attributes id="vm-guest1-meta_attributes">
+                        <nvpair id="vm-guest1-meta_attributes-remote-node"
+                            name="remote-node" value="guest1"/>
+                    </meta_attributes>
+                </primitive>
+                <primitive id="dummy2"
+                        class="ocf" provider="heartbeat" type="Dummy">
+                    <instance_attributes id="vm-guest1-meta_attributes">
+                        <nvpair id="dummy2-remote-node"
+                            name="remote-node" value="guest2"/>
+                    </instance_attributes>
+                </primitive>
+            </resources>
+        """).documentElement
+        resources = dom.getElementsByTagName("resources")[0]
+        resources.parentNode.replaceChild(new_resources, resources)
+
+        self.assertEquals(
+            None,
+            utils.dom_get_meta_attr_value(
+                utils.dom_get_resource(dom, "dummy1"), "foo"
+            )
+        )
+        self.assertEquals(
+            None,
+            utils.dom_get_meta_attr_value(
+                utils.dom_get_resource(dom, "dummy2"), "remote-node"
+            )
+        )
+        self.assertEquals(
+            "guest1",
+            utils.dom_get_meta_attr_value(
+                utils.dom_get_resource(dom, "vm-guest1"), "remote-node"
+            )
+        )
+        self.assertEquals(
+            None,
+            utils.dom_get_meta_attr_value(
+                utils.dom_get_resource(dom, "vm-guest1"), "foo"
+            )
+        )
+
     def testGetElementWithId(self):
         dom = xml.dom.minidom.parseString("""
             <aa>
@@ -901,6 +958,191 @@ class UtilsTest(unittest.TestCase):
                 'nodes_slave': [],
                 'nodes_started': [],
             }
+        )
+
+    def test_count_expected_resource_instances(self):
+        dom = xml.dom.minidom.parse("empty.xml")
+        new_resources = xml.dom.minidom.parseString("""
+<resources>
+    <primitive id="prim1">
+    </primitive>
+    <group id="group1">
+        <primitive id="prim2">
+        </primitive>
+    </group>
+    <clone id="clone1">
+        <primitive id="prim3">
+        </primitive>
+    </clone>
+    <clone id="clone2">
+        <primitive id="prim4">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="clone-max" value="9"/>
+            <nvpair name="clone-node-max" value="3"/>
+        </meta_attributes>
+    </clone>
+    <clone id="clone3">
+        <primitive id="prim5">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="clone-max" value="2"/>
+            <nvpair name="clone-node-max" value="3"/>
+        </meta_attributes>
+    </clone>
+    <clone id="clone4">
+        <primitive id="prim6">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="globally-unique" value="true"/>
+            <nvpair name="clone-max" value="9"/>
+        </meta_attributes>
+    </clone>
+    <clone id="clone5">
+        <primitive id="prim7">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="globally-unique" value="true"/>
+            <nvpair name="clone-max" value="9"/>
+            <nvpair name="clone-node-max" value="2"/>
+        </meta_attributes>
+    </clone>
+    <clone id="clone6">
+        <primitive id="prim8">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="globally-unique" value="true"/>
+            <nvpair name="clone-max" value="9"/>
+            <nvpair name="clone-node-max" value="4"/>
+        </meta_attributes>
+    </clone>
+    <master id="master1">
+        <primitive id="prim9">
+        </primitive>
+    </master>
+    <master id="master2">
+        <primitive id="prim10">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="clone-max" value="9"/>
+            <nvpair name="clone-node-max" value="3"/>
+            <nvpair name="master-max" value="5"/>
+            <nvpair name="master-node-max" value="4"/>
+        </meta_attributes>
+    </master>
+    <master id="master3">
+        <primitive id="prim11">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="globally-unique" value="true"/>
+            <nvpair name="clone-max" value="9"/>
+            <nvpair name="clone-node-max" value="3"/>
+        </meta_attributes>
+    </master>
+    <master id="master4">
+        <primitive id="prim12">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="globally-unique" value="true"/>
+            <nvpair name="clone-max" value="9"/>
+            <nvpair name="clone-node-max" value="3"/>
+            <nvpair name="master-max" value="3"/>
+            <nvpair name="master-node-max" value="2"/>
+        </meta_attributes>
+    </master>
+    <master id="master5">
+        <primitive id="prim13">
+        </primitive>
+        <meta_attributes>
+            <nvpair name="globally-unique" value="true"/>
+            <nvpair name="clone-max" value="9"/>
+            <nvpair name="clone-node-max" value="3"/>
+            <nvpair name="master-max" value="12"/>
+            <nvpair name="master-node-max" value="4"/>
+        </meta_attributes>
+    </master>
+</resources>
+        """).documentElement
+        resources = dom.getElementsByTagName("resources")[0]
+        resources.parentNode.replaceChild(new_resources, resources)
+
+        self.assertEquals(
+            1,
+            utils.count_expected_resource_instances(
+                utils.dom_get_resource(dom, "prim1"), 3
+            )
+        )
+        self.assertEquals(
+            1,
+            utils.count_expected_resource_instances(
+                utils.dom_get_group(dom, "group1"), 3
+            )
+        )
+        self.assertEquals(
+            3,
+            utils.count_expected_resource_instances(
+                utils.dom_get_clone(dom, "clone1"), 3
+            )
+        )
+        self.assertEquals(
+            3,
+            utils.count_expected_resource_instances(
+                utils.dom_get_clone(dom, "clone2"), 3
+            )
+        )
+        self.assertEquals(
+            2,
+            utils.count_expected_resource_instances(
+                utils.dom_get_clone(dom, "clone3"), 3
+            )
+        )
+        self.assertEquals(
+            3,
+            utils.count_expected_resource_instances(
+                utils.dom_get_clone(dom, "clone4"), 3
+            )
+        )
+        self.assertEquals(
+            6,
+            utils.count_expected_resource_instances(
+                utils.dom_get_clone(dom, "clone5"), 3
+            )
+        )
+        self.assertEquals(
+            9,
+            utils.count_expected_resource_instances(
+                utils.dom_get_clone(dom, "clone6"), 3
+            )
+        )
+        self.assertEquals(
+            1,
+            utils.count_expected_resource_instances(
+                utils.dom_get_master(dom, "master1"), 3
+            )
+        )
+        self.assertEquals(
+            3,
+            utils.count_expected_resource_instances(
+                utils.dom_get_master(dom, "master2"), 3
+            )
+        )
+        self.assertEquals(
+            1,
+            utils.count_expected_resource_instances(
+                utils.dom_get_master(dom, "master3"), 3
+            )
+        )
+        self.assertEquals(
+            3,
+            utils.count_expected_resource_instances(
+                utils.dom_get_master(dom, "master4"), 3
+            )
+        )
+        self.assertEquals(
+            9,
+            utils.count_expected_resource_instances(
+                utils.dom_get_master(dom, "master5"), 3
+            )
         )
 
     def assert_element_id(self, node, node_id):

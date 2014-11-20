@@ -41,7 +41,7 @@ def main(argv):
         for arg in argv:
             if arg.startswith("--wait="):
                 tempsecs = arg.replace("--wait=","")
-                if len(tempsecs) > 0 and tempsecs.isdigit():
+                if len(tempsecs) > 0:
                     waitsecs = tempsecs
                     arg = "--wait"
             new_argv.append(arg)
