@@ -279,7 +279,7 @@ Commands:
     restart <resource id> [node] [--wait=n]
         Restart the resource specified. If a node is specified and if the
         resource is a clone or master/slave it will be restarted only on
-        the node specified.  If --timeout is specified, then we will wait
+        the node specified.  If --wait is specified, then we will wait
         up to 'n' seconds for the resource to be restarted and return 0 if
         the restart was successful or 1 if it was not.
 
