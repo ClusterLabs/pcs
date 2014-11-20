@@ -1024,6 +1024,14 @@ def is_resource_started(
                         if failures:
                             return False, "\n".join(failures)
                 else:
+                    if last_call_id is not None:
+                        failures = get_lrm_rsc_op_failures(
+                            dom_get_lrm_rsc_op(
+                                get_cib_dom(), resource, "start", last_call_id
+                            )
+                        )
+                        if failures:
+                            return False, "\n".join(failures)
                     if (
                         res.getAttribute("role") in ("Started", "Master")
                         and
@@ -1038,14 +1046,6 @@ def is_resource_started(
                             len(running_on["nodes_started"]) == count
                         ):
                             return True, running_on["message"]
-                    elif last_call_id is not None:
-                        failures = get_lrm_rsc_op_failures(
-                            dom_get_lrm_rsc_op(
-                                get_cib_dom(), resource, "start", last_call_id
-                            )
-                        )
-                        if failures:
-                            return False, "\n".join(failures)
                 break
         if (expire_time < int(time.time())):
             break

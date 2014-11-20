@@ -321,6 +321,8 @@ def format_desc(indent, desc):
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
     if "--wait" in utils.pcs_options:
+        if utils.usefile:
+            utils.err("Cannot use '-f' together with '--wait'")
         if "--disabled" in utils.pcs_options:
             utils.err("Cannot use '--wait' together with '--disabled'")
         if "target-role=Stopped" in meta_values:
@@ -439,14 +441,23 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     resource_elem = create_xml_element("primitive", primitive_values, instance_attributes + op_attributes + meta_attributes)
     dom.getElementsByTagName("resources")[0].appendChild(resource_elem)
 
+    expected_instances = 1
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
         dom = resource_clone_create(dom, [ra_id] + clone_opts)
+        expected_instances = utils.count_expected_resource_instances(
+            utils.dom_get_clone(dom, ra_id + "-clone"),
+            len(utils.getNodesFromPacemaker())
+        )
         if "--group" in utils.pcs_options:
             print "Warning: --group ignored when creating a clone"
         if "--master" in utils.pcs_options:
             print "Warning: --master ignored when creating a clone"
     elif "--master" in utils.pcs_options:
         dom = resource_master_create(dom, [ra_id] + master_meta_values)
+        expected_instances = utils.count_expected_resource_instances(
+            utils.dom_get_master(dom, ra_id + "-master"),
+            len(utils.getNodesFromPacemaker())
+        )
         if "--group" in utils.pcs_options:
             print "Warning: --group ignored when creating a master"
     elif "--group" in utils.pcs_options:
@@ -464,7 +475,8 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
 
     if wait:
         running, message = utils.is_resource_started(
-            ra_id, int(wait_timeout), last_call_id=last_call_id
+            ra_id, int(wait_timeout), last_call_id=last_call_id,
+            count=expected_instances
         )
         if running:
             print message
