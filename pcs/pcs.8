@@ -107,8 +107,8 @@ Remove the specified operation id
 op defaults [options]
 Set default values for operations, if no options are passed, lists currently configured defaults
 .TP
-meta <resource id | group id | master id | clone id> <meta options>
-Add specified options to the specified resource, group, master/slave or clone.  Meta options should be in the format of name=value, options may be removed by setting an option without a value. Example: pcs resource meta TestResource failure\-timeout=50 stickiness=
+meta <resource id | group id | master id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
+Add specified options to the specified resource, group, master/slave or clone.  Meta options should be in the format of name=value, options may be removed by setting an option without a value.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise.  If 'n' is not specified, default resource timeout will be used.  Example: pcs resource meta TestResource failure\-timeout=50 stickiness=
 .TP
 group add <group name> <resource id> [resource id] ... [resource id] [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]
 Add the specified resource to the group, creating the group if it does not exist.  If the resource is present in another group it is moved to the new group.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resources relatively to some resource already existing in the group.

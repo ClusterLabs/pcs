@@ -1016,13 +1016,73 @@ def resource_meta(res_id, argv):
     else:
         meta_attributes = meta_attributes[0]
 
+    wait = False
+    if "--wait" in utils.pcs_options:
+        if utils.usefile:
+            utils.err("Cannot use '-f' together with '--wait'")
+        wait = True
+        node_count = len(utils.getNodesFromPacemaker())
+        clone_ms_parent = utils.dom_get_resource_clone_ms_parent(dom, res_id)
+        old_status_running = utils.is_resource_started(res_id, 0)[0]
+        old_role = utils.dom_get_meta_attr_value(
+            meta_attributes.parentNode, "target-role"
+        )
+        old_status_enabled = not old_role or old_role.lower() != "stopped"
+        old_status_instances = utils.count_expected_resource_instances(
+            clone_ms_parent if clone_ms_parent else elem, node_count
+        )
+
     update_meta_attributes(
         meta_attributes,
         convert_args_to_tuples(argv),
         res_id + "-meta_attributes-"
     )
 
+    if wait:
+        new_role = utils.dom_get_meta_attr_value(
+            meta_attributes.parentNode, "target-role"
+        )
+        new_status_enabled = not new_role or new_role.lower() != "stopped"
+        new_status_instances = utils.count_expected_resource_instances(
+            clone_ms_parent if clone_ms_parent else elem, node_count
+        )
+        wait_for_start = False
+        wait_for_stop = False
+        if old_status_running and not new_status_enabled:
+            wait_for_stop = True
+        elif (
+            not old_status_running
+            and
+            (not old_status_enabled and new_status_enabled)
+        ):
+            wait_for_start = True
+        elif (
+            old_status_running
+            and
+            old_status_instances != new_status_instances
+        ):
+            wait_for_start = True
+        if wait_for_start or wait_for_stop:
+            timeout = utils.pcs_options["--wait"]
+            if timeout is None:
+                timeout = utils.get_resource_op_timeout(
+                    dom, res_id, "start" if wait_for_start else "stop"
+                )
+            elif not timeout.isdigit():
+                utils.err("You must specify the number of seconds to wait")
+        else:
+            timeout = 0
+
     utils.replace_cib_configuration(dom)
+
+    if wait and (wait_for_start or wait_for_stop):
+        success, message = utils.is_resource_started(
+            res_id, int(timeout), wait_for_stop, count=new_status_instances
+        )
+        if success:
+            print message
+        else:
+            utils.err("Unable to start '%s': %s" % (res_id, message))
 
 def update_meta_attributes(meta_attributes, meta_attrs, id_prefix):
     dom = meta_attributes.ownerDocument

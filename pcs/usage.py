@@ -343,9 +343,14 @@ Commands:
         currently configured defaults
 
     meta <resource id | group id | master id | clone id> <meta options>
+         [--wait[=n]]
         Add specified options to the specified resource, group, master/slave
         or clone.  Meta options should be in the format of name=value, options
-        may be removed by setting an option without a value.
+        may be removed by setting an option without a value.  If --wait is
+        specified, pcs will wait up to 'n' seconds for the changes to take
+        effect and then return 0 if the changes have been processed or 1
+        otherwise.  If 'n' is not specified, default resource timeout will
+        be used.
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
 
     group add <group name> <resource id> [resource id] ... [resource id]

@@ -994,6 +994,23 @@ def is_resource_started(
     expire_time = int(time.time()) + wait
     while True:
         state = getClusterState()
+        clones = state.getElementsByTagName("clone")
+        for cl in clones:
+            if cl.getAttribute("id") == resource:
+                for child in cl.childNodes:
+                    if (
+                        child.nodeType == child.ELEMENT_NODE
+                        and
+                        child.tagName in ["resource", "group"]
+                    ):
+                        resource = child.getAttribute("id")
+                        # in clone resource can have an id of '<resource name>:N'
+                        if (
+                            ":" in resource
+                            and
+                            resource.rsplit(":", 1)[1].isdigit()
+                        ):
+                            resource = resource.rsplit(":", 1)[0]
         # group is started if the last resource in it is started
         groups = state.getElementsByTagName("group")
         for gr in groups:
