@@ -818,14 +818,14 @@ class UtilsTest(unittest.TestCase):
             </resource>
         </clone>
         <clone id="myMaster">
-            <resource id="myMasteredResource" role="Master">
-                <node name="rh70-node1" />
-            </resource>
             <resource id="myMasteredResource:1" role="Slave">
                 <node name="rh70-node2" />
             </resource>
             <resource id="myMasteredResource" role="Slave">
                 <node name="rh70-node3" />
+            </resource>
+            <resource id="myMasteredResource" role="Master">
+                <node name="rh70-node1" />
             </resource>
         </clone>
         <group id="myGroup">
@@ -845,6 +845,11 @@ class UtilsTest(unittest.TestCase):
                  </resource>
             </group>
             <group id="myClonedGroup:2">
+                 <resource id="myClonedGroupedResource" role="Started">
+                     <node name="rh70-node3" />
+                 </resource>
+            </group>
+            <group id="myClonedGroup:3">
                  <resource id="myClonedGroupedResource" role="Started">
                      <node name="rh70-node3" />
                  </resource>
@@ -895,10 +900,32 @@ class UtilsTest(unittest.TestCase):
             }
         )
         self.assertEquals(
+            utils.resource_running_on("myClone", status),
+            {
+                'message':
+                    "Resource 'myClone' is running on nodes "
+                        "rh70-node1, rh70-node2, rh70-node3.",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
+            }
+        )
+        self.assertEquals(
             utils.resource_running_on("myMasteredResource", status),
             {
                 'message':
                     "Resource 'myMasteredResource' is master on node "
+                        "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                'nodes_master': ["rh70-node1"],
+                'nodes_slave': ["rh70-node2", "rh70-node3"],
+                'nodes_started': [],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myMaster", status),
+            {
+                'message':
+                    "Resource 'myMaster' is master on node "
                         "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
                 'nodes_master': ["rh70-node1"],
                 'nodes_slave': ["rh70-node2", "rh70-node3"],
@@ -917,14 +944,50 @@ class UtilsTest(unittest.TestCase):
             }
         )
         self.assertEquals(
+            utils.resource_running_on("myGroup", status),
+            {
+                'message':
+                    "Resource 'myGroup' is running on node "
+                        "rh70-node2.",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': ["rh70-node2"],
+            }
+        )
+        self.assertEquals(
             utils.resource_running_on("myClonedGroupedResource", status),
             {
                 'message':
                     "Resource 'myClonedGroupedResource' is running on nodes "
-                        "rh70-node1, rh70-node2, rh70-node3.",
+                        "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
                 'nodes_master': [],
                 'nodes_slave': [],
-                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
+                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
+                    "rh70-node3"],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myClonedGroup", status),
+            {
+                'message':
+                    "Resource 'myClonedGroup' is running on nodes "
+                        "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
+                    "rh70-node3"],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myGroupClone", status),
+            {
+                'message':
+                    "Resource 'myGroupClone' is running on nodes "
+                        "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
+                'nodes_master': [],
+                'nodes_slave': [],
+                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
+                    "rh70-node3"],
             }
         )
         self.assertEquals(
@@ -938,7 +1001,28 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': [],
             }
         )
-
+        self.assertEquals(
+            utils.resource_running_on("myMasteredGroup", status),
+            {
+                'message':
+                    "Resource 'myMasteredGroup' is master on node "
+                        "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                'nodes_master': ["rh70-node2"],
+                'nodes_slave': ["rh70-node1", "rh70-node3"],
+                'nodes_started': [],
+            }
+        )
+        self.assertEquals(
+            utils.resource_running_on("myGroupMaster", status),
+            {
+                'message':
+                    "Resource 'myGroupMaster' is master on node "
+                        "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                'nodes_master': ["rh70-node2"],
+                'nodes_slave': ["rh70-node1", "rh70-node3"],
+                'nodes_started': [],
+            }
+        )
         self.assertEquals(
             utils.resource_running_on("notMyResource", status),
             {

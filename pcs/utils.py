@@ -989,38 +989,15 @@ def dom_attrs_to_list(dom_el, with_id=False):
 
 # Check if resoure is started (or stopped) for 'wait' seconds
 def is_resource_started(
-    resource, wait, stopped=False, last_call_id=None, count=None
+    resource, wait, stopped=False, last_call_id=None, count=None,
+    allowed_nodes=None, banned_nodes=None
 ):
     expire_time = int(time.time()) + wait
+    resource_original = resource
     while True:
         state = getClusterState()
-        clones = state.getElementsByTagName("clone")
-        for cl in clones:
-            if cl.getAttribute("id") == resource:
-                for child in cl.childNodes:
-                    if (
-                        child.nodeType == child.ELEMENT_NODE
-                        and
-                        child.tagName in ["resource", "group"]
-                    ):
-                        resource = child.getAttribute("id")
-                        # in clone resource can have an id of '<resource name>:N'
-                        if (
-                            ":" in resource
-                            and
-                            resource.rsplit(":", 1)[1].isdigit()
-                        ):
-                            resource = resource.rsplit(":", 1)[0]
-        # group is started if the last resource in it is started
-        groups = state.getElementsByTagName("group")
-        for gr in groups:
-            # If resource is a clone it can have an id of '<resource name>:N'
-            if (
-                gr.getAttribute("id") == resource
-                or
-                gr.getAttribute("id").startswith(resource+":")
-            ):
-                resource = gr.getElementsByTagName("resource")[-1].getAttribute("id")
+        resource = get_resource_for_running_check(state, resource, stopped)
+        running_on = resource_running_on(resource_original, state)
         resources = state.getElementsByTagName("resource")
         for res in resources:
             # If resource is a clone it can have an id of '<resource name>:N'
@@ -1031,7 +1008,10 @@ def is_resource_started(
                         and
                         res.getAttribute("failed") != "true"
                     ):
-                        return True, "Resource '%s' has been stopped" % resource
+                        return (
+                            True,
+                            "Resource '%s' has been stopped" % resource_original
+                        )
                     elif last_call_id is not None:
                         failures = get_lrm_rsc_op_failures(
                             dom_get_lrm_rsc_op(
@@ -1039,8 +1019,40 @@ def is_resource_started(
                             )
                         )
                         if failures:
-                            return False, "\n".join(failures)
+                            return (
+                                False,
+                                "\n".join(failures + [running_on["message"]])
+                            )
                 else:
+                    set_running_on = set(
+                        running_on["nodes_started"] + running_on["nodes_master"]
+                    )
+                    if (
+                        res.getAttribute("role") in ("Started", "Master")
+                        and
+                        res.getAttribute("failed") != "true"
+                        and
+                        (
+                            count is None
+                            or
+                            len(running_on["nodes_master"]) == count
+                            or
+                            len(running_on["nodes_started"]) == count
+                        )
+                        and
+                        (
+                            not banned_nodes
+                            or
+                            set_running_on.isdisjoint(set(banned_nodes))
+                        )
+                        and
+                        (
+                            not allowed_nodes
+                            or
+                            set_running_on <= set(allowed_nodes)
+                        )
+                    ):
+                        return True, running_on["message"]
                     if last_call_id is not None:
                         failures = get_lrm_rsc_op_failures(
                             dom_get_lrm_rsc_op(
@@ -1048,26 +1060,44 @@ def is_resource_started(
                             )
                         )
                         if failures:
-                            return False, "\n".join(failures)
-                    if (
-                        res.getAttribute("role") in ("Started", "Master")
-                        and
-                        res.getAttribute("failed") != "true"
-                    ):
-                        running_on = resource_running_on(resource, state)
-                        if (
-                            count is None
-                            or
-                            len(running_on["nodes_master"]) == count
-                            or
-                            len(running_on["nodes_started"]) == count
-                        ):
-                            return True, running_on["message"]
-                break
+                            return (
+                                False,
+                                "\n".join(failures + [running_on["message"]])
+                            )
         if (expire_time < int(time.time())):
             break
         time.sleep(1)
-    return False, "waiting timed out"
+    return False, "waiting timed out\n" + running_on["message"]
+
+def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
+    for clone in cluster_state.getElementsByTagName("clone"):
+        if clone.getAttribute("id") == resource_id:
+            for child in clone.childNodes:
+                if (
+                    child.nodeType == child.ELEMENT_NODE
+                    and
+                    child.tagName in ["resource", "group"]
+                ):
+                    resource_id = child.getAttribute("id")
+                    # in a clone a resource can have an id of '<name>:N'
+                    if ":" in resource_id:
+                        parts = resource_id.rsplit(":", 1)
+                        if parts[1].isdigit():
+                            resource_id = parts[0]
+                    break
+    for group in cluster_state.getElementsByTagName("group"):
+        # If resource is a clone it can have an id of '<resource name>:N'
+        if (
+            group.getAttribute("id") == resource_id
+            or
+            group.getAttribute("id").startswith(resource_id + ":")
+        ):
+            if stopped:
+                elem = group.getElementsByTagName("resource")[0]
+            else:
+                elem = group.getElementsByTagName("resource")[-1]
+            resource_id = elem.getAttribute("id")
+    return resource_id
 
 def dom_get_lrm_rsc_op(cib, resource, op=None, last_call_id=None):
     lrm_rsc_op_list = []
@@ -1111,6 +1141,8 @@ def resource_running_on(resource, passed_state=None):
     nodes_master = []
     nodes_slave = []
     state = passed_state if passed_state else getClusterState()
+    resource_original = resource
+    resource = get_resource_for_running_check(state, resource)
     resources = state.getElementsByTagName("resource")
     for res in resources:
         # If resource is a clone it can have an id of '<resource name>:N'
@@ -1133,7 +1165,7 @@ def resource_running_on(resource, passed_state=None):
                 elif res.getAttribute("role") == "Slave":
                     nodes_slave.append(node_name)
     if not nodes_started and not nodes_master and not nodes_slave:
-        message = "Resource '%s' is not running on any node" % resource
+        message = "Resource '%s' is not running on any node" % resource_original
     else:
         message_parts = []
         for alist, label in (
@@ -1151,7 +1183,8 @@ def resource_running_on(resource, passed_state=None):
                         ", ".join(alist)
                     )
                 )
-        message = "Resource '%s' is %s." % (resource, "; ".join(message_parts))
+        message = "Resource '%s' is %s."\
+            % (resource_original, "; ".join(message_parts))
     return {
         "message": message,
         "nodes_started": nodes_started,
