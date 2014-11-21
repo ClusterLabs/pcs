@@ -290,17 +290,26 @@ Commands:
         This is mainly used for debugging resources that fail to start.
 
     move <resource id> [destination node] [--master] [lifetime=<lifetime>]
+         [--wait[=n]]
         Move resource off current node (and optionally onto destination node).
-        If --master is used the scope of the command is limited to the
-        master role and you must use the master id (instead of the resource id).
-        If lifetime is not specified it defaults to infinite.
+        If --master is used the scope of the command is limited to the master
+        role and you must use the master id (instead of the resource id).
+        If lifetime is not specified it defaults to infinite.  If --wait is
+        specified, pcs will wait up to 'n' seconds for the resource to start
+        on destination node and then return 0 if the resource is started, or 1
+        if the resource has not yet started.  If 'n' is not specified, default
+        resource timeout will be used.
 
-    ban <resource id> [node] [--master] [lifetime=<lifetime>]
+    ban <resource id> [node] [--master] [lifetime=<lifetime>] [--wait[=n]]
         Prevent the resource id specified from running on the node (or on the
         current node it is running on if no node is specified).
         If --master is used the scope of the command is limited to the
         master role and you must use the master id (instead of the resource id).
-        If lifetime is not specified it defaults to infinite.
+        If lifetime is not specified it defaults to infinite.  If --wait is
+        specified, pcs will wait up to 'n' seconds for the resource to start
+        on different node and then return 0 if the resource is started, or 1
+        if the resource has not yet started.  If 'n' is not specified, default
+        resource timeout will be used.
 
     clear <resource id> [node] [--master]
         Remove constraints created by move and/or ban on the specified

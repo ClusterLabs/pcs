@@ -576,6 +576,36 @@ def resource_move(argv,clear=False,ban=False):
         else:
             utils.err("when specifying --master you must use the master id")
 
+    wait = False
+    if "--wait" in utils.pcs_options and not clear:
+        if utils.usefile:
+            utils.err("Cannot use '-f' together with '--wait'")
+        if not utils.is_resource_started(resource_id, 0)[0]:
+            utils.err("Cannot use '--wait' on non-running resources")
+        wait = True
+        timeout = utils.pcs_options["--wait"]
+        if timeout is None:
+            timeout = (
+                utils.get_resource_op_timeout(dom, resource_id, "stop")
+                +
+                utils.get_resource_op_timeout(dom, resource_id, "start")
+            )
+        elif not timeout.isdigit():
+            utils.err("You must specify the number of seconds to wait")
+        allowed_nodes = set()
+        banned_nodes = set()
+        if not clear:
+            if dest_node and ban:
+                banned_nodes = set([dest_node])
+            elif dest_node:
+                allowed_nodes = set([dest_node])
+            else:
+                state = utils.getClusterState()
+                running_on = utils.resource_running_on(resource_id)
+                banned_nodes = set(
+                    running_on["nodes_master"] + running_on["nodes_started"]
+                )
+
     if "--master" in utils.pcs_options:
         other_options.append("--master")
     if lifetime is not None:
@@ -600,6 +630,16 @@ def resource_move(argv,clear=False,ban=False):
         if "Resource '"+resource_id+"' not moved: active in 0 locations." in output:
             utils.err("You must specify a node when moving/banning a stopped resource")
         utils.err ("error moving/banning/clearing resource\n" + output)
+
+    if wait:
+        success, message = utils.is_resource_started(
+            resource_id, int(timeout), allowed_nodes=allowed_nodes,
+            banned_nodes=banned_nodes
+        )
+        if success:
+            print message
+        else:
+            utils.err("Unable to start '%s': %s" % (resource_id, message))
 
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)
