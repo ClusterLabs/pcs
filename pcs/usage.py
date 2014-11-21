@@ -363,12 +363,14 @@ Commands:
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
 
     group add <group name> <resource id> [resource id] ... [resource id]
-              [--before <resource id> | --after <resource id>]
+              [--before <resource id> | --after <resource id>] [--wait=n]
         Add the specified resource to the group, creating the group if it does
         not exist.  If the resource is present in another group it is moved
         to the new group.  You can use --before or --after to specify
         the position of the added resources relatively to some resource already
-        existing in the group.
+        existing in the group.  If --wait is specified, pcs will wait up to 'n'
+        seconds for resources in the group to start and then return 0 if
+        the resources are started, or 1 if the resources have not started yet.
 
     group remove <group name> <resource id> [resource id] ... [resource id]
         Remove the specified resource(s) from the group, removing the group if
