@@ -464,19 +464,11 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         groupname = utils.pcs_options["--group"]
         dom = resource_group_add(dom, groupname, [ra_id])
 
-    if wait:
-        rsc_op_list = utils.dom_get_lrm_rsc_op(dom, ra_id)
-        if not rsc_op_list:
-            last_call_id = 0
-        else:
-            last_call_id = rsc_op_list[-1].getAttribute("call-id")
-
     utils.replace_cib_configuration(dom)
 
     if wait:
         running, message = utils.is_resource_started(
-            ra_id, int(wait_timeout), last_call_id=last_call_id,
-            count=expected_instances
+            ra_id, int(wait_timeout), count=expected_instances
         )
         if running:
             print message
@@ -639,7 +631,7 @@ def resource_move(argv,clear=False,ban=False):
         if success:
             print message
         else:
-            utils.err("Unable to start '%s': %s" % (resource_id, message))
+            utils.err("Unable to start '%s'\n%s" % (resource_id, message))
 
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)
@@ -1122,7 +1114,7 @@ def resource_meta(res_id, argv):
         if success:
             print message
         else:
-            utils.err("Unable to start '%s': %s" % (res_id, message))
+            utils.err("Unable to start '%s'\n%s" % (res_id, message))
 
 def update_meta_attributes(meta_attributes, meta_attrs, id_prefix):
     dom = meta_attributes.ownerDocument
@@ -1334,7 +1326,7 @@ def resource_clone(argv):
             print message
         else:
             utils.err(
-                "Unable to %s clones of '%s': %s"
+                "Unable to %s clones of '%s'\n%s"
                 % (wait_op, res, message)
             )
 
@@ -1438,7 +1430,7 @@ def resource_clone_master_remove(argv):
             print message
         else:
             utils.err(
-                "Unable to start single instance of '%s': %s"
+                "Unable to start single instance of '%s'\n%s"
                 % (resource_id, message)
             )
 
@@ -1490,7 +1482,7 @@ def resource_master(argv):
         if success:
             print message
         else:
-            utils.err("unable to %s '%s': %s" % (wait_op, res_id, message))
+            utils.err("unable to %s '%s'\n%s" % (wait_op, res_id, message))
 
 def resource_master_create(dom, argv, update=False, master_id=None):
     if update:
@@ -1922,12 +1914,6 @@ def resource_disable(argv):
             utils.err("%s is not a valid number of seconds to wait" % wait)
             sys.exit(1)
 
-        rsc_op_list = utils.dom_get_lrm_rsc_op(cib_dom, resource_wait)
-        if not rsc_op_list:
-            last_call_id = 0
-        else:
-            last_call_id = rsc_op_list[-1].getAttribute("call-id")
-
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
     if retval != 0:
@@ -1935,7 +1921,7 @@ def resource_disable(argv):
 
     if "--wait" in utils.pcs_options:
         did_stop, message = utils.is_resource_started(
-            resource_wait, int(wait), True, last_call_id
+            resource_wait, int(wait), True
         )
         if did_stop:
             print message
@@ -1969,21 +1955,13 @@ def resource_enable(argv):
             utils.err("%s is not a valid number of seconds to wait" % wait)
             sys.exit(1)
 
-        rsc_op_list = utils.dom_get_lrm_rsc_op(cib_dom, resource_wait)
-        if not rsc_op_list:
-            last_call_id = 0
-        else:
-            last_call_id = rsc_op_list[-1].getAttribute("call-id")
-
     args = ["crm_resource", "-r", resource, "-m", "-d", "target-role"]
     output, retval = utils.run(args)
     if retval != 0:
         utils.err (output)
 
     if "--wait" in utils.pcs_options:
-        did_start, message = utils.is_resource_started(
-            resource_wait, int(wait), last_call_id=last_call_id
-        )
+        did_start, message = utils.is_resource_started(resource_wait, int(wait))
         if did_start:
             print message
             return True

@@ -729,51 +729,57 @@ class UtilsTest(unittest.TestCase):
         status.parentNode.replaceChild(new_status, status)
         return cib_dom
 
-    def test_dom_get_lrm_rsc_op(self):
+    def test_get_lrm_rsc_op(self):
         dom = self.get_cib_status_lrm()
 
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy")
+        op_list = utils.get_lrm_rsc_op(dom, "dummy")
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(
             op_id_list,
             ["dummy_monitor_0", "dummy_stop_0", "dummy_start_0",
                 "dummy_monitor_30000",]
         )
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", "monitor")
+        op_list = utils.get_lrm_rsc_op(dom, "dummy", ["monitor"])
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(
             op_id_list,
             ["dummy_monitor_0", "dummy_monitor_30000",]
         )
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", last_call_id=30)
+        op_list = utils.get_lrm_rsc_op(dom, "dummy", ["stop", "start"])
+        op_id_list = [op.getAttribute("id") for op in op_list]
+        self.assertEquals(
+            op_id_list,
+            ["dummy_stop_0", "dummy_start_0",]
+        )
+        op_list = utils.get_lrm_rsc_op(dom, "dummy", last_call_id=30)
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(
             op_id_list,
             ["dummy_stop_0", "dummy_start_0", "dummy_monitor_30000",]
         )
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", "monitor", 30)
+        op_list = utils.get_lrm_rsc_op(dom, "dummy", ["monitor"], 30)
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(
             op_id_list,
             ["dummy_monitor_30000",]
         )
 
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", last_call_id=340)
+        op_list = utils.get_lrm_rsc_op(dom, "dummy", last_call_id=340)
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(op_id_list, [])
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy", last_call_id=34)
+        op_list = utils.get_lrm_rsc_op(dom, "dummy", last_call_id=34)
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(op_id_list, [])
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy0", "monitor", 30)
+        op_list = utils.get_lrm_rsc_op(dom, "dummy0", ["monitor"], 30)
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(op_id_list, [])
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy0", "monitor")
+        op_list = utils.get_lrm_rsc_op(dom, "dummy0", ["monitor"])
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(op_id_list, [])
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy0", last_call_id=30)
+        op_list = utils.get_lrm_rsc_op(dom, "dummy0", last_call_id=30)
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(op_id_list, [])
-        op_list = utils.dom_get_lrm_rsc_op(dom, "dummy0")
+        op_list = utils.get_lrm_rsc_op(dom, "dummy0")
         op_id_list = [op.getAttribute("id") for op in op_list]
         self.assertEquals(op_id_list, [])
 
@@ -781,7 +787,7 @@ class UtilsTest(unittest.TestCase):
         dom = self.get_cib_status_lrm()
 
         failures = utils.get_lrm_rsc_op_failures(
-            utils.dom_get_lrm_rsc_op(dom, "dummy")
+            utils.get_lrm_rsc_op(dom, "dummy")
         )
         self.assertEquals(
             failures,
@@ -789,11 +795,11 @@ class UtilsTest(unittest.TestCase):
         )
 
         failures = utils.get_lrm_rsc_op_failures(
-            utils.dom_get_lrm_rsc_op(dom, "dummy", "start")
+            utils.get_lrm_rsc_op(dom, "dummy", ["start"])
         )
         self.assertEquals(failures, [])
         failures = utils.get_lrm_rsc_op_failures(
-            utils.dom_get_lrm_rsc_op(dom, "dummy0")
+            utils.get_lrm_rsc_op(dom, "dummy0")
         )
         self.assertEquals(failures, [])
 

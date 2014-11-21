@@ -989,40 +989,54 @@ def dom_attrs_to_list(dom_el, with_id=False):
 
 # Check if resoure is started (or stopped) for 'wait' seconds
 def is_resource_started(
-    resource, wait, stopped=False, last_call_id=None, count=None,
+    resource, wait, stopped=False, count=None,
     allowed_nodes=None, banned_nodes=None
 ):
     expire_time = int(time.time()) + wait
+    timeout = False
+    fail = False
+    success = False
     resource_original = resource
-    while True:
+    nodes_running_original = set()
+    while not fail and not success and not timeout:
         state = getClusterState()
+        cib_dom = get_cib_dom()
+        node_count = len(cib_dom.getElementsByTagName("node"))
         resource = get_resource_for_running_check(state, resource, stopped)
         running_on = resource_running_on(resource_original, state)
+        if not nodes_running_original:
+            nodes_running_original = set(
+                running_on["nodes_started"] + running_on["nodes_master"]
+            )
+        lrm_op_list = get_lrm_rsc_op(cib_dom, resource)
+        failed_op_list = []
+        for op in lrm_op_list:
+            if (
+                op.getAttribute("operation") == "monitor"
+                and
+                op.getAttribute("rc-code") == "7"
+            ):
+                continue
+            if op.getAttribute("rc-code") != "0":
+                failed_op_list.append(op)
         resources = state.getElementsByTagName("resource")
+        all_stopped = True
         for res in resources:
             # If resource is a clone it can have an id of '<resource name>:N'
             if res.getAttribute("id") == resource or res.getAttribute("id").startswith(resource+":"):
                 if stopped:
-                    if (
+                    if not (
                         res.getAttribute("role") == "Stopped"
                         and
                         res.getAttribute("failed") != "true"
                     ):
-                        return (
-                            True,
-                            "Resource '%s' has been stopped" % resource_original
-                        )
-                    elif last_call_id is not None:
-                        failures = get_lrm_rsc_op_failures(
-                            dom_get_lrm_rsc_op(
-                                get_cib_dom(), resource, "stop", last_call_id
-                            )
-                        )
-                        if failures:
-                            return (
-                                False,
-                                "\n".join(failures + [running_on["message"]])
-                            )
+                        all_stopped = False
+                    nodes_failed = set()
+                    for op in failed_op_list:
+                        if op.getAttribute("operation") in ["stop", "demote"]:
+                            nodes_failed.add(op.getAttribute("on_node"))
+                    if nodes_failed >= nodes_running_original:
+                        fail = True
                 else:
                     set_running_on = set(
                         running_on["nodes_started"] + running_on["nodes_master"]
@@ -1052,22 +1066,34 @@ def is_resource_started(
                             set_running_on <= set(allowed_nodes)
                         )
                     ):
-                        return True, running_on["message"]
-                    if last_call_id is not None:
-                        failures = get_lrm_rsc_op_failures(
-                            dom_get_lrm_rsc_op(
-                                get_cib_dom(), resource, "start", last_call_id
-                            )
-                        )
-                        if failures:
-                            return (
-                                False,
-                                "\n".join(failures + [running_on["message"]])
-                            )
+                        success = True
+                    # check for failures but give pacemaker a chance to try
+                    # to start the resource on another node (it will try anyway
+                    # so don't report fail prematurely)
+                    nodes_failed = set()
+                    for op in failed_op_list:
+                        if op.getAttribute("operation") in ["start", "promote"]:
+                            nodes_failed.add(op.getAttribute("on_node"))
+                    if (
+                        len(nodes_failed) >= node_count
+                        or
+                        (allowed_nodes and set(allowed_nodes) == nodes_failed)
+                    ):
+                        fail = True
+        if stopped and all_stopped:
+            success = True
         if (expire_time < int(time.time())):
-            break
+            timeout = True
         time.sleep(1)
-    return False, "waiting timed out\n" + running_on["message"]
+    message = ""
+    if timeout and not failed_op_list:
+        message += "waiting timed out\n"
+    message += running_on["message"]
+    if failed_op_list:
+        failed_op_list.sort(key=lambda x: x.getAttribute("on_node"))
+        message += "\nResource failures:\n  "
+        message += "\n  ".join(get_lrm_rsc_op_failures(failed_op_list))
+    return success, message
 
 def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
     for clone in cluster_state.getElementsByTagName("clone"):
@@ -1099,13 +1125,13 @@ def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
             resource_id = elem.getAttribute("id")
     return resource_id
 
-def dom_get_lrm_rsc_op(cib, resource, op=None, last_call_id=None):
+def get_lrm_rsc_op(cib, resource, op_list=None, last_call_id=None):
     lrm_rsc_op_list = []
     for lrm_resource in cib.getElementsByTagName("lrm_resource"):
         if lrm_resource.getAttribute("id") != resource:
             continue
         for lrm_rsc_op in lrm_resource.getElementsByTagName("lrm_rsc_op"):
-            if op is not None and lrm_rsc_op.getAttribute("operation") != op:
+            if op_list and lrm_rsc_op.getAttribute("operation") not in op_list:
                 continue
             if (
                 last_call_id is not None
@@ -1113,6 +1139,12 @@ def dom_get_lrm_rsc_op(cib, resource, op=None, last_call_id=None):
                 int(lrm_rsc_op.getAttribute("call-id")) <= int(last_call_id)
             ):
                 continue
+            if not lrm_rsc_op.getAttribute("on_node"):
+                state = dom_get_parent_by_tag_name(lrm_rsc_op, "node_state")
+                if state:
+                    lrm_rsc_op.setAttribute(
+                        "on_node", state.getAttribute("uname")
+                    )
             lrm_rsc_op_list.append(lrm_rsc_op)
     lrm_rsc_op_list.sort(key=lambda x: int(x.getAttribute("call-id")))
     return lrm_rsc_op_list
