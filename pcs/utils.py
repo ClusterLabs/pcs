@@ -7,6 +7,7 @@ from xml.dom.minidom import parseString,parse
 import xml.etree.ElementTree as ET
 import re
 import json
+import tempfile
 import settings
 import resource
 import signal
@@ -676,7 +677,7 @@ def subprocess_setup():
 
 # Run command, with environment and return (output, retval)
 def run(args, ignore_stderr=False, string_for_stdin=None):
-    env_var = os.environ
+    env_var = dict(os.environ)
     if usefile:
         env_var["CIB_file"] = filename
 
@@ -987,17 +988,38 @@ def dom_attrs_to_list(dom_el, with_id=False):
         attributes.append("(id:%s)" % (dom_el.getAttribute("id")))
     return attributes
 
-# Check if resoure is started (or stopped) for 'wait' seconds
+# Check if resource is started (or stopped) for 'wait' seconds
+# options for started mode:
+#   count - do not success unless 'count' instances of the resource are Started
+#       or Master (Slave does not count)
+#   allowed_nodes - do not success if resource is running on any other node
+#   banned_nodes - do not success if resource is running on any banned node
+#   desired_nodes - do not success unless resource is running on all desired
+#       nodes
+#   cluster state - use passed cluster state instead of live one
+# options for stopped mode:
+#   desired_nodes - do not success unless resource is stopped on all desired
+#       nodes
+# options for both:
+#   slave_as_started - consider Slave role as started, otherwise only Started
+#       and Master are considered
 def is_resource_started(
-    resource, wait, stopped=False, count=None,
-    allowed_nodes=None, banned_nodes=None, cluster_state=None
+    resource, wait, stopped=False,
+    count=None, allowed_nodes=None, banned_nodes=None, desired_nodes=None,
+    cluster_state=None, slave_as_started=False
 ):
-    expire_time = int(time.time()) + wait
+    running_roles = set(("Started", "Master"))
+    if slave_as_started:
+        running_roles.add("Slave")
     timeout = False
     fail = False
     success = False
     resource_original = resource
     nodes_running_original = set()
+    set_allowed_nodes = set(allowed_nodes) if allowed_nodes else allowed_nodes
+    set_banned_nodes = set(banned_nodes) if banned_nodes else banned_nodes
+    set_desired_nodes = set(desired_nodes) if desired_nodes else desired_nodes
+    expire_time = int(time.time()) + wait
     while not fail and not success and not timeout:
         state = cluster_state if cluster_state else getClusterState()
         cib_dom = get_cib_dom()
@@ -1008,19 +1030,35 @@ def is_resource_started(
             nodes_running_original = set(
                 running_on["nodes_started"] + running_on["nodes_master"]
             )
+            if slave_as_started:
+                nodes_running_original.update(running_on["nodes_slave"])
         failed_op_list = get_lrm_rsc_op_failed(cib_dom, resource)
         resources = state.getElementsByTagName("resource")
         all_stopped = True
         for res in resources:
             # If resource is a clone it can have an id of '<resource name>:N'
             if res.getAttribute("id") == resource or res.getAttribute("id").startswith(resource+":"):
+                set_running_on = set(
+                    running_on["nodes_started"] + running_on["nodes_master"]
+                )
+                if slave_as_started:
+                    set_running_on.update(running_on["nodes_slave"])
                 if stopped:
-                    if not (
-                        res.getAttribute("role") == "Stopped"
-                        and
-                        res.getAttribute("failed") != "true"
+                    if (
+                        res.getAttribute("role") != "Stopped"
+                        or
+                        (
+                            res.getAttribute("role") == "Stopped"
+                            and
+                            res.getAttribute("failed") == "true"
+                        )
                     ):
-                        all_stopped = False
+                        if desired_nodes:
+                            for node in res.getElementsByTagName("node"):
+                                if node.getAttribute("name") in desired_nodes:
+                                    all_stopped = False
+                        else:
+                            all_stopped = False
                     nodes_failed = set()
                     for op in failed_op_list:
                         if op.getAttribute("operation") in ["stop", "demote"]:
@@ -1028,32 +1066,29 @@ def is_resource_started(
                     if nodes_failed >= nodes_running_original:
                         fail = True
                 else:
-                    set_running_on = set(
-                        running_on["nodes_started"] + running_on["nodes_master"]
-                    )
                     if (
-                        res.getAttribute("role") in ("Started", "Master")
+                        res.getAttribute("role") in running_roles
                         and
                         res.getAttribute("failed") != "true"
                         and
-                        (
-                            count is None
-                            or
-                            len(running_on["nodes_master"]) == count
-                            or
-                            len(running_on["nodes_started"]) == count
-                        )
+                        (count is None or len(set_running_on) == count)
                         and
                         (
                             not banned_nodes
                             or
-                            set_running_on.isdisjoint(set(banned_nodes))
+                            set_running_on.isdisjoint(set_banned_nodes)
                         )
                         and
                         (
                             not allowed_nodes
                             or
-                            set_running_on <= set(allowed_nodes)
+                            set_running_on <= set_allowed_nodes
+                        )
+                        and
+                        (
+                            not desired_nodes
+                            or
+                            set_running_on >= set_desired_nodes
                         )
                     ):
                         success = True
@@ -1074,7 +1109,8 @@ def is_resource_started(
             success = True
         if (expire_time < int(time.time())):
             timeout = True
-        time.sleep(1)
+        if not timeout:
+            time.sleep(1)
     message = ""
     if not success and timeout and not failed_op_list:
         message += "waiting timed out\n"
@@ -1114,6 +1150,35 @@ def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
                 elem = group.getElementsByTagName("resource")[-1]
             resource_id = elem.getAttribute("id")
     return resource_id
+
+# op_list can be obtained from get_operations_from_transitions
+# it looks like this: [(resource_id, operation, node), ...]
+def wait_for_primitive_ops_to_process(op_list, timeout=None):
+    if timeout:
+        timeout = int(timeout)
+        start_time = time.time()
+    else:
+        cib_dom = get_cib_dom()
+
+    for op in op_list:
+        print "Waiting for '%s' to %s on %s" % (op[0], op[1], op[2])
+        if timeout:
+            remaining_timeout = timeout - (time.time() - start_time)
+        else:
+            remaining_timeout = get_resource_op_timeout(cib_dom, op[0], op[1])
+        # crm_simulate can start resources as slave and promote them later
+        # so we need to consider slave resources as started
+        success, message = is_resource_started(
+            op[0], remaining_timeout, op[1] == "stop",
+            desired_nodes=[op[2]], slave_as_started=(op[1] == "start")
+        )
+        if success:
+            print message
+        else:
+            err(
+                "Unable to %s '%s' on %s\n%s"
+                % (op[1], op[0], op[2], message)
+            )
 
 def get_lrm_rsc_op(cib, resource, op_list=None, last_call_id=None):
     lrm_rsc_op_list = []
@@ -2036,4 +2101,49 @@ def tar_add_file_data(
     data_io = cStringIO.StringIO(data)
     tarball.addfile(info, data_io)
     data_io.close()
+
+def simulate_cib(cib_dom):
+    new_cib_file = tempfile.NamedTemporaryFile("w+b", -1, ".pcs")
+    transitions_file = tempfile.NamedTemporaryFile("w+b", -1, ".pcs")
+    output, retval = run(
+        ["crm_simulate", "--simulate", "--save-output", new_cib_file.name,
+            "--save-graph", transitions_file.name, "--xml-pipe"],
+        string_for_stdin=cib_dom.toxml()
+    )
+    if retval != 0:
+        err("Unable to run crm_simulate:\n%s" % output)
+    try:
+        new_cib_file.seek(0)
+        transitions_file.seek(0)
+        return (
+            output,
+            parseString(transitions_file.read()),
+            parseString(new_cib_file.read()),
+        )
+    except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
+        err("Unable to run crm_simulate:\n%s" % e)
+    except xml.etree.ElementTree.ParseError as e:
+        err("Unable to run crm_simulate:\n%s" % e)
+
+def get_operations_from_transitions(transitions_dom):
+    operation_list = []
+    watched_operations = ("start", "stop", "promote")
+    for rsc_op in transitions_dom.getElementsByTagName("rsc_op"):
+        primitives = rsc_op.getElementsByTagName("primitive")
+        if not primitives:
+            continue
+        if rsc_op.getAttribute("operation").lower() not in watched_operations:
+            continue
+        for prim in primitives:
+            operation_list.append((
+                int(rsc_op.getAttribute("id")),
+                (
+                prim.getAttribute("id"),
+                rsc_op.getAttribute("operation").lower(),
+                rsc_op.getAttribute("on_node"),
+                )
+            ))
+    operation_list.sort(key=lambda x: x[0])
+    op_list = [op[1] for op in operation_list]
+    return op_list
 

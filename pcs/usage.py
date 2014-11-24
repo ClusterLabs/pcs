@@ -311,11 +311,16 @@ Commands:
         if the resource has not yet started.  If 'n' is not specified, default
         resource timeout will be used.
 
-    clear <resource id> [node] [--master]
+    clear <resource id> [node] [--master] [--wait=n]
         Remove constraints created by move and/or ban on the specified
         resource (and node if specified).
         If --master is used the scope of the command is limited to the
-        master role and you must use the master id (instead of the resource id). 
+        master role and you must use the master id (instead of the resource id).
+        If --wait is specified, pcs will wait up to 'n' seconds for resources
+        to start / move depending on the effect of removing the constraints and
+        then return 0 if resources are started on target nodes, or 1 if
+        resources have not yet started / moved.  If clear has no effect, pcs
+        will return 0.
 
     standards
         List available resource agent standards supported by this installation.
@@ -373,13 +378,22 @@ Commands:
         the resources are started, or 1 if the resources have not started yet.
 
     group remove <group name> <resource id> [resource id] ... [resource id]
+          [--wait[=n]]
         Remove the specified resource(s) from the group, removing the group if
-        it no resources remain.
+        it no resources remain.  If --wait is specified, pcs will wait up to 'n'
+        seconds for specified resources to move depending of the effect
+        of ungrouping and the return 0 if resources are moved to target nodes,
+        or 1 if resources have not yet moved.  If 'n' is not specified, default
+        resource timeout will be used.
 
-    ungroup <group name> [resource id] ... [resource id]
+    ungroup <group name> [resource id] ... [resource id] [--wait[=n]]
         Remove the group (Note: this does not remove any resources from the
         cluster) or if resources are specified, remove the specified resources
-        from the group
+        from the group.  If --wait is specified, pcs will wait up to 'n' seconds
+        for specified resources (all group resources if no resource specified)
+        to move depending of the effect of ungrouping and the return 0 if
+        resources are moved to target nodes, or 1 if resources have not yet
+        moved.  If 'n' is not specified, default resource timeout will be used.
 
     clone <resource id | group id> [clone options]... [--wait[=n]]
         Setup up the specified resource or group as a clone.  If --wait is

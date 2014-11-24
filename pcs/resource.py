@@ -9,6 +9,7 @@ import utils
 import re
 import textwrap
 import xml.etree.ElementTree as ET
+import tempfile
 import constraint
 
 def resource_cmd(argv):
@@ -587,17 +588,32 @@ def resource_move(argv,clear=False,ban=False):
             utils.err("You must specify the number of seconds to wait")
         allowed_nodes = set()
         banned_nodes = set()
-        if not clear:
-            if dest_node and ban:
-                banned_nodes = set([dest_node])
-            elif dest_node:
-                allowed_nodes = set([dest_node])
-            else:
-                state = utils.getClusterState()
-                running_on = utils.resource_running_on(resource_id)
-                banned_nodes = set(
-                    running_on["nodes_master"] + running_on["nodes_started"]
-                )
+        if dest_node and ban:
+            banned_nodes = set([dest_node])
+        elif dest_node:
+            allowed_nodes = set([dest_node])
+        else:
+            state = utils.getClusterState()
+            running_on = utils.resource_running_on(resource_id)
+            banned_nodes = set(
+                running_on["nodes_master"] + running_on["nodes_started"]
+            )
+
+    if "--wait" in utils.pcs_options and clear:
+        if utils.usefile:
+            utils.err("Cannot use '-f' together with '--wait'")
+        wait = True
+        timeout = utils.pcs_options["--wait"]
+        if timeout and not timeout.isdigit():
+            utils.err("You must specify the number of seconds to wait")
+        try:
+            tmp_cib = tempfile.NamedTemporaryFile("w+b", -1, ".pcs")
+            tmp_cib.write(utils.get_cib_dom().toxml())
+            tmp_cib.seek(0)
+        except EnvironmentError as e:
+            utils.err("Unable to determine what to wait for:\n%s" % e)
+        utils.usefile = True
+        utils.filename = tmp_cib.name
 
     if "--master" in utils.pcs_options:
         other_options.append("--master")
@@ -624,7 +640,7 @@ def resource_move(argv,clear=False,ban=False):
             utils.err("You must specify a node when moving/banning a stopped resource")
         utils.err ("error moving/banning/clearing resource\n" + output)
 
-    if wait:
+    if wait and not clear:
         success, message = utils.is_resource_started(
             resource_id, int(timeout), allowed_nodes=allowed_nodes,
             banned_nodes=banned_nodes
@@ -633,6 +649,27 @@ def resource_move(argv,clear=False,ban=False):
             print message
         else:
             utils.err("Unable to start '%s'\n%s" % (resource_id, message))
+
+    if wait and clear:
+        utils.usefile = False
+        utils.filename = ""
+        try:
+            tmp_cib.seek(0)
+            tmp_cib_dom = parseString(tmp_cib.read())
+        except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
+            utils.err("Unable to determine what to wait for:\n%s" % e)
+        except xml.etree.ElementTree.ParseError as e:
+            utils.err("Unable to determine what to wait for:\n%s" % e)
+        output, transitions_dom, new_cib_dom = utils.simulate_cib(tmp_cib_dom)
+        op_list = utils.get_operations_from_transitions(transitions_dom)
+        my_op_list = [op for op in op_list if op[0] == resource_id]
+
+        utils.replace_cib_configuration(tmp_cib_dom)
+
+        if my_op_list:
+            utils.wait_for_primitive_ops_to_process(my_op_list, timeout)
+        else:
+            print utils.resource_running_on(resource_id)["message"]
 
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)
@@ -1322,7 +1359,8 @@ def resource_group(argv):
                     success = True
                 if expire_time < int(time.time()):
                     timeout = True
-                time.sleep(1)
+                if not timeout:
+                    time.sleep(1)
             cib_dom = utils.get_cib_dom()
             failed_op_list = []
             for res_id in all_res_id:
@@ -1356,7 +1394,29 @@ def resource_group(argv):
             usage.resource("group")
             sys.exit(1)
         group_name = argv.pop(0)
-        resource_group_rm(group_name, argv)
+        resource_ids = argv
+
+        cib_dom, removed_resources = resource_group_rm(
+            utils.get_cib_dom(), group_name, resource_ids
+        )
+
+        wait = False
+        if "--wait" in utils.pcs_options:
+            if utils.usefile:
+                utils.err("Cannot use '-f' together with '--wait'")
+            wait = True
+            timeout = utils.pcs_options["--wait"]
+            if timeout and not timeout.isdigit():
+                utils.err("You must specify the number of seconds to wait")
+            output, transitions_dom, new_cib_dom = utils.simulate_cib(cib_dom)
+            op_list = utils.get_operations_from_transitions(transitions_dom)
+            my_op_list = [op for op in op_list if op[0] in removed_resources]
+
+        utils.replace_cib_configuration(cib_dom)
+
+        if wait:
+            if my_op_list:
+                utils.wait_for_primitive_ops_to_process(my_op_list, timeout)
     else:
         usage.resource()
         sys.exit(1)
@@ -1765,9 +1825,8 @@ def resource_remove(resource_id, output = True):
     return True
 
 # This removes a resource from a group, but keeps it in the config
-def resource_group_rm(group_name, resource_ids):
-    dom = utils.get_cib_dom()
-    dom = dom.getElementsByTagName("configuration")[0]
+def resource_group_rm(cib_dom, group_name, resource_ids):
+    dom = cib_dom.getElementsByTagName("configuration")[0]
     group_match = None
 
     all_resources = False
@@ -1786,6 +1845,7 @@ def resource_group_rm(group_name, resource_ids):
         utils.err("Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete %s'." % group_name)
 
     resources_to_move = []
+    resources_to_move_id = []
 
     if all_resources:
         for resource in group_match.getElementsByTagName("primitive"):
@@ -1802,22 +1862,17 @@ def resource_group_rm(group_name, resource_ids):
                 utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
 
     for resource in resources_to_move:
+        resources_to_move_id.append(resource.getAttribute("id"))
         parent = resource.parentNode
         resource.parentNode.removeChild(resource)
         parent.parentNode.appendChild(resource)
 
-    constraints_element = dom.getElementsByTagName("constraints")
-    if len(constraints_element) > 0:
-        constraints_element = constraints_element[0]
-    constraints = constraint.remove_constraints_containing(group_name,True,constraints_element)
+    constraint.remove_constraints_containing(group_name, True, passed_dom=dom)
 
     if len(group_match.getElementsByTagName("primitive")) == 0:
         group_match.parentNode.removeChild(group_match)
 
-    utils.replace_cib_configuration(dom)
-
-    return True
-
+    return cib_dom, resources_to_move_id
 
 def resource_group_add(cib_dom, group_name, resource_ids):
     resources_element = cib_dom.getElementsByTagName("resources")[0]

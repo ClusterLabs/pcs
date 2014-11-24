@@ -80,8 +80,8 @@ Move resource off current node (and optionally onto destination node).  If \fB\-
 ban <resource id> [node] [\fB\-\-master\fR] [lifetime=<lifetime>] [\fB\-\-wait\fR[=n]]
 Prevent the resource id specified from running on the node (or on the current node it is running on if no node is specified).  If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).  If lifetime is not specified it defaults to infinite.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start on different node and then return 0 if the resource is started, or 1 if the resource has not yet started.  If 'n' is not specified, default resource timeout will be used.
 .TP
-clear <resource id> [node] [\fB\-\-master\fR]
-Remove constraints created by move and/or ban on the specified resource (and node if specified). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).
+clear <resource id> [node] [\fB\-\-master\fR] [\fB\-\-wait\fR=n]
+Remove constraints created by move and/or ban on the specified resource (and node if specified). If \fB\-\-master\fR is used the scope of the command is limited to the master role and you must use the master id (instead of the resource id).  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for resources to start / move depending on the effect of removing the constraints and then return 0 if resources are started on target nodes, or 1 if resources have not yet started / moved.  If clear has no effect, pcs will return 0.
 .TP
 standards
 List available resource agent standards supported by this installation. (OCF, LSB, etc.)
@@ -114,11 +114,13 @@ group add <group name> <resource id> [resource id] ... [resource id] [\fB\-\-bef
 Add the specified resource to the group, creating the group if it does not exist.  If the resource is present in another group it is moved to the new group.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resources relatively to some resource already existing in the group.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for resources in the group to start and then return 0 if the resources are started, or 1 if the resources have not started yet.
 
 .TP
-group remove <group name> <resource id> [resource id] ... [resource id]
+group remove <group name> <resource id> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
 Remove the specified resource(s) from the group, removing the group if it no resources remain.
+Remove the specified resource(s) from the group, removing the group if it no resources remain.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for specified resources to move depending of the effect of ungrouping and the return 0 if resources are moved to target nodes, or 1 if resources have not yet moved.  If 'n' is not specified, default resource timeout will be used.
 .TP
-ungroup <group name> [resource id] ... [resource id]
+ungroup <group name> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
 Remove the group (Note: this does not remove any resources from the cluster) or if resources are specified, remove the specified resources from the group
+Remove the group (Note: this does not remove any resources from the cluster) or if resources are specified, remove the specified resources from the group.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for specified resources (all group resources if no resource specified) to move depending of the effect of ungrouping and the return 0 if resources are moved to target nodes, or 1 if resources have not yet moved.  If 'n' is not specified, default resource timeout will be used.
 .TP
 clone <resource id | group id> [clone options]... [\fB\-\-wait\fR[=n]]
 Setup up the specified resource or group as a clone.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource clones to start and then return 0 if the clones are started, or 1 if the clones has not yet started.  If 'n' is not specified, default resource timeout will be used.
