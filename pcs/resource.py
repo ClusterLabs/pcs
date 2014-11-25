@@ -1317,75 +1317,18 @@ def resource_group(argv):
                 utils.err("Cannot use '-f' together with '--wait'")
             wait = True
             timeout = utils.pcs_options["--wait"]
-            if not timeout or not timeout.isdigit():
+            if timeout and not timeout.isdigit():
                 utils.err("You must specify the number of seconds to wait")
-            group_el = utils.dom_get_group(cib, group_name)
-            all_res_id = [
-                res.getAttribute("id")
-                    for res in group_el.getElementsByTagName("primitive")
-            ]
-            for res_id in all_res_id:
-                if not utils.is_resource_started(res_id, 0)[0]:
-                    utils.err(
-                        "Cannot use '--wait' on non-running resources"
-                            + " ('%s' is not running)"
-                        % res_id
-                    )
+            output, transitions_dom, new_cib_dom = utils.simulate_cib(cib)
+            op_list = utils.get_operations_from_transitions(transitions_dom)
+            my_op_list = [op for op in op_list if op[0] in resource_ids]
 
         utils.replace_cib_configuration(cib)
 
         if wait:
-            expire_time = int(time.time()) + int(timeout)
-            success = False
-            timeout = False
-            while not success and not timeout:
-                state = utils.getClusterState()
-                all_running_on = None
-                all_same = True
-                for res_id in all_res_id:
-                    running_on = utils.resource_running_on(res_id, state)
-                    res_running_on = (
-                        running_on["nodes_started"],
-                        running_on["nodes_master"],
-                        running_on["nodes_slave"],
-                    )
-                    if all_running_on is None:
-                        all_running_on = res_running_on
-                    else:
-                        if all_running_on != res_running_on:
-                            all_same = False
-                            break
-                if all_same:
-                    success = True
-                if expire_time < int(time.time()):
-                    timeout = True
-                if not timeout:
-                    time.sleep(1)
-            cib_dom = utils.get_cib_dom()
-            failed_op_list = []
-            for res_id in all_res_id:
-                failed_op_list += utils.get_lrm_rsc_op_failed(cib_dom, res_id)
-            message = ""
-            if not success:
-                message += (
-                    "Unable to start resources in group '%s'\n" % group_name
-                )
-                if timeout and not failed_op_list:
-                    message += "waiting timed out\n"
-            message += utils.resource_running_on(group_name)["message"]
-            if not success:
-                for res_id in resource_ids:
-                    message += "\n"+utils.resource_running_on(res_id)["message"]
-            if failed_op_list:
-                failed_op_list.sort(key=lambda x: x.getAttribute("on_node"))
-                message += "\nResource failures:\n  "
-                message += "\n  ".join(
-                    utils.get_lrm_rsc_op_failures(failed_op_list)
-                )
-            if success:
-                print message
-            else:
-                utils.err(message)
+            if my_op_list:
+                utils.wait_for_primitive_ops_to_process(my_op_list, timeout)
+            print utils.resource_running_on(group_name)["message"]
 
     elif (group_cmd == "list"):
         resource_group_list(argv)

@@ -1019,7 +1019,7 @@ def is_resource_started(
     set_allowed_nodes = set(allowed_nodes) if allowed_nodes else allowed_nodes
     set_banned_nodes = set(banned_nodes) if banned_nodes else banned_nodes
     set_desired_nodes = set(desired_nodes) if desired_nodes else desired_nodes
-    expire_time = int(time.time()) + wait
+    expire_time = time.time() + wait
     while not fail and not success and not timeout:
         state = cluster_state if cluster_state else getClusterState()
         cib_dom = get_cib_dom()
@@ -1107,10 +1107,10 @@ def is_resource_started(
                         fail = True
         if stopped and all_stopped:
             success = True
-        if (expire_time < int(time.time())):
+        if (expire_time < time.time()):
             timeout = True
         if not timeout:
-            time.sleep(1)
+            time.sleep(0.25)
     message = ""
     if not success and timeout and not failed_op_list:
         message += "waiting timed out\n"
