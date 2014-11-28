@@ -1,7 +1,6 @@
 require 'sinatra'
 require 'sinatra/reloader' if development?  #require 'rack/ssl'
 require 'sinatra/cookies'
-require 'open3'
 require 'rexml/document'
 require 'resource.rb'
 require 'remote.rb'
@@ -428,7 +427,7 @@ if not DISABLE_GUI
     }
 
     $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
-    code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes_rrp.join(';'), :options => options.to_json})
+    code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes_rrp.join(';'), :options => options.to_json}, true, nil, 180)
 
     if code == 200
       pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
@@ -510,8 +509,7 @@ else
 end
 
 def getLocationDeps(cur_node)
-  stdin, stdout, stderror = Open3.popen3("#{PCS} constraint location show nodes #{cur_node.id}")
-  out = stdout.readlines
+  out, stderror, retval = run_cmd(PCS, "constraint", "location", "show", "nodes", cur_node.id)
   deps_allow = []
   deps_disallow = []
   allowed = false

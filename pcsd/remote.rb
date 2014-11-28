@@ -1,9 +1,7 @@
 require 'json'
-require 'net/http'
 require 'uri'
 require 'pcs.rb'
 require 'resource.rb'
-require 'open3'
 require 'open4'
 
 # Commands for remote access
@@ -319,14 +317,14 @@ def check_gui_status(params)
   node_results = {}
   if params[:nodes] != nil and params[:nodes] != ""
     node_array = params[:nodes].split(",")
-    Open3.popen3(PCS, "cluster", "pcsd-status", *node_array) { |stdin, stdout, stderr, wait_thr|
-      exit_status = wait_thr.value
-      stdout.readlines.each {|l|
-	l = l.chomp
-	out = l.split(/: /)
-	node_results[out[0].strip] = out[1]
+    stdout, stderr, retval = run_cmd(PCS, "cluster", "pcsd-status", *node_array)
+    if retval == 0
+      stdout.each { |l|
+        l = l.chomp
+        out = l.split(/: /)
+        node_results[out[0].strip] = out[1]
       }
-    }
+    end
   end
   return JSON.generate(node_results)
 end
@@ -614,7 +612,7 @@ end
 def pcs_auth(nodes, username, password, force=False)
   command = [PCS, "cluster", "auth", "--local"] + nodes
   command += ["--force"] if force
-  Open3.popen3(*command) {|stdin, stdout, stderr, wait_thr|
+  Open4::popen4(*command) {|pid, stdin, stdout, stderr|
     begin
       while line = stdout.readpartial(4096)
 	if line =~ /Username: \Z/

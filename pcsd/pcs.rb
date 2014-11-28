@@ -3,6 +3,8 @@
 require 'open4'
 require 'shellwords'
 require 'cgi'
+require 'net/http'
+require 'net/https'
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -110,11 +112,8 @@ def add_order_constraint(
     score, sym, "--autocorrect"
   ]
   command << '--force' if force
-  $logger.info command
-  Open3.popen3(*command) { |stdin, stdout, stderror, waitth|
-    $logger.info stdout.readlines()
-    return waitth.value, stderror.readlines().join(' ')
-  }
+  stdout, stderr, retval = run_cmd(*command)
+  return retval, stderr.join(' ')
 end
 
 def add_order_set_constraint(resource_set_list, force=false)
@@ -137,11 +136,8 @@ def add_colocation_constraint(resourceA, resourceB, score, force=false)
     "--autocorrect"
   ]
   command << '--force' if force
-  $logger.info command
-  Open3.popen3(*command) { |stdin, stdout, stderror, waitth|
-    $logger.info stdout.readlines()
-    return waitth.value, stderror.readlines().join(' ')
-  }
+  stdout, stderr, retval = run_cmd(*command)
+  return retval, stderr.join(' ')
 end
 
 def remove_constraint(constraint_id)
@@ -280,7 +276,7 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
   return code,out
 end
 
-def send_request_with_token(node,request, post=false, data={}, remote=true, raw_data = nil)
+def send_request_with_token(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30)
   start = Time.now
   begin
     retval, token = get_node_token(node)
@@ -309,7 +305,7 @@ def send_request_with_token(node,request, post=false, data={}, remote=true, raw_
     myhttp.use_ssl = true
     myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
     res = myhttp.start do |http|
-      http.read_timeout = 30 
+      http.read_timeout = timeout
       http.request(req)
     end
     return res.code.to_i, res.body
@@ -415,6 +411,26 @@ def get_stonith_agents_avail()
 end
 
 def get_cluster_version()
+  if ISRHEL6
+    stdout, stderror, retval = run_cmd(COROSYNC_CMAPCTL, "cluster")
+    if retval == 0
+      stdout.each { |line|
+        match = /^cluster\.name=(.*)$/.match(line)
+        return match[1] if match
+      }
+    end
+    begin
+      cluster_conf = File.open('/etc/cluster/cluster.conf').read
+    rescue
+      return ''
+    end
+    conf_dom = REXML::Document.new(cluster_conf)
+    if conf_dom.root and conf_dom.root.name == 'cluster'
+      return conf_dom.root.attributes['name']
+    end
+    return ''
+  end
+
   stdout, stderror, retval = run_cmd(COROSYNC_CMAPCTL,"totem.cluster_name")
   if retval != 0 and not ISRHEL6
     # Cluster probably isn't running, try to get cluster name from

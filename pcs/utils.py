@@ -1811,6 +1811,19 @@ def stonithCheck():
     return True
 
 def getCorosyncNodesID(allow_failure=False):
+    if is_rhel6():
+        output, retval = run(["cman_tool", "nodes", "-F", "id,name"])
+        if retval != 0:
+            if allow_failure:
+                return {}
+            else:
+                err("unable to get list of corosync nodes")
+        nodeid_re = re.compile(r"^(.)\s+([^\s]+)\s*$", re.M)
+        return dict([
+            (node_id, node_name)
+            for node_id, node_name in nodeid_re.findall(output)
+        ])
+
     cs_nodes = {}
     (output, retval) = run(['corosync-cmapctl', '-b', 'nodelist.node'])
     if retval != 0:
