@@ -359,19 +359,22 @@ class Resource
     :options, :group, :clone, :stonith, :ms, :operations,
     :instance_attr, :meta_attr, :clone_id, :ms_id
   def initialize(e, group = nil, clone = false, ms = false)
-    @id = e.attributes["id"]
+    # Strip ':' from resource name (for clones & master/slave)
+    @id = e.attributes["id"].sub(/(.*):.*/, '\1')
     @agentname = e.attributes["resource_agent"]
     @active = e.attributes["active"] == "true" ? true : false
     @orphaned = e.attributes["orphaned"] == "true" ? true : false
     @failed = e.attributes["failed"] == "true" ? true : false
     @active = e.attributes["active"] == "true" ? true : false
     @nodes = []
-    @group = group
+    # Strip ':' from group name (for clones & master/slave created from a group)
+    @group = group ? group.sub(/(.*):.*/, '\1') : group
     @clone = clone
     @ms = ms
     @clone_id = nil
     @ms_id = nil
     @stonith = false
+    @options = {}
     @instance_attr = {}
     @meta_attr = {}
     @operations = {}
