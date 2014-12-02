@@ -1520,7 +1520,10 @@ def get_cib(scope=None):
         command.append("--scope=%s" % scope)
     output, retval = run(command)
     if retval != 0:
-        err("unable to get cib")
+        if retval == 6 and scope:
+            err("unable to get cib, scope '%s' not present in cib" % scope)
+        else:
+            err("unable to get cib")
     return output
 
 def get_cib_dom():

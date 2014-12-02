@@ -17,6 +17,7 @@ import tempfile
 import datetime
 import commands
 import json
+import xml.dom.minidom
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -666,6 +667,16 @@ def cluster_push(argv):
     if not filename:
         usage.cluster(["cib-push"])
         sys.exit(1)
+
+    try:
+        new_cib_dom = xml.dom.minidom.parse(filename)
+        if scope and not new_cib_dom.getElementsByTagName(scope):
+            utils.err(
+                "unable to push cib, scope '%s' not present in new cib"
+                % scope
+            )
+    except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
+        utils.err("unable to parse new cib: %s" % e)
 
     command = ["cibadmin", "--replace", "--xml-file", filename]
     if scope:
