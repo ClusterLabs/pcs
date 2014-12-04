@@ -1038,11 +1038,12 @@ def is_resource_started(
         for res in resources:
             # If resource is a clone it can have an id of '<resource name>:N'
             if res.getAttribute("id") == resource or res.getAttribute("id").startswith(resource+":"):
-                set_running_on = set(
+                list_running_on = (
                     running_on["nodes_started"] + running_on["nodes_master"]
                 )
                 if slave_as_started:
-                    set_running_on.update(running_on["nodes_slave"])
+                    list_running_on.extend(running_on["nodes_slave"])
+                set_running_on = set(list_running_on)
                 if stopped:
                     if (
                         res.getAttribute("role") != "Stopped"
@@ -1071,7 +1072,7 @@ def is_resource_started(
                         and
                         res.getAttribute("failed") != "true"
                         and
-                        (count is None or len(set_running_on) == count)
+                        (count is None or len(list_running_on) == count)
                         and
                         (
                             not banned_nodes
@@ -1179,6 +1180,45 @@ def wait_for_primitive_ops_to_process(op_list, timeout=None):
                 "Unable to %s '%s' on %s\n%s"
                 % (op[1], op[0], op[2], message)
             )
+
+def get_resource_status_for_wait(dom, resource_el, node_count):
+    res_id = resource_el.getAttribute("id")
+    clone_ms_parent = dom_get_resource_clone_ms_parent(dom, res_id)
+    meta_resource_el = clone_ms_parent if clone_ms_parent else resource_el
+    status_running = is_resource_started(res_id, 0)[0]
+    status_enabled = True
+    for meta in meta_resource_el.getElementsByTagName("meta_attributes"):
+        for nvpair in meta.getElementsByTagName("nvpair"):
+            if nvpair.getAttribute("name") == "target-role":
+                if nvpair.getAttribute("value").lower() == "stopped":
+                    status_enabled = False
+    status_instances = count_expected_resource_instances(
+        meta_resource_el, node_count
+    )
+    return {
+        "running": status_running,
+        "enabled": status_enabled,
+        "instances": status_instances,
+    }
+
+def get_resource_wait_decision(old_status, new_status):
+    wait_for_start = False
+    wait_for_stop = False
+    if old_status["running"] and not new_status["enabled"]:
+        wait_for_stop = True
+    elif (
+        not old_status["running"]
+        and
+        (not old_status["enabled"] and new_status["enabled"])
+    ):
+        wait_for_start = True
+    elif (
+        old_status["running"]
+        and
+        old_status["instances"] != new_status["instances"]
+    ):
+        wait_for_start = True
+    return wait_for_start, wait_for_stop
 
 def get_lrm_rsc_op(cib, resource, op_list=None, last_call_id=None):
     lrm_rsc_op_list = []

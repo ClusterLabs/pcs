@@ -575,8 +575,10 @@ def resource_move(argv,clear=False,ban=False):
         if utils.usefile:
             utils.err("Cannot use '-f' together with '--wait'")
         if not utils.is_resource_started(resource_id, 0)[0]:
-            utils.err("Cannot use '--wait' on non-running resources")
-        wait = True
+            print "Warning: Cannot use '--wait' on non-running resources"
+        else:
+            wait = True
+    if wait:
         timeout = utils.pcs_options["--wait"]
         if timeout is None:
             timeout = (
@@ -737,6 +739,12 @@ def resource_update(res_id,args):
             else:
                 ra_values.append(arg)
 
+    wait = False
+    if "--wait" in utils.pcs_options:
+        if utils.usefile:
+            utils.err("Cannot use '-f' together with '--wait'")
+        wait = True
+
     resource = None
     for r in dom.getElementsByTagName("primitive"):
         if r.getAttribute("id") == res_id:
@@ -753,10 +761,8 @@ def resource_update(res_id,args):
         if clone:
             for a in c.childNodes:
                 if a.localName == "primitive" or a.localName == "group":
-                    return utils.replace_cib_configuration(
-                        resource_clone_create(
-                            dom, [a.getAttribute("id")] + args, True
-                          )
+                    return resource_update_clone_master(
+                        dom, clone, "clone", a.getAttribute("id"), args, wait
                     )
 
         master = None
@@ -766,11 +772,17 @@ def resource_update(res_id,args):
                 break
 
         if master:
-            return utils.replace_cib_configuration(
-                resource_master_create(dom, [res_id] + args, True)
+            return resource_update_clone_master(
+                dom, master, "master", res_id, args, wait
             )
 
         utils.err ("Unable to find resource: %s" % res_id)
+
+    if wait:
+        node_count = len(utils.getNodesFromPacemaker())
+        status_old = utils.get_resource_status_for_wait(
+            dom, resource, node_count
+        )
 
     instance_attributes = resource.getElementsByTagName("instance_attributes")
     if len(instance_attributes) == 0:
@@ -919,7 +931,84 @@ def resource_update(res_id,args):
     if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
         instance_attributes.parentNode.removeChild(instance_attributes)
 
+    if wait:
+        status_new = utils.get_resource_status_for_wait(
+            dom, resource, node_count
+        )
+        wait_for_start, wait_for_stop = utils.get_resource_wait_decision(
+            status_old, status_new
+        )
+        if wait_for_start or wait_for_stop:
+            timeout = utils.pcs_options["--wait"]
+            if timeout is None:
+                timeout = utils.get_resource_op_timeout(
+                    dom, res_id, "start" if wait_for_start else "stop"
+                )
+            elif not timeout.isdigit():
+                utils.err("You must specify the number of seconds to wait")
+        else:
+            timeout = 0
+
     utils.replace_cib_configuration(dom)
+
+    if wait:
+        if wait_for_start or wait_for_stop:
+            success, message = utils.is_resource_started(
+                res_id, int(timeout), wait_for_stop,
+                count=status_new["instances"]
+            )
+            if success:
+                print message
+            else:
+                utils.err("Unable to start '%s'\n%s" % (res_id, message))
+        else:
+            print utils.resource_running_on(res_id)["message"]
+
+def resource_update_clone_master(dom, clone, clone_type, res_id, args, wait):
+    if wait:
+        node_count = len(utils.getNodesFromPacemaker())
+        status_old = utils.get_resource_status_for_wait(dom, clone, node_count)
+
+    if clone_type == "clone":
+        dom = resource_clone_create(dom, [res_id] + args, True)
+    elif clone_type == "master":
+        dom = resource_master_create(dom, [res_id] + args, True)
+
+    if wait:
+        status_new = utils.get_resource_status_for_wait(dom, clone, node_count)
+        wait_for_start, wait_for_stop = utils.get_resource_wait_decision(
+            status_old, status_new
+        )
+        if wait_for_start or wait_for_stop:
+            timeout = utils.pcs_options["--wait"]
+            if timeout is None:
+                timeout = utils.get_resource_op_timeout(
+                    dom, res_id, "start" if wait_for_start else "stop"
+                )
+            elif not timeout.isdigit():
+                utils.err("You must specify the number of seconds to wait")
+        else:
+            timeout = 0
+
+    dom = utils.replace_cib_configuration(dom)
+
+    if wait:
+        if wait_for_start or wait_for_stop:
+            success, message = utils.is_resource_started(
+                clone.getAttribute("id"), int(timeout), wait_for_stop,
+                count=status_new["instances"]
+            )
+            if success:
+                print message
+            else:
+                utils.err(
+                    "Unable to start '%s'\n%s"
+                    % (clone.getAttribute("id"), message)
+                )
+        else:
+            print utils.resource_running_on(clone.getAttribute("id"))["message"]
+
+    return dom
 
 # Removes all OCF_CHECK_LEVEL nvpairs
 def remove_ocf_check_levels(dom):
@@ -1092,15 +1181,7 @@ def resource_meta(res_id, argv):
             utils.err("Cannot use '-f' together with '--wait'")
         wait = True
         node_count = len(utils.getNodesFromPacemaker())
-        clone_ms_parent = utils.dom_get_resource_clone_ms_parent(dom, res_id)
-        old_status_running = utils.is_resource_started(res_id, 0)[0]
-        old_role = utils.dom_get_meta_attr_value(
-            meta_attributes.parentNode, "target-role"
-        )
-        old_status_enabled = not old_role or old_role.lower() != "stopped"
-        old_status_instances = utils.count_expected_resource_instances(
-            clone_ms_parent if clone_ms_parent else elem, node_count
-        )
+        status_old = utils.get_resource_status_for_wait(dom, elem, node_count)
 
     update_meta_attributes(
         meta_attributes,
@@ -1109,29 +1190,10 @@ def resource_meta(res_id, argv):
     )
 
     if wait:
-        new_role = utils.dom_get_meta_attr_value(
-            meta_attributes.parentNode, "target-role"
+        status_new = utils.get_resource_status_for_wait(dom, elem, node_count)
+        wait_for_start, wait_for_stop = utils.get_resource_wait_decision(
+            status_old, status_new
         )
-        new_status_enabled = not new_role or new_role.lower() != "stopped"
-        new_status_instances = utils.count_expected_resource_instances(
-            clone_ms_parent if clone_ms_parent else elem, node_count
-        )
-        wait_for_start = False
-        wait_for_stop = False
-        if old_status_running and not new_status_enabled:
-            wait_for_stop = True
-        elif (
-            not old_status_running
-            and
-            (not old_status_enabled and new_status_enabled)
-        ):
-            wait_for_start = True
-        elif (
-            old_status_running
-            and
-            old_status_instances != new_status_instances
-        ):
-            wait_for_start = True
         if wait_for_start or wait_for_stop:
             timeout = utils.pcs_options["--wait"]
             if timeout is None:
@@ -1145,14 +1207,17 @@ def resource_meta(res_id, argv):
 
     utils.replace_cib_configuration(dom)
 
-    if wait and (wait_for_start or wait_for_stop):
-        success, message = utils.is_resource_started(
-            res_id, int(timeout), wait_for_stop, count=new_status_instances
-        )
-        if success:
-            print message
+    if wait:
+        if wait_for_start or wait_for_stop:
+            success, message = utils.is_resource_started(
+                res_id, int(timeout), wait_for_stop, count=status_new["instances"]
+            )
+            if success:
+                print message
+            else:
+                utils.err("Unable to start '%s'\n%s" % (res_id, message))
         else:
-            utils.err("Unable to start '%s'\n%s" % (res_id, message))
+            print utils.resource_running_on(res_id)["message"]
 
 def update_meta_attributes(meta_attributes, meta_attrs, id_prefix):
     dom = meta_attributes.ownerDocument
@@ -1377,8 +1442,10 @@ def resource_clone(argv):
         if utils.usefile:
             utils.err("Cannot use '-f' together with '--wait'")
         if not utils.is_resource_started(res, 0)[0]:
-            utils.err("Cannot use '--wait' on non-running resources")
-        wait = True
+            print "Warning: Cannot use '--wait' on non-running resources"
+        else:
+            wait = True
+    if wait:
         wait_op = "start"
         for arg in argv:
             if arg.lower() == "target-role=stopped":
@@ -1486,8 +1553,10 @@ def resource_clone_master_remove(argv):
         if utils.usefile:
             utils.err("Cannot use '-f' together with '--wait'")
         if not utils.is_resource_started(resource_id, 0)[0]:
-            utils.err("Cannot use '--wait' on non-running resources")
-        wait = True
+            print "Warning: Cannot use '--wait' on non-running resources"
+        else:
+            wait = True
+    if wait:
         timeout = utils.pcs_options["--wait"]
         if timeout is None:
             timeout = utils.get_resource_op_timeout(dom, resource_id, "stop")
@@ -1534,8 +1603,10 @@ def resource_master(argv):
         if utils.usefile:
             utils.err("Cannot use '-f' together with '--wait'")
         if not utils.is_resource_started(res_id, 0)[0]:
-            utils.err("Cannot use '--wait' on non-running resources")
-        wait = True
+            print "Warning: Cannot use '--wait' on non-running resources"
+        else:
+            wait = True
+    if wait:
         wait_op = "promote"
         for arg in argv:
             if arg.lower() == "target-role=stopped":
