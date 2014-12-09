@@ -325,17 +325,19 @@ def corosync_setup(argv,returnConfig=False):
 
 # Verify that all nodes are resolvable otherwise problems may occur
     udpu_rrp = False
+    node_addr_list = []
     for node in nodes:
-        try:
-            if "," in node:
-                socket.getaddrinfo(node.split(",")[0],None)
-                socket.getaddrinfo(node.split(",")[1],None)
-                udpu_rrp = True
-            else:
-                socket.getaddrinfo(node,None)
-        except socket.error:
-            print "Warning: Unable to resolve hostname: %s" % node
-            failure = True
+        addr_list = utils.parse_multiring_node(node)
+        if addr_list[1]:
+            udpu_rrp = True
+        node_addr_list.extend(addr_list)
+    for node_addr in node_addr_list:
+        if node_addr:
+            try:
+                socket.getaddrinfo(node_addr, None)
+            except socket.error:
+                print "Warning: Unable to resolve hostname: %s" % node_addr
+                failure = True
 
     if udpu_rrp:
         for node in nodes:
@@ -344,6 +346,35 @@ def corosync_setup(argv,returnConfig=False):
 
     if failure and "--force" not in utils.pcs_options:
         utils.err("Unable to resolve all hostnames (use --force to override).")
+
+    transport = "udp" if utils.is_rhel6() else "udpu"
+    if "--transport" in utils.pcs_options:
+        transport = utils.pcs_options["--transport"]
+        if (
+            transport not in ("udp", "udpu")
+            and
+            "--force" not in utils.pcs_options
+        ):
+            utils.err(
+                "unknown transport '%s', use --force to override" % transport
+            )
+
+    if (
+        transport == "udpu"
+        and
+        ("--addr0" in utils.pcs_options or "--addr1" in utils.pcs_options)
+    ):
+        utils.err("--addr0 and --addr1 can only be used with --transport=udp")
+
+    rrpmode = None
+    if "--rrpmode" in utils.pcs_options or udpu_rrp or "--addr0" in utils.pcs_options:
+        rrpmode = "passive"
+        if "--rrpmode" in utils.pcs_options:
+            rrpmode = utils.pcs_options["--rrpmode"]
+        if rrpmode == "active" and "--force" not in utils.pcs_options:
+            utils.err("using a RRP mode of 'active' is not supported or tested, use --force to override")
+        elif rrpmode != "passive" and "--force" not in utils.pcs_options:
+            utils.err("%s is an unknown RRP mode, use --force to override" % rrpmode)
 
     if fedora_config == True:
         if os.path.exists(settings.corosync_conf_file) and not "--force" in utils.pcs_options:
@@ -387,24 +418,9 @@ def corosync_setup(argv,returnConfig=False):
         if "--last_man_standing_window" in utils.pcs_options:
             quorum_options += "last_man_standing_window: " + utils.pcs_options["--last_man_standing_window"] + "\n"
 
-
-        transport = "udpu"
-        if "--transport" in utils.pcs_options:
-            transport = utils.pcs_options["--transport"]
-
         ir = ""
 
-        if transport == "udpu" and ("--addr0" in utils.pcs_options or "--addr1" in utils.pcs_options):
-            utils.err("--addr0 and --addr1 can only be used with --transport=udp")
-
-        if "--rrpmode" in utils.pcs_options or udpu_rrp or "--addr0" in utils.pcs_options:
-            rrpmode = "passive"
-            if "--rrpmode" in utils.pcs_options:
-                rrpmode = utils.pcs_options["--rrpmode"]
-            if rrpmode == "active" and "--force" not in utils.pcs_options:
-                utils.err("using a RRP mode of 'active' is not supported or tested, use --force to override")
-            elif rrpmode != "passive" and "--force" not in utils.pcs_options:
-                utils.err("%s is an unknown RRP mode, use --force to override" % rrpmode)
+        if rrpmode:
             ir += "rrp_mode: " + rrpmode + "\n"
 
         if transport == "udp":
@@ -447,13 +463,27 @@ def corosync_setup(argv,returnConfig=False):
 
         utils.setCorosyncConf(corosync_config)
     else:
-        cluster_conf_location = "/etc/cluster/cluster.conf"
+        broadcast = (
+            ("--broadcast0" in utils.pcs_options)
+            or
+            ("--broadcast1" in utils.pcs_options)
+        )
+        if broadcast:
+            transport = "udpb"
+            if "--broadcast0" not in utils.pcs_options:
+                print("Warning: Enabling broadcast for ring 0 "
+                    + "as cman does not support broadcast in only one ring")
+            if "--broadcast1" not in utils.pcs_options:
+                print("Warning: Enabling broadcast for ring 1 "
+                    + "as cman does not support broadcast in only one ring")
+
+        cluster_conf_location = settings.cluster_conf_file
         if returnConfig:
             cc_temp = tempfile.NamedTemporaryFile('w+b', -1, ".pcs")
             cluster_conf_location = cc_temp.name
 
-        if os.path.exists("/etc/cluster/cluster.conf") and not "--force" in utils.pcs_options and not returnConfig:
-            print "Error: /etc/cluster/cluster.conf already exists, use --force to overwrite"
+        if os.path.exists(cluster_conf_location) and not "--force" in utils.pcs_options and not returnConfig:
+            print "Error: %s already exists, use --force to overwrite" % cluster_conf_location
             sys.exit(1)
         output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--createcluster", cluster_name])
         if retval != 0:
@@ -464,25 +494,125 @@ def corosync_setup(argv,returnConfig=False):
             print output
             utils.err("error creating fence dev: %s" % cluster_name)
 
+        cman_opts = []
+        cman_opts.append("transport=" + transport)
+        cman_opts.append("broadcast=" + ("yes" if broadcast else "no"))
         if len(nodes) == 2:
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", cluster_conf_location, "--setcman", "two_node=1", "expected_votes=1"])
-            if retval != 0:
-                print output
-                utils.err("error adding node: %s" % node)
+            cman_opts.append("two_node=1")
+            cman_opts.append("expected_votes=1")
+        output, retval = utils.run(
+            ["/usr/sbin/ccs", "-f", cluster_conf_location, "--setcman"]
+            + cman_opts
+        )
+        if retval != 0:
+            print output
+            utils.err("error setting cman options")
 
         for node in nodes:
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", cluster_conf_location, "--addnode", node])
+            if udpu_rrp:
+                node0, node1 = node.split(",")
+            elif "--addr1" in utils.pcs_options:
+                node0 = node
+                node1 = utils.pcs_options["--addr1"]
+            else:
+                node0 = node
+                node1 = None
+            output, retval = utils.run(["/usr/sbin/ccs", "-f", cluster_conf_location, "--addnode", node0])
             if retval != 0:
                 print output
-                utils.err("error adding node: %s" % node)
-            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addmethod", "pcmk-method", node])
+                utils.err("error adding node: %s" % node0)
+            if node1:
+                output, retval = utils.run([
+                    "/usr/sbin/ccs", "-f", cluster_conf_location,
+                    "--addalt", node0, node1
+                ])
+                if retval != 0:
+                    print output
+                    utils.err(
+                        "error adding alternative address for node: %s" % node0
+                    )
+            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addmethod", "pcmk-method", node0])
             if retval != 0:
                 print output
-                utils.err("error adding fence method: %s" % node)
-            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addfenceinst", "pcmk-redirect", node, "pcmk-method", "port="+node])
+                utils.err("error adding fence method: %s" % node0)
+            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addfenceinst", "pcmk-redirect", node0, "pcmk-method", "port="+node0])
             if retval != 0:
                 print output
-                utils.err("error adding fence instance: %s" % node)
+                utils.err("error adding fence instance: %s" % node0)
+
+        if not broadcast:
+            for interface in ("0", "1"):
+                if "--addr" + interface not in utils.pcs_options:
+                    continue
+                mcastaddr = "239.255.1.1" if interface == "0" else "239.255.2.1"
+                mcast_options = []
+                if "--mcast" + interface in utils.pcs_options:
+                    mcastaddr = utils.pcs_options["--mcast" + interface]
+                mcast_options.append(mcastaddr)
+                if "--mcastport" + interface in utils.pcs_options:
+                    mcast_options.append(
+                        "port=" + utils.pcs_options["--mcastport" + interface]
+                    )
+                if "--ttl" + interface in utils.pcs_options:
+                    mcast_options.append(
+                        "ttl=" + utils.pcs_options["--ttl" + interface]
+                    )
+                output, retval = utils.run(
+                    ["/usr/sbin/ccs", "-f", cluster_conf_location,
+                    "--setmulticast" if interface == "0" else "--setaltmulticast"]
+                    + mcast_options
+                )
+                if retval != 0:
+                    print output
+                    utils.err("error adding ring%s settings" % interface)
+
+        totem_options = []
+        if "--token" in utils.pcs_options:
+            totem_options.append("token=" + utils.pcs_options["--token"])
+        if "--join" in utils.pcs_options:
+            totem_options.append("join=" + utils.pcs_options["--join"])
+        if "--consensus" in utils.pcs_options:
+            totem_options.append(
+                "consensus=" + utils.pcs_options["--consensus"]
+            )
+        if "--miss_count_const" in utils.pcs_options:
+            totem_options.append(
+                "miss_count_const=" + utils.pcs_options["--miss_count_const"]
+            )
+        if "--fail_recv_const" in utils.pcs_options:
+            totem_options.append(
+                "fail_recv_const=" + utils.pcs_options["--fail_recv_const"]
+            )
+        if rrpmode:
+            totem_options.append("rrp_mode=" + rrpmode)
+        if totem_options:
+            output, retval = utils.run(
+                ["/usr/sbin/ccs", "-f", cluster_conf_location, "--settotem"]
+                + totem_options
+            )
+            if retval != 0:
+                print output
+                utils.err("error setting totem options")
+
+        if "--wait_for_all" in utils.pcs_options:
+            print "Warning: --wait_for_all"\
+                " ignored as it is not supported in cman based clusters"
+        if "--auto_tie_breaker" in utils.pcs_options:
+            print "Warning: --auto_tie_breaker"\
+                " ignored as it is not supported in cman based clusters"
+        if "--last_man_standing" in utils.pcs_options:
+            print "Warning: --last_man_standing"\
+                " ignored as it is not supported in cman based clusters"
+        if "--last_man_standing_window" in utils.pcs_options:
+            print "Warning: --last_man_standing_window"\
+                " ignored as it is not supported in cman based clusters"
+        if "--token_coefficient" in utils.pcs_options:
+            print "Warning: --token_coefficient"\
+                " ignored as it is not supported in cman based clusters"
+        if "--ipv6" in utils.pcs_options:
+            print "Warning: --ipv6"\
+                " ignored as it is not supported in cman based clusters"
+
         if returnConfig:
             cc_temp.seek(0)
             cluster_conf_data = cc_temp.read()
@@ -785,13 +915,10 @@ def cluster_node(argv):
         sys.exit(1)
 
     node = argv[1]
-    if "," in node:
-        node0 = node.split(",")[0]
-        node1 = node.split(",")[1]
-    else:
-        node0 = node
-        node1 = None
+    node0, node1 = utils.parse_multiring_node(node)
 
+    if not node0:
+        utils.err("missing ring 0 address of the node")
     status,output = utils.checkAuthorization(node0)
     if status == 2:
         utils.err("pcsd is not running on %s" % node0)
@@ -802,16 +929,13 @@ def cluster_node(argv):
         )
 
     if add_node == True:
-        if node1 is None and utils.need_ring1_address(utils.getCorosyncConf()):
+        need_ring1_address = utils.need_ring1_address(utils.getCorosyncConf())
+        if not node1 and need_ring1_address:
             utils.err(
                 "cluster is configured for RRP, "
                 "you have to specify ring 1 address for the node"
             )
-        elif (
-            node1 is not None
-            and
-            not utils.need_ring1_address(utils.getCorosyncConf())
-        ):
+        elif node1 and not need_ring1_address:
             utils.err(
                 "cluster is not configured for RRP, "
                 "you must not specify ring 1 address for the node"
@@ -888,12 +1012,12 @@ def cluster_localnode(argv):
         exit(1)
 
 def cluster_uidgid_rhel6(argv, silent_list = False):
-    if not os.path.isfile("/etc/cluster/cluster.conf"):
-        utils.err("the /etc/cluster/cluster.conf file doesn't exist on this machine, create a cluster before running this command")
+    if not os.path.isfile(settings.cluster_conf_file):
+        utils.err("the file doesn't exist on this machine, create a cluster before running this command" % settings.cluster_conf_file)
 
     if len(argv) == 0:
         found = False
-        output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--lsmisc"])
+        output, retval = utils.run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--lsmisc"])
         if retval != 0:
             utils.err("error running ccs\n" + output)
         lines = output.split('\n')
@@ -925,11 +1049,11 @@ def cluster_uidgid_rhel6(argv, silent_list = False):
             utils.err("you must set either uid or gid")
 
         if command == "add":
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--setuidgid", "uid="+uid, "gid="+gid])
+            output, retval = utils.run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--setuidgid", "uid="+uid, "gid="+gid])
             if retval != 0:
                 utils.err("unable to add uidgid\n" + output.rstrip())
         elif command == "rm":
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", "/etc/cluster/cluster.conf", "--rmuidgid", "uid="+uid, "gid="+gid])
+            output, retval = utils.run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--rmuidgid", "uid="+uid, "gid="+gid])
             if retval != 0:
                 utils.err("unable to remove uidgid\n" + output.rstrip())
 

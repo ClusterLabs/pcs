@@ -430,12 +430,7 @@ def getCorosyncActiveNodes():
 # Add node specified to corosync.conf and reload corosync.conf (if running)
 def addNodeToCorosync(node):
 # Before adding, make sure node isn't already in corosync.conf
-    if "," in node:
-        node0 = node.split(",")[0]
-        node1 = node.split(",")[1]
-    else:
-        node0 = node
-        node1 = None
+    node0, node1 = parse_multiring_node(node)
     used_node_ids = []
     num_nodes_in_conf = 0
     for c_node in getNodesFromCorosyncConf():
@@ -482,24 +477,47 @@ def addNodeToCorosync(node):
     return True
 
 def addNodeToClusterConf(node):
+    node0, node1 = parse_multiring_node(node)
     nodes = getNodesFromCorosyncConf()
-    output, retval = run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--addnode", node])
+    for existing_node in nodes:
+        if (existing_node == node0) or (existing_node == node1):
+            err("node already exists in cluster.conf")
+
+    output, retval = run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--addnode", node0])
     if retval != 0:
         print output
-        err("error adding node: %s" % node)
+        err("error adding node: %s" % node0)
 
-    output, retval = run(["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--addmethod", "pcmk-method", node])
+    if node1:
+        output, retval = run([
+            "/usr/sbin/ccs", "-f", settings.cluster_conf_file,
+            "--addalt", node0, node1
+        ])
+        if retval != 0:
+            print output
+            err(
+                "error adding alternative address for node: %s" % node0
+            )
+
+    output, retval = run(["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--addmethod", "pcmk-method", node0])
     if retval != 0:
         print output
         err("error adding fence method: %s" % node)
 
-    output, retval = run(["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--addfenceinst", "pcmk-redirect", node, "pcmk-method", "port="+node])
+    output, retval = run(["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--addfenceinst", "pcmk-redirect", node0, "pcmk-method", "port="+node0])
     if retval != 0:
         print output
         err("error adding fence instance: %s" % node)
 
     if len(nodes) == 2:
-        output, retval = run(["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--setcman"])
+        cman_options_map = get_cluster_conf_cman_options()
+        cman_options_map.pop("expected_votes", None)
+        cman_options_map.pop("two_node", None)
+        cman_options = ["%s=%s" % (n, v) for n, v in cman_options_map.items()]
+        output, retval = run(
+            ["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--setcman"]
+            + cman_options
+        )
         if retval != 0:
             print output
             err("unable to set cman options")
@@ -512,12 +530,7 @@ def removeNodeFromCorosync(node):
     node_found = False
     num_nodes_in_conf = 0
 
-    if "," in node:
-        node0 = node.split(",")[0]
-        node1 = node.split(",")[1]
-    else:
-        node0 = node
-        node1 = None
+    node0, node1 = parse_multiring_node(node)
 
     for c_node in getNodesFromCorosyncConf():
         if c_node == node0:
@@ -562,20 +575,29 @@ def removeNodeFromCorosync(node):
     return removed_node
 
 def removeNodeFromClusterConf(node):
+    node0, node1 = parse_multiring_node(node)
     nodes = getNodesFromCorosyncConf()
-    if node not in nodes:
+    if node0 not in nodes:
         return False
 
-    output, retval = run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--rmnode", node])
+    output, retval = run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--rmnode", node0])
     if retval != 0:
         print output
         err("error removing node: %s" % node)
 
     if len(nodes) == 3:
-        output, retval = run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--setcman", "two_node=1", "expected_votes=1"])
+        cman_options_map = get_cluster_conf_cman_options()
+        cman_options_map.pop("expected_votes", None)
+        cman_options_map.pop("two_node", None)
+        cman_options = ["%s=%s" % (n, v) for n, v in cman_options_map.items()]
+        output, retval = run(
+            ["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--setcman"]
+            + ["two_node=1", "expected_votes=1"]
+            + cman_options
+        )
         if retval != 0:
             print output
-            err("unable to set cman_options: expected_votes and two_node" % node)
+            err("unable to set cman_options: expected_votes and two_node")
     return True
 
 # Adds an option to the quorum section to the corosync.conf passed in and
@@ -651,7 +673,33 @@ def getNextNodeID(corosync_conf):
 
     return highest + 1
 
+def parse_multiring_node(node):
+    node_addr_count = node.count(",") + 1
+    if node_addr_count == 2:
+        return node.split(",")
+    elif node_addr_count == 1:
+        return node, None
+    else:
+        err(
+            "You cannot specify more than two addresses for a node: %s"
+            % node
+        )
+
 def need_ring1_address(corosync_conf):
+    if is_rhel6():
+        # ring1 address is required regardless of transport
+        # it has to be added to cluster.conf in order to set up ring1
+        # in corosync by cman
+        try:
+            dom = parseString(corosync_conf)
+        except xml.parsers.expat.ExpatError as e:
+            err("Unable parse cluster.conf: %s" % e)
+        rrp = False
+        for el in dom.getElementsByTagName("totem"):
+            if el.getAttribute("rrp_mode") in ["active", "passive"]:
+                rrp = True
+        return rrp
+
     line_list = corosync_conf.split("\n")
     in_totem = False
     udpu_transport = False
@@ -670,6 +718,20 @@ def need_ring1_address(corosync_conf):
         if line.startswith("totem {"):
             in_totem = True
     return udpu_transport and rrp
+
+def get_cluster_conf_cman_options():
+    try:
+        dom = parse(settings.cluster_conf_file)
+    except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
+        err("Unable to read cluster.conf: %s" % e)
+    cman = dom.getElementsByTagName("cman")
+    if not cman:
+        return dict()
+    cman = cman[0]
+    options = dict()
+    for name, value in cman.attributes.items():
+        options[name] = value
+    return options
 
 # Restore default behavior before starting subprocesses
 def subprocess_setup():

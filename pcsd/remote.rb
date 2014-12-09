@@ -417,6 +417,10 @@ def setup_cluster(params)
       options << "--transport=udp"
       transport_udp = true
     end
+    if o == "transport" and v == "udpu"
+      options << "--transport=udpu"
+      transport_udp = false
+    end
 
     if ["addr0", "addr1", "mcast0", "mcast1", "mcastport0", "mcastport1", "ttl0", "ttl1"].include?(o)
       options_udp << "--" + o + "=" + v
@@ -1155,12 +1159,16 @@ def need_ring1_address?
     udpu_transport = false
     rrp = false
     out.each { |line|
-      if /^totem\.transport.*= udpu$/.match(line)
+      # support both corosync-objctl and corosync-cmapctl format
+      if /^\s*totem\.transport(\s+.*)?=\s*udpu$/.match(line)
         udpu_transport = true
-      elsif /^totem\.rrp_mode.*= passive$/.match(line) or /^totem\.rrp_mode.*= active$/.match(line)
+      elsif /^\s*totem\.rrp_mode(\s+.*)?=\s*(passive|active)$/.match(line)
         rrp = true
       end
     }
-    return (rrp and udpu_transport)
+    # on rhel6 ring1 address is required regardless of transport
+    # it has to be added to cluster.conf in order to set up ring1
+    # in corosync by cman
+    return ((ISRHEL6 and rrp) or (rrp and udpu_transport))
   end
 end

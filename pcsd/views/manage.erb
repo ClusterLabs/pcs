@@ -124,7 +124,9 @@ A common startup race condition based on the above example is that as \
 soon as 5 nodes become quorate, with the other 3 still offline, the \
 remaining 3 nodes will be fenced.
 
-It is very useful when combined with Last Man Standing." %>
+It is very useful when combined with Last Man Standing.
+
+This option has no effect on cman based cluster." %>
 	<% auto_tie_desc = "\
 Enables Auto Tie Breaker (ATB) feature (default: off).
 
@@ -135,7 +137,9 @@ When ATB is enabled, the cluster can suffer up to 50% of the nodes \
 failing at the same time, in a deterministic fashion. The cluster \
 partition, or the set of nodes that are still in contact with the \
 node that has the lowest nodeid will remain quorate. The other nodes \
-will be inquorate." %>
+will be inquorate.
+
+This option has no effect on cman based cluster." %>
 	<% last_man_desc = "\
 Enables Last Man Standing (LMS) feature (default: off).
 
@@ -154,21 +158,29 @@ to enable WFA when using LMS in High Availability clusters.
 
 Using the above 8 node cluster example, with LMS enabled the cluster \
 can retain quorum and continue operating by losing, in a cascade \
-fashion, up to 6 nodes with only 2 remaining active." %>
+fashion, up to 6 nodes with only 2 remaining active.
+
+This option has no effect on cman based cluster." %>
 	<% last_man_window_desc = "\
 Tunes Last Man Standing Window (default: 10000 ms)
 
 The window of time between when a node (or group of nodes die) and quorum \
-is recalculated if the 'Last Man Standing' option is enabled." %>
+is recalculated if the 'Last Man Standing' option is enabled.
+
+This option has no effect on cman based cluster." %>
 	<% use_ipv6_desc = "\
-Enables IPv6 for cluster communication (default: off)" %>
+Enables IPv6 for cluster communication (default: off)
+
+This option has no effect on cman based cluster." %>
         <% token_timeout = "\
 Sets time in milliseconds until a token loss is declared after not receiving \
 a token (default: 1000 ms)" %>
         <% token_coefficient = "\
 Sets time in milliseconds used for clusters with at least 3 nodes \
 as a coefficient for real token timeout calculation \
-(token + (number_of_nodes - 2) * token_coefficient) (default: 650 ms)" %>
+(token + (number_of_nodes - 2) * token_coefficient) (default: 650 ms)
+
+This option has no effect on cman based cluster." %>
         <% join_timeout = "\
 Sets time in milliseconds to wait for join messages (default: 50 ms)" %>
         <% consensus_timeout = "\

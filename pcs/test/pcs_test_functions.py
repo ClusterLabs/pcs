@@ -26,10 +26,12 @@ def pcs(testfile, args = ""):
             if arg.find("'") != -1 and not (arg[0] == "'" and arg[-1] == "'"):
                 in_quote = True
 
-    if "--corosync_conf" in args:
-        return utils.run([pcs_location, "-f", testfile] + arg_split_temp)
-    else:
-        return utils.run([pcs_location, "-f", testfile, "--corosync_conf=corosync.conf"] + arg_split_temp)
+    conf_opts = []
+    if "--corosync_conf" not in args:
+        conf_opts.append("--corosync_conf=corosync.conf")
+    if "--cluster_conf" not in args:
+        conf_opts.append("--cluster_conf=cluster.conf")
+    return utils.run([pcs_location, "-f", testfile] + conf_opts + arg_split_temp)
 
 # Compare output and print usable diff (diff b a)
 # a is the actual output, b is what should be output
