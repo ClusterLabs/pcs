@@ -377,7 +377,7 @@ def config_checkpoint_list():
         try:
             if os.path.isfile(file_path):
                 cib_list.append(
-                    (int(os.path.getmtime(file_path)), match.group(1))
+                    (float(os.path.getmtime(file_path)), match.group(1))
                 )
         except OSError:
             pass
@@ -388,7 +388,7 @@ def config_checkpoint_list():
     for cib_info in cib_list:
         print(
             "checkpoint %s: date %s"
-            % (cib_info[1], datetime.datetime.fromtimestamp(cib_info[0]))
+            % (cib_info[1], datetime.datetime.fromtimestamp(round(cib_info[0])))
         )
 
 def config_checkpoint_view(argv):
