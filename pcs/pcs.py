@@ -54,7 +54,23 @@ def main(argv):
                 pcs_short_options_with_args.append(prev_char)
             prev_char = c
 
-        pcs_long_options = ["local","start","all","clone","master","force","corosync_conf=", "cluster_conf=", "defaults","debug","version","help","fullhelp","off","from=","to=", "name=", "wait", "group=","groups","full","enable","node=","nodesc","transport=", "addr0=","addr1=","bcast0=","bcast1=","mcast0=","mcast1=","mcastport0=","mcastport1=","ttl0=","ttl1=","rrpmode=", "broadcast0", "broadcast1","wait_for_all=","auto_tie_breaker=","last_man_standing=", "last_man_standing_window=","no-default-ops","ipv6","token=", "token_coefficient=", "consensus=", "miss_count_const=", "fail_recv_const=","join=", "disabled", "after=", "before=", "autocorrect", "interactive"]
+        pcs_long_options = [
+            "debug", "version", "help", "fullhelp",
+            "force", "autocorrect", "interactive",
+            "all", "full", "groups", "local", "wait",
+            "start", "enable", "disabled", "off",
+            "no-default-ops", "defaults", "nodesc",
+            "clone", "master", "name=", "group=", "node=",
+            "from=", "to=", "after=", "before=",
+            "transport=", "rrpmode=", "ipv6",
+            "addr0=", "bcast0=", "mcast0=", "mcastport0=", "ttl0=", "broadcast0",
+            "addr1=", "bcast1=", "mcast1=", "mcastport1=", "ttl1=", "broadcast1",
+            "wait_for_all=", "auto_tie_breaker=", "last_man_standing=",
+            "last_man_standing_window=",
+            "token=", "token_coefficient=", "consensus=", "join=",
+            "miss_count_const=", "fail_recv_const=",
+            "corosync_conf=", "cluster_conf=",
+        ]
         # pull out negative number arguments and add them back after getopt
         prev_arg = ""
         for arg in argv:
