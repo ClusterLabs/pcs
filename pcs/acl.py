@@ -58,6 +58,8 @@ def acl_role(argv):
         id_valid, id_error = utils.validate_xml_id(role_name, 'ACL role')
         if not id_valid:
             utils.err(id_error)
+        if utils.dom_get_element_with_id(dom, "acl_role", role_name):
+            utils.err("role %s already exists" % role_name)
         if utils.does_id_exist(dom,role_name):
             utils.err(role_name + " already exists")
 
@@ -178,8 +180,13 @@ def acl_role(argv):
 
         if not found:
             utils.err("cannot find role: %s, assigned to user/group: %s" % (role_id, ug_id))
+
+        if "--autodelete" in utils.pcs_options:
+            if not ug.getElementsByTagName("role"):
+                ug.parentNode.removeChild(ug)
+
         utils.replace_cib_configuration(dom)
-        
+
     else:
         utils.err("Unknown pcs acl role command: '" + command + "' (try create or delete)")
 
@@ -198,8 +205,14 @@ def acl_target(argv,group=False):
     command = argv.pop(0)
     tug_id = argv.pop(0)
     if command == "create":
+        # pcsd parses the error message in order to determine whether the id is
+        # assigned to user/group or some other cib element
+        if group and utils.dom_get_element_with_id(dom, "acl_group", tug_id):
+            utils.err("group %s already exists" % tug_id)
+        if not group and utils.dom_get_element_with_id(dom, "acl_target", tug_id):
+            utils.err("user %s already exists" % tug_id)
         if utils.does_id_exist(dom,tug_id):
-            utils.err(tug_id + " already exists in cib")
+            utils.err(tug_id + " already exists")
 
         if group:
             element = dom.createElement("acl_group")

@@ -56,7 +56,7 @@ def main(argv):
 
         pcs_long_options = [
             "debug", "version", "help", "fullhelp",
-            "force", "autocorrect", "interactive",
+            "force", "autocorrect", "interactive", "autodelete",
             "all", "full", "groups", "local", "wait",
             "start", "enable", "disabled", "off",
             "no-default-ops", "defaults", "nodesc",

@@ -62,6 +62,42 @@ class ACLTest(unittest.TestCase):
         assert r == 0
         ac(o,"User: user1\n  Roles: role1 role2\nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
 
+        o,r = pcs("acl role create user1")
+        assert r == 1
+        ac(o,"Error: user1 already exists\n")
+
+        o,r = pcs("acl role create group1")
+        assert r == 1
+        ac(o,"Error: group1 already exists\n")
+
+        o,r = pcs("acl role create role1")
+        assert r == 1
+        ac(o,"Error: role role1 already exists\n")
+
+        o,r = pcs("acl user create user1")
+        assert r == 1
+        ac(o,"Error: user user1 already exists\n")
+
+        o,r = pcs("acl user create group1")
+        assert r == 1
+        ac(o,"Error: group1 already exists\n")
+
+        o,r = pcs("acl user create role1")
+        assert r == 1
+        ac(o,"Error: role1 already exists\n")
+
+        o,r = pcs("acl group create user1")
+        assert r == 1
+        ac(o,"Error: user1 already exists\n")
+
+        o,r = pcs("acl group create group1")
+        assert r == 1
+        ac(o,"Error: group group1 already exists\n")
+
+        o,r = pcs("acl group create role1")
+        assert r == 1
+        ac(o,"Error: role1 already exists\n")
+
         o,r = pcs("acl role assign role1 to noexist")
         assert r == 1
         ac(o,"Error: cannot find user or group: noexist\n")
@@ -122,6 +158,61 @@ class ACLTest(unittest.TestCase):
         assert r == 0
         ac(o,"User: user1\n  Roles: role2\nGroup: group1\n  Roles: role1\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\n")
 
+        o,r = pcs("acl role assign role1 user1")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("acl")
+        ac(o, """\
+User: user1
+  Roles: role2 role1
+Group: group1
+  Roles: role1
+Role: role1
+  Permission: read xpath /xpath1/ (role1-read)
+  Permission: write xpath /xpath2/ (role1-write)
+Role: role2
+  Permission: deny xpath /xpath3/ (role2-deny)
+  Permission: deny xpath /xpath4/ (role2-deny-1)
+""")
+        assert r == 0
+
+        o,r = pcs("acl role unassign role2 from user1 --autodelete")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("acl")
+        ac(o, """\
+User: user1
+  Roles: role1
+Group: group1
+  Roles: role1
+Role: role1
+  Permission: read xpath /xpath1/ (role1-read)
+  Permission: write xpath /xpath2/ (role1-write)
+Role: role2
+  Permission: deny xpath /xpath3/ (role2-deny)
+  Permission: deny xpath /xpath4/ (role2-deny-1)
+""")
+        assert r == 0
+
+        o,r = pcs("acl role unassign role1 from user1 --autodelete")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("acl")
+        ac(o, """\
+Group: group1
+  Roles: role1
+Role: role1
+  Permission: read xpath /xpath1/ (role1-read)
+  Permission: write xpath /xpath2/ (role1-write)
+Role: role2
+  Permission: deny xpath /xpath3/ (role2-deny)
+  Permission: deny xpath /xpath4/ (role2-deny-1)
+""")
+        assert r == 0
+
     def testUserGroupCreateDelete(self):
         o,r = pcs("acl")
         assert r == 0
@@ -137,7 +228,7 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl user create user1")
         assert r == 1
-        ac(o,"Error: user1 already exists in cib\n")
+        ac(o,"Error: user user1 already exists\n")
 
         o,r = pcs("acl group create group1")
         ac(o,"")
@@ -149,7 +240,7 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl group create group1")
         assert r == 1
-        ac(o,"Error: group1 already exists in cib\n")
+        ac(o,"Error: group group1 already exists\n")
 
         o,r = pcs("acl")
         assert r == 0
@@ -199,6 +290,10 @@ class ACLTest(unittest.TestCase):
         o,r = pcs("acl role create role0")
         ac(o,"")
         assert r == 0
+
+        o,r = pcs("acl role create role0")
+        ac(o,"Error: role role0 already exists\n")
+        assert r == 1
 
         o,r = pcs("acl role create role0d description='empty role'")
         ac(o,"")

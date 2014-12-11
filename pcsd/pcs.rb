@@ -185,8 +185,8 @@ def add_acl_usergroup(acl_role_id, user_group, name)
     if retval == 0
       return ""
     end
-    if stderr.join("\n").strip.downcase != "error: #{name.to_s.downcase} already exists in cib"
-      return stderror.join("\n").strip
+    if not /^error: (user|group) #{name.to_s} already exists$/i.match(stderr.join("\n").strip)
+      return stderr.join("\n").strip
     end
   end
   stdout, stderror, retval = run_cmd(
@@ -207,7 +207,10 @@ def remove_acl_permission(acl_perm_id)
 end
 
 def remove_acl_usergroup(role_id, usergroup_id)
-  stdout, stderror, retval = run_cmd(PCS, "acl", "role", "unassign", role_id.to_s, usergroup_id.to_s)
+  stdout, stderror, retval = run_cmd(
+    PCS, "acl", "role", "unassign", role_id.to_s, usergroup_id.to_s,
+    "--autodelete"
+  )
   if retval != 0
     return stderror.join("\n").chomp
   end
