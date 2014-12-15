@@ -1459,14 +1459,14 @@ def get_default_op_values(ra_type):
 
     return return_list
 
-def get_timeout_seconds(timeout):
+def get_timeout_seconds(timeout, return_unknown=False):
     if timeout.isdigit():
         return int(timeout)
     if timeout.endswith("s") and timeout[:-1].isdigit():
         return int(timeout[:-1])
     if timeout.endswith("min") and timeout[:-3].isdigit():
         return int(timeout[:-3]) * 60
-    return None
+    return timeout if return_unknown else None
 
 def get_default_op_timeout():
     output, retVal = run([
@@ -1682,23 +1682,19 @@ def find_unique_id(dom, check_id):
     return temp_id
 
 # Checks to see if the specified operation already exists in passed set of
-# operations (ignoring id)
-def operation_exists(operations, op):
-    for existing_op in operations.getElementsByTagName("op"):
-        if len(existing_op.attributes.items()) != len(op.attributes.items()):
-            continue
-        match = False
-        for k,v in existing_op.attributes.items():
-            if k == "id":
-                continue
-            if v == op.getAttribute(k):
-                match = True
-            else:
-                match = False
-                break
-        if match == True:
-            return True
-    return False
+# operations
+# pacemaker differentiates between operations only by name and interval
+def operation_exists(operations_el, op_el):
+    op_name = op_el.getAttribute("name")
+    op_interval = get_timeout_seconds(op_el.getAttribute("interval"), True)
+    for op in operations_el.getElementsByTagName("op"):
+        if (
+            op.getAttribute("name") == op_name
+            and
+            get_timeout_seconds(op.getAttribute("interval"), True) == op_interval
+        ):
+            return op
+    return None
 
 def set_unmanaged(resource):
     args = ["crm_resource", "--resource", resource, "--set-parameter",
@@ -2075,12 +2071,6 @@ def write_empty_cib(cibfile):
     f = open(cibfile, 'w')
     f.write(empty_xml)
     f.close()
-
-# Returns true if we have a valid op attribute
-def is_valid_op_attr(attr):
-    if attr in ["id","name","interval","description","start-delay","interval-origin","timeout","enabled", "record-pending", "role", "requires","on-fail", "OCF_CHECK_LEVEL"]:
-        return True
-    return False
 
 # Test if 'var' is a score or option (contains an '=')
 def is_score_or_opt(var):

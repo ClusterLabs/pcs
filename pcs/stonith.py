@@ -31,33 +31,9 @@ def stonith_cmd(argv):
             sys.exit(1)
         stn_id = argv.pop(0)
         stn_type = "stonith:"+argv.pop(0)
-        st_values = []
-        op_values = [[]]
-        meta_values=[]
-        op_args = False
-        meta_args = False
-        for arg in argv:
-            if arg == "op":
-                op_args = True
-                meta_args = False
-            elif arg == "meta":
-                meta_args = True
-                op_args = False
-            else:
-                if op_args:
-                    if arg == "op":
-                        op_values.append([])
-                    elif "=" not in arg and len(op_values[-1]) != 0:
-                        op_values.append([])
-                        op_values[-1].append(arg)
-                    else:
-                        op_values[-1].append(arg)
-                elif meta_args:
-                    if "=" in arg:
-                        meta_values.append(arg)
-                else:
-                    st_values.append(arg)
-    
+        st_values, op_values, meta_values = resource.parse_resource_options(
+            argv, with_clone=False
+        )
         resource.resource_create(stn_id, stn_type, st_values, op_values, meta_values)
     elif (sub_cmd == "update"):
         stn_id = argv.pop(0)

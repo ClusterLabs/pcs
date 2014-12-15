@@ -33,43 +33,9 @@ def resource_cmd(argv):
             sys.exit(1)
         res_id = argv.pop(0)
         res_type = argv.pop(0)
-        ra_values = []
-        op_values = [[]]
-        meta_values=[]
-        clone_opts=[]
-        op_args = False
-        meta_args = False
-        clone_args = False
-        for arg in argv:
-            if arg == "op":
-                op_args = True
-                meta_args = False
-            elif arg == "meta":
-                meta_args = True
-                op_args = False
-            elif arg == "clone":
-                utils.pcs_options["--clone"] = ""
-                clone_args = True
-                op_args = False
-                meta_args = False
-            else:
-                if clone_args:
-                    if "=" in arg:
-                        clone_opts.append(arg)
-                elif op_args:
-                    if arg == "op":
-                        op_values.append([])
-                    elif "=" not in arg and len(op_values[-1]) != 0:
-                        op_values.append([])
-                        op_values[-1].append(arg)
-                    else:
-                        op_values[-1].append(arg)
-                elif meta_args:
-                    if "=" in arg:
-                        meta_values.append(arg)
-                else:
-                    ra_values.append(arg)
-    
+        ra_values, op_values, meta_values, clone_opts = parse_resource_options(
+            argv, with_clone=True
+        )
         resource_create(res_id, res_type, ra_values, op_values, meta_values, clone_opts)
     elif (sub_cmd == "move"):
         resource_move(argv)
@@ -133,7 +99,7 @@ def resource_cmd(argv):
         resource_failcount(argv)
     elif (sub_cmd == "op"):
         if len(argv) < 1:
-            usage.resource("op")
+            usage.resource(["op"])
             sys.exit(1)
         op_subcmd = argv.pop(0)
         if op_subcmd == "defaults":
@@ -143,14 +109,16 @@ def resource_cmd(argv):
                 set_default("op_defaults", argv)
         elif op_subcmd == "add":
             if len(argv) == 0:
-                usage.resource("op")
+                usage.resource(["op"])
                 sys.exit(1)
             else:
                 res_id = argv.pop(0)
-                resource_operation_add(res_id, argv)
+                utils.replace_cib_configuration(
+                    resource_operation_add(utils.get_cib_dom(), res_id, argv)
+                )
         elif op_subcmd in ["remove","delete"]:
             if len(argv) == 0:
-                usage.resource("op")
+                usage.resource(["op"])
                 sys.exit(1)
             else:
                 res_id = argv.pop(0)
@@ -171,6 +139,48 @@ def resource_cmd(argv):
     else:
         usage.resource()
         sys.exit(1)
+
+def parse_resource_options(argv, with_clone=False):
+    ra_values = []
+    op_values = []
+    meta_values = []
+    clone_opts = []
+    op_args = False
+    meta_args = False
+    clone_args = False
+    for arg in argv:
+        if arg == "op":
+            op_args = True
+            meta_args = False
+            op_values.append([])
+        elif arg == "meta":
+            meta_args = True
+            op_args = False
+        elif with_clone and arg == "clone":
+            utils.pcs_options["--clone"] = ""
+            clone_args = True
+            op_args = False
+            meta_args = False
+        else:
+            if clone_args:
+                if "=" in arg:
+                    clone_opts.append(arg)
+            elif op_args:
+                if arg == "op":
+                    op_values.append([])
+                elif "=" not in arg and len(op_values[-1]) != 0:
+                    op_values.append([])
+                    op_values[-1].append(arg)
+                else:
+                    op_values[-1].append(arg)
+            elif meta_args:
+                if "=" in arg:
+                    meta_values.append(arg)
+            else:
+                ra_values.append(arg)
+    if with_clone:
+        return ra_values, op_values, meta_values, clone_opts
+    return ra_values, op_values, meta_values
 
 # List available resources
 # TODO make location more easily configurable
@@ -362,15 +372,22 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         utils.err("unable to create resource/fence device '%s', '%s' already exists on this system" % (ra_id,ra_id))
 
 
-    if len(op_values[0]) == 0:
-        op_values = []
-
-    default_op_values = utils.get_default_op_values(ra_type)
+    for op_val in op_values:
+        if len(op_val) < 2:
+            utils.err(
+                "When using 'op' you must specify an operation name"
+                + " and at least one option"
+            )
+        if '=' in op_val[0]:
+            utils.err(
+                "When using 'op' you must specify an operation name after 'op'"
+            )
 
     # If the user specifies an operation value and we find a similar one in
     # the default operations we remove if from the default operations
+    op_values_agent = []
     if "--no-default-ops" not in utils.pcs_options: 
-        updated_default_op_values = []
+        default_op_values = utils.get_default_op_values(ra_type)
         for def_op in default_op_values:
             match = False
             for op in op_values:
@@ -378,27 +395,17 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                     continue
                 match = True
             if match == False:
-                updated_default_op_values.append(def_op)
-
-        op_values = updated_default_op_values + op_values
+                op_values_agent.append(def_op)
+    op_values_all = op_values_agent + op_values
 
     is_monitor_present = False
-    for op in op_values:
+    for op in op_values_all:
         if len(op) > 0:
             if op[0] == "monitor":
                 is_monitor_present = True
                 break
     if not is_monitor_present:
-        op_values.append(['monitor','interval=60s'])
-
-    # Verify all op values are recognized
-    if "--force" not in utils.pcs_options:
-        for op_opts in op_values:
-            for opt in op_opts[1:]:
-                if opt.find('=') != -1:
-                    k,v = opt.split('=',1)
-                    if not utils.is_valid_op_attr(k):
-                        utils.err("%s is not a valid op option (use --force to override)" % k)
+        op_values.append(['monitor'])
 
     if "--disabled" in utils.pcs_options:
         meta_values = [
@@ -407,7 +414,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         meta_values.append("target-role=Stopped")
 
     if wait and wait_timeout is None:
-        for op in op_values:
+        for op in op_values_all:
             if op[0] == "start":
                 for op_setting in op[1:]:
                     match = re.match("timeout=(.+)", op_setting)
@@ -425,7 +432,6 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
     primitive_values = get_full_ra_type(ra_type)
     primitive_values.insert(0,("id",ra_id))
-    op_attributes = convert_args_to_operations(op_values, ra_id)
     meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
     if not "--force" in utils.pcs_options and utils.does_resource_have_options(ra_type):
         params = convert_args_to_tuples(ra_values)
@@ -440,8 +446,14 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                 % (", ".join(missing_req_opts), get_full_ra_type(ra_type, True))
             )
 
-    resource_elem = create_xml_element("primitive", primitive_values, instance_attributes + op_attributes + meta_attributes)
+    resource_elem = create_xml_element("primitive", primitive_values, instance_attributes + meta_attributes)
     dom.getElementsByTagName("resources")[0].appendChild(resource_elem)
+    # Do not validate default operations defined by a resource agent
+    # User did not entered them so we will not confuse him/her with their errors
+    for op in op_values_agent:
+        dom = resource_operation_add(dom, ra_id, op, validate=False)
+    for op in op_values:
+        dom = resource_operation_add(dom, ra_id, op, validate=True)
 
     expected_instances = 1
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
@@ -711,33 +723,7 @@ def resource_update(res_id,args):
     dom = utils.get_cib_dom()
 
 # Extract operation arguments
-    op_args = False
-    meta_args = False
-    ra_values = []
-    op_values = []
-    meta_values = []
-    for arg in args:
-        if arg == "op":
-            op_args = True
-            meta_args = False
-            op_values.append([])
-        elif arg == "meta":
-            meta_args = True
-            op_args = False
-        else:
-            if op_args:
-                if arg == "op":
-                    op_values.append([])
-                elif "=" not in arg and len(op_values[-1]) != 0:
-                    op_values.append([])
-                    op_values[-1].append(arg)
-                else:
-                    op_values[-1].append(arg)
-            elif meta_args:
-                if "=" in arg:
-                    meta_values.append(arg)
-            else:
-                ra_values.append(arg)
+    ra_values, op_values, meta_values = parse_resource_options(args)
 
     wait = False
     if "--wait" in utils.pcs_options:
@@ -861,73 +847,39 @@ def resource_update(res_id,args):
         if len(element) < 1:
             continue
 
-        op_name = element.pop(0)
-        op_role = ""
-        op_vars = convert_args_to_tuples(element)
-
+        op_name = element[0]
         if op_name.find('=') != -1:
             utils.err("%s does not appear to be a valid operation action" % op_name)
 
-        if len(element) == 0:
+        if len(element) < 2:
             continue
+
+        op_role = ""
+        op_vars = convert_args_to_tuples(element[1:])
 
         for k,v in op_vars:
             if k == "role":
                 op_role = v
                 break
 
-        # verify op_role is valid
-        if op_role not in ["","Stopped","Started","Slave","Master"] and "--force" not in utils.pcs_options:
-            utils.err("role must be: Stopped, Started, Slave or Master (use --force to override)")
-
-        op = dom.createElement("op")
-        updating_op = False
+        updating_op = None
+        updating_op_before = None
         for existing_op in operations.getElementsByTagName("op"):
+            if updating_op:
+                updating_op_before = existing_op
+                break
             existing_op_name = existing_op.getAttribute("name")
             existing_op_role = existing_op.getAttribute("role")
             if existing_op_role == op_role and existing_op_name == op_name:
-                op = existing_op
-                updating_op = True
-                for key in op.attributes.keys():
-                    op.removeAttribute(key)
-                break
+                updating_op = existing_op
+                continue
 
-        op.setAttribute("name",op_name)
-        op_id = res_id + "-" + op_name
+        if updating_op:
+            updating_op.parentNode.removeChild(updating_op)
+        dom = resource_operation_add(
+            dom, res_id, element, before_op=updating_op_before
+        )
 
-        # Verify all op values are recognized
-        if "--force" not in utils.pcs_options:
-            for k,v in op_vars:
-                if not utils.is_valid_op_attr(k):
-                    utils.err("%s is not a valid op option (use --force to override)" % k)
-
-        iv = None
-        for (key,val) in op_vars:
-            if key == "OCF_CHECK_LEVEL":
-                remove_ocf_check_levels(op)
-                if val != "":
-                    iv = dom.createElement("nvpair")
-                    iv.setAttribute("name","OCF_CHECK_LEVEL")
-                    iv.setAttribute("value",val)
-            else:
-                op.setAttribute(key,val)
-                op_id += "-" + key + "-" + val
-        if iv != None:
-            iv.setAttribute("id",op_id+"-OCF_CHECK_LEVEL-"+iv.getAttribute("value"))
-            ia = dom.createElement("instance_attributes")
-            ia.setAttribute("id","params-" +iv.getAttribute("id"))
-            ia.appendChild(iv)
-            op.appendChild(ia)
-
-        op.setAttribute("id", op_id)
-        if op.getAttribute("interval") == "":
-            if op.getAttribute("name") == "monitor":
-                op.setAttribute("interval","60s")
-            else:
-                op.setAttribute("interval","0s")
-        if not updating_op:
-            operations.appendChild(op)
-        
     if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
         instance_attributes.parentNode.removeChild(instance_attributes)
 
@@ -1010,82 +962,97 @@ def resource_update_clone_master(dom, clone, clone_type, res_id, args, wait):
 
     return dom
 
-# Removes all OCF_CHECK_LEVEL nvpairs
-def remove_ocf_check_levels(dom):
-    for np in dom.getElementsByTagName("nvpair")[:]:
-        if np.getAttribute("name") == "OCF_CHECK_LEVEL":
-            np.parentNode.removeChild(np)
-
-def resource_operation_add(res_id, argv):
+def resource_operation_add(dom, res_id, argv, validate=True, before_op=None):
     if len(argv) < 1:
-        usage.resource()
+        usage.resource(["op"])
         sys.exit(1)
 
-    op_name = argv.pop(0)
-    dom = utils.get_cib_dom()
-    resource_found = False
-
-    for resource in dom.getElementsByTagName("primitive"):
-        if resource.getAttribute("id") == res_id:
-            resource_found = True
-            break
-
-    if not resource_found:
+    res_el = utils.dom_get_resource(dom, res_id)
+    if not res_el:
         utils.err ("Unable to find resource: %s" % res_id)
 
+    op_name = argv.pop(0)
     op_properties = convert_args_to_tuples(argv)
+
+    if validate:
+        if "=" in op_name:
+            utils.err(
+                "%s does not appear to be a valid operation action" % op_name
+            )
+    if validate and "--force" not in utils.pcs_options:
+        valid_attrs = ["id", "name", "interval", "description", "start-delay",
+            "interval-origin", "timeout", "enabled", "record-pending", "role",
+            "requires", "on-fail", "OCF_CHECK_LEVEL"]
+        valid_roles = ["Stopped", "Started", "Slave", "Master"]
+        for key, value in op_properties:
+            if key not in valid_attrs:
+                utils.err(
+                    "%s is not a valid op option (use --force to override)"
+                    % key
+                )
+            if key == "role":
+                if value not in valid_roles:
+                    utils.err(
+                        "role must be: %s or %s (use --force to override)"
+                        % (", ".join(valid_roles[:-1]), valid_roles[-1])
+                    )
+
+    interval = None
+    for key, val in op_properties:
+        if key == "interval":
+            interval = val
+            break
+    if not interval:
+        interval = "60s" if op_name == "monitor" else "0s"
+        op_properties.append(("interval", interval))
+
     op_properties.sort(key=lambda a:a[0])
-    op_properties.insert(0,('name', op_name))
-    found_match = False
+    op_properties.insert(0, ("name", op_name))
 
-    op = dom.createElement("op")
-    op_id = res_id + "-"
-    iv = None
-
-    # Verify all op values are recognized
-    if "--force" not in utils.pcs_options:
-        for k,v in op_properties:
-            if not utils.is_valid_op_attr(k):
-                utils.err("%s is not a valid op option (use --force to override)" % k)
-
-    for (key,val) in op_properties:
-        if key == "OCF_CHECK_LEVEL":
-                iv = dom.createElement("nvpair")
-                iv.setAttribute("name","OCF_CHECK_LEVEL")
-                iv.setAttribute("value",val)
-        else:
-            op.setAttribute(key, val)
-            op_id += key + "-" + val + "-"
-    op_id = op_id[:-1]
+    op_id = "%s-%s-interval-%s" % (res_id, op_name, interval)
     op_id = utils.find_unique_id(dom, op_id)
-
-    if iv != None:
-        iv.setAttribute("id",op_id+"-OCF_CHECK_LEVEL-"+iv.getAttribute("value"))
-        ia = dom.createElement("instance_attributes")
-        ia.setAttribute("id","params-" +iv.getAttribute("id"))
-        ia.appendChild(iv)
-        op.appendChild(ia)
-
-    op.setAttribute("id", op_id)
-
-    if op.getAttribute("interval") == "":
-        if op.getAttribute("name") == "monitor":
-            op.setAttribute("interval","60s")
+    op_el = dom.createElement("op")
+    op_el.setAttribute("id", op_id)
+    for key, val in op_properties:
+        if key == "OCF_CHECK_LEVEL":
+            attrib_el = dom.createElement("instance_attributes")
+            attrib_el.setAttribute(
+                "id", utils.find_unique_id(dom, "params-" + op_id)
+            )
+            op_el.appendChild(attrib_el)
+            nvpair_el = dom.createElement("nvpair")
+            nvpair_el.setAttribute("name", key)
+            nvpair_el.setAttribute("value", val)
+            nvpair_el.setAttribute(
+                "id", utils.find_unique_id(dom, "-".join((op_id, key, val)))
+            )
+            attrib_el.appendChild(nvpair_el)
         else:
-            op.setAttribute("interval","0s")
+            op_el.setAttribute(key, val)
 
-    operations = resource.getElementsByTagName("operations")
+    operations = res_el.getElementsByTagName("operations")
     if len(operations) == 0:
         operations = dom.createElement("operations")
-        resource.appendChild(operations)
+        res_el.appendChild(operations)
     else:
         operations = operations[0]
+        if validate:
+            duplicate_op = utils.operation_exists(operations, op_el)
+            if duplicate_op:
+                utils.err(
+                    "operation %s with interval %ss already specified for %s:\n%s"
+                    % (
+                        op_el.getAttribute("name"),
+                        utils.get_timeout_seconds(
+                            op_el.getAttribute("interval"), True
+                        ),
+                        res_id,
+                        operation_to_string(duplicate_op)
+                    )
+                )
 
-    if utils.operation_exists(operations,op):
-        utils.err ("identical operation already exists for %s" % res_id)
-
-    operations.appendChild(op)
-    utils.replace_cib_configuration(dom)
+    operations.insertBefore(op_el, before_op)
+    return dom
 
 def resource_operation_remove(res_id, argv):
 # if no args, then we're removing an operation id
@@ -1238,62 +1205,6 @@ def update_meta_attributes(meta_attributes, meta_attrs, id_prefix):
             ma.setAttribute("value", val)
             meta_attributes.appendChild(ma)
     return meta_attributes
-
-# Takes in a resource id and an array of arrays with operation values starting
-# with the operation name, followed by options
-# sample op_values = ["monitor", "interval=5s"]
-def convert_args_to_operations(op_values_list, ra_id):
-    ret = []
-    ret_ops = []
-    for op_values in op_values_list:
-        if len(op_values) == 0:
-            return []
-        if '=' in op_values[0]:
-            utils.err("When using 'op' you must specify an operation name after 'op'")
-        if len(op_values) < 2:
-            utils.err("When using 'op' you must specify an operation name and at least one option")
-        op_name = op_values.pop(0)
-        tuples = convert_args_to_tuples(op_values)
-        op_attrs = []
-        nvpair_attrs = []
-        instance_attrs = []
-        op_id = ra_id+"-"+op_name
-        temp_op_id = ""
-        # If interval is specified, use that in the op_name, otherwise all attributes
-        interval_found = False
-        for (a,b) in tuples:
-            if a != "OCF_CHECK_LEVEL":
-                temp_op_id += "-"+a+"-"+b
-            if a == "interval":
-                temp_op_id = "-"+a+"-"+b
-                for (a2,b2) in tuples:
-                    if a2 == "role":
-                        temp_op_id += "-"+a2+"-"+b2
-                interval_found = True
-                break
-        op_id += temp_op_id
-
-        # If no interval is found, we add one, 60s for monitor,
-        # 0s for everything else
-        if not interval_found:
-            if op_name == "monitor":
-                tuples = tuples + [("interval","60s")]
-            else:
-                tuples = tuples + [("interval","0s")]
-
-        for (a,b) in tuples:
-            if a == "OCF_CHECK_LEVEL":
-                nvpair_attrs = [("nvpair", [("name","OCF_CHECK_LEVEL"),("value",b),("id", op_id + "-OCF_CHECK_LEVEL-" + b)],[])]
-                instance_attrs = [("instance_attributes", [("id","params-"+ op_id + "-OCF_CHECK_LEVEL-" + b)],nvpair_attrs)]
-            else:
-                op_attrs.append((a,b))
-
-        op_attrs.append(("id",op_id))
-        op_attrs.append(("name",op_name))
-        ops = ("op",op_attrs,instance_attrs)
-        ret_ops.append(ops)
-    ret = [("operations", [], ret_ops)]
-    return ret
 
 def convert_args_to_meta_attrs(meta_attrs, ra_id):
     if len(meta_attrs) == 0:
@@ -2407,6 +2318,20 @@ def print_operations(node, spaces):
     output = output.rstrip()
     if output != "":
         print spaces + " Operations: " + output
+
+def operation_to_string(op_el):
+    parts = []
+    parts.append(op_el.getAttribute("name"))
+    for name, value in op_el.attributes.items():
+        if name in ["id", "name"]:
+            continue
+        parts.append(name + "=" + value)
+    for nvpair in op_el.getElementsByTagName("nvpair"):
+        parts.append(
+            nvpair.getAttribute("name") + "=" + nvpair.getAttribute("value")
+        )
+    parts.append("(" + op_el.getAttribute("id") + ")")
+    return " ".join(parts)
 
 def get_attrs(node, prepend_string = "", append_string = ""):
     output = ""

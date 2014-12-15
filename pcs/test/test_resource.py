@@ -155,6 +155,77 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)\n Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)\n Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)\n Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)\n Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)\n Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=31s (ClusterIP6-monitor-interval-31s)\n              start interval=32s (ClusterIP6-start-interval-32s)\n              stop interval=33s (ClusterIP6-stop-interval-33s)\n Resource: ClusterIP7 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Meta Attrs: target-role=Stopped \n  Operations: monitor interval=30s (ClusterIP7-monitor-interval-30s)\n',[output]
 
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create A dummy op interval=10"
+        )
+        ac(output, """\
+Error: When using 'op' you must specify an operation name and at least one option
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create A dummy op interval=10 timeout=5"
+        )
+        ac(output, """\
+Error: When using 'op' you must specify an operation name after 'op'
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create A dummy op monitor interval=10 op interval=10 op start timeout=10"
+        )
+        ac(output, """\
+Error: When using 'op' you must specify an operation name and at least one option
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create A dummy op monitor"
+        )
+        ac(output, """\
+Error: When using 'op' you must specify an operation name and at least one option
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create A dummy op monitor interval=10 op stop op start timeout=10"
+        )
+        ac(output, """\
+Error: When using 'op' you must specify an operation name and at least one option
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create A dummy op monitor interval=10 timeout=10 op monitor interval=10 timeout=20"
+        )
+        ac(output, """\
+Error: operation monitor with interval 10s already specified for A:
+monitor interval=10 timeout=10 (A-monitor-interval-10)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create A dummy op monitor interval=10 timeout=10 op stop interval=10 timeout=20"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show A")
+        ac(output, """\
+ Resource: A (class=ocf provider=heartbeat type=Dummy)
+  Operations: start interval=0s timeout=20 (A-start-interval-0s)
+              monitor interval=10 timeout=10 (A-monitor-interval-10)
+              stop interval=10 timeout=20 (A-stop-interval-10)
+""")
+        self.assertEquals(0, returnVal)
+
     def testAddBadResources(self):
         line = "resource create --no-default-ops bad_resource idontexist test=bad"
         output, returnVal = pcs(temp_cib, line) 
@@ -256,12 +327,32 @@ class ResourceTest(unittest.TestCase):
 
         line = 'resource op add ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
+        ac(output, """\
+Error: operation monitor with interval 31s already specified for ClusterIP:
+monitor interval=31s (ClusterIP-monitor-interval-31s)
+""")
         assert returnVal == 1
-        assert output == "Error: identical operation already exists for ClusterIP\n"
+
+        line = 'resource op add ClusterIP monitor interval=31'
+        output, returnVal = pcs(temp_cib, line) 
+        ac(output, """\
+Error: operation monitor with interval 31s already specified for ClusterIP:
+monitor interval=31s (ClusterIP-monitor-interval-31s)
+""")
+        assert returnVal == 1
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource op add ClusterIP moni=tor interval=60"
+        )
+        ac(output, """\
+Error: moni=tor does not appear to be a valid operation action
+""")
+        assert returnVal == 1
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 0
-        ac (output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)\n              monitor interval=31s (ClusterIP-name-monitor-interval-31s)\n')
+        ac (output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)\n              monitor interval=31s (ClusterIP-monitor-interval-31s)\n')
 
         o, r = pcs(temp_cib, "resource create --no-default-ops OPTest Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1")
         ac(o,"")
@@ -276,15 +367,18 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
         
         o, r = pcs(temp_cib, "resource op add OPTest2 start timeout=1800s")
-        ac(o,"")
-        assert r == 0
+        ac(o, """\
+Error: operation start with interval 0s already specified for OPTest2:
+start interval=0s timeout=30s (OPTest2-start-interval-0s)
+""")
+        assert r == 1
         
         o, r = pcs(temp_cib, "resource op add OPTest2 monitor timeout=1800s")
         ac(o,"")
         assert r == 0
         
         o, r = pcs(temp_cib, "resource show OPTest2")
-        ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-25s)\n              start interval=0s timeout=30s (OPTest2-start-timeout-30s)\n              start interval=0s timeout=1800s (OPTest2-name-start-timeout-1800s)\n              monitor interval=60s timeout=1800s (OPTest2-name-monitor-timeout-1800s)\n")
+        ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-25s)\n              start interval=0s timeout=30s (OPTest2-start-interval-0s)\n              monitor interval=60s timeout=1800s (OPTest2-monitor-interval-60s)\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource create --no-default-ops OPTest3 Dummy op monitor OCF_CHECK_LEVEL=1")
@@ -292,7 +386,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o, r = pcs(temp_cib, "resource show OPTest3")
-        ac(o," Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest3-monitor)\n")
+        ac(o," Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest3-monitor-interval-60s)\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource create --no-default-ops OPTest4 Dummy op monitor interval=30s")
@@ -304,7 +398,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o, r = pcs(temp_cib, "resource show OPTest4")
-        ac(o," Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest4-monitor)\n")
+        ac(o," Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest4-monitor-interval-60s)\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource create --no-default-ops OPTest5 Dummy")
@@ -316,7 +410,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o, r = pcs(temp_cib, "resource show OPTest5")
-        ac(o," Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest5-monitor)\n")
+        ac(o," Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest5-monitor-interval-60s)\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource create --no-default-ops OPTest6 Dummy")
@@ -328,7 +422,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o, r = pcs(temp_cib, "resource show OPTest6")
-        ac(o," Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (OPTest6-monitor-interval-60s)\n              monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest6-name-monitor-interval-30s)\n")
+        ac(o," Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (OPTest6-monitor-interval-60s)\n              monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest6-monitor-interval-30s)\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource create --no-default-ops OPTest7 Dummy")
@@ -344,11 +438,14 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o, r = pcs(temp_cib, "resource show OPTest7")
-        ac(o," Resource: OPTest7 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)\n              monitor interval=61s OCF_CHECK_LEVEL=1 (OPTest7-name-monitor-interval-61s)\n")
+        ac(o," Resource: OPTest7 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)\n              monitor interval=61s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-61s)\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource op add OPTest7 monitor interval=60s OCF_CHECK_LEVEL=1")
-        ac(o,"Error: identical operation already exists for OPTest7\n")
+        ac(o, """\
+Error: operation monitor with interval 60s already specified for OPTest7:
+monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
+""")
         assert r == 1
 
         o,r = pcs("resource create --no-default-ops OCFTest1 Dummy")
@@ -364,7 +461,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("resource show OCFTest1")
-        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-name-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-name-monitor-interval-30s)\n")
+        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
         o,r = pcs("resource update OCFTest1 op monitor interval=61s OCF_CHECK_LEVEL=5")
@@ -372,7 +469,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("resource show OCFTest1")
-        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=61s OCF_CHECK_LEVEL=5 (OCFTest1-monitor-interval-61s)\n              monitor interval=31s (OCFTest1-name-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-name-monitor-interval-30s)\n")
+        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=61s OCF_CHECK_LEVEL=5 (OCFTest1-monitor-interval-61s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
         o,r = pcs("resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4")
@@ -380,7 +477,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("resource show OCFTest1")
-        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=4 (OCFTest1-monitor)\n              monitor interval=31s (OCFTest1-name-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-name-monitor-interval-30s)\n")
+        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
         o,r = pcs("resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4 interval=35s")
@@ -388,7 +485,7 @@ class ResourceTest(unittest.TestCase):
         assert r == 0
 
         o,r = pcs("resource show OCFTest1")
-        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=35s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-35s)\n              monitor interval=31s (OCFTest1-name-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-name-monitor-interval-30s)\n")
+        ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=35s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-35s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
     def testRemoveOperation(self):
@@ -407,12 +504,12 @@ class ResourceTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource op remove ClusterIP-name-monitor-interval-32s-xxxxx'
+        line = 'resource op remove ClusterIP-monitor-interval-32s-xxxxx'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 1
-        assert output == "Error: unable to find operation id: ClusterIP-name-monitor-interval-32s-xxxxx\n"
+        assert output == "Error: unable to find operation id: ClusterIP-monitor-interval-32s-xxxxx\n"
 
-        line = 'resource op remove ClusterIP-name-monitor-interval-32s'
+        line = 'resource op remove ClusterIP-monitor-interval-32s'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
@@ -429,7 +526,7 @@ class ResourceTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 0
-        ac(output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=31s (ClusterIP-name-monitor-interval-31s)\n')
+        ac(output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=31s (ClusterIP-monitor-interval-31s)\n')
 
         line = 'resource op remove ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
@@ -468,7 +565,7 @@ class ResourceTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 0
-        ac (output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: stop interval=0s timeout=34s (ClusterIP-name-stop-timeout-34s)\n              start interval=0s timeout=33s (ClusterIP-name-start-timeout-33s)\n')
+        ac (output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: stop interval=0s timeout=34s (ClusterIP-stop-interval-0s)\n              start interval=0s timeout=33s (ClusterIP-start-interval-0s)\n')
 
     def testUpdateOpration(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
@@ -504,7 +601,176 @@ class ResourceTest(unittest.TestCase):
         line = 'resource show ClusterIP --full'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
-        ac(output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)\n              start interval=30s timeout=180s (ClusterIP-start-interval-30s-timeout-180s)\n')
+        ac(output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)\n              start interval=30s timeout=180s (ClusterIP-start-interval-30s)\n')
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create A dummy op monitor interval=10 op monitor interval=20"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show A")
+        ac(output, """\
+ Resource: A (class=ocf provider=heartbeat type=Dummy)
+  Operations: start interval=0s timeout=20 (A-start-interval-0s)
+              stop interval=0s timeout=20 (A-stop-interval-0s)
+              monitor interval=10 (A-monitor-interval-10)
+              monitor interval=20 (A-monitor-interval-20)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update A op monitor interval=20"
+        )
+        ac(output, """\
+Error: operation monitor with interval 20s already specified for A:
+monitor interval=20 (A-monitor-interval-20)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update A op monitor interval=11"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show A")
+        ac(output, """\
+ Resource: A (class=ocf provider=heartbeat type=Dummy)
+  Operations: start interval=0s timeout=20 (A-start-interval-0s)
+              stop interval=0s timeout=20 (A-stop-interval-0s)
+              monitor interval=11 (A-monitor-interval-11)
+              monitor interval=20 (A-monitor-interval-20)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create B dummy --no-default-ops"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource op remove B-monitor-interval-60s"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show B")
+        ac(output, """\
+ Resource: B (class=ocf provider=heartbeat type=Dummy)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update B op monitor interval=60s"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show B")
+        ac(output, """\
+ Resource: B (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (B-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update B op monitor interval=30"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show B")
+        ac(output, """\
+ Resource: B (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=30 (B-monitor-interval-30)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update B op start interval=0 timeout=10"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show B")
+        ac(output, """\
+ Resource: B (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=30 (B-monitor-interval-30)
+              start interval=0 timeout=10 (B-start-interval-0)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update B op start interval=0 timeout=20"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show B")
+        ac(output, """\
+ Resource: B (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=30 (B-monitor-interval-30)
+              start interval=0 timeout=20 (B-start-interval-0)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update B op monitor interval=33"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show B")
+        ac(output, """\
+ Resource: B (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=33 (B-monitor-interval-33)
+              start interval=0 timeout=20 (B-start-interval-0)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update B op monitor interval=100 role=Master"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show B")
+        ac(output, """\
+ Resource: B (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=33 (B-monitor-interval-33)
+              start interval=0 timeout=20 (B-start-interval-0)
+              monitor interval=100 role=Master (B-monitor-interval-100)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "resource update B op start interval=0 timeout=22"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show B")
+        ac(output, """\
+ Resource: B (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=33 (B-monitor-interval-33)
+              start interval=0 timeout=22 (B-start-interval-0)
+              monitor interval=100 role=Master (B-monitor-interval-100)
+""")
+        self.assertEquals(0, returnVal)
 
     def testGroupDeleteTest(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A1 Dummy --group AGroup")
@@ -1173,7 +1439,7 @@ Deleting Resource (and group and M/S) - dummylarge
         assert r==0
 
         o,r = pcs("resource --full")
-        ac (o," Master: F0-master\n  Meta Attrs: notify=true \n  Resource: F0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=10s role=Master (F0-monitor-interval-10s-role-Master)\n               monitor interval=20s role=Slave (F0-monitor-interval-20s-role-Slave)\n")
+        ac (o," Master: F0-master\n  Meta Attrs: notify=true \n  Resource: F0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=10s role=Master (F0-monitor-interval-10s)\n               monitor interval=20s role=Slave (F0-monitor-interval-20s)\n")
         assert r==0
 
     def testBadInstanceVariables(self):
@@ -2034,7 +2300,7 @@ Deleting Resource (and group and M/S) - A2
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource show group0-clone")
-        ac(output," Clone: group0-clone\n  Group: group0\n   Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)\n    Operations: start interval=0s timeout=20 (dummy0-start-timeout-20)\n                stop interval=0s timeout=20 (dummy0-stop-timeout-20)\n                monitor interval=10 timeout=20 (dummy0-monitor-interval-10)\n")
+        ac(output," Clone: group0-clone\n  Group: group0\n   Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)\n    Operations: start interval=0s timeout=20 (dummy0-start-interval-0s)\n                stop interval=0s timeout=20 (dummy0-stop-interval-0s)\n                monitor interval=10 timeout=20 (dummy0-monitor-interval-10)\n")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource disable group0")
         ac(output, "")
@@ -2065,6 +2331,15 @@ Deleting Resource (and group and M/S) - A2
         ac(o,"Error: blah is not a valid op option (use --force to override)\n")
         assert r == 1
 
+        output, returnVal = pcs(
+            temp_cib,
+            "resource op add C monitor interval=60 role=role"
+        )
+        ac(output, """\
+Error: role must be: Stopped, Started, Slave or Master (use --force to override)
+""")
+        assert returnVal == 1
+
         o,r = pcs(temp_cib, "resource show --full")
         ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (B-monitor-interval-60s)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
         assert r == 0
@@ -2078,7 +2353,7 @@ Deleting Resource (and group and M/S) - A2
         assert r == 0
 
         o,r = pcs(temp_cib, "resource show --full")
-        ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (B-monitor-interval-30s)\n              monitor interval=31s role=Master (B-monitor-interval-31s-role-Master)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
+        ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (B-monitor-interval-30s)\n              monitor interval=31s role=Master (B-monitor-interval-31s)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource update B dummy op interval=5s")
@@ -2205,7 +2480,7 @@ Deleting Resource (and group and M/S) - A2
         assert r == 0
 
         o,r = pcs("resource --full")
-        ac(o," Resource: X0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: start interval=0s timeout=20 (X0-start-timeout-20)\n              stop interval=0s timeout=20 (X0-stop-timeout-20)\n              monitor interval=10 timeout=20 (X0-monitor-interval-10)\n Resource: X1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: start interval=0s timeout=20 (X1-start-timeout-20)\n              stop interval=0s timeout=20 (X1-stop-timeout-20)\n              monitor interval=90s (X1-monitor-interval-90s)\n Resource: X2 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=1.1.1.1 \n  Operations: start interval=0s timeout=20s (X2-start-timeout-20s)\n              stop interval=0s timeout=20s (X2-stop-timeout-20s)\n              monitor interval=10s timeout=20s (X2-monitor-interval-10s)\n Resource: X3 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=1.1.1.1 \n  Operations: monitor interval=1s (X3-monitor-interval-1s)\n              start interval=0s timeout=1s (X3-start-timeout-1s)\n              stop interval=0s timeout=1s (X3-stop-timeout-1s)\n")
+        ac(o," Resource: X0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: start interval=0s timeout=20 (X0-start-interval-0s)\n              stop interval=0s timeout=20 (X0-stop-interval-0s)\n              monitor interval=10 timeout=20 (X0-monitor-interval-10)\n Resource: X1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: start interval=0s timeout=20 (X1-start-interval-0s)\n              stop interval=0s timeout=20 (X1-stop-interval-0s)\n              monitor interval=90s (X1-monitor-interval-90s)\n Resource: X2 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=1.1.1.1 \n  Operations: start interval=0s timeout=20s (X2-start-interval-0s)\n              stop interval=0s timeout=20s (X2-stop-interval-0s)\n              monitor interval=10s timeout=20s (X2-monitor-interval-10s)\n Resource: X3 (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=1.1.1.1 \n  Operations: monitor interval=1s (X3-monitor-interval-1s)\n              start interval=0s timeout=1s (X3-start-interval-0s)\n              stop interval=0s timeout=1s (X3-stop-interval-0s)\n")
         assert r == 0
 
     def testClonedMasteredGroup(self):

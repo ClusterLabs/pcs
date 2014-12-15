@@ -5,7 +5,7 @@ import unittest
 import xml.dom.minidom
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
-from pcs_test_functions import pcs
+from pcs_test_functions import pcs, ac
 import utils
 
 empty_cib = "empty.xml"
@@ -645,6 +645,12 @@ class UtilsTest(unittest.TestCase):
         self.assertEquals(utils.get_timeout_seconds("aaa"), None)
         self.assertEquals(utils.get_timeout_seconds(""), None)
 
+        self.assertEquals(utils.get_timeout_seconds("1a1s", True), "1a1s")
+        self.assertEquals(utils.get_timeout_seconds("10m", True), "10m")
+        self.assertEquals(utils.get_timeout_seconds("10mim", True), "10mim")
+        self.assertEquals(utils.get_timeout_seconds("aaa", True), "aaa")
+        self.assertEquals(utils.get_timeout_seconds("", True), "")
+
     def test_get_default_op_timeout(self):
         shutil.copy(empty_cib, temp_cib)
         utils.usefile = True
@@ -667,11 +673,13 @@ class UtilsTest(unittest.TestCase):
         utils.filename = temp_cib
 
         output, retVal = pcs(temp_cib, "property set default-action-timeout=25")
+        ac(output, "")
         self.assertEquals(retVal, 0)
         output, retVal = pcs(
             temp_cib,
             "resource create dummy Dummy op start timeout=33s --no-default-ops"
         )
+        ac(output, "")
         self.assertEquals(retVal, 0)
         dom = xml.dom.minidom.parse(temp_cib)
 
