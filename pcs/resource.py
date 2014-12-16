@@ -397,6 +397,33 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
             if match == False:
                 op_values_agent.append(def_op)
 
+    # find duplicate operations defined in agent and make them unique
+    action_intervals = dict()
+    for op in op_values_agent:
+        if len(op) < 1:
+            continue
+        op_action = op[0]
+        if op_action not in action_intervals:
+            action_intervals[op_action] = set()
+        for key, op_setting in enumerate(op):
+            if key == 0:
+                continue
+            match = re.match("interval=(.+)", op_setting)
+            if match:
+                interval = utils.get_timeout_seconds(match.group(1))
+                if interval is not None:
+                    if interval in action_intervals[op_action]:
+                        old_interval = interval
+                        while interval in action_intervals[op_action]:
+                            interval += 1
+                        op[key] = "interval=%s" % interval
+                        print (
+                            ("Warning: changing a %s operation interval from %s"
+                                + " to %s to make the operation unique")
+                            % (op_action, old_interval, interval)
+                        )
+                    action_intervals[op_action].add(interval)
+
     is_monitor_present = False
     for op in op_values_agent + op_values:
         if len(op) > 0:

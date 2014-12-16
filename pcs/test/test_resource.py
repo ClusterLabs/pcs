@@ -1917,7 +1917,9 @@ Colocation Constraints:
 
     def testMasterOfGroupMove(self):
         o,r = pcs("resource create stateful Stateful --group group1")
-        ac(o,"")
+        ac(o, """\
+Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
+""")
         assert r == 0
 
         o,r = pcs("resource master group1")

@@ -798,11 +798,15 @@ Colocation Constraints:
         assert r == 0
 
         o,r = pcs("resource create stateful1 stateful --master")
-        ac(o,"")
+        ac(o, """\
+Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
+""")
         assert r == 0
 
         o,r = pcs("resource create stateful2 stateful --group statefulG")
-        ac(o,"")
+        ac(o, """\
+Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
+""")
         assert r == 0
 
         o,r = pcs("resource master statefulG")
@@ -911,11 +915,15 @@ Colocation Constraints:
         self.assertEquals(0, returnVal)
 
         output, returnVal = pcs("resource create stateful1 stateful --master")
-        ac(output, "")
+        ac(output, """\
+Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
+""")
         self.assertEquals(0, returnVal)
 
         output, returnVal = pcs("resource create stateful2 stateful --group statefulG")
-        ac(output, "")
+        ac(output, """\
+Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
+""")
         self.assertEquals(0, returnVal)
 
         output, returnVal = pcs("resource master statefulG")
