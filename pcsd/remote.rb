@@ -151,7 +151,7 @@ def cluster_stop(params)
   if params[:name]
     code, response = send_request_with_token(params[:name], 'cluster_stop', true)
   else
-    $logger.info "Starting Daemons"
+    $logger.info "Stopping Daemons"
     output =  `#{PCS} cluster stop`
     $logger.debug output
     return output

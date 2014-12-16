@@ -18,6 +18,7 @@ import datetime
 import commands
 import json
 import xml.dom.minidom
+import threading
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -125,9 +126,7 @@ def sync_start(partial_argv, nodes):
     for node in nodes:
         utils.setCorosyncConfig(node,config)
     print "Starting cluster on nodes: " + ", ".join(nodes) + "..."
-
-    for node in nodes:
-        utils.startCluster(node)
+    start_cluster_nodes(nodes)
 
 def sync(partial_argv,nodes):
     argv = partial_argv[:]
@@ -666,16 +665,22 @@ def start_cluster_all():
     start_cluster_nodes(utils.getNodesFromCorosyncConf())
 
 def start_cluster_nodes(nodes):
-    error_list = utils.map_for_error_list(utils.startCluster, nodes)
-    if len(error_list) > 0:
+    threads = dict()
+    for node in nodes:
+        threads[node] = NodeStartThread(node)
+    error_list = utils.run_node_threads(threads)
+    if error_list:
         utils.err("unable to start all nodes\n" + "\n".join(error_list))
 
 def stop_cluster_all():
     stop_cluster_nodes(utils.getNodesFromCorosyncConf())
 
 def stop_cluster_nodes(nodes):
-    error_list = utils.map_for_error_list(utils.stopCluster, nodes)
-    if len(error_list) > 0:
+    threads = dict()
+    for node in nodes:
+        threads[node] = NodeStopThread(node)
+    error_list = utils.run_node_threads(threads)
+    if error_list:
         utils.err("unable to stop all nodes\n" + "\n".join(error_list))
 
 def node_standby(argv,standby=True):
@@ -740,10 +745,12 @@ def disable_cluster_nodes(nodes):
 
 def destroy_cluster(argv):
     if len(argv) > 0:
-        error_list = utils.map_for_error_list(utils.destroyCluster, argv)
-        if len(error_list) > 0:
+        threads = dict()
+        for node in argv:
+            threads[node] = NodeDestroyThread(node)
+        error_list = utils.run_node_threads(threads)
+        if error_list:
             utils.err("unable to destroy cluster\n" + "\n".join(error_list))
-        return
 
 def stop_cluster(argv):
     if len(argv) > 0:
@@ -1323,4 +1330,23 @@ def cluster_quorum_unblock(argv):
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
     print "Waiting for nodes cancelled"
+
+class NodeActionThread(threading.Thread):
+    def __init__(self, node):
+        super(NodeActionThread, self).__init__()
+        self.node = node
+        self.retval = 0
+        self.output = ""
+
+class NodeStartThread(NodeActionThread):
+    def run(self):
+        self.retval, self.output = utils.startCluster(self.node, quiet=True)
+
+class NodeStopThread(NodeActionThread):
+    def run(self):
+        self.retval, self.output = utils.stopCluster(self.node, quiet=True)
+
+class NodeDestroyThread(NodeActionThread):
+    def run(self):
+        self.retval, self.output = utils.destroyCluster(self.node, quiet=True)
 

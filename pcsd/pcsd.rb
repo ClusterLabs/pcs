@@ -427,7 +427,7 @@ if not DISABLE_GUI
     }
 
     $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
-    code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes_rrp.join(';'), :options => options.to_json}, true, nil, 180)
+    code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes_rrp.join(';'), :options => options.to_json}, true, nil, 60)
 
     if code == 200
       pcs_config.clusters << Cluster.new(@cluster_name, @nodes)

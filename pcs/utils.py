@@ -208,11 +208,11 @@ def setCorosyncConfig(node,config):
         if status != 0:
             err("Unable to set corosync config")
 
-def startCluster(node):
-    return sendHTTPRequest(node, 'remote/cluster_start', None, False, True)
+def startCluster(node, quiet=False):
+    return sendHTTPRequest(node, 'remote/cluster_start', None, False, not quiet)
 
-def stopCluster(node):
-    return sendHTTPRequest(node, 'remote/cluster_stop', None, False, True)
+def stopCluster(node, quiet=False):
+    return sendHTTPRequest(node, 'remote/cluster_stop', None, False, not quiet)
 
 def enableCluster(node):
     return sendHTTPRequest(node, 'remote/cluster_enable', None, False, True)
@@ -220,8 +220,8 @@ def enableCluster(node):
 def disableCluster(node):
     return sendHTTPRequest(node, 'remote/cluster_disable', None, False, True)
 
-def destroyCluster(node):
-    return sendHTTPRequest(node, 'remote/cluster_destroy')
+def destroyCluster(node, quiet=False):
+    return sendHTTPRequest(node, 'remote/cluster_destroy', None, not quiet, not quiet)
 
 def restoreConfig(node, tarball_data):
     data = urllib.urlencode({"tarball": tarball_data})
@@ -790,6 +790,24 @@ def map_for_error_list(callab, iterab):
         (retval, err) = callab(item)
         if retval != 0:
             error_list.append(err)
+    return error_list
+
+def run_node_threads(node_threads):
+    error_list = []
+    for node, thread in node_threads.items():
+        thread.daemon = True
+        thread.start()
+    while node_threads:
+        for node in node_threads.keys():
+            thread = node_threads[node]
+            thread.join(1)
+            if thread.is_alive():
+                continue
+            output = node + ": " + thread.output.strip()
+            print output
+            if thread.retval != 0:
+                error_list.append(output)
+            del node_threads[node]
     return error_list
 
 # Check is something exists in the CIB, if it does return it, if not, return
