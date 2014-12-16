@@ -396,16 +396,17 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                 match = True
             if match == False:
                 op_values_agent.append(def_op)
-    op_values_all = op_values_agent + op_values
 
     is_monitor_present = False
-    for op in op_values_all:
+    for op in op_values_agent + op_values:
         if len(op) > 0:
             if op[0] == "monitor":
                 is_monitor_present = True
                 break
     if not is_monitor_present:
         op_values.append(['monitor'])
+
+    op_values_all = op_values_agent + op_values
 
     if "--disabled" in utils.pcs_options:
         meta_values = [
