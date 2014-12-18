@@ -86,10 +86,12 @@ def updateToken(node,nodes,username,password):
     data = urllib.urlencode(orig_data)
     out = sendHTTPRequest(node, 'remote/auth', data, False, False)
     if out[0] != 0:
-        err("unable to connect to pcsd on %s\n" % node + out[1])
+        err("%s: Unable to connect to pcsd: %s" % (node, out[1]), False)
+        return False
     token = out[1]
     if token == "":
-        err("Username and/or password is incorrect")
+        err("%s: Username and/or password is incorrect" % node, False)
+        return False
 
     tokens = readTokens()
     tokens[node] = token

@@ -657,7 +657,7 @@ def auth(params,request)
 end
 
 # We can't pass username/password on the command line for security purposes
-def pcs_auth(nodes, username, password, force=False)
+def pcs_auth(nodes, username, password, force=false)
   command = [PCS, "cluster", "auth", "--local"] + nodes
   command += ["--force"] if force
   Open4::popen4(*command) {|pid, stdin, stdout, stderr|

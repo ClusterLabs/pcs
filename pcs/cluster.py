@@ -171,6 +171,7 @@ def auth_nodes(nodes):
         password = None
 
     set_nodes = set(nodes)
+    failed_count = 0
     for node in nodes:
         status = utils.checkAuthorization(node)
         need_auth = status[0] == 3 or "--force" in utils.pcs_options
@@ -195,12 +196,18 @@ def auth_nodes(nodes):
                     sys.stdout.write('Password: ')
                     sys.stdout.flush()
                     password = raw_input("")
-            utils.updateToken(node,nodes,username,password)
+            if not utils.updateToken(node,nodes,username,password):
+                failed_count += 1
+                continue
             print "%s: Authorized" % (node)
         elif mutually_authorized:
             print node + ": Already authorized"
         else:
             utils.err("Unable to communicate with %s" % (node), False)
+            failed_count += 1
+
+    if failed_count > 0:
+        sys.exit(failed_count)
 
 
 # If no arguments get current cluster node status, otherwise get listed
