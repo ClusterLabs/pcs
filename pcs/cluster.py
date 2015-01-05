@@ -793,7 +793,7 @@ def cluster_push(argv):
             filename = arg
         else:
             arg_name, arg_value = arg.split("=", 1)
-            if arg_name == "scope":
+            if arg_name == "scope" and "--config" not in utils.pcs_options:
                 if not utils.is_valid_cib_scope(arg_value):
                     utils.err("invalid CIB scope '%s'" % arg_value)
                 else:
@@ -801,6 +801,8 @@ def cluster_push(argv):
             else:
                 usage.cluster(["cib-push"])
                 sys.exit(1)
+    if "--config" in utils.pcs_options:
+        scope = "configuration"
     if not filename:
         usage.cluster(["cib-push"])
         sys.exit(1)
@@ -844,7 +846,7 @@ def cluster_edit(argv):
                 sys.exit(1)
             else:
                 arg_name, arg_value = arg.split("=", 1)
-                if arg_name == "scope":
+                if arg_name == "scope" and "--config" not in utils.pcs_options:
                     if not utils.is_valid_cib_scope(arg_value):
                         utils.err("invalid CIB scope '%s'" % arg_value)
                     else:
@@ -853,6 +855,11 @@ def cluster_edit(argv):
                 else:
                     usage.cluster(["edit"])
                     sys.exit(1)
+        if "--config" in utils.pcs_options:
+            scope = "configuration"
+            # Leave scope_arg empty as cluster_push will pick up a --config
+            # option from utils.pcs_options
+            scope_arg = ""
 
         editor = os.environ['EDITOR']
         tempcib = tempfile.NamedTemporaryFile('w+b',-1,".pcs")
@@ -886,7 +893,7 @@ def get_cib(argv):
             filename = arg
         else:
             arg_name, arg_value = arg.split("=", 1)
-            if arg_name == "scope":
+            if arg_name == "scope" and "--config" not in utils.pcs_options:
                 if not utils.is_valid_cib_scope(arg_value):
                     utils.err("invalid CIB scope '%s'" % arg_value)
                 else:
@@ -894,6 +901,8 @@ def get_cib(argv):
             else:
                 usage.cluster(["cib"])
                 sys.exit(1)
+    if "--config" in utils.pcs_options:
+        scope = "configuration"
 
     if not filename:
         print utils.get_cib(scope),
