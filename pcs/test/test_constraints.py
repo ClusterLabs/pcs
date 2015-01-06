@@ -448,6 +448,27 @@ Colocation Constraints:
         ac(output, "")
         self.assertEquals(0, retValue)
 
+    def testConstraintResourceDiscovery(self):
+        o,r = pcs("resource create crd Dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("resource create crd1 Dummy")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint location crd rule resource-discovery=exclusive score=-INFINITY opsrole ne controller0 and opsrole ne controller1")
+        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        assert r == 0
+
+        o,r = pcs("constraint location crd1 rule resource-discovery=exclusive score=-INFINITY opsrole2 ne controller2")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint --full")
+        ac(o,"Location Constraints:\n  Resource: crd\n    Constraint: location-crd (resource-discovery=exclusive)\n      Rule: score=-INFINITY boolean-op=and  (id:location-crd-rule)\n        Expression: opsrole ne controller0  (id:location-crd-rule-expr)\n        Expression: opsrole ne controller1  (id:location-crd-rule-expr-1)\n  Resource: crd1\n    Constraint: location-crd1 (resource-discovery=exclusive)\n      Rule: score=-INFINITY  (id:location-crd1-rule)\n        Expression: opsrole2 ne controller2  (id:location-crd1-rule-expr)\nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
+
     def testOrderSetsRemoval(self):
         o,r = pcs("resource create T0 Dummy")
         ac(o,"")

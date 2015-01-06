@@ -834,9 +834,9 @@ Commands:
         Create a location constraint on a resource to avoid the specified
         node and score (default score: INFINITY)
 
-    location <resource id> rule [id=<rule id>] [role=master|slave]
-             [constraint-id=<id>] [score=<score>|score-attribute=<attribute>]
-             <expression>
+    location <resource id> rule [id=<rule id>] [resource-discovery=<option>]
+             [role=master|slave] [constraint-id=<id>]
+             [score=<score>|score-attribute=<attribute>] <expression>
         Creates a location rule on the specified resource where the expression
         looks like one of the following:
           defined|not_defined <attribute>
@@ -849,8 +849,9 @@ Commands:
           ( <expression> )
         where duration options and date spec options are: hours, monthdays,
         weekdays, yeardays, months, weeks, years, weekyears, moon
-        If score is ommited it defaults to INFINITY. If id is ommited one is
-        generated from the resource id.
+        If score is omitted it defaults to INFINITY. If id is omitted one is
+        generated from the resource id. If resource-discovery is omitted it
+        defaults to 'always'.
 
     location show [resources|nodes [node id|resource id]...] [--full]
         List all the current location constraints, if 'resources' is specified

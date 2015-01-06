@@ -884,6 +884,7 @@ def location_show(argv):
             show_location_rules(miniruleshash,showDetail, True)
 
 def show_location_rules(ruleshash,showDetail,noheader=False):
+    constraint_options = {}
     for rsc in ruleshash:
         constrainthash= defaultdict(list)
         if not noheader:
@@ -891,9 +892,17 @@ def show_location_rules(ruleshash,showDetail,noheader=False):
         for rule in ruleshash[rsc]:
             constraint_id = rule.parentNode.getAttribute("id")
             constrainthash[constraint_id].append(rule)
+            constraint_options[constraint_id] = []
+            if rule.parentNode.getAttribute("resource-discovery"):
+                constraint_options[constraint_id].append("resource-discovery=%s" % rule.parentNode.getAttribute("resource-discovery"))
 
         for constraint_id in constrainthash.keys():
-            print "    Constraint: " + constraint_id
+            if constraint_id in constraint_options and len(constraint_options[constraint_id]) > 0:
+                constraint_option_info = " (" + " ".join(constraint_options[constraint_id]) + ")"
+            else:
+                constraint_option_info = ""
+
+            print "    Constraint: " + constraint_id + constraint_option_info
             for rule in constrainthash[constraint_id]:
                 print rule_utils.ExportDetailed().get_string(
                     rule, showDetail, "      "
@@ -1006,9 +1015,20 @@ def location_rule(argv):
 
     argv.pop(0) # pop "rule"
 
-    options, rule_argv = rule_utils.parse_argv(argv, {"constraint-id": None,})
-    cib, constraints = getCurrentConstraints(utils.get_cib_dom())
-    lc = cib.createElement("rsc_location")
+    options, rule_argv = rule_utils.parse_argv(argv, {"constraint-id": None, "resource-discovery": None,})
+
+    # If resource-discovery is specified, we use it with the rsc_location
+    # element not the rule
+    if "resource-discovery" in options and options["resource-discovery"]:
+        utils.checkAndUpgradeCIB(2,2,0)
+        cib, constraints = getCurrentConstraints(utils.get_cib_dom())
+        lc = cib.createElement("rsc_location")
+        lc.setAttribute("resource-discovery", options.pop("resource-discovery"))
+    else:
+        cib, constraints = getCurrentConstraints(utils.get_cib_dom())
+        lc = cib.createElement("rsc_location")
+
+
     constraints.appendChild(lc)
     if options.get("constraint-id"):
         id_valid, id_error = utils.validate_xml_id(
