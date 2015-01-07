@@ -107,7 +107,11 @@ def acl_role(argv):
         # Remove any references to this role in acl_target or acl_group
         for elem in dom.getElementsByTagName("role"):
             if elem.getAttribute("id") == role_id:
-                elem.parentNode.removeChild(elem)
+                user_group = elem.parentNode
+                user_group.removeChild(elem)
+                if "--autodelete" in utils.pcs_options:
+                    if not user_group.getElementsByTagName("role"):
+                        user_group.parentNode.removeChild(user_group)
 
         utils.replace_cib_configuration(dom)
     elif command == "assign":

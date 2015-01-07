@@ -213,6 +213,39 @@ Role: role2
 """)
         assert r == 0
 
+        o,r = pcs("acl user create user1 role1 role2")
+        ac(o, "")
+        assert r == 0
+
+        o,r = pcs("acl")
+        ac(o, """\
+User: user1
+  Roles: role1 role2
+Group: group1
+  Roles: role1
+Role: role1
+  Permission: read xpath /xpath1/ (role1-read)
+  Permission: write xpath /xpath2/ (role1-write)
+Role: role2
+  Permission: deny xpath /xpath3/ (role2-deny)
+  Permission: deny xpath /xpath4/ (role2-deny-1)
+""")
+        assert r == 0
+
+        o,r = pcs("acl role delete role1 --autodelete")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("acl")
+        ac(o, """\
+User: user1
+  Roles: role2
+Role: role2
+  Permission: deny xpath /xpath3/ (role2-deny)
+  Permission: deny xpath /xpath4/ (role2-deny-1)
+""")
+        assert r == 0
+
     def testUserGroupCreateDelete(self):
         o,r = pcs("acl")
         assert r == 0

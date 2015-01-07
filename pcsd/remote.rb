@@ -916,7 +916,9 @@ def remove_acl_roles_remote(params)
   errors = ""
   params.each { |name, value|
     if name.index("role-") == 0
-      out, errout, retval = run_cmd(PCS, "acl", "role", "delete", value.to_s)
+      out, errout, retval = run_cmd(
+        PCS, "acl", "role", "delete", value.to_s, "--autodelete"
+      )
       if retval != 0
         errors += "Unable to remove role #{value}"
         unless errout.include?("cib_replace failure")
