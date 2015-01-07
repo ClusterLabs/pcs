@@ -1,7 +1,7 @@
 import sys
 import resource
 #import sys
-#import xml.dom.minidom
+import xml.dom.minidom
 #from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
 import usage
@@ -115,25 +115,60 @@ def stonith_list_options(stonith_agent):
     metadata = utils.get_stonith_metadata(utils.fence_bin + stonith_agent)
     if not metadata:
         utils.err("unable to get metadata for %s" % stonith_agent)
-    print "Stonith options for: %s" % stonith_agent
-    dom = parseString(metadata)
+    try:
+        dom = parseString(metadata)
+    except xml.parsers.expat.ExpatError as e:
+        utils.err("Unable to parse xml for '%s': %s" % (stonith_agent, e))
+
+    title = dom.documentElement.getAttribute("name") or stonith_agent
+    short_desc = dom.documentElement.getAttribute("shortdesc")
+    if not short_desc:
+        for sd in dom.documentElement.getElementsByTagName("shortdesc"):
+            if sd.parentNode.tagName == "resource-agent" and sd.firstChild:
+                short_desc = sd.firstChild.data
+                break
+    long_desc = ""
+    for ld in dom.documentElement.getElementsByTagName("longdesc"):
+        if ld.parentNode.tagName == "resource-agent" and ld.firstChild:
+            long_desc = ld.firstChild.data
+            break
+
+    if short_desc:
+        title += " - " + resource.format_desc(len(title + " - "), short_desc)
+    print title
+    print
+    if long_desc:
+        print " " + resource.format_desc(1, long_desc)
+        print
+    print "Stonith options:"
+
     params = dom.documentElement.getElementsByTagName("parameter")
     for param in params:
         name = param.getAttribute("name")
         if param.getAttribute("required") == "1":
             name += " (required)"
-        desc = param.getElementsByTagName("shortdesc")[0].firstChild.nodeValue.strip().replace("\n", "")
+        desc = ""
+        shortdesc_els = param.getElementsByTagName("shortdesc")
+        if shortdesc_els and shortdesc_els[0].firstChild:
+            desc = shortdesc_els[0].firstChild.nodeValue.strip().replace("\n", "")
+        if not desc:
+            desc = "No description available"
         indent = name.__len__() + 4
         desc = resource.format_desc(indent, desc)
         print "  " + name + ": " + desc
 
     default_stonith_options = utils.get_default_stonith_options()
     for do in default_stonith_options:
-        desc = "No description available"
+        name = do.attrib["name"]
+        desc = ""
         if len(do.findall("shortdesc")) > 0:
             if do.findall("shortdesc")[0].text:
-                desc = do.findall("shortdesc")[0].text
-        print "  " + do.attrib["name"] + ": " + desc
+                desc = do.findall("shortdesc")[0].text.strip()
+        if not desc:
+            desc = "No description available"
+        indent = len(name) + 4
+        desc = resource.format_desc(indent, desc)
+        print "  " + name + ": " + desc
 
 def stonith_level(argv):
     if len(argv) == 0:

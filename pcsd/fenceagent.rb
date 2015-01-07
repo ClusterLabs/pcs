@@ -7,10 +7,11 @@ def getFenceAgents(fence_agent = nil)
     next if fa.name == "fence_ack_manual"
 
     if fence_agent and a.sub(/.*\//,"") == fence_agent.sub(/.*:/,"")
-      required_options, optional_options, advanced_options = getFenceAgentMetadata(fa.name)
+      required_options, optional_options, advanced_options, info = getFenceAgentMetadata(fa.name)
       fa.required_options = required_options
       fa.optional_options = optional_options
       fa.advanced_options = advanced_options
+      fa.info = info
     end
     fence_agent_list[fa.name] = fa
   }
@@ -24,6 +25,21 @@ def getFenceAgentMetadata(fenceagentname)
   #metadata = `stonith_admin --metadata -a #{fenceagentname}`
   metadata = `/usr/sbin/#{fenceagentname} -o metadata`
   doc = REXML::Document.new(metadata)
+
+  short_desc = ""
+  long_desc = ""
+  if doc.root
+    short_desc = doc.root.attributes["shortdesc"]
+  end
+  if short_desc == ""
+    doc.elements.each('resource-agent/shortdesc') {|sd|
+      short_desc = sd.text ? sd.text.strip : sd.text
+    }
+  end
+  doc.elements.each('resource-agent/longdesc') {|ld|
+    long_desc = ld.text ? ld.text.strip : ld.text
+  }
+
   options_required = {}
   options_optional = {}
   options_advanced = {
@@ -57,11 +73,11 @@ def getFenceAgentMetadata(fenceagentname)
       options_optional[param.attributes["name"]] = temp_array
     end
   }
-  [options_required, options_optional, options_advanced]
+  [options_required, options_optional, options_advanced, [short_desc, long_desc]]
 end
 
 class FenceAgent
-  attr_accessor :name, :resource_class, :required_options, :optional_options, :advanced_options
+  attr_accessor :name, :resource_class, :required_options, :optional_options, :advanced_options, :info
   def initialize(name=nil, required_options={}, optional_options={}, resource_class=nil, advanced_options={})
     @name = name
     @required_options = {}
@@ -78,5 +94,19 @@ class FenceAgent
 
   def to_json(options = {})
     JSON.generate({:type => name})
+  end
+
+  def long_desc
+    if info && info.length >= 2
+      return info[1]
+    end
+    return ""
+  end
+
+  def short_desc
+    if info && info.length >= 1
+      return info[0]
+    end
+    return ""
   end
 end

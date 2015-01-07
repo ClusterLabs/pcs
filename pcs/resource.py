@@ -276,13 +276,13 @@ def resource_list_options(resource):
             dom = parseString(metadata)
             long_descs = dom.documentElement.getElementsByTagName("longdesc")
             for ld in long_descs:
-                if ld.parentNode.tagName == "resource-agent":
+                if ld.parentNode.tagName == "resource-agent" and ld.firstChild:
                     long_desc = ld.firstChild.data
                     break
 
             short_descs = dom.documentElement.getElementsByTagName("shortdesc")
             for sd in short_descs:
-                if sd.parentNode.tagName == "resource-agent":
+                if sd.parentNode.tagName == "resource-agent" and sd.firstChild:
                     short_desc = sd.firstChild.data
                     break
             
@@ -299,7 +299,12 @@ def resource_list_options(resource):
                 name = param.getAttribute("name")
                 if param.getAttribute("required") == "1":
                     name += " (required)"
-                desc = param.getElementsByTagName("longdesc")[0].firstChild.nodeValue.strip().replace("\n", " ")
+                desc = ""
+                longdesc_els = param.getElementsByTagName("longdesc")
+                if longdesc_els and longdesc_els[0].firstChild:
+                    desc = longdesc_els[0].firstChild.nodeValue.strip().replace("\n", "")
+                if not desc:
+                    desc = "No description available"
                 indent = name.__len__() + 4
                 desc = format_desc(indent, desc)
                 print "  " + name + ": " + desc

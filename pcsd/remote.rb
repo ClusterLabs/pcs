@@ -858,7 +858,7 @@ end
 def fence_device_metadata (params)
   return 200 if not params[:resourcename] or params[:resourcename] == ""
   @fenceagent = FenceAgent.new(params[:resourcename])
-  @fenceagent.required_options, @fenceagent.optional_options, @fenceagent.advanced_options = getFenceAgentMetadata(params[:resourcename])
+  @fenceagent.required_options, @fenceagent.optional_options, @fenceagent.advanced_options, @fenceagent.info = getFenceAgentMetadata(params[:resourcename])
   @new_fenceagent = params[:new]
   
   erb :fenceagentform
