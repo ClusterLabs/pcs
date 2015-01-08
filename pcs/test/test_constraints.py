@@ -469,6 +469,34 @@ Colocation Constraints:
         ac(o,"Location Constraints:\n  Resource: crd\n    Constraint: location-crd (resource-discovery=exclusive)\n      Rule: score=-INFINITY boolean-op=and  (id:location-crd-rule)\n        Expression: opsrole ne controller0  (id:location-crd-rule-expr)\n        Expression: opsrole ne controller1  (id:location-crd-rule-expr-1)\n  Resource: crd1\n    Constraint: location-crd1 (resource-discovery=exclusive)\n      Rule: score=-INFINITY  (id:location-crd1-rule)\n        Expression: opsrole2 ne controller2  (id:location-crd1-rule-expr)\nOrdering Constraints:\nColocation Constraints:\n")
         assert r == 0
 
+        o,r = pcs("constraint delete location-crd")
+        ac(o,"")
+        assert r==0
+
+        o,r = pcs("constraint delete location-crd1")
+        ac(o,"")
+        assert r==0
+
+        o,r = pcs("constraint --full")
+        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
+
+        o,r = pcs("constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never")
+        ac(o,"")
+        assert r == 0
+
+        o,r = pcs("constraint --full")
+        ac(o,"Location Constraints:\n  Resource: crd\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=always) (id:my_constraint_id)\n  Resource: crd1\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=never) (id:my_constraint_id2)\nOrdering Constraints:\nColocation Constraints:\n")
+        assert r == 0
+
+        o,r = pcs("constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test")
+        ac(o,"Error: bad option 'bad-opt', use --force to override\n")
+        assert r == 1
+
     def testOrderSetsRemoval(self):
         o,r = pcs("resource create T0 Dummy")
         ac(o,"")

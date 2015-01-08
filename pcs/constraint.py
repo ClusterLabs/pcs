@@ -788,6 +788,7 @@ def location_show(argv):
         lc_score = rsc_loc.getAttribute("score")
         lc_role = rsc_loc.getAttribute("role")
         lc_name = "Resource: " + lc_rsc
+        lc_resource_discovery = rsc_loc.getAttribute("resource-discovery")
 
         for child in rsc_loc.childNodes:
             if child.nodeType == child.ELEMENT_NODE and child.tagName == "rule":
@@ -815,14 +816,14 @@ def location_show(argv):
             rschash = rschashoff
 
         if lc_node in nodeshash:
-            nodeshash[lc_node].append((lc_id,lc_rsc,lc_score, lc_role))
+            nodeshash[lc_node].append((lc_id,lc_rsc,lc_score, lc_role, lc_resource_discovery))
         else:
-            nodeshash[lc_node] = [(lc_id, lc_rsc,lc_score, lc_role)]
+            nodeshash[lc_node] = [(lc_id, lc_rsc,lc_score, lc_role, lc_resource_discovery)]
 
         if lc_rsc in rschash:
-            rschash[lc_rsc].append((lc_id,lc_node,lc_score, lc_role))
+            rschash[lc_rsc].append((lc_id,lc_node,lc_score, lc_role, lc_resource_discovery))
         else:
-            rschash[lc_rsc] = [(lc_id,lc_node,lc_score, lc_role)]
+            rschash[lc_rsc] = [(lc_id,lc_node,lc_score, lc_role, lc_resource_discovery)]
 
     nodelist = list(set(nodehashon.keys() + nodehashoff.keys()))
     rsclist = list(set(rschashon.keys() + rschashoff.keys()))
@@ -840,6 +841,8 @@ def location_show(argv):
                     print "      " + options[1] +  " (" + options[0] + ")",
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
+                    if (options[4] != ""):
+                        print "(resource-discovery="+options[4]+")",
                     print "Score: "+ options[2]
 
             if (node in nodehashoff):
@@ -848,6 +851,8 @@ def location_show(argv):
                     print "      " + options[1] +  " (" + options[0] + ")",
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
+                    if (options[4] != ""):
+                        print "(resource-discovery="+options[4]+")",
                     print "Score: "+ options[2]
         show_location_rules(ruleshash,showDetail)
     else:
@@ -866,6 +871,8 @@ def location_show(argv):
                     print "(score:"+options[2]+")",
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
+                    if (options[4] != ""):
+                        print "(resource-discovery="+options[4]+")",
                     if showDetail:
                         print "(id:"+options[0]+")",
                     print
@@ -876,6 +883,8 @@ def location_show(argv):
                     print "(score:"+options[2]+")",
                     if (options[3] != ""):
                         print "(role: "+options[3]+")",
+                    if (options[4] != ""):
+                        print "(resource-discovery="+options[4]+")",
                     if showDetail:
                         print "(id:"+options[0]+")",
                     print 
@@ -943,7 +952,7 @@ def location_prefer(argv):
         
 
 def location_add(argv,rm=False):
-    if len(argv) != 4 and (rm == False or len(argv) < 1): 
+    if len(argv) < 4 and (rm == False or len(argv) < 1): 
         usage.constraint()
         sys.exit(1)
 
@@ -961,6 +970,20 @@ def location_add(argv,rm=False):
         resource_name = argv.pop(0)
         node = argv.pop(0)
         score = argv.pop(0)
+        options = []
+        # For now we only allow setting resource-discovery
+        if len(argv) > 0:
+            for arg in argv:
+                if '=' in arg:
+                    options.append(arg.split('=',1))
+                else:
+                    print "Error: bad option '%s'" % arg
+                    usage.constraint(["location add"])
+                    sys.exit(1)
+                if options[-1][0] != "resource-discovery" and "--force" not in utils.pcs_options:
+                    utils.err("bad option '%s', use --force to override" % options[-1][0])
+
+
         resource_valid, resource_error, correct_id \
             = utils.validate_constraint_resource(
                 utils.get_cib_dom(), resource_name
@@ -996,6 +1019,8 @@ def location_add(argv,rm=False):
         element.setAttribute("rsc",resource_name)
         element.setAttribute("node",node)
         element.setAttribute("score",score)
+        for option in options:
+            element.setAttribute(option[0], option[1])
         constraintsElement.appendChild(element)
 
     utils.replace_cib_configuration(dom)

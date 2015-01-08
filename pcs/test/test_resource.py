@@ -1141,20 +1141,20 @@ Deleting Resource (and group) - dummylarge
 
     def testCloneRemove(self):
         o,r = pcs("resource create --no-default-ops D1 Dummy --clone")
-        assert r == 0
         ac(o,"")
+        assert r == 0
 
         o,r = pcs("constraint location D1-clone prefers rh7-1")
-        assert r == 0
         ac(o,"")
+        assert r == 0
 
         o,r = pcs("constraint location D1 prefers rh7-1 --force")
-        assert r == 0
         ac(o,"")
+        assert r == 0
 
         o,r = pcs("resource --full")
-        assert r == 0
         ac(o," Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n")
+        assert r == 0
 
         o,r = pcs("resource delete D1-clone")
         assert r == 0

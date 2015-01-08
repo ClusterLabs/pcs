@@ -870,7 +870,7 @@ Commands:
         nodes or resources are specified then we only show information about
         them
 
-    location add <id> <resource name> <node> <score>
+    location add <id> <resource name> <node> <score> [resource-discovery=<option>]
         Add a location constraint with the appropriate id, resource name,
         node name and score. (For more advanced pacemaker usage)
 
