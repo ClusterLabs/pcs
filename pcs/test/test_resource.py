@@ -96,15 +96,55 @@ class ResourceTest(unittest.TestCase):
 
         output, returnVal = pcs(temp_cib, "resource describe ocf:heartbeat:Dummy")
         assert returnVal == 0
-        ac(output,"ocf:heartbeat:Dummy - Example stateless resource agent\n\n This is a Dummy Resource Agent. It does absolutely nothing except keep track of\n whether its running or not. Its purpose in life is for testing and to serve as\n a template for RA writers. NB: Please pay attention to the timeouts specified\n in the actions section below. They should be meaningful for the kind of\n resource the agent manages. They should be the minimum advised timeouts, but\n they shouldn't/cannot cover _all_ possible resource instances. So, try to be\n neither overly generous nor too stingy, but moderate. The minimum timeouts\n should never be below 10 seconds.\n\nResource options:\n  state: Location to store the resource state in.\n  fake: Fake attribute that can be changed to cause a reload\n")
+        ac(output, """\
+ocf:heartbeat:Dummy - Example stateless resource agent
+
+This is a Dummy Resource Agent. It does absolutely nothing except 
+keep track of whether its running or not.
+Its purpose in life is for testing and to serve as a template for RA writers.
+
+NB: Please pay attention to the timeouts specified in the actions
+section below. They should be meaningful for the kind of resource
+the agent manages. They should be the minimum advised timeouts,
+but they shouldn't/cannot cover _all_ possible resource
+instances. So, try to be neither overly generous nor too stingy,
+but moderate. The minimum timeouts should never be below 10 seconds.
+
+Resource options:
+  state: Location to store the resource state in.
+  fake: Fake attribute that can be changed to cause a reload
+""")
 
         output, returnVal = pcs(temp_cib, "resource describe Dummy")
         assert returnVal == 0
-        ac(output,"ocf:heartbeat:Dummy - Example stateless resource agent\n\n This is a Dummy Resource Agent. It does absolutely nothing except keep track of\n whether its running or not. Its purpose in life is for testing and to serve as\n a template for RA writers. NB: Please pay attention to the timeouts specified\n in the actions section below. They should be meaningful for the kind of\n resource the agent manages. They should be the minimum advised timeouts, but\n they shouldn't/cannot cover _all_ possible resource instances. So, try to be\n neither overly generous nor too stingy, but moderate. The minimum timeouts\n should never be below 10 seconds.\n\nResource options:\n  state: Location to store the resource state in.\n  fake: Fake attribute that can be changed to cause a reload\n")
+        ac(output, """\
+ocf:heartbeat:Dummy - Example stateless resource agent
+
+This is a Dummy Resource Agent. It does absolutely nothing except 
+keep track of whether its running or not.
+Its purpose in life is for testing and to serve as a template for RA writers.
+
+NB: Please pay attention to the timeouts specified in the actions
+section below. They should be meaningful for the kind of resource
+the agent manages. They should be the minimum advised timeouts,
+but they shouldn't/cannot cover _all_ possible resource
+instances. So, try to be neither overly generous nor too stingy,
+but moderate. The minimum timeouts should never be below 10 seconds.
+
+Resource options:
+  state: Location to store the resource state in.
+  fake: Fake attribute that can be changed to cause a reload
+""")
 
         output, returnVal = pcs(temp_cib, "resource describe SystemHealth")
         assert returnVal == 0
-        ac(output,"ocf:pacemaker:SystemHealth - SystemHealth resource agent\n\n This is a SystemHealth Resource Agent. It is used to monitor the health of a\n system via IPMI.\n\n")
+        ac(output, """\
+ocf:pacemaker:SystemHealth - SystemHealth resource agent
+
+This is a SystemHealth Resource Agent.  It is used to monitor
+the health of a system via IPMI.
+
+""")
 
     def testAddResources(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
