@@ -969,6 +969,12 @@ Commands:
     [show]
         List all current access control lists
 
+    enable
+        Enable access control lists
+
+    disable
+        Disable access control lists
+
     role create <role name> [description=<description>] [((read | write | deny)
                                                 (xpath <query> | id <id>))...]
         Create a role with the name and (optional) description specified.

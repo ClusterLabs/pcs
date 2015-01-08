@@ -1,6 +1,7 @@
 import sys
 import usage
 import utils
+import prop
 
 def acl_cmd(argv):
     if len(argv) == 0:
@@ -18,6 +19,10 @@ def acl_cmd(argv):
         acl_show(argv)
 #    elif (sub_cmd == "grant"):
 #        acl_grant(argv)
+    elif (sub_cmd == "enable"):
+        acl_enable(argv)
+    elif (sub_cmd == "disable"):
+        acl_disable(argv)
     elif (sub_cmd == "role"):
         acl_role(argv)
     elif (sub_cmd == "target" or sub_cmd == "user"):
@@ -33,9 +38,23 @@ def acl_cmd(argv):
 def acl_show(argv):
     dom = utils.get_cib_dom()
 
+    properties = prop.get_set_properties(defaults=prop.get_default_properties())
+    acl_enabled = properties.get("enable-acl", "").lower()
+    if utils.is_cib_true(acl_enabled):
+        print "ACLs are enabled"
+    else:
+        print "ACLs are disabled, run 'pcs acl enable' to enable"
+    print
+
     print_targets(dom)
     print_groups(dom)
     print_roles(dom)
+
+def acl_enable(argv):
+    prop.set_property(["enable-acl=true"])
+
+def acl_disable(argv):
+    prop.set_property(["enable-acl=false"])
 
 def acl_grant(argv):
     print "Not yet implemented"

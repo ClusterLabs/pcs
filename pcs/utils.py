@@ -2129,6 +2129,11 @@ def is_iso8601_date(var):
     output, retVal = run(["iso8601", "-d", var])
     return retVal == 0
 
+# Does pacemaker consider a variable as true in cib?
+# See crm_is_true in pacemaker/lib/common/utils.c
+def is_cib_true(var):
+    return var.lower() in ("true", "on", "yes", "y", "1")
+
 def is_systemctl():
     if os.path.exists('/usr/bin/systemctl'):
         return True

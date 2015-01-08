@@ -20,7 +20,7 @@ class ACLTest(unittest.TestCase):
         shutil.copy(old_cib, old_temp_cib)
 
         o,r = pcs(old_temp_cib, "acl show")
-        ac(o,"")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\n")
         assert r == 0
 
         with open(old_temp_cib) as myfile:
@@ -36,6 +36,31 @@ class ACLTest(unittest.TestCase):
             data = myfile.read()
             assert data.find("pacemaker-1.2") == -1
             assert data.find("pacemaker-2.") != -1
+
+    def testEnableDisable(self):
+        o,r = pcs("acl disable")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs("acl")
+        assert r == 0
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\n")
+
+        o,r = pcs("acl enable")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs("acl")
+        assert r == 0
+        ac(o,"ACLs are enabled\n\n")
+
+        o,r = pcs("acl disable")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs("acl")
+        assert r == 0
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\n")
 
     def testUserGroupCreateDeleteWithRoles(self):
         o,r = pcs("acl role create role1 read xpath /xpath1/ write xpath /xpath2/")
@@ -60,7 +85,7 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: role1 role2\nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: role1 role2\nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
 
         o,r = pcs("acl role create user1")
         assert r == 1
@@ -112,7 +137,7 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: role1 role2 role3\nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: role1 role2 role3\nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
 
         o,r = pcs("acl role unassign noexist from user1")
         assert r == 1
@@ -128,7 +153,7 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: role1 role2\nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: role1 role2\nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
 
         o,r = pcs("acl role unassign role2 from user1")
         assert r == 0
@@ -140,7 +165,7 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: \nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: \nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
 
         o,r = pcs("acl role delete role3")
         assert r == 0
@@ -148,7 +173,7 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: \nGroup: group1\n  Roles: role1\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: \nGroup: group1\n  Roles: role1\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\n")
 
         o,r = pcs("acl role assign role2 to user1")
         assert r == 0
@@ -156,7 +181,7 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: role2\nGroup: group1\n  Roles: role1\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: role2\nGroup: group1\n  Roles: role1\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\n")
 
         o,r = pcs("acl role assign role1 user1")
         ac(o,"")
@@ -164,6 +189,8 @@ class ACLTest(unittest.TestCase):
 
         o,r = pcs("acl")
         ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
 User: user1
   Roles: role2 role1
 Group: group1
@@ -183,6 +210,8 @@ Role: role2
 
         o,r = pcs("acl")
         ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
 User: user1
   Roles: role1
 Group: group1
@@ -202,6 +231,8 @@ Role: role2
 
         o,r = pcs("acl")
         ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
 Group: group1
   Roles: role1
 Role: role1
@@ -219,6 +250,8 @@ Role: role2
 
         o,r = pcs("acl")
         ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
 User: user1
   Roles: role1 role2
 Group: group1
@@ -238,6 +271,8 @@ Role: role2
 
         o,r = pcs("acl")
         ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
 User: user1
   Roles: role2
 Role: role2
@@ -249,7 +284,7 @@ Role: role2
     def testUserGroupCreateDelete(self):
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\n")
 
         o,r = pcs("acl user create user1")
         ac(o,"")
@@ -277,7 +312,7 @@ Role: role2
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: \nUser: user2\n  Roles: \nGroup: group1\n  Roles: \nGroup: group2\n  Roles: \n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: \nUser: user2\n  Roles: \nGroup: group1\n  Roles: \nGroup: group2\n  Roles: \n")
 
         o,r = pcs("acl group delete user1")
         assert r == 1
@@ -285,7 +320,7 @@ Role: role2
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: \nUser: user2\n  Roles: \nGroup: group1\n  Roles: \nGroup: group2\n  Roles: \n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: \nUser: user2\n  Roles: \nGroup: group1\n  Roles: \nGroup: group2\n  Roles: \n")
 
         o,r = pcs("acl group delete group2")
         ac(o,"")
@@ -293,7 +328,7 @@ Role: role2
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: \nUser: user2\n  Roles: \nGroup: group1\n  Roles: \n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: \nUser: user2\n  Roles: \nGroup: group1\n  Roles: \n")
 
         o,r = pcs("acl group delete group1")
         ac(o,"")
@@ -301,7 +336,7 @@ Role: role2
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user1\n  Roles: \nUser: user2\n  Roles: \n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: \nUser: user2\n  Roles: \n")
 
         o,r = pcs("acl user delete user1")
         ac(o,"")
@@ -309,7 +344,7 @@ Role: role2
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"User: user2\n  Roles: \n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user2\n  Roles: \n")
 
         o,r = pcs("acl user delete user2")
         ac(o,"")
@@ -317,7 +352,7 @@ Role: role2
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\n")
 
     def testRoleCreateDelete(self):
         o,r = pcs("acl role create role0")
@@ -345,7 +380,7 @@ Role: role2
         ac(o,"")
 
         o,r = pcs("acl")
-        ac(o,"Role: role0\nRole: role0d\n  Description: empty role\nRole: role1\n  Permission: read xpath /xpath/ (role1-read)\nRole: role2\n  Description: with description\n  Permission: read xpath /xpath/ (role2-read)\nRole: role3\n  Permission: read xpath /xpath_query/ (role3-read)\n  Permission: write xpath /xpath_query2/ (role3-write)\n  Permission: deny xpath /xpath_query3/ (role3-deny)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role0\nRole: role0d\n  Description: empty role\nRole: role1\n  Permission: read xpath /xpath/ (role1-read)\nRole: role2\n  Description: with description\n  Permission: read xpath /xpath/ (role2-read)\nRole: role3\n  Permission: read xpath /xpath_query/ (role3-read)\n  Permission: write xpath /xpath_query2/ (role3-write)\n  Permission: deny xpath /xpath_query3/ (role3-deny)\n")
         assert r == 0
 
         o,r = pcs("acl role delete role2")
@@ -353,7 +388,7 @@ Role: role2
         ac(o,"")
 
         o,r = pcs("acl")
-        ac(o,"Role: role0\nRole: role0d\n  Description: empty role\nRole: role1\n  Permission: read xpath /xpath/ (role1-read)\nRole: role3\n  Permission: read xpath /xpath_query/ (role3-read)\n  Permission: write xpath /xpath_query2/ (role3-write)\n  Permission: deny xpath /xpath_query3/ (role3-deny)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role0\nRole: role0d\n  Description: empty role\nRole: role1\n  Permission: read xpath /xpath/ (role1-read)\nRole: role3\n  Permission: read xpath /xpath_query/ (role3-read)\n  Permission: write xpath /xpath_query2/ (role3-write)\n  Permission: deny xpath /xpath_query3/ (role3-deny)\n")
         assert r == 0
 
         o,r = pcs("acl role delete role2")
@@ -377,7 +412,7 @@ Role: role2
         ac(o,"")
 
         o,r = pcs("acl")
-        ac(o,"")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\n")
         assert r == 0
 
     def testPermissionAddDelete(self):
@@ -395,7 +430,7 @@ Role: role2
 
         o,r = pcs("acl show")
         assert r == 0
-        ac(o,"Role: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: write xpath /xpath6/ (role3-write)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: write xpath /xpath6/ (role3-write)\n")
 
         o,r = pcs("acl permission add role1 deny xpath /myxpath1/")
         ac(o,"")
@@ -407,7 +442,7 @@ Role: role2
 
         o,r = pcs("acl show")
         assert r == 0
-        ac(o,"Role: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: write xpath /xpath6/ (role3-write)\nRole: role4\n  Permission: deny xpath /myxpath2/ (role4-deny)\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: write xpath /xpath6/ (role3-write)\nRole: role4\n  Permission: deny xpath /myxpath2/ (role4-deny)\n")
 
         o,r = pcs("acl permission delete role4-deny")
         ac(o,"")
@@ -419,7 +454,7 @@ Role: role2
 
         o,r = pcs("acl show")
         assert r == 0
-        ac(o,"Role: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: write xpath /xpath6/ (role3-write)\nRole: role4\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: write xpath /xpath6/ (role3-write)\nRole: role4\n")
 
         o,r = pcs("acl permission delete role3-read")
         ac(o,"")
@@ -430,7 +465,7 @@ Role: role2
         assert r == 0
 
         o,r = pcs("acl")
-        ac(o,"Role: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\nRole: role4\n")
+        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\nRole: role4\n")
         assert r == 0
 
 if __name__ == "__main__":
