@@ -8,7 +8,7 @@
       </tr>
       <tr>
         <td></td>
-        <td><div class="long_desc_div reg" style="display:none;max-width:350px;"><%= h(@fenceagent.long_desc)%></div></td>
+        <td><div class="long_desc_div reg"><%= nl2br(h(@fenceagent.long_desc))%></div></td>
       </tr>
       <% if @new_fenceagent %>
 	<tr>

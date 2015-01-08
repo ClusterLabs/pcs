@@ -277,20 +277,23 @@ def resource_list_options(resource):
             long_descs = dom.documentElement.getElementsByTagName("longdesc")
             for ld in long_descs:
                 if ld.parentNode.tagName == "resource-agent" and ld.firstChild:
-                    long_desc = ld.firstChild.data
+                    long_desc = ld.firstChild.data.strip()
                     break
 
             short_descs = dom.documentElement.getElementsByTagName("shortdesc")
             for sd in short_descs:
                 if sd.parentNode.tagName == "resource-agent" and sd.firstChild:
-                    short_desc = sd.firstChild.data
+                    short_desc = sd.firstChild.data.strip()
                     break
             
-            title_1 = "ocf:%s:%s - " % (provider, resource)
-            print title_1 + format_desc(len(title_1),short_desc)
+            title_1 = "ocf:%s:%s" % (provider, resource)
+            if short_desc:
+                title_1 += " - " + format_desc(len(title_1 + " - "), short_desc)
+            print title_1
             print 
-            print " " + format_desc(1,long_desc)
-            print
+            if long_desc:
+                print long_desc
+                print
 
             params = dom.documentElement.getElementsByTagName("parameter")
             if len(params) > 0:

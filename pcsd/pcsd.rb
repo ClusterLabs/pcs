@@ -739,4 +739,8 @@ helpers do
   def h(text)
     Rack::Utils.escape_html(text)
   end
+
+  def nl2br(text)
+    text.gsub(/\n/, "<br>")
+  end
 end

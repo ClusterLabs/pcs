@@ -741,3 +741,15 @@ li.menuheader {
 .hover-pointer {
   cursor: pointer;
 }
+
+.long_desc_div {
+  display: none;
+  font-size: 12px;
+  max-width: 450px;
+}
+#new_resource_agent .long_desc_div {
+  max-width: 350px;
+}
+#new_stonith_agent .long_desc_div {
+  max-width: 350px;
+}

@@ -125,12 +125,12 @@ def stonith_list_options(stonith_agent):
     if not short_desc:
         for sd in dom.documentElement.getElementsByTagName("shortdesc"):
             if sd.parentNode.tagName == "resource-agent" and sd.firstChild:
-                short_desc = sd.firstChild.data
+                short_desc = sd.firstChild.data.strip()
                 break
     long_desc = ""
     for ld in dom.documentElement.getElementsByTagName("longdesc"):
         if ld.parentNode.tagName == "resource-agent" and ld.firstChild:
-            long_desc = ld.firstChild.data
+            long_desc = ld.firstChild.data.strip()
             break
 
     if short_desc:
@@ -138,7 +138,7 @@ def stonith_list_options(stonith_agent):
     print title
     print
     if long_desc:
-        print " " + resource.format_desc(1, long_desc)
+        print long_desc
         print
     print "Stonith options:"
 
