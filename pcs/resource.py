@@ -1717,6 +1717,14 @@ def resource_remove(resource_id, output = True):
     if (group != ""):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
 
+    if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(resource_id, 0, True)[0]:
+        sys.stdout.write("Attempting to stop: "+ resource_id + "...")
+        sys.stdout.flush()
+        resource_disable([resource_id])
+        if not utils.is_resource_started(resource_id, 15, True)[0]:
+            utils.err("Unable to stop: %s before deleting (re-run with --force to force deletion)" % resource_id)
+        print "Stopped"
+
     constraint.remove_constraints_containing(resource_id,output)
     resource_el = utils.dom_get_resource(dom, resource_id)
     if resource_el:
@@ -1727,14 +1735,6 @@ def resource_remove(resource_id, output = True):
             )
             utils.replace_cib_configuration(dom)
             dom = utils.get_cib_dom()
-
-    if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(resource_id, 0, True)[0]:
-        sys.stdout.write("Attempting to stop: "+ resource_id + "...")
-        sys.stdout.flush()
-        resource_disable([resource_id])
-        if not utils.is_resource_started(resource_id, 15, True)[0]:
-            utils.err("Unable to stop: %s before deleting (re-run with --force to force deletion)" % resource_id)
-        print "Stopped"
 
     if (group == "" or num_resources_in_group > 1):
         master_xpath = '//master/primitive[@id="'+resource_id+'"]/..'
