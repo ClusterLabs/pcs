@@ -19,6 +19,7 @@ import commands
 import json
 import xml.dom.minidom
 import threading
+import time
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -676,6 +677,37 @@ def stop_cluster_all():
     stop_cluster_nodes(utils.getNodesFromCorosyncConf())
 
 def stop_cluster_nodes(nodes):
+    error_list = []
+    for node in nodes:
+        command = ["crm_standby", "-v", "on", "-N", node, "-l", "reboot"]
+        output, retval = utils.run(command)
+        if retval == 0 and not output:
+            output = "Cluster standing by..."
+        output = node + ": " + output.strip()
+        print output
+        if retval != 0:
+            error_list.append(output)
+    if error_list:
+        utils.err("unable to stand by all nodes\n" + "\n".join(error_list))
+
+    if not "--force" in utils.pcs_options:
+        print "Waiting for resources to stop/move... (use --force to skip)"
+        while True:
+            resource_running = False
+            state_dom = utils.getClusterState()
+            for resource_el in state_dom.getElementsByTagName("resource"):
+                if resource_el.getAttribute("managed") == "false":
+                    continue
+                for node_el in resource_el.getElementsByTagName("node"):
+                    if node_el.getAttribute("name") in nodes:
+                        resource_running = True
+                        break
+                if resource_running:
+                    break
+            if not resource_running:
+                break
+            time.sleep(1)
+
     threads = dict()
     for node in nodes:
         threads[node] = NodeStopThread(node)
