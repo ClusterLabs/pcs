@@ -1956,18 +1956,36 @@ def resource_show(argv, stonith=False):
         return
 
     if len(argv) == 0:    
-        args = ["crm_resource","-L"]
-        output,retval = utils.run(args)
+        output, retval = utils.run(["crm_mon", "-1", "-r"])
         if retval != 0:
-            utils.err("unable to get resource list from crm_resource\n"+output.rstrip())
+            utils.err("unable to get cluster status from crm_mon\n"+output.rstrip())
         preg = re.compile(r'.*(stonith:.*)')
+        resources_header = False
+        in_resources = False
+        has_resources = False
         for line in output.split('\n'):
-            if line == "":
+            if line == "Full list of resources:":
+                resources_header = True
                 continue
-            if not preg.match(line) and not stonith:
-                print line
-            elif preg.match(line) and stonith:
-                print line
+            if line == "":
+                if resources_header:
+                    resources_header = False
+                    in_resources = True
+                elif in_resources:
+                    if not has_resources:
+                        if not stonith:
+                            print "NO resources configured"
+                        else:
+                            print "NO stonith devices configured"
+                    return
+                continue
+            if in_resources:
+                if not preg.match(line) and not stonith:
+                    has_resources = True
+                    print line
+                elif preg.match(line) and stonith:
+                    has_resources = True
+                    print line
         return
 
     preg = re.compile(r'.*xml:\n',re.DOTALL)
