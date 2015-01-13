@@ -4,7 +4,7 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
-from pcs_test_functions import pcs,ac
+from pcs_test_functions import pcs,ac,isMinimumPacemakerVersion
 
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
@@ -449,6 +449,10 @@ Colocation Constraints:
         self.assertEquals(0, retValue)
 
     def testConstraintResourceDiscovery(self):
+        if not isMinimumPacemakerVersion(1,1,12):
+            print "WARNING: Pacemaker version is too old (must be >= 1.1.12) to test resource-discovery"
+            return
+
         o,r = pcs("resource create crd Dummy")
         ac(o,"")
         assert r == 0
