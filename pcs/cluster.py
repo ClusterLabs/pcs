@@ -19,7 +19,6 @@ import commands
 import json
 import xml.dom.minidom
 import threading
-import time
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
@@ -677,40 +676,16 @@ def stop_cluster_all():
     stop_cluster_nodes(utils.getNodesFromCorosyncConf())
 
 def stop_cluster_nodes(nodes):
-    error_list = []
+    threads = dict()
     for node in nodes:
-        command = ["crm_standby", "-v", "on", "-N", node, "-l", "reboot"]
-        output, retval = utils.run(command)
-        if retval == 0 and not output:
-            output = "Cluster standing by..."
-        output = node + ": " + output.strip()
-        print output
-        if retval != 0:
-            error_list.append(output)
+        threads[node] = NodeStopPacemakerThread(node)
+    error_list = utils.run_node_threads(threads)
     if error_list:
-        utils.err("unable to stand by all nodes\n" + "\n".join(error_list))
-
-    if not "--force" in utils.pcs_options:
-        print "Waiting for resources to stop/move... (use --force to skip)"
-        while True:
-            resource_running = False
-            state_dom = utils.getClusterState()
-            for resource_el in state_dom.getElementsByTagName("resource"):
-                if resource_el.getAttribute("managed") == "false":
-                    continue
-                for node_el in resource_el.getElementsByTagName("node"):
-                    if node_el.getAttribute("name") in nodes:
-                        resource_running = True
-                        break
-                if resource_running:
-                    break
-            if not resource_running:
-                break
-            time.sleep(1)
+        utils.err("unable to stop all nodes\n" + "\n".join(error_list))
 
     threads = dict()
     for node in nodes:
-        threads[node] = NodeStopThread(node)
+        threads[node] = NodeStopCorosyncThread(node)
     error_list = utils.run_node_threads(threads)
     if error_list:
         utils.err("unable to stop all nodes\n" + "\n".join(error_list))
@@ -789,17 +764,32 @@ def stop_cluster(argv):
         stop_cluster_nodes(argv)
         return
 
-    print "Stopping Cluster..."
+    stop_all = (
+        "--pacemaker" not in utils.pcs_options
+        and
+        "--corosync" not in utils.pcs_options
+    )
+    if stop_all or "--pacemaker" in utils.pcs_options:
+        stop_cluster_pacemaker()
+    if stop_all or "--corosync" in utils.pcs_options:
+        stop_cluster_corosync()
+
+def stop_cluster_pacemaker():
+    print "Stopping Cluster (pacemaker)...",
     output, retval = utils.run(["service", "pacemaker","stop"])
     if retval != 0:
         print output,
         utils.err("unable to stop pacemaker")
+
+def stop_cluster_corosync():
     if utils.is_rhel6():
+        print "Stopping Cluster (cman)...",
         output, retval = utils.run(["service", "cman","stop"])
         if retval != 0:
             print output,
             utils.err("unable to stop cman")
     else:
+        print "Stopping Cluster (corosync)...",
         output, retval = utils.run(["service", "corosync","stop"])
         if retval != 0:
             print output,
@@ -1383,9 +1373,17 @@ class NodeStartThread(NodeActionThread):
     def run(self):
         self.retval, self.output = utils.startCluster(self.node, quiet=True)
 
-class NodeStopThread(NodeActionThread):
+class NodeStopPacemakerThread(NodeActionThread):
     def run(self):
-        self.retval, self.output = utils.stopCluster(self.node, quiet=True)
+        self.retval, self.output = utils.stopCluster(
+            self.node, quiet=True, pacemaker=True, corosync=False
+        )
+
+class NodeStopCorosyncThread(NodeActionThread):
+    def run(self):
+        self.retval, self.output = utils.stopCluster(
+            self.node, quiet=True, pacemaker=False, corosync=True
+        )
 
 class NodeDestroyThread(NodeActionThread):
     def run(self):

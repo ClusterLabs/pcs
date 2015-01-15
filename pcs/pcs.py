@@ -59,6 +59,7 @@ def main(argv):
             "force", "autocorrect", "interactive", "autodelete",
             "all", "full", "groups", "local", "wait", "config",
             "start", "enable", "disabled", "off",
+            "pacemaker", "corosync",
             "no-default-ops", "defaults", "nodesc",
             "clone", "master", "name=", "group=", "node=",
             "from=", "to=", "after=", "before=",

@@ -149,10 +149,23 @@ end
 
 def cluster_stop(params)
   if params[:name]
-    code, response = send_request_with_token(params[:name], 'cluster_stop', true)
+    params_without_name = params.reject {|key, value|
+      key == "name" or key == :name
+    }
+    code, response = send_request_with_token(
+      params[:name], 'cluster_stop', true, params_without_name
+    )
   else
-    $logger.info "Stopping Daemons"
-    output =  `#{PCS} cluster stop`
+    options = ""
+    if params.has_key?("component")
+      if params["component"].downcase == "pacemaker"
+        options = "--pacemaker"
+      elsif params["component"].downcase == "corosync"
+        options = "--corosync"
+      end
+    end
+    $logger.info "Stopping Daemons #{options}"
+    output =  `#{PCS} cluster stop #{options}`
     $logger.debug output
     return output
   end

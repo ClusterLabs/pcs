@@ -211,8 +211,16 @@ def setCorosyncConfig(node,config):
 def startCluster(node, quiet=False):
     return sendHTTPRequest(node, 'remote/cluster_start', None, False, not quiet)
 
-def stopCluster(node, quiet=False):
-    return sendHTTPRequest(node, 'remote/cluster_stop', None, False, not quiet)
+def stopCluster(node, quiet=False, pacemaker=True, corosync=True):
+    if (pacemaker and corosync) or (not pacemaker and not corosync):
+        data = None
+    elif pacemaker:
+        data = {"component": "pacemaker"}
+    elif corosync:
+        data = {"component": "corosync"}
+    if data:
+        data = urllib.urlencode(data)
+    return sendHTTPRequest(node, 'remote/cluster_stop', data, False, not quiet)
 
 def enableCluster(node):
     return sendHTTPRequest(node, 'remote/cluster_enable', None, False, True)
