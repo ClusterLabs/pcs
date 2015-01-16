@@ -211,15 +211,15 @@ def setCorosyncConfig(node,config):
 def startCluster(node, quiet=False):
     return sendHTTPRequest(node, 'remote/cluster_start', None, False, not quiet)
 
-def stopCluster(node, quiet=False, pacemaker=True, corosync=True):
-    if (pacemaker and corosync) or (not pacemaker and not corosync):
-        data = None
-    elif pacemaker:
-        data = {"component": "pacemaker"}
-    elif corosync:
-        data = {"component": "corosync"}
-    if data:
-        data = urllib.urlencode(data)
+def stopCluster(node, quiet=False, pacemaker=True, corosync=True, force=True):
+    data = dict()
+    if pacemaker and not corosync:
+        data["component"] = "pacemaker"
+    elif corosync and not pacemaker:
+        data["component"] = "corosync"
+    if force:
+        data["force"] = 1
+    data = urllib.urlencode(data)
     return sendHTTPRequest(node, 'remote/cluster_stop', data, False, not quiet)
 
 def enableCluster(node):
@@ -2285,4 +2285,63 @@ def get_operations_from_transitions(transitions_dom):
     operation_list.sort(key=lambda x: x[0])
     op_list = [op[1] for op in operation_list]
     return op_list
+
+def get_remote_quorumtool_output(node):
+    return sendHTTPRequest(node, "remote/get_quorum_info", None, False, False)
+
+def parse_quorumtool_output(quorumtool_output):
+    parsed = {}
+    in_node_list = False
+    try:
+        for line in quorumtool_output.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            if in_node_list:
+                if line.startswith("-") or line.startswith("Nodeid"):
+                    # skip headers
+                    continue
+                parts = line.split()
+                parsed["node_list"].append({
+                    "name": parts[3],
+                    "votes": int(parts[1]),
+                    "local": len(parts) > 4 and parts[4] == "(local)"
+                })
+            else:
+                if line == "Membership information":
+                    in_node_list = True
+                    parsed["node_list"] = []
+                    continue
+                if not ":" in line:
+                    continue
+                parts = map(lambda x: x.strip(), line.split(":", 1))
+                if parts[0] == "Quorate":
+                    parsed["quorate"] = parts[1].lower() == "yes"
+                elif parts[0] == "Quorum":
+                    match = re.match("(\d+).*", parts[1])
+                    if match:
+                        parsed["quorum"] = int(match.group(1))
+                    else:
+                        return None
+    except (ValueError, IndexError):
+        return None
+    for required in ("quorum", "quorate", "node_list"):
+        if required not in parsed:
+            return None
+    return parsed
+
+# node_list - nodes to stop
+# local - local node is going to be stopped
+def is_node_stop_cause_quorum_loss(quorum_info, local=True, node_list=None):
+    if not quorum_info["quorate"]:
+        return False
+    # sum the votes of nodes that are not going to be stopped
+    votes_after_stop = 0
+    for node_info in quorum_info.get("node_list", []):
+        if local and node_info["local"]:
+            continue
+        if node_list and node_info["name"] in node_list:
+            continue
+        votes_after_stop += node_info["votes"]
+    return votes_after_stop < quorum_info["quorum"]
 

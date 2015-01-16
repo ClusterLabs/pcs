@@ -21,6 +21,8 @@ def remote(params,request)
     return setup_cluster(params)
   when "create_cluster"
     return create_cluster(params)
+  when "get_quorum_info"
+    return get_quorum_info(params)
   when "get_cib"
     return get_cib(params)
   when "get_corosync_conf"
@@ -156,18 +158,22 @@ def cluster_stop(params)
       params[:name], 'cluster_stop', true, params_without_name
     )
   else
-    options = ""
+    options = []
     if params.has_key?("component")
       if params["component"].downcase == "pacemaker"
-        options = "--pacemaker"
+        options << "--pacemaker"
       elsif params["component"].downcase == "corosync"
-        options = "--corosync"
+        options << "--corosync"
       end
     end
-    $logger.info "Stopping Daemons #{options}"
-    output =  `#{PCS} cluster stop #{options}`
-    $logger.debug output
-    return output
+    options << "--force" if params["force"]
+    $logger.info "Stopping Daemons"
+    stdout, stderr, retval = run_cmd(PCS, "cluster", "stop", *options)
+    if retval != 0
+      return [400, stderr.join]
+    else
+      return stdout.join
+    end
   end
 end
 
@@ -271,6 +277,21 @@ def cluster_disable(params)
       return JSON.generate({"error" => "true"})
     end
     return "Cluster Disabled"
+  end
+end
+
+def get_quorum_info(params)
+  if ISRHEL6
+    return ''
+  else
+    stdout, stderr, retval = run_cmd("corosync-quorumtool", "-p", "-s")
+    # retval is 0 on success if node is not in partition with quorum
+    # retval is 1 on error OR on success if node has quorum
+    if stderr.length > 0
+      return stderr.join
+    else
+      return stdout.join
+    end
   end
 end
 

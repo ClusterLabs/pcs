@@ -481,7 +481,7 @@ function setup_node_links() {
   $("#node_stop").click(function() {
     node = $("#node_info_header_title_name").text();
     fade_in_out("#node_stop");
-    $.post('/remote/cluster_stop', {"name": $.trim(node)});
+    node_stop($.trim(node), false);
   });
   $("#node_restart").click(function() {
     node = $("#node_info_header_title_name").text();
@@ -497,6 +497,45 @@ function setup_node_links() {
     node = $("#node_info_header_title_name").text();
     fade_in_out("#node_unstandby");
     $.post('/remote/node_unstandby', {"node": $.trim(node)});
+  });
+}
+
+function node_stop(node, force) {
+  var data = {};
+  data["name"] = node;
+  if (force) {
+    data["force"] = force;
+  }
+  $.ajax({
+    type: 'POST',
+    url: '/remote/cluster_stop',
+    data: data,
+    timeout: pcs_timeout,
+    success: function() {
+    },
+    error: function(xhr, status, error) {
+      if ((status == "timeout") || ($.trim(error) == "timeout")) {
+        /*
+         We are not interested in timeout because:
+         - it can take minutes to stop a node (resources running on it have
+           to be stopped/moved and we do not need to wait for that)
+         - if pcs is not able to stop a node it returns an (forceable) error
+           immediatelly
+        */
+        return;
+      }
+      var message = "Unable to stop node '" + node + "' (" + $.trim(error) + ")";
+      message += "\n" + xhr.responseText;
+      if (message.indexOf('--force') == -1) {
+        alert(message);
+      }
+      else {
+        message = message.replace(', use --force to override', '');
+        if (confirm(message + "\n\nDo you want to force the operation?")) {
+          node_stop(node, true);
+        }
+      }
+    }
   });
 }
 

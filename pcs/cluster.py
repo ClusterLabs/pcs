@@ -676,6 +676,55 @@ def stop_cluster_all():
     stop_cluster_nodes(utils.getNodesFromCorosyncConf())
 
 def stop_cluster_nodes(nodes):
+    all_nodes = utils.getNodesFromCorosyncConf()
+    unknown_nodes = set(nodes) - set(all_nodes)
+    if unknown_nodes:
+        utils.err(
+            "nodes '%s' do not appear to exist in configuration"
+            % "', '".join(unknown_nodes)
+        )
+
+    stopping_all = set(nodes) >= set(all_nodes)
+    if (
+        not "--force" in utils.pcs_options
+        and
+        not stopping_all
+        and
+        not utils.is_rhel6()
+    ):
+        # we are sure we are not on cman cluster because only nodes from
+        # a local cluster can be stopped (see nodes validation above)
+        error_list = []
+        for node in nodes:
+            retval, data = utils.get_remote_quorumtool_output(node)
+            if retval != 0:
+                error_list.append(node + ": " + data)
+                continue
+            quorum_info = utils.parse_quorumtool_output(data)
+            if quorum_info:
+                if not quorum_info["quorate"]:
+                    continue
+                if utils.is_node_stop_cause_quorum_loss(
+                    quorum_info, local=False, node_list=nodes
+                ):
+                    utils.err(
+                        "Stopping the node(s) will cause a loss of the quorum"
+                        + ", use --force to override"
+                    )
+                else:
+                    # We have the info, no need to print errors
+                    error_list = []
+                    break
+            if data.strip() != "Cannot initialize CMAP service":
+                error_list.append("Unable to get quorum status")
+            # else the node seems to be stopped already
+        if error_list:
+            utils.err(
+                "Unable to determine whether stopping the nodes will cause "
+                + "a loss of the quorum, use --force to override\n"
+                + "\n".join(error_list)
+            )
+
     threads = dict()
     for node in nodes:
         threads[node] = NodeStopPacemakerThread(node)
@@ -763,6 +812,25 @@ def stop_cluster(argv):
     if len(argv) > 0:
         stop_cluster_nodes(argv)
         return
+
+    if not "--force" in utils.pcs_options and not utils.is_rhel6():
+        output, retval = utils.run(["corosync-quorumtool", "-p", "-s"])
+        # retval is 0 on success if node is not in partition with quorum
+        # retval is 1 on error OR on success if node has quorum
+        quorum_info = utils.parse_quorumtool_output(output)
+        if quorum_info:
+            if utils.is_node_stop_cause_quorum_loss(quorum_info, local=True):
+                utils.err(
+                    "Stopping the node will cause a loss of the quorum"
+                    + ", use --force to override"
+                )
+        else:
+            if output.strip() != "Cannot initialize CMAP service":
+                utils.err(
+                    "Unable to determine whether stopping the node will cause "
+                    + "a loss of the quorum, use --force to override"
+                )
+            # else the node seems to be stopped already, proceed to be sure
 
     stop_all = (
         "--pacemaker" not in utils.pcs_options
