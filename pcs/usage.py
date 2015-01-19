@@ -625,7 +625,7 @@ Commands:
         corosync.conf file (cluster.conf on RHEL6)
 
     quorum unblock
-        Cancel waiting for all nodes when establishing quorum.  Usefull in
+        Cancel waiting for all nodes when establishing quorum.  Useful in
         situations where you know the cluster is inquorate, but you are
         confident that the cluster should proceed with resource management
         regardless.

@@ -225,7 +225,7 @@ sync
 Sync corosync configuration to all nodes found from current corosync.conf file (cluster.conf on RHEL6)
 .TP
 quorum unblock
-Cancel waiting for all nodes when establishing quorum.  Usefull in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.
+Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.
 .TP
 cib [filename] [scope=<scope> | \fB\-\-config\fR]
 Get the raw xml from the CIB (Cluster Information Base).  If a filename is provided, we save the cib to that file, otherwise the cib is printed.  Specify scope to get a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults, status.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to get the whole CIB or be warned in the case of outdated CIB on cib-push.
