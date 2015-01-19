@@ -1243,6 +1243,161 @@ class UtilsTest(unittest.TestCase):
             )
         )
 
+    def test_parse_cman_quorum_info(self):
+        parsed = utils.parse_cman_quorum_info("""\
+Version: 6.2.0
+Config Version: 23
+Cluster Name: cluster66
+Cluster Id: 22265
+Cluster Member: Yes
+Cluster Generation: 3612
+Membership state: Cluster-Member
+Nodes: 3
+Expected votes: 3
+Total votes: 3
+Node votes: 1
+Quorum: 2 
+Active subsystems: 8
+Flags: 
+Ports Bound: 0 
+Node name: rh66-node2
+Node ID: 2
+Multicast addresses: 239.192.86.80
+Node addresses: 192.168.122.61
+---Votes---
+1 M 3 rh66-node1
+2 M 2 rh66-node2
+3 M 1 rh66-node3
+""")
+        self.assertEquals(True, parsed["quorate"])
+        self.assertEquals(2, parsed["quorum"])
+        self.assertEquals(
+            [
+                {"name": "rh66-node1", "votes": 3, "local": False},
+                {"name": "rh66-node2", "votes": 2, "local": True},
+                {"name": "rh66-node3", "votes": 1, "local": False},
+            ],
+            parsed["node_list"]
+        )
+
+        parsed = utils.parse_cman_quorum_info("""\
+Version: 6.2.0
+Config Version: 23
+Cluster Name: cluster66
+Cluster Id: 22265
+Cluster Member: Yes
+Cluster Generation: 3612
+Membership state: Cluster-Member
+Nodes: 3
+Expected votes: 3
+Total votes: 3
+Node votes: 1
+Quorum: 2 Activity blocked
+Active subsystems: 8
+Flags: 
+Ports Bound: 0 
+Node name: rh66-node1
+Node ID: 1
+Multicast addresses: 239.192.86.80
+Node addresses: 192.168.122.61
+---Votes---
+1 M 3 rh66-node1
+2 X 2 rh66-node2
+3 X 1 rh66-node3
+""")
+        self.assertEquals(False, parsed["quorate"])
+        self.assertEquals(2, parsed["quorum"])
+        self.assertEquals(
+            [
+                {"name": "rh66-node1", "votes": 3, "local": True},
+            ],
+            parsed["node_list"]
+        )
+
+        parsed = utils.parse_cman_quorum_info("")
+        self.assertEquals(None, parsed)
+
+        parsed = utils.parse_cman_quorum_info("""\
+Version: 6.2.0
+Config Version: 23
+Cluster Name: cluster66
+Cluster Id: 22265
+Cluster Member: Yes
+Cluster Generation: 3612
+Membership state: Cluster-Member
+Nodes: 3
+Expected votes: 3
+Total votes: 3
+Node votes: 1
+Quorum: 
+Active subsystems: 8
+Flags: 
+Ports Bound: 0 
+Node name: rh66-node2
+Node ID: 2
+Multicast addresses: 239.192.86.80
+Node addresses: 192.168.122.61
+---Votes---
+1 M 3 rh66-node1
+2 M 2 rh66-node2
+3 M 1 rh66-node3
+""")
+        self.assertEquals(None, parsed)
+
+        parsed = utils.parse_cman_quorum_info("""\
+Version: 6.2.0
+Config Version: 23
+Cluster Name: cluster66
+Cluster Id: 22265
+Cluster Member: Yes
+Cluster Generation: 3612
+Membership state: Cluster-Member
+Nodes: 3
+Expected votes: 3
+Total votes: 3
+Node votes: 1
+Quorum: Foo
+Active subsystems: 8
+Flags: 
+Ports Bound: 0 
+Node name: rh66-node2
+Node ID: 2
+Multicast addresses: 239.192.86.80
+Node addresses: 192.168.122.61
+---Votes---
+1 M 3 rh66-node1
+2 M 2 rh66-node2
+3 M 1 rh66-node3
+""")
+        self.assertEquals(None, parsed)
+
+        parsed = utils.parse_cman_quorum_info("""\
+Version: 6.2.0
+Config Version: 23
+Cluster Name: cluster66
+Cluster Id: 22265
+Cluster Member: Yes
+Cluster Generation: 3612
+Membership state: Cluster-Member
+Nodes: 3
+Expected votes: 3
+Total votes: 3
+Node votes: 1
+Quorum: 4
+Active subsystems: 8
+Flags: 
+Ports Bound: 0 
+Node name: rh66-node2
+Node ID: 2
+Multicast addresses: 239.192.86.80
+Node addresses: 192.168.122.61
+---Votes---
+1 M 3 rh66-node1
+2 M Foo rh66-node2
+3 M 1 rh66-node3
+""")
+        self.assertEquals(None, parsed)
+
     def test_parse_quorumtool_output(self):
         parsed = utils.parse_quorumtool_output("""\
 Quorum information

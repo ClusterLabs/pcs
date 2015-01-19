@@ -80,6 +80,7 @@ configure do
   else
     COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
   end
+  COROSYNC_QUORUMTOOL = "/usr/sbin/corosync-quorumtool"
   CMAN_TOOL = "/usr/sbin/cman_tool"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   CLUSTER_CONF = "/etc/cluster/cluster.conf"
