@@ -801,6 +801,13 @@ def disable_cluster_nodes(nodes):
 
 def destroy_cluster(argv):
     if len(argv) > 0:
+        # stop pacemaker and resources while cluster is still quorate
+        threads = dict()
+        for node in argv:
+            threads[node] = NodeStopPacemakerThread(node)
+        error_list = utils.run_node_threads(threads)
+        # proceed with destroy regardless of errors
+        # destroy will stop any remaining cluster daemons
         threads = dict()
         for node in argv:
             threads[node] = NodeDestroyThread(node)
