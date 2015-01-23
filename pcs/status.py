@@ -36,7 +36,7 @@ def status_cmd(argv):
 
 def full_status():
     if "--full" in utils.pcs_options:
-        (output, retval) = utils.run(["crm_mon", "-1", "-r", "-R"])
+        (output, retval) = utils.run(["crm_mon", "-1", "-r", "-R", "-A", "-f"])
     else:
         (output, retval) = utils.run(["crm_mon", "-1", "-r"])
 
