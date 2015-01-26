@@ -16,6 +16,7 @@ import cStringIO
 import tarfile
 import cluster
 import prop
+import fcntl
 
 
 # usefile & filename variables are set in pcs module
@@ -175,23 +176,40 @@ def remove_uid_gid_file(uid,gid):
 # Returns a dictionary {'nodeA':'tokenA'}
 def readTokens():
     tokenfile = tokenFile()
-    if (os.path.isfile(tokenfile) == False):
-        return {}
+    tokens = {}
+    f = None
+    if not os.path.isfile(tokenfile):
+        return tokens
     try:
-        tokens = json.load(open(tokenfile))
+        f = open(tokenfile, "r")
+        fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+        tokens = json.load(f)
     except:
-        return {}
+        pass
+    finally:
+        if f is not None:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            f.close()
     return tokens
 
 # Takes a dictionary {'nodeA':'tokenA'}
 def writeTokens(tokens):
     tokenfile = tokenFile()
-    if (os.path.isfile(tokenfile) == False) and 'PCS_TOKEN_FILE' not in os.environ:
+    f = None
+    if not os.path.isfile(tokenfile) and 'PCS_TOKEN_FILE' not in os.environ:
         if not os.path.exists(os.path.dirname(tokenfile)):
-            os.makedirs(os.path.dirname(tokenfile),0700);
-    f = os.fdopen (os.open(tokenfile, os.O_WRONLY | os.O_CREAT, 0600), 'w')
-    f.write(json.dumps(tokens))
-    f.close()
+            os.makedirs(os.path.dirname(tokenfile),0700)
+    try:
+        f = os.fdopen(os.open(tokenfile, os.O_WRONLY | os.O_CREAT, 0600), "w")
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        f.truncate()
+        json.dump(tokens, f)
+    except Exception as ex:
+        err("Failed to store tokens into file '%s': %s" % (tokenfile, ex.message))
+    finally:
+        if f is not None:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            f.close()
 
 # Set the corosync.conf file on the specified node
 def getCorosyncConfig(node):
