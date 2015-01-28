@@ -347,14 +347,27 @@ if not DISABLE_GUI
   get '/managec/:cluster/?*' do
     raw_data = request.env["rack.input"].read
     if params[:cluster]
-      send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, false, raw_data)
+      send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, true, raw_data)
     end
   end
 
   post '/managec/:cluster/?*' do
     raw_data = request.env["rack.input"].read
     if params[:cluster]
-      return send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), true, params, false, raw_data)
+      request = "/" + params[:splat].join("/")
+      code, out = send_cluster_request_with_token(params[:cluster], request, true, params, true, raw_data)
+
+      # backward compatibility layer BEGIN
+      # This code correctly remove constraints on pcs/pcsd version 0.9.137 and older
+      redirection = {
+          "/remove_constraint_remote" => "/resource_cmd/rm_constraint",
+          "/remove_constraint_rule_remote" => "/resource_cmd/rm_constraint_rule"
+      }
+      if code == 404 and redirection.key?(request)
+        code, out = send_cluster_request_with_token(params[:cluster], redirection[request], true, params, false, raw_data)
+      end
+      # bcl END
+      return code, out
     end
   end
 
@@ -450,32 +463,6 @@ if not DISABLE_GUI
     }
     pcs_config.save
     redirect '/manage'
-  end
-
-  post '/resource_cmd/rm_constraint' do
-    if params[:constraint_id]
-      retval = remove_constraint(params[:constraint_id])
-      if retval == 0
-        return "Constraint #{params[:constraint_id]} removed"
-      else
-        return [400, "Error removing constraint: #{params[:constraint_id]}"]
-      end
-    else
-      return [400,"Bad Constraint Options"]
-    end
-  end
-
-  post '/resource_cmd/rm_constraint_rule' do
-    if params[:rule_id]
-      retval = remove_constraint_rule(params[:rule_id])
-      if retval == 0
-        return "Constraint rule #{params[:rule_id]} removed"
-      else
-        return [400, "Error removing constraint rule: #{params[:rule_id]}"]
-      end
-    else
-      return [400, "Bad Constraint Rule Options"]
-    end
   end
 
   get '/' do

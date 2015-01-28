@@ -491,12 +491,12 @@ function setup_node_links() {
   $("#node_standby").click(function() {
     node = $("#node_info_header_title_name").text();
     fade_in_out("#node_standby");
-    $.post('/remote/node_standby', {"node": $.trim(node)});
+    $.post('/remote/node_standby', {"name": $.trim(node)});
   });
   $("#node_unstandby").click(function() {
     node = $("#node_info_header_title_name").text();
     fade_in_out("#node_unstandby");
-    $.post('/remote/node_unstandby', {"node": $.trim(node)});
+    $.post('/remote/node_unstandby', {"name": $.trim(node)});
   });
 }
 
@@ -1261,7 +1261,7 @@ function remove_constraint(id) {
   fade_in_out($("[constraint_id='"+id+"']").parent());
   $.ajax({
     type: 'POST',
-    url: '/resource_cmd/rm_constraint',
+    url: get_cluster_remote_url() + 'remove_constraint_remote',
     data: {"constraint_id": id},
     timeout: pcs_timeout,
     success: function (data) {
@@ -1277,7 +1277,7 @@ function remove_constraint_rule(id) {
   fade_in_out($("[rule_id='"+id+"']").parent());
   $.ajax({
     type: 'POST',
-    url: '/resource_cmd/rm_constraint_rule',
+    url: get_cluster_remote_url() + 'remove_constraint_rule_remote',
     data: {"rule_id": id},
     timeout: pcs_timeout,
     success: function (data) {

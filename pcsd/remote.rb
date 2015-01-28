@@ -115,6 +115,10 @@ def remote(params,request)
     return add_constraint_rule_remote(params)
   when "add_constraint_set_remote"
     return add_constraint_set_remote(params)
+  when "remove_constraint_remote"
+    return remove_constraint_remote(params)
+  when "remove_constraint_rule_remote"
+    return remove_constraint_rule_remote(params)
   when "add_meta_attr_remote"
     return add_meta_attr_remote(params)
   when "add_group"
@@ -238,20 +242,22 @@ end
 
 def node_standby(params)
   if params[:name]
-    code, response = send_request_with_token(params[:name], 'node_standby', true)
+    code, response = send_request_with_token(params[:name], 'node_standby', true, {"node"=>params[:name]})
+    # data={"node"=>params[:name]} for backward compatibility with older versions of pcs/pcsd
   else
     $logger.info "Standby Node"
-    stdout, stderr, retval = run_cmd(PCS,"cluster","standby",params[:node])
+    stdout, stderr, retval = run_cmd(PCS,"cluster","standby")
     return stdout
   end
 end
 
 def node_unstandby(params)
   if params[:name]
-    code, response = send_request_with_token(params[:name], 'node_unstandby', true)
+    code, response = send_request_with_token(params[:name], 'node_unstandby', true, {"node"=>params[:name]})
+    # data={"node"=>params[:name]} for backward compatibility with older versions of pcs/pcsd
   else
-    $logger.info "Standby Node"
-    stdout, stderr, retval = run_cmd(PCS,"cluster","unstandby",params[:node])
+    $logger.info "Unstandby Node"
+    stdout, stderr, retval = run_cmd(PCS,"cluster","unstandby")
     return stdout
   end
 end
@@ -1103,6 +1109,32 @@ def add_constraint_set_remote(params)
     return [200, "Successfully added constraint"]
   else
     return [400, "Error adding constraint: #{error}"]
+  end
+end
+
+def remove_constraint_remote(params)
+  if params[:constraint_id]
+    retval = remove_constraint(params[:constraint_id])
+    if retval == 0
+      return "Constraint #{params[:constraint_id]} removed"
+    else
+      return [400, "Error removing constraint: #{params[:constraint_id]}"]
+    end
+  else
+    return [400,"Bad Constraint Options"]
+  end
+end
+
+def remove_constraint_rule_remote(params)
+  if params[:rule_id]
+    retval = remove_constraint_rule(params[:rule_id])
+    if retval == 0
+      return "Constraint rule #{params[:rule_id]} removed"
+    else
+      return [400, "Error removing constraint rule: #{params[:rule_id]}"]
+    end
+  else
+    return [400, "Bad Constraint Rule Options"]
   end
 end
 

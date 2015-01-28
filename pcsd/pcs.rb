@@ -269,7 +269,7 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
     end
   end
   for node in nodes
-    code, out = send_request_with_token(node,request, post, data, remote=true, raw_data)
+    code, out = send_request_with_token(node,request, post, data, remote, raw_data)
     $logger.info "Node: #{node} Request: #{request}"
     if out != '{"noresponse":true}' and out != '{"pacemaker_not_running":true}'
       break
@@ -288,10 +288,13 @@ def send_request_with_token(node, request, post=false, data={}, remote=true, raw
     end
 
     token = token[0].strip
+
+    request = "/#{request}" if not request.start_with?("/")
+
     if remote
-      uri = URI.parse("https://#{node}:2224/remote/" + request)
+      uri = URI.parse("https://#{node}:2224/remote" + request)
     else
-      uri = URI.parse("https://#{node}:2224/" + request)
+      uri = URI.parse("https://#{node}:2224" + request)
     end
 
     if post
