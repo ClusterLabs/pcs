@@ -743,13 +743,11 @@ li.menuheader {
 }
 
 .long_desc_div {
-  display: none;
-  font-size: 12px;
-  max-width: 450px;
+  max-width: 450px !important;
 }
 #new_resource_agent .long_desc_div {
-  max-width: 350px;
+  max-width: 350px !important;
 }
 #new_stonith_agent .long_desc_div {
-  max-width: 350px;
+  max-width: 350px !important;
 }
