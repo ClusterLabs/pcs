@@ -84,6 +84,11 @@ def config_show_cib():
     constraint.colocation_show([])
     print ""
     del utils.pcs_options["--all"]
+    print "Resources Defaults:"
+    resource.show_defaults("rsc_defaults", indent=" ")
+    print "Operations Defaults:"
+    resource.show_defaults("op_defaults", indent=" ")
+    print
     prop.list_property([])
 
 def config_backup(argv):

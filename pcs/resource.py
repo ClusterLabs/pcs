@@ -2274,22 +2274,22 @@ def resource_failcount(argv):
             print output,
 
 
-def show_defaults(def_type):
+def show_defaults(def_type, indent=""):
     dom = utils.get_cib_dom()
     defs = dom.getElementsByTagName(def_type)
     if len(defs) > 0:
         defs = defs[0]
     else:
-        print "No defaults set"
+        print indent + "No defaults set"
         return
 
     foundDefault = False
     for d in defs.getElementsByTagName("nvpair"):
-        print d.getAttribute("name") + ": " + d.getAttribute("value")
+        print indent + d.getAttribute("name") + ": " + d.getAttribute("value")
         foundDefault = True
 
     if not foundDefault:
-        print "No defaults set"
+        print indent + "No defaults set"
 
 def set_default(def_type, argv):
     for arg in argv:
