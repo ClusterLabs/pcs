@@ -14,7 +14,7 @@ ifndef PREFIX
   PREFIX=$(shell prefix=`python -c "import sys; print(sys.prefix)"` || prefix="/usr"; echo $$prefix)
 endif
 
-install: bash_completion
+install: bash_completion docs
 	python setup.py install --prefix ${DESTDIR}${PREFIX} ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	chmod 755 ${DESTDIR}${PYTHON_SITELIB}/pcs/pcs.py
@@ -44,7 +44,7 @@ uninstall:
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
 	rm -rf ${DESTDIR}/var/lib/pcsd
 
-tarball: bash_completion
+tarball: bash_completion docs
 	python setup.py sdist --formats=tar
 	python maketarballs.py
 
