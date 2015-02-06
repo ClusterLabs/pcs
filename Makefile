@@ -51,8 +51,5 @@ tarball: bash_completion
 newversion:
 	python newversion.py
 
-docs:
-	help2man -s 8 -N -h '--fullhelp' --output=pcs/pcs.8 --name='pacemaker/corosync configuration system' pcs/pcs.py
-
 bash_completion:
 	cd pcs ; python -c 'import usage;  usage.sub_generate_bash_completion()' > bash_completion.d.pcs ; cd ..
