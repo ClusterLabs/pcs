@@ -625,7 +625,7 @@ def removeNodeFromClusterConf(node):
         )
         if retval != 0:
             print output
-            err("unable to set cman_options: expected_votes and two_node")
+            err("unable to set cman options: expected_votes and two_node")
     return True
 
 # Adds an option to the quorum section to the corosync.conf passed in and
@@ -2330,7 +2330,7 @@ def is_node_offline_by_quorumtool_output(quorum_info):
     return False
 
 def parse_cman_quorum_info(cman_info):
-# get_cman info like this:
+# get cman_info like this:
 # cman_tool status
 # echo ---Votes---
 # cman_tool nodes -F id,type,votes,name

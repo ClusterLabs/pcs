@@ -478,10 +478,10 @@ def corosync_setup(argv,returnConfig=False):
             transport = "udpb"
             if "--broadcast0" not in utils.pcs_options:
                 print("Warning: Enabling broadcast for ring 0 "
-                    + "as cman does not support broadcast in only one ring")
+                    + "as CMAN does not support broadcast in only one ring")
             if "--broadcast1" not in utils.pcs_options:
                 print("Warning: Enabling broadcast for ring 1 "
-                    + "as cman does not support broadcast in only one ring")
+                    + "as CMAN does not support broadcast in only one ring")
 
         cluster_conf_location = settings.cluster_conf_file
         if returnConfig:
@@ -602,22 +602,22 @@ def corosync_setup(argv,returnConfig=False):
 
         if "--wait_for_all" in utils.pcs_options:
             print "Warning: --wait_for_all"\
-                " ignored as it is not supported in cman based clusters"
+                " ignored as it is not supported on CMAN clusters"
         if "--auto_tie_breaker" in utils.pcs_options:
             print "Warning: --auto_tie_breaker"\
-                " ignored as it is not supported in cman based clusters"
+                " ignored as it is not supported on CMAN clusters"
         if "--last_man_standing" in utils.pcs_options:
             print "Warning: --last_man_standing"\
-                " ignored as it is not supported in cman based clusters"
+                " ignored as it is not supported on CMAN clusters"
         if "--last_man_standing_window" in utils.pcs_options:
             print "Warning: --last_man_standing_window"\
-                " ignored as it is not supported in cman based clusters"
+                " ignored as it is not supported on CMAN clusters"
         if "--token_coefficient" in utils.pcs_options:
             print "Warning: --token_coefficient"\
-                " ignored as it is not supported in cman based clusters"
+                " ignored as it is not supported on CMAN clusters"
         if "--ipv6" in utils.pcs_options:
             print "Warning: --ipv6"\
-                " ignored as it is not supported in cman based clusters"
+                " ignored as it is not supported on CMAN clusters"
 
         if returnConfig:
             cc_temp.seek(0)
@@ -1418,7 +1418,7 @@ def cluster_quorum_unblock(argv):
         sys.exit(1)
 
     if utils.is_rhel6():
-        utils.err("operation is not supported on CMAN based clusters")
+        utils.err("operation is not supported on CMAN clusters")
 
     output, retval = utils.run(
         ["corosync-cmapctl", "-g", "runtime.votequorum.wait_for_all_status"]

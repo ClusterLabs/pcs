@@ -524,7 +524,7 @@ Error: A cluster name (--name <name>) is required to setup a cluster
             "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cnam rh7-1 rh7-2 --ipv6"
         )
         ac(output, """\
-Warning: --ipv6 ignored as it is not supported in cman based clusters
+Warning: --ipv6 ignored as it is not supported on CMAN clusters
 """)
         self.assertEquals(returnVal, 0)
 
@@ -904,7 +904,7 @@ Warning: --ipv6 ignored as it is not supported in cman based clusters
             "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
         )
         ac(output, """\
-Warning: Enabling broadcast for ring 1 as cman does not support broadcast in only one ring
+Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 """)
         self.assertEquals(returnVal, 0)
 
@@ -1033,10 +1033,10 @@ Warning: Unable to resolve hostname: nonexistant-address
             "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5"
         )
         ac(output, """\
-Warning: --wait_for_all ignored as it is not supported in cman based clusters
-Warning: --auto_tie_breaker ignored as it is not supported in cman based clusters
-Warning: --last_man_standing ignored as it is not supported in cman based clusters
-Warning: --last_man_standing_window ignored as it is not supported in cman based clusters
+Warning: --wait_for_all ignored as it is not supported on CMAN clusters
+Warning: --auto_tie_breaker ignored as it is not supported on CMAN clusters
+Warning: --last_man_standing ignored as it is not supported on CMAN clusters
+Warning: --last_man_standing_window ignored as it is not supported on CMAN clusters
 """)
         self.assertEquals(returnVal, 0)
 
@@ -1105,7 +1105,7 @@ Error: blah is an unknown RRP mode, use --force to override
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp"
         )
         ac(output, """\
-Warning: Enabling broadcast for ring 1 as cman does not support broadcast in only one ring
+Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 """)
         self.assertEquals(returnVal, 0)
 
@@ -1115,7 +1115,7 @@ Warning: Enabling broadcast for ring 1 as cman does not support broadcast in onl
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp"
         )
         ac(output, """\
-Warning: Enabling broadcast for ring 1 as cman does not support broadcast in only one ring
+Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 """)
         self.assertEquals(returnVal, 0)
 
@@ -1138,7 +1138,7 @@ Warning: Enabling broadcast for ring 1 as cman does not support broadcast in onl
             temp_cib,
             "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005")
         ac(output, """\
-Warning: --token_coefficient ignored as it is not supported in cman based clusters
+Warning: --token_coefficient ignored as it is not supported on CMAN clusters
 """)
         self.assertEquals(returnVal, 0)
         with open("cluster.conf.tmp") as f:

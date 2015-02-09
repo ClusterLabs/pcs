@@ -421,7 +421,7 @@ def config_checkpoint_restore(argv):
 
 def config_import_cman(argv):
     if no_clufter:
-        utils.err("Unable to perform a cman cluster conversion due to missing python-clufter package")
+        utils.err("Unable to perform a CMAN cluster conversion due to missing python-clufter package")
     # prepare convertor options
     cluster_conf = settings.cluster_conf_file
     dry_run_output = None
