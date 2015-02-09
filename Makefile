@@ -56,7 +56,11 @@ uninstall:
 	rm -f ${DESTDIR}${PREFIX}/sbin/pcs
 	rm -rf ${DESTDIR}${PYTHON_SITELIB}/pcs
 	rm -rf ${DESTDIR}${PREFIX}/lib/pcsd
+ifeq ($(IS_SYSTEMCTL),true)
 	rm -f ${DESTDIR}/usr/lib/systemd/system/pcsd.service
+else
+	rm -f ${DESTDIR}/${initdir}/pcsd
+endif
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
 	rm -rf ${DESTDIR}/var/lib/pcsd
 
