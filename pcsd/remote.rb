@@ -61,6 +61,8 @@ def remote(params,request)
     return resource_status(params)
   when "check_gui_status"
     return check_gui_status(params)
+  when "get_sw_versions"
+    return get_sw_versions(params)
   when "node_available"
     return remote_node_available(params)
   when "add_node_all"
@@ -379,6 +381,37 @@ def check_gui_status(params)
   return JSON.generate(node_results)
 end
 
+def get_sw_versions(params)
+  if params[:nodes] != nil and params[:nodes] != ""
+    nodes = params[:nodes].split(",")
+    final_response = {}
+    threads = []
+    nodes.each {|node|
+      threads << Thread.new {
+        code, response = send_request_with_token(node, 'get_sw_versions')
+        begin
+          node_response = JSON.parse(response)
+          if node_response and node_response["notoken"] == true
+            $logger.error("ERROR: bad token for #{node}")
+          end
+          final_response[node] = node_response
+        rescue JSON::ParserError => e
+        end
+      }
+    }
+    threads.each { |t| t.join }
+    return JSON.generate(final_response)
+  end
+  versions = {
+    "rhel" => get_rhel_version(),
+    "pcs" => get_pcsd_version(),
+    "pacemaker" => get_pacemaker_version(),
+    "corosync" => get_corosync_version(),
+    "cman" => get_cman_version(),
+  }
+  return JSON.generate(versions)
+end
+
 def remote_node_available(params)
   if (not ISRHEL6 and File.exist?(COROSYNC_CONF)) or (ISRHEL6 and File.exist?(CLUSTER_CONF)) or File.exist?("/var/lib/pacemaker/cib/cib.xml")
     return JSON.generate({:node_available => false})
@@ -593,7 +626,9 @@ def node_status(params)
             "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
             "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id,
             "node_attr" => node_attributes, "fence_levels" => fence_levels,
-            "need_ring1_address" => need_ring1_address?, "acls" => acls, "username" => cookies[:CIB_user]
+            "need_ring1_address" => need_ring1_address?,
+            "is_cman_with_udpu_transport" => is_cman_with_udpu_transport?,
+            "acls" => acls, "username" => cookies[:CIB_user]
            }
   ret = JSON.generate(status)
   return ret
@@ -1249,4 +1284,22 @@ def need_ring1_address?
     # in corosync by cman
     return ((ISRHEL6 and rrp) or (rrp and udpu_transport))
   end
+end
+
+def is_cman_with_udpu_transport?
+  if not ISRHEL6
+    return false
+  end
+  begin
+    cluster_conf = File.open(CLUSTER_CONF).read
+    conf_dom = REXML::Document.new(cluster_conf)
+    conf_dom.elements.each("cluster/cman") { |elem|
+      if elem.attributes["transport"].downcase == "udpu"
+        return true
+      end
+    }
+  rescue
+    return false
+  end
+  return false
 end

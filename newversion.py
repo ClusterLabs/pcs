@@ -13,6 +13,7 @@ new_version = ".".join(pcs_version_split)
 print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' setup.py")
 print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/settings.py")
 print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/pcs.8")
+print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcsd/pcsd.rb")
 
 print os.system("git diff")
 print "Look good? (y/n)"

@@ -5,12 +5,20 @@ require 'openssl'
 require 'logger'
 require 'rack'
 
-def is_rhel6()
-  if File.open('/etc/system-release').read =~ /(Red Hat Enterprise Linux Server|CentOS|Scientific Linux) release 6\./
-    return true
-  else
-    return false
+def get_rhel_version()
+  if File.exists?('/etc/system-release')
+    release = File.open('/etc/system-release').read
+    match = /(\d+)\.(\d+)/.match(release)
+    if match
+      return match[1, 2].collect{ | x | x.to_i}
+    end
   end
+  return nil
+end
+
+def is_rhel6()
+  version = get_rhel_version()
+  return (version and version[0] == 6)
 end
 
 def is_systemctl()

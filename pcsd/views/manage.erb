@@ -97,12 +97,15 @@
       <tr><td align=center style="color: red" colspan=2"><span id="at_least_one_node_error_msg" style="display:none;">At least one valid node must be entered.</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="bad_cluster_name_error_msg" style="display:none;">You may not leave the cluster name field blank</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="addr0_addr1_mismatch_error_msg" style="display:none;">Ring 1 addresses do not match to Ring 0 addresses</span></td></tr>
+      <tr><td align=center style="color: red" colspan=2"><span id="cman_udpu_transport_error_msg" style="display:none;">Cannot use UDPU transport on CMAN cluster. Please select UDP transport in Advanced options.</span></td></tr>
+      <tr><td align=center style="color: red" colspan=2"><span id="rhel_version_mismatch_error_msg" style="display:none;">Cannot create a cluster using nodes running different versions of RHEL.</span></td></tr>
+      <tr><td align=center style="color: red" colspan=2"><span id="cman_mismatch_error_msg" style="display:none;">Cannot mix nodes running CMAN and nodes without CMAN in one cluster.</span></td></tr>
     </table>
     <span onclick='$(".advanced_open").toggle();$("#advanced_cluster_create_options").toggle();'><span class="advanced_open rightarrow sprites"></span><span class="advanced_open downarrow sprites" style="display:none;"></span>Advanced Options:</span>
     <div id="advanced_cluster_create_options" style="display:none;">
       <table>
 	<% transport_desc = "\
-Enables either udpu (unicast) or udp (multicase) cluster communication (default: udpu)"%>
+Enables either udpu (unicast) or udp (multicast) cluster communication (default: udpu)"%>
 	<% wait_for_all_desc = "\
 Enables Wait For All (WFA) feature (default: off).
 
@@ -217,8 +220,8 @@ is 0..255. Note that this is only valid on multicast transport types." %>
 Enables Redundant Ring Protocol (RRP) (default: off)
 
 Specify ring 1 address for each node if you want to use RRP." %>
-        <tr>
-          <td title="<%= h(transport_desc) %>" align=right>Transport:</td>
+        <tr title="<%= h(transport_desc) %>">
+          <td align=right>Transport:</td>
           <td>
             <select name="config-transport" onchange="create_cluster_display_rrp(this.value);">
                 <option value="udpu" selected>UDPU (default)</option>

@@ -61,6 +61,7 @@ before do
 end
 
 configure do
+  PCS_VERSION = "0.9.138"
   ISRHEL6 = is_rhel6
   ISSYSTEMCTL = is_systemctl
   DISABLE_GUI = false
@@ -76,6 +77,7 @@ configure do
     PCS = "../pcs/pcs" 
   end
   CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
+  COROSYNC = "/usr/sbin/corosync"
   if ISRHEL6
     COROSYNC_CMAPCTL = "/usr/sbin/corosync-objctl"
   else
@@ -83,6 +85,7 @@ configure do
   end
   COROSYNC_QUORUMTOOL = "/usr/sbin/corosync-quorumtool"
   CMAN_TOOL = "/usr/sbin/cman_tool"
+  PACEMAKERD = "/usr/sbin/pacemakerd"
   COROSYNC_CONF = "/etc/corosync/corosync.conf"
   CLUSTER_CONF = "/etc/cluster/cluster.conf"
   CIBADMIN = "/usr/sbin/cibadmin"

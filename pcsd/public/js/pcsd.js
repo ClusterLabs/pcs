@@ -610,8 +610,19 @@ function checkClusterNodes() {
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
-      update_create_cluster_dialog(mydata);
-
+      $.ajax({
+        type: 'POST',
+        url: '/remote/get_sw_versions',
+        data: {"nodes": nodes.join(",")},
+        timeout: pcs_timeout,
+        success: function(data) {
+          versions = jQuery.parseJSON(data);
+          update_create_cluster_dialog(mydata, versions);
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+          alert("ERROR: Unable to contact server");
+        }
+      });
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
       alert("ERROR: Unable to contact server");
@@ -662,7 +673,7 @@ function update_existing_cluster_dialog(data) {
   $('#unable_to_connect_error_msg_ae').show();
 }
 
-function update_create_cluster_dialog(nodes) {
+function update_create_cluster_dialog(nodes, version_info) {
   var keys = [];
   for (var i in nodes) {
     if (nodes.hasOwnProperty(i)) {
@@ -676,7 +687,13 @@ function update_create_cluster_dialog(nodes) {
   var addr1_match = 1;
   var ring0_nodes = [];
   var ring1_nodes = [];
+  var cman_nodes = [];
+  var noncman_nodes = [];
+  var rhel_versions = [];
+  var versions_check_ok = 1;
   var cluster_name = $('input[name^="clustername"]').val()
+  var transport = $("#create_new_cluster select[name='config-transport']").val()
+
     $('#create_new_cluster input[name^="node-"]').each(function() {
       if ($(this).val() == "") {
 	$(this).parent().prev().css("background-color", "");
@@ -700,7 +717,7 @@ function update_create_cluster_dialog(nodes) {
       }
     });
 
-  if ($("#create_new_cluster select[name='config-transport']").val() == "udpu") {
+  if (transport == "udpu") {
     $('#create_new_cluster input[name^="node-"]').each(function() {
       if ($(this).val().trim() != "") {
         ring0_nodes.push($(this).attr("name"));
@@ -724,6 +741,26 @@ function update_create_cluster_dialog(nodes) {
         }
       }
     }
+  }
+
+  if(version_info) {
+    $.each(version_info, function(node, versions) {
+      if(! versions["pcs"]) {
+        // we do not have valid info for this node
+        return;
+      }
+      if(versions["cman"]) {
+        cman_nodes.push(node);
+      }
+      else {
+        noncman_nodes.push(node);
+      }
+      if(versions["rhel"]) {
+        if($.inArray(versions["rhel"].join("."), rhel_versions) == -1) {
+          rhel_versions.push(versions["rhel"].join("."))
+        }
+      }
+    });
   }
 
   if (cant_connect_nodes != 0 || cant_auth_nodes != 0) {
@@ -751,7 +788,45 @@ function update_create_cluster_dialog(nodes) {
     $("#addr0_addr1_mismatch_error_msg").hide();
   }
 
-  if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes == 0 && cluster_name != "" && addr1_match == 1) {
+  if(versions) {
+    if(cman_nodes.length > 0 && transport == "udpu") {
+      if(noncman_nodes.length < 1 && ring1_nodes.length < 1) {
+        transport = "udp";
+        $("#create_new_cluster select[name='config-transport']").val(transport);
+        create_cluster_display_rrp(transport);
+      }
+      else {
+        versions_check_ok = 0;
+        $("#cman_udpu_transport_error_msg").show();
+      }
+    }
+    else {
+      $("#cman_udpu_transport_error_msg").hide();
+    }
+
+    if(cman_nodes.length > 1 && noncman_nodes.length > 1) {
+      versions_check_ok = 0;
+      $("#cman_mismatch_error_msg").show();
+    }
+    else {
+      $("#cman_mismatch_error_msg").hide();
+    }
+
+    if(rhel_versions.length > 1) {
+      versions_check_ok = 0;
+      $("#rhel_version_mismatch_error_msg").show();
+    }
+    else {
+      $("#rhel_version_mismatch_error_msg").hide();
+    }
+  }
+  else {
+    $("#cman_udpu_transport_error_msg").hide();
+    $("#cman_mismatch_error_msg").hide();
+    $("#rhel_version_mismatch_error_msg").hide();
+  }
+
+  if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes == 0 && cluster_name != "" && addr1_match == 1 && versions_check_ok == 1) {
     $('#create_new_cluster_form').submit();
   }
 

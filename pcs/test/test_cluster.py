@@ -462,14 +462,19 @@ Error: A cluster name (--name <name>) is required to setup a cluster
             temp_cib,
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --transport udpu"
         )
-        ac(output, "Error: cluster.conf.tmp already exists, use --force to overwrite\n")
+        ac(output, """\
+Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
+Error: cluster.conf.tmp already exists, use --force to overwrite
+""")
         self.assertEquals(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
             "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --transport udpu"
         )
-        ac(output, "")
+        ac(output, """\
+Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
+""")
         self.assertEquals(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
@@ -1078,6 +1083,7 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
         )
         ac(output, """\
 Error: --addr0 and --addr1 can only be used with --transport=udp
+Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
 """)
         self.assertEquals(returnVal, 1)
 

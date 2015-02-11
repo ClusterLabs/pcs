@@ -365,6 +365,9 @@ def corosync_setup(argv,returnConfig=False):
                 "unknown transport '%s', use --force to override" % transport
             )
 
+    if transport == "udpu" and utils.is_rhel6():
+        print("Warning: Using udpu transport on a CMAN cluster, "
+            + "cluster restart is required after node add or remove")
     if (
         transport == "udpu"
         and
@@ -1089,6 +1092,9 @@ def cluster_node(argv):
                 utils.startCluster(node0)
         else:
             utils.err("Unable to update any nodes")
+        if utils.is_cman_with_udpu_transport():
+            print("Warning: Using udpu transport on a CMAN cluster, "
+                + "cluster restart is required to apply node addition")
     else:
         nodesRemoved = False
         c_nodes = utils.getNodesFromCorosyncConf()
@@ -1109,6 +1115,9 @@ def cluster_node(argv):
             utils.err("Unable to update any nodes")
 
         output, retval = utils.run(["crm_node", "--force", "-R", node0])
+        if utils.is_cman_with_udpu_transport():
+            print("Warning: Using udpu transport on a CMAN cluster, "
+                + "cluster restart is required to apply node removal")
 
 def cluster_localnode(argv):
     if len(argv) != 2:

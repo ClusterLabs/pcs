@@ -747,6 +747,12 @@ def need_ring1_address(corosync_conf):
             in_totem = True
     return udpu_transport and rrp
 
+def is_cman_with_udpu_transport():
+    if not is_rhel6():
+        return False
+    cman_options = get_cluster_conf_cman_options()
+    return cman_options.get("transport", "").lower() == "udpu"
+
 def get_cluster_conf_cman_options():
     try:
         dom = parse(settings.cluster_conf_file)

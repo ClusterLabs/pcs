@@ -66,10 +66,14 @@ Pcs = Ember.Application.createWithMixins({
 	Pcs.aclsController.update(data);
 	Pcs.set("cluster_settings",data[Object.keys(data)[0]].cluster_settings);
         Pcs.set('need_ring1_address', false)
+        Pcs.set('is_cman_with_udpu_transport', false)
         $.each(data, function(node, node_data) {
           $.each(node_data, function(key, value) {
             if (key == 'need_ring1_address' && value) {
               Pcs.set('need_ring1_address', true);
+            }
+            if (key == 'is_cman_with_udpu_transport' && value) {
+              Pcs.set('is_cman_with_udpu_transport', true);
             }
           });
         });

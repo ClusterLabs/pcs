@@ -601,6 +601,21 @@ def corosync_enabled?()
   return $?.success?
 end
 
+def get_corosync_version()
+  begin
+    stdout, stderror, retval = run_cmd(COROSYNC, "-v")
+  rescue
+    stdout = []
+  end
+  if retval == 0
+    match = /(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
+    if match
+      return match[1..3].collect { | x | x.to_i }
+    end
+  end
+  return nil
+end
+
 def pacemaker_running?()
   if ISSYSTEMCTL
     `systemctl status pacemaker.service`
@@ -619,6 +634,21 @@ def pacemaker_enabled?()
   return $?.success?
 end
 
+def get_pacemaker_version()
+  begin
+    stdout, stderror, retval = run_cmd(PACEMAKERD, "-$")
+  rescue
+    stdout = []
+  end
+  if retval == 0
+    match = /(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
+    if match
+      return match[1..3].collect { | x | x.to_i }
+    end
+  end
+  return nil
+end
+
 def cman_running?()
   if ISSYSTEMCTL
     `systemctl status cman.service`
@@ -628,6 +658,21 @@ def cman_running?()
   return $?.success?
 end
 
+def get_cman_version()
+  begin
+    stdout, stderror, retval = run_cmd(CMAN_TOOL, "-V")
+  rescue
+    stdout = []
+  end
+  if retval == 0
+    match = /(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
+    if match
+      return match[1..3].collect { | x | x.to_i }
+    end
+  end
+  return nil
+end
+
 def pcsd_enabled?()
   if ISSYSTEMCTL
     `systemctl is-enabled pcsd.service`
@@ -635,6 +680,10 @@ def pcsd_enabled?()
     `chkconfig pcsd`
   end
   return $?.success?
+end
+
+def get_pcsd_version()
+  return PCS_VERSION.split(".").collect { | x | x.to_i }
 end
 
 def run_cmd(*args)

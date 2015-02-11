@@ -301,6 +301,11 @@
         <td>Auto Start/Enable:</td>
         <td><input type="checkbox" name="auto_start" value="1" checked></td>
       </tr>
+      {{#if Pcs.is_cman_with_udpu_transport}}
+      <tr>
+        <td colspan="2" style="color: orange">This is a CMAN cluster with UDPU transport,<br>cluster restart is required to apply node addition.</td>
+      </tr>
+      {{/if}}
       <tr>
         <td colspan=2 style="text-align:center;padding-top:20px;">
           <input class="create_node" type=submit onclick="$(this).hide();create_node($(this).parents('form')); return false;" value="Add Node">
@@ -312,4 +317,7 @@
 <div id="remove_node" style="display:none;">
   <p style="font-size:12px;">Are you sure you want to remove the following nodes(s)?</p>
   <span id="nodes_to_remove"></span>
+  {{#if Pcs.is_cman_with_udpu_transport}}
+    <p style="color: orange">This is a CMAN cluster with UDPU transport, cluster restart is required to apply node removal.</p>
+  {{/if}}
 </div>
