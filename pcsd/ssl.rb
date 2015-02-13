@@ -53,7 +53,7 @@ end
 
 webrick_options = {
   :Port               => 2224,
-  :BindAddress        => "::",
+  :BindAddress        => nil,
   :SSLEnable          => true,
   :SSLVerifyClient    => OpenSSL::SSL::VERIFY_NONE,
   :SSLCertificate     => OpenSSL::X509::Certificate.new(File.open(CRT_FILE).read),
@@ -83,8 +83,5 @@ end
 
 require 'pcsd'
 begin
-  server.run(Sinatra::Application, webrick_options)
-rescue Errno::EAFNOSUPPORT
-  webrick_options[:BindAddress] = '0.0.0.0'
   server.run(Sinatra::Application, webrick_options)
 end
