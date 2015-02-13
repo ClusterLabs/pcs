@@ -9,6 +9,7 @@ endif
 
 test:
 	python test_utils.py ${pyunit_flags}
+	python test_corosync_conf.py ${pyunit_flags}
 	python test_cluster.py ${pyunit_flags}
 	python test_resource.py ${pyunit_flags}
 	python test_rule.py ${pyunit_flags}
