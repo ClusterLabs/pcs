@@ -2,8 +2,8 @@ PCS - Pacemaker/Corosync configuration system
 
 Quick install
 
-# tar -xzvf pcs-0.9.48.tar.gz
-# cd pcs-0.9.48
+# tar -xzvf pcs-0.9.138.tar.gz
+# cd pcs-0.9.138
 # make install
 
 This will install pcs into /usr/sbin/pcs
@@ -29,7 +29,7 @@ http://pkgs.fedoraproject.org/cgit/pcs.git/
 Current Fedora 18 .spec:
 http://pkgs.fedoraproject.org/cgit/pcs.git/tree/pcs.spec?h=f18
 
-You can also install pcsd which operates as a GUI and remote server for pcs.  To install pcsd run the following commands from the root of your pcs directory.
+You can also install pcsd which operates as a GUI and remote server for pcs.  To install pcsd run the following commands from the root of your pcs directory. (You must have the ruby bundler gem installed, rubygem-bundler in Fedora, and development packages installed)
 # cd pcsd ; make get_gems ; cd ..
 # make install_pcsd
 
