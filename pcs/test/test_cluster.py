@@ -96,7 +96,39 @@ class ClusterTest(unittest.TestCase):
 
         with open("corosync.conf.tmp") as f:
             data = f.read()
-            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n  node {\n        ring0_addr: rh7-3\n        nodeid: 3\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\n}\n\nlogging {\nto_syslog: yes\n}\n')
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2
+        nodeid: 2
+    }
+
+    node {
+        ring0_addr: rh7-3
+        nodeid: 3
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+}
+
+logging {
+    to_syslog: yes
+}
+""")
 
         output, returnVal = pcs(temp_cib, "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3")
         assert returnVal == 0
@@ -104,28 +136,141 @@ class ClusterTest(unittest.TestCase):
 
         with open("corosync.conf.tmp") as f:
             data = f.read()
-            assert data == 'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n',[data]
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2
+        nodeid: 2
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    two_node: 1
+}
+
+logging {
+    to_syslog: yes
+}
+""")
 
         o,r = pcs(temp_cib, "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3,192.168.1.3")
         assert r == 0
         assert o == "rh7-3,192.168.1.3: successfully added!\n",[o]
         with open("corosync.conf.tmp") as f:
             data = f.read()
-            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-2\n        nodeid: 2\n       }\n  node {\n        ring0_addr: rh7-3\n        ring1_addr: 192.168.1.3\n        nodeid: 3\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\n}\n\nlogging {\nto_syslog: yes\n}\n')
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2
+        nodeid: 2
+    }
+
+    node {
+        ring0_addr: rh7-3
+        ring1_addr: 192.168.1.3
+        nodeid: 3
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+}
+
+logging {
+    to_syslog: yes
+}
+""")
 
         o,r = pcs(temp_cib, "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-2")
         assert r == 0
         assert o == "rh7-2: successfully removed!\n",[o]
         with open("corosync.conf.tmp") as f:
             data = f.read()
-            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n  node {\n        ring0_addr: rh7-3\n        ring1_addr: 192.168.1.3\n        nodeid: 3\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-3
+        ring1_addr: 192.168.1.3
+        nodeid: 3
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    two_node: 1
+}
+
+logging {
+    to_syslog: yes
+}
+""")
 
         o,r = pcs(temp_cib, "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3,192.168.1.3")
         assert r == 0
         assert o == "rh7-3,192.168.1.3: successfully removed!\n",[o]
         with open("corosync.conf.tmp") as f:
             data = f.read()
-            ac(data,'totem {\nversion: 2\nsecauth: off\ncluster_name: cname\ntransport: udpu\n}\n\nnodelist {\n  node {\n        ring0_addr: rh7-1\n        nodeid: 1\n       }\n}\n\nquorum {\nprovider: corosync_votequorum\ntwo_node: 1\n}\n\nlogging {\nto_syslog: yes\n}\n')
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    two_node: 1
+}
+
+logging {
+    to_syslog: yes
+}
+""")
 
         output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf2.tmp --name cname rh7-1 rh7-2 rh7-3")
         ac(output,"")
