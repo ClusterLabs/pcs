@@ -19,11 +19,9 @@ import commands
 import json
 import xml.dom.minidom
 import threading
+import corosync_conf as corosync_conf_utils
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
-COROSYNC_CONFIG_TEMPLATE = pcs_dir + "/corosync.conf.template"
-COROSYNC_CONFIG_FEDORA_TEMPLATE = pcs_dir + "/corosync.conf.fedora.template"
-COROSYNC_CONFIG_FILE = settings.corosync_conf_file
 
 def cluster_cmd(argv):
     if len(argv) == 0:
@@ -301,7 +299,6 @@ def check_nodes(nodes, prefix = ""):
     
 def corosync_setup(argv,returnConfig=False):
     fedora_config = not utils.is_rhel6()
-    failure = False
     primary_nodes = []
 
     # If node contains a ',' we only care about the first address
@@ -330,6 +327,7 @@ def corosync_setup(argv,returnConfig=False):
         cluster_name = argv[0]
 
 # Verify that all nodes are resolvable otherwise problems may occur
+    nodes_unresolvable = False
     udpu_rrp = False
     node_addr_list = []
     for node in nodes:
@@ -343,14 +341,14 @@ def corosync_setup(argv,returnConfig=False):
                 socket.getaddrinfo(node_addr, None)
             except socket.error:
                 print "Warning: Unable to resolve hostname: %s" % node_addr
-                failure = True
+                nodes_unresolvable = True
 
     if udpu_rrp:
         for node in nodes:
             if "," not in node:
                 utils.err("if one node is configured for RRP, all nodes must configured for RRP")
 
-    if failure and "--force" not in utils.pcs_options:
+    if nodes_unresolvable and "--force" not in utils.pcs_options:
         utils.err("Unable to resolve all hostnames (use --force to override).")
 
     transport = "udp" if utils.is_rhel6() else "udpu"
@@ -395,82 +393,114 @@ def corosync_setup(argv,returnConfig=False):
         if "--corosync_conf" not in utils.pcs_options:
             cluster_destroy([])
 
-        f = open(COROSYNC_CONFIG_FEDORA_TEMPLATE, 'r')
+        corosync_conf = corosync_conf_utils.Section("")
+        totem_section = corosync_conf_utils.Section("totem")
+        nodelist_section = corosync_conf_utils.Section("nodelist")
+        quorum_section = corosync_conf_utils.Section("quorum")
+        logging_section = corosync_conf_utils.Section("logging")
+        corosync_conf.add_section(totem_section)
+        corosync_conf.add_section(nodelist_section)
+        corosync_conf.add_section(quorum_section)
+        corosync_conf.add_section(logging_section)
 
-        corosync_config = f.read()
-        f.close()
-
-        i = 1
-        new_nodes_section = ""
-        for node in nodes:
-            new_nodes_section += "  node {\n"
-            if udpu_rrp:
-                new_nodes_section += "        ring0_addr: %s\n" % (node.split(",")[0])
-                new_nodes_section += "        ring1_addr: %s\n" % (node.split(",")[1])
-            else:
-                new_nodes_section += "        ring0_addr: %s\n" % (node)
-            new_nodes_section += "        nodeid: %d\n" % (i)
-            new_nodes_section += "       }\n"
-            i = i+1
-
-        two_node_section = ""
-        if len(nodes) == 2:
-            two_node_section = "two_node: 1"
-
-        quorum_options = ""
-        if "--wait_for_all" in utils.pcs_options:
-            quorum_options += "wait_for_all: " + utils.pcs_options["--wait_for_all"] + "\n"
-        if "--auto_tie_breaker" in utils.pcs_options:
-            quorum_options += "auto_tie_breaker: " + utils.pcs_options["--auto_tie_breaker"] + "\n"
-        if "--last_man_standing" in utils.pcs_options:
-            quorum_options += "last_man_standing: " + utils.pcs_options["--last_man_standing"] + "\n"
-        if "--last_man_standing_window" in utils.pcs_options:
-            quorum_options += "last_man_standing_window: " + utils.pcs_options["--last_man_standing_window"] + "\n"
-
-        ir = ""
+        totem_section.add_attribute("version", "2")
+        totem_section.add_attribute("secauth", "off")
+        totem_section.add_attribute("cluster_name", cluster_name)
+        totem_section.add_attribute("transport", transport)
+        if "--token" in utils.pcs_options:
+            totem_section.add_attribute("token", utils.pcs_options["--token"])
+        if "--token_coefficient" in utils.pcs_options:
+            totem_section.add_attribute(
+                "token_coefficient", utils.pcs_options["--token_coefficient"]
+            )
+        if "--join" in utils.pcs_options:
+            totem_section.add_attribute("join", utils.pcs_options["--join"])
+        if "--consensus" in utils.pcs_options:
+            totem_section.add_attribute(
+                "consensus", utils.pcs_options["--consensus"]
+            )
+        if "--miss_count_const" in utils.pcs_options:
+            totem_section.add_attribute(
+                "miss_count_const", utils.pcs_options["--miss_count_const"]
+            )
+        if "--fail_recv_const" in utils.pcs_options:
+            totem_section.add_attribute(
+                "fail_recv_const", utils.pcs_options["--fail_recv_const"]
+            )
 
         if rrpmode:
-            ir += "rrp_mode: " + rrpmode + "\n"
-
+            totem_section.add_attribute("rrp_mode", rrpmode)
         if transport == "udp":
-
+            interface_ids = []
             if "--addr0" in utils.pcs_options:
-                ir += utils.generate_rrp_corosync_config(0)
-
+                interface_ids.append("0")
                 if "--addr1" in utils.pcs_options:
-                    ir += utils.generate_rrp_corosync_config(1)
+                    interface_ids.append("1")
+            for interface in interface_ids:
+                interface_section = corosync_conf_utils.Section("interface")
+                totem_section.add_section(interface_section)
+                interface_section.add_attribute("ringnumber", interface)
+                interface_section.add_attribute(
+                    "bindnetaddr", utils.pcs_options["--addr" + interface]
+                )
+                if "--broadcast" + interface in utils.pcs_options:
+                    interface_section.add_attribute("broadcast", "yes")
+                else:
+                    if "--mcast" + interface in utils.pcs_options:
+                        mcastaddr = utils.pcs_options["--mcast" + interface]
+                    elif interface == "0":
+                        mcastaddr = "239.255.1.1"
+                    else:
+                        mcastaddr = "239.255.2.1"
+                    interface_section.add_attribute("mcastaddr", mcastaddr)
+                    if "--mcastport" + interface in utils.pcs_options:
+                        mcastport = utils.pcs_options["--mcastport" + interface]
+                    else:
+                        mcastport = "5405"
+                    interface_section.add_attribute("mcastport", mcastport)
+                    if "--ttl" + interface in utils.pcs_options:
+                        interface_section.add_attribute(
+                            "ttl", utils.pcs_options["--ttl" + interface]
+                        )
         if "--ipv6" in utils.pcs_options:
-            ip_version = "ip_version: ipv6\n"
-        else:
-            ip_version = ""
+            totem_section.add_attribute("ip_version", "ipv6")
 
+        for node_id, node_addrs in enumerate(nodes, 1):
+            node0, node1 = utils.parse_multiring_node(node_addrs)
+            node_section = corosync_conf_utils.Section("node")
+            nodelist_section.add_section(node_section)
+            node_section.add_attribute("ring0_addr", node0)
+            if udpu_rrp:
+                node_section.add_attribute("ring1_addr", node1)
+            node_section.add_attribute("nodeid", node_id)
 
-        totem_options = ""
-        if "--token" in utils.pcs_options:
-            totem_options += "token: " + utils.pcs_options["--token"] + "\n"
-        if "--token_coefficient" in utils.pcs_options:
-            totem_options += "token_coefficient: " + utils.pcs_options["--token_coefficient"] + "\n"
-        if "--join" in utils.pcs_options:
-            totem_options += "join: " + utils.pcs_options["--join"] + "\n"
-        if "--consensus" in utils.pcs_options:
-            totem_options += "consensus: " + utils.pcs_options["--consensus"] + "\n"
-        if "--miss_count_const" in utils.pcs_options:
-            totem_options += "miss_count_const: " + utils.pcs_options["--miss_count_const"] + "\n"
-        if "--fail_recv_const" in utils.pcs_options:
-            totem_options += "fail_recv_const: " + utils.pcs_options["--fail_recv_const"] + "\n"
+        quorum_section.add_attribute("provider", "corosync_votequorum")
+        if "--wait_for_all" in utils.pcs_options:
+            quorum_section.add_attribute(
+                "wait_for_all", utils.pcs_options["--wait_for_all"]
+            )
+        if "--auto_tie_breaker" in utils.pcs_options:
+            quorum_section.add_attribute(
+                "auto_tie_breaker", utils.pcs_options["--auto_tie_breaker"]
+            )
+        if "--last_man_standing" in utils.pcs_options:
+            quorum_section.add_attribute(
+                "last_man_standing", utils.pcs_options["--last_man_standing"]
+            )
+        if "--last_man_standing_window" in utils.pcs_options:
+            quorum_section.add_attribute(
+                "last_man_standing_window",
+                utils.pcs_options["--last_man_standing_window"]
+            )
+        if len(nodes) == 2:
+            quorum_section.add_attribute("two_node", "1")
 
-        corosync_config = corosync_config.replace("@@nodes", new_nodes_section)
-        corosync_config = corosync_config.replace("@@cluster_name",cluster_name)
-        corosync_config = corosync_config.replace("@@quorum_options\n",quorum_options)
-        corosync_config = corosync_config.replace("@@two_node",two_node_section)
-        corosync_config = corosync_config.replace("@@transport",transport)
-        corosync_config = corosync_config.replace("@@interfaceandrrpmode\n",ir)
-        corosync_config = corosync_config.replace("@@ip_version\n",ip_version)
-        corosync_config = corosync_config.replace("@@totem_options\n",totem_options)
+        logging_section.add_attribute("to_syslog", "yes")
+
         if returnConfig:
-            return corosync_config
+            return str(corosync_conf)
+        utils.setCorosyncConf(str(corosync_conf))
 
-        utils.setCorosyncConf(corosync_config)
     else:
         broadcast = (
             ("--broadcast0" in utils.pcs_options)

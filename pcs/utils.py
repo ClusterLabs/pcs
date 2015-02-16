@@ -1972,31 +1972,6 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
 
     return bad_parameters, missing_required_parameters 
 
-def generate_rrp_corosync_config(interface):
-    interface = str(interface)
-    if interface == "0":
-        mcastaddr = "239.255.1.1"
-    else:
-        mcastaddr = "239.255.2.1"
-    mcastport = "5405"
-
-    ir = "  interface {\n"
-    ir += "    ringnumber: %s\n" % interface
-    ir += "    bindnetaddr: " + pcs_options["--addr"+interface] + "\n"
-    if "--broadcast" + interface in pcs_options:
-        ir += "    broadcast: yes\n"
-    else:
-        if "--mcast" + interface in pcs_options:
-            mcastaddr = pcs_options["--mcast"+interface]
-        ir += "    mcastaddr: " + mcastaddr + "\n"
-        if "--mcastport"+interface in pcs_options:
-            mcastport = pcs_options["--mcastport"+interface]
-        ir += "    mcastport: " + mcastport + "\n"
-        if "--ttl" + interface in pcs_options:
-            ir += "    ttl: " + pcs_options["--ttl"+interface] + "\n"
-    ir += "  }\n"
-    return ir
-
 def getClusterName():
     if is_rhel6():
         try:
@@ -2008,14 +1983,13 @@ def getClusterName():
     else:
         try:
             f = open(settings.corosync_conf_file,'r')
-        except IOError as e:
+            conf = corosync_conf_utils.parse_string(f.read())
+            f.close()
+            for totem in conf.get_sections("totem"):
+                for attrs in totem.get_attributes("cluster_name"):
+                    return attrs[1]
+        except (IOError, corosync_conf_utils.CorosyncConfException) as e:
             return ""
-
-        p = re.compile('cluster_name: *(.*)')
-        for line in f:
-            m = p.match(line)
-            if m:
-                return m.group(1)
 
     return ""
 
