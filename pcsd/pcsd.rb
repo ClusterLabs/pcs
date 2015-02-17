@@ -61,7 +61,7 @@ before do
 end
 
 configure do
-  PCS_VERSION = "0.9.138"
+  PCS_VERSION = "0.9.139"
   ISRHEL6 = is_rhel6
   ISSYSTEMCTL = is_systemctl
   DISABLE_GUI = false
