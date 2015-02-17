@@ -1088,10 +1088,13 @@ def cluster_node(argv):
             utils.setCorosyncConfig(node0, corosync_conf)
             if "--enable" in utils.pcs_options:
                 utils.enableCluster(node0)
-            if "--start" in utils.pcs_options:
+            if "--start" in utils.pcs_options or utils.is_rhel6():
+                # always start new node on cman cluster
+                # otherwise it will get fenced
                 utils.startCluster(node0)
         else:
             utils.err("Unable to update any nodes")
+        output, retval = utils.reloadCorosync()
         if utils.is_cman_with_udpu_transport():
             print("Warning: Using udpu transport on a CMAN cluster, "
                 + "cluster restart is required to apply node addition")
@@ -1114,6 +1117,7 @@ def cluster_node(argv):
         if nodesRemoved == False:
             utils.err("Unable to update any nodes")
 
+        output, retval = utils.reloadCorosync()
         output, retval = utils.run(["crm_node", "--force", "-R", node0])
         if utils.is_cman_with_udpu_transport():
             print("Warning: Using udpu transport on a CMAN cluster, "

@@ -404,6 +404,9 @@ def setCorosyncConf(corosync_config, conf_file=None):
         err("unable to write corosync configuration file, try running as root.")
 
 def reloadCorosync():
+    if is_rhel6():
+        output, retval = run(["cman_tool", "version", "-r", "-S"])
+        return output, retval
     output, retval = run(["corosync-cfgtool", "-R"])
     return output, retval
 
@@ -498,7 +501,6 @@ def addNodeToCorosync(node):
         if num_nodes_in_conf >= 2:
             new_corosync_conf = rmQuorumOption(new_corosync_conf,("two_node","1"))
         setCorosyncConf(new_corosync_conf)
-        reloadCorosync()
     else:
         err("unable to find nodelist in corosync.conf")
 
@@ -598,7 +600,6 @@ def removeNodeFromCorosync(node):
         if num_nodes_in_conf == 3:
             new_corosync_conf = addQuorumOption(new_corosync_conf,("two_node","1"))
         setCorosyncConf(new_corosync_conf)
-        reloadCorosync()
 
     return removed_node
 
