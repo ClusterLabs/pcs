@@ -1812,11 +1812,17 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
             else:
                 utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
 
+    target_node = group_match.parentNode
+    if (
+        target_node.tagName in ["clone", "master"]
+        and
+        len(group_match.getElementsByTagName("primitive")) > 1
+    ):
+        target_node = dom.getElementsByTagName("resources")[0]
     for resource in resources_to_move:
         resources_to_move_id.append(resource.getAttribute("id"))
-        parent = resource.parentNode
         resource.parentNode.removeChild(resource)
-        parent.parentNode.appendChild(resource)
+        target_node.appendChild(resource)
 
     if len(group_match.getElementsByTagName("primitive")) == 0:
         group_match.parentNode.removeChild(group_match)

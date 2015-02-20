@@ -2254,6 +2254,63 @@ Deleting Resource (and group and M/S) - A2
         ac(o," Master: AGMaster\n  Resource: A (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (A-monitor-interval-60s)\n")
         assert r == 0
 
+    def testClonedGroup(self):
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops D1 Dummy --group DG"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops D2 Dummy --group DG"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clone DG")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Clone: DG-clone
+  Group: DG
+   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (D1-monitor-interval-60s)
+   Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (D2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ungroup DG D1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Clone: DG-clone
+  Group: DG
+   Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (D2-monitor-interval-60s)
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ungroup DG")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Clone: DG-clone
+  Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (D2-monitor-interval-60s)
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
     def testResourceEnable(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy")
         ac(o,"")
