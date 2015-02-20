@@ -877,9 +877,27 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         ac(o,' ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped \n Resource Group: TestGroup1\n     ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped \n Clone Set: ClusterIP4-clone [ClusterIP4]\n Master/Slave Set: Master [ClusterIP5]\n Resource Group: AGroup\n     A2\t(ocf::heartbeat:Dummy):\tStopped \n     A4\t(ocf::heartbeat:Dummy):\tStopped \n     A5\t(ocf::heartbeat:Dummy):\tStopped \n A1\t(ocf::heartbeat:Dummy):\tStopped \n A3\t(ocf::heartbeat:Dummy):\tStopped \n')
 
-        o,r = pcs(temp_cib, "resource ungroup AGroup")
+        o,r = pcs(temp_cib, "constraint location AGroup prefers rh7-1")
         assert r == 0
         ac(o,'')
+
+        o,r = pcs(temp_cib, "resource ungroup AGroup A2")
+        assert r == 0
+        ac(o,'')
+
+        o,r = pcs(temp_cib, "constraint")
+        assert r == 0
+        ac(o, """\
+Location Constraints:
+  Resource: AGroup
+    Enabled on: rh7-1 (score:INFINITY)
+Ordering Constraints:
+Colocation Constraints:
+""")
+
+        o,r = pcs(temp_cib, "resource ungroup AGroup")
+        assert r == 0
+        ac(o, 'Removing Constraint - location-AGroup-rh7-1-INFINITY\n')
 
         o,r = pcs(temp_cib, "resource show AGroup")
         assert r == 1

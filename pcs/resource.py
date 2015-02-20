@@ -1788,17 +1788,10 @@ def resource_remove(resource_id, output = True):
 # This removes a resource from a group, but keeps it in the config
 def resource_group_rm(cib_dom, group_name, resource_ids):
     dom = cib_dom.getElementsByTagName("configuration")[0]
-    group_match = None
 
-    all_resources = False
-    if len(resource_ids) == 0:
-        all_resources = True
+    all_resources = len(resource_ids) == 0
 
-    for group in dom.getElementsByTagName("group"):
-        if group.getAttribute("id") == group_name:
-            group_match = group
-            break
-
+    group_match = utils.dom_get_group(dom, group_name)
     if not group_match:
         utils.err("Group '%s' does not exist" % group_name)
 
@@ -1813,13 +1806,10 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
             resources_to_move.append(resource)
     else:
         for resource_id in resource_ids:
-            found_resource = False
-            for resource in group_match.getElementsByTagName("primitive"):
-                if resource.getAttribute("id") == resource_id:
-                    found_resource = True
-                    resources_to_move.append(resource)
-                    break
-            if not found_resource:
+            resource = utils.dom_get_resource(group_match, resource_id)
+            if resource:
+                resources_to_move.append(resource)
+            else:
                 utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
 
     for resource in resources_to_move:
@@ -1828,10 +1818,11 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
         resource.parentNode.removeChild(resource)
         parent.parentNode.appendChild(resource)
 
-    constraint.remove_constraints_containing(group_name, True, passed_dom=dom)
-
     if len(group_match.getElementsByTagName("primitive")) == 0:
         group_match.parentNode.removeChild(group_match)
+        constraint.remove_constraints_containing(
+            group_name, output=True, passed_dom=dom
+        )
 
     return cib_dom, resources_to_move_id
 
