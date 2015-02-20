@@ -819,19 +819,11 @@ def dom_get_resource_clone_ms_parent(dom, resource_id):
             return clone
         clone = clone.parentNode
 
-# deprecated, use dom_get_master
-def is_master(ms_id):
-    return does_exist("//master[@id='"+ms_id+"']")
-
 def dom_get_master(dom, master_id):
     for master in dom.getElementsByTagName("master"):
         if master.getAttribute("id") == master_id:
             return master
     return None
-
-# deprecated, use dom_get_clone
-def is_clone(clone_id):
-    return does_exist("//clone[@id='"+clone_id+"']")
 
 def dom_get_clone(dom, clone_id):
     for clone in dom.getElementsByTagName("clone"):
@@ -839,19 +831,11 @@ def dom_get_clone(dom, clone_id):
             return clone
     return None
 
-# deprecated, use dom_get_group
-def is_group(group_id):
-    return does_exist("//group[@id='"+group_id+"']")
-
 def dom_get_group(dom, group_id):
     for group in dom.getElementsByTagName("group"):
         if group.getAttribute("id") == group_id:
             return group
     return None
-
-# deprecated, use dom_get_group_clone
-def is_group_clone(group_id):
-    return does_exist("//clone//group[@id='"+group_id+"']")
 
 def dom_get_group_clone(dom, group_id):
     for clone in dom.getElementsByTagName("clone"):
@@ -867,10 +851,6 @@ def dom_get_group_masterslave(dom, group_id):
             return group
     return None
 
-# deprecated, use dom_get_resource
-def is_resource(resource_id):
-    return does_exist("//primitive[@id='"+resource_id+"']")
-
 def dom_get_resource(dom, resource_id):
     for primitive in dom.getElementsByTagName("primitive"):
         if primitive.getAttribute("id") == resource_id:
@@ -880,10 +860,6 @@ def dom_get_resource(dom, resource_id):
 def is_stonith_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"' and @class='stonith']")
 
-# deprecated, use dom_get_resource_clone
-def is_resource_clone(resource_id):
-    return does_exist("//clone//primitive[@id='"+resource_id+"']")
-
 def dom_get_resource_clone(dom, resource_id):
     for clone in dom.getElementsByTagName("clone"):
         resource = dom_get_resource(clone, resource_id)
@@ -891,25 +867,11 @@ def dom_get_resource_clone(dom, resource_id):
             return resource
     return None
 
-# deprecated, use dom_get_resource_masterslave
-def is_resource_masterslave(resource_id):
-    return does_exist("//master//primitive[@id='"+resource_id+"']")
-
 def dom_get_resource_masterslave(dom, resource_id):
     for master in dom.getElementsByTagName("master"):
         resource = dom_get_resource(master, resource_id)
         if resource:
             return resource
-    return None
-
-# deprecated, use dom_get_resource_clone_ms_parent
-def get_resource_master_id(resource_id):
-    dom = get_cib_dom()
-    primitives = dom.getElementsByTagName("primitive")
-    for p in primitives:
-        if p.getAttribute("id") == resource_id:
-            if p.parentNode.tagName == "master":
-                return p.parentNode.getAttribute("id")
     return None
 
 # returns tuple (is_valid, error_message, correct_resource_id_if_exists)

@@ -1601,10 +1601,10 @@ def resource_master_create(dom, argv, update=False, master_id=None):
         if utils.does_id_exist(dom, master_id):
             utils.err("%s already exists in the cib" % master_id)
 
-        if utils.is_resource_clone(rg_id):
+        if utils.dom_get_resource_clone(dom, rg_id):
             utils.err("%s is already a clone resource" % rg_id)
 
-        if utils.is_resource_masterslave(rg_id):
+        if utils.dom_get_resource_masterslave(dom, rg_id):
             utils.err("%s is already a master/slave resource" % rg_id)
 
         resources = dom.getElementsByTagName("resources")[0]
@@ -2119,12 +2119,12 @@ def resource_force_start(argv):
         utils.err("You must specify a resource to debug-start")
 
     resource = argv[0]
+    dom = utils.get_cib_dom()
 
-    if utils.is_group(resource):
+    if utils.dom_get_group(dom, resource):
         group_resources = utils.get_group_children(resource)
         utils.err("unable to debug-start a group, try one of the group's resource(s) (%s)" % ",".join(group_resources))
 
-    dom = utils.get_cib_dom()
 
     if utils.dom_get_clone(dom, resource):
         clone_resource = utils.dom_get_clone_ms_resource(dom, resource)

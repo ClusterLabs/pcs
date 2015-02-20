@@ -1426,7 +1426,7 @@ def cluster_remote_node(argv):
             sys.exit(1)
         hostname = argv.pop(0)
         rsc = argv.pop(0)
-        if not utils.is_resource(rsc):
+        if not utils.dom_get_resource(utils.get_cib_dom(), rsc):
             utils.err("unable to find resource '%s'" % rsc)
         resource.resource_update(rsc, ["meta", "remote-node="+hostname] + argv)
 
