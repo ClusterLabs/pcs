@@ -444,14 +444,25 @@ def remote_remove_nodes(params)
   count = 0
   out = ""
   node_list = []
+  options = []
   while params["nodename-" + count.to_s]
     node_list << params["nodename-" + count.to_s]
     count = count + 1
   end
+  options << "--force" if params["force"]
 
   cur_node = get_current_node_name()
   if i = node_list.index(cur_node)
     node_list.push(node_list.delete_at(i))
+  end
+
+  # stop the nodes at once in order to:
+  # - prevent resources from moving pointlessly
+  # - get possible quorum loss warning
+  stop_params = node_list + options
+  stdout, stderr, retval = run_cmd(PCS, "cluster", "stop", *stop_params)
+  if retval != 0
+    return [400, stderr.join]
   end
 
   node_list.each {|node|

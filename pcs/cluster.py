@@ -1129,6 +1129,41 @@ def cluster_node(argv):
             print("Warning: Using udpu transport on a CMAN cluster, "
                 + "cluster restart is required to apply node addition")
     else:
+        if node0 not in utils.getNodesFromCorosyncConf():
+            utils.err(
+                "node '%s' does not appear to exist in configuration" % node0
+            )
+        if not "--force" in utils.pcs_options:
+            retval, data = utils.get_remote_quorumtool_output(node0)
+            if retval != 0:
+                utils.err(
+                    "Unable to determine whether removing the node will cause "
+                    + "a loss of the quorum, use --force to override\n"
+                    + data
+                )
+            # we are sure whether we are on cman cluster or not because only
+            # nodes from a local cluster can be stopped (see nodes validation
+            # above)
+            if utils.is_rhel6():
+                quorum_info = utils.parse_cman_quorum_info(data)
+            else:
+                quorum_info = utils.parse_quorumtool_output(data)
+            if quorum_info:
+                if utils.is_node_stop_cause_quorum_loss(
+                    quorum_info, local=False, node_list=[node0]
+                ):
+                    utils.err(
+                        "Removing the node will cause a loss of the quorum"
+                        + ", use --force to override"
+                    )
+            elif not utils.is_node_offline_by_quorumtool_output(data):
+                utils.err(
+                    "Unable to determine whether removing the node will cause "
+                    + "a loss of the quorum, use --force to override\n"
+                    + data
+                )
+            # else the node seems to be stopped already, we're ok to proceed
+
         nodesRemoved = False
         c_nodes = utils.getNodesFromCorosyncConf()
         destroy_cluster([node0])

@@ -339,7 +339,8 @@ end
 
 def remove_node(new_nodename, all = false)
   if all
-    out, stderror, retval = run_cmd(PCS, "cluster", "node", "remove", new_nodename)
+    # we check for a quorum loss warning in remote_remove_nodes
+    out, stderror, retval = run_cmd(PCS, "cluster", "node", "remove", new_nodename, "--force")
   else
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
   end

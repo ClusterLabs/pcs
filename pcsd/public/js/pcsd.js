@@ -1026,10 +1026,13 @@ function remove_cluster(ids) {
   }
 }
 
-function remove_nodes(ids) {
+function remove_nodes(ids, force) {
   var data = {};
   for (var i=0; i<ids.length; i++) {
     data["nodename-"+i] = ids[i];
+  }
+  if (force) {
+    data["force"] = force;
   }
 
   $.ajax({
@@ -1047,7 +1050,27 @@ function remove_nodes(ids) {
     },
     error: function (xhr, status, error) {
       $("#remove_node").dialog("close");
-      alert("Unable to remove nodes: " + res + " ("+error+")");
+      if ((status == "timeout") || ($.trim(error) == "timeout")) {
+        /*
+         We are not interested in timeout because:
+         - it can take minutes to stop a node (resources running on it have
+           to be stopped/moved and we do not need to wait for that)
+         - if pcs is not able to stop a node it returns an (forceable) error
+           immediatelly
+        */
+        return;
+      }
+      var message = "Unable to remove nodes (" + $.trim(error) + ")";
+      message += "\n" + xhr.responseText;
+      if (message.indexOf('--force') == -1) {
+        alert(message);
+      }
+      else {
+        message = message.replace(', use --force to override', '');
+        if (confirm(message + "\n\nDo you want to force the operation?")) {
+          remove_nodes(ids, true);
+        }
+      }
     }
   });
 }
