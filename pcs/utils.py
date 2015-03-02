@@ -491,10 +491,7 @@ def addNodeToCorosync(node):
         new_node.add_attribute("ring1_addr", node1)
     new_node.add_attribute("nodeid", new_nodeid)
 
-    if num_nodes_in_conf >= 2:
-        for quorum in corosync_conf.get_sections("quorum"):
-            quorum.del_attributes_by_name("two_node")
-
+    corosync_conf = autoset_2node_corosync(corosync_conf)
     setCorosyncConf(str(corosync_conf))
     return True
 
@@ -563,14 +560,7 @@ def removeNodeFromCorosync(node):
                     removed_node = True
 
     if removed_node:
-        if num_nodes_in_conf == 3:
-            quorum_sections = corosync_conf.get_sections("quorum")
-            for quorum in quorum_sections:
-                quorum.set_attribute("two_node", "1")
-            if not quorum_sections:
-                quorum = corosync_conf_utils.Section("quorum")
-                quorum.add_attribute("two_node", "1")
-                corosync_conf.add_section(quorum)
+        corosync_conf = autoset_2node_corosync(corosync_conf)
         setCorosyncConf(str(corosync_conf))
 
     return removed_node
@@ -600,6 +590,29 @@ def removeNodeFromClusterConf(node):
             print output
             err("unable to set cman options: expected_votes and two_node")
     return True
+
+def autoset_2node_corosync(corosync_conf):
+    node_count = 0
+    auto_tie_breaker = False
+
+    for nodelist in corosync_conf.get_sections("nodelist"):
+        node_count += len(nodelist.get_sections("node"))
+    quorum_sections = corosync_conf.get_sections("quorum")
+    for quorum in quorum_sections:
+        for attr in quorum.get_attributes("auto_tie_breaker"):
+            auto_tie_breaker = attr[1] == "1"
+
+    if node_count == 2 and not auto_tie_breaker:
+        for quorum in quorum_sections:
+            quorum.set_attribute("two_node", "1")
+        if not quorum_sections:
+            quorum = corosync_conf_utils.Section("quorum")
+            quorum.add_attribute("two_node", "1")
+            corosync_conf.add_section(quorum)
+    else:
+        for quorum in quorum_sections:
+            quorum.del_attributes_by_name("two_node")
+    return corosync_conf
 
 def getNextNodeID(corosync_conf):
     currentNodes = []

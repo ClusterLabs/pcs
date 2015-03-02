@@ -292,7 +292,6 @@ nodelist {
 
 quorum {
     provider: corosync_votequorum
-    two_node: 1
 }
 
 logging {
@@ -300,11 +299,128 @@ logging {
 }
 """)
 
-        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf2.tmp --name cname rh7-1 rh7-2 rh7-3")
+# Setup a 2 node cluster with auto_tie_breaker and make sure the two node config
+# is NOT set, then add a node, then remove a node and make sure it is still 
+# NOT set
+        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --auto_tie_breaker=1")
+        ac (output,"")
+        assert returnVal == 0
+
+        with open("corosync.conf.tmp") as f:
+            data = f.read()
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2
+        nodeid: 2
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    auto_tie_breaker: 1
+}
+
+logging {
+    to_syslog: yes
+}
+""")
+
+        output, returnVal = pcs(temp_cib, "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3")
+        ac(output,"rh7-3: successfully added!\n")
+        assert returnVal == 0
+
+        with open("corosync.conf.tmp") as f:
+            data = f.read()
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2
+        nodeid: 2
+    }
+
+    node {
+        ring0_addr: rh7-3
+        nodeid: 3
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    auto_tie_breaker: 1
+}
+
+logging {
+    to_syslog: yes
+}
+""")
+
+        output, returnVal = pcs(temp_cib, "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3")
+        assert returnVal == 0
+        assert output == "rh7-3: successfully removed!\n",output
+
+        with open("corosync.conf.tmp") as f:
+            data = f.read()
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2
+        nodeid: 2
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    auto_tie_breaker: 1
+}
+
+logging {
+    to_syslog: yes
+}
+""")
+
+# Setup a 3 node cluster
+        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 rh7-3")
         ac(output,"")
         assert returnVal == 0
 
-        with open("corosync.conf2.tmp") as f:
+        with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
 totem {
@@ -1191,44 +1307,17 @@ logging {
         assert r == 0
         ac(o,"Warning: Unable to resolve hostname: nonexistant-address\n")
 
-        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5")
-        ac(o,"")
-        assert r == 0
-        with open("corosync.conf.tmp") as f:
-            data = f.read()
-            ac(data, """\
-totem {
-    version: 2
-    secauth: off
-    cluster_name: test99
-    transport: udpu
-}
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2")
+        ac(o, "Error: '2' is not a valid value for --wait_for_all, use 0 or 1\n")
+        assert r == 1
 
-nodelist {
-    node {
-        ring0_addr: rh7-1
-        nodeid: 1
-    }
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --auto_tie_breaker=2")
+        ac(o, "Error: '2' is not a valid value for --auto_tie_breaker, use 0 or 1\n")
+        assert r == 1
 
-    node {
-        ring0_addr: rh7-2
-        nodeid: 2
-    }
-}
-
-quorum {
-    provider: corosync_votequorum
-    wait_for_all: 2
-    auto_tie_breaker: 3
-    last_man_standing: 4
-    last_man_standing_window: 5
-    two_node: 1
-}
-
-logging {
-    to_syslog: yes
-}
-""")
+        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --last_man_standing=2")
+        ac(o, "Error: '2' is not a valid value for --last_man_standing, use 0 or 1\n")
+        assert r == 1
 
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000")
         ac(o,"")
@@ -1261,7 +1350,6 @@ quorum {
     auto_tie_breaker: 1
     last_man_standing: 1
     last_man_standing_window: 12000
-    two_node: 1
 }
 
 logging {

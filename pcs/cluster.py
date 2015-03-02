@@ -393,6 +393,19 @@ def corosync_setup(argv,returnConfig=False):
         if "--corosync_conf" not in utils.pcs_options:
             cluster_destroy([])
 
+        for opt in ["--wait_for_all", "--auto_tie_breaker", "--last_man_standing"]:
+            if (
+                opt in utils.pcs_options
+                and
+                utils.pcs_options[opt] not in ["0", "1"]
+            ):
+                utils.err(
+                    "'%s' is not a valid value for %s, use 0 or 1"
+                    % (utils.pcs_options[opt], opt)
+                )
+
+        auto_tie_breaker = False
+
         corosync_conf = corosync_conf_utils.Section("")
         totem_section = corosync_conf_utils.Section("totem")
         nodelist_section = corosync_conf_utils.Section("nodelist")
@@ -483,6 +496,8 @@ def corosync_setup(argv,returnConfig=False):
             quorum_section.add_attribute(
                 "auto_tie_breaker", utils.pcs_options["--auto_tie_breaker"]
             )
+            if utils.pcs_options["--auto_tie_breaker"] == "1":
+                auto_tie_breaker = True
         if "--last_man_standing" in utils.pcs_options:
             quorum_section.add_attribute(
                 "last_man_standing", utils.pcs_options["--last_man_standing"]
@@ -492,7 +507,7 @@ def corosync_setup(argv,returnConfig=False):
                 "last_man_standing_window",
                 utils.pcs_options["--last_man_standing_window"]
             )
-        if len(nodes) == 2:
+        if len(nodes) == 2 and not auto_tie_breaker:
             quorum_section.add_attribute("two_node", "1")
 
         logging_section.add_attribute("to_syslog", "yes")
