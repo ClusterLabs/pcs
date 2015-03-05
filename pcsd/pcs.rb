@@ -400,6 +400,47 @@ def get_nodes()
   [online, offline]
 end
 
+def get_nodes_status()
+  corosync_online = []
+  corosync_offline = []
+  pacemaker_online = []
+  pacemaker_offline = []
+  pacemaker_standby = []
+  in_pacemaker = false
+  stdout, stderr, retval = run_cmd(PCS,"status","nodes","both")
+  stdout.each {|l|
+    l = l.chomp
+    if l.start_with?("Pacemaker Nodes:")
+      in_pacemaker = true
+    end
+    if l.end_with?(":")
+      next
+    end
+
+    title,nodes = l.split(/: /,2)
+    if nodes == nil
+      next
+    end
+
+    if title == " Online"
+      in_pacemaker ? pacemaker_online.concat(nodes.split(/ /)) : corosync_online.concat(nodes.split(/ /))
+    elsif title == " Standby"
+      if in_pacemaker
+        pacemaker_standby.concat(nodes.split(/ /))
+      end
+    else
+      in_pacemaker ? pacemaker_offline.concat(nodes.split(/ /)) : corosync_offline.concat(nodes.split(/ /))
+    end
+  }
+  return {
+    'corosync_online' => corosync_online,
+    'corosync_offline' => corosync_offline,
+    'pacemaker_online' => pacemaker_online,
+    'pacemaker_offline' => pacemaker_offline,
+    'pacemaker_standby' => pacemaker_standby,
+  }
+end
+
 def get_resource_agents_avail()
   code, result = send_cluster_request_with_token(params[:cluster], 'get_avail_resource_agents')
   ra = JSON.parse(result)

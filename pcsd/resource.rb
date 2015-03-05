@@ -1,6 +1,8 @@
 require 'pp'
 
-def getResourcesGroups(get_fence_devices = false, get_all_options = false)
+def getResourcesGroups(get_fence_devices = false, get_all_options = false,
+  get_operations=false
+)
   stdout, stderror, retval = run_cmd("crm_mon", "--one-shot", "-r", "--as-xml")
   if retval != 0
     return [],[], retval
@@ -54,41 +56,56 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false)
 
   resource_list = resource_list.sort_by{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
-  if get_all_options
+  if get_all_options or get_operations
     stdout, stderror, retval = run_cmd("cibadmin", "-Q", "-l")
     cib_output = stdout
     resources_inst_attr_map = {}
     resources_meta_attr_map = {}
+    resources_operation_map = {}
     begin
       doc = REXML::Document.new(cib_output.join("\n"))
-
-      doc.elements.each('//primitive') do |r|
-	resources_inst_attr_map[r.attributes["id"]] = {}
-	resources_meta_attr_map[r.attributes["id"]] = {}
-	r.each_recursive do |ia|
-	  if ia.node_type == :element and ia.name == "nvpair"
-	    if ia.parent.name == "instance_attributes"
-	      resources_inst_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
-	    elsif ia.parent.name == "meta_attributes"
-	      resources_meta_attr_map[r.attributes["id"]][ia.attributes["name"]] = [ia.attributes["id"],ia.attributes["value"],ia.parent.parent.attributes["id"]]
-	    end
-	  end
-	  if ["group","clone","master"].include?(r.parent.name)
-	    r.parent.elements.each('./meta_attributes/nvpair') do |ma|
-	      resources_meta_attr_map[r.attributes["id"]][ma.attributes["name"]] ||= []
-	      resources_meta_attr_map[r.attributes["id"]][ma.attributes["name"]] = [ma.attributes["id"],ma.attributes["value"],ma.parent.parent.attributes["id"]]
+      if get_all_options
+        doc.elements.each('//primitive') do |r|
+          resources_inst_attr_map[r.attributes["id"]] = {}
+          resources_meta_attr_map[r.attributes["id"]] = {}
+          r.each_recursive do |ia|
+            if ia.node_type == :element and ia.name == "nvpair"
+              if ia.parent.name == "instance_attributes"
+                resources_inst_attr_map[r.attributes["id"]][ia.attributes["name"]] = ia.attributes["value"]
+              elsif ia.parent.name == "meta_attributes"
+                resources_meta_attr_map[r.attributes["id"]][ia.attributes["name"]] = [ia.attributes["id"],ia.attributes["value"],ia.parent.parent.attributes["id"]]
+              end
+            end
+            if ["group","clone","master"].include?(r.parent.name)
+              r.parent.elements.each('./meta_attributes/nvpair') do |ma|
+                resources_meta_attr_map[r.attributes["id"]][ma.attributes["name"]] ||= []
+                resources_meta_attr_map[r.attributes["id"]][ma.attributes["name"]] = [ma.attributes["id"],ma.attributes["value"],ma.parent.parent.attributes["id"]]
+              end
             end
           end
-
-	end
-
+        end
+        resource_list.each {|r|
+          r.options = resources_inst_attr_map[r.id]
+          r.instance_attr = resources_inst_attr_map[r.id]
+          r.meta_attr = resources_meta_attr_map[r.id]
+        }
       end
 
-      resource_list.each {|r|
-	r.options = resources_inst_attr_map[r.id]
-	r.instance_attr = resources_inst_attr_map[r.id]
-	r.meta_attr = resources_meta_attr_map[r.id]
-      }
+      if get_operations
+        doc.elements.each('//lrm_rsc_op') { |rsc_op|
+          resources_operation_map[rsc_op.parent.attributes['id']] ||= []
+          resources_operation_map[rsc_op.parent.attributes['id']] << (
+            ResourceOperation.new(rsc_op)
+          )
+        }
+        resource_list.each {|r|
+          if resources_operation_map[r.id]
+            r.operations = resources_operation_map[r.id].sort { |a, b|
+              a.call_id <=> b.call_id
+            }
+          end
+        }
+      end
     rescue REXML::ParseException
       $logger.info("ERROR: Parse Exception parsing cibadmin -Q")
     end
@@ -365,7 +382,7 @@ class Resource
     @active = e.attributes["active"] == "true" ? true : false
     @orphaned = e.attributes["orphaned"] == "true" ? true : false
     @failed = e.attributes["failed"] == "true" ? true : false
-    @active = e.attributes["active"] == "true" ? true : false
+    @role = e.attributes['role']
     @nodes = []
     # Strip ':' from group name (for clones & master/slave created from a group)
     @group = group ? group.sub(/(.*):.*/, '\1') : group
@@ -377,7 +394,7 @@ class Resource
     @options = {}
     @instance_attr = {}
     @meta_attr = {}
-    @operations = {}
+    @operations = []
     e.elements.each do |n| 
       node = Node.new
       node.name = n.attributes["name"]
@@ -395,7 +412,8 @@ class Resource
   end
 
   def disabled
-    if meta_attr and meta_attr["target-role"] and meta_attr["target-role"] == "Stopped"
+    return false if @stonith
+    if meta_attr and meta_attr["target-role"] and meta_attr["target-role"][1] == "Stopped"
       return true
     else
       return false
@@ -444,6 +462,47 @@ class ResourceAgent
       return info[0]
     end
     return ""
+  end
+end
+
+class ResourceOperation
+  attr_accessor :call_id, :crm_debug_origin, :crm_feature_set, :exec_time,
+    :exit_reason, :id, :interval, :last_rc_change, :last_run, :on_node,
+    :op_digest, :operation, :operation_key, :op_force_restart,
+    :op_restart_digest, :op_status, :queue_time, :rc_code, :transition_key,
+    :transition_magic
+  def initialize(op_element)
+    @call_id = op_element.attributes['call-id'].to_i
+    @crm_debug_origin = op_element.attributes['crm-debug-origin']
+    @crm_feature_set = op_element.attributes['crm_feature_set']
+    @exec_time = op_element.attributes['exec-time'].to_i
+    @exit_reason = op_element.attributes['exit-reason']
+    @id = op_element.attributes['id']
+    @interval = op_element.attributes['interval'].to_i
+    @last_rc_change = op_element.attributes['last-rc-change'].to_i
+    @last_run = op_element.attributes['last-run'].to_i
+    @on_node = op_element.attributes['on_node']
+    @op_digest = op_element.attributes['op-digest']
+    @operation_key = op_element.attributes['operation_key']
+    @operation = op_element.attributes['operation']
+    @op_force_restart = op_element.attributes['op-force-restart']
+    @op_restart_digest = op_element.attributes['op-restart-digest']
+    @op_status = op_element.attributes['op-status'].to_i
+    @queue_time = op_element.attributes['queue-time'].to_i
+    @rc_code = op_element.attributes['rc-code'].to_i
+    @transition_key = op_element.attributes['transition-key']
+    @transition_magic = op_element.attributes['transition-magic']
+
+    if not @on_node
+      elem = op_element.parent
+      while elem
+        if elem.name == 'node_state'
+          @on_node = elem.attributes['uname']
+          break
+        end
+        elem = elem.parent
+      end
+    end
   end
 end
 

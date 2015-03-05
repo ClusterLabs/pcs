@@ -17,6 +17,20 @@ class PCSConfig
     }
   end
 
+  def self.refresh_cluster_nodes(cluster_name, node_list)
+    node_list.uniq!
+    if node_list.length > 0
+      config = self.new
+      old_node_list = config.get_nodes(cluster_name)
+      if old_node_list & node_list != old_node_list or old_node_list.size!=node_list.size
+        $logger.info("Updating node list for: " + cluster_name + " " + old_node_list.inspect + "->" + node_list.inspect)
+        config.update(cluster_name, node_list)
+        return true
+      end
+    end
+    return false
+  end
+
   def update(cluster_name, node_list)
     if node_list.length == 0
       @clusters.delete_if{|c|c.name == cluster_name}

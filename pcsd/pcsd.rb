@@ -325,6 +325,10 @@ if not DISABLE_GUI
     erb :manage, :layout => :main
   end
 
+  get '/overview' do
+    overview_all()
+  end
+
   get '/managec/:cluster/main' do
     @cluster_name = params[:cluster]
     #  @resources, @groups = getResourcesGroups
@@ -346,6 +350,10 @@ if not DISABLE_GUI
 
   get '/managec/:cluster/status_all' do
     status_all(params,get_cluster_nodes(params[:cluster]))
+  end
+
+  get '/managec/:cluster/overview_cluster' do
+    overview_cluster(params)
   end
 
   get '/managec/:cluster/?*' do
