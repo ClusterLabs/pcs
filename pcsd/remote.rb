@@ -79,6 +79,16 @@ def remote(params,request)
     return get_wizard(params)
   when "wizard_submit"
     return wizard_submit(params)
+  when "auth_nodes"
+    return auth_nodes(params, request)
+  when "get_tokens"
+    return get_tokens(params)
+  when "get_cluster_tokens"
+    return get_cluster_tokens(params)
+  when "save_tokens"
+    return save_tokens(params)
+  when "add_node_to_cluster"
+    return add_node_to_cluster(params)
   end
 
   if not pacemaker_status
@@ -370,7 +380,7 @@ def check_gui_status(params)
   if params[:nodes] != nil and params[:nodes] != ""
     node_array = params[:nodes].split(",")
     stdout, stderr, retval = run_cmd(PCS, "cluster", "pcsd-status", *node_array)
-    if retval == 0
+    if retval == 0 or retval == 2
       stdout.each { |l|
         l = l.chomp
         out = l.split(/: /)
@@ -545,7 +555,7 @@ end
 
 def create_cluster(params)
   if set_corosync_conf(params)
-    cluster_start()
+    cluster_start(params)
   else
     return "Failed"
   end
@@ -709,23 +719,26 @@ def auth(params,request)
 end
 
 # We can't pass username/password on the command line for security purposes
-def pcs_auth(nodes, username, password, force=false)
-  command = [PCS, "cluster", "auth", "--local"] + nodes
+def pcs_auth(nodes, username, password, force=false, local=true)
+  command = [PCS, "cluster", "auth"] + nodes
   command += ["--force"] if force
-  Open4::popen4(*command) {|pid, stdin, stdout, stderr|
+  command += ["--local"] if local
+  $logger.info("Running: " + command.join(" "))
+  status = Open4::popen4(*command) do |pid, stdin, stdout, stderr|
     begin
       while line = stdout.readpartial(4096)
-	if line =~ /Username: \Z/
-	  stdin.write(username + "\n")
-	end
+	      if line =~ /Username: \Z/
+	        stdin.write(username + "\n")
+	      end
 
-	if line =~ /Password: \Z/
-	  stdin.write(password + "\n")
-	end
+	      if line =~ /Password: \Z/
+	        stdin.write(password + "\n")
+	      end
       end
     rescue EOFError
     end
-  }
+  end
+  return status.exitstatus
 end
 
 # If we get here, we're already authorized
@@ -1313,4 +1326,88 @@ def is_cman_with_udpu_transport?
     return false
   end
   return false
+end
+
+def auth_nodes(params, request)
+  retval = {}
+  params.each{|node|
+    if node[0].end_with?"-pass" and node[0].length > 5
+      nodename = node[0][0..-6]
+      if params.has_key?("all")
+        pass = params["pass-all"]
+      else
+        pass = node[1]
+      end
+      retval[nodename] = pcs_auth([nodename], "hacluster", pass, true, true)
+    end
+  }
+  return [200, JSON.generate(retval)]
+end
+
+def get_tokens(params)
+  return [200, JSON.generate(read_tokens)]
+end
+
+def get_cluster_tokens(params)
+  on, off = get_nodes
+  nodes = on.concat(off) # get online and offline nodes into one array
+  return [200, JSON.generate(get_tokens_of_nodes(nodes))]
+end
+
+def save_tokens(params)
+  tokens = read_tokens
+
+  params.each{|nodes|
+    if nodes[0].start_with?"node:" and nodes[0].length > 5
+      node = nodes[0][5..-1]
+      token = nodes[1]
+      tokens[node] = token
+    end
+  }
+
+  if write_tokens(tokens)
+    return [200, JSON.generate(tokens)]
+  else
+    return [400, "Cannot update tokenfile."]
+  end
+end
+
+def add_node_to_cluster(params)
+  clustername = params["clustername"]
+  nodes = get_cluster_nodes(clustername)
+  new_node = params["new_nodename"]
+  tokens = read_tokens
+
+  if not tokens.include? new_node
+    return [400, "New node is not authenticated."]
+  end
+
+  auth_supported = true
+
+  token_data = {"node:#{new_node}" => tokens[new_node]}
+  nodes.each { |n|
+    retval, out = send_request_with_token(n, "/save_tokens", true, token_data)
+    if retval == 404 # backward compatibility layer
+      auth_supported = false
+      break
+    elsif retval != 200
+      return [400, "Failed to save token of new node on node '#{n}'."]
+    end
+  }
+
+  if auth_supported
+    nodes << new_node
+    cluster_tokens = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
+    retval, out = send_request_with_token(new_node, "/save_tokens", true, cluster_tokens)
+    if retval != 200
+      return [400, "Failed to authenticate all nodes on new node"]
+    end
+  end
+
+  retval, out = send_cluster_request_with_token(clustername, "/add_node_all", true, params)
+  if retval != 200
+    return [400, "Failed to add new node '#{new_node}' into cluster '#{clustername}': #{out}"]
+  end
+
+  return [200, "Node added successfully."]
 end

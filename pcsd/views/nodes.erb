@@ -10,7 +10,7 @@
 	</div>
 	<div id="no_coro_support">
 	  <div class="x sprites"></div><div class="link" onclick="verify_node_remove();return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
-	  <div class="plus sprites"></div><div class="link" onclick="$('#add_node').dialog({title: 'Add Node', modal:true, width: 'auto'});return false;">&nbsp;Add</div>
+	  <div class="plus sprites"></div><div class="link" onclick="add_node_dialog(); return false;">&nbsp;Add</div>
 	</div>
       </td>
       <td class="borderbottom">&nbsp;</td>
@@ -284,6 +284,7 @@
 <% @myView = "resource" %>
 <%= erb :_resource %>
 </table>
+<%= erb :_dialogs %>
 <div id="add_node" style="display: none;">
   <form method=POST action="/add_node_all">
     <table id="add_node_selector">
@@ -306,11 +307,6 @@
         <td colspan="2" style="color: orange">This is a CMAN cluster with UDPU transport,<br>cluster restart is required to apply node addition.</td>
       </tr>
       {{/if}}
-      <tr>
-        <td colspan=2 style="text-align:center;padding-top:20px;">
-          <input class="create_node" type=submit onclick="$(this).hide();create_node($(this).parents('form')); return false;" value="Add Node">
-        </td>
-      </tr>
     </table>
   </form>
 </div>

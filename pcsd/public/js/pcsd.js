@@ -127,26 +127,95 @@ function create_group() {
   }
 }
 
-function create_node(form) {
-  dataString = $(form).serialize();
-  var nodeName = $(form).find("[name='new_nodename']").val();
-  url = get_cluster_remote_url() + $(form).attr("action");
-  $.ajax({
-    type: "POST",
-    url: url,
-    data: dataString,
-    dataType: "json",
-    success: function(returnValue) {
-      $('input.create_node').show();
-      Pcs.update();
-      $('#add_node').dialog('close');
+function add_node_dialog() {
+  var buttonOpts = [
+    {
+      text: "Add Node",
+      id: "add_node_submit_btn",
+      click: function() {
+        $("#add_node_submit_btn").button("option", "disabled", true);
+        checkAddingNode();
+      }
     },
-    error: function(error) {
-      alert(error.responseText);
-      $('input.create_node').show();
+    {
+      text: "Cancel",
+      click: function() {
+        $(this).dialog("close");
+      }
+    }
+  ];
+
+  buttonOpts["Cancel"] = function() {
+    $(this).dialog("close");
+  };
+
+  // If you hit enter it triggers the first button: Add Node
+  $('#add_node').keypress(function(e) {
+    if (e.keyCode == $.ui.keyCode.ENTER && !$("#add_node_submit_btn").button("option", "disabled")) {
+        $("#add_node_submit_btn").trigger("click");
+      return false;
+    }
+  });
+
+  $('#add_node').dialog({
+    title: 'Add Node',
+    modal:true,
+    resizable: false,
+    width: 'auto',
+    buttons: buttonOpts
+  });
+}
+
+function checkAddingNode(){
+  var nodeName = $("#add_node").children("form").find("[name='new_nodename']").val().trim();
+  if (nodeName == "") {
+    $("#add_node_submit_btn").button("option", "disabled", false);
+    return false;
+  }
+
+  $.ajax({
+    type: 'POST',
+    url: '/remote/check_gui_status',
+    data: {"nodes": nodeName},
+    timeout: pcs_timeout,
+    success: function (data) {
+      var mydata = jQuery.parseJSON(data);
+      if (mydata[nodeName] == "Unable to authenticate") {
+        auth_nodes_dialog([nodeName], function(){$("#add_node_submit_btn").trigger("click");});
+        $("#add_node_submit_btn").button("option", "disabled", false);
+      } else if (mydata[nodeName] == "Offline") {
+        alert("Unable to contact node '" + nodeName + "'");
+        $("#add_node_submit_btn").button("option", "disabled", false);
+      } else {
+        create_node($("#add_node").children("form"));
+      }
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      alert("ERROR: Unable to contact server");
+      $("#add_node_submit_btn").button("option", "disabled", false);
     }
   });
 }
+
+function create_node(form) {
+  var dataString = $(form).serialize();
+  dataString += "&clustername=" + get_cluster_name();
+  $.ajax({
+    type: "POST",
+    url: "/remote/add_node_to_cluster",
+    data: dataString,
+    success: function(returnValue) {
+      $("#add_node_submit_btn").button("option", "disabled", false);
+      $('#add_node').dialog('close');
+      Pcs.update();
+    },
+    error: function(error) {
+      alert(error.responseText);
+      $("#add_node_submit_btn").button("option", "disabled", false);
+    }
+  });
+}
+
 // If update is set to true we update the resource instead of create it
 // if stonith is set to true we update/create a stonith agent
 function create_resource(form, update, stonith) {
@@ -630,20 +699,136 @@ function checkClusterNodes() {
   });
 }
 
+function auth_nodes() {
+  $("#auth_failed_error_msg").hide();
+  $.ajax({
+    type: 'POST',
+    url: '/remote/auth_nodes',
+    data: $("#auth_nodes_form").serialize(),
+    timeout: pcs_timeout,
+    success: function (data) {
+      mydata = jQuery.parseJSON(data);
+      auth_nodes_dialog_update(mydata);
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+      alert("ERROR: Unable to contact server");
+    }
+  });
+}
+
+function auth_nodes_dialog_update(data) {
+  var unauth_nodes = [];
+  var node;
+  for (node in data) {
+    if (data[node] != 0) {
+      unauth_nodes.push(node);
+    }
+  }
+
+  if (unauth_nodes.length == 0) {
+    $("#authenticate_submit_btn").button("option", "disabled", false);
+    $("#auth_failed_error_msg").hide();
+    var callback = $("#auth_nodes").dialog("option", "callback_success_");
+    $("#auth_nodes").dialog("close");
+    if (callback !== null)
+      callback();
+    return unauth_nodes;
+  } else {
+    $("#auth_failed_error_msg").show();
+  }
+
+  if (unauth_nodes.length == 1) {
+    $("#same_pass").hide();
+    $('#auth_nodes_list').find('input:password').each(function(){$(this).show()});
+  }
+
+  $("input:password[name$=-pass]").each(function() {
+    node = $(this).attr("name");
+    node = node.substring(0, node.length - 5);
+    if (unauth_nodes.indexOf(node) == -1) {
+      $(this).parent().parent().remove();
+    } else {
+      $(this).parent().parent().css("color", "red");
+    }
+  });
+
+  $("#authenticate_submit_btn").button("option", "disabled", false);
+  return unauth_nodes;
+}
+
+function auth_nodes_dialog(unauth_nodes, callback_success) {
+  callback_success = typeof callback_success !== 'undefined' ? callback_success : null;
+  $("#auth_failed_error_msg").hide();
+  var buttonsOpts = [
+    {
+      text: "Authenticate",
+      id: "authenticate_submit_btn",
+      click: function() {
+        $("#authenticate_submit_btn").button("option", "disabled", true);
+        $("#auth_nodes").find("table.err_msg_table").find("span[id$=_error_msg]").hide();
+        auth_nodes();
+      }
+    },
+    {
+      text:"Cancel",
+      click: function () {
+        $(this).dialog("close");
+      }
+    }
+  ];
+
+  // If you hit enter it triggers the submit button
+  $('#auth_nodes').keypress(function(e) {
+    if (e.keyCode == $.ui.keyCode.ENTER && !$("#authenticate_submit_btn").button("option", "disabled")) {
+      $("#authenticate_submit_btn").trigger("click");
+      return false;
+    }
+  });
+
+  if (unauth_nodes.length == 1) {
+    $("#same_pass").hide();
+  } else {
+    $("#same_pass").show();
+    $("input:checkbox[name=all]").prop("checked", false);
+    $("#pass_for_all").val("");
+    $("#pass_for_all").hide();
+  }
+
+  $('#auth_nodes_list').empty();
+  unauth_nodes.forEach(function(node) {
+    $('#auth_nodes_list').append("\t\t\t<tr><td>" + node + '</td><td><input type="password" name="' + node + '-pass"></td></tr>\n');
+  });
+
+  $("#auth_nodes").dialog({title: 'Authentification of nodes',
+    modal: true, resizable: false,
+    width: 'auto',
+    buttons: buttonsOpts,
+    callback_success_: callback_success
+  });
+}
+
 function add_existing_dialog() {
-  var buttonOpts = {}
-
-  buttonOpts["Add Existing"] = function() {
-          checkExistingNode();
-  };
-
-  buttonOpts["Cancel"] = function() {
-    $(this).dialog("close");
-  };
+  var buttonOpts = [
+    {
+      text: "Add Existing",
+      id: "add_existing_submit_btn",
+      click: function () {
+        $("#add_existing_cluster").find("table.err_msg_table").find("span[id$=_error_msg]").hide();
+        $("#add_existing_submit_btn").button("option", "disabled", true);
+        checkExistingNode();
+      }
+    },
+    {
+      text: "Cancel",
+      click: function() {
+        $(this).dialog("close");
+      }
+    }
+  ];
 
   // If you hit enter it triggers the first button: Add Existing
   $('#add_existing_cluster').keypress(function(e) {
-    if (e.keyCode == $.ui.keyCode.ENTER) {
+    if (e.keyCode == $.ui.keyCode.ENTER && !$("#add_existing_submit_btn").button("option", "disabled")) {
       $(this).parent().find("button:eq(1)").trigger("click");
       return false;
     }
@@ -660,8 +845,10 @@ function update_existing_cluster_dialog(data) {
   for (var i in data) {
     if (data[i] == "Online") {
       $('#add_existing_cluster_form').submit();
-      $('#add_existing_cluster_error_msg').hide();
-      $('#unable_to_connect_error_msg_ae').hide();
+      return;
+    } else if (data[i] == "Unable to authenticate") {
+      auth_nodes_dialog([i], function() {$("#add_existing_submit_btn").trigger("click");});
+      $("#add_existing_submit_btn").button("option", "disabled", false);
       return;
     }
     break;
@@ -671,6 +858,7 @@ function update_existing_cluster_dialog(data) {
     $('#add_existing_cluster_error_msg').show();
   }
   $('#unable_to_connect_error_msg_ae').show();
+  $("#add_existing_submit_btn").button("option", "disabled", false);
 }
 
 function update_create_cluster_dialog(nodes, version_info) {
@@ -682,7 +870,7 @@ function update_create_cluster_dialog(nodes, version_info) {
   }
 
   var cant_connect_nodes = 0;
-  var cant_auth_nodes = 0;
+  var cant_auth_nodes = [];
   var good_nodes = 0;
   var addr1_match = 1;
   var ring0_nodes = [];
@@ -703,8 +891,7 @@ function update_create_cluster_dialog(nodes, version_info) {
 	if ($(this).val() == keys[i]) {
 	  if (nodes[keys[i]] != "Online") {
 	    if (nodes[keys[i]] == "Unable to authenticate") {
-	      $(this).parent().prev().css("background-color", "orange");
-	      cant_auth_nodes++;
+	      cant_auth_nodes.push(keys[i]);
 	    } else {
 	      $(this).parent().prev().css("background-color", "red");
 	      cant_connect_nodes++;
@@ -716,6 +903,12 @@ function update_create_cluster_dialog(nodes, version_info) {
 	}
       }
     });
+
+    if (cant_auth_nodes.length > 0) {
+      auth_nodes_dialog(cant_auth_nodes, function(){$("#create_cluster_submit_btn").trigger("click")});
+      $("#create_cluster_submit_btn").button("option", "disabled", false);
+      return;
+    }
 
   if (transport == "udpu") {
     $('#create_new_cluster input[name^="node-"]').each(function() {
@@ -763,13 +956,13 @@ function update_create_cluster_dialog(nodes, version_info) {
     });
   }
 
-  if (cant_connect_nodes != 0 || cant_auth_nodes != 0) {
+  if (cant_connect_nodes != 0) {
     $("#unable_to_connect_error_msg").show();
   } else {
     $("#unable_to_connect_error_msg").hide();
   }
 
-  if (good_nodes == 0 && cant_connect_nodes == 0 && cant_auth_nodes == 0) {
+  if (good_nodes == 0 && cant_connect_nodes == 0) {
     $("#at_least_one_node_error_msg").show();
   } else {
     $("#at_least_one_node_error_msg").hide();
@@ -826,8 +1019,10 @@ function update_create_cluster_dialog(nodes, version_info) {
     $("#rhel_version_mismatch_error_msg").hide();
   }
 
-  if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes == 0 && cluster_name != "" && addr1_match == 1 && versions_check_ok == 1) {
+  if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes.length == 0 && cluster_name != "" && addr1_match == 1 && versions_check_ok == 1) {
     $('#create_new_cluster_form').submit();
+  } else {
+    $("#create_cluster_submit_btn").button("option", "disabled", false);
   }
 
 }
@@ -837,6 +1032,8 @@ function create_cluster_dialog() {
     text: "Create Cluster",
     id: "create_cluster_submit_btn",
     click: function() {
+      $("#create_new_cluster").find("table.err_msg_table").find("span[id$=_error_msg]").hide();
+      $("#create_cluster_submit_btn").button("option", "disabled", true);
       checkClusterNodes();
     }
   },

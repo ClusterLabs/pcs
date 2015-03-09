@@ -1,0 +1,13 @@
+<div id="auth_nodes" style="display:none;">
+  <form id="auth_nodes_form">
+    Enter password for user 'hacluster' to authenticate nodes.<br>
+    Nodes to authenticate:
+    <table class="err_msg_table" style="width: 100%">
+      <tr><td align=center style="color: red" colspan=2"><span id="auth_failed_error_msg" style="display:none;">Authentication on some nodes failed.</span></td></tr>
+    </table>
+    <table id="auth_nodes_list">
+    </table>
+    <div id="same_pass"><label><input type="checkbox" name="all" onchange="if ($(this).is(':checked')) {$('#auth_nodes_list').find('input:password').each(function(){$(this).hide()}); $('#pass_for_all').show();} else {$('#auth_nodes_list').find('input:password').each(function(){$(this).show()}); $('#pass_for_all').hide();}"> Use same password for all nodes:</label>
+      <input type="password" name="pass-all" id="pass_for_all" style="display: none;"></div>
+  </form>
+</div>

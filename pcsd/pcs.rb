@@ -5,6 +5,8 @@ require 'shellwords'
 require 'cgi'
 require 'net/http'
 require 'net/https'
+require 'json'
+require 'fileutils'
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -712,4 +714,74 @@ end
 
 def is_score(score)
   return !!/^[+-]?((INFINITY)|(\d+))$/.match(score)
+end
+
+def token_file()
+  filename = ENV['PCS_TOKEN_FILE']
+  unless filename.nil?
+    return filename
+  end
+  if Process.uid == 0
+    return '/var/lib/pcsd/tokens'
+  end
+  return File.expand_path('~/.pcs/tokens')
+end
+
+def read_tokens()
+  filename = token_file()
+  file = nil
+  begin
+    file = File.open(filename, File::RDONLY)
+    file.flock(File::LOCK_SH)
+    return JSON.load(file)
+  rescue => e
+    $logger.error "Cannot read tokenfile: #{e.message}"
+    return {}
+  ensure
+    unless file.nil?
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+end
+
+def write_tokens(tokens)
+  filename = token_file()
+  dirname = File.dirname(filename)
+  if not ENV['PCS_TOKEN_FILE'].nil? and not File.directory?(dirname)
+    FileUtils.mkdir_p(dirname)
+  end
+  file = nil
+  begin
+    file = File.open(filename, 'w', 0600)
+    file.flock(File::LOCK_EX)
+    JSON.dump(tokens, file)
+    return true
+  rescue => e
+    $logger.error "Cannot write to tokenfile: #{e.message}"
+    return false
+  ensure
+    unless file.nil?
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+end
+
+def get_tokens_of_nodes(nodes)
+  tokens = {}
+  read_tokens.each { |node, token|
+    if nodes.include? node
+      tokens[node] = token
+    end
+  }
+  return tokens
+end
+
+def add_prefix_to_keys(hash, prefix)
+  new_hash = {}
+  hash.each { |k,v|
+    new_hash["#{prefix}#{k}"] = v
+  }
+  return new_hash
 end

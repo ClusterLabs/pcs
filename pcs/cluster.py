@@ -223,7 +223,7 @@ def cluster_gui_status(argv,dont_exit = False):
     else:
         bad_nodes = check_nodes(argv, "  ")
     if bad_nodes and not dont_exit:
-        sys.exit(1)
+        sys.exit(2)
 
 def cluster_certkey(argv):
     if len(argv) != 2:

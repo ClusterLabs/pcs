@@ -402,6 +402,34 @@ if not DISABLE_GUI
         redirect '/manage'
       end
 
+      # auth begin
+      retval, out = send_request_with_token(node, '/get_cluster_tokens', false)
+      if retval == 404 # backward compatibility layer
+        session[:error] = "authimposible"
+      else
+        if retval != 200
+          session[:error] = "cannotgettokens"
+          session[:errorval] = status["cluster_name"]
+          redirect '/manage'
+        end
+
+        tokens = read_tokens
+        begin
+          tokens.update(JSON.parse(out))
+        rescue
+          session[:error] = "cannotgettokens"
+          session[:errorval] = status["cluster_name"]
+          redirect '/manage'
+        end
+
+        if not write_tokens(tokens)
+          session[:error] = "cannotgettokens"
+          session[:errorval] = status["cluster_name"]
+          redirect '/manage'
+        end
+      end
+      #auth end
+
       pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
       pcs_config.save
       redirect '/manage'
@@ -439,6 +467,20 @@ if not DISABLE_GUI
     @nodes.each {|n|
       if pcs_config.is_node_in_use(n)
         session[:error] = "duplicatenodename"
+        session[:errorval] = n
+        redirect '/manage'
+      end
+    }
+
+    # firstly we need to authenticate nodes to each other
+    tokens = add_prefix_to_keys(get_tokens_of_nodes(@nodes), "node:")
+    @nodes.each {|n|
+      retval, out = send_request_with_token(n, "/save_tokens", true, tokens)
+      if retval == 404 # backward compatibility layer
+        session[:error] = "authimposible"
+        break
+      elsif retval != 200
+        session[:error] = "cannotsavetokens"
         session[:errorval] = n
         redirect '/manage'
       end

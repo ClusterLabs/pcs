@@ -65,21 +65,23 @@
   <p style="font-size:12px;">Are you sure you want to remove the following cluster(s) from the GUI? (This only removes the cluster from the GUI, it does not stop the cluster from running)</p>
   <span id="resource_to_remove"></span>
 </div>
+<%= erb :_dialogs %>
 <div id="add_existing_cluster" style="display: none;">
   <form id="add_existing_cluster_form" action="/manage/existingcluster" method="post">
     <br>
     Enter the hostname/IP of a node in a cluster that you would like to manage:
     <br>
     <br>
-    <table>
-      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg_ae" style="display:none;">Unable to contact node.<br>Please make sure pcsd is started and authenticated.<br/></span>
+    <table class="err_msg_table" style="width: 100%">
+      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg_ae" style="display:none;">Unable to contact node.<br>Please make sure pcsd is started.<br/></span>
 	  <span id="add_existing_cluster_error_msg" style="display:none;">
 	  </span>
       </td></tr>
+    </table>
+    <table>
       <tr><td align=right>Node Name/IP:</td><td><input size="50" name="node-name" type="text"></td></tr>
     </table>
   </form>
-</div>
 </div>
 <div id="create_new_cluster" style="display: none;">
   <form id="create_new_cluster_form" action="/manage/newcluster" method="post">
@@ -93,7 +95,9 @@
       <tr><td align=right>Node 2:</td><td><input size="50" name="node-2" type="text"></input></td></tr>
       <tr><td align=right>Node 3:</td><td><input size="50" name="node-3" type="text"></input></td></tr>
       <tr><td></td><td id="manage_more_nodes" onclick="create_cluster_add_nodes();" style="color: #2B85DB;">More nodes...</td></tr>
-      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg" style="display:none;">Unable to contact nodes highlighted in red.<br><span style="color:orange;">Unable to authenticate to nodes highlighted in orange.</span><br>Please make sure pcsd is started on all nodes.</span></td></tr>
+    </table>
+    <table class="err_msg_table" style="width:100%">
+      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg" style="display:none;">Unable to contact nodes highlighted in red.<br>Please make sure pcsd is started on all nodes.</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="at_least_one_node_error_msg" style="display:none;">At least one valid node must be entered.</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="bad_cluster_name_error_msg" style="display:none;">You may not leave the cluster name field blank</span></td></tr>
       <tr><td align=center style="color: red" colspan=2"><span id="addr0_addr1_mismatch_error_msg" style="display:none;">Ring 1 addresses do not match to Ring 0 addresses</span></td></tr>
@@ -329,6 +333,15 @@ Specify ring 1 address for each node if you want to use RRP." %>
   <% end %>
   <% if @error == "duplicatenodename" %>
     The node, '<%=@errorval%>' is already configured in pcsd.  You may not add a node to two different clusters in pcsd.
+  <% end %>
+  <% if @error == "cannotgettokens" %>
+    Unable to get authentication info from cluster '<%=@errorval%>'.
+  <% end %>
+  <% if @error == "cannotsavetokens" %>
+    Unable to authenticate all nodes on node '<%=@errorval%>'.
+  <% end %>
+  <% if @error == "authimposible" %>
+    Operation successful.<br>Unable to do correct authentication of cluster because it is running old version of pcs/pcsd.
   <% end %>
   <% if @error == "unabletocreate" %>
     Unable to create new cluster because cluster already exists on one or more of the nodes.  Run 'pcs cluster destroy' on all nodes to remove current cluster configuration.<br><br>(<%=@errorval%>)
