@@ -1,9 +1,25 @@
+# This doesn't work for GNU/Linux.
 REL_INFO := $(shell grep -q -i "release 6" /etc/redhat-release ; echo $$?)
 
-ifeq (${REL_INFO},1)
-  build_gems: build_gems_normal
+# To support GNU/Linux, specifically Debian     
+UNAME_OS_GNU := $(shell if uname -o | grep -q "GNU/Linux" ; then echo 0; else echo 1; fi)
+UNAME_KERNEL_DEBIAN := $(shell if uname -v | grep -q "Debian" ; then echo 0; else echo 1; fi)
+UNAME_DEBIAN_VER_8 := $(shell if grep -q -i "8" /etc/debian_version ; then echo 0; else echo 1; fi)
+
+ifeq (${UNAME_OS_GNU},0)    
+  ifeq (${UNAME_KERNEL_DEBIAN},0)
+    ifeq (${UNAME_DEBIAN_VER_8},0)
+      build_gems: build_gems_normal
+    else
+      build_gems: build_gems_normal
+    endif
+  endif
 else
-  build_gems: build_gems_rhel6
+  ifeq (${REL_INFO},1)
+    build_gems: build_gems_normal
+  else
+    build_gems: build_gems_rhel6
+  endif
 endif
 
 build_gems_normal:
