@@ -1,10 +1,10 @@
-# PCS - Pacemaker/Corosync configuration system
+## PCS - Pacemaker/Corosync configuration system
 
 
-## Quick Start
+### Quick Start
 
 
-#### PCS Installation from Source
+##### PCS Installation from Source
 
 Run the following in terminal:
 
@@ -14,20 +14,20 @@ Run the following in terminal:
 # make install
 ```
 
-This will install pcs into `/usr/sbin/pcs`. You may have to use *sudo* for `make install` to work.
+This will install pcs into `/usr/sbin/pcs`.
 
 
-#### Create a Basic Cluster
+##### Create a Basic Cluster
 
-To create a cluster run the following commands on all nodes (replacing node1, node2, node3 with a list of nodes in the cluster). You may need to use *sudo* to have this work.
+To create a cluster run the following commands on all nodes (replacing node1, node2, node3 with a list of nodes in the cluster).
 
 ```shell
 # pcs cluster setup --local --name cluster_name node1 node2 node3
 ```
 
-Then run the following command on all nodes, and again you may need to use *sudo*:
+Then run the following command on all nodes:
 
-```
+```shell
 # pcs cluster start
 ```
 
@@ -56,9 +56,9 @@ Current Fedora 18 .spec:
 http://pkgs.fedoraproject.org/cgit/pcs.git/tree/pcs.spec?h=f18
 
 
-#### PCS Installation from Source
+##### PCSD Installation from Source
 
-You can also install pcsd which operates as a GUI and remote server for pcs. It is also necessary to follow the guides on the clusterlabs.org website.  
+You can also install pcsd which operates as a GUI and remote server for pcs. pcsd may also necessary in order to follow the guides on the clusterlabs.org website.  
 
 To install pcsd run the following commands from the root of your pcs directory. (You must have the ruby bundler gem installed, rubygem-bundler in Fedora, and development packages installed)
 
@@ -74,6 +74,6 @@ If you are on GNU/Linux its time to:
 ```
 
 
-## Inquiries
+### Inquiries
 
 If you have an questions or concerns please feel free to email cfeist@redhat.com or open a github issue on the pcs project.
