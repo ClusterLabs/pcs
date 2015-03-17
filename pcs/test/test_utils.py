@@ -637,67 +637,23 @@ class UtilsTest(unittest.TestCase):
     def test_get_timeout_seconds(self):
         self.assertEquals(utils.get_timeout_seconds("10"), 10)
         self.assertEquals(utils.get_timeout_seconds("10s"), 10)
+        self.assertEquals(utils.get_timeout_seconds("10sec"), 10)
+        self.assertEquals(utils.get_timeout_seconds("10m"), 600)
         self.assertEquals(utils.get_timeout_seconds("10min"), 600)
+        self.assertEquals(utils.get_timeout_seconds("10h"), 36000)
+        self.assertEquals(utils.get_timeout_seconds("10hr"), 36000)
 
         self.assertEquals(utils.get_timeout_seconds("1a1s"), None)
-        self.assertEquals(utils.get_timeout_seconds("10m"), None)
+        self.assertEquals(utils.get_timeout_seconds("10mm"), None)
         self.assertEquals(utils.get_timeout_seconds("10mim"), None)
         self.assertEquals(utils.get_timeout_seconds("aaa"), None)
         self.assertEquals(utils.get_timeout_seconds(""), None)
 
         self.assertEquals(utils.get_timeout_seconds("1a1s", True), "1a1s")
-        self.assertEquals(utils.get_timeout_seconds("10m", True), "10m")
+        self.assertEquals(utils.get_timeout_seconds("10mm", True), "10mm")
         self.assertEquals(utils.get_timeout_seconds("10mim", True), "10mim")
         self.assertEquals(utils.get_timeout_seconds("aaa", True), "aaa")
         self.assertEquals(utils.get_timeout_seconds("", True), "")
-
-    def test_get_default_op_timeout(self):
-        shutil.copy(empty_cib, temp_cib)
-        utils.usefile = True
-        utils.filename = temp_cib
-
-        self.assertEquals(utils.get_default_op_timeout(), 20)
-        output, retVal = pcs(temp_cib, "property set default-action-timeout=25")
-        self.assertEquals(retVal, 0)
-        self.assertEquals(utils.get_default_op_timeout(), 25)
-        output, retVal = pcs(temp_cib, "property unset default-action-timeout")
-        self.assertEquals(retVal, 0)
-        self.assertEquals(utils.get_default_op_timeout(), 20)
-
-        utils.usefile = False
-        utils.filename = ""
-
-    def test_get_resource_op_timeout(self):
-        shutil.copy(empty_cib, temp_cib)
-        utils.usefile = True
-        utils.filename = temp_cib
-
-        output, retVal = pcs(temp_cib, "property set default-action-timeout=25")
-        ac(output, "")
-        self.assertEquals(retVal, 0)
-        output, retVal = pcs(
-            temp_cib,
-            "resource create dummy Dummy op start timeout=33s --no-default-ops"
-        )
-        ac(output, "")
-        self.assertEquals(retVal, 0)
-        dom = xml.dom.minidom.parse(temp_cib)
-
-        self.assertEquals(
-            utils.get_resource_op_timeout(dom, "dummy", "start"),
-            33
-        )
-        self.assertEquals(
-            utils.get_resource_op_timeout(dom, "dummy", "stop"),
-            20
-        )
-        self.assertEquals(
-            utils.get_resource_op_timeout(dom, "dummy0", "start"),
-            25
-        )
-
-        utils.usefile = False
-        utils.filename = ""
 
     def get_cib_status_lrm(self):
         cib_dom = self.get_cib_empty()
@@ -736,80 +692,6 @@ class UtilsTest(unittest.TestCase):
         status = cib_dom.getElementsByTagName("status")[0]
         status.parentNode.replaceChild(new_status, status)
         return cib_dom
-
-    def test_get_lrm_rsc_op(self):
-        dom = self.get_cib_status_lrm()
-
-        op_list = utils.get_lrm_rsc_op(dom, "dummy")
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(
-            op_id_list,
-            ["dummy_monitor_0", "dummy_stop_0", "dummy_start_0",
-                "dummy_monitor_30000",]
-        )
-        op_list = utils.get_lrm_rsc_op(dom, "dummy", ["monitor"])
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(
-            op_id_list,
-            ["dummy_monitor_0", "dummy_monitor_30000",]
-        )
-        op_list = utils.get_lrm_rsc_op(dom, "dummy", ["stop", "start"])
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(
-            op_id_list,
-            ["dummy_stop_0", "dummy_start_0",]
-        )
-        op_list = utils.get_lrm_rsc_op(dom, "dummy", last_call_id=30)
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(
-            op_id_list,
-            ["dummy_stop_0", "dummy_start_0", "dummy_monitor_30000",]
-        )
-        op_list = utils.get_lrm_rsc_op(dom, "dummy", ["monitor"], 30)
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(
-            op_id_list,
-            ["dummy_monitor_30000",]
-        )
-
-        op_list = utils.get_lrm_rsc_op(dom, "dummy", last_call_id=340)
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(op_id_list, [])
-        op_list = utils.get_lrm_rsc_op(dom, "dummy", last_call_id=34)
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(op_id_list, [])
-        op_list = utils.get_lrm_rsc_op(dom, "dummy0", ["monitor"], 30)
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(op_id_list, [])
-        op_list = utils.get_lrm_rsc_op(dom, "dummy0", ["monitor"])
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(op_id_list, [])
-        op_list = utils.get_lrm_rsc_op(dom, "dummy0", last_call_id=30)
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(op_id_list, [])
-        op_list = utils.get_lrm_rsc_op(dom, "dummy0")
-        op_id_list = [op.getAttribute("id") for op in op_list]
-        self.assertEquals(op_id_list, [])
-
-    def test_get_lrm_rsc_op_failures(self):
-        dom = self.get_cib_status_lrm()
-
-        failures = utils.get_lrm_rsc_op_failures(
-            utils.get_lrm_rsc_op(dom, "dummy")
-        )
-        self.assertEquals(
-            failures,
-            ["rh70-node2: failed", "Xrh70-node1X: test"]
-        )
-
-        failures = utils.get_lrm_rsc_op_failures(
-            utils.get_lrm_rsc_op(dom, "dummy", ["start"])
-        )
-        self.assertEquals(failures, [])
-        failures = utils.get_lrm_rsc_op_failures(
-            utils.get_lrm_rsc_op(dom, "dummy0")
-        )
-        self.assertEquals(failures, [])
 
     def test_resource_running_on(self):
         status = xml.dom.minidom.parseString("""
@@ -897,6 +779,7 @@ class UtilsTest(unittest.TestCase):
             {
                 'message':
                     "Resource 'myResource' is running on node rh70-node1.",
+                'is_running': True,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': ["rh70-node1"],
@@ -908,6 +791,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myClonedResource' is running on nodes "
                         "rh70-node1, rh70-node2, rh70-node3.",
+                'is_running': True,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
@@ -919,6 +803,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myClone' is running on nodes "
                         "rh70-node1, rh70-node2, rh70-node3.",
+                'is_running': True,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
@@ -930,6 +815,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myMasteredResource' is master on node "
                         "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                'is_running': True,
                 'nodes_master': ["rh70-node1"],
                 'nodes_slave': ["rh70-node2", "rh70-node3"],
                 'nodes_started': [],
@@ -941,6 +827,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myMaster' is master on node "
                         "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                'is_running': True,
                 'nodes_master': ["rh70-node1"],
                 'nodes_slave': ["rh70-node2", "rh70-node3"],
                 'nodes_started': [],
@@ -952,6 +839,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myGroupedResource' is running on node "
                         "rh70-node2.",
+                'is_running': True,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': ["rh70-node2"],
@@ -963,6 +851,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myGroup' is running on node "
                         "rh70-node2.",
+                'is_running': True,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': ["rh70-node2"],
@@ -974,6 +863,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myClonedGroupedResource' is running on nodes "
                         "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
+                'is_running': True,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
@@ -986,6 +876,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myClonedGroup' is running on nodes "
                         "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
+                'is_running': True,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
@@ -998,6 +889,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myGroupClone' is running on nodes "
                         "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
+                'is_running': True,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
@@ -1010,6 +902,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myMasteredGroupedResource' is master on node "
                         "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                'is_running': True,
                 'nodes_master': ["rh70-node2"],
                 'nodes_slave': ["rh70-node1", "rh70-node3"],
                 'nodes_started': [],
@@ -1021,6 +914,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myMasteredGroup' is master on node "
                         "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                'is_running': True,
                 'nodes_master': ["rh70-node2"],
                 'nodes_slave': ["rh70-node1", "rh70-node3"],
                 'nodes_started': [],
@@ -1032,6 +926,7 @@ class UtilsTest(unittest.TestCase):
                 'message':
                     "Resource 'myGroupMaster' is master on node "
                         "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                'is_running': True,
                 'nodes_master': ["rh70-node2"],
                 'nodes_slave': ["rh70-node1", "rh70-node3"],
                 'nodes_started': [],
@@ -1042,6 +937,7 @@ class UtilsTest(unittest.TestCase):
             {
                 'message':
                     "Resource 'notMyResource' is not running on any node",
+                'is_running': False,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': [],
@@ -1052,195 +948,11 @@ class UtilsTest(unittest.TestCase):
             {
                 'message':
                     "Resource 'myStoppedResource' is not running on any node",
+                'is_running': False,
                 'nodes_master': [],
                 'nodes_slave': [],
                 'nodes_started': [],
             }
-        )
-
-    def test_count_expected_resource_instances(self):
-        dom = xml.dom.minidom.parse("empty.xml")
-        new_resources = xml.dom.minidom.parseString("""
-<resources>
-    <primitive id="prim1">
-    </primitive>
-    <group id="group1">
-        <primitive id="prim2">
-        </primitive>
-    </group>
-    <clone id="clone1">
-        <primitive id="prim3">
-        </primitive>
-    </clone>
-    <clone id="clone2">
-        <primitive id="prim4">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="clone-max" value="9"/>
-            <nvpair name="clone-node-max" value="3"/>
-        </meta_attributes>
-    </clone>
-    <clone id="clone3">
-        <primitive id="prim5">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="clone-max" value="2"/>
-            <nvpair name="clone-node-max" value="3"/>
-        </meta_attributes>
-    </clone>
-    <clone id="clone4">
-        <primitive id="prim6">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="globally-unique" value="true"/>
-            <nvpair name="clone-max" value="9"/>
-        </meta_attributes>
-    </clone>
-    <clone id="clone5">
-        <primitive id="prim7">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="globally-unique" value="true"/>
-            <nvpair name="clone-max" value="9"/>
-            <nvpair name="clone-node-max" value="2"/>
-        </meta_attributes>
-    </clone>
-    <clone id="clone6">
-        <primitive id="prim8">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="globally-unique" value="true"/>
-            <nvpair name="clone-max" value="9"/>
-            <nvpair name="clone-node-max" value="4"/>
-        </meta_attributes>
-    </clone>
-    <master id="master1">
-        <primitive id="prim9">
-        </primitive>
-    </master>
-    <master id="master2">
-        <primitive id="prim10">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="clone-max" value="9"/>
-            <nvpair name="clone-node-max" value="3"/>
-            <nvpair name="master-max" value="5"/>
-            <nvpair name="master-node-max" value="4"/>
-        </meta_attributes>
-    </master>
-    <master id="master3">
-        <primitive id="prim11">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="globally-unique" value="true"/>
-            <nvpair name="clone-max" value="9"/>
-            <nvpair name="clone-node-max" value="3"/>
-        </meta_attributes>
-    </master>
-    <master id="master4">
-        <primitive id="prim12">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="globally-unique" value="true"/>
-            <nvpair name="clone-max" value="9"/>
-            <nvpair name="clone-node-max" value="3"/>
-            <nvpair name="master-max" value="3"/>
-            <nvpair name="master-node-max" value="2"/>
-        </meta_attributes>
-    </master>
-    <master id="master5">
-        <primitive id="prim13">
-        </primitive>
-        <meta_attributes>
-            <nvpair name="globally-unique" value="true"/>
-            <nvpair name="clone-max" value="9"/>
-            <nvpair name="clone-node-max" value="3"/>
-            <nvpair name="master-max" value="12"/>
-            <nvpair name="master-node-max" value="4"/>
-        </meta_attributes>
-    </master>
-</resources>
-        """).documentElement
-        resources = dom.getElementsByTagName("resources")[0]
-        resources.parentNode.replaceChild(new_resources, resources)
-
-        self.assertEquals(
-            1,
-            utils.count_expected_resource_instances(
-                utils.dom_get_resource(dom, "prim1"), 3
-            )
-        )
-        self.assertEquals(
-            1,
-            utils.count_expected_resource_instances(
-                utils.dom_get_group(dom, "group1"), 3
-            )
-        )
-        self.assertEquals(
-            3,
-            utils.count_expected_resource_instances(
-                utils.dom_get_clone(dom, "clone1"), 3
-            )
-        )
-        self.assertEquals(
-            3,
-            utils.count_expected_resource_instances(
-                utils.dom_get_clone(dom, "clone2"), 3
-            )
-        )
-        self.assertEquals(
-            2,
-            utils.count_expected_resource_instances(
-                utils.dom_get_clone(dom, "clone3"), 3
-            )
-        )
-        self.assertEquals(
-            3,
-            utils.count_expected_resource_instances(
-                utils.dom_get_clone(dom, "clone4"), 3
-            )
-        )
-        self.assertEquals(
-            6,
-            utils.count_expected_resource_instances(
-                utils.dom_get_clone(dom, "clone5"), 3
-            )
-        )
-        self.assertEquals(
-            9,
-            utils.count_expected_resource_instances(
-                utils.dom_get_clone(dom, "clone6"), 3
-            )
-        )
-        self.assertEquals(
-            1,
-            utils.count_expected_resource_instances(
-                utils.dom_get_master(dom, "master1"), 3
-            )
-        )
-        self.assertEquals(
-            3,
-            utils.count_expected_resource_instances(
-                utils.dom_get_master(dom, "master2"), 3
-            )
-        )
-        self.assertEquals(
-            1,
-            utils.count_expected_resource_instances(
-                utils.dom_get_master(dom, "master3"), 3
-            )
-        )
-        self.assertEquals(
-            3,
-            utils.count_expected_resource_instances(
-                utils.dom_get_master(dom, "master4"), 3
-            )
-        )
-        self.assertEquals(
-            9,
-            utils.count_expected_resource_instances(
-                utils.dom_get_master(dom, "master5"), 3
-            )
         )
 
     def test_parse_cman_quorum_info(self):

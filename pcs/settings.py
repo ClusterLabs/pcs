@@ -16,4 +16,3 @@ corosync_uidgid_dir = "/etc/corosync/uidgid.d/"
 cib_dir = "/var/lib/pacemaker/cib/"
 pacemaker_uname = "hacluster"
 pacemaker_gname = "haclient"
-default_wait = 30

@@ -1,6 +1,5 @@
 import sys
 import os
-import time
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
@@ -9,8 +8,9 @@ import utils
 import re
 import textwrap
 import xml.etree.ElementTree as ET
-import tempfile
 import constraint
+
+PACEMAKER_WAIT_TIMEOUT_STATUS = 62
 
 def resource_cmd(argv):
     if len(argv) == 0:
@@ -341,24 +341,19 @@ def format_desc(indent, desc):
 # ra_class, ra_type & ra_provider must all contain valid info
 def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
     if "--wait" in utils.pcs_options:
-        if utils.usefile:
-            utils.err("Cannot use '-f' together with '--wait'")
+        wait_timeout = utils.validate_wait_get_timeout()
         if "--disabled" in utils.pcs_options:
             utils.err("Cannot use '--wait' together with '--disabled'")
-        if "target-role=Stopped" in meta_values:
-            utils.err("Cannot use '--wait' together with 'target-role=Stopped'")
-
-    wait = False
-    wait_timeout = None
-    if "--wait" in utils.pcs_options:
-        wait = True
-        if utils.pcs_options["--wait"] is not None:
-            wait_timeout = utils.pcs_options["--wait"]
-            if not wait_timeout.isdigit():
-                utils.err(
-                    "%s is not a valid number of seconds to wait"
-                    % wait_timeout
-                )
+        do_not_run = ["target-role=stopped"]
+        if (
+            "--master" in utils.pcs_options or "--clone" in utils.pcs_options
+            or
+            clone_opts
+        ):
+            do_not_run.extend(["clone-max=0", "clone-node-max=0"])
+        for opt in meta_values + clone_opts:
+            if opt.lower() in do_not_run:
+                utils.err("Cannot use '--wait' together with '%s'" % opt)
 
     ra_id_valid, ra_id_error = utils.validate_xml_id(ra_id, 'resource name')
     if not ra_id_valid:
@@ -449,16 +444,6 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         ]
         meta_values.append("target-role=Stopped")
 
-    if wait and wait_timeout is None:
-        for op in op_values_all:
-            if op[0] == "start":
-                for op_setting in op[1:]:
-                    match = re.match("timeout=(.+)", op_setting)
-                    if match:
-                        wait_timeout = utils.get_timeout_seconds(match.group(1))
-        if wait_timeout is None:
-            wait_timeout = utils.get_default_op_timeout()
-
 # If it's a master all meta values go to the master
     master_meta_values = []
     if "--master" in utils.pcs_options:
@@ -491,23 +476,14 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     for op in op_values:
         dom = resource_operation_add(dom, ra_id, op, validate=True)
 
-    expected_instances = 1
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
         dom = resource_clone_create(dom, [ra_id] + clone_opts)
-        expected_instances = utils.count_expected_resource_instances(
-            utils.dom_get_clone(dom, ra_id + "-clone"),
-            len(utils.getNodesFromPacemaker())
-        )
         if "--group" in utils.pcs_options:
             print "Warning: --group ignored when creating a clone"
         if "--master" in utils.pcs_options:
             print "Warning: --master ignored when creating a clone"
     elif "--master" in utils.pcs_options:
         dom = resource_master_create(dom, [ra_id] + master_meta_values)
-        expected_instances = utils.count_expected_resource_instances(
-            utils.dom_get_master(dom, ra_id + "-master"),
-            len(utils.getNodesFromPacemaker())
-        )
         if "--group" in utils.pcs_options:
             print "Warning: --group ignored when creating a master"
     elif "--group" in utils.pcs_options:
@@ -516,18 +492,28 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
 
     utils.replace_cib_configuration(dom)
 
-    if wait:
-        running, message = utils.is_resource_started(
-            ra_id, int(wait_timeout), count=expected_instances
-        )
-        if running:
-            print message
+    if "--wait" in utils.pcs_options:
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(ra_id)
+        if retval == 0 and running_on["is_running"]:
+            print running_on["message"]
         else:
-            utils.err(
-                "unable to start: '%s', please check logs for failure "
-                    "information\n%s"
-                % (ra_id, message)
-            )
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            else:
+                msg.append(
+                    "unable to start: '%s', please check logs for failure "
+                    "information"
+                    % ra_id
+                )
+            msg.append(running_on["message"])
+            if retval != 0 and output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
 def resource_move(argv,clear=False,ban=False):
     other_options = []
@@ -618,57 +604,27 @@ def resource_move(argv,clear=False,ban=False):
         else:
             utils.err("when specifying --master you must use the master id")
 
-    wait = False
-    if "--wait" in utils.pcs_options and not clear:
-        if utils.usefile:
-            utils.err("Cannot use '-f' together with '--wait'")
-        if not utils.is_resource_started(resource_id, 0)[0]:
-            print "Warning: Cannot use '--wait' on non-running resources"
-        else:
-            wait = True
-    if wait:
-        timeout = utils.pcs_options["--wait"]
-        if timeout is None:
-            timeout = (
-                utils.get_resource_op_timeout(dom, resource_id, "stop")
-                +
-                utils.get_resource_op_timeout(dom, resource_id, "start")
-            )
-        elif not timeout.isdigit():
-            utils.err("You must specify the number of seconds to wait")
-        allowed_nodes = set()
-        banned_nodes = set()
-        if dest_node and ban:
-            banned_nodes = set([dest_node])
-        elif dest_node:
-            allowed_nodes = set([dest_node])
-        else:
-            state = utils.getClusterState()
+    if "--wait" in utils.pcs_options:
+        wait_timeout = utils.validate_wait_get_timeout()
+        if not clear:
             running_on = utils.resource_running_on(resource_id)
-            banned_nodes = set(
-                running_on["nodes_master"] + running_on["nodes_started"]
-            )
-
-    if "--wait" in utils.pcs_options and clear:
-        if utils.usefile:
-            utils.err("Cannot use '-f' together with '--wait'")
-        wait = True
-        timeout = utils.pcs_options["--wait"]
-        if timeout and not timeout.isdigit():
-            utils.err("You must specify the number of seconds to wait")
-        try:
-            tmp_cib = tempfile.NamedTemporaryFile("w+b", -1, ".pcs")
-            tmp_cib.write(utils.get_cib_dom().toxml())
-            tmp_cib.seek(0)
-        except EnvironmentError as e:
-            utils.err("Unable to determine what to wait for:\n%s" % e)
-        utils.usefile = True
-        utils.filename = tmp_cib.name
+            was_running = running_on["is_running"]
+            allowed_nodes = set()
+            banned_nodes = set()
+            if dest_node and ban: # ban, node specified
+                banned_nodes = set([dest_node])
+            elif dest_node: # move, node specified
+                allowed_nodes = set([dest_node])
+            else: # move or ban, node not specified
+                banned_nodes = set(
+                    running_on["nodes_master"] + running_on["nodes_started"]
+                )
 
     if "--master" in utils.pcs_options:
         other_options.append("--master")
     if lifetime is not None:
         other_options.append("--lifetime=%s" % lifetime)
+
     if clear:
         if dest_node:
             output,ret = utils.run(["crm_resource", "--resource", resource_id, "--clear", "--host", dest_node] + other_options)
@@ -690,36 +646,39 @@ def resource_move(argv,clear=False,ban=False):
             utils.err("You must specify a node when moving/banning a stopped resource")
         utils.err ("error moving/banning/clearing resource\n" + output)
 
-    if wait and not clear:
-        success, message = utils.is_resource_started(
-            resource_id, int(timeout), allowed_nodes=allowed_nodes,
-            banned_nodes=banned_nodes
-        )
-        if success:
-            print message
+    if "--wait" in utils.pcs_options:
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(resource_id)
+        running_nodes = running_on["nodes_started"] + running_on["nodes_master"]
+        error = retval != 0
+        if ban and (
+            not banned_nodes.isdisjoint(running_nodes)
+            or
+            (was_running and not running_nodes)
+        ):
+            error = True
+        if (
+            not ban and not clear and was_running # running resource moved
+            and (
+                not running_nodes
+                or
+                (allowed_nodes and allowed_nodes.isdisjoint(running_nodes))
+           )
+        ):
+            error = True
+        if not error:
+            print running_on["message"]
         else:
-            utils.err("Unable to start '%s'\n%s" % (resource_id, message))
-
-    if wait and clear:
-        utils.usefile = False
-        utils.filename = ""
-        try:
-            tmp_cib.seek(0)
-            tmp_cib_dom = parseString(tmp_cib.read())
-        except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
-            utils.err("Unable to determine what to wait for:\n%s" % e)
-        except xml.etree.ElementTree.ParseError as e:
-            utils.err("Unable to determine what to wait for:\n%s" % e)
-        output, transitions_dom, new_cib_dom = utils.simulate_cib(tmp_cib_dom)
-        op_list = utils.get_operations_from_transitions(transitions_dom)
-        my_op_list = [op for op in op_list if op[0] == resource_id]
-
-        utils.replace_cib_configuration(tmp_cib_dom)
-
-        if my_op_list:
-            utils.wait_for_primitive_ops_to_process(my_op_list, timeout)
-        else:
-            print utils.resource_running_on(resource_id)["message"]
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            msg.append(running_on["message"])
+            if retval != 0 and output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
 def resource_standards(return_output=False):
     output, retval = utils.run(["crm_resource","--list-standards"], True)
@@ -762,9 +721,9 @@ def resource_update(res_id,args):
     ra_values, op_values, meta_values = parse_resource_options(args)
 
     wait = False
+    wait_timeout = None
     if "--wait" in utils.pcs_options:
-        if utils.usefile:
-            utils.err("Cannot use '-f' together with '--wait'")
+        wait_timeout = utils.validate_wait_get_timeout()
         wait = True
 
     resource = None
@@ -784,7 +743,8 @@ def resource_update(res_id,args):
             for a in c.childNodes:
                 if a.localName == "primitive" or a.localName == "group":
                     return resource_update_clone_master(
-                        dom, clone, "clone", a.getAttribute("id"), args, wait
+                        dom, clone, "clone", a.getAttribute("id"), args,
+                        wait, wait_timeout
                     )
 
         master = None
@@ -795,16 +755,10 @@ def resource_update(res_id,args):
 
         if master:
             return resource_update_clone_master(
-                dom, master, "master", res_id, args, wait
+                dom, master, "master", res_id, args, wait, wait_timeout
             )
 
         utils.err ("Unable to find resource: %s" % res_id)
-
-    if wait:
-        node_count = len(utils.getNodesFromPacemaker())
-        status_old = utils.get_resource_status_for_wait(
-            dom, resource, node_count
-        )
 
     instance_attributes = resource.getElementsByTagName("instance_attributes")
     if len(instance_attributes) == 0:
@@ -919,82 +873,51 @@ def resource_update(res_id,args):
     if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
         instance_attributes.parentNode.removeChild(instance_attributes)
 
-    if wait:
-        status_new = utils.get_resource_status_for_wait(
-            dom, resource, node_count
-        )
-        wait_for_start, wait_for_stop = utils.get_resource_wait_decision(
-            status_old, status_new
-        )
-        if wait_for_start or wait_for_stop:
-            timeout = utils.pcs_options["--wait"]
-            if timeout is None:
-                timeout = utils.get_resource_op_timeout(
-                    dom, res_id, "start" if wait_for_start else "stop"
-                )
-            elif not timeout.isdigit():
-                utils.err("You must specify the number of seconds to wait")
-        else:
-            timeout = 0
-
     utils.replace_cib_configuration(dom)
 
-    if wait:
-        if wait_for_start or wait_for_stop:
-            success, message = utils.is_resource_started(
-                res_id, int(timeout), wait_for_stop,
-                count=status_new["instances"]
-            )
-            if success:
-                print message
-            else:
-                utils.err("Unable to start '%s'\n%s" % (res_id, message))
+    if "--wait" in utils.pcs_options:
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(res_id)
+        if retval == 0:
+            print running_on["message"]
         else:
-            print utils.resource_running_on(res_id)["message"]
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            msg.append(running_on["message"])
+            if retval != 0 and output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
-def resource_update_clone_master(dom, clone, clone_type, res_id, args, wait):
-    if wait:
-        node_count = len(utils.getNodesFromPacemaker())
-        status_old = utils.get_resource_status_for_wait(dom, clone, node_count)
-
+def resource_update_clone_master(
+    dom, clone, clone_type, res_id, args, wait, wait_timeout
+):
     if clone_type == "clone":
         dom = resource_clone_create(dom, [res_id] + args, True)
     elif clone_type == "master":
         dom = resource_master_create(dom, [res_id] + args, True)
 
-    if wait:
-        status_new = utils.get_resource_status_for_wait(dom, clone, node_count)
-        wait_for_start, wait_for_stop = utils.get_resource_wait_decision(
-            status_old, status_new
-        )
-        if wait_for_start or wait_for_stop:
-            timeout = utils.pcs_options["--wait"]
-            if timeout is None:
-                timeout = utils.get_resource_op_timeout(
-                    dom, res_id, "start" if wait_for_start else "stop"
-                )
-            elif not timeout.isdigit():
-                utils.err("You must specify the number of seconds to wait")
-        else:
-            timeout = 0
-
     dom = utils.replace_cib_configuration(dom)
 
     if wait:
-        if wait_for_start or wait_for_stop:
-            success, message = utils.is_resource_started(
-                clone.getAttribute("id"), int(timeout), wait_for_stop,
-                count=status_new["instances"]
-            )
-            if success:
-                print message
-            else:
-                utils.err(
-                    "Unable to start '%s'\n%s"
-                    % (clone.getAttribute("id"), message)
-                )
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(clone.getAttribute("id"))
+        if retval == 0:
+            print running_on["message"]
         else:
-            print utils.resource_running_on(clone.getAttribute("id"))["message"]
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            msg.append(running_on["message"])
+            if retval != 0 and output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
     return dom
 
@@ -1178,13 +1101,8 @@ def resource_meta(res_id, argv):
     else:
         meta_attributes = meta_attributes[0]
 
-    wait = False
     if "--wait" in utils.pcs_options:
-        if utils.usefile:
-            utils.err("Cannot use '-f' together with '--wait'")
-        wait = True
-        node_count = len(utils.getNodesFromPacemaker())
-        status_old = utils.get_resource_status_for_wait(dom, elem, node_count)
+        wait_timeout = utils.validate_wait_get_timeout()
 
     update_meta_attributes(
         meta_attributes,
@@ -1192,35 +1110,24 @@ def resource_meta(res_id, argv):
         res_id + "-meta_attributes-"
     )
 
-    if wait:
-        status_new = utils.get_resource_status_for_wait(dom, elem, node_count)
-        wait_for_start, wait_for_stop = utils.get_resource_wait_decision(
-            status_old, status_new
-        )
-        if wait_for_start or wait_for_stop:
-            timeout = utils.pcs_options["--wait"]
-            if timeout is None:
-                timeout = utils.get_resource_op_timeout(
-                    dom, res_id, "start" if wait_for_start else "stop"
-                )
-            elif not timeout.isdigit():
-                utils.err("You must specify the number of seconds to wait")
-        else:
-            timeout = 0
-
     utils.replace_cib_configuration(dom)
 
-    if wait:
-        if wait_for_start or wait_for_stop:
-            success, message = utils.is_resource_started(
-                res_id, int(timeout), wait_for_stop, count=status_new["instances"]
-            )
-            if success:
-                print message
-            else:
-                utils.err("Unable to start '%s'\n%s" % (res_id, message))
+    if "--wait" in utils.pcs_options:
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(res_id)
+        if retval == 0:
+            print running_on["message"]
         else:
-            print utils.resource_running_on(res_id)["message"]
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            msg.append(running_on["message"])
+            if retval != 0 and output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
 def update_meta_attributes(meta_attributes, meta_attrs, id_prefix):
     dom = meta_attributes.ownerDocument
@@ -1323,24 +1230,26 @@ def resource_group(argv):
         resource_ids = argv
         cib = resource_group_add(utils.get_cib_dom(), group_name, resource_ids)
 
-        wait = False
         if "--wait" in utils.pcs_options:
-            if utils.usefile:
-                utils.err("Cannot use '-f' together with '--wait'")
-            wait = True
-            timeout = utils.pcs_options["--wait"]
-            if timeout and not timeout.isdigit():
-                utils.err("You must specify the number of seconds to wait")
-            output, transitions_dom, new_cib_dom = utils.simulate_cib(cib)
-            op_list = utils.get_operations_from_transitions(transitions_dom)
-            my_op_list = [op for op in op_list if op[0] in resource_ids]
+            wait_timeout = utils.validate_wait_get_timeout()
 
         utils.replace_cib_configuration(cib)
 
-        if wait:
-            if my_op_list:
-                utils.wait_for_primitive_ops_to_process(my_op_list, timeout)
-            print utils.resource_running_on(group_name)["message"]
+        if "--wait" in utils.pcs_options:
+            args = ["crm_resource", "--wait"]
+            if wait_timeout:
+                args.extend(["--timeout=%s" % wait_timeout])
+            output, retval = utils.run(args)
+            running_on = utils.resource_running_on(group_name)
+            if retval == 0:
+                print running_on["message"]
+            else:
+                msg = []
+                if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                    msg.append("waiting timeout")
+                if output:
+                    msg.append("\n" + output)
+                utils.err("\n".join(msg).strip())
 
     elif (group_cmd == "list"):
         resource_group_list(argv)
@@ -1351,27 +1260,28 @@ def resource_group(argv):
         group_name = argv.pop(0)
         resource_ids = argv
 
-        cib_dom, removed_resources = resource_group_rm(
+        cib_dom = resource_group_rm(
             utils.get_cib_dom(), group_name, resource_ids
         )
 
-        wait = False
         if "--wait" in utils.pcs_options:
-            if utils.usefile:
-                utils.err("Cannot use '-f' together with '--wait'")
-            wait = True
-            timeout = utils.pcs_options["--wait"]
-            if timeout and not timeout.isdigit():
-                utils.err("You must specify the number of seconds to wait")
-            output, transitions_dom, new_cib_dom = utils.simulate_cib(cib_dom)
-            op_list = utils.get_operations_from_transitions(transitions_dom)
-            my_op_list = [op for op in op_list if op[0] in removed_resources]
+            wait_timeout = utils.validate_wait_get_timeout()
 
         utils.replace_cib_configuration(cib_dom)
 
-        if wait:
-            if my_op_list:
-                utils.wait_for_primitive_ops_to_process(my_op_list, timeout)
+        if "--wait" in utils.pcs_options:
+            args = ["crm_resource", "--wait"]
+            if wait_timeout:
+                args.extend(["--timeout=%s" % wait_timeout])
+            output, retval = utils.run(args)
+            if retval != 0:
+                msg = []
+                if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                    msg.append("waiting timeout")
+                if output:
+                    msg.append("\n" + output)
+                utils.err("\n".join(msg).strip())
+
     else:
         usage.resource()
         sys.exit(1)
@@ -1384,44 +1294,29 @@ def resource_clone(argv):
     res = argv[0]
     cib_dom = utils.get_cib_dom()
 
-    wait = False
     if "--wait" in utils.pcs_options:
-        if utils.usefile:
-            utils.err("Cannot use '-f' together with '--wait'")
-        if not utils.is_resource_started(res, 0)[0]:
-            print "Warning: Cannot use '--wait' on non-running resources"
-        else:
-            wait = True
-    if wait:
-        wait_op = "start"
-        for arg in argv:
-            if arg.lower() == "target-role=stopped":
-                wait_op = "stop"
-        timeout = utils.pcs_options["--wait"]
-        if timeout is None:
-            timeout = utils.get_resource_op_timeout(cib_dom, res, wait_op)
-        elif not timeout.isdigit():
-            utils.err("You must specify the number of seconds to wait")
+        wait_timeout = utils.validate_wait_get_timeout()
 
     cib_dom = resource_clone_create(cib_dom, argv)
     cib_dom = constraint.constraint_resource_update(res, cib_dom)
     utils.replace_cib_configuration(cib_dom)
 
-    if wait:
-        count = utils.count_expected_resource_instances(
-            utils.dom_get_clone(cib_dom, res + "-clone"),
-            len(utils.getNodesFromPacemaker())
-        )
-        success, message = utils.is_resource_started(
-            res, int(timeout), wait_op == "stop", count=count
-        )
-        if success:
-            print message
+    if "--wait" in utils.pcs_options:
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(res + "-clone")
+        if retval == 0:
+            print running_on["message"]
         else:
-            utils.err(
-                "Unable to %s clones of '%s'\n%s"
-                % (wait_op, res, message)
-            )
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            msg.append(running_on["message"])
+            if output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
 def resource_clone_create(cib_dom, argv, update_existing=False):
     name = argv.pop(0)
@@ -1495,20 +1390,8 @@ def resource_clone_master_remove(argv):
     resource_id = resource.getAttribute("id")
     clone_id = clone.getAttribute("id")
 
-    wait = False
     if "--wait" in utils.pcs_options:
-        if utils.usefile:
-            utils.err("Cannot use '-f' together with '--wait'")
-        if not utils.is_resource_started(resource_id, 0)[0]:
-            print "Warning: Cannot use '--wait' on non-running resources"
-        else:
-            wait = True
-    if wait:
-        timeout = utils.pcs_options["--wait"]
-        if timeout is None:
-            timeout = utils.get_resource_op_timeout(dom, resource_id, "stop")
-        elif not timeout.isdigit():
-            utils.err("You must specify the number of seconds to wait")
+        wait_timeout = utils.validate_wait_get_timeout()
 
     constraint.remove_constraints_containing(
         clone.getAttribute("id"), passed_dom=dom
@@ -1517,17 +1400,22 @@ def resource_clone_master_remove(argv):
     clone.parentNode.removeChild(clone)
     utils.replace_cib_configuration(dom)
 
-    if wait:
-        running, message = utils.is_resource_started(
-            resource_id, int(timeout), count=1
-        )
-        if running:
-            print message
+    if "--wait" in utils.pcs_options:
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(resource_id)
+        if retval == 0:
+            print running_on["message"]
         else:
-            utils.err(
-                "Unable to start single instance of '%s'\n%s"
-                % (resource_id, message)
-            )
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            msg.append(running_on["message"])
+            if output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
 def resource_master(argv):
     non_option_args_count = 0
@@ -1545,41 +1433,29 @@ def resource_master(argv):
         res_id = argv[0]
     cib_dom = utils.get_cib_dom()
 
-    wait = False
     if "--wait" in utils.pcs_options:
-        if utils.usefile:
-            utils.err("Cannot use '-f' together with '--wait'")
-        if not utils.is_resource_started(res_id, 0)[0]:
-            print "Warning: Cannot use '--wait' on non-running resources"
-        else:
-            wait = True
-    if wait:
-        wait_op = "promote"
-        for arg in argv:
-            if arg.lower() == "target-role=stopped":
-                wait_op = "stop"
-        timeout = utils.pcs_options["--wait"]
-        if timeout is None:
-            timeout = utils.get_resource_op_timeout(cib_dom, res_id, wait_op)
-        elif not timeout.isdigit():
-            utils.err("You must specify the number of seconds to wait")
+        wait_timeout = utils.validate_wait_get_timeout()
 
     cib_dom = resource_master_create(cib_dom, argv, False, master_id)
     cib_dom = constraint.constraint_resource_update(res_id, cib_dom)
     utils.replace_cib_configuration(cib_dom)
 
-    if wait:
-        count = utils.count_expected_resource_instances(
-            utils.dom_get_master(cib_dom, master_id),
-            len(utils.getNodesFromPacemaker())
-        )
-        success, message = utils.is_resource_started(
-            res_id, int(timeout), wait_op == "stop", count=count
-        )
-        if success:
-            print message
+    if "--wait" in utils.pcs_options:
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(master_id)
+        if retval == 0:
+            print running_on["message"]
         else:
-            utils.err("unable to %s '%s'\n%s" % (wait_op, res_id, message))
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            msg.append(running_on["message"])
+            if output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
 def resource_master_create(dom, argv, update=False, master_id=None):
     if update:
@@ -1696,10 +1572,24 @@ def resource_remove(resource_id, output = True):
         group_dom = parseString(group)
         print "Stopping all resources in group: %s..." % resource_id
         resource_disable([resource_id])
-        for res in group_dom.documentElement.getElementsByTagName("primitive"):
-            res_id = res.getAttribute("id")
-            if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(res_id, 15, True)[0]:
-                utils.err("Unable to stop group: %s before deleting (re-run with --force to force deletion)" % resource_id)
+        if not "--force" in utils.pcs_options and not utils.usefile:
+            output, retval = utils.run(["crm_resource", "--wait"])
+            stopped = True
+            state = utils.getClusterState()
+            for res in group_dom.documentElement.getElementsByTagName("primitive"):
+                res_id = res.getAttribute("id")
+                if utils.resource_running_on(res_id, state)["is_running"]:
+                    stopped = False
+                    break
+            if not stopped:
+                msg = [
+                    "Unable to stop group: %s before deleting "
+                    "(re-run with --force to force deletion)"
+                    % resource_id
+                ]
+                if retval != 0 and output:
+                    msg.append("\n" + output)
+                utils.err("\n".join(msg).strip())
         for res in group_dom.documentElement.getElementsByTagName("primitive"):
             resource_remove(res.getAttribute("id"))
         sys.exit(0)
@@ -1717,12 +1607,26 @@ def resource_remove(resource_id, output = True):
     if (group != ""):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
 
-    if not "--force" in utils.pcs_options and not utils.usefile and not utils.is_resource_started(resource_id, 0, True)[0]:
+    if (
+        not "--force" in utils.pcs_options
+        and
+        not utils.usefile
+        and
+        utils.resource_running_on(resource_id)["is_running"]
+    ):
         sys.stdout.write("Attempting to stop: "+ resource_id + "...")
         sys.stdout.flush()
         resource_disable([resource_id])
-        if not utils.is_resource_started(resource_id, 15, True)[0]:
-            utils.err("Unable to stop: %s before deleting (re-run with --force to force deletion)" % resource_id)
+        output, retval = utils.run(["crm_resource", "--wait"])
+        if utils.resource_running_on(resource_id)["is_running"]:
+            msg = [
+                "Unable to stop: %s before deleting "
+                "(re-run with --force to force deletion)"
+                % resource_id
+            ]
+            if retval != 0 and output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
         print "Stopped"
 
     constraint.remove_constraints_containing(resource_id,output)
@@ -1799,7 +1703,6 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
         utils.err("Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete %s'." % group_name)
 
     resources_to_move = []
-    resources_to_move_id = []
 
     if all_resources:
         for resource in group_match.getElementsByTagName("primitive"):
@@ -1820,7 +1723,6 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
     ):
         target_node = dom.getElementsByTagName("resources")[0]
     for resource in resources_to_move:
-        resources_to_move_id.append(resource.getAttribute("id"))
         resource.parentNode.removeChild(resource)
         target_node.appendChild(resource)
 
@@ -1830,7 +1732,7 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
             group_name, output=True, passed_dom=dom
         )
 
-    return cib_dom, resources_to_move_id
+    return cib_dom
 
 def resource_group_add(cib_dom, group_name, resource_ids):
     resources_element = cib_dom.getElementsByTagName("resources")[0]
@@ -2008,18 +1910,7 @@ def resource_disable(argv):
         print "Warning: '%s' is unmanaged" % resource
 
     if "--wait" in utils.pcs_options:
-        cib_dom = utils.get_cib_dom()
-        resource_wait = utils.dom_get_clone_ms_resource(cib_dom, resource)
-        if resource_wait is not None and resource_wait.tagName == "primitive":
-            resource_wait = resource_wait.getAttribute("id")
-        else:
-            resource_wait = resource
-        wait = utils.pcs_options["--wait"]
-        if wait is None:
-            wait = utils.get_resource_op_timeout(cib_dom, resource_wait, "stop")
-        elif not wait.isdigit():
-            utils.err("%s is not a valid number of seconds to wait" % wait)
-            sys.exit(1)
+        wait_timeout = utils.validate_wait_get_timeout()
 
     args = ["crm_resource", "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"]
     output, retval = utils.run(args)
@@ -2027,18 +1918,28 @@ def resource_disable(argv):
         utils.err(output)
 
     if "--wait" in utils.pcs_options:
-        did_stop, message = utils.is_resource_started(
-            resource_wait, int(wait), True
-        )
-        if did_stop:
-            print message
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(resource)
+        if retval == 0 and not running_on["is_running"]:
+            print running_on["message"]
             return True
         else:
-            utils.err(
-                "unable to stop: '%s', please check logs for failure "
-                    "information\n%s"
-                % (resource, message)
-            )
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            else:
+                msg.append(
+                    "unable to stop: '%s', please check logs for failure "
+                    "information"
+                    % resource
+                )
+            msg.append(running_on["message"])
+            if retval != 0 and output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
 def resource_enable(argv):
     if len(argv) < 1:
@@ -2049,18 +1950,7 @@ def resource_enable(argv):
         print "Warning: '%s' is unmanaged" % resource
 
     if "--wait" in utils.pcs_options:
-        cib_dom = utils.get_cib_dom()
-        resource_wait = utils.dom_get_clone_ms_resource(cib_dom, resource)
-        if resource_wait is not None and resource_wait.tagName == "primitive":
-            resource_wait = resource_wait.getAttribute("id")
-        else:
-            resource_wait = resource
-        wait = utils.pcs_options["--wait"]
-        if wait is None:
-            wait = utils.get_resource_op_timeout(cib_dom, resource_wait, "start")
-        elif not wait.isdigit():
-            utils.err("%s is not a valid number of seconds to wait" % wait)
-            sys.exit(1)
+        wait_timeout = utils.validate_wait_get_timeout()
 
     args = ["crm_resource", "-r", resource, "-m", "-d", "target-role"]
     output, retval = utils.run(args)
@@ -2068,16 +1958,28 @@ def resource_enable(argv):
         utils.err (output)
 
     if "--wait" in utils.pcs_options:
-        did_start, message = utils.is_resource_started(resource_wait, int(wait))
-        if did_start:
-            print message
+        args = ["crm_resource", "--wait"]
+        if wait_timeout:
+            args.extend(["--timeout=%s" % wait_timeout])
+        output, retval = utils.run(args)
+        running_on = utils.resource_running_on(resource)
+        if retval == 0 and running_on["is_running"]:
+            print running_on["message"]
             return True
         else:
-            utils.err(
-                "unable to start: '%s', please check logs for failure "
-                    "information\n%s"
-                % (resource, message)
-            )
+            msg = []
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                msg.append("waiting timeout")
+            else:
+                msg.append(
+                    "unable to start: '%s', please check logs for failure "
+                    "information"
+                    % ra_id
+                )
+            msg.append(running_on["message"])
+            if retval != 0 and output:
+                msg.append("\n" + output)
+            utils.err("\n".join(msg).strip())
 
 def resource_restart(argv):
     if len(argv) < 1:

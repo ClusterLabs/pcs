@@ -247,9 +247,9 @@ Commands:
         resource relatively to some resource already existing in the group.
         If --disabled is specified the resource is not started automatically.
         If --wait is specified, pcs will wait up to 'n' seconds for the resource
-        to start and then return 0 if the resource is started, or 1 if the
-        resource has not yet started. If 'n' is not specified, default resource
-        timeout will be used.
+        to start and then return 0 if the resource is started, or 1 if
+        the resource has not yet started.  If 'n' is not specified it defaults
+        to 60 minutes.
         Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \\
                      ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
                      nic=eth2
@@ -265,16 +265,18 @@ Commands:
         Allow the cluster to start the resource. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resource may
         remain stopped.  If --wait is specified, pcs will wait up to 'n' seconds
-        (or resource timeout seconds) for the resource to start and then return
-        0 if the resource is started, or 1 if the resource has not yet started.
+        for the resource to start and then return 0 if the resource is started,
+        or 1 if the resource has not yet started.  If 'n' is not specified it
+        defaults to 60 minutes.
 
     disable <resource id> [--wait[=n]]
         Attempt to stop the resource if it is running and forbid the cluster
         from starting it again.  Depending on the rest of the configuration
         (constraints, options, failures, etc), the resource may remain
-        started.  If --wait is specified, pcs will wait up to 'n' seconds (or
-        resource timeout seconds) for the resource to stop and then return 0
-        if the resource is stopped or 1 if the resource has not stopped.
+        started.  If --wait is specified, pcs will wait up to 'n' seconds for
+        the resource to stop and then return 0 if the resource is stopped or 1
+        if the resource has not stopped.  If 'n' is not specified it defaults
+        to 60 minutes.
 
     restart <resource id> [node] [--wait=n]
         Restart the resource specified. If a node is specified and if the
@@ -295,10 +297,9 @@ Commands:
         If --master is used the scope of the command is limited to the master
         role and you must use the master id (instead of the resource id).
         If lifetime is not specified it defaults to infinite.  If --wait is
-        specified, pcs will wait up to 'n' seconds for the resource to start
-        on destination node and then return 0 if the resource is started, or 1
-        if the resource has not yet started.  If 'n' is not specified, default
-        resource timeout will be used.
+        specified, pcs will wait up to 'n' seconds for the resource to move
+        and then return 0 on success or 1 on error.  If 'n' is not specified it
+        defaults to 60 minutes.
 
     ban <resource id> [node] [--master] [lifetime=<lifetime>] [--wait[=n]]
         Prevent the resource id specified from running on the node (or on the
@@ -306,21 +307,19 @@ Commands:
         If --master is used the scope of the command is limited to the
         master role and you must use the master id (instead of the resource id).
         If lifetime is not specified it defaults to infinite.  If --wait is
-        specified, pcs will wait up to 'n' seconds for the resource to start
-        on different node and then return 0 if the resource is started, or 1
-        if the resource has not yet started.  If 'n' is not specified, default
-        resource timeout will be used.
+        specified, pcs will wait up to 'n' seconds for the resource to move
+        and then return 0 on success or 1 on error.  If 'n' is not specified it
+        defaults to 60 minutes.
 
-    clear <resource id> [node] [--master] [--wait=n]
+    clear <resource id> [node] [--master] [--wait[=n]]
         Remove constraints created by move and/or ban on the specified
         resource (and node if specified).
         If --master is used the scope of the command is limited to the
         master role and you must use the master id (instead of the resource id).
-        If --wait is specified, pcs will wait up to 'n' seconds for resources
-        to start / move depending on the effect of removing the constraints and
-        then return 0 if resources are started on target nodes, or 1 if
-        resources have not yet started / moved.  If clear has no effect, pcs
-        will return 0.
+        If --wait is specified, pcs will wait up to 'n' seconds for the
+        operation to finish (including starting and/or moving resources if
+        appropriate) and then return 0 on success or 1 on error.  If 'n' is not
+        specified it defaults to 60 minutes.
 
     standards
         List available resource agent standards supported by this installation.
@@ -343,8 +342,7 @@ Commands:
         use the add_operation & remove_operation commands.  If --wait is
         specified, pcs will wait up to 'n' seconds for the changes to take
         effect and then return 0 if the changes have been processed or 1
-        otherwise.  If 'n' is not specified, default resource timeout will
-        be used.
+        otherwise.  If 'n' is not specified it defaults to 60 minutes.
 
     op add <resource id> <operation action> [operation properties]
         Add operation for specified resource
@@ -367,8 +365,7 @@ Commands:
         may be removed by setting an option without a value.  If --wait is
         specified, pcs will wait up to 'n' seconds for the changes to take
         effect and then return 0 if the changes have been processed or 1
-        otherwise.  If 'n' is not specified, default resource timeout will
-        be used.
+        otherwise.  If 'n' is not specified it defaults to 60 minutes.
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
 
     group add <group name> <resource id> [resource id] ... [resource id]
@@ -378,51 +375,47 @@ Commands:
         to the new group.  You can use --before or --after to specify
         the position of the added resources relatively to some resource already
         existing in the group.  If --wait is specified, pcs will wait up to 'n'
-        seconds for resources to move depending on the effect of grouping and
-        then return 0 if the resources are moved, or 1 if the resources have not
-        yet moved.  If 'n' is not specified, default resource timeout will
-        be used.
+        seconds for the operation to finish (including moving resources if
+        appropriate) and then return 0 on success or 1 on error.  If 'n' is not
+        specified it defaults to 60 minutes.
 
     group remove <group name> <resource id> [resource id] ... [resource id]
           [--wait[=n]]
         Remove the specified resource(s) from the group, removing the group if
         it no resources remain.  If --wait is specified, pcs will wait up to 'n'
-        seconds for specified resources to move depending of the effect
-        of ungrouping and the return 0 if resources are moved to target nodes,
-        or 1 if resources have not yet moved.  If 'n' is not specified, default
-        resource timeout will be used.
+        seconds for the operation to finish (including moving resources if
+        appropriate) and then return 0 on success or 1 on error.  If 'n' is not
+        specified it defaults to 60 minutes.
 
     ungroup <group name> [resource id] ... [resource id] [--wait[=n]]
         Remove the group (Note: this does not remove any resources from the
         cluster) or if resources are specified, remove the specified resources
         from the group.  If --wait is specified, pcs will wait up to 'n' seconds
-        for specified resources (all group resources if no resource specified)
-        to move depending of the effect of ungrouping and the return 0 if
-        resources are moved to target nodes, or 1 if resources have not yet
-        moved.  If 'n' is not specified, default resource timeout will be used.
+        for the operation to finish (including moving resources if appropriate)
+        and the return 0 on success or 1 on error.  If 'n' is not specified it
+        defaults to 60 minutes.
 
     clone <resource id | group id> [clone options]... [--wait[=n]]
         Setup up the specified resource or group as a clone.  If --wait is
-        specified, pcs will wait up to 'n' seconds for the resource clones
-        to start and then return 0 if the clones are started, or 1 if
-        the clones has not yet started.  If 'n' is not specified, default
-        resource timeout will be used.
+        specified, pcs will wait up to 'n' seconds for the operation to finish
+        (including starting clone instances if appropriate) and then return 0
+        on success or 1 on error.  If 'n' is not specified it defaults to 60
+        minutes.
 
     unclone <resource id | group name> [--wait[=n]]
         Remove the clone which contains the specified group or resource (the
         resource or group will not be removed).  If --wait is specified, pcs
-        will wait up to 'n' seconds for the resource clones to stop and then
-        return 0 if the resource is running as one instance, or 1 if
-        the resource clones has not yet stopped.  If 'n' is not specified,
-        default resource timeout will be used.
+        will wait up to 'n' seconds for the operation to finish (including
+        stopping clone instances if appropriate) and then return 0 on success
+        or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 
     master [<master/slave name>] <resource id | group name> [options]
            [--wait[=n]]
         Configure a resource or group as a multi-state (master/slave) resource.
-        If --wait is specified, pcs will wait up to 'n' seconds for the resource
-        to be promoted and then return 0 if the resource is promoted, or 1 if
-        the resource has not yet been promoted.  If 'n' is not specified,
-        default resource timeout will be used.
+        If --wait is specified pcs will wait up to 'n' seconds for the operation
+        to finish (including starting and promoting resource instances if
+        appropriate) and then return 0 on success or 1 on error.  If 'n' is not
+        specified it defaults to 60 minutes.
         Note: to remove a master you must remove the resource/group it contains.
 
     manage <resource id> ... [resource n]
