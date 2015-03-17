@@ -150,7 +150,7 @@ def stonith_list_options(stonith_agent):
         desc = ""
         shortdesc_els = param.getElementsByTagName("shortdesc")
         if shortdesc_els and shortdesc_els[0].firstChild:
-            desc = shortdesc_els[0].firstChild.nodeValue.strip().replace("\n", "")
+            desc = shortdesc_els[0].firstChild.nodeValue.strip().replace("\n", " ")
         if not desc:
             desc = "No description available"
         indent = name.__len__() + 4

@@ -305,7 +305,7 @@ def resource_list_options(resource):
                 desc = ""
                 longdesc_els = param.getElementsByTagName("longdesc")
                 if longdesc_els and longdesc_els[0].firstChild:
-                    desc = longdesc_els[0].firstChild.nodeValue.strip().replace("\n", "")
+                    desc = longdesc_els[0].firstChild.nodeValue.strip().replace("\n", " ")
                 if not desc:
                     desc = "No description available"
                 indent = name.__len__() + 4
