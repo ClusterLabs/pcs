@@ -3,11 +3,13 @@ import os
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
-import usage
-import utils
 import re
 import textwrap
 import xml.etree.ElementTree as ET
+import time
+
+import usage
+import utils
 import constraint
 
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62
@@ -1574,6 +1576,21 @@ def resource_remove(resource_id, output = True):
         resource_disable([resource_id])
         if not "--force" in utils.pcs_options and not utils.usefile:
             output, retval = utils.run(["crm_resource", "--wait"])
+            if retval != 0 and "unrecognized option '--wait'" in output:
+                output = ""
+                retval = 0
+                for res in reversed(
+                    group_dom.documentElement.getElementsByTagName("primitive")
+                ):
+                    res_id = res.getAttribute("id")
+                    res_stopped = False
+                    for i in range(15):
+                        time.sleep(1)
+                        if not utils.resource_running_on(res_id)["is_running"]:
+                            res_stopped = True
+                            break
+                    if not res_stopped:
+                        break
             stopped = True
             state = utils.getClusterState()
             for res in group_dom.documentElement.getElementsByTagName("primitive"):
@@ -1618,6 +1635,13 @@ def resource_remove(resource_id, output = True):
         sys.stdout.flush()
         resource_disable([resource_id])
         output, retval = utils.run(["crm_resource", "--wait"])
+        if retval != 0 and "unrecognized option '--wait'" in output:
+            output = ""
+            retval = 0
+            for i in range(15):
+                time.sleep(1)
+                if not utils.resource_running_on(resource_id)["is_running"]:
+                    break
         if utils.resource_running_on(resource_id)["is_running"]:
             msg = [
                 "Unable to stop: %s before deleting "
