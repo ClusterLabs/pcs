@@ -33,4 +33,7 @@ You can also install pcsd which operates as a GUI and remote server for pcs.  To
 # cd pcsd ; make get_gems ; cd ..
 # make install_pcsd
 
+If you are using GNU/Linux its now time to:
+# systemctl daemon-reload
+
 If you have an questions or concerns please feel free to email cfeist@redhat.com or open a github issue on the pcs project.
