@@ -1378,7 +1378,7 @@ def resource_clone_master_remove(argv):
     dom = utils.get_cib_dom()
     re = dom.documentElement.getElementsByTagName("resources")[0]
 
-    found = False
+    # get the resource no matter if user entered a clone or a cloned resource
     resource = (
         utils.dom_get_resource(re, name)
         or
@@ -1388,18 +1388,32 @@ def resource_clone_master_remove(argv):
     )
     if not resource:
         utils.err("could not find resource: %s" % name)
-    clone = resource.parentNode
     resource_id = resource.getAttribute("id")
-    clone_id = clone.getAttribute("id")
+    clone = utils.dom_get_resource_clone_ms_parent(re, resource_id)
+    if not clone:
+        utils.err("'%s' is not a clone resource" % name)
 
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
 
-    constraint.remove_constraints_containing(
-        clone.getAttribute("id"), passed_dom=dom
-    )
-    clone.parentNode.appendChild(resource)
-    clone.parentNode.removeChild(clone)
+    # if user requested uncloning a resource contained in a cloned group
+    # remove the resource from the group and leave the clone itself alone
+    # unless the resource is the last one in the group
+    clone_child = utils.dom_get_clone_ms_resource(re, clone.getAttribute("id"))
+    if (
+        clone_child.tagName == "group"
+        and
+        resource.tagName != "group"
+        and
+        len(clone_child.getElementsByTagName("primitive")) > 1
+    ):
+        resource_group_rm(dom, clone_child.getAttribute("id"), [resource_id])
+    else:
+        constraint.remove_constraints_containing(
+            clone.getAttribute("id"), passed_dom=dom
+        )
+        clone.parentNode.appendChild(resource)
+        clone.parentNode.removeChild(clone)
     utils.replace_cib_configuration(dom)
 
     if "--wait" in utils.pcs_options:
@@ -1738,6 +1752,15 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
                 resources_to_move.append(resource)
             else:
                 utils.err("Resource '%s' does not exist in group '%s'" % (resource_id, group_name))
+
+    if group_match.parentNode.tagName in ["clone", "master"]:
+        res_in_group = len(group_match.getElementsByTagName("primitive"))
+        if (
+            res_in_group > 1
+            and
+            (all_resources or (len(resources_to_move) == res_in_group))
+        ):
+            utils.err("Cannot remove more than one resource from cloned group")
 
     target_node = group_match.parentNode
     if (

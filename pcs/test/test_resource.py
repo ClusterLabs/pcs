@@ -1600,6 +1600,357 @@ Deleting Resource (and group and M/S) - dummylarge
         ac(o,"")
         assert r == 0
 
+    def testUnclone(self):
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy1 Dummy"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy2 Dummy"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        # try to unclone a non-cloned resource
+        output, returnVal = pcs(temp_cib, "resource unclone dummy1")
+        ac(output, "Error: 'dummy1' is not a clone resource\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource group add gr dummy1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone gr")
+        ac(output, "Error: 'gr' is not a clone resource\n")
+        self.assertEquals(1, returnVal)
+
+        # unclone with a cloned primitive specified
+        output, returnVal = pcs(temp_cib, "resource clone dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Group: gr
+  Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+ Clone: dummy2-clone
+  Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Group: gr
+  Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+ Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        # unclone with a clone itself specified
+        output, returnVal = pcs(temp_cib, "resource group add gr dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clone gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Clone: gr-clone
+  Group: gr
+   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone gr-clone")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Group: gr
+  Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+  Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        # unclone with a cloned group specified
+        output, returnVal = pcs(temp_cib, "resource clone gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Clone: gr-clone
+  Group: gr
+   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Group: gr
+  Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+  Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        # unclone with a cloned grouped resource specified
+        output, returnVal = pcs(temp_cib, "resource clone gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Clone: gr-clone
+  Group: gr
+   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone dummy1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Clone: gr-clone
+  Group: gr
+   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+ Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+ Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+    def testUncloneMaster(self):
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy1 Stateful"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy2 Stateful"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        # try to unclone a non-cloned resource
+        output, returnVal = pcs(temp_cib, "resource unclone dummy1")
+        ac(output, "Error: 'dummy1' is not a clone resource\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource group add gr dummy1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone gr")
+        ac(output, "Error: 'gr' is not a clone resource\n")
+        self.assertEquals(1, returnVal)
+
+        # unclone with a cloned primitive specified
+        output, returnVal = pcs(temp_cib, "resource master dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Group: gr
+  Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+ Master: dummy2-master
+  Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Group: gr
+  Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+ Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+  Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        # unclone with a clone itself specified
+        output, returnVal = pcs(temp_cib, "resource group add gr dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource master gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Master: gr-master
+  Group: gr
+   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone gr-master")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Group: gr
+  Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+  Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        # unclone with a cloned group specified
+        output, returnVal = pcs(temp_cib, "resource master gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Master: gr-master
+  Group: gr
+   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Group: gr
+  Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+  Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        # unclone with a cloned grouped resource specified
+        output, returnVal = pcs(temp_cib, "resource ungroup gr dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource master gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+  Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+ Master: gr-master
+  Group: gr
+   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone dummy1")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+  Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+ Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+  Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource group add gr dummy1 dummy2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource master gr")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Master: gr-master
+  Group: gr
+   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone dummy2")
+        ac(output, "Error: Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete gr'.\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Master: gr-master
+  Group: gr
+   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy1-monitor-interval-60s)
+   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+    Operations: monitor interval=60s (dummy2-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
     def testCloneGroupMember(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops D0 Dummy --group AG")
         ac(o,"")
@@ -2281,6 +2632,18 @@ Deleting Resource (and group and M/S) - A2
     Operations: monitor interval=60s (D2-monitor-interval-60s)
 """)
         self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ungroup DG")
+        ac(output, """\
+Error: Cannot remove more than one resource from cloned group
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource ungroup DG D1 D2")
+        ac(output, """\
+Error: Cannot remove more than one resource from cloned group
+""")
+        self.assertEquals(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource ungroup DG D1")
         ac(output, "")
