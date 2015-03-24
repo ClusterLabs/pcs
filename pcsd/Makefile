@@ -1,9 +1,9 @@
 REL_INFO := $(shell grep -q -i "release 6" /etc/redhat-release ; echo $$?)
 
-ifeq (${REL_INFO},1)
-  build_gems: build_gems_normal
-else
+ifeq (${REL_INFO},0)
   build_gems: build_gems_rhel6
+else
+  build_gems: build_gems_normal
 endif
 
 build_gems_normal:
