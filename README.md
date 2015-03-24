@@ -42,7 +42,7 @@
    ```
 
 <br />
-- **Add a Cluster Reosurce**
+- **Add Cluster Resources**
 
    After this you can add resources and stonith agents:
 
@@ -56,15 +56,10 @@
    # pcs stonith help
    ```
 
-   Currently this is built into Fedora (other distributions to follow).  You can see the current Fedora .spec in the fedora package git repositories here: http://pkgs.fedoraproject.org/cgit/pcs.git/
-
-   Current Fedora 18 .spec:   
-   http://pkgs.fedoraproject.org/cgit/pcs.git/tree/pcs.spec?h=f18
-
 <br />
 - **PCSD Installation from Source**
 
-   You can also install pcsd which operates as a GUI and remote server for pcs. pcsd may also necessary in order to follow the guides on the clusterlabs.org website.
+   You can also install pcsd which operates as a GUI and remote server for pcs. pcsd may also be necessary in order to follow the guides on the clusterlabs.org website.
 
    To install pcsd run the following commands from the root of your pcs directory. (You must have the ruby bundler gem installed, rubygem-bundler in Fedora, and development packages installed)
 
@@ -73,11 +68,20 @@
    # make install_pcsd
    ```
 
-   If you are on GNU/Linux its time to:
+   If you are on GNU/Linux its now time to:
 
    ```shell
    # systemctl daemon-reload
    ```
+
+<br />
+### Packages
+***
+
+   Currently this is built into Fedora (other distributions to follow).  You can see the current Fedora .spec in the fedora package git repositories here: http://pkgs.fedoraproject.org/cgit/pcs.git/
+
+   Current Fedora 21 .spec:
+   http://pkgs.fedoraproject.org/cgit/pcs.git/tree/pcs.spec?h=f21
 
 <br />
 ### Inquiries
