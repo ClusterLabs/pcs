@@ -793,28 +793,29 @@ def stop_cluster_nodes(nodes):
         utils.err("unable to stop all nodes\n" + "\n".join(error_list))
 
 def node_standby(argv,standby=True):
-    # If we didn't specify any arguments, use the current node name
-    if len(argv) == 0 and "--all" not in utils.pcs_options:
-        p = subprocess.Popen(["uname","-n"], stdout=subprocess.PIPE)
-        cur_node = p.stdout.readline().rstrip()
-        argv = [cur_node]
+    if len(argv) > 1:
+        if standby:
+            usage.cluster(["standby"])
+        else:
+            usage.cluster(["unstandby"])
+        sys.exit(1)
 
     nodes = utils.getNodesFromPacemaker()
 
     if "--all" not in utils.pcs_options:
-        nodeFound = False
-        for node in nodes:
-            if node == argv[0]:
-                nodeFound = True
-                break
-
-        if not nodeFound:
-            utils.err("node '%s' does not appear to exist in configuration" % argv[0])
-
+        options_node = []
+        if argv:
+            if argv[0] not in nodes:
+                utils.err(
+                    "node '%s' does not appear to exist in configuration"
+                    % argv[0]
+                )
+            else:
+                options_node = ["-N", argv[0]]
         if standby:
-            utils.run(["crm_standby", "-v", "on", "-N", node])
+            utils.run(["crm_standby", "-v", "on"] + options_node)
         else:
-            utils.run(["crm_standby", "-D", "-N", node])
+            utils.run(["crm_standby", "-D"] + options_node)
     else:
         for node in nodes:
             if standby:
