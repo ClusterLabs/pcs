@@ -104,7 +104,7 @@ def config_backup(argv):
 
     tar_data = config_backup_local()
     if outfile_name:
-        ok, message = utils.write_file(outfile_name, tar_data)
+        ok, message = utils.write_file(outfile_name, tar_data, 0600)
         if not ok:
             utils.err(message)
     else:
@@ -220,7 +220,7 @@ def config_restore_local(infile_name, infile_obj):
                 "the cluster in order to restore the configuration."
         )
 
-    file_list = config_backup_path_list()
+    file_list = config_backup_path_list(with_uid_gid=True)
     tarball_file_list = []
     version = None
     try:
@@ -267,10 +267,12 @@ def config_restore_local(infile_name, infile_obj):
                 path = os.path.dirname(path)
             if not extract_info:
                 continue
-            tarball.extractall(
-                os.path.dirname(extract_info["path"]),
-                [tar_member_info]
-            )
+            path_extract = os.path.dirname(extract_info["path"])
+            tarball.extractall(path_extract, [tar_member_info])
+            path_full = os.path.join(path_extract, tar_member_info.name)
+            file_attrs = extract_info["attrs"]
+            os.chmod(path_full, file_attrs["mode"])
+            os.chown(path_full, file_attrs["uid"], file_attrs["gid"])
         tarball.close()
     except (tarfile.TarError, EnvironmentError) as e:
         utils.err("unable to restore the cluster: %s" % e)
@@ -284,7 +286,7 @@ def config_restore_local(infile_name, infile_obj):
 
 def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
     rhel6 = utils.is_rhel6() if force_rhel6 is None else force_rhel6
-    root_attrs = {
+    corosync_attrs = {
         "mtime": int(time.time()),
         "mode": 0644,
         "uname": "root",
@@ -316,25 +318,25 @@ def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
         "cib.xml": {
             "path": os.path.join(settings.cib_dir, "cib.xml"),
             "required": True,
-            "attrs": cib_attrs,
+            "attrs": dict(cib_attrs),
         },
     }
     if rhel6:
         file_list["cluster.conf"] = {
             "path": settings.cluster_conf_file,
             "required": True,
-            "attrs": root_attrs,
+            "attrs": dict(corosync_attrs),
         }
     else:
         file_list["corosync.conf"] = {
             "path": settings.corosync_conf_file,
             "required": True,
-            "attrs": root_attrs,
+            "attrs": dict(corosync_attrs),
         }
         file_list["uidgid.d"] = {
             "path": settings.corosync_uidgid_dir.rstrip("/"),
             "required": False,
-            "attrs": root_attrs,
+            "attrs": dict(corosync_attrs),
         }
     return file_list
 
@@ -501,7 +503,13 @@ def config_import_cman(argv):
         sys.exit(1 if result is None else result)
 
     # put new config files into tarball
-    file_list = config_backup_path_list(with_uid_gid=True, force_rhel6=rhel6)
+    file_list = config_backup_path_list(force_rhel6=rhel6)
+    for file_item in file_list.values():
+        file_item["attrs"]["uname"] = "root"
+        file_item["attrs"]["gname"] = "root"
+        file_item["attrs"]["uid"] = 0
+        file_item["attrs"]["gid"] = 0
+        file_item["attrs"]["mode"] = 0600
     tar_data = cStringIO.StringIO()
     try:
         tarball = tarfile.open(fileobj=tar_data, mode="w|bz2")
@@ -557,7 +565,7 @@ def config_import_cman(argv):
 
     #save tarball / remote restore
     if dry_run_output:
-        ok, message = utils.write_file(dry_run_output, tar_data.read())
+        ok, message = utils.write_file(dry_run_output, tar_data.read(), 0600)
         if not ok:
             utils.err(message)
     else:

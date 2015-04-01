@@ -1784,7 +1784,7 @@ def disableServices():
             run(["chkconfig", "corosync", "off"])
             run(["chkconfig", "pacemaker", "off"])
 
-def write_file(path, data):
+def write_file(path, data, permissions=0644):
     if os.path.exists(path):
         if not "--force" in pcs_options:
             return False, "'%s' already exists, use --force to overwrite" % path
@@ -1794,7 +1794,7 @@ def write_file(path, data):
             except EnvironmentError as e:
                 return False, "unable to remove '%s': %s" % (path, e)
     try:
-        with open(path, "w") as outfile:
+        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, permissions), "w") as outfile:
             outfile.write(data)
     except EnvironmentError as e:
         return False, "unable to write to '%s': %s" % (path, e)
