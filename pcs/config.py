@@ -461,6 +461,7 @@ def config_import_cman(argv):
         "cib": {"passin": "bytestring"},
         "nocheck": force,
         "batch": True,
+        "sys": "linux",
     }
     if interactive:
         if "EDITOR" not in os.environ:
@@ -471,8 +472,10 @@ def config_import_cman(argv):
         logging.getLogger("clufter").setLevel(logging.DEBUG)
     if rhel6:
         clufter_args["ccs_pcmk"] = {"passin": "bytestring"}
+        clufter_args["dist"] = "redhat,6.7,Santiago"
     else:
         clufter_args["coro"] = {"passin": "struct"}
+        clufter_args["dist"] = "redhat,7.1,Maipo"
     clufter_args_obj = type('ClufterOptions', (object, ), clufter_args)
 
     # run convertor
