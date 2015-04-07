@@ -64,7 +64,7 @@ webrick_options = {
 
 if is_systemctl
   webrick_options[:StartCallback] = Proc.new {
-    `python /usr/lib/pcsd/systemd-notify-fix.py`
+    `python2 /usr/lib/pcsd/systemd-notify-fix.py`
   }
 end
 
