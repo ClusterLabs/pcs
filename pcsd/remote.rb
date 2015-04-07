@@ -899,7 +899,7 @@ def update_resource (params)
     run_cmd(PCS, "resource", "clone", params[:resource_id])
   end
   if params[:resource_ms] and params[:_orig_resource_ms] == "false"
-    run_cmd(PCS, "resource", "master", params[:resource_id] + "-master", params[:resource_id])
+    run_cmd(PCS, "resource", "master", params[:resource_id])
   end
 
   if params[:_orig_resource_clone] == "true" and not params[:resource_clone]

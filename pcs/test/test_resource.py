@@ -2491,6 +2491,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 1
         assert output == "Error: unable to create resource/fence device 'dlm', 'dlm' already exists on this system\n", [output]
 
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm-clone ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        assert returnVal == 1
+        assert output == "Error: unable to create resource/fence device 'dlm-clone', 'dlm-clone' already exists on this system\n", [output]
+
         output,returnVal = pcs(temp_cib, "resource --full")
         assert returnVal == 0
         assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
@@ -2502,6 +2506,122 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         output, returnVal = pcs(temp_large_cib, "resource unclone dummy1")
         ac(output, '')
         assert returnVal == 0
+
+    def testResourceCloneId(self):
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy-clone Dummy"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy Dummy"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clone dummy")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy-clone-monitor-interval-60s)
+ Clone: dummy-clone-1
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource delete dummy")
+        ac(output, "Deleting Resource - dummy\n")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy Dummy --clone"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy-clone-monitor-interval-60s)
+ Clone: dummy-clone-1
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+    def testResourceMasterId(self):
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy-master Dummy"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy Dummy"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource master dummy")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy-master-monitor-interval-60s)
+ Master: dummy-master-1
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource unclone dummy")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource master dummy-master dummy")
+        ac(output, "Error: dummy-master already exists in the cib\n")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource master dummy-master0 dummy")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy-master-monitor-interval-60s)
+ Master: dummy-master0
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource delete dummy")
+        ac(output, "Deleting Resource - dummy\n")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy Dummy --master"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show --full")
+        ac(output, """\
+ Resource: dummy-master (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (dummy-master-monitor-interval-60s)
+ Master: dummy-master-1
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
 
     def testResourceCloneUpdate(self):
         o, r  = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --clone")
@@ -2588,6 +2708,30 @@ Deleting Resource (and group and M/S) - A2
         o,r = pcs(temp_cib, "resource master AGMaster AG")
         assert r == 0
 
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops A Dummy"
+        )
+        ac(output, """\
+Error: unable to create resource/fence device 'A', 'A' already exists on this system
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops AG Dummy"
+        )
+        ac(output, """\
+Error: unable to create resource/fence device 'AG', 'AG' already exists on this system
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops AGMaster Dummy"
+        )
+        ac(output, """\
+Error: unable to create resource/fence device 'AGMaster', 'AGMaster' already exists on this system
+""")
+        self.assertEquals(1, returnVal)
+
         o,r = pcs(temp_cib, "resource ungroup AG")
         ac(o,"Error: Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete AG'.\n")
         assert r == 1
@@ -2632,6 +2776,30 @@ Deleting Resource (and group and M/S) - A2
     Operations: monitor interval=60s (D2-monitor-interval-60s)
 """)
         self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops D1 Dummy"
+        )
+        ac(output, """\
+Error: unable to create resource/fence device 'D1', 'D1' already exists on this system
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops DG Dummy"
+        )
+        ac(output, """\
+Error: unable to create resource/fence device 'DG', 'DG' already exists on this system
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops DG-clone Dummy"
+        )
+        ac(output, """\
+Error: unable to create resource/fence device 'DG-clone', 'DG-clone' already exists on this system
+""")
+        self.assertEquals(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource ungroup DG")
         ac(output, """\
