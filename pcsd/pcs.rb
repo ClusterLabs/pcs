@@ -8,6 +8,7 @@ require 'net/https'
 require 'json'
 require 'fileutils'
 
+require 'config.rb'
 require 'cfgsync.rb'
 
 def getAllSettings()
@@ -236,7 +237,7 @@ end
 
 # Gets all of the nodes specified in the pcs config file for the cluster
 def get_cluster_nodes(cluster_name)
-  pcs_config = PCSConfig.new
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   clusters = pcs_config.clusters
   cluster = nil
   for c in clusters
@@ -337,8 +338,9 @@ def add_node(new_nodename,all = false, auto_start=true)
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
   end
   $logger.info("Adding #{new_nodename} from pcs_settings.conf")
-  pcs_config = PCSConfig.new
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update($cluster_name,get_corosync_nodes())
+  Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
   return retval, out.join("\n") + stderror.join("\n")
 end
 
@@ -350,8 +352,9 @@ def remove_node(new_nodename, all = false)
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
   end
   $logger.info("Removing #{new_nodename} from pcs_settings.conf")
-  pcs_config = PCSConfig.new
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update($cluster_name,get_corosync_nodes())
+  Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
   return retval, out + stderror
 end
 

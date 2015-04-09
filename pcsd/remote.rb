@@ -4,6 +4,7 @@ require 'open4'
 
 require 'pcs.rb'
 require 'resource.rb'
+require 'config.rb'
 require 'cfgsync.rb'
 
 # Commands for remote access
@@ -421,7 +422,7 @@ def remote_remove_nodes(params)
     retval, output = remove_node(node,true)
     out = out + output.join("\n")
   }
-  config = PCSConfig.new
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   if config.get_nodes($cluster_name) == nil or config.get_nodes($cluster_name).length == 0
     return [200,"No More Nodes"]
   end
@@ -606,8 +607,15 @@ def status_all(params, nodes = [])
   }
 
   node_list.uniq!
-  if PCSConfig.refresh_cluster_nodes(params[:cluster], node_list)
-    return status_all(params, node_list)
+  if node_list.length > 0
+    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+    old_node_list = config.get_nodes(params[:cluster])
+    if old_node_list & node_list != old_node_list or old_node_list.size!=node_list.size
+      $logger.info("Updating node list for: " + params[:cluster] + " " + old_node_list.inspect + "->" + node_list.inspect)
+      config.update(params[:cluster], node_list)
+      Cfgsync::PcsdSettings.from_text(config.text()).save()
+      return status_all(params, node_list)
+    end
   end
   $logger.debug("NODE LIST: " + node_list.inspect)
   return JSON.generate(final_response)
@@ -924,7 +932,7 @@ end
 def overview_all()
   cluster_map = {}
   threads = []
-  config = PCSConfig.new
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   config.clusters.each { |cluster|
     threads << Thread.new {
       overview_cluster = nil
@@ -974,14 +982,16 @@ def overview_all()
     }
   }
   threads.each { |t| t.join }
-  cluster_map.each { |cluster, values| # update clusters in PCSConfig
+  # update clusters in PCSConfig
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  cluster_map.each { |cluster, values|
     nodes = []
     values["node_list"].each { |node|
       nodes << node["name"]
     }
-    config.update_without_saving(cluster, nodes)
+    config.update(cluster, nodes)
   }
-  config.save
+  Cfgsync::PcsdSettings.from_text(config.text()).save()
   overview = {
     'cluster_list' => cluster_map.values.sort { |a, b| a['name'] <=> b['name']}
   }

@@ -2,6 +2,8 @@ require 'fileutils'
 require 'rexml/document'
 require 'digest/sha1'
 
+require 'config.rb'
+
 CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
 CFG_PCSD_SETTINGS = "pcs_settings.conf" unless defined? CFG_PCSD_SETTINGS
@@ -114,8 +116,7 @@ module Cfgsync
     protected
 
     def get_version()
-      # TODO
-      return 0
+      return PCSConfig.new(self.text).data_version
     end
   end
 

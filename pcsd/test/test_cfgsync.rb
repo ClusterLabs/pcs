@@ -1,15 +1,11 @@
 require 'test/unit'
 require 'fileutils'
 
-CURRENT_DIR = File.expand_path(File.dirname(__FILE__))
-CFG_COROSYNC_CONF = File.join(CURRENT_DIR, "corosync.conf.tmp")
-CFG_CLUSTER_CONF = File.join(CURRENT_DIR, "cluster.conf.tmp")
-CFG_PCSD_SETTINGS = File.join(CURRENT_DIR, "pcs_settings.conf.tmp")
+require 'pcsd_test_utils.rb'
 require 'cfgsync.rb'
 
 
 class TestCfgsync < Test::Unit::TestCase
-
   def test_compare_version()
     cfg1 = Cfgsync::ClusterConf.from_text(
       '<cluster config_version="1" name="test1"/>'
@@ -35,7 +31,6 @@ end
 
 
 class TestClusterConf < Test::Unit::TestCase
-
   def setup()
     FileUtils.cp(File.join(CURRENT_DIR, "cluster.conf"), CFG_CLUSTER_CONF)
   end
@@ -58,5 +53,53 @@ class TestClusterConf < Test::Unit::TestCase
     cfg = Cfgsync::ClusterConf.from_file()
     assert_equal(9, cfg.version)
     assert_equal("198bda4b748ef646de867cb850cd3ad208c36d8b", cfg.hash)
+  end
+end
+
+
+class TestPcsdSettings < Test::Unit::TestCase
+  def setup()
+    FileUtils.cp(File.join(CURRENT_DIR, "pcs_settings.conf"), CFG_PCSD_SETTINGS)
+  end
+
+  def test_basics()
+    assert_equal("pcs_settings.conf", Cfgsync::PcsdSettings.name)
+    text = '
+{
+  "format_version": 2,
+  "data_version": 3,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1",
+        "rh71-node2"
+      ]
+    }
+  ]
+}
+    '
+
+    cfg = Cfgsync::PcsdSettings.from_text(text)
+    assert_equal(text, cfg.text)
+    assert_equal(3, cfg.version)
+    assert_equal("42eeb92e14b34886d92ca628ba515cc67c97b5f0", cfg.hash)
+
+    cfg.text = '
+{
+  "format_version": 2,
+  "data_version": 4,
+  "clusters": [
+  ]
+}
+'
+    assert_equal(4, cfg.version)
+    assert_equal("e1562832d847370f885040f38a7374b1d8062d26", cfg.hash)
+  end
+
+  def test_file()
+    cfg = Cfgsync::PcsdSettings.from_file()
+    assert_equal(9, cfg.version)
+    assert_equal("ac032803c5190d735cd94a702d42c5c6358013b8", cfg.hash)
   end
 end

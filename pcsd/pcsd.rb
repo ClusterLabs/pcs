@@ -2,6 +2,12 @@ require 'sinatra'
 require 'sinatra/reloader' if development?  #require 'rack/ssl'
 require 'sinatra/cookies'
 require 'rexml/document'
+require 'webrick'
+require 'pp'
+require 'webrick/https'
+require 'openssl'
+require 'logger'
+
 require 'resource.rb'
 require 'remote.rb'
 require 'fenceagent.rb'
@@ -10,11 +16,6 @@ require 'config.rb'
 require 'pcs.rb'
 require 'auth.rb'
 require 'wizard.rb'
-require 'webrick'
-require 'pp'
-require 'webrick/https'
-require 'openssl'
-require 'logger'
 require 'cfgsync.rb'
 
 Dir["wizards/*.rb"].each {|file| require file}
@@ -329,7 +330,7 @@ if not DISABLE_GUI
     @cluster_name = params[:cluster]
     #  @resources, @groups = getResourcesGroups
     @load_data = true
-    pcs_config = PCSConfig.new
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
     @clusters = pcs_config.clusters
     @resources = []
     @groups = []
@@ -386,7 +387,7 @@ if not DISABLE_GUI
   end
 
   post '/manage/existingcluster' do
-    pcs_config = PCSConfig.new
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
     node = params['node-name']
     code, result = send_request_with_token(node, 'status')
     status = JSON.parse(result)
@@ -435,7 +436,7 @@ if not DISABLE_GUI
       #auth end
 
       pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
-      pcs_config.save
+      Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
       redirect '/manage'
     else
       redirect '/manage/?error=notauthorized#manage'
@@ -443,7 +444,7 @@ if not DISABLE_GUI
   end
 
   post '/manage/newcluster' do
-    pcs_config = PCSConfig.new
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
     @manage = true
     @cluster_name = params[:clustername]
     @nodes = []
@@ -495,7 +496,7 @@ if not DISABLE_GUI
 
     if code == 200
       pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
-      pcs_config.save
+      Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
     else
       session[:error] = "unabletocreate"
       session[:errorval] = out
@@ -505,13 +506,13 @@ if not DISABLE_GUI
   end
 
   post '/manage/removecluster' do
-    pcs_config = PCSConfig.new
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
     params.each { |k,v|
       if k.start_with?("clusterid-")
         pcs_config.remove_cluster(k.sub("clusterid-",""))
       end
     }
-    pcs_config.save
+    Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
     redirect '/manage'
   end
 
