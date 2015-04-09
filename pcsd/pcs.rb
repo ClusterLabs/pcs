@@ -8,6 +8,8 @@ require 'net/https'
 require 'json'
 require 'fileutils'
 
+require 'cfgsync.rb'
+
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
   stdout.map(&:chomp!)
@@ -444,7 +446,7 @@ def get_stonith_agents_avail()
   end
 end
 
-def get_cluster_version()
+def get_cluster_name()
   if ISRHEL6
     stdout, stderror, retval = run_cmd(COROSYNC_CMAPCTL, "cluster")
     if retval == 0
@@ -454,7 +456,7 @@ def get_cluster_version()
       }
     end
     begin
-      cluster_conf = File.open('/etc/cluster/cluster.conf').read
+      cluster_conf = Cfgsync::ClusterConf.from_file().text()
     rescue
       return ''
     end
@@ -470,7 +472,7 @@ def get_cluster_version()
     # Cluster probably isn't running, try to get cluster name from
     # corosync.conf
     begin
-      corosync_conf = File.open("/etc/corosync/corosync.conf").read
+      corosync_conf = Cfgsync::CorosyncConf.from_file().text()
     rescue
       return ""
     end

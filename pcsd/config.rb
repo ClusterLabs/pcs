@@ -1,13 +1,15 @@
 require 'json'
 require 'pp'
 
+require 'cfgsync.rb'
+
 class PCSConfig
   attr_accessor :clusters
 
   def initialize
     @clusters = []
     begin
-      json = File.read(SETTINGS_FILE)
+      json = Cfgsync::PcsdSettings.from_file().text()
       input_clusters = JSON.parse(json)
     rescue
       input_clusters = []
@@ -59,9 +61,10 @@ class PCSConfig
       out_cluster_array << temphash
     }
 
-    File.open(SETTINGS_FILE, "w") do |f|
-	f.write(JSON.pretty_generate(out_cluster_array))
-    end
+    cfg = Cfgsync::PcsdSettings.from_text(
+      JSON.pretty_generate(out_cluster_array)
+    )
+    cfg.save()
   end
 
   def remove_cluster(cluster_name)

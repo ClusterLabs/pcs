@@ -15,6 +15,7 @@ require 'pp'
 require 'webrick/https'
 require 'openssl'
 require 'logger'
+require 'cfgsync.rb'
 
 Dir["wizards/*.rb"].each {|file| require file}
 
@@ -46,6 +47,7 @@ also_reload 'config.rb'
 also_reload 'pcs.rb'
 also_reload 'auth.rb'
 also_reload 'wizard.rb'
+also_reload 'cfgsync.rb'
 
 before do
   $session = session
@@ -53,7 +55,7 @@ before do
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
-  $cluster_name = get_cluster_version()
+  $cluster_name = get_cluster_name()
   @errorval = session[:errorval]
   @error = session[:error]
   session[:errorval] = nil
@@ -86,10 +88,7 @@ configure do
   COROSYNC_QUORUMTOOL = "/usr/sbin/corosync-quorumtool"
   CMAN_TOOL = "/usr/sbin/cman_tool"
   PACEMAKERD = "/usr/sbin/pacemakerd"
-  COROSYNC_CONF = "/etc/corosync/corosync.conf"
-  CLUSTER_CONF = "/etc/cluster/cluster.conf"
   CIBADMIN = "/usr/sbin/cibadmin"
-  SETTINGS_FILE = "pcs_settings.conf"
   $user_pass_file = "pcs_users.conf"
 
   logger = File.open("/var/log/pcsd/pcsd.log", "a+", 0600)

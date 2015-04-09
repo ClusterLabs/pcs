@@ -1,8 +1,10 @@
 require 'json'
 require 'uri'
+require 'open4'
+
 require 'pcs.rb'
 require 'resource.rb'
-require 'open4'
+require 'cfgsync.rb'
 
 # Commands for remote access
 def remote(params,request)
@@ -287,24 +289,13 @@ def get_cib(params)
 end
 
 def get_corosync_conf(params)
-  if ISRHEL6
-    f = File.open("/etc/cluster/cluster.conf",'r')
-  else
-    f = File.open("/etc/corosync/corosync.conf",'r')
-  end
-  return f.read
+  return Cfgsync::cluster_cfg_class.from_file().text()
 end
 
 def set_cluster_conf(params)
   if params[:cluster_conf] != nil and params[:cluster_conf] != ""
-    begin
-      FileUtils.cp(CLUSTER_CONF, CLUSTER_CONF + "." + Time.now.to_i.to_s)
-    rescue => e
-      $logger.debug "Exception trying to backup cluster.conf: " + e.inspect.to_s
-    end
-    File.open("/etc/cluster/cluster.conf",'w') {|f|
-      f.write(params[:cluster_conf])
-    }
+    Cfgsync::ClusterConf.backup()
+    Cfgsync::ClusterConf.from_text(params[:cluster_conf]).save()
     return true
   else
     $logger.info "Invalid cluster.conf file"
@@ -315,13 +306,8 @@ end
 
 def set_corosync_conf(params)
   if params[:corosync_conf] != nil and params[:corosync_conf] != ""
-    begin
-      FileUtils.cp(COROSYNC_CONF,COROSYNC_CONF + "." + Time.now.to_i.to_s)
-    rescue
-    end
-    File.open("/etc/corosync/corosync.conf",'w') {|f|
-      f.write(params[:corosync_conf])
-    }
+    Cfgsync::CorosyncConf.backup()
+    Cfgsync::CorosyncConf.from_text(params[:corosync_conf]).save()
     return true
   else
     $logger.info "Invalid corosync.conf file"
@@ -379,7 +365,7 @@ def get_sw_versions(params)
 end
 
 def remote_node_available(params)
-  if (not ISRHEL6 and File.exist?(COROSYNC_CONF)) or (ISRHEL6 and File.exist?(CLUSTER_CONF)) or File.exist?("/var/lib/pacemaker/cib/cib.xml")
+  if (not ISRHEL6 and File.exist?(Cfgsync::CorosyncConf.file_path)) or (ISRHEL6 and File.exist?(Cfgsync::ClusterConf.file_path)) or File.exist?("/var/lib/pacemaker/cib/cib.xml")
     return JSON.generate({:node_available => false})
   end
   return JSON.generate({:node_available => true})
@@ -1616,7 +1602,7 @@ def is_cman_with_udpu_transport?
     return false
   end
   begin
-    cluster_conf = File.open(CLUSTER_CONF).read
+    cluster_conf = Cfgsync::ClusterConf.from_file().text()
     conf_dom = REXML::Document.new(cluster_conf)
     conf_dom.elements.each("cluster/cman") { |elem|
       if elem.attributes["transport"].downcase == "udpu"
