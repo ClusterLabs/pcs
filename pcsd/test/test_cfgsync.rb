@@ -57,6 +57,85 @@ class TestClusterConf < Test::Unit::TestCase
 end
 
 
+class TestCorosyncConf < Test::Unit::TestCase
+  def setup()
+    FileUtils.cp(File.join(CURRENT_DIR, 'corosync.conf'), CFG_COROSYNC_CONF)
+  end
+
+  def test_basics()
+    assert_equal('corosync.conf', Cfgsync::CorosyncConf.name)
+    text = '
+totem {
+    version: 2
+    cluster_name: test99
+    config_version: 3
+}
+'
+    cfg = Cfgsync::CorosyncConf.from_text(text)
+    assert_equal(3, cfg.version)
+    assert_equal('570c9f0324f1dec73a632fa9ae4a0dd53ebf8bc7', cfg.hash)
+
+    cfg.text = '
+totem {
+    version: 2
+    cluster_name: test99
+    config_version: 4
+}
+'
+    assert_equal(4, cfg.version)
+    assert_equal('296209324c8b59166337488a96c0aeb0fc6ad255', cfg.hash)
+  end
+
+  def test_file()
+    cfg = Cfgsync::CorosyncConf.from_file()
+    assert_equal(9, cfg.version)
+    assert_equal('cd8faaf2367ceafba281387fb9dfe70eba51769c', cfg.hash)
+  end
+
+  def test_version()
+    text = '
+totem {
+    version: 2
+    cluster_name: test99
+}
+'
+    cfg = Cfgsync::CorosyncConf.from_text(text)
+    assert_equal(0, cfg.version)
+
+    text = '
+totem {
+    version: 2
+    cluster_name: test99
+    config_version: 3
+    config_version: 4
+}
+'
+    cfg = Cfgsync::CorosyncConf.from_text(text)
+    assert_equal(4, cfg.version)
+
+    text = '
+totem {
+    version: 2
+    cluster_name: test99
+    config_version: foo
+}
+'
+    cfg = Cfgsync::CorosyncConf.from_text(text)
+    assert_equal(0, cfg.version)
+
+    text = '
+totem {
+    version: 2
+    cluster_name: test99
+    config_version: 1foo
+}
+'
+    cfg = Cfgsync::CorosyncConf.from_text(text)
+    assert_equal(1, cfg.version)
+  end
+end
+
+
 class TestPcsdSettings < Test::Unit::TestCase
   def setup()
     FileUtils.cp(File.join(CURRENT_DIR, "pcs_settings.conf"), CFG_PCSD_SETTINGS)

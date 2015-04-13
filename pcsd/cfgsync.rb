@@ -3,6 +3,7 @@ require 'rexml/document'
 require 'digest/sha1'
 
 require 'config.rb'
+require 'corosyncconf.rb'
 
 CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
@@ -131,7 +132,7 @@ module Cfgsync
     def get_version()
       dom = REXML::Document.new(self.text)
       if dom.root and dom.root.name == 'cluster'
-        return dom.root.attributes['config_version']
+        return dom.root.attributes['config_version'].to_i
       end
       return 0
     end
@@ -146,8 +147,15 @@ module Cfgsync
     protected
 
     def get_version()
-      # TODO
-      return 0
+      parsed = ::CorosyncConf::parse_string(self.text)
+      # mimic corosync behavior - the last config_version found is used
+      version = nil
+      parsed.sections('totem').each { |totem|
+        totem.attributes('config_version').each { |attrib|
+          version = attrib[1].to_i
+        }
+      }
+      return version ? version : 0
     end
   end
 
