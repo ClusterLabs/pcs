@@ -147,6 +147,18 @@ class SectionTest(unittest.TestCase):
             ]
         )
 
+        section.add_attribute("name1", "value1")
+        section.add_attribute("name1", "value1")
+        section.set_attribute("name1", "value1")
+        self.assertEquals(
+            section.get_attributes(),
+            [
+                ["name1", "value1"],
+                ["name2", "value2a"],
+                ["name3", "value3"],
+            ]
+        )
+
     def test_attribute_change(self):
         section = corosync_conf.Section("mySection")
         section.add_attribute("name1", "value1")
@@ -180,7 +192,6 @@ class SectionTest(unittest.TestCase):
             [
                 ["name1", "value1"],
                 ["name3", "value3"],
-                ["name2", "value2"],
             ]
         )
 
@@ -189,13 +200,15 @@ class SectionTest(unittest.TestCase):
             section.get_attributes(),
             [
                 ["name1", "value1"],
-                ["name2", "value2"],
             ]
         )
 
-        self.assertRaises(
-            ValueError,
-            section.del_attribute, ["name3", "value3"]
+        section.del_attribute(["name3", "value3"])
+        self.assertEquals(
+            section.get_attributes(),
+            [
+                ["name1", "value1"],
+            ]
         )
 
     def test_attribute_del_by_name(self):
@@ -256,7 +269,6 @@ class SectionTest(unittest.TestCase):
                 ["name3", "value3a"],
             ]
         )
-
         section.del_attributes_by_name("name3")
         self.assertEquals(
             section.get_attributes(),

@@ -52,22 +52,30 @@ class Section(object):
         return self
 
     def del_attribute(self, attribute):
-        self._attr_list.remove(attribute)
+        self._attr_list = [
+            attr for attr in self._attr_list if attr != attribute
+        ]
         return self
 
     def del_attributes_by_name(self, name, value=None):
-        for index, attr in enumerate(self._attr_list):
-            if attr[0] == name and (value is None or attr[1] == value):
-                del self._attr_list[index]
+        self._attr_list = [
+            attr for attr in self._attr_list
+                if not(attr[0] == name and (value is None or attr[1] == value))
+        ]
         return self
 
     def set_attribute(self, name, value):
-        existing_attrs = self.get_attributes(name)
-        if existing_attrs:
-            existing_attrs[0][1] = value
-            for attr in existing_attrs[1:]:
-                self.del_attribute(attr)
-        else:
+        found = False
+        new_attr_list = []
+        for attr in self._attr_list:
+            if attr[0] != name:
+                new_attr_list.append(attr)
+            elif not found:
+                found = True
+                attr[1] = value
+                new_attr_list.append(attr)
+        self._attr_list = new_attr_list
+        if not found:
             self.add_attribute(name, value)
         return self
 
@@ -91,6 +99,8 @@ class Section(object):
 
     def del_section(self, section):
         self._section_list.remove(section)
+        # don't set parent to None if the section was not found in the list
+        # thanks to remove raising a ValueError in that case
         section._parent = None
         return self
 

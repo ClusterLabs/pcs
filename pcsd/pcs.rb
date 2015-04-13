@@ -10,6 +10,7 @@ require 'fileutils'
 
 require 'config.rb'
 require 'cfgsync.rb'
+require 'corosyncconf.rb'
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -475,27 +476,20 @@ def get_cluster_name()
     # Cluster probably isn't running, try to get cluster name from
     # corosync.conf
     begin
-      corosync_conf = Cfgsync::CorosyncConf.from_file().text()
+      corosync_conf = CorosyncConf::parse_string(
+        Cfgsync::CorosyncConf.from_file().text()
+      )
+      # mimic corosync behavior - the last cluster_name found is used
+      cluster_name = nil
+      corosync_conf.sections('totem').each { |totem|
+        totem.attributes('cluster_name').each { |attrib|
+          cluster_name = attrib[1]
+        }
+      }
+      return cluster_name if cluster_name
     rescue
-      return ""
+      return ''
     end
-    in_totem = false
-    current_level = 0
-    corosync_conf.each_line do |line|
-      if line =~ /totem\s*\{/
-        in_totem = true
-      end
-      if in_totem
-        md = /cluster_name:\s*(\w+)/.match(line)
-        if md
-          return md[1]
-        end
-      end
-      if in_totem and line =~ /\}/
-        in_totem = false
-      end
-    end
-
     return ""
   else
     return stdout.join().gsub(/.*= /,"").strip

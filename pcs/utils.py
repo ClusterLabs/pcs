@@ -1655,9 +1655,13 @@ def getClusterName():
             f = open(settings.corosync_conf_file,'r')
             conf = corosync_conf_utils.parse_string(f.read())
             f.close()
+            # mimic corosync behavior - the last cluster_name found is used
+            cluster_name = None
             for totem in conf.get_sections("totem"):
                 for attrs in totem.get_attributes("cluster_name"):
-                    return attrs[1]
+                    cluster_name = attrs[1]
+            if cluster_name:
+                return cluster_name
         except (IOError, corosync_conf_utils.CorosyncConfException) as e:
             return ""
 
