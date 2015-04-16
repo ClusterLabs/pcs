@@ -4,6 +4,7 @@ require 'digest/sha1'
 
 require 'config.rb'
 require 'corosyncconf.rb'
+require 'pcs.rb'
 
 CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
@@ -76,6 +77,9 @@ module Cfgsync
         file = File.open(self.class.file_path, 'w', self.class.file_perm)
         file.flock(File::LOCK_EX)
         file.write(self.text)
+        $logger.info(
+          "Saved config #{self.class.name} version #{self.version} #{self.hash}"
+        )
       rescue => e
         $logger.error "Cannot write to config file: #{e.message}"
         raise
@@ -182,6 +186,170 @@ module Cfgsync
         totem.set_attribute('config_version', new_version)
       }
       return parsed.text
+    end
+  end
+
+
+  class ConfigPublisher
+    def initialize(configs, nodes, cluster_name)
+      @configs = configs
+      @nodes = nodes
+      @cluster_name = cluster_name
+      @published_configs_names = @configs.collect { |cfg|
+        cfg.class.name
+      }
+    end
+
+    def publish()
+      @configs.each { |cfg|
+        cfg.version += 1
+        $logger.info(
+          "Broadcasting config #{cfg.class.name} version #{cfg.version} #{cfg.hash}"
+        )
+      }
+
+      data = self.prepare_request_data(@configs, @cluster_name)
+      node_response = {}
+      threads = []
+      @nodes.each { |node|
+        threads << Thread.new {
+          code, out = send_request_with_token(node, 'set_configs', true, data)
+          if 200 == code
+            begin
+              node_response[node] = JSON.parse(out)
+            rescue JSON::ParserError
+            end
+          else
+            begin
+              response = JSON.parse(out)
+              if true == response['notauthorized'] or true == response['notoken']
+                node_response[node] = {'status' => 'notauthorized'}
+              end
+            rescue JSON::ParserError
+            end
+          end
+          if not node_response.key?(node)
+            node_response[node] = {'status' => 'error'}
+          end
+        }
+      }
+      threads.each { |t| t.join }
+
+      node_response.each { |node, response|
+        $logger.debug("Broadcasting config response from #{node}: #{response}")
+      }
+      return [
+        self.get_old_local_configs(node_response, @published_configs_names),
+        node_response
+      ]
+    end
+
+    protected
+
+    def prepare_request_data(configs, cluster_name)
+      data = {
+        'configs' => {},
+      }
+      data['cluster_name'] = cluster_name if cluster_name
+      configs.each { |cfg|
+        data['configs'][cfg.class.name] = {
+          'type' => 'file',
+          'text' => cfg.text,
+        }
+      }
+      return {
+        'configs' => JSON.generate(data)
+      }
+    end
+
+    def get_old_local_configs(node_response, published_configs_names)
+      old_local_configs = []
+      node_response.each { |node, response|
+        if 'ok' == response['status'] and response['result']
+          response['result'].each { |cfg_name, status|
+            if 'rejected' == status and published_configs_names.include?(cfg_name)
+              old_local_configs << cfg_name
+            end
+          }
+        end
+      }
+      return old_local_configs.uniq
+    end
+  end
+
+
+  class ConfigFetcher
+    def initialize(config_classes, nodes, cluster_name)
+      @config_classes = config_classes
+      @nodes = nodes
+      @cluster_name = cluster_name
+    end
+
+    def fetch()
+      configs_cluster = self.filter_configs_cluster(
+        self.get_configs_cluster(@nodes, @cluster_name),
+        @config_classes
+      )
+
+      newest_configs_cluster = {}
+      configs_cluster.each { |name, cfgs|
+        newest_configs_cluster[name] = cfgs.max
+      }
+      configs_local = Cfgsync::get_configs_local()
+
+      newest_from_cluster = []
+      newest_from_local = []
+      configs_local.each { |name, local_cfg|
+        if newest_configs_cluster.key?(name)
+          if newest_configs_cluster[name] > local_cfg
+            newest_from_cluster << newest_configs_cluster[name]
+          elsif newest_configs_cluster[name] < local_cfg
+            newest_from_local << local_cfg
+          end
+        end
+      }
+      return newest_from_cluster, newest_from_local
+    end
+
+    protected
+
+    def get_configs_cluster(nodes, cluster_name)
+      data = {
+        'cluster_name' => cluster_name,
+      }
+
+      $logger.info 'Fetching configs from the cluster'
+      threads = []
+      node_configs = {}
+      nodes.each { |node|
+        threads << Thread.new {
+          code, out = send_request_with_token(node, 'get_configs', false, data)
+          if 200 == code
+            begin
+              parsed = JSON::parse(out)
+              if 'ok' == parsed['status'] and cluster_name == parsed['cluster_name']
+                node_configs[node] = Cfgsync::sync_msg_to_configs(parsed)
+              end
+            rescue JSON::ParserError
+            end
+          end
+        }
+      }
+      threads.each { |t| t.join }
+      return node_configs
+    end
+
+    def filter_configs_cluster(node_configs, wanted_configs_classes)
+      configs = {}
+      node_configs.each { |node, cfg_hash|
+        cfg_hash.each { |name, cfg|
+          if wanted_configs_classes.include?(cfg.class)
+            configs[cfg.class.name] = configs[cfg.class.name] || []
+            configs[cfg.class.name] << cfg
+          end
+        }
+      }
+      return configs
     end
   end
 
