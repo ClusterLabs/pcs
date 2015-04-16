@@ -338,7 +338,7 @@ def add_node(new_nodename,all = false, auto_start=true)
   else
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
   end
-  $logger.info("Adding #{new_nodename} from pcs_settings.conf")
+  $logger.info("Adding #{new_nodename} to pcs_settings.conf")
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update($cluster_name,get_corosync_nodes())
   Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
