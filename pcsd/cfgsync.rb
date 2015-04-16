@@ -29,7 +29,7 @@ module Cfgsync
         file.flock(File::LOCK_SH)
         return self.from_text(file.read())
       rescue => e
-        $logger.error "Cannot read config file: #{e.message}"
+        $logger.warn "Cannot read config file: #{e.message}"
         raise
       ensure
         unless file.nil?
@@ -65,6 +65,11 @@ module Cfgsync
       return @version ||= self.get_version().to_i()
     end
 
+    def version=(new_version)
+      self.text = self.set_version(new_version)
+      return self
+    end
+
     def save()
       begin
         file = nil
@@ -91,7 +96,6 @@ module Cfgsync
     end
 
     protected
-    attr_reader :file_path, :file_perm
 
     def initialize(text)
       self.text = text
@@ -119,6 +123,12 @@ module Cfgsync
     def get_version()
       return PCSConfig.new(self.text).data_version
     end
+
+    def set_version(new_version)
+      parsed = PCSConfig.new(self.text)
+      parsed.data_version = new_version
+      return parsed.text
+    end
   end
 
 
@@ -135,6 +145,14 @@ module Cfgsync
         return dom.root.attributes['config_version'].to_i
       end
       return 0
+    end
+
+    def set_version(new_version)
+      dom = REXML::Document.new(self.text)
+      if dom.root and dom.root.name == 'cluster'
+        dom.root.attributes['config_version'] = new_version
+      end
+      return dom.to_s
     end
   end
 
@@ -156,6 +174,14 @@ module Cfgsync
         }
       }
       return version ? version : 0
+    end
+
+    def set_version(new_version)
+      parsed = ::CorosyncConf::parse_string(self.text)
+      parsed.sections('totem').each { |totem|
+        totem.set_attribute('config_version', new_version)
+      }
+      return parsed.text
     end
   end
 

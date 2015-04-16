@@ -19,6 +19,7 @@ class TestCfgsync < Test::Unit::TestCase
     cfg4 = Cfgsync::ClusterConf.from_text(
       '<cluster config_version="2" name="test2"/>'
     )
+
     assert(cfg1 == cfg2)
     assert(cfg1 < cfg3)
     assert(cfg1 < cfg4)
@@ -26,6 +27,10 @@ class TestCfgsync < Test::Unit::TestCase
     assert_equal("0ebab34c8034fd1cb268d1170de935a183d156cf", cfg3.hash)
     assert_equal("0f22e8a496ae00815d8bcbf005fd7b645ba9f617", cfg4.hash)
     assert(cfg3 < cfg4)
+
+    newest = [cfg1, cfg2, cfg3, cfg4].shuffle!.max
+    assert_equal(2, newest.version)
+    assert_equal('0f22e8a496ae00815d8bcbf005fd7b645ba9f617', newest.hash)
   end
 end
 
@@ -44,9 +49,13 @@ class TestClusterConf < Test::Unit::TestCase
     assert_equal(3, cfg.version)
     assert_equal("1c0ff62f0749bea0b877599a02f6557573f286e2", cfg.hash)
 
-    cfg.text = '<cluster config_version="4" name="test1"/>'
+    cfg.version = 4
     assert_equal(4, cfg.version)
-    assert_equal("a49b848fc173ddb0821009170a653561fa1d82a6", cfg.hash)
+    assert_equal('589e22aaff926907cc1f4db48eeeb5e269e41c39', cfg.hash)
+
+    cfg.text = "<cluster config_version='4' name='test1'/>"
+    assert_equal(4, cfg.version)
+    assert_equal('589e22aaff926907cc1f4db48eeeb5e269e41c39', cfg.hash)
   end
 
   def test_file()
@@ -75,15 +84,19 @@ totem {
     assert_equal(3, cfg.version)
     assert_equal('570c9f0324f1dec73a632fa9ae4a0dd53ebf8bc7', cfg.hash)
 
-    cfg.text = '
+    cfg.version = 4
+    assert_equal(4, cfg.version)
+    assert_equal('efe2fc7d92ddf17ba1f14f334004c7c1933bb1e3', cfg.hash)
+
+    cfg.text = "\
 totem {
     version: 2
     cluster_name: test99
     config_version: 4
 }
-'
+"
     assert_equal(4, cfg.version)
-    assert_equal('296209324c8b59166337488a96c0aeb0fc6ad255', cfg.hash)
+    assert_equal('efe2fc7d92ddf17ba1f14f334004c7c1933bb1e3', cfg.hash)
   end
 
   def test_file()
@@ -164,16 +177,25 @@ class TestPcsdSettings < Test::Unit::TestCase
     assert_equal(3, cfg.version)
     assert_equal("42eeb92e14b34886d92ca628ba515cc67c97b5f0", cfg.hash)
 
-    cfg.text = '
-{
+    cfg.version = 4
+    assert_equal(4, cfg.version)
+    assert_equal('efe28c6d63dbce02da1a414ddb68fa1fc4f89c2e', cfg.hash)
+
+    cfg.text = '{
   "format_version": 2,
   "data_version": 4,
   "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1",
+        "rh71-node2"
+      ]
+    }
   ]
-}
-'
+}'
     assert_equal(4, cfg.version)
-    assert_equal("e1562832d847370f885040f38a7374b1d8062d26", cfg.hash)
+    assert_equal('efe28c6d63dbce02da1a414ddb68fa1fc4f89c2e', cfg.hash)
   end
 
   def test_file()
