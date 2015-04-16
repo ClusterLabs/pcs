@@ -37,6 +37,8 @@ def remote(params,request)
           return "Failed"
         end
       },
+      :get_configs => method(:get_configs),
+      :set_configs => method(:set_configs),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
       :config_backup => method(:config_backup),
@@ -314,6 +316,68 @@ def set_corosync_conf(params)
     $logger.info "Invalid corosync.conf file"
     return false
   end
+end
+
+def get_configs(params)
+  if not $cluster_name or $cluster_name.empty?
+    return JSON.generate({'status' => 'not_in_cluster'})
+  end
+  if params[:cluster_name] != $cluster_name
+    return JSON.generate({'status' => 'wrong_cluster_name'})
+  end
+  out = {
+    'status' => 'ok',
+    'cluster_name' => $cluster_name,
+    'configs' => {},
+  }
+  Cfgsync::get_configs_local.each { |name, cfg|
+    out['configs'][cfg.class.name] = {
+      'type' => 'file',
+      'text' => cfg.text,
+    }
+  }
+  return JSON.generate(out)
+end
+
+def set_configs(params)
+  return JSON.generate({'status' => 'bad_json'}) if not params['configs']
+  begin
+    configs_json = JSON.parse(params['configs'])
+  rescue JSON::ParserError
+    $logger.info 'JSON parse error'
+    return JSON.generate({'status' => 'bad_json'})
+  end
+  has_cluster = not($cluster_name == nil or $cluster_name.empty?)
+  if has_cluster and $cluster_name != configs_json['cluster_name']
+    return JSON.generate({'status' => 'wrong_cluster_name'})
+  end
+
+  remote_configs = Cfgsync::sync_msg_to_configs(configs_json)
+  local_configs = Cfgsync::get_configs_local
+
+  result = {}
+  remote_configs.each { |name, remote_cfg|
+    begin
+      # Save a remote config if it is a newer version than local. If the config
+      # is not present on a local node, the node is beeing added to a cluster,
+      # so we need to save the config as well.
+      if not local_configs.key?(name) or remote_cfg > local_configs[name]
+        local_configs[name].class.backup() if local_configs.key?(name)
+        remote_cfg.save()
+        result[name] = 'accepted'
+      elsif remote_cfg == local_configs[name]
+        # Someone wants this node to have a config that it already has.
+        # So the desired state is met and the result is a success then.
+        result[name] = 'accepted'
+      else
+        result[name] = 'rejected'
+      end
+    rescue => e
+      $logger.error("Error saving config #{name}: #{e}")
+      result[name] = 'error'
+    end
+  }
+  return JSON.generate({'status' => 'ok', 'result' => result})
 end
 
 def check_gui_status(params)

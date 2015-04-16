@@ -186,7 +186,43 @@ module Cfgsync
   end
 
 
-  def Cfgsync::cluster_cfg_class()
+  def self.cluster_cfg_class()
     return ISRHEL6 ? ClusterConf : CorosyncConf
+  end
+
+  def self.get_cfg_classes()
+    return [self.cluster_cfg_class, PcsdSettings]
+  end
+
+  def self.get_cfg_classes_by_name()
+    classes = {}
+    self.get_cfg_classes.each { |cfgclass|
+      classes[cfgclass.name] = cfgclass
+    }
+    return classes
+  end
+
+  def self.sync_msg_to_configs(sync_msg)
+    cfg_classes = self.get_cfg_classes_by_name
+    configs = {}
+    sync_msg['configs'].each { |name, data|
+      if cfg_classes[name]
+        if 'file' == data['type'] and data['text'] and not data['text'].strip.empty?
+          configs[name] = cfg_classes[name].from_text(data['text'])
+        end
+      end
+    }
+    return configs
+  end
+
+  def self.get_configs_local()
+    configs = {}
+    self.get_cfg_classes.each { |cfg_class|
+      begin
+        configs[cfg_class.name] = cfg_class.from_file
+      rescue
+      end
+    }
+    return configs
   end
 end
