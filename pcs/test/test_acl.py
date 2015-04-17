@@ -355,6 +355,86 @@ Role: role2
         ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\n")
 
     def testRoleCreateDelete(self):
+        o, r = pcs("acl role create role0 read")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 read //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 read xpath")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 read id")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 readX xpath //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 read xpathX //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 description=test read")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 description=test read //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 description=test read xpath")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 description=test read id")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs(
+            "acl role create role0 description=test readX xpath //resources"
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs(
+            "acl role create role0 description=test read xpathX //resources"
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 desc=test read")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 desc=test read //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 desc=test read xpath")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 desc=test read id")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 desc=test readX xpath //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl role create role0 desc=test read xpathX //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEquals(1, r)
+
+        o,r = pcs("acl")
+        ac(o, "ACLs are disabled, run 'pcs acl enable' to enable\n\n")
+        self.assertEquals(0, r)
+
         o,r = pcs("acl role create role0")
         ac(o,"")
         assert r == 0
@@ -467,6 +547,101 @@ Role: role2
         o,r = pcs("acl")
         ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\n  Permission: deny xpath /myxpath1/ (role1-deny)\nRole: role2\n  Permission: read xpath /xpath3/ (role2-read)\n  Permission: write xpath /xpath4/ (role2-write)\nRole: role3\nRole: role4\n")
         assert r == 0
+
+        o, r = pcs("acl permission delete role1-read")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs("acl permission delete role1-write")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs("acl permission delete role1-deny")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs("acl permission delete role2-read")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs("acl permission delete role2-write")
+        ac(o, "")
+        self.assertEquals(0, r)
+
+        o, r = pcs("acl")
+        ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
+Role: role1
+Role: role2
+Role: role3
+Role: role4
+""")
+        self.assertEquals(0, r)
+
+        o, r = pcs("acl permission add role1 read")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 read //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 read xpath")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 read id")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 readX xpath //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 read xpathX //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 read id dummy read")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 read id dummy read //resources")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 read id dummy read xpath")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl permission add role1 read id dummy read id")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs(
+            "acl permission add role1 read id dummy readX xpath //resources"
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs(
+            "acl permission add role1 read id dummy read xpathX //resources"
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl")
+        ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
+Role: role1
+Role: role2
+Role: role3
+Role: role4
+""")
+        self.assertEquals(0, r)
+
 
 if __name__ == "__main__":
     if isMinimumPacemakerVersion(1,1,11):
