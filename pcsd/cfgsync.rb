@@ -293,25 +293,31 @@ module Cfgsync
 
       newest_configs_cluster = {}
       configs_cluster.each { |name, cfgs|
-        newest_configs_cluster[name] = cfgs.max
+        newest_configs_cluster[name] = self.find_newest_config(cfgs)
       }
-      configs_local = Cfgsync::get_configs_local()
+      configs_local = self.get_configs_local()
 
-      newest_from_cluster = []
-      newest_from_local = []
+      to_update_locally = []
+      to_update_in_cluster = []
       configs_local.each { |name, local_cfg|
         if newest_configs_cluster.key?(name)
-          if newest_configs_cluster[name] > local_cfg
-            newest_from_cluster << newest_configs_cluster[name]
-          elsif newest_configs_cluster[name] < local_cfg
-            newest_from_local << local_cfg
+          if newest_configs_cluster[name].version > local_cfg.version
+            to_update_locally << newest_configs_cluster[name]
+          elsif newest_configs_cluster[name].version < local_cfg.version
+            to_update_in_cluster << local_cfg
+          elsif newest_configs_cluster[name].hash != local_cfg.hash
+            to_update_locally << newest_configs_cluster[name]
           end
         end
       }
-      return newest_from_cluster, newest_from_local
+      return to_update_locally, to_update_in_cluster
     end
 
     protected
+
+    def get_configs_local()
+      return Cfgsync::get_configs_local()
+    end
 
     def get_configs_cluster(nodes, cluster_name)
       data = {
@@ -341,8 +347,8 @@ module Cfgsync
 
     def filter_configs_cluster(node_configs, wanted_configs_classes)
       configs = {}
-      node_configs.each { |node, cfg_hash|
-        cfg_hash.each { |name, cfg|
+      node_configs.each { |node, cfg_map|
+        cfg_map.each { |name, cfg|
           if wanted_configs_classes.include?(cfg.class)
             configs[cfg.class.name] = configs[cfg.class.name] || []
             configs[cfg.class.name] << cfg
@@ -350,6 +356,27 @@ module Cfgsync
         }
       }
       return configs
+    end
+
+    def find_newest_config(config_list)
+      newest_version = config_list.collect { |cfg| cfg.version }.max
+      hash_config = {}
+      hash_count = {}
+      config_list.each { |cfg|
+        if cfg.version == newest_version
+          hash_config[cfg.hash] = cfg
+          if hash_count.key?(cfg.hash)
+            hash_count[cfg.hash] += 1
+          else
+            hash_count[cfg.hash] = 1
+          end
+        end
+      }
+      most_frequent_hash_count = hash_count.max_by { |hash, count| count }[1]
+      most_frequent_hashes = hash_count.reject { |hash, count|
+        count != most_frequent_hash_count
+      }
+      return hash_config[most_frequent_hashes.keys.max]
     end
   end
 

@@ -204,3 +204,219 @@ class TestPcsdSettings < Test::Unit::TestCase
     assert_equal("ac032803c5190d735cd94a702d42c5c6358013b8", cfg.hash)
   end
 end
+
+
+class TestConfigFetcher < Test::Unit::TestCase
+  class ConfigFetcherMock < Cfgsync::ConfigFetcher
+    def get_configs_local()
+      return @configs_local
+    end
+
+    def set_configs_local(configs)
+      @configs_local = configs
+      return self
+    end
+
+    def get_configs_cluster(nodes, cluster_name)
+      return @configs_cluster
+    end
+
+    def set_configs_cluster(configs)
+      @configs_cluster = configs
+      return self
+    end
+
+    def find_newest_config_test(config_list)
+      return self.find_newest_config(config_list)
+    end
+  end
+
+  def test_find_newest_config()
+    cfg1 = Cfgsync::ClusterConf.from_text(
+      '<cluster config_version="1" name="test1"/>'
+    )
+    cfg2 = Cfgsync::ClusterConf.from_text(
+      '<cluster config_version="1" name="test1"/>'
+    )
+    cfg3 = Cfgsync::ClusterConf.from_text(
+      '<cluster config_version="2" name="test1"/>'
+    )
+    cfg4 = Cfgsync::ClusterConf.from_text(
+      '<cluster config_version="2" name="test2"/>'
+    )
+    assert(cfg1 == cfg2)
+    assert(cfg1 < cfg3)
+    assert(cfg1 < cfg4)
+    assert(cfg3 < cfg4)
+    fetcher = ConfigFetcherMock.new(nil, nil, nil)
+
+    # trivial case
+    assert_equal(cfg1, fetcher.find_newest_config_test([cfg1]))
+    # decide by version only
+    assert_equal(cfg3, fetcher.find_newest_config_test([cfg1, cfg2, cfg3]))
+    assert_equal(cfg3, fetcher.find_newest_config_test([cfg1, cfg1, cfg3]))
+    # in case of multiple configs with the same version decide by count
+    assert_equal(cfg3, fetcher.find_newest_config_test([cfg3, cfg3, cfg4]))
+    assert_equal(
+      cfg3, fetcher.find_newest_config_test([cfg1, cfg3, cfg3, cfg4])
+    )
+    # if the count is the same decide by hash
+    assert(cfg3 < cfg4)
+    assert_equal(cfg4, fetcher.find_newest_config_test([cfg3, cfg4]))
+    assert_equal(cfg4, fetcher.find_newest_config_test([cfg1, cfg3, cfg4]))
+    assert_equal(
+      cfg4, fetcher.find_newest_config_test([cfg3, cfg3, cfg4, cfg4])
+    )
+    assert_equal(
+      cfg4, fetcher.find_newest_config_test([cfg1, cfg3, cfg3, cfg4, cfg4])
+    )
+  end
+
+  def test_fetch()
+    cfg1 = Cfgsync::ClusterConf.from_text(
+      '<cluster config_version="1" name="test1"/>'
+    )
+    cfg2 = Cfgsync::ClusterConf.from_text(
+      '<cluster config_version="1" name="test1"/>'
+    )
+    cfg3 = Cfgsync::ClusterConf.from_text(
+      '<cluster config_version="2" name="test1"/>'
+    )
+    cfg4 = Cfgsync::ClusterConf.from_text(
+      '<cluster config_version="2" name="test2"/>'
+    )
+    assert(cfg1 == cfg2)
+    assert(cfg1 < cfg3)
+    assert(cfg1 < cfg4)
+    assert(cfg3 < cfg4)
+    cfg_name = Cfgsync::ClusterConf.name
+    fetcher = ConfigFetcherMock.new([Cfgsync::ClusterConf], nil, nil)
+
+    # local config is synced
+    fetcher.set_configs_local({cfg_name => cfg1})
+
+    fetcher.set_configs_cluster({
+      'node1' => {'configs' => {cfg_name => cfg1}},
+    })
+    assert_equal([[], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {'configs' => {cfg_name => cfg2}},
+    })
+    assert_equal([[], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {'configs' => {cfg_name => cfg1}},
+      'node2' => {'configs' => {cfg_name => cfg2}},
+    })
+    assert_equal([[], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {'configs' => {cfg_name => cfg1}},
+      'node2' => {'configs' => {cfg_name => cfg2}},
+      'node3' => {'configs' => {cfg_name => cfg2}},
+    })
+    assert_equal([[], []], fetcher.fetch())
+
+    # local config is older
+    fetcher.set_configs_local({cfg_name => cfg1})
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+    })
+    assert_equal([[cfg3], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+      'node2' => {cfg_name => cfg4},
+    })
+    assert_equal([[cfg4], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+      'node2' => {cfg_name => cfg4},
+      'node3' => {cfg_name => cfg3},
+    })
+    assert_equal([[cfg3], []], fetcher.fetch())
+
+    # local config is newer
+    fetcher.set_configs_local({cfg_name => cfg3})
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg1},
+    })
+    assert_equal([[], [cfg3]], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg1},
+      'node2' => {cfg_name => cfg1},
+    })
+    assert_equal([[], [cfg3]], fetcher.fetch())
+
+    # local config is the same version
+    fetcher.set_configs_local({cfg_name => cfg3})
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+    })
+    assert_equal([[], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg4},
+    })
+    assert_equal([[cfg4], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+      'node2' => {cfg_name => cfg4},
+    })
+    assert_equal([[cfg4], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+      'node2' => {cfg_name => cfg4},
+      'node3' => {cfg_name => cfg3},
+    })
+    assert_equal([[], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+      'node2' => {cfg_name => cfg4},
+      'node3' => {cfg_name => cfg4},
+    })
+    assert_equal([[cfg4], []], fetcher.fetch())
+
+    # local config is the same version
+    fetcher.set_configs_local({cfg_name => cfg4})
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+    })
+    assert_equal([[cfg3], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg4},
+    })
+    assert_equal([[], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+      'node2' => {cfg_name => cfg4},
+    })
+    assert_equal([[], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+      'node2' => {cfg_name => cfg4},
+      'node3' => {cfg_name => cfg3},
+    })
+    assert_equal([[cfg3], []], fetcher.fetch())
+
+    fetcher.set_configs_cluster({
+      'node1' => {cfg_name => cfg3},
+      'node2' => {cfg_name => cfg4},
+      'node3' => {cfg_name => cfg4},
+    })
+    assert_equal([[], []], fetcher.fetch())
+  end
+end
