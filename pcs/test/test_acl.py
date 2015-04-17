@@ -75,6 +75,38 @@ class ACLTest(unittest.TestCase):
         assert r == 0
         ac(o,"")
 
+        o, r = pcs("acl user create user1 roleX")
+        ac(o, "Error: cannot find acl role: roleX\n")
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl user create user1 role1 roleX")
+        ac(o, "Error: cannot find acl role: roleX\n")
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl group create group1 roleX")
+        ac(o, "Error: cannot find acl role: roleX\n")
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl group create group1 role1 roleX")
+        ac(o, "Error: cannot find acl role: roleX\n")
+        self.assertEquals(1, r)
+
+        o, r = pcs("acl")
+        ac(o, """\
+ACLs are disabled, run 'pcs acl enable' to enable
+
+Role: role1
+  Permission: read xpath /xpath1/ (role1-read)
+  Permission: write xpath /xpath2/ (role1-write)
+Role: role2
+  Permission: deny xpath /xpath3/ (role2-deny)
+  Permission: deny xpath /xpath4/ (role2-deny-1)
+Role: role3
+  Permission: read xpath /xpath5/ (role3-read)
+  Permission: read xpath /xpath6/ (role3-read-1)
+""")
+        self.assertEquals(0, r)
+
         o,r = pcs("acl user create user1 role1 role2")
         assert r == 0
         ac(o,"")

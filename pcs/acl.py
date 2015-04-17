@@ -230,6 +230,8 @@ def acl_target(argv,group=False):
 
         acls.appendChild(element)
         for role in argv:
+            if not utils.dom_get_element_with_id(acls, "acl_role", role):
+                utils.err("cannot find acl role: %s" % role)
             r = dom.createElement("role")
             r.setAttribute("id", role)
             element.appendChild(r)
