@@ -276,7 +276,7 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
   for node in nodes
     code, out = send_request_with_token(node,request, post, data, remote, raw_data)
     $logger.info "Node: #{node} Request: #{request}"
-    if out != '{"noresponse":true}' and out != '{"pacemaker_not_running":true}'
+    if code == 200 and out != '{"noresponse":true}' and out != '{"pacemaker_not_running":true}'
       break
     end
     $logger.info "No response: Node: #{node} Request: #{request}"
