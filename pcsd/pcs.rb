@@ -220,13 +220,16 @@ def remove_acl_usergroup(role_id, usergroup_id)
 end
 
 def get_node_token(node)
-  out, stderror, retval = run_cmd(PCS, "cluster", "token", node)
-  return retval, out
+  tokens = read_tokens()
+  if tokens.include? node
+    return tokens[node]
+  else
+    return nil
+  end
 end
 
 def get_token_node_list()
-  out, stderror, retval = run_cmd(PCS, "cluster", "token-nodes")
-  return retval, out
+  return read_tokens.keys
 end
 
 # Gets all of the nodes specified in the pcs config file for the cluster
@@ -284,12 +287,10 @@ end
 def send_request_with_token(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30)
   start = Time.now
   begin
-    retval, token = get_node_token(node)
-    if retval != 0
+    token = get_node_token(node)
+    if not token
       return 400,'{"notoken":true}'
     end
-
-    token = token[0].strip
 
     request = "/#{request}" if not request.start_with?("/")
 

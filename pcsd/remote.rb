@@ -743,10 +743,9 @@ end
 
 # If we get here, we're already authorized
 def check_auth(params, request)
-  retval, node_list = get_token_node_list()
   return JSON.generate({
-    'success' => retval == 0,
-    'node_list' => node_list.collect { |item| item.strip },
+    'success' => true,
+    'node_list' => get_token_node_list,
   })
 end
 
