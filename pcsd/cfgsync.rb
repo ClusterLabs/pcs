@@ -420,4 +420,30 @@ module Cfgsync
     }
     return configs
   end
+
+  # save and sync updated config
+  # return true on success, false on version conflict
+  def self.save_sync_new_version(config, nodes, cluster_name, fetch_on_conflict)
+    if not cluster_name or cluster_name.empty?
+      # we run on a standalone host, no config syncing
+      config.version += 1
+      config.save()
+      return true
+    else
+      # we run in a cluster so we need to sync the config
+      publisher = ConfigPublisher.new([config], nodes, cluster_name)
+      old_configs, _ = publisher.publish()
+      if old_configs.include?(config.class.name)
+        if fetch_on_conflict
+          fetcher = ConfigFetcher.new([config.class], nodes, cluster_name)
+          cfgs_to_save, _ = fetcher.fetch()
+          cfgs_to_save.each { |cfg_to_save|
+            cfg_to_save.save() if cfg_to_save.class == config.class
+          }
+        end
+        return false
+      end
+      return true
+    end
+  end
 end

@@ -339,9 +339,15 @@ def add_node(new_nodename,all = false, auto_start=true)
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "add", new_nodename)
   end
   $logger.info("Adding #{new_nodename} to pcs_settings.conf")
+  corosync_nodes = get_corosync_nodes()
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  pcs_config.update($cluster_name,get_corosync_nodes())
-  Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
+  pcs_config.update($cluster_name, corosync_nodes)
+  sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+  # on version conflict just go on, config will be corrected eventually
+  # by displaying the cluster in the web UI
+  Cfgsync::save_sync_new_version(
+    sync_config, corosync_nodes, $cluster_name, true
+  )
   return retval, out.join("\n") + stderror.join("\n")
 end
 
@@ -353,9 +359,15 @@ def remove_node(new_nodename, all = false)
     out, stderror, retval = run_cmd(PCS, "cluster", "localnode", "remove", new_nodename)
   end
   $logger.info("Removing #{new_nodename} from pcs_settings.conf")
+  corosync_nodes = get_corosync_nodes()
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  pcs_config.update($cluster_name,get_corosync_nodes())
-  Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
+  pcs_config.update($cluster_name, corosync_nodes)
+  sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+  # on version conflict just go on, config will be corrected eventually
+  # by displaying the cluster in the web UI
+  Cfgsync::save_sync_new_version(
+    sync_config, corosync_nodes, $cluster_name, true
+  )
   return retval, out + stderror
 end
 

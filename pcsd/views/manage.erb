@@ -443,4 +443,7 @@ Specify ring 1 address for each node if you want to use RRP." %>
   <% if @error == "unabletocreate" %>
     Unable to create new cluster because cluster already exists on one or more of the nodes.  Run 'pcs cluster destroy' on all nodes to remove current cluster configuration.<br><br>(<%=@errorval%>)
   <% end %>
+  <% if @error == "configversionsconflict" %>
+    Configuration conflict detected.<br><br>Some nodes had a newer configuration than the local node.  Local node's configuration was updated.  Please repeat the last action if appropriate.
+  <% end %>
 </div>

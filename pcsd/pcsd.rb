@@ -436,7 +436,14 @@ if not DISABLE_GUI
       #auth end
 
       pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
-      Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
+
+      sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+      if not Cfgsync::save_sync_new_version(
+        sync_config, get_corosync_nodes(), $cluster_name, true
+      )
+        session[:error] = 'configversionsconflict'
+        session[:errorval] = sync_config.class.name
+      end
       redirect '/manage'
     else
       redirect '/manage/?error=notauthorized#manage'
@@ -496,7 +503,13 @@ if not DISABLE_GUI
 
     if code == 200
       pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
-      Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
+      sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+      if not Cfgsync::save_sync_new_version(
+        sync_config, get_corosync_nodes(), $cluster_name, true
+      )
+        session[:error] = 'configversionsconflict'
+        session[:errorval] = sync_config.class.name
+      end
     else
       session[:error] = "unabletocreate"
       session[:errorval] = out
@@ -512,8 +525,14 @@ if not DISABLE_GUI
         pcs_config.remove_cluster(k.sub("clusterid-",""))
       end
     }
-    Cfgsync::PcsdSettings.from_text(pcs_config.text()).save()
-    redirect '/manage'
+    sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+    if not Cfgsync::save_sync_new_version(
+      sync_config, get_corosync_nodes(), $cluster_name, true
+    )
+      session[:error] = 'configversionsconflict'
+      session[:errorval] = sync_config.class.name
+    end
+    # do not reload nor redirect as that's done in js which called this
   end
 
   get '/' do

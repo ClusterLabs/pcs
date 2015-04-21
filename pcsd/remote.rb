@@ -638,7 +638,7 @@ def node_status(params)
   return ret
 end
 
-def status_all(params, nodes = [])
+def status_all(params, nodes = [], dont_update_config=false)
   if nodes == nil
     return JSON.generate({"error" => "true"})
   end
@@ -674,11 +674,16 @@ def status_all(params, nodes = [])
   if node_list.length > 0
     config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
     old_node_list = config.get_nodes(params[:cluster])
-    if old_node_list & node_list != old_node_list or old_node_list.size!=node_list.size
+    if not dont_update_config and (old_node_list & node_list != old_node_list or old_node_list.size!=node_list.size)
       $logger.info("Updating node list for: " + params[:cluster] + " " + old_node_list.inspect + "->" + node_list.inspect)
       config.update(params[:cluster], node_list)
-      Cfgsync::PcsdSettings.from_text(config.text()).save()
-      return status_all(params, node_list)
+      sync_config = Cfgsync::PcsdSettings.from_text(config.text())
+      # on version conflict just go on, config will be corrected eventually
+      # by displaying the cluster in the web UI
+      Cfgsync::save_sync_new_version(
+        sync_config, get_corosync_nodes(), $cluster_name, true
+      )
+      return status_all(params, node_list, true)
     end
   end
   $logger.debug("NODE LIST: " + node_list.inspect)
