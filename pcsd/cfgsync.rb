@@ -334,7 +334,7 @@ module Cfgsync
             begin
               parsed = JSON::parse(out)
               if 'ok' == parsed['status'] and cluster_name == parsed['cluster_name']
-                node_configs[node] = Cfgsync::sync_msg_to_configs(parsed)
+                node_configs[node], _ = Cfgsync::sync_msg_to_configs(parsed)
               end
             rescue JSON::ParserError
             end
@@ -386,7 +386,8 @@ module Cfgsync
   end
 
   def self.get_cfg_classes()
-    return [self.cluster_cfg_class, PcsdSettings]
+    return [PcsdSettings]
+    # return [PcsdSettings, self.cluster_cfg_class]
   end
 
   def self.get_cfg_classes_by_name()
@@ -400,14 +401,17 @@ module Cfgsync
   def self.sync_msg_to_configs(sync_msg)
     cfg_classes = self.get_cfg_classes_by_name
     configs = {}
+    unknown_config_names = []
     sync_msg['configs'].each { |name, data|
       if cfg_classes[name]
         if 'file' == data['type'] and data['text'] and not data['text'].strip.empty?
           configs[name] = cfg_classes[name].from_text(data['text'])
         end
+      else
+        unknown_config_names << name
       end
     }
-    return configs
+    return configs, unknown_config_names
   end
 
   def self.get_configs_local()

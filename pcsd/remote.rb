@@ -37,6 +37,7 @@ def remote(params,request)
           return "Failed"
         end
       },
+      :get_sync_capabilities => method(:get_sync_capabilities),
       :get_configs => method(:get_configs),
       :set_configs => method(:set_configs),
       :cluster_start => method(:cluster_start),
@@ -318,6 +319,12 @@ def set_corosync_conf(params)
   end
 end
 
+def get_sync_capabilities(params)
+  return JSON.generate({
+    'syncable_configs' => Cfgsync::get_cfg_classes_by_name().keys,
+  })
+end
+
 def get_configs(params)
   if not $cluster_name or $cluster_name.empty?
     return JSON.generate({'status' => 'not_in_cluster'})
@@ -352,10 +359,11 @@ def set_configs(params)
     return JSON.generate({'status' => 'wrong_cluster_name'})
   end
 
-  remote_configs = Cfgsync::sync_msg_to_configs(configs_json)
+  remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
   local_configs = Cfgsync::get_configs_local
 
   result = {}
+  unknown_cfg_names.each { |name| result[name] = 'not_supported' }
   remote_configs.each { |name, remote_cfg|
     begin
       # Save a remote config if it is a newer version than local. If the config
