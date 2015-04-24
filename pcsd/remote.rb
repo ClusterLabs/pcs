@@ -494,7 +494,7 @@ def remote_remove_nodes(params)
     retval, output = remove_node(node,true)
     out = out + output.join("\n")
   }
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   if config.get_nodes($cluster_name) == nil or config.get_nodes($cluster_name).length == 0
     return [200,"No More Nodes"]
   end
@@ -680,7 +680,7 @@ def status_all(params, nodes = [], dont_update_config=false)
 
   node_list.uniq!
   if node_list.length > 0
-    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     old_node_list = config.get_nodes(params[:cluster])
     if not dont_update_config and (old_node_list & node_list != old_node_list or old_node_list.size!=node_list.size)
       $logger.info("Updating node list for: " + params[:cluster] + " " + old_node_list.inspect + "->" + node_list.inspect)

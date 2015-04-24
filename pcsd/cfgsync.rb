@@ -23,7 +23,7 @@ module Cfgsync
       return self.new(text)
     end
 
-    def self.from_file()
+    def self.from_file(default=nil)
       begin
         file = nil
         file = File.open(@file_path, File::RDONLY)
@@ -31,6 +31,7 @@ module Cfgsync
         return self.from_text(file.read())
       rescue => e
         $logger.warn "Cannot read config file: #{e.message}"
+        return self.from_text(default) if default
         raise
       ensure
         unless file.nil?
