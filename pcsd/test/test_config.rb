@@ -1,4 +1,5 @@
 require 'test/unit'
+require 'fileutils'
 
 require 'pcsd_test_utils.rb'
 require 'config.rb'
