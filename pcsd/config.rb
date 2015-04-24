@@ -1,5 +1,6 @@
 require 'json'
 require 'pp'
+require 'orderedhash'
 
 require 'cluster.rb'
 
@@ -59,19 +60,16 @@ class PCSConfig
   end
 
   def text()
-    out_hash = {
-      "format_version" => CURRENT_FORMAT,
-      "data_version" => @data_version,
-      "clusters" => [],
-    }
+    out_hash = OrderedHash.new
+    out_hash['format_version'] = CURRENT_FORMAT
+    out_hash['data_version'] = @data_version
+    out_hash['clusters'] = []
 
-    cluster_list = []
     @clusters.each { |c|
-      out_hash["clusters"] << {
-        "name" => c.name,
-        "nodes" => c.nodes,
-      }
-      cluster_list << c.name
+      c_hash = OrderedHash.new
+      c_hash['name'] = c.name
+      c_hash['nodes'] = c.nodes
+      out_hash['clusters'] << c_hash
     }
 
     return JSON.pretty_generate(out_hash)
@@ -148,11 +146,13 @@ class PCSTokens
   end
 
   def text()
-    out_hash = {
-      'format_version' => CURRENT_FORMAT,
-      'data_version' => @data_version,
-      'tokens' => @tokens,
-    }
+    tokens_hash = OrderedHash.new
+    @tokens.keys.sort.each { |key| tokens_hash[key] = @tokens[key] }
+
+    out_hash = OrderedHash.new
+    out_hash['format_version'] = CURRENT_FORMAT
+    out_hash['data_version'] = @data_version
+    out_hash['tokens'] = tokens_hash
 
     return JSON.pretty_generate(out_hash)
   end

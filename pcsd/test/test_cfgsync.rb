@@ -51,10 +51,11 @@ class TestClusterConf < Test::Unit::TestCase
 
     cfg.version = 4
     assert_equal(4, cfg.version)
+    assert_equal("<cluster config_version='4' name='test1'/>", cfg.text)
     assert_equal('589e22aaff926907cc1f4db48eeeb5e269e41c39', cfg.hash)
 
-    cfg.text = "<cluster config_version='4' name='test1'/>"
     assert_equal(4, cfg.version)
+    assert_equal("<cluster config_version='4' name='test1'/>", cfg.text)
     assert_equal('589e22aaff926907cc1f4db48eeeb5e269e41c39', cfg.hash)
   end
 
