@@ -2,35 +2,10 @@ require 'rubygems'
 require 'webrick'
 require 'webrick/https'
 require 'openssl'
-require 'logger'
 require 'rack'
 
-def get_rhel_version()
-  if File.exists?('/etc/system-release')
-    release = File.open('/etc/system-release').read
-    match = /(\d+)\.(\d+)/.match(release)
-    if match
-      return match[1, 2].collect{ | x | x.to_i}
-    end
-  end
-  return nil
-end
+require 'bootstrap.rb'
 
-def is_rhel6()
-  version = get_rhel_version()
-  return (version and version[0] == 6)
-end
-
-def is_systemctl()
-  if File.exist?('/usr/bin/systemctl')
-    return true
-  else
-    return false
-  end
-end
-
-CRT_FILE = "/var/lib/pcsd/pcsd.crt"
-KEY_FILE = "/var/lib/pcsd/pcsd.key"
 server_name = WEBrick::Utils::getservername
 
 if not File.exists?(CRT_FILE) or not File.exists?(KEY_FILE)

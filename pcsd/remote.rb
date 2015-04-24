@@ -354,7 +354,7 @@ def set_configs(params)
     $logger.info 'JSON parse error'
     return JSON.generate({'status' => 'bad_json'})
   end
-  has_cluster = not($cluster_name == nil or $cluster_name.empty?)
+  has_cluster = !($cluster_name == nil or $cluster_name.empty?)
   if has_cluster and $cluster_name != configs_json['cluster_name']
     return JSON.generate({'status' => 'wrong_cluster_name'})
   end

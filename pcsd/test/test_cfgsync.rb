@@ -206,6 +206,53 @@ class TestPcsdSettings < Test::Unit::TestCase
 end
 
 
+class TestPcsdTokens < Test::Unit::TestCase
+  def setup()
+    FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
+  end
+
+  def test_basics()
+    assert_equal('tokens', Cfgsync::PcsdTokens.name)
+    text =
+'{
+  "format_version": 2,
+  "data_version": 3,
+  "tokens": {
+    "rh7-1": "token-rh7-1",
+    "rh7-2": "token-rh7-2"
+  }
+}'
+
+    cfg = Cfgsync::PcsdTokens.from_text(text)
+    assert_equal(text, cfg.text)
+    assert_equal(3, cfg.version)
+    assert_equal('c362c4354ceb0b0425c71ed955d43f89c3d4304a', cfg.hash)
+
+    cfg.version = 4
+    assert_equal(4, cfg.version)
+    assert_equal('9586d6ce66f6fc649618f7f55005d8ddfe54db9b', cfg.hash)
+
+    cfg.text =
+'{
+  "format_version": 2,
+  "data_version": 4,
+  "tokens": {
+    "rh7-1": "token-rh7-1",
+    "rh7-2": "token-rh7-2"
+  }
+}'
+    assert_equal(4, cfg.version)
+    assert_equal('9586d6ce66f6fc649618f7f55005d8ddfe54db9b', cfg.hash)
+  end
+
+  def test_file()
+    cfg = Cfgsync::PcsdTokens.from_file()
+    assert_equal(9, cfg.version)
+    assert_equal('571afb6abc603f527462818e7dfe278a8a1f64a7', cfg.hash)
+  end
+end
+
+
 class TestConfigFetcher < Test::Unit::TestCase
   class ConfigFetcherMock < Cfgsync::ConfigFetcher
     def get_configs_local()

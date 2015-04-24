@@ -61,15 +61,6 @@ def checkAuthorization(node):
     out = sendHTTPRequest(node, 'remote/check_auth', None, False, False)
     return out
 
-def tokenFile():
-    if 'PCS_TOKEN_FILE' in os.environ:
-        return os.environ['PCS_TOKEN_FILE']
-    else:
-        if os.getuid() == 0:
-            return "/var/lib/pcsd/tokens"
-        else:
-            return os.path.expanduser("~/.pcs/tokens")
-
 def updateToken(node,nodes,username,password):
     count = 0
     orig_data = {}
@@ -175,41 +166,17 @@ def remove_uid_gid_file(uid,gid):
     return file_removed
 # Returns a dictionary {'nodeA':'tokenA'}
 def readTokens():
-    tokenfile = tokenFile()
     tokens = {}
-    f = None
-    if not os.path.isfile(tokenfile):
-        return tokens
-    try:
-        f = open(tokenfile, "r")
-        fcntl.flock(f.fileno(), fcntl.LOCK_SH)
-        tokens = json.load(f)
-    except:
-        pass
-    finally:
-        if f is not None:
-            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-            f.close()
+    output, retval = run_pcsdcli("read_tokens")
+    if retval == 0 and output['status'] == 'ok' and output['data']:
+        tokens = output['data']
     return tokens
 
 # Takes a dictionary {'nodeA':'tokenA'}
 def writeTokens(tokens):
-    tokenfile = tokenFile()
-    f = None
-    if not os.path.isfile(tokenfile) and 'PCS_TOKEN_FILE' not in os.environ:
-        if not os.path.exists(os.path.dirname(tokenfile)):
-            os.makedirs(os.path.dirname(tokenfile),0700)
-    try:
-        f = os.fdopen(os.open(tokenfile, os.O_WRONLY | os.O_CREAT, 0600), "w")
-        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-        f.truncate()
-        json.dump(tokens, f)
-    except Exception as ex:
-        err("Failed to store tokens into file '%s': %s" % (tokenfile, ex.message))
-    finally:
-        if f is not None:
-            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-            f.close()
+    output, retval = run_pcsdcli("write_tokens", tokens)
+    if retval != 0 or output['status'] != 'ok' or not output['data']:
+        err("Failed to store tokens")
 
 # Set the corosync.conf file on the specified node
 def getCorosyncConfig(node):
@@ -695,8 +662,11 @@ def subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 # Run command, with environment and return (output, retval)
-def run(args, ignore_stderr=False, string_for_stdin=None):
-    env_var = dict(os.environ)
+def run(args, ignore_stderr=False, string_for_stdin=None, env_extend=None):
+    if not env_extend:
+        env_extend = dict()
+    env_var = env_extend
+    env_var.update(dict(os.environ))
     if usefile:
         env_var["CIB_file"] = filename
 
@@ -740,6 +710,38 @@ def run(args, ignore_stderr=False, string_for_stdin=None):
         err("unable to locate command: " + args[0])
 
     return output, returnVal
+
+def run_pcsdcli(command, data=None):
+    if not data:
+        data = dict()
+    env_var = dict()
+    if "--debug" in pcs_options:
+        env_var["PCSD_DEBUG"] = "true"
+    pcs_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    if pcs_dir == "/usr/sbin":
+        pcsd_dir_path = '/var/lib/pcsd'
+    else:
+        pcsd_dir_path = os.path.join(pcs_dir, '../pcsd')
+    pcsdcli_path = os.path.join(pcsd_dir_path, 'pcsd-cli.rb')
+    gem_home = os.path.join(pcsd_dir_path, 'vendor/bundle/ruby')
+    env_var["GEM_HOME"] = gem_home
+    output, retval = run(
+        ["/usr/bin/ruby", "-I" + pcsd_dir_path, pcsdcli_path, command],
+        string_for_stdin=json.dumps(data),
+        env_extend=env_var
+    )
+    try:
+        output_json = json.loads(output)
+        for key in ['status', 'text', 'data']:
+            if key not in output_json:
+                output_json[key] = None
+    except ValueError:
+        output_json = {
+            'status': 'bad_json_output',
+            'text': output,
+            'data': None,
+        }
+    return output_json, retval
 
 def map_for_error_list(callab, iterab):
     error_list = []

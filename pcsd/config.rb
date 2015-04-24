@@ -108,3 +108,52 @@ class PCSConfig
     return nil
   end
 end
+
+
+class PCSTokens
+  CURRENT_FORMAT = 2
+  attr_accessor :tokens, :format_version, :data_version
+
+  def initialize(cfg_text)
+    @format_version = 0
+    @data_version = 0
+    @tokens = {}
+
+    begin
+      json = JSON.parse(cfg_text)
+      if not(json.is_a?(Hash) and json.key?('format_version') and json.key?('tokens'))
+        @format_version = 1
+      else
+        @format_version = json['format_version']
+      end
+
+      if @format_version > CURRENT_FORMAT
+        $logger.warn(
+          "Token file format version is #{@format_version}" +
+          ", newest fully supported version is #{CURRENT_FORMAT}"
+        )
+      end
+
+      if @format_version >= 2
+        @data_version = json['data_version'] || 0
+        @tokens = json['tokens'] || {}
+      elsif @format_version == 1
+        @tokens = json
+      else
+        $logger.error('Unable to parse tokens file')
+      end
+    rescue => e
+      $logger.error("Unable to parse tokens file: #{e}")
+    end
+  end
+
+  def text()
+    out_hash = {
+      'format_version' => CURRENT_FORMAT,
+      'data_version' => @data_version,
+      'tokens' => @tokens,
+    }
+
+    return JSON.pretty_generate(out_hash)
+  end
+end

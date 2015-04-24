@@ -6,9 +6,21 @@ require 'config.rb'
 require 'corosyncconf.rb'
 require 'pcs.rb'
 
+def token_file_path()
+  filename = ENV['PCS_TOKEN_FILE']
+  unless filename.nil?
+    return filename
+  end
+  if Process.uid == 0
+    return '/var/lib/pcsd/tokens'
+  end
+  return File.expand_path('~/.pcs/tokens')
+end
+
 CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
 CFG_PCSD_SETTINGS = "pcs_settings.conf" unless defined? CFG_PCSD_SETTINGS
+CFG_PCSD_TOKENS = token_file_path() unless defined? CFG_PCSD_TOKENS
 
 module Cfgsync
   class Config
@@ -30,7 +42,9 @@ module Cfgsync
         file.flock(File::LOCK_SH)
         return self.from_text(file.read())
       rescue => e
-        $logger.warn "Cannot read config file: #{e.message}"
+        $logger.warn(
+          "Cannot read config '#{@name}' from '#{@file_path}': #{e.message}"
+        )
         return self.from_text(default) if default
         raise
       ensure
@@ -45,7 +59,7 @@ module Cfgsync
       begin
         FileUtils.cp(@file_path, @file_path + "." + Time.now.to_i.to_s)
       rescue => e
-        $logger.debug "Exception trying to backup #{self.name}: #{e}"
+        $logger.debug "Exception trying to backup config '#{self.name}': #{e}"
       end
     end
 
@@ -79,7 +93,7 @@ module Cfgsync
         file.flock(File::LOCK_EX)
         file.write(self.text)
         $logger.info(
-          "Saved config #{self.class.name} version #{self.version} #{self.hash}"
+          "Saved config '#{self.class.name}' version #{self.version} #{self.hash} to '#{self.class.file_path}'"
         )
       rescue => e
         $logger.error "Cannot write to config file: #{e.message}"
@@ -131,6 +145,36 @@ module Cfgsync
 
     def set_version(new_version)
       parsed = PCSConfig.new(self.text)
+      parsed.data_version = new_version
+      return parsed.text
+    end
+  end
+
+
+  class PcsdTokens < Config
+    @name = 'tokens'
+    @file_path = ::CFG_PCSD_TOKENS
+    @file_perm = 0600
+
+    def self.backup()
+    end
+
+    def save()
+      dirname = File.dirname(self.class.file_path)
+      if not ENV['PCS_TOKEN_FILE'] and not File.directory?(dirname)
+        FileUtils.mkdir_p(dirname, {:mode => 0700})
+      end
+      super
+    end
+
+    protected
+
+    def get_version()
+      return PCSTokens.new(self.text).data_version
+    end
+
+    def set_version(new_version)
+      parsed = PCSTokens.new(self.text)
       parsed.data_version = new_version
       return parsed.text
     end

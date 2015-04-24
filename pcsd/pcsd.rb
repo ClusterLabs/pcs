@@ -8,6 +8,7 @@ require 'webrick/https'
 require 'openssl'
 require 'logger'
 
+require 'bootstrap.rb'
 require 'resource.rb'
 require 'remote.rb'
 require 'fenceagent.rb'
@@ -22,11 +23,9 @@ Dir["wizards/*.rb"].each {|file| require file}
 
 use Rack::CommonLogger
 
-COOKIE_FILE = "/var/lib/pcsd/pcsd.cookiesecret"
-
 begin
   secret = File.read(COOKIE_FILE)
-rescue Errno::ENOENT => e
+rescue Errno::ENOENT
   secret = SecureRandom.hex(30)
   File.open(COOKIE_FILE, 'w', 0700) {|f| f.write(secret)}
 end
@@ -64,56 +63,14 @@ before do
 end
 
 configure do
-  PCS_VERSION = "0.9.139"
-  ISRHEL6 = is_rhel6
-  ISSYSTEMCTL = is_systemctl
   DISABLE_GUI = false
-
-  OCF_ROOT = "/usr/lib/ocf"
-  HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
-  PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
-  PENGINE = "/usr/libexec/pacemaker/pengine"
-  CRM_NODE = "/usr/sbin/crm_node"
-  if Dir.pwd == "/var/lib/pcsd"
-    PCS = "/usr/sbin/pcs" 
-  else
-    PCS = "../pcs/pcs" 
-  end
-  CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
-  COROSYNC = "/usr/sbin/corosync"
-  if ISRHEL6
-    COROSYNC_CMAPCTL = "/usr/sbin/corosync-objctl"
-  else
-    COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
-  end
-  COROSYNC_QUORUMTOOL = "/usr/sbin/corosync-quorumtool"
-  CMAN_TOOL = "/usr/sbin/cman_tool"
-  PACEMAKERD = "/usr/sbin/pacemakerd"
-  CIBADMIN = "/usr/sbin/cibadmin"
-  $user_pass_file = "pcs_users.conf"
-
+  PCS = get_pcs_path(Dir.pwd)
   logger = File.open("/var/log/pcsd/pcsd.log", "a+", 0600)
   STDOUT.reopen(logger)
   STDERR.reopen(logger)
   STDOUT.sync = true
   STDERR.sync = true
-  $logger = Logger.new('/var/log/pcsd/pcsd.log')
-  if ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true" then
-    $logger.level = Logger::DEBUG
-    $logger.info "PCSD Debugging enabled"
-  else
-    $logger.level = Logger::INFO
-  end
-
-  if ISRHEL6
-    $logger.debug "Detected RHEL 6"
-  else
-    $logger.debug "Did not detect RHEL 6"
-  end
-
-  if not defined? $cur_node_name
-    $cur_node_name = `hostname`.chomp
-  end
+  $logger = configure_logger('/var/log/pcsd/pcsd.log')
 end
 
 set :logging, true

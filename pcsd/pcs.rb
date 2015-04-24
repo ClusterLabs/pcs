@@ -223,19 +223,6 @@ def remove_acl_usergroup(role_id, usergroup_id)
   return ""
 end
 
-def get_node_token(node)
-  tokens = read_tokens()
-  if tokens.include? node
-    return tokens[node]
-  else
-    return nil
-  end
-end
-
-def get_token_node_list()
-  return read_tokens.keys
-end
-
 # Gets all of the nodes specified in the pcs config file for the cluster
 def get_cluster_nodes(cluster_name)
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
@@ -752,56 +739,19 @@ def is_score(score)
   return !!/^[+-]?((INFINITY)|(\d+))$/.match(score)
 end
 
-def token_file()
-  filename = ENV['PCS_TOKEN_FILE']
-  unless filename.nil?
-    return filename
-  end
-  if Process.uid == 0
-    return '/var/lib/pcsd/tokens'
-  end
-  return File.expand_path('~/.pcs/tokens')
-end
-
 def read_tokens()
-  filename = token_file()
-  file = nil
-  begin
-    file = File.open(filename, File::RDONLY)
-    file.flock(File::LOCK_SH)
-    return JSON.load(file)
-  rescue => e
-    $logger.error "Cannot read tokenfile: #{e.message}"
-    return {}
-  ensure
-    unless file.nil?
-      file.flock(File::LOCK_UN)
-      file.close()
-    end
-  end
+  return PCSTokens.new(Cfgsync::PcsdTokens.from_file('').text()).tokens
 end
 
 def write_tokens(tokens)
-  filename = token_file()
-  dirname = File.dirname(filename)
-  if not ENV['PCS_TOKEN_FILE'].nil? and not File.directory?(dirname)
-    FileUtils.mkdir_p(dirname)
-  end
-  file = nil
   begin
-    file = File.open(filename, 'w', 0600)
-    file.flock(File::LOCK_EX)
-    JSON.dump(tokens, file)
-    return true
-  rescue => e
-    $logger.error "Cannot write to tokenfile: #{e.message}"
+    cfg = PCSTokens.new(Cfgsync::PcsdTokens.from_file('').text())
+    cfg.tokens = tokens
+    Cfgsync::PcsdTokens.from_text(cfg.text()).save()
+  rescue
     return false
-  ensure
-    unless file.nil?
-      file.flock(File::LOCK_UN)
-      file.close()
-    end
   end
+  return true
 end
 
 def get_tokens_of_nodes(nodes)
@@ -812,6 +762,19 @@ def get_tokens_of_nodes(nodes)
     end
   }
   return tokens
+end
+
+def get_node_token(node)
+  tokens = read_tokens()
+  if tokens.include? node
+    return tokens[node]
+  else
+    return nil
+  end
+end
+
+def get_token_node_list()
+  return read_tokens.keys
 end
 
 def add_prefix_to_keys(hash, prefix)
