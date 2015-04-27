@@ -6,149 +6,99 @@ require 'open4'
 
 # Commands for remote access
 def remote(params,request)
-  pacemaker_status = pacemaker_running?
+  remote_cmd_without_pacemaker = {
+      :status => method(:node_status),
+      :status_all => method(:status_all),
+      :auth => method(:auth),
+      :check_auth => method(:check_auth),
+      :setup_cluster => method(:setup_cluster),
+      :create_cluster => method(:create_cluster),
+      :get_quorum_info => method(:get_quorum_info),
+      :get_cib => method(:get_cib),
+      :get_corosync_conf => method(:get_corosync_conf),
+      :set_cluster_conf => lambda { |param|
+        if set_cluster_conf(params)
+          return "Updated cluster.conf..."
+        else
+          return "Failed to update cluster.conf..."
+        end
+      },
+      :set_corosync_conf => lambda { |param|
+        if set_corosync_conf(params)
+          return "Succeeded"
+        else
+          return "Failed"
+        end
+      },
+      :cluster_start => method(:cluster_start),
+      :cluster_stop => method(:cluster_stop),
+      :config_backup => method(:config_backup),
+      :config_restore => method(:config_restore),
+      :node_restart => method(:node_restart),
+      :node_standby => method(:node_standby),
+      :node_unstandby => method(:node_unstandby),
+      :cluster_enable => method(:cluster_enable),
+      :cluster_disable => method(:cluster_disable),
+      :resource_status => method(:resource_status),
+      :check_gui_status => method(:check_gui_status),
+      :get_sw_versions => method(:get_sw_versions),
+      :node_available => method(:remote_node_available),
+      :add_node_all => lambda { |param|
+        remote_add_node(params,true)
+      },
+      :add_node => lambda { |param|
+        remote_add_node(params,false)
+      },
+      :remove_nodes => method(:remote_remove_nodes),
+      :remove_node => method(:remote_remove_node),
+      :cluster_destroy => method(:cluster_destroy),
+      :get_wizard => method(:get_wizard),
+      :wizard_submit => method(:wizard_submit),
+      :auth_nodes => method(:auth_nodes),
+      :get_tokens => method(:get_tokens),
+      :get_cluster_tokens => method(:get_cluster_tokens),
+      :save_tokens => method(:save_tokens),
+      :add_node_to_cluster => method(:add_node_to_cluster),
+  }
+  remote_cmd_with_pacemaker = {
+      :resource_start => method(:resource_start),
+      :resource_stop => method(:resource_stop),
+      :resource_cleanup => method(:resource_cleanup),
+      :resource_form => method(:resource_form),
+      :fence_device_form => method(:fence_device_form),
+      :update_resource => method(:update_resource),
+      :update_fence_device => method(:update_fence_device),
+      :resource_metadata => method(:resource_metadata),
+      :fence_device_metadata => method(:fence_device_metadata),
+      :get_avail_resource_agents => method(:get_avail_resource_agents),
+      :get_avail_fence_agents => method(:get_avail_fence_agents),
+      :remove_resource => method(:remove_resource),
+      :add_constraint_remote => method(:add_constraint_remote),
+      :add_constraint_rule_remote => method(:add_constraint_rule_remote),
+      :add_constraint_set_remote => method(:add_constraint_set_remote),
+      :remove_constraint_remote => method(:remove_constraint_remote),
+      :remove_constraint_rule_remote => method(:remove_constraint_rule_remote),
+      :add_meta_attr_remote => method(:add_meta_attr_remote),
+      :add_group => method(:add_group),
+      :update_cluster_settings => method(:update_cluster_settings),
+      :add_fence_level_remote => method(:add_fence_level_remote),
+      :add_node_attr_remote => method(:add_node_attr_remote),
+      :add_acl_role => method(:add_acl_role_remote),
+      :remove_acl_roles => method(:remove_acl_roles_remote),
+      :add_acl => method(:add_acl_remote),
+      :remove_acl => method(:remove_acl_remote),
+  }
 
-  case (params[:command])
-  when "status"
-    return node_status(params)
-  when "status_all"
-    return status_all(params)
-  when "auth"
-    return auth(params,request)
-  when "check_auth"
-    return check_auth(params, request)
-  when "setup_cluster"
-    return setup_cluster(params)
-  when "create_cluster"
-    return create_cluster(params)
-  when "get_quorum_info"
-    return get_quorum_info(params)
-  when "get_cib"
-    return get_cib(params)
-  when "get_corosync_conf"
-    return get_corosync_conf(params)
-  when "set_cluster_conf"
-    if set_cluster_conf(params)
-      return "Updated cluster.conf..."
+  command = params[:command].to_sym
+
+  if remote_cmd_without_pacemaker.include? command
+    return remote_cmd_without_pacemaker[command].call(params)
+  elsif remote_cmd_with_pacemaker.include? command
+    if pacemaker_running?
+      return remote_cmd_with_pacemaker[command].call(params)
     else
-      return "Failed to update cluster.conf..."
+      return [200,'{"pacemaker_not_running":true}']
     end
-  when "set_corosync_conf"
-    if set_corosync_conf(params)
-      return "Succeeded"
-    else
-      return "Failed"
-    end
-  when "cluster_start"
-    return cluster_start(params)
-  when "cluster_stop"
-    return cluster_stop(params)
-  when "config_backup"
-    return config_backup(params)
-  when "config_restore"
-    return config_restore(params)
-  when "node_restart"
-    return node_restart(params)
-  when "node_standby"
-    return node_standby(params)
-  when "node_unstandby"
-    return node_unstandby(params)
-  when "cluster_enable"
-    return cluster_enable(params)
-  when "cluster_disable"
-    return cluster_disable(params)
-  when "resource_status"
-    return resource_status(params)
-  when "check_gui_status"
-    return check_gui_status(params)
-  when "get_sw_versions"
-    return get_sw_versions(params)
-  when "node_available"
-    return remote_node_available(params)
-  when "add_node_all"
-    return remote_add_node(params,true)
-  when "add_node"
-    return remote_add_node(params,false)
-  when "remove_nodes"
-    return remote_remove_nodes(params)
-  when "remove_node"
-    return remote_remove_node(params)
-  when "cluster_destroy"
-    return cluster_destroy(params)
-  when "get_wizard"
-    return get_wizard(params)
-  when "wizard_submit"
-    return wizard_submit(params)
-  when "auth_nodes"
-    return auth_nodes(params, request)
-  when "get_tokens"
-    return get_tokens(params)
-  when "get_cluster_tokens"
-    return get_cluster_tokens(params)
-  when "save_tokens"
-    return save_tokens(params)
-  when "add_node_to_cluster"
-    return add_node_to_cluster(params)
-  end
-
-  if not pacemaker_status
-    return [200,'{"pacemaker_not_running":true}']
-  end
-  # Anything below this line will not be run if pacemaker is not started
-
-  case (params[:command])
-  when "resource_start"
-    return resource_start(params)
-  when "resource_stop"
-    return resource_stop(params)
-  when "resource_cleanup"
-    return resource_cleanup(params)
-  when "resource_form"
-    return resource_form(params)
-  when "fence_device_form"
-    return fence_device_form(params)
-  when "update_resource"
-    return update_resource(params)
-  when "update_fence_device"
-    return update_fence_device(params)
-  when "resource_metadata"
-    return resource_metadata(params)
-  when "fence_device_metadata"
-    return fence_device_metadata(params)
-  when "get_avail_resource_agents"
-    return get_avail_resource_agents(params)
-  when "get_avail_fence_agents"
-    return get_avail_fence_agents(params)
-  when "remove_resource"
-    return remove_resource(params)
-  when "add_constraint_remote"
-    return add_constraint_remote(params)
-  when "add_constraint_rule_remote"
-    return add_constraint_rule_remote(params)
-  when "add_constraint_set_remote"
-    return add_constraint_set_remote(params)
-  when "remove_constraint_remote"
-    return remove_constraint_remote(params)
-  when "remove_constraint_rule_remote"
-    return remove_constraint_rule_remote(params)
-  when "add_meta_attr_remote"
-    return add_meta_attr_remote(params)
-  when "add_group"
-    return add_group(params)
-  when "update_cluster_settings"
-    return update_cluster_settings(params)
-  when "add_fence_level_remote"
-    return add_fence_level_remote(params)
-  when "add_node_attr_remote"
-    return add_node_attr_remote(params)
-  when "add_acl_role"
-    return add_acl_role_remote(params)
-  when "remove_acl_roles"
-    return remove_acl_roles_remote(params)
-  when "add_acl"
-    return add_acl_remote(params)
-  when "remove_acl"
-    return remove_acl_remote(params)
   else
     return [404, "Unknown Request"]
   end
@@ -701,8 +651,8 @@ def status_all(params, nodes = [])
   return JSON.generate(final_response)
 end
 
-def auth(params,request)
-  token = PCSAuth.validUser(params['username'],params['password'], true, request)
+def auth(params)
+  token = PCSAuth.validUser(params['username'],params['password'], true)
   # If we authorized to this machine, attempt to authorize everywhere
   node_list = []
   if token and params["bidirectional"]
@@ -742,7 +692,7 @@ def pcs_auth(nodes, username, password, force=false, local=true)
 end
 
 # If we get here, we're already authorized
-def check_auth(params, request)
+def check_auth(params)
   return JSON.generate({
     'success' => true,
     'node_list' => get_token_node_list,
@@ -1327,7 +1277,7 @@ def is_cman_with_udpu_transport?
   return false
 end
 
-def auth_nodes(params, request)
+def auth_nodes(params)
   retval = {}
   params.each{|node|
     if node[0].end_with?"-pass" and node[0].length > 5

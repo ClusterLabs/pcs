@@ -16,7 +16,7 @@ class PCSAuth
     end
   end
 
-  def self.validUser(username, password, generate_token = false, request = nil)
+  def self.validUser(username, password, generate_token = false)
     $logger.info("Attempting login by '#{username}'")
     if not Rpam.auth(username,password, :service => "pcsd")
       $logger.info("Failed login by '#{username}' (bad username or password)")
@@ -47,7 +47,7 @@ class PCSAuth
 	$logger.info "Empty pcs_users.conf file, creating new file"
 	users = []
       end
-      users << {"username" => username, "token" => token, "client" => request.ip, "creation_date" => Time.now}
+      users << {"username" => username, "token" => token, "creation_date" => Time.now}
       password_file.truncate(0)
       password_file.rewind
       password_file.write(JSON.pretty_generate(users))
