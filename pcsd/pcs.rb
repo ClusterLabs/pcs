@@ -375,29 +375,9 @@ def get_corosync_nodes()
   return corosync_nodes
 end
 
-# Get pacemaker nodes, but if they are not present fall back to corosync
 def get_nodes()
-  stdout, stderr, retval = run_cmd(PCS, "status", "nodes")
-  if retval != 0
-    stdout, stderr, retval = run_cmd(PCS, "status", "nodes", "corosync")
-  end
-
-  online = stdout[1]
-  offline = stdout[2]
-
-  if online
-    online = online.split(' ')[1..-1].sort
-  else
-    online = []
-  end
-
-  if offline
-    offline = offline.split(' ')[1..-1].sort
-  else
-    offline = []
-  end
-
-  [online, offline]
+  nodes = get_nodes_status()
+  [nodes["corosync_online"] + nodes["pacemaker_online"], nodes["corosync_offline"] + nodes["pacemaker_offline"] + nodes["pacemaker_standby"]]
 end
 
 def get_nodes_status()
@@ -826,4 +806,31 @@ def add_prefix_to_keys(hash, prefix)
     new_hash["#{prefix}#{k}"] = v
   }
   return new_hash
+end
+
+def check_gui_status_of_nodes(nodes, timeout=10)
+  threads = []
+  not_authorized_nodes = []
+  online_nodes = []
+  offline_nodes = []
+  nodes.each { |node|
+    threads << Thread.new {
+      code, response = send_request_with_token(node, 'check_auth', false, {:check_auth_only => ""}, true, nil, timeout)
+      if code == 200
+        online_nodes << node
+      else
+        begin
+          parsed_response = JSON.parse(response)
+          if parsed_response['notauthorized'] or parsed_response['notoken']
+            not_authorized_nodes << node
+          else
+            offline_nodes << node
+          end
+        rescue JSON::ParserError
+        end
+      end
+    }
+  }
+  threads.each { |t| t.join }
+  return online_nodes, offline_nodes, not_authorized_nodes
 end

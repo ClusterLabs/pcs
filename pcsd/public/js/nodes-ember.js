@@ -48,11 +48,43 @@ Pcs = Ember.Application.createWithMixins({
   },
   update_timeout: null,
   update: function(first_run) {
+    var self = Pcs;
     if (first_run)
       show_loading_screen();
-    if (this.cluster_name == null) {
+    var cluster_name = self.cluster_name;
+    if (cluster_name == null) {
       Ember.debug("Empty Cluster Name");
-      hide_loading_screen();
+      if (location.pathname != "/manage") {
+        hide_loading_screen();
+        return;
+      }
+      $.ajax({
+        url: "/overview",
+        dataType: "json",
+        timeout: 20000,
+        success: function(data) {
+          Pcs.clusterController.update(data);
+          Ember.run.next(function(){correct_visibility_dashboard(Pcs.clusterController.cur_cluster);});
+          clearTimeout(Pcs.update_timeout);
+          Pcs.update_timeout = window.setTimeout(self.update,20000);
+          hide_loading_screen();
+        },
+        error: function(jqhxr,b,c) {
+          if (jqhxr.responseText) {
+            try {
+              var obj = $.parseJSON(jqhxr.responseText);
+              if (obj.notauthorized == "true") {
+                location.reload();
+              }
+            } catch(e) {
+              console.log("Error: Unable to parse json for overview");
+            }
+          }
+          clearTimeout(Pcs.update_timeout);
+          Pcs.update_timeout = window.setTimeout(self.update,20000);
+          hide_loading_screen();
+        }
+      });
       return;
     }
     $.ajax({
@@ -77,9 +109,9 @@ Pcs = Ember.Application.createWithMixins({
             }
           });
         });
-	Ember.run.next(this,disable_checkbox_clicks);
+	Ember.run.next(self,disable_checkbox_clicks);
 	if (first_run) {
-	    Ember.run.next(this,function () {
+	    Ember.run.next(self,function () {
 	      Pcs.resourcesController.load_resource($('#resource_list_row').find('.node_selected').first(),true);
 	      Pcs.resourcesController.load_stonith($('#stonith_list_row').find('.node_selected').first(),true);
 	      Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first(),true);
@@ -224,9 +256,52 @@ Pcs.Setting = Ember.Object.extend({
 
 Pcs.Resource = Ember.Object.extend({
   name: null,
+  status: null,
+  status_val: function() {
+    if (this.warnings.length)
+      return get_status_value("warning");
+    if (this.errors.length)
+      return get_status_value("error");
+    return get_status_value(this.status);
+  }.property("status"),
+  status_color: function() {
+    return get_status_color(this.get("status_val"));
+  }.property("status_val"),
+  status_style: function() {
+    var color = get_status_color(this.get("status_val"));
+    return "color: " + color + ((color != "green")? "; font-weight: bold;" : "");
+  }.property("status_val"),
+  status_class: function() {
+    var show = ((Pcs.clusterController.get("show_all_resources"))? "" : "hidden ");
+    return ((this.get("status_val") == get_status_value("ok") || this.status == "disabled") ? show + "default-hidden" : "");
+  }.property("status_val"),
+  status_class_fence: function() {
+    var show = ((Pcs.clusterController.get("show_all_fence"))? "" : "hidden ");
+    return ((this.get("status_val") == get_status_value("ok")) ? show + "default-hidden" : "");
+  }.property("status", "status_val"),
+  status_icon: function() {
+    var icon_class = {"-1": "x", 1: "error", 2: "warning", 3: "x", 4: "check"};
+    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[this.get("status_val")] + " sprites\"></div>";
+  }.property("status_val"),
+  tooltip: function() {
+    var self = this;
+    var out = "";
+    if (self.errors.length > 0) {
+      out += "<span style='color: red;  font-weight: bold;'>ERRORS:</span><br>\n";
+      out += get_formated_html_list(self.errors);
+    }
+    if (self.warnings.length > 0) {
+      out += "<span style='color: orange;  font-weight: bold;'>WARNINGS:</span><br>\n";
+      out += get_formated_html_list(self.warnings);
+    }
+    return out;
+  }.property("errors", "warnings"),
   id: function() {
     return this.name;
   }.property("name"),
+  errors: [],
+  warnings: [],
+  stonith: false,
   ms: false,
   clone: false,
   full_name: function() {
@@ -292,6 +367,51 @@ Pcs.Resource = Ember.Object.extend({
 
 Pcs.Clusternode = Ember.Object.extend({
   name: null,
+  status: null,
+  status_val: function() {
+    if (this.warnings && this.warnings.length)
+      return get_status_value("warning");
+    if (this.errors && this.errors.length)
+      return get_status_value("error");
+    return get_status_value(this.status);
+  }.property("status"),
+  status_style: function() {
+    var color = get_status_color(this.get("status_val"));
+    return "color: " + color + ((color != "green")? "; font-weight: bold;" : "");
+  }.property("status_val"),
+  status_class: function() {
+    var show = ((Pcs.clusterController.get("show_all_nodes"))? "" : "hidden ");
+    return ((this.get("status_val") == get_status_value("ok") || this.status == "standby") ? show + "default-hidden" : "");
+  }.property("status_val"),
+  status_icon: function() {
+    var icon_class = {"-1": "x", 1: "error", 2: "warning", 3: "x", 4: "check"};
+    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[this.get("status_val")] + " sprites\"></div>";
+  }.property("status_val"),
+  errors: [],
+  warnings: [],
+  tooltip: function() {
+    var self = this;
+    var out = "";
+    if (self.errors && self.errors.length > 0) {
+      out += "<span style='color: red;  font-weight: bold;'>ERRORS:</span><br>\n";
+      out += get_formated_html_list(self.errors);
+    }
+    if (self.warnings && self.warnings.length > 0) {
+      out += "<span style='color: orange;  font-weight: bold;'>WARNINGS:</span><br>\n";
+      out += get_formated_html_list(self.warnings);
+    }
+    return out;
+  }.property("errors", "warnings"),
+  quorum: false,
+  quorum_show: function() {
+    if (this.status == "unknown" || this.status == "offline") {
+      return '<span style="color: orange; font-weight: bold;">unknown</span>';
+    } else if (this.quorum) {
+      return '<span style="color: green;">YES</span>';
+    } else {
+      return '<span style="color: red; font-weight: bold;">NO</span>';
+    }
+  }.property("status", "quorum"),
   cur_node: false,
   checked: false,
   resources_running: [],
@@ -381,6 +501,218 @@ Pcs.Aclrole = Ember.Object.extend({
   showArrow: function(){
     return this.cur_role ? "" : "display:none";
   }.property("cur_role"),
+});
+
+Pcs.Cluster = Ember.Object.extend({
+  name: null,
+  url_link: function(){return get_cluster_remote_url(this.name) + "main";}.property("name"),
+  input_name: function(){return "clusterid-" + this.name;}.property("name"),
+  div_id: function(){return "cluster_info_" + this.name}.property("name"),
+  status: "unknown",
+  status_unknown: function() {
+    return this.status == "unknown";
+  }.property("status"),
+  status_icon: function() {
+    var icon_class = {"-1": "x", 1: "error", 2: "warning", 3: "x", 4: "check"};
+    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[get_status_value(this.status)] + " sprites\"></div>";
+  }.property("status"),
+  quorum_show: function() {
+    if (this.status == "unknown") {
+      return "<span style='color:orange'>(quorate unknown)</span>"
+    } else if (!this.quorate) {
+      return "<span style='color: red'>(doesn't have quorum)</span>"
+    } else {
+      return ""
+    }
+  }.property("status", "quorum"),
+  nodes: [],
+  nodes_failed: 0,
+  resources: [],
+  resources_failed: 0,
+  fence: [],
+  fence_failed: 0,
+  errors: [],
+  warnings: [],
+  quorate: false,
+
+  get_num_of_failed: function(type) {
+    var num = 0;
+    $.each(this.get(type), function(key, value) {
+      if (value.get("status_val") < get_status_value("ok") && value.status != "disabled" && value.status != "standby")
+        num++;
+    });
+    return num;
+  },
+
+  status_sort: function(a,b) {
+    if (a.get("status_val") == b.get("status_val"))
+      return ((a.status == b.status) ? 0 : ((a.status > b.status) ? 1 : -1));
+    return status_comparator(a.status, b.status)
+  },
+
+  add_resources: function(data) {
+    var self = this;
+    var resource;
+    var resources = [];
+    var fence = [];
+    $.each(data, function(key, val) {
+      resource = Pcs.Resource.create({
+        name: val["id"],
+        url_link: get_cluster_remote_url(self.name) + "main#/" + (val["is_fence"]?"fencedevices/":"resources/") + val["id"],
+        status: val["status"],
+        stonith: val["is_fence"],
+        errors: val["error_list"],
+        warnings: val["warning_list"]
+      });
+      if (val["is_fence"])
+        fence.push(resource);
+      else
+        resources.push(resource);
+    });
+    resources.sort(self.status_sort);
+    fence.sort(self.status_sort);
+    self.set("resources", resources);
+    self.set("fence", fence);
+  },
+
+  add_nodes: function(data) {
+    var self = this;
+    var nodes = [];
+    var node;
+    $.each(data, function(key, val) {
+      node = Pcs.Clusternode.create({
+        name: val["name"],
+        url_link: get_cluster_remote_url(self.name) + "main#/nodes/" + val["name"],
+        status: val["status"],
+        quorum: val["quorum"],
+        errors: val["error_list"],
+        warnings: val["warning_list"]
+      });
+      nodes.push(node);
+    });
+    nodes.sort(self.status_sort);
+    self.set("nodes", nodes);
+  }
+});
+
+Pcs.clusterController = Ember.ArrayController.createWithMixins({
+  content: [],
+  sortProperties: ['status'],
+  sortAscending: true,
+  sortFunction: function(a,b){return status_comparator(a,b);},
+  cur_cluster: null,
+  show_all_nodes: false,
+  show_all_resources: false,
+  show_all_fence: false,
+  num_ok: 0,
+  num_error: 0,
+  num_warning: 0,
+  num_unknown: 0,
+
+  init: function() {
+    this._super();
+  },
+
+  update_cur_cluster: function(row) {
+    var self = this;
+    var cluster_name = $(row).attr("nodeID");
+    $("#clusters_list").find("div.arrow").hide();
+    $(row).find("div.arrow").show();
+
+    $.each(self.content, function(key, cluster) {
+      if (cluster["name"] == cluster_name) {
+        self.cur_cluster = cluster;
+        return false;
+      }
+    });
+    correct_visibility_dashboard(self.cur_cluster);
+
+    $("#node_sub_info").children().each(function (i, val) {
+      if ($(val).attr("id") == ("cluster_info_" + cluster_name))
+        $(val).show();
+      else
+        $(val).hide();
+    });
+  },
+
+  update: function(data) {
+    var self = this;
+    var clusters = data["cluster_list"];
+    var cluster_name_list = [];
+    self.set("num_ok", 0);
+    self.set("num_error", 0);
+    self.set("num_warning", 0);
+    self.set("num_unknown", 0);
+
+    $.each(clusters, function(key, value) {
+      cluster_name_list.push(value["name"]);
+      var found = false;
+      var cluster = null;
+
+      $.each(self.content, function(key, pre_existing_cluster) {
+        if (pre_existing_cluster && pre_existing_cluster.name == value["name"]) {
+          found = true;
+          cluster = pre_existing_cluster;
+          cluster.set("status", value["status"]);
+          cluster.set("quorate",value["quorate"]);
+          cluster.set("errors",value["error_list"]);
+          cluster.set("warnings",value["warning_list"]);
+        }
+      });
+
+      if (!found) {
+        cluster = Pcs.Cluster.create({
+          name: value["name"],
+          status: value["status"],
+          quorate: value["quorate"],
+          errors: value["error_list"],
+          warnings: value["warning_list"]
+        });
+      }
+
+      cluster.add_nodes(value["node_list"]);
+      cluster.add_resources(value["resource_list"].concat(value["fence_list"]));
+      cluster.set("nodes_failed", cluster.get_num_of_failed("nodes"));
+      cluster.set("resources_failed", cluster.get_num_of_failed("resources"));
+      cluster.set("fence_failed", cluster.get_num_of_failed("fence"));
+
+      switch (cluster.status) {
+        case "ok":
+          self.set("num_ok", self.num_ok+1);
+          break;
+        case "error":
+          self.set("num_error", self.num_error+1);
+          break;
+        case "warning":
+          self.set("num_warning", self.num_warning+1);
+          break;
+        default:
+          self.set("num_unknown", self.num_unknown+1);
+          break;
+      }
+
+      if (!found) {
+        self.content.pushObject(cluster);
+      }
+
+      if (cluster.get_num_of_failed("nodes") == cluster.nodes.length) {
+        if (cluster.status != "unknown")
+          cluster.warnings.push({"message":"Cluster is offline"});
+        cluster.set("status", "unknown");
+      }
+    });
+
+    var new_content = [];
+    $.each(self.content, function(key,val) {
+      if (cluster_name_list.indexOf(val.name) != -1) {
+        new_content.pushObject(val);
+      }
+    });
+
+    if (new_content.length != self.content.length) {
+      self.set("content", new_content);
+    }
+  }
 });
 
 Pcs.aclsController = Ember.ArrayController.createWithMixins({

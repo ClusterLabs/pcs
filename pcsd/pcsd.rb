@@ -319,9 +319,6 @@ if not DISABLE_GUI
 
   get '/manage/?' do
     @manage = true
-    pcs_config = PCSConfig.new
-    @clusters = pcs_config.clusters
-    @load_data = true
     erb :manage, :layout => :main
   end
 

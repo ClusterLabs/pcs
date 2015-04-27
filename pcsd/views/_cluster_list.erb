@@ -1,28 +1,57 @@
 <form method=post action="/manage/removecluster">
-  <table cellpadding=0 cellspacing=0 style="float:left;">
+  <table cellpadding=0 cellspacing=0 style="float:left; width: 100%;">
     <tr>
-      <%if @clusters.length > 0 %>
-	<th></th><th></th><th>NAME</th><th>NODES</th><th></th>
-      <% end %>
+      <th style="width: 20%; padding-left: 5px;" nowrap>Clusters #</th>
+      <th style="width: 20%;">OK <div class="check sprites"></div></th>
+      <th style="width: 20%;">Warning<div class="warning sprites"></div></th>
+      <th style="width: 20%;">Failed<div class="error sprites"></div></th>
+      <th style="width: 20%;">Unknown<div class="x sprites"></div></th>
     </tr>
-    <% @clusters.each  do |c| %>
-      <tr onmouseover="$(this).css('background-color', 'e4f5fd');$(this).find('td').last().css('display','');show_cluster_info(this)" onmouseout="$(this).css('background-color','ffffff');$(this).find('td').last().css('display','none');" onclick="window.location='<%=c.ui_address%>'" nodeID="<%=c.name%>">
-	<td class="node_list_check">
-	  <input class="node_list_check" type="checkbox" name="clusterid-<%=c.name%>" res_id="<%=c.name%>">
-	</td>
-	<td class="node_list_sprite">
-	  <div class="check sprites"></div>
-	</td>
-	<td nowrap class="resource_name">
-	  <%= c.name %>
-	</td>
-	<td class="resource_type">
-	  <%= c.num_nodes %>
-	</td>
-	<td style="display:none">
-	  <div class="arrow sprites"></div>
-	</td>
-      </tr>
-    <% end %>
+    <tr>
+      <td style="padding-left: 5px;">{{ Pcs.clusterController.content.length }}</td>
+      <td style="padding-left: 5px;">{{ Pcs.clusterController.num_ok }}</td>
+      <td style="padding-left: 5px;">{{ Pcs.clusterController.num_warning }}</td>
+      <td style="padding-left: 5px;">{{ Pcs.clusterController.num_error }}</td>
+      <td style="padding-left: 5px;">{{ Pcs.clusterController.num_unknown }}</td>
+    </tr>
+  </table>
+  <table cellpadding=0 cellspacing=0 style="float:left;" id="clusters_list">
+    <tr>
+      {{#if Pcs.clusterController.content.length}}
+      <th></th><th></th><th>NAME</th><th>NODES</th><th style="padding-right: 50px;">RESOURCES</th><th style="padding-right: 16px;"></th>
+      {{/if}}
+    </tr>
+    {{#each Pcs.clusterController }}
+    <tr onmouseover="hover_over(this);" onmouseout="hover_out(this);" onclick="Pcs.clusterController.update_cur_cluster(this);" {{bind-attr nodeID="this.name"}}>
+    <td class="node_list_check">
+      <input class="node_list_check" type="checkbox" {{bind-attr name="input_name"}} {{bind-attr res_id="name"}}>
+    </td>
+    <td>
+      {{{status_icon}}}
+    </td>
+    <td nowrap class="resource_name">
+      <a {{bind-attr href=url_link}}>{{name}}</a>
+    </td>
+    <td class="resource_type">
+      {{nodes.length}}
+      {{#if nodes_failed}}
+        <span style="color: red">({{nodes_failed}} issue(s))</span>
+      {{/if}}
+    </td>
+    <td class="resource_type">
+      {{#if status_unknown}}
+        unknown
+      {{else}}
+        {{resources.length}}
+        {{#if resources_failed}}
+      <span style="color: red">({{resources_failed}} issue(s))</span>
+        {{/if}}
+      {{/if}}
+    </td>
+    <td>
+      <div style="display:none" class="arrow sprites"></div>
+    </td>
+    </tr>
+    {{/each}}
   </table>
 </form>

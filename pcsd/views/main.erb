@@ -15,6 +15,17 @@
   <script src="/js/ember-1.4.0.js"></script>
   <script src="/js/pcsd.js"></script>
   <script type="text/javascript">
+    $(function () { // use jquery html tooltips
+      $.widget("ui.tooltip", $.ui.tooltip, {
+        options: {
+          content: function () {
+            return $(this).prop('title');
+          },
+          track: true
+        }
+      });
+      $(document).tooltip();
+    });
     var origMainTRHeight = 0;
     function resizeDialog() {
       $('#add_resource').dialog('option','position','center');

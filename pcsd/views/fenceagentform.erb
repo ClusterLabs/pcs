@@ -4,7 +4,7 @@
     <table style="clear:left; float:left; margin-top: 25px;">
       <tr>
         <td><div class="bold">Description:</div></td>
-        <td><span class="reg" style="float:left;"><%=h(@fenceagent.short_desc)%>&nbsp;</span>&nbsp;<span title="<%=h(@fenceagent.long_desc)%>" onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span></td>
+        <td><span class="reg" style="float:left;"><%=h(@fenceagent.short_desc)%>&nbsp;</span>&nbsp;<span title="<%=nl2br(h(@fenceagent.long_desc))%>" onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span></td>
       </tr>
       <tr>
         <td></td>

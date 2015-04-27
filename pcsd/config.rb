@@ -31,20 +31,23 @@ class PCSConfig
     return false
   end
 
-  def update(cluster_name, node_list)
+  def update_without_saving(cluster_name, node_list)
     if node_list.length == 0
       @clusters.delete_if{|c|c.name == cluster_name}
       $logger.info("Removing cluster: #{cluster_name}")
-      self.save
-      return
-    end
+    else
     @clusters.each {|c|
       if c.name == cluster_name
         c.nodes = node_list
-        self.save
         break
       end
     }
+    end
+  end
+
+  def update(cluster_name, node_list)
+    update_without_saving(cluster_name, node_list)
+    self.save
   end
 
   def save

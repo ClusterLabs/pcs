@@ -1716,18 +1716,6 @@ function remove_acl_item(id,item) {
   });
 }
 
-function show_cluster_info(row) {
-  cluster_name = $(row).attr("nodeID");
-
-  $("#node_sub_info").children().each(function (i, val) {
-    if ($(val).attr("id") == ("cluster_info_" + cluster_name))
-      $(val).show();
-    else
-      $(val).hide();
-  });
-
-}
-
 function update_cluster_settings(form) {
   var data = form.serialize();
   $('html, body, form, :input, :submit').css("cursor","wait");
@@ -1748,7 +1736,7 @@ function update_cluster_settings(form) {
 
 // Pull currently managed cluster name out of URL
 function get_cluster_name() {
-  cluster_name = location.pathname.match("/managec/(.*)/");
+  var cluster_name = location.pathname.match("/managec/(.*)/");
   if (cluster_name && cluster_name.length >= 2) {
     Ember.debug("Cluster Name: " + cluster_name[1]);
     cluster_name = cluster_name[1];
@@ -1759,8 +1747,9 @@ function get_cluster_name() {
   return cluster_name;
 }
 
-function get_cluster_remote_url() {
-    return '/managec/' + Pcs.cluster_name + "/";
+function get_cluster_remote_url(cluster_name) {
+  cluster_name = typeof cluster_name !== 'undefined' ? cluster_name : Pcs.cluster_name;
+  return '/managec/' + cluster_name + "/";
 }
 
 function checkBoxToggle(cb,nodes) {
@@ -1811,4 +1800,97 @@ function setup_resource_class_provider_selection() {
     update_resource_type_options();
   });
   $("#resource_class_provider_selector").change();
+}
+
+function get_status_value(status) {
+  var values = {
+    failed: 1,
+    error: 1,
+    offline: 1,
+    blocked: 1,
+    warning: 2,
+    standby: 2,
+    disabled: 3,
+    unknown: 3,
+    ok: 4,
+    running: 4,
+    online: 4
+  };
+  return ((values.hasOwnProperty(status)) ? values[status] : -1);
+}
+
+function status_comparator(a,b) {
+  var valA = get_status_value(a);
+  var valB = get_status_value(b);
+  if (valA == -1) return 1;
+  if (valB == -1) return -1;
+  return valA - valB;
+}
+
+function get_status_color(status_val) {
+  if (status_val == get_status_value("ok")) {
+    return "green";
+  }
+  else if (status_val == get_status_value("warning") || status_val == get_status_value("unknown")) {
+    return "orange";
+  }
+  return "red";
+}
+
+function show_hide_dashboard(element, type) {
+  var cluster = Pcs.clusterController.cur_cluster;
+  if (Pcs.clusterController.get("show_all_" + type)) { // show only failed
+    Pcs.clusterController.set("show_all_" + type, false);
+  } else { // show all
+    Pcs.clusterController.set("show_all_" + type, true);
+  }
+  correct_visibility_dashboard_type(cluster, type);
+}
+
+function correct_visibility_dashboard(cluster) {
+  if (cluster == null)
+    return;
+  $.each(["nodes", "resources", "fence"], function(key, type) {
+    correct_visibility_dashboard_type(cluster, type);
+  });
+}
+
+function correct_visibility_dashboard_type(cluster, type) {
+  if (cluster == null) {
+    return;
+  }
+  $("div[id^=ui-tooltip-]").remove(); // destroy tooltips
+  var listTable = $("#cluster_info_" + cluster.name).find("table." + type + "_list");
+  var datatable = listTable.find("table.datatable");
+  if (Pcs.clusterController.get("show_all_" + type)) {
+    listTable.find("span.downarrow").show();
+    listTable.find("span.rightarrow").hide();
+    datatable.find("tr.default-hidden").removeClass("hidden");
+  } else {
+    listTable.find("span.downarrow").hide();
+    listTable.find("span.rightarrow").show();
+    datatable.find("tr.default-hidden").addClass("hidden");
+  }
+  if (cluster.get(type + "_failed") == 0 && !Pcs.clusterController.get("show_all_" + type)) {
+    datatable.hide();
+  } else {
+    datatable.show();
+  }
+}
+
+function get_formated_html_list(data) {
+  if (data == null || data.length == 0) {
+    return "";
+  }
+  var out = "<ul>";
+  $.each(data, function(key, value) {
+    out += "<li>" + htmlEncode(value.message) + "</li>";
+  });
+  out += "</ul>";
+  return out;
+}
+
+function htmlEncode(s)
+{
+  return $("<div/>").text(s).html().replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }

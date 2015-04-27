@@ -43,20 +43,117 @@
       </div>
       <div id="node_sub_info">
 	<div id="no_cluster_selected">Select a cluster to view more detailed cluster information</div>
-	<% @clusters.each do |c| %>
-	  <div id="cluster_info_<%=c.name%>" style="display:none;">
+	{{#each Pcs.clusterController}}
+	  <div style="display:none;" {{bind-attr id=div_id}}>
 	    <table>
-	      <tr><td style="text-align:right"><b>Cluster:</b>&nbsp;</td><td><%=c.name%></td></tr>
-	      <% first = true %>
-	      <% c.nodes.each { |n| %>
-		<%= '<tr><td style="text-align:right"><b>Nodes:</b>&nbsp;</td>' if first %>
-		<%= "<tr><td></td>" if not first %>
-		  <td><%=n%></td></tr>
-		<% first = false %>
-	      <% } %>
-	    </table>
+	      <tr><td style="text-align:right"><b>Cluster:</b>&nbsp;</td><td><a {{bind-attr href=url_link}}>{{name}}</a> {{{quorum_show}}}</td></tr>
+          {{#if errors}}
+          <tr><td style="text-align:right"><b>Errors:</b>&nbsp;</td><td></td></tr>
+          {{/if}}
+          {{#each errors}}
+          <tr><td></td><td style="color: red;">{{message}}</td></tr>
+          {{/each}}
+          {{#if warnings}}
+          <tr><td style="text-align:right"><b>Warnings:</b>&nbsp;</td><td></td></tr>
+          {{/if}}
+          {{#each warnings}}
+          <tr><td></td><td style="color: orange;">{{message}}</td></tr>
+          {{/each}}
+        </table><br>
+        <table style="clear:left;float:left" class="nodes_list">
+          <tr>
+            <td class="datatable_header hover-pointer" onclick="show_hide_dashboard(this, 'nodes');">
+              <span style="display: none;" class="downarrow sprites"></span>
+              <span style="" class="rightarrow sprites"></span>
+              Nodes ({{nodes.length}} | {{#if nodes_failed}}<span style="color: red">issues: {{nodes_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
+              <span style="font-size: 10px;">(displaying {{#if Pcs.clusterController.show_all_nodes}}all{{else}}only issues{{/if}})</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table class="datatable">
+                <tr>
+                  <th style="width: 150px;">NODE</th>
+                  <th style="width: 80px;">STATUS</th>
+                  <th style="width: 70px;">QUORUM</th>
+                </tr>
+                {{#each node in nodes}}
+                <tr {{bind-attr title=node.tooltip}} {{bind-attr class=node.status_class}}>
+                  <td><a {{bind-attr href=node.url_link}}>{{node.name}}</a></td>
+                  <td {{bind-attr style=node.status_style}}>{{{node.status_icon}}}{{node.status}}</td>
+                  <td>{{{node.quorum_show}}}</td>
+                </tr>
+                {{/each}}
+              </table>
+            </td>
+          </tr>
+        </table>
+        {{#unless status_unknown}}
+        <table style="clear:left;float:left" class="resources_list">
+          <tr>
+            <td class="datatable_header hover-pointer" onclick="show_hide_dashboard(this, 'resources');">
+              <span style="display: none;" class="downarrow sprites"></span>
+              <span style="" class="rightarrow sprites"></span>
+              Resources ({{resources.length}} | {{#if resources_failed}}<span style="color: red">issues: {{resources_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
+              <span style="font-size: 10px;">(displaying {{#if Pcs.clusterController.show_all_resources}}all{{else}}only issues{{/if}})</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table class="datatable">
+                <tr>
+                  <th style="width: 150px;">RESOURCE</th>
+                  <th style="width: 80px;">STATUS</th>
+                </tr>
+                {{#each r in resources}}
+                <tr {{bind-attr title=r.tooltip}} {{bind-attr class=r.status_class}}>
+                  <td><a {{bind-attr href=r.url_link}}>{{r.id}}</a></td>
+                  <td {{bind-attr style=r.status_style}}>{{{r.status_icon}}}{{r.status}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                  <td>No resources</td>
+                  <td></td>
+                </tr>
+                {{/each}}
+              </table>
+            </td>
+          </tr>
+        </table>
+        <table style="clear:left;float:left" class="fence_list">
+          <tr>
+            <td class="datatable_header hover-pointer" onclick="show_hide_dashboard(this, 'fence');">
+              <span style="display: none;" class="downarrow sprites"></span>
+              <span style="" class="rightarrow sprites"></span>
+              Fence-devices ({{fence.length}} | {{#if fence_failed}}<span style="color: red">issues: {{fence_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
+              <span style="font-size: 10px;">(displaying {{#if Pcs.clusterController.show_all_fence}}all{{else}}only issues{{/if}})</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table class="datatable">
+                <tr>
+                  <th style="width: 150px;">FENCE-DEVICE</th>
+                  <th style="width: 80px;">STATUS</th>
+                </tr>
+                {{#each f in fence}}
+                <tr {{bind-attr title=f.tooltip}} {{bind-attr class=f.status_class_fence}}>
+                  <td><a {{bind-attr href=f.url_link}}>{{f.id}}</a></td>
+                  <td {{bind-attr style=f.status_style}}>{{{f.status_icon}}}{{f.status}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                  <td>No fence devices</td>
+                  <td></td>
+                </tr>
+                {{/each}}
+              </table>
+            </td>
+          </tr>
+        </table>
+        {{/unless}}
 	  </div>
-	<% end %>
+	{{/each}}
       </div>
     </td>
   </tr>

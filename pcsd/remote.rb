@@ -332,14 +332,16 @@ def check_gui_status(params)
   node_results = {}
   if params[:nodes] != nil and params[:nodes] != ""
     node_array = params[:nodes].split(",")
-    stdout, stderr, retval = run_cmd(PCS, "cluster", "pcsd-status", *node_array)
-    if retval == 0 or retval == 2
-      stdout.each { |l|
-        l = l.chomp
-        out = l.split(/: /)
-        node_results[out[0].strip] = out[1]
-      }
-    end
+    online, offline, notauthorized = check_gui_status_of_nodes(node_array)
+    online.each { |node|
+      node_results[node] = "Online"
+    }
+    offline.each { |node|
+      node_results[node] = "Offline"
+    }
+    notauthorized.each { |node|
+      node_results[node] = "Unable to authenticate"
+    }
   end
   return JSON.generate(node_results)
 end
@@ -668,29 +670,17 @@ def overview_node(params)
   get_nodes_status.each{ |key, node_list|
     known_nodes.concat node_list
   }
-  overview['known_nodes'] = known_nodes.uniq
+  known_nodes.uniq!
+  overview['known_nodes'] = known_nodes
 
-  threads = []
-  not_authorized_nodes = {}
-  known_nodes.each { |node|
-    threads << Thread.new {
-      code, response = send_request_with_token(node, 'check_auth')
-      begin
-        parsed_response = JSON.parse(response)
-        if parsed_response['notoken'] or parsed_response['notauthorized']
-          not_authorized_nodes[node] = true
-        end
-      rescue JSON::ParserError
-      end
-    }
-  }
-  threads.each { |t| t.join }
+  _,_,not_authorized_nodes = check_gui_status_of_nodes(known_nodes, 3)
+
   if not_authorized_nodes.length > 0
     overview['warning_list'] << {
       'message' => 'Not authorized against node(s) '\
-        + not_authorized_nodes.keys.join(', '),
+        + not_authorized_nodes.join(', '),
       'type' => 'nodes_not_authorized',
-      'node_list' => not_authorized_nodes.keys,
+      'node_list' => not_authorized_nodes,
     }
   end
 
@@ -811,22 +801,25 @@ def overview_cluster(params)
     'warning_list' => [],
     'quorate' => false,
     'status' => 'unknown',
+    'node_list' => [],
+    'fence_list' => [],
+    'resource_list' => []
   }
 
   node_map = {}
-  not_authorized_nodes = []
   known_nodes = []
   threads = []
-  get_cluster_nodes(cluster_name).each { |node|
+  online_nodes, offline_nodes = get_nodes
+  cluster_nodes = online_nodes + offline_nodes
+  cluster_nodes.each { |node|
     threads << Thread.new {
-      code, response = send_request_with_token(node, 'overview_node')
+      code, response = send_request_with_token(node, 'overview_node', false, {}, true, nil, 6)
       begin
         parsed_response = JSON.parse(response)
         if parsed_response['noresponse'] or parsed_response['pacemaker_not_running']
           node_map[node] = {'status' => 'offline'}
         elsif parsed_response['notoken'] or parsed_response['notauthorized']
           node_map[node] = {'status' => 'unknown'}
-          not_authorized_nodes << node
         else
           node_map[node] = parsed_response
           if parsed_response['known_nodes']
@@ -845,22 +838,9 @@ def overview_cluster(params)
   }
   threads.each { |t| t.join }
 
-  if PCSConfig.refresh_cluster_nodes(cluster_name, known_nodes)
-    return overview_cluster(params)
-  end
-
   all_nodes = node_map.keys
   node_list = node_map.values.sort { |a, b| a['name'] <=> b['name'] }
   overview['node_list'] = node_list
-
-  if not_authorized_nodes.length > 0
-    overview['warning_list'] << {
-      'message' => 'Not authorized against node(s) '\
-        + not_authorized_nodes.join(', '),
-      'type' => 'nodes_not_authorized',
-      'node_list' => not_authorized_nodes,
-    }
-  end
 
   quorate_nodes = []
   node_list.each{ |node_info|
@@ -872,7 +852,7 @@ def overview_cluster(params)
 
   nodes_to_ask = quorate_nodes.length > 0 ? quorate_nodes : all_nodes
   for node in nodes_to_ask
-    code, response = send_request_with_token(node, 'overview_resources')
+    code, response = send_request_with_token(node, 'overview_resources', false, {}, true, nil, 6)
     begin
       parsed_response = JSON.parse(response)
       if parsed_response['resource_list'] and parsed_response['fence_list']
@@ -883,7 +863,7 @@ def overview_cluster(params)
     rescue JSON::ParserError
     end
   end
-  if overview['fence_list'] and overview['fence_list'].length < 1
+  if overview['fence_list'] and overview['fence_list'].length < 1 and quorate_nodes.length > 0
     overview['warning_list'] << {
       'message' => 'No fence devices configured in the cluster',
     }
@@ -906,7 +886,7 @@ def overview_cluster(params)
   }
   ConfigOption.getDefaultValues(option_map.values)
   ConfigOption.loadValues(option_map.values, cluster_name)
-  if not ['true', 'on'].include? option_map['stonith-enabled'].value
+  if not ['true', 'on'].include? option_map['stonith-enabled'].value and quorate_nodes.length > 0
     overview['warning_list'] << {
       'message' => 'Stonith is not enabled',
     }
@@ -957,20 +937,26 @@ end
 def overview_all()
   cluster_map = {}
   threads = []
-  PCSConfig.new.clusters.each { |cluster|
+  config = PCSConfig.new
+  config.clusters.each { |cluster|
     threads << Thread.new {
       overview_cluster = nil
-      not_authorized_nodes = []
-      for node in get_cluster_nodes(cluster.name)
+      online, offline, not_authorized_nodes = check_gui_status_of_nodes(get_cluster_nodes(cluster.name), 3)
+      not_supported = false
+      for node in online + offline
         code, response = send_request_with_token(
-          node, 'overview_cluster', true, {:cluster => cluster.name}
+          node, 'overview_cluster', true, {:cluster => cluster.name}, true, nil, 15
         )
+        if code == 404
+          not_supported = true
+          break
+        end
         begin
           parsed_response = JSON.parse(response)
           if parsed_response['noresponse'] or parsed_response['pacemaker_not_running']
             next
           elsif parsed_response['notoken'] or parsed_response['notauthorized']
-            not_authorized_nodes << node
+            next
           else
             overview_cluster = parsed_response
             break
@@ -981,9 +967,12 @@ def overview_all()
       if not overview_cluster
         overview_cluster = {
           'name' => cluster.name,
-          'error_list' => [],
-          'warning_list' => [],
+          'error_list' => !not_supported ? [{:message=>"Unable to connect to cluster."}] : [],
+          'warning_list' => not_supported ? [{:message=>"Cluster is running old version of pcs/pcsd which doesn't provide data for dashboard."}] : [],
           'status' => 'unknown',
+          'node_list' => get_default_node_list(cluster.name),
+          'fence_list' => [],
+          'resource_list' => []
         }
       end
       if not_authorized_nodes.length > 0
@@ -998,10 +987,33 @@ def overview_all()
     }
   }
   threads.each { |t| t.join }
+  cluster_map.each { |cluster, values| # update clusters in PCSConfig
+    nodes = []
+    values["node_list"].each { |node|
+      nodes << node["name"]
+    }
+    config.update_without_saving(cluster, nodes)
+  }
+  config.save
   overview = {
     'cluster_list' => cluster_map.values.sort { |a, b| a['name'] <=> b['name']}
   }
   return JSON.generate(overview)
+end
+
+def get_default_node_list(clustername)
+  nodes = get_cluster_nodes clustername
+  node_list = []
+  nodes.each { |node|
+    node_list << {
+        "error_list" => [],
+        "warning_list" => [],
+        "status" => "unknown",
+        "quorum" => false,
+        "name" => node
+    }
+  }
+  return node_list
 end
 
 # We can't pass username/password on the command line for security purposes
@@ -1029,6 +1041,9 @@ end
 
 # If we get here, we're already authorized
 def check_auth(params)
+  if params.include?("check_auth_only")
+    return [200, "{\"success\":true}"]
+  end
   return JSON.generate({
     'success' => true,
     'node_list' => get_token_node_list,
@@ -1635,7 +1650,8 @@ end
 
 def get_cluster_tokens(params)
   on, off = get_nodes
-  nodes = on.concat(off) # get online and offline nodes into one array
+  nodes = on + off
+  nodes.uniq!
   return [200, JSON.generate(get_tokens_of_nodes(nodes))]
 end
 
