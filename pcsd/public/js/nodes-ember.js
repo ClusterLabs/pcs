@@ -533,6 +533,7 @@ Pcs.Cluster = Ember.Object.extend({
   fence_failed: 0,
   errors: [],
   warnings: [],
+  need_reauth: false,
   quorate: false,
 
   get_num_of_failed: function(type) {
@@ -577,9 +578,18 @@ Pcs.Cluster = Ember.Object.extend({
 
   add_nodes: function(data) {
     var self = this;
+    self.set("need_reauth", false);
     var nodes = [];
     var node;
     $.each(data, function(key, val) {
+      $.each(val["warning_list"], function(key, value){
+        if (self.need_reauth)
+          return false;
+        if (typeof(value.type) !== 'undefined' && value.type == "nodes_not_authorized") {
+          self.set("need_reauth", true);
+        }
+      });
+
       node = Pcs.Clusternode.create({
         name: val["name"],
         url_link: get_cluster_remote_url(self.name) + "main#/nodes/" + val["name"],
@@ -689,6 +699,22 @@ Pcs.clusterController = Ember.ArrayController.createWithMixins({
         default:
           self.set("num_unknown", self.num_unknown+1);
           break;
+      }
+
+      var nodes_to_auth = [];
+      $.each(cluster.warnings, function(key, val){
+        if (val.hasOwnProperty("type") && val.type == "nodes_not_authorized"){
+          nodes_to_auth = nodes_to_auth.concat(val.node_list);
+        }
+      });
+      nodes_to_auth = $.unique(nodes_to_auth);
+
+      if (cluster.need_reauth || nodes_to_auth.length > 0) {
+        cluster.warnings.push({
+          message: "There are few authentication problems. To fix them, click <a href='#' onclick='auth_nodes_dialog(" + JSON.stringify(nodes_to_auth) + ", null, function() {fix_auth_of_cluster();})'>here</a>.",
+          type: "nodes_not_authorized",
+          node_list: self.nodes_to_auth
+        });
       }
 
       if (!found) {

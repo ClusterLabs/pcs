@@ -14,6 +14,7 @@ def remote(params,request)
       :overview_cluster => method(:overview_cluster),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
+      :fix_auth_of_cluster => method(:fix_auth_of_cluster),
       :setup_cluster => method(:setup_cluster),
       :create_cluster => method(:create_cluster),
       :get_quorum_info => method(:get_quorum_info),
@@ -1711,4 +1712,31 @@ def add_node_to_cluster(params)
   end
 
   return [200, "Node added successfully."]
+end
+
+def fix_auth_of_cluster(params)
+  if not params["clustername"]
+    return [400, "cluster name not defined"]
+  end
+
+  clustername = params["clustername"]
+  nodes = get_cluster_nodes(clustername)
+  tokens_data = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
+  failed = []
+
+  nodes.each { |node|
+    retval, out = send_request_with_token(node, "/save_tokens", true, tokens_data)
+    if retval == 404
+      return [400, "Old version of PCS/PCSD is runnig on cluster nodes. Fixing authentication is not supported."]
+    elsif retval != 200
+      failed << node
+    end
+  }
+  if failed.length > 0
+    if failed.length == nodes.length
+      return [400, "Authentication failed."]
+    end
+    return [400, "Cannot store new tokens on nodes: #{failed.join(', ')}. Are they online?"]
+  end
+  return [200, "Auhentication of nodes in cluster should be fixed."]
 end

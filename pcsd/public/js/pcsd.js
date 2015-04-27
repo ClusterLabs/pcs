@@ -725,9 +725,12 @@ function auth_nodes_dialog_update(data) {
     }
   }
 
+  var callback_one = $("#auth_nodes").dialog("option", "callback_success_one_");
   if (unauth_nodes.length == 0) {
     $("#authenticate_submit_btn").button("option", "disabled", false);
     $("#auth_failed_error_msg").hide();
+    if (callback_one !== null)
+      callback_one();
     var callback = $("#auth_nodes").dialog("option", "callback_success_");
     $("#auth_nodes").dialog("close");
     if (callback !== null)
@@ -742,22 +745,29 @@ function auth_nodes_dialog_update(data) {
     $('#auth_nodes_list').find('input:password').each(function(){$(this).show()});
   }
 
+  var one_success = false;
   $("input:password[name$=-pass]").each(function() {
     node = $(this).attr("name");
     node = node.substring(0, node.length - 5);
     if (unauth_nodes.indexOf(node) == -1) {
       $(this).parent().parent().remove();
+      one_success = true;
     } else {
       $(this).parent().parent().css("color", "red");
     }
   });
 
+  if (one_success && callback_one !== null)
+    callback_one();
+
   $("#authenticate_submit_btn").button("option", "disabled", false);
   return unauth_nodes;
 }
 
-function auth_nodes_dialog(unauth_nodes, callback_success) {
+function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one) {
   callback_success = typeof callback_success !== 'undefined' ? callback_success : null;
+  callback_success_one = typeof callback_success_one !== 'undefined' ? callback_success_one : null;
+
   $("#auth_failed_error_msg").hide();
   var buttonsOpts = [
     {
@@ -785,6 +795,13 @@ function auth_nodes_dialog(unauth_nodes, callback_success) {
     }
   });
 
+  if (unauth_nodes.length == 0) {
+    if (callback_success !== null) {
+      callback_success();
+    }
+    return;
+  }
+
   if (unauth_nodes.length == 1) {
     $("#same_pass").hide();
   } else {
@@ -803,7 +820,8 @@ function auth_nodes_dialog(unauth_nodes, callback_success) {
     modal: true, resizable: false,
     width: 'auto',
     buttons: buttonsOpts,
-    callback_success_: callback_success
+    callback_success_: callback_success,
+    callback_success_one_: callback_success_one
   });
 }
 
@@ -1200,6 +1218,7 @@ function show_loading_screen() {
 
 function hide_loading_screen() {
   $("#loading_screen").dialog('close');
+  $("div[id^=ui-tooltip-]").remove(); // destroy tooltips
 }
 
 function remove_cluster(ids) {
@@ -1893,4 +1912,23 @@ function get_formated_html_list(data) {
 function htmlEncode(s)
 {
   return $("<div/>").text(s).html().replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function fix_auth_of_cluster() {
+  show_loading_screen();
+  var clustername = Pcs.clusterController.cur_cluster.name;
+  $.ajax({
+    url: "/remote/fix_auth_of_cluster",
+    type: "POST",
+    data: "clustername=" + clustername,
+    success: function(data) {
+      hide_loading_screen();
+      Pcs.update();
+    },
+    error: function(jqhxr,b,c) {
+      hide_loading_screen();
+      Pcs.update();
+      alert(jqhxr.responseText);
+    }
+  });
 }

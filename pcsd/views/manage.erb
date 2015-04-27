@@ -51,13 +51,13 @@
           <tr><td style="text-align:right"><b>Errors:</b>&nbsp;</td><td></td></tr>
           {{/if}}
           {{#each errors}}
-          <tr><td></td><td style="color: red;">{{message}}</td></tr>
+          <tr><td></td><td style="color: red;">{{{message}}}</td></tr>
           {{/each}}
           {{#if warnings}}
           <tr><td style="text-align:right"><b>Warnings:</b>&nbsp;</td><td></td></tr>
           {{/if}}
           {{#each warnings}}
-          <tr><td></td><td style="color: orange;">{{message}}</td></tr>
+          <tr><td></td><td style="color: orange;">{{{message}}}</td></tr>
           {{/each}}
         </table><br>
         <table style="clear:left;float:left" class="nodes_list">
