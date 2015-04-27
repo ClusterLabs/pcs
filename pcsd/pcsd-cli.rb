@@ -2,23 +2,23 @@ require 'rubygems'
 require 'etc'
 require 'json'
 require 'stringio'
+require 'orderedhash'
 
 require 'bootstrap.rb'
 require 'pcs.rb'
 require 'auth.rb'
 
 def cli_format_response(status, text=nil, data=nil)
-  response = {'status' => status}
+  response = OrderedHash.new
+  response['status'] = status
   response['text'] = text if text
   response['data'] = data if data
-  response['log'] = $logger_device.string
-  return JSON.generate(response)
+  response['log'] = $logger_device.string.lines.collect
+  return JSON.pretty_generate(response)
 end
 
 def cli_exit(status, text=nil, data=nil, exitcode=0)
-  output = cli_format_response(status, text, data)
-  $logger.debug "pcsd-cli finished with code #{exitcode} and output #{output}"
-  puts output
+  puts cli_format_response(status, text, data)
   exit exitcode
 end
 
@@ -36,14 +36,11 @@ command = ARGV[0]
 # check and set user
 uid = Process.uid
 if 0 == uid
-  $logger.info "'pcsd-cli #{command}' running as user: root"
   $session[:username] = 'hacluster'
   $cookies[:CIB_user] = 'hacluster'
 else
   username = Etc.getpwuid(uid).name
-  $logger.info "'pcsd-cli #{command}' running as user: #{username}"
   if not PCSAuth.isUserAllowedToLogin(username)
-    $logger.info "pcsd-cli permission denied for user: #{username}"
     cli_exit('access_denied')
   else
     $session[:username] = username
@@ -72,6 +69,4 @@ if allowed_commands.key?(command)
 else
   cli_exit('bad_command')
 end
-
-
 
