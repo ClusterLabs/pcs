@@ -811,7 +811,7 @@ def overview_cluster(params)
   known_nodes = []
   threads = []
   online_nodes, offline_nodes = get_nodes
-  cluster_nodes = online_nodes + offline_nodes
+  cluster_nodes = (online_nodes + offline_nodes).uniq
   cluster_nodes.each { |node|
     threads << Thread.new {
       code, response = send_request_with_token(node, 'overview_node', false, {}, true, nil, 6)

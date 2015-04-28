@@ -377,7 +377,10 @@ end
 
 def get_nodes()
   nodes = get_nodes_status()
-  [nodes["corosync_online"] + nodes["pacemaker_online"], nodes["corosync_offline"] + nodes["pacemaker_offline"] + nodes["pacemaker_standby"]]
+  return [
+    (nodes["corosync_online"] + nodes["pacemaker_online"]).uniq,
+    (nodes["corosync_offline"] + nodes["pacemaker_offline"] + nodes["pacemaker_standby"]).uniq
+  ]
 end
 
 def get_nodes_status()
