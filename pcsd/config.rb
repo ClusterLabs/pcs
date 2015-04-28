@@ -53,7 +53,7 @@ class PCSConfig
     end
     @clusters.each {|c|
       if c.name == cluster_name
-        c.nodes = node_list
+        c.nodes = node_list.uniq.sort
         break
       end
     }
@@ -68,7 +68,7 @@ class PCSConfig
     @clusters.each { |c|
       c_hash = OrderedHash.new
       c_hash['name'] = c.name
-      c_hash['nodes'] = c.nodes
+      c_hash['nodes'] = c.nodes.uniq.sort
       out_hash['clusters'] << c_hash
     }
 

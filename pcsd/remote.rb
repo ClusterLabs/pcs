@@ -716,7 +716,6 @@ def auth(params)
 end
 
 def overview_node(params)
-  node_id = get_local_node_id()
   node_online = (corosync_running? and pacemaker_running?)
   overview = {
     'error_list' => [],
@@ -726,6 +725,7 @@ def overview_node(params)
   }
 
   if node_online
+    node_id = get_local_node_id()
     stdout, stderr, retval = run_cmd('crm_mon', '--one-shot', '-r', '--as-xml')
     crm_dom = retval == 0 ? REXML::Document.new(stdout.join("\n")) : nil
 
@@ -1009,7 +1009,7 @@ end
 def overview_all()
   cluster_map = {}
   threads = []
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   config.clusters.each { |cluster|
     threads << Thread.new {
       overview_cluster = nil
@@ -1059,8 +1059,10 @@ def overview_all()
     }
   }
   threads.each { |t| t.join }
+
   # update clusters in PCSConfig
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  config_text_old = Cfgsync::PcsdSettings.from_file('').text()
+  config = PCSConfig.new(config_text_old)
   cluster_map.each { |cluster, values|
     nodes = []
     values["node_list"].each { |node|
@@ -1068,7 +1070,15 @@ def overview_all()
     }
     config.update(cluster, nodes)
   }
-  Cfgsync::PcsdSettings.from_text(config.text()).save()
+  if config_text_old != config.text()
+    sync_config = Cfgsync::PcsdSettings.from_text(config.text())
+    # on version conflict just go on, config will be corrected eventually
+    # by displaying the cluster in the web UI
+    Cfgsync::save_sync_new_version(
+      sync_config, get_corosync_nodes(), $cluster_name, true
+    )
+  end
+
   overview = {
     'cluster_list' => cluster_map.values.sort { |a, b| a['name'] <=> b['name']}
   }
