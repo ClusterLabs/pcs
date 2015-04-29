@@ -169,44 +169,73 @@ def auth_nodes(nodes):
         password = None
 
     set_nodes = set(nodes)
-    failed_count = 0
-    for node in nodes:
-        status = utils.checkAuthorization(node)
-        need_auth = status[0] == 3 or "--force" in utils.pcs_options
-        mutually_authorized = False
-        if status[0] == 0:
-            try:
-                auth_status = json.loads(status[1])
-                if auth_status["success"]:
-                    if set_nodes == set(auth_status["node_list"]):
-                        mutually_authorized = True
-            except ValueError, KeyError:
-                pass
-        if need_auth or not mutually_authorized:
-            if username == None:
-                sys.stdout.write('Username: ')
+    need_auth = "--force" in utils.pcs_options or (not username or not password)
+    if not need_auth:
+        for node in set_nodes:
+            status = utils.checkAuthorization(node)
+            if status[0] == 3:
+                need_auth = True
+                break
+            mutually_authorized = False
+            if status[0] == 0:
+                try:
+                    auth_status = json.loads(status[1])
+                    if auth_status["success"]:
+                        if set_nodes == set(auth_status["node_list"]):
+                            mutually_authorized = True
+                except ValueError, KeyError:
+                    pass
+            if not mutually_authorized:
+                need_auth = True
+                break
+
+    if need_auth:
+        if username == None:
+            sys.stdout.write('Username: ')
+            sys.stdout.flush()
+            username = raw_input("")
+        if password == None:
+            if sys.stdout.isatty():
+                password = getpass.getpass("Password: ")
+            else:
+                sys.stdout.write('Password: ')
                 sys.stdout.flush()
-                username = raw_input("")
-            if password == None:
-                if sys.stdout.isatty():
-                    password = getpass.getpass("Password: ")
+                password = raw_input("")
+
+    pcsd_data = {
+        'nodes': list(set_nodes),
+        'username': username,
+        'password': password,
+        'force': '--force' in utils.pcs_options,
+        'local': '--local' in utils.pcs_options,
+    }
+    output, retval = utils.run_pcsdcli('auth', pcsd_data)
+    if retval == 0 and output['status'] == 'ok' and output['data']:
+        failed_count = 0
+        try:
+            for node, result in output['data'].items():
+                if result['status'] == 'ok':
+                    print "{0}: Authorized".format(node)
+                elif result['status'] == 'already_authorized':
+                    print "{0}: Already authorized".format(node)
+                elif result['status'] == 'bad_password':
+                    utils.err(
+                        "{0}: Username and/or password is incorrect".format(node),
+                        False
+                    )
+                    failed_count += 1
+                elif result['status'] == 'noresponse':
+                    utils.err("Unable to communicate with {0}".format(node), False)
+                    failed_count += 1
                 else:
-                    sys.stdout.write('Password: ')
-                    sys.stdout.flush()
-                    password = raw_input("")
-            if not utils.updateToken(node,nodes,username,password):
-                failed_count += 1
-                continue
-            print "%s: Authorized" % (node)
-        elif mutually_authorized:
-            print node + ": Already authorized"
-        else:
-            utils.err("Unable to communicate with %s" % (node), False)
-            failed_count += 1
-
-    if failed_count > 0:
-        sys.exit(failed_count)
-
+                    utils.err("Unexpected response from {0}".format(node), False)
+                    failed_count += 1
+        except:
+            utils.err('Unable to communicate with pcsd')
+        if failed_count > 0:
+            sys.exit(failed_count)
+        return
+    utils.err('Unable to communicate with pcsd')
 
 # If no arguments get current cluster node status, otherwise get listed
 # nodes status

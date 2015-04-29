@@ -61,36 +61,6 @@ def checkAuthorization(node):
     out = sendHTTPRequest(node, 'remote/check_auth', None, False, False)
     return out
 
-def updateToken(node,nodes,username,password):
-    count = 0
-    orig_data = {}
-    for n in nodes:
-        orig_data["node-"+str(count)] = n
-        count = count + 1
-    orig_data["username"] = username
-    orig_data["password"] = password
-    if "--local" not in pcs_options and node != os.uname()[1]:
-        orig_data["bidirectional"] = 1
-
-    if "--force" in pcs_options:
-        orig_data["force"] = 1
-
-    data = urllib.urlencode(orig_data)
-    out = sendHTTPRequest(node, 'remote/auth', data, False, False)
-    if out[0] != 0:
-        err("%s: Unable to connect to pcsd: %s" % (node, out[1]), False)
-        return False
-    token = out[1]
-    if token == "":
-        err("%s: Username and/or password is incorrect" % node, False)
-        return False
-
-    tokens = readTokens()
-    tokens[node] = token
-    writeTokens(tokens)
-
-    return True
-
 def get_uid_gid_file_name(uid, gid):
     return "pcs-uidgid-%s-%s" % (uid, gid)
 
@@ -171,12 +141,6 @@ def readTokens():
     if retval == 0 and output['status'] == 'ok' and output['data']:
         tokens = output['data']
     return tokens
-
-# Takes a dictionary {'nodeA':'tokenA'}
-def writeTokens(tokens):
-    output, retval = run_pcsdcli("write_tokens", tokens)
-    if retval != 0 or output['status'] != 'ok' or not output['data']:
-        err("Failed to store tokens")
 
 # Set the corosync.conf file on the specified node
 def getCorosyncConfig(node):

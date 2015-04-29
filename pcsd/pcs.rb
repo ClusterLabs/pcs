@@ -276,13 +276,21 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
 end
 
 def send_request_with_token(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30)
-  start = Time.now
-  begin
-    token = get_node_token(node)
-    if not token
-      return 400,'{"notoken":true}'
-    end
+  token = get_node_token(node)
+  if not token
+    return 400,'{"notoken":true}'
+  end
+  cookies_data = {
+    'token' => token,
+    'CIB_user' => $session[:username].to_s,
+  }
+  return send_request(
+    node, request, post, data, remote, raw_data, timeout, cookies_data
+  )
+end
 
+def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data=nil)
+  begin
     request = "/#{request}" if not request.start_with?("/")
 
     if remote
@@ -298,9 +306,15 @@ def send_request_with_token(node, request, post=false, data={}, remote=true, raw
       req = Net::HTTP::Get.new(uri.path)
       req.set_form_data(data)
     end
-    cookies_to_send = [CGI::Cookie.new("name" => 'token', "value" => token).to_s]
-    cookies_to_send << CGI::Cookie.new("name" =>  "CIB_user", "value" => $session[:username].to_s).to_s
-    req.add_field("Cookie",cookies_to_send.join(";"))
+
+    cookies_to_send = []
+    if cookies_data
+      cookies_data.each { |name, value|
+        cookies_to_send << CGI::Cookie.new('name' => name, 'value' => value).to_s
+      }
+      req.add_field('Cookie', cookies_to_send.join(';'))
+    end
+
     myhttp = Net::HTTP.new(uri.host, uri.port)
     myhttp.use_ssl = true
     myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -785,16 +799,33 @@ def add_prefix_to_keys(hash, prefix)
   return new_hash
 end
 
-def check_gui_status_of_nodes(nodes, timeout=10)
+def check_gui_status_of_nodes(nodes, check_mutuality=false, timeout=10)
+  options = {}
+  options[:check_auth_only] = '' if not check_mutuality
   threads = []
   not_authorized_nodes = []
   online_nodes = []
   offline_nodes = []
+
+  nodes = nodes.uniq.sort
   nodes.each { |node|
     threads << Thread.new {
-      code, response = send_request_with_token(node, 'check_auth', false, {:check_auth_only => ""}, true, nil, timeout)
+      code, response = send_request_with_token(node, 'check_auth', false, options, true, nil, timeout)
       if code == 200
-        online_nodes << node
+        if check_mutuality
+          begin
+            parsed_response = JSON.parse(response)
+            if parsed_response['node_list'] and parsed_response['node_list'].uniq.sort == nodes
+              online_nodes << node
+            else
+              not_authorized_nodes << node
+            end
+          rescue
+            not_authorized_nodes << node
+          end
+        else
+          online_nodes << node
+        end
       else
         begin
           parsed_response = JSON.parse(response)
@@ -811,3 +842,55 @@ def check_gui_status_of_nodes(nodes, timeout=10)
   threads.each { |t| t.join }
   return online_nodes, offline_nodes, not_authorized_nodes
 end
+
+def pcs_auth(nodes, username, password, force=false, local=true)
+  if not force
+    online, offline, not_authenticated = check_gui_status_of_nodes(nodes, true)
+    if not_authenticated.length < 1
+      result = {}
+      online.each { |node| result[node] = {'status' => 'already_authorized'} }
+      offline.each { |node| result[node] = {'status' => 'noresponse'} }
+      return result
+    end
+  end
+
+  data = {}
+  nodes.each_with_index { |node, index|
+    data["node-#{index}"] = node
+  }
+  data['username'] = username
+  data['password'] = password
+  data['bidirectional'] = 1 if not local
+  data['force'] = 1 if force
+
+  node_response = {}
+  threads = []
+  nodes.each { |node|
+    threads << Thread.new {
+      code, response = send_request(node, 'auth', true, data)
+      if 200 == code
+        token = response.strip
+        if '' == token
+          node_response[node] = {'status' => 'bad_password'}
+        else
+          node_response[node] = {'status' => 'ok', 'token' => token}
+        end
+      else
+        node_response[node] = {'status' => 'noresponse'}
+      end
+    }
+  }
+  threads.each { |t| t.join }
+
+  new_tokens = {}
+  node_response.each { |node, response|
+    new_tokens[node] = response['token'] if 'ok' == response['status']
+  }
+
+  tokens = read_tokens()
+  tokens.update(new_tokens)
+  write_tokens(tokens)
+
+  return node_response
+end
+

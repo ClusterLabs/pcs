@@ -13,7 +13,7 @@ def cli_format_response(status, text=nil, data=nil)
   response['status'] = status
   response['text'] = text if text
   response['data'] = data if data
-  response['log'] = $logger_device.string.lines.collect
+  response['log'] = $logger_device.string.lines.to_a
   return JSON.pretty_generate(response)
 end
 
@@ -53,8 +53,13 @@ allowed_commands = {
   'read_tokens' => {
     'call' => lambda { |params| read_tokens() },
   },
-  'write_tokens' => {
-    'call' => lambda { |params| write_tokens(params) },
+  'auth' => {
+    'call' => lambda { |params|
+      pcs_auth(
+        params['nodes'] || [], params['username'] || '', params['password'] || '',
+        params['force'], params['local'],
+      )
+    },
   },
 }
 

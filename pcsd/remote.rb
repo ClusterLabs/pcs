@@ -698,23 +698,6 @@ def status_all(params, nodes = [], dont_update_config=false)
   return JSON.generate(final_response)
 end
 
-def auth(params)
-  token = PCSAuth.validUser(params['username'],params['password'], true)
-  # If we authorized to this machine, attempt to authorize everywhere
-  node_list = []
-  if token and params["bidirectional"]
-    params.each { |k,v|
-      if k.start_with?("node-")
-	node_list.push(v)
-      end
-    }
-    if node_list.length > 0
-      pcs_auth(node_list, params['username'], params['password'], params["force"] == "1")
-    end
-  end
-  return token
-end
-
 def overview_node(params)
   node_online = (corosync_running? and pacemaker_running?)
   overview = {
@@ -745,7 +728,7 @@ def overview_node(params)
   known_nodes.uniq!
   overview['known_nodes'] = known_nodes
 
-  _,_,not_authorized_nodes = check_gui_status_of_nodes(known_nodes, 3)
+  _,_,not_authorized_nodes = check_gui_status_of_nodes(known_nodes, false, 3)
 
   if not_authorized_nodes.length > 0
     overview['warning_list'] << {
@@ -1013,7 +996,7 @@ def overview_all()
   config.clusters.each { |cluster|
     threads << Thread.new {
       overview_cluster = nil
-      online, offline, not_authorized_nodes = check_gui_status_of_nodes(get_cluster_nodes(cluster.name), 3)
+      online, offline, not_authorized_nodes = check_gui_status_of_nodes(get_cluster_nodes(cluster.name), false, 3)
       not_supported = false
       for node in online + offline
         code, response = send_request_with_token(
@@ -1100,27 +1083,21 @@ def get_default_node_list(clustername)
   return node_list
 end
 
-# We can't pass username/password on the command line for security purposes
-def pcs_auth(nodes, username, password, force=false, local=true)
-  command = [PCS, "cluster", "auth"] + nodes
-  command += ["--force"] if force
-  command += ["--local"] if local
-  $logger.info("Running: " + command.join(" "))
-  status = Open4::popen4(*command) do |pid, stdin, stdout, stderr|
-    begin
-      while line = stdout.readpartial(4096)
-	      if line =~ /Username: \Z/
-	        stdin.write(username + "\n")
-	      end
-
-	      if line =~ /Password: \Z/
-	        stdin.write(password + "\n")
-	      end
+def auth(params)
+  token = PCSAuth.validUser(params['username'],params['password'], true)
+  # If we authorized to this machine, attempt to authorize everywhere
+  node_list = []
+  if token and params["bidirectional"]
+    params.each { |k,v|
+      if k.start_with?("node-")
+        node_list.push(v)
       end
-    rescue EOFError
+    }
+    if node_list.length > 0
+      pcs_auth(node_list, params['username'], params['password'], params["force"] == "1")
     end
   end
-  return status.exitstatus
+  return token
 end
 
 # If we get here, we're already authorized
@@ -1722,7 +1699,13 @@ def auth_nodes(params)
       else
         pass = node[1]
       end
-      retval[nodename] = pcs_auth([nodename], "hacluster", pass, true, true)
+      result = pcs_auth([nodename], "hacluster", pass, true, true)
+      node_status = result[nodename]['status']
+      if 'ok' == node_status or 'already_authorized' == node_status
+        retval[nodename] = 0
+      else
+        retval[nodename] = 1
+      end
     end
   }
   return [200, JSON.generate(retval)]
