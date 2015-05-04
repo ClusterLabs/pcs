@@ -241,34 +241,40 @@ module Cfgsync
 
 
   class ConfigPublisher
-    def initialize(configs, nodes, cluster_name)
+    def initialize(configs, nodes, cluster_name, tokens={})
       @configs = configs
       @nodes = nodes
       @cluster_name = cluster_name
       @published_configs_names = @configs.collect { |cfg|
         cfg.class.name
       }
+      @additional_tokens = tokens
     end
 
-    def publish()
+    def send(force=false)
+      nodes_txt = @nodes.join(', ')
       @configs.each { |cfg|
-        cfg.version += 1
         $logger.info(
-          "Broadcasting config #{cfg.class.name} version #{cfg.version} #{cfg.hash}"
+          "Sending config '#{cfg.class.name}' version #{cfg.version} #{cfg.hash}"\
+          + " to nodes: #{nodes_txt}"
         )
       }
 
-      data = self.prepare_request_data(@configs, @cluster_name)
+      data = self.prepare_request_data(@configs, @cluster_name, force)
       node_response = {}
       threads = []
       @nodes.each { |node|
         threads << Thread.new {
-          code, out = send_request_with_token(node, 'set_configs', true, data)
+          code, out = send_request_with_token(
+            node, 'set_configs', true, data, true, nil, 30, @additional_tokens
+          )
           if 200 == code
             begin
               node_response[node] = JSON.parse(out)
             rescue JSON::ParserError
             end
+          elsif 404 == code
+            node_response[node] = {'status' => 'not_supported'}
           else
             begin
               response = JSON.parse(out)
@@ -281,13 +287,26 @@ module Cfgsync
           if not node_response.key?(node)
             node_response[node] = {'status' => 'error'}
           end
+          # old pcsd returns this instead of 404 if pacemaker isn't running there
+          if node_response[node]['pacemaker_not_running']
+            node_response[node] = {'status' => 'not_supported'}
+          end
         }
       }
       threads.each { |t| t.join }
 
       node_response.each { |node, response|
-        $logger.debug("Broadcasting config response from #{node}: #{response}")
+        $logger.info("Sending config response from #{node}: #{response}")
       }
+
+      return node_response
+    end
+
+    def publish()
+      @configs.each { |cfg|
+        cfg.version += 1
+      }
+      node_response = self.send()
       return [
         self.get_old_local_configs(node_response, @published_configs_names),
         node_response
@@ -296,7 +315,7 @@ module Cfgsync
 
     protected
 
-    def prepare_request_data(configs, cluster_name)
+    def prepare_request_data(configs, cluster_name, force)
       data = {
         'configs' => {},
       }
@@ -307,6 +326,7 @@ module Cfgsync
           'text' => cfg.text,
         }
       }
+      data['force'] = true if force
       return {
         'configs' => JSON.generate(data)
       }
@@ -335,11 +355,15 @@ module Cfgsync
       @cluster_name = cluster_name
     end
 
-    def fetch()
-      configs_cluster = self.filter_configs_cluster(
+    def fetch_all()
+      return self.filter_configs_cluster(
         self.get_configs_cluster(@nodes, @cluster_name),
         @config_classes
       )
+    end
+
+    def fetch()
+      configs_cluster = self.fetch_all()
 
       newest_configs_cluster = {}
       configs_cluster.each { |name, cfgs|
@@ -436,7 +460,7 @@ module Cfgsync
   end
 
   def self.get_cfg_classes()
-    return [PcsdSettings]
+    return [PcsdSettings, PcsdTokens]
     # return [PcsdSettings, self.cluster_cfg_class]
   end
 
@@ -477,16 +501,16 @@ module Cfgsync
 
   # save and sync updated config
   # return true on success, false on version conflict
-  def self.save_sync_new_version(config, nodes, cluster_name, fetch_on_conflict)
+  def self.save_sync_new_version(config, nodes, cluster_name, fetch_on_conflict, tokens={})
     if not cluster_name or cluster_name.empty?
       # we run on a standalone host, no config syncing
       config.version += 1
       config.save()
-      return true
+      return true, {}
     else
       # we run in a cluster so we need to sync the config
-      publisher = ConfigPublisher.new([config], nodes, cluster_name)
-      old_configs, _ = publisher.publish()
+      publisher = ConfigPublisher.new([config], nodes, cluster_name, tokens)
+      old_configs, node_responses = publisher.publish()
       if old_configs.include?(config.class.name)
         if fetch_on_conflict
           fetcher = ConfigFetcher.new([config.class], nodes, cluster_name)
@@ -495,9 +519,58 @@ module Cfgsync
             cfg_to_save.save() if cfg_to_save.class == config.class
           }
         end
-        return false
+        return false, node_responses
       end
-      return true
+      return true, node_responses
     end
+  end
+
+  def self.merge_tokens_files(orig_cfg, to_merge_cfgs, new_tokens)
+    # Merge tokens files, use only newer tokens files, keep the most recent
+    # tokens, make sure new_tokens are included.
+    max_version = orig_cfg.version
+    with_new_tokens = PCSTokens.new(orig_cfg.text)
+    if to_merge_cfgs
+      to_merge_cfgs.reject! { |item| item.version <= orig_cfg.version }
+      if to_merge_cfgs.length > 0
+        to_merge_cfgs.sort.each { |ft|
+          with_new_tokens.tokens.update(PCSTokens.new(ft.text).tokens)
+        }
+        max_version = [to_merge_cfgs.max.version, max_version].max
+      end
+    end
+    with_new_tokens.tokens.update(new_tokens)
+    config_new = PcsdTokens.from_text(with_new_tokens.text)
+    config_new.version = max_version
+    return config_new
+  end
+
+  def self.save_sync_new_tokens(config, new_tokens, nodes, cluster_name)
+    with_new_tokens = PCSTokens.new(config.text)
+    with_new_tokens.tokens.update(new_tokens)
+    config_new = PcsdTokens.from_text(with_new_tokens.text)
+    if not cluster_name or cluster_name.empty?
+      # we run on a standalone host, no config syncing
+      config_new.version += 1
+      config_new.save()
+      return true, {}
+    end
+    # we run in a cluster so we need to sync the config
+    publisher = ConfigPublisher.new(
+      [config_new], nodes, cluster_name, new_tokens
+    )
+    old_configs, node_responses = publisher.publish()
+    if not old_configs.include?(config_new.class.name)
+      # no node had newer tokens file, we are ok, everything done
+      return true, node_responses
+    end
+    # get tokens from all nodes and merge them
+    fetcher = ConfigFetcher.new([config_new.class], nodes, cluster_name)
+    fetched_tokens = fetcher.fetch_all()[config_new.class.name]
+    config_new = Cfgsync::merge_tokens_files(config, fetched_tokens, new_tokens)
+    # and try to publish again
+    return Cfgsync::save_sync_new_version(
+      config_new, nodes, cluster_name, true, new_tokens
+    )
   end
 end

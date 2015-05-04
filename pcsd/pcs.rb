@@ -275,21 +275,20 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
   return code,out
 end
 
-def send_request_with_token(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30)
-  token = get_node_token(node)
+def send_request_with_token(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={})
+  token = additional_tokens[node] || get_node_token(node)
   if not token
     return 400,'{"notoken":true}'
   end
   cookies_data = {
     'token' => token,
-    'CIB_user' => $session[:username].to_s,
   }
   return send_request(
     node, request, post, data, remote, raw_data, timeout, cookies_data
   )
 end
 
-def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data=nil)
+def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data={})
   begin
     request = "/#{request}" if not request.start_with?("/")
 
@@ -308,12 +307,14 @@ def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, 
     end
 
     cookies_to_send = []
-    if cookies_data
-      cookies_data.each { |name, value|
-        cookies_to_send << CGI::Cookie.new('name' => name, 'value' => value).to_s
-      }
-      req.add_field('Cookie', cookies_to_send.join(';'))
-    end
+    cookies_data_default = {
+      'CIB_user' => $session[:username].to_s,
+    }
+    cookies_data_default.update(cookies_data)
+    cookies_data_default.each { |name, value|
+      cookies_to_send << CGI::Cookie.new('name' => name, 'value' => value).to_s
+    }
+    req.add_field('Cookie', cookies_to_send.join(';'))
 
     myhttp = Net::HTTP.new(uri.host, uri.port)
     myhttp.use_ssl = true
@@ -324,7 +325,7 @@ def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, 
     end
     return res.code.to_i, res.body
   rescue Exception => e
-    $logger.info "No response from: #{node} request: #{request}"
+    $logger.info "No response from: #{node} request: #{request}, exception: #{e}"
     return 400,'{"noresponse":true}'
   end
 end
@@ -844,18 +845,72 @@ def check_gui_status_of_nodes(nodes, check_mutuality=false, timeout=10)
 end
 
 def pcs_auth(nodes, username, password, force=false, local=true)
+  # if no sync is needed, do not report a sync error
+  sync_successful = true
+  sync_failed_nodes = []
+  sync_responses = {}
+  # check for already authorized nodes
   if not force
     online, offline, not_authenticated = check_gui_status_of_nodes(nodes, true)
     if not_authenticated.length < 1
       result = {}
       online.each { |node| result[node] = {'status' => 'already_authorized'} }
       offline.each { |node| result[node] = {'status' => 'noresponse'} }
-      return result
+      return result, sync_successful, sync_failed_nodes, sync_responses
     end
   end
 
+  # authorize the nodes locally (i.e. not bidirectionally)
+  auth_responses = run_auth_requests(nodes, nodes, username, password, force, true)
+
+  # get the tokens and sync them within the local cluster
+  new_tokens = {}
+  auth_responses.each { |node, response|
+    new_tokens[node] = response['token'] if 'ok' == response['status']
+  }
+  if not new_tokens.empty?
+    cluster_nodes = get_corosync_nodes()
+    tokens_cfg = Cfgsync::PcsdTokens.from_file('')
+    sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
+      tokens_cfg, new_tokens, cluster_nodes, $cluster_name
+    )
+    sync_failed_nodes = []
+    sync_not_supported_nodes = []
+    sync_responses.each { |node, response|
+      if 'not_supported' == response['status']
+        sync_not_supported_nodes << node
+      elsif response['status'] != 'ok'
+        sync_failed_nodes << node
+      else
+        node_result = response['result'][Cfgsync::PcsdTokens.name]
+        if 'not_supported' == node_result
+          sync_not_supported_nodes << node
+        elsif not ['accepted', 'rejected'].include?(node_result)
+          sync_failed_nodes << node
+        end
+      end
+    }
+    if not local
+      # authorize nodes outside of the local cluster and nodes not supporting
+      # the tokens file synchronization in the other direction
+      nodes_to_auth = []
+      nodes.each { |node|
+        nodes_to_auth << node if sync_not_supported_nodes.include?(node)
+        nodes_to_auth << node if not cluster_nodes.include?(node)
+      }
+      auth_responses2 = run_auth_requests(
+        nodes_to_auth, nodes, username, password, force, false
+      )
+      auth_responses.update(auth_responses2)
+    end
+  end
+
+  return auth_responses, sync_successful, sync_failed_nodes, sync_responses
+end
+
+def run_auth_requests(nodes_to_send, nodes_to_auth, username, password, force=false, local=true)
   data = {}
-  nodes.each_with_index { |node, index|
+  nodes_to_auth.each_with_index { |node, index|
     data["node-#{index}"] = node
   }
   data['username'] = username
@@ -863,34 +918,31 @@ def pcs_auth(nodes, username, password, force=false, local=true)
   data['bidirectional'] = 1 if not local
   data['force'] = 1 if force
 
-  node_response = {}
+  auth_responses = {}
   threads = []
-  nodes.each { |node|
+  nodes_to_send.each { |node|
     threads << Thread.new {
       code, response = send_request(node, 'auth', true, data)
       if 200 == code
         token = response.strip
         if '' == token
-          node_response[node] = {'status' => 'bad_password'}
+          auth_responses[node] = {'status' => 'bad_password'}
         else
-          node_response[node] = {'status' => 'ok', 'token' => token}
+          auth_responses[node] = {'status' => 'ok', 'token' => token}
         end
       else
-        node_response[node] = {'status' => 'noresponse'}
+        auth_responses[node] = {'status' => 'noresponse'}
       end
     }
   }
   threads.each { |t| t.join }
+  return auth_responses
+end
 
-  new_tokens = {}
-  node_response.each { |node, response|
-    new_tokens[node] = response['token'] if 'ok' == response['status']
-  }
-
-  tokens = read_tokens()
-  tokens.update(new_tokens)
-  write_tokens(tokens)
-
-  return node_response
+def send_local_configs_to_nodes(nodes, force=false, tokens={})
+  publisher = Cfgsync::ConfigPublisher.new(
+    Cfgsync::get_configs_local().values(), nodes, $cluster_name, tokens
+  )
+  return publisher.send(force)
 end
 

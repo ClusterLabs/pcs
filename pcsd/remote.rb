@@ -359,6 +359,7 @@ def set_configs(params)
     return JSON.generate({'status' => 'wrong_cluster_name'})
   end
 
+  force = configs_json['force']
   remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
   local_configs = Cfgsync::get_configs_local
 
@@ -369,7 +370,7 @@ def set_configs(params)
       # Save a remote config if it is a newer version than local. If the config
       # is not present on a local node, the node is beeing added to a cluster,
       # so we need to save the config as well.
-      if not local_configs.key?(name) or remote_cfg > local_configs[name]
+      if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
         local_configs[name].class.backup() if local_configs.key?(name)
         remote_cfg.save()
         result[name] = 'accepted'
@@ -1699,12 +1700,18 @@ def auth_nodes(params)
       else
         pass = node[1]
       end
-      result = pcs_auth([nodename], "hacluster", pass, true, true)
-      node_status = result[nodename]['status']
-      if 'ok' == node_status or 'already_authorized' == node_status
-        retval[nodename] = 0
-      else
+      result, sync_successful, _, _ = pcs_auth(
+        [nodename], "hacluster", pass, true, true
+      )
+      if not sync_successful
         retval[nodename] = 1
+      else
+        node_status = result[nodename]['status']
+        if 'ok' == node_status or 'already_authorized' == node_status
+          retval[nodename] = 0
+        else
+          retval[nodename] = 1
+        end
       end
     end
   }
@@ -1723,18 +1730,23 @@ def get_cluster_tokens(params)
 end
 
 def save_tokens(params)
-  tokens = read_tokens
+  new_tokens = {}
 
   params.each{|nodes|
     if nodes[0].start_with?"node:" and nodes[0].length > 5
       node = nodes[0][5..-1]
       token = nodes[1]
-      tokens[node] = token
+      new_tokens[node] = token
     end
   }
 
-  if write_tokens(tokens)
-    return [200, JSON.generate(tokens)]
+  tokens_cfg = Cfgsync::PcsdTokens.from_file('')
+  sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
+    tokens_cfg, new_tokens, get_corosync_nodes(), $cluster_name
+  )
+
+  if sync_successful
+    return [200, JSON.generate(read_tokens())]
   else
     return [400, "Cannot update tokenfile."]
   end
@@ -1742,7 +1754,6 @@ end
 
 def add_node_to_cluster(params)
   clustername = params["clustername"]
-  nodes = get_cluster_nodes(clustername)
   new_node = params["new_nodename"]
   tokens = read_tokens
 
@@ -1750,26 +1761,17 @@ def add_node_to_cluster(params)
     return [400, "New node is not authenticated."]
   end
 
-  auth_supported = true
-
+  # Save the new node token on all nodes in a cluster the new node is beeing
+  # added to. Send the token to one node and let the cluster nodes synchronize
+  # it by themselves.
   token_data = {"node:#{new_node}" => tokens[new_node]}
-  nodes.each { |n|
-    retval, out = send_request_with_token(n, "/save_tokens", true, token_data)
-    if retval == 404 # backward compatibility layer
-      auth_supported = false
-      break
-    elsif retval != 200
-      return [400, "Failed to save token of new node on node '#{n}'."]
-    end
-  }
-
-  if auth_supported
-    nodes << new_node
-    cluster_tokens = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
-    retval, out = send_request_with_token(new_node, "/save_tokens", true, cluster_tokens)
-    if retval != 200
-      return [400, "Failed to authenticate all nodes on new node"]
-    end
+  retval, out = send_cluster_request_with_token(
+    clustername, '/save_tokens', true, token_data
+  )
+  # If the cluster runs an old pcsd which doesn't support /save_tokens,
+  # ignore 404 in order to not prevent the node to be added.
+  if retval != 404 and retval != 200
+    return [400, 'Failed to save the token of the new node in target cluster.']
   end
 
   retval, out = send_cluster_request_with_token(clustername, "/add_node_all", true, params)
@@ -1788,21 +1790,14 @@ def fix_auth_of_cluster(params)
   clustername = params["clustername"]
   nodes = get_cluster_nodes(clustername)
   tokens_data = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
-  failed = []
 
-  nodes.each { |node|
-    retval, out = send_request_with_token(node, "/save_tokens", true, tokens_data)
-    if retval == 404
-      return [400, "Old version of PCS/PCSD is runnig on cluster nodes. Fixing authentication is not supported."]
-    elsif retval != 200
-      failed << node
-    end
-  }
-  if failed.length > 0
-    if failed.length == nodes.length
-      return [400, "Authentication failed."]
-    end
-    return [400, "Cannot store new tokens on nodes: #{failed.join(', ')}. Are they online?"]
+  retval, out = send_cluster_request_with_token(
+    clustername, "/save_tokens", true, tokens_data
+  )
+  if retval == 404
+    return [400, "Old version of PCS/PCSD is runnig on cluster nodes. Fixing authentication is not supported."]
+  elsif retval != 200
+    return [400, "Authentication failed."]
   end
   return [200, "Auhentication of nodes in cluster should be fixed."]
 end

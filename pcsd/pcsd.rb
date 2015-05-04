@@ -374,19 +374,21 @@ if not DISABLE_GUI
           session[:errorval] = status["cluster_name"]
           redirect '/manage'
         end
-
-        tokens = read_tokens
         begin
-          tokens.update(JSON.parse(out))
+          new_tokens = JSON.parse(out)
         rescue
           session[:error] = "cannotgettokens"
           session[:errorval] = status["cluster_name"]
           redirect '/manage'
         end
 
-        if not write_tokens(tokens)
-          session[:error] = "cannotgettokens"
-          session[:errorval] = status["cluster_name"]
+        sync_config = Cfgsync::PcsdTokens.from_file('')
+        pushed, _ = Cfgsync::save_sync_new_tokens(
+          sync_config, new_tokens, get_corosync_nodes(), $clustername
+        )
+        if not pushed
+          session[:error] = "configversionsconflict"
+          session[:errorval] = sync_config.class.name
           redirect '/manage'
         end
       end
@@ -395,9 +397,10 @@ if not DISABLE_GUI
       pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
 
       sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-      if not Cfgsync::save_sync_new_version(
+      pushed, _ = Cfgsync::save_sync_new_version(
         sync_config, get_corosync_nodes(), $cluster_name, true
       )
+      if not pushed
         session[:error] = 'configversionsconflict'
         session[:errorval] = sync_config.class.name
       end
@@ -461,9 +464,10 @@ if not DISABLE_GUI
     if code == 200
       pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
       sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-      if not Cfgsync::save_sync_new_version(
+      pushed, _ = Cfgsync::save_sync_new_version(
         sync_config, get_corosync_nodes(), $cluster_name, true
       )
+      if not pushed
         session[:error] = 'configversionsconflict'
         session[:errorval] = sync_config.class.name
       end
@@ -483,9 +487,10 @@ if not DISABLE_GUI
       end
     }
     sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-    if not Cfgsync::save_sync_new_version(
+    pushed, _ = Cfgsync::save_sync_new_version(
       sync_config, get_corosync_nodes(), $cluster_name, true
     )
+    if not pushed
       session[:error] = 'configversionsconflict'
       session[:errorval] = sync_config.class.name
     end

@@ -55,12 +55,25 @@ allowed_commands = {
   },
   'auth' => {
     'call' => lambda { |params|
-      pcs_auth(
+      auth_responses, sync_successful, sync_nodes_err, sync_responses = pcs_auth(
         params['nodes'] || [], params['username'] || '', params['password'] || '',
-        params['force'], params['local'],
+        params['force'], params['local']
       )
+      return {
+        'auth_responses' => auth_responses,
+        'sync_successful' => sync_successful,
+        'sync_nodes_err' => sync_nodes_err,
+        'sync_responses' => sync_responses,
+      }
     },
   },
+  'send_local_configs' => {
+    'call' => lambda { |params|
+      send_local_configs_to_nodes(
+        params['nodes'] || [], params['force'] || false
+      )
+    }
+  }
 }
 
 if allowed_commands.key?(command)

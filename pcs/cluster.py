@@ -211,9 +211,15 @@ def auth_nodes(nodes):
     }
     output, retval = utils.run_pcsdcli('auth', pcsd_data)
     if retval == 0 and output['status'] == 'ok' and output['data']:
-        failed_count = 0
+        failed = False
         try:
-            for node, result in output['data'].items():
+            if not output['data']['sync_successful']:
+                utils.err(
+                    "Some nodes had a newer tokens than the local node. "
+                    + "Local node's tokens were updated. "
+                    + "Please repeat the authentication if needed."
+                )
+            for node, result in output['data']['auth_responses'].items():
                 if result['status'] == 'ok':
                     print "{0}: Authorized".format(node)
                 elif result['status'] == 'already_authorized':
@@ -223,17 +229,28 @@ def auth_nodes(nodes):
                         "{0}: Username and/or password is incorrect".format(node),
                         False
                     )
-                    failed_count += 1
+                    failed = True
                 elif result['status'] == 'noresponse':
                     utils.err("Unable to communicate with {0}".format(node), False)
-                    failed_count += 1
+                    failed = True
                 else:
                     utils.err("Unexpected response from {0}".format(node), False)
-                    failed_count += 1
+                    failed = True
+            if output['data']['sync_nodes_err']:
+                utils.err(
+                    (
+                        "Unable to synchronize and save tokens on nodes: {0}. "
+                        + "Are they authorized?"
+                    ).format(
+                        ", ".join(output['data']['sync_nodes_err'])
+                    ),
+                    False
+                )
+                failed = True
         except:
             utils.err('Unable to communicate with pcsd')
-        if failed_count > 0:
-            sys.exit(failed_count)
+        if failed:
+            sys.exit(1)
         return
     utils.err('Unable to communicate with pcsd')
 
@@ -1160,6 +1177,23 @@ def cluster_node(argv):
                 print "%s: Corosync updated" % my_node
                 corosync_conf = output
         if corosync_conf != None:
+            # send local cluster pcsd configs to the new node
+            # may be used for sending corosync config as well in future
+            pcsd_data = {
+                'nodes': [node0],
+                'force': True,
+            }
+            output, retval = utils.run_pcsdcli('send_local_configs', pcsd_data)
+            if retval == 0 and output['status'] == 'ok' and output['data']:
+                try:
+                    node_response = output['data'][node0]
+                    if node_response['status'] not in ['ok', 'not_supported']:
+                        utils.err("Unable to set pcsd configs")
+                except:
+                    utils.err('Unable to communicate with pcsd')
+            else:
+                utils.err("Unable to set pcsd configs")
+
             utils.setCorosyncConfig(node0, corosync_conf)
             if "--enable" in utils.pcs_options:
                 utils.enableCluster(node0)

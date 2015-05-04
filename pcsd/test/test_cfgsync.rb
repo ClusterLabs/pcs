@@ -468,3 +468,239 @@ class TestConfigFetcher < Test::Unit::TestCase
     assert_equal([[], []], fetcher.fetch())
   end
 end
+
+
+class TestMergeTokens < Test::Unit::TestCase
+  def test_nothing_to_merge()
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {})
+    assert_equal(old_cfg.text.strip, new_cfg.text.strip)
+
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {'rh7-4' => 'token4'})
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "tokens": {
+    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
+    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
+    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
+    "rh7-4": "token4"
+  }
+}'
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {'rh7-3' => 'token3'})
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "tokens": {
+    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
+    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
+    "rh7-3": "token3"
+  }
+}'
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+  end
+
+  def test_only_old_to_merge()
+    to_merge = [
+      Cfgsync::PcsdTokens.from_text(
+'{
+  "format_version": 2,
+  "data_version": 1,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-4": "token4a"
+  }
+}'
+      )
+    ]
+
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {})
+    assert_equal(old_cfg.text.strip, new_cfg.text.strip)
+
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-4' => 'token4'})
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "tokens": {
+    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
+    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
+    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
+    "rh7-4": "token4"
+  }
+}'
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-3' => 'token3'})
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "tokens": {
+    "rh7-1": "2a8b40aa-b539-4713-930a-483468d62ef4",
+    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
+    "rh7-3": "token3"
+  }
+}'
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+  end
+
+  def test_one_to_merge()
+    to_merge = [
+      Cfgsync::PcsdTokens.from_text(
+'{
+  "format_version": 2,
+  "data_version": 11,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-4": "token4a"
+  }
+}'
+      )
+    ]
+
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {})
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 11,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
+    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
+    "rh7-4": "token4a"
+  }
+}'
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-4' => 'token4'})
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 11,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
+    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
+    "rh7-4": "token4"
+  }
+}'
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(old_cfg, to_merge, {'rh7-3' => 'token3'})
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 11,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-2": "76174e2c-09e8-4435-b318-5c6b8250a22c",
+    "rh7-3": "token3",
+    "rh7-4": "token4a"
+  }
+}'
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+  end
+
+  def test_more_to_merge()
+    to_merge_12 = Cfgsync::PcsdTokens.from_text(
+'{
+  "format_version": 2,
+  "data_version": 12,
+  "tokens": {
+    "rh7-2": "token2",
+    "rh7-4": "token4b"
+  }
+}'
+    )
+    to_merge_11 = Cfgsync::PcsdTokens.from_text(
+'{
+  "format_version": 2,
+  "data_version": 11,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-4": "token4a"
+  }
+}'
+    )
+
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 12,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-2": "token2",
+    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
+    "rh7-4": "token4b"
+  }
+}'
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, [to_merge_11, to_merge_12], {}
+    )
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, [to_merge_12, to_merge_11], {}
+    )
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 12,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-2": "token2",
+    "rh7-3": "55844951-9ae5-4103-bb4a-64f9c1ea0a71",
+    "rh7-4": "token4"
+  }
+}'
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, [to_merge_11, to_merge_12], {'rh7-4' => 'token4'}
+    )
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, [to_merge_12, to_merge_11], {'rh7-4' => 'token4'}
+    )
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+
+    new_cfg_text =
+'{
+  "format_version": 2,
+  "data_version": 12,
+  "tokens": {
+    "rh7-1": "token1",
+    "rh7-2": "token2",
+    "rh7-3": "token3",
+    "rh7-4": "token4b"
+  }
+}'
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, [to_merge_11, to_merge_12], {'rh7-3' => 'token3'}
+    )
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+    old_cfg = Cfgsync::PcsdTokens.from_file()
+    new_cfg = Cfgsync::merge_tokens_files(
+      old_cfg, [to_merge_12, to_merge_11], {'rh7-3' => 'token3'}
+    )
+    assert_equal(new_cfg_text, new_cfg.text.strip)
+  end
+end
+
