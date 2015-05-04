@@ -17,9 +17,14 @@ def token_file_path()
   return File.expand_path('~/.pcs/tokens')
 end
 
+def settings_file_path()
+  current_dir = File.expand_path(File.dirname(__FILE__))
+  return File.join(current_dir, 'pcs_settings.conf')
+end
+
 CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
 CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
-CFG_PCSD_SETTINGS = "pcs_settings.conf" unless defined? CFG_PCSD_SETTINGS
+CFG_PCSD_SETTINGS = settings_file_path() unless defined? CFG_PCSD_SETTINGS
 CFG_PCSD_TOKENS = token_file_path() unless defined? CFG_PCSD_TOKENS
 
 module Cfgsync
