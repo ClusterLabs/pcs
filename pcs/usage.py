@@ -293,23 +293,35 @@ Commands:
 
     move <resource id> [destination node] [--master] [lifetime=<lifetime>]
          [--wait[=n]]
-        Move resource off current node (and optionally onto destination node).
-        If --master is used the scope of the command is limited to the master
-        role and you must use the master id (instead of the resource id).
-        If lifetime is not specified it defaults to infinite.  If --wait is
-        specified, pcs will wait up to 'n' seconds for the resource to move
-        and then return 0 on success or 1 on error.  If 'n' is not specified it
-        defaults to 60 minutes.
+        Move the resource off the node it is currently running on by creating a
+        -INFINITY location constraint to ban the node.  If destination node is
+        specified the resource will be moved to that node by creating an
+        INFINITY location constraint to prefer the destination node.  If
+        --master is used the scope of the command is limited to the master role
+        and you must use the master id (instead of the resource id).  If
+        lifetime is specified then the constraint will expire after that time,
+        otherwise it defaults to infinity and the constraint can be cleared
+        manually with 'pcs resource clear' or 'pcs constraint delete'.  If
+        --wait is specified, pcs will wait up to 'n' seconds for the resource
+        to move and then return 0 on success or 1 on error.  If 'n' is not
+        specified it defaults to 60 minutes.
+        If you want the resource to preferably avoid running on some nodes but
+        be able to failover to them use 'pcs location avoids'.
 
     ban <resource id> [node] [--master] [lifetime=<lifetime>] [--wait[=n]]
         Prevent the resource id specified from running on the node (or on the
-        current node it is running on if no node is specified).
-        If --master is used the scope of the command is limited to the
-        master role and you must use the master id (instead of the resource id).
-        If lifetime is not specified it defaults to infinite.  If --wait is
-        specified, pcs will wait up to 'n' seconds for the resource to move
-        and then return 0 on success or 1 on error.  If 'n' is not specified it
-        defaults to 60 minutes.
+        current node it is running on if no node is specified) by creating a
+        -INFINITY location constraint.  If --master is used the scope of the
+        command is limited to the master role and you must use the master id
+        (instead of the resource id).  If lifetime is specified then the
+        constraint will expire after that time, otherwise it defaults to
+        infinity and the constraint can be cleared manually with 'pcs resource
+        clear' or 'pcs constraint delete'.  If --wait is specified, pcs will
+        wait up to 'n' seconds for the resource to move and then return 0
+        on success or 1 on error. If 'n' is not specified it defaults to 60
+        minutes.
+        If you want the resource to preferably avoid running on some nodes but
+        be able to failover to them use 'pcs location avoids'.
 
     clear <resource id> [node] [--master] [--wait[=n]]
         Remove constraints created by move and/or ban on the specified
