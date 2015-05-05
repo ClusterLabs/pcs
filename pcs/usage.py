@@ -250,12 +250,12 @@ Commands:
         to start and then return 0 if the resource is started, or 1 if
         the resource has not yet started.  If 'n' is not specified it defaults
         to 60 minutes.
-        Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \\
-                     ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s \\
-                     nic=eth2
-                 Create a new resource called 'VirtualIP' with IP address
-                 192.168.0.99, netmask of 32, monitored everything 30 seconds,
-                 on eth2.
+        Example: Create a new resource called 'VirtualIP' with IP address
+            192.168.0.99, netmask of 32, monitored everything 30 seconds,
+            on eth2.
+            pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \\
+                ip=192.168.0.99 cidr_netmask=32 nic=eth2 \\
+                op monitor interval=30s
 
     delete <resource id|group id|master id|clone id>
         Deletes the resource, group, master or clone (and all resources within
@@ -350,8 +350,8 @@ Commands:
         found operation with the same action on the specified resource, if no
         operation with that action exists then a new operation will be created.
         (WARNING: all current options on the update op will be reset if not
-        specified) If you want to create multiple monitor operations you should
-        use the add_operation & remove_operation commands.  If --wait is
+        specified.)  If you want to create multiple monitor operations you
+        should use the add_operation & remove_operation commands.  If --wait is
         specified, pcs will wait up to 'n' seconds for the changes to take
         effect and then return 0 if the changes have been processed or 1
         otherwise.  If 'n' is not specified it defaults to 60 minutes.
@@ -424,7 +424,7 @@ Commands:
     master [<master/slave name>] <resource id | group name> [options]
            [--wait[=n]]
         Configure a resource or group as a multi-state (master/slave) resource.
-        If --wait is specified pcs will wait up to 'n' seconds for the operation
+        If --wait is specified, pcs will wait up to 'n' seconds for the operation
         to finish (including starting and promoting resource instances if
         appropriate) and then return 0 on success or 1 on error.  If 'n' is not
         specified it defaults to 60 minutes.
@@ -522,14 +522,14 @@ Commands:
             [--ipv6] [--token <timeout>] [--token_coefficient <timeout>]
             [--join <timeout>] [--consensus <timeout>] [--miss_count_const <count>]
             [--fail_recv_const <failures>]
-        Configure corosync and sync configuration out to listed nodes
-        --local will only perform changes on the local node
-        --start will also start the cluster on the specified nodes
-        --enable will enable corosync and pacemaker on node startup
-        --transport allows specification of corosync transport (default: udpu)
+        Configure corosync and sync configuration out to listed nodes.
+        --local will only perform changes on the local node,
+        --start will also start the cluster on the specified nodes,
+        --enable will enable corosync and pacemaker on node startup,
+        --transport allows specification of corosync transport (default: udpu),
         --rrpmode allows you to set the RRP mode of the system. Currently only
             'passive' is supported or tested (using 'active' is not
-            recommended)
+            recommended).
         The --wait_for_all, --auto_tie_breaker, --last_man_standing,
         --last_man_standing_window options are all documented in corosync's
         votequorum(5) man page.
@@ -701,8 +701,8 @@ Commands:
     destroy [--all]
         Permanently destroy the cluster on the current node, killing all
         corosync/pacemaker processes removing all cib files and the
-        corosync.conf file.  Using '--all' will attempt to destroy the
-        cluster on all nodes configure in the corosync.conf file
+        corosync.conf file.  Using --all will attempt to destroy the
+        cluster on all nodes configure in the corosync.conf file.
         WARNING: This command permantly removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster.
@@ -710,13 +710,13 @@ Commands:
     verify [-V] [filename]
         Checks the pacemaker configuration (cib) for syntax and common
         conceptual errors.  If no filename is specified the check is
-        performmed on the currently running cluster.  If '-V' is used
+        performmed on the currently running cluster.  If -V is used
         more verbose output will be printed
 
     report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D" H:M:S"]] dest
         Create a tarball containing everything needed when reporting cluster
-        problems.  If '--from' and '--to' are not used, the report will include
-        the past 24 hours
+        problems.  If --from and --to are not used, the report will include
+        the past 24 hours.
 """
     if pout:
         print sub_usage(args, output)
@@ -788,7 +788,7 @@ Commands:
         call to stonith which will turn the node off instead of rebooting it)
 
     confirm <node>
-        Confirm that the host specified is currently down
+        Confirm that the host specified is currently down.
         WARNING: if this node is not actually down data corruption/cluster
         failure can occur.
 
@@ -807,7 +807,7 @@ Configure pacemaker properties
 
 Commands:
     list|show [<property> | --all | --defaults]
-        List property settings (default: lists configured properties)
+        List property settings (default: lists configured properties).
         If --defaults is specified will show all property defaults, if --all
         is specified, current configured properties will be shown with unset
         properties and their defaults.
@@ -817,7 +817,7 @@ Commands:
         Set specific pacemaker properties (if the value is blank then the
         property is removed from the configuration).  If a property is not
         recognized by pcs the property will not be created unless the
-        '--force' is used.  If --node is used a node attribute is set on
+        --force is used.  If --node is used a node attribute is set on
         the specified node.
         Run 'man pengine' and 'man crmd' to get a description of the properties.
 
@@ -866,7 +866,7 @@ Commands:
           <expression> and|or <expression>
           ( <expression> )
         where duration options and date spec options are: hours, monthdays,
-        weekdays, yeardays, months, weeks, years, weekyears, moon
+        weekdays, yeardays, months, weeks, years, weekyears, moon.
         If score is omitted it defaults to INFINITY. If id is omitted one is
         generated from the resource id. If resource-discovery is omitted it
         defaults to 'always'.
@@ -876,7 +876,7 @@ Commands:
         location constraints are displayed per resource (default), if 'nodes'
         is specified location constraints are displayed per node.  If specific
         nodes or resources are specified then we only show information about
-        them
+        them.  If --full is specified show the internal constraint id's as well.
 
     location add <id> <resource name> <node> <score> [resource-discovery=<option>]
         Add a location constraint with the appropriate id, resource name,
@@ -887,7 +887,7 @@ Commands:
         node name and score. (For more advanced pacemaker usage)
 
     order show [--full]
-        List all current ordering constraints (if '--full' is specified show
+        List all current ordering constraints (if --full is specified show
         the internal constraint id's as well).
 
     order [action] <resource id> then [action] <resource id> [options]
@@ -910,7 +910,7 @@ Commands:
         Remove resource from any ordering constraint
 
     colocation show [--full]
-        List all current colocation constraints (if '--full' is specified show
+        List all current colocation constraints (if --full is specified show
         the internal constraint id's as well).
 
     colocation add [master|slave] <source resource id> with [master|slave]

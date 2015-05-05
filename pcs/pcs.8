@@ -56,7 +56,9 @@ describe <standard:provider:type|type>
 Show options for the specified resource
 .TP
 create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
-Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created.  If \fB\-\-group\fR is specified the resource is added to the group named.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group.  If \fB\-\-disabled\fR is specified the resource is not started automatically.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.  If 'n' is not specified it defaults to 60 minutes.  Example: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \e ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s \e Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2.
+Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created.  If \fB\-\-group\fR is specified the resource is added to the group named.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group.  If \fB\-\-disabled\fR is specified the resource is not started automatically.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.  If 'n' is not specified it defaults to 60 minutes.
+
+Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
 .TP
 delete <resource id|group id|master id|clone id>
 Deletes the resource, group, master or clone (and all resources within the group/master/clone).
@@ -92,7 +94,7 @@ agents [standard[:provider]]
 List available agents optionally filtered by standard and provider
 .TP
 update <resource id> [resource options] [op [<operation action> <operation options>]...] [meta <meta operations>...] [\fB\-\-wait\fR[=n]]
-Add/Change options to specified resource, clone or multi\-state resource.  If an operation (op) is specified it will update the first found operation with the same action on the specified resource, if no operation with that action exists then a new operation will be created (WARNING: all current options on the update op will be reset if not specified). If you want to create multiple monitor operations you should use the add_operation & remove_operation commands.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise.  If 'n' is not specified it defaults to 60 minutes.
+Add/Change options to specified resource, clone or multi\-state resource.  If an operation (op) is specified it will update the first found operation with the same action on the specified resource, if no operation with that action exists then a new operation will be created.  (WARNING: all current options on the update op will be reset if not specified.)  If you want to create multiple monitor operations you should use the add_operation & remove_operation commands.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise.  If 'n' is not specified it defaults to 60 minutes.
 .TP
 op add <resource id> <operation action> [operation properties]
 Add operation for specified resource
@@ -125,7 +127,7 @@ unclone <resource id | group name> [\fB\-\-wait\fR[=n]]
 Remove the clone which contains the specified group or resource (the resource or group will not be removed).  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including stopping clone instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
 master [<master/slave name>] <resource id | group name> [options] [\fB\-\-wait\fR[=n]]
-Configure a resource or group as a multi\-state (master/slave) resource.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting and promoting resource instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
+Configure a resource or group as a multi\-state (master/slave) resource.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting and promoting resource instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.  Note: to remove a master you must remove the resource/group it contains.
 .TP
 manage <resource id> ... [resource n]
 Set resources listed to managed mode (default)
@@ -137,7 +139,7 @@ defaults [options]
 Set default values for resources, if no options are passed, lists currently configured defaults
 .TP
 cleanup [<resource id>]
-Cleans up the resource in the lrmd (useful to reset the resource status and failcount). This tells the cluster to forget the operation history of a resource and re-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved. If resource id is not specified then all resources/stonith devices will be cleaned up.
+Cleans up the resource in the lrmd (useful to reset the resource status and failcount). This tells the cluster to forget the operation history of a resource and re-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved. If a resource id is not specified then all resources/stonith devices will be cleaned up.
 .TP
 failcount show <resource id> [node]
 Show current failcount for specified resource from all nodes or only on specified node
@@ -146,10 +148,10 @@ failcount reset <resource id> [node]
 Reset failcount for specified resource on all nodes or only on specified node. This tells the cluster to forget how many times a resource has failed in the past.  This may allow the resource to be started or moved to a more preferred location.
 .SS "cluster"
 .TP
-auth [node] [...] [\fB\-u\fR username] [\fB\-p\fR password] [\fB\-\-local\fR] [\fB\-\-force\fR]
+auth [node] [...] [\fB\-u\fR username] [\fB\-p\fR password] [\fB\-\-force\fR] [\fB\-\-local\fR]
 Authenticate pcs to pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified (authorization tokens are stored in ~/.pcs/tokens or /var/lib/pcsd/tokens for root).  By default all nodes are also authenticated to each other, using \fB\-\-local\fR only authenticates the local node (and does not authenticate the remote nodes with each other).  Using \fB\-\-force\fR forces re-authentication to occur.
 .TP
-setup [\fB\-\-start\fR] [\fB\-\-local\fR] [\fB\-\-enable\fR] \fB\-\-name\fR <cluster name> <node1[,node1-altaddr]> [node2[,node2-altaddr]] [..] [\fB\-\-transport\fR <udpu|udp>] [\fB\-\-rrpmode\fR active|passive] [\fB\-\-addr0\fR <addr/net> [[[\fB\-\-mcast0\fR <address>] [\fB\-\-mcastport0\fR <port>] [\fB\-\-ttl0\fR <ttl>]] | [\fB\-\-broadcast0\fR]] [\fB\-\-addr1\fR <addr/net> [[[\fB\-\-mcast1\fR <address>] [\fB\-\-mcastport1\fR <port>] [\fB\-\-ttl1\fR <ttl>]] | [\fB\-\-broadcast1\fR]]]] [\fB\-\-wait_for_all\fR=<0|1>] [\fB\-\-auto_tie_breaker\fR=<0|1>] [\fB\-\-last_man_standing\fR=<0|1> [\fB\-\-last_man_standing_window\fR=<time in ms>]] [\fB\-\-token\fR <timeout>] [\fB\-\-token_coefficient\fR <timeout>] [\fB\-\-join\fR <timeout>] [\fB\-\-consensus\fR <timeout>] [\fB\-\-miss_count_const\fR <count>] [\fB\-\-fail_recv_const\fR <failures>]
+setup [\fB\-\-start\fR] [\fB\-\-local\fR] [\fB\-\-enable\fR] \fB\-\-name\fR <cluster name> <node1[,node1-altaddr]> [node2[,node2-altaddr]] [..] [\fB\-\-transport\fR <udpu|udp>] [\fB\-\-rrpmode\fR active|passive] [\fB\-\-addr0\fR <addr/net> [[[\fB\-\-mcast0\fR <address>] [\fB\-\-mcastport0\fR <port>] [\fB\-\-ttl0\fR <ttl>]] | [\fB\-\-broadcast0\fR]] [\fB\-\-addr1\fR <addr/net> [[[\fB\-\-mcast1\fR <address>] [\fB\-\-mcastport1\fR <port>] [\fB\-\-ttl1\fR <ttl>]] | [\fB\-\-broadcast1\fR]]]] [\fB\-\-wait_for_all\fR=<0|1>] [\fB\-\-auto_tie_breaker\fR=<0|1>] [\fB\-\-last_man_standing\fR=<0|1> [\fB\-\-last_man_standing_window\fR=<time in ms>]] [\fB\-\-ipv6\fR] [\fB\-\-token\fR <timeout>] [\fB\-\-token_coefficient\fR <timeout>] [\fB\-\-join\fR <timeout>] [\fB\-\-consensus\fR <timeout>] [\fB\-\-miss_count_const\fR <count>] [\fB\-\-fail_recv_const\fR <failures>]
 Configure corosync and sync configuration out to listed nodes. \fB\-\-local\fR will only perform changes on the local node, \fB\-\-start\fR will also start the cluster on the specified nodes, \fB\-\-enable\fR will enable corosync and pacemaker on node startup, \fB\-\-transport\fR allows specification of corosync transport (default: udpu), \fB\-\-rrpmode\fR allows you to set the RRP mode of the system. Currently only 'passive' is supported or tested (using 'active' is not recommended). The \fB\-\-wait_for_all\fR, \fB\-\-auto_tie_breaker\fR, \fB\-\-last_man_standing\fR, \fB\-\-last_man_standing_window\fR options are all documented in corosync's votequorum(5) man page.
 
 \fB\-\-ipv6\fR will configure corosync to use ipv6 (instead of ipv4)
@@ -264,14 +266,14 @@ verify [\fB\-V\fR] [filename]
 Checks the pacemaker configuration (cib) for syntax and common conceptual errors.  If no filename is specified the check is performmed on the currently running cluster.  If \fB\-V\fR is used more verbose output will be printed
 .TP
 report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D" H:M:S"]] dest
-Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours
+Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours.
 .SS "stonith"
 .TP
 show [stonith id] [\fB\-\-full\fR]
 Show all currently configured stonith devices or if a stonith id is specified show the options for the configured stonith device.  If \fB\-\-full\fR is specified all configured stonith options will be displayed
 .TP
 list [filter] [\fB\-\-nodesc\fR]
-Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of stontih agents are not printed.
+Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of stonith agents are not printed.
 .TP
 describe <stonith agent>
 Show options for specified stonith agent
