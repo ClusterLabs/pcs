@@ -2127,7 +2127,10 @@ Colocation Constraints:
 """)
 
         output, returnVal = pcs(temp_cib, "resource ban dummy rh7-1")
-        ac(output, "")
+        ac(output, """\
+Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1.
+This will prevent dummy from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+""")
         self.assertEquals(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
@@ -2185,7 +2188,10 @@ Colocation Constraints:
         output, returnVal = pcs(
             temp_cib, "resource ban dummy rh7-1 lifetime=P1H"
         )
-        ac(output, "")
+        ac(output, """\
+Warning: Creating location constraint cli-ban-dummy-on-rh7-1 with a score of -INFINITY for resource dummy on node rh7-1.
+This will prevent dummy from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+""")
         self.assertEquals(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")
@@ -2262,7 +2268,10 @@ Error: when specifying --master you must use the master id
         self.assertEquals(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource ban DG-clone rh7-1")
-        ac(output, "")
+        ac(output, """\
+Warning: Creating location constraint cli-ban-DG-clone-on-rh7-1 with a score of -INFINITY for resource DG-clone on node rh7-1.
+This will prevent DG-clone from running on rh7-1 until the constraint is removed. This will be the case even if rh7-1 is the last node in the cluster.
+""")
         self.assertEquals(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint --full")

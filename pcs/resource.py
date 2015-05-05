@@ -649,6 +649,30 @@ def resource_move(argv,clear=False,ban=False):
         if "Resource '"+resource_id+"' not moved: active in 0 locations." in output:
             utils.err("You must specify a node when moving/banning a stopped resource")
         utils.err ("error moving/banning/clearing resource\n" + output)
+    else:
+        warning_re = re.compile(
+            r"WARNING: Creating rsc_location constraint '([^']+)' "
+            + r"with a score of -INFINITY for resource ([\S]+) on (.+)."
+        )
+        for line in output.split("\n"):
+            warning_match = warning_re.search(line)
+            if warning_match:
+                warning_constraint = warning_match.group(1)
+                warning_resource = warning_match.group(2)
+                warning_node = warning_match.group(3)
+                warning_action = "running"
+                if "--master" in utils.pcs_options:
+                    warning_action = "being promoted"
+                print ("Warning: Creating location constraint {0} with a score "
+                    + "of -INFINITY for resource {1} on node {2}.").format(
+                        warning_constraint, warning_resource, warning_node
+                    )
+                print ("This will prevent {0} from {1} on {2} until the "
+                    + "constraint is removed. This will be the case even if {3}"
+                    + " is the last node in the cluster.").format(
+                        warning_resource, warning_action, warning_node,
+                        warning_node
+                    )
 
     if "--wait" in utils.pcs_options:
         args = ["crm_resource", "--wait"]
