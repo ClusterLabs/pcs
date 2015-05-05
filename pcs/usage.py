@@ -798,7 +798,8 @@ Commands:
         List property settings (default: lists configured properties)
         If --defaults is specified will show all property defaults, if --all
         is specified, current configured properties will be shown with unset
-        properties and their defaults
+        properties and their defaults.
+        Run 'man pengine' and 'man crmd' to get a description of the properties.
 
     set [--force] [--node <nodename>] <property>=[<value>]
         Set specific pacemaker properties (if the value is blank then the
@@ -806,10 +807,12 @@ Commands:
         recognized by pcs the property will not be created unless the
         '--force' is used.  If --node is used a node attribute is set on
         the specified node.
+        Run 'man pengine' and 'man crmd' to get a description of the properties.
 
     unset [--node <nodename>] <property>
         Remove property from configuration (or remove attribute from
         specified node if --node is used).
+        Run 'man pengine' and 'man crmd' to get a description of the properties.
 
 Examples:
     pcs property set stonith-enabled=false
