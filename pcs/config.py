@@ -177,20 +177,27 @@ def config_restore_remote(infile_name, infile_obj):
     if not node_list:
         utils.err("no nodes found in the tarball")
 
+    err_msgs = []
     for node in node_list:
         try:
             retval, output = utils.checkStatus(node)
             if retval != 0:
-                utils.err("unable to determine status of the node %s" % node)
+                err_msgs.append(output)
+                continue
             status = json.loads(output)
             if status["corosync"] or status["pacemaker"] or status["cman"]:
-                utils.err(
+                err_msgs.append(
                     "Cluster is currently running on node %s. You need to stop "
                         "the cluster in order to restore the configuration."
                     % node
                 )
+                continue
         except (ValueError, NameError):
-            utils.err("unable to determine status of the node %s" % node)
+            err_msgs.append("unable to determine status of the node %s" % node)
+    if err_msgs:
+        for msg in err_msgs:
+            utils.err(msg, False)
+        sys.exit(1)
 
     if infile_obj:
         infile_obj.seek(0)
