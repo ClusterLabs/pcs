@@ -415,11 +415,13 @@ if not DISABLE_GUI
     @manage = true
     @cluster_name = params[:clustername]
     @nodes = []
+    nodes_with_indexes = []
     @nodes_rrp = []
     options = {}
     params.each {|k,v|
       if k.start_with?("node-") and v != ""
         @nodes << v
+        nodes_with_indexes << [k[5..-1].to_i, v]
         if params.has_key?("ring1-" + k) and params["ring1-" + k] != ""
           @nodes_rrp << v + "," + params["ring1-" + k]
         else
@@ -458,18 +460,33 @@ if not DISABLE_GUI
       end
     }
 
-    $logger.info("Sending setup cluster request for: " + @cluster_name + " to: " + @nodes[0])
-    code,out = send_request_with_token(@nodes[0], "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes_rrp.join(';'), :options => options.to_json}, true, nil, 60)
+    # the first node from the form is the source of config files
+    node_to_send_to = nodes_with_indexes.sort[0][1]
+    $logger.info(
+      "Sending setup cluster request for: #{@cluster_name} to: #{node_to_send_to}"
+    )
+    code,out = send_request_with_token(node_to_send_to, "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes_rrp.join(';'), :options => options.to_json}, true, nil, 60)
 
     if code == 200
-      pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
-      sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-      pushed, _ = Cfgsync::save_sync_new_version(
-        sync_config, get_corosync_nodes(), $cluster_name, true
-      )
+      pushed = false
+      2.times {
+        # Add the new cluster to config and publish the config.
+        # If this host is a node of the cluster, some other node may send its
+        # own PcsdSettings.  To handle it we just need to reload the config, as
+        # we are waiting for the request to finish, so no locking is needed.
+        # If we are in a different cluster we just try twice to update the
+        # config, dealing with any updates in between.
+        pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+        pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
+        sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+        pushed, _ = Cfgsync::save_sync_new_version(
+          sync_config, get_corosync_nodes(), $cluster_name, true
+        )
+        break if pushed
+      }
       if not pushed
         session[:error] = 'configversionsconflict'
-        session[:errorval] = sync_config.class.name
+        session[:errorval] = Cfgsync::PcsdSettings.name
       end
     else
       session[:error] = "unabletocreate"

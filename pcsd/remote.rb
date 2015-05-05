@@ -351,7 +351,6 @@ def set_configs(params)
   begin
     configs_json = JSON.parse(params['configs'])
   rescue JSON::ParserError
-    $logger.info 'JSON parse error'
     return JSON.generate({'status' => 'bad_json'})
   end
   has_cluster = !($cluster_name == nil or $cluster_name.empty?)

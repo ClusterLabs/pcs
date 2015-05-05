@@ -941,7 +941,7 @@ end
 
 def send_local_configs_to_nodes(nodes, force=false, tokens={})
   publisher = Cfgsync::ConfigPublisher.new(
-    Cfgsync::get_configs_local().values(), nodes, $cluster_name, tokens
+    Cfgsync::get_configs_local(true).values(), nodes, $cluster_name, tokens
   )
   return publisher.send(force)
 end

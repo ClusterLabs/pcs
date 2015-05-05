@@ -119,10 +119,7 @@ def cluster_cmd(argv):
 # corosync & pacemaker on the nodes
 # partial_argv is an array of args passed to corosync configure sync_start
 def sync_start(partial_argv, nodes):
-    argv = partial_argv[:]
-    config = corosync_setup(argv,True)
-    for node in nodes:
-        utils.setCorosyncConfig(node,config)
+    sync(partial_argv, nodes)
     print "Starting cluster on nodes: " + ", ".join(nodes) + "..."
     start_cluster_nodes(nodes)
 
@@ -130,6 +127,28 @@ def sync(partial_argv,nodes):
     argv = partial_argv[:]
     config = corosync_setup(argv,True)
     sync_nodes(nodes,config)
+    # send local cluster pcsd configs to the new nodes
+    # may be used for sending corosync config as well in future
+    pcsd_data = {
+        'nodes': nodes,
+        'force': True,
+    }
+    output, retval = utils.run_pcsdcli('send_local_configs', pcsd_data)
+    if retval == 0 and output['status'] == 'ok' and output['data']:
+        err_msgs = []
+        try:
+            for node in nodes:
+                node_response = output['data'][node]
+                if node_response['status'] not in ['ok', 'not_supported']:
+                    err_msgs.append(
+                        "Unable to set pcsd configs on {0}".format(node)
+                    )
+        except:
+            err_msgs.append('Unable to communicate with pcsd')
+    else:
+        err_msgs.append("Unable to set pcsd configs")
+    for err_msg in err_msgs:
+        print "Warning: {0}".format(err_msg)
 
 def sync_nodes(nodes,config):
     for node in nodes:

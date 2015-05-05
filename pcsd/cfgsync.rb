@@ -478,7 +478,7 @@ module Cfgsync
     unknown_config_names = []
     sync_msg['configs'].each { |name, data|
       if cfg_classes[name]
-        if 'file' == data['type'] and data['text'] and not data['text'].strip.empty?
+        if 'file' == data['type'] and data['text']
           configs[name] = cfg_classes[name].from_text(data['text'])
         end
       else
@@ -488,11 +488,12 @@ module Cfgsync
     return configs, unknown_config_names
   end
 
-  def self.get_configs_local()
+  def self.get_configs_local(with_missing=false)
+    default = with_missing ? '' : nil
     configs = {}
     self.get_cfg_classes.each { |cfg_class|
       begin
-        configs[cfg_class.name] = cfg_class.from_file
+        configs[cfg_class.name] = cfg_class.from_file(default)
       rescue
       end
     }
