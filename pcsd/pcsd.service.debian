@@ -1,0 +1,9 @@
+[Unit]
+Description=PCS GUI and remote configuration interface
+
+[Service]
+EnvironmentFile=/etc/default/pcsd
+ExecStart=/usr/bin/ruby -C/var/lib/pcsd -I/usr/share/pcsd -- /usr/share/pcsd/ssl.rb & > /dev/null &
+
+[Install]
+WantedBy=multi-user.target
