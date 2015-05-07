@@ -1,3 +1,16 @@
+# Compatibility with GNU/Linux [i.e. Debian] based distros
+UNAME_OS_GNU := $(shell if uname -o | grep -q "GNU/Linux" ; then echo true; else echo false; fi)
+UNAME_KERNEL_DEBIAN := $(shell if uname -v | grep -q "Debian" ; then echo true; else echo false; fi)
+IS_DEBIAN=false
+UNAME_DEBIAN_VER_8=false
+
+ifeq ($(UNAME_OS_GNU),true)
+  ifeq ($(UNAME_KERNEL_DEBIAN),true)
+    IS_DEBIAN=true
+    UNAME_DEBIAN_VER_8 := $(shell if grep -q -i "8" /etc/debian_version ; then echo true; else echo false; fi)
+  endif
+endif
+
 ifndef PYTHON_SITELIB
   PYTHON_SITELIB=$(shell python2 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
 endif
@@ -8,19 +21,34 @@ ifeq ($(PYTHON_SITELIB), /usr/lib/python2.7/dist-packages)
   EXTRA_SETUP_OPTS="--install-layout=deb"
 endif
 
+# Check for systemd presence, add compatibility with Debian based distros
 IS_SYSTEMCTL=false
-ifeq ("$(wildcard /usr/bin/systemctl)","/usr/bin/systemctl")
-  IS_SYSTEMCTL=true
+
+ifeq ($(IS_DEBIAN),true)
+  IS_SYSTEMCTL = $(shell if ps -p 1 -o comm= | grep -q -i "systemd" ; then echo true; else echo false; fi)
 else
-  ifeq ("$(wildcard /bin/systemctl)","/usr/bin/systemctl")
+  ifeq ("$(wildcard /usr/bin/systemctl)","/usr/bin/systemctl")
     IS_SYSTEMCTL=true
+  else
+    ifeq ("$(wildcard /bin/systemctl)","/usr/bin/systemctl")
+      IS_SYSTEMCTL=true
+    endif
   endif
+endif
+
+# Check for an override for building gems
+ifndef BUILD_GEMS
+  BUILD_GEMS=true
 endif
 
 MANDIR=/usr/share/man
 
 ifndef PREFIX
   PREFIX=$(shell prefix=`python2 -c "import sys; print(sys.prefix)"` || prefix="/usr"; echo $$prefix)
+endif
+
+ifndef systemddir
+  systemddir=/usr/lib/systemd
 endif
 
 ifndef initdir
@@ -36,28 +64,48 @@ install: bash_completion
 	install -m644 -D pcs/pcs.8 ${DESTDIR}/${MANDIR}/man8/pcs.8
 
 install_pcsd:
+ifeq ($(BUILD_GEMS),true)
 	make -C pcsd build_gems
+endif
 	mkdir -p ${DESTDIR}/var/log/pcsd
+ifeq ($(IS_DEBIAN),true)
+	mkdir -p ${DESTDIR}/usr/share/
+	cp -r pcsd ${DESTDIR}/usr/share/
+	install -m 644 -D pcsd/pcsd.conf ${DESTDIR}/etc/default/pcsd
+	install -d ${DESTDIR}/etc/pam.d
+	install  pcsd/pcsd.pam.debian ${DESTDIR}/etc/pam.d/pcsd
+  ifeq ($(IS_SYSTEMCTL),true)
+	install -d ${DESTDIR}/${systemddir}/system/
+	install -m 644 pcsd/pcsd.service.debian ${DESTDIR}/${systemddir}/system/pcsd.service
+  else
+	install -m 755 -D pcsd/pcsd.debian ${DESTDIR}/${initdir}/pcsd
+  endif
+else
 	mkdir -p ${DESTDIR}${PREFIX}/lib/
 	cp -r pcsd ${DESTDIR}${PREFIX}/lib/
 	install -m 644 -D pcsd/pcsd.conf ${DESTDIR}/etc/sysconfig/pcsd
 	install -d ${DESTDIR}/etc/pam.d
 	install  pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
+  ifeq ($(IS_SYSTEMCTL),true)
+	install -d ${DESTDIR}/${systemddir}/system/
+	install -m 644 pcsd/pcsd.service ${DESTDIR}/${systemddir}/system/
+  else
+	install -m 755 -D pcsd/pcsd ${DESTDIR}/${initdir}/pcsd
+  endif
+endif
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	install -m 644 -D pcsd/pcsd.logrotate ${DESTDIR}/etc/logrotate.d/pcsd
-ifeq ($(IS_SYSTEMCTL),true)
-	install -d ${DESTDIR}/usr/lib/systemd/system/
-	install -m 644 pcsd/pcsd.service ${DESTDIR}/usr/lib/systemd/system/
-else
-	install -m 755 -D pcsd/pcsd ${DESTDIR}/${initdir}/pcsd
-endif
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/sbin/pcs
 	rm -rf ${DESTDIR}${PYTHON_SITELIB}/pcs
+ifeq ($(IS_DEBIAN),true)
+	rm -rf ${DESTDIR}/usr/share/pcsd
+else
 	rm -rf ${DESTDIR}${PREFIX}/lib/pcsd
+endif
 ifeq ($(IS_SYSTEMCTL),true)
-	rm -f ${DESTDIR}/usr/lib/systemd/system/pcsd.service
+	rm -f ${DESDIR}/${systemddir}/system/pcsd.service
 else
 	rm -f ${DESTDIR}/${initdir}/pcsd
 endif
