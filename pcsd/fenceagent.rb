@@ -43,7 +43,6 @@ def getFenceAgentMetadata(fenceagentname)
   options_required = {}
   options_optional = {}
   options_advanced = {
-      "timeout" => "",
       "priority" => "",
       "pcmk_host_argument" => "",
       "pcmk_host_map" => "",
