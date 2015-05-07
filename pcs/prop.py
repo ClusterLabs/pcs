@@ -32,9 +32,8 @@ def set_property(argv):
         if "--node" in utils.pcs_options:
             utils.set_node_attribute(args[0], args[1], utils.pcs_options["--node"])
         elif ("--force" in utils.pcs_options) or utils.is_valid_property(args[0]):
-            id_valid, id_error = utils.validate_xml_id(args[0], 'property name')
-            if not id_valid:
-                utils.err(id_error)
+            if not args[0]:
+                utils.err("property name cannot be empty")
             utils.set_cib_property(args[0],args[1])
         else:
             utils.err("unknown cluster property: '%s', (use --force to override)" % args[0])

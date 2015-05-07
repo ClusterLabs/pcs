@@ -116,8 +116,8 @@ class PropertyTest(unittest.TestCase):
         assert r==1
         ac(o,"Error: unknown cluster property: 'xxxx', (use --force to override)\n")
 
-        output, returnVal = pcs("property set 1234=5678 --force")
-        ac(output, "Error: invalid property name '1234', '1' is not a valid first character for a property name\n")
+        output, returnVal = pcs("property set =5678 --force")
+        ac(output, "Error: property name cannot be empty\n")
         assert returnVal == 1
 
         o,r = pcs("property unset zzzzz")
