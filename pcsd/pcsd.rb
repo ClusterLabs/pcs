@@ -384,7 +384,7 @@ if not DISABLE_GUI
 
         sync_config = Cfgsync::PcsdTokens.from_file('')
         pushed, _ = Cfgsync::save_sync_new_tokens(
-          sync_config, new_tokens, get_corosync_nodes(), $clustername
+          sync_config, new_tokens, get_corosync_nodes(), $cluster_name
         )
         if not pushed
           session[:error] = "configversionsconflict"
