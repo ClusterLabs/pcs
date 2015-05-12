@@ -1,6 +1,6 @@
 # Compatibility with GNU/Linux [i.e. Debian] based distros
 UNAME_OS_GNU := $(shell if uname -o | grep -q "GNU/Linux" ; then echo true; else echo false; fi)
-UNAME_KERNEL_DEBIAN := $(shell if uname -v | grep -q "Debian" ; then echo true; else echo false; fi)
+UNAME_KERNEL_DEBIAN := $(shell if uname -v | grep -q "Debian\|Ubuntu" ; then echo true; else echo false; fi)
 IS_DEBIAN=false
 UNAME_DEBIAN_VER_8=false
 
