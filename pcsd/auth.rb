@@ -77,7 +77,7 @@ class PCSAuth
 
   def self.isLoggedIn(session, cookies)
     if username = validToken(cookies["token"])
-      if username == "hacluster" and $cookies.key?(:CIB_user) and $cookies.key?(:CIB_user) != ""
+      if username == SUPERUSER and $cookies.key?(:CIB_user) and $cookies.key?(:CIB_user) != ""
         $session[:username] = $cookies[:CIB_user]
       end
       return true

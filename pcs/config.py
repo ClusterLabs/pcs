@@ -199,6 +199,14 @@ def config_restore_remote(infile_name, infile_obj):
             utils.err(msg, False)
         sys.exit(1)
 
+    # Temporarily disable config files syncing thread in pcsd so it will not
+    # rewrite restored files. 10 minutes should be enough time to restore.
+    # If node returns HTTP 404 it does not support config syncing at all.
+    for node in node_list:
+        retval, output = utils.pauseConfigSyncing(node, 10 * 60)
+        if not (retval == 0 or output.endswith("(HTTP error: 404)")):
+            utils.err(output)
+
     if infile_obj:
         infile_obj.seek(0)
         tarball_data = infile_obj.read()

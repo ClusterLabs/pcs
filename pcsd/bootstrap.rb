@@ -57,6 +57,7 @@ CMAN_TOOL = "/usr/sbin/cman_tool"
 PACEMAKERD = "/usr/sbin/pacemakerd"
 CIBADMIN = "/usr/sbin/cibadmin"
 
+SUPERUSER = 'hacluster'
 $user_pass_file = "pcs_users.conf"
 
 if not defined? $cur_node_name

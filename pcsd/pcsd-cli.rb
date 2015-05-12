@@ -29,15 +29,12 @@ $cookies = {}
 PCS = get_pcs_path(File.expand_path(File.dirname(__FILE__)))
 $logger_device = StringIO.new
 $logger = configure_logger($logger_device)
-$cluster_name = get_cluster_name()
-
-command = ARGV[0]
 
 # check and set user
 uid = Process.uid
 if 0 == uid
-  $session[:username] = 'hacluster'
-  $cookies[:CIB_user] = 'hacluster'
+  $session[:username] = SUPERUSER
+  $cookies[:CIB_user] = SUPERUSER
 else
   username = Etc.getpwuid(uid).name
   if not PCSAuth.isUserAllowedToLogin(username)
@@ -48,7 +45,11 @@ else
   end
 end
 
+# continue environment setup with user set in $session
+$cluster_name = get_cluster_name()
+
 # get params and run a command
+command = ARGV[0]
 allowed_commands = {
   'read_tokens' => {
     'call' => lambda { |params| read_tokens() },

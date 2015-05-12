@@ -7,6 +7,7 @@ require 'pp'
 require 'webrick/https'
 require 'openssl'
 require 'logger'
+require 'thread'
 
 require 'bootstrap.rb'
 require 'resource.rb'
@@ -71,10 +72,40 @@ configure do
   STDOUT.sync = true
   STDERR.sync = true
   $logger = configure_logger('/var/log/pcsd/pcsd.log')
+  $semaphore_cfgsync = Mutex.new
 end
 
 set :logging, true
 set :run, false
+
+$thread_cfgsync = Thread.new {
+  while true
+    $semaphore_cfgsync.synchronize {
+      $logger.debug('Config files sync thread started')
+      if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
+        begin
+          # do not sync if this host is not in a cluster
+          cluster_name = get_cluster_name(SUPERUSER)
+          if cluster_name and !cluster_name.empty?()
+            $logger.debug('Config files sync thread fetching')
+            fetcher = Cfgsync::ConfigFetcher.new(
+              Cfgsync::get_cfg_classes(), get_corosync_nodes(SUPERUSER),
+              cluster_name, SUPERUSER
+            )
+            cfgs_to_save, _ = fetcher.fetch()
+            cfgs_to_save.each { |cfg_to_save|
+              cfg_to_save.save()
+            }
+          end
+        rescue => e
+          $logger.warn("Config files sync thread exception: #{e}")
+        end
+      end
+      $logger.debug('Config files sync thread finished')
+    }
+    sleep(60)
+  end
+}
 
 helpers do
   def protected!

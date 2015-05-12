@@ -275,7 +275,7 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
   return code,out
 end
 
-def send_request_with_token(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={})
+def send_request_with_token(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={}, username=nil)
   token = additional_tokens[node] || get_node_token(node)
   if not token
     return 400,'{"notoken":true}'
@@ -284,11 +284,11 @@ def send_request_with_token(node, request, post=false, data={}, remote=true, raw
     'token' => token,
   }
   return send_request(
-    node, request, post, data, remote, raw_data, timeout, cookies_data
+    node, request, post, data, remote, raw_data, timeout, cookies_data, username
   )
 end
 
-def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data={})
+def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data={}, username=nil)
   begin
     request = "/#{request}" if not request.start_with?("/")
 
@@ -307,9 +307,12 @@ def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, 
     end
 
     cookies_to_send = []
-    cookies_data_default = {
-      'CIB_user' => $session[:username].to_s,
-    }
+    cookies_data_default = {}
+    if username
+      cookies_data_default['CIB_user'] = username.to_s
+    else
+      cookies_data_default['CIB_user'] = $session[:username].to_s
+    end
     cookies_data_default.update(cookies_data)
     cookies_data_default.each { |name, value|
       cookies_to_send << CGI::Cookie.new('name' => name, 'value' => value).to_s
@@ -381,8 +384,13 @@ def get_current_node_name()
   return ""
 end
 
-def get_corosync_nodes()
-  stdout, stderror, retval = run_cmd(PCS, "status", "nodes", "corosync")
+def get_corosync_nodes(username=nil)
+  run_options = {}
+  run_options['username'] = username if username
+
+  stdout, stderror, retval = run_cmd_options(
+    run_options, PCS, "status", "nodes", "corosync"
+  )
   if retval != 0
     return []
   end
@@ -464,9 +472,14 @@ def get_stonith_agents_avail()
   end
 end
 
-def get_cluster_name()
+def get_cluster_name(username=nil)
+  run_options = {}
+  run_options['username'] = username if username
+
   if ISRHEL6
-    stdout, stderror, retval = run_cmd(COROSYNC_CMAPCTL, "cluster")
+    stdout, stderror, retval = run_cmd_options(
+      run_options, COROSYNC_CMAPCTL, "cluster"
+    )
     if retval == 0
       stdout.each { |line|
         match = /^cluster\.name=(.*)$/.match(line)
@@ -485,7 +498,9 @@ def get_cluster_name()
     return ''
   end
 
-  stdout, stderror, retval = run_cmd(COROSYNC_CMAPCTL,"totem.cluster_name")
+  stdout, stderror, retval = run_cmd_options(
+    run_options, COROSYNC_CMAPCTL, "totem.cluster_name"
+  )
   if retval != 0 and not ISRHEL6
     # Cluster probably isn't running, try to get cluster name from
     # corosync.conf
@@ -728,16 +743,27 @@ def get_pcsd_version()
 end
 
 def run_cmd(*args)
+  options = {}
+  return run_cmd_options(options, *args)
+end
+
+def run_cmd_options(options, *args)
   $logger.info("Running: " + args.join(" "))
   start = Time.now
   out = ""
   errout = ""
-  if $session[:username] == "hacluster"
-    ENV['CIB_user'] = $cookies[:CIB_user]
+
+  if options and options.key?('username')
+    ENV['CIB_user'] = options['username']
   else
-    ENV['CIB_user'] = $session[:username]
+    if $session[:username] == SUPERUSER
+      ENV['CIB_user'] = $cookies[:CIB_user]
+    else
+      ENV['CIB_user'] = $session[:username]
+    end
   end
   $logger.debug("CIB USER: #{ENV['CIB_user'].to_s}")
+
   status = Open4::popen4(*args) do |pid, stdin, stdout, stderr|
     out = stdout.readlines()
     errout = stderr.readlines()
@@ -941,7 +967,8 @@ end
 
 def send_local_configs_to_nodes(nodes, force=false, tokens={})
   publisher = Cfgsync::ConfigPublisher.new(
-    Cfgsync::get_configs_local(true).values(), nodes, $cluster_name, tokens
+    Cfgsync::get_configs_local(true).values(), nodes, $session[:username],
+    $cluster_name, tokens
   )
   return publisher.send(force)
 end

@@ -1,5 +1,6 @@
 require 'test/unit'
 require 'fileutils'
+require 'thread'
 
 require 'pcsd_test_utils.rb'
 require 'cfgsync.rb'
@@ -254,6 +255,104 @@ class TestPcsdTokens < Test::Unit::TestCase
 end
 
 
+class TestConfigSyncControll < Test::Unit::TestCase
+  def setup()
+    file = File.open(CFG_SYNC_CONTROL, 'w')
+    file.write(JSON.pretty_generate({}))
+    file.close()
+  end
+
+  def test_bad_file()
+    FileUtils.rm(CFG_SYNC_CONTROL, {:force => true})
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    file = File.open(CFG_SYNC_CONTROL, 'w')
+    file.write('')
+    file.close()
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    file = File.open(CFG_SYNC_CONTROL, 'w')
+    file.write(JSON.pretty_generate({'thread_paused_until' => 'abcde'}))
+    file.close()
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+  end
+
+  def test_empty_file()
+    # see setup method
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+  end
+
+  def test_paused()
+    semaphore = Mutex.new
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_resume())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(semaphore))
+    assert(Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_resume())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(semaphore, 2))
+    assert(Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+    sleep(4)
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(semaphore, '2'))
+    assert(Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+    sleep(4)
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(semaphore, 'abcd'))
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+  end
+
+  def test_disable()
+    semaphore = Mutex.new
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_enable())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_disable(semaphore))
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_enable())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
+    assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
+    assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+  end
+end
+
+
 class TestConfigFetcher < Test::Unit::TestCase
   class ConfigFetcherMock < Cfgsync::ConfigFetcher
     def get_configs_local()
@@ -296,7 +395,7 @@ class TestConfigFetcher < Test::Unit::TestCase
     assert(cfg1 < cfg3)
     assert(cfg1 < cfg4)
     assert(cfg3 < cfg4)
-    fetcher = ConfigFetcherMock.new(nil, nil, nil)
+    fetcher = ConfigFetcherMock.new(nil, nil, nil, nil)
 
     # trivial case
     assert_equal(cfg1, fetcher.find_newest_config_test([cfg1]))
@@ -338,7 +437,7 @@ class TestConfigFetcher < Test::Unit::TestCase
     assert(cfg1 < cfg4)
     assert(cfg3 < cfg4)
     cfg_name = Cfgsync::ClusterConf.name
-    fetcher = ConfigFetcherMock.new([Cfgsync::ClusterConf], nil, nil)
+    fetcher = ConfigFetcherMock.new([Cfgsync::ClusterConf], nil, nil, nil)
 
     # local config is synced
     fetcher.set_configs_local({cfg_name => cfg1})

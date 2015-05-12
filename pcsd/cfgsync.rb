@@ -27,6 +27,8 @@ CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
 CFG_PCSD_SETTINGS = settings_file_path() unless defined? CFG_PCSD_SETTINGS
 CFG_PCSD_TOKENS = token_file_path() unless defined? CFG_PCSD_TOKENS
 
+CFG_SYNC_CONTROL = '/var/lib/pcsd/cfgsync_ctl' unless defined? CFG_SYNC_CONTROL
+
 module Cfgsync
   class Config
     include Comparable
@@ -101,7 +103,9 @@ module Cfgsync
           "Saved config '#{self.class.name}' version #{self.version} #{self.hash} to '#{self.class.file_path}'"
         )
       rescue => e
-        $logger.error "Cannot write to config file: #{e.message}"
+        $logger.error(
+          "Cannot save config '#{self.class.name}': #{e.message}"
+        )
         raise
       ensure
         unless file.nil?
@@ -240,8 +244,113 @@ module Cfgsync
   end
 
 
+  class ConfigSyncControl
+    def self.sync_thread_allowed?()
+      data = self.load()
+      return !(
+        self.sync_thread_paused_data?(data)\
+        or\
+        self.sync_thread_disabled_data?(data)
+      )
+    end
+
+    def self.sync_thread_paused?()
+      return self.sync_thread_paused_data?(self.load())
+    end
+
+    def self.sync_thread_disabled?()
+      return self.sync_thread_disabled_data?(self.load())
+    end
+
+    def self.sync_thread_pause(semaphore_cfgsync, seconds=300)
+      # wait for the thread to finish current run and disable it
+      semaphore_cfgsync.synchronize {
+        data = self.load()
+        data['thread_paused_until'] = Time.now.to_i() + seconds.to_i()
+        return self.save(data)
+      }
+    end
+
+    def self.sync_thread_resume()
+      data = self.load()
+      if data['thread_paused_until']
+        data.delete('thread_paused_until')
+        return self.save(data)
+      end
+      return true
+    end
+
+    def self.sync_thread_disable(semaphore_cfgsync)
+      # wait for the thread to finish current run and disable it
+      semaphore_cfgsync.synchronize {
+        data = self.load()
+        data['thread_disabled'] = true
+        return self.save(data)
+      }
+    end
+
+    def self.sync_thread_enable()
+      data = self.load()
+      if data['thread_disabled']
+        data.delete('thread_disabled')
+        return self.save(data)
+      end
+      return true
+    end
+
+    protected
+
+    def self.sync_thread_paused_data?(data)
+      if data['thread_paused_until']
+        paused_until = data['thread_paused_until'].to_i()
+        return ((paused_until > 0) and (Time.now().to_i() < paused_until))
+      end
+      return false
+    end
+
+    def self.sync_thread_disabled_data?(data)
+      return data['thread_disabled']
+    end
+
+    def self.load()
+      begin
+        file = nil
+        file = File.open(CFG_SYNC_CONTROL, File::RDONLY)
+        file.flock(File::LOCK_SH)
+        return JSON.parse(file.read())
+      rescue => e
+        $logger.debug("Cannot read config '#{CFG_SYNC_CONTROL}': #{e.message}")
+        return {}
+      ensure
+        unless file.nil?
+          file.flock(File::LOCK_UN)
+          file.close()
+        end
+      end
+    end
+
+    def self.save(data)
+      text = JSON.pretty_generate(data)
+      begin
+        file = nil
+        file = File.open(CFG_SYNC_CONTROL, 'w', 0600)
+        file.flock(File::LOCK_EX)
+        file.write(text)
+      rescue => e
+        $logger.error("Cannot save config '#{CFG_SYNC_CONTROL}': #{e.message}")
+        return false
+      ensure
+        unless file.nil?
+          file.flock(File::LOCK_UN)
+          file.close()
+        end
+      end
+    end
+  end
+
+
   class ConfigPublisher
-    def initialize(configs, nodes, cluster_name, tokens={})
+    def initialize(configs, nodes, cluster_name, username, tokens={})
       @configs = configs
       @nodes = nodes
       @cluster_name = cluster_name
@@ -249,6 +358,7 @@ module Cfgsync
         cfg.class.name
       }
       @additional_tokens = tokens
+      @username = username
     end
 
     def send(force=false)
@@ -266,7 +376,8 @@ module Cfgsync
       @nodes.each { |node|
         threads << Thread.new {
           code, out = send_request_with_token(
-            node, 'set_configs', true, data, true, nil, 30, @additional_tokens
+            node, 'set_configs', true, data, true, nil, 30, @additional_tokens,
+            @username
           )
           if 200 == code
             begin
@@ -349,10 +460,11 @@ module Cfgsync
 
 
   class ConfigFetcher
-    def initialize(config_classes, nodes, cluster_name)
+    def initialize(config_classes, nodes, cluster_name, username)
       @config_classes = config_classes
       @nodes = nodes
       @cluster_name = cluster_name
+      @username = username
     end
 
     def fetch_all()
@@ -398,12 +510,14 @@ module Cfgsync
         'cluster_name' => cluster_name,
       }
 
-      $logger.info 'Fetching configs from the cluster'
+      $logger.debug 'Fetching configs from the cluster'
       threads = []
       node_configs = {}
       nodes.each { |node|
         threads << Thread.new {
-          code, out = send_request_with_token(node, 'get_configs', false, data)
+          code, out = send_request_with_token(
+            node, 'get_configs', false, data, true, nil, 30, {}, @username
+          )
           if 200 == code
             begin
               parsed = JSON::parse(out)
@@ -510,11 +624,15 @@ module Cfgsync
       return true, {}
     else
       # we run in a cluster so we need to sync the config
-      publisher = ConfigPublisher.new([config], nodes, cluster_name, tokens)
+      publisher = ConfigPublisher.new(
+        [config], nodes, cluster_name, SUPERUSER, tokens
+      )
       old_configs, node_responses = publisher.publish()
       if old_configs.include?(config.class.name)
         if fetch_on_conflict
-          fetcher = ConfigFetcher.new([config.class], nodes, cluster_name)
+          fetcher = ConfigFetcher.new(
+            [config.class], nodes, cluster_name, SUPERUSER
+          )
           cfgs_to_save, _ = fetcher.fetch()
           cfgs_to_save.each { |cfg_to_save|
             cfg_to_save.save() if cfg_to_save.class == config.class
@@ -558,7 +676,7 @@ module Cfgsync
     end
     # we run in a cluster so we need to sync the config
     publisher = ConfigPublisher.new(
-      [config_new], nodes, cluster_name, new_tokens
+      [config_new], nodes, cluster_name, SUPERUSER, new_tokens
     )
     old_configs, node_responses = publisher.publish()
     if not old_configs.include?(config_new.class.name)
@@ -566,7 +684,9 @@ module Cfgsync
       return true, node_responses
     end
     # get tokens from all nodes and merge them
-    fetcher = ConfigFetcher.new([config_new.class], nodes, cluster_name)
+    fetcher = ConfigFetcher.new(
+      [config_new.class], nodes, cluster_name, SUPERUSER
+    )
     fetched_tokens = fetcher.fetch_all()[config_new.class.name]
     config_new = Cfgsync::merge_tokens_files(config, fetched_tokens, new_tokens)
     # and try to publish again

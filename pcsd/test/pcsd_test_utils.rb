@@ -4,6 +4,8 @@ CFG_CLUSTER_CONF = File.join(CURRENT_DIR, "cluster.conf.tmp")
 CFG_PCSD_SETTINGS = File.join(CURRENT_DIR, "pcs_settings.conf.tmp")
 CFG_PCSD_TOKENS = File.join(CURRENT_DIR, 'tokens.tmp')
 
+CFG_SYNC_CONTROL = File.join(CURRENT_DIR, 'cfgsync_ctl.tmp')
+
 class MockLogger
   attr_reader :log
 

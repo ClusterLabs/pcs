@@ -186,6 +186,14 @@ def restoreConfig(node, tarball_data):
     data = urllib.urlencode({"tarball": tarball_data})
     return sendHTTPRequest(node, "remote/config_restore", data, False, True)
 
+def pauseConfigSyncing(node, delay_seconds=300):
+  data = urllib.urlencode({"sync_thread_pause": delay_seconds})
+  return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
+
+def resumeConfigSyncing(node):
+  data = urllib.urlencode({"sync_thread_resume": 1})
+  return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
+
 def canAddNodeToCluster(node):
     retval, output = sendHTTPRequest(node, 'remote/node_available', [], False, False)
     if retval == 0:

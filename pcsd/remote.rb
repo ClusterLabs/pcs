@@ -38,6 +38,7 @@ def remote(params,request)
         end
       },
       :get_sync_capabilities => method(:get_sync_capabilities),
+      :set_sync_options => method(:set_sync_options),
       :get_configs => method(:get_configs),
       :set_configs => method(:set_configs),
       :cluster_start => method(:cluster_start),
@@ -325,6 +326,52 @@ def get_sync_capabilities(params)
   })
 end
 
+def set_sync_options(params)
+  options = [
+    'sync_thread_pause', 'sync_thread_resume',
+    'sync_thread_disable', 'sync_thread_enable',
+  ]
+  if params.keys.count { |key| options.include?(key) } != 1
+    return [400, 'Exactly one option has to be specified']
+  end
+
+  if params['sync_thread_disable']
+    if Cfgsync::ConfigSyncControl.sync_thread_disable($semaphore_cfgsync)
+      return 'sync thread disabled'
+    else
+      return [400, 'sync thread disable error']
+    end
+  end
+
+  if params['sync_thread_enable']
+    if Cfgsync::ConfigSyncControl.sync_thread_enable()
+      return 'sync thread enabled'
+    else
+      return [400, 'sync thread enable error']
+    end
+  end
+
+  if params['sync_thread_resume']
+    if Cfgsync::ConfigSyncControl.sync_thread_resume()
+      return 'sync thread resumed'
+    else
+      return [400, 'sync thread resume error']
+    end
+  end
+
+  if params['sync_thread_pause']
+    if Cfgsync::ConfigSyncControl.sync_thread_pause(
+        $semaphore_cfgsync, params['sync_thread_pause']
+      )
+      return 'sync thread paused'
+    else
+      return [400, 'sync thread pause error']
+    end
+  end
+
+  return [400, 'Exactly one option has to be specified']
+end
+
 def get_configs(params)
   if not $cluster_name or $cluster_name.empty?
     return JSON.generate({'status' => 'not_in_cluster'})
@@ -358,34 +405,36 @@ def set_configs(params)
     return JSON.generate({'status' => 'wrong_cluster_name'})
   end
 
-  force = configs_json['force']
-  remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
-  local_configs = Cfgsync::get_configs_local
+  $semaphore_cfgsync.synchronize {
+    force = configs_json['force']
+    remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
+    local_configs = Cfgsync::get_configs_local
 
-  result = {}
-  unknown_cfg_names.each { |name| result[name] = 'not_supported' }
-  remote_configs.each { |name, remote_cfg|
-    begin
-      # Save a remote config if it is a newer version than local. If the config
-      # is not present on a local node, the node is beeing added to a cluster,
-      # so we need to save the config as well.
-      if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
-        local_configs[name].class.backup() if local_configs.key?(name)
-        remote_cfg.save()
-        result[name] = 'accepted'
-      elsif remote_cfg == local_configs[name]
-        # Someone wants this node to have a config that it already has.
-        # So the desired state is met and the result is a success then.
-        result[name] = 'accepted'
-      else
-        result[name] = 'rejected'
+    result = {}
+    unknown_cfg_names.each { |name| result[name] = 'not_supported' }
+    remote_configs.each { |name, remote_cfg|
+      begin
+        # Save a remote config if it is a newer version than local. If the config
+        # is not present on a local node, the node is beeing added to a cluster,
+        # so we need to save the config as well.
+        if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
+          local_configs[name].class.backup() if local_configs.key?(name)
+          remote_cfg.save()
+          result[name] = 'accepted'
+        elsif remote_cfg == local_configs[name]
+          # Someone wants this node to have a config that it already has.
+          # So the desired state is met and the result is a success then.
+          result[name] = 'accepted'
+        else
+          result[name] = 'rejected'
+        end
+      rescue => e
+        $logger.error("Error saving config '#{name}': #{e}")
+        result[name] = 'error'
       end
-    rescue => e
-      $logger.error("Error saving config #{name}: #{e}")
-      result[name] = 'error'
-    end
+    }
+    return JSON.generate({'status' => 'ok', 'result' => result})
   }
-  return JSON.generate({'status' => 'ok', 'result' => result})
 end
 
 def check_gui_status(params)
@@ -1700,7 +1749,7 @@ def auth_nodes(params)
         pass = node[1]
       end
       result, sync_successful, _, _ = pcs_auth(
-        [nodename], "hacluster", pass, true, true
+        [nodename], SUPERUSER, pass, true, true
       )
       if not sync_successful
         retval[nodename] = 1
