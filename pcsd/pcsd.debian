@@ -70,7 +70,7 @@ run()
     return 1
   fi
 
-  nohup $DAEMON $DAEMON_ARGS > /dev/null 2>&1
+  nohup $DAEMON $DAEMON_ARGS > /dev/null 2>&1 &
   echo $! > $PIDFILE
   read PID < "$PIDFILE"
 
