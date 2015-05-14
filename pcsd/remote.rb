@@ -41,6 +41,8 @@ def remote(params,request)
       :set_sync_options => method(:set_sync_options),
       :get_configs => method(:get_configs),
       :set_configs => method(:set_configs),
+      :set_certs => method(:set_certs),
+      :pcsd_restart => method(:remote_pcsd_restart),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
       :config_backup => method(:config_backup),
@@ -437,6 +439,50 @@ def set_configs(params)
   }
 end
 
+def set_certs(params)
+  if SUPERUSER != $session[:username]
+    return 401, "Permission denied"
+  end
+
+  ssl_cert = (params['ssl_cert'] || '').strip
+  ssl_key = (params['ssl_key'] || '').strip
+  if ssl_cert.empty? and !ssl_key.empty?
+    return [400, 'cannot save ssl certificate without ssl key']
+  end
+  if !ssl_cert.empty? and ssl_key.empty?
+    return [400, 'cannot save ssl key without ssl certificate']
+  end
+  if !ssl_cert.empty? and !ssl_key.empty?
+    begin
+      write_file_lock(CRT_FILE, 0700, ssl_cert)
+      write_file_lock(KEY_FILE, 0700, ssl_key)
+    rescue
+      # clean the files if we ended in the middle
+      # the files will be regenerated on next pcsd start
+      FileUtils.rm(CRT_FILE, {:force => true})
+      FileUtils.rm(KEY_FILE, {:force => true})
+      return [400, 'cannot save ssl files']
+    end
+  end
+
+  if params['cookie_secret']
+    cookie_secret = params['cookie_secret'].strip
+    if !cookie_secret.empty?
+      begin
+        write_file_lock(COOKIE_FILE, 0700, cookie_secret)
+      rescue
+        return [400, 'cannot save cookie secret']
+      end
+    end
+  end
+
+  return [200, 'success']
+end
+
+def remote_pcsd_restart(params)
+  pcsd_restart()
+end
+
 def check_gui_status(params)
   node_results = {}
   if params[:nodes] != nil and params[:nodes] != ""
@@ -612,7 +658,10 @@ def setup_cluster(params)
   nodes_options += options_udp if transport_udp
   stdout, stderr, retval = run_cmd(PCS, "cluster", "setup", "--enable", "--start", "--name",params[:clustername], *nodes_options)
   if retval != 0
-    return [400, stdout.join("\n") + stderr.join("\n")]
+    return [
+      400,
+      (stdout + [''] + stderr).collect { |line| line.rstrip() }.join("\n")
+    ]
   end
   return 200
 end

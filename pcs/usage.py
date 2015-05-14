@@ -13,6 +13,7 @@ def full_usage():
     out += strip_extras(acl([],False))
     out += strip_extras(status([],False))
     out += strip_extras(config([],False))
+    out += strip_extras(pcsd([],False))
     print out.strip()
     print "Examples:\n" + examples.replace(" \ ","")
 
@@ -130,6 +131,7 @@ def sub_generate_bash_completion():
     tree["constraint"] = generate_tree(constraint([],False))
     tree["status"] = generate_tree(status([],False))
     tree["config"] = generate_tree(config([],False))
+    tree["pcsd"] = generate_tree(pcsd([],False))
     print """
     _pcs()
     {
@@ -204,6 +206,7 @@ Commands:
     acl         Set pacemaker access control lists
     status      View cluster status
     config      View and manage cluster configuration
+    pcsd        Manage pcs daemon
 """
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -621,9 +624,6 @@ Commands:
     pcsd-status [node] [...]
         Get current status of pcsd on nodes specified, or on all nodes
         configured in corosync.conf if no nodes are specified
-
-    certkey <certificate file> <key file>
-        Load custom certificate and key files for use in pcsd
 
     sync
         Sync corosync configuration to all nodes found from current
@@ -1104,6 +1104,25 @@ Commands:
         /etc/cluster/cluster.conf will be used.  You can force to create output
         containing either cluster.conf or corosync.conf using the output-format
         option.
+"""
+    if pout:
+        print sub_usage(args, output)
+    else:
+        return output
+
+def pcsd(args=[], pout=True):
+    output = """
+Usage: pcs pcsd [commands]...
+Manage pcs daemon
+
+Commands:
+    certkey <certificate file> <key file>
+        Load custom certificate and key files for use in pcsd.
+
+    sync-certificates
+        Sync pcsd certificates to all nodes found from current corosync.conf
+        file (cluster.conf on systems running Corosync 1.x).  WARNING: This will
+        restart pcsd daemon on the nodes.
 """
     if pout:
         print sub_usage(args, output)

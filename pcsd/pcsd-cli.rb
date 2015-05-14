@@ -74,7 +74,17 @@ allowed_commands = {
         params['nodes'] || [], params['force'] || false
       )
     }
-  }
+  },
+  'send_local_certs' => {
+    'call' => lambda { |params|
+      send_local_certs_to_nodes(params['nodes'] || [])
+    }
+  },
+  'pcsd_restart_nodes' => {
+    'call' => lambda { |params|
+      pcsd_restart_nodes(params['nodes'] || [])
+    }
+  },
 }
 
 if allowed_commands.key?(command)

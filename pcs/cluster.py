@@ -20,6 +20,7 @@ import json
 import xml.dom.minidom
 import threading
 import corosync_conf as corosync_conf_utils
+import pcsd
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -125,8 +126,6 @@ def sync_start(partial_argv, nodes):
 
 def sync(partial_argv,nodes):
     argv = partial_argv[:]
-    config = corosync_setup(argv,True)
-    sync_nodes(nodes,config)
     # send local cluster pcsd configs to the new nodes
     # may be used for sending corosync config as well in future
     pcsd_data = {
@@ -149,6 +148,9 @@ def sync(partial_argv,nodes):
         err_msgs.append("Unable to set pcsd configs")
     for err_msg in err_msgs:
         print "Warning: {0}".format(err_msg)
+
+    config = corosync_setup(argv,True)
+    sync_nodes(nodes,config)
 
 def sync_nodes(nodes,config):
     for node in nodes:
@@ -291,49 +293,7 @@ def cluster_gui_status(argv,dont_exit = False):
         sys.exit(2)
 
 def cluster_certkey(argv):
-    if len(argv) != 2:
-        usage.cluster(["certkey"])
-        exit(1)
-
-    certfile = argv[0]
-    keyfile = argv[1]
-
-    try:
-        with open(certfile, 'r') as myfile:
-            cert = myfile.read()
-    except IOError as e:
-        utils.err(e)
-
-    try:
-        with open(keyfile, 'r') as myfile:
-            key = myfile.read()
-    except IOError as e:
-        utils.err(e)
-
-    if not "--force" in utils.pcs_options and (os.path.exists(settings.pcsd_cert_location) or os.path.exists(settings.pcsd_key_location)):
-        utils.err("certificate and/or key already exists, your must use --force to overwrite")
-
-    try:
-        try:
-            os.chmod(settings.pcsd_cert_location, 0700)
-        except OSError: # If the file doesn't exist, we don't care
-            pass
-
-        try:
-            os.chmod(settings.pcsd_key_location, 0700)
-        except OSError: # If the file doesn't exist, we don't care
-            pass
-
-        with os.fdopen(os.open(settings.pcsd_cert_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0700), 'wb') as myfile:
-            myfile.write(cert)
-
-        with os.fdopen(os.open(settings.pcsd_key_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0700), 'wb') as myfile:
-            myfile.write(key)
-
-    except IOError as e:
-        utils.err(e)
-
-    print "Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect"
+    return pcsd.pcsd_certkey(argv)
 
 # Check and see if pcsd is running on the nodes listed
 def check_nodes(nodes, prefix = ""):
@@ -381,11 +341,15 @@ def corosync_setup(argv,returnConfig=False):
         sync_start(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_nodes)
+        print "Synchronizing pcsd certificates..."
+        pcsd.pcsd_sync_certs([])
         return
     elif not returnConfig and not "--local" in utils.pcs_options:# and fedora_config:
         sync(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_nodes)
+        print "Synchronizing pcsd certificates..."
+        pcsd.pcsd_sync_certs([])
         return
     else:
         nodes = argv[1:]
@@ -1220,6 +1184,10 @@ def cluster_node(argv):
                 # always start new node on cman cluster
                 # otherwise it will get fenced
                 utils.startCluster(node0)
+
+            pcsd_data = {'nodes': [node0]}
+            utils.run_pcsdcli('send_local_certs', pcsd_data)
+            utils.run_pcsdcli('pcsd_restart_nodes', pcsd_data)
         else:
             utils.err("Unable to update any nodes")
         output, retval = utils.reloadCorosync()

@@ -12,6 +12,7 @@ import utils
 import status
 import settings
 import config
+import pcsd
 
 usefile = False
 filename = ""
@@ -147,6 +148,8 @@ def main(argv):
         status.status_cmd(argv)
     elif (command == "config"):
         config.config_cmd(argv)
+    elif (command == "pcsd"):
+        pcsd.pcsd_cmd(argv)
     else:
         usage.main()
         sys.exit(1)

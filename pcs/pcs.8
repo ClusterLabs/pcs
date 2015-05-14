@@ -44,6 +44,9 @@ View cluster status
 .TP
 config
 View and manage cluster configuration
+.TP
+pcsd
+Manage pcs daemon
 .SS "resource"
 .TP
 show [resource id] [\fB\-\-full\fR] [\fB\-\-groups\fR]
@@ -216,9 +219,6 @@ View current cluster status (an alias of 'pcs status cluster')
 .TP
 pcsd\-status [node] [...]
 Get current status of pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified
-.TP
-certkey <certificate file> <key file>
-Load custom certificate and key files for use in pcsd
 .TP
 sync
 Sync corosync configuration to all nodes found from current corosync.conf file (cluster.conf on systems running Corosync 1.x)
@@ -504,6 +504,13 @@ Restore cluster configuration to specified checkpoint.
 .TP
 import-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] [output-format=corosync.conf|cluster.conf]
 Converts CMAN cluster configuration to Pacemaker cluster configuration.  Converted configuration will be saved to 'output' file.  To send the configuration to the cluster nodes the 'pcs config restore' command can be used.  If \fB\-\-interactive\fR is specified you will be prompted to solve incompatibilities manually.  If no input is specified /etc/cluster/cluster.conf will be used.  You can force to create output containing either cluster.conf or corosync.conf using the output-format option.
+.SS "pcsd"
+.TP
+certkey <certificate file> <key file>
+Load custom certificate and key files for use in pcsd.
+.TP
+sync-certificates
+Sync pcsd certificates to all nodes found from current corosync.conf file (cluster.conf on systems running Corosync 1.x).  WARNING: This will restart pcsd daemon on the nodes.
 .SH EXAMPLES
 .TP
 Show all resources

@@ -729,6 +729,17 @@ def get_cman_version()
   return nil
 end
 
+def pcsd_restart()
+  fork {
+    sleep(10)
+    if ISSYSTEMCTL
+      `systemctl restart pcsd`
+    else
+      `service pcsd restart`
+    end
+  }
+end
+
 def pcsd_enabled?()
   if ISSYSTEMCTL
     `systemctl is-enabled pcsd.service`
@@ -973,3 +984,71 @@ def send_local_configs_to_nodes(nodes, force=false, tokens={})
   return publisher.send(force)
 end
 
+def send_local_certs_to_nodes(nodes)
+  if SUPERUSER != $session[:username]
+    return {
+      'status' => 'access_denied',
+      'text' => 'Unable to send pcsd certificates: Permission denied',
+    }
+  end
+
+  data = {
+    'ssl_cert' => File.read(CRT_FILE),
+    'ssl_key' => File.read(KEY_FILE),
+    'cookie_secret' => File.read(COOKIE_FILE),
+  }
+  node_response = {}
+  threads = []
+  nodes.each { |node|
+    code, _ = send_request_with_token(node, '/set_certs', true, data)
+    node_response[node] = 200 == code ? 'ok' : 'error'
+  }
+  threads.each { |t| t.join }
+
+  node_error = []
+  node_response.each { |node, response|
+    node_error << node if response != 'ok'
+  }
+  return {
+    'status' => node_error.empty?() ? 'ok' : 'error',
+    'text' => node_error.empty?() ? 'Success' : \
+      "Unable to save pcsd certificates to nodes: #{node_error.join(', ')}",
+  }
+end
+
+def pcsd_restart_nodes(nodes)
+  node_response = {}
+  threads = []
+  nodes.each { |node|
+    code, _ = send_request_with_token(node, '/pcsd_restart', true)
+    node_response[node] = 200 == code ? 'ok' : 'error'
+  }
+  threads.each { |t| t.join }
+
+  node_error = []
+  node_response.each { |node, response|
+    node_error << node if response != 'ok'
+  }
+  return {
+    'status' => node_error.empty?() ? 'ok' : 'error',
+    'text' => node_error.empty?() ? 'Success' : \
+      "Unable to restart pcsd on nodes: #{node_error.join(', ')}",
+  }
+end
+
+def write_file_lock(path, perm, data)
+  begin
+    file = nil
+    file = File.open(path, 'w', perm)
+    file.flock(File::LOCK_EX)
+    file.write(data)
+  rescue => e
+    $logger.error("Cannot save file '#{path}': #{e.message}")
+    raise
+  ensure
+    unless file.nil?
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+end
