@@ -31,7 +31,9 @@ end
 
 use Rack::Session::Cookie,
   :expire_after => 60 * 60,
-  :secret => secret
+  :secret => secret,
+  :secure => true, # only send over HTTPS
+  :httponly => true # don't provide to javascript
 
 #use Rack::SSL
 
@@ -44,8 +46,6 @@ also_reload 'config.rb'
 also_reload 'pcs.rb'
 also_reload 'auth.rb'
 also_reload 'wizard.rb'
-
-enable :sessions
 
 before do
   $session = session
