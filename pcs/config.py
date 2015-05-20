@@ -1,5 +1,6 @@
 import sys
 import os
+import os.path
 import re
 import datetime
 import cStringIO
@@ -29,6 +30,7 @@ import resource
 import status
 import stonith
 import usage
+
 
 def config_cmd(argv):
     if len(argv) == 0:
@@ -144,10 +146,30 @@ def config_restore(argv):
     if not infile_name:
         infile_obj = cStringIO.StringIO(sys.stdin.read())
 
-    if "--local" in utils.pcs_options:
-        config_restore_local(infile_name, infile_obj)
+    if os.getuid() == 0:
+        if "--local" in utils.pcs_options:
+            config_restore_local(infile_name, infile_obj)
+        else:
+            config_restore_remote(infile_name, infile_obj)
     else:
-        config_restore_remote(infile_name, infile_obj)
+        new_argv = ['config', 'restore']
+        new_stdin = None
+        if '--local' in utils.pcs_options:
+            new_argv.append('--local')
+        if infile_name:
+            new_argv.append(os.path.abspath(infile_name))
+        else:
+            new_stdin = infile_obj.read()
+        err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
+            new_argv, True, new_stdin
+        )
+        if err_msgs:
+            for msg in err_msgs:
+                utils.err(msg, False)
+            sys.exit(1)
+        print std_out
+        sys.stderr.write(std_err)
+        sys.exit(exitcode)
 
 def config_restore_remote(infile_name, infile_obj):
     extracted = {

@@ -776,6 +776,10 @@ def run_cmd_options(options, *args)
   $logger.debug("CIB USER: #{ENV['CIB_user'].to_s}")
 
   status = Open4::popen4(*args) do |pid, stdin, stdout, stderr|
+    if options and options.key?('stdin')
+      stdin.puts(options['stdin'])
+      stdin.close()
+    end
     out = stdout.readlines()
     errout = stderr.readlines()
     duration = Time.now - start

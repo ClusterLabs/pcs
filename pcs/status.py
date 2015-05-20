@@ -1,12 +1,15 @@
 import sys
-import usage
-import utils
+import os
 import xml.dom.minidom
+from xml.dom.minidom import parseString
 import re
+
 import resource
 import cluster
 import settings
-from xml.dom.minidom import parseString
+import usage
+import utils
+
 
 def status_cmd(argv):
     if len(argv) == 0:
@@ -56,14 +59,22 @@ def full_status():
     print output
 
     if not utils.usefile:
-        if not utils.is_rhel6():
-            print "PCSD Status:"
-            cluster.cluster_gui_status([],True)
-            print ""
+        print_pcsd_daemon_status()
+        print
         utils.serviceStatus("  ")
 
 # Parse crm_mon for status
 def nodes_status(argv):
+    if len(argv) == 1 and argv[0] == "pacemaker-id":
+        for node_id, node_name in utils.getPacemakerNodesID().items():
+            print "{0} {1}".format(node_id, node_name)
+        return
+
+    if len(argv) == 1 and argv[0] == "corosync-id":
+        for node_id, node_name in utils.getCorosyncNodesID().items():
+            print "{0} {1}".format(node_id, node_name)
+        return
+
     if len(argv) == 1 and (argv[0] == "config"):
         corosync_nodes = utils.getNodesFromCorosyncConf()
         pacemaker_nodes = utils.getNodesFromPacemaker()
@@ -170,11 +181,15 @@ def cluster_status(argv):
     for line in output.splitlines():
         if line == "":
             if first_empty_line:
-                return
+                break
             first_empty_line = True
             continue
         else:
             print "",line
+
+    if not utils.usefile:
+        print
+        print_pcsd_daemon_status()
 
 def corosync_status():
     (output, retval) = utils.run(["corosync-quorumtool", "-l"])
@@ -210,4 +225,20 @@ def is_pacemaker_running():
     else:
         output, retval = utils.run(["service", "pacemaker", "status"])
     return retval == 0
+
+def print_pcsd_daemon_status():
+    print "PCSD Status:"
+    if os.getuid() == 0:
+        cluster.cluster_gui_status([], True)
+    else:
+        err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
+            ['status', 'pcsd'], True
+        )
+        if err_msgs:
+            for msg in err_msgs:
+                print msg
+        if 0 == exitcode:
+            print std_out
+        else:
+            print "Unable to get PCSD status"
 

@@ -118,7 +118,7 @@ helpers do
         on_managec_main = true
       end
 
-      if request.path.start_with?('/remote') or (request.path.match(match_expr) and not on_managec_main)
+      if request.path.start_with?('/remote') or (request.path.match(match_expr) and not on_managec_main) or '/run_pcs' == request.path
 	$logger.info "ERROR: Request without authentication"
 	halt [401, '{"notauthorized":"true"}']
       else
@@ -179,6 +179,70 @@ end
 
 post '/remote/?:command?' do
   return remote(params,request)
+end
+
+post '/run_pcs' do
+  command = params['command'] || '{}'
+  std_in = params['stdin'] || nil
+  begin
+    command_decoded = JSON.parse(command)
+  rescue JSON::ParserError
+    result = {
+      'status' => 'error',
+      'data' => {},
+    }
+    return JSON.pretty_generate(result)
+  end
+  # do not reveal potentialy sensitive information
+  command_decoded.delete('--debug')
+
+  allowed_commands = [
+    ['cluster', 'auth', '...'],
+    ['cluster', 'corosync', '...'],
+    ['cluster', 'destroy', '...'],
+    ['cluster', 'disable', '...'],
+    ['cluster', 'enable', '...'],
+    ['cluster', 'node', '...'],
+    ['cluster', 'pcsd-status', '...'],
+    ['cluster', 'setup', '...'],
+    ['cluster', 'start', '...'],
+    ['cluster', 'stop', '...'],
+    ['config', 'restore', '...'],
+    ['pcsd', 'sync-certificates'],
+    ['status', 'nodes', 'corosync-id'],
+    ['status', 'nodes', 'pacemaker-id'],
+    ['status', 'pcsd', '...'],
+  ]
+  allowed = false
+  allowed_commands.each { |cmd|
+    if command_decoded == cmd \
+      or \
+      (cmd[-1] == '...' and cmd[0..-2] == command_decoded[0..(cmd.length - 2)])
+      then
+        allowed = true
+        break
+    end
+  }
+  if !allowed
+    result = {
+      'status' => 'bad_command',
+      'data' => {},
+    }
+    return JSON.pretty_generate(result)
+  end
+
+  options = {}
+  options['stdin'] = std_in if std_in
+  std_out, std_err, retval = run_cmd_options(options, PCS, *command_decoded)
+  result = {
+    'status' => 'ok',
+    'data' => {
+      'stdout' => std_out.join(""),
+      'stderr' => std_err.join(""),
+      'code' => retval,
+    },
+  }
+  return JSON.pretty_generate(result)
 end
 
 if not DISABLE_GUI

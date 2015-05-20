@@ -1,6 +1,5 @@
 import os, subprocess
 import sys
-import pcs
 import xml.dom.minidom
 import urllib,urllib2
 from xml.dom.minidom import parseString,parse
@@ -8,14 +7,17 @@ import xml.etree.ElementTree as ET
 import re
 import json
 import tempfile
-import settings
-import resource
 import signal
 import time
 import cStringIO
 import tarfile
-import cluster
 import fcntl
+import getpass
+
+import settings
+import pcs
+import resource
+import cluster
 import corosync_conf as corosync_conf_utils
 
 
@@ -714,6 +716,57 @@ def run_pcsdcli(command, data=None):
             'data': None,
         }
     return output_json, retval
+
+def call_local_pcsd(argv, interactive_auth=False, std_in=None):
+    # some commands cannot be run under a non-root account
+    # so we pass those commands to locally running pcsd to execute them
+    # returns [list_of_errors, exit_code, stdout, stderr]
+    data = {
+        "command": json.dumps(argv),
+    }
+    if std_in:
+        data['stdin'] = std_in
+    data_send = urllib.urlencode(data)
+    code, output = sendHTTPRequest(
+        "localhost", "run_pcs", data_send, False, False
+    )
+
+    # authenticate against local pcsd and run again
+    if interactive_auth and 3 == code: # not authenticated
+        print 'Please authenticate yourself to the local pcsd'
+        username = get_terminal_input('Username: ')
+        password = get_terminal_password()
+        cluster.auth_nodes_do(["localhost"], username, password, True, True)
+        print
+        code, output = sendHTTPRequest(
+            "localhost", "run_pcs", data_send, False, False
+        )
+
+    if 3 == code: # not authenticated
+        # don't advise to run 'pcs cluster auth' as that is not used to auth
+        # to localhost
+        return [['Unable to authenticate to the local pcsd'], 1, '', '']
+    if 0 != code: # http error connecting to localhost
+        return [[output], 1, '', '']
+
+    try:
+        output_json = json.loads(output)
+        for key in ['status', 'data']:
+            if key not in output_json:
+                output_json[key] = None
+    except ValueError:
+        return [['Unable to communicate with pcsd'], 1, '', '']
+    if output_json['status'] == 'bad_command':
+        return [['Command not allowed'], 1, '', '']
+    if output_json['status'] != "ok" or not output_json["data"]:
+        return [['Unable to communicate with pcsd'], 1, '', '']
+    try:
+        exitcode = output_json["data"]["code"]
+        std_out = output_json["data"]["stdout"]
+        std_err = output_json["data"]["stderr"]
+        return [[], exitcode, std_out, std_err]
+    except KeyError:
+        return [['Unable to communicate with pcsd'], 1, '', '']
 
 def map_for_error_list(callab, iterab):
     error_list = []
@@ -1438,6 +1491,18 @@ def getTerminalSize(fd=1):
  
     return hw
 
+def get_terminal_input(message=None):
+    if message:
+        sys.stdout.write('Username: ')
+        sys.stdout.flush()
+    return raw_input("")
+
+def get_terminal_password(message="Password: "):
+    if sys.stdout.isatty():
+        return getpass.getpass(message)
+    else:
+        return get_terminal_input(message)
+
 # Returns an xml dom containing the current status of the cluster
 def getClusterState():
     (output, retval) = run(["crm_mon", "-1", "-X","-r"])
@@ -1476,27 +1541,37 @@ def stonithCheck():
     return True
 
 def getCorosyncNodesID(allow_failure=False):
-    if is_rhel6():
-        output, retval = run(["cman_tool", "nodes", "-F", "id,name"])
-        if retval != 0:
-            if allow_failure:
-                return {}
-            else:
-                err("unable to get list of corosync nodes")
-        nodeid_re = re.compile(r"^(.)\s+([^\s]+)\s*$", re.M)
-        return dict([
-            (node_id, node_name)
-            for node_id, node_name in nodeid_re.findall(output)
-        ])
+    if os.getuid() == 0:
+        if is_rhel6():
+            output, retval = run(["cman_tool", "nodes", "-F", "id,name"])
+            if retval != 0:
+                if allow_failure:
+                    return {}
+                else:
+                    err("unable to get list of corosync nodes")
+            nodeid_re = re.compile(r"^(.)\s+([^\s]+)\s*$", re.M)
+            return dict([
+                (node_id, node_name)
+                for node_id, node_name in nodeid_re.findall(output)
+            ])
 
-    cs_nodes = {}
-    (output, retval) = run(['corosync-cmapctl', '-b', 'nodelist.node'])
+        (output, retval) = run(['corosync-cmapctl', '-b', 'nodelist.node'])
+    else:
+        err_msgs, retval, output, std_err = call_local_pcsd(
+            ['status', 'nodes', 'corosync-id'], True
+        )
+        if err_msgs:
+            for msg in err_msgs:
+                err(msg, False)
+            sys.exit(1)
+
     if retval != 0:
         if allow_failure:
             return {}
         else:
             err("unable to get list of corosync nodes")
 
+    cs_nodes = {}
     node_list_node_mapping = {}
     for line in output.rstrip().split("\n"):
         m = re.match("nodelist.node.(\d+).nodeid.*= (.*)",line)
@@ -1511,7 +1586,17 @@ def getCorosyncNodesID(allow_failure=False):
 
 # Warning, if a node has never started the hostname may be '(null)'
 def getPacemakerNodesID(allow_failure=False):
-    (output, retval) = run(['crm_node', '-l'])
+    if os.getuid() == 0:
+        (output, retval) = run(['crm_node', '-l'])
+    else:
+        err_msgs, retval, output, std_err = call_local_pcsd(
+            ['status', 'nodes', 'pacemaker-id'], True
+        )
+        if err_msgs:
+            for msg in err_msgs:
+                err(msg, False)
+            sys.exit(1)
+
     if retval != 0:
         if allow_failure:
             return {}

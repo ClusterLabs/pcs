@@ -5,7 +5,6 @@ import usage
 import urllib2
 import utils
 import sys
-import getpass
 import status
 import prop
 import resource
@@ -41,9 +40,6 @@ def cluster_cmd(argv):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     elif (sub_cmd == "status"):
         status.cluster_status(argv)
-        print ""
-        print "PCSD Status:"
-        cluster_gui_status([],True)
     elif (sub_cmd == "pcsd-status"):
         cluster_gui_status(argv)
     elif (sub_cmd == "certkey"):
@@ -138,6 +134,11 @@ def sync(partial_argv,nodes):
         try:
             for node in nodes:
                 node_response = output['data'][node]
+                if node_response['status'] == 'notauthorized':
+                    err_msgs.append(
+                        "Unable to authenticate to " + node
+                        + ", try running 'pcs cluster auth'"
+                    )
                 if node_response['status'] not in ['ok', 'not_supported']:
                     err_msgs.append(
                         "Unable to set pcsd configs on {0}".format(node)
@@ -212,23 +213,22 @@ def auth_nodes(nodes):
 
     if need_auth:
         if username == None:
-            sys.stdout.write('Username: ')
-            sys.stdout.flush()
-            username = raw_input("")
+            username = utils.get_terminal_input('Username: ')
         if password == None:
-            if sys.stdout.isatty():
-                password = getpass.getpass("Password: ")
-            else:
-                sys.stdout.write('Password: ')
-                sys.stdout.flush()
-                password = raw_input("")
+            password = utils.get_terminal_password()
 
+    auth_nodes_do(
+        set_nodes, username, password, '--force' in utils.pcs_options,
+        '--local' in utils.pcs_options
+    )
+
+def auth_nodes_do(nodes, username, password, force, local):
     pcsd_data = {
-        'nodes': list(set_nodes),
+        'nodes': list(set(nodes)),
         'username': username,
         'password': password,
-        'force': '--force' in utils.pcs_options,
-        'local': '--local' in utils.pcs_options,
+        'force': force,
+        'local': local,
     }
     output, retval = utils.run_pcsdcli('auth', pcsd_data)
     if retval == 0 and output['status'] == 'ok' and output['data']:
@@ -341,14 +341,12 @@ def corosync_setup(argv,returnConfig=False):
         sync_start(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_nodes)
-        print "Synchronizing pcsd certificates..."
         pcsd.pcsd_sync_certs([])
         return
     elif not returnConfig and not "--local" in utils.pcs_options:# and fedora_config:
         sync(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_nodes)
-        print "Synchronizing pcsd certificates..."
         pcsd.pcsd_sync_certs([])
         return
     else:
@@ -1167,15 +1165,20 @@ def cluster_node(argv):
                 'force': True,
             }
             output, retval = utils.run_pcsdcli('send_local_configs', pcsd_data)
-            if retval == 0 and output['status'] == 'ok' and output['data']:
+            if retval != 0:
+                utils.err("Unable to set pcsd configs")
+            if output['status'] == 'notauthorized':
+                utils.err(
+                    "Unable to authenticate to " + node0
+                    + ", try running 'pcs cluster auth'"
+                )
+            if output['status'] == 'ok' and output['data']:
                 try:
                     node_response = output['data'][node0]
                     if node_response['status'] not in ['ok', 'not_supported']:
                         utils.err("Unable to set pcsd configs")
                 except:
                     utils.err('Unable to communicate with pcsd')
-            else:
-                utils.err("Unable to set pcsd configs")
 
             utils.setCorosyncConfig(node0, corosync_conf)
             if "--enable" in utils.pcs_options:
