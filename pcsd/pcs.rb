@@ -1013,8 +1013,10 @@ def send_local_certs_to_nodes(nodes)
   node_response = {}
   threads = []
   nodes.each { |node|
-    code, _ = send_request_with_token(node, '/set_certs', true, data)
-    node_response[node] = 200 == code ? 'ok' : 'error'
+    threads << Thread.new {
+      code, _ = send_request_with_token(node, '/set_certs', true, data)
+      node_response[node] = 200 == code ? 'ok' : 'error'
+    }
   }
   threads.each { |t| t.join }
 
@@ -1033,8 +1035,10 @@ def pcsd_restart_nodes(nodes)
   node_response = {}
   threads = []
   nodes.each { |node|
-    code, _ = send_request_with_token(node, '/pcsd_restart', true)
-    node_response[node] = 200 == code ? 'ok' : 'error'
+    threads << Thread.new {
+      code, _ = send_request_with_token(node, '/pcsd_restart', true)
+      node_response[node] = 200 == code ? 'ok' : 'error'
+    }
   }
   threads.each { |t| t.join }
 
