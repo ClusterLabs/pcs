@@ -947,7 +947,7 @@ def overview_resources(params)
 end
 
 def overview_cluster(params)
-  cluster_name = params[:cluster]
+  cluster_name = $cluster_name
   overview = {
     'name' => cluster_name,
     'error_list' => [],
@@ -955,9 +955,12 @@ def overview_cluster(params)
     'quorate' => false,
     'status' => 'unknown',
     'node_list' => [],
-    'fence_list' => [],
-    'resource_list' => []
+    'fence_list' => nil,
+    'resource_list' => nil,
   }
+  if not cluster_name or cluster_name.empty?
+    return JSON.generate(overview)
+  end
 
   node_map = {}
   known_nodes = []
@@ -1096,7 +1099,9 @@ def overview_all()
       overview_cluster = nil
       online, offline, not_authorized_nodes = check_gui_status_of_nodes(get_cluster_nodes(cluster.name), false, 3)
       not_supported = false
-      for node in online + offline
+      cluster_nodes = (online + offline).uniq
+      nodes_not_in_cluster = []
+      for node in cluster_nodes
         code, response = send_request_with_token(
           node, 'overview_cluster', true, {:cluster => cluster.name}, true, nil, 15
         )
@@ -1110,12 +1115,28 @@ def overview_all()
             next
           elsif parsed_response['notoken'] or parsed_response['notauthorized']
             next
+          elsif parsed_response['name'].empty?
+            # queried node is not in the cluster (any more)
+            nodes_not_in_cluster << node
+            next
           else
             overview_cluster = parsed_response
             break
           end
         rescue JSON::ParserError
         end
+      end
+
+      if cluster_nodes.sort == nodes_not_in_cluster.sort
+        overview_cluster = {
+          'name' => cluster.name,
+          'error_list' => [],
+          'warning_list' => [],
+          'status' => 'unknown',
+          'node_list' => [],
+          'fence_list' => [],
+          'resource_list' => []
+        }
       end
       if not overview_cluster
         overview_cluster = {
