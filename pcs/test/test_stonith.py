@@ -537,29 +537,26 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
 """)
 
     def testNoStonithWarning(self):
-        o,r = pcs("status")
+        o,r = pcs(temp_cib, "status")
         assert "WARNING: no stonith devices and " in o
-        assert r == 0
 
-        o,r = pcs("stonith create test_stonith fence_apc ipaddr=ip login=lgn, action=reboot, pcmk_host_argument=node1")
+        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn, action=reboot, pcmk_host_argument=node1")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("status")
+        o,r = pcs(temp_cib, "status")
         assert "WARNING: no stonith devices and " not in o
-        assert r == 0
 
-        o,r = pcs("stonith delete test_stonith")
+        o,r = pcs(temp_cib, "stonith delete test_stonith")
         ac(o,"Deleting Resource - test_stonith\n")
         assert r == 0
 
-        o,r = pcs("stonith create test_stonith fence_apc ipaddr=ip login=lgn, action=reboot, pcmk_host_argument=node1 --clone")
+        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn, action=reboot, pcmk_host_argument=node1 --clone")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("status")
+        o,r = pcs(temp_cib, "status")
         assert "WARNING: no stonith devices and " not in o
-        assert r == 0
 
 if __name__ == "__main__":
     unittest.main()
