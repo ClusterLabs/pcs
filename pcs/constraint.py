@@ -296,7 +296,11 @@ def colocation_set(argv):
             argv[i:] = []
             break
 
-    current_set = set_args_into_array(argv)
+    argv.insert(0, "set")
+    resource_sets = set_args_into_array(argv)
+    if not check_empty_resource_sets(resource_sets):
+        usage.constraint(["colocation set"])
+        sys.exit(1)
     cib, constraints = getCurrentConstraints(utils.get_cib_dom())
 
     attributes = []
@@ -346,7 +350,7 @@ def colocation_set(argv):
     rsc_colocation = cib.createElement("rsc_colocation")
     for name, value in attributes:
         rsc_colocation.setAttribute(name, value)
-    set_add_resource_sets(rsc_colocation, current_set, cib)
+    set_add_resource_sets(rsc_colocation, resource_sets, cib)
     constraints.appendChild(rsc_colocation)
     utils.replace_cib_configuration(cib)
 
@@ -417,16 +421,23 @@ def set_constraint_el_to_string(constraint_el, showDetail=False):
     return " ".join(set_list + constraint_opts)
 
 def set_args_into_array(argv):
-    current_set = []
-    current_nodes = []
-    for i in range(len(argv)):
-        if argv[i] == "set" and len(argv) >= i:
-            current_set = current_set + set_args_into_array(argv[i+1:])
-            break
-        current_nodes.append(argv[i])
-    current_set = [current_nodes] + current_set
+    all_sets = []
+    current_set = None
+    for elem in argv:
+        if "set" == elem:
+            if current_set is not None:
+                all_sets.append(current_set)
+            current_set = []
+        else:
+            current_set.append(elem)
+    if current_set is not None:
+        all_sets.append(current_set)
+    return all_sets
 
-    return current_set
+def check_empty_resource_sets(sets):
+    if not sets:
+        return False
+    return all(sets)
 
 def set_add_resource_sets(elem, sets, cib):
     allowed_options = {
@@ -504,7 +515,11 @@ def order_set(argv):
             argv[i:] = []
             break
 
-    current_set = set_args_into_array(argv)
+    argv.insert(0, "set")
+    resource_sets = set_args_into_array(argv)
+    if not check_empty_resource_sets(resource_sets):
+        usage.constraint(["order set"])
+        sys.exit(1)
     cib, constraints = getCurrentConstraints(utils.get_cib_dom())
 
     attributes = []
@@ -555,7 +570,7 @@ def order_set(argv):
     rsc_order = cib.createElement("rsc_order")
     for name, value in attributes:
         rsc_order.setAttribute(name, value)
-    set_add_resource_sets(rsc_order, current_set, cib)
+    set_add_resource_sets(rsc_order, resource_sets, cib)
     constraints.appendChild(rsc_order)
     utils.replace_cib_configuration(cib)
 

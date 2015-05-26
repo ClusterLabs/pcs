@@ -361,6 +361,22 @@ Colocation Constraints:
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
+        o, r = pcs(temp_cib, "constraint colocation set")
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(temp_cib, "constraint colocation set D7 D8 set")
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(temp_cib, "constraint colocation set D7 D8 set set D8 D9")
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(temp_cib, "constraint colocation set setoptions score=100")
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
         o, r = pcs(temp_cib, "constraint colocation set D5 D6 D7 sequential=false require-all=true set D8 D9 sequential=true require-all=false action=start role=Stopped setoptions score=INFINITY ")
         ac(o,"")
         assert r == 0
@@ -377,13 +393,13 @@ Colocation Constraints:
         ac(o, """\
 Colocation Constraints:
   Resource Sets:
-    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_D7_set_D8_D9)
-    set D5 D6 (id:pcs_rsc_set_D5_D6) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6)
-    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9)
+    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9)
+    set D5 D6 (id:pcs_rsc_set_D5_D6) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6)
+    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint remove pcs_rsc_colocation_D5_D6")
+        o, r = pcs(temp_cib, "constraint remove pcs_rsc_colocation_set_D5_D6")
         ac(o,"")
         assert r == 0
 
@@ -391,8 +407,8 @@ Colocation Constraints:
         ac(o, """\
 Colocation Constraints:
   Resource Sets:
-    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_D7_set_D8_D9)
-    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9)
+    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9)
+    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
         assert r == 0
 
@@ -405,11 +421,11 @@ Colocation Constraints:
         assert r == 0
         
         o, r = pcs(temp_cib, "constraint ref D7")
-        ac(o,"Resource: D7\n  pcs_rsc_colocation_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9\n")
+        ac(o,"Resource: D7\n  pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9\n")
         assert r == 0
         
         o, r = pcs(temp_cib, "constraint ref D8")
-        ac(o,"Resource: D8\n  pcs_rsc_colocation_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_D5_D6_set_D7_D8_set_D8_D9\n")
+        ac(o,"Resource: D8\n  pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9\n")
         assert r == 0
         
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 sequential=foo")
@@ -585,6 +601,22 @@ Colocation Constraints:
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
+        o, r = pcs(temp_cib, "constraint order set")
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(temp_cib, "constraint order set D7 D8 set")
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(temp_cib, "constraint order set D7 D8 set set D8 D9")
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(temp_cib, "constraint order set setoptions score=100")
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
         o, r = pcs(temp_cib, "constraint order set D5 D6 D7 sequential=false require-all=true set D8 D9 sequential=true require-all=false action=start role=Stopped")
         ac(o,"")
         assert r == 0
@@ -602,12 +634,12 @@ Colocation Constraints:
         ac(o,"""\
 Ordering Constraints:
   Resource Sets:
-    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)
-    set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_D5_D6)
-    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)
+    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
+    set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D5_D6)
+    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
 
-        o, r = pcs(temp_cib, "constraint remove pcs_rsc_order_D5_D6")
+        o, r = pcs(temp_cib, "constraint remove pcs_rsc_order_set_D5_D6")
         assert r == 0
         ac(o,"")
 
@@ -616,8 +648,8 @@ Ordering Constraints:
         ac(o,"""\
 Ordering Constraints:
   Resource Sets:
-    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)
-    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)
+    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
+    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
         
         o, r = pcs(temp_cib, "resource delete D5")
@@ -687,9 +719,9 @@ Error: invalid symmetrical value 'foo', allowed values are: true, false
 Location Constraints:
 Ordering Constraints:
   Resource Sets:
-    set D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_D5_D6_D7_set_D8_D9)
-    set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_D5_D6_set_D7_D8_set_D8_D9)
-    set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions symmetrical=false kind=Mandatory (id:pcs_rsc_order_D1_D2)
+    set D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
+    set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
+    set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions symmetrical=false kind=Mandatory (id:pcs_rsc_order_set_D1_D2)
 Colocation Constraints:
 """)
         self.assertEquals(0, retValue)
@@ -954,11 +986,11 @@ Location Constraints:
 Ordering Constraints:
   start stateful1 then start dummy1 (kind:Mandatory) (id:order-stateful1-dummy1-mandatory)
   Resource Sets:
-    set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1) (id:pcs_rsc_order_stateful1_dummy1)
+    set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1) (id:pcs_rsc_order_set_stateful1_dummy1)
 Colocation Constraints:
   stateful1 with dummy1 (score:INFINITY) (id:colocation-stateful1-dummy1-INFINITY)
   Resource Sets:
-    set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1-1) setoptions score=INFINITY (id:pcs_rsc_colocation_stateful1_dummy1)
+    set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_stateful1_dummy1)
 """)
         assert r == 0
 
@@ -1076,14 +1108,14 @@ Ordering Constraints:
   start stateful1-master then start dummy1 (kind:Mandatory) (id:order-stateful1-master-dummy1-mandatory)
   start dummy1 then start statefulG-master (kind:Mandatory) (id:order-dummy1-statefulG-master-mandatory)
   Resource Sets:
-    set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1) (id:pcs_rsc_order_stateful1_dummy1)
-    set dummy1 statefulG-master (id:pcs_rsc_set_dummy1_statefulG-master) (id:pcs_rsc_order_dummy1_statefulG)
+    set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1) (id:pcs_rsc_order_set_stateful1_dummy1)
+    set dummy1 statefulG-master (id:pcs_rsc_set_dummy1_statefulG-master) (id:pcs_rsc_order_set_dummy1_statefulG)
 Colocation Constraints:
   stateful1-master with dummy1 (score:INFINITY) (id:colocation-stateful1-master-dummy1-INFINITY)
   dummy1 with statefulG-master (score:INFINITY) (id:colocation-dummy1-statefulG-master-INFINITY)
   Resource Sets:
-    set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_stateful1)
-    set statefulG-master dummy1 (id:pcs_rsc_set_statefulG-master_dummy1) setoptions score=INFINITY (id:pcs_rsc_colocation_statefulG_dummy1)
+    set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_stateful1)
+    set statefulG-master dummy1 (id:pcs_rsc_set_statefulG-master_dummy1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_statefulG_dummy1)
 """)
         self.assertEquals(0, returnVal)
 
@@ -1126,7 +1158,7 @@ Adding stateful1-master dummy1 (kind: Mandatory) (Options: first-action=start th
         )
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
-  set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1) (id:pcs_rsc_order_stateful1_dummy1)
+  set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1) (id:pcs_rsc_order_set_stateful1_dummy1)
 """)
         self.assertEquals(1, returnVal)
 
@@ -1156,7 +1188,7 @@ Error: duplicate constraint already exists, use --force to override
         )
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
-  set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_stateful1)
+  set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_stateful1)
 """)
         self.assertEquals(1, returnVal)
 
@@ -1187,17 +1219,17 @@ Ordering Constraints:
   start dummy1 then start statefulG-master (kind:Mandatory) (id:order-dummy1-statefulG-master-mandatory)
   start stateful1-master then start dummy1 (kind:Mandatory) (id:order-stateful1-master-dummy1-mandatory-1)
   Resource Sets:
-    set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1) (id:pcs_rsc_order_stateful1_dummy1)
-    set dummy1 statefulG-master (id:pcs_rsc_set_dummy1_statefulG-master) (id:pcs_rsc_order_dummy1_statefulG)
-    set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1-1) (id:pcs_rsc_order_stateful1_dummy1-1)
+    set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1) (id:pcs_rsc_order_set_stateful1_dummy1)
+    set dummy1 statefulG-master (id:pcs_rsc_set_dummy1_statefulG-master) (id:pcs_rsc_order_set_dummy1_statefulG)
+    set stateful1-master dummy1 (id:pcs_rsc_set_stateful1-master_dummy1-1) (id:pcs_rsc_order_set_stateful1_dummy1-1)
 Colocation Constraints:
   stateful1-master with dummy1 (score:INFINITY) (id:colocation-stateful1-master-dummy1-INFINITY)
   dummy1 with statefulG-master (score:INFINITY) (id:colocation-dummy1-statefulG-master-INFINITY)
   stateful1-master with dummy1 (score:INFINITY) (id:colocation-stateful1-master-dummy1-INFINITY-1)
   Resource Sets:
-    set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_stateful1)
-    set statefulG-master dummy1 (id:pcs_rsc_set_statefulG-master_dummy1) setoptions score=INFINITY (id:pcs_rsc_colocation_statefulG_dummy1)
-    set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_stateful1-1)
+    set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_stateful1)
+    set statefulG-master dummy1 (id:pcs_rsc_set_statefulG-master_dummy1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_statefulG_dummy1)
+    set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_stateful1-1)
 """)
         self.assertEquals(0, returnVal)
 
@@ -1308,11 +1340,11 @@ Location Constraints:
 Ordering Constraints:
   start dummy then start dummy1 (kind:Mandatory) (id:order-dummy-dummy1-mandatory)
   Resource Sets:
-    set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy) (id:pcs_rsc_order_dummy1_dummy)
+    set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy) (id:pcs_rsc_order_set_dummy1_dummy)
 Colocation Constraints:
   dummy with dummy1 (score:INFINITY) (id:colocation-dummy-dummy1-INFINITY)
   Resource Sets:
-    set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy)
+    set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy)
 """)
         assert r == 0
 
@@ -1426,14 +1458,14 @@ Ordering Constraints:
   start dummy-clone then start dummy1 (kind:Mandatory) (id:order-dummy-clone-dummy1-mandatory)
   start dummy1 then start dummyG-clone (kind:Mandatory) (id:order-dummy1-dummyG-clone-mandatory)
   Resource Sets:
-    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone) (id:pcs_rsc_order_dummy1_dummy)
-    set dummyG-clone dummy1 (id:pcs_rsc_set_dummyG-clone_dummy1) (id:pcs_rsc_order_dummyG_dummy1)
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone) (id:pcs_rsc_order_set_dummy1_dummy)
+    set dummyG-clone dummy1 (id:pcs_rsc_set_dummyG-clone_dummy1) (id:pcs_rsc_order_set_dummyG_dummy1)
 Colocation Constraints:
   dummy-clone with dummy1 (score:INFINITY) (id:colocation-dummy-clone-dummy1-INFINITY)
   dummy1 with dummyG-clone (score:INFINITY) (id:colocation-dummy1-dummyG-clone-INFINITY)
   Resource Sets:
-    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy)
-    set dummy1 dummyG-clone (id:pcs_rsc_set_dummy1_dummyG-clone) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummyG)
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy)
+    set dummy1 dummyG-clone (id:pcs_rsc_set_dummy1_dummyG-clone) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummyG)
 """)
         self.assertEquals(0, returnVal)
 
@@ -1476,7 +1508,7 @@ Adding dummy-clone dummy1 (kind: Mandatory) (Options: first-action=start then-ac
         )
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
-  set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone) (id:pcs_rsc_order_dummy1_dummy)
+  set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone) (id:pcs_rsc_order_set_dummy1_dummy)
 """)
         self.assertEquals(1, returnVal)
 
@@ -1506,7 +1538,7 @@ Error: duplicate constraint already exists, use --force to override
         )
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
-  set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy)
+  set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy)
 """)
         self.assertEquals(1, returnVal)
 
@@ -1537,17 +1569,17 @@ Ordering Constraints:
   start dummy1 then start dummyG-clone (kind:Mandatory) (id:order-dummy1-dummyG-clone-mandatory)
   start dummy-clone then start dummy1 (kind:Mandatory) (id:order-dummy-clone-dummy1-mandatory-1)
   Resource Sets:
-    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone) (id:pcs_rsc_order_dummy1_dummy)
-    set dummyG-clone dummy1 (id:pcs_rsc_set_dummyG-clone_dummy1) (id:pcs_rsc_order_dummyG_dummy1)
-    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-2) (id:pcs_rsc_order_dummy1_dummy-1)
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone) (id:pcs_rsc_order_set_dummy1_dummy)
+    set dummyG-clone dummy1 (id:pcs_rsc_set_dummyG-clone_dummy1) (id:pcs_rsc_order_set_dummyG_dummy1)
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-2) (id:pcs_rsc_order_set_dummy1_dummy-1)
 Colocation Constraints:
   dummy-clone with dummy1 (score:INFINITY) (id:colocation-dummy-clone-dummy1-INFINITY)
   dummy1 with dummyG-clone (score:INFINITY) (id:colocation-dummy1-dummyG-clone-INFINITY)
   dummy-clone with dummy1 (score:INFINITY) (id:colocation-dummy-clone-dummy1-INFINITY-1)
   Resource Sets:
-    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy)
-    set dummy1 dummyG-clone (id:pcs_rsc_set_dummy1_dummyG-clone) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummyG)
-    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-3) setoptions score=INFINITY (id:pcs_rsc_colocation_dummy1_dummy-1)
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy)
+    set dummy1 dummyG-clone (id:pcs_rsc_set_dummy1_dummyG-clone) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummyG)
+    set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-3) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy-1)
 """)
         self.assertEquals(0, returnVal)
 
@@ -2064,7 +2096,7 @@ Colocation Constraints:
         output, returnVal = pcs("constraint order set D1 D2")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
-  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_D1_D2)
+  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)
 """)
         self.assertEquals(1, returnVal)
 
@@ -2079,7 +2111,7 @@ Error: duplicate constraint already exists, use --force to override
         output, returnVal = pcs("constraint order set D1 D2 set D5 D6")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
-  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_D1_D2_set_D5_D6)
+  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)
 """)
         self.assertEquals(1, returnVal)
 
@@ -2095,7 +2127,7 @@ Error: duplicate constraint already exists, use --force to override
         output, returnVal = pcs("constraint colocation set D1 D2")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
-  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2)
+  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)
 """)
         self.assertEquals(1, returnVal)
 
@@ -2110,7 +2142,7 @@ Error: duplicate constraint already exists, use --force to override
         output, returnVal = pcs("constraint colocation set D1 D2 set D5 D6")
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
-  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2_set_D5_D6)
+  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)
 """)
         self.assertEquals(1, returnVal)
 
@@ -2135,18 +2167,18 @@ Error: duplicate constraint already exists, use --force to override
 Location Constraints:
 Ordering Constraints:
   Resource Sets:
-    set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_D1_D2)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-1) (id:pcs_rsc_order_D1_D2-1)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_D1_D2_set_D5_D6)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-3) set D5 D6 (id:pcs_rsc_set_D5_D6-1) (id:pcs_rsc_order_D1_D2_set_D5_D6-1)
-    set D6 D1 (id:pcs_rsc_set_D6_D1-1) (id:pcs_rsc_order_D6_D1)
+    set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-1) (id:pcs_rsc_order_set_D1_D2-1)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-3) set D5 D6 (id:pcs_rsc_set_D5_D6-1) (id:pcs_rsc_order_set_D1_D2_set_D5_D6-1)
+    set D6 D1 (id:pcs_rsc_set_D6_D1-1) (id:pcs_rsc_order_set_D6_D1)
 Colocation Constraints:
   Resource Sets:
-    set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-5) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2-1)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2_set_D5_D6)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-7) set D5 D6 (id:pcs_rsc_set_D5_D6-3) setoptions score=INFINITY (id:pcs_rsc_colocation_D1_D2_set_D5_D6-1)
-    set D6 D1 (id:pcs_rsc_set_D6_D1) setoptions score=INFINITY (id:pcs_rsc_colocation_D6_D1)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-5) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2-1)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)
+    set D1 D2 (id:pcs_rsc_set_D1_D2-7) set D5 D6 (id:pcs_rsc_set_D5_D6-3) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6-1)
+    set D6 D1 (id:pcs_rsc_set_D6_D1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D6_D1)
 """)
 
     def testDuplicateLocationRules(self):
