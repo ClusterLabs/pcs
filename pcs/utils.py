@@ -1,6 +1,8 @@
 import os, subprocess
 import sys
 import xml.dom.minidom
+import ssl
+import inspect
 import urllib,urllib2
 from xml.dom.minidom import parseString,parse
 import xml.etree.ElementTree as ET
@@ -251,7 +253,20 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 # 3 = Auth Error
 def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess = True):
     url = 'https://' + host + ':2224/' + request
-    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+    # enable self-signed certificates
+    # https://www.python.org/dev/peps/pep-0476/
+    # http://bugs.python.org/issue21308
+    if (
+        hasattr(ssl, "_create_unverified_context")
+        and
+        "context" in inspect.getargspec(urllib2.HTTPSHandler.__init__).args
+    ):
+        opener = urllib2.build_opener(
+            urllib2.HTTPSHandler(context=ssl._create_unverified_context()),
+            urllib2.HTTPCookieProcessor()
+        )
+    else:
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
     tokens = readTokens()
     if "--debug" in pcs_options:
         print "Sending HTTP Request to: " + url
