@@ -1800,6 +1800,8 @@ Colocation Constraints:
         assert returnVal == 0
 
     def testRemoteNodeConstraintsRemove(self):
+        # constraints referencing the remote node's name,
+        # deleting the remote node resource
         output, returnVal = pcs(
             temp_cib,
             'resource create vm-guest1 VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
@@ -1865,6 +1867,8 @@ Colocation Constraints:
 """)
         self.assertEquals(0, returnVal)
 
+        # constraints referencing the remote node's name,
+        # removing the remote node
         output, returnVal = pcs(
             temp_cib,
             'resource create vm-guest1 VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
@@ -1913,6 +1917,34 @@ Location Constraints:
     Disabled on: node2 (score:-300) (id:location-D2-node2--300)
 Ordering Constraints:
 Colocation Constraints:
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource delete vm-guest1")
+        ac(output, """\
+Deleting Resource - vm-guest1
+""")
+        self.assertEquals(0, returnVal)
+
+        # constraints referencing the remote node resource
+        # deleting the remote node resource
+        output, returnVal = pcs(
+            temp_cib,
+            'resource create vm-guest1 VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "constraint location vm-guest1 prefers node1"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource delete vm-guest1")
+        ac(output, """\
+Removing Constraint - location-vm-guest1-node1-INFINITY
+Deleting Resource - vm-guest1
 """)
         self.assertEquals(0, returnVal)
 

@@ -1703,6 +1703,7 @@ def resource_remove(resource_id, output = True):
         print "Stopped"
 
     constraint.remove_constraints_containing(resource_id,output)
+    dom = utils.get_cib_dom()
     resource_el = utils.dom_get_resource(dom, resource_id)
     if resource_el:
         remote_node = utils.dom_get_resource_remote_node_name(resource_el)
