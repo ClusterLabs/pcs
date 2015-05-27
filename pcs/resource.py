@@ -2028,16 +2028,46 @@ def resource_enable(argv):
         utils.err("You must specify a resource to enable")
 
     resource = argv[0]
-    if not is_managed(resource):
-        print "Warning: '%s' is unmanaged" % resource
+    cib_dom = utils.get_cib_dom()
+
+    resource_clone = (
+        utils.dom_get_clone(cib_dom, resource)
+        or
+        utils.dom_get_master(cib_dom, resource)
+    )
+    if resource_clone:
+        resource_main = utils.dom_elem_get_clone_ms_resource(resource_clone)
+    else:
+        resource_main = (
+            utils.dom_get_resource(cib_dom, resource)
+            or
+            utils.dom_get_group(cib_dom, resource)
+        )
+        if not resource_main:
+            utils.err(
+                "unable to find a resource/clone/master/group: {0}".format(
+                    resource
+                )
+            )
+        resource_clone = utils.dom_elem_get_resource_clone_ms_parent(
+            resource_main
+        )
+    resources_to_enable = [resource_main.getAttribute("id")]
+    if resource_clone:
+        resources_to_enable.append(resource_clone.getAttribute("id"))
+
+    for res in resources_to_enable:
+        if not is_managed(res):
+            print "Warning: '{0}' is unmanaged".format(res)
 
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
 
-    args = ["crm_resource", "-r", resource, "-m", "-d", "target-role"]
-    output, retval = utils.run(args)
-    if retval != 0:
-        utils.err (output)
+    for res in resources_to_enable:
+        args = ["crm_resource", "-r", res, "-m", "-d", "target-role"]
+        output, retval = utils.run(args)
+        if retval != 0:
+            utils.err (output)
 
     if "--wait" in utils.pcs_options:
         args = ["crm_resource", "--wait"]

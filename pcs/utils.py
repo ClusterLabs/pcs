@@ -850,13 +850,17 @@ def dom_get_clone_ms_resource(dom, clone_ms_id):
         dom_get_master(dom, clone_ms_id)
     )
     if clone_ms:
-        for child in clone_ms.childNodes:
-            if (
-                child.nodeType == xml.dom.minidom.Node.ELEMENT_NODE
-                and
-                child.tagName in ["group", "primitive"]
-            ):
-                return child
+        return dom_elem_get_clone_ms_resource(clone_ms)
+    return None
+
+def dom_elem_get_clone_ms_resource(clone_ms):
+    for child in clone_ms.childNodes:
+        if (
+            child.nodeType == xml.dom.minidom.Node.ELEMENT_NODE
+            and
+            child.tagName in ["group", "primitive"]
+        ):
+            return child
     return None
 
 def dom_get_resource_clone_ms_parent(dom, resource_id):
@@ -865,6 +869,9 @@ def dom_get_resource_clone_ms_parent(dom, resource_id):
         or
         dom_get_group(dom, resource_id)
     )
+    return dom_elem_get_resource_clone_ms_parent(resource)
+
+def dom_elem_get_resource_clone_ms_parent(resource):
     clone = resource
     while True:
         if not isinstance(clone, xml.dom.minidom.Element):

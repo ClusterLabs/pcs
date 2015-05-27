@@ -2856,6 +2856,7 @@ Error: Cannot remove more than one resource from cloned group
         ac(o,"")
         assert r == 0
 
+        # primitive resource
         o,r = pcs(temp_cib, "resource disable D1")
         ac(o,"")
         assert r == 0
@@ -2872,6 +2873,7 @@ Error: Cannot remove more than one resource from cloned group
         ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n")
         assert r == 0
 
+        # bad resource name
         o,r = pcs(temp_cib, "resource enable NoExist")
         ac(o,"Error: unable to find a resource/clone/master/group: NoExist\n")
         assert r == 1
@@ -2880,9 +2882,30 @@ Error: Cannot remove more than one resource from cloned group
         ac(o,"Error: unable to find a resource/clone/master/group: NoExist\n")
         assert r == 1
 
+        # cloned group
+        output, retVal = pcs(temp_cib, "resource create dummy0 Dummy --group group0")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource clone group0")
+        ac(output, "")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource show group0-clone")
+        ac(output," Clone: group0-clone\n  Group: group0\n   Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)\n    Operations: start interval=0s timeout=20 (dummy0-start-interval-0s)\n                stop interval=0s timeout=20 (dummy0-stop-interval-0s)\n                monitor interval=10 timeout=20 (dummy0-monitor-interval-10)\n")
+        assert retVal == 0
+        output, retVal = pcs(temp_cib, "resource disable group0")
+        ac(output, "")
+        assert retVal == 0
+
+    def testResourceEnableUnmanaged(self):
+        o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy")
+        ac(o,"")
+        assert r == 0
+
         o,r = pcs(temp_cib, "resource create --no-default-ops D2 Dummy")
         ac(o,"")
         assert r == 0
+
+        # unmanaged resource - by meta attribute
         o,r = pcs(temp_cib, "resource unmanage D2")
         ac(o,"")
         assert r == 0
@@ -2893,6 +2916,7 @@ Error: Cannot remove more than one resource from cloned group
         ac(o,"Warning: 'D2' is unmanaged\n")
         assert r == 0
 
+        # unmanaged resource - by cluster property
         o,r = pcs(temp_cib, "property set is-managed-default=false")
         ac(o,"")
         assert r == 0
@@ -2906,6 +2930,7 @@ Error: Cannot remove more than one resource from cloned group
         ac(o,"")
         assert r == 0
 
+        # resource in an unmanaged group
         o,r = pcs(temp_cib, "resource create --no-default-ops D3 Dummy")
         ac(o,"")
         assert r == 0
@@ -2931,6 +2956,7 @@ Error: Cannot remove more than one resource from cloned group
         ac(o,"")
         assert r == 0
 
+        # unmanaged resource in a group
         o,r = pcs(temp_cib, "resource create --no-default-ops D4 Dummy")
         ac(o,"")
         assert r == 0
@@ -2950,18 +2976,171 @@ Error: Cannot remove more than one resource from cloned group
         ac(o,"")
         assert r == 0
 
-        output, retVal = pcs(temp_cib, "resource create dummy0 Dummy --group group0")
+    def testResourceEnableClone(self):
+        output, retVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy Dummy --clone"
+        )
         ac(output, "")
-        assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource clone group0")
+        self.assertEquals(retVal, 0)
+
+        # disable primitive, enable clone
+        output, retVal = pcs(temp_cib, "resource disable dummy")
         ac(output, "")
-        assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource show group0-clone")
-        ac(output," Clone: group0-clone\n  Group: group0\n   Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)\n    Operations: start interval=0s timeout=20 (dummy0-start-interval-0s)\n                stop interval=0s timeout=20 (dummy0-stop-interval-0s)\n                monitor interval=10 timeout=20 (dummy0-monitor-interval-10)\n")
-        assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource disable group0")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource enable dummy-clone")
         ac(output, "")
-        assert retVal == 0
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-clone")
+        ac(output, """\
+ Clone: dummy-clone
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(retVal, 0)
+
+        # disable clone, enable primitive
+        output, retVal = pcs(temp_cib, "resource disable dummy-clone")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource enable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-clone")
+        ac(output, """\
+ Clone: dummy-clone
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(retVal, 0)
+
+        # disable both primitive and clone, enable clone
+        output, retVal = pcs(temp_cib, "resource disable dummy-clone")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource disable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource enable dummy-clone")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-clone")
+        ac(output, """\
+ Clone: dummy-clone
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(retVal, 0)
+
+        # disable both primitive and clone, enable primitive
+        output, retVal = pcs(temp_cib, "resource disable dummy-clone")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource disable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource enable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-clone")
+        ac(output, """\
+ Clone: dummy-clone
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(retVal, 0)
+
+    def testResourceEnableMaster(self):
+        output, retVal = pcs(
+            temp_cib, "resource create --no-default-ops dummy Stateful --master"
+        )
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        # disable primitive, enable master
+        output, retVal = pcs(temp_cib, "resource disable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource enable dummy-master")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-master")
+        ac(output, """\
+ Master: dummy-master
+  Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(retVal, 0)
+
+        # disable master, enable primitive
+        output, retVal = pcs(temp_cib, "resource disable dummy-master")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource enable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-master")
+        ac(output, """\
+ Master: dummy-master
+  Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(retVal, 0)
+
+        # disable both primitive and master, enable master
+        output, retVal = pcs(temp_cib, "resource disable dummy-master")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource disable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource enable dummy-master")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-master")
+        ac(output, """\
+ Master: dummy-master
+  Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(retVal, 0)
+
+        # disable both primitive and master, enable primitive
+        output, retVal = pcs(temp_cib, "resource disable dummy-master")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource disable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource enable dummy")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-master")
+        ac(output, """\
+ Master: dummy-master
+  Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+        self.assertEquals(retVal, 0)
 
     def testOPOption(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy op monitor interval=30s blah=blah")
