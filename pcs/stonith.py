@@ -211,6 +211,9 @@ def stonith_level(argv):
 def stonith_level_add(level, node, devices):
     dom = utils.get_cib_dom()
 
+    if not re.search(r'^\d+$', level) or re.search(r'^0+$', level):
+        utils.err("invalid level '{0}', use a positive integer".format(level))
+    level = level.lstrip('0')
     if not "--force" in utils.pcs_options:
         for dev in devices.split(","):
             if not utils.is_stonith_resource(dev):

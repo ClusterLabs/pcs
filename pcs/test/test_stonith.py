@@ -180,6 +180,26 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
         assert returnVal == 0
         ac(output,"")
 
+        output, returnVal = pcs(temp_cib, "stonith level add NaN rh7-1 F3,F4")
+        ac(output, "Error: invalid level 'NaN', use a positive integer\n")
+        assert returnVal == 1
+
+        output, returnVal = pcs(temp_cib, "stonith level add -10 rh7-1 F3,F4")
+        ac(output, "Error: invalid level '-10', use a positive integer\n")
+        assert returnVal == 1
+
+        output, returnVal = pcs(temp_cib, "stonith level add 10abc rh7-1 F3,F4")
+        ac(output, "Error: invalid level '10abc', use a positive integer\n")
+        assert returnVal == 1
+
+        output, returnVal = pcs(temp_cib, "stonith level add 0 rh7-1 F3,F4")
+        ac(output, "Error: invalid level '0', use a positive integer\n")
+        assert returnVal == 1
+
+        output, returnVal = pcs(temp_cib, "stonith level add 000 rh7-1 F3,F4")
+        ac(output, "Error: invalid level '000', use a positive integer\n")
+        assert returnVal == 1
+
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 F3,F4")
         assert returnVal == 0
         assert output == ""
@@ -196,7 +216,7 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "stonith level add 2 rh7-2 F2")
+        output, returnVal = pcs(temp_cib, "stonith level add 002 rh7-2 F2")
         assert returnVal == 0
         assert output == ""
 
@@ -372,6 +392,26 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
 
         o,r = pcs(temp_cib, "stonith level clear")
         o,r = pcs(temp_cib, "stonith level")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level add 10 rh7-1 F1")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level add 010 rh7-1 F2")
+        assert r == 0
+        ac(o,"")
+
+        o,r = pcs(temp_cib, "stonith level")
+        assert r == 0
+        ac(o, """\
+ Node: rh7-1
+  Level 10 - F1
+  Level 10 - F2
+""")
+
+        o,r = pcs(temp_cib, "stonith level clear")
         assert r == 0
         ac(o,"")
 
