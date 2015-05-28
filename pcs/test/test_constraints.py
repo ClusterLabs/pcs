@@ -7,6 +7,7 @@ import utils
 from pcs_test_functions import pcs,ac,isMinimumPacemakerVersion
 
 empty_cib = "empty.xml"
+empty_cib_1_2 = "empty-1.2.xml"
 temp_cib = "temp.xml"
 large_cib = "large.xml"
 temp_large_cib = "temp-large.xml"
@@ -213,6 +214,28 @@ Colocation Constraints:
 
         o,r = pcs("constraint --full")
         ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\n")
+        assert r == 0
+
+    def testOrderConstraintRequireAll(self):
+        if not isMinimumPacemakerVersion(1,1,12):
+            print "WARNING: Pacemaker version is too old (must be >= 1.1.12) to test require-all"
+            return
+
+        o,r = pcs("cluster cib-upgrade")
+        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        assert r == 0
+
+        o,r = pcs("constraint order start D1 then start D2 require-all=false")
+        ac(o,"Adding D1 D2 (kind: Mandatory) (Options: require-all=false first-action=start then-action=start)\n")
+        assert r == 0
+
+        o,r = pcs("constraint --full")
+        ac(o, """\
+Location Constraints:
+Ordering Constraints:
+  start D1 then start D2 (kind:Mandatory) (Options: require-all=false) (id:order-D1-D2-mandatory)
+Colocation Constraints:
+""")
         assert r == 0
 
     def testAllConstraints(self):

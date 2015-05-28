@@ -381,7 +381,12 @@ def order_el_to_string(ord_loc, showDetail=False):
     oc_kind = ord_loc.getAttribute("kind")
     oc_sym = ""
     oc_id_out = ""
-    if ord_loc.getAttribute("symmetrical") == "false":
+    oc_options = ""
+    if (
+        ord_loc.getAttribute("symmetrical")
+        and
+        not utils.is_cib_true(ord_loc.getAttribute("symmetrical"))
+    ):
         oc_sym = "(non-symmetrical)"
     if oc_kind != "":
         score_text = "(kind:" + oc_kind + ")"
@@ -391,9 +396,20 @@ def order_el_to_string(ord_loc, showDetail=False):
         score_text = "(score:" + oc_score + ")"
     if showDetail:
         oc_id_out = "(id:"+oc_id+")"
+    already_processed_attrs = (
+        "first", "then", "first-action", "then-action", "id", "score", "kind",
+        "symmetrical"
+    )
+    oc_options = " ".join([
+        "{0}={1}".format(name, value)
+        for name, value in ord_loc.attributes.items()
+        if name not in already_processed_attrs
+    ])
+    if oc_options:
+        oc_options = "(Options: " + oc_options + ")"
     return " ".join(filter(None, [
         first_action, oc_resource1, "then", then_action, oc_resource2,
-        score_text, oc_sym, oc_id_out
+        score_text, oc_sym, oc_options, oc_id_out
     ]))
 
 def print_sets(sets,showDetail):

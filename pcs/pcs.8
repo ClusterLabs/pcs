@@ -408,7 +408,7 @@ order show [\fB\-\-full\fR]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 order [action] <resource id> then [action] <resource id> [options]
-Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start. Available options are kind=Optional/Mandatory/Serialize, symmetrical=true/false and id=<constraint-id>.
+Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start.  Available options are kind=Optional/Mandatory/Serialize, symmetrical=true/false, require-all=true/false and id=<constraint-id>.
 .TP
 order set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]] [setoptions [constraint_options]]
 Create an ordered set of resources. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.  Available constraint_options are id=<constraint-id>, kind=Optional/Mandatory/Serialize and symmetrical=true/false.

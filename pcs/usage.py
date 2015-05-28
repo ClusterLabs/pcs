@@ -895,7 +895,7 @@ Commands:
         demote) and if no action is specified the default action will be
         start.
         Available options are kind=Optional/Mandatory/Serialize,
-        symmetrical=true/false and id=<constraint-id>.
+        symmetrical=true/false, require-all=true/false and id=<constraint-id>.
 
     order set <resource1> <resource2> [resourceN]... [options] [set
               <resourceX> <resourceY> ... [options]]
