@@ -706,9 +706,9 @@ def run_pcsdcli(command, data=None):
     env_var = dict()
     if "--debug" in pcs_options:
         env_var["PCSD_DEBUG"] = "true"
-    pcs_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    pcs_dir = os.path.dirname(sys.argv[0])
     if pcs_dir == "/usr/sbin":
-        pcsd_dir_path = '/var/lib/pcsd'
+        pcsd_dir_path = settings.pcsd_exec_location
     else:
         pcsd_dir_path = os.path.join(pcs_dir, '../pcsd')
     pcsdcli_path = os.path.join(pcsd_dir_path, 'pcsd-cli.rb')
@@ -1809,10 +1809,15 @@ def is_cib_true(var):
     return var.lower() in ("true", "on", "yes", "y", "1")
 
 def is_systemctl():
-    if os.path.exists('/usr/bin/systemctl'):
-        return True
-    else:
-        return False
+    systemctl_paths = [
+        '/usr/bin/systemctl',
+        '/bin/systemctl',
+        '/var/run/systemd/system',
+    ]
+    for path in systemctl_paths:
+        if os.path.exists(path):
+            return True
+    return False
 
 def is_rhel6():
     try:

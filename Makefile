@@ -71,9 +71,11 @@ else
   ifeq ($(install_settings),true)
     ifeq ($(settings_x86_64),true)
       settings_file=settings.py.x86_64-linux-gnu.debian
+      settings_file_pcsd=settings.rb.x86_64-linux-gnu.debian
     else
       ifeq ($(settings_i386),true)
         settings_file=settings.py.i386-linux-gnu.debian
+        settings_file_pcsd=settings.rb.i386-linux-gnu.debian
       endif
     endif
   endif
@@ -105,6 +107,10 @@ ifeq ($(IS_DEBIAN),true)
 	install -m 644 -D pcsd/pcsd.conf ${DESTDIR}/etc/default/pcsd
 	install -d ${DESTDIR}/etc/pam.d
 	install  pcsd/pcsd.pam.debian ${DESTDIR}/etc/pam.d/pcsd
+  ifeq ($(install_settings),true)
+	rm -f  ${DESTDIR}/usr/share/pcsd/settings.rb
+	install -m755 pcsd/${settings_file_pcsd} ${DESTDIR}/usr/share/pcsd/settings.rb
+  endif
   ifeq ($(IS_SYSTEMCTL),true)
 	install -d ${DESTDIR}/${systemddir}/system/
 	install -m 644 pcsd/pcsd.service.debian ${DESTDIR}/${systemddir}/system/pcsd.service

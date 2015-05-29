@@ -13,8 +13,8 @@
 # Should-Stop: 
 # Default-Start:
 # Default-Stop:
-# Short-Description: Starts and stops Pacemaker & Corosync daemon
-# Description: Starts and stops Pacemaker & Corosync daemon
+# Short-Description: Starts and stops Pacemaker & Corosync Configuration daemon
+# Description: Starts and stops Pacemaker & Corosync Configuration daemon
 ### END INIT INFO
 
 # Source function library.
@@ -23,6 +23,7 @@
 exec="/usr/bin/ruby"
 prog="pcsd"
 config="/var/lib/pcsd"
+pidfile="/var/run/pcsd.pid"
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
@@ -31,11 +32,20 @@ lockfile=/var/lock/subsys/$prog
 start() {
     [ -x $exec ] || exit 5
     echo -n $"Starting $prog: "
-    export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
-    cd /var/lib/pcsd
-    daemon $exec -I/usr/lib/pcsd /usr/lib/pcsd/ssl.rb
-    # if not running, start it up here, usually something like "daemon $exec"
-    retval=$?
+    if status $prog > /dev/null 2>&1; then
+        success
+    else
+        export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
+        cd /var/lib/pcsd
+        nohup $exec -I/usr/lib/pcsd /usr/lib/pcsd/ssl.rb > /dev/null 2>&1 & echo $! > $pidfile
+        retval=$?
+        [ $retval -eq 0 ] && touch $lockfile
+        if status $prog > /dev/null 2>&1; then
+            success
+        else
+            failure
+        fi
+    fi
     echo
     [ $retval -eq 0 ] && touch $lockfile
     return $retval
@@ -43,8 +53,14 @@ start() {
 
 stop() {
     echo -n $"Stopping $prog: "
-    # stop it here, often "killproc $prog"
+    killproc $prog
     retval=$?
+    [ $retval -eq 0 ] && rm -f $lockfile
+    if [ $retval -eq 0 ]; then
+        success
+    else
+        failure
+    fi
     echo
     [ $retval -eq 0 ] && rm -f $lockfile
     return $retval

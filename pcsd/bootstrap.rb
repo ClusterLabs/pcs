@@ -1,8 +1,7 @@
 require 'logger'
 
-CRT_FILE = '/var/lib/pcsd/pcsd.crt'
-KEY_FILE = '/var/lib/pcsd/pcsd.key'
-COOKIE_FILE = '/var/lib/pcsd/pcsd.cookiesecret'
+require 'settings.rb'
+
 
 def get_rhel_version()
   if File.exists?('/etc/system-release')
@@ -21,15 +20,19 @@ def is_rhel6()
 end
 
 def is_systemctl()
-  if File.exist?('/usr/bin/systemctl')
-    return true
-  else
-    return false
-  end
+  systemctl_paths = [
+      '/usr/bin/systemctl',
+      '/bin/systemctl',
+      '/var/run/systemd/system',
+  ]
+  systemctl_paths.each { |path|
+    return true if File.exist?(path)
+  }
+  return false
 end
 
 def get_pcs_path(pcsd_path)
-  if '/var/lib/pcsd' == pcsd_path
+  if PCSD_EXEC_LOCATION == pcsd_path or PCSD_EXEC_LOCATION == (pcsd_path + '/')
     return '/usr/sbin/pcs'
   else
     return '../pcs/pcs'
@@ -40,25 +43,13 @@ PCS_VERSION = '0.9.139'
 ISRHEL6 = is_rhel6
 ISSYSTEMCTL = is_systemctl
 
-OCF_ROOT = "/usr/lib/ocf"
-HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
-PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
-PENGINE = "/usr/libexec/pacemaker/pengine"
-CRM_NODE = "/usr/sbin/crm_node"
-CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"
-COROSYNC = "/usr/sbin/corosync"
+COROSYNC = COROSYNC_BINARIES + "corosync"
 if ISRHEL6
-  COROSYNC_CMAPCTL = "/usr/sbin/corosync-objctl"
+  COROSYNC_CMAPCTL = COROSYNC_BINARIES + "corosync-objctl"
 else
-  COROSYNC_CMAPCTL = "/usr/sbin/corosync-cmapctl"
+  COROSYNC_CMAPCTL = COROSYNC_BINARIES + "corosync-cmapctl"
 end
-COROSYNC_QUORUMTOOL = "/usr/sbin/corosync-quorumtool"
-CMAN_TOOL = "/usr/sbin/cman_tool"
-PACEMAKERD = "/usr/sbin/pacemakerd"
-CIBADMIN = "/usr/sbin/cibadmin"
-
-SUPERUSER = 'hacluster'
-$user_pass_file = "pcs_users.conf"
+COROSYNC_QUORUMTOOL = COROSYNC_BINARIES + "corosync-quorumtool"
 
 if not defined? $cur_node_name
   $cur_node_name = `hostname`.chomp
