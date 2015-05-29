@@ -1,0 +1,141 @@
+#!/bin/sh
+##
+# pcsd Pacemaker & Corosync configuration daemon
+#
+# chkconfig:   - 21 81 
+# description: Pacemaker & Corosync configuration daemon
+
+### BEGIN INIT INFO
+# Provides: pcsd
+# Required-Start: $remote_fs $network $syslog
+# Required-Stop: $remote_fs $network $syslog
+# Should-Start: 
+# Should-Stop: 
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Starts and stops Pacemaker & Corosync daemon
+# Description: Starts and stops Pacemaker & Corosync daemon
+### END INIT INFO
+
+# PATH
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+DESC="pcs daemon"
+NAME=pcsd
+EXEC=ruby
+SUB_EXEC=/usr/share/pcsd/ssl.rb
+DAEMON_USER=root
+DAEMON=/usr/bin/ruby
+DAEMON_ARGS="-C/var/lib/pcsd -I/usr/share/pcsd -- /usr/share/pcsd/ssl.rb"
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+LOGFILE=/var/log/$NAME/$NAME.log
+SLEEP_DURATION=2
+
+# Exit if ruby is not installed
+[ -x $(which $EXEC) ] || echo "$EXEC was not found. Is it installed?"
+[ -x $(which $SUB_EXEC) ] || echo "$SUB_EXEC not found. Is pcs installed?"
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# Source lsb init functions
+. /lib/lsb/init-functions
+
+is_running()
+{
+  # Test whether pid file exists or not
+  test -f $PIDFILE || return 1
+
+  # Test whether process is running or not
+  read PID < "$PIDFILE"
+  ps -p $PID >/dev/null 2>&1 || return 1
+
+  # Is running
+  return 0
+}
+
+root_only()
+{
+  if [ "$(id -u)" != "0" ]; then
+    echo "Only root should run this operation"
+    exit 1
+  fi
+}
+
+run()
+{
+  if is_running; then
+    PID="$(cat $PIDFILE)"
+    echo "Daemon is already running as PID $PID"
+    return 1
+  fi
+
+  nohup $DAEMON $DAEMON_ARGS > /dev/null 2>&1 &
+  echo $! > $PIDFILE
+  read PID < "$PIDFILE"
+
+  echo "PID is $PID"
+
+  sleep $SLEEP_DURATION
+  if ! is_running; then
+    echo "Daemon died immediately after starting. Please check your logs and configurations."
+    return 1
+  fi
+
+  echo "Daemon is running as PID $PID"
+  return 0
+}
+
+stop()
+{
+  if is_running; then
+    read PID < "$PIDFILE"
+    kill -9 $PID
+  fi
+
+  sleep $SLEEP_DURATION
+  if is_running; then
+    while is_running; do
+      echo "waiting for daemon to die (PID $PID)"
+      sleep $SLEEP_DURATION
+    done
+  fi
+
+  # Be sure to remove the pid file
+  rm -f "$PIDFILE"
+  return 0
+}
+
+case "$1" in
+  start)
+    root_only
+    log_daemon_msg "Starting $DESC"  "$NAME"
+    run
+    log_end_msg $?
+    ;;
+  stop)
+    root_only
+    log_daemon_msg "Stopping $DESC" "$NAME"
+    stop
+    log_end_msg $?
+    ;;
+  restart|force-reload)
+    log_daemon_msg "Restarting $DESC" "$NAME"
+    root_only
+    $0 stop && $0 start
+    ;;
+  status|monitor)
+    status_of_proc \
+      -p "$PIDFILE" \
+      "$SUB_EXEC" \
+      "$NAME" \
+      && exit 0 \
+      || exit $?
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|reload|force-reload|status|monitor}"
+    exit 1
+  ;;
+esac
+
+:
