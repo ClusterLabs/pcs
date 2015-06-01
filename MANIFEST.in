@@ -2,3 +2,5 @@ include Makefile
 include COPYING
 graft pcsd
 prune pcsd/vendor/bundle
+prune pcsd/test
+recursive-exclude pcsd .gitignore
