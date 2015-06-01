@@ -39,7 +39,7 @@ def get_pcs_path(pcsd_path)
   end
 end
 
-PCS_VERSION = '0.9.139'
+PCS_VERSION = '0.9.140'
 ISRHEL6 = is_rhel6
 ISSYSTEMCTL = is_systemctl
 
