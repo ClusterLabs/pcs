@@ -1099,9 +1099,10 @@ def overview_all()
       overview_cluster = nil
       online, offline, not_authorized_nodes = check_gui_status_of_nodes(get_cluster_nodes(cluster.name), false, 3)
       not_supported = false
-      cluster_nodes = (online + offline).uniq
+      cluster_nodes_auth = (online + offline).uniq
+      cluster_nodes_all = (cluster_nodes_auth + not_authorized_nodes).uniq
       nodes_not_in_cluster = []
-      for node in cluster_nodes
+      for node in cluster_nodes_auth
         code, response = send_request_with_token(
           node, 'overview_cluster', true, {:cluster => cluster.name}, true, nil, 15
         )
@@ -1127,7 +1128,7 @@ def overview_all()
         end
       end
 
-      if cluster_nodes.sort == nodes_not_in_cluster.sort
+      if cluster_nodes_all.sort == nodes_not_in_cluster.sort
         overview_cluster = {
           'name' => cluster.name,
           'error_list' => [],
@@ -1138,6 +1139,7 @@ def overview_all()
           'resource_list' => []
         }
       end
+
       if not overview_cluster
         overview_cluster = {
           'name' => cluster.name,
