@@ -24,7 +24,7 @@ class PCSConfig
 
       if @format_version > CURRENT_FORMAT
         $logger.warn(
-          "Config file format version is #{@format_version}" +
+          "pcs_settings file format version is #{@format_version}" +
           ", newest fully supported version is #{CURRENT_FORMAT}"
         )
       end
@@ -35,10 +35,10 @@ class PCSConfig
       elsif @format_version == 1
         input_clusters = json
       else
-        $logger.error("Unable to parse config file")
+        $logger.error("Unable to parse pcs_settings file")
       end
     rescue => e
-      $logger.error("Unable to parse config file: #{e}")
+      $logger.error("Unable to parse pcs_settings file: #{e}")
     end
     input_clusters.each {|c|
       @clusters << Cluster.new(c["name"], c["nodes"])
@@ -48,7 +48,7 @@ class PCSConfig
   def update(cluster_name, node_list)
     if node_list.length == 0
       @clusters.delete_if{|c|c.name == cluster_name}
-      $logger.info("Removing cluster: #{cluster_name}")
+      $logger.info("Removing cluster from pcs_settings: #{cluster_name}")
       return
     end
     @clusters.each {|c|
@@ -127,7 +127,7 @@ class PCSTokens
 
       if @format_version > CURRENT_FORMAT
         $logger.warn(
-          "Token file format version is #{@format_version}" +
+          "tokens file format version is #{@format_version}" +
           ", newest fully supported version is #{CURRENT_FORMAT}"
         )
       end

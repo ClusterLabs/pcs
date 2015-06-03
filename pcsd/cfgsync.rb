@@ -507,7 +507,7 @@ module Cfgsync
     protected
 
     def get_configs_local()
-      return Cfgsync::get_configs_local()
+      return Cfgsync::get_configs_local(true)
     end
 
     def get_configs_cluster(nodes, cluster_name)
