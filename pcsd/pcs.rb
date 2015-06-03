@@ -245,14 +245,20 @@ def get_cluster_nodes(cluster_name)
 end
 
 def send_cluster_request_with_token(cluster_name, request, post=false, data={}, remote=true, raw_data=nil)
+  $logger.info("SCRWT: " + request)
+  nodes = get_cluster_nodes(cluster_name)
+  return send_nodes_request_with_token(
+    nodes, request, post, data, remote, raw_data
+  )
+end
+
+def send_nodes_request_with_token(nodes, request, post=false, data={}, remote=true, raw_data=nil)
   out = ""
   code = 0
-  nodes = get_cluster_nodes(cluster_name)
+  $logger.info("SNRWT: " + request)
 
   # If we're removing nodes, we don't send this to one of the nodes we're
   # removing, unless we're removing all nodes
-
-  $logger.info("SCRWT: " + request)
   if request == "/remove_nodes"
     new_nodes = nodes.dup
     data.each {|k,v|
@@ -264,19 +270,23 @@ def send_cluster_request_with_token(cluster_name, request, post=false, data={}, 
       nodes = new_nodes
     end
   end
+
   for node in nodes
-    code, out = send_request_with_token(node,request, post, data, remote, raw_data)
-    $logger.info "Node: #{node} Request: #{request}"
+    $logger.info "SNRWT Node: #{node} Request: #{request}"
+    code, out = send_request_with_token(
+      node, request, post, data, remote, raw_data
+    )
     if code == 200 and out != '{"noresponse":true}' and out != '{"pacemaker_not_running":true}'
       break
     end
     $logger.info "No response: Node: #{node} Request: #{request}"
   end
-  return code,out
+  return code, out
 end
 
 def send_request_with_token(node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={}, username=nil)
   token = additional_tokens[node] || get_node_token(node)
+  $logger.info "SRWT Node: #{node} Request: #{request}"
   if not token
     return 400,'{"notoken":true}'
   end

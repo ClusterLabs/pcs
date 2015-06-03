@@ -777,8 +777,12 @@ class ConfigOption
     @desc = desc
   end
 
-  def self.loadValues(cos,cluster_name)
-    code,output = send_cluster_request_with_token(cluster_name, "get_cib")
+  def self.loadValues(cos, cluster_name, node_list=nil)
+    if node_list
+      code, output = send_nodes_request_with_token(node_list, "get_cib")
+    else
+      code, output = send_cluster_request_with_token(cluster_name, "get_cib")
+    end
     $logger.info(code)
     if code != 200
       $logger.info "Error: unable to load cib"

@@ -1041,7 +1041,7 @@ def overview_cluster(params)
     'stonith-enabled' => ConfigOption.new("Stonith Enabled", "stonith-enabled"),
   }
   ConfigOption.getDefaultValues(option_map.values)
-  ConfigOption.loadValues(option_map.values, cluster_name)
+  ConfigOption.loadValues(option_map.values, cluster_name, nodes_to_ask)
   if not ['true', 'on'].include? option_map['stonith-enabled'].value and quorate_nodes.length > 0
     overview['warning_list'] << {
       'message' => 'Stonith is not enabled',
