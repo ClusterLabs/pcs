@@ -2,6 +2,7 @@ require 'fileutils'
 require 'rexml/document'
 require 'digest/sha1'
 
+require 'settings.rb'
 require 'config.rb'
 require 'corosyncconf.rb'
 require 'pcs.rb'
@@ -12,14 +13,18 @@ def token_file_path()
     return filename
   end
   if Process.uid == 0
-    return '/var/lib/pcsd/tokens'
+    return File.join(PCSD_VAR_LOCATION, 'tokens')
   end
   return File.expand_path('~/.pcs/tokens')
 end
 
 def settings_file_path()
   current_dir = File.expand_path(File.dirname(__FILE__))
-  return File.join(current_dir, 'pcs_settings.conf')
+  if PCSD_EXEC_LOCATION == current_dir or PCSD_EXEC_LOCATION == (current_dir + '/')
+    return File.join(PCSD_VAR_LOCATION, 'pcs_settings.conf')
+  else
+    return File.join(current_dir, 'pcs_settings.conf')
+  end
 end
 
 CFG_COROSYNC_CONF = "/etc/corosync/corosync.conf" unless defined? CFG_COROSYNC_CONF
@@ -27,7 +32,7 @@ CFG_CLUSTER_CONF = "/etc/cluster/cluster.conf" unless defined? CFG_CLUSTER_CONF
 CFG_PCSD_SETTINGS = settings_file_path() unless defined? CFG_PCSD_SETTINGS
 CFG_PCSD_TOKENS = token_file_path() unless defined? CFG_PCSD_TOKENS
 
-CFG_SYNC_CONTROL = '/var/lib/pcsd/cfgsync_ctl' unless defined? CFG_SYNC_CONTROL
+CFG_SYNC_CONTROL = File.join(PCSD_VAR_LOCATION, 'cfgsync_ctl') unless defined? CFG_SYNC_CONTROL
 
 module Cfgsync
   class Config
