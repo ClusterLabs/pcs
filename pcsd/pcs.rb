@@ -56,10 +56,10 @@ end
 def add_fence_level (level, devices, node, remove = false)
   if not remove
     stdout, stderr, retval = run_cmd(PCS, "stonith", "level", "add", level, node, devices)
-    return retval
+    return retval,stdout, stderr
   else
     stdout, stderr, retval = run_cmd(PCS, "stonith", "level", "remove", level, node, devices)
-    return retval
+    return retval,stdout, stderr
   end
 end
 

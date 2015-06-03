@@ -1344,7 +1344,11 @@ function add_remove_fence_level(parent_id,remove) {
       if (remove)
         alert("Unable to remove fence level: ("+xhr.responseText+")");
       else
-        alert("Unable to add fence level: ("+xhr.responseText+")");
+        if (xhr.responseText.substring(0,6) == "Error:") {
+          alert(xhr.responseText);
+        } else {
+          alert("Unable to add fence level: ("+xhr.responseText+")");
+        }
     }
   });
 }

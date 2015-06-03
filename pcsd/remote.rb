@@ -1472,11 +1472,11 @@ def remove_resource (params)
 end
 
 def add_fence_level_remote(params)
-  retval = add_fence_level(params["level"], params["devices"], params["node"], params["remove"])
+  retval, stdout, stderr = add_fence_level(params["level"], params["devices"], params["node"], params["remove"])
   if retval == 0
     return [200, "Successfully added fence level"]
   else
-    return [400, "Error adding fence level"]
+    return [400, stderr]
   end
 end
 
