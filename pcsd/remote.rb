@@ -481,6 +481,7 @@ end
 
 def remote_pcsd_restart(params)
   pcsd_restart()
+  return [200, 'success']
 end
 
 def check_gui_status(params)
