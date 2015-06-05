@@ -1175,7 +1175,9 @@ def overview_all()
     }
     config.update(cluster, nodes)
   }
+  not_current_data = false
   if config_text_old != config.text()
+    not_current_data = true
     sync_config = Cfgsync::PcsdSettings.from_text(config.text())
     # on version conflict just go on, config will be corrected eventually
     # by displaying the cluster in the web UI
@@ -1185,6 +1187,7 @@ def overview_all()
   end
 
   overview = {
+    'not_current_data' => not_current_data,
     'cluster_list' => cluster_map.values.sort { |a, b| a['name'] <=> b['name']}
   }
   return JSON.generate(overview)

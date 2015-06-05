@@ -65,8 +65,12 @@ Pcs = Ember.Application.createWithMixins({
         success: function(data) {
           Pcs.clusterController.update(data);
           Ember.run.next(function(){correct_visibility_dashboard(Pcs.clusterController.cur_cluster);});
-          clearTimeout(Pcs.update_timeout);
-          Pcs.update_timeout = window.setTimeout(self.update,20000);
+          if (data["not_current_data"]) {
+            self.update();
+          } else {
+            clearTimeout(Pcs.update_timeout);
+            Pcs.update_timeout = window.setTimeout(self.update, 20000);
+          }
           hide_loading_screen();
         },
         error: function(jqhxr,b,c) {
