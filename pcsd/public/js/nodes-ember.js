@@ -54,10 +54,6 @@ Pcs = Ember.Application.createWithMixins({
     var cluster_name = self.cluster_name;
     if (cluster_name == null) {
       Ember.debug("Empty Cluster Name");
-      if (location.pathname != "/manage") {
-        hide_loading_screen();
-        return;
-      }
       $.ajax({
         url: "/overview",
         dataType: "json",
