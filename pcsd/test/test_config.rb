@@ -17,7 +17,7 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(
       [[
         "error",
-        "Unable to parse config file: A JSON text must at least contain two octets!"
+        "Unable to parse pcs_settings file: A JSON text must at least contain two octets!"
       ]],
       $logger.log
     )
