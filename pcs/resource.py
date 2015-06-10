@@ -1668,7 +1668,7 @@ def resource_remove(resource_id, output = True):
         if utils.does_exist('//resources/master[@id="'+resource_id+'"]'):
             return resource_master_remove([resource_id])
 
-        utils.err("Resource does not exist.")
+        utils.err("Resource '{0}' does not exist.".format(resource_id))
 
     if (group != ""):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))

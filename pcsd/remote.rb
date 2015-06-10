@@ -1460,20 +1460,25 @@ def fence_device_metadata (params)
 end
 
 def remove_resource (params)
+  force = params['force']
   errors = ""
   params.each { |k,v|
     if k.index("resid-") == 0
-      out, errout, retval = run_cmd(PCS, "--force", "resource", "delete", k.gsub("resid-",""))
+      resid = k.gsub('resid-', '')
+      command = [PCS, 'resource', 'delete', resid]
+      command << '--force' if force
+      out, errout, retval = run_cmd(*command)
       if retval != 0
-	errors += "Unable to remove: " + k.gsub("resid-","") + "\n"
+        errors += errout.join(' ').strip + "\n"
       end
     end
   }
+  errors.strip!
   if errors == ""
     return 200
   else
     logger.info("Remove resource errors:\n"+errors)
-    return [500, errors]
+    return [400, errors]
   end
 end
 

@@ -9,7 +9,7 @@
 	  <input type="checkbox" onchange="checkBoxToggle($(this), true);">
 	</div>
 	<div id="no_coro_support">
-	  <div class="x sprites"></div><div class="link" onclick="verify_node_remove();return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+	  <div class="x sprites"></div><div class="link" onclick="verify_remove_nodes(); return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
 	  <div class="plus sprites"></div><div class="link" onclick="add_node_dialog(); return false;">&nbsp;Add</div>
 	</div>
       </td>
@@ -309,11 +309,4 @@
       {{/if}}
     </table>
   </form>
-</div>
-<div id="remove_node" style="display:none;">
-  <p style="font-size:12px;">Are you sure you want to remove the following nodes(s)?</p>
-  <span id="nodes_to_remove"></span>
-  {{#if Pcs.is_cman_with_udpu_transport}}
-    <p style="color: orange">This is a CMAN cluster with UDPU transport, cluster restart is required to apply node removal.</p>
-  {{/if}}
 </div>

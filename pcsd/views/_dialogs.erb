@@ -11,3 +11,28 @@
       <input type="password" name="pass-all" id="pass_for_all" style="display: none;"></div>
   </form>
 </div>
+
+<div id="dialog_verify_remove_clusters" style="display: none;">
+  <p style="font-size:12px;">Are you sure you want to remove the following cluster(s) from the GUI? (This only removes the cluster from the GUI, it does not stop the cluster from running.)</p>
+  <span class="name_list"></span>
+</div>
+
+<div id="dialog_verify_remove_nodes" style="display:none;">
+  <p style="font-size:12px;">Are you sure you want to remove the following nodes(s)?</p>
+  <span class="name_list"></span>
+  {{#if Pcs.is_cman_with_udpu_transport}}
+    <p style="color: orange">This is a CMAN cluster with UDPU transport, cluster restart is required to apply node removal.</p>
+  {{/if}}
+</div>
+
+<div id="dialog_verify_remove_resources" style="display: none;">
+  <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
+  <span class="name_list"></span>
+  <input type="checkbox" name="force">
+  Enforce removal (Remove the resources without stopping them first.)
+</div>
+
+<div id="dialog_verify_remove_acl_roles" style="display:none;">
+  <p style="font-size:12px;">Are you sure you want to remove the following ACL role(s)?</p>
+  <span class="name_list"></span>
+</div>

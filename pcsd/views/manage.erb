@@ -8,7 +8,7 @@
 	  <td>
 	      <a href="#" class="x sprites"></a>
 	    <div class="link">
-	      <a id="manage_remove_cluster" href="#" onclick="verify_remove('cluster','You must select at least one cluster to remove', 'Remove Cluster(s)','Cluster Removal');">Remove</a>
+	      <a id="manage_remove_cluster" href="#" onclick="verify_remove_clusters();">Remove</a>
 	    </div>
 	  </td>
 	  <td>
@@ -158,10 +158,6 @@
     </td>
   </tr>
 </table>
-<div id="verify_remove" style="display: none;">
-  <p style="font-size:12px;">Are you sure you want to remove the following cluster(s) from the GUI? (This only removes the cluster from the GUI, it does not stop the cluster from running)</p>
-  <span id="resource_to_remove"></span>
-</div>
 <%= erb :_dialogs %>
 <div id="add_existing_cluster" style="display: none;">
   <form id="add_existing_cluster_form" action="/manage/existingcluster" method="post">

@@ -311,6 +311,10 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
         assert returnVal == 0
         assert output == 'NO resources configured\n'
 
+        output, returnVal = pcs(temp_cib, "resource delete ClusterIP")
+        assert returnVal == 1
+        ac(output, "Error: Resource 'ClusterIP' does not exist.\n")
+
     def testResourceShow(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 

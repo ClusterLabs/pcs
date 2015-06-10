@@ -7,9 +7,9 @@
     <td id="remove_add" class="borderbottom">
       <div class="x sprites"></div><div class=link">&nbsp;
 	<% if @myView == "resource" %>
-	  <a href="#" onclick='verify_remove("resource");return false;'>
+	  <a href="#" onclick='verify_remove_resources(); return false;'>
 	<% else %>
-	  <a href="#" onclick='verify_remove("stonith", null, "Remove device(s)", "Fence Device Removal");return false;'>
+	  <a href="#" onclick='verify_remove_fence_devices(); return false;'>
 	<% end %>
       Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
   <div class="plus sprites"></div><div class="link">&nbsp;
@@ -404,9 +404,5 @@ Use the 'Add' button to submit the form.">
 	<p style="font-size:12px;">Group Name:</p><input name="resource_group" type=text>
 	<input id="resources_to_add_to_group"  type=hidden name="resources" value="">
       </form>
-    </div>
-    <div id="verify_remove" style="display: none;">
-      <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
-      <span id="resource_to_remove"></span>
     </div>
     <% end %>

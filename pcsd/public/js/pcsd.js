@@ -302,104 +302,106 @@ function update_resource_form_groups(form, group_list) {
   select.replaceWith(select_new);
 }
 
-function verify_node_remove() {
-  var buttonOpts = {};
-  var ids = []
-  $.each($('.node_list_check :checked'), function (i,e) {
-    ids.push($(e).parent().parent().attr("nodeID"));
-  });
-  buttonOpts["Remove Node(s)"] = function() {
-    if (ids.length > 0) {
-      remove_nodes(ids);
-    }
+function verify_remove(remove_func, forceable, checklist_id, dialog_id, label, ok_text, title, remove_id) {
+  var remove_id_list = new Array();
+  if (remove_id) {
+    remove_id_list = [remove_id];
   }
-  buttonOpts["Cancel"] = function() {
-    $(this).dialog("close");
-  };
-
-  list_of_nodes = "<ul>";
-  $('.node_list_check :checked').each(function (i,e) {
-    list_of_nodes += "<li>" + $(e).parent().parent().attr("nodeID") + "</li>";
-  });
-  list_of_nodes += "</ul>";
-  $("#nodes_to_remove").html(list_of_nodes);
-  if (ids.length == 0) {
-    alert("You must select at least one node to remove");
+  else {
+    remove_id_list = get_checked_ids_from_nodelist(checklist_id);
+  }
+  if (remove_id_list.length < 1) {
+    alert("You must select at least one " + label + " to remove.");
     return;
   }
 
-  $("#remove_node").dialog({title: "Remove Node",
-    modal: true, resizable: false,
+  var buttonOpts = [
+    {
+      text: ok_text,
+      id: "verify_remove_submit_btn",
+      click: function() {
+        if (remove_id_list.length < 1) {
+          return;
+        }
+        $("#verify_remove_submit_btn").button("option", "disabled", true);
+        if (forceable) {
+          force = $("#" + dialog_id + " :checked").length > 0
+          remove_func(remove_id_list, force);
+        }
+        else {
+          remove_func(remove_id_list);
+        }
+      }
+    },
+    {
+      text: "Cancel",
+      id: "verify_remove_cancel_btn",
+      click: function() {
+        $(this).dialog("destroy");
+        if (forceable) {
+          $("#" + dialog_id + " input[name=force]").attr("checked", false);
+        }
+      }
+    }
+  ];
+
+  var name_list = "<ul>";
+  $.each(remove_id_list, function(key, remid) {
+    name_list += "<li>" + remid + "</li>";
+  });
+  name_list += "</ul>";
+  $("#" + dialog_id + " .name_list").html(name_list);
+  $("#" + dialog_id).dialog({
+    title: title,
+    modal: true,
+    resizable: false,
     buttons: buttonOpts
   });
 }
 
-function verify_remove(rem_type, error_message, ok_message, title_message, resource_id, post_location) {
-  if (!error_message)
-    if (rem_type == "resource")
-      error_message = "You must select at least one resource.";
-    else
-      error_message = "You must select at least one fence device.";
-  if (!ok_message)
-    ok_message = "Remove resource(s)";
-  if (!title_message)
-    title_message = "Resource Removal";
-  if (!post_location)
-    post_location = "/resourcerm";
+function verify_remove_clusters(cluster_id) {
+  verify_remove(
+    remove_cluster, false, "cluster_list", "dialog_verify_remove_clusters",
+    "cluster", "Remove Cluster(s)", "Cluster Removal", cluster_id
+  );
+}
 
-  var buttonOpts = {}
-  buttonOpts[ok_message] = function() {
-    if (resource_id) {
-      if (rem_type == "cluster")
-	remove_cluster([resource_id]);
-      else
-	remove_resource([resource_id]);
-    } else {
-      ids = []
-      $.each($('#'+rem_type+'_list .node_list_check :checked'), function (i,e) {
-	ids.push($(e).parent().parent().attr("nodeID"))
-      });
-      if (ids.length > 0) {
-	if (rem_type == "cluster")
-	  remove_cluster(ids);
-	else
-	  remove_resource(ids);
-      }
+function verify_remove_nodes(node_id) {
+  verify_remove(
+    remove_nodes, false, "node_list", "dialog_verify_remove_nodes",
+    "node", "Remove Node(s)", "Remove Node", node_id
+  );
+}
+
+function verify_remove_resources(resource_id) {
+  verify_remove(
+    remove_resource, true, "resource_list", "dialog_verify_remove_resources",
+    "resource", "Remove resource(s)", "Resurce Removal", resource_id
+  );
+}
+
+function verify_remove_fence_devices(resource_id) {
+  verify_remove(
+    remove_resource, false, "stonith_list", "dialog_verify_remove_resources",
+    "fence device", "Remove device(s)", "Fence Device Removal", resource_id
+  );
+}
+
+function verify_remove_acl_roles(role_id) {
+  verify_remove(
+    remove_acl_roles, false, "acls_roles_list", "dialog_verify_remove_acl_roles",
+    "ACL role", "Remove Role(s)", "Remove ACL Role", role_id
+  );
+}
+
+function get_checked_ids_from_nodelist(nodelist_id) {
+  var ids = new Array()
+  $("#" + nodelist_id + " .node_list_check :checked").each(function (index, element) {
+    if($(element).parent().parent().attr("nodeID")) {
+      ids.push($(element).parent().parent().attr("nodeID"));
     }
-    $(this).dialog("close");
-//    if (rem_type == "cluster")
- //     document.location.reload();
-  };
-  buttonOpts["Cancel"] = function() {
-    $(this).dialog("close");
-  };
-
-  var list_of_nodes = "<ul>";
-  var nodes_to_remove = 0;
-
-  if (resource_id) {
-    list_of_nodes += "<li>" + resource_id +"</li>";
-    nodes_to_remove++;
-  } else {
-    $("#"+rem_type+"_list :checked").each(function (index,element) {
-      if ($(element).parent().parent().attr("nodeID")) {
-	if ($(element).is(':visible')) {
-	  list_of_nodes += "<li>" + $(element).parent().parent().attr("nodeID")+"</li>";
-	  nodes_to_remove++;
-	}
-      }
-    });
-  }
-  list_of_nodes += "</ul>";
-  if (nodes_to_remove != 0) {
-    $("#resource_to_remove").html(list_of_nodes);
-    $("#verify_remove").dialog({title: title_message,
-      modal: true, resizable: false,
-      buttons: buttonOpts
-    });
-  } else {
-    alert(error_message);
-  }
+  });
+  return ids;
 }
 
 function remote_node_update() {
@@ -611,10 +613,10 @@ function node_stop(node, force) {
 function setup_resource_links(link_type) {
   Ember.debug("Setup resource links");
   $("#resource_delete_link").click(function () {
-    verify_remove("resource", null, "Remove resource", "Resource Removal", curResource(), "/resourcerm");
+    verify_remove_resources(curResource());
   });
   $("#stonith_delete_link").click(function () {
-    verify_remove("stonith", null, "Remove device(s)", "Fence Device Removal", curStonith(), "/fencerm")
+    verify_remove_fence_devices(curStonith());
   });
   $("#resource_stop_link").click(function () {
     fade_in_out("#resource_stop_link");
@@ -1218,7 +1220,11 @@ function show_loading_screen() {
 
 function hide_loading_screen() {
   $("#loading_screen").dialog('close');
-  $("div[id^=ui-tooltip-]").remove(); // destroy tooltips
+  destroy_tooltips();
+}
+
+function destroy_tooltips() {
+  $("div[id^=ui-tooltip-]").remove();
 }
 
 function remove_cluster(ids) {
@@ -1233,10 +1239,12 @@ function remove_cluster(ids) {
       data: data,
       timeout: pcs_timeout,
       success: function () {
-      	location.reload();
+        $("#dialog_verify_remove_clusters.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+        location.reload();
       },
       error: function (xhr, status, error) {
-	alert("Unable to remove resource: " + res + " ("+error+")");
+        alert("Unable to remove cluster: " + res + " ("+error+")");
+        $("#dialog_verify_remove_clusters.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
       }
     });
   }
@@ -1257,15 +1265,15 @@ function remove_nodes(ids, force) {
     data: data,
     timeout: pcs_timeout*3,
     success: function(data,textStatus) {
-      $("#remove_node").dialog("close");
+      $("#dialog_verify_remove_nodes.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
       if (data == "No More Nodes") {
-	window.location.href = "/manage";
-      }	else {
-	Pcs.update();
+        window.location.href = "/manage";
+      } else {
+        Pcs.update();
       }
     },
     error: function (xhr, status, error) {
-      $("#remove_node").dialog("close");
+      $("#dialog_verify_remove_nodes.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
       if ((status == "timeout") || ($.trim(error) == "timeout")) {
         /*
          We are not interested in timeout because:
@@ -1291,8 +1299,11 @@ function remove_nodes(ids, force) {
   });
 }
 
-function remove_resource(ids) {
+function remove_resource(ids, force) {
   var data = {};
+  if (force) {
+    data["force"] = force;
+  }
   var res = "";
   for (var i=0; i<ids.length; i++) {
     res += ids[i] + ", ";
@@ -1307,10 +1318,19 @@ function remove_resource(ids) {
     data: data,
     timeout: pcs_timeout*3,
     success: function () {
+      $("#dialog_verify_remove_resources.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+      $("#dialog_verify_remove_resources input[name=force]").attr("checked", false);
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      alert("Unable to remove resources: " + res + " ("+error+")");
+      var message = "Unable to remove resources (" + error + ")";
+      if (xhr.responseText.substring(0,6) == "Error:") {
+        message += "\n" + xhr.responseText.replace("--force", "'Enforce removal'");
+      }
+      alert(message);
+      $("#dialog_verify_remove_resources.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+      $("#dialog_verify_remove_resources input[name=force]").attr("checked", false);
+      Pcs.update();
     }
   });
 }
@@ -1626,36 +1646,6 @@ function add_acl_role(form) {
   });
 }
 
-function verify_acl_role_remove() {
-  var buttonOpts = {};
-  var ids = [];
-  var html_roles = "";
-  $.each($('.node_list_check :checked'), function (i,e) {
-    var role_id = $(e).parent().parent().attr("nodeID");
-    ids.push(role_id);
-    html_roles += "<li>" + role_id + "</li>";
-  });
-  if (ids.length == 0) {
-    alert("You must select at least one role to remove");
-    return;
-  }
-  buttonOpts["Remove Role(s)"] = function() {
-    if (ids.length > 0) {
-      remove_acl_roles(ids);
-    }
-  }
-  buttonOpts["Cancel"] = function() {
-    $(this).dialog("close");
-  };
-  $("#roles_to_remove").html("<ul>" + html_roles + "<ul>");
-  $("#remove_acl_roles").dialog({
-    title: "Remove ACL Role",
-    modal: true,
-    resizable: false,
-    buttons: buttonOpts
-  });
-}
-
 function remove_acl_roles(ids) {
   var data = {};
   for (var i = 0; i < ids.length; i++) {
@@ -1667,12 +1657,12 @@ function remove_acl_roles(ids) {
     data: data,
     timeout: pcs_timeout*3,
     success: function(data,textStatus) {
-      $("#remove_acl_roles").dialog("close");
+      $("#dialog_verify_remove_acl_roles.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      $("#remove_acl_roles").dialog("close");
       alert(xhr.responseText);
+      $("#dialog_verify_remove_acl_roles.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
     }
   });
 }
@@ -1882,7 +1872,7 @@ function correct_visibility_dashboard_type(cluster, type) {
   if (cluster == null) {
     return;
   }
-  $("div[id^=ui-tooltip-]").remove(); // destroy tooltips
+  destroy_tooltips();
   var listTable = $("#cluster_info_" + cluster.name).find("table." + type + "_list");
   var datatable = listTable.find("table.datatable");
   if (Pcs.clusterController.get("show_all_" + type)) {

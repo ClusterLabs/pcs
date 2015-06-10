@@ -5,7 +5,7 @@
 <tr {{bind-attr style="Pcs.acls_page"}}>
   <td id="remove_add" class="borderbottom">
     <div class="x sprites"></div>
-    <div class="link" onclick="verify_acl_role_remove();return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+    <div class="link" onclick="verify_remove_acl_roles();return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
     <div class="plus sprites"></div>
     <div class="link" onclick="$('#add_acl_role').dialog({
         title: 'Add ACL Role',
@@ -158,8 +158,5 @@
       </tr>
     </table>
   </div>
-  <div id="remove_acl_roles" style="display:none;">
-    <p style="font-size:12px;">Are you sure you want to remove the following ACL role(s)?</p>
-    <span id="roles_to_remove"></span>
-  </div>
+  <%= erb :_dialogs %>
 </td></td>
