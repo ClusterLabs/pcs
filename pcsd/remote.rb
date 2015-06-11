@@ -289,7 +289,10 @@ end
 def get_cib(params)
   cib, stderr, retval = run_cmd(CIBADMIN, "-Ql")
   if retval != 0
-    return [400, "Unable to get CIB: " + cib.to_s + stderr.to_s]
+    if not pacemaker_running?
+      return [400, '{"pacemaker_not_running":true}']
+    end
+    return [500, "Unable to get CIB: " + cib.to_s + stderr.to_s]
   else
     return [200, cib]
   end
@@ -441,7 +444,7 @@ end
 
 def set_certs(params)
   if SUPERUSER != $session[:username]
-    return 401, "Permission denied"
+    return 403, "Permission denied"
   end
 
   ssl_cert = (params['ssl_cert'] || '').strip
@@ -601,7 +604,7 @@ def remote_remove_node(params)
   if params[:remove_nodename] != nil
     retval, output = remove_node(params[:remove_nodename])
   else
-    return 404, "No nodename specified"
+    return 400, "No nodename specified"
   end
 
   if retval == 0

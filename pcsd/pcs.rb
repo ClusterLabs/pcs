@@ -276,10 +276,37 @@ def send_nodes_request_with_token(nodes, request, post=false, data={}, remote=tr
     code, out = send_request_with_token(
       node, request, post, data, remote, raw_data
     )
-    if code == 200 and out != '{"noresponse":true}' and out != '{"pacemaker_not_running":true}'
-      break
+    # try next node if:
+    # - current node does not support the request (old version of pcsd?) (404)
+    # - an exception or other error occurred (5xx)
+    # - we don't have a token for the node (401, notoken)
+    # - we didn't get a response form the node (e.g. an exception occurred)
+    # - pacemaker is not running on the node
+    # do not try next node if
+    # - node returned 400 - it means the request cannot be processed because of
+    #   invalid arguments or another known issue, no node would be able to
+    #   process the request (e.g. removing a non-existing resource)
+    # - node returned 403 - permission denied, no node should allow to process
+    #   the request
+    log = "SNRWT Node #{node} Request #{request}"
+    if (404 == code) or (code >= 500 and code <= 599)
+      $logger.info("#{log}: HTTP code #{code}")
+      next
     end
-    $logger.info "No response: Node: #{node} Request: #{request}"
+    if (401 == code) or ('{"notoken":true}' == out)
+      $logger.info("#{log}: Bad or missing token")
+      next
+    end
+    if '{"pacemaker_not_running":true}' == out
+      $logger.info("#{log}: Pacemaker not running")
+      next
+    end
+    if '{"noresponse":true}' == out
+      $logger.info("#{log}: No response")
+      next
+    end
+    $logger.info("#{log}: HTTP code #{code}")
+    break
   end
   return code, out
 end
