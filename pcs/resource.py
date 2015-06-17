@@ -13,6 +13,7 @@ import utils
 import constraint
 
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62
+RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
 def resource_cmd(argv):
     if len(argv) == 0:
@@ -138,6 +139,8 @@ def resource_cmd(argv):
             resource_cleanup(res_id)
     elif (sub_cmd == "history"):
         resource_history(argv)
+    elif (sub_cmd == "relocate"):
+        resource_relocate(argv)
     else:
         usage.resource()
         sys.exit(1)
@@ -1116,18 +1119,7 @@ def resource_meta(res_id, argv):
     if not element_found:
         utils.err("unable to find a resource/clone/master/group: %s" % res_id)
 
-    # Make sure we only check direct children for meta_attributes
-    meta_attributes = []
-    for child in elem.childNodes:
-        if child.nodeType == child.ELEMENT_NODE and child.tagName == "meta_attributes":
-            meta_attributes.append(child)
-
-    if len(meta_attributes) == 0:
-        meta_attributes = dom.createElement("meta_attributes")
-        meta_attributes.setAttribute("id", res_id + "-meta_attributes")
-        elem.appendChild(meta_attributes)
-    else:
-        meta_attributes = meta_attributes[0]
+    meta_attributes = prepare_meta_attributes_element(elem)
 
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
@@ -1156,6 +1148,24 @@ def resource_meta(res_id, argv):
             if retval != 0 and output:
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
+
+def prepare_meta_attributes_element(resource_el):
+    # Make sure we only check direct children for meta_attributes
+    dom = resource_el.ownerDocument
+    meta_attributes = []
+    for child in resource_el.childNodes:
+        if child.nodeType == child.ELEMENT_NODE and child.tagName == "meta_attributes":
+            meta_attributes.append(child)
+
+    if len(meta_attributes) == 0:
+        meta_attributes = dom.createElement("meta_attributes")
+        meta_attributes.setAttribute(
+            "id", resource_el.getAttribute("id") + "-meta_attributes"
+        )
+        resource_el.appendChild(meta_attributes)
+    else:
+        meta_attributes = meta_attributes[0]
+    return meta_attributes
 
 def update_meta_attributes(meta_attributes, meta_attrs, id_prefix):
     dom = meta_attributes.ownerDocument
@@ -2449,4 +2459,197 @@ def resource_history(args):
                 print "  Stopped on node xx on %s" % last_date
             elif operation == "start":
                 print "  Started on node xx %s" % last_date
+
+def resource_relocate(argv):
+    if len(argv) < 1:
+        usage.resource(["relocate"])
+        sys.exit(1)
+    cmd = argv.pop(0)
+    if cmd == "show":
+        if argv:
+            usage.resource(["relocate show"])
+            sys.exit(1)
+        resource_relocate_show(utils.get_cib_dom())
+    elif cmd == "dry-run":
+        resource_relocate_run(utils.get_cib_dom(), argv, True)
+    elif cmd == "run":
+        resource_relocate_run(utils.get_cib_dom(), argv, False)
+    elif cmd == "clean":
+        if argv:
+            usage.resource(["relocate clean"])
+            sys.exit(1)
+        utils.replace_cib_configuration(
+            resource_relocate_clean(utils.get_cib_dom())
+        )
+    else:
+        usage.resource(["relocate"])
+        sys.exit(1)
+
+def resource_relocate_set_stickiness(cib_dom, resources=None):
+    resources = [] if resources is None else resources
+    cib_dom = cib_dom.cloneNode(True) # do not change the original cib
+    resources_found = set()
+    updated_resources = set()
+    # set stickiness=0
+    for tagname in ("master", "clone", "group", "primitive"):
+        for res_el in cib_dom.getElementsByTagName(tagname):
+            if resources and res_el.getAttribute("id") not in resources:
+                continue
+            resources_found.add(res_el.getAttribute("id"))
+            res_and_children = (
+                [res_el]
+                +
+                res_el.getElementsByTagName("group")
+                +
+                res_el.getElementsByTagName("primitive")
+            )
+            updated_resources.update(
+                [el.getAttribute("id") for el in res_and_children]
+            )
+            for res_or_child in res_and_children:
+                meta_attributes = prepare_meta_attributes_element(res_or_child)
+                meta_attributes = update_meta_attributes(
+                    meta_attributes,
+                    [["resource-stickiness", "0"]],
+                    meta_attributes.getAttribute("id")
+                )
+    # resources don't exist
+    if resources:
+        resources_not_found = set(resources) - resources_found
+        if resources_not_found:
+            for res_id in resources_not_found:
+                utils.err(
+                    "unable to find a resource/clone/master/group: {0}".format(
+                        res_id
+                    ),
+                    False
+                )
+            sys.exit(1)
+    return cib_dom, updated_resources
+
+def resource_relocate_get_locations(cib_dom, resources=None):
+    resources = [] if resources is None else resources
+    updated_cib, updated_resources = resource_relocate_set_stickiness(
+        cib_dom, resources
+    )
+    simout, transitions, new_cib = utils.simulate_cib(updated_cib)
+    operation_list = utils.get_operations_from_transitions(transitions)
+    locations = utils.get_resources_location_from_operations(
+        new_cib, operation_list
+    )
+    # filter out non-requested resources
+    if not resources:
+        return locations.values()
+    return [
+        val for val in locations.values()
+        if val["id"] in updated_resources
+            or val["id_for_constraint"] in updated_resources
+    ]
+
+def resource_relocate_show(cib_dom):
+    updated_cib, updated_resources = resource_relocate_set_stickiness(cib_dom)
+    simout, transitions, new_cib = utils.simulate_cib(updated_cib)
+    in_status = False
+    in_status_resources = False
+    in_transitions = False
+    for line in simout.split("\n"):
+        if line.strip() == "Current cluster status:":
+            in_status = True
+            in_status_resources = False
+            in_transitions = False
+        elif line.strip() == "Transition Summary:":
+            in_status = False
+            in_status_resources = False
+            in_transitions = True
+            print
+        elif line.strip() == "":
+            if in_status:
+                in_status = False
+                in_status_resources = True
+                in_transitions = False
+            else:
+                in_status = False
+                in_status_resources = False
+                in_transitions = False
+        if in_status or in_status_resources or in_transitions:
+            print line
+
+def resource_relocate_location_to_str(location):
+    message = "Creating location constraint: {res} prefers {node}=INFINITY{role}"
+    if "start_on_node" in location:
+        return message.format(
+            res=location["id_for_constraint"], node=location["start_on_node"],
+            role=""
+        )
+    if "promote_on_node" in location:
+        return message.format(
+            res=location["id_for_constraint"], node=location["promote_on_node"],
+            role=" role=Master"
+        )
+    return ""
+
+def resource_relocate_run(cib_dom, resources=None, dry=True):
+    resources = [] if resources is None else resources
+    error = False
+    anything_changed = False
+    if not dry:
+        utils.check_pacemaker_supports_resource_wait()
+        if utils.usefile:
+            utils.err("This command cannot be used with -f")
+
+    # create constraints
+    cib_dom, constraint_el = constraint.getCurrentConstraints(cib_dom)
+    for location in resource_relocate_get_locations(cib_dom, resources):
+        if not("start_on_node" in location or "promote_on_node" in location):
+            continue
+        anything_changed = True
+        print resource_relocate_location_to_str(location)
+        constraint_id = utils.find_unique_id(
+            cib_dom,
+            RESOURCE_RELOCATE_CONSTRAINT_PREFIX + location["id_for_constraint"]
+        )
+        new_constraint = cib_dom.createElement("rsc_location")
+        new_constraint.setAttribute("id", constraint_id)
+        new_constraint.setAttribute("rsc", location["id_for_constraint"])
+        new_constraint.setAttribute("score", "INFINITY")
+        if "promote_on_node" in location:
+            new_constraint.setAttribute("node", location["promote_on_node"])
+            new_constraint.setAttribute("role", "Master")
+        elif "start_on_node" in location:
+            new_constraint.setAttribute("node", location["start_on_node"])
+        constraint_el.appendChild(new_constraint)
+    if not anything_changed:
+        return
+    if not dry:
+        utils.replace_cib_configuration(cib_dom)
+
+    # wait for resources to move
+    print
+    print "Waiting for resources to move..."
+    print
+    if not dry:
+        output, retval = utils.run(["crm_resource", "--wait"])
+        if retval != 0:
+            error = True
+            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                utils.err("waiting timeout", False)
+            else:
+                utils.err(output, False)
+
+    # remove constraints
+    resource_relocate_clean(cib_dom)
+    if not dry:
+        utils.replace_cib_configuration(cib_dom)
+
+    if error:
+        sys.exit(1)
+
+def resource_relocate_clean(cib_dom):
+    for constraint_el in cib_dom.getElementsByTagName("constraints"):
+        for location_el in constraint_el.getElementsByTagName("rsc_location"):
+            location_id = location_el.getAttribute("id")
+            if location_id.startswith(RESOURCE_RELOCATE_CONSTRAINT_PREFIX):
+                print "Removing constraint {0}".format(location_id)
+                location_el.parentNode.removeChild(location_el)
+    return cib_dom
 

@@ -6,6 +6,7 @@ import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir) 
 import utils
+import resource
 from pcs_test_functions import pcs,ac
 
 empty_cib = "empty.xml"
@@ -3400,6 +3401,237 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "NO resources configured\n")
         assert retVal == 0
 
+    def test_relocate_stickiness(self):
+        output, retVal = pcs(
+            temp_cib, "resource create D1 dummy --no-default-ops"
+        )
+        self.assertEquals(0, retVal)
+        ac(output, "")
+        output, retVal = pcs(
+            temp_cib, "resource create DG1 dummy --no-default-ops --group GR"
+        )
+        self.assertEquals(0, retVal)
+        ac(output, "")
+        output, retVal = pcs(
+            temp_cib, "resource create DG2 dummy --no-default-ops --group GR"
+        )
+        self.assertEquals(0, retVal)
+        ac(output, "")
+        output, retVal = pcs(
+            temp_cib, "resource create DC dummy --no-default-ops --clone"
+        )
+        self.assertEquals(0, retVal)
+        ac(output, "")
+        output, retVal = pcs(
+            temp_cib, "resource create DGC1 dummy --no-default-ops --group GRC"
+        )
+        self.assertEquals(0, retVal)
+        ac(output, "")
+        output, retVal = pcs(
+            temp_cib, "resource create DGC2 dummy --no-default-ops --group GRC"
+        )
+        self.assertEquals(0, retVal)
+        ac(output, "")
+        output, retVal = pcs(temp_cib, "resource clone GRC")
+        self.assertEquals(0, retVal)
+        ac(output, "")
+
+        status = """\
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+ Group: GR
+  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (DG1-monitor-interval-60s)
+  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (DG2-monitor-interval-60s)
+ Clone: DC-clone
+  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (DC-monitor-interval-60s)
+ Clone: GRC-clone
+  Group: GRC
+   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (DGC1-monitor-interval-60s)
+   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (DGC2-monitor-interval-60s)
+"""
+        cib_original, retVal = pcs(temp_cib, "cluster cib")
+        self.assertEquals(0, retVal)
+
+        resources = set([
+            "D1", "DG1", "DG2", "GR", "DC", "DC-clone", "DGC1", "DGC2", "GRC",
+            "GRC-clone"
+        ])
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, status)
+        self.assertEquals(0, retVal)
+        cib_in = utils.parseString(cib_original)
+        cib_out, updated_resources = resource.resource_relocate_set_stickiness(
+            cib_in
+        )
+        self.assertFalse(cib_in is cib_out)
+        self.assertEquals(resources, updated_resources)
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, status)
+        self.assertEquals(0, retVal)
+        with open(temp_cib, "w") as f:
+            f.write(cib_out.toxml())
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Meta Attrs: resource-stickiness=0 
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+ Group: GR
+  Meta Attrs: resource-stickiness=0 
+  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: resource-stickiness=0 
+   Operations: monitor interval=60s (DG1-monitor-interval-60s)
+  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: resource-stickiness=0 
+   Operations: monitor interval=60s (DG2-monitor-interval-60s)
+ Clone: DC-clone
+  Meta Attrs: resource-stickiness=0 
+  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: resource-stickiness=0 
+   Operations: monitor interval=60s (DC-monitor-interval-60s)
+ Clone: GRC-clone
+  Meta Attrs: resource-stickiness=0 
+  Group: GRC
+   Meta Attrs: resource-stickiness=0 
+   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+    Meta Attrs: resource-stickiness=0 
+    Operations: monitor interval=60s (DGC1-monitor-interval-60s)
+   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+    Meta Attrs: resource-stickiness=0 
+    Operations: monitor interval=60s (DGC2-monitor-interval-60s)
+""")
+        self.assertEquals(0, retVal)
+
+        resources = set(["D1", "DG1", "DC", "DGC1"])
+        with open(temp_cib, "w") as f:
+            f.write(cib_original)
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, status)
+        self.assertEquals(0, retVal)
+        cib_in = utils.parseString(cib_original)
+        cib_out, updated_resources = resource.resource_relocate_set_stickiness(
+            cib_in, resources
+        )
+        self.assertFalse(cib_in is cib_out)
+        self.assertEquals(resources, updated_resources)
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, status)
+        self.assertEquals(0, retVal)
+        with open(temp_cib, "w") as f:
+            f.write(cib_out.toxml())
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Meta Attrs: resource-stickiness=0 
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+ Group: GR
+  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: resource-stickiness=0 
+   Operations: monitor interval=60s (DG1-monitor-interval-60s)
+  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (DG2-monitor-interval-60s)
+ Clone: DC-clone
+  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: resource-stickiness=0 
+   Operations: monitor interval=60s (DC-monitor-interval-60s)
+ Clone: GRC-clone
+  Group: GRC
+   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+    Meta Attrs: resource-stickiness=0 
+    Operations: monitor interval=60s (DGC1-monitor-interval-60s)
+   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (DGC2-monitor-interval-60s)
+""")
+        self.assertEquals(0, retVal)
+
+        resources = set(["GRC-clone", "GRC", "DGC1", "DGC2"])
+        with open(temp_cib, "w") as f:
+            f.write(cib_original)
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, status)
+        self.assertEquals(0, retVal)
+        cib_in = utils.parseString(cib_original)
+        cib_out, updated_resources = resource.resource_relocate_set_stickiness(
+            cib_in, ["GRC-clone"]
+        )
+        self.assertFalse(cib_in is cib_out)
+        self.assertEquals(resources, updated_resources)
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, status)
+        self.assertEquals(0, retVal)
+        with open(temp_cib, "w") as f:
+            f.write(cib_out.toxml())
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+ Group: GR
+  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (DG1-monitor-interval-60s)
+  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (DG2-monitor-interval-60s)
+ Clone: DC-clone
+  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (DC-monitor-interval-60s)
+ Clone: GRC-clone
+  Meta Attrs: resource-stickiness=0 
+  Group: GRC
+   Meta Attrs: resource-stickiness=0 
+   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+    Meta Attrs: resource-stickiness=0 
+    Operations: monitor interval=60s (DGC1-monitor-interval-60s)
+   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+    Meta Attrs: resource-stickiness=0 
+    Operations: monitor interval=60s (DGC2-monitor-interval-60s)
+""")
+        self.assertEquals(0, retVal)
+
+        resources = set(["GR", "DG1", "DG2", "DC-clone", "DC"])
+        with open(temp_cib, "w") as f:
+            f.write(cib_original)
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, status)
+        self.assertEquals(0, retVal)
+        cib_in = utils.parseString(cib_original)
+        cib_out, updated_resources = resource.resource_relocate_set_stickiness(
+            cib_in, ["GR", "DC-clone"]
+        )
+        self.assertFalse(cib_in is cib_out)
+        self.assertEquals(resources, updated_resources)
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, status)
+        self.assertEquals(0, retVal)
+        with open(temp_cib, "w") as f:
+            f.write(cib_out.toxml())
+        output, retVal = pcs(temp_cib, "resource --full")
+        ac(output, """\
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+ Group: GR
+  Meta Attrs: resource-stickiness=0 
+  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: resource-stickiness=0 
+   Operations: monitor interval=60s (DG1-monitor-interval-60s)
+  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: resource-stickiness=0 
+   Operations: monitor interval=60s (DG2-monitor-interval-60s)
+ Clone: DC-clone
+  Meta Attrs: resource-stickiness=0 
+  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: resource-stickiness=0 
+   Operations: monitor interval=60s (DC-monitor-interval-60s)
+ Clone: GRC-clone
+  Group: GRC
+   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (DGC1-monitor-interval-60s)
+   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=60s (DGC2-monitor-interval-60s)
+""")
+        self.assertEquals(0, retVal)
 
 if __name__ == "__main__":
     unittest.main()

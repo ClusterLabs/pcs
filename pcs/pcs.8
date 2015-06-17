@@ -149,6 +149,18 @@ Show current failcount for specified resource from all nodes or only on specifie
 .TP
 failcount reset <resource id> [node]
 Reset failcount for specified resource on all nodes or only on specified node. This tells the cluster to forget how many times a resource has failed in the past.  This may allow the resource to be started or moved to a more preferred location.
+.TP
+relocate dry-run [resource1] [resource2] ...
+The same as 'relocate run' but has no effect on the cluster.
+.TP
+relocate run [resource1] [resource2] ...
+Relocate specified resources to their preferred nodes.  If no resources are specified, relocate all resources.  This command calculates the preferred node for each resource while ignoring resource stickiness.  Then it creates location constraints which will cause the resources to move to their preferred nodes.  Once the resources have been moved the constraints are deleted automatically.  Note that the preferred node is calculated based on current cluster status, constraints, location of resources and other settings and thus it might change over time.
+.TP
+relocate show
+Display current status of resources and their optimal node ignoring resource stickiness.
+.TP
+relocate clean
+Remove all constraints created by the 'relocate run' command.
 .SS "cluster"
 .TP
 auth [node] [...] [\fB\-u\fR username] [\fB\-p\fR password] [\fB\-\-force\fR] [\fB\-\-local\fR]

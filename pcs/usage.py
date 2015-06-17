@@ -461,6 +461,27 @@ Commands:
         a resource has failed in the past.  This may allow the resource to
         be started or moved to a more preferred location.
 
+    relocate dry-run [resource1] [resource2] ...
+        The same as 'relocate run' but has no effect on the cluster.
+
+    relocate run [resource1] [resource2] ...
+        Relocate specified resources to their preferred nodes.  If no resources
+        are specified, relocate all resources.
+        This command calculates the preferred node for each resource while
+        ignoring resource stickiness.  Then it creates location constraints
+        which will cause the resources to move to their preferred nodes.  Once
+        the resources have been moved the constraints are deleted automatically.
+        Note that the preferred node is calculated based on current cluster
+        status, constraints, location of resources and other settings and thus
+        it might change over time.
+
+    relocate show
+        Display current status of resources and their optimal node ignoring
+        resource stickiness.
+
+    relocate clean
+        Remove all constraints created by the 'relocate run' command.
+
 Examples:
 
     pcs resource show

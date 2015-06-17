@@ -1179,10 +1179,13 @@ def get_timeout_seconds(timeout, return_unknown=False):
             return int(timeout[:-len(suffix)]) * multiplier
     return timeout if return_unknown else None
 
-def validate_wait_get_timeout():
+def check_pacemaker_supports_resource_wait():
     output, retval = run(["crm_resource", "-?"])
     if "--wait" not in output:
         err("crm_resource does not support --wait, please upgrade pacemaker")
+
+def validate_wait_get_timeout():
+    check_pacemaker_supports_resource_wait()
     if usefile:
         err("Cannot use '-f' together with '--wait'")
     wait_timeout = pcs_options["--wait"]
@@ -1937,7 +1940,7 @@ def simulate_cib(cib_dom):
 
 def get_operations_from_transitions(transitions_dom):
     operation_list = []
-    watched_operations = ("start", "stop", "promote")
+    watched_operations = ("start", "stop", "promote", "demote")
     for rsc_op in transitions_dom.getElementsByTagName("rsc_op"):
         primitives = rsc_op.getElementsByTagName("primitive")
         if not primitives:
@@ -1945,17 +1948,47 @@ def get_operations_from_transitions(transitions_dom):
         if rsc_op.getAttribute("operation").lower() not in watched_operations:
             continue
         for prim in primitives:
+            prim_id = prim.getAttribute("id")
             operation_list.append((
                 int(rsc_op.getAttribute("id")),
-                (
-                prim.getAttribute("id"),
-                rsc_op.getAttribute("operation").lower(),
-                rsc_op.getAttribute("on_node"),
-                )
+                {
+                    "id": prim_id,
+                    "long_id": prim.getAttribute("long-id") or prim_id,
+                    "operation": rsc_op.getAttribute("operation").lower(),
+                    "on_node": rsc_op.getAttribute("on_node"),
+                }
             ))
     operation_list.sort(key=lambda x: x[0])
     op_list = [op[1] for op in operation_list]
     return op_list
+
+def get_resources_location_from_operations(cib_dom, resources_operations):
+    locations = {}
+    for res_op in resources_operations:
+        operation = res_op["operation"]
+        if operation not in ("start", "promote"):
+            continue
+        long_id = res_op["long_id"]
+        if long_id not in locations:
+            id_for_constraint = validate_constraint_resource(
+                cib_dom, res_op["id"]
+            )[2]
+            if not id_for_constraint:
+                continue
+            locations[long_id] = {
+                "id": res_op["id"],
+                "long_id": long_id,
+                "id_for_constraint": id_for_constraint,
+            }
+        if operation == "start":
+            locations[long_id]["start_on_node"] = res_op["on_node"]
+        if operation == "promote":
+            locations[long_id]["promote_on_node"] = res_op["on_node"]
+    locations_clean = dict([
+        (key, val) for key, val in locations.items()
+        if "start_on_node" in val or "promote_on_node" in val
+    ])
+    return locations_clean
 
 def get_remote_quorumtool_output(node):
     return sendHTTPRequest(node, "remote/get_quorum_info", None, False, False)

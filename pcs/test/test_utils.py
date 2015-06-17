@@ -3,18 +3,19 @@ import sys
 import shutil
 import unittest
 import xml.dom.minidom
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+currentdir = os.path.dirname(os.path.abspath(__file__))
+parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 from pcs_test_functions import pcs, ac
 import utils
 
-empty_cib = "empty.xml"
-temp_cib = "temp.xml"
+empty_cib = os.path.join(currentdir, "empty.xml")
+temp_cib = os.path.join(currentdir, "temp.xml")
 
 class UtilsTest(unittest.TestCase):
 
     def get_cib_empty(self):
-        return xml.dom.minidom.parse("empty.xml")
+        return xml.dom.minidom.parse(empty_cib)
 
     def get_cib_resources(self):
         cib_dom = self.get_cib_empty()
@@ -214,7 +215,7 @@ class UtilsTest(unittest.TestCase):
         )
 
     def testDomGetResourceRemoteNodeName(self):
-        dom = xml.dom.minidom.parse("empty.xml")
+        dom = self.get_cib_empty()
         new_resources = xml.dom.minidom.parseString("""
             <resources>
                 <primitive id="dummy1"
@@ -265,7 +266,7 @@ class UtilsTest(unittest.TestCase):
         )
 
     def test_dom_get_meta_attr_value(self):
-        dom = xml.dom.minidom.parse("empty.xml")
+        dom = self.get_cib_empty()
         new_resources = xml.dom.minidom.parseString("""
             <resources>
                 <primitive id="dummy1"
@@ -1417,6 +1418,205 @@ Membership information
             utils.is_node_stop_cause_quorum_loss(
                 quorum_info, False, ["rh70-node2", "rh70-node3"]
             )
+        )
+
+    def test_get_operations_from_transitions(self):
+        transitions = utils.parse(os.path.join(currentdir, "transitions01.xml"))
+        self.assertEquals(
+            [
+                {
+                    'id': 'dummy',
+                    'long_id': 'dummy',
+                    'operation': 'stop',
+                    'on_node': 'rh7-3',
+                },
+                {
+                    'id': 'dummy',
+                    'long_id': 'dummy',
+                    'operation': 'start',
+                    'on_node': 'rh7-2',
+                },
+                {
+                    'id': 'd0',
+                    'long_id': 'd0:1',
+                    'operation': 'stop',
+                    'on_node': 'rh7-1',
+                },
+                {
+                    'id': 'd0',
+                    'long_id': 'd0:1',
+                    'operation': 'start',
+                    'on_node': 'rh7-2',
+                },
+                {
+                    'id': 'state',
+                    'long_id': 'state:0',
+                    'operation': 'stop',
+                    'on_node': 'rh7-3',
+                },
+                {
+                    'id': 'state',
+                    'long_id': 'state:0',
+                    'operation': 'start',
+                    'on_node': 'rh7-2',
+                },
+            ],
+            utils.get_operations_from_transitions(transitions)
+        )
+
+    def test_get_resources_location_from_operations(self):
+        cib_dom = self.get_cib_resources()
+
+        operations = []
+        self.assertEquals(
+            {},
+            utils.get_resources_location_from_operations(cib_dom, operations)
+        )
+
+        operations = [
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "start",
+                "on_node": "rh7-1",
+            },
+        ]
+        self.assertEquals(
+            {
+                'myResource': {
+                    'id': 'myResource',
+                    'id_for_constraint': 'myResource',
+                    'long_id': 'myResource',
+                    'start_on_node': 'rh7-1',
+                 },
+            },
+            utils.get_resources_location_from_operations(cib_dom, operations)
+        )
+
+        operations = [
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "start",
+                "on_node": "rh7-1",
+            },
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "start",
+                "on_node": "rh7-2",
+            },
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "monitor",
+                "on_node": "rh7-3",
+            },
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "stop",
+                "on_node": "rh7-3",
+            },
+        ]
+        self.assertEquals(
+            {
+                'myResource': {
+                    'id': 'myResource',
+                    'id_for_constraint': 'myResource',
+                    'long_id': 'myResource',
+                    'start_on_node': 'rh7-2',
+                 },
+            },
+            utils.get_resources_location_from_operations(cib_dom, operations)
+        )
+
+        operations = [
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "start",
+                "on_node": "rh7-1",
+            },
+            {
+                "id": "myClonedResource",
+                "long_id": "myClonedResource:0",
+                "operation": "start",
+                "on_node": "rh7-1",
+            },
+            {
+                "id": "myClonedResource",
+                "long_id": "myClonedResource:0",
+                "operation": "start",
+                "on_node": "rh7-2",
+            },
+            {
+                "id": "myClonedResource",
+                "long_id": "myClonedResource:1",
+                "operation": "start",
+                "on_node": "rh7-3",
+            },
+        ]
+        self.assertEquals(
+            {
+                'myResource': {
+                    'id': 'myResource',
+                    'id_for_constraint': 'myResource',
+                    'long_id': 'myResource',
+                    'start_on_node': 'rh7-1',
+                 },
+                'myClonedResource:0': {
+                    'id': 'myClonedResource',
+                    'id_for_constraint': 'myClone',
+                    'long_id': 'myClonedResource:0',
+                    'start_on_node': 'rh7-2',
+                 },
+                'myClonedResource:1': {
+                    'id': 'myClonedResource',
+                    'id_for_constraint': 'myClone',
+                    'long_id': 'myClonedResource:1',
+                    'start_on_node': 'rh7-3',
+                 },
+            },
+            utils.get_resources_location_from_operations(cib_dom, operations)
+        )
+
+        operations = [
+            {
+                "id": "myMasteredGroupedResource",
+                "long_id": "myMasteredGroupedResource:0",
+                "operation": "start",
+                "on_node": "rh7-1",
+            },
+            {
+                "id": "myMasteredGroupedResource",
+                "long_id": "myMasteredGroupedResource:1",
+                "operation": "demote",
+                "on_node": "rh7-2",
+            },
+            {
+                "id": "myMasteredGroupedResource",
+                "long_id": "myMasteredGroupedResource:1",
+                "operation": "promote",
+                "on_node": "rh7-3",
+            },
+        ]
+        self.assertEquals(
+            {
+                'myMasteredGroupedResource:0': {
+                    'id': 'myMasteredGroupedResource',
+                    'id_for_constraint': 'myGroupMaster',
+                    'long_id': 'myMasteredGroupedResource:0',
+                    'start_on_node': 'rh7-1',
+                 },
+                'myMasteredGroupedResource:1': {
+                    'id': 'myMasteredGroupedResource',
+                    'id_for_constraint': 'myGroupMaster',
+                    'long_id': 'myMasteredGroupedResource:1',
+                    'promote_on_node': 'rh7-3',
+                 },
+            },
+            utils.get_resources_location_from_operations(cib_dom, operations)
         )
 
     def assert_element_id(self, node, node_id):
