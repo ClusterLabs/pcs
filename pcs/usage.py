@@ -294,6 +294,30 @@ Commands:
         starting the resource.  Using --full will give more detailed output.
         This is mainly used for debugging resources that fail to start.
 
+    debug-stop <resource id> [--full]
+        This command will force the specified resource to stop on this node
+        ignoring the cluster recommendations and print the output from
+        stopping the resource.  Using --full will give more detailed output.
+        This is mainly used for debugging resources that fail to stop.
+
+    debug-promote <resource id> [--full]
+        This command will force the specified resource to be promoted on this
+        node ignoring the cluster recommendations and print the output from
+        promoting the resource.  Using --full will give more detailed output.
+        This is mainly used for debugging resources that fail to promote.
+
+    debug-demote <resource id> [--full]
+        This command will force the specified resource to be demoted on this
+        node ignoring the cluster recommendations and print the output from
+        demoting the resource.  Using --full will give more detailed output.
+        This is mainly used for debugging resources that fail to demote.
+
+    debug-monitor <resource id> [--full]
+        This command will force the specified resource to be moniored on this
+        node  ignoring the cluster recommendations and print the output from
+        monitoring the resource.  Using --full will give more detailed output.
+        This is mainly used for debugging resources that fail to be monitored.
+
     move <resource id> [destination node] [--master] [lifetime=<lifetime>]
          [--wait[=n]]
         Move the resource off the node it is currently running on by creating a

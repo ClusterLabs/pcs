@@ -918,6 +918,17 @@ def dom_get_resource(dom, resource_id):
             return primitive
     return None
 
+def dom_get_any_resource(dom, resource_id):
+    return (
+        dom_get_resource(dom, resource_id)
+        or
+        dom_get_group(dom, resource_id)
+        or
+        dom_get_clone(dom, resource_id)
+        or
+        dom_get_master(dom, resource_id)
+    )
+
 def is_stonith_resource(resource_id):
     return does_exist("//primitive[@id='"+resource_id+"' and @class='stonith']")
 

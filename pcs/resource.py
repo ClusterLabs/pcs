@@ -93,7 +93,15 @@ def resource_cmd(argv):
     elif (sub_cmd == "restart"):
         resource_restart(argv)
     elif (sub_cmd == "debug-start"):
-        resource_force_start(argv)
+        resource_force_action(sub_cmd, argv)
+    elif (sub_cmd == "debug-stop"):
+        resource_force_action(sub_cmd, argv)
+    elif (sub_cmd == "debug-promote"):
+        resource_force_action(sub_cmd, argv)
+    elif (sub_cmd == "debug-demote"):
+        resource_force_action(sub_cmd, argv)
+    elif (sub_cmd == "debug-monitor"):
+        resource_force_action(sub_cmd, argv)
     elif (sub_cmd == "manage"):
         resource_manage(argv, True)
     elif (sub_cmd == "unmanage"):
@@ -2136,31 +2144,68 @@ def resource_restart(argv):
 
     print "%s successfully restarted" % resource
 
-def resource_force_start(argv):
+def resource_force_action(action, argv):
     if len(argv) < 1:
-        utils.err("You must specify a resource to debug-start")
+        utils.err("You must specify a resource to {0}".format(action))
+    if len(argv) != 1:
+        usage.resource([action])
+        sys.exit(1)
+
+    action_command = {
+        "debug-start": "--force-start",
+        "debug-stop": "--force-stop",
+        "debug-promote": "--force-promote",
+        "debug-demote": "--force-demote",
+        "debug-monitor": "--force-check",
+    }
+
+    if action not in action_command:
+        usage.resource(["debug-"])
+        sys.exit(1)
 
     resource = argv[0]
     dom = utils.get_cib_dom()
 
+    if not utils.dom_get_any_resource(dom, resource):
+        utils.err(
+            "unable to find a resource/clone/master/group: {0}".format(resource)
+        )
     if utils.dom_get_group(dom, resource):
         group_resources = utils.get_group_children(resource)
-        utils.err("unable to debug-start a group, try one of the group's resource(s) (%s)" % ",".join(group_resources))
-
-
+        utils.err(
+            "unable to {0} a group, try one of the group's resource(s) ({1})".format(
+                action, ",".join(group_resources)
+            )
+        )
     if utils.dom_get_clone(dom, resource):
         clone_resource = utils.dom_get_clone_ms_resource(dom, resource)
-        utils.err("unable to debug-start a clone, try the clone's resource: %s" % clone_resource.getAttribute("id"))
-
+        utils.err(
+            "unable to {0} a clone, try the clone's resource: {1}".format(
+                action, clone_resource.getAttribute("id")
+            )
+        )
     if utils.dom_get_master(dom, resource):
         master_resource = utils.dom_get_clone_ms_resource(dom, resource)
-        utils.err("unable to debug-start a master, try the master's resource: %s" % master_resource.getAttribute("id"))
+        utils.err(
+            "unable to {0} a master, try the master's resource: {1}".format(
+                action, master_resource.getAttribute("id")
+            )
+        )
 
-    args = ["crm_resource", "-r", resource, "--force-start"]
+    args = ["crm_resource", "-r", resource, action_command[action]]
     if "--full" in utils.pcs_options:
-        args = args + ["-V"]
-
+        args.append("-V")
+    if "--force" in utils.pcs_options:
+        args.append("--force")
     output, retval = utils.run(args)
+
+    if "doesn't support group resources" in output:
+        utils.err("groups are not supported")
+        sys.exit(retval)
+    if "doesn't support stonith resources" in output:
+        utils.err("stonith devices are not supported")
+        sys.exit(retval)
+
     print output,
     sys.exit(retval)
 
