@@ -487,7 +487,9 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     for op in op_values_agent:
         dom = resource_operation_add(dom, ra_id, op, validate=False)
     for op in op_values:
-        dom = resource_operation_add(dom, ra_id, op, validate=True)
+        dom = resource_operation_add(
+            dom, ra_id, op, validate=True, validate_strict=False
+        )
 
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
         dom, clone_id = resource_clone_create(dom, [ra_id] + clone_opts)
@@ -906,7 +908,8 @@ def resource_update(res_id,args):
         if updating_op:
             updating_op.parentNode.removeChild(updating_op)
         dom = resource_operation_add(
-            dom, res_id, element, before_op=updating_op_before
+            dom, res_id, element, validate_strict=False,
+            before_op=updating_op_before
         )
 
     if len(instance_attributes.getElementsByTagName("nvpair")) == 0:
@@ -960,7 +963,9 @@ def resource_update_clone_master(
 
     return dom
 
-def resource_operation_add(dom, res_id, argv, validate=True, before_op=None):
+def resource_operation_add(
+    dom, res_id, argv, validate=True, validate_strict=True, before_op=None
+):
     if len(argv) < 1:
         usage.resource(["op"])
         sys.exit(1)
@@ -1035,8 +1040,8 @@ def resource_operation_add(dom, res_id, argv, validate=True, before_op=None):
     else:
         operations = operations[0]
         if validate:
-            duplicate_op = utils.operation_exists(operations, op_el)
-            if duplicate_op:
+            duplicate_op_list = utils.operation_exists(operations, op_el)
+            if duplicate_op_list:
                 utils.err(
                     "operation %s with interval %ss already specified for %s:\n%s"
                     % (
@@ -1045,9 +1050,25 @@ def resource_operation_add(dom, res_id, argv, validate=True, before_op=None):
                             op_el.getAttribute("interval"), True
                         ),
                         res_id,
-                        operation_to_string(duplicate_op)
+                        "\n".join([
+                            operation_to_string(op) for op in duplicate_op_list
+                        ])
                     )
                 )
+            if validate_strict and "--force" not in utils.pcs_options:
+                duplicate_op_list = utils.operation_exists_by_name(
+                    operations, op_el
+                )
+                if duplicate_op_list:
+                    msg = ("operation {action} already specified for {res}"
+                        + ", use --force to override:\n{op}")
+                    utils.err(msg.format(
+                        action=op_el.getAttribute("name"),
+                        res=res_id,
+                        op="\n".join([
+                            operation_to_string(op) for op in duplicate_op_list
+                        ])
+                    ))
 
     operations.insertBefore(op_el, before_op)
     return dom

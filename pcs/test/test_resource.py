@@ -367,6 +367,15 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
 
         line = 'resource op add ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line) 
+        ac(output, """\
+Error: operation monitor already specified for ClusterIP, use --force to override:
+monitor interval=30s (ClusterIP-monitor-interval-30s)
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource op add ClusterIP monitor interval=31s --force"
+        )
         assert returnVal == 0
         assert output == ""
 
@@ -402,28 +411,37 @@ Error: moni=tor does not appear to be a valid operation action
         o, r = pcs(temp_cib, "resource create --no-default-ops OPTest Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1")
         ac(o,"")
         assert r == 0
-        
+
         o, r = pcs(temp_cib, "resource show OPTest")
         ac(o," Resource: OPTest (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-25s)\n")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource create --no-default-ops OPTest2 Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1 op start timeout=30s")
+        o, r = pcs(temp_cib, "resource create --no-default-ops OPTest2 Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=2 op start timeout=30s")
         ac(o,"")
         assert r == 0
-        
+
         o, r = pcs(temp_cib, "resource op add OPTest2 start timeout=1800s")
         ac(o, """\
 Error: operation start with interval 0s already specified for OPTest2:
 start interval=0s timeout=30s (OPTest2-start-interval-0s)
 """)
         assert r == 1
-        
+
+        output, retVal = pcs(
+            temp_cib, "resource op add OPTest2 start interval=100"
+        )
+        ac(output, """\
+Error: operation start already specified for OPTest2, use --force to override:
+start interval=0s timeout=30s (OPTest2-start-interval-0s)
+""")
+        self.assertEquals(1, retVal)
+
         o, r = pcs(temp_cib, "resource op add OPTest2 monitor timeout=1800s")
         ac(o,"")
         assert r == 0
-        
+
         o, r = pcs(temp_cib, "resource show OPTest2")
-        ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-25s)\n              start interval=0s timeout=30s (OPTest2-start-interval-0s)\n              monitor interval=60s timeout=1800s (OPTest2-monitor-interval-60s)\n")
+        ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=2 (OPTest2-monitor-interval-25s)\n              start interval=0s timeout=30s (OPTest2-start-interval-0s)\n              monitor interval=60s timeout=1800s (OPTest2-monitor-interval-60s)\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource create --no-default-ops OPTest3 Dummy op monitor OCF_CHECK_LEVEL=1")
@@ -479,6 +497,13 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         assert r == 0
 
         o,r = pcs(temp_cib, "resource op add OPTest7 monitor interval=61s OCF_CHECK_LEVEL=1")
+        ac(o, """\
+Error: operation monitor already specified for OPTest7, use --force to override:
+monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
+""")
+        self.assertEquals(1, r)
+
+        o,r = pcs(temp_cib, "resource op add OPTest7 monitor interval=61s OCF_CHECK_LEVEL=1 --force")
         ac(o,"")
         assert r == 0
 
@@ -493,45 +518,90 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
 """)
         assert r == 1
 
-        o,r = pcs("resource create --no-default-ops OCFTest1 Dummy")
+        o,r = pcs(temp_cib, "resource create --no-default-ops OCFTest1 Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource op add OCFTest1 monitor interval=31s")
+        o,r = pcs(temp_cib, "resource op add OCFTest1 monitor interval=31s")
+        ac(o, """\
+Error: operation monitor already specified for OCFTest1, use --force to override:
+monitor interval=60s (OCFTest1-monitor-interval-60s)
+""")
+        self.assertEquals(1, r)
+
+        o,r = pcs(temp_cib, "resource op add OCFTest1 monitor interval=31s --force")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource op add OCFTest1 monitor interval=30s OCF_CHECK_LEVEL=15")
+        o,r = pcs(temp_cib, "resource op add OCFTest1 monitor interval=30s OCF_CHECK_LEVEL=15")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource show OCFTest1")
+        o,r = pcs(temp_cib, "resource show OCFTest1")
         ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
-        o,r = pcs("resource update OCFTest1 op monitor interval=61s OCF_CHECK_LEVEL=5")
+        o,r = pcs(temp_cib, "resource update OCFTest1 op monitor interval=61s OCF_CHECK_LEVEL=5")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource show OCFTest1")
+        o,r = pcs(temp_cib, "resource show OCFTest1")
         ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=61s OCF_CHECK_LEVEL=5 (OCFTest1-monitor-interval-61s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
-        o,r = pcs("resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4")
+        o,r = pcs(temp_cib, "resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource show OCFTest1")
+        o,r = pcs(temp_cib, "resource show OCFTest1")
         ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
 
-        o,r = pcs("resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4 interval=35s")
+        o,r = pcs(temp_cib, "resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4 interval=35s")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource show OCFTest1")
+        o,r = pcs(temp_cib, "resource show OCFTest1")
         ac(o," Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=35s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-35s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n")
         assert r == 0
+
+        output, retVal = pcs(
+            temp_cib, "resource create --no-default-ops state stateful"
+        )
+        ac(output, "")
+        self.assertEquals(0, retVal)
+
+        output, retVal = pcs(
+            temp_cib, "resource op add state monitor interval=10"
+        )
+        ac(output, """\
+Error: operation monitor already specified for state, use --force to override:
+monitor interval=60s (state-monitor-interval-60s)
+""")
+        self.assertEquals(1, retVal)
+
+        output, retVal = pcs(
+            temp_cib, "resource op add state monitor interval=10 role=Started"
+        )
+        ac(output, """\
+Error: operation monitor already specified for state, use --force to override:
+monitor interval=60s (state-monitor-interval-60s)
+""")
+        self.assertEquals(1, retVal)
+
+        output, retVal = pcs(
+            temp_cib, "resource op add state monitor interval=10 role=Master"
+        )
+        ac(output, "")
+        self.assertEquals(0, retVal)
+
+        output, retVal = pcs(temp_cib, "resource show state")
+        ac(output, """\
+ Resource: state (class=ocf provider=pacemaker type=Stateful)
+  Operations: monitor interval=60s (state-monitor-interval-60s)
+              monitor interval=10 role=Master (state-monitor-interval-10)
+""")
+        self.assertEquals(0, retVal)
 
     def testRemoveOperation(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
@@ -539,12 +609,12 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource op add ClusterIP monitor interval=31s'
+        line = 'resource op add ClusterIP monitor interval=31s --force'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource op add ClusterIP monitor interval=32s'
+        line = 'resource op add ClusterIP monitor interval=32s --force'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
@@ -587,7 +657,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource op add ClusterIP monitor interval=32s'
+        line = 'resource op add ClusterIP monitor interval=32s --force'
         output, returnVal = pcs(temp_cib, line) 
         assert returnVal == 0
         assert output == ""
@@ -612,7 +682,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert returnVal == 0
         ac (output,' Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)\n  Attributes: ip=192.168.0.99 cidr_netmask=32 \n  Operations: stop interval=0s timeout=34s (ClusterIP-stop-interval-0s)\n              start interval=0s timeout=33s (ClusterIP-start-interval-0s)\n')
 
-    def testUpdateOpration(self):
+    def testUpdateOperation(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
         output, returnVal = pcs(temp_cib, line) 
         assert output == ""

@@ -1381,6 +1381,7 @@ def find_unique_id(dom, check_id):
 # operations
 # pacemaker differentiates between operations only by name and interval
 def operation_exists(operations_el, op_el):
+    existing = []
     op_name = op_el.getAttribute("name")
     op_interval = get_timeout_seconds(op_el.getAttribute("interval"), True)
     for op in operations_el.getElementsByTagName("op"):
@@ -1389,7 +1390,34 @@ def operation_exists(operations_el, op_el):
             and
             get_timeout_seconds(op.getAttribute("interval"), True) == op_interval
         ):
-            return op
+            existing.append(op)
+    return existing
+
+def operation_exists_by_name(operations_el, op_el):
+    existing = []
+    op_name = op_el.getAttribute("name")
+    op_role = op_el.getAttribute("role") or "Started"
+    ocf_check_level = None
+    if "monitor" == op_name:
+        ocf_check_level = get_operation_ocf_check_level(op_el)
+
+    for op in operations_el.getElementsByTagName("op"):
+        if op.getAttribute("name") == op_name:
+            if op_name != "monitor":
+                existing.append(op)
+            elif (
+                (op.getAttribute("role") or "Started") == op_role
+                and
+                ocf_check_level == get_operation_ocf_check_level(op)
+            ):
+                existing.append(op)
+    return existing
+
+def get_operation_ocf_check_level(operation_el):
+    for attr_el in operation_el.getElementsByTagName("instance_attributes"):
+        for nvpair_el in attr_el.getElementsByTagName("nvpair"):
+            if nvpair_el.getAttribute("name") == "OCF_CHECK_LEVEL":
+                return nvpair_el.getAttribute("value")
     return None
 
 def set_unmanaged(resource):

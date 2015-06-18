@@ -376,9 +376,9 @@ Commands:
         resource.  If an operation (op) is specified it will update the first
         found operation with the same action on the specified resource, if no
         operation with that action exists then a new operation will be created.
-        (WARNING: all current options on the update op will be reset if not
-        specified.)  If you want to create multiple monitor operations you
-        should use the add_operation & remove_operation commands.  If --wait is
+        (WARNING: all existing options on the updated operation will be reset
+        if not specified.)  If you want to create multiple monitor operations
+        you should use the 'op add' & 'op remove' commands.  If --wait is
         specified, pcs will wait up to 'n' seconds for the changes to take
         effect and then return 0 if the changes have been processed or 1
         otherwise.  If 'n' is not specified it defaults to 60 minutes.
