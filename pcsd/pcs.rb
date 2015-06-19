@@ -329,10 +329,16 @@ def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, 
   begin
     request = "/#{request}" if not request.start_with?("/")
 
+    # fix ipv6 address for URI.parse
+    node6 = node
+    if (node.include?(":") and ! node.start_with?("["))
+      node6 = "[#{node}]"
+    end
+
     if remote
-      uri = URI.parse("https://#{node}:2224/remote" + request)
+      uri = URI.parse("https://#{node6}:2224/remote" + request)
     else
-      uri = URI.parse("https://#{node}:2224" + request)
+      uri = URI.parse("https://#{node6}:2224" + request)
     end
 
     if post
@@ -356,7 +362,12 @@ def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, 
     }
     req.add_field('Cookie', cookies_to_send.join(';'))
 
-    myhttp = Net::HTTP.new(uri.host, uri.port)
+    # uri.host returns "[addr]" for ipv6 addresses, which is wrong
+    # uri.hostname returns "addr" for ipv6 addresses, which is correct, but it
+    #   is not available in older ruby versions
+    # There is a bug in Net::HTTP.new in some versions of ruby which prevents
+    # ipv6 addresses being used here at all.
+    myhttp = Net::HTTP.new(node, uri.port)
     myhttp.use_ssl = true
     myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
     res = myhttp.start do |http|
