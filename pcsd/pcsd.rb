@@ -1,5 +1,5 @@
 require 'sinatra'
-require 'sinatra/reloader' if development?  #require 'rack/ssl'
+require 'sinatra/reloader' if development?
 require 'sinatra/cookies'
 require 'rexml/document'
 require 'webrick'
@@ -39,16 +39,18 @@ use Rack::Session::Cookie,
 
 #use Rack::SSL
 
-Dir["wizards/*.rb"].each {|file| also_reload file}
-also_reload 'resource.rb'
-also_reload 'remote.rb'
-also_reload 'fenceagent.rb'
-also_reload 'cluster.rb'
-also_reload 'config.rb'
-also_reload 'pcs.rb'
-also_reload 'auth.rb'
-also_reload 'wizard.rb'
-also_reload 'cfgsync.rb'
+if development?
+  Dir["wizards/*.rb"].each {|file| also_reload file}
+  also_reload 'resource.rb'
+  also_reload 'remote.rb'
+  also_reload 'fenceagent.rb'
+  also_reload 'cluster.rb'
+  also_reload 'config.rb'
+  also_reload 'pcs.rb'
+  also_reload 'auth.rb'
+  also_reload 'wizard.rb'
+  also_reload 'cfgsync.rb'
+end
 
 before do
   $session = session
