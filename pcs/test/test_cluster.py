@@ -114,6 +114,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -154,6 +156,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -190,6 +194,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -230,6 +236,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -266,6 +274,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -295,6 +305,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -334,6 +346,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -375,6 +389,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -411,6 +427,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -452,6 +470,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -493,6 +513,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -894,6 +916,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -994,6 +1018,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -1044,6 +1070,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -1094,6 +1122,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -1146,6 +1176,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -1196,6 +1228,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -1245,6 +1279,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -1287,6 +1323,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -1353,6 +1391,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)
@@ -1870,6 +1910,8 @@ quorum {
 }
 
 logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
     to_syslog: yes
 }
 """)

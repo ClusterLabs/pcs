@@ -537,6 +537,8 @@ def corosync_setup(argv,returnConfig=False):
         if len(nodes) == 2 and not auto_tie_breaker:
             quorum_section.add_attribute("two_node", "1")
 
+        logging_section.add_attribute("to_logfile", "yes")
+        logging_section.add_attribute("logfile", "/var/log/cluster/corosync.log")
         logging_section.add_attribute("to_syslog", "yes")
 
         if returnConfig:
