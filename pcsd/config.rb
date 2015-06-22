@@ -3,17 +3,21 @@ require 'pp'
 require 'orderedhash'
 
 require 'cluster.rb'
+require 'permissions.rb'
 
 class PCSConfig
   CURRENT_FORMAT = 2
-  attr_accessor :clusters, :format_version, :data_version
+  attr_accessor :clusters, :permissions_local, :format_version, :data_version
 
   def initialize(cfg_text)
     @format_version = 0
     @data_version = 0
     @clusters = []
+    @permissions_local = Permissions::PermissionsSet.new([])
 
     input_clusters = []
+    input_permissions = {}
+
     begin
       json = JSON.parse(cfg_text)
       if not(json.is_a?(Hash) and json.key?("format_version"))
@@ -32,20 +36,45 @@ class PCSConfig
       if @format_version >= 2
         @data_version = json["data_version"] || 0
         input_clusters = json["clusters"] || []
+        input_permissions = json['permissions'] || {}
       elsif @format_version == 1
         input_clusters = json
+        # backward compatibility code start
+        # pcsd without permission support used format_version == 1
+        # all users, who were member of 'haclient' group, had full access
+        input_permissions = {
+          'local_cluster' => [
+            {
+              'type' => Permissions::TYPE_GROUP,
+              'name' => ADMIN_GROUP,
+              'allow' => [Permissions::FULL],
+            },
+          ],
+        }
+        # backward compatibility code end
       else
         $logger.error("Unable to parse pcs_settings file")
       end
     rescue => e
       $logger.error("Unable to parse pcs_settings file: #{e}")
     end
+
     input_clusters.each {|c|
       @clusters << Cluster.new(c["name"], c["nodes"])
     }
+
+    if input_permissions.key?('local_cluster')
+      perm_list = []
+      input_permissions['local_cluster'].each { |perm|
+        perm_list << Permissions::EntityPermissions.new(
+          perm['type'], perm['name'], perm['allow']
+        )
+      }
+      @permissions_local = Permissions::PermissionsSet.new(perm_list)
+    end
   end
 
-  def update(cluster_name, node_list)
+  def update_cluster(cluster_name, node_list)
     if node_list.length == 0
       @clusters.delete_if{|c|c.name == cluster_name}
       $logger.info("Removing cluster from pcs_settings: #{cluster_name}")
@@ -64,12 +93,26 @@ class PCSConfig
     out_hash['format_version'] = CURRENT_FORMAT
     out_hash['data_version'] = @data_version
     out_hash['clusters'] = []
+    out_hash['permissions'] = OrderedHash.new
+    out_hash['permissions']['local_cluster'] = []
 
     @clusters.each { |c|
       c_hash = OrderedHash.new
       c_hash['name'] = c.name
       c_hash['nodes'] = c.nodes.uniq.sort
       out_hash['clusters'] << c_hash
+    }
+
+    perm_set = []
+    @permissions_local.entity_permissions_list.each { |perm|
+      perm_hash = OrderedHash.new
+      perm_hash['type'] = perm.type
+      perm_hash['name'] = perm.name
+      perm_hash['allow'] = perm.allow_list.uniq.sort
+      perm_set << perm_hash
+    }
+    out_hash['permissions']['local_cluster'] = perm_set.sort { |a, b|
+      a['type'] == b['type'] ? a['name'] <=> b['name'] : a['type'] <=> b['type']
     }
 
     return JSON.pretty_generate(out_hash)
@@ -104,6 +147,12 @@ class PCSConfig
       end
     }
     return nil
+  end
+
+  def cluster_nodes_equal?(cluster_name, nodes)
+    my_nodes = get_nodes(cluster_name) || []
+    nodes = nodes || []
+    return my_nodes.sort.uniq == nodes.sort.uniq
   end
 end
 

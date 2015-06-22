@@ -3,6 +3,7 @@ require 'fileutils'
 
 require 'pcsd_test_utils.rb'
 require 'config.rb'
+require 'permissions.rb'
 
 class TestConfig < Test::Unit::TestCase
   def setup
@@ -27,7 +28,12 @@ class TestConfig < Test::Unit::TestCase
   "data_version": 0,
   "clusters": [
 
-  ]
+  ],
+  "permissions": {
+    "local_cluster": [
+
+    ]
+  }
 }',
       cfg.text
     )
@@ -37,6 +43,27 @@ class TestConfig < Test::Unit::TestCase
     text = '[]'
     cfg = PCSConfig.new(text)
     assert_equal(0, cfg.clusters.length)
+    assert_equal(
+'{
+  "format_version": 2,
+  "data_version": 0,
+  "clusters": [
+
+  ],
+  "permissions": {
+    "local_cluster": [
+      {
+        "type": "group",
+        "name": "haclient",
+        "allow": [
+          "full"
+        ]
+      }
+    ]
+  }
+}',
+      cfg.text
+    )
 
     text = '
 [
@@ -65,7 +92,18 @@ class TestConfig < Test::Unit::TestCase
         "rh71-node2"
       ]
     }
-  ]
+  ],
+  "permissions": {
+    "local_cluster": [
+      {
+        "type": "group",
+        "name": "haclient",
+        "allow": [
+          "full"
+        ]
+      }
+    ]
+  }
 }',
       cfg.text
     )
@@ -87,7 +125,12 @@ class TestConfig < Test::Unit::TestCase
   "data_version": 0,
   "clusters": [
 
-  ]
+  ],
+  "permissions": {
+    "local_cluster": [
+
+    ]
+  }
 }',
       cfg.text
     )
@@ -104,7 +147,12 @@ class TestConfig < Test::Unit::TestCase
         "rh71-node2"
       ]
     }
-  ]
+  ],
+  "permissions": {
+    "local_cluster": [
+
+    ]
+  }
 }'
     cfg = PCSConfig.new(text)
     assert_equal(2, cfg.format_version)
@@ -113,6 +161,204 @@ class TestConfig < Test::Unit::TestCase
     assert_equal("cluster71", cfg.clusters[0].name)
     assert_equal(["rh71-node1", "rh71-node2"], cfg.clusters[0].nodes)
     assert_equal(text, cfg.text)
+
+    text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node2",
+        "rh71-node1",
+        "rh71-node3",
+        "rh71-node2"
+      ]
+    },
+    {
+      "name": "abcd",
+      "nodes": [
+        "abcd-node2",
+        "abcd-node1",
+        "abcd-node3",
+        "abcd-node2"
+      ]
+    }
+  ],
+  "permissions": {
+    "local_cluster": [
+
+    ]
+  }
+}'
+    cfg = PCSConfig.new(text)
+    assert_equal(2, cfg.format_version)
+    assert_equal(9, cfg.data_version)
+    assert_equal(2, cfg.clusters.length)
+    assert_equal("cluster71", cfg.clusters[0].name)
+    assert_equal(
+      ["rh71-node1", "rh71-node2", "rh71-node3"],
+      cfg.clusters[0].nodes
+    )
+    out_text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1",
+        "rh71-node2",
+        "rh71-node3"
+      ]
+    },
+    {
+      "name": "abcd",
+      "nodes": [
+        "abcd-node1",
+        "abcd-node2",
+        "abcd-node3"
+      ]
+    }
+  ],
+  "permissions": {
+    "local_cluster": [
+
+    ]
+  }
+}'
+    assert_equal(out_text, cfg.text)
+  end
+
+  def test_parse_format2_permissions()
+    text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1",
+        "rh71-node2"
+      ]
+    }
+  ],
+  "permissions": {
+    "local_cluster": [
+      {
+        "type": "group",
+        "name": "group2",
+        "allow": [
+          "read"
+        ]
+      },
+      {
+        "type": "user",
+        "name": "user2",
+        "allow": [
+
+        ]
+      },
+      {
+        "type": "group",
+        "name": "group2",
+        "allow": [
+          "grant"
+        ]
+      },
+      {
+        "type": "group",
+        "name": "group1",
+        "allow": [
+          "write", "full", "write"
+        ]
+      },
+      {
+        "type": "user",
+        "name": "user1",
+        "allow": [
+          "grant", "write", "grant", "read"
+        ]
+      }
+    ]
+  }
+}'
+    out_text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1",
+        "rh71-node2"
+      ]
+    }
+  ],
+  "permissions": {
+    "local_cluster": [
+      {
+        "type": "group",
+        "name": "group1",
+        "allow": [
+          "full",
+          "write"
+        ]
+      },
+      {
+        "type": "group",
+        "name": "group2",
+        "allow": [
+          "grant",
+          "read"
+        ]
+      },
+      {
+        "type": "user",
+        "name": "user1",
+        "allow": [
+          "grant",
+          "read",
+          "write"
+        ]
+      },
+      {
+        "type": "user",
+        "name": "user2",
+        "allow": [
+
+        ]
+      }
+    ]
+  }
+}'
+    cfg = PCSConfig.new(text)
+    assert_equal(out_text, cfg.text)
+
+    perms = cfg.permissions_local
+    assert_equal(false, perms.allows?('user1', [], Permissions::FULL))
+    assert_equal(true, perms.allows?('user1', [], Permissions::GRANT))
+    assert_equal(true, perms.allows?('user1', [], Permissions::WRITE))
+    assert_equal(true, perms.allows?('user1', [], Permissions::READ))
+
+    assert_equal(true, perms.allows?('user1', ['group1'], Permissions::FULL))
+    assert_equal(true, perms.allows?('user1', ['group1'], Permissions::GRANT))
+    assert_equal(true, perms.allows?('user1', ['group1'], Permissions::WRITE))
+    assert_equal(true, perms.allows?('user1', ['group1'], Permissions::READ))
+
+    assert_equal(false, perms.allows?('user2', [], Permissions::FULL))
+    assert_equal(false, perms.allows?('user2', [], Permissions::GRANT))
+    assert_equal(false, perms.allows?('user2', [], Permissions::WRITE))
+    assert_equal(false, perms.allows?('user2', [], Permissions::READ))
+
+    assert_equal(false, perms.allows?('user2', ['group2'], Permissions::FULL))
+    assert_equal(true, perms.allows?('user2', ['group2'], Permissions::GRANT))
+    assert_equal(false, perms.allows?('user2', ['group2'], Permissions::WRITE))
+    assert_equal(true, perms.allows?('user2', ['group2'], Permissions::READ))
   end
 
   def test_in_use()
@@ -140,7 +386,7 @@ class TestConfig < Test::Unit::TestCase
     )
   end
 
-  def test_update()
+  def test_update_cluster()
     cfg = PCSConfig.new(File.open(CFG_PCSD_SETTINGS).read)
     assert_equal(
       ["rh71-node1", "rh71-node2"],
@@ -151,7 +397,7 @@ class TestConfig < Test::Unit::TestCase
       cfg.get_nodes('cluster67')
     )
 
-    cfg.update('cluster71', ["rh71-node1", "rh71-node2", "rh71-node3"])
+    cfg.update_cluster('cluster71', ["rh71-node1", "rh71-node2", "rh71-node3"])
     assert_equal(
       ["rh71-node1", "rh71-node2", "rh71-node3"],
       cfg.get_nodes('cluster71')
@@ -161,7 +407,7 @@ class TestConfig < Test::Unit::TestCase
       cfg.get_nodes('cluster67')
     )
 
-    cfg.update('cluster71', ["rh71-node1", "rh71-node2"])
+    cfg.update_cluster('cluster71', ["rh71-node1", "rh71-node2"])
     assert_equal(
       ["rh71-node1", "rh71-node2"],
       cfg.get_nodes('cluster71')
@@ -171,7 +417,7 @@ class TestConfig < Test::Unit::TestCase
       cfg.get_nodes('cluster67')
     )
 
-    cfg.update('cluster71', [])
+    cfg.update_cluster('cluster71', [])
     assert(! cfg.is_cluster_name_in_use('cluster71'))
     assert_equal(
       ["rh67-node1", "rh67-node2", "rh67-node3"],
@@ -179,7 +425,7 @@ class TestConfig < Test::Unit::TestCase
     )
   end
 
-  def test_remove()
+  def test_remove_cluster()
     cfg = PCSConfig.new(File.open(CFG_PCSD_SETTINGS).read)
     assert_equal(
       ["rh71-node1", "rh71-node2"],
@@ -205,6 +451,67 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(
       ["rh67-node1", "rh67-node2", "rh67-node3"],
       cfg.get_nodes('cluster67')
+    )
+  end
+
+  def test_cluster_nodes_equal?()
+    text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1",
+        "rh71-node2"
+      ]
+    }
+  ],
+  "permissions": {
+    "local_cluster": [
+
+    ]
+  }
+}'
+    cfg = PCSConfig.new(text)
+
+    assert_equal(
+      true,
+      cfg.cluster_nodes_equal?('cluster71', ['rh71-node1', 'rh71-node2'])
+    )
+    assert_equal(
+      true,
+      cfg.cluster_nodes_equal?('cluster71', ['rh71-node1', 'rh71-node2', 'rh71-node1'])
+    )
+    assert_equal(
+      true,
+      cfg.cluster_nodes_equal?('cluster71', ['rh71-node2', 'rh71-node1'])
+    )
+    assert_equal(
+      false,
+      cfg.cluster_nodes_equal?('cluster71', [])
+    )
+    assert_equal(
+      false,
+      cfg.cluster_nodes_equal?('cluster71', ['rh71-node1'])
+    )
+    assert_equal(
+      false,
+      cfg.cluster_nodes_equal?('cluster71', ['rh71-node3', 'rh71-node1'])
+    )
+    assert_equal(
+      false,
+      cfg.cluster_nodes_equal?('cluster71', ['rh71-node1', 'rh71-node2', 'rh71-node3'])
+    )
+
+    assert_equal(
+      false,
+      cfg.cluster_nodes_equal?('abcd', ['rh71-node3', 'rh71-node1'])
+    )
+    assert_equal(
+      true,
+      cfg.cluster_nodes_equal?('abcd', [])
     )
   end
 end

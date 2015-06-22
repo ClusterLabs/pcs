@@ -170,18 +170,23 @@ class TestPcsdSettings < Test::Unit::TestCase
         "rh71-node2"
       ]
     }
-  ]
+  ],
+  "permissions": {
+    "local_cluster": [
+
+    ]
+  }
 }
     '
 
     cfg = Cfgsync::PcsdSettings.from_text(text)
     assert_equal(text, cfg.text)
     assert_equal(3, cfg.version)
-    assert_equal("42eeb92e14b34886d92ca628ba515cc67c97b5f0", cfg.hash)
+    assert_equal('b35f951a228ac0734d4c1e45fe73c03b18bca380', cfg.hash)
 
     cfg.version = 4
     assert_equal(4, cfg.version)
-    assert_equal('efe28c6d63dbce02da1a414ddb68fa1fc4f89c2e', cfg.hash)
+    assert_equal('26579b79a27f9f56e1acd398eb761d2eb1872c6d', cfg.hash)
 
     cfg.text = '{
   "format_version": 2,

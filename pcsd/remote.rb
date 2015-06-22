@@ -211,9 +211,9 @@ def cluster_status(params, cluster_name=nil, dont_update_config=false)
   if cluster_nodes.length > 0
     config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     old_cluster_nodes = config.get_nodes(params[:cluster])
-    if not dont_update_config and (old_cluster_nodes & cluster_nodes != old_cluster_nodes or old_cluster_nodes.size!=cluster_nodes.size)
-      $logger.info('Updating node list for: ' + params[:cluster] + ' ' + old_cluster_nodes.inspect + '->' + cluster_nodes.inspect)
-      config.update(params[:cluster], cluster_nodes)
+    if !(dont_update_config or config.cluster_nodes_equal?(params[:cluster], cluster_nodes))
+      $logger.info("Updating node list for: #{params[:cluster]} #{old_cluster_nodes}->#{cluster_nodes}")
+      config.update_cluster(params[:cluster], cluster_nodes)
       sync_config = Cfgsync::PcsdSettings.from_text(config.text())
       # on version conflict just go on, config will be corrected eventually
       # by displaying the cluster in the web UI
@@ -1019,9 +1019,9 @@ def status_all(params, nodes = [], dont_update_config=false)
   if node_list.length > 0
     config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     old_node_list = config.get_nodes(params[:cluster])
-    if not dont_update_config and (old_node_list & node_list != old_node_list or old_node_list.size!=node_list.size)
-      $logger.info("Updating node list for: " + params[:cluster] + " " + old_node_list.inspect + "->" + node_list.inspect)
-      config.update(params[:cluster], node_list)
+    if !(dont_update_config or config.cluster_nodes_equal?(params[:cluster], node_list))
+      $logger.info("Updating node list for: #{params[:cluster]} #{old_node_list}->#{node_list}")
+      config.update_cluster(params[:cluster], node_list)
       sync_config = Cfgsync::PcsdSettings.from_text(config.text())
       # on version conflict just go on, config will be corrected eventually
       # by displaying the cluster in the web UI
@@ -1124,18 +1124,20 @@ def clusters_overview()
   threads.each { |t| t.join }
 
   # update clusters in PCSConfig
-  config_text_old = Cfgsync::PcsdSettings.from_file('').text()
-  config = PCSConfig.new(config_text_old)
+  not_current_data = false
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   cluster_map.each { |cluster, values|
     nodes = []
     values['node_list'].each { |node|
       nodes << node['name']
     }
-    config.update(cluster, nodes)
+    if !config.cluster_nodes_equal?(cluster, nodes)
+      $logger.info("Updating node list for: #{cluster} #{config.get_nodes(cluster)}->#{nodes}")
+      config.update_cluster(cluster, nodes)
+      not_current_data = true
+    end
   }
-  not_current_data = false
-  if config_text_old != config.text()
-    not_current_data = true
+  if not_current_data
     sync_config = Cfgsync::PcsdSettings.from_text(config.text())
     # on version conflict just go on, config will be corrected eventually
     # by displaying the cluster in the web UI
