@@ -17,4 +17,5 @@ PACEMAKERD = "/usr/sbin/pacemakerd"
 CIBADMIN = "/usr/sbin/cibadmin"
 
 SUPERUSER = 'hacluster'
+ADMIN_GROUP = 'haclient'
 $user_pass_file = "pcs_users.conf"
