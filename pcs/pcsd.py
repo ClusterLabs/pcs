@@ -1,8 +1,11 @@
 import sys
 import json
+import os
+import errno
 
 import usage
 import utils
+import settings
 
 def pcsd_cmd(argv):
     if len(argv) == 0:
@@ -16,6 +19,8 @@ def pcsd_cmd(argv):
         pcsd_certkey(argv)
     elif sub_cmd == "sync-certificates":
         pcsd_sync_certs(argv)
+    elif sub_cmd == "clear-auth":
+        pcsd_clear_auth(argv)
     else:
         usage.pcsd()
         sys.exit(1)
@@ -87,3 +92,31 @@ def pcsd_sync_certs(argv):
         if error:
             utils.err(error, False)
 
+def pcsd_clear_auth(argv):
+    output = []
+    files = []
+    if os.geteuid() == 0:
+        pcsd_tokens_file = settings.pcsd_tokens_location
+    else:
+        pcsd_tokens_file = os.path.expanduser("~/.pcs/tokens")
+
+    if '--local' in utils.pcs_options:
+        files.append(pcsd_tokens_file)
+    if '--remote' in utils.pcs_options:
+        files.append(settings.pcsd_users_conf_location)
+
+    if len(files) == 0:
+        files.append(pcsd_tokens_file)
+        files.append(settings.pcsd_users_conf_location)
+
+    for f in files:
+        try:
+            os.remove(f)
+        except OSError as e:
+            if (e.errno != errno.ENOENT):
+                output.append(e.strerror + " (" + f + ")")
+
+    if len(output) > 0:
+        for o in output:
+            print "Error: " + o
+        sys.exit(1)

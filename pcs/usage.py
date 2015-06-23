@@ -1168,6 +1168,15 @@ Commands:
         Sync pcsd certificates to all nodes found from current corosync.conf
         file (cluster.conf on systems running Corosync 1.x).  WARNING: This will
         restart pcsd daemon on the nodes.
+
+    clear-auth [--local] [--remote]
+       Removes all system tokens which allow pcs/pcsd on the current system to
+       authenticate with remote pcs/pcsd instances and vice-versa.  After this
+       command is run this node will need to be re-authenticated with other
+       nodes (using 'pcs cluster auth').  Using '--local' only removes tokens
+       used by local pcs (and pcsd if root) to connect to other pcsd instances,
+       using --remote clears authentication tokens used by remote systems to
+       connect to the local pcsd instance.
 """
     if pout:
         print sub_usage(args, output)

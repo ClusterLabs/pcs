@@ -77,6 +77,7 @@ def main(argv):
             "token=", "token_coefficient=", "consensus=", "join=",
             "miss_count_const=", "fail_recv_const=",
             "corosync_conf=", "cluster_conf=",
+            "remote",
         ]
         # pull out negative number arguments and add them back after getopt
         prev_arg = ""
