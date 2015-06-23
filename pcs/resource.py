@@ -266,69 +266,101 @@ def resource_list_available(argv):
     else:
         print ret,
 
+def resource_parse_options(metadata, standard, provider, resource):
+    try:
+        short_desc = ""
+        long_desc = ""
+        dom = parseString(metadata)
+        long_descs = dom.documentElement.getElementsByTagName("longdesc")
+        for ld in long_descs:
+            if ld.parentNode.tagName == "resource-agent" and ld.firstChild:
+                long_desc = ld.firstChild.data.strip()
+                break
+
+        short_descs = dom.documentElement.getElementsByTagName("shortdesc")
+        for sd in short_descs:
+            if sd.parentNode.tagName == "resource-agent" and sd.firstChild:
+                short_desc = sd.firstChild.data.strip()
+                break
+
+        if provider:
+            title_1 = "%s:%s:%s" % (standard, provider, resource)
+        else:
+            title_1 = "%s:%s" % (standard, resource)
+
+        if short_desc:
+            title_1 += " - " + format_desc(len(title_1 + " - "), short_desc)
+        print title_1
+        print 
+        if long_desc:
+            print long_desc
+            print
+
+        params = dom.documentElement.getElementsByTagName("parameter")
+        if len(params) > 0:
+            print "Resource options:"
+        for param in params:
+            name = param.getAttribute("name")
+            if param.getAttribute("required") == "1":
+                name += " (required)"
+            desc = ""
+            longdesc_els = param.getElementsByTagName("longdesc")
+            if longdesc_els and longdesc_els[0].firstChild:
+                desc = longdesc_els[0].firstChild.nodeValue.strip().replace("\n", " ")
+            if not desc:
+                desc = "No description available"
+            indent = name.__len__() + 4
+            desc = format_desc(indent, desc)
+            print "  " + name + ": " + desc
+    except xml.parsers.expat.ExpatError as e:
+        utils.err("Unable to parse xml for '%s': %s" % (resource, e))
 
 def resource_list_options(resource):
     found_resource = False
     resource = get_full_ra_type(resource,True)
+
+    # we know this is the nagios resource standard
+    if "nagios:" in resource:
+        resource_split = resource.split(":",2)
+        resource = resource_split[1]
+        standard = "nagios"
+        try:
+            with open("/usr/share/pacemaker/nagios/plugins-metadata/" + resource + ".xml",'r') as f:
+                resource_parse_options(f.read(), standard, None, resource)
+        except IOError as e:
+            utils.err ("Unable to find resource: %s" % resource)
+        return
+
+    # we know this is the nagios resource standard
     if "ocf:" in resource:
         resource_split = resource.split(":",3)
-        providers = [resource_split[1]]
+        provider = resource_split[1]
         resource = resource_split[2]
-    else:
-        providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
+        standard = "ocf"
+        metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
+        if metadata:
+            resource_parse_options(metadata, standard, provider, resource)
+        else:
+            utils.err ("Unable to find resource: %s" % resource)
+        return
+
+    # no standard was give, lets search all ocf providers first
+    providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
     for provider in providers:
         metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
         if metadata == False:
             continue
         else:
+            resource_parse_options(metadata, "ocf", provider, resource)
             found_resource = True
-        
-        try:
-            short_desc = ""
-            long_desc = ""
-            dom = parseString(metadata)
-            long_descs = dom.documentElement.getElementsByTagName("longdesc")
-            for ld in long_descs:
-                if ld.parentNode.tagName == "resource-agent" and ld.firstChild:
-                    long_desc = ld.firstChild.data.strip()
-                    break
 
-            short_descs = dom.documentElement.getElementsByTagName("shortdesc")
-            for sd in short_descs:
-                if sd.parentNode.tagName == "resource-agent" and sd.firstChild:
-                    short_desc = sd.firstChild.data.strip()
-                    break
-            
-            title_1 = "ocf:%s:%s" % (provider, resource)
-            if short_desc:
-                title_1 += " - " + format_desc(len(title_1 + " - "), short_desc)
-            print title_1
-            print 
-            if long_desc:
-                print long_desc
-                print
-
-            params = dom.documentElement.getElementsByTagName("parameter")
-            if len(params) > 0:
-                print "Resource options:"
-            for param in params:
-                name = param.getAttribute("name")
-                if param.getAttribute("required") == "1":
-                    name += " (required)"
-                desc = ""
-                longdesc_els = param.getElementsByTagName("longdesc")
-                if longdesc_els and longdesc_els[0].firstChild:
-                    desc = longdesc_els[0].firstChild.nodeValue.strip().replace("\n", " ")
-                if not desc:
-                    desc = "No description available"
-                indent = name.__len__() + 4
-                desc = format_desc(indent, desc)
-                print "  " + name + ": " + desc
-        except xml.parsers.expat.ExpatError as e:
-            utils.err("Unable to parse xml for '%s': %s" % (resource, e))
-
+    # still not found, now lets look at nagios plugins
     if not found_resource:
-        utils.err ("Unable to find resource: %s" % resource)
+        try:
+            with open("/usr/share/pacemaker/nagios/plugins-metadata/" + resource + ".xml",'r') as f:
+                resource_parse_options(f.read(), "nagios", None, resource)
+        except IOError as e:
+            utils.err ("Unable to find resource: %s" % resource)
 
 # Return the string formatted with a line length of 79 and indented
 def format_desc(indent, desc):
@@ -1255,6 +1287,8 @@ def get_full_ra_type(ra_type, return_string = False):
             ra_type = "ocf:heartbeat:" + ra_type
         elif os.path.isfile("/usr/lib/ocf/resource.d/pacemaker/%s" % ra_type):
             ra_type = "ocf:pacemaker:" + ra_type
+        elif os.path.isfile("/usr/share/pacemaker/nagios/plugins-metadata/%s.xml" % ra_type):
+            ra_type = "nagios:" + ra_type
         else:
             ra_type = "ocf:heartbeat:" + ra_type
 
