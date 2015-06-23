@@ -54,6 +54,7 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false,
     group_list.push(e.attributes["id"])
   end
 
+  resource_list = resource_list.select { |x| not x.orphaned }
   resource_list = resource_list.sort_by{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
   if get_all_options or get_operations

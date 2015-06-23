@@ -714,7 +714,9 @@ def node_status(params)
     out_nodes = []
     oConstraints = []
     meta_attributes = []
-    r.meta_attr.each_pair {|k,v| meta_attributes << {:key => k, :value => v[1], :id => v[0], :parent => v[2]}}
+    if r.meta_attr
+      r.meta_attr.each_pair {|k,v| meta_attributes << {:key => k, :value => v[1], :id => v[0], :parent => v[2]}}
+    end
     r.nodes.each{|n|
       out_nodes.push(n.name)
     }
