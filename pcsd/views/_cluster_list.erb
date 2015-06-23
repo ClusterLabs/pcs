@@ -32,19 +32,19 @@
     <td nowrap class="resource_name">
       <a {{bind-attr href=url_link}}>{{name}}</a>
     </td>
-    <td class="resource_type">
+    <td nowrap class="resource_type">
       {{nodes.length}}
       {{#if nodes_failed}}
-        <span style="color: red">({{nodes_failed}} issue(s))</span>
+      | <div style="display: inline-block;" title="Issue(s) found"><div class="warning sprites"></div> <span style="font-weight: bold; color: red">{{nodes_failed}}</span></div>
       {{/if}}
     </td>
-    <td class="resource_type">
+    <td nowrap class="resource_type">
       {{#if status_unknown}}
         unknown
       {{else}}
         {{resources.length}}
         {{#if resources_failed}}
-      <span style="color: red">({{resources_failed}} issue(s))</span>
+      | <div style="display: inline-block;" title="Issue(s) found"><div class="warning sprites"></div> <span style="font-weight: bold; color: red">{{resources_failed}}</span></div>
         {{/if}}
       {{/if}}
     </td>
