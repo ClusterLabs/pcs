@@ -1213,8 +1213,6 @@ def validate_wait_get_timeout():
 # Check and see if the specified resource (or stonith) type is present on the
 # file system and properly responds to a meta-data request
 def is_valid_resource(resource, caseInsensitiveCheck=False):
-    found_resource = False
-    stonith_resource = False
     if resource.startswith("ocf:"):
         resource_split = resource.split(":",3)
         if len(resource_split) != 3:
@@ -1222,9 +1220,20 @@ def is_valid_resource(resource, caseInsensitiveCheck=False):
         providers = [resource_split[1]]
         resource = resource_split[2]
     elif resource.startswith("stonith:"):
-        stonith_resource = True
         resource_split = resource.split(":", 2)
         stonith = resource_split[1]
+        metadata = get_stonith_metadata("/usr/sbin/" + stonith)
+        if metadata != False:
+            return True
+        else:
+            return False
+    elif resource.startswith("nagios:"):
+        # search for nagios script
+        resource_split = resource.split(":", 2)
+        if os.path.isfile("/usr/share/pacemaker/nagios/plugins-metadata/%s.xml" % resource_split[1]):
+            return True
+        else:
+            return False
     elif resource.startswith("lsb:"):
         resource_split = resource.split(":",2)
         lsb_ra = resource_split[1]
@@ -1242,29 +1251,25 @@ def is_valid_resource(resource, caseInsensitiveCheck=False):
     else:
         providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
 
-    if stonith_resource:
-        metadata = get_stonith_metadata("/usr/sbin/" + stonith)
-        if metadata != False:
-            found_resource = True
-    else:
-        for provider in providers:
-            filepath = "/usr/lib/ocf/resource.d/" + provider + "/"
-            if caseInsensitiveCheck:
-                if os.path.isdir(filepath):
-                    all_files = [ f for f in os.listdir(filepath ) ]
-                    for f in all_files:
-                        if f.lower() == resource.lower() and os.path.isfile(filepath + f):
-                            return "ocf:" + provider + ":" + f
-                    continue
-
-            metadata = get_metadata(filepath + resource)
-            if metadata == False:
+    # search for ocf script
+    for provider in providers:
+        filepath = "/usr/lib/ocf/resource.d/" + provider + "/"
+        if caseInsensitiveCheck:
+            if os.path.isdir(filepath):
+                all_files = [ f for f in os.listdir(filepath ) ]
+                for f in all_files:
+                    if f.lower() == resource.lower() and os.path.isfile(filepath + f):
+                        return "ocf:" + provider + ":" + f
                 continue
-            else:
-                found_resource = True
-                break
 
-    return found_resource
+        metadata = get_metadata(filepath + resource)
+        if metadata == False:
+            continue
+        else:
+            # found it
+            return True
+
+    return False
 
 # Get metadata from resource agent
 def get_metadata(resource_agent_script):
