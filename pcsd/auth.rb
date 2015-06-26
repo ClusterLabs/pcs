@@ -2,6 +2,7 @@ require 'json'
 require 'pp'
 require 'securerandom'
 require 'rpam'
+require 'base64'
 
 class PCSAuth
   # Ruby 1.8.7 doesn't implement SecureRandom.uuid
@@ -27,13 +28,13 @@ class PCSAuth
     if generate_token
       token = PCSAuth.uuid
       begin
-      	password_file = File.open($user_pass_file, File::RDWR|File::CREAT)
-	password_file.flock(File::LOCK_EX)
-	json = password_file.read()
-	users = JSON.parse(json)
-      rescue Exception => ex
-	$logger.info "Empty pcs_users.conf file, creating new file"
-	users = []
+        password_file = File.open($user_pass_file, File::RDWR|File::CREAT)
+        password_file.flock(File::LOCK_EX)
+        json = password_file.read()
+        users = JSON.parse(json)
+      rescue Exception
+        $logger.info "Empty pcs_users.conf file, creating new file"
+        users = []
       end
       users << {"username" => username, "token" => token, "creation_date" => Time.now}
       password_file.truncate(0)
@@ -45,14 +46,29 @@ class PCSAuth
     return true
   end
 
-  def self.isUserAllowedToLogin(username)
+  def self.getUsersGroups(username)
     stdout, stderr, retval = run_cmd("id", "-Gn", username)
     if retval != 0
-      $logger.info("Failed login by '#{username}' (unable to determine groups user is a member of)")
+      $logger.info(
+        "Unable to determine groups of user '#{username}': #{stderr.join(' ').strip}"
+      )
+      return [false, []]
+    end
+    return [true, stdout.join(' ').split(nil)]
+  end
+
+  def self.isUserAllowedToLogin(username)
+    success, groups = getUsersGroups(username)
+    if not success
+      $logger.info(
+        "Failed login by '#{username}' (unable to determine user's groups)"
+      )
       return false
     end
-    if not stdout[0].match(/\bhaclient\b/)
-      $logger.info("Failed login by '#{username}' (user is not a member of haclient)")
+    if not groups.include?(ADMIN_GROUP)
+      $logger.info(
+        "Failed login by '#{username}' (user is not a member of #{ADMIN_GROUP})"
+      )
       return false
     end
     $logger.info("Successful login by '#{username}'")
@@ -69,43 +85,66 @@ class PCSAuth
 
     users.each {|u|
       if u["token"] == token
-	return u["username"]
+        return u["username"]
       end
     }
     return false
   end
 
-  def self.isLoggedIn(session, cookies)
+  def self.loginByToken(cookies)
     if username = validToken(cookies["token"])
-      if username == SUPERUSER and $cookies.key?(:CIB_user) and $cookies.key?(:CIB_user) != ""
-        $session[:username] = $cookies[:CIB_user]
+      if SUPERUSER == username
+        if cookies['CIB_user'] and cookies['CIB_user'].strip != ''
+          $session[:username] = cookies['CIB_user']
+          if cookies['CIB_user_groups'] and cookies['CIB_user_groups'].strip != ''
+            $session[:usergroups] = cookieUserDecode(
+              cookies['CIB_user_groups']
+            ).split(nil)
+          else
+            $session[:usergroups] = []
+          end
+        else
+          $session[:username] = SUPERUSER
+          $session[:usergroups] = []
+        end
+        return true
+      else
+        $session[:username] = username
+        success, groups = getUsersGroups(username)
+        $session[:usergroups] = success ? groups : []
+        return true
       end
+    end
+    return false
+  end
+
+  def self.loginByPassword(username, password)
+    if validUser(username, password)
+      $session[:username] = username
+      success, groups = getUsersGroups(username)
+      $session[:usergroups] = success ? groups : []
       return true
-    else
-      return session[:username] != nil
     end
+    return false
   end
 
-  # Always an admin until we implement groups
-  def self.isAdmin(session)
-    true
+  def self.isLoggedIn(session)
+    return session[:username] != nil
   end
 
-  def self.createUser(username, password)
-    begin
-      json = File.read($user_pass_file)
-      users = JSON.parse(json)
-    rescue
-      users = []
-    end
+  # Let's be safe about characters in cookie variables and do base64.
+  # We cannot do it for CIB_user however to be backward compatible
+  # so we at least remove disallowed characters.
+  def self.cookieUserSafe(text)
+    return text.gsub(/[^!-~]/, '').gsub(';', '')
+  end
 
-    token = PCSAuth.uuid
+  def self.cookieUserEncode(text)
+    return Base64.encode64(text).gsub("\n", '')
+  end
 
-    users.delete_if{|u| u["username"] == username}
-    users << {"username" => username, "password" => password, "token" => token}
-    File.open($user_pass_file, "w") do |f|
-      f.write(JSON.pretty_generate(users))
-    end
+  def self.cookieUserDecode(text)
+    return Base64.decode64(text)
   end
 end
 

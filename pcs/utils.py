@@ -15,6 +15,7 @@ import cStringIO
 import tarfile
 import fcntl
 import getpass
+import base64
 
 import settings
 import pcs
@@ -271,8 +272,23 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
     if "--debug" in pcs_options:
         print "Sending HTTP Request to: " + url
         print "Data: " + str(data)
+    cookies = []
     if host in tokens:
-        opener.addheaders.append(('Cookie', 'token='+tokens[host]))
+        cookies.append("token=" + tokens[host])
+    if os.geteuid() == 0:
+        for name in ("CIB_user", "CIB_user_groups"):
+            if name in os.environ and os.environ[name].strip():
+                value = os.environ[name].strip()
+                # Let's be safe about characters in env variables and do base64.
+                # We cannot do it for CIB_user however to be backward compatible
+                # so we at least remove disallowed characters.
+                if "CIB_user" == name:
+                    value = re.sub(r"[^!-~]", "", value).replace(";", "")
+                else:
+                    value = base64.b64encode(value)
+                cookies.append("{0}={1}".format(name, value))
+    if cookies:
+        opener.addheaders.append(('Cookie', ";".join(cookies)))
     urllib2.install_opener(opener)
     try:
         result = opener.open(url,data)

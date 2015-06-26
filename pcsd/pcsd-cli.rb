@@ -25,6 +25,7 @@ end
 
 # bootstrap, emulate environment created by pcsd http server
 $session = {}
+# we don't need cookies as username and groups are read from session
 $cookies = {}
 PCS = get_pcs_path(File.expand_path(File.dirname(__FILE__)))
 $logger_device = StringIO.new
@@ -33,15 +34,25 @@ $logger = configure_logger($logger_device)
 # check and set user
 uid = Process.uid
 if 0 == uid
-  $session[:username] = SUPERUSER
-  $cookies[:CIB_user] = SUPERUSER
+  if ENV['CIB_user'] and ENV['CIB_user'].strip != ''
+    $session[:username] = ENV['CIB_user']
+    if ENV['CIB_user_groups'] and ENV['CIB_user_groups'].strip != ''
+      $session[:usergroups] = ENV['CIB_user_groups'].split(nil)
+    else
+      $session[:usergroups] = []
+    end
+  else
+    $session[:username] = SUPERUSER
+    $session[:usergroups] = []
+  end
 else
   username = Etc.getpwuid(uid).name
   if not PCSAuth.isUserAllowedToLogin(username)
     cli_exit('access_denied')
   else
     $session[:username] = username
-    $cookies[:CIB_user] = username
+    success, groups = PCSAuth.getUsersGroups(username)
+    $session[:usergroups] = success ? groups : []
   end
 end
 

@@ -111,7 +111,8 @@ $thread_cfgsync = Thread.new {
 
 helpers do
   def protected!
-    if not PCSAuth.isLoggedIn(session, request.cookies)
+    PCSAuth.loginByToken(request.cookies) if not PCSAuth.isLoggedIn(session)
+    if not PCSAuth.isLoggedIn(session)
       # If we're on /managec/<cluster_name>/main we redirect
       match_expr = "/managec/(.*)/(.*)"
       mymatch = request.path.match(match_expr)
@@ -257,8 +258,7 @@ if not DISABLE_GUI
   end
 
   post '/login' do
-    if PCSAuth.validUser(params['username'],params['password'])
-      session["username"] = params['username']
+    if PCSAuth.loginByPassword(params['username'], params['password'])
       # Temporarily ignore pre_login_path until we come up with a list of valid
       # paths to redirect to (to prevent status_all issues)
       #    if session["pre_login_path"]

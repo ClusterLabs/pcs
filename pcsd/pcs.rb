@@ -13,7 +13,7 @@ require 'cfgsync.rb'
 require 'corosyncconf.rb'
 require 'resource.rb'
 require 'cluster_entity.rb'
-
+require 'auth.rb'
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -112,7 +112,7 @@ def add_location_constraint_rule(resource, rule, score, force=false, autocorrect
 end
 
 def add_order_constraint(
-    resourceA, resourceB, actionA, actionB, score, symmetrical=true, 
+    resourceA, resourceB, actionA, actionB, score, symmetrical=true,
     force=false, autocorrect=true
 )
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
@@ -146,7 +146,7 @@ def add_colocation_constraint(resourceA, resourceB, score, force=false, autocorr
     score = "INFINITY"
   end
   command = [
-    PCS, "constraint", "colocation", "add", resourceA, resourceB, score,
+    PCS, "constraint", "colocation", "add", resourceA, resourceB, score
   ]
   command << '--force' if force
   command << '--autocorrect' if autocorrect
@@ -375,11 +375,20 @@ def send_request(node, request, post=false, data={}, remote=true, raw_data=nil, 
 
     cookies_to_send = []
     cookies_data_default = {}
+    # Let's be safe about characters in cookie variables and do base64.
+    # We cannot do it for CIB_user however to be backward compatible
+    # so we at least remove disallowed characters.
     if username
-      cookies_data_default['CIB_user'] = username.to_s
+      cookies_data_default['CIB_user'] = PCSAuth.cookieUserSafe(username.to_s)
+      cookies_data_default['CIB_user_groups'] = ''
     else
-      cookies_data_default['CIB_user'] = $session[:username].to_s
+      cookies_data_default['CIB_user'] = PCSAuth.cookieUserSafe(
+        $session[:username].to_s
+      )
+      groups = ($session[:usergroups] || []).join(' ')
+      cookies_data_default['CIB_user_groups'] = PCSAuth.cookieUserEncode(groups)
     end
+
     cookies_data_default.update(cookies_data)
     cookies_data_default.each { |name, value|
       cookies_to_send << CGI::Cookie.new('name' => name, 'value' => value).to_s
@@ -839,13 +848,13 @@ def run_cmd_options(options, *args)
   if options and options.key?('username')
     ENV['CIB_user'] = options['username']
   else
-    if $session[:username] == SUPERUSER
-      ENV['CIB_user'] = $cookies[:CIB_user]
-    else
-      ENV['CIB_user'] = $session[:username]
-    end
+    ENV['CIB_user'] = $session[:username]
+    # when running 'id -Gn' to get the groups they are not defined yet
+    ENV['CIB_user_groups'] = ($session[:usergroups] || []).join(' ')
   end
-  $logger.debug("CIB USER: #{ENV['CIB_user'].to_s}")
+  $logger.debug(
+    "CIB USER: #{ENV['CIB_user'].to_s}, groups: #{ENV['CIB_user_groups']}"
+  )
 
   status = Open4::popen4(*args) do |pid, stdin, stdout, stderr|
     if options and options.key?('stdin')
@@ -1163,7 +1172,7 @@ def get_node_status(cib_dom)
       :need_ring1_address => need_ring1_address?,
       :is_cman_with_udpu_transport => is_cman_with_udpu_transport?,
       :acls => get_acls(),
-      :username => cookies[:CIB_user]
+      :username => $session[:username]
   }
   nodes = get_nodes_status()
 
