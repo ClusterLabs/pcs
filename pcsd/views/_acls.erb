@@ -68,20 +68,31 @@
               <tr><th>Type</th><th>XPath/ID</th><th>Query/ID</th><th>Remove</th></tr>
                 {{#each perm in Pcs.aclsController.cur_role.permissions}}
                 <tr {{bind-attr acl_perm_id="perm.permission_id"}}>
-                    <td>{{perm.type}}</td>
-                    <td>{{perm.xpath_id}}</td>
-                    <td>{{perm.query_id}}</td>
-                    <td style="text-align:center;">
-                      <a onclick="x=$(this);remove_acl_item($(this).closest('tr'),'perm');return false;" href="#" class="remove">X</a>
-                    </td>
-                  </tr>
+                  <td>{{perm.type}}</td>
+                  <td>{{perm.xpath_id}}</td>
+                  <td>{{perm.query_id}}</td>
+                  <td style="text-align:center;">
+                    <a onclick="x=$(this);remove_acl_item($(this).closest('tr'),'perm');return false;" href="#" class="remove">X</a>
+                  </td>
+                </tr>
               {{/each}}
               {{#unless Pcs.aclsController}}
                 <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
               {{/unless}}
               <tr id="new_acl_perm">
-                <td><select name="role_type"><option>read</option><option>write</option><option>deny</option></select></td>
-                <td><select name="role_xpath_id"><option>XPath</option><option>ID</option></td>
+                <td>
+                  <select name="role_type">
+                    <option value="read">Read</option>
+                    <option value="write">Write</option>
+                    <option value="deny">Deny</option>
+                  </select>
+                </td>
+                <td>
+                  <select name="role_xpath_id">
+                    <option value="xpath">XPath</option>
+                    <option value="id">ID</option>
+                  </select>
+                </td>
                 <td><input type="text" name="role_query_id"></td>
                 <td><button type="button" onclick="add_acl_item('#new_acl_perm', 'perm');" name="add">Add</button></td>
               </tr>

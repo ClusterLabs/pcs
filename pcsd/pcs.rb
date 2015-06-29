@@ -178,7 +178,11 @@ def add_acl_permission(acl_role_id, perm_type, xpath_id, query_id)
     xpath_id.to_s, query_id.to_s
   )
   if retval != 0
-    return stderror.join("\n").strip
+    if stderror.empty?
+      return "Error adding permission"
+    else
+      return stderror.join("\n").strip
+    end
   end
   return ""
 end
@@ -199,7 +203,11 @@ def add_acl_usergroup(acl_role_id, user_group, name)
     PCS, "acl", "role", "assign", acl_role_id.to_s, name.to_s
   )
   if retval != 0
-    return stderror.join("\n").strip
+    if stderror.empty?
+      return "Error adding #{user_group}"
+    else
+      return stderror.join("\n").strip
+    end
   end
   return ""
 end
@@ -207,7 +215,11 @@ end
 def remove_acl_permission(acl_perm_id)
   stdout, stderror, retval = run_cmd(PCS, "acl", "permission", "delete", acl_perm_id.to_s)
   if retval != 0
-    return stderror.join("\n").chomp
+    if stderror.empty?
+      return "Error removing permission"
+    else
+      return stderror.join("\n").strip
+    end
   end
   return ""
 end
@@ -218,7 +230,11 @@ def remove_acl_usergroup(role_id, usergroup_id)
     "--autodelete"
   )
   if retval != 0
-    return stderror.join("\n").chomp
+    if stderror.empty?
+      return "Error removing user / group"
+    else
+      return stderror.join("\n").strip
+    end
   end
   return ""
 end

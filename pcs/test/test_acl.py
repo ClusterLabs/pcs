@@ -483,11 +483,11 @@ Role: role2
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("acl role create role2 description='with description' read xpath /xpath/")
+        o,r = pcs("acl role create role2 description='with description' READ XPATH /xpath/")
         assert r == 0
         ac(o,"")
 
-        o,r = pcs("acl role create role3 read xpath /xpath_query/ write xpath /xpath_query2/ deny xpath /xpath_query3/")
+        o,r = pcs("acl role create role3 Read XPath /xpath_query/ wRiTe xpATH /xpath_query2/ deny xpath /xpath_query3/")
         assert r == 0
         ac(o,"")
 

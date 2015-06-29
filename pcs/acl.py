@@ -363,13 +363,13 @@ def add_permissions_to_role(role_element, argv):
     while argv:
         if len(argv) < 3:
             return False
-        rwd = argv.pop(0)
-        if not rwd in ["read","write","deny"]:
+        rwd = argv.pop(0).lower()
+        if not rwd in ["read", "write", "deny"]:
             return False
         se = dom.createElement("acl_permission")
         se.setAttribute("id", utils.find_unique_id(dom, role_id + "-" + rwd))
         se.setAttribute("kind", rwd)
-        xp_id = argv.pop(0)
+        xp_id = argv.pop(0).lower()
         if xp_id == "xpath":
             xpath_query = argv.pop(0)
             se.setAttribute("xpath", xpath_query)
