@@ -105,7 +105,7 @@ $thread_cfgsync = Thread.new {
       end
       $logger.debug('Config files sync thread finished')
     }
-    sleep(60)
+    sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
   end
 }
 

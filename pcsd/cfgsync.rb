@@ -250,6 +250,9 @@ module Cfgsync
 
 
   class ConfigSyncControl
+    @thread_interval_default = 60
+    @thread_interval_minimum = 20
+
     def self.sync_thread_allowed?()
       data = self.load()
       return !(
@@ -265,6 +268,27 @@ module Cfgsync
 
     def self.sync_thread_disabled?()
       return self.sync_thread_disabled_data?(self.load())
+    end
+
+    def self.sync_thread_interval()
+      data = self.load()
+      if data['thread_interval']
+        interval = data['thread_interval'].to_i()
+        if interval > 0 # thread_interval is a number
+          if interval > @thread_interval_minimum
+            return interval
+          else
+            return @thread_interval_minimum
+          end
+        end
+      end
+      return @thread_interval_default
+    end
+
+    def self.sync_thread_interval=(seconds)
+      data = self.load()
+      data['thread_interval'] = seconds.to_i()
+      return self.save(data)
     end
 
     def self.sync_thread_pause(semaphore_cfgsync, seconds=300)
@@ -350,6 +374,7 @@ module Cfgsync
           file.close()
         end
       end
+      return true
     end
   end
 

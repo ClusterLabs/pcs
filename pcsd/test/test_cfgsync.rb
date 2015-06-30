@@ -260,6 +260,8 @@ class TestConfigSyncControll < Test::Unit::TestCase
     file = File.open(CFG_SYNC_CONTROL, 'w')
     file.write(JSON.pretty_generate({}))
     file.close()
+    @thread_interval_default = 60
+    @thread_interval_minimum = 20
   end
 
   def test_bad_file()
@@ -267,6 +269,10 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+    assert_equal(
+      @thread_interval_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
 
     file = File.open(CFG_SYNC_CONTROL, 'w')
     file.write('')
@@ -274,13 +280,24 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+    assert_equal(
+      @thread_interval_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
 
     file = File.open(CFG_SYNC_CONTROL, 'w')
-    file.write(JSON.pretty_generate({'thread_paused_until' => 'abcde'}))
+    file.write(JSON.pretty_generate({
+      'thread_paused_until' => 'abcde',
+      'thread_interval' => 'fghij',
+    }))
     file.close()
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+    assert_equal(
+      @thread_interval_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
   end
 
   def test_empty_file()
@@ -288,6 +305,10 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+    assert_equal(
+      @thread_interval_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
   end
 
   def test_paused()
@@ -349,6 +370,46 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
+  end
+
+  def test_interval()
+    assert_equal(
+      @thread_interval_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
+
+    interval = @thread_interval_default + @thread_interval_minimum
+    assert(Cfgsync::ConfigSyncControl.sync_thread_interval=(interval))
+    assert_equal(
+      interval,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_interval=(
+      @thread_interval_minimum / 2
+    ))
+    assert_equal(
+      @thread_interval_minimum,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_interval=(0))
+    assert_equal(
+      @thread_interval_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_interval=(-100))
+    assert_equal(
+      @thread_interval_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
+
+    assert(Cfgsync::ConfigSyncControl.sync_thread_interval=('abcd'))
+    assert_equal(
+      @thread_interval_default,
+      Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
   end
 end
 
