@@ -191,7 +191,7 @@ def auth_nodes(nodes):
         password = None
 
     set_nodes = set(nodes)
-    need_auth = "--force" in utils.pcs_options or (not username or not password)
+    need_auth = "--force" in utils.pcs_options or (username or password)
     if not need_auth:
         for node in set_nodes:
             status = utils.checkAuthorization(node)
