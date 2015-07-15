@@ -93,35 +93,41 @@ function create_group() {
 
   if (num_nodes == 0) {
     alert("You must select at least one resource to add to a group");
-  } else {
-    $("#resources_to_add_to_group").val(node_names);
-    $("#add_group").dialog({title: 'Create Group',
-      modal: true, resizable: false, 
-      buttons: {
-	Cancel: function() {
-	  $(this).dialog("close");
-	},
-	"Create Group": function() {
-	  var data = $('#add_group > form').serialize();
-	  var url = get_cluster_remote_url() + "add_group";
-	  $.ajax({
-	    type: "POST",
-	    url: url,
-	    data: data,
-	    success: function() {
-	      Pcs.update();
-	      $("#add_group").dialog("close");
-	      reload_current_resource();
-	    },
-	    error: function (xhr, status, error) {
-	      alert(xhr.responseText);
-	      $("#add_group").dialog("close");
-	    }
-	  });
-	}
-      }
-    });
+    return;
   }
+
+  $("#resources_to_add_to_group").val(node_names);
+  $("#add_group").dialog({
+    title: 'Create Group',
+    modal: true,
+    resizable: false,
+    buttons: {
+      Cancel: function() {
+        $(this).dialog("close");
+      },
+      "Create Group": function() {
+        var data = $('#add_group > form').serialize();
+        var url = get_cluster_remote_url() + "add_group";
+        $.ajax({
+          type: "POST",
+          url: url,
+          data: data,
+          success: function() {
+            Pcs.update();
+            $("#add_group").dialog("close");
+            reload_current_resource();
+          },
+          error: function (xhr, status, error) {
+            alert(
+              "Error creating group "
+              + ajax_simple_error(xhr, status, error)
+            );
+            $("#add_group").dialog("close");
+          }
+        });
+      }
+    }
+  });
 }
 
 function add_node_dialog() {
@@ -247,12 +253,20 @@ function create_resource(form, update, stonith) {
 	}
       }
     },
-    error: function() {
-      if (update)
-	alert("Unable to update " + name);
-      else
-	alert("Unable to add " + name);
-      $('#apply_changes').fadeIn();
+    error: function(xhr, status, error) {
+      if (update) {
+        alert(
+          "Unable to update " + name + " "
+          + ajax_simple_error(xhr, status, error)
+        );
+      }
+      else {
+        alert(
+          "Unable to add " + name + " "
+          + ajax_simple_error(xhr, status, error)
+        );
+      }
+      $('input.apply_changes').show();
     }
   });
 }
@@ -478,30 +492,6 @@ function resource_list_update() {
   });
 }
 
-// TODO: REMOVE
-function resource_update() {
-  resource = $('#node_info_header_title_name').first().text();
-  $.ajax({
-    type: 'GET',
-    url: '/remote/resource_status?resource='+resource,
-    timeout: pcs_timeout,
-    success: function(data) {
-      data = jQuery.parseJSON(data);
-      $("#cur_res_loc").html(data.location);
-      $("#res_status").html(data.status);
-      if (data.status == "Running") {
-	setStatus($("#res_status"), 0);
-      } else {
-	setStatus($("#res_status"), 1);
-      }
-      window.setTimeout(resource_update, pcs_timeout);
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      window.setTimeout(resource_update, 60000);
-    }
-  });
-}
-
 // Set the status of a service
 // 0 = Running (green)
 // 1 = Stopped (red)
@@ -539,32 +529,42 @@ function fade_in_out(id) {
   });
 }
 
+function node_link_action(link_selector, url, label) {
+  var node = $.trim($("#node_info_header_title_name").text());
+  fade_in_out(link_selector);
+  $.ajax({
+    type: 'POST',
+    url: url,
+    data: {"name": node},
+    success: function() {
+    },
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to " + label + " node '" + node + "' "
+        + ajax_simple_error(xhr, status, error)
+      );
+    }
+  });
+}
+
 function setup_node_links() {
   Ember.debug("Setup node links");
   $("#node_start").click(function() {
-    node = $("#node_info_header_title_name").text();
-    fade_in_out("#node_start");
-    $.post('/remote/cluster_start',{"name": $.trim(node)});
+    node_link_action("#node_start", "/remote/cluster_start", "start");
   });
   $("#node_stop").click(function() {
-    node = $("#node_info_header_title_name").text();
+    var node = $.trim($("#node_info_header_title_name").text());
     fade_in_out("#node_stop");
-    node_stop($.trim(node), false);
+    node_stop(node, false);
   });
   $("#node_restart").click(function() {
-    node = $("#node_info_header_title_name").text();
-    fade_in_out("#node_restart");
-    $.post('/remote/node_restart', {"name": $.trim(node)});
+    node_link_action("#node_restart", "/remote/node_restart", "restart");
   });
   $("#node_standby").click(function() {
-    node = $("#node_info_header_title_name").text();
-    fade_in_out("#node_standby");
-    $.post('/remote/node_standby', {"name": $.trim(node)});
+    node_link_action("#node_standby", "/remote/node_standby", "standby");
   });
   $("#node_unstandby").click(function() {
-    node = $("#node_info_header_title_name").text();
-    fade_in_out("#node_unstandby");
-    $.post('/remote/node_unstandby', {"name": $.trim(node)});
+    node_link_action("#node_unstandby", "/remote/node_unstandby", "unstandby");
   });
 }
 
@@ -592,8 +592,9 @@ function node_stop(node, force) {
         */
         return;
       }
-      var message = "Unable to stop node '" + node + "' (" + $.trim(error) + ")";
-      message += "\n" + xhr.responseText;
+      var message = "Unable to stop node '" + node + " " + ajax_simple_error(
+        xhr, status, error
+      );
       if (message.indexOf('--force') == -1) {
         alert(message);
       }
@@ -618,13 +619,39 @@ function disable_resource() {
 }
 
 function cleanup_resource() {
+  var resource = curResource();
   fade_in_out("#resource_cleanup_link");
-  $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curResource());
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'resource_cleanup',
+    data: {"resource": resource},
+    success: function() {
+    },
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to cleanup resource '" + resource + "' "
+        + ajax_simple_error(xhr, status, error)
+      );
+    }
+  });
 }
 
 function cleanup_stonith() {
+  var resource = curStonith();
   fade_in_out("#stonith_cleanup_link");
-  $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curStonith());
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'resource_cleanup',
+    data: {"resource": resource},
+    success: function() {
+    },
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to cleanup resource '" + resource + "' "
+        + ajax_simple_error(xhr, status, error)
+      );
+    }
+  });
 }
 
 function checkExistingNode() {
@@ -1298,12 +1325,17 @@ function remove_resource(ids, force) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
+      error = $.trim(error)
       var message = "Unable to remove resources (" + error + ")";
-      if (xhr.responseText.substring(0,6) == "Error:") {
-        message += "\n" + xhr.responseText.replace("--force", "'Enforce removal'");
+      if (
+        (xhr.responseText.substring(0,6) == "Error:") || ("Forbidden" == error)
+      ) {
+        message += "\n\n" + xhr.responseText.replace("--force", "'Enforce removal'");
       }
       alert(message);
-      $("#dialog_verify_remove_resources.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+      $("#dialog_verify_remove_resources.ui-dialog-content").each(
+        function(key, item) { $(item).dialog("destroy"); }
+      );
       $("#dialog_verify_remove_resources input[name=force]").attr("checked", false);
       Pcs.update();
     }
@@ -1336,14 +1368,22 @@ function add_remove_fence_level(parent_id,remove) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      if (remove)
-        alert("Unable to remove fence level: ("+xhr.responseText+")");
-      else
+      if (remove) {
+        alert(
+          "Unable to remove fence level "
+          + ajax_simple_error(xhr, status, error)
+        );
+      }
+      else {
         if (xhr.responseText.substring(0,6) == "Error:") {
           alert(xhr.responseText);
         } else {
-          alert("Unable to add fence level: ("+xhr.responseText+")");
+          alert(
+            "Unable to add fence level "
+            + ajax_simple_error(xhr, status, error)
+          );
         }
+      }
     }
   });
 }
@@ -1365,7 +1405,10 @@ function remove_node_attr(parent_id) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      alert("Unable to add meta attribute: ("+error+")");
+      alert(
+        "Unable to remove node attribute "
+        + ajax_simple_error(xhr, status, error)
+      );
     }
   });
 }
@@ -1388,7 +1431,10 @@ function add_node_attr(parent_id) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      alert("Unable to add node attribute: ("+error+")");
+      alert(
+        "Unable to add node attribute "
+        + ajax_simple_error(xhr, status, error)
+      );
     }
   });
 }
@@ -1441,14 +1487,15 @@ function add_constraint(parent_id, c_type, force) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      var message = "Unable to add constraints: (" + error + ")";
+      var message = "Unable to add constraint (" + $.trim(error) + ")";
       var error_prefix = 'Error adding constraint: ';
-      if (
-        xhr.responseText.indexOf(error_prefix) == 0
-        &&
-        xhr.responseText.indexOf('cib_replace failed') == -1
-      ) {
-        message += "\n" + xhr.responseText.slice(error_prefix.length);
+      if (xhr.responseText.indexOf('cib_replace failed') == -1) {
+        if (xhr.responseText.indexOf(error_prefix) == 0) {
+          message += "\n\n" + xhr.responseText.slice(error_prefix.length);
+        }
+        else {
+          message += "\n\n" + xhr.responseText;
+        }
       }
       if (message.indexOf('--force') == -1) {
         alert(message);
@@ -1492,14 +1539,15 @@ function add_constraint_set(parent_id, c_type, force) {
       Pcs.update();
     },
     error: function (xhr, status, error){
-      var message = "Unable to add constraints: (" + error + ")";
+      var message = "Unable to add constraint (" + $.trim(error) + ")";
       var error_prefix = 'Error adding constraint: ';
-      if (
-        xhr.responseText.indexOf(error_prefix) == 0
-        &&
-        xhr.responseText.indexOf('cib_replace failed') == -1
-      ) {
-        message += "\n" + xhr.responseText.slice(error_prefix.length);
+      if (xhr.responseText.indexOf('cib_replace failed') == -1) {
+        if (xhr.responseText.indexOf(error_prefix) == 0) {
+          message += "\n\n" + xhr.responseText.slice(error_prefix.length);
+        }
+        else {
+          message += "\n\n" + xhr.responseText;
+        }
       }
       if (message.indexOf('--force') == -1) {
         alert(message);
@@ -1507,6 +1555,7 @@ function add_constraint_set(parent_id, c_type, force) {
       }
       else {
         message = message.replace(', use --force to override', '');
+        message = message.replace('Use --force to override.', '');
         if (confirm(message + "\n\nDo you want to force the operation?")) {
           add_constraint_set(parent_id, c_type, true);
         }
@@ -1538,7 +1587,10 @@ function remove_constraint(id) {
       Pcs.resourcesContainer.remove_constraint(id);
     },
     error: function (xhr, status, error) {
-      alert("Error removing constraint: ("+error+")");
+      alert(
+        "Error removing constraint "
+        + ajax_simple_error(xhr, status, error)
+      );
     },
     complete: function() {
       Pcs.update();
@@ -1557,7 +1609,10 @@ function remove_constraint_rule(id) {
       Pcs.resourcesContainer.remove_constraint(id);
     },
     error: function (xhr, status, error) {
-      alert("Error removing constraint rule: ("+error+")");
+      alert(
+        "Error removing constraint rule "
+        + ajax_simple_error(xhr, status, error)
+      );
     },
     complete: function() {
       Pcs.update();
@@ -1579,7 +1634,10 @@ function add_acl_role(form) {
       $("#add_acl_role").dialog("close");
     },
     error: function(xhr, status, error) {
-      alert(xhr.responseText);
+      alert(
+        "Error adding ACL role "
+        + ajax_simple_error(xhr, status, error)
+      );
     }
   });
 }
@@ -1595,12 +1653,19 @@ function remove_acl_roles(ids) {
     data: data,
     timeout: pcs_timeout*3,
     success: function(data,textStatus) {
-      $("#dialog_verify_remove_acl_roles.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+      $("#dialog_verify_remove_acl_roles.ui-dialog-content").each(
+        function(key, item) { $(item).dialog("destroy"); }
+      );
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      alert(xhr.responseText);
-      $("#dialog_verify_remove_acl_roles.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+      alert(
+        "Error removing ACL role "
+        + ajax_simple_error(xhr, status, error)
+      );
+      $("#dialog_verify_remove_acl_roles.ui-dialog-content").each(
+        function(key, item) { $(item).dialog("destroy"); }
+      );
     }
   });
 }
@@ -1608,17 +1673,20 @@ function remove_acl_roles(ids) {
 function add_acl_item(parent_id, item_type) {
   var data = {};
   data["role_id"] = Pcs.aclsController.cur_role.name;
+  var item_label = "";
   switch (item_type) {
     case "perm":
       data["item"] = "permission";
       data["type"] = $(parent_id + " select[name='role_type']").val();
       data["xpath_id"] = $(parent_id + " select[name='role_xpath_id']").val();
       data["query_id"] = $(parent_id + " input[name='role_query_id']").val().trim();
+      item_label = "permission"
       break;
     case "user":
     case "group":
       data["item"] = item_type;
       data["usergroup"] = $(parent_id + " input[name='role_assign_user']").val().trim();
+      item_label = item_type
       break;
   }
   fade_in_out($(parent_id));
@@ -1632,7 +1700,10 @@ function add_acl_item(parent_id, item_type) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      alert(xhr.responseText);
+      alert(
+        "Error adding " + item_label + " "
+        + ajax_simple_error(xhr, status, error)
+      );
     }
   });
 }
@@ -1640,15 +1711,18 @@ function add_acl_item(parent_id, item_type) {
 function remove_acl_item(id,item) {
   fade_in_out(id);
   var data = {};
+  var item_label = "";
   switch (item) {
     case "perm":
       data["item"] = "permission";
       data["acl_perm_id"] = id.attr("acl_perm_id");
+      item_label = "permission"
       break;
     case "usergroup":
       data["item"] = "usergroup";
       data["usergroup_id"] = id.attr("usergroup_id")
       data["role_id"] = id.attr("role_id")
+      item_label = "user / group"
       break;
   }
 
@@ -1661,7 +1735,10 @@ function remove_acl_item(id,item) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      alert(xhr.responseText);
+      alert(
+        "Error removing " + item_label + " "
+        + ajax_simple_error(xhr, status, error)
+      );
     }
   });
 }
@@ -1678,7 +1755,10 @@ function update_cluster_settings(form) {
       window.location.reload();
     },
     error: function (xhr, status, error) {
-      alert("Error updating configuration: ("+error+")");
+      alert(
+        "Error updating configuration "
+        + ajax_simple_error(xhr, status, error)
+      );
       $('html, body, form, :input, :submit').css("cursor","auto");
     }
   });
@@ -1948,7 +2028,10 @@ function resource_master(resource_id) {
     data: {resource_id: resource_id},
     timeout: pcs_timeout,
     error: function (xhr, status, error) {
-      alert(xhr.responseText);
+      alert(
+        "Unable to create master/slave resource "
+        + ajax_simple_error(xhr, status, error)
+      );
     },
     complete: function() {
       Pcs.update();
@@ -1964,7 +2047,10 @@ function resource_clone(resource_id) {
     data: {resource_id: resource_id},
     timeout: pcs_timeout,
     error: function (xhr, status, error) {
-      alert(xhr.responseText);
+      alert(
+        "Unable to clone the resource "
+        + ajax_simple_error(xhr, status, error)
+      );
     },
     complete: function() {
       Pcs.update();
@@ -1984,7 +2070,10 @@ function resource_unclone(resource_id) {
     data: {resource_id: resource_id},
     timeout: pcs_timeout,
     error: function (xhr, status, error) {
-      alert(xhr.responseText);
+      alert(
+        "Unable to unclone the resource "
+        + ajax_simple_error(xhr, status, error)
+      );
     },
     complete: function() {
       Pcs.update();
@@ -2000,7 +2089,10 @@ function resource_ungroup(group_id) {
     data: {group_id: group_id},
     timeout: pcs_timeout,
     error: function (xhr, status, error) {
-      alert(xhr.responseText);
+      alert(
+        "Unable to ungroup the resource "
+        + ajax_simple_error(xhr, status, error)
+      );
     },
     complete: function() {
       Pcs.update();
@@ -2031,10 +2123,25 @@ function resource_change_group(resource_id, group_id) {
     data: data,
     timeout: pcs_timeout,
     error: function (xhr, status, error) {
-      alert(xhr.responseText);
+      alert(
+        "Unable to change group "
+        + ajax_simple_error(xhr, status, error)
+      );
     },
     complete: function() {
       Pcs.update();
     }
   });
+}
+
+function ajax_simple_error(xhr, status, error) {
+  var message = "(" + $.trim(error) + ")"
+  if (
+    $.trim(xhr.responseText).length > 0
+    &&
+    xhr.responseText.indexOf('cib_replace failed') == -1
+  ) {
+    message = message + "\n\n" + $.trim(xhr.responseText);
+  }
+  return message;
 }

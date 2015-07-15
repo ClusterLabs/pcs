@@ -47,7 +47,9 @@ class PCSAuth
   end
 
   def self.getUsersGroups(username)
-    stdout, stderr, retval = run_cmd("id", "-Gn", username)
+    stdout, stderr, retval = run_cmd(
+      getSuperuserSession, "id", "-Gn", username
+    )
     if retval != 0
       $logger.info(
         "Unable to determine groups of user '#{username}': #{stderr.join(' ').strip}"
@@ -91,38 +93,38 @@ class PCSAuth
     return false
   end
 
-  def self.loginByToken(cookies)
+  def self.loginByToken(session, cookies)
     if username = validToken(cookies["token"])
       if SUPERUSER == username
         if cookies['CIB_user'] and cookies['CIB_user'].strip != ''
-          $session[:username] = cookies['CIB_user']
+          session[:username] = cookies['CIB_user']
           if cookies['CIB_user_groups'] and cookies['CIB_user_groups'].strip != ''
-            $session[:usergroups] = cookieUserDecode(
+            session[:usergroups] = cookieUserDecode(
               cookies['CIB_user_groups']
             ).split(nil)
           else
-            $session[:usergroups] = []
+            session[:usergroups] = []
           end
         else
-          $session[:username] = SUPERUSER
-          $session[:usergroups] = []
+          session[:username] = SUPERUSER
+          session[:usergroups] = []
         end
         return true
       else
-        $session[:username] = username
+        session[:username] = username
         success, groups = getUsersGroups(username)
-        $session[:usergroups] = success ? groups : []
+        session[:usergroups] = success ? groups : []
         return true
       end
     end
     return false
   end
 
-  def self.loginByPassword(username, password)
+  def self.loginByPassword(session, username, password)
     if validUser(username, password)
-      $session[:username] = username
+      session[:username] = username
       success, groups = getUsersGroups(username)
-      $session[:usergroups] = success ? groups : []
+      session[:usergroups] = success ? groups : []
       return true
     end
     return false
@@ -130,6 +132,13 @@ class PCSAuth
 
   def self.isLoggedIn(session)
     return session[:username] != nil
+  end
+
+  def self.getSuperuserSession()
+    return {
+      :username => SUPERUSER,
+      :usergroups => [],
+    }
   end
 
   # Let's be safe about characters in cookie variables and do base64.

@@ -1137,6 +1137,8 @@ def cluster_node(argv):
             "%s is not yet authenticated (try pcs cluster auth %s)"
             % (node0, node0)
         )
+    elif status != 0:
+        utils.err(output)
 
     if add_node == True:
         need_ring1_address = utils.need_ring1_address(utils.getCorosyncConf())

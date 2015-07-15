@@ -73,8 +73,8 @@ def pcsd_certkey(argv):
 def pcsd_sync_certs(argv):
     nodes = utils.getNodesFromCorosyncConf()
     print (
-        "Synchronizing pcsd certificates on nodes {0}. pcsd needs to be "
-        "restarted on the nodes in order to reload the certificates."
+        "Synchronizing pcsd certificates on nodes {0}. pcsd will be "
+        + "restarted on the nodes in order to reload the certificates."
     ).format(", ".join(nodes))
     print
     pcsd_data = {'nodes': nodes}

@@ -29,11 +29,11 @@ class ApacheWizard < PCSDWizard
 
     puts "PCS NAME"
     puts PCS
-    puts run_cmd(PCS, 'resource','create','shared_dev', 'LVM', 'volgrpname='+vg)
-    puts run_cmd(PCS, 'resource','create','shared_fs', 'Filesystem', 'device='+device, 'directory=/var/www/html', 'fstype="ext4"', 'options="ro"')
-    puts run_cmd(PCS, 'resource','create','Apache','apache', 'configfile="/etc/httpd/conf/httpd.conf"', 'statusurl="http://127.0.0.1/server-status"')
-    puts run_cmd(PCS, 'resource','create','ClusterIP','IPaddr2',"ip="+ip, "cidr_netmask="+nm)
-    puts run_cmd(PCS, 'resource','group','add','ApacheGroup','shared_dev','shared_fs','ClusterIP','Apache')
+    puts run_cmd(session, PCS, 'resource','create','shared_dev', 'LVM', 'volgrpname='+vg)
+    puts run_cmd(session, PCS, 'resource','create','shared_fs', 'Filesystem', 'device='+device, 'directory=/var/www/html', 'fstype="ext4"', 'options="ro"')
+    puts run_cmd(session, PCS, 'resource','create','Apache','apache', 'configfile="/etc/httpd/conf/httpd.conf"', 'statusurl="http://127.0.0.1/server-status"')
+    puts run_cmd(session, PCS, 'resource','create','ClusterIP','IPaddr2',"ip="+ip, "cidr_netmask="+nm)
+    puts run_cmd(session, PCS, 'resource','group','add','ApacheGroup','shared_dev','shared_fs','ClusterIP','Apache')
     out = "Resources created..."
     return out.gsub(/\n/,"<br>")
   end

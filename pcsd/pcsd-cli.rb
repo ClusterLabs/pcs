@@ -1,3 +1,5 @@
+#!/usr/bin/ruby
+
 require 'rubygems'
 require 'etc'
 require 'json'
@@ -24,9 +26,7 @@ end
 
 
 # bootstrap, emulate environment created by pcsd http server
-$session = {}
-# we don't need cookies as username and groups are read from session
-$cookies = {}
+session = {}
 PCS = get_pcs_path(File.expand_path(File.dirname(__FILE__)))
 $logger_device = StringIO.new
 $logger = configure_logger($logger_device)
@@ -35,41 +35,46 @@ $logger = configure_logger($logger_device)
 uid = Process.uid
 if 0 == uid
   if ENV['CIB_user'] and ENV['CIB_user'].strip != ''
-    $session[:username] = ENV['CIB_user']
+    session[:username] = ENV['CIB_user']
     if ENV['CIB_user_groups'] and ENV['CIB_user_groups'].strip != ''
-      $session[:usergroups] = ENV['CIB_user_groups'].split(nil)
+      session[:usergroups] = ENV['CIB_user_groups'].split(nil)
     else
-      $session[:usergroups] = []
+      session[:usergroups] = []
     end
   else
-    $session[:username] = SUPERUSER
-    $session[:usergroups] = []
+    session[:username] = SUPERUSER
+    session[:usergroups] = []
   end
 else
   username = Etc.getpwuid(uid).name
   if not PCSAuth.isUserAllowedToLogin(username)
     cli_exit('access_denied')
   else
-    $session[:username] = username
+    session[:username] = username
     success, groups = PCSAuth.getUsersGroups(username)
-    $session[:usergroups] = success ? groups : []
+    session[:usergroups] = success ? groups : []
   end
 end
 
-# continue environment setup with user set in $session
+# continue environment setup with user set in session
 $cluster_name = get_cluster_name()
 
 # get params and run a command
 command = ARGV[0]
 allowed_commands = {
   'read_tokens' => {
-    'call' => lambda { |params| read_tokens() },
+    # returns tokens of the user who runs pcsd-cli, thus no permission check
+    'only_superuser' => false,
+    'permissions' => nil,
+    'call' => lambda { |params, session| read_tokens() },
   },
   'auth' => {
-    'call' => lambda { |params|
+    'only_superuser' => false,
+    'permissions' => nil,
+    'call' => lambda { |params, session|
       auth_responses, sync_successful, sync_nodes_err, sync_responses = pcs_auth(
-        params['nodes'] || [], params['username'] || '', params['password'] || '',
-        params['force'], params['local']
+        session, params['nodes'] || [], params['username'] || '',
+        params['password'] || '', params['force'], params['local']
       )
       return {
         'auth_responses' => auth_responses,
@@ -80,20 +85,26 @@ allowed_commands = {
     },
   },
   'send_local_configs' => {
-    'call' => lambda { |params|
+    'only_superuser' => true,
+    'permissions' => nil,
+    'call' => lambda { |params, session|
       send_local_configs_to_nodes(
-        params['nodes'] || [], params['force'] || false
+        session, params['nodes'] || [], params['force'] || false
       )
     }
   },
   'send_local_certs' => {
-    'call' => lambda { |params|
-      send_local_certs_to_nodes(params['nodes'] || [])
+    'only_superuser' => true,
+    'permissions' => nil,
+    'call' => lambda { |params, session|
+      send_local_certs_to_nodes(session, params['nodes'] || [])
     }
   },
   'pcsd_restart_nodes' => {
-    'call' => lambda { |params|
-      pcsd_restart_nodes(params['nodes'] || [])
+    'only_superuser' => false,
+    'permissions' => nil,
+    'call' => lambda { |params, session|
+      pcsd_restart_nodes(session, params['nodes'] || [])
     }
   },
 }
@@ -104,7 +115,17 @@ if allowed_commands.key?(command)
   rescue JSON::ParserError => e
     cli_exit('bad_json_input', e.to_s)
   end
-  result = allowed_commands[command]['call'].call(params)
+  if allowed_commands['only_superuser']
+    if not allowed_for_superuser(session)
+      cli_exit('permission_denied')
+    end
+  end
+  if allowed_commands['permissions']
+    if not allowed_for_local_cluster(session, command_settings['permissions'])
+      cli_exit('permission_denied')
+    end
+  end
+  result = allowed_commands[command]['call'].call(params, session)
   cli_exit('ok', nil, result)
 else
   cli_exit('bad_command')

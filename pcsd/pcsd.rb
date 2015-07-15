@@ -19,6 +19,7 @@ require 'pcs.rb'
 require 'auth.rb'
 require 'wizard.rb'
 require 'cfgsync.rb'
+require 'permissions.rb'
 
 Dir["wizards/*.rb"].each {|file| require file}
 
@@ -53,8 +54,6 @@ if development?
 end
 
 before do
-  $session = session
-  $cookies = cookies
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
@@ -87,11 +86,11 @@ $thread_cfgsync = Thread.new {
       if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
         begin
           # do not sync if this host is not in a cluster
-          cluster_name = get_cluster_name(SUPERUSER)
+          cluster_name = get_cluster_name()
           if cluster_name and !cluster_name.empty?()
             $logger.debug('Config files sync thread fetching')
             fetcher = Cfgsync::ConfigFetcher.new(
-              Cfgsync::get_cfg_classes(), get_corosync_nodes(SUPERUSER),
+              Cfgsync::get_cfg_classes(), get_corosync_nodes(),
               cluster_name, SUPERUSER
             )
             cfgs_to_save, _ = fetcher.fetch()
@@ -111,7 +110,7 @@ $thread_cfgsync = Thread.new {
 
 helpers do
   def protected!
-    PCSAuth.loginByToken(request.cookies) if not PCSAuth.isLoggedIn(session)
+    PCSAuth.loginByToken(session, cookies) if not PCSAuth.isLoggedIn(session)
     if not PCSAuth.isLoggedIn(session)
       # If we're on /managec/<cluster_name>/main we redirect
       match_expr = "/managec/(.*)/(.*)"
@@ -156,7 +155,7 @@ helpers do
     end
 
     if @nodes.length != 0
-      @loc_dep_allow, @loc_dep_disallow = getLocationDeps(@cur_node)
+      @loc_dep_allow, @loc_dep_disallow = getLocationDeps(session, @cur_node)
     end
     @nodes = @nodes_online.concat(@nodes_offline)
   end
@@ -178,11 +177,11 @@ helpers do
 end
 
 get '/remote/?:command?' do
-  return remote(params,request)
+  return remote(params, request, session)
 end
 
 post '/remote/?:command?' do
-  return remote(params,request)
+  return remote(params, request, session)
 end
 
 post '/run_pcs' do
@@ -200,30 +199,107 @@ post '/run_pcs' do
   # do not reveal potentialy sensitive information
   command_decoded.delete('--debug')
 
-  allowed_commands = [
-    ['cluster', 'auth', '...'],
-    ['cluster', 'corosync', '...'],
-    ['cluster', 'destroy', '...'],
-    ['cluster', 'disable', '...'],
-    ['cluster', 'enable', '...'],
-    ['cluster', 'node', '...'],
-    ['cluster', 'pcsd-status', '...'],
-    ['cluster', 'setup', '...'],
-    ['cluster', 'start', '...'],
-    ['cluster', 'stop', '...'],
-    ['config', 'restore', '...'],
-    ['pcsd', 'sync-certificates'],
-    ['status', 'nodes', 'corosync-id'],
-    ['status', 'nodes', 'pacemaker-id'],
-    ['status', 'pcsd', '...'],
-  ]
+  allowed_commands = {
+    ['cluster', 'auth', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    # runs on the local node, check permissions
+    ['cluster', 'corosync'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    # runs on a remote node which checks permissions by itself
+    ['cluster', 'corosync', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['cluster', 'destroy', '...'] => {
+      'only_superuser' => true,
+      'permissions' => nil,
+    },
+    # runs on the local node, check permissions
+    ['cluster', 'disable'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::WRITE,
+    },
+    # runs on a remote node which checks permissions by itself
+    ['cluster', 'disable', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    # runs on the local node, check permissions
+    ['cluster', 'enable'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::WRITE,
+    },
+    # runs on a remote node which checks permissions by itself
+    ['cluster', 'enable', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['cluster', 'node', '...'] => {
+      'only_superuser' => true,
+      'permissions' => nil,
+    },
+    ['cluster', 'pcsd-status', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['cluster', 'setup', '...'] => {
+      'only_superuser' => true,
+      'permissions' => nil,
+    },
+    # runs on the local node, check permissions
+    ['cluster', 'start'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::WRITE,
+    },
+    # runs on a remote node which checks permissions by itself
+    ['cluster', 'start', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    # runs on the local node, check permissions
+    ['cluster', 'stop'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::WRITE,
+    },
+    # runs on a remote node which checks permissions by itself
+    ['cluster', 'stop', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['config', 'restore', '...'] => {
+      'only_superuser' => true,
+      'permissions' => nil,
+    },
+    ['pcsd', 'sync-certificates', '...'] => {
+      'only_superuser' => true,
+      'permissions' => nil,
+    },
+    ['status', 'nodes', 'corosync-id', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    ['status', 'nodes', 'pacemaker-id', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    ['status', 'pcsd', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+  }
   allowed = false
-  allowed_commands.each { |cmd|
+  command_settings = {}
+  allowed_commands.each { |cmd, cmd_settings|
     if command_decoded == cmd \
       or \
       (cmd[-1] == '...' and cmd[0..-2] == command_decoded[0..(cmd.length - 2)])
       then
         allowed = true
+        command_settings = cmd_settings
         break
     end
   }
@@ -235,9 +311,22 @@ post '/run_pcs' do
     return JSON.pretty_generate(result)
   end
 
+  if command_settings['only_superuser']
+    if not allowed_for_superuser(session)
+      return 403, 'Permission denied'
+    end
+  end
+  if command_settings['permissions']
+    if not allowed_for_local_cluster(session, command_settings['permissions'])
+      return 403, 'Permission denied'
+    end
+  end
+
   options = {}
   options['stdin'] = std_in if std_in
-  std_out, std_err, retval = run_cmd_options(options, PCS, *command_decoded)
+  std_out, std_err, retval = run_cmd_options(
+    session, options, PCS, *command_decoded
+  )
   result = {
     'status' => 'ok',
     'data' => {
@@ -258,7 +347,7 @@ if not DISABLE_GUI
   end
 
   post '/login' do
-    if PCSAuth.loginByPassword(params['username'], params['password'])
+    if PCSAuth.loginByPassword(session, params['username'], params['password'])
       # Temporarily ignore pre_login_path until we come up with a list of valid
       # paths to redirect to (to prevent status_all issues)
       #    if session["pre_login_path"]
@@ -279,22 +368,31 @@ if not DISABLE_GUI
   end
 
   post '/fencerm' do
+    if not allowed_for_local_cluster(session, Permissions::WRITE)
+      return 403, 'Permission denied'
+    end
     params.each { |k,v|
       if k.index("resid-") == 0
-        run_cmd(PCS, "resource", "delete", k.gsub("resid-",""))
+        run_cmd(session, PCS, "resource", "delete", k.gsub("resid-",""))
       end
     }
     redirect "/fencedevices/"
   end
 
   get '/configure/?:page?' do
+    if not allowed_for_local_cluster(session, Permissions::READ)
+      return 403, 'Permission denied'
+    end
     @config_options = getConfigOptions(params[:page])
     @configuremenuclass = "class=\"active\""
     erb :configure, :layout => :main
   end
 
   get '/fencedevices2/?:fencedevice?' do
-    @resources, @groups = getResourcesGroups(true)
+    if not allowed_for_local_cluster(session, Permissions::READ)
+      return 403, 'Permission denied'
+    end
+    @resources, @groups = getResourcesGroups(session, true)
     pp @resources
 
     if @resources.length == 0
@@ -310,7 +408,7 @@ if not DISABLE_GUI
           end
         end
       end
-      @cur_resource.options = getResourceOptions(@cur_resource.id)
+      @cur_resource.options = getResourceOptions(session, @cur_resource.id)
       @resource_agents = getFenceAgents(@cur_resource.agentname)
     end
     erb :fencedevices, :layout => :main
@@ -318,29 +416,34 @@ if not DISABLE_GUI
 
   ['/resources2/?:resource?', '/resource_list/?:resource?'].each do |path|
     get path do
+      if not allowed_for_local_cluster(session, Permissions::READ)
+        return 403, 'Permission denied'
+      end
       @load_data = true
-      @resources, @groups = getResourcesGroups
+      @resources, @groups = getResourcesGroups(session)
       @resourcemenuclass = "class=\"active\""
 
       if @resources.length == 0
         @cur_resource = nil
-        @resource_agents = getResourceAgents()
+        @resource_agents = getResourceAgents(session)
       else
         @cur_resource = @resources[0]
-        @cur_resource.options = getResourceOptions(@cur_resource.id)
+        @cur_resource.options = getResourceOptions(session, @cur_resource.id)
         if params[:resource]
           @resources.each do |r|
             if r.id == params[:resource]
               @cur_resource = r
-              @cur_resource.options = getResourceOptions(r.id)
+              @cur_resource.options = getResourceOptions(session, r.id)
               break
             end
           end
         end
-        @resource_agents = getResourceAgents(@cur_resource.agentname)
-        @ord_dep_before, @ord_dep_after  = getOrderingConstraints(@cur_resource.id)
-        @colo_dep_together, @colo_dep_apart = getColocationConstraints(@cur_resource.id)
-        @enabled_nodes, @disabled_nodes = getLocationConstraints(@cur_resource.id)
+        @resource_agents = getResourceAgents(
+          session, @cur_resource.agentname
+        )
+        @ord_dep_before, @ord_dep_after  = getOrderingConstraints(session, @cur_resource.id)
+        @colo_dep_together, @colo_dep_apart = getColocationConstraints(session, @cur_resource.id)
+        @enabled_nodes, @disabled_nodes = getLocationConstraints(session, @cur_resource.id)
       end
 
       @nodes_online, @nodes_offline = get_nodes
@@ -354,10 +457,13 @@ if not DISABLE_GUI
   end
 
   get '/nodes/?:node?' do
+    if not allowed_for_local_cluster(session, Permissions::READ)
+      return 403, 'Permission denied'
+    end
     setup()
     @load_data = true
     #  @nodemenuclass = "class=\"active\""
-    @resources, @groups = getResourcesGroups
+    @resources, @groups = getResourcesGroups(session)
     #  @resources_running = []
     #  @resources.each { |r|
     #    @cur_node && r.nodes && r.nodes.each {|n|
@@ -366,7 +472,7 @@ if not DISABLE_GUI
     #      end
     #    }
     #  }
-    @resource_agents = getResourceAgents()
+    @resource_agents = getResourceAgents(session)
     @stonith_agents = getFenceAgents()
     #  @nodes = @nodes.sort_by{|k,v|k}
     erb :nodes, :layout => :main
@@ -378,12 +484,12 @@ if not DISABLE_GUI
   end
 
   get '/clusters_overview' do
-    clusters_overview()
+    clusters_overview(params, request, session)
   end
 
   get '/managec/:cluster/main' do
     @cluster_name = params[:cluster]
-    #  @resources, @groups = getResourcesGroups
+    #  @resources, @groups = getResourcesGroups(session)
     @load_data = true
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     @clusters = pcs_config.clusters
@@ -393,29 +499,32 @@ if not DISABLE_GUI
     if @nodes == []
       redirect '/manage/?error=badclustername&errorval=' + params[:cluster] + '#manage'
     end
-    @resource_agents = get_resource_agents_avail() 
-    @stonith_agents = get_stonith_agents_avail() 
-    @config_options = getConfigOptions2(@cluster_name)
+    @resource_agents = get_resource_agents_avail(session)
+    @stonith_agents = get_stonith_agents_avail(session)
+    @config_options = getConfigOptions2(session, @cluster_name)
 
     erb :nodes, :layout => :main
   end
 
   get '/managec/:cluster/status_all' do
-    status_all(params,get_cluster_nodes(params[:cluster]))
+    status_all(params, request, session, get_cluster_nodes(params[:cluster]))
   end
 
   get '/managec/:cluster/cluster_status' do
-    cluster_status(params, params[:cluster])
+    cluster_status(params, request, session, params[:cluster])
   end
 
   get '/managec/:cluster/overview_cluster' do
-    overview_cluster(params)
+    overview_cluster(params, request, session)
   end
 
   get '/managec/:cluster/?*' do
     raw_data = request.env["rack.input"].read
     if params[:cluster]
-      send_cluster_request_with_token(params[:cluster], "/" + params[:splat].join("/"), false, params, true, raw_data)
+      send_cluster_request_with_token(
+        session, params[:cluster], "/" + params[:splat].join("/"), false, params,
+        true, raw_data
+      )
     end
   end
 
@@ -423,7 +532,9 @@ if not DISABLE_GUI
     raw_data = request.env["rack.input"].read
     if params[:cluster]
       request = "/" + params[:splat].join("/")
-      code, out = send_cluster_request_with_token(params[:cluster], request, true, params, true, raw_data)
+      code, out = send_cluster_request_with_token(
+        session, params[:cluster], request, true, params, true, raw_data
+      )
 
       # backward compatibility layer BEGIN
       # This code correctly remove constraints on pcs/pcsd version 0.9.137 and older
@@ -432,7 +543,10 @@ if not DISABLE_GUI
           "/remove_constraint_rule_remote" => "/resource_cmd/rm_constraint_rule"
       }
       if code == 404 and redirection.key?(request)
-        code, out = send_cluster_request_with_token(params[:cluster], redirection[request], true, params, false, raw_data)
+        code, out = send_cluster_request_with_token(
+          session, params[:cluster], redirection[request], true, params, false,
+          raw_data
+        )
       end
       # bcl END
       return code, out
@@ -441,14 +555,18 @@ if not DISABLE_GUI
 
   get '/manage/:node/?*' do
     if params[:node]
-      return send_request_with_token(params[:node], params[:splat].join("/"), false, {}, false)
+      return send_request_with_token(
+        session, params[:node], params[:splat].join("/"), false, {}, false
+      )
     end
   end
 
   post '/manage/existingcluster' do
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     node = params['node-name']
-    code, result = send_request_with_token(node, 'status')
+    code, result = send_request_with_token(
+      session, node, 'status', false, {}, true, nil, 30, {}, SUPERUSER
+    )
     status = JSON.parse(result)
     if status.has_key?("corosync_offline") and
       status.has_key?("corosync_online") then
@@ -467,7 +585,10 @@ if not DISABLE_GUI
       end
 
       # auth begin
-      retval, out = send_request_with_token(node, '/get_cluster_tokens', false)
+      retval, out = send_request_with_token(
+        session, node, '/get_cluster_tokens', false, {}, true, nil, 30, {},
+        SUPERUSER
+      )
       if retval == 404 # backward compatibility layer
         session[:error] = "authimposible"
       else
@@ -513,6 +634,11 @@ if not DISABLE_GUI
   end
 
   post '/manage/newcluster' do
+    if not allowed_for_superuser(session)
+      session[:error] = "permissiondenied"
+      redirect '/manage'
+    end
+
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     @manage = true
     @cluster_name = params[:clustername]
@@ -551,7 +677,9 @@ if not DISABLE_GUI
     # firstly we need to authenticate nodes to each other
     tokens = add_prefix_to_keys(get_tokens_of_nodes(@nodes), "node:")
     @nodes.each {|n|
-      retval, out = send_request_with_token(n, "/save_tokens", true, tokens)
+      retval, out = send_request_with_token(
+        session, n, "/save_tokens", true, tokens
+      )
       if retval == 404 # backward compatibility layer
         session[:error] = "authimposible"
         break
@@ -567,7 +695,20 @@ if not DISABLE_GUI
     $logger.info(
       "Sending setup cluster request for: #{@cluster_name} to: #{node_to_send_to}"
     )
-    code,out = send_request_with_token(node_to_send_to, "setup_cluster", true, {:clustername => @cluster_name, :nodes => @nodes_rrp.join(';'), :options => options.to_json}, true, nil, 60)
+    code,out = send_request_with_token(
+      session,
+      node_to_send_to,
+      'setup_cluster',
+      true,
+      {
+        :clustername => @cluster_name,
+        :nodes => @nodes_rrp.join(';'),
+        :options => options.to_json
+      },
+      true,
+      nil,
+      60
+    )
 
     if code == 200
       pushed = false
@@ -647,8 +788,10 @@ else
 
 end
 
-def getLocationDeps(cur_node)
-  out, stderror, retval = run_cmd(PCS, "constraint", "location", "show", "nodes", cur_node.id)
+def getLocationDeps(session, cur_node)
+  out, stderror, retval = run_cmd(
+    session, PCS, "constraint", "location", "show", "nodes", cur_node.id
+  )
   deps_allow = []
   deps_disallow = []
   allowed = false
@@ -674,7 +817,7 @@ def getLocationDeps(cur_node)
   [deps_allow, deps_disallow]
 end
 
-def getConfigOptions2(cluster_name)
+def getConfigOptions2(session, cluster_name, username=nil)
   config_options = {}
   general_page = []
 #  general_page << ConfigOption.new("Cluster Delay Time", "cluster-delay",  "int", 4, "Seconds") 
@@ -712,7 +855,7 @@ If checked, the cluster will refuse to start resources unless one or more STONIT
   allconfigoptions = []
   config_options.each { |i,k| k.each { |j| allconfigoptions << j } }
   ConfigOption.getDefaultValues(allconfigoptions)
-  ConfigOption.loadValues(allconfigoptions,cluster_name)
+  ConfigOption.loadValues(session, allconfigoptions, cluster_name, nil, username)
   return config_options
 end
 
@@ -784,11 +927,15 @@ class ConfigOption
     @desc = desc
   end
 
-  def self.loadValues(cos, cluster_name, node_list=nil)
+  def self.loadValues(session, cos, cluster_name, node_list=nil, username=nil)
     if node_list
-      code, output = send_nodes_request_with_token(node_list, "get_cib")
+      code, output = send_nodes_request_with_token(
+        session, node_list, "get_cib", false, {}, true, nil, username
+      )
     else
-      code, output = send_cluster_request_with_token(cluster_name, "get_cib")
+      code, output = send_cluster_request_with_token(
+        session, cluster_name, "get_cib", false, {}, true, nil, username
+      )
     end
     $logger.info(code)
     if code != 200
@@ -872,7 +1019,7 @@ class ConfigOption
       options.each {|key, option|
 	ret += "<option #{checked(key)} value=\"#{key}\">#{option}</option>"
       }
-      ret += "<select"
+      ret += "</select>"
       return ret
     end
   end

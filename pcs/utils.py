@@ -63,8 +63,7 @@ def checkStatus(node):
 
 # Check and see if we're authorized (faster than a status check)
 def checkAuthorization(node):
-    out = sendHTTPRequest(node, 'remote/check_auth', None, False, False)
-    return out
+    return sendHTTPRequest(node, 'remote/check_auth', None, False, False)
 
 def get_uid_gid_file_name(uid, gid):
     return "pcs-uidgid-%s-%s" % (uid, gid)
@@ -149,20 +148,19 @@ def readTokens():
 
 # Set the corosync.conf file on the specified node
 def getCorosyncConfig(node):
-    retval, output = sendHTTPRequest(node, 'remote/get_corosync_conf', None, False, False)
-    return retval,output
+    return sendHTTPRequest(node, 'remote/get_corosync_conf', None, False, False)
 
 def setCorosyncConfig(node,config):
     if is_rhel6():
         data = urllib.urlencode({'cluster_conf':config})
         (status, data) = sendHTTPRequest(node, 'remote/set_cluster_conf', data)
         if status != 0:
-            err("Unable to set cluster.conf")
+            err("Unable to set cluster.conf: {0}".format(data))
     else:
         data = urllib.urlencode({'corosync_conf':config})
         (status, data) = sendHTTPRequest(node, 'remote/set_corosync_conf', data)
         if status != 0:
-            err("Unable to set corosync config")
+            err("Unable to set corosync config: {0}".format(data))
 
 def startCluster(node, quiet=False):
     return sendHTTPRequest(node, 'remote/cluster_start', None, False, not quiet)
@@ -252,6 +250,7 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 # 1 = HTTP Error
 # 2 = No response,
 # 3 = Auth Error
+# 4 = Permission denied
 def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess = True):
     url = 'https://' + host + ':2224/' + request
     # enable self-signed certificates
@@ -303,15 +302,30 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
     except urllib2.HTTPError, e:
         if "--debug" in pcs_options:
             print "Response Code: " + str(e.code)
-        if printResult:
-            if e.code == 401:
-                print "Unable to authenticate to %s - (HTTP error: %d), try running 'pcs cluster auth'" % (host,e.code)
-            else:
-                print "Error connecting to %s - (HTTP error: %d)" % (host,e.code)
         if e.code == 401:
-            return (3,"Unable to authenticate to %s - (HTTP error: %d), try running 'pcs cluster auth'" % (host,e.code))
+            output = (
+                3,
+                "Unable to authenticate to {node} - (HTTP error: {code}), try running 'pcs cluster auth'".format(
+                    node=host, code=e.code
+                )
+            )
+        elif e.code == 403:
+            output = (
+                4,
+                "{node}: Permission denied - (HTTP error: {code})".format(
+                    node=host, code=e.code
+                )
+            )
         else:
-            return (1,"Error connecting to %s - (HTTP error: %d)" % (host,e.code))
+            output = (
+                1,
+                "Error connecting to {node} - (HTTP error: {code})".format(
+                    node=host, code=e.code
+                )
+            )
+        if printResult:
+            print output[1]
+        return output
     except urllib2.URLError, e:
         if "--debug" in pcs_options:
             print "Response Reason: " + str(e.reason)

@@ -1,9 +1,11 @@
 require 'pp'
 
-def getResourcesGroups(get_fence_devices = false, get_all_options = false,
+def getResourcesGroups(session, get_fence_devices = false, get_all_options = false,
   get_operations=false
 )
-  stdout, stderror, retval = run_cmd("crm_mon", "--one-shot", "-r", "--as-xml")
+  stdout, stderror, retval = run_cmd(
+    session, "crm_mon", "--one-shot", "-r", "--as-xml"
+  )
   if retval != 0
     return [],[], retval
   end
@@ -58,7 +60,7 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false,
   resource_list = resource_list.sort_by{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
   if get_all_options or get_operations
-    stdout, stderror, retval = run_cmd("cibadmin", "-Q", "-l")
+    stdout, stderror, retval = run_cmd(session, "cibadmin", "-Q", "-l")
     cib_output = stdout
     resources_inst_attr_map = {}
     resources_meta_attr_map = {}
@@ -115,17 +117,18 @@ def getResourcesGroups(get_fence_devices = false, get_all_options = false,
   [resource_list, group_list, 0]
 end
 
-def getResourceOptions(resource_id,stonith=false)
+def getResourceOptions(session, resource_id, stonith=false)
   # Strip ':' from resource name (for clones & master/slave)
   resource_id = resource_id.sub(/(.*):.*/,'\1')
 
   ret = {}
   if stonith
-    resource_options = `#{PCS} stonith show #{resource_id}`
+    cmd = [PCS, 'stonith', 'show', resource_id.to_s]
   else
-    resource_options = `#{PCS} resource show #{resource_id}`
+    cmd = [PCS, 'resource', 'show', resource_id.to_s]
   end
-  resource_options.each_line { |line|
+  stdout, stderr, retval = run_cmd(session, *cmd)
+  stdout.each { |line|
     keyval = line.strip.split(/: /,2)
     if keyval[0] == "Attributes" then
       options = keyval[1].split(/ /)
@@ -138,17 +141,9 @@ def getResourceOptions(resource_id,stonith=false)
   return ret
 end
 
-def getAllConstraints(constraints_dom=nil)
+def getAllConstraints(constraints_dom)
   constraints = {}
-  if constraints_dom
-    doc = constraints_dom
-  else
-    stdout, _, retval = run_cmd('cibadmin', '-Q', '-l', '--xpath', '//constraints/*')
-    if retval != 0
-      return constraints
-    end
-    doc = REXML::Document.new(stdout.join("\n"))
-  end
+  doc = constraints_dom
 
   doc.elements.each() { |e|
     if e.name == 'rsc_location' and e.has_elements?()
@@ -198,11 +193,13 @@ end
 
 # Returns two arrays, one that lists resources that start before
 # one that lists resources that start after
-def getOrderingConstraints(resource_id)
-  ordering_constraints = `#{PCS} constraint order show all`
+def getOrderingConstraints(session, resource_id)
+  stdout, stderr, retval = run_cmd(
+    session, PCS, 'constraint', 'order', 'show', 'all'
+  )
   before = []
   after = []
-  ordering_constraints.each_line { |line|
+  stdout.each { |line|
     if line.start_with?("Ordering Constraints:")
       next
     end
@@ -220,12 +217,14 @@ end
 
 # Returns two arrays, one that lists nodes that can run resource
 # one that lists nodes that cannot
-def getLocationConstraints(resource_id)
-  location_constraints = `#{PCS} constraint location show all`
+def getLocationConstraints(session, resource_id)
+  stdout, stderr, retval = run_cmd(
+    session, PCS, 'constraint', 'location', 'show', 'all'
+  )
   enabled_nodes = {}
   disabled_nodes = {}
   inResource = false
-  location_constraints.each_line { |line|
+  stdout.each { |line|
     line.strip!
     next if line.start_with?("Location Constraints:")
     if line.start_with?("Resource:")
@@ -269,11 +268,13 @@ end
 
 # Returns two arrays, one that lists resources that should be together
 # one that lists resources that should be apart
-def getColocationConstraints(resource_id)
-  colocation_constraints = `#{PCS} constraint colocation show all`
+def getColocationConstraints(session, resource_id)
+  stdout, stderr, retval = run_cmd(
+    session, PCS, 'constraint', 'colocation', 'show', 'all'
+  )
   together = []
   apart = []
-  colocation_constraints.each_line { |line|
+  stdout.each { |line|
     if line.start_with?("Colocation Constraints:")
       next
     end
@@ -347,9 +348,9 @@ def getResourceMetadata(resourcepath)
   [options_required, options_optional, [short_desc,long_desc]]
 end
 
-def getResourceAgents(resource_agent = nil)
+def getResourceAgents(session, resource_agent=nil)
   resource_agent_list = {}
-  stdout, stderr, retval = run_cmd(PCS, "resource", "list", "--nodesc")
+  stdout, stderr, retval = run_cmd(session, PCS, "resource", "list", "--nodesc")
   if retval != 0
     logger.error("Error running 'pcs resource list --nodesc")
     logger.error(stdout + stderr)

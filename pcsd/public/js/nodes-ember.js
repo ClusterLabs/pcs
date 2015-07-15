@@ -63,7 +63,9 @@ Pcs = Ember.Application.createWithMixins({
         timeout: 20000,
         success: function(data) {
           Pcs.clusterController.update(data);
-          Ember.run.next(function(){correct_visibility_dashboard(Pcs.clusterController.cur_cluster);});
+          Ember.run.next(function() {
+            correct_visibility_dashboard(Pcs.clusterController.cur_cluster);
+          });
           if (data["not_current_data"]) {
             self.update();
           } else {
@@ -341,7 +343,10 @@ Pcs.resourcesContainer = Ember.Object.create({
       data: data,
       timeout: pcs_timeout,
       error: function (xhr, status, error) {
-        alert("Unable to update meta attribute '" + attr + "': ("+error+")");
+        alert(
+          "Unable to update meta attribute '" + attr + "' "
+          + ajax_simple_error(xhr, status, error)
+        );
       },
       complete: function() {
         Pcs.update();
@@ -361,7 +366,10 @@ Pcs.resourcesContainer = Ember.Object.create({
         }
       },
       error: function(xhr, status, error) {
-        alert("Unable to enable resource '" + resource_id + "': (" + error + ")");
+        alert(
+          "Unable to enable resource '" + resource_id + "' "
+          + ajax_simple_error(xhr, status, error)
+        );
       },
       complete: function() {
         Pcs.update();
@@ -381,7 +389,10 @@ Pcs.resourcesContainer = Ember.Object.create({
         }
       },
       error: function(xhr, status, error) {
-        alert("Unable to disable resource '" + resource_id + "': (" + error + ")");
+        alert(
+          "Unable to disable resource '" + resource_id + "' "
+          + ajax_simple_error(xhr, status, error)
+        );
       },
       complete: function() {
         Pcs.update();
@@ -1042,6 +1053,15 @@ Pcs.Cluster = Ember.Object.extend({
   status_unknown: function() {
     return this.status == "unknown";
   }.property("status"),
+  forbidden: function() {
+    var out = false;
+    $.each(this.get("error_list"), function(key, value) {
+      if ("forbidden" == value["type"]) {
+        out = true;
+      }
+    });
+    return out;
+  }.property("error_list"),
   status_icon: function() {
     var icon_class = {"-1": "x", 1: "error", 2: "warning", 3: "x", 4: "check"};
     return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[get_status_value(this.status)] + " sprites\"></div>";

@@ -46,7 +46,7 @@
 	{{#each Pcs.clusterController.cluster_list}}
 	  <div style="display:none;" {{bind-attr id=div_id}}>
 	    <table>
-	      <tr><td style="text-align:right"><b>Cluster:</b>&nbsp;</td><td><a {{bind-attr href=url_link}}>{{name}}</a> {{{quorum_show}}}</td></tr>
+	      <tr><td style="text-align:right"><b>Cluster:</b>&nbsp;</td><td><a {{bind-attr href=url_link}}>{{name}}</a>{{#unless forbidden}} {{{quorum_show}}}{{/unless}}</td></tr>
           {{#if error_list}}
           <tr><td style="text-align:right"><b>Errors:</b>&nbsp;</td><td></td></tr>
           {{/if}}
@@ -60,6 +60,7 @@
           <tr><td></td><td style="color: orange;">{{{message}}}</td></tr>
           {{/each}}
         </table><br>
+        {{#unless forbidden}}
         <table style="clear:left;float:left" class="nodes_list">
           <tr>
             <td class="datatable_header hover-pointer" onclick="show_hide_dashboard(this, 'nodes');">
@@ -151,6 +152,7 @@
             </td>
           </tr>
         </table>
+        {{/unless}}
         {{/unless}}
 	  </div>
 	{{/each}}
@@ -441,5 +443,8 @@ Specify ring 1 address for each node if you want to use RRP." %>
   <% end %>
   <% if @error == "configversionsconflict" %>
     Configuration conflict detected.<br><br>Some nodes had a newer configuration than the local node.  Local node's configuration was updated.  Please repeat the last action if appropriate.
+  <% end %>
+  <% if @error == "permissiondenied" %>
+    Permission denied.
   <% end %>
 </div>

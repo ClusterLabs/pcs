@@ -205,8 +205,10 @@ def main(argv):
                 for msg in err_msgs:
                     utils.err(msg, False)
                 sys.exit(1)
-            print std_out
-            sys.stderr.write(std_err)
+            if std_out.strip():
+                print std_out
+            if std_err.strip():
+                sys.stderr.write(std_err)
             sys.exit(exitcode)
             return
     cmd_map[command](argv)

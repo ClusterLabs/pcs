@@ -34,60 +34,60 @@ class TestAuth < Test::Unit::TestCase
     password_file.write(JSON.pretty_generate(users))
     password_file.close()
 
-    $session = {}
+    session = {}
     cookies = {}
-    result = PCSAuth.loginByToken(cookies)
+    result = PCSAuth.loginByToken(session, cookies)
     assert_equal(false, result)
-    assert_equal({}, $session)
+    assert_equal({}, session)
 
-    $session = {}
+    session = {}
     cookies = {'token' => 'tokenX'}
-    result = PCSAuth.loginByToken(cookies)
+    result = PCSAuth.loginByToken(session, cookies)
     assert_equal(false, result)
-    assert_equal({}, $session)
+    assert_equal({}, session)
 
-    $session = {}
+    session = {}
     cookies = {'token' => 'token1'}
-    result = PCSAuth.loginByToken(cookies)
+    result = PCSAuth.loginByToken(session, cookies)
     assert_equal(true, result)
     assert_equal(
       {:username => 'user1', :usergroups => ['group1', 'haclient']},
-      $session
+      session
     )
 
-    $session = {}
+    session = {}
     cookies = {
       'token' => 'token1',
       'CIB_user' => 'userX',
       'CIB_user_groups' => PCSAuth.cookieUserEncode('groupX')
     }
-    result = PCSAuth.loginByToken(cookies)
+    result = PCSAuth.loginByToken(session, cookies)
     assert_equal(true, result)
     assert_equal(
       {:username => 'user1', :usergroups => ['group1', 'haclient']},
-      $session
+      session
     )
 
-    $session = {}
+    session = {}
     cookies = {'token' => 'tokenS'}
-    result = PCSAuth.loginByToken(cookies)
+    result = PCSAuth.loginByToken(session, cookies)
     assert_equal(true, result)
     assert_equal(
       {:username => SUPERUSER, :usergroups => []},
-      $session
+      session
     )
 
-    $session = {}
+    session = {}
     cookies = {
       'token' => 'tokenS',
       'CIB_user' => 'userX',
       'CIB_user_groups' => PCSAuth.cookieUserEncode('groupX')
     }
-    result = PCSAuth.loginByToken(cookies)
+    result = PCSAuth.loginByToken(session, cookies)
     assert_equal(true, result)
     assert_equal(
       {:username => 'userX', :usergroups => ['groupX']},
-      $session
+      session
     )
   end
 

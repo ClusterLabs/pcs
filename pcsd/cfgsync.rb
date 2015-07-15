@@ -406,8 +406,8 @@ module Cfgsync
       @nodes.each { |node|
         threads << Thread.new {
           code, out = send_request_with_token(
-            node, 'set_configs', true, data, true, nil, 30, @additional_tokens,
-            @username
+            {}, node, 'set_configs', true, data, true, nil, 30,
+            @additional_tokens, @username
           )
           if 200 == code
             begin
@@ -546,7 +546,7 @@ module Cfgsync
       nodes.each { |node|
         threads << Thread.new {
           code, out = send_request_with_token(
-            node, 'get_configs', false, data, true, nil, 30, {}, @username
+            {}, node, 'get_configs', false, data, true, nil, 30, {}, @username
           )
           if 200 == code
             begin

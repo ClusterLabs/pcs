@@ -916,7 +916,7 @@ module ClusterEntity
       @fence_levels = {}
     end
 
-    def self.load_current_node(crm_dom=nil)
+    def self.load_current_node(session, crm_dom=nil)
       node = ClusterEntity::Node.new
       node.corosync = corosync_running?
       node.corosync_enabled = corosync_enabled?
@@ -924,7 +924,7 @@ module ClusterEntity
       node.pacemaker_enabled = pacemaker_enabled?
       node.cman = cman_running?
       node.pcsd_enabled = pcsd_enabled?
-      node.fence_levels = get_fence_levels()
+      node.fence_levels = get_fence_levels(session)
 
       node_online = (node.corosync and node.pacemaker)
       node.status =  node_online ? 'online' : 'offline'
@@ -944,7 +944,7 @@ module ClusterEntity
         node.status = 'offline'
       end
 
-      get_node_attributes.each { |k,v|
+      get_node_attributes(session).each { |k,v|
         node.attr << ClusterEntity::NvPair.new(nil, k, v)
       }
       return node

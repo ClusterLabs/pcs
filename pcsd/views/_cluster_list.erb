@@ -33,9 +33,13 @@
       <a {{bind-attr href=url_link}}>{{name}}</a>
     </td>
     <td nowrap class="resource_type">
-      {{nodes.length}}
-      {{#if nodes_failed}}
-      | <div style="display: inline-block;" title="Issue(s) found"><div class="warning sprites"></div> <span style="font-weight: bold; color: red">{{nodes_failed}}</span></div>
+      {{#if forbidden}}
+        unknown
+      {{else}}
+        {{nodes.length}}
+        {{#if nodes_failed}}
+        | <div style="display: inline-block;" title="Issue(s) found"><div class="warning sprites"></div> <span style="font-weight: bold; color: red">{{nodes_failed}}</span></div>
+        {{/if}}
       {{/if}}
     </td>
     <td nowrap class="resource_type">
