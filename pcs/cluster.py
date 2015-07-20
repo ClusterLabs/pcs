@@ -218,10 +218,10 @@ def auth_nodes(nodes):
         if password == None:
             password = utils.get_terminal_password()
 
-        auth_nodes_do(
-            set_nodes, username, password, '--force' in utils.pcs_options,
-            '--local' in utils.pcs_options
-        )
+    auth_nodes_do(
+        set_nodes, username, password, '--force' in utils.pcs_options,
+        '--local' in utils.pcs_options
+    )
 
 def auth_nodes_do(nodes, username, password, force, local):
     pcsd_data = {
