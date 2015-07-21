@@ -6,15 +6,14 @@ require 'pcs.rb'
 require 'resource.rb'
 require 'config.rb'
 require 'cfgsync.rb'
+require 'cluster_entity.rb'
 
 # Commands for remote access
 def remote(params,request)
   remote_cmd_without_pacemaker = {
       :status => method(:node_status),
       :status_all => method(:status_all),
-      :overview_node => method(:overview_node),
-      :overview_resources => method(:overview_resources),
-      :overview_cluster => method(:overview_cluster),
+      :cluster_status => method(:cluster_status),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
       :fix_auth_of_cluster => method(:fix_auth_of_cluster),
@@ -100,6 +99,11 @@ def remote(params,request)
       :remove_acl_roles => method(:remove_acl_roles_remote),
       :add_acl => method(:add_acl_remote),
       :remove_acl => method(:remove_acl_remote),
+      :resource_change_group => method(:resource_change_group),
+      :resource_master => method(:resource_master),
+      :resource_clone => method(:resource_clone),
+      :resource_unclone => method(:resource_unclone),
+      :resource_ungroup => method(:resource_ungroup)
   }
 
   command = params[:command].to_sym
@@ -115,6 +119,206 @@ def remote(params,request)
   else
     return [404, "Unknown Request"]
   end
+end
+
+def cluster_status(params, cluster_name=nil, dont_update_config=false)
+  unless cluster_name
+    cluster_name = $cluster_name
+  end
+  overview = {
+      :cluster_name => cluster_name,
+      :error_list => [],
+      :warning_list => [],
+      :quorate => nil,
+      :status => 'unknown',
+      :node_list => [],
+      :resource_list => [],
+  }
+  if not cluster_name or cluster_name.empty?
+    return JSON.generate(overview)
+  end
+
+  node_map = {}
+  node_list = []
+  priority_nodes = []
+  threads = []
+  not_authorized_nodes = []
+  cluster_nodes = get_cluster_nodes(cluster_name)
+  old_status = 0
+  cluster_nodes.each { |node|
+    threads << Thread.new {
+      _, response = send_request_with_token(
+        node,
+        'status',
+        false,
+        {:version=>'2', :operations=>'1'},
+        true,
+        nil,
+        6
+      )
+      node_map[node] = {}
+      node_map[node].update(overview)
+      begin
+        parsed_response = JSON.parse(response, {:symbolize_names => true})
+        if parsed_response[:noresponse]
+          node_map[node][:node] = {
+            :status => 'unknown',
+            :warning_list => [],
+            :error_list => []
+          }
+        elsif parsed_response[:notoken] or parsed_response[:notauthorized]
+          not_authorized_nodes << node
+          node_map[node][:node] = {
+            :status => 'unknown',
+            :notauthorized => true,
+            :warning_list => [],
+            :error_list => []
+          }
+        else
+          if parsed_response[:node] # status version == 2
+            parsed_response[:status_version] = '2'
+            parsed_response[:node][:status_version] = '2'
+            priority_nodes << node if parsed_response[:node][:quorum]
+          else
+            parsed_response = status_v1_to_v2(parsed_response)
+            old_status += 1
+          end
+          node_map[node] = parsed_response
+        end
+        node_map[node][:node][:name] = node
+      rescue JSON::ParserError
+        node_map[node] = {:status => 'unknown'}
+        node_map[node][:node] = {
+          :name => node,
+          :warning_list => [],
+          :error_list => []
+        }
+      end
+    }
+  }
+  threads.each { |t| t.join }
+
+  cluster_nodes = []
+  node_map.each { |_, n|
+    node_list << n[:node]
+    cluster_nodes += n['corosync_offline'] if n['corosync_offline']
+    cluster_nodes += n['corosync_online'] if n['corosync_online']
+    cluster_nodes += n['pacemaker_offline'] if n['pacemaker_offline']
+    cluster_nodes += n['pacemaker_online'] if n['pacemaker_online']
+  }
+
+  cluster_nodes.uniq!
+  if cluster_nodes.length > 0
+    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+    old_cluster_nodes = config.get_nodes(params[:cluster])
+    if not dont_update_config and (old_cluster_nodes & cluster_nodes != old_cluster_nodes or old_cluster_nodes.size!=cluster_nodes.size)
+      $logger.info('Updating node list for: ' + params[:cluster] + ' ' + old_cluster_nodes.inspect + '->' + cluster_nodes.inspect)
+      config.update(params[:cluster], cluster_nodes)
+      sync_config = Cfgsync::PcsdSettings.from_text(config.text())
+      # on version conflict just go on, config will be corrected eventually
+      # by displaying the cluster in the web UI
+      Cfgsync::save_sync_new_version(
+          sync_config, get_corosync_nodes(), cluster_name, true
+      )
+      return cluster_status(params, cluster_name, true)
+    end
+  end
+  
+  if priority_nodes.length > 0
+    status = overview.update(node_map[priority_nodes[0]])
+    status[:quorate] = true
+    status[:node_list] = node_list
+  elsif old_status == 0 # all new but no qourum
+    status = overview.update(node_map.values[0])
+    status[:quorate] = false
+    status[:node_list] = node_list
+  else
+    status = overview.update(node_map.values[0])
+    status[:node_list] = node_list
+    status[:quorate] = nil
+    node_map.each { |_,node|
+      if node[:status_version] and node[:status_version] == '1' and
+          !node[:cluster_settings][:error]
+        status = overview.update(node)
+        break
+      end
+    }
+  end
+
+  if status[:quorate]
+    fence_count = 0
+    status[:resource_list].each { |r|
+      if r[:stonith]
+        fence_count += 1
+      end
+    }
+    if fence_count == 0
+      status[:warning_list] << {
+          :message => 'No fence devices configured in the cluster',
+      }
+    end
+
+    if status[:cluster_settings]['stonith-enabled'.to_sym] and
+        not ['true', 'on'].include?(status[:cluster_settings]['stonith-enabled'.to_sym])
+      status[:warning_list] << {
+          :message => 'Stonith is not enabled',
+      }
+    end
+  end
+
+  if not_authorized_nodes.length > 0
+    status[:warning_list] << {
+        :message => 'Not authorized against node(s) '\
+            + not_authorized_nodes.join(', '),
+        :type => 'nodes_not_authorized',
+        :node_list => not_authorized_nodes,
+    }
+  end
+
+  if status[:quorate].nil?
+    if old_status > 0
+      status[:warning_list] << {
+          :message => 'Cluster is running old version of pcs/pcsd which '\
+              + "doesn't provide data for dashboard.",
+          :type => 'old_pcsd'
+      }
+    else
+      status[:error_list] << {
+          :message => 'Unable to connect to cluster.'
+      }
+    end
+    status[:status] == 'unknown'
+    return JSON.generate(status)
+  end
+
+  if status[:error_list].length > 0 or (not status[:quorate].nil? and not status[:quorate])
+    status[:status] = 'error'
+  else
+    if status[:warning_list].length > 0
+      status[:status] = 'warning'
+    end
+    status[:node_list].each { |node|
+      if (node[:error_list] and node[:error_list].length > 0) or
+          ['unknown', 'offline'].include?(node[:status])
+        status[:status] = 'error'
+        break
+      elsif node[:warning_list] and node[:warning_list].length > 0
+        status[:status] = 'warning'
+      end
+    }
+    if status[:status] != 'error'
+      status[:resource_list].each { |resource|
+        if resource[:status] == 'failed'
+          status[:status] = 'error'
+          break
+        elsif ['blocked', 'partially running'].include?(resource[:status])
+          status[:status] = 'warning'
+        end
+      }
+    end
+  end
+  status[:status] = 'ok' if status[:status] == 'unknown'
+  return JSON.generate(status)
 end
 
 def cluster_start(params)
@@ -679,75 +883,104 @@ def create_cluster(params)
 end
 
 def node_status(params)
-  if params[:node] != nil and params[:node] != "" and params[:node] != $cur_node_name
-    return send_request_with_token(params[:node],"status?hello=1")
+  if params[:node] and params[:node] != '' and params[:node] !=
+    $cur_node_name and !params[:redirected]
+    return send_request_with_token(
+      params[:node],
+      'status?redirected=1',
+      false,
+      params.select { |k,_|
+        [:version, :operations].include?(k)
+      }
+    )
   end
 
-  uptime = `cat /proc/uptime`.chomp.split(' ')[0].split('.')[0].to_i
-  mm, ss = uptime.divmod(60)
-  hh, mm = mm.divmod(60)
-  dd, hh = hh.divmod(24)
-  uptime = "%d days, %02d:%02d:%02d" % [dd, hh, mm, ss]
+  cib_dom = get_cib_dom
+  crm_dom = get_crm_mon_dom
 
-  corosync_status = corosync_running?
-  corosync_enabled = corosync_enabled?
-  pacemaker_status = pacemaker_running?
-  pacemaker_enabled = pacemaker_enabled?
-  cman_status = cman_running?
-  pcsd_enabled = pcsd_enabled?
+  status = get_node_status(cib_dom)
+  resources = get_resources(
+    cib_dom,
+    crm_dom,
+    (params[:operations] and params[:operations] == '1')
+  )
 
-  nodes_status = get_nodes_status()
-  corosync_online = nodes_status['corosync_online']
-  corosync_offline = nodes_status['corosync_offline']
-  pacemaker_online = nodes_status['pacemaker_online']
-  pacemaker_offline = nodes_status['pacemaker_offline']
-  pacemaker_standby = nodes_status['pacemaker_standby']
+  node = ClusterEntity::Node.load_current_node(crm_dom)
 
-  node_id = get_local_node_id()
-  resource_list, group_list = getResourcesGroups(false,true)
-  stonith_resource_list, stonith_group_list = getResourcesGroups(true,true)
-  stonith_resource_list.each {|sr| sr.stonith = true}
-  resource_list = resource_list + stonith_resource_list
-  acls = get_acls()
-  out_rl = []
-  resource_list.each {|r|
-    out_nodes = []
-    oConstraints = []
-    meta_attributes = []
-    if r.meta_attr
-      r.meta_attr.each_pair {|k,v| meta_attributes << {:key => k, :value => v[1], :id => v[0], :parent => v[2]}}
-    end
-    r.nodes.each{|n|
-      out_nodes.push(n.name)
+  _,_,not_authorized_nodes = check_gui_status_of_nodes(
+    status[:known_nodes],
+    false,
+    3
+  )
+
+  if not_authorized_nodes.length > 0
+    node.warning_list << {
+      :message => 'Not authorized against node(s) ' + 
+        not_authorized_nodes.join(', '),
+      :type => 'nodes_not_authorized',
+      :node_list => not_authorized_nodes,
     }
-    out_rl.push({:id => r.id, :agentname => r.agentname, :active => r.active,
-                 :nodes => out_nodes, :group => r.group, :clone => r.clone,
-                 :clone_id => r.clone_id, :ms_id => r.ms_id,
-                 :failed => r.failed, :orphaned => r.orphaned, :options => r.options,
-                 :stonith => r.stonith, :ms => r.ms, :disabled => r.disabled,
-                 :operations => r.operations, :instance_attr => r.instance_attr,
-                 :meta_attr => meta_attributes})
+  end
+
+  version = params[:version] || '1'
+
+  if version == '2'
+    status[:node] = node.to_status(version)
+    resource_list = nil
+    if resources
+      resource_list = []
+      resources.each do |r|
+        resource_list << r.to_status(version)
+      end
+    end
+
+    status[:resource_list] = resource_list
+
+    return JSON.generate(status)
+  end
+
+  resource_list = []
+  resources.each do |r|
+    resource_list.concat(r.to_status('1'))
+  end
+
+  cluster_settings = (status[:cluster_settings].empty?) ?
+    {'error' => 'Unable to get configuration settings'} :
+    status[:cluster_settings]
+
+  node_attr = {}
+  node.attr.each { |v|
+    node_attr[v.name.to_sym] = v.value
   }
-  constraints = getAllConstraints()
-  cluster_settings = getAllSettings()
-  node_attributes = get_node_attributes()
-  fence_levels = get_fence_levels()
-  status = {"uptime" => uptime, "corosync" => corosync_status, "pacemaker" => pacemaker_status,
-            "cman" => cman_status,
-            "corosync_enabled" => corosync_enabled, "pacemaker_enabled" => pacemaker_enabled,
-            "pcsd_enabled" => pcsd_enabled,
-            "corosync_online" => corosync_online, "corosync_offline" => corosync_offline,
-            "pacemaker_online" => pacemaker_online, "pacemaker_offline" => pacemaker_offline,
-            "pacemaker_standby" => pacemaker_standby,
-            "cluster_name" => $cluster_name, "resources" => out_rl, "groups" => group_list,
-            "constraints" => constraints, "cluster_settings" => cluster_settings, "node_id" => node_id,
-            "node_attr" => node_attributes, "fence_levels" => fence_levels,
-            "need_ring1_address" => need_ring1_address?,
-            "is_cman_with_udpu_transport" => is_cman_with_udpu_transport?,
-            "acls" => acls, "username" => cookies[:CIB_user]
-           }
-  ret = JSON.generate(status)
-  return ret
+
+  old_status = {
+    :uptime => node.uptime,
+    :corosync => node.corosync,
+    :pacemaker => node.pacemaker,
+    :cman => node.cman,
+    :corosync_enabled => node.corosync_enabled,
+    :pacemaker_enabled => node.pacemaker_enabled,
+    :pcsd_enabled => node.pcsd_enabled,
+    :corosync_online => status[:corosync_online],
+    :corosync_offline => status[:corosync_offline],
+    :pacemaker_online => status[:pacemaker_online],
+    :pacemaker_offline => status[:pacemaker_offline],
+    :pacemaker_standby => status[:pacemaker_standby],
+    :cluster_name => status[:cluster_name],
+    :resources => resource_list,
+    :groups => status[:groups],
+    :constraints => status[:constraints],
+    :cluster_settings => cluster_settings,
+    :node_id => node.id,
+    :node_attr => node_attr,
+    :fence_levels => node.fence_levels,
+    :need_ring1_address => status[:need_ring1_address],
+    :is_cman_with_udpu_transport => status[:is_cman_with_udpu_transport],
+    :acls => status[:acls],
+    :username => status[:username]
+  }
+
+  return JSON.generate(old_status)
 end
 
 def status_all(params, nodes = [], dont_update_config=false)
@@ -802,319 +1035,28 @@ def status_all(params, nodes = [], dont_update_config=false)
   return JSON.generate(final_response)
 end
 
-def overview_node(params)
-  node_online = (corosync_running? and pacemaker_running?)
-  overview = {
-    'error_list' => [],
-    'warning_list' => [],
-    'status' => node_online ? 'online' : 'offline',
-    'quorum' => false,
-  }
-
-  if node_online
-    node_id = get_local_node_id()
-    stdout, stderr, retval = run_cmd('crm_mon', '--one-shot', '-r', '--as-xml')
-    crm_dom = retval == 0 ? REXML::Document.new(stdout.join("\n")) : nil
-
-    if crm_dom
-      node_el = crm_dom.elements["//node[@id='#{node_id}']"]
-      if node_el and node_el.attributes['standby'] == 'true'
-        overview['status'] = 'standby'
-      end
-      overview['quorum'] = !!crm_dom.elements['//current_dc[@with_quorum="true"]']
-    end
-  end
-
-  known_nodes = []
-  get_nodes_status.each{ |key, node_list|
-    known_nodes.concat node_list
-  }
-  known_nodes.uniq!
-  overview['known_nodes'] = known_nodes
-
-  _,_,not_authorized_nodes = check_gui_status_of_nodes(known_nodes, false, 3)
-
-  if not_authorized_nodes.length > 0
-    overview['warning_list'] << {
-      'message' => 'Not authorized against node(s) '\
-        + not_authorized_nodes.join(', '),
-      'type' => 'nodes_not_authorized',
-      'node_list' => not_authorized_nodes,
-    }
-  end
-
-  return JSON.generate(overview)
-end
-
-def overview_resources(params)
-  status_priority = ['unknown', 'blocked', 'running', 'failed', 'disabled']
-  resource_list, group_list, retval = getResourcesGroups(false, true, true)
-  return JSON.generate({}) if retval != 0
-  fence_list, group_list, retval = getResourcesGroups(true, true, true)
-  return JSON.generate({}) if retval != 0
-  fence_list.each { |resource| resource.stonith = true }
-  resource_list += fence_list
-  resource_map = {}
-  resource_master_map = {}
-  failed_op_map = {}
-
-  # if resource is cloned or mastered it will be iterated over once for each
-  # instance
-  resource_list.each { |resource|
-    resource_overview = resource_map[resource.id] || {
-      'id' => resource.id,
-      'error_list' => [],
-      'warning_list' => [],
-      'status' => 'unknown',
-      'is_fence' => resource.stonith,
-    }
-
-    # get failed operations, each operation once for a node
-    resource.operations.each { |operation|
-      if operation.rc_code != 0
-        failed_op_map[resource.id] = failed_op_map[resource.id] || {}
-        op_key = "#{operation.transition_magic}__#{operation.on_node}"
-        if not failed_op_map[resource.id].has_key?(op_key)
-          failed_op_map[resource.id][op_key] = operation
-        end
-      end
-    }
-
-    # check whether a master/slave resource has been promoted on any node
-    if resource.ms
-      if resource.role == 'Master'
-        resource_master_map[resource.id] = true
-      elsif not resource_master_map[resource.id]
-        resource_master_map[resource.id] = false
-      end
-    end
-
-    # get status on a node and combine it with status on other nodes (if any)
-    # e.g. running on one node and failed on another => failed
-    if resource.disabled
-      status = 'disabled'
-    elsif ['Started', 'Master', 'Slave'].include?(resource.role)
-      status = 'running'
-    elsif failed_op_map[resource.id] and failed_op_map[resource.id].length > 0
-      status = 'failed'
-    else
-      status = 'blocked'
-    end
-    if status_priority.index(status) > status_priority.index(resource_overview['status'])
-      resource_overview['status'] = status
-    end
-
-    resource_map[resource.id] = resource_overview
-  }
-
-  failed_op_map.each { |resource, failed_ops|
-    failed = resource_map[resource]['status'] == 'failed'
-    message_list = []
-    failed_ops.each { |op_key, operation|
-      next if not failed and operation.operation == 'monitor'\
-        and operation.rc_code == 7
-      message = "Failed to #{operation.operation} #{resource}"
-      message += " on #{Time.at(operation.last_rc_change).asctime}"
-      message += " on node #{operation.on_node}" if operation.on_node
-      message += ": #{operation.exit_reason}" if operation.exit_reason
-      message_list << {
-        'message' => message,
-      }
-    }
-    if failed
-      resource_map[resource]['error_list'] += message_list
-    else
-      resource_map[resource]['warning_list'] += message_list
-    end
-  }
-
-  resource_master_map.each { |resource, has_master|
-    if not has_master
-      resource_map[resource]['error_list'] << {
-        'message' => 'Resource is master/slave but has not been promoted '\
-          + 'to master on any node',
-      }
-    end
-  }
-
-  resource_list = []
-  fence_list = []
-  resource_map.each { |resource, resource_info|
-    if resource_info['is_fence']
-      fence_list << resource_info
-    else
-      resource_list << resource_info
-    end
-  }
-  return JSON.generate({
-    'resource_list' => resource_list,
-    'fence_list' => fence_list,
-  })
-end
-
-def overview_cluster(params)
-  cluster_name = $cluster_name
-  overview = {
-    'name' => cluster_name,
-    'error_list' => [],
-    'warning_list' => [],
-    'quorate' => false,
-    'status' => 'unknown',
-    'node_list' => [],
-    'fence_list' => nil,
-    'resource_list' => nil,
-  }
-  if not cluster_name or cluster_name.empty?
-    return JSON.generate(overview)
-  end
-
-  node_map = {}
-  known_nodes = []
-  threads = []
-  online_nodes, offline_nodes = get_nodes
-  cluster_nodes = (online_nodes + offline_nodes).uniq
-  cluster_nodes.each { |node|
-    threads << Thread.new {
-      code, response = send_request_with_token(node, 'overview_node', false, {}, true, nil, 6)
-      begin
-        parsed_response = JSON.parse(response)
-        if parsed_response['noresponse'] or parsed_response['pacemaker_not_running']
-          node_map[node] = {'status' => 'offline'}
-        elsif parsed_response['notoken'] or parsed_response['notauthorized']
-          node_map[node] = {'status' => 'unknown'}
-        else
-          node_map[node] = parsed_response
-          if parsed_response['known_nodes']
-            known_nodes.concat(parsed_response['known_nodes'])
-            parsed_response.delete('known_nodes')
-          end
-        end
-      rescue JSON::ParserError
-        node_map[node] = {'status' => 'unknown'}
-      end
-      node_map[node]['name'] = node
-      node_map[node]['error_list'] = node_map[node]['error_list'] || []
-      node_map[node]['warning_list'] = node_map[node]['warning_list'] || []
-      node_map[node]['quorum'] = node_map[node]['quorum'] || false
-    }
-  }
-  threads.each { |t| t.join }
-
-  all_nodes = node_map.keys
-  node_list = node_map.values.sort { |a, b| a['name'] <=> b['name'] }
-  overview['node_list'] = node_list
-
-  quorate_nodes = []
-  node_list.each{ |node_info|
-    if node_info['quorum']
-      overview['quorate'] = true
-      quorate_nodes << node_info['name']
-    end
-  }
-
-  nodes_to_ask = quorate_nodes.length > 0 ? quorate_nodes : all_nodes
-  for node in nodes_to_ask
-    code, response = send_request_with_token(node, 'overview_resources', false, {}, true, nil, 6)
-    begin
-      parsed_response = JSON.parse(response)
-      if parsed_response['resource_list'] and parsed_response['fence_list']
-        overview['resource_list'] = parsed_response['resource_list']
-        overview['fence_list'] = parsed_response['fence_list']
-        break
-      end
-    rescue JSON::ParserError
-    end
-  end
-  if overview['fence_list'] and overview['fence_list'].length < 1 and quorate_nodes.length > 0
-    overview['warning_list'] << {
-      'message' => 'No fence devices configured in the cluster',
-    }
-  end
-  if not overview['resource_list']
-    overview['warning_list'] << {
-      'message' => 'Unable to get resources information',
-    }
-    overview['resource_list'] = []
-  end
-  if not overview['fence_list']
-    overview['warning_list'] << {
-      'message' => 'Unable to get fence devices information',
-    }
-    overview['fence_list'] = []
-  end
-
-  option_map = {
-    'stonith-enabled' => ConfigOption.new("Stonith Enabled", "stonith-enabled"),
-  }
-  ConfigOption.getDefaultValues(option_map.values)
-  ConfigOption.loadValues(option_map.values, cluster_name, nodes_to_ask)
-  if not ['true', 'on'].include? option_map['stonith-enabled'].value and quorate_nodes.length > 0
-    overview['warning_list'] << {
-      'message' => 'Stonith is not enabled',
-    }
-  end
-
-  if overview['error_list'].length > 0 or not overview['quorate']
-    overview['status'] = 'error'
-  else
-    if overview['warning_list'].length > 0
-      overview['status'] = 'warning'
-    end
-    node_list.each{ |node_info|
-      if ((
-        node_info['error_list'].length > 0
-        ) or (
-        ['unknown', 'offline'].include?(node_info['status'])
-      ))
-        overview['status'] = 'error'
-        break
-      end
-      if node_info['warning_list'].length > 0
-        overview['status'] = 'warning'
-      end
-    }
-    (overview['resource_list'] + overview['fence_list']).each { |resource_info|
-      if ((
-        resource_info['error_list'].length > 0
-        ) or (
-        resource_info['status'] == 'failed'
-      ))
-        overview['status'] = 'error'
-        break
-      end
-      if ((
-        resource_info['warning_list'].length > 0
-        ) or (
-        resource_info['status'] == 'blocked'
-      ))
-        overview['status'] = 'warning'
-      end
-    }
-  end
-  overview['status'] = 'ok' if overview['status'] == 'unknown'
-
-  return JSON.generate(overview)
-end
-
-def overview_all()
+def clusters_overview()
   cluster_map = {}
   threads = []
   config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   config.clusters.each { |cluster|
     threads << Thread.new {
       overview_cluster = nil
-      online, offline, not_authorized_nodes = check_gui_status_of_nodes(get_cluster_nodes(cluster.name), false, 3)
+      online, offline, not_authorized_nodes = check_gui_status_of_nodes(
+        get_cluster_nodes(cluster.name),
+        false,3
+      )
       not_supported = false
       cluster_nodes_auth = (online + offline).uniq
       cluster_nodes_all = (cluster_nodes_auth + not_authorized_nodes).uniq
       nodes_not_in_cluster = []
       for node in cluster_nodes_auth
         code, response = send_request_with_token(
-          node, 'overview_cluster', true, {:cluster => cluster.name}, true, nil, 15
+          node, 'cluster_status', true, {}, true, nil, 15
         )
         if code == 404
           not_supported = true
-          break
+          next
         end
         begin
           parsed_response = JSON.parse(response)
@@ -1122,7 +1064,7 @@ def overview_all()
             next
           elsif parsed_response['notoken'] or parsed_response['notauthorized']
             next
-          elsif parsed_response['name'].empty?
+          elsif parsed_response['cluster_name'] != cluster.name
             # queried node is not in the cluster (any more)
             nodes_not_in_cluster << node
             next
@@ -1136,35 +1078,46 @@ def overview_all()
 
       if cluster_nodes_all.sort == nodes_not_in_cluster.sort
         overview_cluster = {
-          'name' => cluster.name,
+          'cluster_name' => cluster.name,
           'error_list' => [],
           'warning_list' => [],
           'status' => 'unknown',
           'node_list' => [],
-          'fence_list' => [],
           'resource_list' => []
         }
       end
 
       if not overview_cluster
         overview_cluster = {
-          'name' => cluster.name,
-          'error_list' => !not_supported ? [{:message=>"Unable to connect to cluster."}] : [],
-          'warning_list' => not_supported ? [{:message=>"Cluster is running old version of pcs/pcsd which doesn't provide data for dashboard."}] : [],
+          'cluster_name' => cluster.name,
+          'error_list' => !not_supported ?
+            [{:message=>'Unable to connect to cluster.'}] : [],
+          'warning_list' => not_supported ?
+            [{:message=>"Cluster is running old version of pcs/pcsd which " +
+               "doesn't provide data for dashboard."}] : [],
           'status' => 'unknown',
           'node_list' => get_default_node_list(cluster.name),
-          'fence_list' => [],
           'resource_list' => []
         }
       end
       if not_authorized_nodes.length > 0
         overview_cluster['warning_list'] << {
-          'message' => 'Not authorized against node(s) '\
+          'message' => 'GUI is not authorized against node(s) '\
             + not_authorized_nodes.join(', '),
           'type' => 'nodes_not_authorized',
           'node_list' => not_authorized_nodes,
         }
       end
+
+      overview_cluster['node_list'].each { |node|
+        if node['status_version'] == '1'
+          overview_cluster['warning_list'] << {
+            :message => 'Some nodes are running old version of pcs/pcsd.'
+          }
+          break
+        end
+      }
+
       cluster_map[cluster.name] = overview_cluster
     }
   }
@@ -1175,8 +1128,8 @@ def overview_all()
   config = PCSConfig.new(config_text_old)
   cluster_map.each { |cluster, values|
     nodes = []
-    values["node_list"].each { |node|
-      nodes << node["name"]
+    values['node_list'].each { |node|
+      nodes << node['name']
     }
     config.update(cluster, nodes)
   }
@@ -1193,7 +1146,9 @@ def overview_all()
 
   overview = {
     'not_current_data' => not_current_data,
-    'cluster_list' => cluster_map.values.sort { |a, b| a['name'] <=> b['name']}
+    'cluster_list' => cluster_map.values.sort { |a, b|
+      a['clustername'] <=> b['clustername']
+    }
   }
   return JSON.generate(overview)
 end
@@ -1293,20 +1248,22 @@ def resource_start(params)
 end
 
 def resource_form(params)
-  @resources, @groups, retval = getResourcesGroups()
-  if retval != 0
-    return [200,'{"noresponse":true}']
-  end
-  @existing_resource = true
-  @resources.each do |r|
-    if r.id == params[:resource]
-      @cur_resource = r
+  cib_dom = get_cib_dom
+  @cur_resource = get_resource_by_id(params[:resource], cib_dom)
+  @groups = get_resource_groups(cib_dom)
+  @version = params[:version]
+
+  if @cur_resource.instance_of?(ClusterEntity::Primitive) and !@cur_resource.stonith
+    @cur_resource_group = @cur_resource.get_group
+    @cur_resource_clone = @cur_resource.get_clone
+    @cur_resource_ms = @cur_resource.get_master
+    @resource = ResourceAgent.new(@cur_resource.agentname)
+    if @cur_resource.provider == 'heartbeat'
+      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + @cur_resource.type)
+    elsif @cur_resource.provider == 'pacemaker'
+      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(PACEMAKER_AGENTS_DIR + @cur_resource.type)
     end
-  end
-  if @cur_resource
-    @cur_resource.options = getResourceOptions(@cur_resource.id)
-    @resource_agents = getResourceAgents(@cur_resource.agentname)
-    @resource = @resource_agents[@cur_resource.agentname.gsub('::',':')]
+    @existing_resource = true
     if @resource
       erb :resourceagentform
     else
@@ -1318,24 +1275,12 @@ def resource_form(params)
 end
 
 def fence_device_form(params)
-  @resources, @groups, retval = getResourcesGroups(true)
-  if retval != 0
-    return [200,'{"noresponse":true}']
-  end
+  @cur_resource = get_resource_by_id(params[:resource], get_cib_dom)
 
-  @cur_resource = nil
-  @resources.each do |r|
-    if r.id == params[:resource]
-      @cur_resource = r
-      break
-    end
-  end
-
-  if @cur_resource
-    @cur_resource.options = getResourceOptions(@cur_resource.id,true)
+  if @cur_resource.instance_of?(ClusterEntity::Primitive) and @cur_resource.stonith
     @resource_agents = getFenceAgents(@cur_resource.agentname)
     @existing_resource = true
-    @fenceagent = @resource_agents[@cur_resource.agentname.gsub(/.*:/,"")]
+    @fenceagent = @resource_agents[@cur_resource.type]
     erb :fenceagentform
   else
     "Can't find fence device"
@@ -1344,10 +1289,10 @@ end
 
 # Creates resource if params[:resource_id] is not set
 def update_resource (params)
-  param_line = getParamLine(params)
+  param_line = getParamList(params)
   if not params[:resource_id]
     out, stderr, retval = run_cmd(PCS, "resource", "create", params[:name], params[:resource_type],
-	    *(param_line.split(" ")))
+	    *param_line)
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
     end
@@ -1373,7 +1318,7 @@ def update_resource (params)
     if params[:resource_clone]
       params[:resource_id].sub!(/(.*):.*/,'\1')
     end
-    run_cmd(PCS, "resource", "update", params[:resource_id], *(param_line.split(" ")))
+    run_cmd(PCS, "resource", "update", params[:resource_id], *param_line)
   end
 
   if params[:resource_group]
@@ -1406,13 +1351,12 @@ end
 def update_fence_device (params)
   logger.info "Updating fence device"
   logger.info params
-  param_line = getParamLine(params)
+  param_line = getParamList(params)
   logger.info param_line
 
-  param_line = getParamLine(params)
   if not params[:resource_id]
     out, stderr, retval = run_cmd(PCS, "stonith", "create", params[:name], params[:resource_type],
-	    *(param_line.split(" ")))
+	    *param_line)
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
     end
@@ -1420,7 +1364,7 @@ def update_fence_device (params)
   end
 
   if param_line.length != 0
-    out, stderr, retval = run_cmd(PCS, "stonith", "update", params[:resource_id], *(param_line.split(" ")))
+    out, stderr, retval = run_cmd(PCS, "stonith", "update", params[:resource_id], *param_line)
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
     end
@@ -1466,6 +1410,7 @@ end
 
 def remove_resource (params)
   force = params['force']
+  no_error_if_not_exists = params.include?('no_error_if_not_exists')
   errors = ""
   params.each { |k,v|
     if k.index("resid-") == 0
@@ -1474,7 +1419,9 @@ def remove_resource (params)
       command << '--force' if force
       out, errout, retval = run_cmd(*command)
       if retval != 0
-        errors += errout.join(' ').strip + "\n"
+        unless out.index(" does not exist.") != -1 and no_error_if_not_exists  
+          errors += errout.join(' ').strip + "\n"
+        end
       end
     end
   }
@@ -1593,7 +1540,8 @@ def add_constraint_remote(params)
   case params["c_type"]
   when "loc"
     retval, error = add_location_constraint(
-      params["res_id"], params["node_id"], params["score"]
+      params["res_id"], params["node_id"], params["score"], params["force"],
+      !params['disable_autocorrect']
     )
   when "ord"
     resA = params["res_id"]
@@ -1606,7 +1554,8 @@ def add_constraint_remote(params)
     end
 
     retval, error = add_order_constraint(
-      resA, resB, actionA, actionB, params["score"], true, params["force"]
+      resA, resB, actionA, actionB, params["score"], true, params["force"],
+      !params['disable_autocorrect']
     )
   when "col"
     resA = params["res_id"]
@@ -1621,7 +1570,7 @@ def add_constraint_remote(params)
     end
 
     retval, error = add_colocation_constraint(
-      resA, resB, score, params["force"]
+      resA, resB, score, params["force"], !params['disable_autocorrect']
     )
   else
     return [400, "Unknown constraint type: #{params['c_type']}"]
@@ -1637,7 +1586,8 @@ end
 def add_constraint_rule_remote(params)
   if params["c_type"] == "loc"
     retval, error = add_location_constraint_rule(
-      params["res_id"], params["rule"], params["score"], params["force"]
+      params["res_id"], params["rule"], params["score"], params["force"],
+      !params['disable_autocorrect']
     )
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]
@@ -1654,7 +1604,7 @@ def add_constraint_set_remote(params)
   case params["c_type"]
   when "ord"
     retval, error = add_order_set_constraint(
-      params["resources"].values, params["force"]
+      params["resources"].values, params["force"], !params['disable_autocorrect']
     )
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]
@@ -1934,4 +1884,96 @@ def fix_auth_of_cluster(params)
     return [400, "Authentication failed."]
   end
   return [200, "Auhentication of nodes in cluster should be fixed."]
+end
+
+def resource_master(params)
+  unless params[:resource_id]
+    return [400, 'resource_id has to be specified.']
+  end
+  _, stderr, retval = run_cmd(
+    PCS, 'resource', 'master', params[:resource_id]
+  )
+  if retval != 0
+    return [400, 'Unable to create master/slave resource from ' +
+      "'#{params[:resource_id]}': #{stderr.join('')}"
+    ]
+  end
+  return 200
+end
+
+def resource_change_group(params)
+  if params[:resource_id].nil? or params[:group_id].nil?
+    return [400, 'resource_id and group_id have to be specified.']
+  end
+  if params[:group_id].empty?
+    if params[:old_group_id]
+      _, stderr, retval = run_cmd(
+        PCS, 'resource', 'group', 'remove', params[:old_group_id],
+        params[:resource_id]
+      )
+      if retval != 0
+        return [400, "Unable to remove resource '#{params[:resource_id]}' " +
+          "from group '#{params[:old_group_id]}': #{stderr.join('')}"
+        ]
+      end
+    end
+    return 200
+  end
+  _, stderr, retval = run_cmd(
+    PCS, 'resource', 'group', 'add', params[:group_id], params[:resource_id]
+  )
+  if retval != 0
+    return [400, "Unable to add resource '#{params[:resource_id]}' to " +
+      "group '#{params[:group_id]}': #{stderr.join('')}"
+    ]
+  end
+  return 200
+end
+
+def resource_ungroup(params)
+  unless params[:group_id]
+    return [400, 'group_id has to be specified.']
+  end
+  
+  _, stderr, retval = run_cmd(
+    PCS, 'resource', 'ungroup', params[:group_id]
+  )
+  if retval != 0
+    return [400, 'Unable to ungroup group ' +
+      "'#{params[:group_id]}': #{stderr.join('')}"
+    ]
+  end
+  return 200
+end
+
+def resource_clone(params)
+  unless params[:resource_id]
+    return [400, 'resource_id has to be specified.']
+  end
+  
+  _, stderr, retval = run_cmd(
+    PCS, 'resource', 'clone', params[:resource_id]
+  )
+  if retval != 0
+    return [400, 'Unable to create clone resource from ' +
+      "'#{params[:resource_id]}': #{stderr.join('')}"
+    ]
+  end
+  return 200
+end
+
+def resource_unclone(params)
+  unless params[:resource_id]
+    return [400, 'resource_id has to be specified.']
+  end
+
+  _, stderr, retval = run_cmd(
+    PCS, 'resource', 'unclone', params[:resource_id]
+  )
+  if retval != 0
+    return [400, 'Unable to unclone ' +
+      "'#{params[:resource_id]}': #{stderr.join('')}"
+    ]
+  end
+  return 200
 end

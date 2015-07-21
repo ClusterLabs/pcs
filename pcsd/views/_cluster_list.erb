@@ -1,27 +1,27 @@
 <form method=post action="/manage/removecluster">
-  <table cellpadding=0 cellspacing=0 style="float:left; width: 100%;">
+  <table cellpadding=0 cellspacing=0 style="width: 100%; padding-left: 5px;">
     <tr>
-      <th style="width: 20%; padding-left: 5px;" nowrap>Clusters #</th>
-      <th style="width: 20%;">OK <div class="check sprites"></div></th>
-      <th style="width: 20%;">Warning<div class="warning sprites"></div></th>
-      <th style="width: 20%;">Failed<div class="error sprites"></div></th>
-      <th style="width: 20%;">Unknown<div class="x sprites"></div></th>
+      <th>All</th>
+      <th><div class="check sprites" title="OK"></div></th>
+      <th><div class="warning sprites" title="Warning"></div></th>
+      <th><div class="error sprites" title="Failed"></div></th>
+      <th style="width: 20px;"><div class="x sprites" title="Unknown"></div></th>
     </tr>
     <tr>
-      <td style="padding-left: 5px;">{{ Pcs.clusterController.content.length }}</td>
+      <td>{{ Pcs.clusterController.cluster_list.length }}</td>
       <td style="padding-left: 5px;">{{ Pcs.clusterController.num_ok }}</td>
       <td style="padding-left: 5px;">{{ Pcs.clusterController.num_warning }}</td>
       <td style="padding-left: 5px;">{{ Pcs.clusterController.num_error }}</td>
       <td style="padding-left: 5px;">{{ Pcs.clusterController.num_unknown }}</td>
     </tr>
   </table>
-  <table cellpadding=0 cellspacing=0 style="float:left;" id="clusters_list">
+  <table cellpadding=0 cellspacing=0 id="clusters_list">
     <tr>
-      {{#if Pcs.clusterController.content.length}}
-      <th></th><th></th><th>NAME</th><th>NODES</th><th style="padding-right: 50px;">RESOURCES</th><th style="padding-right: 16px;"></th>
+      {{#if Pcs.clusterController.cluster_list.length}}
+      <th></th><th></th><th>NAME</th><th style="padding-right: 1em;">NODES</th><th>RESOURCES</th><th style="padding-right: 16px;"></th>
       {{/if}}
     </tr>
-    {{#each Pcs.clusterController }}
+    {{#each Pcs.clusterController.cluster_list }}
     <tr onmouseover="hover_over(this);" onmouseout="hover_out(this);" onclick="Pcs.clusterController.update_cur_cluster(this);" {{bind-attr nodeID="this.name"}}>
     <td class="node_list_check">
       <input class="node_list_check" type="checkbox" {{bind-attr name="input_name"}} {{bind-attr res_id="name"}}>
@@ -42,7 +42,7 @@
       {{#if status_unknown}}
         unknown
       {{else}}
-        {{resources.length}}
+        {{resource_list.length}}
         {{#if resources_failed}}
       | <div style="display: inline-block;" title="Issue(s) found"><div class="warning sprites"></div> <span style="font-weight: bold; color: red">{{resources_failed}}</span></div>
         {{/if}}

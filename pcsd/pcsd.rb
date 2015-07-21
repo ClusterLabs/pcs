@@ -120,7 +120,8 @@ helpers do
         on_managec_main = true
       end
 
-      if request.path.start_with?('/remote') or (request.path.match(match_expr) and not on_managec_main) or '/run_pcs' == request.path
+      if request.path.start_with?('/remote') or (request.path.match(match_expr) and not on_managec_main) or '/run_pcs' == request.path or 
+        '/clusters_overview' == request.path
 	$logger.info "ERROR: Request without authentication"
 	halt [401, '{"notauthorized":"true"}']
       else
@@ -159,16 +160,16 @@ helpers do
     @nodes = @nodes_online.concat(@nodes_offline)
   end
 
-  def getParamLine(params)
-    param_line = ""
-    meta_options = ""
+  def getParamList(params)
+    param_line = []
+    meta_options = []
     params.each { |param, val|
       if param.start_with?("_res_paramne_") or (param.start_with?("_res_paramempty_") and val != "")
-	myparam = param.sub(/^_res_paramne_/,"").sub(/^_res_paramempty_/,"")
-	param_line += " #{myparam}=#{val}"
+        myparam = param.sub(/^_res_paramne_/,"").sub(/^_res_paramempty_/,"")
+        param_line << "#{myparam}=#{val}"
       end
       if param == "disabled"
-      	meta_options += " meta target-role=Stopped"
+        meta_options << "meta target-role=Stopped"
       end
     }
     return param_line + meta_options
@@ -376,8 +377,8 @@ if not DISABLE_GUI
     erb :manage, :layout => :main
   end
 
-  get '/overview' do
-    overview_all()
+  get '/clusters_overview' do
+    clusters_overview()
   end
 
   get '/managec/:cluster/main' do
@@ -401,6 +402,10 @@ if not DISABLE_GUI
 
   get '/managec/:cluster/status_all' do
     status_all(params,get_cluster_nodes(params[:cluster]))
+  end
+
+  get '/managec/:cluster/cluster_status' do
+    cluster_status(params, params[:cluster])
   end
 
   get '/managec/:cluster/overview_cluster' do

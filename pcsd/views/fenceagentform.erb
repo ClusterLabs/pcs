@@ -32,7 +32,7 @@
 	    &nbsp;<%= name %>
 	  </td>
 	  <td>
-	    <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if (@existing_resource and @cur_resource and @cur_resource.options)%>" size="35" class="text_field">
+	    <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.instance_attr[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=h(@cur_resource.instance_attr[name].value) if (@existing_resource and @cur_resource and @cur_resource.instance_attr[name])%>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
@@ -48,7 +48,7 @@
 	    &nbsp;<%= name %>
 	  </td>
 	  <td>
-            <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if @existing_resource and @cur_resource and @cur_resource.options%>" size="35" class="text_field">
+            <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.instance_attr[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=h(@cur_resource.instance_attr[name].value) if @existing_resource and @cur_resource and @cur_resource.instance_attr[name]%>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
@@ -64,7 +64,7 @@
         &nbsp;<%= name %>
       </td>
       <td>
-            <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if @existing_resource and @cur_resource and @cur_resource.options%>" size="35" class="text_field">
+            <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.instance_attr[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=h(@cur_resource.instance_attr[name].value) if @existing_resource and @cur_resource and @cur_resource.instance_attr[name]%>" size="35" class="text_field">
       </td>
     </tr>
       <% } %>

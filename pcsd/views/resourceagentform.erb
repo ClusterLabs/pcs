@@ -10,24 +10,25 @@
           <td></td>
           <td><div class="long_desc_div reg" style="display:none; font-size:12px; max-width:350px;"><%= nl2br(h(@resource.long_desc))%></div></td>
         </tr>
+	<% if @version != '2' %>
         <tr title="<%= h('Select a group to add the resource to.') %>">
 	  <td nowrap><div class="bold">Resource Group:</div></td>
 	  <td>
 	    <select name="resource_group">
 		<option value="">None</option>
 	      <% @groups.each do |g| %>
-		<option <%= "selected" if @cur_resource and g == @cur_resource.group %> value="<%=g%>"><%=g%></option>
+		<option <%= "selected" if g == @cur_resource_group %> value="<%=g%>"><%=g%></option>
 	      <% end %>
 	    </select>
-	    <input type=hidden name="_orig_resource_group" value="<%= @cur_resource.group if @cur_resource %>">
+	    <input type=hidden name="_orig_resource_group" value="<%= @cur_resource_group if @cur_resource_group %>">
 	  </td>
 	</tr>
 	<tr title='<%= h("Makes the resource run multiple times on the cluster. \
 By default the resource will run once on each of the nodes.") %>'>
 	  <td nowrap><div class="bold">Clone:</div></td>
 	  <td>
-	    <input type="hidden" name="_orig_resource_clone" value="<%= @cur_resource.clone if @cur_resource %>">
-	    <input type=checkbox name="resource_clone" <%= "checked" if @cur_resource && @cur_resource.clone %>>
+	    <input type="hidden" name="_orig_resource_clone" value="<%= @cur_resource_clone if @cur_resource %>">
+	    <input type=checkbox name="resource_clone" <%= "checked" if @cur_resource && @cur_resource_clone %>>
 	  </td>
 	</tr>
 	<tr title='<%= h("Makes the resource run multiple times on the cluster and \
@@ -36,10 +37,11 @@ By default the resource will run on one node in Master mode and on all other \
 nodes in Slave mode.") %>'>
 	  <td nowrap><div class="bold">Master/Slave:</div></td>
 	  <td>
-	    <input type="hidden" name="_orig_resource_ms" value="<%= @cur_resource.ms if @cur_resource %>">
-	    <input type=checkbox name="resource_ms" <%= "checked" if @cur_resource && @cur_resource.ms %>>
+	    <input type="hidden" name="_orig_resource_ms" value="<%= @cur_resource_ms if @cur_resource %>">
+	    <input type=checkbox name="resource_ms" <%= "checked" if @cur_resource && @cur_resource_ms %>>
 	  </td>
 	</tr>
+	<% end %>
 	<% if not @existing_resource %>
 	  <tr title="<%= h('Do not start the resource automatically after creating.') %>">
 	    <td nowrap><div class="bold">Disabled:</div></td>
@@ -66,14 +68,14 @@ nodes in Slave mode.") %>'>
 	<input type="hidden" name="resource_id" value="<%=@cur_resource.id%>">
       <% end %>
 
-      <input type="hidden" name="resource_type" value="<%=@resource.name%>">
+      <input type="hidden" name="resource_type" value="<%=@resource.type%>">
       <% @resource.required_options.each { |name, desc|  %>
 	<tr title="<%=h(desc[1])%>">
 	  <td class="reg">
 	    <%= name %>
 	  </td>
 	  <td>
-	    <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	    <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.instance_attr[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=h(@cur_resource.instance_attr[name].value) if @existing_resource && @cur_resource && @cur_resource.instance_attr[name] %>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>
@@ -89,7 +91,7 @@ nodes in Slave mode.") %>'>
 	    <%= name %>
 	  </td>
 	  <td>
-	    <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.options[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=@cur_resource.options[name] if @existing_resource %>" size="35" class="text_field">
+	    <input placeholder="<%=desc[0]%>" style="margin-right: 50px;" type="text" name="<%= @cur_resource && @cur_resource.instance_attr[name] ? "_res_paramne_" : "_res_paramempty_"%><%=name%>" value="<%=h(@cur_resource.instance_attr[name].value) if @existing_resource && @cur_resource && @cur_resource.instance_attr[name] %>" size="35" class="text_field">
 	  </td>
 	</tr>
       <% } %>

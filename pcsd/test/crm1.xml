@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<crm_mon version="1.1.12">
+    <summary>
+        <last_update time="Sun Jul  5 12:52:15 2015" />
+        <last_change time="Sun Jul  5 12:47:19 2015" user="" client="" origin="" />
+        <stack type="corosync" />
+        <current_dc present="true" version="1.1.12-a9c8177" name="node3" id="3" with_quorum="true" />
+        <nodes_configured number="3" expected_votes="unknown" />
+        <resources_configured number="24" />
+    </summary>
+    <nodes>
+        <node name="node1" id="1" online="true" standby="false" standby_onfail="false" maintenance="false" pending="false" unclean="false" shutdown="false" expected_up="true" is_dc="false" resources_running="8" type="member" />
+        <node name="node2" id="2" online="true" standby="false" standby_onfail="false" maintenance="false" pending="false" unclean="false" shutdown="false" expected_up="true" is_dc="false" resources_running="7" type="member" />
+        <node name="node3" id="3" online="true" standby="false" standby_onfail="false" maintenance="false" pending="false" unclean="false" shutdown="false" expected_up="true" is_dc="true" resources_running="9" type="member" />
+    </nodes>
+    <resources>
+        <resource id="node1-stonith" resource_agent="stonith:fence_xvm" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+            <node name="node3" id="3" cached="false"/>
+        </resource>
+        <resource id="node2-stonith" resource_agent="stonith:fence_xvm" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+            <node name="node1" id="1" cached="false"/>
+        </resource>
+        <resource id="node3-stonith" resource_agent="stonith:fence_xvm" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+            <node name="node2" id="2" cached="false"/>
+        </resource>
+        <resource id="dummy1" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+            <node name="node1" id="1" cached="false"/>
+        </resource>
+        <group id="group1" number_resources="2" >
+             <resource id="dummy3" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                 <node name="node3" id="3" cached="false"/>
+             </resource>
+             <resource id="dummy4" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                 <node name="node3" id="3" cached="false"/>
+             </resource>
+        </group>
+        <clone id="dummy-clone" multi_state="false" unique="false" managed="true" failed="false" failure_ignored="false" >
+            <resource id="dummy" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                <node name="node3" id="3" cached="false"/>
+            </resource>
+            <resource id="dummy" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                <node name="node1" id="1" cached="false"/>
+            </resource>
+            <resource id="dummy" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                <node name="node2" id="2" cached="false"/>
+            </resource>
+        </clone>
+        <clone id="group2-clone" multi_state="false" unique="false" managed="true" failed="false" failure_ignored="false" >
+            <group id="group2:0" number_resources="2" >
+                 <resource id="dummy6" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node3" id="3" cached="false"/>
+                 </resource>
+                 <resource id="dummy5" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node3" id="3" cached="false"/>
+                 </resource>
+            </group>
+            <group id="group2:1" number_resources="2" >
+                 <resource id="dummy6" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node1" id="1" cached="false"/>
+                 </resource>
+                 <resource id="dummy5" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node1" id="1" cached="false"/>
+                 </resource>
+            </group>
+            <group id="group2:2" number_resources="2" >
+                 <resource id="dummy6" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node2" id="2" cached="false"/>
+                 </resource>
+                 <resource id="dummy5" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node2" id="2" cached="false"/>
+                 </resource>
+            </group>
+        </clone>
+        <clone id="ms-master" multi_state="true" unique="false" managed="true" failed="false" failure_ignored="false" >
+            <resource id="ms" resource_agent="ocf::pacemaker:Stateful" role="Master" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                <node name="node3" id="3" cached="false"/>
+            </resource>
+            <resource id="ms" resource_agent="ocf::pacemaker:Stateful" role="Slave" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                <node name="node1" id="1" cached="false"/>
+            </resource>
+            <resource id="ms" resource_agent="ocf::pacemaker:Stateful" role="Slave" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                <node name="node2" id="2" cached="false"/>
+            </resource>
+        </clone>
+        <clone id="group3-master" multi_state="true" unique="false" managed="true" failed="false" failure_ignored="false" >
+            <group id="group3:0" number_resources="2" >
+                 <resource id="ms1" resource_agent="ocf::pacemaker:Stateful" role="Master" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node3" id="3" cached="false"/>
+                 </resource>
+                 <resource id="ms2" resource_agent="ocf::pacemaker:Stateful" role="Master" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node3" id="3" cached="false"/>
+                 </resource>
+            </group>
+            <group id="group3:1" number_resources="2" >
+                 <resource id="ms1" resource_agent="ocf::pacemaker:Stateful" role="Slave" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node1" id="1" cached="false"/>
+                 </resource>
+                 <resource id="ms2" resource_agent="ocf::pacemaker:Stateful" role="Slave" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node1" id="1" cached="false"/>
+                 </resource>
+            </group>
+            <group id="group3:2" number_resources="2" >
+                 <resource id="ms1" resource_agent="ocf::pacemaker:Stateful" role="Slave" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node2" id="2" cached="false"/>
+                 </resource>
+                 <resource id="ms2" resource_agent="ocf::pacemaker:Stateful" role="Slave" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
+                     <node name="node2" id="2" cached="false"/>
+                 </resource>
+            </group>
+        </clone>
+    </resources>
+</crm_mon>

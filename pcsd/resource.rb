@@ -138,15 +138,19 @@ def getResourceOptions(resource_id,stonith=false)
   return ret
 end
 
-def getAllConstraints()
-  stdout, stderror, retval = run_cmd("cibadmin", "-Q", "-l", "--xpath", "//constraints")
+def getAllConstraints(constraints_dom=nil)
   constraints = {}
-  if retval != 0
-    return {}
+  if constraints_dom
+    doc = constraints_dom
+  else
+    stdout, _, retval = run_cmd('cibadmin', '-Q', '-l', '--xpath', '//constraints/*')
+    if retval != 0
+      return constraints
+    end
+    doc = REXML::Document.new(stdout.join("\n"))
   end
-  doc = REXML::Document.new(stdout.join("\n"))
-  constraints = {}
-  doc.elements.each('constraints/*') do |e|
+
+  doc.elements.each() { |e|
     if e.name == 'rsc_location' and e.has_elements?()
       rule_export = RuleToExpression.new()
       e.elements.each('rule') { |rule|
@@ -188,7 +192,7 @@ def getAllConstraints()
         constraints[e.name] = [e.attributes]
       end
     end
-  end
+  }
   return constraints
 end
 

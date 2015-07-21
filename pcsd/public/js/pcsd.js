@@ -1,11 +1,11 @@
 var pcs_timeout = 30000;
 
 function curResource() {
-  return Pcs.resourcesController.cur_resource.name
+  return Pcs.resourcesContainer.get('cur_resource').get('id')
 }
 
 function curStonith() {
-  return Pcs.resourcesController.cur_resource.name
+  return Pcs.resourcesContainer.get('cur_fence').get('id')
 }
 
 function configure_menu_show(item) {
@@ -36,10 +36,7 @@ function select_menu(menu, item, initial) {
   }
 
   if (menu == "RESOURCES") {
-    Pcs.set('cur_page',"resources")
-    Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_res);
-    if (item)
-      Pcs.resourcesController.load_resource($('[nodeID="'+item+'"]'));
+    Pcs.set('cur_page',"resources");
     menu_show("resource", true);
   } else {
     menu_show("resource", false);
@@ -610,38 +607,24 @@ function node_stop(node, force) {
   });
 }
 
-function setup_resource_links(link_type) {
-  Ember.debug("Setup resource links");
-  $("#resource_delete_link").click(function () {
-    verify_remove_resources(curResource());
-  });
-  $("#stonith_delete_link").click(function () {
-    verify_remove_fence_devices(curStonith());
-  });
-  $("#resource_stop_link").click(function () {
-    fade_in_out("#resource_stop_link");
-    $.post(get_cluster_remote_url() + 'resource_stop',"resource="+curResource());
-    Pcs.resourcesController.cur_resource.set("disabled",true);
-  });
-  $("#resource_start_link").click(function () {
-    fade_in_out("#resource_start_link");
-    $.post(get_cluster_remote_url() + 'resource_start',"resource="+curResource());
-    Pcs.resourcesController.cur_resource.set("disabled",false);
-  });
-  $("#resource_cleanup_link").click(function () {
-    fade_in_out("#resource_cleanup_link");
-    $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curResource());
-  });
-  $("#stonith_cleanup_link").click(function () {
-    fade_in_out("#stonith_cleanup_link");
-    $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curResource());
-  });
-  $("#resource_move_link").click(function () {
-    alert("Not Yet Implemented");
-  });
-  $("#resource_history_link").click(function () {
-    alert("Not Yet Implemented");
-  });
+function enable_resource() {
+  fade_in_out("#resource_start_link");
+  Pcs.resourcesContainer.enable_resource(curResource());
+}
+
+function disable_resource() {
+  fade_in_out("#resource_stop_link");
+  Pcs.resourcesContainer.disable_resource(curResource());
+}
+
+function cleanup_resource() {
+  fade_in_out("#resource_cleanup_link");
+  $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curResource());
+}
+
+function cleanup_stonith() {
+  fade_in_out("#stonith_cleanup_link");
+  $.post(get_cluster_remote_url() + 'resource_cleanup',"resource="+curStonith());
 }
 
 function checkExistingNode() {
@@ -1130,19 +1113,8 @@ function hover_out(o) {
 }
 
 function reload_current_resource() {
-  load_row_by_id(Pcs.resourcesController.cur_resource.name);
-}
-
-function load_row_by_id(resource_id) {
-  row = $("[nodeid='"+resource_id+"']");
-  if (row.parents("#resource_list").length != 0) {
-    load_agent_form(row, false);
-    load_row(row, Pcs.resourcesController, 'cur_resource', '#resource_info_div', 'cur_resource_res');
-  } else if (row.parents("#stonith_list").length != 0) {
-    load_agent_form(row, true);
-    load_row(row, Pcs.resourcesController, 'cur_resource', "#stonith_info_div", 'cur_resource_ston');
-  } else
-    alert("Unable to make " + resource_id + " active, doesn't appear to be resource or stonith");
+  tree_view_onclick(curResource(), true);
+  tree_view_onclick(curStonith(), true);
 }
 
 function load_row(node_row, ac, cur_elem, containing_elem, also_set, initial_load){
@@ -1170,25 +1142,28 @@ function load_row(node_row, ac, cur_elem, containing_elem, also_set, initial_loa
 	  self.content[key].set(cur_elem,false);
       }
     });
-    Pcs.resourcesController.update_cur_resource();
     $(containing_elem).fadeTo(500,1);
   });
 }
 
-function load_agent_form(resource_row, stonith) {
-  resource_name = $(resource_row).attr("nodeID");
+function load_agent_form(resource_id, stonith) {
   var url;
   var form;
-  var data = {resource: resource_name};
   if (stonith) {
     form = $("#stonith_agent_form");
     url = '/managec/' + Pcs.cluster_name + '/fence_device_form';
   } else {
     form = $("#resource_agent_form");
-    url = '/managec/' + Pcs.cluster_name + '/resource_form';
+    url = '/managec/' + Pcs.cluster_name + '/resource_form?version=2';
   }
 
   form.empty();
+
+  var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
+  if (!resource_obj || !resource_obj.get('is_primitive'))
+    return;
+
+  var data = {resource: resource_id};
 
   $.ajax({
     type: 'GET',
@@ -1196,9 +1171,7 @@ function load_agent_form(resource_row, stonith) {
     data: data,
     timeout: pcs_timeout,
     success: function (data) {
-      form.html(data);
-      disable_spaces(form);
-      myform = form;
+      Ember.run.next(function(){form.html(data);});
     }
   });
 }
@@ -1300,7 +1273,9 @@ function remove_nodes(ids, force) {
 }
 
 function remove_resource(ids, force) {
-  var data = {};
+  var data = {
+    no_error_if_not_exists: true
+  };
   if (force) {
     data["force"] = force;
   }
@@ -1419,53 +1394,25 @@ function add_node_attr(parent_id) {
 }
 
 function remove_meta_attr(parent_id) {
-  var data = {};
-  data["res_id"] = parent_id.attr("meta_attr_res");
-  data["key"] = parent_id.attr("meta_attr_key");
-  data["value"] = "";
+  var resource_id = curResource();
+  var attr = parent_id.attr("meta_attr_key");
   fade_in_out(parent_id.parent());
-
-  $.ajax({
-    type: 'POST',
-    url: get_cluster_remote_url() + 'add_meta_attr_remote',
-    data: data,
-    timeout: pcs_timeout,
-    success: function() {
-      Pcs.resourcesController.add_meta_attr(data["res_id"], data["key"], data["value"]);
-      Pcs.update();
-    },
-    error: function (xhr, status, error) {
-      alert("Unable to add meta attribute: ("+error+")");
-    }
-  });
+  Pcs.resourcesContainer.update_meta_attr(resource_id, attr);
 }
 
 function add_meta_attr(parent_id) {
-  var data = {};
-  data["res_id"] = Pcs.resourcesController.cur_resource.name
-  data["key"] = $(parent_id + " input[name='new_meta_key']").val();
-  data["value"] = $(parent_id + " input[name='new_meta_value']").val();
+  var resource_id = curResource();
+  var attr = $(parent_id + " input[name='new_meta_key']").val();
+  var value = $(parent_id + " input[name='new_meta_value']").val();
   fade_in_out($(parent_id));
-
-  $.ajax({
-    type: 'POST',
-    url: get_cluster_remote_url() + 'add_meta_attr_remote',
-    data: data,
-    timeout: pcs_timeout,
-    success: function() {
-      $(parent_id + " input").val("");
-      Pcs.resourcesController.add_meta_attr(data["res_id"], data["key"], data["value"]);
-      Pcs.update();
-    },
-    error: function (xhr, status, error) {
-      alert("Unable to add meta attribute: ("+error+")");
-    }
-  });
+  $(parent_id + " input").val("");
+  Pcs.resourcesContainer.update_meta_attr(resource_id, attr, value);
 }
 
 function add_constraint(parent_id, c_type, force) {
   var data = {};
-  data["res_id"] = Pcs.resourcesController.cur_resource.name
+  data["disable_autocorrect"] = true;
+  data["res_id"] = Pcs.resourcesContainer.cur_resource.get('id');
   data["node_id"] = $(parent_id + " input[name='node_id']").val();
   data["rule"] = $(parent_id + " input[name='node_id']").val();
   data["score"] = $(parent_id + " input[name='score']").val();
@@ -1480,7 +1427,7 @@ function add_constraint(parent_id, c_type, force) {
   }
   fade_in_out($(parent_id));
 
-  $.ajax({ 
+  $.ajax({
     type: 'POST',
     url: get_cluster_remote_url() + (
       data['node_id'] && (data['node_id'].trim().indexOf(' ') != -1)
@@ -1491,19 +1438,6 @@ function add_constraint(parent_id, c_type, force) {
     timeout: pcs_timeout,
     success: function() {
       $(parent_id + " input").val("");
-      if (c_type == "loc")
-	Pcs.resourcesController.add_loc_constraint(data["res_id"],"temp-cons-id",
-						   data["node_id"], data["score"]);
-      else if (c_type == "ord")
-        Pcs.resourcesController.add_ord_constraint(
-          data["res_id"], "temp-cons-id", data["target_res_id"],
-          data['res_action'], data['target_action'], data["order"],
-          data["score"]
-        );
-      else if (c_type == "col")
-	Pcs.resourcesController.add_col_constraint(data["res_id"],"temp-cons-id",
-						   data["target_res_id"],
-						   data["colocation_type"], data["score"]);
       Pcs.update();
     },
     error: function (xhr, status, error) {
@@ -1518,9 +1452,11 @@ function add_constraint(parent_id, c_type, force) {
       }
       if (message.indexOf('--force') == -1) {
         alert(message);
+        Pcs.update();
       }
       else {
         message = message.replace(', use --force to override', '');
+        message = message.replace('Use --force to override.', '');
         if (confirm(message + "\n\nDo you want to force the operation?")) {
           add_constraint(parent_id, c_type, true);
         }
@@ -1553,11 +1489,6 @@ function add_constraint_set(parent_id, c_type, force) {
     timeout: pcs_timeout,
     success: function() {
       reset_constraint_set_form(parent_id);
-      if (c_type == "ord") {
-        Pcs.resourcesController.add_ord_set_constraint(
-          data["resources"], "temp-cons-id", "temp-cons-set-id"
-        );
-      }
       Pcs.update();
     },
     error: function (xhr, status, error){
@@ -1572,6 +1503,7 @@ function add_constraint_set(parent_id, c_type, force) {
       }
       if (message.indexOf('--force') == -1) {
         alert(message);
+        Pcs.update();
       }
       else {
         message = message.replace(', use --force to override', '');
@@ -1603,10 +1535,13 @@ function remove_constraint(id) {
     data: {"constraint_id": id},
     timeout: pcs_timeout,
     success: function (data) {
-      Pcs.resourcesController.remove_constraint(id);
+      Pcs.resourcesContainer.remove_constraint(id);
     },
     error: function (xhr, status, error) {
       alert("Error removing constraint: ("+error+")");
+    },
+    complete: function() {
+      Pcs.update();
     }
   });
 }
@@ -1619,10 +1554,13 @@ function remove_constraint_rule(id) {
     data: {"rule_id": id},
     timeout: pcs_timeout,
     success: function (data) {
-      Pcs.resourcesController.remove_constraint(id);
+      Pcs.resourcesContainer.remove_constraint(id);
     },
     error: function (xhr, status, error) {
       alert("Error removing constraint rule: ("+error+")");
+    },
+    complete: function() {
+      Pcs.update();
     }
   });
 }
@@ -1721,7 +1659,6 @@ function remove_acl_item(id,item) {
     timeout: pcs_timeout,
     success: function (data) {
       Pcs.update();
-//      Pcs.resourcesController.remove_constraint(id);
     },
     error: function (xhr, status, error) {
       alert(xhr.responseText);
@@ -1772,9 +1709,9 @@ function checkBoxToggle(cb,nodes) {
     cbs = $(cb).closest("tr").parent().find(".node_list_check input[type=checkbox]")
   }
   if ($(cb).prop('checked'))
-    cbs.prop('checked',true);
+    cbs.prop('checked',true).change();
   else
-    cbs.prop('checked',false);
+    cbs.prop('checked',false).change();
 }
 
 function loadWizard(item) {
@@ -1823,6 +1760,7 @@ function get_status_value(status) {
     blocked: 1,
     warning: 2,
     standby: 2,
+    "partially running": 2,
     disabled: 3,
     unknown: 3,
     ok: 4,
@@ -1923,6 +1861,180 @@ function fix_auth_of_cluster() {
       hide_loading_screen();
       Pcs.update();
       alert(jqhxr.responseText);
+    }
+  });
+}
+
+function get_tree_view_element_id(element) {
+  return $(element).parents('table.tree-element')[0].id;
+}
+
+function get_list_view_element_id(element) {
+  return $(element)[0].id;
+}
+
+function auto_show_hide_constraints() {
+  var cont = ["location_constraints", "ordering_constraints", "ordering_set_constraints", "colocation_constraints", "meta_attributes"];
+  $.each(cont, function(index, name) {
+    var elem = $("#" + name)[0];
+    var cur_resource = Pcs.resourcesContainer.get('cur_resource');
+    if (elem && cur_resource) {
+      var visible = $(elem).children("span")[0].style.display != 'none';
+      if (visible && (!cur_resource.get(name) || cur_resource.get(name).length == 0))
+        show_hide_constraints(elem);
+      else if (!visible && cur_resource.get(name) && cur_resource.get(name).length > 0)
+        show_hide_constraints(elem);
+    }
+  });
+}
+
+function tree_view_onclick(resource_id, auto) {
+  auto = typeof auto !== 'undefined' ? auto : false;
+  var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
+  if (!resource_obj) {
+    console.log("Resource " + resource_id + "not found.");
+    return;
+  }
+  if (resource_obj.get('stonith')) {
+    Pcs.resourcesContainer.set('cur_fence', resource_obj);
+    if (!auto) window.location.hash = "/fencedevices/" + resource_id;
+  } else {
+    Pcs.resourcesContainer.set('cur_resource', resource_obj);
+    if (!auto) window.location.hash = "/resources/" + resource_id;
+    auto_show_hide_constraints();
+  }
+
+  tree_view_select(resource_id);
+
+  load_agent_form(resource_id, resource_obj.get('stonith'));
+}
+
+function tree_view_select(element_id) {
+  var e = $('#' + element_id);
+  var view = e.parents('table.tree-view');
+  view.find('div.arrow').hide();
+  view.find('tr.children').hide();
+  view.find('table.tree-element').show();
+  view.find('tr.tree-element-name').removeClass("node_selected");
+  e.find('tr.tree-element-name:first').addClass("node_selected");
+  e.find('tr.tree-element-name div.arrow:first').show();
+  e.parents('tr.children').show();
+  e.find('tr.children').show();
+}
+
+function list_view_select(element_id) {
+  var e = $('#' + element_id);
+  var view = e.parents('table.list-view');
+  view.find('div.arrow').hide();
+  view.find('tr.list-view-element').removeClass("node_selected");
+  e.addClass('node_selected');
+  e.find('div.arrow').show();
+}
+
+function tree_view_checkbox_onchange(element) {
+  var e = $(element);
+  var children = $(element).closest(".tree-element").find(".children" +
+    " input:checkbox");
+  var val = e.prop('checked');
+  children.prop('checked', val);
+  children.prop('disabled', val);
+}
+
+function resource_master(resource_id) {
+  show_loading_screen();
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'resource_master',
+    data: {resource_id: resource_id},
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(xhr.responseText);
+    },
+    complete: function() {
+      Pcs.update();
+    }
+  });
+}
+
+function resource_clone(resource_id) {
+  show_loading_screen();
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'resource_clone',
+    data: {resource_id: resource_id},
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(xhr.responseText);
+    },
+    complete: function() {
+      Pcs.update();
+    }
+  });
+}
+
+function resource_unclone(resource_id) {
+  show_loading_screen();
+  var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
+  if (resource_obj.get('class_type') == 'clone') {
+    resource_id = resource_obj.get('member').get('id');
+  }
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'resource_unclone',
+    data: {resource_id: resource_id},
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(xhr.responseText);
+    },
+    complete: function() {
+      Pcs.update();
+    }
+  });
+}
+
+function resource_ungroup(group_id) {
+  show_loading_screen();
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'resource_ungroup',
+    data: {group_id: group_id},
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(xhr.responseText);
+    },
+    complete: function() {
+      Pcs.update();
+    }
+  });
+}
+
+function resource_change_group(resource_id, group_id) {
+  show_loading_screen();
+  var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
+  var data = {
+    resource_id: resource_id,
+    group_id: group_id
+  };
+  
+  if (resource_obj.get('parent')) {
+    if (resource_obj.get('parent').get('id') == group_id) {
+      return;  
+    }
+    if (resource_obj.get('parent').get('class_type') == 'group') {
+      data['old_group_id'] = resource_obj.get('parent').get('id');
+    }
+  }
+
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'resource_change_group',
+    data: data,
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(xhr.responseText);
+    },
+    complete: function() {
+      Pcs.update();
     }
   });
 }

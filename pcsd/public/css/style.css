@@ -727,7 +727,7 @@ li.menuheader {
 }
 
 .node_selected {
-  background: #e4f5fd;
+  background-color: #e4f5fd;
 }
 
 .ui-progressbar .ui-progressbar-value {
@@ -758,4 +758,24 @@ li.menuheader {
 
 .hidden {
     display: none;
+}
+
+.element_name {
+  height: 25px;
+}
+.element_name div div {
+  margin-top: 3px;
+  height: 100%;
+}
+
+.tree-view {
+  width: 450px;
+}
+
+.mouse_on_row {
+  background-color: #e4f5fd;
+}
+
+.issue_table {
+  margin-top: 1.5em;
 }

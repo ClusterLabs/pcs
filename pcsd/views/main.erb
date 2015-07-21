@@ -63,6 +63,430 @@
 </head>
 <html>
   <body>
+  <script type="text/x-handlebars" data-template-name="components/list-view">
+  <div style="width: 300px;" id="node_list" {{bind-attr class=element-class}}>
+    <table cellpadding="0" cellspacing="0" class="list-view" style="width: 100%; border: none;">
+      <tr>
+        <th style="width:27px;"><input type="checkbox" onchange="checkBoxToggle(this,false)"></th><th style="width:47px;"></th><th>{{table-title}}</th><th style="width:18px;"></th>
+      </tr>
+      {{#each element in elements}}
+      <tr class="list-view-element" onmouseover="$(this).addClass('mouse_on_row');" onmouseout="$(this).removeClass('mouse_on_row');" onclick="list_view_select(get_list_view_element_id(this));" {{bind-attr id=element.name}}>
+        <td class="node_list_check">{{view Ember.Checkbox checkedBinding="checked" class="node_list_check"}}</td>
+        <td class="node_list_sprite">{{#if default-icon}}{{{default-icon}}}{{else}}{{#if element.status_icon}}{{{element.status_icon}}}{{else}}<div class="check sprites"></div>{{/if}}{{/if}}</td>
+        <td class="node_name" nowrap {{bind-attr style=element.style}}>{{element.name}}</td>
+        <td>
+          <div style="display: none;" class="arrow sprites"></div>
+        </td>
+      </tr>
+      {{/each}}
+      </table>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/resource-tree-view">
+  <div style="width: 450px;">
+    <table cellpadding="0" cellspacing="0" class="tree-view" style="width: 100%; border: none;">
+      <tr>
+        <th style="width:27px;"><input type="checkbox" onchange="checkBoxToggle(this,false)"></th><th style="width:47px;"></th><th>NAME</th><th style="width:220px;">TYPE</th><th style="width:18px;"></th>
+      </tr>
+      {{#each element in elements}}
+      <tr><td colspan="5" style="padding-top: 0px; padding-bottom: 0px;">
+          {{resource-tree-element node=element}}
+      </td></tr>
+      {{/each}}
+      </table>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/resource-tree-element">
+    <table class="tree-element"  cellpadding="0" cellspacing="0" style="width: 100%; border: none;" {{bind-attr id=node._id}}>
+    <tr class="tree-element-name" onclick="tree_view_onclick(get_tree_view_element_id(this));" onmouseover="$(this).addClass('mouse_on_row');" onmouseout="$(this).removeClass('mouse_on_row');" {{bind-attr nodeID=node.id}}>
+        <td style="width:20px;" class="node_list_check">
+          <input type="checkbox" onchange="tree_view_checkbox_onchange(this)">
+        </td>
+        <td style="width:18px;" class="node_list_sprite">{{{node.status_icon}}}</td>
+        <td class="resource_name" nowrap {{bind-attr node=node.style}}>{{node._id}}</td>
+        <td style="width:200px;" class="resource_type" {{bind-attr style=node.style}}>{{node.resource_type}}</td>
+        <td style="width:18px;">
+          <div style="display: none;" class="arrow sprites"></div>
+        </td>
+    </tr>
+      {{#if node.children.length}}
+      <tr class="children" style="display: none;">
+        <td colspan="5" style="padding-left: 10px; padding-top: 0px; padding-bottom: 0px;">
+        {{#each child in node.children}}
+          {{resource-tree-element node=child}}
+        {{/each}}
+        </td>
+      </tr>
+      {{/if}}
+      </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/issues-table">
+  {{#if issue_list.length}}
+  <div class="issue_table">
+  <span {{bind-attr style=table_name_style}}>{{table_name}}</span>
+  <table style="width: 100%" {{bind-attr class=issue_class}}>
+    {{#each issue in issue_list}}
+      <tr><td>
+        {{issue.message}}
+      </td></tr>
+    {{/each}}
+  </table>
+  </div>
+  {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/resource-edit">
+  {{#if resource}}
+    <div id="node_info_header">
+      <div class="node_info_header_title" >Edit {{page_name}}&nbsp;</div>
+      <div id="node_info_header_title_name">{{resource._id}}</div>
+    </div>
+    <div id="node_sub_info">
+      <table>
+        <tr>
+          <td>
+            <input disabled style="margin-right: 50px;" type="text" {{bind-attr value=resource._id}} size="35" class="text_field">
+          </td>
+          <td>
+            <div style="margin-right: 8px;" class="check sprites"></div>
+          </td>
+          <td nowrap>{{{resource.show_status}}}</td>
+        </tr>
+      </table>
+    </div>
+    <div id="node_options_buttons">
+    {{#if resource.stonith}}
+      <div class="xdark sprites" style="float: left"></div>
+      <div id="stonith_delete_link" class="link" onclick="verify_remove_fence_devices(curStonith());">Remove</div>
+      <div class="restart sprites" style="float: left"></div>
+      <div id="stonith_cleanup_link" class="link" onclick="cleanup_stonith();">Cleanup</div>
+    {{else}}
+      <div class="checkdark sprites" style="float: left"></div>
+      <div id="resource_start_link" class="link" onclick="enable_resource();">Enable</div>
+      <div class="cancel sprites" style="float: left"></div>
+      <div id="resource_stop_link" class="link" onclick="disable_resource();">Disable</div>
+      <div class="restart sprites" style="float: left"></div>
+      <div id="resource_cleanup_link" class="link" onclick="cleanup_resource();">Cleanup</div>
+      <div class="xdark sprites" style="float: left"></div>
+      <div id="resource_delete_link" class="link" onclick="verify_remove_resources(curResource());">Remove</div>
+    {{/if}}
+      <!--
+      <div class="move sprites" style="float: left"></div>
+      <div id="resource_move_link" class="link">Move</div>
+      <div class="history sprites" style="float: left"></div>
+      <div id="resource_history_link" class="link">History</div>
+      -->
+    </div>
+    <br>
+    <div id="resource_issues">
+      {{issues-table table_name="Errors" table_name_style="color:red;" issue_list=resource.error_list issue_class="error_table"}}
+      {{issues-table table_name="Warnings" table_name_style="color:orange;" issue_list=resource.warning_list issue_class="warning_table"}}
+    </div>
+    <div id="node_details">
+      <table style="margin-bottom:25px;">
+        <tr>
+          <td class="bold" nowrap>Type:</td>
+          <td class="reg" nowrap>{{resource.res_type}}</td>
+        </tr>
+        {{#unless resource.stonith}}
+        {{#if resource.is_primitive}}
+          <tr>
+            <td class="bold" nowrap>Current Location:</td>
+            <td id="cur_res_loc" class="reg">{{resource.nodes_running_on_string}}</td>
+          </tr>
+          {{#unless resource.parent}}
+            <tr>
+              <td class="bold" nowrap>Clone:</td>
+              <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster. By default the resource will run once on each of the nodes.">
+                <input type="button" onclick="resource_clone(curResource());" value="Create clone">
+              </td>
+            </tr>
+            <tr>
+              <td class="bold" nowrap>Master/Slave:</td>
+              <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance.By default the resource will run on one node in Master mode and on all other nodes in Slave mode.">
+                <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
+              </td>
+            </tr>
+            <tr>
+              <td class="bold" nowrap>Group:</td>
+              <td id="cur_res_loc" class="reg">
+                {{{resource.group_selector}}}
+              </td>
+            </tr>
+          {{else}}
+            {{#if resource.parent.is_group}}
+            <tr>
+              <td class="bold" nowrap>Group:</td>
+              <td id="cur_res_loc" class="reg">
+                {{{resource.group_selector}}}
+              </td>
+            </tr>
+            {{/if}}
+          {{/unless}}
+        {{/if}}
+        {{/unless}}
+        {{#if resource.is_group}}
+        {{#unless resource.parent}}
+          <tr>
+            <td class="bold" nowrap>Clone:</td>
+            <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster. By default the resource will run once on each of the nodes.">
+              <input type="button" onclick="resource_clone(curResource());" value="Create clone">
+            </td>
+          </tr>
+          <tr>
+            <td class="bold" nowrap>Master/Slave:</td>
+            <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance.By default the resource will run on one node in Master mode and on all other nodes in Slave mode.">
+              <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
+            </td>
+          </tr>
+          <tr>
+            <td class="bold" nowrap>Group:</td>
+            <td id="cur_res_loc" class="reg">
+              <input type="button" onclick="resource_ungroup(curResource());" value="Ungroup">
+            </td>
+          </tr>
+        {{/unless}}
+        {{/if}}
+        {{#if resource.is_multi_instance}}
+          <tr>
+            <td class="bold" nowrap>Clone:</td>
+            <td id="cur_res_loc" class="reg">
+              <input type="button" onclick="resource_unclone(curResource());" value="Unclone">
+            </td>
+          </tr>
+        {{/if}}
+      </table>
+      {{#unless resource.stonith}}
+        {{location_constraints-table constraints=resource.location_constraints}}
+        {{ordering_constraints-table constraints=resource.ordering_constraints resource_id=resource._id}}
+        {{ordering_set_constraints-table constraints=resource.ordering_set_constraints}}
+        {{colocation_constraints-table constraints=resource.colocation_constraints}}
+        {{meta_attributes-table resource=resource}}
+        <br style="clear:left;">
+      {{/unless}}
+    </div>
+    {{#if stonith}}
+      <div style="clear:left; margin-top: 2em;" id="stonith_agent_form"></div>
+    {{else}}
+      <div style="clear:left; margin-top: 2em;" id="resource_agent_form"></div>
+    {{/if}}
+  {{else}}
+    {{#if stonith}}
+      NO FENCE DEVICE IN CLUSTER
+    {{else}}
+      NO RESOURCES IN CLUSTER
+    {{/if}}
+  {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/location_constraints-table">
+    <table style="clear:left;float:left">
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="location_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Location Preferences ({{#if constraints}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td>
+		    <div id="locationdep">
+		      <table class="datatable">
+			<tr><th>Node/Rule</th><th>Score</th><th>Remove</th></tr>
+			{{#each cons in constraints}}
+			<tr>
+			{{#if cons.rule_string}}
+			  <td style="white-space: normal;">{{cons.rule_string}}</td>
+			  <td>{{#if cons.score-attribute}}{{cons.score-attribute}}{{else}}{{cons.score}}{{/if}}</td>
+			  <td {{bind-attr rule_id=cons.id}} style="text-align:center">
+			    {{#unless cons.temp}}
+				<a onclick="remove_constraint_rule($(this).parent().attr('rule_id'));return false;" href="#" class="remove">X</a>
+			    {{/unless}}
+			  </td>
+			{{else}}
+			  <td>{{cons.node}}</td>
+			  <td>{{cons.score}}</td>
+			  <td {{bind-attr constraint_id=cons.id}} style="text-align:center">
+			    {{#unless cons.temp}}
+				<a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+			    {{/unless}}
+			  </td>
+			{{/if}}
+			</tr>
+			{{else}}
+			<tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+		        {{/each}}
+			<tr id="new_res_loc">
+			  <td><input type="text" name="node_id"></td>
+			  <td><input type="text" name="score" size="5"></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_loc','loc', false);" name="add">Add</button></td>
+			</tr>
+		      </table>
+		    </div>
+		  </td>
+		</tr>
+    </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/ordering_constraints-table">
+    <table style="clear:left;float:left;">
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="ordering_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Ordering Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td>
+		    <div id="locationdep">
+		      <table class="datatable">
+			<tr><th>Resource</th><th>Action</th><th>Before/After</th><th>Action</th><th>Score</th><th>Remove</th></tr>
+		        {{#each cons in constraints}}
+			  <tr><td>{{cons.other_rsc}}</td>
+			    {{#if cons.before}}
+			      <td>{{#if cons.first-action}}{{cons.first-action}}s{{else}}starts{{/if}}</td>
+			      <td>before {{then}}</td>
+			      <td>{{#if cons.then-action}}{{cons.then-action}}s{{else}}starts{{/if}}</td>
+			    {{else}}
+			      <td>{{#if cons.then-action}}{{cons.then-action}}s{{else}}starts{{/if}}</td>
+			      <td>after {{cons.first}}</td>
+			      <td>{{#if cons.first-action}}{{cons.first-action}}s{{else}}starts{{/if}}</td>
+			    {{/if}}
+			    <td>{{cons.score}}</td>
+			    <td {{bind-attr constraint_id=cons.id}} style="text-align:center">
+				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+			    </td>
+			  </tr>
+			{{else}}
+			<tr><td style="color: gray;">NONE</td><td></td><td></td><td></td><td></td><td></td></tr>
+ 			{{/each}}
+			<tr id="new_res_orc">
+			  <td><input type="text" name="target_res_id"></td>
+			  <td>
+			    <select name="target_action">
+			      <option value="start">starts</option>
+			      <option value="promote">promotes</option>
+			      <option value="demote">demotes</option>
+			      <option value="stop">stops</option>
+			    </select>
+			  </td>
+			  <td>
+			    <select name="order">
+			      <option value="after">after</option>
+			      <option value="before">before</option>
+			    </select>
+			    {{resource_id}}
+			  </td>
+			  <td>
+			    <select name="res_action">
+			      <option value="start">starts</option>
+			      <option value="promote">promotes</option>
+			      <option value="demote">demotes</option>
+			      <option value="stop">stops</option>
+			    </select>
+			  </td>
+			  <td><input type="text" name="score" size="5"></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_orc','ord', false);" name="add">Add</button></td>
+			</tr>
+		      </table>
+		    </div>
+		  </td>
+		</tr>
+	      </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/ordering_set_constraints-table">
+    <table style="clear:left;float:left;">
+          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="ordering_set_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Ordering Set Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+          <tr><td>
+            <div id="locationdep">
+              <table class="datatable">
+                <tr>
+                  <th>Preference Name/Set of Resources</th>
+                  <th style="text-align: center;">Remove</th>
+                </tr>
+                {{#each cons in constraints}}
+                <tr>
+                  <td>{{cons.id}}</td>
+                  <td {{bind-attr constraint_id="id"}} style="text-align:center;">
+                    <a onclick="remove_constraint($(this).parent().attr('constraint_id')); return false;" href="#" class="remove">X</a>
+                  </td>
+                </tr>
+                {{#each sets}}
+                <tr>
+                  <td style="padding-left:2em;">Set:{{#each rsc in cons.resources}} {{rsc}}{{/each}}</td>
+                  <td></td>
+                </tr>
+                {{/each}}
+                {{else}}
+                <tr><td style="color: gray;">NONE</td><td></td></tr>
+                {{/each}}
+                <tr id="new_res_orc_set" title="Enter the resources you want to be in one set into the 'Set' field separated by space.
+Use the 'New Set' button to create more sets.
+Use the 'Add' button to submit the form.">
+                  <td>Set: <input type="text" name="resource_ids[]"></td>
+                  <td style="vertical-align: bottom;">
+                    <button type="button" onclick="new_constraint_set_row('#new_res_orc_set');" name="new-row">New Set</button>
+                    <button type="button" onclick="add_constraint_set('#new_res_orc_set', 'ord', false);" name="add">Add</button>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td></tr>
+        </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/colocation_constraints-table">
+    <table style="clear:left;float:left">
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="colocation_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Colocation Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td>
+		    <div id="locationdep">
+		      <table class="datatable">
+			<tr><th>Resource</th><th>Together/Apart</th><th>Score</th><th>Remove</th></tr>
+			{{#each cons in constraints}}
+			  <tr><td>{{cons.other_rsc}}</td>
+			    <td>{{cons.together}}</td>
+			    <td>{{cons.score}}</td>
+			    <td {{bind-attr constraint_id=cons.id}} style="text-align:center">
+				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+			    </td>
+			  </tr>
+			  {{else}}
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+              {{/each}}
+			<tr id="new_res_col">
+			  <td><input type="text" name="target_res_id"></td>
+			  <td><select name="colocate"><option value="together">Together<option value="apart">Apart</select></td>
+			  <td><input type="text" name="score" size="5"></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_col','col', false);" name="add">Add</button></td>
+			</tr>
+
+		      </table>
+		    </div>
+		  </td>
+		</tr>
+	      </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/meta_attributes-table">
+    <table style="clear:left;float:left">
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="meta_attributes"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Meta Attributes ({{#if resource.meta_attr.length}}{{resource.meta_attr.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td>
+		    <div id="locationdep">
+		      <table class="datatable">
+			<tr><th>Meta Attribute</th><th>Value</th><th>Remove</th></tr>
+			{{#each meta in resource.meta_attr}}
+			<tr><td>{{meta.name}}</td>
+			    <td>{{meta.value}}</td>
+			    <td {{bind-attr meta_attr_key=meta.name}} {{bind-attr meta_attr_res=resource.id}} style="text-align:center">
+				  <a onclick="remove_meta_attr($(this).parent());return false;" href="#" class="remove">X</a>
+			    </td>
+			  </tr>
+			  {{else}}
+			  <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+			  {{/each}}
+			<tr id="new_meta_col">
+			  <td><input type="text" name="new_meta_key" size="20"></td>
+			  <td><input type="text" name="new_meta_value" size="20"></td>
+			  <td><button type="button" onclick="add_meta_attr('#new_meta_col');" name="add">Add</button></td>
+			</tr>
+		      </table>
+		    </div>
+		  </td>
+		</tr>
+    </table>
+  </script>
+  
   <script type="text/x-handlebars">
     <div id="wrapper">
   <div id="header">

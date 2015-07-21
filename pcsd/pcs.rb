@@ -11,6 +11,9 @@ require 'fileutils'
 require 'config.rb'
 require 'cfgsync.rb'
 require 'corosyncconf.rb'
+require 'resource.rb'
+require 'cluster_entity.rb'
+
 
 def getAllSettings()
   stdout, stderr, retval = run_cmd(PCS, "property")
@@ -73,7 +76,7 @@ def add_meta_attr(resource, key, value)
   return retval
 end
 
-def add_location_constraint(resource, node, score)
+def add_location_constraint(resource, node, score, force=false, autocorrect=true)
   if node == ""
     return "Bad node"
   end
@@ -84,15 +87,16 @@ def add_location_constraint(resource, node, score)
     nodescore = node +"="+score
   end
 
-  stdout, stderr, retval = run_cmd(
-    PCS, "constraint", "location", resource, "prefers", nodescore,
-    "--autocorrect"
-  )
+  cmd = [PCS, "constraint", "location", resource, "prefers", nodescore]
+  cmd << '--force' if force
+  cmd << '--autocorrect' if autocorrect
+
+  stdout, stderr, retval = run_cmd(*cmd)
   return retval, stderr.join(' ')
 end
 
-def add_location_constraint_rule(resource, rule, score, force=false)
-  cmd = [PCS, "constraint", "location", "--autocorrect", resource, "rule"]
+def add_location_constraint_rule(resource, rule, score, force=false, autocorrect=true)
+  cmd = [PCS, "constraint", "location", resource, "rule"]
   if score != ''
     if is_score(score.upcase)
       cmd << "score=#{score.upcase}"
@@ -102,12 +106,14 @@ def add_location_constraint_rule(resource, rule, score, force=false)
   end
   cmd.concat(rule.shellsplit())
   cmd << '--force' if force
+  cmd << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(*cmd)
   return retval, stderr.join(' ')
 end
 
 def add_order_constraint(
-    resourceA, resourceB, actionA, actionB, score, symmetrical=true, force=false
+    resourceA, resourceB, actionA, actionB, score, symmetrical=true, 
+    force=false, autocorrect=true
 )
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
   if score != ""
@@ -115,33 +121,35 @@ def add_order_constraint(
   end
   command = [
     PCS, "constraint", "order", actionA, resourceA, "then", actionB, resourceB,
-    score, sym, "--autocorrect"
+    score, sym
   ]
   command << '--force' if force
+  command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(*command)
   return retval, stderr.join(' ')
 end
 
-def add_order_set_constraint(resource_set_list, force=false)
-  command = [PCS, "constraint", "order", "--autocorrect"]
+def add_order_set_constraint(resource_set_list, force=false, autocorrect=true)
+  command = [PCS, "constraint", "order"]
   resource_set_list.each { |resource_set|
     command << "set"
     command.concat(resource_set)
   }
   command << '--force' if force
+  command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(*command)
   return retval, stderr.join(' ')
 end
 
-def add_colocation_constraint(resourceA, resourceB, score, force=false)
+def add_colocation_constraint(resourceA, resourceB, score, force=false, autocorrect=true)
   if score == "" or score == nil
     score = "INFINITY"
   end
   command = [
     PCS, "constraint", "colocation", "add", resourceA, resourceB, score,
-    "--autocorrect"
   ]
   command << '--force' if force
+  command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(*command)
   return retval, stderr.join(' ')
 end
@@ -641,7 +649,7 @@ end
 def get_acls()
   stdout, stderr, retval = run_cmd(PCS, "acl", "show")
   if retval != 0 or stdout == ""
-    return []
+    return {}
   end
 
   ret_val = {}
@@ -1132,4 +1140,185 @@ def write_file_lock(path, perm, data)
       file.close()
     end
   end
+end
+
+def get_node_uptime()
+  uptime = `cat /proc/uptime`.chomp.split(' ')[0].split('.')[0].to_i
+  mm, ss = uptime.divmod(60)
+  hh, mm = mm.divmod(60)
+  dd, hh = hh.divmod(24)
+  return '%d day%s, %02d:%02d:%02d' % [dd, dd != 1?'s':'', hh, mm, ss]
+end
+
+def get_node_status(cib_dom)
+  node_status = {
+      :cluster_name => $cluster_name,
+      :groups => [],
+      :constraints => {
+          # :rsc_location => [],
+          # :rcs_colocation => [],
+          # :rcs_order => []
+      },
+      :cluster_settings => {},
+      :need_ring1_address => need_ring1_address?,
+      :is_cman_with_udpu_transport => is_cman_with_udpu_transport?,
+      :acls => get_acls(),
+      :username => cookies[:CIB_user]
+  }
+  nodes = get_nodes_status()
+
+  known_nodes = []
+  nodes.each { |_, node_list|
+    known_nodes.concat node_list
+  }
+  node_status[:known_nodes] = known_nodes.uniq
+
+  nodes.each do |k,v|
+    node_status[k.to_sym] = v
+  end
+
+  if cib_dom
+    node_status[:groups] = get_resource_groups(cib_dom)
+    node_status[:constraints] = getAllConstraints(cib_dom.elements['//constraints'])
+  end
+
+  cluster_settings = getAllSettings()
+  if not cluster_settings.has_key?('error')
+    node_status[:cluster_settings] = cluster_settings
+  end
+
+  return node_status
+end
+
+def get_resource_groups(cib_dom)
+  unless cib_dom
+    return []
+  end
+  group_list = []
+  cib_dom.elements.each('cib/configuration/resources//group') do |e|
+    group_list << e.attributes['id']
+  end
+  return group_list
+end
+
+def get_resources(cib_dom, crm_dom=nil, get_operations=false)
+  unless cib_dom
+    return []
+  end
+
+  resource_list = []
+  cib = (get_operations) ? cib_dom : nil
+
+  cib_dom.elements.each('cib/configuration/resources/primitive') do |e|
+    resource_list << ClusterEntity::Primitive.new(e, crm_dom, nil, cib)
+  end
+  cib_dom.elements.each('cib/configuration/resources/group') do |e|
+    resource_list << ClusterEntity::Group.new(e, crm_dom, nil, cib)
+  end
+  cib_dom.elements.each('cib/configuration/resources/clone') do |e|
+    resource_list << ClusterEntity::Clone.new(e, crm_dom, nil, cib)
+  end
+  cib_dom.elements.each('cib/configuration/resources/master') do |e|
+    resource_list << ClusterEntity::MasterSlave.new(e, crm_dom, nil, cib)
+  end
+  return resource_list
+end
+
+def get_resource_by_id(id, cib_dom, crm_dom=nil, get_operations=false)
+  unless cib_dom
+    return nil
+  end
+
+  e = cib_dom.elements["cib/configuration/resources//*[@id='#{id}']"]
+  unless e
+    return nil
+  end
+
+  if e.parent.name != 'resources' # if resource is in group, clone or master/slave
+    p = get_resource_by_id(e.parent.attributes['id'], cib_dom, crm_dom, get_operations)
+    return p.get_map[id.to_sym]
+  end
+
+  cib = (get_operations) ? cib_dom : nil
+
+  case e.name
+    when 'primitive'
+      return ClusterEntity::Primitive.new(e, crm_dom, nil, cib)
+    when 'group'
+      return ClusterEntity::Group.new(e, crm_dom, nil, cib)
+    when 'clone'
+      return ClusterEntity::Clone.new(e, crm_dom, nil, cib)
+    when 'master'
+      return ClusterEntity::MasterSlave.new(e, crm_dom, nil, cib)
+    else
+      return nil
+  end
+end
+
+def get_crm_mon_dom()
+  begin
+    stdout, _, retval = run_cmd('crm_mon', '--one-shot', '-r', '--as-xml')
+    if retval == 0
+      return REXML::Document.new(stdout.join("\n"))
+    end
+  rescue
+    $logger.error 'Failed to parse crm_mon.'
+  end
+  return nil
+end
+
+def get_cib_dom()
+  begin
+    stdout, _, retval = run_cmd('cibadmin', '-Q', '-l')
+    if retval == 0
+      return REXML::Document.new(stdout.join("\n"))
+    end
+  rescue
+    $logger.error 'Failed to parse cib.'
+  end
+  return nil
+end
+
+def status_v1_to_v2(status)
+  new_status = status.select { |k,_|
+    [:cluster_name, :username, :is_cman_with_udpu_transport,
+     :need_ring1_address, :cluster_settings, :constraints, :groups,
+     :corosync_online, :corosync_offline, :pacemaker_online, :pacemaker_standby,
+     :pacemaker_offline, :acls
+    ].include?(k)
+  }
+  resources = ClusterEntity::make_resources_tree(
+    ClusterEntity::get_primitives_from_status_v1(status[:resources])
+  )
+  resources_hash = []
+  resources.each { |r|
+    resources_hash << r.to_status('2')
+  }
+  new_status[:resource_list] = resources_hash
+  new_status[:node] = status.select { |k,_|
+    [:uptime, :corosync, :pacemaker, :cman, :corosync_enabled,
+     :pacemaker_enabled, :pcsd_enabled
+    ].include?(k)
+  }
+
+  node_attr = ClusterEntity::NvSet.new
+  status[:node_attr].each { |k,v|
+    node_attr << ClusterEntity::NvPair.new(nil, k, v)
+  }
+  new_status[:node].update(
+    {
+      :id => status[:node_id],
+      :attr => node_attr.to_status,
+      :fence_levels => status[:fence_levels],
+      :quorum => nil,
+      :warning_list => [],
+      :error_list => [],
+      :status => (new_status[:node][:corosync] and
+        new_status[:node][:pacemaker]) ? "online" : "offline",
+      :status_version => '1'
+    }
+  )
+  new_status[:status_version] = '1'
+
+  return new_status
 end
