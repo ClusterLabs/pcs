@@ -487,6 +487,65 @@ if not DISABLE_GUI
     clusters_overview(params, request, session)
   end
 
+  get '/permissions/?' do
+    @manage = true
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+    @clusters = pcs_config.clusters.sort { |a, b| a.name <=> b.name }
+    erb :permissions, :layout => :main
+  end
+
+  get '/permissions/:cluster/?' do
+    @cluster_name = params[:cluster]
+    @error = nil
+    @permission_types = []
+    @permissions_dependencies = {}
+    @user_types = []
+    @users_permissions = []
+
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+
+    if not pcs_config.is_cluster_name_in_use(@cluster_name)
+      @error = 'Cluster not found'
+    else
+      code, data = send_cluster_request_with_token(
+        session, @cluster_name, 'get_permissions'
+      )
+      if 404 == code
+        @error = 'Cluster is running an old version of pcsd which does not support permissions'
+      elsif 403 == code
+        @error = 'Permission denied'
+      elsif 200 != code
+        @error = 'Unable to load permissions of the cluster'
+      else
+        begin
+          permissions = JSON.parse(data)
+          if permissions['notoken'] or permissions['noresponse']
+            @error = 'Unable to load permissions of the cluster'
+          else
+            @permission_types = permissions['permission_types'] || []
+            @permissions_dependencies = permissions['permissions_dependencies'] || {}
+            @user_types = permissions['user_types'] || []
+            @users_permissions = permissions['users_permissions'] || []
+          end
+        rescue JSON::ParserError
+          @error = 'Unable to read permissions of the cluster'
+        end
+      end
+    end
+    erb :_permissions_cluster
+  end
+
+  post '/permissions_save/?' do
+    cluster_name = params['cluster_name']
+    params.delete('cluster_name')
+    new_params = {
+      'json_data' => JSON.generate(params)
+    }
+    return send_cluster_request_with_token(
+      session, cluster_name, "set_permissions", true, new_params
+    )
+  end
+
   get '/managec/:cluster/main' do
     @cluster_name = params[:cluster]
     #  @resources, @groups = getResourcesGroups(session)

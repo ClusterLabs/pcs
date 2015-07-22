@@ -30,6 +30,10 @@ Pcs = Ember.Application.createWithMixins({
     if (this.cur_page == "manage") return "display: table-row;";
     else return "display: none;";
   }.property("cur_page"),
+  permissions_page: function() {
+    if (this.cur_page == "permissions") return "display: table-row;";
+    else return "display: none;";
+  }.property("cur_page"),
   wizards_page: function() {
     if (this.cur_page == "wizards") return "display: table-row;";
     else return "display: none;";
@@ -48,6 +52,7 @@ Pcs = Ember.Application.createWithMixins({
   update_timeout: null,
   update: function(first_run) {
     if (window.location.pathname.lastIndexOf('/manage', 0) !== 0) {
+      hide_loading_screen();
       return;
     }
     clearTimeout(Pcs.update_timeout);
@@ -56,6 +61,10 @@ Pcs = Ember.Application.createWithMixins({
       show_loading_screen();
     var cluster_name = self.cluster_name;
     if (cluster_name == null) {
+      if (location.pathname.indexOf("/manage") != 0) {
+        hide_loading_screen();
+        return;
+      }
       Ember.debug("Empty Cluster Name");
       $.ajax({
         url: "/clusters_overview",
@@ -833,10 +842,24 @@ Pcs.WizardsRoute = Ember.Route.extend({
 
 Pcs.IndexRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    if (window.location.pathname == "/manage" || window.location.pathname == "/manage/")
+    if (
+      window.location.pathname == "/manage"
+      ||
+      window.location.pathname == "/manage/"
+    ) {
       select_menu("MANAGE");
-    else
+    }
+    else if (
+      window.location.pathname == "/permissions"
+      ||
+      window.location.pathname == "/permissions/"
+    ) {
+      select_menu("PERMISSIONS");
+      Ember.run.scheduleOnce('afterRender', this, permissions_load_all);
+    }
+    else {
       select_menu("NODES");
+    }
   }
 });
 

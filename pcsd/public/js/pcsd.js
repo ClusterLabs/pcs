@@ -59,6 +59,13 @@ function select_menu(menu, item, initial) {
     menu_show("cluster", false);
   }
 
+  if (menu == "PERMISSIONS") {
+    Pcs.set('cur_page', "permissions");
+    menu_show("cluster", true);
+  } else {
+    menu_show("cluster", false);
+  }
+
   if (menu == "CONFIGURE") {
     Pcs.set('cur_page',"configure");
     menu_show("configure", true);
@@ -2145,3 +2152,236 @@ function ajax_simple_error(xhr, status, error) {
   }
   return message;
 }
+
+var permissions_current_cluster;
+
+function permissions_load_all() {
+  show_loading_screen();
+
+  var cluster_list = [];
+  $("#node_info div[id^='permissions_cluster_']").each(function(i, div) {
+    cluster_list.push(
+      $(div).attr("id").substring("permissions_cluster_".length)
+    );
+  });
+
+  var call_count = cluster_list.length;
+  var callback = function() {
+    call_count = call_count - 1;
+    if (call_count < 1) {
+      hide_loading_screen();
+    }
+  }
+
+  $.each(cluster_list, function(index, cluster) {
+    permissions_load_cluster(cluster, callback);
+  });
+
+  if (cluster_list.length > 0) {
+    permissions_current_cluster = cluster_list[0];
+    permissions_show_cluster(
+      permissions_current_cluster,
+      $("#cluster_list tr").first().next() /* the first row is a heading */
+    );
+  }
+}
+
+function permissions_load_cluster(cluster_name, callback) {
+  var element_id = "permissions_cluster_" + cluster_name;
+  $.ajax({
+    type: "GET",
+    url: "/permissions/" + cluster_name,
+    timeout: pcs_timeout,
+    success: function(data) {
+      $("#" + element_id).html(data);
+      $("#" + element_id + " :checkbox").each(function(key, checkbox) {
+        permissions_fix_dependent_checkboxes(checkbox);
+      });
+      if (callback) {
+        callback();
+      }
+    },
+    error: function(xhr, status, error) {
+      $("#" + element_id).html(
+        "Error loading permissions " + ajax_simple_error(xhr, status, error)
+      );
+      if (callback) {
+        callback();
+      }
+    }
+  });
+}
+
+function permissions_show_cluster(cluster_name, list_row) {
+  permissions_current_cluster = cluster_name;
+
+  var container = $("#node_info");
+  container.fadeTo(500, .01, function() {
+    container.children().hide();
+    $("#permissions_cluster_" + cluster_name).show();
+    container.fadeTo(500, 1);
+  });
+
+  $(list_row).siblings("tr").each(function(index, row) {
+    hover_out(row);
+    $(row).find("td").last().children().hide();
+  });
+  hover_over(list_row);
+  $(list_row).find("td").last().children().show();
+}
+
+function permissions_save_cluster(form) {
+  var dataString = $(form).serialize();
+  var cluster_name = permissions_get_clustername(form);
+  $.ajax({
+    type: "POST",
+    url: "/permissions_save/",
+    timeout: pcs_timeout,
+    data: dataString,
+    success: function() {
+      show_loading_screen();
+      permissions_load_cluster(cluster_name, hide_loading_screen);
+    },
+    error: function(xhr, status, error) {
+      alert(
+        "Unable to save permissions of cluster " + cluster_name + " "
+        + ajax_simple_error(xhr, status, error)
+      );
+    }
+  });
+}
+
+function permission_remove_row(button) {
+  $(button).parent().parent().remove();
+}
+
+function permissions_add_row(template_row) {
+  var user_name = permissions_get_row_name(template_row);
+  var user_type = permissions_get_row_type(template_row);
+  var max_key = -1;
+  var exists = false;
+
+  if("" == user_name) {
+    alert("Please enter the name");
+    return;
+  }
+  if("" == user_type) {
+    alert("Please enter the type");
+    return;
+  }
+
+  $(template_row).siblings().each(function(index, row) {
+    if(
+      (permissions_get_row_name(row) == user_name)
+      &&
+      (permissions_get_row_type(row) == user_type)
+    ) {
+      exists = true;
+    }
+    $(row).find("input").each(function(index, input) {
+      var match = input.name.match(/^[^[]*\[(\d+)\].*$/);
+      if (match) {
+        var key = parseInt(match[1]);
+        if(key > max_key) {
+          max_key = key;
+        }
+      }
+    });
+  });
+  if(exists) {
+    alert("Permissions already set for the user");
+    return;
+  }
+
+  max_key = max_key + 1;
+  var new_row = $(template_row).clone();
+  new_row.find("[name*='_new']").each(function(index, element) {
+    element.name = element.name.replace("_new", "[" + max_key + "]");
+  });
+  new_row.find("td").last().html(
+    '<a class="remove" href="#" onclick="permission_remove_row(this);">X</a>'
+  );
+  new_row.find("[name$='[name]']").each(function(index, element) {
+    $(element).after(user_name);
+    $(element).attr("type", "hidden");
+  });
+  new_row.find("[name$='[type]']").each(function(index, element) {
+    $(element).after(user_type);
+    $(element).after(
+      '<input type="hidden" name="' + element.name  + '" value="' + user_type + '">'
+    );
+    $(element).remove();
+  });
+
+  $(template_row).before(new_row);
+  $(template_row).find(":input").val("").removeAttr("checked").removeAttr("selected");
+}
+
+function permissions_get_dependent_checkboxes(checkbox) {
+  var cluster_name = permissions_get_clustername(
+    $(checkbox).parents("form").first()
+  );
+  var checkbox_permission = permissions_get_checkbox_permission(checkbox);
+  var deps = {};
+  var dependent_permissions = [];
+  var dependent_checkboxes = [];
+
+  if (permissions_dependencies[cluster_name]) {
+    deps = permissions_dependencies[cluster_name];
+    if (deps["also_allows"] && deps["also_allows"][checkbox_permission]) {
+      dependent_permissions = deps["also_allows"][checkbox_permission];
+      $(checkbox).parents("tr").first().find(":checkbox").not(checkbox).each(
+        function(key, check) {
+          var perm = permissions_get_checkbox_permission(check);
+          if (dependent_permissions.indexOf(perm) != -1) {
+            dependent_checkboxes.push(check);
+          }
+        }
+      );
+    }
+  }
+  return dependent_checkboxes;
+}
+
+function permissions_fix_dependent_checkboxes(checkbox) {
+  var dep_checks = $(permissions_get_dependent_checkboxes(checkbox));
+  if ($(checkbox).prop("checked")) {
+    /* the checkbox is now checked */
+    dep_checks.each(function(key, check) {
+      var jq_check = $(check);
+      jq_check.prop("checked", true);
+      jq_check.prop("readonly", true);
+      permissions_fix_dependent_checkboxes(check);
+    });
+  }
+  else {
+    /* the checkbox is now empty */
+    dep_checks.each(function(key, check) {
+      var jq_check = $(check);
+      jq_check.prop("checked", jq_check.prop("defaultChecked"));
+      jq_check.prop("readonly", false);
+      permissions_fix_dependent_checkboxes(check);
+    });
+  }
+}
+
+function permissions_get_row_name(row) {
+  return $.trim($(row).find("[name$='[name]']").val());
+}
+
+function permissions_get_row_type(row) {
+  return $.trim($(row).find("[name$='[type]']").val());
+}
+
+function permissions_get_clustername(form) {
+  return $.trim($(form).find("[name=cluster_name]").val());
+}
+
+function permissions_get_checkbox_permission(checkbox) {
+  var match = checkbox.name.match(/^.*\[([^[]+)\]$/);
+  if (match) {
+    return match[1];
+  }
+  return "";
+}
+

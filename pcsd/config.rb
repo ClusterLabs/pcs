@@ -103,17 +103,7 @@ class PCSConfig
       out_hash['clusters'] << c_hash
     }
 
-    perm_set = []
-    @permissions_local.entity_permissions_list.each { |perm|
-      perm_hash = OrderedHash.new
-      perm_hash['type'] = perm.type
-      perm_hash['name'] = perm.name
-      perm_hash['allow'] = perm.allow_list.uniq.sort
-      perm_set << perm_hash
-    }
-    out_hash['permissions']['local_cluster'] = perm_set.sort { |a, b|
-      a['type'] == b['type'] ? a['name'] <=> b['name'] : a['type'] <=> b['type']
-    }
+    out_hash['permissions']['local_cluster'] = @permissions_local.to_hash()
 
     return JSON.pretty_generate(out_hash)
   end

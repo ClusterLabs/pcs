@@ -488,90 +488,97 @@ Use the 'Add' button to submit the form.">
   </script>
   
   <script type="text/x-handlebars">
-    <div id="wrapper">
-  <div id="header">
-    <div id="topmenu">
-    <table id="menu_controls">
-	<tr><td rowspan=2 width="170px" style="vertical-align: top;">
-	    <div id="logo">
-	      <img width="170" height="40" src="/images/HAM-logo.png" onclick="if (Pcs) { Pcs.update(); }">
-	    </div>
-	  </td>
-	</tr>
-	<tr><td>
-	    <div id="menu_list">
-	      <table>
-		<tr>
-		  <td colspan=3 style="padding-bottom:8px;">
-		      <% if @clusters != nil %>
-		      <div style="float:left;width:100%">
-			<div class="menuheader">
-			  <div id="dropdownr" class="label"  style="white-space:nowrap" onclick="window.location='/manage'">
-			    <table style="background: #000000">
-			    <tr><td>
-			    <%=@manage ? "Select Cluster" : "Cluster: " + @cluster_name%>
-			    </td>
-			    <td><div style="float:right;" class="downarrow sprites"></div></td>
-			    </tr></table>
-			  </div>
-			  <div style="width:100%;" class="menu">
-			    <% if not @manage %>
-			      <a href="/manage" class="menu-item">Manage&nbsp;Clusters&nbsp;&nbsp;</a>
-			    <% end %>
-			  <% @clusters.each { |c| %>
-			    <a href="<%=c.ui_address%>" class="menu-item"><%=c.name%>&nbsp;&nbsp;</a>
-			  <% } %>
-			  </div>
-			</div>
-		      </div>
-		      <% end %>
-		  </td>
-		  <td colspan=4 style="padding-bottom:8px;">
-		    <% if session[:username] %>
-		      <div style="float:right">
-			<div class="menuheader">
-			<div id="dropdownr" class="label"><%=session[:username]%><div style="float:right;" class="downarrow sprites"></div></div>
-			<div style="width:100%" class="menu">
-			  <a href="/logout" class="menu-item">Logout&nbsp;&nbsp;</a>
-			</div>
-			</div>
-			<!--		      <div id="dropdownr">
-			  <%=session[:username]%><div style="float:right;" class="downarrow sprites"></div>
-			</div> -->
-		      </div>
-		    <% end %>
-		  </td>
-		</tr>
-		<% if !@manage %>
-		<tr>
-		  <td class="menuitem first">{{#link-to "Nodes" }}NODES{{/link-to}}</td>
-		  <td class="menuitem">{{#link-to "Resources" }}RESOURCES{{/link-to}}</td>
-		  <td class="menuitem">{{#link-to "Fence Devices" }}FENCE DEVICES{{/link-to}}</td>
-		  <td class="menuitem">{{#link-to "ACLs" }}ACLS{{/link-to}}</td>
-		  <td class="menuitem">{{#link-to "Configuration" }}CLUSTER PROPERTIES{{/link-to}}</td>
-		  <td class="menuitem"><a href="/manage">MANAGE CLUSTERS</a></td>
-		  <!--<td class="menuitem">{{#link-to "Wizards" }}WIZARDS{{/link-to}}</td>-->
-		</tr>
-	      <% else %>
-		<tr height="37px">
-		  <td colspan=5 width="565px"></td>
-		</tr>
-	      <% end %>
-	      </table>
-	    </div>
-	</td>
-	<td>
-	</td>
-      </tr>
-      </table>
-    </div>
-  </div>
+<div id="wrapper">
 
-  <div id="content">
-      <%= yield %>
-  </div>
-  <div id="push">
-  </div>
+<div id="header"><div id="topmenu">
+  <table id="menu_controls">
+    <tr>
+      <td width="170" style="vertical-align: top;">
+        <div id="logo">
+          <img width="170" height="40" src="/images/HAM-logo.png" onclick="if (Pcs) { Pcs.update(); }">
+        </div>
+      </td>
+      <td>
+        <div id="menu_list">
+          <table width="700">
+            <tr>
+              <td style="padding-bottom:8px;">
+                <% if @clusters != nil %>
+                  <div style="float:left;">
+                    <div class="menuheader">
+                      <div id="dropdownr" class="label"  style="white-space:nowrap" onclick="window.location='/manage'">
+                        <table style="background: #000000">
+                          <tr>
+                            <td>
+                              <%=@manage ? "Select Cluster" : "Cluster: " + @cluster_name%>
+                            </td>
+                            <td>
+                              <div style="float:right;" class="downarrow sprites"></div>
+                            </td>
+                          </tr>
+                        </table>
+                      </div>
+                      <div style="width:100%;" class="menu">
+                        <% if not @manage %>
+                          <a href="/manage" class="menu-item">Manage&nbsp;Clusters&nbsp;&nbsp;</a>
+                        <% end %>
+                        <% @clusters.each { |c| %>
+                          <a href="<%=c.ui_address%>" class="menu-item"><%=c.name%>&nbsp;&nbsp;</a>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </td>
+              <td style="padding-bottom:8px;">
+                <% if session[:username] %>
+                  <div style="float:right">
+                    <div class="menuheader">
+                      <div id="dropdownr" class="label"><%=session[:username]%><div style="float:right;" class="downarrow sprites"></div></div>
+                      <div style="width:100%" class="menu">
+                        <a href="/logout" class="menu-item">Logout&nbsp;&nbsp;</a>
+                      </div>
+                    </div>
+                    <!-- <div id="dropdownr">
+                      <%=session[:username]%><div style="float:right;" class="downarrow sprites"></div>
+                    </div> -->
+                  </div>
+                <% end %>
+              </td>
+            </tr>
+          </table>
+          <table>
+            <% if !@manage %>
+              <tr>
+                <td class="menuitem first">{{#link-to "Nodes" }}NODES{{/link-to}}</td>
+                <td class="menuitem">{{#link-to "Resources" }}RESOURCES{{/link-to}}</td>
+                <td class="menuitem">{{#link-to "Fence Devices" }}FENCE DEVICES{{/link-to}}</td>
+                <td class="menuitem">{{#link-to "ACLs" }}ACLS{{/link-to}}</td>
+                <td class="menuitem">{{#link-to "Configuration" }}CLUSTER PROPERTIES{{/link-to}}</td>
+                <td class="menuitem"><a href="/manage">MANAGE CLUSTERS</a></td>
+                <!--<td class="menuitem">{{#link-to "Wizards" }}WIZARDS{{/link-to}}</td>-->
+              </tr>
+            <% else %>
+              <tr>
+                <td class="menuitem first"><a href="/manage">MANAGE CLUSTERS</a></td>
+                <td class="menuitem"><a href="/permissions">PERMISSIONS</a></td>
+              </tr>
+            <% end %>
+          </table>
+        </div>
+      </td>
+      <td> </td>
+    </tr>
+  </table>
+</div></div>
+
+<div id="content">
+  <%= yield %>
+</div>
+
+<div id="push">
+</div>
+
 </div>
     </script>
 <!--  <div id="footer">

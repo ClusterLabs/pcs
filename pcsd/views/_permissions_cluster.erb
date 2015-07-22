@@ -1,0 +1,117 @@
+<div id="node_info_header">
+  <div id="node_info_header_title">
+    PERMISSIONS FOR CLUSTER <%= h(@cluster_name).upcase %>
+  </div>
+</div>
+<div id="node_sub_info">
+  <script type="text/javascript">
+    if (typeof permissions_dependencies === "undefined") {
+      var permissions_dependencies = {};
+    }
+  </script>
+  <% if @error %>
+    <script type="text/javascript">
+      permissions_dependencies["<%= h(@cluster_name) %>"] = {};
+    </script>
+    <b>Error: </b><span style="color:red;"><%= h(@error) %></span>
+    <div style="padding-top:20px;">
+      <button type="button"
+        onclick="
+          show_loading_screen();
+          permissions_load_cluster('<%= h(@cluster_name)%>', hide_loading_screen);
+        "
+      >Refresh</button>
+    </div>
+  <% else %>
+    <script type="text/javascript">
+      permissions_dependencies["<%= h(@cluster_name) %>"] = <%= @permissions_dependencies.to_json %>;
+    </script>
+    <form method="post" action="/permissions_save/">
+      <input type="hidden" name="cluster_name" value="<%= h(@cluster_name) %>">
+      <table class="datatable">
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <% @permission_types.each { |type| %>
+            <th title="<%= h(type['description']) %>"><%= h(type['label']) %></th>
+          <% } %>
+          <th>Remove</th>
+        </tr>
+        <% @users_permissions.each_with_index { |user, index| %>
+          <tr>
+            <td>
+              <input type="hidden" name="permissions[<%= index %>][name]"
+                value="<%= h(user['name']) %>"
+              >
+              <%= h(user['name']) %>
+            </td>
+            <td>
+              <input type="hidden" name="permissions[<%= index%>][type]"
+                value="<%= h(user['type']) %>"
+              >
+              <%= h(user['type']) %>
+            </td>
+            <% @permission_types.each { |perm| %>
+              <td title="<%= h(perm['label']) %>: <%= h(perm['description']) %>">
+                <input type="checkbox" value="1"
+                  name="permissions[<%= index %>][allow][<%= h(perm['code']) %>]"
+                  <% if user['allow'].include?(perm['code']) %>
+                    checked="checked"
+                  <% end %>
+                  onchange="permissions_fix_dependent_checkboxes(this);"
+                >
+              </td>
+            <% } %>
+            <td style="text-align:center;">
+              <a class="remove" href="#" onclick="permission_remove_row(this);">X</a>
+            </td>
+          </tr>
+        <% } %>
+        <tr>
+          <td>
+            <input type="text" name="permissions_new[name]">
+          </td>
+          <td>
+            <select name="permissions_new[type]">
+              <% @user_types.each { |type| %>
+                <option value="<%= h(type['code']) %>"><%= h(type['label']) %></option>
+              <% } %>
+            </select>
+          </td>
+          <% @permission_types.each { |perm| %>
+            <td title="<%= h(perm['label']) %>: <%= h(perm['description']) %>">
+              <input type="checkbox" value="1"
+                name="permissions_new[allow][<%= h(perm['code']) %>]"
+                onchange="permissions_fix_dependent_checkboxes(this);"
+              >
+            </td>
+          <% } %>
+          <td style="text-align:center;">
+            <button type="button"
+              onclick="
+                this.disabled = true;
+                permissions_add_row($(this).parents('tr').first());
+                this.disabled = false;
+              "
+            >Add</button>
+          </td>
+        </tr>
+      </table>
+      <div style="padding-top:20px;">
+        <button type="button"
+          onclick="
+            show_loading_screen();
+            permissions_load_cluster('<%= h(@cluster_name) %>', hide_loading_screen);
+          "
+        >Refresh</button>
+        <button type="button"
+          onclick="
+            this.disabled = true;
+            permissions_save_cluster($(this).parents('form').first());
+            this.disabled = false;
+          "
+        >Apply Changes</button>
+      </div>
+    </form>
+  <% end %>
+</div>

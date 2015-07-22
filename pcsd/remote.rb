@@ -32,6 +32,8 @@ def remote(params, request, session)
       :set_configs => method(:set_configs),
       :set_certs => method(:set_certs),
       :pcsd_restart => method(:remote_pcsd_restart),
+      :get_permissions => method(:get_permissions_remote),
+      :set_permissions => method(:set_permissions_remote),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
       :config_backup => method(:config_backup),
@@ -750,6 +752,77 @@ def set_certs(params, request, session)
   end
 
   return [200, 'success']
+end
+
+def get_permissions_remote(params, request, session)
+  if not allowed_for_local_cluster(session, Permissions::GRANT)
+    return 403, 'Permission denied'
+  end
+
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  data = {
+    'user_types' => Permissions::get_user_types(),
+    'permission_types' => Permissions::get_permission_types(),
+    'permissions_dependencies' => Permissions::permissions_dependencies(),
+    'users_permissions' => pcs_config.permissions_local.to_hash(),
+  }
+  return [200, JSON.generate(data)]
+end
+
+def set_permissions_remote(params, request, session)
+  if not allowed_for_local_cluster(session, Permissions::GRANT)
+    return 403, 'Permission denied'
+  end
+
+  begin
+    data = JSON.parse(params['json_data'])
+  rescue JSON::ParserError
+    return 400, JSON.generate({'status' => 'bad_json'})
+  end
+
+  user_set = {}
+  perm_list = []
+  if data['permissions']
+    data['permissions'].each { |key, perm|
+      name = (perm['name'] || '').strip
+      type = (perm['type'] || '').strip
+      return [400, 'Missing user name'] if '' == name
+      return [400, 'Missing user type'] if '' == type
+      if not Permissions::is_user_type(type)
+        return [400, "Unknown user type '#{type}'"]
+      end
+
+      if user_set.key?([name, type])
+        return [400, "Duplicate permissions for #{type} #{name}"]
+      end
+      user_set[[name, type]] = true
+
+      allow = []
+      if perm['allow']
+        perm['allow'].each { |perm_allow, enabled|
+          next if "1" != enabled
+          if not Permissions::is_permission_type(perm_allow)
+            return [400, "Unknown permission '#{perm_allow}'"]
+          end
+          allow << perm_allow
+        }
+      end
+
+      perm_list << Permissions::EntityPermissions.new(type, name, allow.uniq())
+    }
+  end
+  perm_set = Permissions::PermissionsSet.new(perm_list)
+
+  2.times {
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+    pcs_config.permissions_local = perm_set
+    sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+    pushed, _ = Cfgsync::save_sync_new_version(
+      sync_config, get_corosync_nodes(), $cluster_name, true
+    )
+    return [200, 'Permissions saved'] if pushed
+  }
+  return 400, 'Unable to save permissions'
 end
 
 def remote_pcsd_restart(params, request, session)

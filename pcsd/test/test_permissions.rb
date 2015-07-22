@@ -3,6 +3,26 @@ require 'test/unit'
 require 'pcsd_test_utils.rb'
 require 'permissions.rb'
 
+class TestPermissions < Test::Unit::TestCase
+
+  def test_is_user_type()
+    assert_equal(true, Permissions::is_user_type(Permissions::TYPE_USER))
+    assert_equal(true, Permissions::is_user_type(Permissions::TYPE_GROUP))
+    assert_equal(false, Permissions::is_user_type(''))
+    assert_equal(false, Permissions::is_user_type('nonsense'))
+  end
+
+  def test_is_permission_type()
+    assert_equal(true, Permissions::is_permission_type(Permissions::READ))
+    assert_equal(true, Permissions::is_permission_type(Permissions::WRITE))
+    assert_equal(true, Permissions::is_permission_type(Permissions::GRANT))
+    assert_equal(true, Permissions::is_permission_type(Permissions::FULL))
+    assert_equal(false, Permissions::is_permission_type(''))
+    assert_equal(false, Permissions::is_permission_type('nonsense'))
+  end
+end
+
+
 class TestEntityPermissions < Test::Unit::TestCase
 
   def setup
