@@ -288,15 +288,15 @@ def get_cluster_nodes(cluster_name)
   return nodes
 end
 
-def send_cluster_request_with_token(session, cluster_name, request, post=false, data={}, remote=true, raw_data=nil, username=nil)
+def send_cluster_request_with_token(session, cluster_name, request, post=false, data={}, remote=true, raw_data=nil)
   $logger.info("SCRWT: " + request)
   nodes = get_cluster_nodes(cluster_name)
   return send_nodes_request_with_token(
-    session, nodes, request, post, data, remote, raw_data, username
+    session, nodes, request, post, data, remote, raw_data
   )
 end
 
-def send_nodes_request_with_token(session, nodes, request, post=false, data={}, remote=true, raw_data=nil, username=nil)
+def send_nodes_request_with_token(session, nodes, request, post=false, data={}, remote=true, raw_data=nil)
   out = ""
   code = 0
   $logger.info("SNRWT: " + request)
@@ -318,7 +318,7 @@ def send_nodes_request_with_token(session, nodes, request, post=false, data={}, 
   for node in nodes
     $logger.info "SNRWT Node: #{node} Request: #{request}"
     code, out = send_request_with_token(
-      session, node, request, post, data, remote, raw_data, 30, {}, username
+      session, node, request, post, data, remote, raw_data
     )
     # try next node if:
     # - current node does not support the request (old version of pcsd?) (404)
@@ -355,7 +355,7 @@ def send_nodes_request_with_token(session, nodes, request, post=false, data={}, 
   return code, out
 end
 
-def send_request_with_token(session, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={}, username=nil)
+def send_request_with_token(session, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={})
   token = additional_tokens[node] || get_node_token(node)
   $logger.info "SRWT Node: #{node} Request: #{request}"
   if not token
@@ -365,12 +365,11 @@ def send_request_with_token(session, node, request, post=false, data={}, remote=
     'token' => token,
   }
   return send_request(
-    session, node, request, post, data, remote, raw_data, timeout, cookies_data,
-    username
+    session, node, request, post, data, remote, raw_data, timeout, cookies_data
   )
 end
 
-def send_request(session, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data=nil, username=nil)
+def send_request(session, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data=nil)
   cookies_data = {} if not cookies_data
   begin
     request = "/#{request}" if not request.start_with?("/")
@@ -400,16 +399,12 @@ def send_request(session, node, request, post=false, data={}, remote=true, raw_d
     # Let's be safe about characters in cookie variables and do base64.
     # We cannot do it for CIB_user however to be backward compatible
     # so we at least remove disallowed characters.
-    if username
-      cookies_data_default['CIB_user'] = PCSAuth.cookieUserSafe(username.to_s)
-      cookies_data_default['CIB_user_groups'] = ''
-    else
-      cookies_data_default['CIB_user'] = PCSAuth.cookieUserSafe(
-        session[:username].to_s
-      )
-      groups = (session[:usergroups] || []).join(' ')
-      cookies_data_default['CIB_user_groups'] = PCSAuth.cookieUserEncode(groups)
-    end
+    cookies_data_default['CIB_user'] = PCSAuth.cookieUserSafe(
+      session[:username].to_s
+    )
+    cookies_data_default['CIB_user_groups'] = PCSAuth.cookieUserEncode(
+      (session[:usergroups] || []).join(' ')
+    )
 
     cookies_data_default.update(cookies_data)
     cookies_data_default.each { |name, value|
@@ -969,13 +964,9 @@ def run_cmd_options(session, options, *args)
   out = ""
   errout = ""
 
-  if options and options.key?('username')
-    ENV['CIB_user'] = options['username']
-  else
-    ENV['CIB_user'] = session[:username]
-    # when running 'id -Gn' to get the groups they are not defined yet
-    ENV['CIB_user_groups'] = (session[:usergroups] || []).join(' ')
-  end
+  ENV['CIB_user'] = session[:username]
+  # when running 'id -Gn' to get the groups they are not defined yet
+  ENV['CIB_user_groups'] = (session[:usergroups] || []).join(' ')
   $logger.debug(
     "CIB USER: #{ENV['CIB_user'].to_s}, groups: #{ENV['CIB_user_groups']}"
   )
@@ -1209,8 +1200,8 @@ end
 
 def send_local_configs_to_nodes(session, nodes, force=false, tokens={})
   publisher = Cfgsync::ConfigPublisher.new(
-    Cfgsync::get_configs_local(true).values(), nodes, $cluster_name,
-    session[:username], tokens
+    session, Cfgsync::get_configs_local(true).values(), nodes, $cluster_name,
+    tokens
   )
   return publisher.send(force)
 end

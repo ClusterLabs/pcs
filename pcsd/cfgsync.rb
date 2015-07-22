@@ -6,6 +6,7 @@ require 'settings.rb'
 require 'config.rb'
 require 'corosyncconf.rb'
 require 'pcs.rb'
+require 'auth.rb'
 
 def token_file_path()
   filename = ENV['PCS_TOKEN_FILE']
@@ -380,7 +381,7 @@ module Cfgsync
 
 
   class ConfigPublisher
-    def initialize(configs, nodes, cluster_name, username, tokens={})
+    def initialize(session, configs, nodes, cluster_name, tokens={})
       @configs = configs
       @nodes = nodes
       @cluster_name = cluster_name
@@ -388,7 +389,7 @@ module Cfgsync
         cfg.class.name
       }
       @additional_tokens = tokens
-      @username = username
+      @session = session
     end
 
     def send(force=false)
@@ -406,8 +407,8 @@ module Cfgsync
       @nodes.each { |node|
         threads << Thread.new {
           code, out = send_request_with_token(
-            {}, node, 'set_configs', true, data, true, nil, 30,
-            @additional_tokens, @username
+            @session, node, 'set_configs', true, data, true, nil, 30,
+            @additional_tokens
           )
           if 200 == code
             begin
@@ -490,11 +491,11 @@ module Cfgsync
 
 
   class ConfigFetcher
-    def initialize(config_classes, nodes, cluster_name, username)
+    def initialize(session, config_classes, nodes, cluster_name)
       @config_classes = config_classes
       @nodes = nodes
       @cluster_name = cluster_name
-      @username = username
+      @session = session
     end
 
     def fetch_all()
@@ -546,7 +547,7 @@ module Cfgsync
       nodes.each { |node|
         threads << Thread.new {
           code, out = send_request_with_token(
-            {}, node, 'get_configs', false, data, true, nil, 30, {}, @username
+            @session, node, 'get_configs', false, data
           )
           if 200 == code
             begin
@@ -655,13 +656,13 @@ module Cfgsync
     else
       # we run in a cluster so we need to sync the config
       publisher = ConfigPublisher.new(
-        [config], nodes, cluster_name, SUPERUSER, tokens
+        PCSAuth.getSuperuserSession(), [config], nodes, cluster_name, tokens
       )
       old_configs, node_responses = publisher.publish()
       if old_configs.include?(config.class.name)
         if fetch_on_conflict
           fetcher = ConfigFetcher.new(
-            [config.class], nodes, cluster_name, SUPERUSER
+            PCSAuth.getSuperuserSession(), [config.class], nodes, cluster_name
           )
           cfgs_to_save, _ = fetcher.fetch()
           cfgs_to_save.each { |cfg_to_save|
@@ -706,7 +707,8 @@ module Cfgsync
     end
     # we run in a cluster so we need to sync the config
     publisher = ConfigPublisher.new(
-      [config_new], nodes, cluster_name, SUPERUSER, new_tokens
+      PCSAuth.getSuperuserSession(), [config_new], nodes, cluster_name,
+      new_tokens
     )
     old_configs, node_responses = publisher.publish()
     if not old_configs.include?(config_new.class.name)
@@ -715,7 +717,7 @@ module Cfgsync
     end
     # get tokens from all nodes and merge them
     fetcher = ConfigFetcher.new(
-      [config_new.class], nodes, cluster_name, SUPERUSER
+      PCSAuth.getSuperuserSession(), [config_new.class], nodes, cluster_name
     )
     fetched_tokens = fetcher.fetch_all()[config_new.class.name]
     config_new = Cfgsync::merge_tokens_files(config, fetched_tokens, new_tokens)

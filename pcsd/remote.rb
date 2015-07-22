@@ -1994,7 +1994,7 @@ def update_cluster_settings(params, request, session)
   binary_settings = []
   changed_settings = []
   old_settings = {}
-  getConfigOptions2(session, $cluster_name, SUPERUSER).values().flatten().each { |opt|
+  getConfigOptions2(PCSAuth.getSuperuserSession(), $cluster_name).values().flatten().each { |opt|
     if "check" == opt.type
       binary_settings << opt.configname
       old_settings[opt.configname] = is_cib_true(opt.value)
@@ -2192,8 +2192,8 @@ def fix_auth_of_cluster(params, request, session)
   tokens_data = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
 
   retval, out = send_cluster_request_with_token(
-    session, clustername, "/save_tokens", true, tokens_data, true, nil,
-    SUPERUSER
+    PCSAuth.getSuperuserSession(), clustername, "/save_tokens", true,
+    tokens_data, true
   )
   if retval == 404
     return [400, "Old version of PCS/PCSD is runnig on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]

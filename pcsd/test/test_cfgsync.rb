@@ -461,7 +461,7 @@ class TestConfigFetcher < Test::Unit::TestCase
     assert(cfg1 < cfg3)
     assert(cfg1 < cfg4)
     assert(cfg3 < cfg4)
-    fetcher = ConfigFetcherMock.new(nil, nil, nil, nil)
+    fetcher = ConfigFetcherMock.new({}, nil, nil, nil)
 
     # trivial case
     assert_equal(cfg1, fetcher.find_newest_config_test([cfg1]))
@@ -503,7 +503,7 @@ class TestConfigFetcher < Test::Unit::TestCase
     assert(cfg1 < cfg4)
     assert(cfg3 < cfg4)
     cfg_name = Cfgsync::ClusterConf.name
-    fetcher = ConfigFetcherMock.new([Cfgsync::ClusterConf], nil, nil, nil)
+    fetcher = ConfigFetcherMock.new({}, [Cfgsync::ClusterConf], nil, nil)
 
     # local config is synced
     fetcher.set_configs_local({cfg_name => cfg1})

@@ -90,8 +90,8 @@ $thread_cfgsync = Thread.new {
           if cluster_name and !cluster_name.empty?()
             $logger.debug('Config files sync thread fetching')
             fetcher = Cfgsync::ConfigFetcher.new(
-              Cfgsync::get_cfg_classes(), get_corosync_nodes(),
-              cluster_name, SUPERUSER
+              PCSAuth.getSuperuserSession(), Cfgsync::get_cfg_classes(),
+              get_corosync_nodes(), cluster_name
             )
             cfgs_to_save, _ = fetcher.fetch()
             cfgs_to_save.each { |cfg_to_save|
@@ -624,7 +624,7 @@ if not DISABLE_GUI
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     node = params['node-name']
     code, result = send_request_with_token(
-      session, node, 'status', false, {}, true, nil, 30, {}, SUPERUSER
+      PCSAuth.getSuperuserSession(), node, 'status'
     )
     status = JSON.parse(result)
     if status.has_key?("corosync_offline") and
@@ -645,8 +645,7 @@ if not DISABLE_GUI
 
       # auth begin
       retval, out = send_request_with_token(
-        session, node, '/get_cluster_tokens', false, {}, true, nil, 30, {},
-        SUPERUSER
+        PCSAuth.getSuperuserSession(), node, '/get_cluster_tokens'
       )
       if retval == 404 # backward compatibility layer
         session[:error] = "authimposible"
@@ -876,7 +875,7 @@ def getLocationDeps(session, cur_node)
   [deps_allow, deps_disallow]
 end
 
-def getConfigOptions2(session, cluster_name, username=nil)
+def getConfigOptions2(session, cluster_name)
   config_options = {}
   general_page = []
 #  general_page << ConfigOption.new("Cluster Delay Time", "cluster-delay",  "int", 4, "Seconds") 
@@ -914,7 +913,7 @@ If checked, the cluster will refuse to start resources unless one or more STONIT
   allconfigoptions = []
   config_options.each { |i,k| k.each { |j| allconfigoptions << j } }
   ConfigOption.getDefaultValues(allconfigoptions)
-  ConfigOption.loadValues(session, allconfigoptions, cluster_name, nil, username)
+  ConfigOption.loadValues(session, allconfigoptions, cluster_name)
   return config_options
 end
 
@@ -986,14 +985,14 @@ class ConfigOption
     @desc = desc
   end
 
-  def self.loadValues(session, cos, cluster_name, node_list=nil, username=nil)
+  def self.loadValues(session, cos, cluster_name, node_list=nil)
     if node_list
       code, output = send_nodes_request_with_token(
-        session, node_list, "get_cib", false, {}, true, nil, username
+        session, node_list, "get_cib",
       )
     else
       code, output = send_cluster_request_with_token(
-        session, cluster_name, "get_cib", false, {}, true, nil, username
+        session, cluster_name, "get_cib"
       )
     end
     $logger.info(code)
