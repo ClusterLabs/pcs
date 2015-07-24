@@ -784,6 +784,7 @@ def set_permissions_remote(params, request, session)
   user_set = {}
   perm_list = []
   full_users_new = Set.new
+  perm_deps = Permissions.permissions_dependencies
   if data['permissions']
     data['permissions'].each { |key, perm|
       name = (perm['name'] || '').strip
@@ -806,9 +807,15 @@ def set_permissions_remote(params, request, session)
           if not Permissions::is_permission_type(perm_allow)
             return [400, "Unknown permission '#{perm_allow}'"]
           end
-          allow << perm_allow
           if Permissions::FULL == perm_allow
             full_users_new << [type, name]
+          end
+          allow << perm_allow
+          # Explicitly save dependant permissions. That way if the dependency is
+          # changed in the future it won't revoke permissions which were once
+          # granted.
+          if perm_deps['also_allows'] and perm_deps['also_allows'][perm_allow]
+            allow += perm_deps['also_allows'][perm_allow]
           end
         }
       end

@@ -121,7 +121,7 @@ helpers do
       end
 
       if request.path.start_with?('/remote') or (request.path.match(match_expr) and not on_managec_main) or '/run_pcs' == request.path or 
-        '/clusters_overview' == request.path
+        '/clusters_overview' == request.path or request.path.start_with?('/permissions_')
 	$logger.info "ERROR: Request without authentication"
 	halt [401, '{"notauthorized":"true"}']
       else
@@ -498,7 +498,7 @@ if not DISABLE_GUI
     erb :permissions, :layout => :main
   end
 
-  get '/permissions/:cluster/?' do
+  get '/permissions_cluster_form/:cluster/?' do
     @cluster_name = params[:cluster]
     @error = nil
     @permission_types = []

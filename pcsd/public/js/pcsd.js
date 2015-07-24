@@ -2193,7 +2193,7 @@ function permissions_load_cluster(cluster_name, callback) {
   var element_id = "permissions_cluster_" + cluster_name;
   $.ajax({
     type: "GET",
-    url: "/permissions/" + cluster_name,
+    url: "/permissions_cluster_form/" + cluster_name,
     timeout: pcs_timeout,
     success: function(data) {
       $("#" + element_id).html(data);
@@ -2317,7 +2317,10 @@ function permissions_add_row(template_row) {
   });
 
   $(template_row).before(new_row);
-  $(template_row).find(":input").val("").removeAttr("checked").removeAttr("selected");
+  var template_inputs = $(template_row).find(":input");
+  template_inputs.removeAttr("checked").removeAttr("selected");
+  template_inputs.removeAttr("disabled").removeAttr("readonly");
+  $(template_row).find(":input[type=text]").val("");
 }
 
 function permissions_get_dependent_checkboxes(checkbox) {
@@ -2354,6 +2357,9 @@ function permissions_fix_dependent_checkboxes(checkbox) {
       var jq_check = $(check);
       jq_check.prop("checked", true);
       jq_check.prop("readonly", true);
+      // readonly on checkbox makes it look like readonly but doesn't prevent
+      // changing its state (checked - not checked), setting disabled works
+      jq_check.prop("disabled", true);
       permissions_fix_dependent_checkboxes(check);
     });
   }
@@ -2363,6 +2369,7 @@ function permissions_fix_dependent_checkboxes(checkbox) {
       var jq_check = $(check);
       jq_check.prop("checked", jq_check.prop("defaultChecked"));
       jq_check.prop("readonly", false);
+      jq_check.prop("disabled", false);
       permissions_fix_dependent_checkboxes(check);
     });
   }
