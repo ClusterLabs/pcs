@@ -52,18 +52,17 @@ Pcs = Ember.Application.createWithMixins({
   update_timeout: null,
   update: function(first_run) {
     if (window.location.pathname.lastIndexOf('/manage', 0) !== 0) {
-      hide_loading_screen();
       return;
     }
     clearTimeout(Pcs.update_timeout);
     var self = Pcs;
-    if (first_run)
-      show_loading_screen();
     var cluster_name = self.cluster_name;
     if (cluster_name == null) {
       if (location.pathname.indexOf("/manage") != 0) {
-        hide_loading_screen();
         return;
+      }
+      if (first_run) {
+        show_loading_screen();
       }
       Ember.debug("Empty Cluster Name");
       $.ajax({
@@ -98,6 +97,9 @@ Pcs = Ember.Application.createWithMixins({
         }
       });
       return;
+    }
+    if (first_run) {
+      show_loading_screen();
     }
     $.ajax({
       url: "cluster_status",

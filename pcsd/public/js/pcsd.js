@@ -2184,6 +2184,9 @@ function permissions_load_all() {
       $("#cluster_list tr").first().next() /* the first row is a heading */
     );
   }
+  else {
+    hide_loading_screen();
+  }
 }
 
 function permissions_load_cluster(cluster_name, callback) {
