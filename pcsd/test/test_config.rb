@@ -56,7 +56,9 @@ class TestConfig < Test::Unit::TestCase
         "type": "group",
         "name": "haclient",
         "allow": [
-          "full"
+          "grant",
+          "read",
+          "write"
         ]
       }
     ]
@@ -99,7 +101,9 @@ class TestConfig < Test::Unit::TestCase
         "type": "group",
         "name": "haclient",
         "allow": [
-          "full"
+          "grant",
+          "read",
+          "write"
         ]
       }
     ]

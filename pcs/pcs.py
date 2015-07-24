@@ -159,6 +159,7 @@ def main(argv):
         cmd_map[command](argv)
         return
     # specific commands need to be run under root account, pass them to pcsd
+    # don't forget to allow each command in pcsd.rb in "post /run_pcs do"
     root_command_list = [
         ['cluster', 'auth', '...'],
         ['cluster', 'corosync', '...'],
@@ -170,6 +171,7 @@ def main(argv):
         ['cluster', 'setup', '...'],
         ['cluster', 'start', '...'],
         ['cluster', 'stop', '...'],
+        ['cluster', 'sync', '...'],
         # ['config', 'restore', '...'], # handled in config.config_restore
         ['pcsd', 'sync-certificates'],
         ['status', 'nodes', 'corosync-id'],

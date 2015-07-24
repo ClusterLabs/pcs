@@ -1,6 +1,7 @@
 require 'json'
 require 'uri'
 require 'open4'
+require 'set'
 
 require 'pcs.rb'
 require 'resource.rb'
@@ -373,8 +374,8 @@ def config_backup(params, request, session)
       session, params[:name], 'config_backup', true
     )
   else
-    if not allowed_for_superuser(session)
-      return 403, "Permission denied"
+    if not allowed_for_local_cluster(session, Permissions::FULL)
+      return 403, 'Permission denied'
     end
     $logger.info "Backup node configuration"
     stdout, stderr, retval = run_cmd(session, PCS, "config", "backup")
@@ -394,8 +395,8 @@ def config_restore(params, request, session)
       {:tarball => params[:tarball]}
     )
   else
-    if not allowed_for_superuser(session)
-      return 403, "Permission denied"
+    if not allowed_for_local_cluster(session, Permissions::FULL)
+      return 403, 'Permission denied'
     end
     $logger.info "Restore node configuration"
     if params[:tarball] != nil and params[:tarball] != ""
@@ -560,7 +561,7 @@ def get_corosync_conf_remote(params, request, session)
 end
 
 def set_cluster_conf(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   if params[:cluster_conf] != nil and params[:cluster_conf].strip != ""
@@ -574,7 +575,7 @@ def set_cluster_conf(params, request, session)
 end
 
 def set_corosync_conf(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   if params[:corosync_conf] != nil and params[:corosync_conf].strip != ""
@@ -594,7 +595,7 @@ def get_sync_capabilities(params, request, session)
 end
 
 def set_sync_options(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
 
@@ -644,7 +645,7 @@ def set_sync_options(params, request, session)
 end
 
 def get_configs(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   if not $cluster_name or $cluster_name.empty?
@@ -668,7 +669,7 @@ def get_configs(params, request, session)
 end
 
 def set_configs(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   return JSON.generate({'status' => 'bad_json'}) if not params['configs']
@@ -715,8 +716,8 @@ def set_configs(params, request, session)
 end
 
 def set_certs(params, request, session)
-  if not allowed_for_superuser(session)
-    return 403, "Permission denied"
+  if not allowed_for_local_cluster(session, Permissions::FULL)
+    return 403, 'Permission denied'
   end
 
   ssl_cert = (params['ssl_cert'] || '').strip
@@ -782,6 +783,7 @@ def set_permissions_remote(params, request, session)
 
   user_set = {}
   perm_list = []
+  full_users_new = Set.new
   if data['permissions']
     data['permissions'].each { |key, perm|
       name = (perm['name'] || '').strip
@@ -805,6 +807,9 @@ def set_permissions_remote(params, request, session)
             return [400, "Unknown permission '#{perm_allow}'"]
           end
           allow << perm_allow
+          if Permissions::FULL == perm_allow
+            full_users_new << [type, name]
+          end
         }
       end
 
@@ -812,6 +817,31 @@ def set_permissions_remote(params, request, session)
     }
   end
   perm_set = Permissions::PermissionsSet.new(perm_list)
+
+  full_users_old = Set.new
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  pcs_config.permissions_local.entity_permissions_list.each{ |entity_perm|
+    if entity_perm.allow_list.include?(Permissions::FULL)
+      full_users_old << [entity_perm.type, entity_perm.name]
+    end
+  }
+
+  if full_users_new != full_users_old
+    label = 'Full'
+    Permissions.get_permission_types.each { |perm_type|
+      if Permissions::FULL == perm_type['code']
+        label = perm_type['label']
+        break
+      end
+    }
+    if not allowed_for_local_cluster(session, Permissions::FULL)
+      return [
+        403,
+        "Permission denied\nOnly #{SUPERUSER} and users with #{label} "\
+          + "permission can grant or revoke #{label} permission."
+      ]
+    end
+  end
 
   2.times {
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
@@ -891,7 +921,7 @@ def remote_node_available(params, request, session)
 end
 
 def remote_add_node(params, request, session, all=false)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   auto_start = false
@@ -915,7 +945,7 @@ def remote_add_node(params, request, session, all=false)
 end
 
 def remote_remove_nodes(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   count = 0
@@ -956,7 +986,7 @@ def remote_remove_nodes(params, request, session)
 end
 
 def remote_remove_node(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   if params[:remove_nodename] != nil
@@ -2031,7 +2061,7 @@ def update_cluster_settings(params, request, session)
 end
 
 def cluster_destroy(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   out, errout, retval = run_cmd(session, PCS, "cluster", "destroy")
@@ -2098,7 +2128,7 @@ end
 # not used anymore, left here for backward compatability reasons
 def get_tokens(params, request, session)
   # pcsd runs as root thus always returns hacluster's tokens
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
   return [200, JSON.generate(read_tokens)]
@@ -2106,7 +2136,7 @@ end
 
 def get_cluster_tokens(params, request, session)
   # pcsd runs as root thus always returns hacluster's tokens
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, "Permission denied"
   end
   on, off = get_nodes
@@ -2117,7 +2147,7 @@ end
 
 def save_tokens(params, request, session)
   # pcsd runs as root thus always returns hacluster's tokens
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, "Permission denied"
   end
 
@@ -2144,7 +2174,7 @@ def save_tokens(params, request, session)
 end
 
 def add_node_to_cluster(params, request, session)
-  if not allowed_for_superuser(session)
+  if not allowed_for_local_cluster(session, Permissions::FULL)
     return 403, 'Permission denied'
   end
 
@@ -2161,7 +2191,8 @@ def add_node_to_cluster(params, request, session)
   # it by themselves.
   token_data = {"node:#{new_node}" => tokens[new_node]}
   retval, out = send_cluster_request_with_token(
-    session, clustername, '/save_tokens', true, token_data
+    # new node doesn't have config with permissions yet
+    PCSAuth.getSuperuserSession(), clustername, '/save_tokens', true, token_data
   )
   # If the cluster runs an old pcsd which doesn't support /save_tokens,
   # ignore 404 in order to not prevent the node to be added.

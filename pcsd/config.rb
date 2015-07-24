@@ -40,14 +40,20 @@ class PCSConfig
       elsif @format_version == 1
         input_clusters = json
         # backward compatibility code start
-        # pcsd without permission support used format_version == 1
-        # all users, who were member of 'haclient' group, had full access
+        # Old pcsd without permission support was using format_version == 1.
+        # All members of 'haclient' group had unrestricted access.
+        # We give them access to most functions except reading tokens and keys,
+        # they also won't be able to add and remove nodes because of that.
         input_permissions = {
           'local_cluster' => [
             {
               'type' => Permissions::TYPE_GROUP,
               'name' => ADMIN_GROUP,
-              'allow' => [Permissions::FULL],
+              'allow' => [
+                Permissions::READ,
+                Permissions::WRITE,
+                Permissions::GRANT,
+              ]
             },
           ],
         }

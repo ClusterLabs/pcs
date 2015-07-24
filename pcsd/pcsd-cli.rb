@@ -85,17 +85,21 @@ allowed_commands = {
     },
   },
   'send_local_configs' => {
-    'only_superuser' => true,
-    'permissions' => nil,
+    'only_superuser' => false,
+    'permissions' => Permissions::FULL,
     'call' => lambda { |params, session|
       send_local_configs_to_nodes(
-        session, params['nodes'] || [], params['force'] || false
+        # for a case when sending to a node which is being added to a cluster
+        # - the node doesn't have the config so it cannot check permissions
+        PCSAuth.getSuperuserSession(),
+        params['nodes'] || [],
+        params['force'] || false
       )
     }
   },
   'send_local_certs' => {
-    'only_superuser' => true,
-    'permissions' => nil,
+    'only_superuser' => false,
+    'permissions' => Permissions::FULL,
     'call' => lambda { |params, session|
       send_local_certs_to_nodes(session, params['nodes'] || [])
     }

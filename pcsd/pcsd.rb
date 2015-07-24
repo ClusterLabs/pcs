@@ -215,8 +215,8 @@ post '/run_pcs' do
       'permissions' => nil,
     },
     ['cluster', 'destroy', '...'] => {
-      'only_superuser' => true,
-      'permissions' => nil,
+      'only_superuser' => false,
+      'permissions' => Permissions::FULL,
     },
     # runs on the local node, check permissions
     ['cluster', 'disable'] => {
@@ -239,8 +239,8 @@ post '/run_pcs' do
       'permissions' => nil,
     },
     ['cluster', 'node', '...'] => {
-      'only_superuser' => true,
-      'permissions' => nil,
+      'only_superuser' => false,
+      'permissions' => Permissions::FULL,
     },
     ['cluster', 'pcsd-status', '...'] => {
       'only_superuser' => false,
@@ -270,13 +270,17 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => nil,
     },
+    ['cluster', 'sync', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::FULL,
+    },
     ['config', 'restore', '...'] => {
-      'only_superuser' => true,
-      'permissions' => nil,
+      'only_superuser' => false,
+      'permissions' => Permissions::FULL,
     },
     ['pcsd', 'sync-certificates', '...'] => {
-      'only_superuser' => true,
-      'permissions' => nil,
+      'only_superuser' => false,
+      'permissions' => Permissions::FULL,
     },
     ['status', 'nodes', 'corosync-id', '...'] => {
       'only_superuser' => false,
@@ -732,7 +736,7 @@ if not DISABLE_GUI
       end
     }
 
-    # firstly we need to authenticate nodes to each other
+    # first we need to authenticate nodes to each other
     tokens = add_prefix_to_keys(get_tokens_of_nodes(@nodes), "node:")
     @nodes.each {|n|
       retval, out = send_request_with_token(
