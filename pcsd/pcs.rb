@@ -1198,10 +1198,17 @@ def run_auth_requests(session, nodes_to_send, nodes_to_auth, username, password,
   return auth_responses
 end
 
-def send_local_configs_to_nodes(session, nodes, force=false, tokens={})
+def send_local_configs_to_nodes(
+  session, nodes, force=false, clear_local_permissions=false
+)
+  configs = Cfgsync::get_configs_local(true)
+  if clear_local_permissions
+    pcs_config = PCSConfig.new(configs[Cfgsync::PcsdSettings.name].text())
+    pcs_config.permissions_local = Permissions::PermissionsSet.new([])
+    configs[Cfgsync::PcsdSettings.name].text = pcs_config.text()
+  end
   publisher = Cfgsync::ConfigPublisher.new(
-    session, Cfgsync::get_configs_local(true).values(), nodes, $cluster_name,
-    tokens
+    session, configs.values(), nodes, $cluster_name
   )
   return publisher.send(force)
 end

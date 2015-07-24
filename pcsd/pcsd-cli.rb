@@ -93,7 +93,8 @@ allowed_commands = {
         # - the node doesn't have the config so it cannot check permissions
         PCSAuth.getSuperuserSession(),
         params['nodes'] || [],
-        params['force'] || false
+        params['force'] || false,
+        params['clear_local_cluster_permissions'] || false
       )
     }
   },

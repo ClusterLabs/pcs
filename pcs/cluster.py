@@ -127,6 +127,7 @@ def sync(partial_argv,nodes):
     pcsd_data = {
         'nodes': nodes,
         'force': True,
+        'clear_local_cluster_permissions': True,
     }
     output, retval = utils.run_pcsdcli('send_local_configs', pcsd_data)
     if retval == 0 and output['status'] == 'ok' and output['data']:
