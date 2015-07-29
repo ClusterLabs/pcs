@@ -639,7 +639,7 @@ def get_resource_agents_avail(session)
   code, result = send_cluster_request_with_token(
     session, params[:cluster], 'get_avail_resource_agents'
   )
-  return {} if 403 == code
+  return {} if 200 != code
   begin
     ra = JSON.parse(result)
     if (ra["noresponse"] == true) or (ra["notauthorized"] == "true") or (ra["notoken"] == true) or (ra["pacemaker_not_running"] == true)
@@ -656,7 +656,7 @@ def get_stonith_agents_avail(session)
   code, result = send_cluster_request_with_token(
     session, params[:cluster], 'get_avail_fence_agents'
   )
-  return {} if 403 == code
+  return {} if 200 != code
   begin
     sa = JSON.parse(result)
     if (sa["noresponse"] == true) or (sa["notauthorized"] == "true") or (sa["notoken"] == true) or (sa["pacemaker_not_running"] == true)

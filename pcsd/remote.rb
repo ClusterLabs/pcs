@@ -2181,12 +2181,15 @@ def save_tokens(params, request, session)
 end
 
 def add_node_to_cluster(params, request, session)
-  if not allowed_for_local_cluster(session, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-
   clustername = params["clustername"]
   new_node = params["new_nodename"]
+
+  if clustername == $cluster_name
+    if not allowed_for_local_cluster(session, Permissions::FULL)
+      return 403, 'Permission denied'
+    end
+  end
+
   tokens = read_tokens
 
   if not tokens.include? new_node

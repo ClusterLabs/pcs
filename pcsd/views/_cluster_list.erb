@@ -30,7 +30,11 @@
       {{{status_icon}}}
     </td>
     <td nowrap class="resource_name">
-      <a {{bind-attr href=url_link}}>{{name}}</a>
+      {{#if forbidden}}
+        {{name}}
+      {{else}}
+        <a {{bind-attr href=url_link}}>{{name}}</a>
+      {{/if}}
     </td>
     <td nowrap class="resource_type">
       {{#if forbidden}}

@@ -748,10 +748,10 @@ function auth_nodes_dialog_update(data) {
   if (unauth_nodes.length == 0) {
     $("#authenticate_submit_btn").button("option", "disabled", false);
     $("#auth_failed_error_msg").hide();
+    $("#auth_nodes").dialog("close");
     if (callback_one !== null)
       callback_one();
     var callback = $("#auth_nodes").dialog("option", "callback_success_");
-    $("#auth_nodes").dialog("close");
     if (callback !== null)
       callback();
     return unauth_nodes;

@@ -46,7 +46,18 @@
 	{{#each Pcs.clusterController.cluster_list}}
 	  <div style="display:none;" {{bind-attr id=div_id}}>
 	    <table>
-	      <tr><td style="text-align:right"><b>Cluster:</b>&nbsp;</td><td><a {{bind-attr href=url_link}}>{{name}}</a>{{#unless forbidden}} {{{quorum_show}}}{{/unless}}</td></tr>
+	      <tr>
+          <td style="text-align:right">
+            <b>Cluster:</b>&nbsp;
+          </td>
+          <td>
+            {{#if forbidden}}
+              {{name}}
+            {{else}}
+              <a {{bind-attr href=url_link}}>{{name}}</a> {{{quorum_show}}}
+            {{/if}}
+          </td>
+        </tr>
           {{#if error_list}}
           <tr><td style="text-align:right"><b>Errors:</b>&nbsp;</td><td></td></tr>
           {{/if}}

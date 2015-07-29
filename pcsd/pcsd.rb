@@ -992,7 +992,7 @@ class ConfigOption
   def self.loadValues(session, cos, cluster_name, node_list=nil)
     if node_list
       code, output = send_nodes_request_with_token(
-        session, node_list, "get_cib",
+        session, node_list, "get_cib"
       )
     else
       code, output = send_cluster_request_with_token(
