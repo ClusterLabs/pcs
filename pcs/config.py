@@ -375,6 +375,18 @@ def config_backup_path_list(with_uid_gid=False, force_rhel6=None):
             "required": False,
             "attrs": dict(corosync_attrs),
         }
+        file_list["pcs_settings.conf"] = {
+            "path": settings.pcsd_settings_conf_location,
+            "required": False,
+            "attrs": {
+                "mtime": int(time.time()),
+                "mode": 0644,
+                "uname": "root",
+                "gname": "root",
+                "uid": 0,
+                "gid": 0,
+            },
+        }
     return file_list
 
 def config_backup_check_version(version):
