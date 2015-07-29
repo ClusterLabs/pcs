@@ -2574,12 +2574,12 @@ def resource_relocate(argv):
         resource_relocate_run(utils.get_cib_dom(), argv, True)
     elif cmd == "run":
         resource_relocate_run(utils.get_cib_dom(), argv, False)
-    elif cmd == "clean":
+    elif cmd == "clear":
         if argv:
-            usage.resource(["relocate clean"])
+            usage.resource(["relocate clear"])
             sys.exit(1)
         utils.replace_cib_configuration(
-            resource_relocate_clean(utils.get_cib_dom())
+            resource_relocate_clear(utils.get_cib_dom())
         )
     else:
         usage.resource(["relocate"])
@@ -2737,14 +2737,14 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
                 utils.err(output, False)
 
     # remove constraints
-    resource_relocate_clean(cib_dom)
+    resource_relocate_clear(cib_dom)
     if not dry:
         utils.replace_cib_configuration(cib_dom)
 
     if error:
         sys.exit(1)
 
-def resource_relocate_clean(cib_dom):
+def resource_relocate_clear(cib_dom):
     for constraint_el in cib_dom.getElementsByTagName("constraints"):
         for location_el in constraint_el.getElementsByTagName("rsc_location"):
             location_id = location_el.getAttribute("id")

@@ -503,7 +503,7 @@ Commands:
         Display current status of resources and their optimal node ignoring
         resource stickiness.
 
-    relocate clean
+    relocate clear
         Remove all constraints created by the 'relocate run' command.
 
 Examples:
