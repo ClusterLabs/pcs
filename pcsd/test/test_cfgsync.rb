@@ -636,6 +636,10 @@ end
 
 
 class TestMergeTokens < Test::Unit::TestCase
+  def setup()
+    FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
+  end
+
   def test_nothing_to_merge()
     old_cfg = Cfgsync::PcsdTokens.from_file()
     new_cfg = Cfgsync::merge_tokens_files(old_cfg, nil, {})
