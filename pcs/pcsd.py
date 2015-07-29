@@ -72,15 +72,25 @@ def pcsd_certkey(argv):
 
 def pcsd_sync_certs(argv):
     nodes = utils.getNodesFromCorosyncConf()
-    print (
-        "Synchronizing pcsd certificates on nodes {0}. pcsd will be "
-        + "restarted on the nodes in order to reload the certificates."
-    ).format(", ".join(nodes))
-    print
     pcsd_data = {'nodes': nodes}
-    for cmd in ['send_local_certs', 'pcsd_restart_nodes']:
+    commands = [
+        {
+            "command": "send_local_certs",
+            "message": "Synchronizing pcsd certificates on nodes {0}.".format(
+                ", ".join(nodes)
+            ),
+        },
+        {
+            "command": "pcsd_restart_nodes",
+            "message": "Restaring pcsd on the nodes in order to reload "
+                + "the certificates."
+            ,
+        },
+    ]
+    for cmd in commands:
         error = ''
-        output, retval = utils.run_pcsdcli(cmd, pcsd_data)
+        print cmd["message"]
+        output, retval = utils.run_pcsdcli(cmd["command"], pcsd_data)
         if retval == 0 and output['status'] == 'ok' and output['data']:
             try:
                 if output['data']['status'] != 'ok' and output['data']['text']:
@@ -90,6 +100,8 @@ def pcsd_sync_certs(argv):
         else:
             error = 'Unable to sync pcsd certificates'
         if error:
+            # restart pcsd even if sync failed in order to reload
+            # the certificates on nodes where it succeded
             utils.err(error, False)
 
 def pcsd_clear_auth(argv):
