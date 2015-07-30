@@ -10,7 +10,7 @@ ifeq ($(UNAME_OS_GNU),true)
     UNAME_DEBIAN_VER_8 := $(shell if grep -q -i "8" /etc/debian_version ; then echo true; else echo false; fi)
     settings_x86_64 := $(shell if uname -m | grep -q -i "x86_64" ; then echo true; else echo false; fi)
     settings_i386=false
-    ifeq ($(settings_64),false)
+    ifeq ($(settings_x86_64),false)
       settings_i386 := $(shell if uname -m | grep -q -i "i386" ; then echo true; else echo false; fi)
     endif
   endif
