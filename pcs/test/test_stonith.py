@@ -222,7 +222,19 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
 
         output, returnVal = pcs(temp_cib, "stonith show")
         assert returnVal == 0
-        ac(output,' F1\t(stonith:fence_apc):\tStopped \n F2\t(stonith:fence_apc):\tStopped \n F3\t(stonith:fence_apc):\tStopped \n F4\t(stonith:fence_apc):\tStopped \n F5\t(stonith:fence_apc):\tStopped \n Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 1 - F1\n  Level 2 - F2\n')
+        ac(output,"""\
+ F1\t(stonith:fence_apc):\tStopped
+ F2\t(stonith:fence_apc):\tStopped
+ F3\t(stonith:fence_apc):\tStopped
+ F4\t(stonith:fence_apc):\tStopped
+ F5\t(stonith:fence_apc):\tStopped
+ Node: rh7-1
+  Level 1 - F3,F4
+  Level 2 - F5,F2
+ Node: rh7-2
+  Level 1 - F1
+  Level 2 - F2
+""")
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
@@ -502,13 +514,13 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEquals(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped 
- n2-ipmi\t(stonith:fence_ilo):\tStopped 
- n1-apc1\t(stonith:fence_apc):\tStopped 
- n1-apc2\t(stonith:fence_apc):\tStopped 
- n2-apc1\t(stonith:fence_apc):\tStopped 
- n2-apc2\t(stonith:fence_apc):\tStopped 
- n2-apc3\t(stonith:fence_apc):\tStopped 
+ n1-ipmi\t(stonith:fence_ilo):\tStopped
+ n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-apc1\t(stonith:fence_apc):\tStopped
+ n1-apc2\t(stonith:fence_apc):\tStopped
+ n2-apc1\t(stonith:fence_apc):\tStopped
+ n2-apc2\t(stonith:fence_apc):\tStopped
+ n2-apc3\t(stonith:fence_apc):\tStopped
  Node: rh7-1
   Level 1 - n1-ipmi
   Level 2 - n1-apc1,n1-apc2,n2-apc2
@@ -524,12 +536,12 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEquals(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped 
- n2-ipmi\t(stonith:fence_ilo):\tStopped 
- n1-apc1\t(stonith:fence_apc):\tStopped 
- n1-apc2\t(stonith:fence_apc):\tStopped 
- n2-apc1\t(stonith:fence_apc):\tStopped 
- n2-apc3\t(stonith:fence_apc):\tStopped 
+ n1-ipmi\t(stonith:fence_ilo):\tStopped
+ n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-apc1\t(stonith:fence_apc):\tStopped
+ n1-apc2\t(stonith:fence_apc):\tStopped
+ n2-apc1\t(stonith:fence_apc):\tStopped
+ n2-apc3\t(stonith:fence_apc):\tStopped
  Node: rh7-1
   Level 1 - n1-ipmi
   Level 2 - n1-apc1,n1-apc2
@@ -545,11 +557,11 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEquals(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped 
- n2-ipmi\t(stonith:fence_ilo):\tStopped 
- n1-apc1\t(stonith:fence_apc):\tStopped 
- n1-apc2\t(stonith:fence_apc):\tStopped 
- n2-apc3\t(stonith:fence_apc):\tStopped 
+ n1-ipmi\t(stonith:fence_ilo):\tStopped
+ n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-apc1\t(stonith:fence_apc):\tStopped
+ n1-apc2\t(stonith:fence_apc):\tStopped
+ n2-apc3\t(stonith:fence_apc):\tStopped
  Node: rh7-1
   Level 1 - n1-ipmi
   Level 2 - n1-apc1,n1-apc2
@@ -565,10 +577,10 @@ Error: missing required option(s): 'port' for resource type: stonith:fence_apc (
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEquals(returnVal, 0)
         ac(output, """\
- n1-ipmi\t(stonith:fence_ilo):\tStopped 
- n2-ipmi\t(stonith:fence_ilo):\tStopped 
- n1-apc1\t(stonith:fence_apc):\tStopped 
- n1-apc2\t(stonith:fence_apc):\tStopped 
+ n1-ipmi\t(stonith:fence_ilo):\tStopped
+ n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-apc1\t(stonith:fence_apc):\tStopped
+ n1-apc2\t(stonith:fence_apc):\tStopped
  Node: rh7-1
   Level 1 - n1-ipmi
   Level 2 - n1-apc1,n1-apc2

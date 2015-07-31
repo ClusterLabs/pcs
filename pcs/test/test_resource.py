@@ -190,7 +190,15 @@ the health of a system via IPMI.
 # Verify all resource have been added
         output, returnVal = pcs(temp_cib, "resource show")
         assert returnVal == 0
-        assert output == ' ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP2\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP3\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP4\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP5\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped \n ClusterIP7\t(ocf::heartbeat:IPaddr2):\tStopped \n'
+        ac(output, """\
+ ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped
+ ClusterIP2\t(ocf::heartbeat:IPaddr2):\tStopped
+ ClusterIP3\t(ocf::heartbeat:IPaddr2):\tStopped
+ ClusterIP4\t(ocf::heartbeat:IPaddr2):\tStopped
+ ClusterIP5\t(ocf::heartbeat:IPaddr2):\tStopped
+ ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped
+ ClusterIP7\t(ocf::heartbeat:IPaddr2):\t(target-role:Stopped) Stopped
+""")
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP6 --full")
         assert returnVal == 0
@@ -897,7 +905,12 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
-        ac(o," Resource Group: AGroup\n     A1\t(ocf::heartbeat:Dummy):\tStopped \n     A2\t(ocf::heartbeat:Dummy):\tStopped \n     A3\t(ocf::heartbeat:Dummy):\tStopped \n")
+        ac(o,"""\
+ Resource Group: AGroup
+     A1\t(ocf::heartbeat:Dummy):\tStopped
+     A2\t(ocf::heartbeat:Dummy):\tStopped
+     A3\t(ocf::heartbeat:Dummy):\tStopped
+""")
 
         o,r = pcs(temp_cib, "resource delete AGroup")
         ac(o,"Removing group: AGroup (and all resources within group)\nStopping all resources in group: AGroup...\nDeleting Resource - A1\nDeleting Resource - A2\nDeleting Resource (and group) - A3\n")
@@ -950,7 +963,19 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
-        ac(o,' ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped \n Resource Group: TestGroup1\n     ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped \n Clone Set: ClusterIP4-clone [ClusterIP4]\n Master/Slave Set: Master [ClusterIP5]\n Resource Group: AGroup\n     A2\t(ocf::heartbeat:Dummy):\tStopped \n     A4\t(ocf::heartbeat:Dummy):\tStopped \n     A5\t(ocf::heartbeat:Dummy):\tStopped \n A1\t(ocf::heartbeat:Dummy):\tStopped \n A3\t(ocf::heartbeat:Dummy):\tStopped \n')
+        ac(o, """\
+ ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped
+ Resource Group: TestGroup1
+     ClusterIP\t(ocf::heartbeat:IPaddr2):\tStopped
+ Clone Set: ClusterIP4-clone [ClusterIP4]
+ Master/Slave Set: Master [ClusterIP5]
+ Resource Group: AGroup
+     A2\t(ocf::heartbeat:Dummy):\tStopped
+     A4\t(ocf::heartbeat:Dummy):\tStopped
+     A5\t(ocf::heartbeat:Dummy):\tStopped
+ A1\t(ocf::heartbeat:Dummy):\tStopped
+ A3\t(ocf::heartbeat:Dummy):\tStopped
+""")
 
         o,r = pcs(temp_cib, "constraint location AGroup prefers rh7-1")
         assert r == 0
@@ -1006,7 +1031,16 @@ Colocation Constraints:
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
-        ac(o,' A1\t(ocf::heartbeat:Dummy):\tStopped \n A2\t(ocf::heartbeat:Dummy):\tStopped \n A3\t(ocf::heartbeat:Dummy):\tStopped \n A4\t(ocf::heartbeat:Dummy):\tStopped \n A5\t(ocf::heartbeat:Dummy):\tStopped \n Resource Group: Dgroup\n     A6\t(ocf::heartbeat:Dummy):\tStopped \n     A7\t(ocf::heartbeat:Dummy):\tStopped \n')
+        ac(o,"""\
+ A1\t(ocf::heartbeat:Dummy):\tStopped
+ A2\t(ocf::heartbeat:Dummy):\tStopped
+ A3\t(ocf::heartbeat:Dummy):\tStopped
+ A4\t(ocf::heartbeat:Dummy):\tStopped
+ A5\t(ocf::heartbeat:Dummy):\tStopped
+ Resource Group: Dgroup
+     A6\t(ocf::heartbeat:Dummy):\tStopped
+     A7\t(ocf::heartbeat:Dummy):\tStopped
+""")
 
         o,r = pcs(temp_cib, "resource delete A6")
         assert r == 0
@@ -1028,7 +1062,15 @@ Colocation Constraints:
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
-        ac(o,' Resource Group: MyGroup\n     A1\t(ocf::heartbeat:Dummy):\tStopped \n     A2\t(ocf::heartbeat:Dummy):\tStopped \n Resource Group: MyGroup2\n     A3\t(ocf::heartbeat:Dummy):\tStopped \n     A4\t(ocf::heartbeat:Dummy):\tStopped \n     A5\t(ocf::heartbeat:Dummy):\tStopped \n')
+        ac(o,"""\
+ Resource Group: MyGroup
+     A1\t(ocf::heartbeat:Dummy):\tStopped
+     A2\t(ocf::heartbeat:Dummy):\tStopped
+ Resource Group: MyGroup2
+     A3\t(ocf::heartbeat:Dummy):\tStopped
+     A4\t(ocf::heartbeat:Dummy):\tStopped
+     A5\t(ocf::heartbeat:Dummy):\tStopped
+""")
 
         o, r = pcs(temp_cib, "resource create --no-default-ops A6 Dummy")
         self.assertEquals(0, r)
@@ -1047,14 +1089,14 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "resource show")
         ac(o, """\
  Resource Group: MyGroup
-     A7\t(ocf::heartbeat:Dummy):\tStopped 
-     A1\t(ocf::heartbeat:Dummy):\tStopped 
-     A6\t(ocf::heartbeat:Dummy):\tStopped 
-     A2\t(ocf::heartbeat:Dummy):\tStopped 
+     A7\t(ocf::heartbeat:Dummy):\tStopped
+     A1\t(ocf::heartbeat:Dummy):\tStopped
+     A6\t(ocf::heartbeat:Dummy):\tStopped
+     A2\t(ocf::heartbeat:Dummy):\tStopped
  Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped 
-     A4\t(ocf::heartbeat:Dummy):\tStopped 
-     A5\t(ocf::heartbeat:Dummy):\tStopped 
+     A3\t(ocf::heartbeat:Dummy):\tStopped
+     A4\t(ocf::heartbeat:Dummy):\tStopped
+     A5\t(ocf::heartbeat:Dummy):\tStopped
 """)
         self.assertEquals(0, r)
 
@@ -1069,14 +1111,14 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "resource show")
         ac(o, """\
  Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped 
-     A2\t(ocf::heartbeat:Dummy):\tStopped 
+     A1\t(ocf::heartbeat:Dummy):\tStopped
+     A2\t(ocf::heartbeat:Dummy):\tStopped
  Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped 
-     A4\t(ocf::heartbeat:Dummy):\tStopped 
-     A6\t(ocf::heartbeat:Dummy):\tStopped 
-     A5\t(ocf::heartbeat:Dummy):\tStopped 
-     A7\t(ocf::heartbeat:Dummy):\tStopped 
+     A3\t(ocf::heartbeat:Dummy):\tStopped
+     A4\t(ocf::heartbeat:Dummy):\tStopped
+     A6\t(ocf::heartbeat:Dummy):\tStopped
+     A5\t(ocf::heartbeat:Dummy):\tStopped
+     A7\t(ocf::heartbeat:Dummy):\tStopped
 """)
         self.assertEquals(0, r)
 
@@ -1087,14 +1129,14 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "resource show")
         ac(o, """\
  Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped 
-     A6\t(ocf::heartbeat:Dummy):\tStopped 
-     A7\t(ocf::heartbeat:Dummy):\tStopped 
-     A2\t(ocf::heartbeat:Dummy):\tStopped 
+     A1\t(ocf::heartbeat:Dummy):\tStopped
+     A6\t(ocf::heartbeat:Dummy):\tStopped
+     A7\t(ocf::heartbeat:Dummy):\tStopped
+     A2\t(ocf::heartbeat:Dummy):\tStopped
  Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped 
-     A4\t(ocf::heartbeat:Dummy):\tStopped 
-     A5\t(ocf::heartbeat:Dummy):\tStopped 
+     A3\t(ocf::heartbeat:Dummy):\tStopped
+     A4\t(ocf::heartbeat:Dummy):\tStopped
+     A5\t(ocf::heartbeat:Dummy):\tStopped
 """)
         self.assertEquals(0, r)
 
@@ -1105,14 +1147,14 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "resource show")
         ac(o, """\
  Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped 
-     A2\t(ocf::heartbeat:Dummy):\tStopped 
+     A1\t(ocf::heartbeat:Dummy):\tStopped
+     A2\t(ocf::heartbeat:Dummy):\tStopped
  Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped 
-     A4\t(ocf::heartbeat:Dummy):\tStopped 
-     A6\t(ocf::heartbeat:Dummy):\tStopped 
-     A7\t(ocf::heartbeat:Dummy):\tStopped 
-     A5\t(ocf::heartbeat:Dummy):\tStopped 
+     A3\t(ocf::heartbeat:Dummy):\tStopped
+     A4\t(ocf::heartbeat:Dummy):\tStopped
+     A6\t(ocf::heartbeat:Dummy):\tStopped
+     A7\t(ocf::heartbeat:Dummy):\tStopped
+     A5\t(ocf::heartbeat:Dummy):\tStopped
 """)
         self.assertEquals(0, r)
 
@@ -1148,16 +1190,16 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "resource show")
         ac(o, """\
  Resource Group: MyGroup
-     A8\t(ocf::heartbeat:Dummy):\tStopped 
-     A1\t(ocf::heartbeat:Dummy):\tStopped 
-     A9\t(ocf::heartbeat:Dummy):\tStopped 
-     A2\t(ocf::heartbeat:Dummy):\tStopped 
+     A8\t(ocf::heartbeat:Dummy):\tStopped
+     A1\t(ocf::heartbeat:Dummy):\tStopped
+     A9\t(ocf::heartbeat:Dummy):\tStopped
+     A2\t(ocf::heartbeat:Dummy):\tStopped
  Resource Group: MyGroup2
-     A3\t(ocf::heartbeat:Dummy):\tStopped 
-     A4\t(ocf::heartbeat:Dummy):\tStopped 
-     A6\t(ocf::heartbeat:Dummy):\tStopped 
-     A7\t(ocf::heartbeat:Dummy):\tStopped 
-     A5\t(ocf::heartbeat:Dummy):\tStopped 
+     A3\t(ocf::heartbeat:Dummy):\tStopped
+     A4\t(ocf::heartbeat:Dummy):\tStopped
+     A6\t(ocf::heartbeat:Dummy):\tStopped
+     A7\t(ocf::heartbeat:Dummy):\tStopped
+     A5\t(ocf::heartbeat:Dummy):\tStopped
 """)
         self.assertEquals(0, r)
 
@@ -1172,16 +1214,16 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "resource show")
         ac(o, """\
  Resource Group: MyGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped 
-     A8\t(ocf::heartbeat:Dummy):\tStopped 
-     A9\t(ocf::heartbeat:Dummy):\tStopped 
-     A2\t(ocf::heartbeat:Dummy):\tStopped 
+     A1\t(ocf::heartbeat:Dummy):\tStopped
+     A8\t(ocf::heartbeat:Dummy):\tStopped
+     A9\t(ocf::heartbeat:Dummy):\tStopped
+     A2\t(ocf::heartbeat:Dummy):\tStopped
  Resource Group: MyGroup2
-     A4\t(ocf::heartbeat:Dummy):\tStopped 
-     A6\t(ocf::heartbeat:Dummy):\tStopped 
-     A3\t(ocf::heartbeat:Dummy):\tStopped 
-     A7\t(ocf::heartbeat:Dummy):\tStopped 
-     A5\t(ocf::heartbeat:Dummy):\tStopped 
+     A4\t(ocf::heartbeat:Dummy):\tStopped
+     A6\t(ocf::heartbeat:Dummy):\tStopped
+     A3\t(ocf::heartbeat:Dummy):\tStopped
+     A7\t(ocf::heartbeat:Dummy):\tStopped
+     A5\t(ocf::heartbeat:Dummy):\tStopped
 """)
         self.assertEquals(0, r)
 
@@ -1259,7 +1301,20 @@ Deleting Resource (and group) - dummylarge
 
         output, returnVal = pcs(temp_cib, "resource")
         assert returnVal == 0
-        assert output == ' F\t(ocf::heartbeat:Dummy):\tStopped \n G\t(ocf::heartbeat:Dummy):\tStopped \n H\t(ocf::heartbeat:Dummy):\tStopped \n Resource Group: RGA\n     A\t(ocf::heartbeat:Dummy):\tStopped \n     B\t(ocf::heartbeat:Dummy):\tStopped \n     C\t(ocf::heartbeat:Dummy):\tStopped \n     E\t(ocf::heartbeat:Dummy):\tStopped \n     D\t(ocf::heartbeat:Dummy):\tStopped \n     K\t(ocf::heartbeat:Dummy):\tStopped \n     J\t(ocf::heartbeat:Dummy):\tStopped \n     I\t(ocf::heartbeat:Dummy):\tStopped \n',[output]
+        ac(output, """\
+ F\t(ocf::heartbeat:Dummy):\tStopped
+ G\t(ocf::heartbeat:Dummy):\tStopped
+ H\t(ocf::heartbeat:Dummy):\tStopped
+ Resource Group: RGA
+     A\t(ocf::heartbeat:Dummy):\tStopped
+     B\t(ocf::heartbeat:Dummy):\tStopped
+     C\t(ocf::heartbeat:Dummy):\tStopped
+     E\t(ocf::heartbeat:Dummy):\tStopped
+     D\t(ocf::heartbeat:Dummy):\tStopped
+     K\t(ocf::heartbeat:Dummy):\tStopped
+     J\t(ocf::heartbeat:Dummy):\tStopped
+     I\t(ocf::heartbeat:Dummy):\tStopped
+""")
 
         output, returnVal = pcs(temp_cib, "resource group list")
         assert returnVal == 0
@@ -2040,7 +2095,11 @@ Deleting Resource (and group and M/S) - dummylarge
         assert r == 0
 
         o,r = pcs(temp_cib, "resource")
-        ac(o," Resource Group: AG\n     D1\t(ocf::heartbeat:Dummy):\tStopped \n Clone Set: D0-clone [D0]\n")
+        ac(o,"""\
+ Resource Group: AG
+     D1\t(ocf::heartbeat:Dummy):\tStopped
+ Clone Set: D0-clone [D0]
+""")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource clone D1")
@@ -2064,7 +2123,13 @@ Deleting Resource (and group and M/S) - dummylarge
         assert r == 0
 
         o,r = pcs(temp_cib, "resource")
-        ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n Resource Group: AG2\n     D3\t(ocf::heartbeat:Dummy):\tStopped \n Master/Slave Set: D2-master [D2]\n")
+        ac(o,"""\
+ Clone Set: D0-clone [D0]
+ Clone Set: D1-clone [D1]
+ Resource Group: AG2
+     D3\t(ocf::heartbeat:Dummy):\tStopped
+ Master/Slave Set: D2-master [D2]
+""")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource master D3")
@@ -2492,7 +2557,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
-        ac(o," Resource Group: DGroup\n     D1\t(ocf::heartbeat:Dummy):\tStopped \n     D2\t(ocf::heartbeat:Dummy):\tStopped \n")
+        ac(o,"""\
+ Resource Group: DGroup
+     D1\t(ocf::heartbeat:Dummy):\tStopped
+     D2\t(ocf::heartbeat:Dummy):\tStopped
+""")
 
         o,r = pcs(temp_cib, "resource move DGroup rh7-1")
         ac(o,"")
@@ -3416,7 +3485,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource show")
-        ac(output, " Resource Group: dummies\n     dummy1\t(ocf::heartbeat:Dummy):\tStopped \n     dummy2\t(ocf::heartbeat:Dummy):\tStopped \n     dummy3\t(ocf::heartbeat:Dummy):\tStopped \n")
+        ac(output, """\
+ Resource Group: dummies
+     dummy1\t(ocf::heartbeat:Dummy):\tStopped
+     dummy2\t(ocf::heartbeat:Dummy):\tStopped
+     dummy3\t(ocf::heartbeat:Dummy):\tStopped
+""")
         assert retVal == 0
 
         output, retVal = pcs(temp_cib, "resource clone dummies")
@@ -3454,7 +3528,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource show")
-        ac(output, " Resource Group: dummies\n     dummy1\t(ocf::heartbeat:Dummy):\tStopped \n     dummy2\t(ocf::heartbeat:Dummy):\tStopped \n     dummy3\t(ocf::heartbeat:Dummy):\tStopped \n")
+        ac(output, """\
+ Resource Group: dummies
+     dummy1\t(ocf::heartbeat:Dummy):\tStopped
+     dummy2\t(ocf::heartbeat:Dummy):\tStopped
+     dummy3\t(ocf::heartbeat:Dummy):\tStopped
+""")
         assert retVal == 0
 
         output, retVal = pcs(temp_cib, "resource master dummies")
