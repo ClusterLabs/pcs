@@ -1461,7 +1461,7 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
         re.appendChild(clone)
     if meta is None:
         meta = cib_dom.createElement("meta_attributes")
-        meta.setAttribute("id",name + "-clone-meta")
+        meta.setAttribute("id",name + "-clone-meta_attributes")
         clone.appendChild(meta)
 
     update_meta_attributes(meta, convert_args_to_tuples(argv), name + "-")

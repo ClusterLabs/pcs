@@ -3203,6 +3203,56 @@ Error: Cannot remove more than one resource from cloned group
 """)
         self.assertEquals(retVal, 0)
 
+        # disable via 'resource disable', enable via 'resource meta'
+        output, retVal = pcs(temp_cib, "resource disable dummy-clone")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-clone")
+        ac(output, """\
+ Clone: dummy-clone
+  Meta Attrs: target-role=Stopped 
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+
+        output, retVal = pcs(temp_cib, "resource meta dummy-clone target-role=")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-clone")
+        ac(output, """\
+ Clone: dummy-clone
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+
+        # disable via 'resource meta', enable via 'resource enable'
+        output, retVal = pcs(
+            temp_cib, "resource meta dummy-clone target-role=Stopped"
+        )
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-clone")
+        ac(output, """\
+ Clone: dummy-clone
+  Meta Attrs: target-role=Stopped 
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+
+        output, retVal = pcs(temp_cib, "resource enable dummy-clone")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-clone")
+        ac(output, """\
+ Clone: dummy-clone
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+
     def testResourceEnableMaster(self):
         output, retVal = pcs(
             temp_cib, "resource create --no-default-ops dummy Stateful --master"
@@ -3285,6 +3335,56 @@ Error: Cannot remove more than one resource from cloned group
    Operations: monitor interval=60s (dummy-monitor-interval-60s)
 """)
         self.assertEquals(retVal, 0)
+
+        # disable via 'resource disable', enable via 'resource meta'
+        output, retVal = pcs(temp_cib, "resource disable dummy-master")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-master")
+        ac(output, """\
+ Master: dummy-master
+  Meta Attrs: target-role=Stopped 
+  Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+
+        output, retVal = pcs(temp_cib, "resource meta dummy-master target-role=")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-master")
+        ac(output, """\
+ Master: dummy-master
+  Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+
+        # disable via 'resource meta', enable via 'resource enable'
+        output, retVal = pcs(
+            temp_cib, "resource meta dummy-master target-role=Stopped"
+        )
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-master")
+        ac(output, """\
+ Master: dummy-master
+  Meta Attrs: target-role=Stopped 
+  Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
+
+        output, retVal = pcs(temp_cib, "resource enable dummy-master")
+        ac(output, "")
+        self.assertEquals(retVal, 0)
+
+        output, retVal = pcs(temp_cib, "resource show dummy-master")
+        ac(output, """\
+ Master: dummy-master
+  Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+   Operations: monitor interval=60s (dummy-monitor-interval-60s)
+""")
 
     def testOPOption(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy op monitor interval=30s blah=blah")
