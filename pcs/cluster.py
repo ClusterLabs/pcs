@@ -207,7 +207,6 @@ def auth_nodes(nodes):
                             mutually_authorized = True
                 except ValueError, KeyError:
                     pass
-
             if not mutually_authorized:
                 need_auth = True
                 break
@@ -329,23 +328,13 @@ def check_nodes(nodes, prefix = ""):
 def corosync_setup(argv,returnConfig=False):
     fedora_config = not utils.is_rhel6()
     primary_nodes = []
-    hostname_map = {}
 
     # If node contains a ',' we only care about the first address
     for node in argv[1:]:
-        nodename = ""
         if "," in node:
-            nodename = node.split(',')[0]
-
-        if "/" in node:
-            if nodename == "":
-                nodename = node.split('/')[0]
-            hostname_map[nodename] = node.split('/')[1]
-
-        if nodename == "":
-            nodename = node
-
-        primary_nodes.append(nodename)
+            primary_nodes.append(node.split(',')[0])
+        else:
+            primary_nodes.append(node)
 
     if len(argv) < 2:
         usage.cluster()
@@ -526,8 +515,6 @@ def corosync_setup(argv,returnConfig=False):
             node_section.add_attribute("ring0_addr", node0)
             if udpu_rrp:
                 node_section.add_attribute("ring1_addr", node1)
-            if node0 in hostname_map:
-                node_section.add_attribute("name", hostname_map[node0])
             node_section.add_attribute("nodeid", node_id)
 
         quorum_section.add_attribute("provider", "corosync_votequorum")
@@ -1139,10 +1126,6 @@ def cluster_node(argv):
 
     node = argv[1]
     node0, node1 = utils.parse_multiring_node(node)
-    if "/" in node:
-        alt_hostname = node.split('/')[1]
-    else:
-        alt_hostname = None
 
     if not node0:
         utils.err("missing ring 0 address of the node")
@@ -1173,7 +1156,7 @@ def cluster_node(argv):
             utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
 
         for my_node in utils.getNodesFromCorosyncConf():
-            retval, output = utils.addLocalNode(my_node, node0, node1, alt_hostname)
+            retval, output = utils.addLocalNode(my_node, node0, node1)
             if retval != 0:
                 print >> sys.stderr, "Error: unable to add %s on %s - %s" % (node0, my_node, output.strip())
             else:

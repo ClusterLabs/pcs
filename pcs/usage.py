@@ -559,10 +559,8 @@ Commands:
         the remote nodes with each other).  Using --force forces
         re-authentication to occur.
 
-    setup [--start] [--local] [--enable] --name <cluster name>
-            <node1[,node1-altaddr][/node1-hostname]>
-            [node2[,node2-altaddr][/node2-hostname]] [..]
-            [--transport <udpu|udp>] [--rrpmode active|passive]
+    setup [--start] [--local] [--enable] --name <cluster name> <node1[,node1-altaddr]>
+            [node2[,node2-altaddr]] [..] [--transport <udpu|udp>] [--rrpmode active|passive]
             [--addr0 <addr/net> [[[--mcast0 <address>] [--mcastport0 <port>]
                             [--ttl0 <ttl>]] | [--broadcast0]]
             [--addr1 <addr/net> [[[--mcast1 <address>] [--mcastport1 <port>]
@@ -714,7 +712,7 @@ Commands:
         --config is recommended.  Do not specify a scope if you need to edit
         the whole CIB or be warned in the case of outdated CIB.
 
-    node add <node[,node-altaddr][/node-hostname]> [--start] [--enable]
+    node add <node[,node-altaddr]> [--start] [--enable]
         Add the node to corosync.conf and corosync on all nodes in the cluster
         and sync the new corosync.conf to the new node.  If --start is specified
         also start corosync/pacemaker on the new node, if --enable is specified

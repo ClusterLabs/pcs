@@ -214,13 +214,10 @@ def canAddNodeToCluster(node):
 
     return (False,"error checking node availability")
 
-def addLocalNode(node, node_to_add, ring1_addr=None, alt_hostname=None):
+def addLocalNode(node, node_to_add, ring1_addr=None):
     options = {'new_nodename': node_to_add}
     if ring1_addr:
         options['new_ring1addr'] = ring1_addr
-    if alt_hostname:
-        options['alt_hostname'] = alt_hostname
-
     data = urllib.urlencode(options)
     retval, output = sendHTTPRequest(node, 'remote/add_node', data, False, False)
     if retval == 0:
@@ -424,12 +421,6 @@ def getCorosyncActiveNodes():
 def addNodeToCorosync(node):
 # Before adding, make sure node isn't already in corosync.conf
     node0, node1 = parse_multiring_node(node)
-
-    if "/" in node:
-        alt_hostname = node.split('/')[1]
-    else:
-        alt_hostname = None
-
     used_node_ids = []
     num_nodes_in_conf = 0
     corosync_conf_text = getCorosyncConf()
@@ -453,8 +444,6 @@ def addNodeToCorosync(node):
     new_node.add_attribute("ring0_addr", node0)
     if node1:
         new_node.add_attribute("ring1_addr", node1)
-    if alt_hostname:
-        new_node.add_attribute("name", alt_hostname)
     new_node.add_attribute("nodeid", new_nodeid)
 
     corosync_conf = autoset_2node_corosync(corosync_conf)
@@ -600,8 +589,6 @@ def getNextNodeID(corosync_conf):
     return highest + 1
 
 def parse_multiring_node(node):
-    # Strip '/' from name of nodes (for specifying hostname)
-    node = re.sub('/.*','',node)
     node_addr_count = node.count(",") + 1
     if node_addr_count == 2:
         return node.split(",")

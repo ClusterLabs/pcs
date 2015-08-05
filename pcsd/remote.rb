@@ -554,9 +554,6 @@ def remote_add_node(params,all = false)
     if params[:new_ring1addr] != nil
       node += ',' + params[:new_ring1addr]
     end
-    if params[:alt_hostname] != nil
-      node += "/" + params[:alt_hostname]
-    end
     retval, output = add_node(node, all, auto_start)
   end
 
