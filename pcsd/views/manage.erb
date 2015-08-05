@@ -458,4 +458,7 @@ Specify ring 1 address for each node if you want to use RRP." %>
   <% if @error == "permissiondenied" %>
     Permission denied.
   <% end %>
+  <% if @error == "genericerror" %>
+    <%=nl2br(@errorval)%>
+  <% end %>
 </div>

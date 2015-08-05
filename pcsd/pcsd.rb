@@ -630,7 +630,14 @@ if not DISABLE_GUI
     code, result = send_request_with_token(
       PCSAuth.getSuperuserSession(), node, 'status'
     )
-    status = JSON.parse(result)
+    begin
+      status = JSON.parse(result)
+    rescue JSON::ParserError
+      session[:error] = "genericerror"
+      session[:errorval] = 'Unable to comunicate with remote pcsd.'
+      redirect '/manage'
+    end
+
     if status.has_key?("corosync_offline") and
       status.has_key?("corosync_online") then
       nodes = status["corosync_offline"] + status["corosync_online"]
