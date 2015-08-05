@@ -2160,7 +2160,7 @@ def resource_enable(argv):
                 msg.append(
                     "unable to start: '%s', please check logs for failure "
                     "information"
-                    % ra_id
+                    % resource
                 )
             msg.append(running_on["message"])
             if retval != 0 and output:
