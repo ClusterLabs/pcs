@@ -259,8 +259,8 @@
                    <td><input type="text" name="new_level_level" size="2"></td>
                    <td><select name="new_level_value">
                        <option></option>
-                       {{#each Pcs.resourcesController.stonith_resource_list}}
-                       <option {{bind-attr value="this"}}>{{this}}</option>
+                       {{#each Pcs.resourcesContainer.fence_list}}
+                         <option {{bind-attr value="this.id"}}>{{this.id}}</option>
                        {{/each }}
                    </select></td>
                    <td><button type="button" onclick="add_remove_fence_level($(this).parent());" name="add">Add</button></td>

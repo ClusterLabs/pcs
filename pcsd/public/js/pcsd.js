@@ -44,9 +44,6 @@ function select_menu(menu, item, initial) {
 
   if (menu == "FENCE DEVICES") {
     Pcs.set('cur_page',"stonith");
-    Pcs.resourcesController.set("cur_resource",Pcs.resourcesController.cur_resource_ston);
-    if (item)
-      Pcs.resourcesController.load_stonith($('[nodeID='+item+']'));
     menu_show("stonith", true);
   } else {
     menu_show("stonith", false);

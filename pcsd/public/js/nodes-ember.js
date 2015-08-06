@@ -879,9 +879,8 @@ Pcs.FenceDevicesRoute = Ember.Route.extend({
     select_menu("FENCE DEVICES");
   },
   model: function(params) {
-    Ember.debug("Router FD: " + params.stonith_id);
-    Pcs.opening_resource = params.stonith_id;
-    return null;
+    Pcs.resourcesContainer.set('fence_id_to_load', params.stonith_id);
+    return params.stonith_id;
   }
 });
 

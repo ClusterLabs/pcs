@@ -398,13 +398,13 @@
                 {{#each cons in constraints}}
                 <tr>
                   <td>{{cons.id}}</td>
-                  <td {{bind-attr constraint_id="id"}} style="text-align:center;">
+                  <td {{bind-attr constraint_id="cons.id"}} style="text-align:center;">
                     <a onclick="remove_constraint($(this).parent().attr('constraint_id')); return false;" href="#" class="remove">X</a>
                   </td>
                 </tr>
-                {{#each sets}}
+                {{#each set in cons.sets}}
                 <tr>
-                  <td style="padding-left:2em;">Set:{{#each rsc in cons.resources}} {{rsc}}{{/each}}</td>
+                  <td style="padding-left:2em;">Set:{{#each rsc in set.resources}} {{rsc}}{{/each}}</td>
                   <td></td>
                 </tr>
                 {{/each}}

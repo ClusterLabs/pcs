@@ -39,7 +39,7 @@ module ClusterEntity
   end
 
   def self.get_meta_attr_from_status_v1(resource_id, meta_attr)
-    new_ma = ClusterEntity::NvSet
+    new_ma = ClusterEntity::NvSet.new
     meta_attr.each { |v|
       if v[:parent] == resource_id
         new_ma << ClusterEntity::NvPair.new(v[:id], v[:key], v[:value])
@@ -153,7 +153,7 @@ module ClusterEntity
         if data[:group]
           mi_id = data[:group].split('/', 2)[0]
         else
-          mi_id = data[:clone]
+          mi_id = (data[:clone] or data[:master])
         end
         unless not_primitives.include?(mi_id.to_sym)
           if data[:clone]
@@ -522,28 +522,27 @@ module ClusterEntity
 
       @operations = []
       failed_ops = []
-      cib_dom.elements.each("//lrm_resource[@id='#{@id}']/lrm_rsc_op") { |e|
-        o = ResourceOperation.new(e)
-        if o.rc_code != 0
-          failed_ops << o
-        end
-        @operations << o
-      }
       message_list = []
-
-      failed_ops.each { |operation|
-        next if operation.operation == 'monitor' and operation.rc_code == 7
-        message = "Failed to #{operation.operation} #{@id}"
-        message += " on #{Time.at(operation.last_rc_change).asctime}"
-        message += " on node #{operation.on_node}" if operation.on_node
-        message += ": #{operation.exit_reason}" if operation.exit_reason
-        message_list << {
-          :message => message
-        }
+      cib_dom.elements.each("//lrm_resource[@id='#{@id}']/lrm_rsc_op") { |e|
+        operation = ResourceOperation.new(e)
+        @operations << operation
+        if operation.rc_code != 0
+          # 7 == OCF_NOT_RUNNING == The resource is safely stopped.
+          next if operation.operation == 'monitor' and operation.rc_code == 7
+          # 8 == OCF_RUNNING_MASTER == The resource is running in master mode.
+          next if 8 == operation.rc_code
+          failed_ops << operation
+          message = "Failed to #{operation.operation} #{@id}"
+          message += " on #{Time.at(operation.last_rc_change).asctime}"
+          message += " on node #{operation.on_node}" if operation.on_node
+          message += ": #{operation.exit_reason}" if operation.exit_reason
+          message_list << {
+            :message => message
+          }
+        end
       }
 
       status = get_status
-
       if (failed_ops.length > 0 and
         status == ClusterEntity::ResourceStatus.new(:blocked)
       )

@@ -634,7 +634,7 @@ if not DISABLE_GUI
       status = JSON.parse(result)
     rescue JSON::ParserError
       session[:error] = "genericerror"
-      session[:errorval] = 'Unable to comunicate with remote pcsd.'
+      session[:errorval] = 'Unable to communicate with remote pcsd.'
       redirect '/manage'
     end
 
