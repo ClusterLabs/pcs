@@ -236,6 +236,55 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(out_text, cfg.text)
   end
 
+  def test_parse_format2_bad_cluster()
+    text =
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node2",
+        "rh71-node1",
+          [
+            "xxx",
+            "yyy"
+          ],
+        "rh71-node2"
+      ]
+    }
+  ]
+}'
+    cfg = PCSConfig.new(text)
+    assert_equal(2, cfg.format_version)
+    assert_equal(9, cfg.data_version)
+    assert_equal(1, cfg.clusters.length)
+    assert_equal("cluster71", cfg.clusters[0].name)
+    assert_equal(["rh71-node1", "rh71-node2"], cfg.clusters[0].nodes)
+    assert_equal(
+'{
+  "format_version": 2,
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1",
+        "rh71-node2"
+      ]
+    }
+  ],
+  "permissions": {
+    "local_cluster": [
+
+    ]
+  }
+}',
+      cfg.text
+    )
+  end
+
   def test_parse_format2_permissions()
     text =
 '{
@@ -423,6 +472,15 @@ class TestConfig < Test::Unit::TestCase
 
     cfg.update_cluster('cluster71', [])
     assert(! cfg.is_cluster_name_in_use('cluster71'))
+    assert_equal(
+      ["rh67-node1", "rh67-node2", "rh67-node3"],
+      cfg.get_nodes('cluster67')
+    )
+
+    cfg.update_cluster(
+      'cluster67',
+      ['rh67-node3', [], 'rh67-node1', 'rh67-node2', ['xx'], 'rh67-node1']
+    )
     assert_equal(
       ["rh67-node1", "rh67-node2", "rh67-node3"],
       cfg.get_nodes('cluster67')

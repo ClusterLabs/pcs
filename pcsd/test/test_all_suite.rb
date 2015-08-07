@@ -2,6 +2,7 @@ require 'rubygems'
 require 'test/unit'
 
 require 'test_corosyncconf.rb'
+require 'test_cluster.rb'
 require 'test_cluster_entity.rb'
 require 'test_auth.rb'
 require 'test_permissions.rb'

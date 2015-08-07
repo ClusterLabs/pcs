@@ -88,7 +88,7 @@ class PCSConfig
     end
     @clusters.each {|c|
       if c.name == cluster_name
-        c.nodes = node_list.uniq.sort
+        c.nodes = node_list
         break
       end
     }
