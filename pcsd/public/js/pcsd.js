@@ -715,16 +715,16 @@ function checkClusterNodes() {
   });
 }
 
-function auth_nodes() {
+function auth_nodes(dialog) {
   $("#auth_failed_error_msg").hide();
   $.ajax({
     type: 'POST',
     url: '/remote/auth_nodes',
-    data: $("#auth_nodes_form").serialize(),
+    data: dialog.find("#auth_nodes_form").serialize(),
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
-      auth_nodes_dialog_update(mydata);
+      auth_nodes_dialog_update(dialog, mydata);
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
       alert("ERROR: Unable to contact server");
@@ -732,7 +732,7 @@ function auth_nodes() {
   });
 }
 
-function auth_nodes_dialog_update(data) {
+function auth_nodes_dialog_update(dialog_obj, data) {
   var unauth_nodes = [];
   var node;
   for (node in data) {
@@ -741,28 +741,32 @@ function auth_nodes_dialog_update(data) {
     }
   }
 
-  var callback_one = $("#auth_nodes").dialog("option", "callback_success_one_");
+  var callback_one = dialog_obj.dialog("option", "callback_success_one_");
+  var callback = dialog_obj.dialog("option", "callback_success_");
   if (unauth_nodes.length == 0) {
-    $("#authenticate_submit_btn").button("option", "disabled", false);
-    $("#auth_failed_error_msg").hide();
-    $("#auth_nodes").dialog("close");
+    dialog_obj.parent().find("#authenticate_submit_btn").button(
+      "option", "disabled", false
+    );
+    dialog_obj.find("#auth_failed_error_msg").hide();
+    dialog_obj.dialog("close");
     if (callback_one !== null)
       callback_one();
-    var callback = $("#auth_nodes").dialog("option", "callback_success_");
     if (callback !== null)
       callback();
     return unauth_nodes;
   } else {
-    $("#auth_failed_error_msg").show();
+    dialog_obj.find("#auth_failed_error_msg").show();
   }
 
   if (unauth_nodes.length == 1) {
-    $("#same_pass").hide();
-    $('#auth_nodes_list').find('input:password').each(function(){$(this).show()});
+    dialog_obj.find("#same_pass").hide();
+    dialog_obj.find('#auth_nodes_list').find('input:password').each(
+      function(){$(this).show()}
+    );
   }
 
   var one_success = false;
-  $("input:password[name$=-pass]").each(function() {
+  dialog_obj.find("input:password[name$=-pass]").each(function() {
     node = $(this).attr("name");
     node = node.substring(0, node.length - 5);
     if (unauth_nodes.indexOf(node) == -1) {
@@ -776,7 +780,9 @@ function auth_nodes_dialog_update(data) {
   if (one_success && callback_one !== null)
     callback_one();
 
-  $("#authenticate_submit_btn").button("option", "disabled", false);
+  dialog_obj.parent().find("#authenticate_submit_btn").button(
+    "option", "disabled", false
+  );
   return unauth_nodes;
 }
 
@@ -784,15 +790,17 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
   callback_success = typeof callback_success !== 'undefined' ? callback_success : null;
   callback_success_one = typeof callback_success_one !== 'undefined' ? callback_success_one : null;
 
-  $("#auth_failed_error_msg").hide();
   var buttonsOpts = [
     {
       text: "Authenticate",
       id: "authenticate_submit_btn",
       click: function() {
-        $("#authenticate_submit_btn").button("option", "disabled", true);
-        $("#auth_nodes").find("table.err_msg_table").find("span[id$=_error_msg]").hide();
-        auth_nodes();
+        var dialog = $(this);
+        dialog.parent().find("#authenticate_submit_btn").button(
+          "option", "disabled", true
+        );
+        dialog.find("table.err_msg_table").find("span[id$=_error_msg]").hide();
+        auth_nodes(dialog);
       }
     },
     {
@@ -802,11 +810,20 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
       }
     }
   ];
+  var dialog_obj = $("#auth_nodes").dialog({title: 'Authentification of nodes',
+    modal: true, resizable: false,
+    width: 'auto',
+    buttons: buttonsOpts,
+    callback_success_: callback_success,
+    callback_success_one_: callback_success_one
+  });
+
+  dialog_obj.find("#auth_failed_error_msg").hide();
 
   // If you hit enter it triggers the submit button
-  $('#auth_nodes').keypress(function(e) {
-    if (e.keyCode == $.ui.keyCode.ENTER && !$("#authenticate_submit_btn").button("option", "disabled")) {
-      $("#authenticate_submit_btn").trigger("click");
+  dialog_obj.keypress(function(e) {
+    if (e.keyCode == $.ui.keyCode.ENTER && !dialog_obj.parent().find("#authenticate_submit_btn").button("option", "disabled")) {
+      dialog_obj.parent().find("#authenticate_submit_btn").trigger("click");
       return false;
     }
   });
@@ -819,26 +836,19 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
   }
 
   if (unauth_nodes.length == 1) {
-    $("#same_pass").hide();
+    dialog_obj.find("#same_pass").hide();
   } else {
-    $("#same_pass").show();
-    $("input:checkbox[name=all]").prop("checked", false);
-    $("#pass_for_all").val("");
-    $("#pass_for_all").hide();
+    dialog_obj.find("#same_pass").show();
+    dialog_obj.find("input:checkbox[name=all]").prop("checked", false);
+    dialog_obj.find("#pass_for_all").val("");
+    dialog_obj.find("#pass_for_all").hide();
   }
 
-  $('#auth_nodes_list').empty();
+  dialog_obj.find('#auth_nodes_list').empty();
   unauth_nodes.forEach(function(node) {
-    $('#auth_nodes_list').append("\t\t\t<tr><td>" + node + '</td><td><input type="password" name="' + node + '-pass"></td></tr>\n');
+    dialog_obj.find('#auth_nodes_list').append("\t\t\t<tr><td>" + node + '</td><td><input type="password" name="' + node + '-pass"></td></tr>\n');
   });
 
-  $("#auth_nodes").dialog({title: 'Authentification of nodes',
-    modal: true, resizable: false,
-    width: 'auto',
-    buttons: buttonsOpts,
-    callback_success_: callback_success,
-    callback_success_one_: callback_success_one
-  });
 }
 
 function add_existing_dialog() {

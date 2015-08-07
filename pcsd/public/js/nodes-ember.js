@@ -469,7 +469,6 @@ Pcs.resourcesContainer = Ember.Object.create({
       });
 
       if (!update) {
-        console.log('adding to list');
         if (resource_obj.stonith) {
           self.get('fence_list').pushObject(resource_obj);
         } else {
