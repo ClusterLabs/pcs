@@ -574,7 +574,7 @@ if not DISABLE_GUI
   end
 
   get '/managec/:cluster/cluster_status' do
-    cluster_status(params, request, session, params[:cluster])
+    cluster_status_gui(session, params[:cluster])
   end
 
   get '/managec/:cluster/overview_cluster' do

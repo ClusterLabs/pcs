@@ -16,7 +16,7 @@ def remote(params, request, session)
   remote_cmd_without_pacemaker = {
       :status => method(:node_status),
       :status_all => method(:status_all),
-      :cluster_status => method(:cluster_status),
+      :cluster_status => method(:cluster_status_remote),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
       :fix_auth_of_cluster => method(:fix_auth_of_cluster),
@@ -114,210 +114,65 @@ def remote(params, request, session)
   end
 end
 
-def cluster_status(
-  params, request, session, cluster_name=nil, dont_update_config=false
-)
+# provides remote cluster status to a local gui
+def cluster_status_gui(session, cluster_name, dont_update_config=false)
+  cluster_nodes = get_cluster_nodes(cluster_name)
+  status = cluster_status_from_nodes(session, cluster_nodes, cluster_name)
+  unless status
+    return 403, 'Permission denied'
+  end
+
+  new_cluster_nodes = []
+  new_cluster_nodes += status[:corosync_offline] if status[:corosync_offline]
+  new_cluster_nodes += status[:corosync_online] if status[:corosync_online]
+  new_cluster_nodes += status[:pacemaker_offline] if status[:pacemaker_offline]
+  new_cluster_nodes += status[:pacemaker_online] if status[:pacemaker_online]
+  new_cluster_nodes.uniq!
+
+  if new_cluster_nodes.length > 0
+    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+    if !(dont_update_config or config.cluster_nodes_equal?(cluster_name, new_cluster_nodes))
+      old_cluster_nodes = config.get_nodes(cluster_name)
+      $logger.info("Updating node list for: #{cluster_name} #{old_cluster_nodes}->#{new_cluster_nodes}")
+      config.update_cluster(cluster_name, new_cluster_nodes)
+      sync_config = Cfgsync::PcsdSettings.from_text(config.text())
+      # on version conflict just go on, config will be corrected eventually
+      # by displaying the cluster in the web UI
+      Cfgsync::save_sync_new_version(
+          sync_config, get_corosync_nodes(), $cluster_name, true
+      )
+      return cluster_status_gui(session, cluster_name, true)
+    end
+  end
+  return JSON.generate(status)
+end
+
+# get cluster status and return it to a remote gui or other client
+def cluster_status_remote(params, request, session)
   if not allowed_for_local_cluster(session, Permissions::READ)
     return 403, 'Permission denied'
   end
 
-  unless cluster_name
-    cluster_name = $cluster_name
-  end
-  overview = {
-      :cluster_name => cluster_name,
+  cluster_name = $cluster_name
+  # If node is not in a cluster, return empty data
+  if not cluster_name or cluster_name.empty?
+    overview = {
+      :cluster_name => nil,
       :error_list => [],
       :warning_list => [],
       :quorate => nil,
       :status => 'unknown',
       :node_list => [],
       :resource_list => [],
-  }
-  if not cluster_name or cluster_name.empty?
+    }
     return JSON.generate(overview)
   end
 
-  node_map = {}
-  node_list = []
-  priority_nodes = []
-  threads = []
-  not_authorized_nodes = []
-  cluster_nodes = get_cluster_nodes(cluster_name)
-  old_status = 0
-  cluster_nodes.each { |node|
-    threads << Thread.new {
-      _, response = send_request_with_token(
-        session,
-        node,
-        'status',
-        false,
-        {:version=>'2', :operations=>'1'},
-        true,
-        nil,
-        6
-      )
-      node_map[node] = {}
-      node_map[node].update(overview)
-      begin
-        parsed_response = JSON.parse(response, {:symbolize_names => true})
-        if parsed_response[:noresponse]
-          node_map[node][:node] = {
-            :status => 'unknown',
-            :warning_list => [],
-            :error_list => []
-          }
-        elsif parsed_response[:notoken] or parsed_response[:notauthorized]
-          not_authorized_nodes << node
-          node_map[node][:node] = {
-            :status => 'unknown',
-            :notauthorized => true,
-            :warning_list => [],
-            :error_list => []
-          }
-        else
-          if parsed_response[:node] # status version == 2
-            parsed_response[:status_version] = '2'
-            parsed_response[:node][:status_version] = '2'
-            priority_nodes << node if parsed_response[:node][:quorum]
-          else
-            parsed_response = status_v1_to_v2(parsed_response)
-            old_status += 1
-          end
-          node_map[node] = parsed_response
-        end
-        node_map[node][:node][:name] = node
-      rescue JSON::ParserError
-        node_map[node] = {:status => 'unknown'}
-        node_map[node][:node] = {
-          :name => node,
-          :warning_list => [],
-          :error_list => []
-        }
-      end
-    }
-  }
-  threads.each { |t| t.join }
-
-  cluster_nodes = []
-  node_map.each { |_, n|
-    node_list << n[:node]
-    cluster_nodes += n['corosync_offline'] if n['corosync_offline']
-    cluster_nodes += n['corosync_online'] if n['corosync_online']
-    cluster_nodes += n['pacemaker_offline'] if n['pacemaker_offline']
-    cluster_nodes += n['pacemaker_online'] if n['pacemaker_online']
-  }
-
-  cluster_nodes.uniq!
-  if cluster_nodes.length > 0
-    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
-    old_cluster_nodes = config.get_nodes(params[:cluster])
-    if !(dont_update_config or config.cluster_nodes_equal?(params[:cluster], cluster_nodes))
-      $logger.info("Updating node list for: #{params[:cluster]} #{old_cluster_nodes}->#{cluster_nodes}")
-      config.update_cluster(params[:cluster], cluster_nodes)
-      sync_config = Cfgsync::PcsdSettings.from_text(config.text())
-      # on version conflict just go on, config will be corrected eventually
-      # by displaying the cluster in the web UI
-      Cfgsync::save_sync_new_version(
-          sync_config, get_corosync_nodes(), cluster_name, true
-      )
-      return cluster_status(params, request, session, cluster_name, true)
-    end
+  cluster_nodes = get_nodes().flatten
+  status = cluster_status_from_nodes(session, cluster_nodes, cluster_name)
+  unless status
+    return 403, 'Permission denied'
   end
-  
-  if priority_nodes.length > 0
-    status = overview.update(node_map[priority_nodes[0]])
-    status[:quorate] = true
-    status[:node_list] = node_list
-  elsif old_status == 0 # all new but no qourum
-    status = overview.update(node_map.values[0])
-    status[:quorate] = false
-    status[:node_list] = node_list
-  else
-    status = overview.update(node_map.values[0])
-    status[:node_list] = node_list
-    status[:quorate] = nil
-    node_map.each { |_,node|
-      if node[:status_version] and node[:status_version] == '1' and
-          !node[:cluster_settings][:error]
-        status = overview.update(node)
-        break
-      end
-    }
-  end
-
-  if status[:quorate]
-    fence_count = 0
-    status[:resource_list].each { |r|
-      if r[:stonith]
-        fence_count += 1
-      end
-    }
-    if fence_count == 0
-      status[:warning_list] << {
-          :message => 'No fence devices configured in the cluster',
-      }
-    end
-
-    if status[:cluster_settings]['stonith-enabled'.to_sym] and
-        not ['true', 'on'].include?(status[:cluster_settings]['stonith-enabled'.to_sym])
-      status[:warning_list] << {
-          :message => 'Stonith is not enabled',
-      }
-    end
-  end
-
-  if not_authorized_nodes.length > 0
-    status[:warning_list] << {
-        :message => 'Not authorized against node(s) '\
-            + not_authorized_nodes.join(', '),
-        :type => 'nodes_not_authorized',
-        :node_list => not_authorized_nodes,
-    }
-  end
-
-  if status[:quorate].nil?
-    if old_status > 0
-      status[:warning_list] << {
-          :message => 'Cluster is running old version of pcs/pcsd which '\
-              + "doesn't provide data for dashboard.",
-          :type => 'old_pcsd'
-      }
-    else
-      status[:error_list] << {
-          :message => 'Unable to connect to cluster.'
-      }
-    end
-    status[:status] == 'unknown'
-    return JSON.generate(status)
-  end
-
-  if status[:error_list].length > 0 or (not status[:quorate].nil? and not status[:quorate])
-    status[:status] = 'error'
-  else
-    if status[:warning_list].length > 0
-      status[:status] = 'warning'
-    end
-    status[:node_list].each { |node|
-      if (node[:error_list] and node[:error_list].length > 0) or
-          ['unknown', 'offline'].include?(node[:status])
-        status[:status] = 'error'
-        break
-      elsif node[:warning_list] and node[:warning_list].length > 0
-        status[:status] = 'warning'
-      end
-    }
-    if status[:status] != 'error'
-      status[:resource_list].each { |resource|
-        if resource[:status] == 'failed'
-          status[:status] = 'error'
-          break
-        elsif ['blocked', 'partially running'].include?(resource[:status])
-          status[:status] = 'warning'
-        end
-      }
-    end
-  end
-  status[:status] = 'ok' if status[:status] == 'unknown'
   return JSON.generate(status)
 end
 
@@ -1190,19 +1045,19 @@ def node_status(params, request, session)
 end
 
 def status_all(params, request, session, nodes=[], dont_update_config=false)
-  if not allowed_for_local_cluster(session, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-
   if nodes == nil
     return JSON.generate({"error" => "true"})
   end
 
   final_response = {}
   threads = []
+  forbidden_nodes = {}
   nodes.each {|node|
     threads << Thread.new {
       code, response = send_request_with_token(session, node, 'status')
+      if 403 == code
+        forbidden_nodes[node] = true
+      end
       begin
         final_response[node] = JSON.parse(response)
       rescue JSON::ParserError => e
@@ -1215,6 +1070,9 @@ def status_all(params, request, session, nodes=[], dont_update_config=false)
     }
   }
   threads.each { |t| t.join }
+  if forbidden_nodes.length > 0
+    return 403, 'Permission denied'
+  end
 
   # Get full list of nodes and see if we need to update the configuration
   node_list = []

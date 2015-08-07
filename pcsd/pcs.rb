@@ -1279,6 +1279,198 @@ def write_file_lock(path, perm, data)
   end
 end
 
+def cluster_status_from_nodes(session, cluster_nodes, cluster_name)
+  node_map = {}
+  forbidden_nodes = {}
+  overview = {
+    :cluster_name => cluster_name,
+    :error_list => [],
+    :warning_list => [],
+    :quorate => nil,
+    :status => 'unknown',
+    :node_list => [],
+    :resource_list => [],
+  }
+
+  threads = []
+  cluster_nodes.uniq.each { |node|
+    threads << Thread.new {
+      code, response = send_request_with_token(
+        session,
+        node,
+        'status',
+        false,
+        {:version=>'2', :operations=>'1'},
+        true,
+        nil,
+        6
+      )
+      node_map[node] = {}
+      node_map[node].update(overview)
+      if 403 == code
+        forbidden_nodes[node] = true
+      end
+      node_status_unknown = {
+        :name => node,
+        :status => 'unknown',
+        :warning_list => [],
+        :error_list => []
+      }
+      begin
+        parsed_response = JSON.parse(response, {:symbolize_names => true})
+        if parsed_response[:noresponse]
+          node_map[node][:node] = {}
+          node_map[node][:node].update(node_status_unknown)
+        elsif parsed_response[:notoken] or parsed_response[:notauthorized]
+          node_map[node][:node] = {}
+          node_map[node][:node].update(node_status_unknown)
+          node_map[node][:node][:notauthorized] = true
+        else
+          if parsed_response[:node]
+            parsed_response[:status_version] = '2'
+            parsed_response[:node][:status_version] = '2'
+          else
+            parsed_response = status_v1_to_v2(parsed_response)
+          end
+          node_map[node] = parsed_response
+        end
+        node_map[node][:node][:name] = node
+      rescue JSON::ParserError
+        node_map[node][:node] = {}
+        node_map[node][:node].update(node_status_unknown)
+      end
+    }
+  }
+  threads.each { |t| t.join }
+
+  cluster_nodes_map = {}
+  node_status_list = []
+  quorate_nodes = []
+  not_authorized_nodes = []
+  old_status = false
+  node_map.each { |node_name, cluster_status|
+    # If we were able to get node's cluster name and it's different than
+    # requested cluster name, the node belongs to some other cluster and its
+    # data should not be used.
+    # If we don't know node's cluster name, we keep the data because the node is
+    # possibly in our cluster, we just didn't get its status.
+    next if cluster_status[:cluster_name] != cluster_name
+    cluster_nodes_map[node_name] = cluster_status
+    node_status_list << cluster_status[:node]
+    old_status = true if '1' == cluster_status[:status_version]
+    quorate_nodes << node_name if cluster_status[:node][:quorum]
+    not_authorized_nodes << node_name if cluster_status[:node][:notauthorized]
+  }
+
+  node_status_list.each { |node|
+    return nil if forbidden_nodes[node[:name]]
+  }
+  if cluster_nodes_map.length < 1
+    return overview
+  end
+
+  # if we have quorum, use data from a node in the quorate partition
+  if quorate_nodes.length > 0
+    status = overview.update(cluster_nodes_map[quorate_nodes[0]])
+    status[:quorate] = true
+    status[:node_list] = node_status_list
+  # if we don't have quorum, use data from any node
+  # no node has quorum, so no node has any info about the cluster
+  elsif not old_status
+    status = overview.update(cluster_nodes_map.values[0])
+    status[:quorate] = false
+    status[:node_list] = node_status_list
+  # old pcsd doesn't provide info about quorum, use data from any node
+  else
+    status = overview
+    status[:quorate] = nil
+    status[:node_list] = node_status_list
+    cluster_nodes_map.each { |_, node|
+      if node[:status_version] and node[:status_version] == '1' and
+          !node[:cluster_settings][:error]
+        status = overview.update(node)
+        break
+      end
+    }
+  end
+  status.delete(:node)
+
+  if status[:quorate]
+    fence_count = 0
+    status[:resource_list].each { |r|
+      if r[:stonith]
+        fence_count += 1
+      end
+    }
+    if fence_count == 0
+      status[:warning_list] << {
+        :message => 'No fence devices configured in the cluster',
+      }
+    end
+
+    if status[:cluster_settings]['stonith-enabled'.to_sym] and
+        not is_cib_true(status[:cluster_settings]['stonith-enabled'.to_sym])
+      status[:warning_list] << {
+        :message => 'Stonith is not enabled',
+      }
+    end
+  end
+
+  if not_authorized_nodes.length > 0
+    status[:warning_list] << {
+      :message => 'Not authorized against node(s) '\
+        + not_authorized_nodes.join(', '),
+      :type => 'nodes_not_authorized',
+      :node_list => not_authorized_nodes,
+    }
+  end
+
+  if status[:quorate].nil?
+    if old_status
+      status[:warning_list] << {
+        :message => 'Cluster is running an old version of pcs/pcsd which '\
+          + "doesn't provide data for the dashboard.",
+        :type => 'old_pcsd'
+      }
+    else
+      status[:error_list] << {
+        :message => 'Unable to connect to the cluster.'
+      }
+    end
+    status[:status] == 'unknown'
+    return status
+  end
+
+  if status[:error_list].length > 0 or (not status[:quorate].nil? and not status[:quorate])
+    status[:status] = 'error'
+  else
+    if status[:warning_list].length > 0
+      status[:status] = 'warning'
+    end
+    status[:node_list].each { |node|
+      if (node[:error_list] and node[:error_list].length > 0) or
+          ['unknown', 'offline'].include?(node[:status])
+        status[:status] = 'error'
+        break
+      elsif node[:warning_list] and node[:warning_list].length > 0
+        status[:status] = 'warning'
+      end
+    }
+    if status[:status] != 'error'
+      status[:resource_list].each { |resource|
+        if resource[:status] == 'failed'
+          status[:status] = 'error'
+          break
+        elsif ['blocked', 'partially running'].include?(resource[:status])
+          status[:status] = 'warning'
+        end
+      }
+    end
+  end
+  status[:status] = 'ok' if status[:status] == 'unknown'
+  return status
+end
+
 def get_node_uptime()
   uptime = `cat /proc/uptime`.chomp.split(' ')[0].split('.')[0].to_i
   mm, ss = uptime.divmod(60)
@@ -1395,7 +1587,7 @@ end
 def get_crm_mon_dom(session)
   begin
     stdout, _, retval = run_cmd(
-      session, 'crm_mon', '--one-shot', '-r', '--as-xml'
+      session, CRM_MON, '--one-shot', '-r', '--as-xml'
     )
     if retval == 0
       return REXML::Document.new(stdout.join("\n"))

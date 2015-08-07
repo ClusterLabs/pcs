@@ -4,7 +4,7 @@ def getResourcesGroups(session, get_fence_devices = false, get_all_options = fal
   get_operations=false
 )
   stdout, stderror, retval = run_cmd(
-    session, "crm_mon", "--one-shot", "-r", "--as-xml"
+    session, CRM_MON, "--one-shot", "-r", "--as-xml"
   )
   if retval != 0
     return [],[], retval
