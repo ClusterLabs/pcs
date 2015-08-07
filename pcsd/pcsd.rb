@@ -554,7 +554,7 @@ if not DISABLE_GUI
     @cluster_name = params[:cluster]
     #  @resources, @groups = getResourcesGroups(session)
     @load_data = true
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     @clusters = pcs_config.clusters
     @resources = []
     @groups = []
@@ -625,7 +625,7 @@ if not DISABLE_GUI
   end
 
   post '/manage/existingcluster' do
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     node = params['node-name']
     code, result = send_request_with_token(
       PCSAuth.getSuperuserSession(), node, 'status'
@@ -708,7 +708,7 @@ if not DISABLE_GUI
       redirect '/manage'
     end
 
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     @manage = true
     @cluster_name = params[:clustername]
     @nodes = []
@@ -788,7 +788,7 @@ if not DISABLE_GUI
         # we are waiting for the request to finish, so no locking is needed.
         # If we are in a different cluster we just try twice to update the
         # config, dealing with any updates in between.
-        pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+        pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
         pcs_config.clusters << Cluster.new(@cluster_name, @nodes)
         sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
         pushed, _ = Cfgsync::save_sync_new_version(
@@ -809,7 +809,7 @@ if not DISABLE_GUI
   end
 
   post '/manage/removecluster' do
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     params.each { |k,v|
       if k.start_with?("clusterid-")
         pcs_config.remove_cluster(k.sub("clusterid-",""))
