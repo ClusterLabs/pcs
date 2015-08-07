@@ -216,9 +216,9 @@
               <table class="datatable">
                 <tr><th>Attribute</th><th>Value</th><th>Remove</th></tr>
                 {{#each Pcs.nodesController.cur_node_attr}}
-                <tr><td>{{this.key}}</td>
+                <tr><td>{{this.name}}</td>
                   <td>{{this.value}}</td>
-                  <td {{bind-attr node_attr_key="this.key"}} {{bind-attr node_attr_parent="this.parent"}} style="text-align:center">
+                  <td {{bind-attr node_attr_key="this.name"}} {{bind-attr node_attr_parent="this.parent"}} style="text-align:center">
                   <a onclick="remove_node_attr($(this).parent());return false;" href="#" class="remove">X</a>
                   </td>
                 </tr>

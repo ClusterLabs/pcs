@@ -1508,17 +1508,11 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
   content: [],
   cur_node: null,
   cur_node_attr: function () {
-    var ret_val = [];
     var nc = this;
-    $.each(this.content, function(node, value) {
-      if ("node_attrs" in value && nc.cur_node && value["node_attrs"]) {
-        if (nc.cur_node.name in value["node_attrs"]) {
-          ret_val = ret_val.concat(value["node_attrs"][nc.cur_node.name]);
-        }
-        return false;
-      }
-    });
-    return ret_val;
+    if (nc.cur_node && "node_attrs" in nc.cur_node) {
+      return nc.cur_node.node_attrs;
+    }
+    return [];
   }.property("cur_node", "content.@each.node_attrs"),
   cur_node_fence_levels: function () {
     var ret_val = [];
@@ -1626,9 +1620,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
 
       var node_attr = {};
       if (node_obj["attr"]) {
-        $.each(node_obj["attr"], function(_, attr) {
-          node_attr[attr.name] = attr.value;
-        });
+        node_attr = node_obj["attr"];
       }
 
       found = false;

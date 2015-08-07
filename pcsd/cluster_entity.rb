@@ -939,13 +939,20 @@ module ClusterEntity
           node.status = 'online'
         end
         node.quorum = !!crm_dom.elements['//current_dc[@with_quorum="true"]']
+
+        node_name = get_current_node_name()
+        all_nodes_attr = get_node_attributes(session)
+        if all_nodes_attr[node_name]
+          all_nodes_attr[node_name].each { |pair|
+            node.attr << ClusterEntity::NvPair.new(
+              nil, pair[:key], pair[:value]
+            )
+          }
+        end
       else
         node.status = 'offline'
       end
 
-      get_node_attributes(session).each { |k,v|
-        node.attr << ClusterEntity::NvPair.new(nil, k, v)
-      }
       return node
     end
   end
