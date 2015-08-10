@@ -967,7 +967,7 @@ def run_cmd_options(session, options, *args)
   ENV['CIB_user'] = session[:username]
   # when running 'id -Gn' to get the groups they are not defined yet
   ENV['CIB_user_groups'] = (session[:usergroups] || []).join(' ')
-  $logger.debug(
+  $logger.info(
     "CIB USER: #{ENV['CIB_user'].to_s}, groups: #{ENV['CIB_user_groups']}"
   )
 
@@ -983,7 +983,7 @@ def run_cmd_options(session, options, *args)
     $logger.debug("Duration: " + duration.to_s + "s")
   end
   retval = status.exitstatus
-  $logger.debug("Return Value: " + retval.to_s)
+  $logger.info("Return Value: " + retval.to_s)
   return out, errout, retval
 end
 
