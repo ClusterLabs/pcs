@@ -68,7 +68,7 @@ nodes in Slave mode.") %>'>
 	<input type="hidden" name="resource_id" value="<%=@cur_resource.id%>">
       <% end %>
 
-      <input type="hidden" name="resource_type" value="<%=@resource.type%>">
+      <input type="hidden" name="resource_type" value="<%=@resource.name%>">
       <% @resource.required_options.each { |name, desc|  %>
 	<tr title="<%=h(desc[1])%>">
 	  <td class="reg">
