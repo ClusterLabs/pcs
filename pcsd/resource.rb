@@ -303,13 +303,28 @@ def getColocationConstraints(session, resource_id)
 end
 
 def getResourceMetadata(resourcepath)
-  ENV['OCF_ROOT'] = OCF_ROOT
-  metadata = `#{resourcepath} meta-data`
-  doc = REXML::Document.new(metadata)
   options_required = {}
   options_optional = {}
   long_desc = ""
   short_desc = ""
+
+  if resourcepath.end_with?('.xml')
+    begin
+      metadata = IO.read(resourcepath)
+    rescue
+      metadata = ""
+    end
+  else
+    ENV['OCF_ROOT'] = OCF_ROOT
+    metadata = `#{resourcepath} meta-data`
+  end
+
+  begin
+    doc = REXML::Document.new(metadata)
+  rescue REXML::ParseException
+    return [options_required, options_optional, [short_desc, long_desc]]
+  end
+
   doc.elements.each('resource-agent/longdesc') {|ld|
     long_desc = ld.text ? ld.text.strip : ld.text
   }
@@ -345,7 +360,7 @@ def getResourceMetadata(resourcepath)
       options_optional[param.attributes["name"]] = temp_array
     end
   }
-  [options_required, options_optional, [short_desc,long_desc]]
+  [options_required, options_optional, [short_desc, long_desc]]
 end
 
 def getResourceAgents(session, resource_agent=nil)

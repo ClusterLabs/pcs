@@ -8,6 +8,7 @@ COOKIE_FILE = PCSD_VAR_LOCATION + 'pcsd.cookiesecret'
 OCF_ROOT = "/usr/lib/ocf"
 HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
 PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
+NAGIOS_METADATA_DIR = '/usr/share/pacemaker/nagios/plugins-metadata/'
 PENGINE = "/usr/libexec/pacemaker/pengine"
 CRM_MON = "/usr/sbin/crm_mon"
 CRM_NODE = "/usr/sbin/crm_node"

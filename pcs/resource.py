@@ -198,13 +198,28 @@ def parse_resource_options(argv, with_clone=False):
 # List available resources
 # TODO make location more easily configurable
 def resource_list_available(argv):
+    def get_name_and_desc(full_res_name, metadata):
+        sd = ""
+        try:
+            dom = parseString(metadata)
+            shortdesc = dom.documentElement.getElementsByTagName("shortdesc")
+            if len(shortdesc) > 0:
+                sd = " - " +  format_desc(
+                    len(full_res_name + " - "),
+                    shortdesc[0].firstChild.nodeValue.strip().replace("\n", " ")
+                )
+        except xml.parsers.expat.ExpatError:
+            sd = ""
+        finally:
+            return full_res_name + sd + "\n"
+
     ret = ""
     if len(argv) != 0:
         filter_string = argv[0]
     else:
         filter_string = ""
 
-# ocf agents
+    # ocf agents
     os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
     providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
     for provider in providers:
@@ -223,32 +238,47 @@ def resource_list_available(argv):
             metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
             if metadata == False:
                 continue
-            sd = ""
-            try:
-                dom = parseString(metadata)
-                shortdesc = dom.documentElement.getElementsByTagName("shortdesc")
-                if len(shortdesc) > 0:
-                    sd = " - " +  format_desc(full_res_name.__len__() + 3, shortdesc[0].firstChild.nodeValue.strip().replace("\n", " "))
-            except xml.parsers.expat.ExpatError:
-                sd = ""
-            finally:
-                ret += full_res_name + sd + "\n"
-# lsb agents
+            ret += get_name_and_desc(
+                "ocf:" + provider + ":" + resource,
+                metadata
+            )
+
+    # lsb agents
     lsb_dir = "/etc/init.d/"
     agents = sorted(os.listdir(lsb_dir))
     for agent in agents:
         if os.access(lsb_dir + agent, os.X_OK):
             ret += "lsb:" + agent + "\n"
-# systemd agents
+
+    # systemd agents
     if utils.is_systemctl():
         agents, retval = utils.run(["systemctl", "list-unit-files", "--full"])
         agents = agents.split("\n")
-
     for agent in agents:
         match = re.search(r'^([\S]*)\.service',agent)
         if match:
             ret += "systemd:" + match.group(1) + "\n"
 
+    # nagios metadata
+    nagios_metadata_path = "/usr/share/pacemaker/nagios/plugins-metadata"
+    for metadata_file in sorted(os.listdir(nagios_metadata_path)):
+        if metadata_file.startswith("."):
+            continue
+        full_res_name = "nagios:" + metadata_file
+        if full_res_name.lower().endswith(".xml"):
+            full_res_name = full_res_name[:-len(".xml")]
+        if "--nodesc" in utils.pcs_options:
+            ret += full_res_name + "\n"
+            continue
+        try:
+            ret += get_name_and_desc(
+                full_res_name,
+                open(os.path.join(nagios_metadata_path, metadata_file), "r").read()
+            )
+        except EnvironmentError as e:
+            pass
+
+    # output
     if not ret:
         utils.err(
             "No resource agents available. "

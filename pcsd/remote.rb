@@ -1373,6 +1373,8 @@ def resource_form(params, request, session)
       @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + @cur_resource.type)
     elsif @cur_resource.provider == 'pacemaker'
       @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(PACEMAKER_AGENTS_DIR + @cur_resource.type)
+    elsif @cur_resource._class == 'nagios'
+      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(NAGIOS_METADATA_DIR + @cur_resource.type + '.xml')
     end
     @existing_resource = true
     if @resource
@@ -1546,6 +1548,8 @@ def resource_metadata(params, request, session)
     @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + resource_name)
   elsif class_provider == "ocf:pacemaker"
     @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(PACEMAKER_AGENTS_DIR + resource_name)
+  elsif class_provider == 'nagios'
+    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(NAGIOS_METADATA_DIR + resource_name + '.xml')
   end
   @new_resource = params[:new]
   @resources, @groups = getResourcesGroups(session)
