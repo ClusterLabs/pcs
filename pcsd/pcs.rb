@@ -359,6 +359,7 @@ def send_request_with_token(session, node, request, post=false, data={}, remote=
   token = additional_tokens[node] || get_node_token(node)
   $logger.info "SRWT Node: #{node} Request: #{request}"
   if not token
+    $logger.error "Unable to connect to node #{node}, no token available"
     return 400,'{"notoken":true}'
   end
   cookies_data = {
