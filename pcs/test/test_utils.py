@@ -29,6 +29,14 @@ class UtilsTest(unittest.TestCase):
                           class="ocf" provider="heartbeat" type="Dummy">
                       </primitive>
                   </clone>
+                  <clone id="myUniqueClone">
+                      <primitive id="myUniqueClonedResource"
+                          class="ocf" provider="heartbeat" type="Dummy">
+                      </primitive>
+                      <meta-attributes>
+                        <nvpair name="globally-unique" value="true" />
+                      </meta-attributes>
+                  </clone>
                   <master id="myMaster">
                       <primitive id="myMasteredResource"
                             class="ocf" provider="heartbeat" type="Dummy">
@@ -94,6 +102,7 @@ class UtilsTest(unittest.TestCase):
         all_ids = set([
             "none", "myResource",
             "myClone", "myClonedResource",
+            "myUniqueClone", "myUniqueClonedResource",
             "myMaster", "myMasteredResource",
             "myGroup", "myGroupedResource",
             "myGroupClone", "myClonedGroup", "myClonedGroupedResource",
@@ -102,7 +111,8 @@ class UtilsTest(unittest.TestCase):
 
         resource_ids = set([
             "myResource",
-            "myClonedResource", "myGroupedResource", "myMasteredResource",
+            "myClonedResource", "myUniqueClonedResource",
+            "myGroupedResource", "myMasteredResource",
             "myClonedGroupedResource", "myMasteredGroupedResource"
         ])
         test_dom_get(
@@ -110,7 +120,10 @@ class UtilsTest(unittest.TestCase):
             resource_ids, all_ids - resource_ids
         )
 
-        cloned_ids = set(["myClonedResource", "myClonedGroupedResource"])
+        cloned_ids = set([
+            "myClonedResource", "myUniqueClonedResource",
+            "myClonedGroupedResource"
+        ])
         test_dom_get(
             utils.dom_get_resource_clone, cib_dom,
             cloned_ids, all_ids - cloned_ids
@@ -133,7 +146,7 @@ class UtilsTest(unittest.TestCase):
             cloned_group_ids, all_ids - cloned_group_ids
         )
 
-        clone_ids = set(["myClone", "myGroupClone"])
+        clone_ids = set(["myClone", "myUniqueClone", "myGroupClone"])
         test_dom_get(
             utils.dom_get_clone, cib_dom,
             clone_ids, all_ids - clone_ids
@@ -1575,6 +1588,44 @@ Membership information
                     'id': 'myClonedResource',
                     'id_for_constraint': 'myClone',
                     'long_id': 'myClonedResource:1',
+                    'start_on_node': 'rh7-3',
+                 },
+            },
+            utils.get_resources_location_from_operations(cib_dom, operations)
+        )
+
+        operations = [
+            {
+                "id": "myUniqueClonedResource:0",
+                "long_id": "myUniqueClonedResource:0",
+                "operation": "start",
+                "on_node": "rh7-1",
+            },
+            {
+                "id": "myUniqueClonedResource:1",
+                "long_id": "myUniqueClonedResource:1",
+                "operation": "monitor",
+                "on_node": "rh7-2",
+            },
+            {
+                "id": "myUniqueClonedResource:2",
+                "long_id": "myUniqueClonedResource:2",
+                "operation": "start",
+                "on_node": "rh7-3",
+            },
+        ]
+        self.assertEquals(
+            {
+                'myUniqueClonedResource:0': {
+                    'id': 'myUniqueClonedResource:0',
+                    'id_for_constraint': 'myUniqueClone',
+                    'long_id': 'myUniqueClonedResource:0',
+                    'start_on_node': 'rh7-1',
+                 },
+                'myUniqueClonedResource:2': {
+                    'id': 'myUniqueClonedResource:2',
+                    'id_for_constraint': 'myUniqueClone',
+                    'long_id': 'myUniqueClonedResource:2',
                     'start_on_node': 'rh7-3',
                  },
             },

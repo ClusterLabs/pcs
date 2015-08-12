@@ -2044,8 +2044,15 @@ def get_resources_location_from_operations(cib_dom, resources_operations):
             continue
         long_id = res_op["long_id"]
         if long_id not in locations:
+            # Move clone instances as if they were non-cloned resources, it
+            # really works with current pacemaker (1.1.13-6). Otherwise there
+            # is probably no way to move them other then setting their
+            # stickiness to 0.
+            res_id = res_op["id"]
+            if ":" in res_id:
+                res_id = res_id.split(":")[0]
             id_for_constraint = validate_constraint_resource(
-                cib_dom, res_op["id"]
+                cib_dom, res_id
             )[2]
             if not id_for_constraint:
                 continue
