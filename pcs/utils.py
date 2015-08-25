@@ -2014,7 +2014,9 @@ def simulate_cib(cib_dom):
 
 def get_operations_from_transitions(transitions_dom):
     operation_list = []
-    watched_operations = ("start", "stop", "promote", "demote")
+    watched_operations = (
+        "start", "stop", "promote", "demote", "migrate_from", "migrate_to"
+    )
     for rsc_op in transitions_dom.getElementsByTagName("rsc_op"):
         primitives = rsc_op.getElementsByTagName("primitive")
         if not primitives:
@@ -2040,7 +2042,7 @@ def get_resources_location_from_operations(cib_dom, resources_operations):
     locations = {}
     for res_op in resources_operations:
         operation = res_op["operation"]
-        if operation not in ("start", "promote"):
+        if operation not in ("start", "promote", "migrate_from"):
             continue
         long_id = res_op["long_id"]
         if long_id not in locations:
@@ -2061,7 +2063,7 @@ def get_resources_location_from_operations(cib_dom, resources_operations):
                 "long_id": long_id,
                 "id_for_constraint": id_for_constraint,
             }
-        if operation == "start":
+        if operation in ("start", "migrate_from"):
             locations[long_id]["start_on_node"] = res_op["on_node"]
         if operation == "promote":
             locations[long_id]["promote_on_node"] = res_op["on_node"]

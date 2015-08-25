@@ -1477,6 +1477,43 @@ Membership information
             utils.get_operations_from_transitions(transitions)
         )
 
+        transitions = utils.parse(os.path.join(currentdir, "transitions02.xml"))
+        self.assertEquals(
+            [
+                {
+                    "id": "RemoteNode",
+                    "long_id": "RemoteNode",
+                    "operation": "stop",
+                    "on_node": "virt-143",
+                },
+                {
+                    "id": "RemoteNode",
+                    "long_id": "RemoteNode",
+                    "operation": "migrate_to",
+                    "on_node": "virt-143",
+                },
+                {
+                    "id": "RemoteNode",
+                    "long_id": "RemoteNode",
+                    "operation": "migrate_from",
+                    "on_node": "virt-142",
+                },
+                {
+                    "id": "dummy8",
+                    "long_id": "dummy8",
+                    "operation": "stop",
+                    "on_node": "virt-143",
+                },
+                {
+                    "id": "dummy8",
+                    "long_id": "dummy8",
+                    "operation": "start",
+                    "on_node": "virt-142",
+                }
+            ],
+            utils.get_operations_from_transitions(transitions)
+        )
+
     def test_get_resources_location_from_operations(self):
         cib_dom = self.get_cib_resources()
 
@@ -1666,6 +1703,38 @@ Membership information
                     'long_id': 'myMasteredGroupedResource:1',
                     'promote_on_node': 'rh7-3',
                  },
+            },
+            utils.get_resources_location_from_operations(cib_dom, operations)
+        )
+
+        operations = [
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "stop",
+                "on_node": "rh7-1",
+            },
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "migrate_to",
+                "on_node": "rh7-1",
+            },
+            {
+                "id": "myResource",
+                "long_id": "myResource",
+                "operation": "migrate_from",
+                "on_node": "rh7-2",
+            },
+        ]
+        self.assertEquals(
+            {
+                "myResource": {
+                    "id": "myResource",
+                    "id_for_constraint": "myResource",
+                    "long_id": "myResource",
+                    "start_on_node": "rh7-2",
+                },
             },
             utils.get_resources_location_from_operations(cib_dom, operations)
         )

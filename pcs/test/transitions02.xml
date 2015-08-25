@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transition_graph batch-limit="0" cluster-delay="60s" failed-start-offset="INFINITY" failed-stop-offset="INFINITY" stonith-timeout="60s" transition_id="0">
+  <synapse id="0">
+    <action_set>
+      <rsc_op id="30" on_node="virt-142" on_node_uuid="1" operation="migrate_from" operation_key="RemoteNode_migrate_from_0">
+        <primitive class="ocf" id="RemoteNode" provider="pacemaker" type="remote"/>
+        <attributes CRM_meta_migrate_source="virt-143" CRM_meta_migrate_target="virt-142" CRM_meta_remote_node="virt-145" CRM_meta_timeout="20000" crm_feature_set="3.0.10" server="virt-145"/>
+      </rsc_op>
+    </action_set>
+    <inputs>
+      <trigger>
+        <rsc_op id="29" on_node="virt-143" on_node_uuid="2" operation="migrate_to" operation_key="RemoteNode_migrate_to_0"/>
+      </trigger>
+    </inputs>
+  </synapse>
+  <synapse id="1">
+    <action_set>
+      <rsc_op id="29" on_node="virt-143" on_node_uuid="2" operation="migrate_to" operation_key="RemoteNode_migrate_to_0">
+        <primitive class="ocf" id="RemoteNode" provider="pacemaker" type="remote"/>
+        <attributes CRM_meta_migrate_source="virt-143" CRM_meta_migrate_target="virt-142" CRM_meta_remote_node="virt-145" CRM_meta_timeout="20000" crm_feature_set="3.0.10" server="virt-145"/>
+      </rsc_op>
+    </action_set>
+    <inputs/>
+  </synapse>
+  <synapse id="2">
+    <action_set>
+      <rsc_op id="28" on_node="virt-142" on_node_uuid="1" operation="monitor" operation_key="RemoteNode_monitor_60000">
+        <primitive class="ocf" id="RemoteNode" provider="pacemaker" type="remote"/>
+        <attributes CRM_meta_interval="60000" CRM_meta_name="monitor" CRM_meta_remote_node="virt-145" CRM_meta_timeout="30000" crm_feature_set="3.0.10" server="virt-145"/>
+      </rsc_op>
+    </action_set>
+    <inputs>
+      <trigger>
+        <pseudo_event id="27" operation="start" operation_key="RemoteNode_start_0"/>
+      </trigger>
+    </inputs>
+  </synapse>
+  <synapse id="3">
+    <action_set>
+      <pseudo_event id="27" operation="start" operation_key="RemoteNode_start_0">
+        <attributes CRM_meta_name="start" CRM_meta_remote_node="virt-145" CRM_meta_timeout="60000" crm_feature_set="3.0.10" server="virt-145"/>
+      </pseudo_event>
+    </action_set>
+    <inputs>
+      <trigger>
+        <rsc_op id="26" on_node="virt-143" on_node_uuid="2" operation="stop" operation_key="RemoteNode_stop_0"/>
+      </trigger>
+      <trigger>
+        <rsc_op id="30" on_node="virt-142" on_node_uuid="1" operation="migrate_from" operation_key="RemoteNode_migrate_from_0"/>
+      </trigger>
+    </inputs>
+  </synapse>
+  <synapse id="4">
+    <action_set>
+      <rsc_op id="26" on_node="virt-143" on_node_uuid="2" operation="stop" operation_key="RemoteNode_stop_0">
+        <primitive class="ocf" id="RemoteNode" provider="pacemaker" type="remote"/>
+        <attributes CRM_meta_name="stop" CRM_meta_remote_node="virt-145" CRM_meta_timeout="60000" crm_feature_set="3.0.10" server="virt-145"/>
+      </rsc_op>
+    </action_set>
+    <inputs>
+      <trigger>
+        <rsc_op id="30" on_node="virt-142" on_node_uuid="1" operation="migrate_from" operation_key="RemoteNode_migrate_from_0"/>
+      </trigger>
+    </inputs>
+  </synapse>
+  <synapse id="5">
+    <action_set>
+      <rsc_op id="47" on_node="virt-142" on_node_uuid="1" operation="monitor" operation_key="dummy8_monitor_10000">
+        <primitive class="ocf" id="dummy8" provider="heartbeat" type="Dummy"/>
+        <attributes CRM_meta_interval="10000" CRM_meta_name="monitor" CRM_meta_timeout="20000" crm_feature_set="3.0.10"/>
+      </rsc_op>
+    </action_set>
+    <inputs>
+      <trigger>
+        <rsc_op id="46" on_node="virt-142" on_node_uuid="1" operation="start" operation_key="dummy8_start_0"/>
+      </trigger>
+    </inputs>
+  </synapse>
+  <synapse id="6">
+    <action_set>
+      <rsc_op id="46" on_node="virt-142" on_node_uuid="1" operation="start" operation_key="dummy8_start_0">
+        <primitive class="ocf" id="dummy8" provider="heartbeat" type="Dummy"/>
+        <attributes CRM_meta_name="start" CRM_meta_timeout="20000" crm_feature_set="3.0.10"/>
+      </rsc_op>
+    </action_set>
+    <inputs>
+      <trigger>
+        <rsc_op id="45" on_node="virt-143" on_node_uuid="2" operation="stop" operation_key="dummy8_stop_0"/>
+      </trigger>
+    </inputs>
+  </synapse>
+  <synapse id="7">
+    <action_set>
+      <rsc_op id="45" on_node="virt-143" on_node_uuid="2" operation="stop" operation_key="dummy8_stop_0">
+        <primitive class="ocf" id="dummy8" provider="heartbeat" type="Dummy"/>
+        <attributes CRM_meta_name="stop" CRM_meta_timeout="20000" crm_feature_set="3.0.10"/>
+      </rsc_op>
+    </action_set>
+    <inputs/>
+  </synapse>
+  <synapse id="8">
+    <action_set>
+      <pseudo_event id="13" operation="all_stopped" operation_key="all_stopped">
+        <attributes crm_feature_set="3.0.10"/>
+      </pseudo_event>
+    </action_set>
+    <inputs>
+      <trigger>
+        <rsc_op id="26" on_node="virt-143" on_node_uuid="2" operation="stop" operation_key="RemoteNode_stop_0"/>
+      </trigger>
+      <trigger>
+        <rsc_op id="45" on_node="virt-143" on_node_uuid="2" operation="stop" operation_key="dummy8_stop_0"/>
+      </trigger>
+    </inputs>
+  </synapse>
+</transition_graph>
