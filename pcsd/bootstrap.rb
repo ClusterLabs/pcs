@@ -1,4 +1,5 @@
 require 'logger'
+require 'pathname'
 
 require 'settings.rb'
 
@@ -32,7 +33,8 @@ def is_systemctl()
 end
 
 def get_pcs_path(pcsd_path)
-  if PCSD_EXEC_LOCATION == pcsd_path or PCSD_EXEC_LOCATION == (pcsd_path + '/')
+  real_path = Pathname.new(pcsd_path).realpath.to_s
+  if PCSD_EXEC_LOCATION == real_path or PCSD_EXEC_LOCATION == (real_path + '/')
     return '/usr/sbin/pcs'
   else
     return '../pcs/pcs'

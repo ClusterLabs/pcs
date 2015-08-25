@@ -736,7 +736,7 @@ def run_pcsdcli(command, data=None):
     env_var = dict()
     if "--debug" in pcs_options:
         env_var["PCSD_DEBUG"] = "true"
-    pcs_dir = os.path.dirname(sys.argv[0])
+    pcs_dir = os.path.realpath(os.path.dirname(sys.argv[0]))
     if pcs_dir == "/usr/sbin":
         pcsd_dir_path = settings.pcsd_exec_location
     else:
