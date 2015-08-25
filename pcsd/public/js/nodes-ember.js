@@ -126,6 +126,7 @@ Pcs = Ember.Application.createWithMixins({
           var cur_resource = self.get('cur_resource');
           var resource_map = self.get('resource_map');
           if (first_run) {
+            setup_node_links();
             Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first(),true);
             Pcs.aclsController.load_role($('#acls_list_row').find('.node_selected').first(), true);
             if (self.get("fence_id_to_load")) {
@@ -173,7 +174,6 @@ Pcs = Ember.Application.createWithMixins({
             if (!resource_change && self.get('cur_fence'))
               tree_view_select(self.get('cur_resource').get('id'));
             Pcs.selectedNodeController.reset();
-            setup_node_links();
             disable_checkbox_clicks();
           });
         });
