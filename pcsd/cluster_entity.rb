@@ -895,7 +895,7 @@ module ClusterEntity
   class Node < JSONable
     attr_accessor :id, :error_list, :warning_list, :status, :quorum, :uptime,
                   :name, :corosync, :pacemaker, :cman, :corosync_enabled,
-                  :pacemaker_enabled, :pcsd_enabled, :attr, :fence_levels
+                  :pacemaker_enabled, :pcsd_enabled
 
     def initialize
       @id = nil
@@ -911,8 +911,6 @@ module ClusterEntity
       @corosync_enabled = false
       @pacemaker_enabled = false
       @pcsd_enabled = false
-      @attr = ClusterEntity::NvSet.new
-      @fence_levels = {}
     end
 
     def self.load_current_node(session, crm_dom=nil)
@@ -923,7 +921,6 @@ module ClusterEntity
       node.pacemaker_enabled = pacemaker_enabled?
       node.cman = cman_running?
       node.pcsd_enabled = pcsd_enabled?
-      node.fence_levels = get_fence_levels(session)
 
       node_online = (node.corosync and node.pacemaker)
       node.status =  node_online ? 'online' : 'offline'
@@ -939,16 +936,6 @@ module ClusterEntity
           node.status = 'online'
         end
         node.quorum = !!crm_dom.elements['//current_dc[@with_quorum="true"]']
-
-        node_name = get_current_node_name()
-        all_nodes_attr = get_node_attributes(session)
-        if all_nodes_attr[node_name]
-          all_nodes_attr[node_name].each { |pair|
-            node.attr << ClusterEntity::NvPair.new(
-              nil, pair[:key], pair[:value]
-            )
-          }
-        end
       else
         node.status = 'offline'
       end

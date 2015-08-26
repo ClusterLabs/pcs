@@ -1014,8 +1014,14 @@ def node_status(params, request, session)
     status[:cluster_settings]
 
   node_attr = {}
-  node.attr.each { |v|
-    node_attr[v.name.to_sym] = v.value
+  status[:node_attr].each { |node, attrs|
+    node_attr[node] = []
+    attrs.each { |attr|
+      node_attr[node] << {
+        :key => attr[:name],
+        :value => attr[:value]
+      }
+    }
   }
 
   old_status = {
@@ -1038,7 +1044,7 @@ def node_status(params, request, session)
     :cluster_settings => cluster_settings,
     :node_id => node.id,
     :node_attr => node_attr,
-    :fence_levels => node.fence_levels,
+    :fence_levels => status[:fence_levels],
     :need_ring1_address => status[:need_ring1_address],
     :is_cman_with_udpu_transport => status[:is_cman_with_udpu_transport],
     :acls => status[:acls],

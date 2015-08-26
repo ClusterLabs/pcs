@@ -1631,8 +1631,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       }
 
       var node_attr = [];
-      if (node_obj["attr"]) {
-        node_attr = node_obj["attr"];
+      if (data["node_attr"] && data["node_attr"][node_id]) {
+        node_attr = data["node_attr"][node_id];
       }
 
       found = false;
@@ -1658,7 +1658,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
           node.set("uptime", node_obj["uptime"]);
           node.set("node_id", node_obj["id"]);
           node.set("node_attrs", node_attr);
-          node.set("fence_levels", node_obj["fence_levels"]);
+          node.set("fence_levels", data["fence_levels"]);
           node.set("status", node_obj["status"]);
         }
       });
@@ -1683,7 +1683,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
           uptime: node_obj["uptime"],
           node_id: node_obj["id"],
           node_attrs: node_attr,
-          fence_levels: node_obj["fence_levels"],
+          fence_levels: data["fence_levels"],
           status: node_obj["status"]
         });
       }

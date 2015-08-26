@@ -1624,8 +1624,11 @@ def get_node_status(session, cib_dom)
       :need_ring1_address => need_ring1_address?,
       :is_cman_with_udpu_transport => is_cman_with_udpu_transport?,
       :acls => get_acls(session),
-      :username => session[:username]
+      :username => session[:username],
+      :fence_levels => get_fence_levels(session),
+      :node_attr => node_attrs_to_v2(get_node_attributes(session))
   }
+
   nodes = get_nodes_status()
 
   known_nodes = []
@@ -1742,14 +1745,31 @@ def get_cib_dom(session)
   return nil
 end
 
+def node_attrs_to_v2(node_attrs)
+  all_nodes_attr = {}
+  node_attrs.each { |node, attrs|
+    all_nodes_attr[node] = []
+    attrs.each { |attr|
+      all_nodes_attr[node] << {
+        :id => nil,
+        :name => attr[:key],
+        :value => attr[:value]
+      }
+    }
+  }
+  return all_nodes_attr
+end
+
 def status_v1_to_v2(status)
   new_status = status.select { |k,_|
     [:cluster_name, :username, :is_cman_with_udpu_transport,
      :need_ring1_address, :cluster_settings, :constraints, :groups,
      :corosync_online, :corosync_offline, :pacemaker_online, :pacemaker_standby,
-     :pacemaker_offline, :acls
+     :pacemaker_offline, :acls, :fence_levels
     ].include?(k)
   }
+  new_status[:node_attr] = node_attrs_to_v2(status[:node_attr])
+
   resources = ClusterEntity::make_resources_tree(
     ClusterEntity::get_primitives_from_status_v1(status[:resources])
   )
@@ -1764,15 +1784,9 @@ def status_v1_to_v2(status)
     ].include?(k)
   }
 
-  node_attr = ClusterEntity::NvSet.new
-  status[:node_attr].each { |k,v|
-    node_attr << ClusterEntity::NvPair.new(nil, k, v)
-  }
   new_status[:node].update(
     {
       :id => status[:node_id],
-      :attr => node_attr.to_status,
-      :fence_levels => status[:fence_levels],
       :quorum => nil,
       :warning_list => [],
       :error_list => [],

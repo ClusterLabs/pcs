@@ -212,7 +212,6 @@
               </td>
               </tr>
             </table>
-            {{#unless Pcs.nodesController.cur_node.status_unknown}}
             <table style="clear:left;float:left;margin-top:25px;">
               <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Node Attributes ({{#if Pcs.nodesController.cur_node_attr.length}}{{Pcs.nodesController.cur_node_attr.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
               <tr><td>
@@ -272,7 +271,6 @@
               </td>
               </tr>
             </table>
-            {{/unless}}
     </div>
     </div>
     </td>
