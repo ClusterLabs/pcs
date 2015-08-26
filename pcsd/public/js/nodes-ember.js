@@ -171,7 +171,7 @@ Pcs = Ember.Application.createWithMixins({
               tree_view_onclick(self.get('cur_resource').get('id'), true);
             if (!fence_change && self.get('cur_fence'))
               tree_view_select(self.get('cur_fence').get('id'));
-            if (!resource_change && self.get('cur_fence'))
+            if (!resource_change && self.get('cur_resource'))
               tree_view_select(self.get('cur_resource').get('id'));
             Pcs.selectedNodeController.reset();
             disable_checkbox_clicks();
@@ -932,6 +932,9 @@ Pcs.Setting = Ember.Object.extend({
 Pcs.Clusternode = Ember.Object.extend({
   name: null,
   status: null,
+  status_unknown: function() {
+    return this.get('status') == "unknown";
+  }.property("status"),
   status_val: function() {
     if (this.warnings && this.warnings.length)
       return get_status_value("warning");
@@ -1013,6 +1016,10 @@ Pcs.Clusternode = Ember.Object.extend({
 	return "color:red";
     }
   }.property("up","pacemaker_standby"),
+  pacemaker_standby: null,
+  corosync_enabled: null,
+  pacemaker_enabled: null,
+  pcsd_enabled: null,
   standby_style: function () {
     if (this.pacemaker_standby)
       return "display: none;";
@@ -1043,7 +1050,12 @@ Pcs.Clusternode = Ember.Object.extend({
     else
       return "Disabled";
   }.property("pcsd_enabled"),
-  location_constraints: null
+  location_constraints: null,
+  node_attrs: [],
+  fence_levels: [],
+  pcsd: null,
+  corosync_daemon: null,
+  pacemaker_daemon: null,
 });
 
 Pcs.Aclrole = Ember.Object.extend({
@@ -1509,8 +1521,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
   cur_node: null,
   cur_node_attr: function () {
     var nc = this;
-    if (nc.cur_node && "node_attrs" in nc.cur_node) {
-      return nc.cur_node.node_attrs;
+    if (nc.get('cur_node')) {
+      return nc.get('cur_node').get('node_attrs');
     }
     return [];
   }.property("cur_node", "content.@each.node_attrs"),
@@ -1599,7 +1611,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
         pacemaker_standby = false;
       }
 
-      if (node_obj["noresponse"] == true) {
+      if (node_obj["status"] == 'unknown') {
         pcsd_daemon = false
       } else {
         pcsd_daemon = true
@@ -1618,7 +1630,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
         up_status = false;
       }
 
-      var node_attr = {};
+      var node_attr = [];
       if (node_obj["attr"]) {
         node_attr = node_obj["attr"];
       }
@@ -1647,6 +1659,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
           node.set("node_id", node_obj["id"]);
           node.set("node_attrs", node_attr);
           node.set("fence_levels", node_obj["fence_levels"]);
+          node.set("status", node_obj["status"]);
         }
       });
 
@@ -1670,7 +1683,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
           uptime: node_obj["uptime"],
           node_id: node_obj["id"],
           node_attrs: node_attr,
-          fence_levels: node_obj["fence_levels"]
+          fence_levels: node_obj["fence_levels"],
+          status: node_obj["status"]
         });
       }
       var pathname = window.location.pathname.split('/');
