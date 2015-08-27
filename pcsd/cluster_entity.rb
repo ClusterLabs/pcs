@@ -112,6 +112,9 @@ module ClusterEntity
       status.node = node
       primitive.crm_status << status
     }
+    primitives.each {|_, resource|
+      resource[0].update_status
+    }
     return primitives
   end
 
@@ -177,6 +180,9 @@ module ClusterEntity
           tree << mi
         end
       end
+    }
+    tree.each {|resource|
+      resource.update_status
     }
     return tree
   end
@@ -491,12 +497,19 @@ module ClusterEntity
       end
     end
 
+    def update_status
+      @status = get_status
+    end
+
     def get_status
       count = @crm_status.length
       running = 0
+      failed = 0
       @crm_status.each do |s|
-        if ['Started', 'Master', 'Slave'].include?(s.role)
+        if s.active
           running += 1
+        elsif s.failed
+          failed += 1
         end
       end
 
@@ -655,6 +668,14 @@ module ClusterEntity
       end
     end
 
+    def update_status
+      @status = ClusterEntity::ResourceStatus.new(:running)
+      @members.each { |p|
+        p.update_status
+        @status = p.status if @status < p.status
+      }
+    end
+
     def to_status(version='1')
       if version == '2'
         hash = super(version)
@@ -730,6 +751,13 @@ module ClusterEntity
       end
     end
 
+    def update_status
+      if @member
+        @member.update_status
+        @status = @member.status
+      end
+    end
+
     def to_status(version='1')
       if version == '2'
         hash = super(version)
@@ -794,13 +822,13 @@ module ClusterEntity
           primitive_list = @member.members
         end
         @masters, @slaves = get_masters_slaves(primitive_list)
-      end
-      if @masters.empty?
-        @error_list << {
-          :message => 'Resource is master/slave but has not been promoted '\
+        if @masters.empty?
+          @error_list << {
+            :message => 'Resource is master/slave but has not been promoted '\
               + 'to master on any node.',
-          :type => 'no_master'
-        }
+            :type => 'no_master'
+          }
+        end
       end
     end
 
