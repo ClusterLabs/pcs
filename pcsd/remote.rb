@@ -584,15 +584,19 @@ def set_certs(params, request, session)
     return [400, 'cannot save ssl key without ssl certificate']
   end
   if !ssl_cert.empty? and !ssl_key.empty?
+    ssl_errors = verify_cert_key_pair(ssl_cert, ssl_key)
+    if ssl_errors and !ssl_errors.empty?
+      return [400, ssl_errors.join]
+    end
     begin
       write_file_lock(CRT_FILE, 0700, ssl_cert)
       write_file_lock(KEY_FILE, 0700, ssl_key)
-    rescue
+    rescue => e
       # clean the files if we ended in the middle
       # the files will be regenerated on next pcsd start
       FileUtils.rm(CRT_FILE, {:force => true})
       FileUtils.rm(KEY_FILE, {:force => true})
-      return [400, 'cannot save ssl files']
+      return [400, "cannot save ssl files: #{e}"]
     end
   end
 
@@ -601,8 +605,8 @@ def set_certs(params, request, session)
     if !cookie_secret.empty?
       begin
         write_file_lock(COOKIE_FILE, 0700, cookie_secret)
-      rescue
-        return [400, 'cannot save cookie secret']
+      rescue => e
+        return [400, "cannot save cookie secret: #{e}"]
       end
     end
   end

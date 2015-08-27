@@ -25,10 +25,20 @@ Dir["wizards/*.rb"].each {|file| require file}
 
 use Rack::CommonLogger
 
+def generate_cookie_secret
+  return SecureRandom.hex(30)
+end
+
 begin
   secret = File.read(COOKIE_FILE)
+  secret_errors = verify_cookie_secret(secret)
+  if secret_errors and not secret_errors.empty?
+    secret_errors.each { |err| $logger.error err }
+    $logger.error "Invalid cookie secret, using temporary one"
+    secret = generate_cookie_secret()
+  end
 rescue Errno::ENOENT
-  secret = SecureRandom.hex(30)
+  secret = generate_cookie_secret()
   File.open(COOKIE_FILE, 'w', 0700) {|f| f.write(secret)}
 end
 

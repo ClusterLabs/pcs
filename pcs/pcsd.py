@@ -36,14 +36,15 @@ def pcsd_certkey(argv):
     try:
         with open(certfile, 'r') as myfile:
             cert = myfile.read()
-    except IOError as e:
-        utils.err(e)
-
-    try:
         with open(keyfile, 'r') as myfile:
             key = myfile.read()
     except IOError as e:
         utils.err(e)
+    errors = utils.verify_cert_key_pair(cert, key)
+    if errors:
+        for err in errors:
+            utils.err(err, False)
+        sys.exit(1)
 
     if not "--force" in utils.pcs_options and (os.path.exists(settings.pcsd_cert_location) or os.path.exists(settings.pcsd_key_location)):
         utils.err("certificate and/or key already exists, your must use --force to overwrite")
@@ -70,39 +71,71 @@ def pcsd_certkey(argv):
 
     print "Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect"
 
-def pcsd_sync_certs(argv):
-    nodes = utils.getNodesFromCorosyncConf()
-    pcsd_data = {'nodes': nodes}
-    commands = [
-        {
-            "command": "send_local_certs",
-            "message": "Synchronizing pcsd certificates on nodes {0}.".format(
-                ", ".join(nodes)
-            ),
-        },
-        {
-            "command": "pcsd_restart_nodes",
-            "message": "Restaring pcsd on the nodes in order to reload "
-                + "the certificates."
-            ,
-        },
-    ]
-    for cmd in commands:
-        error = ''
-        print cmd["message"]
-        output, retval = utils.run_pcsdcli(cmd["command"], pcsd_data)
-        if retval == 0 and output['status'] == 'ok' and output['data']:
-            try:
-                if output['data']['status'] != 'ok' and output['data']['text']:
-                    error = output['data']['text']
-            except KeyError:
-                error = 'Unable to communicate with pcsd'
-        else:
-            error = 'Unable to sync pcsd certificates'
-        if error:
-            # restart pcsd even if sync failed in order to reload
-            # the certificates on nodes where it succeded
-            utils.err(error, False)
+def pcsd_sync_certs(argv, exit_after_error=True):
+    error = False
+    nodes_sync = argv if argv else utils.getNodesFromCorosyncConf()
+    nodes_restart = []
+
+    print("Synchronizing pcsd certificates on nodes {0}...".format(
+        ", ".join(nodes_sync)
+    ))
+    pcsd_data = {
+        "nodes": nodes_sync,
+    }
+    output, retval = utils.run_pcsdcli("send_local_certs", pcsd_data)
+    if retval == 0 and output["status"] == "ok" and output["data"]:
+        try:
+            sync_result = output["data"]
+            if sync_result["node_status"]:
+                for node, status in sync_result["node_status"].items():
+                    print("{0}: {1}".format(node, status["text"]))
+                    if status["status"] == "ok":
+                        nodes_restart.append(node)
+                    else:
+                        error = True
+            if sync_result["status"] != "ok":
+                error = True
+                utils.err(sync_result["text"], False)
+            if error and not nodes_restart:
+                if exit_after_error:
+                    sys.exit(1)
+                else:
+                    return
+            print
+        except (KeyError, AttributeError):
+            utils.err("Unable to communicate with pcsd", exit_after_error)
+            return
+    else:
+        utils.err("Unable to sync pcsd certificates", exit_after_error)
+        return
+
+    print("Restaring pcsd on the nodes in order to reload the certificates...")
+    pcsd_data = {
+        "nodes": nodes_restart,
+    }
+    output, retval = utils.run_pcsdcli("pcsd_restart_nodes", pcsd_data)
+    if retval == 0 and output["status"] == "ok" and output["data"]:
+        try:
+            restart_result = output["data"]
+            if restart_result["node_status"]:
+                for node, status in restart_result["node_status"].items():
+                    print("{0}: {1}".format(node, status["text"]))
+                    if status["status"] != "ok":
+                        error = True
+            if restart_result["status"] != "ok":
+                error = True
+                utils.err(restart_result["text"], False)
+            if error:
+                if exit_after_error:
+                    sys.exit(1)
+                else:
+                    return
+        except (KeyError, AttributeError):
+            utils.err("Unable to communicate with pcsd", exit_after_error)
+            return
+    else:
+        utils.err("Unable to restart pcsd", exit_after_error)
+        return
 
 def pcsd_clear_auth(argv):
     output = []

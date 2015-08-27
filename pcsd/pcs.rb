@@ -1215,29 +1215,84 @@ def send_local_configs_to_nodes(
 end
 
 def send_local_certs_to_nodes(session, nodes)
-  data = {
-    'ssl_cert' => File.read(CRT_FILE),
-    'ssl_key' => File.read(KEY_FILE),
-    'cookie_secret' => File.read(COOKIE_FILE),
-  }
+  begin
+    data = {
+      'ssl_cert' => File.read(CRT_FILE),
+      'ssl_key' => File.read(KEY_FILE),
+      'cookie_secret' => File.read(COOKIE_FILE),
+    }
+  rescue => e
+    return {
+      'status' => 'error',
+      'text' => "Unable to read certificates: #{e}",
+      'node_status' => {},
+    }
+  end
+
+  crt_errors = verify_cert_key_pair(data['ssl_cert'], data['ssl_key'])
+  if crt_errors and not crt_errors.empty?
+    return {
+      'status' => 'error',
+      'text' => "Invalid certificate and/or key: #{crt_errors.join}",
+      'node_status' => {},
+    }
+  end
+  secret_errors = verify_cookie_secret(data['cookie_secret'])
+  if secret_errors and not secret_errors.empty?
+    return {
+      'status' => 'error',
+      'text' => "Invalid cookie secret: #{secret_errors.join}",
+      'node_status' => {},
+    }
+  end
+
   node_response = {}
   threads = []
   nodes.each { |node|
     threads << Thread.new {
-      code, _ = send_request_with_token(session, node, '/set_certs', true, data)
-      node_response[node] = 200 == code ? 'ok' : 'error'
+      code, response = send_request_with_token(
+        session, node, '/set_certs', true, data
+      )
+      node_response[node] = [code, response]
     }
   }
   threads.each { |t| t.join }
 
   node_error = []
+  node_status = {}
   node_response.each { |node, response|
-    node_error << node if response != 'ok'
+    if response[0] == 200
+      node_status[node] = {
+        'status' => 'ok',
+        'text' => 'Success',
+      }
+    else
+      text = response[1]
+      if response[0] == 401
+        text = "Unable to authenticate, try running 'pcs cluster auth'"
+      elsif response[0] == 400
+        begin
+          parsed_response = JSON.parse(response[1], {:symbolize_names => true})
+          if parsed_response[:noresponse]
+            text = "Unable to connect"
+          elsif parsed_response[:notoken] or parsed_response[:notauthorized]
+            text = "Unable to authenticate, try running 'pcs cluster auth'"
+          end
+        rescue JSON::ParserError
+        end
+      end
+      node_status[node] = {
+        'status' => 'error',
+        'text' => text
+      }
+      node_error << node
+    end
   }
   return {
     'status' => node_error.empty?() ? 'ok' : 'error',
     'text' => node_error.empty?() ? 'Success' : \
       "Unable to save pcsd certificates to nodes: #{node_error.join(', ')}",
+    'node_status' => node_status,
   }
 end
 
@@ -1246,20 +1301,49 @@ def pcsd_restart_nodes(session, nodes)
   threads = []
   nodes.each { |node|
     threads << Thread.new {
-      code, _ = send_request_with_token(session, node, '/pcsd_restart', true)
-      node_response[node] = 200 == code ? 'ok' : 'error'
+      code, response = send_request_with_token(
+        session, node, '/pcsd_restart', true
+      )
+      node_response[node] = [code, response]
     }
   }
   threads.each { |t| t.join }
 
   node_error = []
+  node_status = {}
   node_response.each { |node, response|
-    node_error << node if response != 'ok'
+    if response[0] == 200
+      node_status[node] = {
+        'status' => 'ok',
+        'text' => 'Success',
+      }
+    else
+      text = response[1]
+      if response[0] == 401
+        text = "Unable to authenticate, try running 'pcs cluster auth'"
+      elsif response[0] == 400
+        begin
+          parsed_response = JSON.parse(response[1], {:symbolize_names => true})
+          if parsed_response[:noresponse]
+            text = "Unable to connect"
+          elsif parsed_response[:notoken] or parsed_response[:notauthorized]
+            text = "Unable to authenticate, try running 'pcs cluster auth'"
+          end
+        rescue JSON::ParserError
+        end
+      end
+      node_status[node] = {
+        'status' => 'error',
+        'text' => text
+      }
+      node_error << node
+    end
   }
   return {
     'status' => node_error.empty?() ? 'ok' : 'error',
     'text' => node_error.empty?() ? 'Success' : \
       "Unable to restart pcsd on nodes: #{node_error.join(', ')}",
+    'node_status' => node_status,
   }
 end
 
@@ -1278,6 +1362,53 @@ def write_file_lock(path, perm, data)
       file.close()
     end
   end
+end
+
+def verify_cert_key_pair(cert, key)
+  errors = []
+  cert_modulus = nil
+  key_modulus = nil
+
+  stdout, stderr, retval = run_cmd_options(
+    PCSAuth.getSuperuserSession(),
+    {
+      'stdin' => cert,
+    },
+    '/usr/bin/openssl', 'x509', '-modulus', '-noout'
+  )
+  if retval != 0
+    errors << "Invalid certificate: #{stderr.join}"
+  else
+    cert_modulus = stdout.join.strip
+  end
+
+  stdout, stderr, retval = run_cmd_options(
+    PCSAuth.getSuperuserSession(),
+    {
+      'stdin' => key,
+    },
+    '/usr/bin/openssl', 'rsa', '-modulus', '-noout'
+  )
+  if retval != 0
+    errors << "Invalid key: #{stderr.join}"
+  else
+    key_modulus = stdout.join.strip
+  end
+
+  if errors.empty? and cert_modulus and key_modulus
+    if cert_modulus != key_modulus
+      errors << 'Certificate does not match the key'
+    end
+  end
+
+  return errors
+end
+
+def verify_cookie_secret(secret)
+  if secret.empty?
+    return ['Cookie secret is empty']
+  end
+  return []
 end
 
 def cluster_status_from_nodes(session, cluster_nodes, cluster_name)

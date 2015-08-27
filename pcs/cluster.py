@@ -345,13 +345,13 @@ def corosync_setup(argv,returnConfig=False):
         sync_start(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_nodes)
-        pcsd.pcsd_sync_certs([])
+        pcsd.pcsd_sync_certs([], exit_after_error=False)
         return
     elif not returnConfig and not "--local" in utils.pcs_options:# and fedora_config:
         sync(argv, primary_nodes)
         if "--enable" in utils.pcs_options:
             enable_cluster(primary_nodes)
-        pcsd.pcsd_sync_certs([])
+        pcsd.pcsd_sync_certs([], exit_after_error=False)
         return
     else:
         nodes = argv[1:]
@@ -1190,15 +1190,17 @@ def cluster_node(argv):
 
             utils.setCorosyncConfig(node0, corosync_conf)
             if "--enable" in utils.pcs_options:
-                utils.enableCluster(node0)
+                retval, err = utils.enableCluster(node0)
+                if retval != 0:
+                    print("Warning: enable cluster - {0}".format(err))
             if "--start" in utils.pcs_options or utils.is_rhel6():
                 # always start new node on cman cluster
                 # otherwise it will get fenced
-                utils.startCluster(node0)
+                retval, err = utils.startCluster(node0)
+                if retval != 0:
+                    print("Warning: start cluster - {0}".format(err))
 
-            pcsd_data = {'nodes': [node0]}
-            utils.run_pcsdcli('send_local_certs', pcsd_data)
-            utils.run_pcsdcli('pcsd_restart_nodes', pcsd_data)
+            pcsd.pcsd_sync_certs([node0], exit_after_error=False)
         else:
             utils.err("Unable to update any nodes")
         output, retval = utils.reloadCorosync()

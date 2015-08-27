@@ -1880,6 +1880,35 @@ def is_iso8601_date(var):
     output, retVal = run(["iso8601", "-d", var])
     return retVal == 0
 
+def verify_cert_key_pair(cert, key):
+    errors = []
+    cert_modulus = ""
+    key_modulus = ""
+
+    output, retval = run(
+        ["/usr/bin/openssl", "x509", "-modulus", "-noout"],
+        string_for_stdin=cert
+    )
+    if retval != 0:
+        errors.append("Invalid certificate: {0}".format(output.strip()))
+    else:
+        cert_modulus = output.strip()
+
+    output, retval = run(
+        ["/usr/bin/openssl", "rsa", "-modulus", "-noout"],
+        string_for_stdin=key
+    )
+    if retval != 0:
+        errors.append("Invalid key: {0}".format(output.strip()))
+    else:
+        key_modulus = output.strip()
+
+    if not errors and cert_modulus and key_modulus:
+        if cert_modulus != key_modulus:
+            errors.append("Certificate does not match the key")
+
+    return errors
+
 # Does pacemaker consider a variable as true in cib?
 # See crm_is_true in pacemaker/lib/common/utils.c
 def is_cib_true(var):
