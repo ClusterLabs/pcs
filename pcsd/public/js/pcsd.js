@@ -1203,26 +1203,24 @@ function destroy_tooltips() {
 }
 
 function remove_cluster(ids) {
-  for (var i=0; i<ids.length; i++) {
-    var cluster = ids[i];
-    var clusterid_name = "clusterid-"+ids[i];
-    var data = {}
-    data[clusterid_name] = true;
-    $.ajax({
-      type: 'POST',
-      url: '/manage/removecluster',
-      data: data,
-      timeout: pcs_timeout,
-      success: function () {
-        $("#dialog_verify_remove_clusters.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
-        location.reload();
-      },
-      error: function (xhr, status, error) {
-        alert("Unable to remove cluster: " + res + " ("+error+")");
-        $("#dialog_verify_remove_clusters.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
-      }
-    });
-  }
+  var data = {};
+  $.each(ids, function(_, cluster) {
+    data[ "clusterid-" + cluster] = true;
+  });
+  $.ajax({
+    type: 'POST',
+    url: '/manage/removecluster',
+    data: data,
+    timeout: pcs_timeout,
+    success: function () {
+      $("#dialog_verify_remove_clusters.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+      location.reload();
+    },
+    error: function (xhr, status, error) {
+      alert("Unable to remove cluster: " + res + " ("+error+")");
+      $("#dialog_verify_remove_clusters.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+    }
+  });
 }
 
 function remove_nodes(ids, force) {
