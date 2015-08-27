@@ -2,7 +2,7 @@ CRT_FILE = '/var/lib/pcsd/pcsd.crt'
 KEY_FILE = '/var/lib/pcsd/pcsd.key'
 COOKIE_FILE = '/var/lib/pcsd/pcsd.cookiesecret'
 
-PCSD_EXEC_LOCATION = '/usr/lib/pcsd/'
+PCSD_EXEC_LOCATION = '/usr/share/pcsd/'
 OCF_ROOT = "/usr/lib/ocf"
 HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
 PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
