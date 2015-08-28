@@ -244,17 +244,17 @@ function create_resource(form, update, stonith) {
     success: function(returnValue) {
       $('input.apply_changes').show();
       if (returnValue["error"] == "true") {
-	alert(returnValue["stderr"]);
+        alert(returnValue["stderr"]);
       } else {
-	Pcs.update();
-	if (!update) {
-	  if (stonith)
-	    $('#add_stonith').dialog('close');
-	  else
-	    $('#add_resource').dialog('close');
-	} else { 
-	  reload_current_resource();
-	}
+        Pcs.update();
+        if (!update) {
+          if (stonith)
+            $('#add_stonith').dialog('close');
+          else
+            $('#add_resource').dialog('close');
+        } else {
+          reload_current_resource();
+        }
       }
     },
     error: function(xhr, status, error) {
@@ -444,9 +444,9 @@ function local_node_update(node, data) {
 
   for (var n in data) {
     if (data[n].pacemaker_online && (jQuery.inArray(n, data[n].pacemaker_online) != -1)) {
-	setNodeStatus(n, true);
+      setNodeStatus(n, true);
     } else {
-    	setNodeStatus(n,false);
+      setNodeStatus(n,false);
     }
   }
 }
@@ -454,45 +454,6 @@ function local_node_update(node, data) {
 function disable_checkbox_clicks() {
   $('.node_list_check input[type=checkbox]').click(function(e) {
     e.stopPropagation();
-  });
-}
-
-// TODO: REMOVE
-function resource_list_update() {
-  resource = $('#node_info_header_title_name').first().text();
-
-  // If resources are checked we need to keep them selected on refresh
-  var checkedResources = new Array();
-  $('.node_list_check :checked').each(function(i,e) {
-    checkedResources.push($(e).attr("res_id"));
-  });
-
-  $.ajax({
-    type: 'GET',
-    url: '/resource_list/'+resource,
-    timeout: pcs_timeout,
-    success: function(data) {
-      try {
-	newdata = $(data);
-      } catch(err) {
-	newdata = $("");
-      }
-      newdata.find('.node_list_check input[type=checkbox]').each( function(i,e) {
-	var res_id = $(e).attr("res_id");
-	for (var i=checkedResources.length-1; i>= 0; --i) {
-	  if (checkedResources[i] == res_id) {
-	    $(e).prop("checked",true);
-	  }
-	}
-      });
-      
-      $("#node_list").html(newdata);
-      disable_checkbox_clicks();
-      window.setTimeout(resource_list_update, pcs_timeout);
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      window.setTimeout(resource_list_update, 60000);
-    }
   });
 }
 
@@ -928,23 +889,23 @@ function update_create_cluster_dialog(nodes, version_info) {
 
     $('#create_new_cluster input[name^="node-"]').each(function() {
       if ($(this).val() == "") {
-	$(this).parent().prev().css("background-color", "");
-	return;
+        $(this).parent().prev().css("background-color", "");
+        return;
       }
       for (var i = 0; i < keys.length; i++) {
-	if ($(this).val() == keys[i]) {
-	  if (nodes[keys[i]] != "Online") {
-	    if (nodes[keys[i]] == "Unable to authenticate") {
-	      cant_auth_nodes.push(keys[i]);
-	    } else {
-	      $(this).parent().prev().css("background-color", "red");
-	      cant_connect_nodes++;
-	    }
-	  } else {
-	    $(this).parent().prev().css("background-color", "");
-	    good_nodes++;
-	  }
-	}
+        if ($(this).val() == keys[i]) {
+          if (nodes[keys[i]] != "Online") {
+            if (nodes[keys[i]] == "Unable to authenticate") {
+              cant_auth_nodes.push(keys[i]);
+            } else {
+              $(this).parent().prev().css("background-color", "red");
+              cant_connect_nodes++;
+            }
+          } else {
+            $(this).parent().prev().css("background-color", "");
+            good_nodes++;
+          }
+        }
       }
     });
 
@@ -1168,19 +1129,19 @@ function load_row(node_row, ac, cur_elem, containing_elem, also_set, initial_loa
     node_name = $(node_row).attr("nodeID");
     $.each(self.content, function(key, node) {
       if (node.name == node_name) {
-	if (!initial_load) {self.set(cur_elem,node);}
-	node.set(cur_elem, true);
-	if (also_set)
-	  self.set(also_set, node);
+        if (!initial_load) {
+          self.set(cur_elem,node);
+        }
+        node.set(cur_elem, true);
+        if (also_set)
+          self.set(also_set, node);
       } else {
-	if (self.cur_resource_ston &&
-	    self.cur_resource_ston.name == node.name)
-	  self.content[key].set(cur_elem,true);
-	else if (self.cur_resource_res &&
-		 self.cur_resource_res.name == node.name)
-	  self.content[key].set(cur_elem,true);
-	else
-	  self.content[key].set(cur_elem,false);
+        if (self.cur_resource_ston && self.cur_resource_ston.name == node.name)
+          self.content[key].set(cur_elem,true);
+        else if (self.cur_resource_res && self.cur_resource_res.name == node.name)
+          self.content[key].set(cur_elem,true);
+        else
+          self.content[key].set(cur_elem,false);
       }
     });
     $(containing_elem).fadeTo(500,1);
@@ -1376,9 +1337,10 @@ function add_remove_fence_level(parent_id,remove) {
     timeout: pcs_timeout,
     success: function() {
 //      Pcs.nodesController.remove_fence_level();
-      if (!remove)
-	$(parent_id.parent()).find("input").val("");
-	$(parent_id.parent()).find("select").val("");
+      if (!remove) {
+        $(parent_id.parent()).find("input").val("");
+        $(parent_id.parent()).find("select").val("");
+      }
       Pcs.update();
     },
     error: function (xhr, status, error) {

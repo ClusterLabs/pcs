@@ -3,7 +3,6 @@ require 'sinatra/reloader' if development?
 require 'sinatra/cookies'
 require 'rexml/document'
 require 'webrick'
-require 'pp'
 require 'webrick/https'
 require 'openssl'
 require 'logger'
@@ -130,44 +129,19 @@ helpers do
         on_managec_main = true
       end
 
-      if request.path.start_with?('/remote') or (request.path.match(match_expr) and not on_managec_main) or '/run_pcs' == request.path or 
-        '/clusters_overview' == request.path or request.path.start_with?('/permissions_')
-	$logger.info "ERROR: Request without authentication"
-	halt [401, '{"notauthorized":"true"}']
+      if request.path.start_with?('/remote') or
+        (request.path.match(match_expr) and not on_managec_main) or
+        '/run_pcs' == request.path or
+        '/clusters_overview' == request.path or
+        request.path.start_with?('/permissions_')
+      then
+        $logger.info "ERROR: Request without authentication"
+        halt [401, '{"notauthorized":"true"}']
       else
-	session[:pre_login_path] = request.path
-	redirect '/login'
+        session[:pre_login_path] = request.path
+        redirect '/login'
       end
     end
-  end
-
-  def setup
-    @nodes_online, @nodes_offline = get_nodes()
-    @nodes = {}
-    @nodes_online.each do |i|
-      @nodes[i]  = Node.new(i, i, i, true)
-    end
-    @nodes_offline.each do |i|
-      @nodes[i]  = Node.new(i, i, i, false)
-    end
-
-    if @nodes_online.length == 0
-      @pcs_node_offline = true
-    end
-
-    if params[:node]
-      @cur_node = @nodes[params[:node]]
-      if not @cur_node
-	@cur_node = @nodes.values[0]
-      end
-    else
-      @cur_node = @nodes.values[0]
-    end
-
-    if @nodes.length != 0
-      @loc_dep_allow, @loc_dep_disallow = getLocationDeps(session, @cur_node)
-    end
-    @nodes = @nodes_online.concat(@nodes_offline)
   end
 
   def getParamList(params)
@@ -369,7 +343,7 @@ if not DISABLE_GUI
       #      session.delete("pre_login_path")
       #      pp "Pre Login Path: " + plp
       #      if plp == "" or plp == "/"
-      #      	plp = '/manage'
+      #        plp = '/manage'
       #      end
       #      redirect plp
       #    else
@@ -379,117 +353,6 @@ if not DISABLE_GUI
       session["bad_login_name"] = params['username']
       redirect '/login?badlogin=1'
     end
-  end
-
-  post '/fencerm' do
-    if not allowed_for_local_cluster(session, Permissions::WRITE)
-      return 403, 'Permission denied'
-    end
-    params.each { |k,v|
-      if k.index("resid-") == 0
-        run_cmd(session, PCS, "resource", "delete", k.gsub("resid-",""))
-      end
-    }
-    redirect "/fencedevices/"
-  end
-
-  get '/configure/?:page?' do
-    if not allowed_for_local_cluster(session, Permissions::READ)
-      return 403, 'Permission denied'
-    end
-    @config_options = getConfigOptions(params[:page])
-    @configuremenuclass = "class=\"active\""
-    erb :configure, :layout => :main
-  end
-
-  get '/fencedevices2/?:fencedevice?' do
-    if not allowed_for_local_cluster(session, Permissions::READ)
-      return 403, 'Permission denied'
-    end
-    @resources, @groups = getResourcesGroups(session, true)
-    pp @resources
-
-    if @resources.length == 0
-      @cur_resource = nil
-      @resource_agents = getFenceAgents()
-    else
-      @cur_resource = @resources[0]
-      if params[:fencedevice]
-        @resources.each do |fd|
-          if fd.id == params[:fencedevice]
-            @cur_resource = fd
-            break
-          end
-        end
-      end
-      @cur_resource.options = getResourceOptions(session, @cur_resource.id)
-      @resource_agents = getFenceAgents(@cur_resource.agentname)
-    end
-    erb :fencedevices, :layout => :main
-  end
-
-  ['/resources2/?:resource?', '/resource_list/?:resource?'].each do |path|
-    get path do
-      if not allowed_for_local_cluster(session, Permissions::READ)
-        return 403, 'Permission denied'
-      end
-      @load_data = true
-      @resources, @groups = getResourcesGroups(session)
-      @resourcemenuclass = "class=\"active\""
-
-      if @resources.length == 0
-        @cur_resource = nil
-        @resource_agents = getResourceAgents(session)
-      else
-        @cur_resource = @resources[0]
-        @cur_resource.options = getResourceOptions(session, @cur_resource.id)
-        if params[:resource]
-          @resources.each do |r|
-            if r.id == params[:resource]
-              @cur_resource = r
-              @cur_resource.options = getResourceOptions(session, r.id)
-              break
-            end
-          end
-        end
-        @resource_agents = getResourceAgents(
-          session, @cur_resource.agentname
-        )
-        @ord_dep_before, @ord_dep_after  = getOrderingConstraints(session, @cur_resource.id)
-        @colo_dep_together, @colo_dep_apart = getColocationConstraints(session, @cur_resource.id)
-        @enabled_nodes, @disabled_nodes = getLocationConstraints(session, @cur_resource.id)
-      end
-
-      @nodes_online, @nodes_offline = get_nodes
-
-      if path.start_with? '/resource_list'
-        erb :_resource_list
-      else
-        erb :resource, :layout => :main
-      end
-    end
-  end
-
-  get '/nodes/?:node?' do
-    if not allowed_for_local_cluster(session, Permissions::READ)
-      return 403, 'Permission denied'
-    end
-    setup()
-    @load_data = true
-    #  @nodemenuclass = "class=\"active\""
-    @resources, @groups = getResourcesGroups(session)
-    #  @resources_running = []
-    #  @resources.each { |r|
-    #    @cur_node && r.nodes && r.nodes.each {|n|
-    #      if n.name == @cur_node.id
-    #	@resources_running << r
-    #      end
-    #    }
-    #  }
-    @resource_agents = getResourceAgents(session)
-    @stonith_agents = getFenceAgents()
-    #  @nodes = @nodes.sort_by{|k,v|k}
-    erb :nodes, :layout => :main
   end
 
   get '/manage/?' do
@@ -562,12 +425,8 @@ if not DISABLE_GUI
 
   get '/managec/:cluster/main' do
     @cluster_name = params[:cluster]
-    #  @resources, @groups = getResourcesGroups(session)
-    @load_data = true
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     @clusters = pcs_config.clusters
-    @resources = []
-    @groups = []
     @nodes = get_cluster_nodes(params[:cluster])
     if @nodes == []
       redirect '/manage/?error=badclustername&errorval=' + params[:cluster] + '#manage'
@@ -867,35 +726,6 @@ else
 
 end
 
-def getLocationDeps(session, cur_node)
-  out, stderror, retval = run_cmd(
-    session, PCS, "constraint", "location", "show", "nodes", cur_node.id
-  )
-  deps_allow = []
-  deps_disallow = []
-  allowed = false
-  disallowed = false
-  out.each {|line|
-    line = line.strip
-    next if line == "Location Constraints:" or line.match(/^Node:/)
-
-    if line == "Allowed to run:"
-      allowed = true
-      next
-    elsif line == "Not allowed to run:"
-      disallowed = true
-      next
-    end
-
-    if disallowed == true
-      deps_disallow << line.sub(/ .*/,"")
-    elsif allowed == true
-      deps_allow << line.sub(/ .*/,"")
-    end
-  }  
-  [deps_allow, deps_disallow]
-end
-
 def getConfigOptions2(session, cluster_name)
   config_options = {}
   general_page = []
@@ -935,53 +765,6 @@ If checked, the cluster will refuse to start resources unless one or more STONIT
   config_options.each { |i,k| k.each { |j| allconfigoptions << j } }
   ConfigOption.getDefaultValues(allconfigoptions)
   ConfigOption.loadValues(session, allconfigoptions, cluster_name)
-  return config_options
-end
-
-def getConfigOptions(page="general")
-  config_options = []
-  case page
-  when "general", nil
-    cg1 = []
-    cg1 << ConfigOption.new("Cluster Delay Time", "cdt",  "int", 4, "Seconds") 
-    cg1 << ConfigOption.new("Batch Limit", "cdt",  "int", 4) 
-    cg1 << ConfigOption.new("Default Action Timeout", "cdt",  "int", 4, "Seconds") 
-    cg2 = []
-    cg2 << ConfigOption.new("During timeout should cluster stop all active resources", "res_stop", "radio", "4", "", ["Yes","No"])
-
-    cg3 = []
-    cg3 << ConfigOption.new("PE Error Storage", "res_stop", "radio", "4", "", ["Yes","No"])
-    cg3 << ConfigOption.new("PE Warning Storage", "res_stop", "radio", "4", "", ["Yes","No"])
-    cg3 << ConfigOption.new("PE Input Storage", "res_stop", "radio", "4", "", ["Yes","No"])
-
-    config_options << cg1
-    config_options << cg2
-    config_options << cg3
-  when "pacemaker"
-    cg1 = []
-    cg1 << ConfigOption.new("Batch Limit", "batch-limit",  "int", 4, "jobs") 
-    cg1 << ConfigOption.new("No Quorum Policy", "no-quorum-policy",  "dropdown","" ,"", {"ignore" => "Ignore","freeze" => "Freeze", "stop" => "Stop", "suicide" => "Suicide"}) 
-    cg1 << ConfigOption.new("Symmetric", "symmetric-cluster", "check")
-    cg2 = []
-    cg2 << ConfigOption.new("Stonith Enabled", "stonith-enabled", "check")
-    cg2 << ConfigOption.new("Stonith Action", "stonith-action",  "dropdown","" ,"", {"reboot" => "Reboot","poweroff" => "Poweroff"}) 
-    cg3 = []
-    cg3 << ConfigOption.new("Cluster Delay", "cluster-delay",  "int", 4) 
-    cg3 << ConfigOption.new("Stop Orphan Resources", "stop-orphan-resources", "check")
-    cg3 << ConfigOption.new("Stop Orphan Actions", "stop-orphan-actions", "check")
-    cg3 << ConfigOption.new("Start Failure is Fatal", "start-failure-is-fatal", "check")
-    cg3 << ConfigOption.new("PE Error Storage", "pe-error-series-max", "int", "4")
-    cg3 << ConfigOption.new("PE Warning Storage", "pe-warn-series-max", "int", "4")
-    cg3 << ConfigOption.new("PE Input Storage", "pe-input-series-max", "int", "4")
-
-    config_options << cg1
-    config_options << cg2
-    config_options << cg3
-  end
-
-  allconfigoptions = []
-  config_options.each { |i| i.each { |j| allconfigoptions << j } }
-  ConfigOption.getDefaultValues(allconfigoptions)
   return config_options
 end
 
@@ -1028,11 +811,11 @@ class ConfigOption
     cos.each {|co|
       prop_found = false
       doc.elements.each("cib/configuration/crm_config/cluster_property_set/nvpair[@name='#{co.configname}']") { |e|
-      	co.value = e.attributes["value"]
-      	prop_found = true
+        co.value = e.attributes["value"]
+        prop_found = true
       }
       if prop_found == false
-      	co.value = co.default
+        co.value = co.default
       end
     }
   end
@@ -1043,8 +826,8 @@ class ConfigOption
 
     cos.each { |co|
       doc.elements.each("resource-agent/parameters/parameter[@name='#{co.configname}']/content") { |e|
-	co.default = e.attributes["default"]
-	break
+        co.default = e.attributes["default"]
+        break
       }
     }
   end
@@ -1054,23 +837,23 @@ class ConfigOption
     when "radio"
       val = value
       if option == "Yes"
-	if val == "true"
-	  return "checked"
-	end
+        if val == "true"
+          return "checked"
+        end
       else
-	if val == "false"
-	  return "checked"
-	end
+        if val == "false"
+          return "checked"
+        end
       end
     when "check"
       if value == "true" || value == "on"
-	return "checked"
+        return "checked"
       else
-	return ""
+        return ""
       end
     when "dropdown"
       if value == option
-	return "selected"
+        return "selected"
       end
     end
   end
@@ -1086,7 +869,7 @@ class ConfigOption
     when "radio"
       ret = ""
       options.each {|option|
-	ret += "<input type=radio #{checked(option)} name=\"#{paramname}\" value=\"#{option}\">#{option}"
+        ret += "<input type=radio #{checked(option)} name=\"#{paramname}\" value=\"#{option}\">#{option}"
       }
       return ret
     when "check"
@@ -1096,7 +879,7 @@ class ConfigOption
     when "dropdown"
       ret = "<select name=\"#{paramname}\">"
       options.each {|key, option|
-	ret += "<option #{checked(key)} value=\"#{key}\">#{option}</option>"
+        ret += "<option #{checked(key)} value=\"#{key}\">#{option}</option>"
       }
       ret += "</select>"
       return ret

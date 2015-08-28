@@ -1,5 +1,4 @@
 require 'json'
-require 'pp'
 require 'securerandom'
 require 'rpam'
 require 'base64'

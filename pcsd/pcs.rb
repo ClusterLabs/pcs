@@ -31,8 +31,8 @@ def getAllSettings(session)
       name = e.attributes["name"]
       name.gsub!(/-/,"_")
       e.elements.each("content") { |c|
-	default = c.attributes["default"]
-	el_type = c.attributes["type"]
+        default = c.attributes["default"]
+        el_type = c.attributes["type"]
       }
       ret[name] = {"value" => default, "type" => el_type}
     }
@@ -41,14 +41,14 @@ def getAllSettings(session)
       key,val = line.split(': ', 2)
       key.gsub!(/-/,"_")
       if ret.has_key?(key)
-	if ret[key]["type"] == "boolean"
-	  val == "true" ?  ret[key]["value"] = true : ret[key]["value"] = false
-	else
-	  ret[key]["value"] = val
-	end
+        if ret[key]["type"] == "boolean"
+          val == "true" ?  ret[key]["value"] = true : ret[key]["value"] = false
+        else
+          ret[key]["value"] = val
+        end
 
       else
-	ret[key] = {"value" => val, "type" => "unknown"}
+        ret[key] = {"value" => val, "type" => "unknown"}
       end
     }
     return ret

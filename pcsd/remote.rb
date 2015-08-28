@@ -1300,15 +1300,15 @@ def resource_status(params, request, session)
   @resources.each {|r|
     if r.id == resource_id
       if r.failed
-	res_status =  "Failed"
+        res_status =  "Failed"
       elsif !r.active
-	res_status = "Inactive"
+        res_status = "Inactive"
       else
-	res_status = "Running"
+        res_status = "Running"
       end
       if r.nodes.length != 0
-	location = r.nodes[0].name
-	break
+        location = r.nodes[0].name
+        break
       end
     end
   }
@@ -1766,9 +1766,9 @@ def add_constraint_remote(params, request, session)
     score = params["score"]
     if params["colocation_type"] == "apart"
       if score.length > 0 and score[0] != "-"
-      	score = "-" + score
+        score = "-" + score
       elsif score == ""
-      	score = "-INFINITY"
+        score = "-INFINITY"
       end
     end
 
