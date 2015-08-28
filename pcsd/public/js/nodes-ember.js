@@ -207,6 +207,7 @@ Pcs.resourcesContainer = Ember.Object.create({
   cur_fence: null,
   constraints: {},
   group_list: [],
+  data_version: null,
 
   get_resource_by_id: function(resource_id) {
     var resource_map = this.get('resource_map');
@@ -434,6 +435,7 @@ Pcs.resourcesContainer = Ember.Object.create({
   update: function(data) {
     var self = this;
     self.set('group_list', data['groups']);
+    self.set("data_version", data['status_version']);
     var resources = data["resource_list"];
     var resource_obj = null;
     var resource_id;
@@ -493,6 +495,12 @@ Pcs.resourcesContainer = Ember.Object.create({
       });
     });
   }
+});
+
+Pcs.resourcesContainer.reopen({
+  is_version_1: function() {
+    return (this.get("data_version") == '1');
+  }.property('data_version')
 });
 
 Pcs.ResourceObj = Ember.Object.extend({

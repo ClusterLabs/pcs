@@ -197,6 +197,7 @@
             <td class="bold" nowrap>Current Location:</td>
             <td id="cur_res_loc" class="reg">{{resource.nodes_running_on_string}}</td>
           </tr>
+          {{#unless old_pcsd}}
           {{#unless resource.parent}}
             <tr>
               <td class="bold" nowrap>Clone:</td>
@@ -226,8 +227,10 @@
             </tr>
             {{/if}}
           {{/unless}}
+          {{/unless}}
         {{/if}}
         {{/unless}}
+        {{#unless old_pcsd}}
         {{#if resource.is_group}}
         {{#unless resource.parent}}
           <tr>
@@ -258,6 +261,7 @@
             </td>
           </tr>
         {{/if}}
+        {{/unless}}
       </table>
       {{#unless resource.stonith}}
         {{location_constraints-table constraints=resource.location_constraints}}

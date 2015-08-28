@@ -32,16 +32,16 @@
     <td id="<%=@myView%>_list" class="node_list">
       <%= erb :_resource_list %>
     </td>
-	<td id="node_info" colspan=2>
-	  <div id="<%=@myView%>_info_div">
-		<% if @myView == "resource" %>
-			{{resource-edit resource=Pcs.resourcesContainer.cur_resource page_name="Resource"}}
-		<% else %>
-			{{resource-edit resource=Pcs.resourcesContainer.cur_fence page_name="Fence device" stonith=1}}
-		<% end %>
-	  </div>
-	  </td>
-	</tr>
+  <td id="node_info" colspan=2>
+    <div id="<%=@myView%>_info_div">
+    <% if @myView == "resource" %>
+      {{resource-edit resource=Pcs.resourcesContainer.cur_resource page_name="Resource" old_pcsd=Pcs.resourcesContainer.is_version_1}}
+    <% else %>
+      {{resource-edit resource=Pcs.resourcesContainer.cur_fence page_name="Fence device" stonith=1 old_pcsd=Pcs.resourcesContainer.is_version_1}}
+    <% end %>
+    </div>
+    </td>
+  </tr>
     <% if @myView == "resource" %>
       </div>
     </table>
