@@ -502,7 +502,6 @@ module ClusterEntity
     end
 
     def get_status
-      count = @crm_status.length
       running = 0
       failed = 0
       @crm_status.each do |s|
@@ -515,12 +514,10 @@ module ClusterEntity
 
       if disabled?
         status = ClusterEntity::ResourceStatus.new(:disabled)
-      elsif running != 0
-        if running == count
-          status = ClusterEntity::ResourceStatus.new(:running)
-        else
-          status = ClusterEntity::ResourceStatus.new(:partially_running)
-        end
+      elsif running > 0
+        status = ClusterEntity::ResourceStatus.new(:running)
+      elsif failed > 0
+        status = ClusterEntity::ResourceStatus.new(:failed)
       else
         status = ClusterEntity::ResourceStatus.new(:blocked)
       end
