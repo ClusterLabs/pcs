@@ -1506,10 +1506,18 @@ def cluster_status_from_nodes(session, cluster_nodes, cluster_name)
     status = overview.update(cluster_nodes_map[quorate_nodes[0]])
     status[:quorate] = true
     status[:node_list] = node_status_list
-  # if we don't have quorum, use data from any node
-  # no node has quorum, so no node has any info about the cluster
+  # if we don't have quorum, use data from any online node,
+  # otherwise use data from any node no node has quorum, so no node has any
+  # info about the cluster
   elsif not old_status
-    status = overview.update(cluster_nodes_map.values[0])
+    node_to_use = cluster_nodes_map.values[0]
+    cluster_nodes_map.each { |_, node_data|
+      if node_data[:node] and node_data[:node][:status] == 'online'
+        node_to_use = node_data
+        break
+      end
+    }
+    status = overview.update(node_to_use)
     status[:quorate] = false
     status[:node_list] = node_status_list
   # old pcsd doesn't provide info about quorum, use data from any node
