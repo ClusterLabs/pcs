@@ -54,7 +54,8 @@ Pcs = Ember.Application.createWithMixins({
     if (window.location.pathname.lastIndexOf('/manage', 0) !== 0) {
       return;
     }
-    clearTimeout(Pcs.update_timeout);
+    clearTimeout(Pcs.get('update_timeout'));
+    Pcs.set('update_timeout', null);
     var self = Pcs;
     var cluster_name = self.cluster_name;
     if (cluster_name == null) {
@@ -77,7 +78,7 @@ Pcs = Ember.Application.createWithMixins({
           if (data["not_current_data"]) {
             self.update();
           } else {
-            Pcs.update_timeout = window.setTimeout(self.update, 20000);
+            Pcs.set('update_timeout', window.setTimeout(self.update,20000));
           }
           hide_loading_screen();
         },
@@ -92,7 +93,7 @@ Pcs = Ember.Application.createWithMixins({
               console.log("Error: Unable to parse json for clusters_overview");
             }
           }
-          Pcs.update_timeout = window.setTimeout(self.update,20000);
+          Pcs.set('update_timeout', window.setTimeout(self.update,20000));
           hide_loading_screen();
         }
       });

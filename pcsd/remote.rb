@@ -2,6 +2,7 @@ require 'json'
 require 'uri'
 require 'open4'
 require 'set'
+require 'timeout'
 
 require 'pcs.rb'
 require 'resource.rb'
@@ -1120,6 +1121,16 @@ def clusters_overview(params, request, session)
   config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
   config.clusters.each { |cluster|
     threads << Thread.new {
+      cluster_map[cluster.name] = {
+        'cluster_name' => cluster.name,
+        'error_list' => [
+          {'message' => 'Unable to connect to the cluster. Request timeout.'}
+        ],
+        'warning_list' => [],
+        'status' => 'unknown',
+        'node_list' => get_default_overview_node_list(cluster.name),
+        'resource_list' => []
+      }
       overview_cluster = nil
       online, offline, not_authorized_nodes = check_gui_status_of_nodes(
         session,
@@ -1134,7 +1145,7 @@ def clusters_overview(params, request, session)
       nodes_not_in_cluster = []
       for node in cluster_nodes_auth
         code, response = send_request_with_token(
-          session, node, 'cluster_status', true, {}, true, nil, 15
+          session, node, 'cluster_status', true, {}, true, nil, 8
         )
         if code == 404
           not_supported = true
@@ -1228,7 +1239,14 @@ def clusters_overview(params, request, session)
       cluster_map[cluster.name] = overview_cluster
     }
   }
-  threads.each { |t| t.join }
+
+  begin
+    Timeout::timeout(18) {
+      threads.each { |t| t.join }
+    }
+  rescue Timeout::Error
+    threads.each { |t| t.exit }
+  end
 
   # update clusters in PCSConfig
   not_current_data = false
