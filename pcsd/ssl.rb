@@ -67,14 +67,20 @@ end
 server = ::Rack::Handler::WEBrick
 trap(:INT) do
   puts "Shutting down (INT)"
-  server.shutdown
-  #exit
+  if server.instance_variable_get("@server")
+    server.shutdown
+  else
+    exit
+  end
 end
 
 trap(:TERM) do
   puts "Shutting down (TERM)"
-  server.shutdown
-  #exit
+  if server.instance_variable_get("@server")
+    server.shutdown
+  else
+    exit
+  end
 end
 
 require 'pcsd'
