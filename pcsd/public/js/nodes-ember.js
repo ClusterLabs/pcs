@@ -49,21 +49,24 @@ Pcs = Ember.Application.createWithMixins({
     });
     return retArray;
   },
-  update_timeout: null,
-  update: function(first_run) {
+  updater: null,
+
+  update: function() {
+    Pcs.get('updater').update();
+  },
+
+  _update: function(first_run) {
     if (window.location.pathname.lastIndexOf('/manage', 0) !== 0) {
       return;
     }
-    clearTimeout(Pcs.get('update_timeout'));
-    Pcs.set('update_timeout', null);
+    if (first_run) {
+      show_loading_screen();
+    }
     var self = Pcs;
     var cluster_name = self.cluster_name;
     if (cluster_name == null) {
       if (location.pathname.indexOf("/manage") != 0) {
         return;
-      }
-      if (first_run) {
-        show_loading_screen();
       }
       Ember.debug("Empty Cluster Name");
       $.ajax({
@@ -77,8 +80,6 @@ Pcs = Ember.Application.createWithMixins({
           });
           if (data["not_current_data"]) {
             self.update();
-          } else {
-            Pcs.set('update_timeout', window.setTimeout(self.update,20000));
           }
           hide_loading_screen();
         },
@@ -93,14 +94,13 @@ Pcs = Ember.Application.createWithMixins({
               console.log("Error: Unable to parse json for clusters_overview");
             }
           }
-          Pcs.set('update_timeout', window.setTimeout(self.update,20000));
           hide_loading_screen();
+        },
+        complete: function() {
+          Pcs.get('updater').update_finished();
         }
       });
       return;
-    }
-    if (first_run) {
-      show_loading_screen();
     }
     $.ajax({
       url: "cluster_status",
@@ -191,9 +191,81 @@ Pcs = Ember.Application.createWithMixins({
       },
       complete: function() {
         hide_loading_screen();
-        Pcs.update_timeout = window.setTimeout(Pcs.update,20000);
+        Pcs.get('updater').update_finished();
       }
     });
+  }
+});
+
+Pcs.Updater = Ember.Object.extend({
+  timeout: 20000,
+  first_run: true,
+  async: true,
+  autostart: true,
+  started: false,
+  in_progress: false,
+  waiting: false,
+  update_function: null,
+  update_target: null,
+  timer: null,
+
+  start: function() {
+    this.set('started', true);
+    this.update();
+  },
+
+  stop: function() {
+    this.set('started', false);
+    this.cancel_timer();
+  },
+
+  cancel_timer: function() {
+    var self = this;
+    var timer = self.get('timer');
+    if (timer) {
+      self.set('timer', null);
+      Ember.run.cancel(timer);
+    }
+  },
+
+  update: function() {
+    var self = this;
+    if (!self.get('update_function')) {
+      console.log('No update_function defined!');
+      return;
+    }
+    self.cancel_timer();
+    self.set('waiting', false);
+    if (self.get('in_progress')) {
+      self.set('waiting', true);
+    } else {
+      self.set('in_progress', true);
+      self.get('update_function').apply(self.get('update_target'), [self.get('first_run')]);
+      self.set('first_run', false);
+      if (!self.get('async')) {
+        self.update_finished();
+      }
+    }
+  },
+
+  update_finished: function() {
+    var self = this;
+    if (self.get('waiting')) {
+      Ember.run.next(self, self.update);
+    } else if (self.get('started')) {
+      self.set('timer', Ember.run.later(self, self.update, self.get('timeout')));
+    }
+    self.set('in_progress', false);
+  },
+
+  init: function() {
+    var self = this;
+    if (!self.get('update_target')) {
+      self.set('update_target', self);
+    }
+    if (self.get('autostart')) {
+      self.start();
+    }
   }
 });
 
@@ -1742,4 +1814,8 @@ function myUpdate() {
 //  window.setTimeout(myUpdate,4000);
 }
 
-Pcs.update(true);
+Pcs.set('updater', Pcs.Updater.create({
+  timeout: 20000,
+  update_function: Pcs._update,
+  update_target: Pcs
+}));
