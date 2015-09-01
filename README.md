@@ -8,11 +8,19 @@
 - **PCS Installation from Source**
 
    Run the following in terminal:
-  
+
    ```shell
-   # tar -xzvf pcs-0.9.138.tar.gz
-   # cd pcs-0.9.138
+   # tar -xzvf pcs-0.9.143.tar.gz
+   # cd pcs-0.9.143
    # make install
+   ```
+
+   If you are using Debian or Debian-based distribution (such as Ubuntu), run the following instead:
+
+   ```shell
+   # tar -xzvf pcs-0.9.143.tar.gz
+   # cd pcs-0.9.143
+   # make install install_settings=true
    ```
 
    This will install pcs into `/usr/sbin/pcs`.
@@ -68,7 +76,14 @@
    # make install_pcsd
    ```
 
-   If you are on GNU/Linux its now time to:
+   If you are using Debian or Debian-based distribution (such as Ubuntu), run the following instead:
+
+   ```shell
+   # cd pcsd ; make get_gems ; cd ..
+   # make install_pcsd install_settings=true
+   ```
+
+   If you are using GNU/Linux its now time to:
 
    ```shell
    # systemctl daemon-reload
@@ -80,8 +95,8 @@
 
    Currently this is built into Fedora (other distributions to follow).  You can see the current Fedora .spec in the fedora package git repositories here: http://pkgs.fedoraproject.org/cgit/pcs.git/
 
-   Current Fedora 21 .spec:
-   http://pkgs.fedoraproject.org/cgit/pcs.git/tree/pcs.spec?h=f21
+   Current Fedora 23 .spec:
+   http://pkgs.fedoraproject.org/cgit/pcs.git/tree/pcs.spec?h=f23
 
 <br />
 ### Inquiries
