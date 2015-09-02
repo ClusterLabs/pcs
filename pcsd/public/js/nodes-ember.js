@@ -562,9 +562,12 @@ Pcs.resourcesContainer = Ember.Object.create({
     self.set('constraints', constraints);
     var resource_map = self.get('resource_map');
     $.each(constraints, function(const_type, cons) {
-      $.each(cons, function(resource_id, cons_list) {
-        if (resource_id in resource_map)
-          resource_map[resource_id].set(const_type, cons_list);
+      $.each(resource_map, function(resource_id, resource_obj) {
+        if (resource_id in cons) {
+          resource_obj.set(const_type, cons[resource_id]);
+        } else {
+          resource_obj.set(const_type, []);
+        }
       });
     });
   }
