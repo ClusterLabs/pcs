@@ -1557,9 +1557,6 @@ function remove_constraint(id) {
     url: get_cluster_remote_url() + 'remove_constraint_remote',
     data: {"constraint_id": id},
     timeout: pcs_timeout,
-    success: function (data) {
-      Pcs.resourcesContainer.remove_constraint(id);
-    },
     error: function (xhr, status, error) {
       alert(
         "Error removing constraint "
@@ -1579,9 +1576,6 @@ function remove_constraint_rule(id) {
     url: get_cluster_remote_url() + 'remove_constraint_rule_remote',
     data: {"rule_id": id},
     timeout: pcs_timeout,
-    success: function (data) {
-      Pcs.resourcesContainer.remove_constraint(id);
-    },
     error: function (xhr, status, error) {
       alert(
         "Error removing constraint rule "

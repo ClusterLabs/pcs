@@ -390,30 +390,6 @@ Pcs.resourcesContainer = Ember.Object.create({
     };
   },
 
-  remove_constraint: function(constraint_id) {
-    $.each(this.get('resource_map'), function(key, resource) {
-      $.each(
-        [
-          "location_constraints",
-          "ordering_constraints",
-          "ordering_set_constraints",
-          "colocation_constraints"
-        ],
-        function(_, constraint_type) {
-          if (resource.get(constraint_type)) {
-            resource.set(
-              constraint_type,
-              $.grep(
-                resource.get(constraint_type),
-                function(value2, key) { return value2.id != constraint_id; }
-              )
-            );
-          }
-        }
-      );
-    });
-  },
-
   update_meta_attr: function(resource_id, attr, value) {
     value = typeof value !== 'undefined' ? value.trim() : "";
     var data = {
