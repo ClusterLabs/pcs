@@ -2167,6 +2167,7 @@ function permissions_load_cluster(cluster_name, callback) {
       $("#" + element_id + " :checkbox").each(function(key, checkbox) {
         permissions_fix_dependent_checkboxes(checkbox);
       });
+      permissions_cluster_dirty_flag(cluster_name, false);
       if (callback) {
         callback();
       }
@@ -2221,8 +2222,27 @@ function permissions_save_cluster(form) {
   });
 }
 
+function permissions_cluster_dirty_flag(cluster_name, flag) {
+  var cluster_row = permissions_get_cluster_row(cluster_name);
+  if (cluster_row) {
+    var dirty_elem = cluster_row.find("span[class=unsaved_changes]");
+    if (dirty_elem) {
+      if (flag) {
+        dirty_elem.show();
+      }
+      else {
+        dirty_elem.hide();
+      }
+    }
+  }
+}
+
 function permission_remove_row(button) {
+  var cluster_name = permissions_get_clustername(
+    $(button).parents("form").first()
+  );
   $(button).parent().parent().remove();
+  permissions_cluster_dirty_flag(cluster_name, true);
 }
 
 function permissions_add_row(template_row) {
@@ -2230,6 +2250,9 @@ function permissions_add_row(template_row) {
   var user_type = permissions_get_row_type(template_row);
   var max_key = -1;
   var exists = false;
+  var cluster_name = permissions_get_clustername(
+    $(template_row).parents("form").first()
+  );
 
   if("" == user_name) {
     alert("Please enter the name");
@@ -2288,6 +2311,8 @@ function permissions_add_row(template_row) {
   template_inputs.removeAttr("checked").removeAttr("selected");
   template_inputs.removeAttr("disabled").removeAttr("readonly");
   $(template_row).find(":input[type=text]").val("");
+
+  permissions_cluster_dirty_flag(cluster_name, true);
 }
 
 function permissions_get_dependent_checkboxes(checkbox) {
@@ -2360,5 +2385,16 @@ function permissions_get_checkbox_permission(checkbox) {
     return match[1];
   }
   return "";
+}
+
+function permissions_get_cluster_row(cluster_name) {
+  var cluster_row = null;
+  $('#cluster_list td[class=node_name]').each(function(index, elem) {
+    var jq_elem = $(elem);
+    if (jq_elem.text().trim() == cluster_name.trim()) {
+      cluster_row = jq_elem.parents("tr").first();
+    }
+  });
+  return cluster_row;
 }
 

@@ -58,7 +58,10 @@
                   <% if user['allow'].include?(perm['code']) %>
                     checked="checked"
                   <% end %>
-                  onchange="permissions_fix_dependent_checkboxes(this);"
+                  onchange="
+                    permissions_fix_dependent_checkboxes(this);
+                    permissions_cluster_dirty_flag('<%= h(@cluster_name) %>', true);
+                  "
                 >
               </td>
             <% } %>
