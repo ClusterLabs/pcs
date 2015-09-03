@@ -820,13 +820,15 @@ module ClusterEntity
           primitive_list = @member.members
         end
         @masters, @slaves = get_masters_slaves(primitive_list)
-        if @masters.empty?
-          @error_list << {
+        if @masters.empty? and !disabled?
+          @status = ClusterEntity::ResourceStatus.new(:partially_running)
+          @warning_list << {
             :message => 'Resource is master/slave but has not been promoted '\
               + 'to master on any node.',
             :type => 'no_master'
           }
         end
+        @status = @member.status if @status < @member.status
       end
     end
 
@@ -849,6 +851,22 @@ module ClusterEntity
           )
         end
         return member
+      end
+    end
+
+    def update_status
+      if @member
+        @member.update_status
+        if @member.instance_of?(Primitive)
+          primitive_list = [@member]
+        else
+          primitive_list = @member.members
+        end
+        @masters, @slaves = get_masters_slaves(primitive_list)
+        if @masters.empty? and !disabled?
+          @status = ClusterEntity::ResourceStatus.new(:partially_running)
+        end
+        @status = @member.status if @status < @member.status
       end
     end
 

@@ -2226,8 +2226,8 @@ class TestMasterSlave < Test::Unit::TestCase
       '1'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
-    assert_equal(1, obj.error_list.length)
-    assert(obj.warning_list.empty?)
+    assert(obj.error_list.empty?)
+    assert_equal(1, obj.warning_list.length)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
@@ -2304,8 +2304,8 @@ class TestMasterSlave < Test::Unit::TestCase
       '0'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
-    assert_equal(1, obj.error_list.length)
-    assert(obj.warning_list.empty?)
+    assert(obj.error_list.empty?)
+    assert_equal(1, obj.warning_list.length)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
