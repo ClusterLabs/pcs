@@ -533,7 +533,8 @@ module ClusterEntity
       @operations = []
       failed_ops = []
       message_list = []
-      cib_dom.elements.each("//lrm_resource[@id='#{@id}']/lrm_rsc_op") { |e|
+      cib_dom.elements.each("//lrm_resource[@id='#{@id}']/lrm_rsc_op | "\
+      + "//lrm_resource[starts-with(@id, \"#{@id}:\")]/lrm_rsc_op") { |e|
         operation = ResourceOperation.new(e)
         @operations << operation
         if operation.rc_code != 0
