@@ -803,6 +803,8 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
         return [['Unable to communicate with pcsd'], 1, '', '']
     if output_json['status'] == 'bad_command':
         return [['Command not allowed'], 1, '', '']
+    if output_json['status'] == 'access_denied':
+        return [['Access denied'], 1, '', '']
     if output_json['status'] != "ok" or not output_json["data"]:
         return [['Unable to communicate with pcsd'], 1, '', '']
     try:

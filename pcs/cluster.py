@@ -235,6 +235,8 @@ def auth_nodes_do(nodes, username, password, force, local):
         'local': local,
     }
     output, retval = utils.run_pcsdcli('auth', pcsd_data)
+    if retval == 0 and output['status'] == 'access_denied':
+        utils.err('Access denied')
     if retval == 0 and output['status'] == 'ok' and output['data']:
         failed = False
         try:

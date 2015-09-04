@@ -18,7 +18,7 @@ class PCSAuth
 
   def self.validUser(username, password, generate_token = false)
     $logger.info("Attempting login by '#{username}'")
-    if not Rpam.auth(username,password, :service => "pcsd")
+    if not Rpam.auth(username, password, :service => "pcsd")
       $logger.info("Failed login by '#{username}' (bad username or password)")
       return nil
     end
@@ -58,7 +58,7 @@ class PCSAuth
     return [true, stdout.join(' ').split(nil)]
   end
 
-  def self.isUserAllowedToLogin(username)
+  def self.isUserAllowedToLogin(username, log_success=true)
     success, groups = getUsersGroups(username)
     if not success
       $logger.info(
@@ -72,7 +72,9 @@ class PCSAuth
       )
       return false
     end
-    $logger.info("Successful login by '#{username}'")
+    if log_success
+      $logger.info("Successful login by '#{username}'")
+    end
     return true
   end
 
@@ -130,7 +132,13 @@ class PCSAuth
   end
 
   def self.isLoggedIn(session)
-    return session[:username] != nil
+    username = session[:username]
+    if (username != nil) and isUserAllowedToLogin(username, false)
+      success, groups = getUsersGroups(username)
+      session[:usergroups] = success ? groups : []
+      return true
+    end
+    return false
   end
 
   def self.getSuperuserSession()

@@ -21,6 +21,7 @@ class TestAuth < Test::Unit::TestCase
 
   def setup
     $user_pass_file = CFG_PCSD_USERS
+    $logger = MockLogger.new
   end
 
   def testLoginByToken
