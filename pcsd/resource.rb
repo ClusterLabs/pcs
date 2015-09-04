@@ -1,3 +1,5 @@
+require 'pathname'
+
 def getResourcesGroups(session, get_fence_devices = false, get_all_options = false,
   get_operations=false
 )
@@ -165,11 +167,23 @@ def getAllConstraints(constraints_dom)
   return constraints
 end
 
-def getResourceMetadata(resourcepath)
+def getResourceMetadata(session, resourcepath)
   options_required = {}
   options_optional = {}
   long_desc = ""
   short_desc = ""
+
+  resourcepath = Pathname.new(resourcepath).cleanpath.to_s
+  resource_dirs = [
+    HEARTBEAT_AGENTS_DIR, PACEMAKER_AGENTS_DIR, NAGIOS_METADATA_DIR,
+  ]
+  if not resource_dirs.any? { |allowed| resourcepath.start_with?(allowed) }
+    $logger.error(
+      "Unable to get metadata of resource agent '#{resourcepath}': " +
+      'path not allowed'
+    )
+    return [options_required, options_optional, [short_desc, long_desc]]
+  end
 
   if resourcepath.end_with?('.xml')
     begin
@@ -179,12 +193,16 @@ def getResourceMetadata(resourcepath)
     end
   else
     ENV['OCF_ROOT'] = OCF_ROOT
-    metadata = `#{resourcepath} meta-data`
+    stdout, stderr, retval = run_cmd(session, resourcepath, 'meta-data')
+    metadata = stdout.join
   end
 
   begin
     doc = REXML::Document.new(metadata)
-  rescue REXML::ParseException
+  rescue REXML::ParseException => e
+    $logger.error(
+      "Unable to parse metadata of resource agent '#{resourcepath}': #{e}"
+    )
     return [options_required, options_optional, [short_desc, long_desc]]
   end
 

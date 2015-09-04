@@ -1,4 +1,4 @@
-def getFenceAgents(fence_agent = nil)
+def getFenceAgents(session, fence_agent = nil)
   fence_agent_list = {}
   agents = Dir.glob('/usr/sbin/fence_' + '*')
   agents.each { |a|
@@ -7,7 +7,7 @@ def getFenceAgents(fence_agent = nil)
     next if fa.name == "fence_ack_manual"
 
     if fence_agent and a.sub(/.*\//,"") == fence_agent.sub(/.*:/,"")
-      required_options, optional_options, advanced_options, info = getFenceAgentMetadata(fa.name)
+      required_options, optional_options, advanced_options, info = getFenceAgentMetadata(session, fa.name)
       fa.required_options = required_options
       fa.optional_options = optional_options
       fa.advanced_options = advanced_options
@@ -18,13 +18,42 @@ def getFenceAgents(fence_agent = nil)
   fence_agent_list
 end
 
-def getFenceAgentMetadata(fenceagentname)
+def getFenceAgentMetadata(session, fenceagentname)
+  options_required = {}
+  options_optional = {}
+  options_advanced = {
+      "priority" => "",
+      "pcmk_host_argument" => "",
+      "pcmk_host_map" => "",
+      "pcmk_host_list" => "",
+      "pcmk_host_check" => ""
+  }
+  for a in ["reboot", "list", "status", "monitor", "off"]
+    options_advanced["pcmk_" + a + "_action"] = ""
+    options_advanced["pcmk_" + a + "_timeout"] = ""
+    options_advanced["pcmk_" + a + "_retries"] = ""
+  end
+
   # There are bugs in stonith_admin & the new fence_agents interaction
   # eventually we'll want to switch back to this, but for now we directly
   # call the agent to get metadata
   #metadata = `stonith_admin --metadata -a #{fenceagentname}`
-  metadata = `/usr/sbin/#{fenceagentname} -o metadata`
-  doc = REXML::Document.new(metadata)
+  if not fenceagentname.start_with?('fence_') or fenceagentname.include?('/')
+    $logger.error "Invalid fence agent '#{fenceagentname}'"
+    return [options_required, options_optional, options_advanced]
+  end
+  stdout, stderr, retval = run_cmd(
+    session, "/usr/sbin/#{fenceagentname}", '-o', 'metadata'
+  )
+  metadata = stdout.join
+  begin
+    doc = REXML::Document.new(metadata)
+  rescue REXML::ParseException => e
+    $logger.error(
+      "Unable to parse metadata of fence agent '#{resourcepath}': #{e}"
+    )
+    return [options_required, options_optional, options_advanced]
+  end
 
   short_desc = ""
   long_desc = ""
@@ -40,20 +69,6 @@ def getFenceAgentMetadata(fenceagentname)
     long_desc = ld.text ? ld.text.strip : ld.text
   }
 
-  options_required = {}
-  options_optional = {}
-  options_advanced = {
-      "priority" => "",
-      "pcmk_host_argument" => "",
-      "pcmk_host_map" => "",
-      "pcmk_host_list" => "",
-      "pcmk_host_check" => ""
-  }
-  for a in ["reboot", "list", "status", "monitor", "off"]
-    options_advanced["pcmk_" + a + "_action"] = ""
-    options_advanced["pcmk_" + a + "_timeout"] = ""
-    options_advanced["pcmk_" + a + "_retries"] = ""
-  end
   doc.elements.each('resource-agent/parameters/parameter') { |param|
     temp_array = []
     if param.elements["shortdesc"]

@@ -1398,11 +1398,11 @@ def resource_form(params, request, session)
     @cur_resource_ms = @cur_resource.get_master
     @resource = ResourceAgent.new(@cur_resource.agentname)
     if @cur_resource.provider == 'heartbeat'
-      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + @cur_resource.type)
+      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(session, HEARTBEAT_AGENTS_DIR + @cur_resource.type)
     elsif @cur_resource.provider == 'pacemaker'
-      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(PACEMAKER_AGENTS_DIR + @cur_resource.type)
+      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(session, PACEMAKER_AGENTS_DIR + @cur_resource.type)
     elsif @cur_resource._class == 'nagios'
-      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(NAGIOS_METADATA_DIR + @cur_resource.type + '.xml')
+      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(session, NAGIOS_METADATA_DIR + @cur_resource.type + '.xml')
     end
     @existing_resource = true
     if @resource
@@ -1423,7 +1423,7 @@ def fence_device_form(params, request, session)
   @cur_resource = get_resource_by_id(params[:resource], get_cib_dom(session))
 
   if @cur_resource.instance_of?(ClusterEntity::Primitive) and @cur_resource.stonith
-    @resource_agents = getFenceAgents(@cur_resource.agentname)
+    @resource_agents = getFenceAgents(session, @cur_resource.agentname)
     @existing_resource = true
     @fenceagent = @resource_agents[@cur_resource.type]
     erb :fenceagentform
@@ -1559,7 +1559,7 @@ def get_avail_fence_agents(params, request, session)
   if not allowed_for_local_cluster(session, Permissions::READ)
     return 403, 'Permission denied'
   end
-  agents = getFenceAgents()
+  agents = getFenceAgents(session)
   return JSON.generate(agents)
 end
 
@@ -1573,11 +1573,11 @@ def resource_metadata(params, request, session)
 
   @resource = ResourceAgent.new(params[:resourcename])
   if class_provider == "ocf:heartbeat"
-    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(HEARTBEAT_AGENTS_DIR + resource_name)
+    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(session, HEARTBEAT_AGENTS_DIR + resource_name)
   elsif class_provider == "ocf:pacemaker"
-    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(PACEMAKER_AGENTS_DIR + resource_name)
+    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(session, PACEMAKER_AGENTS_DIR + resource_name)
   elsif class_provider == 'nagios'
-    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(NAGIOS_METADATA_DIR + resource_name + '.xml')
+    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(session, NAGIOS_METADATA_DIR + resource_name + '.xml')
   end
   @new_resource = params[:new]
   @resources, @groups = getResourcesGroups(session)
@@ -1591,7 +1591,7 @@ def fence_device_metadata(params, request, session)
   end
   return 200 if not params[:resourcename] or params[:resourcename] == ""
   @fenceagent = FenceAgent.new(params[:resourcename])
-  @fenceagent.required_options, @fenceagent.optional_options, @fenceagent.advanced_options, @fenceagent.info = getFenceAgentMetadata(params[:resourcename])
+  @fenceagent.required_options, @fenceagent.optional_options, @fenceagent.advanced_options, @fenceagent.info = getFenceAgentMetadata(session, params[:resourcename])
   @new_fenceagent = params[:new]
   
   erb :fenceagentform
