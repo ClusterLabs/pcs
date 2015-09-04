@@ -261,22 +261,26 @@ def resource_list_available(argv):
 
     # nagios metadata
     nagios_metadata_path = "/usr/share/pacemaker/nagios/plugins-metadata"
-    for metadata_file in sorted(os.listdir(nagios_metadata_path)):
-        if metadata_file.startswith("."):
-            continue
-        full_res_name = "nagios:" + metadata_file
-        if full_res_name.lower().endswith(".xml"):
-            full_res_name = full_res_name[:-len(".xml")]
-        if "--nodesc" in utils.pcs_options:
-            ret += full_res_name + "\n"
-            continue
-        try:
-            ret += get_name_and_desc(
-                full_res_name,
-                open(os.path.join(nagios_metadata_path, metadata_file), "r").read()
-            )
-        except EnvironmentError as e:
-            pass
+    if os.path.isdir(nagios_metadata_path):
+        for metadata_file in sorted(os.listdir(nagios_metadata_path)):
+            if metadata_file.startswith("."):
+                continue
+            full_res_name = "nagios:" + metadata_file
+            if full_res_name.lower().endswith(".xml"):
+                full_res_name = full_res_name[:-len(".xml")]
+            if "--nodesc" in utils.pcs_options:
+                ret += full_res_name + "\n"
+                continue
+            try:
+                ret += get_name_and_desc(
+                    full_res_name,
+                    open(
+                        os.path.join(nagios_metadata_path, metadata_file),
+                        "r"
+                    ).read()
+                )
+            except EnvironmentError as e:
+                pass
 
     # output
     if not ret:
