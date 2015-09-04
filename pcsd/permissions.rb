@@ -146,7 +146,7 @@ module Permissions
 
     def allows?(username, groups, action)
       $logger.debug(
-        "permission check action=#{action} username=#{username} groups=#{groups}"
+        "permission check action=#{action} username=#{username} groups=#{groups.join(' ')}"
       )
 
       if ::SUPERUSER == username

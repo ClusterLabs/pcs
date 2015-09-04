@@ -316,8 +316,8 @@ class TestPrimitive < Test::Unit::TestCase
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_equal('dummy1', obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_equal('ocf::heartbeat:Dummy', obj.agentname)
     assert_equal('ocf', obj._class)
     assert_equal('heartbeat', obj.provider)
@@ -329,8 +329,8 @@ class TestPrimitive < Test::Unit::TestCase
       '--test'
     )
     assert_equal_NvSet(instance_attr, obj.instance_attr)
-    assert_empty(obj.crm_status)
-    assert_empty(obj.operations)
+    assert(obj.crm_status.empty?)
+    assert(obj.operations.empty?)
   end
 
   def test_init_with_crm
@@ -350,8 +350,8 @@ class TestPrimitive < Test::Unit::TestCase
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_equal('dummy1', obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_equal('ocf::heartbeat:Dummy', obj.agentname)
     assert_equal('ocf', obj._class)
     assert_equal('heartbeat', obj.provider)
@@ -363,7 +363,7 @@ class TestPrimitive < Test::Unit::TestCase
       '--test'
     )
     assert_equal_NvSet(instance_attr, obj.instance_attr)
-    assert_empty(obj.operations)
+    assert(obj.operations.empty?)
     assert_equal(1, obj.crm_status.length)
 
     # ResourceStatus
@@ -404,8 +404,8 @@ class TestPrimitive < Test::Unit::TestCase
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_equal('dummy1', obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_equal('ocf::heartbeat:Dummy', obj.agentname)
     assert_equal('ocf', obj._class)
     assert_equal('heartbeat', obj.provider)
@@ -498,8 +498,8 @@ class TestPrimitive < Test::Unit::TestCase
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_equal('dummy1', obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_equal('ocf::heartbeat:Dummy', obj.agentname)
     assert_equal('ocf', obj._class)
     assert_equal('heartbeat', obj.provider)
@@ -511,7 +511,7 @@ class TestPrimitive < Test::Unit::TestCase
       '--test'
     )
     assert_equal_NvSet(instance_attr, obj.instance_attr)
-    assert_empty(obj.crm_status)
+    assert(obj.crm_status.empty?)
     assert_equal(4, obj.operations.length)
 
     # ResourceOperation
@@ -561,18 +561,18 @@ class TestPrimitive < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
+    assert(obj.meta_attr.empty?)
     assert_nil(obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_nil(obj.agentname)
     assert_nil(obj._class)
     assert_nil(obj.provider)
     assert_nil(obj.type)
     assert_equal(false, obj.stonith)
-    assert_empty(obj.instance_attr)
-    assert_empty(obj.crm_status)
-    assert_empty(obj.operations)
+    assert(obj.instance_attr.empty?)
+    assert(obj.crm_status.empty?)
+    assert(obj.operations.empty?)
   end
 
   def test_init_invalid_element
@@ -582,18 +582,18 @@ class TestPrimitive < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
+    assert(obj.meta_attr.empty?)
     assert_nil(obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_nil(obj.agentname)
     assert_nil(obj._class)
     assert_nil(obj.provider)
     assert_nil(obj.type)
     assert_equal(false, obj.stonith)
-    assert_empty(obj.instance_attr)
-    assert_empty(obj.crm_status)
-    assert_empty(obj.operations)
+    assert(obj.instance_attr.empty?)
+    assert(obj.crm_status.empty?)
+    assert(obj.operations.empty?)
   end
 
   def test_init_empty_element
@@ -603,18 +603,18 @@ class TestPrimitive < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
+    assert(obj.meta_attr.empty?)
     assert_nil(obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_nil(obj.agentname)
     assert_nil(obj._class)
     assert_nil(obj.provider)
     assert_nil(obj.type)
     assert_equal(false, obj.stonith)
-    assert_empty(obj.instance_attr)
-    assert_empty(obj.crm_status)
-    assert_empty(obj.operations)
+    assert(obj.instance_attr.empty?)
+    assert(obj.crm_status.empty?)
+    assert(obj.operations.empty?)
   end
 
   def test_init_empty_element_with_crm
@@ -624,18 +624,18 @@ class TestPrimitive < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
+    assert(obj.meta_attr.empty?)
     assert_nil(obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_nil(obj.agentname)
     assert_nil(obj._class)
     assert_nil(obj.provider)
     assert_nil(obj.type)
     assert_equal(false, obj.stonith)
-    assert_empty(obj.instance_attr)
-    assert_empty(obj.crm_status)
-    assert_empty(obj.operations)
+    assert(obj.instance_attr.empty?)
+    assert(obj.crm_status.empty?)
+    assert(obj.operations.empty?)
   end
 
   def test_init_stonith
@@ -644,10 +644,10 @@ class TestPrimitive < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
+    assert(obj.meta_attr.empty?)
     assert_equal('node1-stonith', obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_equal('stonith:fence_xvm', obj.agentname)
     assert_equal('stonith', obj._class)
     assert_nil(obj.provider)
@@ -659,8 +659,8 @@ class TestPrimitive < Test::Unit::TestCase
       'node1'
     )
     assert_equal_NvSet(instance_attr, obj.instance_attr)
-    assert_empty(obj.crm_status)
-    assert_empty(obj.operations)
+    assert(obj.crm_status.empty?)
+    assert(obj.operations.empty?)
   end
 
   def test_init_stonith_with_crm
@@ -669,10 +669,10 @@ class TestPrimitive < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
+    assert(obj.meta_attr.empty?)
     assert_equal('node1-stonith', obj.id)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_equal('stonith:fence_xvm', obj.agentname)
     assert_equal('stonith', obj._class)
     assert_nil(obj.provider)
@@ -684,7 +684,7 @@ class TestPrimitive < Test::Unit::TestCase
       'node1'
     )
     assert_equal_NvSet(instance_attr, obj.instance_attr)
-    assert_empty(obj.operations)
+    assert(obj.operations.empty?)
 
     # ResourceStatus
     s = obj.crm_status[0]
@@ -877,8 +877,8 @@ class TestGroup < Test::Unit::TestCase
       '333'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_equal(2, obj.members.length)
     m = obj.members
     assert_instance_of(ClusterEntity::Primitive, m[0])
@@ -887,14 +887,14 @@ class TestGroup < Test::Unit::TestCase
     assert_equal(obj.id, m[0].get_group)
     assert_equal('dummy3', m[0].id)
     assert_equal(obj, m[0].parent)
-    assert_empty(m[0].crm_status)
+    assert(m[0].crm_status.empty?)
     assert_instance_of(ClusterEntity::Primitive, m[1])
     assert_nil(m[1].get_master)
     assert_nil(m[1].get_clone)
     assert_equal(obj.id, m[1].get_group)
     assert_equal('dummy4', m[1].id)
     assert_equal(obj, m[1].parent)
-    assert_empty(m[1].crm_status)
+    assert(m[1].crm_status.empty?)
   end
 
   def test_init_with_crm
@@ -914,8 +914,8 @@ class TestGroup < Test::Unit::TestCase
       '333'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_equal(2, obj.members.length)
 
     m = obj.members
@@ -943,10 +943,10 @@ class TestGroup < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
-    assert_empty(obj.members)
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert(obj.members.empty?)
   end
 
   def test_init_empty_element
@@ -957,10 +957,10 @@ class TestGroup < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
-    assert_empty(obj.members)
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
+    assert(obj.members.empty?)
   end
 
   def test_to_status_version1
@@ -1187,9 +1187,9 @@ class TestClone < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
@@ -1205,9 +1205,9 @@ class TestClone < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
@@ -1232,8 +1232,8 @@ class TestClone < Test::Unit::TestCase
       '222'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert(obj.managed)
@@ -1267,8 +1267,8 @@ class TestClone < Test::Unit::TestCase
       '222'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
@@ -1279,7 +1279,7 @@ class TestClone < Test::Unit::TestCase
     assert_instance_of(ClusterEntity::Primitive, m)
     assert_equal(obj, m.parent)
     assert_equal('dummy', m.id)
-    assert_empty(m.crm_status)
+    assert(m.crm_status.empty?)
     assert_nil(m.get_master)
     assert_equal(obj.id, m.get_clone)
     assert_nil(m.get_group)
@@ -1301,8 +1301,8 @@ class TestClone < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert(obj.managed)
@@ -1349,8 +1349,8 @@ class TestClone < Test::Unit::TestCase
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
     assert_nil(obj.get_group)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
@@ -2151,9 +2151,9 @@ class TestMasterSlave < Test::Unit::TestCase
     obj = ClusterEntity::MasterSlave.new(REXML::Document.new(xml).elements['*'])
     assert_nil(obj.id)
     assert_nil(obj.parent)
-    assert_empty(obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
@@ -2166,9 +2166,9 @@ class TestMasterSlave < Test::Unit::TestCase
     obj = ClusterEntity::MasterSlave.new(REXML::Document.new(xml).elements['*'])
     assert_equal('dummy-clone', obj.id)
     assert_nil(obj.parent)
-    assert_empty(obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.meta_attr.empty?)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
@@ -2190,8 +2190,8 @@ class TestMasterSlave < Test::Unit::TestCase
       '1'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert(obj.managed)
@@ -2227,21 +2227,21 @@ class TestMasterSlave < Test::Unit::TestCase
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_equal(1, obj.error_list.length)
-    assert_empty(obj.warning_list)
+    assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
 
-    assert_empty(obj.masters)
-    assert_empty(obj.slaves)
+    assert(obj.masters.empty?)
+    assert(obj.slaves.empty?)
 
     m = obj.member
     assert_instance_of(ClusterEntity::Primitive, m)
     assert_equal(obj, m.parent)
     assert_equal('ms', m.id)
-    assert_empty(m.crm_status)
+    assert(m.crm_status.empty?)
   end
 
   def test_init_group_with_crm
@@ -2258,8 +2258,8 @@ class TestMasterSlave < Test::Unit::TestCase
       '0'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
-    assert_empty(obj.error_list)
-    assert_empty(obj.warning_list)
+    assert(obj.error_list.empty?)
+    assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert(obj.managed)
@@ -2305,15 +2305,15 @@ class TestMasterSlave < Test::Unit::TestCase
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_equal(1, obj.error_list.length)
-    assert_empty(obj.warning_list)
+    assert(obj.warning_list.empty?)
     assert_not_nil(obj.member)
     assert_equal(false, obj.unique)
     assert_equal(false, obj.managed)
     assert_equal(false, obj.failed)
     assert_equal(false, obj.failure_ignored)
 
-    assert_empty(obj.masters)
-    assert_empty(obj.slaves)
+    assert(obj.masters.empty?)
+    assert(obj.slaves.empty?)
 
     g = obj.member
     assert_instance_of(ClusterEntity::Group, g)
@@ -2324,12 +2324,12 @@ class TestMasterSlave < Test::Unit::TestCase
     m = g.members[0]
     assert_instance_of(ClusterEntity::Primitive, m)
     assert_equal('ms1', m.id)
-    assert_empty(m.crm_status)
+    assert(m.crm_status.empty?)
 
     m = g.members[1]
     assert_instance_of(ClusterEntity::Primitive, m)
     assert_equal('ms2', m.id)
-    assert_empty(m.crm_status)
+    assert(m.crm_status.empty?)
   end
 
   def test_to_status_primitive_version1
