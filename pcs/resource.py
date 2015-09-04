@@ -2559,14 +2559,14 @@ def resource_cleanup(res_id):
     if retval != 0:
         utils.err("Unable to cleanup resource: %s" % res_id + "\n" + output)
     else:
-        print "Resource: %s successfully cleaned up" % res_id
+        print output
 
 def resource_cleanup_all():
     (output, retval) = utils.run(["crm_resource", "-C"])
     if retval != 0:
         utils.err("Unexpected error occured. 'crm_resource -C' err_code: %s\n%s" % (retval, output))
     else:
-        print "All resources/stonith devices successfully cleaned up"
+        print output
 
 def resource_history(args):
     dom = utils.get_cib_dom()
