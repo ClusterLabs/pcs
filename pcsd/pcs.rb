@@ -568,6 +568,9 @@ def get_nodes_status()
     if l.start_with?("Pacemaker Nodes:")
       in_pacemaker = true
     end
+    if l.start_with?("Pacemaker Remote Nodes:")
+      break
+    end
     if l.end_with?(":")
       next
     end

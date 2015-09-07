@@ -123,14 +123,28 @@ def nodes_status(argv):
     onlinenodes = []
     offlinenodes = []
     standbynodes = []
+    remote_onlinenodes = []
+    remote_offlinenodes = []
+    remote_standbynodes = []
     for node in nodes[0].getElementsByTagName("node"):
+        node_name = node.getAttribute("name")
+        node_remote = node.getAttribute("type") == "remote"
         if node.getAttribute("online") == "true":
             if node.getAttribute("standby") == "true":
-                standbynodes.append(node.getAttribute("name"))
+                if node_remote:
+                    remote_standbynodes.append(node_name)
+                else:
+                    standbynodes.append(node_name)
             else:
-                onlinenodes.append(node.getAttribute("name"))
+                if node_remote:
+                    remote_onlinenodes.append(node_name)
+                else:
+                    onlinenodes.append(node_name)
         else:
-            offlinenodes.append(node.getAttribute("name"))
+            if node_remote:
+                remote_offlinenodes.append(node_name)
+            else:
+                offlinenodes.append(node_name)
 
     print "Pacemaker Nodes:"
 
@@ -146,6 +160,23 @@ def nodes_status(argv):
 
     print " Offline:",
     for node in offlinenodes:
+        print node,
+    print ""
+
+    print "Pacemaker Remote Nodes:"
+
+    print " Online:",
+    for node in remote_onlinenodes:
+        print node,
+    print ""
+
+    print " Standby:",
+    for node in remote_standbynodes:
+        print node,
+    print ""
+
+    print " Offline:",
+    for node in remote_offlinenodes:
         print node,
     print ""
 
