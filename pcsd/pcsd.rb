@@ -119,8 +119,7 @@ $thread_cfgsync = Thread.new {
 
 helpers do
   def protected!
-    PCSAuth.loginByToken(session, cookies) if not PCSAuth.isLoggedIn(session)
-    if not PCSAuth.isLoggedIn(session)
+    if not PCSAuth.loginByToken(session, cookies) and not PCSAuth.isLoggedIn(session)
       # If we're on /managec/<cluster_name>/main we redirect
       match_expr = "/managec/(.*)/(.*)"
       mymatch = request.path.match(match_expr)
