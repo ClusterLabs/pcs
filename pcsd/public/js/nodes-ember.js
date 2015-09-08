@@ -1162,14 +1162,14 @@ Pcs.Cluster = Ember.Object.extend({
     return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[get_status_value(this.status)] + " sprites\"></div>";
   }.property("status"),
   quorum_show: function() {
-    if (this.status == "unknown") {
+    if (this.get('status') == "unknown") {
       return "<span style='color:orange'>(quorate unknown)</span>"
-    } else if (!this.quorate) {
+    } else if (!this.get('quorate')) {
       return "<span style='color: red'>(doesn't have quorum)</span>"
     } else {
       return ""
     }
-  }.property("status", "quorum"),
+  }.property("status", "quorate"),
   nodes: [],
   nodes_failed: 0,
   resource_list: [],
