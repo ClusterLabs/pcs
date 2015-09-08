@@ -1320,6 +1320,114 @@ Deleting Resource (and group) - dummylarge
         assert returnVal == 0
         assert output == "RGA: A B C E D K J I \n",[output]
 
+    def testRemoveLastResourceFromGroup(self):
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops d1 Dummy --group gr1"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops d2 Dummy --group gr2"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show")
+        ac(output, """\
+ Resource Group: gr1
+     d1\t(ocf::heartbeat:Dummy):\tStopped
+ Resource Group: gr2
+     d2\t(ocf::heartbeat:Dummy):\tStopped
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource group add gr1 d2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show")
+        ac(output, """\
+ Resource Group: gr1
+     d1\t(ocf::heartbeat:Dummy):\tStopped
+     d2\t(ocf::heartbeat:Dummy):\tStopped
+""")
+        self.assertEquals(0, returnVal)
+
+    def testRemoveLastResourceFromClonedGroup(self):
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops d1 Dummy --group gr1"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops d2 Dummy --group gr2"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource clone gr2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show")
+        ac(output, """\
+ Resource Group: gr1
+     d1\t(ocf::heartbeat:Dummy):\tStopped
+ Clone Set: gr2-clone [gr2]
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource group add gr1 d2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show")
+        ac(output, """\
+ Resource Group: gr1
+     d1\t(ocf::heartbeat:Dummy):\tStopped
+     d2\t(ocf::heartbeat:Dummy):\tStopped
+""")
+        self.assertEquals(0, returnVal)
+
+    def testRemoveLastResourceFromMasteredGroup(self):
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops d1 Dummy --group gr1"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "resource create --no-default-ops d2 Dummy --group gr2"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource master gr2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show")
+        ac(output, """\
+ Resource Group: gr1
+     d1\t(ocf::heartbeat:Dummy):\tStopped
+ Master/Slave Set: gr2-master [gr2]
+""")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource group add gr1 d2")
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "resource show")
+        ac(output, """\
+ Resource Group: gr1
+     d1\t(ocf::heartbeat:Dummy):\tStopped
+     d2\t(ocf::heartbeat:Dummy):\tStopped
+""")
+        self.assertEquals(0, returnVal)
+
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 

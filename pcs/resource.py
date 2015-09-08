@@ -2000,8 +2000,17 @@ def resource_group_add(cib_dom, group_name, resource_ids):
                 mygroup.insertBefore(resource, before)
             else:
                 mygroup.appendChild(resource)
-            if oldParent.tagName == "group" and len(oldParent.getElementsByTagName("primitive")) == 0:
-                oldParent.parentNode.removeChild(oldParent)
+            if (
+                oldParent.tagName == "group"
+                and
+                len(oldParent.getElementsByTagName("primitive")) == 0
+            ):
+                if oldParent.parentNode.tagName in ["clone", "master"]:
+                    oldParent.parentNode.parentNode.removeChild(
+                        oldParent.parentNode
+                    )
+                else:
+                    oldParent.parentNode.removeChild(oldParent)
         return cib_dom
     else:
         utils.err("No resources to add.")
