@@ -1159,7 +1159,7 @@ Pcs.Cluster = Ember.Object.extend({
   }.property("error_list"),
   status_icon: function() {
     var icon_class = {"-1": "x", 1: "error", 2: "warning", 3: "x", 4: "check"};
-    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[get_status_value(this.status)] + " sprites\"></div>";
+    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[get_status_value(this.get('status'))] + " sprites\"></div>";
   }.property("status"),
   quorum_show: function() {
     if (this.get('status') == "unknown") {
@@ -1355,21 +1355,6 @@ Pcs.clusterController = Ember.Object.create({
         });
       }
 
-      switch (cluster.get('status')) {
-        case "ok":
-          self.incrementProperty('num_ok');
-          break;
-        case "error":
-          self.incrementProperty('num_error');
-          break;
-        case "warning":
-          self.incrementProperty('num_warning');
-          break;
-        default:
-          self.incrementProperty('num_unknown');
-          break;
-      }
-
       var nodes_to_auth = [];
       $.each(cluster.get('warning_list'), function(key, val){
         if (val.hasOwnProperty("type") && val.type == "nodes_not_authorized"){
@@ -1397,6 +1382,21 @@ Pcs.clusterController = Ember.Object.create({
           });
 
         cluster.set("status", "unknown");
+      }
+
+      switch (get_status_value(cluster.get('status'))) {
+        case get_status_value("ok"):
+          self.incrementProperty('num_ok');
+          break;
+        case get_status_value("error"):
+          self.incrementProperty('num_error');
+          break;
+        case get_status_value("warning"):
+          self.incrementProperty('num_warning');
+          break;
+        default:
+          self.incrementProperty('num_unknown');
+          break;
       }
     });
 
