@@ -2127,7 +2127,7 @@ def fix_auth_of_cluster(params, request, session)
     tokens_data, true
   )
   if retval == 404
-    return [400, "Old version of PCS/PCSD is runnig on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
+    return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
   elsif retval != 200
     return [400, "Authentication failed."]
   end
