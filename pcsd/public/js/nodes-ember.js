@@ -595,30 +595,20 @@ Pcs.ResourceObj = Ember.Object.extend({
   }.property("class_type"),
   res_type: Ember.computed.alias('resource_type'),
   status_icon: function() {
-    var icon_class;
-    switch (this.get('status')) {
-      case "running":
-        icon_class = "check";
-        break;
-      case "disabled":
-      case "partially running":
-        icon_class = "warning";
-        break;
-      case "failed":
-      case "blocked":
-        icon_class = "error";
-        break;
-      default:
-        icon_class = "x";
-    }
+    var icon_class = get_status_icon_class(this.get("status_val"));
     return "<div style=\"float:left;margin-right:6px;height:16px;\" class=\"" + icon_class + " sprites\"></div>";
   }.property("status_val"),
   status_val: function() {
+    var status_val = get_status_value(this.get('status'));
     if (this.get('warning_list').length)
-      return get_status_value("warning");
+      status_val = get_status_value("warning");
     if (this.get('error_list').length)
-      return get_status_value("error");
-    return get_status_value(this.status);
+      status_val = get_status_value("error");
+    if ((get_status_value(this.get('status')) - status_val) < 0) {
+      return get_status_value(this.get('status'));
+    } else {
+      return status_val;
+    }
   }.property('status', 'error_list.@each.message', 'warning_list.@each.message'),
   status_color: function() {
     return get_status_color(this.get("status_val"));
@@ -996,12 +986,17 @@ Pcs.Clusternode = Ember.Object.extend({
     return this.get('status') == "unknown";
   }.property("status"),
   status_val: function() {
-    if (this.warnings && this.warnings.length)
-      return get_status_value("warning");
-    if (this.errors && this.errors.length)
-      return get_status_value("error");
-    return get_status_value(this.status);
-  }.property("status"),
+    var status_val = get_status_value(this.get('status'));
+    if (this.get('warning_list').length)
+      status_val = get_status_value("warning");
+    if (this.get('error_list').length)
+      status_val = get_status_value("error");
+    if ((get_status_value(this.get('status')) - status_val) < 0) {
+      return get_status_value(this.get('status'));
+    } else {
+      return status_val;
+    }
+  }.property('status', 'error_list.@each.message', 'warning_list.@each.message'),
   status_style: function() {
     var color = get_status_color(this.get("status_val"));
     return "color: " + color + ((color != "green")? "; font-weight: bold;" : "");
@@ -1011,8 +1006,8 @@ Pcs.Clusternode = Ember.Object.extend({
     return ((this.get("status_val") == get_status_value("ok") || this.status == "standby") ? show + "default-hidden" : "");
   }.property("status_val"),
   status_icon: function() {
-    var icon_class = {"-1": "x", 1: "error", 2: "warning", 3: "x", 4: "check"};
-    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[this.get("status_val")] + " sprites\"></div>";
+    var icon_class = get_status_icon_class(this.get("status_val"));
+    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class + " sprites\"></div>";
   }.property("status_val"),
   error_list: [],
   warning_list: [],
@@ -1158,8 +1153,8 @@ Pcs.Cluster = Ember.Object.extend({
     return out;
   }.property("error_list"),
   status_icon: function() {
-    var icon_class = {"-1": "x", 1: "error", 2: "warning", 3: "x", 4: "check"};
-    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class[get_status_value(this.get('status'))] + " sprites\"></div>";
+    var icon_class = get_status_icon_class(get_status_value(this.get('status')));
+    return "<div style=\"float:left;margin-right:6px;\" class=\"" + icon_class + " sprites\"></div>";
   }.property("status"),
   quorum_show: function() {
     if (this.get('status') == "unknown") {

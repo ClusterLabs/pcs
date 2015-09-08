@@ -1812,10 +1812,10 @@ function get_status_value(status) {
     standby: 2,
     "partially running": 2,
     disabled: 3,
-    unknown: 3,
-    ok: 4,
-    running: 4,
-    online: 4
+    unknown: 4,
+    ok: 5,
+    running: 5,
+    online: 5
   };
   return ((values.hasOwnProperty(status)) ? values[status] : -1);
 }
@@ -1826,6 +1826,20 @@ function status_comparator(a,b) {
   if (valA == -1) return 1;
   if (valB == -1) return -1;
   return valA - valB;
+}
+
+function get_status_icon_class(status_val) {
+  switch (status_val) {
+    case get_status_value("error"):
+      return "error";
+    case get_status_value("disabled"):
+    case get_status_value("warning"):
+      return "warning";
+    case get_status_value("ok"):
+      return "check";
+    default:
+      return "x";
+  }
 }
 
 function get_status_color(status_val) {
