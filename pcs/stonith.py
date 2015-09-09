@@ -36,8 +36,12 @@ def stonith_cmd(argv):
         )
         resource.resource_create(stn_id, stn_type, st_values, op_values, meta_values)
     elif (sub_cmd == "update"):
-        stn_id = argv.pop(0)
-        resource.resource_update(stn_id,argv)
+        if len(argv) > 1:
+            stn_id = argv.pop(0)
+            resource.resource_update(stn_id,argv)
+        else:
+            usage.stonith(["update"])
+            sys.exit(1)
     elif (sub_cmd == "delete"):
         if len(argv) == 1:
             stn_id = argv.pop(0)
