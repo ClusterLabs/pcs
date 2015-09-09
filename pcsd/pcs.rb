@@ -1601,10 +1601,10 @@ def cluster_status_from_nodes(session, cluster_nodes, cluster_name)
     }
     if status[:status] != 'error'
       status[:resource_list].each { |resource|
-        if resource[:status] == 'failed'
+        if ['failed', 'blocked'].include?(resource[:status])
           status[:status] = 'error'
           break
-        elsif ['blocked', 'partially running'].include?(resource[:status])
+        elsif ['partially running'].include?(resource[:status])
           status[:status] = 'warning'
         end
       }
