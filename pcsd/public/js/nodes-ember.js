@@ -75,9 +75,9 @@ Pcs = Ember.Application.createWithMixins({
         timeout: 20000,
         success: function(data) {
           Pcs.clusterController.update(data);
-          Ember.run.next(function() {
-            correct_visibility_dashboard(Pcs.clusterController.cur_cluster);
-          });
+          if (Pcs.clusterController.get('cur_cluster')) {
+            Pcs.clusterController.update_cur_cluster(Pcs.clusterController.get('cur_cluster').get('name'));
+          }
           if (data["not_current_data"]) {
             self.update();
           }
@@ -1278,26 +1278,25 @@ Pcs.clusterController = Ember.Object.create({
   num_warning: 0,
   num_unknown: 0,
 
-  update_cur_cluster: function(row) {
+  update_cur_cluster: function(cluster_name) {
     var self = this;
-    var cluster_name = $(row).attr("nodeID");
-    $("#clusters_list").find("div.arrow").hide();
-    $(row).find("div.arrow").show();
+    $("#clusters_list div.arrow").hide();
+    var selected_cluster = null;
 
     $.each(self.get('cluster_list').get('content'), function(key, cluster) {
       if (cluster.get("name") == cluster_name) {
-        self.set('cur_cluster', cluster);
+        selected_cluster = cluster;
         return false;
       }
     });
-    correct_visibility_dashboard(self.get('cur_cluster'));
 
-    $("#node_sub_info").children().each(function (i, val) {
-      if ($(val).attr("id") == ("cluster_info_" + cluster_name))
-        $(val).show();
-      else
-        $(val).hide();
-    });
+    self.set('cur_cluster', selected_cluster);
+    if (selected_cluster) {
+      Ember.run.next(function() {
+        $("#clusters_list tr[nodeID=" + cluster_name + "] div.arrow").show();
+        correct_visibility_dashboard(self.get('cur_cluster'));
+      });
+    }
   },
 
   update: function(data) {

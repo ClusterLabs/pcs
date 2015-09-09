@@ -22,7 +22,7 @@
       {{/if}}
     </tr>
     {{#each Pcs.clusterController.cluster_list }}
-    <tr onmouseover="hover_over(this);" onmouseout="hover_out(this);" onclick="Pcs.clusterController.update_cur_cluster(this);" {{bind-attr nodeID="this.name"}}>
+    <tr onmouseover="hover_over(this);" onmouseout="hover_out(this);" onclick="Pcs.clusterController.update_cur_cluster($(this).attr('nodeID'));" {{bind-attr nodeID="this.name"}}>
     <td class="node_list_check">
       <input class="node_list_check" type="checkbox" {{bind-attr name="input_name"}} {{bind-attr res_id="name"}}>
     </td>
