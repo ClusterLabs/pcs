@@ -1791,14 +1791,16 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
 
     if missing_required_parameters:
         if resClass == "stonith" and "port" in missing_required_parameters:
-            if (
-                "pcmk_host_argument" in ra_values
-                or
-                "pcmk_host_map" in ra_values
-                or
-                "pcmk_host_list" in ra_values
-            ):
-                missing_required_parameters.remove("port")
+            # Temporarily make "port" an optional parameter. Once we are
+            # getting metadata from pacemaker, this will be reviewed and fixed.
+            #if (
+            #    "pcmk_host_argument" in ra_values
+            #    or
+            #    "pcmk_host_map" in ra_values
+            #    or
+            #    "pcmk_host_list" in ra_values
+            #):
+            missing_required_parameters.remove("port")
 
     return bad_parameters, missing_required_parameters 
 

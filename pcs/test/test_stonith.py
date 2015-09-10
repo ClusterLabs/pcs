@@ -121,14 +121,18 @@ class StonithTest(unittest.TestCase):
     def testPcmkHostAllowsMissingPort(self):
         # Test that port is not required when pcmk_host_argument or
         # pcmk_host_list or pcmk_host_map is specified
+        # Port is temporarily an optional parameter. Once we are getting
+        # metadata from pacemaker, this will be reviewed and fixed.
         output, returnVal = pcs(
             temp_cib,
             'stonith create apc-1 fence_apc params ipaddr="ip" login="apc" action="reboot"'
         )
-        ac(output, """\
-Error: missing required option(s): 'port' for resource type: stonith:fence_apc (use --force to override)
-""")
-        self.assertEquals(returnVal, 1)
+#        ac(output, """\
+#Error: missing required option(s): 'port' for resource type: stonith:fence_apc (use --force to override)
+#""")
+#        self.assertEquals(returnVal, 1)
+        ac(output, "")
+        self.assertEquals(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib,
