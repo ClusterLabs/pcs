@@ -1846,7 +1846,7 @@ function get_status_color(status_val) {
   if (status_val == get_status_value("ok")) {
     return "green";
   }
-  else if (status_val == get_status_value("warning") || status_val == get_status_value("unknown")) {
+  else if (status_val == get_status_value("warning") || status_val == get_status_value("unknown") || status_val == get_status_value('disabled')) {
     return "orange";
   }
   return "red";

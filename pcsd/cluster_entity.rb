@@ -3,6 +3,34 @@ require 'pcs.rb'
 
 module ClusterEntity
 
+  def self.get_rsc_status(crm_dom)
+    unless crm_dom
+      return {}
+    end
+    status = {}
+    crm_dom.elements.each('/crm_mon/resources//resource') { |e|
+      rsc_id = e.attributes['id'].split(':')[0]
+      status[rsc_id] ||= []
+      status[rsc_id] << ClusterEntity::CRMResourceStatus.new(e)
+    }
+    return status
+  end
+
+  def self.get_resources_operations(cib_dom)
+    unless cib_dom
+      return {}
+    end
+    operations = {}
+    cib_dom.elements.each(
+      '/cib/status/node_state/lrm/lrm_resources/lrm_resource/lrm_rsc_op'
+    ) { |e|
+      rsc_id = e.parent.attributes['id'].split(':')[0]
+      operations[rsc_id] ||= []
+      operations[rsc_id] << ClusterEntity::ResourceOperation.new(e)
+    }
+    return operations
+  end
+
   def self.obj_to_hash(obj, variables=nil)
     unless variables
       variables = obj.instance_variables
@@ -454,8 +482,9 @@ module ClusterEntity
     attr_accessor :agentname, :_class, :provider, :type, :stonith,
                   :instance_attr, :crm_status, :operations
 
-    def initialize(primitive_cib_element=nil, crm_dom=nil, parent=nil, cib_dom=nil)
-      super(primitive_cib_element, crm_dom, parent)
+    def initialize(primitive_cib_element=nil, rsc_status=nil, parent=nil,
+        operations=nil)
+      super(primitive_cib_element, nil, parent)
       @class_type = 'primitive'
       @agentname = nil
       @_class = nil
@@ -482,18 +511,12 @@ module ClusterEntity
           )
         }
         @stonith = @_class == 'stonith'
-        if @id and crm_dom
-          crm_dom.elements.each("//resource[starts-with(@id, \"#{@id}:\")] | "\
-              + "//resource[@id=\"#{@id}\"]") { |e|
-            @crm_status << CRMResourceStatus.new(e)
-          }
+        if @id and rsc_status
+          @crm_status = rsc_status[@id] || []
         end
 
         @status = get_status
-
-        if cib_dom
-          load_operations(cib_dom)
-        end
+        load_operations(operations)
       end
     end
 
@@ -525,28 +548,26 @@ module ClusterEntity
       return status
     end
 
-    def load_operations(cib_dom)
-      unless @id
+    def load_operations(operations)
+      @operations = []
+      unless operations and @id and operations[@id]
         return
       end
 
-      @operations = []
       failed_ops = []
       message_list = []
-      cib_dom.elements.each("//lrm_resource[@id='#{@id}']/lrm_rsc_op | "\
-      + "//lrm_resource[starts-with(@id, \"#{@id}:\")]/lrm_rsc_op") { |e|
-        operation = ResourceOperation.new(e)
-        @operations << operation
-        if operation.rc_code != 0
+      operations[@id].each { |o|
+        @operations << o
+        if o.rc_code != 0
           # 7 == OCF_NOT_RUNNING == The resource is safely stopped.
-          next if operation.operation == 'monitor' and operation.rc_code == 7
+          next if o.operation == 'monitor' and o.rc_code == 7
           # 8 == OCF_RUNNING_MASTER == The resource is running in master mode.
-          next if 8 == operation.rc_code
-          failed_ops << operation
-          message = "Failed to #{operation.operation} #{@id}"
-          message += " on #{Time.at(operation.last_rc_change).asctime}"
-          message += " on node #{operation.on_node}" if operation.on_node
-          message += ": #{operation.exit_reason}" if operation.exit_reason
+          next if 8 == o.rc_code
+          failed_ops << o
+          message = "Failed to #{o.operation} #{@id}"
+          message += " on #{Time.at(o.last_rc_change).asctime}"
+          message += " on node #{o.on_node}" if o.on_node
+          message += ": #{o.exit_reason}" if o.exit_reason
           message_list << {
             :message => message
           }
@@ -652,16 +673,22 @@ module ClusterEntity
   class Group < Resource
     attr_accessor :members
 
-    def initialize(group_cib_element=nil, crm_dom=nil, parent=nil, cib_dom=nil)
-      super(group_cib_element, crm_dom, parent)
+    def initialize(
+      group_cib_element=nil, rsc_status=nil, parent=nil, operations=nil
+    )
+      super(group_cib_element, nil, parent)
       @class_type = 'group'
       @members = []
       if group_cib_element and group_cib_element.name == 'group'
         @status = ClusterEntity::ResourceStatus.new(:running)
         group_cib_element.elements.each('primitive') { |e|
-          p = Primitive.new(e, crm_dom, self, cib_dom)
+          p = Primitive.new(e, rsc_status, self, operations)
           members << p
-          @status = p.status if @status < p.status
+          if p.status == ClusterEntity::ResourceStatus.new(:disabled)
+            @status = ClusterEntity::ResourceStatus.new(:blocked)
+          elsif @status < p.status
+            @status = p.status
+          end
         }
       end
     end
@@ -670,7 +697,11 @@ module ClusterEntity
       @status = ClusterEntity::ResourceStatus.new(:running)
       @members.each { |p|
         p.update_status
-        @status = p.status if @status < p.status
+        if p.status == ClusterEntity::ResourceStatus.new(:disabled)
+          @status = ClusterEntity::ResourceStatus.new(:blocked)
+        elsif @status < p.status
+          @status = p.status
+        end
       }
     end
 
@@ -713,8 +744,9 @@ module ClusterEntity
   class MultiInstance < Resource
     attr_accessor :member, :unique, :managed, :failed, :failure_ignored
 
-    def initialize(resource_cib_element=nil, crm_dom=nil, parent=nil, cib_dom=nil)
-      super(resource_cib_element, crm_dom, parent)
+    def initialize(resource_cib_element=nil, crm_dom=nil, rsc_status=nil,
+                   parent=nil, operations=nil)
+      super(resource_cib_element, nil, parent)
       @member = nil
       @multi_state = false
       @unique = false
@@ -730,15 +762,18 @@ module ClusterEntity
       )
         member = resource_cib_element.elements['group | primitive']
         if member and member.name == 'group'
-          @member = Group.new(member, crm_dom, self, cib_dom)
+          @member = Group.new(member, rsc_status, self, operations)
         elsif member and member.name == 'primitive'
-          @member = Primitive.new(member, crm_dom, self, cib_dom)
+          @member = Primitive.new(member, rsc_status, self, operations)
         end
         if @member
           @status = @member.status
+          if @member.status == ClusterEntity::ResourceStatus.new(:disabled)
+            @status = ClusterEntity::ResourceStatus.new(:blocked)
+          end
         end
         if crm_dom
-          status = crm_dom.elements["//clone[@id='#{@id}']"]
+          status = crm_dom.elements["/crm_mon/resources//clone[@id='#{@id}']"]
           if status
             @unique = status.attributes['unique'] == 'true'
             @managed = status.attributes['managed'] == 'true'
@@ -753,6 +788,9 @@ module ClusterEntity
       if @member
         @member.update_status
         @status = @member.status
+        if @member.status == ClusterEntity::ResourceStatus.new(:disabled)
+          @status = ClusterEntity::ResourceStatus.new(:blocked)
+        end
       end
     end
 
@@ -776,8 +814,11 @@ module ClusterEntity
 
   class Clone < MultiInstance
 
-    def initialize(resource_cib_element=nil, crm_dom=nil, parent=nil, cib_dom=nil)
-      super(resource_cib_element, crm_dom, parent, cib_dom)
+    def initialize(
+      resource_cib_element=nil, crm_dom=nil, rsc_status=nil, parent=nil,
+      operations=nil
+    )
+      super(resource_cib_element, crm_dom, rsc_status, parent, operations)
       @class_type = 'clone'
     end
 
@@ -808,8 +849,8 @@ module ClusterEntity
   class MasterSlave < MultiInstance
     attr_accessor :masters, :slaves
 
-    def initialize(master_cib_element=nil, crm_dom=nil, parent=nil, cib_dom=nil)
-      super(master_cib_element, crm_dom, parent, cib_dom)
+    def initialize(master_cib_element=nil, crm_dom=nil, rsc_status=nil, parent=nil, operations=nil)
+      super(master_cib_element, crm_dom, rsc_status, parent, operations)
       @class_type = 'master'
       @masters = []
       @slaves = []

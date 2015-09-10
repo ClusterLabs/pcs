@@ -600,7 +600,7 @@ Pcs.ResourceObj = Ember.Object.extend({
   }.property("status_val"),
   status_val: function() {
     var status_val = get_status_value(this.get('status'));
-    if (this.get('warning_list').length)
+    if (this.get('warning_list').length && status_val != get_status_value('disabled'))
       status_val = get_status_value("warning");
     if (this.get('error_list').length)
       status_val = get_status_value("error");
@@ -1265,7 +1265,7 @@ Pcs.Cluster = Ember.Object.extend({
 
 Pcs.clusterController = Ember.Object.create({
   cluster_list: Ember.ArrayController.create({
-    content: Ember.A(), sortProperties: ['status'],
+    content: Ember.A(), sortProperties: ['status', 'name'],
     sortAscending: true,
     sortFunction: function(a,b){return status_comparator(a,b);}
   }),

@@ -334,7 +334,10 @@ class TestPrimitive < Test::Unit::TestCase
   end
 
   def test_init_with_crm
-    obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='dummy1']"], @crm_mon)
+    obj = ClusterEntity::Primitive.new(
+      @cib.elements["//primitive[@id='dummy1']"],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     assert_nil(obj.parent)
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
@@ -388,7 +391,12 @@ class TestPrimitive < Test::Unit::TestCase
   end
 
   def test_init_with_crm_and_operations
-    obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='dummy1']"], @crm_mon, nil, @cib)
+    obj = ClusterEntity::Primitive.new(
+      @cib.elements["//primitive[@id='dummy1']"],
+      ClusterEntity::get_rsc_status(@crm_mon),
+      nil,
+      ClusterEntity::get_resources_operations(@cib)
+    )
     assert_nil(obj.parent)
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
@@ -482,7 +490,12 @@ class TestPrimitive < Test::Unit::TestCase
   end
 
   def test_init_with_operations
-    obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='dummy1']"], nil, nil, @cib)
+    obj = ClusterEntity::Primitive.new(
+      @cib.elements["//primitive[@id='dummy1']"],
+      nil,
+      nil,
+      ClusterEntity::get_resources_operations(@cib)
+    )
     assert_nil(obj.parent)
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
@@ -619,7 +632,10 @@ class TestPrimitive < Test::Unit::TestCase
 
   def test_init_empty_element_with_crm
     xml ='<primitive/>'
-    obj = ClusterEntity::Primitive.new(REXML::Document.new(xml).elements['primitive'], @crm_mon)
+    obj = ClusterEntity::Primitive.new(
+      REXML::Document.new(xml).elements['primitive'],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     assert_nil(obj.parent)
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
@@ -664,7 +680,10 @@ class TestPrimitive < Test::Unit::TestCase
   end
 
   def test_init_stonith_with_crm
-    obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='node1-stonith']"], @crm_mon)
+    obj = ClusterEntity::Primitive.new(
+      @cib.elements["//primitive[@id='node1-stonith']"],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     assert_nil(obj.parent)
     assert_nil(obj.get_master)
     assert_nil(obj.get_clone)
@@ -707,7 +726,10 @@ class TestPrimitive < Test::Unit::TestCase
   end
 
   def test_to_status_version1
-    obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='dummy1']"], @crm_mon)
+    obj = ClusterEntity::Primitive.new(
+      @cib.elements["//primitive[@id='dummy1']"],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json = '[{
       "id": "dummy1",
       "agentname": "ocf::heartbeat:Dummy",
@@ -794,7 +816,10 @@ class TestPrimitive < Test::Unit::TestCase
   end
 
   def test_to_status_version2
-    obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='dummy1']"], @crm_mon)
+    obj = ClusterEntity::Primitive.new(
+      @cib.elements["//primitive[@id='dummy1']"],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json = '{
       "id": "dummy1",
       "meta_attr": [
@@ -898,7 +923,10 @@ class TestGroup < Test::Unit::TestCase
   end
 
   def test_init_with_crm
-    obj = ClusterEntity::Group.new(@cib.elements["//group[@id='group1']"], @crm_mon)
+    obj = ClusterEntity::Group.new(
+      @cib.elements["//group[@id='group1']"],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     assert_equal('group1', obj.id)
     assert_nil(obj.parent)
     assert_nil(obj.get_master)
@@ -964,7 +992,10 @@ class TestGroup < Test::Unit::TestCase
   end
 
   def test_to_status_version1
-    obj = ClusterEntity::Group.new(@cib.elements["//group[@id='group1']"], @crm_mon)
+    obj = ClusterEntity::Group.new(
+      @cib.elements["//group[@id='group1']"],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json = '[{
       "id": "dummy3",
       "agentname": "ocf::heartbeat:Dummy",
@@ -1050,7 +1081,10 @@ class TestGroup < Test::Unit::TestCase
   end
 
   def test_to_status_version2
-    obj = ClusterEntity::Group.new(@cib.elements["//group[@id='group1']"], @crm_mon)
+    obj = ClusterEntity::Group.new(
+      @cib.elements["//group[@id='group1']"],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json = '{
       "id": "group1",
       "meta_attr": [
@@ -1216,7 +1250,11 @@ class TestClone < Test::Unit::TestCase
   end
 
   def test_init_primitive_with_crm
-    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='dummy-clone']"], @crm_mon)
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='dummy-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     assert_equal('dummy-clone', obj.id)
     assert_nil(obj.parent)
     assert_nil(obj.get_master)
@@ -1286,7 +1324,11 @@ class TestClone < Test::Unit::TestCase
   end
 
   def test_init_group_with_crm
-    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='group2-clone']"], @crm_mon)
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='group2-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
       'group2-clone-meta_attributes-a',
       'a',
@@ -1382,7 +1424,11 @@ class TestClone < Test::Unit::TestCase
   end
 
   def test_to_status_primitive_version1
-    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='dummy-clone']"], @crm_mon)
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='dummy-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json = '[{
       "id": "dummy",
       "agentname": "ocf::heartbeat:Dummy",
@@ -1508,7 +1554,11 @@ class TestClone < Test::Unit::TestCase
   end
 
   def test_to_status_group_version1
-    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='group2-clone']"], @crm_mon)
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='group2-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json = '[{
       "id": "dummy6",
       "agentname": "ocf::heartbeat:Dummy",
@@ -1808,7 +1858,11 @@ class TestClone < Test::Unit::TestCase
   end
 
   def test_to_status_primitive_version2
-    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='dummy-clone']"], @crm_mon)
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='dummy-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json ='{
       "id": "dummy-clone",
       "meta_attr": [
@@ -1917,7 +1971,11 @@ class TestClone < Test::Unit::TestCase
   end
 
   def test_to_status_group_version2
-    obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='group2-clone']"], @crm_mon)
+    obj = ClusterEntity::Clone.new(
+      @cib.elements["//clone[@id='group2-clone']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json = '{
       "id": "group2-clone",
       "meta_attr": [
@@ -2177,7 +2235,11 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_init_primitive_with_crm
-    obj = ClusterEntity::MasterSlave.new(@cib.elements["//master[@id='ms-master']"], @crm_mon)
+    obj = ClusterEntity::MasterSlave.new(
+      @cib.elements["//master[@id='ms-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     assert_equal('ms-master', obj.id)
     assert_nil(obj.parent)
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
@@ -2245,7 +2307,11 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_init_group_with_crm
-    obj = ClusterEntity::MasterSlave.new(@cib.elements["//master[@id='group3-master']"], @crm_mon)
+    obj = ClusterEntity::MasterSlave.new(
+      @cib.elements["//master[@id='group3-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     assert_equal('group3-master', obj.id)
     assert_nil(obj.parent)
     meta_attr = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
@@ -2333,7 +2399,11 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_to_status_primitive_version1
-    obj = ClusterEntity::MasterSlave.new(@cib.elements["//master[@id='ms-master']"], @crm_mon)
+    obj = ClusterEntity::MasterSlave.new(
+      @cib.elements["//master[@id='ms-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json ='[{
       "id": "ms",
       "agentname": "ocf::pacemaker:Stateful",
@@ -2460,7 +2530,11 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_to_status_group_version1
-    obj = ClusterEntity::MasterSlave.new(@cib.elements["//master[@id='group3-master']"], @crm_mon)
+    obj = ClusterEntity::MasterSlave.new(
+      @cib.elements["//master[@id='group3-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json ='[{
       "id": "ms1",
       "agentname": "ocf::pacemaker:Stateful",
@@ -2742,7 +2816,11 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_to_status_primitive_version2
-    obj = ClusterEntity::MasterSlave.new(@cib.elements["//master[@id='ms-master']"], @crm_mon)
+    obj = ClusterEntity::MasterSlave.new(
+      @cib.elements["//master[@id='ms-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json ='{
       "id": "ms-master",
       "meta_attr": [
@@ -2850,7 +2928,11 @@ class TestMasterSlave < Test::Unit::TestCase
   end
 
   def test_to_status_group_version2
-    obj = ClusterEntity::MasterSlave.new(@cib.elements["//master[@id='group3-master']"], @crm_mon)
+    obj = ClusterEntity::MasterSlave.new(
+      @cib.elements["//master[@id='group3-master']"],
+      @crm_mon,
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
     json = '{
       "id": "group3-master",
       "meta_attr": [

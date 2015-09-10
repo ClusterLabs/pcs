@@ -15,14 +15,14 @@ require 'resource.rb'
 require 'cluster_entity.rb'
 require 'auth.rb'
 
-def getAllSettings(session)
-  stdout, stderr, retval = run_cmd(session, PCS, "property")
-  stdout.map(&:chomp!)
-  stdout.map(&:strip!)
+def getAllSettings(session, cib_dom=nil)
+  unless cib_dom
+    cib_dom = get_cib_dom(session)
+  end
   stdout2, stderr2, retval2 = run_cmd(session, PENGINE, "metadata")
   metadata = stdout2.join
   ret = {}
-  if retval == 0 and retval2 == 0
+  if cib_dom and retval2 == 0
     doc = REXML::Document.new(metadata)
 
     default = ""
@@ -37,8 +37,9 @@ def getAllSettings(session)
       ret[name] = {"value" => default, "type" => el_type}
     }
 
-    stdout.each {|line|
-      key,val = line.split(': ', 2)
+    cib_dom.elements.each('/cib/configuration/crm_config//nvpair') { |e|
+      key = e.attributes['name']
+      val = e.attributes['value']
       key.gsub!(/-/,"_")
       if ret.has_key?(key)
         if ret[key]["type"] == "boolean"
@@ -723,106 +724,92 @@ def get_cluster_name()
   end
 end
 
-def get_node_attributes(session)
-  stdout, stderr, retval = run_cmd(session, PCS, "property", "list")
-  if retval != 0
-    return {}
+def get_node_attributes(session, cib_dom=nil)
+  unless cib_dom
+    cib_dom = get_cib_dom(session)
+    return {} unless cib_dom
   end
-
-  attrs = {}
-  found = false
-  stdout.each { |line|
-    if not found
-      if line.strip.start_with?("Node Attributes:")
-        found = true
-      end
-      next
-    end
-    if not line.start_with?(" ")
-      break
-    end
-    sline = line.split(":", 2)
-    nodename = sline[0].strip
-    attrs[nodename] = []
-    sline[1].strip.split(" ").each { |attr|
-      key, val = attr.split("=", 2)
-      attrs[nodename] << {:key => key, :value => val}
+  node_attrs = {}
+  cib_dom.elements.each(
+    '/cib/configuration/nodes/node/instance_attributes/nvpair'
+  ) { |e|
+    node = e.parent.parent.attributes['uname']
+    node_attrs[node] ||= []
+    node_attrs[node] << {
+      :id => e.attributes['id'],
+      :key => e.attributes['name'],
+      :value => e.attributes['value']
     }
   }
-  return attrs
+  node_attrs.each { |_, val| val.sort_by! { |obj| obj[:key] }}
+  return node_attrs
 end
 
-def get_fence_levels(session)
-  stdout, stderr, retval = run_cmd(session, PCS, "stonith", "level")
-  if retval != 0 or stdout == ""
-    return {}
+def get_fence_levels(session, cib_dom=nil)
+  unless cib_dom
+    cib_dom = get_cib_dom(session)
+    return {} unless cib_dom
   end
 
   fence_levels = {}
-  node = ""
-  stdout.each {|line|
-    if line.start_with?(" Node: ")
-      node = line.split(":",2)[1].strip
-      next
-    end
-    fence_levels[node] ||= []
-    md = / Level (\S+) - (.*)$/.match(line)
-    fence_levels[node] << {"level" => md[1], "devices" => md[2]}
+  cib_dom.elements.each(
+    '/cib/configuration/fencing-topology/fencing-level'
+  ) { |e|
+    target = e.attributes['target']
+    fence_levels[target] ||= []
+    fence_levels[target] << {
+      'level' => e.attributes['index'],
+      'devices' => e.attributes['devices']
+    }
   }
+  fence_levels.each { |_, val| val.sort_by! { |obj| obj['level'].to_i }}
   return fence_levels
 end
 
-def get_acls(session)
-  stdout, stderr, retval = run_cmd(session, PCS, "acl", "show")
-  if retval != 0 or stdout == ""
-    return {}
+def get_acls(session, cib_dom=nil)
+  unless cib_dom
+    cib_dom = get_cib_dom(session)
+    return {} unless cib_dom
   end
 
-  ret_val = {}
-  state = nil
-  user = ""
-  role = ""
+  acls = {
+    'role' => {},
+    'group' => {},
+    'user' => {},
+    'target' => {}
+  }
 
-  stdout.each do |line|
-    if m = /^User: (.*)$/.match(line)
-      user = m[1]
-      state = "user"
-      ret_val[state] ||= {}
-      ret_val[state][user] ||= []
-      next
-    elsif m = /^Group: (.*)$/.match(line)
-      user = m[1]
-      state = "group"
-      ret_val[state] ||= {}
-      ret_val[state][user] ||= []
-      next
-    elsif m = /^Role: (.*)$/.match(line)
-      role = m[1]
-      state = "role"
-      ret_val[state] ||= {}
-      ret_val[state][role] ||= {}
-      next
-    end
-
-    case state
-    when "user", "group"
-      m = /^  Roles: (.*)$/.match(line)
-      ret_val[state][user] ||= []
-      m[1].scan(/\S+/).each {|urole|
-        ret_val[state][user] << urole
+  cib_dom.elements.each('/cib/configuration/acls/*') { |e|
+    type = e.name[4..-1]
+    if e.name == 'acl_role'
+      role_id = e.attributes['id']
+      desc = e.attributes['description']
+      acls[type][role_id] = {}
+      acls[type][role_id]['description'] = desc ? desc : ''
+      acls[type][role_id]['permissions'] = []
+      e.elements.each('acl_permission') { |p|
+        p_id = p.attributes['id']
+        p_kind = p.attributes['kind']
+        val = ''
+        if p.attributes['xpath']
+          val = "xpath #{p.attributes['xpath']}"
+        elsif p.attributes['reference']
+          val = "id #{p.attributes['reference']}"
+        else
+          next
+        end
+        acls[type][role_id]['permissions'] << "#{p_kind} #{val} (#{p_id})"
       }
-    when "role"
-      ret_val[state][role] ||= {}
-      ret_val[state][role]["permissions"] ||= []
-      ret_val[state][role]["description"] ||= ""
-      if m = /^  Description: (.*)$/.match(line)
-        ret_val[state][role]["description"] = m[1]
-      elsif m = /^  Permission: (.*)$/.match(line)
-        ret_val[state][role]["permissions"] << m[1]
-      end
+    elsif ['acl_target', 'acl_group'].include?(e.name)
+      id = e.attributes['id']
+      acls[type][id] = []
+      e.elements.each('role') { |r|
+        acls[type][id] << r.attributes['id']
+      }
     end
-  end
-  return ret_val
+  }
+  acls['user'] = acls['target']
+  return acls
 end
 
 def enable_cluster(session)
@@ -1438,7 +1425,7 @@ def cluster_status_from_nodes(session, cluster_nodes, cluster_name)
         {:version=>'2', :operations=>'1'},
         true,
         nil,
-        6
+        15
       )
       node_map[node] = {}
       node_map[node].update(overview)
@@ -1634,10 +1621,11 @@ def get_node_status(session, cib_dom)
       :cluster_settings => {},
       :need_ring1_address => need_ring1_address?,
       :is_cman_with_udpu_transport => is_cman_with_udpu_transport?,
-      :acls => get_acls(session),
+      :acls => get_acls(session, cib_dom),
       :username => session[:username],
-      :fence_levels => get_fence_levels(session),
-      :node_attr => node_attrs_to_v2(get_node_attributes(session))
+      :fence_levels => get_fence_levels(session, cib_dom),
+      :node_attr => node_attrs_to_v2(get_node_attributes(session, cib_dom)),
+      :known_nodes => []
   }
 
   nodes = get_nodes_status()
@@ -1654,10 +1642,10 @@ def get_node_status(session, cib_dom)
 
   if cib_dom
     node_status[:groups] = get_resource_groups(cib_dom)
-    node_status[:constraints] = getAllConstraints(cib_dom.elements['//constraints'])
+    node_status[:constraints] = getAllConstraints(cib_dom.elements['/cib/configuration/constraints'])
   end
 
-  cluster_settings = getAllSettings(session)
+  cluster_settings = getAllSettings(session, cib_dom)
   if not cluster_settings.has_key?('error')
     node_status[:cluster_settings] = cluster_settings
   end
@@ -1670,7 +1658,7 @@ def get_resource_groups(cib_dom)
     return []
   end
   group_list = []
-  cib_dom.elements.each('cib/configuration/resources//group') do |e|
+  cib_dom.elements.each('/cib/configuration/resources//group') do |e|
     group_list << e.attributes['id']
   end
   return group_list
@@ -1682,49 +1670,54 @@ def get_resources(cib_dom, crm_dom=nil, get_operations=false)
   end
 
   resource_list = []
-  cib = (get_operations) ? cib_dom : nil
+  operations = (get_operations) ? ClusterEntity::get_resources_operations(cib_dom) : nil
+  rsc_status = ClusterEntity::get_rsc_status(crm_dom)
 
-  cib_dom.elements.each('cib/configuration/resources/primitive') do |e|
-    resource_list << ClusterEntity::Primitive.new(e, crm_dom, nil, cib)
+  cib_dom.elements.each('/cib/configuration/resources/primitive') do |e|
+    resource_list << ClusterEntity::Primitive.new(e, rsc_status, nil, operations)
   end
-  cib_dom.elements.each('cib/configuration/resources/group') do |e|
-    resource_list << ClusterEntity::Group.new(e, crm_dom, nil, cib)
+  cib_dom.elements.each('/cib/configuration/resources/group') do |e|
+    resource_list << ClusterEntity::Group.new(e, rsc_status, nil, operations)
   end
-  cib_dom.elements.each('cib/configuration/resources/clone') do |e|
-    resource_list << ClusterEntity::Clone.new(e, crm_dom, nil, cib)
+  cib_dom.elements.each('/cib/configuration/resources/clone') do |e|
+    resource_list << ClusterEntity::Clone.new(
+      e, crm_dom, rsc_status, nil, operations
+    )
   end
-  cib_dom.elements.each('cib/configuration/resources/master') do |e|
-    resource_list << ClusterEntity::MasterSlave.new(e, crm_dom, nil, cib)
+  cib_dom.elements.each('/cib/configuration/resources/master') do |e|
+    resource_list << ClusterEntity::MasterSlave.new(
+      e, crm_dom, rsc_status, nil, operations
+    )
   end
   return resource_list
 end
 
-def get_resource_by_id(id, cib_dom, crm_dom=nil, get_operations=false)
+def get_resource_by_id(id, cib_dom, crm_dom=nil, rsc_status=nil, operations=false)
   unless cib_dom
     return nil
   end
 
-  e = cib_dom.elements["cib/configuration/resources//*[@id='#{id}']"]
+  e = cib_dom.elements["/cib/configuration/resources//*[@id='#{id}']"]
   unless e
     return nil
   end
 
   if e.parent.name != 'resources' # if resource is in group, clone or master/slave
-    p = get_resource_by_id(e.parent.attributes['id'], cib_dom, crm_dom, get_operations)
+    p = get_resource_by_id(
+      e.parent.attributes['id'], cib_dom, crm_dom, rsc_status, operations
+    )
     return p.get_map[id.to_sym]
   end
 
-  cib = (get_operations) ? cib_dom : nil
-
   case e.name
     when 'primitive'
-      return ClusterEntity::Primitive.new(e, crm_dom, nil, cib)
+      return ClusterEntity::Primitive.new(e, rsc_status, nil, operations)
     when 'group'
-      return ClusterEntity::Group.new(e, crm_dom, nil, cib)
+      return ClusterEntity::Group.new(e, rsc_status, nil, operations)
     when 'clone'
-      return ClusterEntity::Clone.new(e, crm_dom, nil, cib)
+      return ClusterEntity::Clone.new(e, crm_dom, rsc_status, nil, operations)
     when 'master'
-      return ClusterEntity::MasterSlave.new(e, crm_dom, nil, cib)
+      return ClusterEntity::MasterSlave.new(e, crm_dom, rsc_status, nil, operations)
     else
       return nil
   end
@@ -1762,7 +1755,7 @@ def node_attrs_to_v2(node_attrs)
     all_nodes_attr[node] = []
     attrs.each { |attr|
       all_nodes_attr[node] << {
-        :id => nil,
+        :id => attr[:id],
         :name => attr[:key],
         :value => attr[:value]
       }
