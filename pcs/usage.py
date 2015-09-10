@@ -693,12 +693,17 @@ Commands:
 
     cib-push <filename> [scope=<scope> | --config]
         Push the raw xml from <filename> to the CIB (Cluster Information Base).
+        You can obtain the CIB by running the 'pcs cluster cib' command, which
+        is recommended first step when you want to perform desired
+        modifications (pcs -f <command>) for the one-off push.
         Specify scope to push a specific section of the CIB.  Valid values
         of the scope are: configuration, nodes, resources, constraints,
         crm_config, rsc_defaults, op_defaults.  --config is the same as
         scope=configuration.  Use of --config is recommended.  Do not specify
         a scope if you need to push the whole CIB or be warned in the case
         of outdated CIB.
+        WARNING: the selected scope of the CIB will be overwritten by the
+        current content of the specified file.
 
     cib-upgrade
         Upgrade the cib to the latest version
