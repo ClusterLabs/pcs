@@ -1,5 +1,9 @@
 source 'https://rubygems.org'
 
+source 'https://tojeline.fedorapeople.org/rubygems/' do
+    gem 'rpam-ruby19-feist', :platform => :ruby_18
+end
+
 gem 'sinatra'
 gem 'sinatra-contrib'
 gem 'rack'
@@ -10,7 +14,8 @@ gem 'rack-test'
 gem 'backports'
 gem 'sinatra-sugar'
 gem 'monkey-lib'
-gem 'rpam-ruby19'
+gem 'rpam-ruby19', :platform => [:ruby_19, :ruby_20, :ruby_21, :ruby_22]
+gem 'json'
 gem 'multi_json'
 gem 'open4'
 gem 'orderedhash'

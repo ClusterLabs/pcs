@@ -1,8 +1,10 @@
 GEM
   remote: https://rubygems.org/
+  remote: https://tojeline.fedorapeople.org/rubygems/
   specs:
     backports (3.6.4)
     eventmachine (1.0.7)
+    json (1.8.3)
     monkey-lib (0.5.4)
       backports
     multi_json (1.11.1)
@@ -36,6 +38,7 @@ PLATFORMS
 DEPENDENCIES
   backports
   eventmachine
+  json
   monkey-lib
   multi_json
   open4
