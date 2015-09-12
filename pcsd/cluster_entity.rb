@@ -684,25 +684,37 @@ module ClusterEntity
         group_cib_element.elements.each('primitive') { |e|
           p = Primitive.new(e, rsc_status, self, operations)
           members << p
-          if p.status == ClusterEntity::ResourceStatus.new(:disabled)
-            @status = ClusterEntity::ResourceStatus.new(:blocked)
-          elsif @status < p.status
-            @status = p.status
-          end
         }
+        update_status
       end
     end
 
     def update_status
       @status = ClusterEntity::ResourceStatus.new(:running)
+      first = true
       @members.each { |p|
         p.update_status
-        if p.status == ClusterEntity::ResourceStatus.new(:disabled)
-          @status = ClusterEntity::ResourceStatus.new(:blocked)
-        elsif @status < p.status
-          @status = p.status
+        if first
+          first = false
+          next
+        end
+        if (
+          p.status == ClusterEntity::ResourceStatus.new(:disabled) or
+          p.status == ClusterEntity::ResourceStatus.new(:blocked) or
+          p.status == ClusterEntity::ResourceStatus.new(:failed)
+        )
+          @status = ClusterEntity::ResourceStatus.new(:partially_running)
         end
       }
+      if (@members and @members.length > 0 and
+        (ClusterEntity::ResourceStatus.new(:running) != @members[0].status and
+        ClusterEntity::ResourceStatus.new(:unknown) != @members[0].status)
+      )
+        @status = @members[0].status
+      end
+      if disabled?
+        @status = ClusterEntity::ResourceStatus.new(:disabled)
+      end
     end
 
     def to_status(version='1')
@@ -766,12 +778,7 @@ module ClusterEntity
         elsif member and member.name == 'primitive'
           @member = Primitive.new(member, rsc_status, self, operations)
         end
-        if @member
-          @status = @member.status
-          if @member.status == ClusterEntity::ResourceStatus.new(:disabled)
-            @status = ClusterEntity::ResourceStatus.new(:blocked)
-          end
-        end
+        update_status
         if crm_dom
           status = crm_dom.elements["/crm_mon/resources//clone[@id='#{@id}']"]
           if status
@@ -788,9 +795,9 @@ module ClusterEntity
       if @member
         @member.update_status
         @status = @member.status
-        if @member.status == ClusterEntity::ResourceStatus.new(:disabled)
-          @status = ClusterEntity::ResourceStatus.new(:blocked)
-        end
+      end
+      if disabled?
+        @status = ClusterEntity::ResourceStatus.new(:disabled)
       end
     end
 
@@ -854,6 +861,7 @@ module ClusterEntity
       @class_type = 'master'
       @masters = []
       @slaves = []
+      update_status
       if @member
         if @member.instance_of?(Primitive)
           primitive_list = [@member]
@@ -861,15 +869,15 @@ module ClusterEntity
           primitive_list = @member.members
         end
         @masters, @slaves = get_masters_slaves(primitive_list)
-        if @masters.empty? and !disabled?
-          @status = ClusterEntity::ResourceStatus.new(:partially_running)
+        if (@masters.empty? and
+          @status != ClusterEntity::ResourceStatus.new(:disabled)
+        )
           @warning_list << {
             :message => 'Resource is master/slave but has not been promoted '\
               + 'to master on any node.',
             :type => 'no_master'
           }
         end
-        @status = @member.status if @status < @member.status
       end
     end
 
@@ -898,16 +906,21 @@ module ClusterEntity
     def update_status
       if @member
         @member.update_status
+        @status = @member.status
         if @member.instance_of?(Primitive)
           primitive_list = [@member]
         else
           primitive_list = @member.members
         end
         @masters, @slaves = get_masters_slaves(primitive_list)
-        if @masters.empty? and !disabled?
+        if (@masters.empty? and
+          @member.status != ClusterEntity::ResourceStatus.new(:disabled)
+        )
           @status = ClusterEntity::ResourceStatus.new(:partially_running)
         end
-        @status = @member.status if @status < @member.status
+      end
+      if disabled?
+        @status = ClusterEntity::ResourceStatus.new(:disabled)
       end
     end
 
