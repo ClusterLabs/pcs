@@ -42,7 +42,7 @@
       {{else}}
         {{nodes.length}}
         {{#if nodes_failed}}
-        | <div style="display: inline-block;" title="Issue(s) found"><div class="warning sprites"></div> <span style="font-weight: bold; color: red">{{nodes_failed}}</span></div>
+        | <div style="display: inline-block;" title="Issue(s) found"><span style="font-weight: bold; color: red">{{nodes_failed}}</span></div>
         {{/if}}
       {{/if}}
     </td>
@@ -52,7 +52,7 @@
       {{else}}
         {{resource_list.length}}
         {{#if resources_failed}}
-      | <div style="display: inline-block;" title="Issue(s) found"><div class="warning sprites"></div> <span style="font-weight: bold; color: red">{{resources_failed}}</span></div>
+      | <div style="display: inline-block;" title="Issue(s) found"><span style="font-weight: bold; color: red">{{resources_failed}}</span></div>
         {{/if}}
       {{/if}}
     </td>
