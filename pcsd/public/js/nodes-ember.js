@@ -147,8 +147,10 @@ Pcs = Ember.Application.createWithMixins({
           } else {
             if (self.get('fence_list').length > 0) {
               cur_fence = self.get('fence_list')[0];
-              fence_change = true;
+            } else {
+              cur_fence = null;
             }
+            fence_change = true;
           }
 
           if (cur_resource && cur_resource.get('id') in resource_map) {
@@ -158,22 +160,28 @@ Pcs = Ember.Application.createWithMixins({
           } else {
             if (self.get('resource_list').length > 0) {
               cur_resource = self.get('resource_list')[0];
-              resource_change = true;
+            } else {
+              cur_resource = null;
             }
+            resource_change = true;
           }
 
           self.set('cur_fence', cur_fence);
           self.set('cur_resource', cur_resource);
 
           Ember.run.scheduleOnce('afterRender', Pcs, function () {
-            if (fence_change)
-              tree_view_onclick(self.get('cur_fence').get('id'), true);
-            if (resource_change)
-              tree_view_onclick(self.get('cur_resource').get('id'), true);
-            if (!fence_change && self.get('cur_fence'))
-              tree_view_select(self.get('cur_fence').get('id'));
-            if (!resource_change && self.get('cur_resource'))
-              tree_view_select(self.get('cur_resource').get('id'));
+            if (self.get('cur_fence')) {
+              if (fence_change)
+                tree_view_onclick(self.get('cur_fence').get('id'), true);
+              else
+                tree_view_select(self.get('cur_fence').get('id'));
+            }
+            if (self.get('cur_resource')) {
+              if (resource_change)
+                tree_view_onclick(self.get('cur_resource').get('id'), true);
+              else
+                tree_view_select(self.get('cur_resource').get('id'));
+            }
             Pcs.selectedNodeController.reset();
             disable_checkbox_clicks();
           });
