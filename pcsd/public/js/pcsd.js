@@ -680,7 +680,7 @@ function auth_nodes(dialog) {
   $("#auth_failed_error_msg").hide();
   $.ajax({
     type: 'POST',
-    url: '/remote/auth_nodes',
+    url: '/remote/auth_gui_against_nodes',
     data: dialog.find("#auth_nodes_form").serialize(),
     timeout: pcs_timeout,
     success: function (data) {
@@ -696,9 +696,11 @@ function auth_nodes(dialog) {
 function auth_nodes_dialog_update(dialog_obj, data) {
   var unauth_nodes = [];
   var node;
-  for (node in data) {
-    if (data[node] != 0) {
-      unauth_nodes.push(node);
+  if (data['node_auth_error']) {
+    for (node in data['node_auth_error']) {
+      if (data['node_auth_error'][node] != 0) {
+        unauth_nodes.push(node);
+      }
     }
   }
 

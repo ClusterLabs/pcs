@@ -60,7 +60,7 @@ def remote(params, request, session)
       :cluster_destroy => method(:cluster_destroy),
       :get_wizard => method(:get_wizard),
       :wizard_submit => method(:wizard_submit),
-      :auth_nodes => method(:auth_nodes),
+      :auth_gui_against_nodes => method(:auth_gui_against_nodes),
       :get_tokens => method(:get_tokens),
       :get_cluster_tokens => method(:get_cluster_tokens),
       :save_tokens => method(:save_tokens),
@@ -1994,32 +1994,48 @@ def wizard_submit(params, request, session)
 
 end
 
-def auth_nodes(params, request, session)
-  retval = {}
-  params.each{|node|
-    if node[0].end_with?"-pass" and node[0].length > 5
-      nodename = node[0][0..-6]
-      if params.has_key?("all")
-        pass = params["pass-all"]
-      else
-        pass = node[1]
-      end
-      result, sync_successful, _, _ = pcs_auth(
-        session, [nodename], SUPERUSER, pass, true, true
-      )
-      if not sync_successful
-        retval[nodename] = 1
-      else
-        node_status = result[nodename]['status']
-        if 'ok' == node_status or 'already_authorized' == node_status
-          retval[nodename] = 0
+def auth_gui_against_nodes(params, request, session)
+  node_auth_error = {}
+  new_tokens = {}
+  threads = []
+  params.each { |node|
+    threads << Thread.new {
+      if node[0].end_with?("-pass") and node[0].length > 5
+        nodename = node[0][0..-6]
+        if params.has_key?("all")
+          pass = params["pass-all"]
         else
-          retval[nodename] = 1
+          pass = node[1]
+        end
+        data = {
+          'node-0' => nodename,
+          'username' => SUPERUSER,
+          'password' => pass,
+          'force' => 1,
+        }
+        node_auth_error[nodename] = 1
+        code, response = send_request(session, nodename, 'auth', true, data)
+        if 200 == code
+          token = response.strip
+          if not token.empty?
+            new_tokens[nodename] = token
+            node_auth_error[nodename] = 0
+          end
         end
       end
-    end
+    }
   }
-  return [200, JSON.generate(retval)]
+  threads.each { |t| t.join }
+
+  if not new_tokens.empty?
+    cluster_nodes = get_corosync_nodes()
+    tokens_cfg = Cfgsync::PcsdTokens.from_file('')
+    sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
+      tokens_cfg, new_tokens, cluster_nodes, $cluster_name
+    )
+  end
+
+  return [200, JSON.generate({'node_auth_error' => node_auth_error})]
 end
 
 # not used anymore, left here for backward compatability reasons
