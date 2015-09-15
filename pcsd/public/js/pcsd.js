@@ -284,15 +284,14 @@ function disable_spaces(item) {
 }
 
 function load_resource_form(item, ra, stonith) {
-  data = { "new": true, resourcename: ra};
+  var data = { new: true, resourcename: ra};
+  var command;
   if (!stonith)
     command = "resource_metadata";
   else
     command = "fence_device_metadata";
   
-  item.load(get_cluster_remote_url() + command, data, function() {
-    disable_spaces(this);
-  });
+  item.load(get_cluster_remote_url() + command, data);
 }
 
 function update_resource_form_groups(form, group_list) {
