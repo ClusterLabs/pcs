@@ -546,6 +546,8 @@ Pcs.resourcesContainer = Ember.Object.create({
         }
       });
     });
+    self.set('resource_list', Ember.copy(self.get('resource_list')).sort(function(a,b){return a.get('id').localeCompare(b.get('id'))}));
+    self.set('fence_list', Ember.copy(self.get('fence_list')).sort(function(a,b){return a.get('id').localeCompare(b.get('id'))}));
   }
 });
 
@@ -1265,9 +1267,9 @@ Pcs.Cluster = Ember.Object.extend({
 
 Pcs.clusterController = Ember.Object.create({
   cluster_list: Ember.ArrayController.create({
-    content: Ember.A(), sortProperties: ['status', 'name'],
-    sortAscending: true,
-    sortFunction: function(a,b){return status_comparator(a,b);}
+    content: Ember.A(),
+    sortProperties: ['name'],
+    sortAscending: true
   }),
   cur_cluster: null,
   show_all_nodes: false,
@@ -1779,6 +1781,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
     $.each(nodesToRemove, function(k,v) {
       self.content.removeObject(v);
     });
+    self.set('content', Ember.copy(self.get('content').sort(function(a,b){return a.get('name').localeCompare(b.get('name'))})));
   }
 });
 
