@@ -554,6 +554,9 @@ Pcs.resourcesContainer = Ember.Object.create({
         }
       });
     });
+    $.each(resource_map, function(resource_id, resource_obj) {
+      resource_obj.set('group_list', self.get('group_list'));
+    });
     self.set('resource_list', Ember.copy(self.get('resource_list')).sort(function(a,b){return a.get('id').localeCompare(b.get('id'))}));
     self.set('fence_list', Ember.copy(self.get('fence_list')).sort(function(a,b){return a.get('id').localeCompare(b.get('id'))}));
   }
@@ -575,6 +578,7 @@ Pcs.ResourceObj = Ember.Object.extend({
   disabled: false,
   error_list: [],
   warning_list: [],
+  group_list: [],
   get_group_id: function() {
     var self = this;
     var p = self.get('parent');
@@ -587,7 +591,7 @@ Pcs.ResourceObj = Ember.Object.extend({
     var self = this;
     var cur_group = self.get('get_group_id');
     var html = '<select>\n<option value="">None</option>\n';
-    $.each(Pcs.resourcesContainer.get('group_list'), function(_, group) {
+    $.each(self.get('group_list'), function(_, group) {
       html += '<option value="' + group + '"';
       if (cur_group === group) {
         html += 'selected';
@@ -596,7 +600,7 @@ Pcs.ResourceObj = Ember.Object.extend({
     });
     html += '</select><input type="button" value="Change group" onclick="resource_change_group(curResource(), $(this).prev().prop(\'value\'));">';
     return html;
-  }.property('Pcs.resourceContainer.group_list', 'get_group_id'),
+  }.property('group_list', 'get_group_id'),
   status: "unknown",
   class_type: null, // property to determine type of the resource
   resource_type: function() { // this property is just for displaying resource type in GUI
