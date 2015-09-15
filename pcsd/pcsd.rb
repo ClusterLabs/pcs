@@ -152,7 +152,7 @@ helpers do
         param_line << "#{myparam}=#{val}"
       end
       if param == "disabled"
-        meta_options << "meta target-role=Stopped"
+        meta_options << 'meta' << 'target-role=Stopped'
       end
     }
     return param_line + meta_options
