@@ -1488,7 +1488,10 @@ function add_constraint(parent_id, c_type, force) {
 }
 
 function add_constraint_set(parent_id, c_type, force) {
-  var data = {'resources': []};
+  var data = {
+    resources: [],
+    disable_autocorrect: true
+  };
   $(parent_id + " input[name='resource_ids[]']").each(function(index, element) {
     var resources = element.value.trim();
     if (resources.length > 0) {
