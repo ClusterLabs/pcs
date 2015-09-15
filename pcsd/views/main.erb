@@ -105,7 +105,9 @@
           <input type="checkbox" onchange="tree_view_checkbox_onchange(this)">
         </td>
         <td style="width:18px;" class="node_list_sprite">{{{node.status_icon}}}</td>
-        <td class="resource_name" nowrap {{bind-attr node=node.style}}>{{node._id}}</td>
+        <td class="resource_name" nowrap {{bind-attr node=node.style}}>
+          <span {{bind-attr class=node.span_class}}>{{node._id}}</span>
+        </td>
         <td style="width:200px;" class="resource_type" {{bind-attr style=node.style}}>{{node.resource_type}}</td>
         <td style="width:18px;">
           <div style="display: none;" class="arrow sprites"></div>

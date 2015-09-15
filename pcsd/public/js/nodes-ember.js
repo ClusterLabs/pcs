@@ -651,6 +651,17 @@ Pcs.ResourceObj = Ember.Object.extend({
     }
     return out;
   }.property("error_list.@each", "warning_list.@each"),
+  span_class: function() {
+    switch (this.get("status_val")) {
+      case get_status_value("failed"):
+        return "status-error";
+      case get_status_value("warning"):
+      case get_status_value("disabled"):
+        return "status-warning";
+      default:
+        return "";
+    }
+  }.property("status_val"),
 
   location_constraints: [],
   ordering_constraints: [],

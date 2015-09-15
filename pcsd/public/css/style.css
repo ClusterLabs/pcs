@@ -778,3 +778,11 @@ li.menuheader {
 .issue_table {
   margin-top: 1.5em;
 }
+
+.status-error {
+  color: red;
+}
+
+.status-warning {
+  color: #ff6600;
+}
