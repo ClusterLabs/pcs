@@ -914,7 +914,7 @@ module ClusterEntity
         end
         @masters, @slaves = get_masters_slaves(primitive_list)
         if (@masters.empty? and
-          @member.status != ClusterEntity::ResourceStatus.new(:disabled)
+          @member.status == ClusterEntity::ResourceStatus.new(:running)
         )
           @status = ClusterEntity::ResourceStatus.new(:partially_running)
         end
