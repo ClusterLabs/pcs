@@ -1,6 +1,10 @@
 include Makefile
 include COPYING
+include pcs/pcs.8
+include pcs/bash_completion.d.pcs
+include pcsd/.bundle/config
 graft pcsd
+graft pcsd/vendor/cache
 prune pcsd/vendor/bundle
 prune pcsd/test
 recursive-exclude pcsd .gitignore
