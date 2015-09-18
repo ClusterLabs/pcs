@@ -333,7 +333,9 @@ fence <node> [\fB\-\-off\fR]
 Fence the node specified (if \fB\-\-off\fR is specified, use the 'off' API call to stonith which will turn the node off instead of rebooting it)
 .TP
 confirm <node>
-Confirm that the host specified is currently down.  WARNING: if this node is not actually down data corruption/cluster failure can occur.
+Confirm that the host specified is currently down.  This command should \fBONLY\fR be used when the node specified has already been confirmed to be down.
+
+.B WARNING: if this node is not actually down data corruption/cluster failure can occur.
 .SS "acl"
 .TP
 [show]

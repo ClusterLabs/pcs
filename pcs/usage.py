@@ -839,7 +839,10 @@ Commands:
         call to stonith which will turn the node off instead of rebooting it)
 
     confirm <node>
-        Confirm that the host specified is currently down.
+        Confirm that the host specified is currently down.  This command
+        should ONLY be used when the node specified has already been
+        confirmed to be down.
+
         WARNING: if this node is not actually down data corruption/cluster
         failure can occur.
 
