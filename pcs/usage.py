@@ -574,7 +574,8 @@ Commands:
         --local will only perform changes on the local node,
         --start will also start the cluster on the specified nodes,
         --enable will enable corosync and pacemaker on node startup,
-        --transport allows specification of corosync transport (default: udpu),
+        --transport allows specification of corosync transport (default: udpu;
+            udp for CMAN clusters),
         --rrpmode allows you to set the RRP mode of the system. Currently only
             'passive' is supported or tested (using 'active' is not
             recommended).
@@ -601,8 +602,8 @@ Commands:
 
         Configuring Redundant Ring Protocol (RRP)
 
-        When using udpu (the default) specifying nodes, specify the ring 0
-        address first followed by a ',' and then the ring 1 address.
+        When using udpu specifying nodes, specify the ring 0 address first
+        followed by a ',' and then the ring 1 address.
 
         Example: pcs cluster setup --name cname nodeA-0,nodeA-1 nodeB-0,nodeB-1
 
