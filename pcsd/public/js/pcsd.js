@@ -1972,7 +1972,9 @@ function tree_view_onclick(resource_id, auto) {
 
   tree_view_select(resource_id);
 
-  load_agent_form(resource_id, resource_obj.get('stonith'));
+  Ember.run.next(Pcs, function() {
+    load_agent_form(resource_id, resource_obj.get('stonith'));
+  });
 }
 
 function tree_view_select(element_id) {

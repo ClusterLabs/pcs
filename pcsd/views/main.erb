@@ -277,7 +277,9 @@
     {{#if stonith}}
       <div style="clear:left; margin-top: 2em;" id="stonith_agent_form"></div>
     {{else}}
+    {{#if resource.is_primitive}}
       <div style="clear:left; margin-top: 2em;" id="resource_agent_form"></div>
+    {{/if}}
     {{/if}}
   {{else}}
     {{#if stonith}}
