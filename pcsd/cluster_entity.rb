@@ -191,6 +191,7 @@ module ClusterEntity
             mi =  ClusterEntity::Clone.new
           else
             mi = ClusterEntity::MasterSlave.new
+            mi.masters_unknown = true
           end
           mi.id = mi_id
           mi.meta_attr = ClusterEntity::get_meta_attr_from_status_v1(
@@ -854,10 +855,11 @@ module ClusterEntity
 
 
   class MasterSlave < MultiInstance
-    attr_accessor :masters, :slaves
+    attr_accessor :masters, :slaves, :masters_unknown
 
     def initialize(master_cib_element=nil, crm_dom=nil, rsc_status=nil, parent=nil, operations=nil)
       super(master_cib_element, crm_dom, rsc_status, parent, operations)
+      @masters_unknown = false
       @class_type = 'master'
       @masters = []
       @slaves = []
@@ -869,7 +871,7 @@ module ClusterEntity
           primitive_list = @member.members
         end
         @masters, @slaves = get_masters_slaves(primitive_list)
-        if (@masters.empty? and
+        if (@masters.empty? and !@masters_unknown and
           @status != ClusterEntity::ResourceStatus.new(:disabled)
         )
           @warning_list << {
@@ -913,7 +915,7 @@ module ClusterEntity
           primitive_list = @member.members
         end
         @masters, @slaves = get_masters_slaves(primitive_list)
-        if (@masters.empty? and
+        if (@masters.empty? and !@masters_unknown and
           @member.status == ClusterEntity::ResourceStatus.new(:running)
         )
           @status = ClusterEntity::ResourceStatus.new(:partially_running)
