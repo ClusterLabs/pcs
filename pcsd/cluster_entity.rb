@@ -540,7 +540,7 @@ module ClusterEntity
         status = ClusterEntity::ResourceStatus.new(:disabled)
       elsif running > 0
         status = ClusterEntity::ResourceStatus.new(:running)
-      elsif failed > 0
+      elsif failed > 0 or @error_list.length > 0
         status = ClusterEntity::ResourceStatus.new(:failed)
       else
         status = ClusterEntity::ResourceStatus.new(:blocked)
