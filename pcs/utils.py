@@ -1706,8 +1706,9 @@ def getPacemakerNodesID(allow_failure=False):
 
     pm_nodes = {}
     for line in output.rstrip().split("\n"):
-        node_info = line.rstrip().split(" ",1)
-        pm_nodes[node_info[0]] = node_info[1]
+        node_info = line.rstrip().split(" ")
+        if len(node_info) <= 2 or node_info[2] != "lost":
+            pm_nodes[node_info[0]] = node_info[1]
 
     return pm_nodes
 
