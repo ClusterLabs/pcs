@@ -47,6 +47,9 @@ View and manage cluster configuration
 .TP
 pcsd
 Manage pcs daemon
+.TP
+node
+Manage cluster nodes
 .SS "resource"
 .TP
 show [resource id] [\fB\-\-full\fR] [\fB\-\-groups\fR]
@@ -546,6 +549,13 @@ Sync pcsd certificates to all nodes found from current corosync.conf file (clust
 .TP
 clear-auth [\fB\-\-local\fR] [\fB\-\-remote\fR]
 Removes all system tokens which allow pcs/pcsd on the current system to authenticate with remote pcs/pcsd instances and vice\-versa.  After this command is run this node will need to be re\-authenticated with other nodes (using 'pcs cluster auth').  Using \fB\-\-local\fR only removes tokens used by local pcs (and pcsd if root) to connect to other pcsd instances, using \fB\-\-remote\fR clears authentication tokens used by remote systems to connect to the local pcsd instance.
+.SS "node"
+.TP
+maintenance [\fB\-\-all\fR] | [node]...
+Put specified node(s) into maintenance mode, if no node or options are specified the current node will be put into maintenance mode, if \fB\-\-all\fR is specified all nodes will be put into maintenace mode.
+.TP
+unmaintenance [\fB\-\-all\fR] | [node]...
+Remove node(s) from maintenance mode, if no node or options are specified the current node will be removed from maintenance mode, if \fB\-\-all\fR is specified all nodes will be removed from maintenance mode.
 .SH EXAMPLES
 .TP
 Show all resources

@@ -17,3 +17,4 @@ test:
 	python2 test_stonith.py ${pyunit_flags}
 	python2 test_properties.py ${pyunit_flags}
 	python2 test_acl.py ${pyunit_flags}
+	python2 test_node.py ${pyunit_flags}

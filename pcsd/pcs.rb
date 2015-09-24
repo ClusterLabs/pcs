@@ -588,6 +588,10 @@ def get_nodes_status()
       if in_pacemaker
         pacemaker_standby.concat(nodes.split(/ /))
       end
+    elsif title == " Maintenance"
+      if in_pacemaker
+        pacemaker_online.concat(nodes.split(/ /))
+      end
     else
       in_pacemaker ? pacemaker_offline.concat(nodes.split(/ /)) : corosync_offline.concat(nodes.split(/ /))
     end

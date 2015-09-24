@@ -1414,6 +1414,52 @@ function add_node_attr(parent_id) {
   });
 }
 
+function node_maintenance(node) {
+  var data = {
+    node: node,
+    key: "maintenance",
+    value: "on"
+  };
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_node_attr_remote',
+    data: data,
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to put node '" + node + "' to maintenance mode. "
+        + ajax_simple_error(xhr, status, error)
+      );
+    },
+    complete: function() {
+      Pcs.update();
+    }
+  });
+}
+
+function node_unmaintenance(node) {
+  var data = {
+    node: node,
+    key: "maintenance",
+    value: ""
+  };
+  $.ajax({
+    type: 'POST',
+    url: get_cluster_remote_url() + 'add_node_attr_remote',
+    data: data,
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to remove node '" + node + "' from maintenance mode. "
+        + ajax_simple_error(xhr, status, error)
+      );
+    },
+    complete: function() {
+      Pcs.update();
+    }
+  });
+}
+
 function remove_meta_attr(parent_id) {
   var resource_id = curResource();
   var attr = parent_id.attr("meta_attr_key");
@@ -1812,6 +1858,7 @@ function get_status_value(status) {
     blocked: 1,
     warning: 2,
     standby: 2,
+    maintenance: 2,
     "partially running": 2,
     disabled: 3,
     unknown: 4,
@@ -2412,3 +2459,9 @@ function permissions_get_cluster_row(cluster_name) {
   return cluster_row;
 }
 
+function is_cib_true(value) {
+  if (value) {
+    return (['true', 'on', 'yes', 'y', '1'].indexOf(value.toString().toLowerCase()) != -1);
+  }
+  return false;
+}

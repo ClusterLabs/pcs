@@ -132,6 +132,7 @@ def sub_generate_bash_completion():
     tree["status"] = generate_tree(status([],False))
     tree["config"] = generate_tree(config([],False))
     tree["pcsd"] = generate_tree(pcsd([],False))
+    tree["node"] = generate_tree(node([], False))
     print """
     _pcs()
     {
@@ -148,7 +149,7 @@ def sub_generate_bash_completion():
     print sub_gen_code(1,tree,[])
     print """
     if [ $COMP_CWORD -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config pcsd" -- $cur) )
+        COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config pcsd node" -- $cur) )
     fi
     return 0
 
@@ -207,6 +208,7 @@ Commands:
     status      View cluster status
     config      View and manage cluster configuration
     pcsd        Manage pcs daemon
+    node        Manage cluster nodes
 """
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -1201,6 +1203,27 @@ Commands:
        used by local pcs (and pcsd if root) to connect to other pcsd instances,
        using --remote clears authentication tokens used by remote systems to
        connect to the local pcsd instance.
+"""
+    if pout:
+        print sub_usage(args, output)
+    else:
+        return output
+
+def node(args=[], pout=True):
+    output = """
+Usage: pcs node <command>
+Manage cluster nodes
+
+Commands:
+    maintenance [--all] | [node]...
+        Put specified node(s) into maintenance mode, if no node or options are
+        specified the current node will be put into maintenance mode, if --all
+        is specified all nodes will be put into maintenace mode.
+
+    unmaintenance [--all] | [node]...
+        Remove node(s) from maintenance mode, if no node or options are
+        specified the current node will be removed from maintenance mode,
+        if --all is specified all nodes will be removed from maintenance mode.
 """
     if pout:
         print sub_usage(args, output)

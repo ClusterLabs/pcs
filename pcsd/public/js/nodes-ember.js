@@ -1028,7 +1028,11 @@ Pcs.Clusternode = Ember.Object.extend({
   }.property("status_val"),
   status_class: function() {
     var show = ((Pcs.clusterController.get("show_all_nodes"))? "" : "hidden ");
-    return ((this.get("status_val") == get_status_value("ok") || this.status == "standby") ? show + "default-hidden" : "");
+    return (
+      (this.get("status_val") == get_status_value("ok") || this.status == "standby" ||
+      this.status == "maintenance")
+        ? show + "default-hidden" : ""
+    );
   }.property("status_val"),
   status_icon: function() {
     var icon_class = get_status_icon_class(this.get("status_val"));
@@ -1087,16 +1091,17 @@ Pcs.Clusternode = Ember.Object.extend({
       return ""
   }.property("cur_node"),
   node_name_style: function() {
-    if (this.up) {
+    if (this.up && !this.get('pacemaker_maintenance')) {
       return "";
     } else {
-      if (this.pacemaker_standby)
-      	return "color: #ff6600";
+      if (this.get("pacemaker_standby") || this.get("pacemaker_maintenance"))
+        return "color: #ff6600";
       else
-	return "color:red";
+        return "color:red";
     }
-  }.property("up","pacemaker_standby"),
+  }.property("up","pacemaker_standby","pacemaker_maintenance"),
   pacemaker_standby: null,
+  pacemaker_maintenance: Ember.computed.alias('is_in_maintenance'),
   corosync_enabled: null,
   pacemaker_enabled: null,
   pcsd_enabled: null,
@@ -1132,6 +1137,17 @@ Pcs.Clusternode = Ember.Object.extend({
   }.property("pcsd_enabled"),
   location_constraints: null,
   node_attrs: [],
+  is_in_maintenance: function() {
+    var self = this;
+    var result = false;
+    $.each(self.get('node_attrs'), function(_, attr) {
+      if (attr["name"] == "maintenance") {
+        result = is_cib_true(attr["value"]);
+        return false; // break foreach loop
+      }
+    });
+    return result;
+  }.property('node_attrs'),
   fence_levels: [],
   pcsd: null,
   corosync_daemon: null,
@@ -1204,8 +1220,12 @@ Pcs.Cluster = Ember.Object.extend({
   get_num_of_failed: function(type) {
     var num = 0;
     $.each(this.get(type), function(key, value) {
-      if (value.get("status_val") < get_status_value("ok") && value.status != "disabled" && value.status != "standby")
+      if (value.get("status_val") < get_status_value("ok") &&
+        value.status != "disabled" && value.status != "standby" &&
+        value.status != "maintenance"
+      ) {
         num++;
+      }
     });
     return num;
   },
@@ -1257,7 +1277,7 @@ Pcs.Cluster = Ember.Object.extend({
     self.set('resource_list', resources);
   },
 
-  add_nodes: function(data) {
+  add_nodes: function(data, node_attrs) {
     var self = this;
     self.set("need_reauth", false);
     var nodes = [];
@@ -1273,6 +1293,11 @@ Pcs.Cluster = Ember.Object.extend({
         });
       }
 
+      var attrs = [];
+      if (node_attrs && val["name"] in node_attrs) {
+        attrs = node_attrs[val["name"]];
+      }
+
       node = Pcs.Clusternode.create({
         name: val["name"],
         url_link: get_cluster_remote_url(self.name) + "main#/nodes/" + val["name"],
@@ -1281,6 +1306,10 @@ Pcs.Cluster = Ember.Object.extend({
         error_list: val["error_list"],
         warning_list: val["warning_list"]
       });
+      node.set("node_attrs", attrs);
+      if (node.get("is_in_maintenance") && node.get('status_val') > get_status_value("maintenance")) {
+        node.set("status", "maintenance");
+      }
       nodes.push(node);
     });
     nodes.sort(self.status_sort);
@@ -1359,7 +1388,7 @@ Pcs.clusterController = Ember.Object.create({
         });
       }
 
-      cluster.add_nodes(value["node_list"]);
+      cluster.add_nodes(value["node_list"], value["node_attr"]);
       cluster.add_resources(value["resource_list"]);
       cluster.set("nodes_failed", cluster.get_num_of_failed("nodes"));
       cluster.set("resources_failed", cluster.get_num_of_failed("resource_list"));

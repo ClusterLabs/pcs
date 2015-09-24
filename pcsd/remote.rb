@@ -1647,7 +1647,8 @@ def add_node_attr_remote(params, request, session)
   retval = add_node_attr(
     session, params["node"], params["key"], params["value"]
   )
-  if retval == 0
+  # retval = 2 if removing attr which doesn't exist
+  if retval == 0 or retval == 2
     return [200, "Successfully added attribute to node"]
   else
     return [400, "Error adding attribute to node"]

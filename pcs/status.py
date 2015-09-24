@@ -123,9 +123,11 @@ def nodes_status(argv):
     onlinenodes = []
     offlinenodes = []
     standbynodes = []
+    maintenancenodes = []
     remote_onlinenodes = []
     remote_offlinenodes = []
     remote_standbynodes = []
+    remote_maintenancenodes = []
     for node in nodes[0].getElementsByTagName("node"):
         node_name = node.getAttribute("name")
         node_remote = node.getAttribute("type") == "remote"
@@ -135,6 +137,11 @@ def nodes_status(argv):
                     remote_standbynodes.append(node_name)
                 else:
                     standbynodes.append(node_name)
+            elif node.getAttribute("maintenance") == "true":
+                if node_remote:
+                    remote_maintenancenodes.append(node_name)
+                else:
+                    maintenancenodes.append(node_name)
             else:
                 if node_remote:
                     remote_onlinenodes.append(node_name)
@@ -158,6 +165,11 @@ def nodes_status(argv):
         print node,
     print ""
 
+    print " Maintenance:",
+    for node in maintenancenodes:
+        print node,
+    print ""
+
     print " Offline:",
     for node in offlinenodes:
         print node,
@@ -172,6 +184,11 @@ def nodes_status(argv):
 
     print " Standby:",
     for node in remote_standbynodes:
+        print node,
+    print ""
+
+    print " Maintenance:",
+    for node in remote_maintenancenodes:
         print node,
     print ""
 

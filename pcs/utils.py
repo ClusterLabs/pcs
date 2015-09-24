@@ -1531,7 +1531,11 @@ def set_node_attribute(prop, value, node):
     if (value == ""):
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--query"])
         if r != 0 and "--force" not in pcs_options:
-            err("attribute: '%s' doesn't exist for node: '%s'" % (prop,node))
+            err(
+                "attribute: '%s' doesn't exist for node: '%s'" % (prop, node),
+                False
+            )
+            sys.exit(2)
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--delete"])
     else:
         o,r = run(["crm_attribute", "-t", "nodes", "--node", node, "--name",prop,"--update",value])

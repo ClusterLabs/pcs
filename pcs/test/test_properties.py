@@ -105,7 +105,7 @@ class PropertyTest(unittest.TestCase):
 
         o,r = pcs("property unset --node=rh7-1 IP")
         ac(o,"Error: attribute: 'IP' doesn't exist for node: 'rh7-1'\n")
-        assert r==1
+        assert r==2
 
         o,r = pcs("property unset --node=rh7-1 IP --force")
         ac(o,"")

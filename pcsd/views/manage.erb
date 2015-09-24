@@ -85,7 +85,7 @@
                 <table class="datatable">
                   <tr>
                     <th style="width: 150px;">NODE</th>
-                    <th style="width: 80px;">STATUS</th>
+                    <th style="width: 100px;">STATUS</th>
                     <th style="width: 70px;">QUORUM</th>
                   </tr>
                   {{#each node in Pcs.clusterController.cur_cluster.nodes}}
@@ -114,7 +114,7 @@
                 <table class="datatable">
                   <tr>
                     <th style="width: 150px;">RESOURCE</th>
-                    <th style="width: 80px;">STATUS</th>
+                    <th style="width: 100px;">STATUS</th>
                   </tr>
                   {{#each r in Pcs.clusterController.cur_cluster.resource_list}}
                   <tr {{bind-attr title=r.tooltip}} {{bind-attr class=r.status_class}}>
@@ -145,7 +145,7 @@
                 <table class="datatable">
                   <tr>
                     <th style="width: 150px;">FENCE-DEVICE</th>
-                    <th style="width: 80px;">STATUS</th>
+                    <th style="width: 100px;">STATUS</th>
                   </tr>
                   {{#each f in Pcs.clusterController.cur_cluster.fence_list}}
                   <tr {{bind-attr title=f.tooltip}} {{bind-attr class=f.status_class_fence}}>

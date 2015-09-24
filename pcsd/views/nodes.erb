@@ -58,18 +58,36 @@
                   <td><div style="margin-right: 8px;" class="check sprites"></div></td>
                   <td>
                     {{#if Pcs.nodesController.cur_node.pacemaker}}
+                    {{#unless Pcs.nodesController.cur_node.pacemaker_standby}}
+                    {{#if Pcs.nodesController.cur_node.pacemaker_maintenance}}
+                    <div id="pacemaker_online_status" class="status-standby">
+                      Pacemaker Maintanence
+                    </div>
+                    {{else}}
                     <div id="pacemaker_online_status" class="status">
                       Pacemaker Connected
                     </div>
+                    {{/if}}
+                    {{else}}
+                    <div id="pacemaker_online_status" class="status">
+                      Pacemaker Connected
+                    </div>
+                    {{/unless}}
                     {{else}}
                     {{#if Pcs.nodesController.cur_node.pacemaker_standby}}
                     <div id="pacemaker_online_status" class="status-standby">
                       Pacemaker Standby
                     </div>
                     {{else}}
+                    {{#if Pcs.nodesController.cur_node.pacemaker_maintenance}}
+                    <div id="pacemaker_online_status" class="status-standby">
+                      Pacemaker Maintanence
+                    </div>
+                    {{else}}
                     <div id="pacemaker_online_status" class="status-offline">
                       Pacemaker Not Connected
                     </div>
+                    {{/if}}
                     {{/if}}
                     {{/if}}
                   </td>
@@ -112,6 +130,17 @@
                 <div class="standby sprites" style="float: left"></div>
                 &nbsp;Standby
               </div>
+              {{#if Pcs.nodesController.cur_node.is_in_maintenance}}
+              <div id="node_unmaintenance" class="link" onclick="fade_in_out('#node_unmaintenance');node_unmaintenance(Pcs.nodesController.cur_node.get('name'));">
+                <div class="unstandby sprites" style="float: left"></div>
+                &nbsp;Unmaintenance
+              </div>
+              {{else}}
+              <div id="node_maintenance" class="link" onclick="fade_in_out('#node_maintenance');node_maintenance(Pcs.nodesController.cur_node.get('name'));">
+                <div class="standby sprites" style="float: left"></div>
+                &nbsp;Maintenance
+              </div>
+              {{/if}}
               <div class="configure sprites" style="float: left"></div>
               <div class="link"><a href="#/fencedevices" onclick="select_menu('FENCE DEVICES');return true;">Configure Fencing</a></div>
             </div>

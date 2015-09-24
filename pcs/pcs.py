@@ -14,6 +14,7 @@ import status
 import settings
 import config
 import pcsd
+import node
 
 usefile = False
 filename = ""
@@ -149,6 +150,7 @@ def main(argv):
         "status": status.status_cmd,
         "config": config.config_cmd,
         "pcsd": pcsd.pcsd_cmd,
+        "node": node.node_cmd,
     }
     if command not in cmd_map:
         usage.main()
