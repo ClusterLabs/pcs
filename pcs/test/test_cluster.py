@@ -23,7 +23,25 @@ class ClusterTest(unittest.TestCase):
         ac(output, "")
         assert returnVal == 0
 
+        # try to standby node which is already in standby mode
+        output, returnVal = pcs(temp_cib, "cluster standby rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "cluster unstandby rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
+        # try to unstandby node which is no in standby mode
+        output, returnVal = pcs(temp_cib, "cluster unstandby rh7-1")
+        ac(output, "")
+        assert returnVal == 0
+
         output, returnVal = pcs(temp_cib, "cluster standby nonexistant-node") 
+        assert returnVal == 1
+        assert output == "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
+
+        output, returnVal = pcs(temp_cib, "cluster unstandby nonexistant-node")
         assert returnVal == 1
         assert output == "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
 
