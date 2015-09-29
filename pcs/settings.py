@@ -1,5 +1,6 @@
 pacemaker_binaries = "/usr/sbin/"
 corosync_binaries = "/usr/sbin/"
+ccs_binaries = "/usr/sbin/"
 corosync_conf_file = "/etc/corosync/corosync.conf"
 cluster_conf_file = "/etc/cluster/cluster.conf"
 fence_agent_binaries = "/usr/sbin/"

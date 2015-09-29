@@ -33,9 +33,11 @@ def cluster_cmd(argv):
         usage.cluster(argv)
     elif (sub_cmd == "setup"):
         if "--name" in utils.pcs_options:
-            corosync_setup([utils.pcs_options["--name"]] + argv)
+            cluster_setup([utils.pcs_options["--name"]] + argv)
         else:
-            utils.err("A cluster name (--name <name>) is required to setup a cluster")
+            utils.err(
+                "A cluster name (--name <name>) is required to setup a cluster"
+            )
     elif (sub_cmd == "sync"):
         sync_nodes(utils.getNodesFromCorosyncConf(),utils.getCorosyncConf())
     elif (sub_cmd == "status"):
@@ -111,48 +113,6 @@ def cluster_cmd(argv):
     else:
         usage.cluster()
         sys.exit(1)
-
-# Create config and then send it to all of the nodes and start
-# corosync & pacemaker on the nodes
-# partial_argv is an array of args passed to corosync configure sync_start
-def sync_start(partial_argv, nodes):
-    sync(partial_argv, nodes)
-    print "Starting cluster on nodes: " + ", ".join(nodes) + "..."
-    start_cluster_nodes(nodes)
-
-def sync(partial_argv,nodes):
-    argv = partial_argv[:]
-    # send local cluster pcsd configs to the new nodes
-    # may be used for sending corosync config as well in future
-    pcsd_data = {
-        'nodes': nodes,
-        'force': True,
-        'clear_local_cluster_permissions': True,
-    }
-    output, retval = utils.run_pcsdcli('send_local_configs', pcsd_data)
-    if retval == 0 and output['status'] == 'ok' and output['data']:
-        err_msgs = []
-        try:
-            for node in nodes:
-                node_response = output['data'][node]
-                if node_response['status'] == 'notauthorized':
-                    err_msgs.append(
-                        "Unable to authenticate to " + node
-                        + ", try running 'pcs cluster auth'"
-                    )
-                if node_response['status'] not in ['ok', 'not_supported']:
-                    err_msgs.append(
-                        "Unable to set pcsd configs on {0}".format(node)
-                    )
-        except:
-            err_msgs.append('Unable to communicate with pcsd')
-    else:
-        err_msgs.append("Unable to set pcsd configs")
-    for err_msg in err_msgs:
-        print "Warning: {0}".format(err_msg)
-
-    config = corosync_setup(argv,True)
-    sync_nodes(nodes,config)
 
 def sync_nodes(nodes,config):
     for node in nodes:
@@ -327,392 +287,671 @@ def check_nodes(nodes, prefix = ""):
             print prefix + node + ": Offline"
             bad_nodes = True
     return bad_nodes
-    
-def corosync_setup(argv,returnConfig=False):
-    fedora_config = not utils.is_rhel6()
-    primary_nodes = []
 
-    # If node contains a ',' we only care about the first address
-    for node in argv[1:]:
-        if "," in node:
-            primary_nodes.append(node.split(',')[0])
-        else:
-            primary_nodes.append(node)
-
+def cluster_setup(argv):
     if len(argv) < 2:
-        usage.cluster()
-        exit(1)
+        usage.cluster(["setup"])
+        sys.exit(1)
 
-    if not returnConfig and "--start" in utils.pcs_options and not "--local" in utils.pcs_options:# and fedora_config:
-        sync_start(argv, primary_nodes)
-        if "--enable" in utils.pcs_options:
-            enable_cluster(primary_nodes)
-        pcsd.pcsd_sync_certs([], exit_after_error=False)
-        return
-    elif not returnConfig and not "--local" in utils.pcs_options:# and fedora_config:
-        sync(argv, primary_nodes)
-        if "--enable" in utils.pcs_options:
-            enable_cluster(primary_nodes)
-        pcsd.pcsd_sync_certs([], exit_after_error=False)
-        return
-    else:
-        nodes = argv[1:]
-        cluster_name = argv[0]
+    is_rhel6 = utils.is_rhel6()
+    cluster_name = argv[0]
 
-# Verify that all nodes are resolvable otherwise problems may occur
-    nodes_unresolvable = False
+    # get nodes' addresses
     udpu_rrp = False
-    node_addr_list = []
-    for node in nodes:
+    node_list = []
+    primary_addr_list = []
+    all_addr_list = []
+    for node in argv[1:]:
         addr_list = utils.parse_multiring_node(node)
+        primary_addr_list.append(addr_list[0])
+        all_addr_list.append(addr_list[0])
+        node_options = {
+            "ring0_addr": addr_list[0],
+        }
         if addr_list[1]:
             udpu_rrp = True
-        node_addr_list.extend(addr_list)
-    for node_addr in node_addr_list:
-        if node_addr:
-            try:
-                socket.getaddrinfo(node_addr, None)
-            except socket.error:
-                print "Warning: Unable to resolve hostname: %s" % node_addr
-                nodes_unresolvable = True
+            all_addr_list.append(addr_list[1])
+            node_options["ring1_addr"] = addr_list[1]
+        node_list.append(node_options)
+    # special case of ring1 address on cman
+    if is_rhel6 and not udpu_rrp and "--addr1" in utils.pcs_options:
+        for node in node_list:
+            node["ring1_addr"] = utils.pcs_options["--addr1"]
 
+    # verify addresses
     if udpu_rrp:
-        for node in nodes:
-            if "," not in node:
-                utils.err("if one node is configured for RRP, all nodes must configured for RRP")
+        for node_options in node_list:
+            if "ring1_addr" not in node_options:
+                utils.err(
+                    "if one node is configured for RRP, "
+                    + "all nodes must be configured for RRP"
+                )
 
+    nodes_unresolvable = False
+    for node_addr in all_addr_list:
+        try:
+            socket.getaddrinfo(node_addr, None)
+        except socket.error:
+            print("Warning: Unable to resolve hostname: {0}".format(node_addr))
+            nodes_unresolvable = True
     if nodes_unresolvable and "--force" not in utils.pcs_options:
-        utils.err("Unable to resolve all hostnames (use --force to override).")
+        utils.err("Unable to resolve all hostnames, use --force to override")
 
-    transport = "udp" if utils.is_rhel6() else "udpu"
-    if "--transport" in utils.pcs_options:
-        transport = utils.pcs_options["--transport"]
-        if (
-            transport not in ("udp", "udpu")
-            and
-            "--force" not in utils.pcs_options
-        ):
-            utils.err(
-                "unknown transport '%s', use --force to override" % transport
-            )
+    # parse, validate and complete options
+    if is_rhel6:
+        options, messages = cluster_setup_parse_options_cman(utils.pcs_options)
+    else:
+        options, messages = cluster_setup_parse_options_corosync(
+            utils.pcs_options
+        )
+    if udpu_rrp and "rrp_mode" not in options["transport_options"]:
+        options["transport_options"]["rrp_mode"] = "passive"
+    cluster_setup_print_messages(messages)
 
-    if transport == "udpu" and utils.is_rhel6():
-        print("Warning: Using udpu transport on a CMAN cluster, "
-            + "cluster restart is required after node add or remove")
-    if (
-        transport == "udpu"
-        and
-        ("--addr0" in utils.pcs_options or "--addr1" in utils.pcs_options)
-    ):
-        utils.err("--addr0 and --addr1 can only be used with --transport=udp")
+    # prepare config file
+    if is_rhel6:
+        config, messages = cluster_setup_create_cluster_conf(
+            cluster_name,
+            node_list,
+            options["transport_options"],
+            options["totem_options"]
+        )
+    else:
+        config, messages = cluster_setup_create_corosync_conf(
+            cluster_name,
+            node_list,
+            options["transport_options"],
+            options["totem_options"],
+            options["quorum_options"]
+        )
+    cluster_setup_print_messages(messages)
 
-    rrpmode = None
-    if "--rrpmode" in utils.pcs_options or udpu_rrp or "--addr0" in utils.pcs_options:
-        rrpmode = "passive"
-        if "--rrpmode" in utils.pcs_options:
-            rrpmode = utils.pcs_options["--rrpmode"]
-        if rrpmode == "active" and "--force" not in utils.pcs_options:
-            utils.err("using a RRP mode of 'active' is not supported or tested, use --force to override")
-        elif rrpmode != "passive" and "--force" not in utils.pcs_options:
-            utils.err("%s is an unknown RRP mode, use --force to override" % rrpmode)
+    # setup on the local node
+    if "--local" in utils.pcs_options:
+        # Config path can be overriden by --corosync_conf or --cluster_conf
+        # command line options. If it is overriden we do not touch any cluster
+        # which may be set up on the local node.
+        if is_rhel6:
+            config_path = settings.cluster_conf_file
+        else:
+            config_path = settings.corosync_conf_file
+        config_path_overriden = (
+            (is_rhel6 and "--cluster_conf" in utils.pcs_options)
+            or
+            (not is_rhel6 and "--corosync_conf" in utils.pcs_options)
+        )
 
-    if fedora_config == True:
-        if os.path.exists(settings.corosync_conf_file) and not "--force" in utils.pcs_options:
-            utils.err("%s already exists, use --force to overwrite" % settings.corosync_conf_file)
-        if not ("--corosync_conf" in utils.pcs_options and "--local" in utils.pcs_options):
+        # verify and ensure no cluster is set up on the host
+        if "--force" not in utils.pcs_options and os.path.exists(config_path):
+            utils.err("{0} already exists, use --force to overwrite".format(
+                config_path
+            ))
+        if not config_path_overriden:
             cib_path = os.path.join(settings.cib_dir, "cib.xml")
-            if os.path.exists(cib_path) and not "--force" in utils.pcs_options:
-                utils.err("%s already exists, use --force to overwrite" % cib_path)
-        if "--corosync_conf" not in utils.pcs_options:
+            if "--force" not in utils.pcs_options and os.path.exists(cib_path):
+                utils.err("{0} already exists, use --force to overwrite".format(
+                    cib_path
+                ))
             cluster_destroy([])
 
-        for opt in ["--wait_for_all", "--auto_tie_breaker", "--last_man_standing"]:
-            if (
-                opt in utils.pcs_options
-                and
-                utils.pcs_options[opt] not in ["0", "1"]
-            ):
+        # set up the cluster
+        utils.setCorosyncConf(config)
+        if "--start" in utils.pcs_options:
+            start_cluster([])
+        if "--enable" in utils.pcs_options:
+            enable_cluster([])
+
+    # setup on remote nodes
+    else:
+        # verify and ensure no cluster is set up on the nodes
+        # checks that nodes are authenticated as well
+        if "--force" not in utils.pcs_options:
+            all_nodes_available = True
+            for node in primary_addr_list:
+                available, message = utils.canAddNodeToCluster(node)
+                if not available:
+                    all_nodes_available = False
+                    utils.err("{0}: {1}".format(node, message), False)
+            if not all_nodes_available:
                 utils.err(
-                    "'%s' is not a valid value for %s, use 0 or 1"
-                    % (utils.pcs_options[opt], opt)
+                    "nodes availability check failed, use --force to override. "
+                    + "WARNING: This will destroy existing cluster on the nodes."
                 )
+        print("Destroying cluster on nodes: {0}...".format(
+            ", ".join(primary_addr_list)
+        ))
+        destroy_cluster(primary_addr_list)
+        print
 
-        auto_tie_breaker = False
+        # send local cluster pcsd configs to the new nodes
+        print("Sending cluster config files to the nodes...")
+        pcsd_data = {
+            "nodes": primary_addr_list,
+            "force": True,
+            "clear_local_cluster_permissions": True,
+        }
+        err_msgs = []
+        output, retval = utils.run_pcsdcli("send_local_configs", pcsd_data)
+        if retval == 0 and output["status"] == "ok" and output["data"]:
+            try:
+                for node in primary_addr_list:
+                    node_response = output["data"][node]
+                    if node_response["status"] == "notauthorized":
+                        err_msgs.append(
+                            "Unable to authenticate to " + node
+                            + ", try running 'pcs cluster auth'"
+                        )
+                    if node_response["status"] not in ["ok", "not_supported"]:
+                        err_msgs.append(
+                            "Unable to set pcsd configs on {0}".format(node)
+                        )
+            except:
+                err_msgs.append("Unable to communicate with pcsd")
+        else:
+            err_msgs.append("Unable to set pcsd configs")
+        for err_msg in err_msgs:
+            print "Warning: {0}".format(err_msg)
 
-        corosync_conf = corosync_conf_utils.Section("")
-        totem_section = corosync_conf_utils.Section("totem")
-        nodelist_section = corosync_conf_utils.Section("nodelist")
-        quorum_section = corosync_conf_utils.Section("quorum")
-        logging_section = corosync_conf_utils.Section("logging")
-        corosync_conf.add_section(totem_section)
-        corosync_conf.add_section(nodelist_section)
-        corosync_conf.add_section(quorum_section)
-        corosync_conf.add_section(logging_section)
+        # send the cluster config
+        for node in primary_addr_list:
+            utils.setCorosyncConfig(node, config)
 
-        totem_section.add_attribute("version", "2")
-        totem_section.add_attribute("secauth", "off")
-        totem_section.add_attribute("cluster_name", cluster_name)
-        totem_section.add_attribute("transport", transport)
-        if "--token" in utils.pcs_options:
-            totem_section.add_attribute("token", utils.pcs_options["--token"])
-        if "--token_coefficient" in utils.pcs_options:
-            totem_section.add_attribute(
-                "token_coefficient", utils.pcs_options["--token_coefficient"]
-            )
-        if "--join" in utils.pcs_options:
-            totem_section.add_attribute("join", utils.pcs_options["--join"])
-        if "--consensus" in utils.pcs_options:
-            totem_section.add_attribute(
-                "consensus", utils.pcs_options["--consensus"]
-            )
-        if "--miss_count_const" in utils.pcs_options:
-            totem_section.add_attribute(
-                "miss_count_const", utils.pcs_options["--miss_count_const"]
-            )
-        if "--fail_recv_const" in utils.pcs_options:
-            totem_section.add_attribute(
-                "fail_recv_const", utils.pcs_options["--fail_recv_const"]
-            )
+        # start and enable the cluster if requested
+        if "--start" in utils.pcs_options:
+            print("\nStarting cluster on nodes: {0}...".format(
+                ", ".join(primary_addr_list)
+            ))
+            start_cluster_nodes(primary_addr_list)
+        if "--enable" in utils.pcs_options:
+            enable_cluster(primary_addr_list)
 
-        if rrpmode:
-            totem_section.add_attribute("rrp_mode", rrpmode)
-        if transport == "udp":
-            interface_ids = []
-            if "--addr0" in utils.pcs_options:
-                interface_ids.append("0")
-                if "--addr1" in utils.pcs_options:
-                    interface_ids.append("1")
-            for interface in interface_ids:
+        # sync certificates as the last step because it restarts pcsd
+        print
+        pcsd.pcsd_sync_certs([], exit_after_error=False)
+
+def cluster_setup_parse_options_corosync(options):
+    messages = []
+    parsed = {
+        "transport_options": {
+            "rings_options": [],
+        },
+        "totem_options": {},
+        "quorum_options": {},
+    }
+
+    transport = "udpu"
+    if "--transport" in options:
+        transport = options["--transport"]
+        if transport not in ("udp", "udpu"):
+            messages.append({
+                "text": "unknown transport '{0}'".format(transport),
+                "type": "error",
+                "forceable": True,
+            })
+    parsed["transport_options"]["transport"] = transport
+
+    if transport == "udpu" and ("--addr0" in options or "--addr1" in options):
+        messages.append({
+            "text": "--addr0 and --addr1 can only be used with --transport=udp",
+            "type": "error",
+            "forceable": False,
+        })
+
+    rrpmode = None
+    if "--rrpmode" in options or "--addr0" in options:
+        rrpmode = "passive"
+        if "--rrpmode" in options:
+            rrpmode = options["--rrpmode"]
+        if rrpmode not in ("passive", "active"):
+            messages.append({
+                "text": "{0} is an unknown RRP mode".format(rrpmode),
+                "type": "error",
+                "forceable": True,
+            })
+        if rrpmode == "active":
+            messages.append({
+                "text": "using a RRP mode of 'active' is not supported or tested",
+                "type": "error",
+                "forceable": True,
+            })
+    if rrpmode:
+        parsed["transport_options"]["rrp_mode"] = rrpmode
+
+    totem_options_names = {
+        "--token": "token",
+        "--token_coefficient": "token_coefficient",
+        "--join": "join",
+        "--consensus": "consensus",
+        "--miss_count_const": "miss_count_const",
+        "--fail_recv_const": "fail_recv_const",
+    }
+    for opt_name, parsed_name in totem_options_names.items():
+        if opt_name in options:
+            parsed["totem_options"][parsed_name] = options[opt_name]
+
+    if transport == "udp":
+        interface_ids = []
+        if "--addr0" in options:
+            interface_ids.append(0)
+            if "--addr1" in options:
+                interface_ids.append(1)
+        for interface in interface_ids:
+            ring_options = {}
+            ring_options["addr"] = options["--addr{0}".format(interface)]
+            if "--broadcast{0}".format(interface) in options:
+                ring_options["broadcast"] = True
+            else:
+                if "--mcast{0}".format(interface) in options:
+                    mcastaddr = options["--mcast{0}".format(interface)]
+                else:
+                    mcastaddr = "239.255.{0}.1".format(interface + 1)
+                ring_options["mcastaddr"] = mcastaddr
+                if "--mcastport{0}".format(interface) in options:
+                    mcastport = options["--mcastport{0}".format(interface)]
+                else:
+                    mcastport = "5405"
+                ring_options["mcastport"] = mcastport
+                if "--ttl{0}".format(interface) in options:
+                    ring_options["ttl"] = options["--ttl{0}".format(interface)]
+            parsed["transport_options"]["rings_options"].append(ring_options)
+
+    if "--ipv6" in options:
+        parsed["transport_options"]["ip_version"] = "ipv6"
+
+    quorum_options_names = {
+        "--wait_for_all": "wait_for_all",
+        "--auto_tie_breaker": "auto_tie_breaker",
+        "--last_man_standing": "last_man_standing",
+        "--last_man_standing_window": "last_man_standing_window",
+    }
+    for opt_name, parsed_name in quorum_options_names.items():
+        if opt_name in options:
+            parsed["quorum_options"][parsed_name] = options[opt_name]
+    for opt_name in (
+        "--wait_for_all", "--auto_tie_breaker", "--last_man_standing"
+    ):
+        if opt_name in options and options[opt_name] not in ("0", "1"):
+            messages.append({
+                "text": "'{0}' is not a valid value for {1}, use 0 or 1".format(
+                    options[opt_name], opt_name
+                ),
+                "type": "error",
+                "forceable": False,
+            })
+
+    return parsed, messages
+
+def cluster_setup_parse_options_cman(options):
+    messages = []
+    parsed = {
+        "transport_options": {
+            "rings_options": [],
+        },
+        "totem_options": {},
+    }
+
+    broadcast = ("--broadcast0" in options) or ("--broadcast1" in options)
+    if broadcast:
+        transport = "udpb"
+        parsed["transport_options"]["broadcast"] = True
+        ring_missing_broadcast = None
+        if "--broadcast0" not in options:
+            ring_missing_broadcast = "0"
+        if "--broadcast1" not in options:
+            ring_missing_broadcast = "1"
+        if ring_missing_broadcast:
+            messages.append({
+                "text": (
+                    "Enabling broadcast for ring {0} as CMAN does not support "
+                    + "broadcast in only one ring"
+                ).format(ring_missing_broadcast),
+                "type": "warning",
+                "forceable": False,
+            })
+    else:
+        transport = "udp"
+        if "--transport" in options:
+            transport = options["--transport"]
+            if transport not in ("udp", "udpu"):
+                messages.append({
+                    "text": "unknown transport '{0}'".format(transport),
+                    "type": "error",
+                    "forceable": True,
+                })
+    parsed["transport_options"]["transport"] = transport
+
+    if transport == "udpu":
+        messages.append({
+            "text": (
+                "Using udpu transport on a CMAN cluster, "
+                + "cluster restart is required after node add or remove"
+            ),
+            "type": "warning",
+            "forceable": False,
+        })
+    if transport == "udpu" and ("--addr0" in options or "--addr1" in options):
+        messages.append({
+            "text": "--addr0 and --addr1 can only be used with --transport=udp",
+            "type": "error",
+            "forceable": False,
+        })
+
+    rrpmode = None
+    if "--rrpmode" in options or "--addr0" in options:
+        rrpmode = "passive"
+        if "--rrpmode" in options:
+            rrpmode = options["--rrpmode"]
+        if rrpmode not in ("passive", "active"):
+            messages.append({
+                "text": "{0} is an unknown RRP mode".format(rrpmode),
+                "type": "error",
+                "forceable": True,
+            })
+        if rrpmode == "active":
+            messages.append({
+                "text": "using a RRP mode of 'active' is not supported or tested",
+                "type": "error",
+                "forceable": True,
+            })
+    if rrpmode:
+        parsed["transport_options"]["rrp_mode"] = rrpmode
+
+    totem_options_names = {
+        "--token": "token",
+        "--join": "join",
+        "--consensus": "consensus",
+        "--miss_count_const": "miss_count_const",
+        "--fail_recv_const": "fail_recv_const",
+    }
+    for opt_name, parsed_name in totem_options_names.items():
+        if opt_name in options:
+            parsed["totem_options"][parsed_name] = options[opt_name]
+
+    if not broadcast:
+        for interface in (0, 1):
+            if "--addr{0}".format(interface) not in options:
+                continue
+            ring_options = {}
+            if "--mcast{0}".format(interface) in options:
+                mcastaddr = options["--mcast{0}".format(interface)]
+            else:
+                mcastaddr = "239.255.{0}.1".format(interface + 1)
+            ring_options["mcastaddr"] = mcastaddr
+            if "--mcastport{0}".format(interface) in options:
+                ring_options["mcastport"] = options[
+                    "--mcastport{0}".format(interface)
+                ]
+            if "--ttl{0}".format(interface) in options:
+                ring_options["ttl"] = options["--ttl{0}".format(interface)]
+            parsed["transport_options"]["rings_options"].append(ring_options)
+
+    ignored_options_names = (
+        "--wait_for_all",
+        "--auto_tie_breaker",
+        "--last_man_standing",
+        "--last_man_standing_window",
+        "--token_coefficient",
+        "--ipv6",
+    )
+    for opt_name in ignored_options_names:
+        if opt_name in options:
+            text = "{0} ignored as it is not supported on CMAN clusters".format(
+                opt_name
+            )
+            messages.append({
+                "text": text,
+                "type": "warning",
+                "forceable": False,
+            })
+
+    return parsed, messages
+
+def cluster_setup_create_corosync_conf(
+    cluster_name, node_list, transport_options, totem_options, quorum_options
+):
+    messages = []
+
+    corosync_conf = corosync_conf_utils.Section("")
+    totem_section = corosync_conf_utils.Section("totem")
+    nodelist_section = corosync_conf_utils.Section("nodelist")
+    quorum_section = corosync_conf_utils.Section("quorum")
+    logging_section = corosync_conf_utils.Section("logging")
+    corosync_conf.add_section(totem_section)
+    corosync_conf.add_section(nodelist_section)
+    corosync_conf.add_section(quorum_section)
+    corosync_conf.add_section(logging_section)
+
+    totem_section.add_attribute("version", "2")
+    totem_section.add_attribute("secauth", "off")
+    totem_section.add_attribute("cluster_name", cluster_name)
+
+    transport_options_names = (
+        "transport",
+        "rrp_mode",
+        "ip_version",
+    )
+    for opt_name in transport_options_names:
+        if opt_name in transport_options:
+            totem_section.add_attribute(opt_name, transport_options[opt_name])
+
+    totem_options_names = (
+        "token",
+        "token_coefficient",
+        "join",
+        "consensus",
+        "miss_count_const",
+        "fail_recv_const",
+    )
+    for opt_name in totem_options_names:
+        if opt_name in totem_options:
+            totem_section.add_attribute(opt_name, totem_options[opt_name])
+
+    transport = None
+    if "transport" in transport_options:
+        transport = transport_options["transport"]
+    if transport == "udp":
+        if "rings_options" in transport_options:
+            for ring_number, ring_options in enumerate(
+                transport_options["rings_options"]
+            ):
                 interface_section = corosync_conf_utils.Section("interface")
                 totem_section.add_section(interface_section)
-                interface_section.add_attribute("ringnumber", interface)
-                interface_section.add_attribute(
-                    "bindnetaddr", utils.pcs_options["--addr" + interface]
-                )
-                if "--broadcast" + interface in utils.pcs_options:
+                interface_section.add_attribute("ringnumber", ring_number)
+                if "addr" in ring_options:
+                    interface_section.add_attribute(
+                        "bindnetaddr", ring_options["addr"]
+                    )
+                if "broadcast" in ring_options and ring_options["broadcast"]:
                     interface_section.add_attribute("broadcast", "yes")
                 else:
-                    if "--mcast" + interface in utils.pcs_options:
-                        mcastaddr = utils.pcs_options["--mcast" + interface]
-                    elif interface == "0":
-                        mcastaddr = "239.255.1.1"
-                    else:
-                        mcastaddr = "239.255.2.1"
-                    interface_section.add_attribute("mcastaddr", mcastaddr)
-                    if "--mcastport" + interface in utils.pcs_options:
-                        mcastport = utils.pcs_options["--mcastport" + interface]
-                    else:
-                        mcastport = "5405"
-                    interface_section.add_attribute("mcastport", mcastport)
-                    if "--ttl" + interface in utils.pcs_options:
-                        interface_section.add_attribute(
-                            "ttl", utils.pcs_options["--ttl" + interface]
+                    for opt_name in ("mcastaddr", "mcastport", "ttl"):
+                        if opt_name in ring_options:
+                            interface_section.add_attribute(
+                                opt_name,
+                                ring_options[opt_name]
+                            )
+
+    for node_id, node_options in enumerate(node_list, 1):
+        node_section = corosync_conf_utils.Section("node")
+        nodelist_section.add_section(node_section)
+        for opt_name in ("ring0_addr", "ring1_addr"):
+            if opt_name in node_options:
+                node_section.add_attribute(opt_name, node_options[opt_name])
+        node_section.add_attribute("nodeid", node_id)
+
+    quorum_section.add_attribute("provider", "corosync_votequorum")
+    quorum_options_names = (
+        "wait_for_all",
+        "auto_tie_breaker",
+        "last_man_standing",
+        "last_man_standing_window",
+    )
+    for opt_name in quorum_options_names:
+        if opt_name in quorum_options:
+            quorum_section.add_attribute(opt_name, quorum_options[opt_name])
+    auto_tie_breaker = (
+        "auto_tie_breaker" in quorum_options
+        and
+        quorum_options["auto_tie_breaker"] == "1"
+    )
+    if len(node_list) == 2 and not auto_tie_breaker:
+        quorum_section.add_attribute("two_node", "1")
+
+    logging_section.add_attribute("to_logfile", "yes")
+    logging_section.add_attribute("logfile", "/var/log/cluster/corosync.log")
+    logging_section.add_attribute("to_syslog", "yes")
+
+    return str(corosync_conf), messages
+
+def cluster_setup_create_cluster_conf(
+    cluster_name, node_list, transport_options, totem_options
+):
+    broadcast = (
+        "broadcast" in transport_options
+        and
+        transport_options["broadcast"]
+    )
+
+    commands = []
+    commands.append({
+        "cmd": ["-i", "--createcluster", cluster_name],
+        "err": "error creating cluster: {0}".format(cluster_name),
+    })
+    commands.append({
+        "cmd": ["-i", "--addfencedev", "pcmk-redirect", "agent=fence_pcmk"],
+        "err": "error creating fence dev: {0}".format(cluster_name),
+    })
+
+    cman_opts = []
+    if "transport" in transport_options:
+        cman_opts.append("transport=" + transport_options["transport"])
+    cman_opts.append("broadcast=" + ("yes" if broadcast else "no"))
+    if len(node_list) == 2:
+        cman_opts.append("two_node=1")
+        cman_opts.append("expected_votes=1")
+    commands.append({
+        "cmd": ["--setcman"] + cman_opts,
+        "err": "error setting cman options",
+    })
+
+    for node_options in node_list:
+        if "ring0_addr" in node_options:
+            ring0_addr = node_options["ring0_addr"]
+            commands.append({
+                "cmd": ["--addnode", ring0_addr],
+                "err": "error adding node: {0}".format(ring0_addr),
+            })
+            if "ring1_addr" in node_options:
+                ring1_addr = node_options["ring1_addr"]
+                commands.append({
+                    "cmd": ["--addalt", ring0_addr, ring1_addr],
+                    "err": (
+                        "error adding alternative address for node: {0}".format(
+                            ring0_addr
                         )
-        if "--ipv6" in utils.pcs_options:
-            totem_section.add_attribute("ip_version", "ipv6")
+                    ),
+                })
+            commands.append({
+                "cmd": ["-i", "--addmethod", "pcmk-method", ring0_addr],
+                "err": "error adding fence method: {0}".format(ring0_addr),
+            })
+            commands.append({
+                "cmd": [
+                    "-i", "--addfenceinst", "pcmk-redirect", ring0_addr,
+                    "pcmk-method", "port=" + ring0_addr
+                ],
+                "err": "error adding fence instance: {0}".format(ring0_addr),
+            })
 
-        for node_id, node_addrs in enumerate(nodes, 1):
-            node0, node1 = utils.parse_multiring_node(node_addrs)
-            node_section = corosync_conf_utils.Section("node")
-            nodelist_section.add_section(node_section)
-            node_section.add_attribute("ring0_addr", node0)
-            if udpu_rrp:
-                node_section.add_attribute("ring1_addr", node1)
-            node_section.add_attribute("nodeid", node_id)
-
-        quorum_section.add_attribute("provider", "corosync_votequorum")
-        if "--wait_for_all" in utils.pcs_options:
-            quorum_section.add_attribute(
-                "wait_for_all", utils.pcs_options["--wait_for_all"]
-            )
-        if "--auto_tie_breaker" in utils.pcs_options:
-            quorum_section.add_attribute(
-                "auto_tie_breaker", utils.pcs_options["--auto_tie_breaker"]
-            )
-            if utils.pcs_options["--auto_tie_breaker"] == "1":
-                auto_tie_breaker = True
-        if "--last_man_standing" in utils.pcs_options:
-            quorum_section.add_attribute(
-                "last_man_standing", utils.pcs_options["--last_man_standing"]
-            )
-        if "--last_man_standing_window" in utils.pcs_options:
-            quorum_section.add_attribute(
-                "last_man_standing_window",
-                utils.pcs_options["--last_man_standing_window"]
-            )
-        if len(nodes) == 2 and not auto_tie_breaker:
-            quorum_section.add_attribute("two_node", "1")
-
-        logging_section.add_attribute("to_logfile", "yes")
-        logging_section.add_attribute("logfile", "/var/log/cluster/corosync.log")
-        logging_section.add_attribute("to_syslog", "yes")
-
-        if returnConfig:
-            return str(corosync_conf)
-        utils.setCorosyncConf(str(corosync_conf))
-
-    else:
-        broadcast = (
-            ("--broadcast0" in utils.pcs_options)
-            or
-            ("--broadcast1" in utils.pcs_options)
-        )
-        if broadcast:
-            transport = "udpb"
-            if "--broadcast0" not in utils.pcs_options:
-                print("Warning: Enabling broadcast for ring 0 "
-                    + "as CMAN does not support broadcast in only one ring")
-            if "--broadcast1" not in utils.pcs_options:
-                print("Warning: Enabling broadcast for ring 1 "
-                    + "as CMAN does not support broadcast in only one ring")
-
-        cluster_conf_location = settings.cluster_conf_file
-        if returnConfig:
-            cc_temp = tempfile.NamedTemporaryFile('w+b', -1, ".pcs")
-            cluster_conf_location = cc_temp.name
-
-        if os.path.exists(cluster_conf_location) and not "--force" in utils.pcs_options and not returnConfig:
-            print "Error: %s already exists, use --force to overwrite" % cluster_conf_location
-            sys.exit(1)
-        output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--createcluster", cluster_name])
-        if retval != 0:
-            print output
-            utils.err("error creating cluster: %s" % cluster_name)
-        output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addfencedev", "pcmk-redirect", "agent=fence_pcmk"])
-        if retval != 0:
-            print output
-            utils.err("error creating fence dev: %s" % cluster_name)
-
-        cman_opts = []
-        cman_opts.append("transport=" + transport)
-        cman_opts.append("broadcast=" + ("yes" if broadcast else "no"))
-        if len(nodes) == 2:
-            cman_opts.append("two_node=1")
-            cman_opts.append("expected_votes=1")
-        output, retval = utils.run(
-            ["/usr/sbin/ccs", "-f", cluster_conf_location, "--setcman"]
-            + cman_opts
-        )
-        if retval != 0:
-            print output
-            utils.err("error setting cman options")
-
-        for node in nodes:
-            if udpu_rrp:
-                node0, node1 = node.split(",")
-            elif "--addr1" in utils.pcs_options:
-                node0 = node
-                node1 = utils.pcs_options["--addr1"]
-            else:
-                node0 = node
-                node1 = None
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", cluster_conf_location, "--addnode", node0])
-            if retval != 0:
-                print output
-                utils.err("error adding node: %s" % node0)
-            if node1:
-                output, retval = utils.run([
-                    "/usr/sbin/ccs", "-f", cluster_conf_location,
-                    "--addalt", node0, node1
-                ])
-                if retval != 0:
-                    print output
-                    utils.err(
-                        "error adding alternative address for node: %s" % node0
-                    )
-            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addmethod", "pcmk-method", node0])
-            if retval != 0:
-                print output
-                utils.err("error adding fence method: %s" % node0)
-            output, retval = utils.run(["/usr/sbin/ccs", "-i", "-f", cluster_conf_location, "--addfenceinst", "pcmk-redirect", node0, "pcmk-method", "port="+node0])
-            if retval != 0:
-                print output
-                utils.err("error adding fence instance: %s" % node0)
-
-        if not broadcast:
-            for interface in ("0", "1"):
-                if "--addr" + interface not in utils.pcs_options:
-                    continue
-                mcastaddr = "239.255.1.1" if interface == "0" else "239.255.2.1"
+    if not broadcast:
+        if "rings_options" in transport_options:
+            for ring_number, ring_options in enumerate(
+                transport_options["rings_options"]
+            ):
                 mcast_options = []
-                if "--mcast" + interface in utils.pcs_options:
-                    mcastaddr = utils.pcs_options["--mcast" + interface]
-                mcast_options.append(mcastaddr)
-                if "--mcastport" + interface in utils.pcs_options:
-                    mcast_options.append(
-                        "port=" + utils.pcs_options["--mcastport" + interface]
-                    )
-                if "--ttl" + interface in utils.pcs_options:
-                    mcast_options.append(
-                        "ttl=" + utils.pcs_options["--ttl" + interface]
-                    )
-                output, retval = utils.run(
-                    ["/usr/sbin/ccs", "-f", cluster_conf_location,
-                    "--setmulticast" if interface == "0" else "--setaltmulticast"]
-                    + mcast_options
-                )
-                if retval != 0:
-                    print output
-                    utils.err("error adding ring%s settings" % interface)
+                if "mcastaddr" in ring_options:
+                    mcast_options.append(ring_options["mcastaddr"])
+                if "mcastport" in ring_options:
+                    mcast_options.append("port=" + ring_options["mcastport"])
+                if "ttl" in ring_options:
+                    mcast_options.append("ttl=" + ring_options["ttl"])
+                if ring_number == 0:
+                    cmd_name = "--setmulticast"
+                else:
+                    cmd_name = "--setaltmulticast"
+                commands.append({
+                    "cmd": [cmd_name] + mcast_options,
+                    "err": "error adding ring{0} settings".format(ring_number),
+                })
 
-        totem_options = []
-        if "--token" in utils.pcs_options:
-            totem_options.append("token=" + utils.pcs_options["--token"])
-        if "--join" in utils.pcs_options:
-            totem_options.append("join=" + utils.pcs_options["--join"])
-        if "--consensus" in utils.pcs_options:
-            totem_options.append(
-                "consensus=" + utils.pcs_options["--consensus"]
+    totem_options_names = (
+        "token",
+        "join",
+        "consensus",
+        "miss_count_const",
+        "fail_recv_const",
+    )
+    totem_cmd_options = []
+    for opt_name in totem_options_names:
+        if opt_name in totem_options:
+            totem_cmd_options.append(
+                "{0}={1}".format(opt_name, totem_options[opt_name])
             )
-        if "--miss_count_const" in utils.pcs_options:
-            totem_options.append(
-                "miss_count_const=" + utils.pcs_options["--miss_count_const"]
-            )
-        if "--fail_recv_const" in utils.pcs_options:
-            totem_options.append(
-                "fail_recv_const=" + utils.pcs_options["--fail_recv_const"]
-            )
-        if rrpmode:
-            totem_options.append("rrp_mode=" + rrpmode)
-        if totem_options:
-            output, retval = utils.run(
-                ["/usr/sbin/ccs", "-f", cluster_conf_location, "--settotem"]
-                + totem_options
-            )
-            if retval != 0:
-                print output
-                utils.err("error setting totem options")
+    if "rrp_mode" in transport_options:
+        totem_cmd_options.append(
+            "rrp_mode={0}".format(transport_options["rrp_mode"])
+        )
+    if totem_cmd_options:
+        commands.append({
+            "cmd": ["--settotem"] + totem_cmd_options,
+            "err": "error setting totem options",
+        })
 
-        if "--wait_for_all" in utils.pcs_options:
-            print "Warning: --wait_for_all"\
-                " ignored as it is not supported on CMAN clusters"
-        if "--auto_tie_breaker" in utils.pcs_options:
-            print "Warning: --auto_tie_breaker"\
-                " ignored as it is not supported on CMAN clusters"
-        if "--last_man_standing" in utils.pcs_options:
-            print "Warning: --last_man_standing"\
-                " ignored as it is not supported on CMAN clusters"
-        if "--last_man_standing_window" in utils.pcs_options:
-            print "Warning: --last_man_standing_window"\
-                " ignored as it is not supported on CMAN clusters"
-        if "--token_coefficient" in utils.pcs_options:
-            print "Warning: --token_coefficient"\
-                " ignored as it is not supported on CMAN clusters"
-        if "--ipv6" in utils.pcs_options:
-            print "Warning: --ipv6"\
-                " ignored as it is not supported on CMAN clusters"
+    messages = []
+    conf_temp = tempfile.NamedTemporaryFile('w+b', -1, ".pcs")
+    conf_path = conf_temp.name
+    cmd_prefix = ["ccs", "-f", conf_path]
+    for cmd_item in commands:
+        output, retval = utils.run(cmd_prefix + cmd_item["cmd"])
+        if retval != 0:
+            if output:
+                messages.append({
+                    "text": output,
+                    "type": "plain",
+                })
+            messages.append({
+                "text": cmd_item["err"],
+                "type": "error",
+                "forceable": False,
+            })
+            conf_temp.close()
+            return "", messages
+    conf_temp.seek(0)
+    cluster_conf = conf_temp.read()
+    conf_temp.close()
+    return cluster_conf, messages
 
-        if returnConfig:
-            cc_temp.seek(0)
-            cluster_conf_data = cc_temp.read()
-            cc_temp.close()
-            return cluster_conf_data
-
-
-    if "--start" in utils.pcs_options:
-        start_cluster([])
-    if "--enable" in utils.pcs_options:
-        enable_cluster([])
+def cluster_setup_print_messages(messages):
+    critical_error = False
+    for msg in messages:
+        if msg["type"] == "error":
+            if msg["forceable"] and "--force" in utils.pcs_options:
+                # Let the user know what may be wrong even when --force is used,
+                # as it may be used for override early errors hiding later
+                # errors otherwise.
+                print("Warning: " + msg["text"])
+                continue
+            text = msg["text"]
+            if msg["forceable"]:
+                text += ", use --force to override"
+            critical_error = True
+            utils.err(text, False)
+        elif msg["type"] == "warning":
+            print("Warning: " + msg["text"])
+        else:
+            print(msg["text"])
+    if critical_error:
+        sys.exit(1)
 
 def get_local_network():
     args = ["/sbin/ip", "route"]
@@ -1305,7 +1544,7 @@ def cluster_uidgid_rhel6(argv, silent_list = False):
 
     if len(argv) == 0:
         found = False
-        output, retval = utils.run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--lsmisc"])
+        output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--lsmisc"])
         if retval != 0:
             utils.err("error running ccs\n" + output)
         lines = output.split('\n')
@@ -1337,11 +1576,11 @@ def cluster_uidgid_rhel6(argv, silent_list = False):
             utils.err("you must set either uid or gid")
 
         if command == "add":
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--setuidgid", "uid="+uid, "gid="+gid])
+            output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--setuidgid", "uid="+uid, "gid="+gid])
             if retval != 0:
                 utils.err("unable to add uidgid\n" + output.rstrip())
         elif command == "rm":
-            output, retval = utils.run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--rmuidgid", "uid="+uid, "gid="+gid])
+            output, retval = utils.run(["ccs", "-f", settings.cluster_conf_file, "--rmuidgid", "uid="+uid, "gid="+gid])
             if retval != 0:
                 utils.err("unable to remove uidgid\n" + output.rstrip())
 

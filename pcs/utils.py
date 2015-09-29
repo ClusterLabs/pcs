@@ -205,13 +205,12 @@ def canAddNodeToCluster(node):
             if "notauthorized" in myout and myout["notauthorized"] == "true":
                 return (False, "unable to authenticate to node")
             if "node_available" in myout and myout["node_available"] == True:
-                return (True,"")
+                return (True, "")
             else:
-                return (False,"node is already in a cluster")
+                return (False, "node is already in a cluster")
         except ValueError:
             return (False, "response parsing error")
-
-    return (False,"error checking node availability")
+    return (False, "error checking node availability: {0}".format(output))
 
 def addLocalNode(node, node_to_add, ring1_addr=None):
     options = {'new_nodename': node_to_add}
@@ -383,14 +382,19 @@ def getCorosyncConfParsed(conf=None, text=None):
         err("Unable to parse corosync.conf: %s" % e)
 
 def setCorosyncConf(corosync_config, conf_file=None):
-    if conf_file == None:
-        conf_file = settings.corosync_conf_file
+    if not conf_file:
+        if is_rhel6():
+            conf_file = settings.cluster_conf_file
+        else:
+            conf_file = settings.corosync_conf_file
     try:
         f = open(conf_file,'w')
         f.write(corosync_config)
         f.close()
-    except IOError:
-        err("unable to write corosync configuration file, try running as root.")
+    except EnvironmentError as e:
+        err("Unable to write {0}, try running as root.\n{1}".format(
+            conf_file, e.strerror
+        ))
 
 def reloadCorosync():
     if is_rhel6():
@@ -487,14 +491,14 @@ def addNodeToClusterConf(node):
         if (existing_node == node0) or (existing_node == node1):
             err("node already exists in cluster.conf")
 
-    output, retval = run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--addnode", node0])
+    output, retval = run(["ccs", "-f", settings.cluster_conf_file, "--addnode", node0])
     if retval != 0:
         print output
         err("error adding node: %s" % node0)
 
     if node1:
         output, retval = run([
-            "/usr/sbin/ccs", "-f", settings.cluster_conf_file,
+            "ccs", "-f", settings.cluster_conf_file,
             "--addalt", node0, node1
         ])
         if retval != 0:
@@ -503,12 +507,12 @@ def addNodeToClusterConf(node):
                 "error adding alternative address for node: %s" % node0
             )
 
-    output, retval = run(["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--addmethod", "pcmk-method", node0])
+    output, retval = run(["ccs", "-i", "-f", settings.cluster_conf_file, "--addmethod", "pcmk-method", node0])
     if retval != 0:
         print output
         err("error adding fence method: %s" % node)
 
-    output, retval = run(["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--addfenceinst", "pcmk-redirect", node0, "pcmk-method", "port="+node0])
+    output, retval = run(["ccs", "-i", "-f", settings.cluster_conf_file, "--addfenceinst", "pcmk-redirect", node0, "pcmk-method", "port="+node0])
     if retval != 0:
         print output
         err("error adding fence instance: %s" % node)
@@ -519,7 +523,7 @@ def addNodeToClusterConf(node):
         cman_options_map.pop("two_node", None)
         cman_options = ["%s=%s" % (n, v) for n, v in cman_options_map.items()]
         output, retval = run(
-            ["/usr/sbin/ccs", "-i", "-f", settings.cluster_conf_file, "--setcman"]
+            ["ccs", "-i", "-f", settings.cluster_conf_file, "--setcman"]
             + cman_options
         )
         if retval != 0:
@@ -556,7 +560,7 @@ def removeNodeFromClusterConf(node):
     if node0 not in nodes:
         return False
 
-    output, retval = run(["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--rmnode", node0])
+    output, retval = run(["ccs", "-f", settings.cluster_conf_file, "--rmnode", node0])
     if retval != 0:
         print output
         err("error removing node: %s" % node)
@@ -567,7 +571,7 @@ def removeNodeFromClusterConf(node):
         cman_options_map.pop("two_node", None)
         cman_options = ["%s=%s" % (n, v) for n, v in cman_options_map.items()]
         output, retval = run(
-            ["/usr/sbin/ccs", "-f", settings.cluster_conf_file, "--setcman"]
+            ["ccs", "-f", settings.cluster_conf_file, "--setcman"]
             + ["two_node=1", "expected_votes=1"]
             + cman_options
         )
@@ -698,9 +702,11 @@ def run(args, ignore_stderr=False, string_for_stdin=None, env_extend=None):
     command = args[0]
     if command[0:3] == "crm" or command in ["cibadmin", "cman_tool", "iso8601"]:
         args[0] = settings.pacemaker_binaries + command
-    if command[0:8] == "corosync":
+    elif command[0:8] == "corosync":
         args[0] = settings.corosync_binaries + command
-        
+    elif command == "ccs":
+        args[0] = settings.ccs_binaries + command
+
     try:
         if "--debug" in pcs_options:
             print "Running: " + " ".join(args)

@@ -1,10 +1,11 @@
-import os,sys
+import os
+import sys
 import shutil
 import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir) 
+sys.path.insert(0, parentdir)
 import utils
-from pcs_test_functions import pcs,ac,isMinimumPacemakerVersion
+from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
 
 empty_cib = "empty-withnodes.xml"
 temp_cib = "temp.xml"
@@ -12,6 +13,10 @@ temp_cib = "temp.xml"
 class ClusterTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
+        if os.path.exists("corosync.conf.tmp"):
+            os.unlink("corosync.conf.tmp")
+        if os.path.exists("cluster.conf.tmp"):
+            os.unlink("cluster.conf.tmp")
 
     def testNodeStandby(self):
         output, returnVal = pcs(temp_cib, "cluster standby rh7-1") 
@@ -67,25 +72,252 @@ class ClusterTest(unittest.TestCase):
         assert r==0
         ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
-    def testCreation(self):
+    def test_cluster_setup_bad_args(self):
+        output, returnVal = pcs(temp_cib, "cluster setup")
+        self.assertEquals(
+            "Error: A cluster name (--name <name>) is required to setup a cluster\n",
+            output
+        )
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "cluster setup --name cname")
+        self.assertTrue(output.startswith("\nUsage: pcs cluster setup..."))
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "cluster setup cname rh7-1 rh7-2")
+        self.assertEquals(
+            "Error: A cluster name (--name <name>) is required to setup a cluster\n",
+            output
+        )
+        self.assertEquals(1, returnVal)
+
+    def test_cluster_setup_hostnames_resolving(self):
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --cluster_conf=cluster.conf.tmp --name cname nonexistant-address"
+        )
+        ac(output, """\
+Error: Unable to resolve all hostnames, use --force to override
+Warning: Unable to resolve hostname: nonexistant-address
+""")
+        self.assertEquals(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --cluster_conf=cluster.conf.tmp --name cname nonexistant-address --force"
+        )
+        ac(output, """\
+Warning: Unable to resolve hostname: nonexistant-address
+""")
+        self.assertEquals(0, returnVal)
+
+    def test_cluster_setup_file_exists(self):
         if utils.is_rhel6():
             return
 
-        output, returnVal = pcs(temp_cib, "cluster") 
-        assert returnVal == 1
-        assert output.startswith("\nUsage: pcs cluster [commands]...")
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
+        corosync_conf = """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
 
-        output, returnVal = pcs(temp_cib, "cluster setup --local --corosync_conf=corosync.conf.tmp cname rh7-1 rh7-2")
-        assert returnVal == 1
-        assert output.startswith("Error: A cluster name (--name <name>) is required to setup a cluster\n")
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
 
-# Setup a 2 node cluster and make sure the two node config is set, then add a
-# node and make sure that it's unset, then remove a node and make sure it's
-# set again
-        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2")
-        ac (output,"")
-        assert returnVal == 0
+    node {
+        ring0_addr: rh7-2
+        nodeid: 2
+    }
+}
 
+quorum {
+    provider: corosync_votequorum
+    two_node: 1
+}
+
+logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
+    to_syslog: yes
+}
+"""
+        with open("corosync.conf.tmp") as f:
+            data = f.read()
+            ac(data, corosync_conf)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-2 rh7-3"
+        )
+        self.assertEquals("""\
+Error: corosync.conf.tmp already exists, use --force to overwrite
+""",
+            output
+        )
+        self.assertEquals(1, returnVal)
+        with open("corosync.conf.tmp") as f:
+            data = f.read()
+            ac(data, corosync_conf)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-2 rh7-3"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
+        with open("corosync.conf.tmp") as f:
+            data = f.read()
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: udpu
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-2
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-3
+        nodeid: 2
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    two_node: 1
+}
+
+logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
+    to_syslog: yes
+}
+""")
+
+    def test_cluster_setup_file_exists_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
+        cluster_conf = """\
+<cluster config_version="9" name="cname">
+  <fence_daemon/>
+  <clusternodes>
+    <clusternode name="rh7-1" nodeid="1">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-1"/>
+        </method>
+      </fence>
+    </clusternode>
+    <clusternode name="rh7-2" nodeid="2">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-2"/>
+        </method>
+      </fence>
+    </clusternode>
+  </clusternodes>
+  <cman broadcast="no" expected_votes="1" transport="udp" two_node="1"/>
+  <fencedevices>
+    <fencedevice agent="fence_pcmk" name="pcmk-redirect"/>
+  </fencedevices>
+  <rm>
+    <failoverdomains/>
+    <resources/>
+  </rm>
+</cluster>
+"""
+        with open("cluster.conf.tmp") as f:
+            data = f.read()
+            ac(data, cluster_conf)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-2 rh7-3"
+        )
+        self.assertEquals("""\
+Error: cluster.conf.tmp already exists, use --force to overwrite
+""",
+            output
+        )
+        self.assertEquals(1, returnVal)
+        with open("cluster.conf.tmp") as f:
+            data = f.read()
+            ac(data, cluster_conf)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-2 rh7-3"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
+        with open("cluster.conf.tmp") as f:
+            data = f.read()
+            ac(data, """\
+<cluster config_version="9" name="cname">
+  <fence_daemon/>
+  <clusternodes>
+    <clusternode name="rh7-2" nodeid="1">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-2"/>
+        </method>
+      </fence>
+    </clusternode>
+    <clusternode name="rh7-3" nodeid="2">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-3"/>
+        </method>
+      </fence>
+    </clusternode>
+  </clusternodes>
+  <cman broadcast="no" expected_votes="1" transport="udp" two_node="1"/>
+  <fencedevices>
+    <fencedevice agent="fence_pcmk" name="pcmk-redirect"/>
+  </fencedevices>
+  <rm>
+    <failoverdomains/>
+    <resources/>
+  </rm>
+</cluster>
+""")
+
+    def test_cluster_setup_2_nodes_no_atb(self):
+        # Setup a 2 node cluster and make sure the two node config is set, then
+        # add a node and make sure that it's unset, then remove a node and make
+        # sure it's set again.
+        if utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -120,10 +352,12 @@ logging {
 }
 """)
 
-        output, returnVal = pcs(temp_cib, "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3")
-        ac(output,"rh7-3: successfully added!\n")
-        assert returnVal == 0
-
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3"
+        )
+        self.assertEquals("rh7-3: successfully added!\n", output)
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -162,10 +396,12 @@ logging {
 }
 """)
 
-        output, returnVal = pcs(temp_cib, "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3")
-        assert returnVal == 0
-        assert output == "rh7-3: successfully removed!\n",output
-
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3"
+        )
+        self.assertEquals(0, returnVal)
+        self.assertEquals("rh7-3: successfully removed!\n", output)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -200,9 +436,12 @@ logging {
 }
 """)
 
-        o,r = pcs(temp_cib, "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3,192.168.1.3")
-        assert r == 0
-        assert o == "rh7-3,192.168.1.3: successfully added!\n",[o]
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3,192.168.1.3"
+        )
+        self.assertEquals("rh7-3,192.168.1.3: successfully added!\n", output)
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -242,9 +481,12 @@ logging {
 }
 """)
 
-        o,r = pcs(temp_cib, "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-2")
-        assert r == 0
-        assert o == "rh7-2: successfully removed!\n",[o]
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-2"
+        )
+        self.assertEquals(0, returnVal)
+        self.assertEquals("rh7-2: successfully removed!\n", output)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -280,9 +522,12 @@ logging {
 }
 """)
 
-        o,r = pcs(temp_cib, "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3,192.168.1.3")
-        assert r == 0
-        assert o == "rh7-3,192.168.1.3: successfully removed!\n",[o]
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3,192.168.1.3"
+        )
+        self.assertEquals(0, returnVal)
+        self.assertEquals("rh7-3,192.168.1.3: successfully removed!\n", output)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -311,13 +556,19 @@ logging {
 }
 """)
 
-# Setup a 2 node cluster with auto_tie_breaker and make sure the two node config
-# is NOT set, then add a node, then remove a node and make sure it is still 
-# NOT set
-        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --auto_tie_breaker=1")
-        ac (output,"")
-        assert returnVal == 0
+    def test_cluster_setup_2_nodes_with_atb(self):
+        # Setup a 2 node cluster with auto_tie_breaker and make sure the two
+        # node config is NOT set, then add a node, then remove a node and make
+        # sure it is still NOT set.
+        if utils.is_rhel6():
+            return
 
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --auto_tie_breaker=1"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -352,10 +603,12 @@ logging {
 }
 """)
 
-        output, returnVal = pcs(temp_cib, "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3")
-        ac(output,"rh7-3: successfully added!\n")
-        assert returnVal == 0
-
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3"
+        )
+        self.assertEquals(output, "rh7-3: successfully added!\n")
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -395,10 +648,12 @@ logging {
 }
 """)
 
-        output, returnVal = pcs(temp_cib, "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3")
-        assert returnVal == 0
-        assert output == "rh7-3: successfully removed!\n",output
-
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3"
+        )
+        self.assertEquals("rh7-3: successfully removed!\n", output)
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -433,11 +688,17 @@ logging {
 }
 """)
 
-# Setup a 3 node cluster
-        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 rh7-3")
-        ac(output,"")
-        assert returnVal == 0
+    def test_cluster_setup_3_nodes(self):
+        # Setup a 3 node cluster
+        if utils.is_rhel6():
+            return
 
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 rh7-3"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -476,15 +737,17 @@ logging {
 }
 """)
 
-## Test to make transport is set
-        output, returnVal = pcs(temp_cib, "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --transport udp")
-        ac(output,"Error: corosync.conf.tmp already exists, use --force to overwrite\n")
-        assert returnVal == 1
+    def test_cluster_setup_transport(self):
+        # Test to make transport is set
+        if utils.is_rhel6():
+            return
 
-        output, returnVal = pcs(temp_cib, "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --transport udp")
-        ac(output,"")
-        assert returnVal == 0
-
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --transport udp"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -519,36 +782,24 @@ logging {
 }
 """)
 
-    def testCreationRhel6(self):
+    def test_cluster_setup_2_nodes_rhel6(self):
+        # Setup a 2 node cluster and make sure the two node config is set, then
+        # add a node and make sure that it's unset, then remove a node and make
+        # sure it's set again.
+        # There is no auto-tie-breaker in CMAN so we don't need the non-atb
+        # variant as we do for corosync.
         if not utils.is_rhel6():
             return
 
-        output, returnVal = pcs(temp_cib, "cluster") 
-        self.assertTrue(output.startswith("\nUsage: pcs cluster [commands]..."))
-        self.assertEquals(returnVal, 1)
-
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf=cluster.conf.tmp cname rh7-1 rh7-2"
-        )
-        ac(output, """\
-Error: A cluster name (--name <name>) is required to setup a cluster
-""")
-        self.assertEquals(returnVal, 1)
-
-        # Setup a 2 node cluster and make sure the two node config is set, then
-        # add a node and make sure that it's unset, then remove a node and make
-        # sure it's set again
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2"
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2"
         )
         ac(output, "")
         self.assertEquals(returnVal, 0)
-
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -584,10 +835,9 @@ Error: A cluster name (--name <name>) is required to setup a cluster
         )
         ac(output, "rh7-3: successfully added!\n")
         self.assertEquals(returnVal, 0)
-
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="13" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -633,7 +883,7 @@ Error: A cluster name (--name <name>) is required to setup a cluster
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="15" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -672,7 +922,7 @@ Error: A cluster name (--name <name>) is required to setup a cluster
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="20" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -719,7 +969,7 @@ Error: A cluster name (--name <name>) is required to setup a cluster
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="22" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -759,7 +1009,7 @@ Error: A cluster name (--name <name>) is required to setup a cluster
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="23" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -782,16 +1032,20 @@ Error: A cluster name (--name <name>) is required to setup a cluster
 </cluster>
 """)
 
+    def test_cluster_setup_3_nodes_rhel6(self):
+        # Setup a 3 node cluster
+        if not utils.is_rhel6():
+            return
+
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf2.tmp --name cname rh7-1 rh7-2 rh7-3"
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 rh7-3"
         )
         ac(output, "")
         self.assertEquals(returnVal, 0)
-
-        with open("cluster.conf2.tmp") as f:
+        with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="12" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -828,29 +1082,22 @@ Error: A cluster name (--name <name>) is required to setup a cluster
 </cluster>
 """)
 
+    def test_cluster_setup_transport_rhel6(self):
         # Test to make transport is set
+        if not utils.is_rhel6():
+            return
+
         output, returnVal = pcs(
             temp_cib,
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --transport udpu"
         )
         ac(output, """\
 Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
-Error: cluster.conf.tmp already exists, use --force to overwrite
-""")
-        self.assertEquals(returnVal, 1)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --transport udpu"
-        )
-        ac(output, """\
-Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
 """)
         self.assertEquals(returnVal, 0)
-
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -880,20 +1127,23 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 </cluster>
 """)
 
-    def testIPV6(self):
+    def test_cluster_setup_ipv6(self):
         if utils.is_rhel6():
             return
 
-        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cnam rh7-1 rh7-2 --ipv6")
-        ac(o,"")
-        assert r == 0
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --ipv6"
+        )
+        self.assertEquals("", output)
+        self.assertEquals(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
 totem {
     version: 2
     secauth: off
-    cluster_name: cnam
+    cluster_name: cname
     transport: udpu
     ip_version: ipv6
 }
@@ -922,23 +1172,22 @@ logging {
 }
 """)
 
-    def testIPV6Rhel6(self):
+    def test_cluster_setup_ipv6_rhel6(self):
         if not utils.is_rhel6():
             return
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cnam rh7-1 rh7-2 --ipv6"
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --ipv6"
         )
         ac(output, """\
 Warning: --ipv6 ignored as it is not supported on CMAN clusters
 """)
         self.assertEquals(returnVal, 0)
-
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
-<cluster config_version="9" name="cnam">
+            ac(data, """\
+<cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
     <clusternode name="rh7-1" nodeid="1">
@@ -967,12 +1216,19 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
 </cluster>
 """)
 
-
-    def testRRPConfig(self):
+    def test_cluster_setup_rrp_passive_udp_addr01(self):
         if utils.is_rhel6():
             return
 
-        o,r = pcs("cluster setup --transport udp --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr0 1.1.2.0")
+        assert r == 1
+        ac(o, "Error: --addr0 can only be used once\n")
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp")
+        assert r == 1
+        ac("Error: blah is an unknown RRP mode, use --force to override\n", o)
+
+        o,r = pcs("cluster setup --transport udp --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
@@ -1024,7 +1280,11 @@ logging {
 }
 """)
 
-        o,r = pcs("cluster setup --transport udp --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9")
+    def test_cluster_setup_rrp_passive_udp_addr01_mcast01(self):
+        if utils.is_rhel6():
+            return
+
+        o,r = pcs("cluster setup --transport udp --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
@@ -1076,7 +1336,11 @@ logging {
 }
 """)
 
-        o,r = pcs("cluster setup --transport udp --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0")
+    def test_cluster_setup_rrp_passive_udp_addr01_mcastport01(self):
+        if utils.is_rhel6():
+            return
+
+        o,r = pcs("cluster setup --transport udp --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
@@ -1128,7 +1392,11 @@ logging {
 }
 """)
 
-        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp")
+    def test_cluster_setup_rrp_passive_udp_addr01_ttl01(self):
+        if utils.is_rhel6():
+            return
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
@@ -1182,8 +1450,16 @@ logging {
 }
 """)
 
+    def test_cluster_setup_rrp_active_udp_addr01(self):
+        if utils.is_rhel6():
+            return
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp")
+        ac(o, "Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n")
+        assert r == 1
+
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp")
-        ac(o,"")
+        ac(o, "Warning: using a RRP mode of 'active' is not supported or tested\n")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
@@ -1234,8 +1510,16 @@ logging {
 }
 """)
 
+    def test_cluster_setup_rrp_active_udp_broadcast_addr01(self):
+        if utils.is_rhel6():
+            return
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp")
+        ac(o, "Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n")
+        assert r == 1
+
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp")
-        ac(o,"")
+        ac(o, "Warning: using a RRP mode of 'active' is not supported or tested\n")
         assert r == 0
         with open("corosync.conf.tmp") as f:
             data = f.read()
@@ -1285,11 +1569,23 @@ logging {
 }
 """)
 
-        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2,192.168.99.3")
+    def test_cluster_setup_rrp_udpu(self):
+        if utils.is_rhel6():
+            return
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2,192.168.99.3")
         ac(o,"Error: You cannot specify more than two addresses for a node: rh7-2,192.168.99.2,192.168.99.3\n")
         assert r == 1
 
-        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2")
+        ac(o,"Error: if one node is configured for RRP, all nodes must be configured for RRP\n")
+        assert r == 1
+
+        o,r = pcs("cluster setup --force --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1")
+        ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
+        assert r == 1
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
@@ -1329,28 +1625,28 @@ logging {
 }
 """)
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2")
-        ac(o,"Error: if one node is configured for RRP, all nodes must configured for RRP\n")
-        assert r == 1
+    def test_cluster_setup_quorum_options(self):
+        if utils.is_rhel6():
+            return
 
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr0 1.1.2.0")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2")
+        ac(o, "Error: '2' is not a valid value for --wait_for_all, use 0 or 1\n")
         assert r == 1
-        ac(o, "Error: --addr0 can only be used once\n")
-
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname nonexistant-address")
-        assert r == 1
-        ac(o,"Error: Unable to resolve all hostnames (use --force to override).\nWarning: Unable to resolve hostname: nonexistant-address\n")
-
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname nonexistant-address --force")
-        assert r == 0
-        ac(o,"Warning: Unable to resolve hostname: nonexistant-address\n")
 
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2")
         ac(o, "Error: '2' is not a valid value for --wait_for_all, use 0 or 1\n")
         assert r == 1
 
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --auto_tie_breaker=2")
+        ac(o, "Error: '2' is not a valid value for --auto_tie_breaker, use 0 or 1\n")
+        assert r == 1
+
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --auto_tie_breaker=2")
         ac(o, "Error: '2' is not a valid value for --auto_tie_breaker, use 0 or 1\n")
+        assert r == 1
+
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --last_man_standing=2")
+        ac(o, "Error: '2' is not a valid value for --last_man_standing, use 0 or 1\n")
         assert r == 1
 
         o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --last_man_standing=2")
@@ -1397,42 +1693,37 @@ logging {
 }
 """)
 
-        o,r = pcs("cluster setup --force --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1")
-        assert r == 1
-        ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
-
-        os.remove("corosync.conf.tmp")
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp")
-        assert r == 1
-        ac("Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n",o)
-
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp")
-        assert r == 1
-        ac("Error: blah is an unknown RRP mode, use --force to override\n", o)
-
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp")
-        assert r == 0
-        ac("", o)
-
-        os.remove("corosync.conf.tmp")
-        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp")
-        assert r == 0
-        ac("", o)
-
-    def testRRPConfigRhel6(self):
+    def test_cluster_setup_rrp_passive_udp_addr01_rhel6(self):
         if not utils.is_rhel6():
             return
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0"
+            "cluster setup --local --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr0 1.1.2.0"
+        )
+        ac(output, "Error: --addr0 can only be used once\n")
+        self.assertEquals(returnVal, 1)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
+        )
+        ac(output, """\
+Error: blah is an unknown RRP mode, use --force to override
+Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+""")
+        self.assertEquals(returnVal, 1)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --transport udp --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0"
         )
         ac(output, "")
         self.assertEquals(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -1468,16 +1759,20 @@ logging {
 </cluster>
 """)
 
+    def test_cluster_setup_rrp_passive_udp_addr01_mcast01_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
+            "cluster setup --transport udp --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
         )
         ac(output, "")
         self.assertEquals(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -1513,16 +1808,20 @@ logging {
 </cluster>
 """)
 
+    def test_cluster_setup_rrp_passive_udp_addr01_mcastport01_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
+            "cluster setup --transport udp --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
         )
         ac(output, "")
         self.assertEquals(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -1558,16 +1857,20 @@ logging {
 </cluster>
 """)
 
+    def test_cluster_setup_rrp_passive_udp_addr01_ttl01_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
         )
         ac(output, "")
         self.assertEquals(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -1603,16 +1906,32 @@ logging {
 </cluster>
 """)
 
+    def test_cluster_setup_rrp_active_udp_addr01_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+        )
+        ac(
+            output,
+            "Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n"
+        )
+        self.assertEquals(returnVal, 1)
+
         output, returnVal = pcs(
             temp_cib,
             "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
         )
-        ac(output, "")
+        ac(
+            output,
+            "Warning: using a RRP mode of 'active' is not supported or tested\n"
+        )
         self.assertEquals(returnVal, 0)
-
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -1648,18 +1967,32 @@ logging {
 </cluster>
 """)
 
+    def test_cluster_setup_rrp_active_udp_broadcast_addr01_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+        )
+        ac(output, """\
+Error: using a RRP mode of 'active' is not supported or tested, use --force to override
+Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+""")
+        self.assertEquals(returnVal, 1)
+
         output, returnVal = pcs(
             temp_cib,
             "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
         )
         ac(output, """\
 Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+Warning: using a RRP mode of 'active' is not supported or tested
 """)
         self.assertEquals(returnVal, 0)
-
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="12" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -1692,9 +2025,13 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
 </cluster>
 """)
 
+    def test_cluster_setup_rrp_udpu_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2,192.168.99.3"
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2,192.168.99.3"
         )
         ac(output, """\
 Error: You cannot specify more than two addresses for a node: rh7-2,192.168.99.2,192.168.99.3
@@ -1703,14 +2040,32 @@ Error: You cannot specify more than two addresses for a node: rh7-2,192.168.99.2
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2"
+            "cluster setup --local --name cname rh7-1,192.168.99.1 rh7-2"
+        )
+        ac(output, """\
+Error: if one node is configured for RRP, all nodes must be configured for RRP
+""")
+        self.assertEquals(returnVal, 1)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --force --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1 --transport=udpu"
+        )
+        ac(output, """\
+Error: --addr0 and --addr1 can only be used with --transport=udp
+Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
+""")
+        self.assertEquals(returnVal, 1)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2"
         )
         ac(output, "")
         self.assertEquals(returnVal, 0)
-
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="12" name="cname">
   <fence_daemon/>
   <clusternodes>
@@ -1743,43 +2098,76 @@ Error: You cannot specify more than two addresses for a node: rh7-2,192.168.99.2
 </cluster>
 """)
 
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --local --name cname rh7-1,192.168.99.1 rh7-2"
-        )
-        ac(output, """\
-Error: if one node is configured for RRP, all nodes must configured for RRP
-""")
-        self.assertEquals(returnVal, 1)
+    def test_cluster_setup_broadcast_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
+        cluster_conf = """\
+<cluster config_version="12" name="cname">
+  <fence_daemon/>
+  <clusternodes>
+    <clusternode name="rh7-1" nodeid="1">
+      <altname name="1.1.2.0"/>
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-1"/>
+        </method>
+      </fence>
+    </clusternode>
+    <clusternode name="rh7-2" nodeid="2">
+      <altname name="1.1.2.0"/>
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-2"/>
+        </method>
+      </fence>
+    </clusternode>
+  </clusternodes>
+  <cman broadcast="yes" expected_votes="1" transport="udpb" two_node="1"/>
+  <fencedevices>
+    <fencedevice agent="fence_pcmk" name="pcmk-redirect"/>
+  </fencedevices>
+  <rm>
+    <failoverdomains/>
+    <resources/>
+  </rm>
+  <totem rrp_mode="passive"/>
+</cluster>
+"""
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr0 1.1.2.0"
-        )
-        ac(output, "Error: --addr0 can only be used once\n")
-        self.assertEquals(returnVal, 1)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --local --name cname nonexistant-address"
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp"
         )
         ac(output, """\
-Error: Unable to resolve all hostnames (use --force to override).\nWarning: Unable to resolve hostname: nonexistant-address
-""")
-        self.assertEquals(returnVal, 1)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname nonexistant-address --force"
-        )
-        ac(output, """\
-Warning: Unable to resolve hostname: nonexistant-address
+Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 """)
         self.assertEquals(returnVal, 0)
+        with open("cluster.conf.tmp") as f:
+            data = f.read()
+            ac(data, cluster_conf)
+
+        os.remove("cluster.conf.tmp")
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5"
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp"
+        )
+        ac(output, """\
+Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+""")
+        self.assertEquals(returnVal, 0)
+        with open("cluster.conf.tmp") as f:
+            data = f.read()
+            ac(data, cluster_conf)
+
+    def test_cluster_setup_quorum_options_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5"
         )
         ac(output, """\
 Warning: --wait_for_all ignored as it is not supported on CMAN clusters
@@ -1788,10 +2176,9 @@ Warning: --last_man_standing ignored as it is not supported on CMAN clusters
 Warning: --last_man_standing_window ignored as it is not supported on CMAN clusters
 """)
         self.assertEquals(returnVal, 0)
-
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="9" name="test99">
   <fence_daemon/>
   <clusternodes>
@@ -1821,59 +2208,11 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
 </cluster>
 """)
 
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --force --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1 --transport=udpu"
-        )
-        ac(output, """\
-Error: --addr0 and --addr1 can only be used with --transport=udp
-Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
-""")
-        self.assertEquals(returnVal, 1)
-
-        os.remove("cluster.conf.tmp")
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
-        )
-        ac(output, """\
-Error: using a RRP mode of 'active' is not supported or tested, use --force to override
-""")
-        self.assertEquals(returnVal, 1)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
-        )
-        ac(output, """\
-Error: blah is an unknown RRP mode, use --force to override
-""")
-        self.assertEquals(returnVal, 1)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp"
-        )
-        ac(output, """\
-Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
-""")
-        self.assertEquals(returnVal, 0)
-
-        os.remove("cluster.conf.tmp")
-        output, returnVal = pcs(
-            temp_cib,
-            "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp"
-        )
-        ac(output, """\
-Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
-""")
-        self.assertEquals(returnVal, 0)
-
-    def testTotemOptions(self):
+    def test_cluster_setup_totem_options(self):
         if utils.is_rhel6():
             return
 
-        o,r = pcs("cluster setup --force --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005")
+        o,r = pcs("cluster setup --local --corosync_conf=corosync.conf.tmp --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005")
         ac(o,"")
         assert r == 0
         with open("corosync.conf.tmp") as f:
@@ -1916,20 +2255,20 @@ logging {
 }
 """)
 
-    def testTotemOptionsRhel6(self):
+    def test_cluster_setup_totem_options_rhel6(self):
         if not utils.is_rhel6():
             return
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005")
+            "cluster setup --local --cluster_conf=cluster.conf.tmp --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005")
         ac(output, """\
 Warning: --token_coefficient ignored as it is not supported on CMAN clusters
 """)
         self.assertEquals(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
-        ac(data, """\
+            ac(data, """\
 <cluster config_version="10" name="test99">
   <fence_daemon/>
   <clusternodes>
@@ -1963,6 +2302,7 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
     def testUIDGID(self):
         if utils.is_rhel6():
             os.system("cp cluster.conf cluster.conf.tmp")
+
             o,r = pcs("cluster uidgid --cluster_conf=cluster.conf.tmp")
             assert r == 0
             ac(o, "No uidgids configured in cluster.conf\n")
