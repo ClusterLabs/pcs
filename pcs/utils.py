@@ -32,6 +32,14 @@ fence_bin = settings.fence_agent_binaries
 
 score_regexp = re.compile(r'^[+-]?((INFINITY)|(\d+))$')
 
+def simple_cache(func):
+    cache = {}
+    def wrapper(*args):
+        if args not in cache:
+            cache[args] = func()
+        return cache[args]
+    return wrapper
+
 def getValidateWithVersion(dom):
     cib = dom.getElementsByTagName("cib")
     if len(cib) != 1:
@@ -1936,20 +1944,19 @@ def is_systemctl():
             return True
     return False
 
+@simple_cache
 def is_rhel6():
-    try:
-        issue = open('/etc/system-release').read()
-    except IOError as e:
+    # Checking corosync version works in most cases and supports non-rhel
+    # distributions as well as running (manually compiled) corosync2 on rhel6.
+    # - corosync2 does not support cman at all
+    # - corosync1 runs with cman on rhel6
+    # - corosync1 can be used without cman, but we don't support it anyways
+    # - corosync2 is the default result if errors occur
+    output, retval = run(["corosync", "-v"])
+    if retval != 0:
         return False
-
-# Since there are so many RHEL 6 variants, this check looks for the first
-# number in /etc/system-release followed by a period and number, and if it's 6.N,
-# it returns true.
-    match = re.search(r'(\d)\.\d', issue)
-    if match and match.group(1) == "6":
-        return True
-    else:
-        return False
+    match = re.search(r"version\D+(\d+)", output)
+    return match and match.group(1) == "1"
 
 def err(errorText, exit_after_error=True):
     sys.stderr.write("Error: %s\n" % errorText)

@@ -851,7 +851,7 @@ def get_corosync_version()
     stdout = []
   end
   if retval == 0
-    match = /(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
+    match = /version\D+(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
     if match
       return match[1..3].collect { | x | x.to_i }
     end
@@ -915,6 +915,17 @@ def get_cman_version()
     match = /(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
     if match
       return match[1..3].collect { | x | x.to_i }
+    end
+  end
+  return nil
+end
+
+def get_rhel_version()
+  if File.exists?('/etc/system-release')
+    release = File.open('/etc/system-release').read
+    match = /(\d+)\.(\d+)/.match(release)
+    if match
+      return match[1, 2].collect{ |x| x.to_i}
     end
   end
   return nil
