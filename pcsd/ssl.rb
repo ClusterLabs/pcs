@@ -58,12 +58,6 @@ webrick_options = {
   :SSLOptions         => OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3,
 }
 
-if is_systemctl
-  webrick_options[:StartCallback] = Proc.new {
-    `python2 /usr/lib/pcsd/systemd-notify-fix.py`
-  }
-end
-
 server = ::Rack::Handler::WEBrick
 trap(:INT) do
   puts "Shutting down (INT)"

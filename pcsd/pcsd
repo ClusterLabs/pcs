@@ -21,32 +21,49 @@
 . /etc/rc.d/init.d/functions
 
 exec="/usr/bin/ruby"
+params=" -C/var/lib/pcsd -I/usr/lib/pcsd -- /usr/lib/pcsd/ssl.rb"
 prog="pcsd"
 config="/var/lib/pcsd"
+pidfile="/var/run/pcsd.pid"
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
 lockfile=/var/lock/subsys/$prog
 
 start() {
-    [ -x $exec ] || exit 5
+    [ -x $exec ] || return 5
+    retval=0
     echo -n $"Starting $prog: "
-    export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
-    cd /var/lib/pcsd
-    daemon $exec -I/usr/lib/pcsd /usr/lib/pcsd/ssl.rb
-    # if not running, start it up here, usually something like "daemon $exec"
-    retval=$?
+    if status $prog > /dev/null 2>&1; then
+        success
+    else
+        export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
+        $exec $params > /dev/null 2>&1 &
+        echo $! > $pidfile
+        if status $prog > /dev/null 2>&1; then
+            touch $lockfile
+            success
+        else
+            failure
+            retval=1
+        fi
+    fi
     echo
-    [ $retval -eq 0 ] && touch $lockfile
     return $retval
 }
 
 stop() {
     echo -n $"Stopping $prog: "
-    # stop it here, often "killproc $prog"
+    ! status $prog > /dev/null 2>&1 && return
+    killproc $prog
     retval=$?
+    if [ $retval -eq 0 ]; then
+        rm -f $lockfile
+        success
+    else
+        failure
+    fi
     echo
-    [ $retval -eq 0 ] && rm -f $lockfile
     return $retval
 }
 
@@ -104,4 +121,3 @@ case "$1" in
         exit 2
 esac
 exit $?
-
