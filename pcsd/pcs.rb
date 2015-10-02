@@ -966,14 +966,7 @@ def run_cmd_options(session, options, *args)
   out = ""
   errout = ""
 
-  ENV['CIB_user'] = session[:username]
-  # when running 'id -Gn' to get the groups they are not defined yet
-  ENV['CIB_user_groups'] = (session[:usergroups] || []).join(' ')
-  $logger.info(
-    "CIB USER: #{ENV['CIB_user'].to_s}, groups: #{ENV['CIB_user_groups']}"
-  )
-
-  status = Open4::popen4(*args) do |pid, stdin, stdout, stderr|
+  proc_block = proc { |pid, stdin, stdout, stderr|
     if options and options.key?('stdin')
       stdin.puts(options['stdin'])
       stdin.close()
@@ -982,8 +975,23 @@ def run_cmd_options(session, options, *args)
     errout = stderr.readlines()
     duration = Time.now - start
     $logger.debug(out)
+    $logger.debug(errout)
     $logger.debug("Duration: " + duration.to_s + "s")
-  end
+  }
+  cib_user = session[:username]
+  # when running 'id -Gn' to get the groups they are not defined yet
+  cib_groups = (session[:usergroups] || []).join(' ')
+  $logger.info("CIB USER: #{cib_user}, groups: #{cib_groups}")
+  # Open4.popen4 reimplementation which sets ENV in a child process prior
+  # to running an external process by exec
+  status = Open4::do_popen(proc_block, :init) { |ps_read, ps_write|
+    ps_read.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+    ps_write.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+    ENV['CIB_user'] = cib_user
+    ENV['CIB_user_groups'] = cib_groups
+    exec(*args)
+  }
+
   retval = status.exitstatus
   $logger.info("Return Value: " + retval.to_s)
   return out, errout, retval
