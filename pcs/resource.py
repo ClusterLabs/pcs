@@ -2349,11 +2349,15 @@ def resource_manage(argv, set_managed):
             if retval != 0:
                 utils.err("error attempting to unmanage resource: %s" % output)
         else:
-            xpath = "(//primitive|//group)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']" 
+            # Remove the meta attribute from the id specified
+            xpath = "(//primitive|//group|//clone|//master)[@id='"+resource+"']/meta_attributes/nvpair[@name='is-managed']"
+            utils.run(["cibadmin", "-D", "--xpath", xpath])
+            # Remove the meta attribute from the parent of the id specified, if the parent is a clone or master
+            xpath = "(//master|//clone)[primitive[contains(@id, '"+resource+"')]]/meta_attributes/nvpair[@name='is-managed']"
             utils.run(["cibadmin", "-D", "--xpath", xpath])
             if isGroup:
                 for res in res_to_manage:
-                    xpath = "(//primitive|//group)[@id='"+res+"']/meta_attributes/nvpair[@name='is-managed']" 
+                    xpath = "(//primitive|//group|//clone|//master)[@id='"+res+"']/meta_attributes/nvpair[@name='is-managed']"
                     utils.run(["cibadmin", "-D", "--xpath", xpath])
 
 def is_managed(resource_id):

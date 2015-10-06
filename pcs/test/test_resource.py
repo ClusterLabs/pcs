@@ -1678,6 +1678,114 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
         assert output == ' Group: DGroup\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n',[output]
 
+    def testCloneMasterManage(self):
+# is-managed on the primitive, attempting manage on primitive
+        output, returnVal = pcs(temp_cib, "resource create clone-unmanage Dummy --clone")
+        assert returnVal == 0
+        ac (output,'')
+
+        output, returnVal = pcs(temp_cib, "resource update clone-unmanage meta is-managed=false")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+
+        output, returnVal = pcs(temp_cib, "resource manage clone-unmanage")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        output, returnVal = pcs(temp_cib, "resource delete clone-unmanage")
+
+# is-managed on the clone, attempting manage on primitive
+        output, returnVal = pcs(temp_cib, "resource create clone-unmanage Dummy --clone")
+        ac (output,'')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "resource update clone-unmanage-clone meta is-managed=false")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, ' Clone: clone-unmanage-clone\n  Meta Attrs: is-managed=false \n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+
+        output, returnVal = pcs(temp_cib, "resource manage clone-unmanage")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        pcs(temp_cib, "resource delete clone-unmanage")
+
+# is-managed on the primitive, attempting manage on clone
+        output, returnVal = pcs(temp_cib, "resource create clone-unmanage Dummy --clone")
+        assert returnVal == 0
+        ac (output,'')
+
+        output, returnVal = pcs(temp_cib, "resource update clone-unmanage meta is-managed=false")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+
+        output, returnVal = pcs(temp_cib, "resource manage clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        pcs(temp_cib, "resource delete clone-unmanage")
+
+# is-managed on the clone, attempting manage on clone
+        output, returnVal = pcs(temp_cib, "resource create clone-unmanage Dummy --clone")
+        assert returnVal == 0
+        ac (output,'')
+
+        output, returnVal = pcs(temp_cib, "resource update clone-unmanage-clone meta is-managed=false")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, ' Clone: clone-unmanage-clone\n  Meta Attrs: is-managed=false \n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+
+        output, returnVal = pcs(temp_cib, "resource manage clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
+        assert returnVal == 0
+        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+
+        output, returnVal = pcs(temp_cib, "resource create master-unmanage Stateful --master --no-default-ops")
+        ac (output,'')
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "resource update master-unmanage-master meta is-managed=false")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show master-unmanage-master")
+        assert returnVal == 0
+        ac (output, ' Master: master-unmanage-master\n  Meta Attrs: is-managed=false \n  Resource: master-unmanage (class=ocf provider=pacemaker type=Stateful)\n   Operations: monitor interval=60s (master-unmanage-monitor-interval-60s)\n')
+
+        output, returnVal = pcs(temp_cib, "resource manage master-unmanage")
+        assert returnVal == 0
+        ac (output, '')
+
+        output, returnVal = pcs(temp_cib, "resource show master-unmanage-master")
+        assert returnVal == 0
+        ac (output, ' Master: master-unmanage-master\n  Resource: master-unmanage (class=ocf provider=pacemaker type=Stateful)\n   Operations: monitor interval=60s (master-unmanage-monitor-interval-60s)\n')
+
     def testGroupManage(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group AG")
         ac(o,"")
