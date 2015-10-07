@@ -2351,7 +2351,7 @@ def resource_manage(argv, set_managed):
         else:
             # Remove the meta attribute from the id specified (and all children)
             xpath = "(//primitive|//group|//clone|//master)[@id='"+resource+"']//meta_attributes/nvpair[@name='is-managed']"
-            utils.run(["cibadmin", "-D", "--xpath", xpath])
+            utils.run(["cibadmin", "-d", "--xpath", xpath, "--force"])
             # Remove the meta attribute from the parent of the id specified, if the parent is a clone or master
             xpath = "(//master|//clone)[(group|primitive)[@id='"+resource+"']]/meta_attributes/nvpair[@name='is-managed']"
             utils.run(["cibadmin", "-D", "--xpath", xpath])
