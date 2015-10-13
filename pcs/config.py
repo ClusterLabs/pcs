@@ -58,6 +58,17 @@ def config_cmd(argv):
             sys.exit(1)
     elif sub_cmd == "import-cman":
         config_import_cman(argv)
+    elif sub_cmd == "export":
+        if not argv:
+            usage.config(["export"])
+            sys.exit(1)
+        elif argv[0] == "pcs-commands":
+            config_export_pcs_commands(argv[1:])
+        elif argv[0] == "pcs-commands-verbose":
+            config_export_pcs_commands(argv[1:], True)
+        else:
+            usage.config(["export"])
+            sys.exit(1)
     else:
         usage.config()
         sys.exit(1)
@@ -476,7 +487,7 @@ def config_import_cman(argv):
     # prepare convertor options
     cluster_conf = settings.cluster_conf_file
     dry_run_output = None
-    rhel6 = utils.is_rhel6()
+    output_format = "cluster.conf" if utils.is_rhel6() else "corosync.conf"
     invalid_args = False
     for arg in argv:
         if "=" in arg:
@@ -485,19 +496,24 @@ def config_import_cman(argv):
                 cluster_conf = value
             elif name == "output":
                 dry_run_output = value
-                if not dry_run_output.endswith(".tar.bz2"):
-                    dry_run_output += ".tar.bz2"
             elif name == "output-format":
-                if value == "corosync.conf":
-                    rhel6 = False
-                elif value == "cluster.conf":
-                    rhel6 = True
+                if value in (
+                    "cluster.conf", "corosync.conf",
+                    "pcs-commands", "pcs-commands-verbose",
+                ):
+                    output_format = value
                 else:
                     invalid_args = True
             else:
                 invalid_args = True
         else:
             invalid_args = True
+    if (
+        output_format not in ("pcs-commands", "pcs-commands-verbose")
+        and
+        not dry_run_output.endswith(".tar.bz2")
+    ):
+        dry_run_output += ".tar.bz2"
     if invalid_args or not dry_run_output:
         usage.config(["import-cman"])
         sys.exit(1)
@@ -511,6 +527,8 @@ def config_import_cman(argv):
         "nocheck": force,
         "batch": True,
         "sys": "linux",
+        # Make it work on RHEL6 as well for sure
+        "color": "always" if sys.stdout.isatty() else "never"
     }
     if interactive:
         if "EDITOR" not in os.environ:
@@ -519,43 +537,49 @@ def config_import_cman(argv):
         clufter_args["editor"] = os.environ["EDITOR"]
     if debug:
         logging.getLogger("clufter").setLevel(logging.DEBUG)
-    if rhel6:
+    if output_format == "cluster.conf":
         clufter_args["ccs_pcmk"] = {"passin": "bytestring"}
         clufter_args["dist"] = "redhat,6.7,Santiago"
-    else:
+        cmd_name = "ccs2pcs-flatiron"
+    elif output_format == "corosync.conf":
         clufter_args["coro"] = {"passin": "struct"}
         clufter_args["dist"] = "redhat,7.1,Maipo"
+        cmd_name = "ccs2pcs-needle"
+    elif output_format in ("pcs-commands", "pcs-commands-verbose"):
+        clufter_args["output"] = {"passin": "bytestring"}
+        clufter_args["start_wait"] = "60"
+        clufter_args["tmp_cib"] = "tmp-cib.xml"
+        clufter_args["force"] = force
+        clufter_args["text_width"] = "80"
+        clufter_args["silent"] = True
+        clufter_args["noguidance"] = True
+        if output_format == "pcs-commands-verbose":
+            clufter_args["text_width"] = "-1"
+            clufter_args["silent"] = False
+            clufter_args["noguidance"] = False
+        cmd_name = "ccs2pcscmd-flatiron"
     clufter_args_obj = type('ClufterOptions', (object, ), clufter_args)
 
     # run convertor
-    try:
-        cmd_name = "ccs2pcs-flatiron" if rhel6 else "ccs2pcs-needle"
-        result = None
-        cmd_manager = clufter.command_manager.CommandManager.init_lookup(
-            cmd_name
-        )
-        result = cmd_manager.commands[cmd_name](clufter_args_obj)
-        error_message = ""
-    except Exception as e:
-        error_message = str(e)
-    if error_message or result != 0:
-        hints = []
-        hints.append("--interactive to solve the issues manually")
-        if not debug:
-            hints.append("--debug to get more information")
-        if not force:
-            hints.append("--force to override")
-        hints_string = "\nTry using %s." % ", ".join(hints) if hints else ""
-        sys.stderr.write(
+    run_clufter(
+        cmd_name, clufter_args_obj, debug, force,
             "Error: unable to import cluster configuration"
-            + (": %s" % error_message if error_message else "")
-            + hints_string
-            + "\n"
+    )
+
+    # save commands
+    if output_format in ("pcs-commands", "pcs-commands-verbose"):
+        ok, message = utils.write_file(
+            dry_run_output,
+            clufter_args_obj.output["passout"]
         )
-        sys.exit(1 if result is None else result)
+        if not ok:
+            utils.err(message)
+        return
 
     # put new config files into tarball
-    file_list = config_backup_path_list(force_rhel6=rhel6)
+    file_list = config_backup_path_list(
+        force_rhel6=(output_format == "cluster.conf")
+    )
     for file_item in file_list.values():
         file_item["attrs"]["uname"] = "root"
         file_item["attrs"]["gname"] = "root"
@@ -570,7 +594,7 @@ def config_import_cman(argv):
             tarball, clufter_args_obj.cib["passout"], "cib.xml",
             **file_list["cib.xml"]["attrs"]
         )
-        if rhel6:
+        if output_format == "cluster.conf":
             utils.tar_add_file_data(
                 tarball, clufter_args_obj.ccs_pcmk["passout"], "cluster.conf",
                 **file_list["cluster.conf"]["attrs"]
@@ -623,4 +647,104 @@ def config_import_cman(argv):
     else:
         config_restore_remote(None, tar_data)
     tar_data.close()
+
+def config_export_pcs_commands(argv, verbose=False):
+    if no_clufter:
+        utils.err(
+            "Unable to perform export due to missing python-clufter package"
+        )
+
+    # parse options
+    debug = "--debug" in utils.pcs_options
+    force = "--force" in utils.pcs_options
+    interactive = "--interactive" in utils.pcs_options
+    invalid_args = False
+    output_file = None
+    for arg in argv:
+        if "=" in arg:
+            name, value = arg.split("=", 1)
+            if name == "output":
+                output_file = value
+            else:
+                invalid_args = True
+        else:
+            invalid_args = True
+    if invalid_args or not output_file:
+        usage.config(["export", "pcs-commands"])
+        sys.exit(1)
+
+    # prepare convertor options
+    clufter_args = {
+        "nocheck": force,
+        "batch": True,
+        "sys": "linux",
+        # Make it work on RHEL6 as well for sure
+        "color": "always" if sys.stdout.isatty() else "never",
+        "coro": settings.corosync_conf_file,
+        "ccs": settings.cluster_conf_file,
+        "output": {"passin": "bytestring"},
+        "start_wait": "60",
+        "tmp_cib": "tmp-cib.xml",
+        "force": force,
+        "text_width": "80",
+        "silent": True,
+        "noguidance": True,
+    }
+    if interactive:
+        if "EDITOR" not in os.environ:
+            utils.err("$EDITOR environment variable is not set")
+        clufter_args["batch"] = False
+        clufter_args["editor"] = os.environ["EDITOR"]
+    if debug:
+        logging.getLogger("clufter").setLevel(logging.DEBUG)
+    if utils.usefile:
+        clufter_args["input"] = os.path.abspath(utils.filename)
+    else:
+        clufter_args["input"] = ("bytestring", utils.get_cib())
+    if verbose:
+        clufter_args["text_width"] = "-1"
+        clufter_args["silent"] = False
+        clufter_args["noguidance"] = False
+    clufter_args_obj = type('ClufterOptions', (object, ), clufter_args)
+    cmd_name = "pcs2pcscmd-flatiron" if utils.is_rhel6() else "pcs2pcscmd-needle"
+
+    # run convertor
+    run_clufter(
+        cmd_name, clufter_args_obj, debug, force,
+        "Error: unable to export cluster configuration"
+    )
+
+    # save commands
+    ok, message = utils.write_file(
+        output_file,
+        clufter_args_obj.output["passout"]
+    )
+    if not ok:
+        utils.err(message)
+
+def run_clufter(cmd_name, cmd_args, debug, force, err_prefix):
+    try:
+        result = None
+        cmd_manager = clufter.command_manager.CommandManager.init_lookup(
+            cmd_name
+        )
+        result = cmd_manager.commands[cmd_name](cmd_args)
+        error_message = ""
+    except Exception as e:
+        error_message = str(e)
+    if error_message or result != 0:
+        hints = []
+        hints.append("--interactive to solve the issues manually")
+        if not debug:
+            hints.append("--debug to get more information")
+        if not force:
+            hints.append("--force to override")
+        hints_string = "\nTry using %s." % ", ".join(hints) if hints else ""
+        sys.stderr.write(
+            err_prefix
+            + (": %s" % error_message if error_message else "")
+            + hints_string
+            + "\n"
+        )
+        sys.exit(1 if result is None else result)
 

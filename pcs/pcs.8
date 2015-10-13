@@ -528,8 +528,14 @@ Show specified configuration checkpoint.
 checkpoint restore <checkpoint_number>
 Restore cluster configuration to specified checkpoint.
 .TP
-import-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] [output-format=corosync.conf|cluster.conf]
+import\-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] [output\-format=corosync.conf|cluster.conf]
 Converts CMAN cluster configuration to Pacemaker cluster configuration.  Converted configuration will be saved to 'output' file.  To send the configuration to the cluster nodes the 'pcs config restore' command can be used.  If \fB\-\-interactive\fR is specified you will be prompted to solve incompatibilities manually.  If no input is specified /etc/cluster/cluster.conf will be used.  You can force to create output containing either cluster.conf or corosync.conf using the output-format option.
+.TP
+import\-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] output\-format=pcs-commands|pcs-commands-verbose
+Converts CMAN cluster configuration to a list of pcs commands which recreates the same cluster as Pacemaker cluster when executed.  Commands will be saved to 'output' file.  For other options see above.
+.TP
+export pcs\-commands|pcs\-commands\-verbose output=<filename>
+Creates a list of pcs commands which upon execution recreates the current cluster running on this node.  Commands will be saved to 'output' file.  Use pcs\-commands to get a simple list of commands, whereas pcs\-commands\-verbose creates a list including comments and debug messages.
 .SS "pcsd"
 .TP
 certkey <certificate file> <key file>

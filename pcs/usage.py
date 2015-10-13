@@ -1158,6 +1158,19 @@ Commands:
         /etc/cluster/cluster.conf will be used.  You can force to create output
         containing either cluster.conf or corosync.conf using the output-format
         option.
+
+    import-cman output=<filename> [input=<filename>] [--interactive]
+            output-format=pcs-commands|pcs-commands-verbose
+        Converts CMAN cluster configuration to a list of pcs commands which
+        recreates the same cluster as Pacemaker cluster when executed.  Commands
+        will be saved to 'output' file.  For other options see above.
+
+    export pcs-commands|pcs-commands-verbose output=<filename>
+        Creates a list of pcs commands which upon execution recreates
+        the current cluster running on this node.  Commands will be saved
+        to 'output' file.  Use pcs-commands to get a simple list of commands,
+        whereas pcs-commands-verbose creates a list including comments and debug
+        messages.
 """
     if pout:
         print sub_usage(args, output)
