@@ -698,9 +698,9 @@ def config_export_pcs_commands(argv, verbose=False):
     if debug:
         logging.getLogger("clufter").setLevel(logging.DEBUG)
     if utils.usefile:
-        clufter_args["input"] = os.path.abspath(utils.filename)
+        clufter_args["cib"] = os.path.abspath(utils.filename)
     else:
-        clufter_args["input"] = ("bytestring", utils.get_cib())
+        clufter_args["cib"] = ("bytestring", utils.get_cib())
     if verbose:
         clufter_args["text_width"] = "-1"
         clufter_args["silent"] = False
