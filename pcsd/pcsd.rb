@@ -432,7 +432,7 @@ if not DISABLE_GUI
     end
     @resource_agents = get_resource_agents_avail(session)
     @stonith_agents = get_stonith_agents_avail(session)
-    @config_options = getConfigOptions2(session, @cluster_name)
+    @config_options = getConfigOptions2(session, @nodes)
 
     erb :nodes, :layout => :main
   end
@@ -725,7 +725,7 @@ else
 
 end
 
-def getConfigOptions2(session, cluster_name)
+def getConfigOptions2(session, cluster_nodes)
   config_options = {}
   general_page = []
 #  general_page << ConfigOption.new("Cluster Delay Time", "cluster-delay",  "int", 4, "Seconds") 
@@ -763,7 +763,7 @@ If checked, the cluster will refuse to start resources unless one or more STONIT
   allconfigoptions = []
   config_options.each { |i,k| k.each { |j| allconfigoptions << j } }
   ConfigOption.getDefaultValues(allconfigoptions)
-  ConfigOption.loadValues(session, allconfigoptions, cluster_name)
+  ConfigOption.loadValues(session, allconfigoptions, cluster_nodes)
   return config_options
 end
 
@@ -788,16 +788,8 @@ class ConfigOption
     @desc = desc
   end
 
-  def self.loadValues(session, cos, cluster_name, node_list=nil)
-    if node_list
-      code, output = send_nodes_request_with_token(
-        session, node_list, "get_cib"
-      )
-    else
-      code, output = send_cluster_request_with_token(
-        session, cluster_name, "get_cib"
-      )
-    end
+  def self.loadValues(session, cos, node_list)
+    code, output = send_nodes_request_with_token(session, node_list, "get_cib")
     $logger.info(code)
     if code != 200
       $logger.info "Error: unable to load cib"

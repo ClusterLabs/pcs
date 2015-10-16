@@ -1921,9 +1921,13 @@ def update_cluster_settings(params, request, session)
   binary_settings = []
   changed_settings = []
   old_settings = {}
-  getConfigOptions2(PCSAuth.getSuperuserSession(), $cluster_name).values().flatten().each { |opt|
+  getConfigOptions2(
+    PCSAuth.getSuperuserSession(), get_nodes().flatten()
+  ).values().flatten().each { |opt|
+    binary_settings << opt.configname if "check" == opt.type
+    # if we don't know current value of an option, consider it changed
+    next if opt.value.nil?
     if "check" == opt.type
-      binary_settings << opt.configname
       old_settings[opt.configname] = is_cib_true(opt.value)
     else
       old_settings[opt.configname] = opt.value
@@ -1931,6 +1935,7 @@ def update_cluster_settings(params, request, session)
   }
   settings.each { |key, val|
     new_val = binary_settings.include?(key) ? is_cib_true(val) : val
+    # if we don't know current value of an option, consider it changed
     if (not old_settings.key?(key)) or (old_settings[key] != new_val)
       changed_settings << key.downcase()
     end
@@ -1940,7 +1945,7 @@ def update_cluster_settings(params, request, session)
       return 403, 'Permission denied'
     end
   end
-  if changed_settings.count { |x| x != 'enable-acl'} > 0
+  if changed_settings.count { |x| x != 'enable-acl' } > 0
     if not allowed_for_local_cluster(session, Permissions::WRITE)
       return 403, 'Permission denied'
     end
