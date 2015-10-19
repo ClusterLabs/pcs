@@ -257,7 +257,7 @@ cib-push <filename> [scope=<scope> | \fB\-\-config\fR]
 Push the raw xml from <filename> to the CIB (Cluster Information Base).  You can obtain the CIB by running the 'pcs cluster cib' command, which is recommended first step when you want to perform desired modifications (pcs \fB\-f\fR <command>) for the one-off push.  Specify scope to push a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to push the whole CIB or be warned in the case of outdated CIB.  WARNING: the selected scope of the CIB will be overwritten by the current content of the specified file.
 .TP
 cib\-upgrade
-Upgrade the cib to the latest version
+Upgrade the CIB to conform to the latest version of the document schema
 .TP
 edit [scope=<scope> | \fB\-\-config\fR]
 Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving.  Specify scope to edit a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to edit the whole CIB or be warned in the case of outdated CIB.
@@ -287,7 +287,7 @@ destroy [\fB\-\-all\fR]
 Permanently destroy the cluster on the current node, killing all corosync/pacemaker processes removing all cib files and the corosync.conf file.  Using \fB\-\-all\fR will attempt to destroy the cluster on all nodes configure in the corosync.conf file.  WARNING: This command permantly removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster.
 .TP
 verify [\fB\-V\fR] [filename]
-Checks the pacemaker configuration (cib) for syntax and common conceptual errors.  If no filename is specified the check is performmed on the currently running cluster.  If \fB\-V\fR is used more verbose output will be printed
+Checks the pacemaker configuration (cib) for syntax and common conceptual errors.  If no filename is specified the check is performed on the currently running cluster.  If \fB\-V\fR is used more verbose output will be printed
 .TP
 report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D" H:M:S"]] dest
 Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours.
@@ -302,7 +302,7 @@ Show list of all available stonith agents (if filter is provided then only stoni
 describe <stonith agent>
 Show options for specified stonith agent
 .TP
-create <stonith id> <stonith device type> [stonith device options]
+create <stonith id> <stonith device type> [stonith device options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...]
 Create stonith device with specified type and options
 .TP
 update <stonith id> [stonith device options]
@@ -446,7 +446,7 @@ colocation show [\fB\-\-full\fR]
 List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 colocation add [master|slave] <source resource id> with [master|slave] <target resource id> [score] [options] [id=constraint-id]
-Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score force <source resource> to run (or not run) with <target resource>. (score defaults to "INFINITY") A role can be master or slave (if no role is specified, it defaults to 'started').
+Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY").  A role can be master or slave (if no role is specified, it defaults to 'started').
 .TP
 colocation set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]] [setoptions [constraint_options]]
 Create a colocation constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Available constraint_options are id, score, score-attribute and score-attribute-mangle.

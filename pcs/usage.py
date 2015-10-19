@@ -148,7 +148,7 @@ def sub_generate_bash_completion():
     print sub_gen_code(1,tree,[])
     print """
     if [ $COMP_CWORD -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config" -- $cur) )
+        COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config pcsd" -- $cur) )
     fi
     return 0
 
@@ -171,7 +171,7 @@ def generate_tree(usage_txt):
 
         if ignore == True:
             continue
-        
+
         if re.match("^    \w",l):
             args = l.split()
             arg = args.pop(0)
@@ -649,7 +649,7 @@ Commands:
         be able to host resources), if no node or options are specified the
         current node will be put into standby mode, if --all is specified all
         nodes will be put into standby mode.
-    
+
     unstandby [<node>] | --all
         Remove node from standby mode (the node specified will now be able to
         host resources), if no node or options are specified the current node
@@ -659,7 +659,7 @@ Commands:
     remote-node add <hostname> <resource id> [options]
         Enables the specified resource as a remote-node resource on the
         specified hostname (hostname should be the same as 'uname -n')
-    
+
     remote-node remove <hostname>
         Disables any resources configured to be remote-node resource on the
         specified hostname (hostname should be the same as 'uname -n')
@@ -707,7 +707,7 @@ Commands:
         current content of the specified file.
 
     cib-upgrade
-        Upgrade the cib to the latest version
+        Upgrade the CIB to conform to the latest version of the document schema
 
     edit [scope=<scope> | --config]
         Edit the cib in the editor specified by the $EDITOR environment
@@ -761,7 +761,7 @@ Commands:
     verify [-V] [filename]
         Checks the pacemaker configuration (cib) for syntax and common
         conceptual errors.  If no filename is specified the check is
-        performmed on the currently running cluster.  If -V is used
+        performed on the currently running cluster.  If -V is used
         more verbose output will be printed
 
     report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D" H:M:S"]] dest
@@ -794,11 +794,13 @@ Commands:
         Show options for specified stonith agent
 
     create <stonith id> <stonith device type> [stonith device options]
+           [op <operation action> <operation options> [<operation action>
+           <operation options>]...] [meta <meta options>...]
         Create stonith device with specified type and options
 
     update <stonith id> [stonith device options]
         Add/Change options to specified stonith id
-        
+
     delete <stonith id>
         Remove stonith id from configuration
 
@@ -973,8 +975,8 @@ Commands:
         determined <target resource> should run.  Positive values of score
         mean the resources should be run on the same node, negative values
         mean the resources should not be run on the same node.  Specifying
-        'INFINITY' (or '-INFINITY') for the score force <source resource> to
-        run (or not run) with <target resource>. (score defaults to "INFINITY")
+        'INFINITY' (or '-INFINITY') for the score forces <source resource> to
+        run (or not run) with <target resource> (score defaults to "INFINITY").
         A role can be master or slave (if no role is specified, it defaults to
         'started').
 
@@ -1195,7 +1197,7 @@ Commands:
        Removes all system tokens which allow pcs/pcsd on the current system to
        authenticate with remote pcs/pcsd instances and vice-versa.  After this
        command is run this node will need to be re-authenticated with other
-       nodes (using 'pcs cluster auth').  Using '--local' only removes tokens
+       nodes (using 'pcs cluster auth').  Using --local only removes tokens
        used by local pcs (and pcsd if root) to connect to other pcsd instances,
        using --remote clears authentication tokens used by remote systems to
        connect to the local pcsd instance.
