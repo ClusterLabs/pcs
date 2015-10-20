@@ -267,6 +267,8 @@ class TestConfigSyncControll < Test::Unit::TestCase
     file.close()
     @thread_interval_default = 60
     @thread_interval_minimum = 20
+    @file_backup_count_default = 50
+    @file_backup_count_minimum = 0
   end
 
   def test_bad_file()
@@ -400,13 +402,13 @@ class TestConfigSyncControll < Test::Unit::TestCase
 
     assert(Cfgsync::ConfigSyncControl.sync_thread_interval=(0))
     assert_equal(
-      @thread_interval_default,
+      @thread_interval_minimum,
       Cfgsync::ConfigSyncControl.sync_thread_interval()
     )
 
     assert(Cfgsync::ConfigSyncControl.sync_thread_interval=(-100))
     assert_equal(
-      @thread_interval_default,
+      @thread_interval_minimum,
       Cfgsync::ConfigSyncControl.sync_thread_interval()
     )
 
@@ -414,6 +416,46 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert_equal(
       @thread_interval_default,
       Cfgsync::ConfigSyncControl.sync_thread_interval()
+    )
+  end
+
+  def test_file_backup_count()
+    assert_equal(
+      @file_backup_count_default,
+      Cfgsync::ConfigSyncControl.file_backup_count()
+    )
+
+    count = @file_backup_count_default + @file_backup_count_minimum
+    assert(Cfgsync::ConfigSyncControl.file_backup_count=(count))
+    assert_equal(
+      count,
+      Cfgsync::ConfigSyncControl.file_backup_count()
+    )
+
+    assert(Cfgsync::ConfigSyncControl.file_backup_count=(
+      @file_backup_count_minimum / 2
+    ))
+    assert_equal(
+      @file_backup_count_minimum,
+      Cfgsync::ConfigSyncControl.file_backup_count()
+    )
+
+    assert(Cfgsync::ConfigSyncControl.file_backup_count=(0))
+    assert_equal(
+      @file_backup_count_minimum,
+      Cfgsync::ConfigSyncControl.file_backup_count()
+    )
+
+    assert(Cfgsync::ConfigSyncControl.file_backup_count=(-100))
+    assert_equal(
+      @file_backup_count_minimum,
+      Cfgsync::ConfigSyncControl.file_backup_count()
+    )
+
+    assert(Cfgsync::ConfigSyncControl.file_backup_count=('abcd'))
+    assert_equal(
+      @file_backup_count_default,
+      Cfgsync::ConfigSyncControl.file_backup_count()
     )
   end
 end

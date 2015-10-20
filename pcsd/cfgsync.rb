@@ -72,8 +72,32 @@ module Cfgsync
       begin
         FileUtils.cp(@file_path, @file_path + "." + Time.now.to_i.to_s)
       rescue => e
-        $logger.debug "Exception trying to backup config '#{self.name}': #{e}"
+        $logger.debug("Exception when backing up config '#{self.name}': #{e}")
+        return
       end
+      begin
+        self.remove_old_backups()
+      rescue => e
+        $logger.debug("Exception when removing old backup files: #{e}")
+      end
+    end
+
+    def self.remove_old_backups()
+      backup_files = []
+      Dir.glob(@file_path + '.*') { |path|
+        if File.file?(path)
+          match = path.match(/^#{@file_path}\.(\d+)$/)
+          if match
+            backup_files << [match[1].to_i(), path]
+          end
+        end
+      }
+      backup_count = ConfigSyncControl::file_backup_count()
+      to_delete = backup_files.sort()[0..-(backup_count + 1)]
+      return if not to_delete
+      to_delete.each { |timestamp, path|
+        File.delete(path)
+      }
     end
 
     def text()
@@ -253,6 +277,8 @@ module Cfgsync
   class ConfigSyncControl
     @thread_interval_default = 60
     @thread_interval_minimum = 20
+    @file_backup_count_default = 50
+    @file_backup_count_minimum = 0
 
     def self.sync_thread_allowed?()
       data = self.load()
@@ -272,23 +298,16 @@ module Cfgsync
     end
 
     def self.sync_thread_interval()
-      data = self.load()
-      if data['thread_interval']
-        interval = data['thread_interval'].to_i()
-        if interval > 0 # thread_interval is a number
-          if interval > @thread_interval_minimum
-            return interval
-          else
-            return @thread_interval_minimum
-          end
-        end
-      end
-      return @thread_interval_default
+      return self.get_integer_value(
+        self.load()['thread_interval'],
+        @thread_interval_default,
+        @thread_interval_minimum
+      )
     end
 
     def self.sync_thread_interval=(seconds)
       data = self.load()
-      data['thread_interval'] = seconds.to_i()
+      data['thread_interval'] = seconds
       return self.save(data)
     end
 
@@ -328,6 +347,20 @@ module Cfgsync
       return true
     end
 
+    def self.file_backup_count()
+      return self.get_integer_value(
+        self.load()['file_backup_count'],
+        @file_backup_count_default,
+        @file_backup_count_minimum
+      )
+    end
+
+    def self.file_backup_count=(count)
+      data = self.load()
+      data['file_backup_count'] = count
+      return self.save(data)
+    end
+
     protected
 
     def self.sync_thread_paused_data?(data)
@@ -340,6 +373,17 @@ module Cfgsync
 
     def self.sync_thread_disabled_data?(data)
       return data['thread_disabled']
+    end
+
+    def self.get_integer_value(value, default, minimum)
+      return default if value.nil?
+      if value.respond_to?(:match)
+        return default if not value.match(/\A\s*[+-]?\d+\Z/)
+      end
+      return default if not value.respond_to?(:to_i)
+      numeric = value.to_i()
+      return minimum if numeric < minimum
+      return numeric
     end
 
     def self.load()
