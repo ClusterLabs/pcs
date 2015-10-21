@@ -10,6 +10,7 @@ HEARTBEAT_AGENTS_DIR = "/usr/lib/ocf/resource.d/heartbeat/"
 PACEMAKER_AGENTS_DIR = "/usr/lib/ocf/resource.d/pacemaker/"
 NAGIOS_METADATA_DIR = '/usr/share/pacemaker/nagios/plugins-metadata/'
 PENGINE = "/usr/libexec/pacemaker/pengine"
+CIB_BINARY = '/usr/libexec/pacemaker/cib'
 CRM_MON = "/usr/sbin/crm_mon"
 CRM_NODE = "/usr/sbin/crm_node"
 CRM_ATTRIBUTE = "/usr/sbin/crm_attribute"

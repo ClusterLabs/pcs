@@ -812,14 +812,19 @@ class ConfigOption
   end
 
   def self.getDefaultValues(cos)
-    metadata = `#{PENGINE} metadata`
-    doc = REXML::Document.new(metadata)
-
-    cos.each { |co|
-      doc.elements.each("resource-agent/parameters/parameter[@name='#{co.configname}']/content") { |e|
-        co.default = e.attributes["default"]
-        break
-      }
+    [PENGINE, CIB_BINARY].each { |command|
+      metadata = `#{command} metadata`
+      begin
+        doc = REXML::Document.new(metadata)
+        cos.each { |co|
+          doc.elements.each("resource-agent/parameters/parameter[@name='#{co.configname}']/content") { |e|
+            co.default = e.attributes["default"]
+            break
+          }
+        }
+      rescue
+        $logger.error("Failed to parse #{command} metadata")
+      end
     }
   end
 
