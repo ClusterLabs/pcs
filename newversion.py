@@ -2,8 +2,12 @@
 
 import sys
 import os
+import locale
+import datetime
 sys.path.append("pcs")
 import settings
+
+locale.setlocale(locale.LC_ALL, "C")
 
 # Get the current version, increment by 1, verify changes, git commit & tag
 pcs_version_split = settings.pcs_version.split('.')
@@ -14,8 +18,13 @@ print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' setup.py
 print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/settings.py")
 print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/settings.py.i386-linux-gnu.debian")
 print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/settings.py.x86_64-linux-gnu.debian")
-print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/pcs.8")
 print os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcsd/bootstrap.rb")
+
+manpage_head = '.TH PCS "8" "{date}" "pcs {version}" "System Administration Utilities"'.format(
+    date=datetime.date.today().strftime('%B %Y'),
+    version=new_version
+)
+print os.system("sed -i '1c " + manpage_head + "' pcs/pcs.8")
 
 print os.system("git diff")
 print "Look good? (y/n)"
