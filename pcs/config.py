@@ -511,7 +511,7 @@ def config_import_cman(argv):
     if (
         output_format not in ("pcs-commands", "pcs-commands-verbose")
         and
-        not dry_run_output.endswith(".tar.bz2")
+        (dry_run_output and not dry_run_output.endswith(".tar.bz2"))
     ):
         dry_run_output += ".tar.bz2"
     if invalid_args or not dry_run_output:
