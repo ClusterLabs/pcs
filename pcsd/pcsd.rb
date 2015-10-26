@@ -24,6 +24,8 @@ Dir["wizards/*.rb"].each {|file| require file}
 
 use Rack::CommonLogger
 
+set :app_file, __FILE__
+
 def generate_cookie_secret
   return SecureRandom.hex(30)
 end
