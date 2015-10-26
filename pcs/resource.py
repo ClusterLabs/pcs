@@ -11,6 +11,7 @@ import time
 import usage
 import utils
 import constraint
+import stonith
 
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
@@ -1542,9 +1543,7 @@ def resource_clone_master_remove(argv):
     ):
         resource_group_rm(dom, clone_child.getAttribute("id"), [resource_id])
     else:
-        constraint.remove_constraints_containing(
-            clone.getAttribute("id"), passed_dom=dom
-        )
+        remove_resource_references(dom, clone.getAttribute("id"))
         clone.parentNode.appendChild(resource)
         clone.parentNode.removeChild(clone)
     utils.replace_cib_configuration(dom)
@@ -1713,7 +1712,9 @@ def resource_master_remove(argv):
         constraints_element = constraints_element[0]
         constraints = []
         for resource_id in resources_to_cleanup:
-            constraint.remove_constraints_containing(resource_id, constraints_element)
+            remove_resource_references(
+                dom, resource_id, constraints_element=constraints_element
+            )
     master.parentNode.removeChild(master)
     print "Removing Master - " + master_id
     utils.replace_cib_configuration(dom)
@@ -1809,7 +1810,9 @@ def resource_remove(resource_id, output = True):
             utils.err("\n".join(msg).strip())
         print "Stopped"
 
-    constraint.remove_constraints_containing(resource_id,output)
+    utils.replace_cib_configuration(
+        remove_resource_references(utils.get_cib_dom(), resource_id, output)
+    )
     dom = utils.get_cib_dom()
     resource_el = utils.dom_get_resource(dom, resource_id)
     if resource_el:
@@ -1845,20 +1848,34 @@ def resource_remove(resource_id, output = True):
             msg = "and group and M/S"
             to_remove_dom = parseString(top_master).getElementsByTagName("master")
             to_remove_id = to_remove_dom[0].getAttribute("id")
-            constraint.remove_constraints_containing(to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id"))
+            utils.replace_cib_configuration(
+                remove_resource_references(
+                    utils.get_cib_dom(),
+                    to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id")
+                )
+            )
         elif top_clone != "":
             to_remove_xpath = top_clone_xpath
             msg = "and group and clone"
             to_remove_dom = parseString(top_clone).getElementsByTagName("clone")
             to_remove_id = to_remove_dom[0].getAttribute("id")
-            constraint.remove_constraints_containing(to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id"))
+            utils.replace_cib_configuration(
+                remove_resource_references(
+                    utils.get_cib_dom(),
+                    to_remove_dom[0].getElementsByTagName("group")[0].getAttribute("id")
+                )
+            )
         else:
             to_remove_xpath = group_xpath
             msg = "and group"
             to_remove_dom = parseString(group).getElementsByTagName("group")
             to_remove_id = to_remove_dom[0].getAttribute("id")
 
-        constraint.remove_constraints_containing(to_remove_id,output)
+        utils.replace_cib_configuration(
+            remove_resource_references(
+                utils.get_cib_dom(), to_remove_id, output
+            )
+        )
 
         args = ["cibadmin", "-o", "resources", "-D", "--xpath", to_remove_xpath]
         if output == True:
@@ -1869,6 +1886,15 @@ def resource_remove(resource_id, output = True):
                 utils.err("Unable to remove resource '%s' (do constraints exist?)" % (resource_id))
             return False
     return True
+
+def remove_resource_references(
+    dom, resource_id, output=False, constraints_element=None
+):
+    constraint.remove_constraints_containing(
+        resource_id, output, constraints_element, dom
+    )
+    stonith.stonith_level_rm_device(dom, resource_id)
+    return dom
 
 # This removes a resource from a group, but keeps it in the config
 def resource_group_rm(cib_dom, group_name, resource_ids):
@@ -1918,9 +1944,7 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
 
     if len(group_match.getElementsByTagName("primitive")) == 0:
         group_match.parentNode.removeChild(group_match)
-        constraint.remove_constraints_containing(
-            group_name, output=True, passed_dom=dom
-        )
+        remove_resource_references(dom, group_name, output=True)
 
     return cib_dom
 

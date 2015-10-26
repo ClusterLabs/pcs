@@ -45,9 +45,6 @@ def stonith_cmd(argv):
     elif (sub_cmd == "delete"):
         if len(argv) == 1:
             stn_id = argv.pop(0)
-            utils.replace_cib_configuration(
-                stonith_level_rm_device(utils.get_cib_dom(), stn_id)
-            )
             resource.resource_remove(stn_id)
         else:
             usage.stonith(["delete"])

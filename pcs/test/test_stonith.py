@@ -592,6 +592,38 @@ class StonithTest(unittest.TestCase):
   Level 1 - n2-ipmi
 """)
 
+        output, returnVal = pcs(temp_cib, "resource delete n1-apc1")
+        self.assertEquals(returnVal, 0)
+        ac(output, "Deleting Resource - n1-apc1\n")
+
+        output, returnVal = pcs(temp_cib, "stonith")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+ n1-ipmi\t(stonith:fence_ilo):\tStopped
+ n2-ipmi\t(stonith:fence_ilo):\tStopped
+ n1-apc2\t(stonith:fence_apc):\tStopped
+ Node: rh7-1
+  Level 1 - n1-ipmi
+  Level 2 - n1-apc2
+ Node: rh7-2
+  Level 1 - n2-ipmi
+""")
+
+        output, returnVal = pcs(temp_cib, "resource delete n1-apc2")
+        self.assertEquals(returnVal, 0)
+        ac(output, "Deleting Resource - n1-apc2\n")
+
+        output, returnVal = pcs(temp_cib, "stonith")
+        self.assertEquals(returnVal, 0)
+        ac(output, """\
+ n1-ipmi\t(stonith:fence_ilo):\tStopped
+ n2-ipmi\t(stonith:fence_ilo):\tStopped
+ Node: rh7-1
+  Level 1 - n1-ipmi
+ Node: rh7-2
+  Level 1 - n2-ipmi
+""")
+
     def testNoStonithWarning(self):
         o,r = pcs(temp_cib, "status")
         assert "WARNING: no stonith devices and " in o
