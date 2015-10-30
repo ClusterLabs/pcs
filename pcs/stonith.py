@@ -1,14 +1,11 @@
 import sys
-import resource
-#import sys
-import xml.dom.minidom
-#from xml.dom.minidom import getDOMImplementation
-from xml.dom.minidom import parseString
-import usage
-import utils
 import re
 import glob
-import os
+from xml.dom.minidom import parseString
+
+import usage
+import utils
+import resource
 
 def stonith_cmd(argv):
     if len(argv) == 0:
@@ -26,15 +23,7 @@ def stonith_cmd(argv):
             usage.stonith()
             sys.exit(1)
     elif (sub_cmd == "create"):
-        if len(argv) < 2:
-            usage.stonith()
-            sys.exit(1)
-        stn_id = argv.pop(0)
-        stn_type = "stonith:"+argv.pop(0)
-        st_values, op_values, meta_values = resource.parse_resource_options(
-            argv, with_clone=False
-        )
-        resource.resource_create(stn_id, stn_type, st_values, op_values, meta_values)
+        stonith_create(argv)
     elif (sub_cmd == "update"):
         if len(argv) > 1:
             stn_id = argv.pop(0)
@@ -170,6 +159,27 @@ def stonith_list_options(stonith_agent):
         indent = len(name) + 4
         desc = resource.format_desc(indent, desc)
         print "  " + name + ": " + desc
+
+def stonith_create(argv):
+    if len(argv) < 2:
+        usage.stonith(["create"])
+        sys.exit(1)
+
+    stonith_id = argv.pop(0)
+    stonith_type = argv.pop(0)
+    st_values, op_values, meta_values = resource.parse_resource_options(
+        argv, with_clone=False
+    )
+    metadata = utils.get_stonith_metadata("/usr/sbin/" + stonith_type)
+    if metadata:
+        if stonith_does_agent_provide_unfencing(metadata):
+            meta_values = [
+                meta for meta in meta_values if not meta.startswith("provides=")
+            ]
+            meta_values.append("provides=unfencing")
+    resource.resource_create(
+        stonith_id, "stonith:" + stonith_type, st_values, op_values, meta_values
+    )
 
 def stonith_level(argv):
     if len(argv) == 0:
@@ -400,3 +410,24 @@ def stonith_confirm(argv):
         utils.err("unable to confirm fencing of node '%s'\n" % node + output)
     else:
         print "Node: %s confirmed fenced" % node
+
+def stonith_does_agent_provide_unfencing(metadata_string):
+    try:
+        dom = parseString(metadata_string)
+        for agent in utils.dom_get_children_by_tag_name(dom, "resource-agent"):
+            for actions in utils.dom_get_children_by_tag_name(agent, "actions"):
+                for action in utils.dom_get_children_by_tag_name(
+                    actions, "action"
+                ):
+                    if (
+                        action.getAttribute("name") == "on"
+                        and
+                        action.getAttribute("on_target") == "1"
+                        and
+                        action.getAttribute("automatic") == "1"
+                    ):
+                        return True
+    except xml.parsers.expat.ExpatError as e:
+        return False
+    return False
+

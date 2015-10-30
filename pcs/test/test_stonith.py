@@ -100,6 +100,107 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == 'Cluster Name: test99\nCorosync Nodes:\n rh7-1 rh7-2 \nPacemaker Nodes:\n \n\nResources: \n\nStonith Devices: \n Resource: test1 (class=stonith type=fence_noxist)\n  Operations: monitor interval=60s (test1-monitor-interval-60s)\n Resource: test2 (class=stonith type=fence_ilo)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n Resource: test3 (class=stonith type=fence_ilo)\n  Attributes: ipaddr=test login=testA \n  Operations: monitor interval=60s (test3-monitor-interval-60s)\n Resource: test-fencing (class=stonith type=fence_apc)\n  Attributes: pcmk_host_list="rhel7-node1 \n  Operations: monitor interval=61s (test-fencing-monitor-interval-61s)\nFencing Levels: \n\nLocation Constraints:\nOrdering Constraints:\nColocation Constraints:\n\nResources Defaults:\n No defaults set\nOperations Defaults:\n No defaults set\n\nCluster Properties:\n',[output]
 
+    def test_stonith_create_provides_unfencing(self):
+        if utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "stonith create f1 fence_scsi"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "stonith create f2 fence_scsi meta provides=unfencing"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "stonith create f3 fence_scsi meta provides=something"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "stonith create f4 fence_xvm meta provides=something"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "stonith show --full")
+        ac(output, """\
+ Resource: f1 (class=stonith type=fence_scsi)
+  Meta Attrs: provides=unfencing 
+  Operations: monitor interval=60s (f1-monitor-interval-60s)
+ Resource: f2 (class=stonith type=fence_scsi)
+  Meta Attrs: provides=unfencing 
+  Operations: monitor interval=60s (f2-monitor-interval-60s)
+ Resource: f3 (class=stonith type=fence_scsi)
+  Meta Attrs: provides=unfencing 
+  Operations: monitor interval=60s (f3-monitor-interval-60s)
+ Resource: f4 (class=stonith type=fence_xvm)
+  Meta Attrs: provides=something 
+  Operations: monitor interval=60s (f4-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
+    def test_stonith_create_provides_unfencing_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
+        output, returnVal = pcs(
+            temp_cib,
+            "stonith create f1 fence_mpath key=abc"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "stonith create f2 fence_mpath key=abc meta provides=unfencing"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "stonith create f3 fence_mpath key=abc meta provides=something"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib,
+            "stonith create f4 fence_xvm meta provides=something"
+        )
+        ac(output, "")
+        self.assertEquals(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "stonith show --full")
+        ac(output, """\
+ Resource: f1 (class=stonith type=fence_mpath)
+  Attributes: key=abc 
+  Meta Attrs: provides=unfencing 
+  Operations: monitor interval=60s (f1-monitor-interval-60s)
+ Resource: f2 (class=stonith type=fence_mpath)
+  Attributes: key=abc 
+  Meta Attrs: provides=unfencing 
+  Operations: monitor interval=60s (f2-monitor-interval-60s)
+ Resource: f3 (class=stonith type=fence_mpath)
+  Attributes: key=abc 
+  Meta Attrs: provides=unfencing 
+  Operations: monitor interval=60s (f3-monitor-interval-60s)
+ Resource: f4 (class=stonith type=fence_xvm)
+  Meta Attrs: provides=something 
+  Operations: monitor interval=60s (f4-monitor-interval-60s)
+""")
+        self.assertEquals(0, returnVal)
+
     def testStonithFenceConfirm(self):
         output, returnVal = pcs(temp_cib, "stonith fence blah blah")
         assert returnVal == 1
