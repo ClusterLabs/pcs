@@ -574,7 +574,8 @@ monitor interval=60s (OCFTest1-monitor-interval-60s)
         assert r == 0
 
         output, retVal = pcs(
-            temp_cib, "resource create --no-default-ops state stateful"
+            temp_cib,
+            "resource create --no-default-ops state ocf:pacemaker:Stateful"
         )
         ac(output, "")
         self.assertEquals(0, retVal)
@@ -1766,7 +1767,7 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
         ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
 
-        output, returnVal = pcs(temp_cib, "resource create master-unmanage Stateful --master --no-default-ops")
+        output, returnVal = pcs(temp_cib, "resource create master-unmanage ocf:pacemaker:Stateful --master --no-default-ops")
         ac (output,'')
         assert returnVal == 0
 
@@ -2112,13 +2113,15 @@ Deleting Resource (and group and M/S) - dummylarge
 
     def testUncloneMaster(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy1 Stateful"
+            temp_cib,
+            "resource create --no-default-ops dummy1 ocf:pacemaker:Stateful"
         )
         ac(output, "")
         self.assertEquals(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy2 Stateful"
+            temp_cib,
+            "resource create --no-default-ops dummy2 ocf:pacemaker:Stateful"
         )
         ac(output, "")
         self.assertEquals(0, returnVal)
@@ -2690,7 +2693,9 @@ Colocation Constraints:
         assert output == ' Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D0-monitor-interval-60s)\n Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Master: D2-master\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n', [output]
 
     def testMasterOfGroupMove(self):
-        o,r = pcs("resource create stateful Stateful --group group1")
+        o,r = pcs(
+            "resource create stateful ocf:pacemaker:Stateful --group group1"
+        )
         ac(o, """\
 Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
 """)
@@ -3471,7 +3476,8 @@ Error: Cannot remove more than one resource from cloned group
 
     def testResourceEnableMaster(self):
         output, retVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy Stateful --master"
+            temp_cib,
+            "resource create --no-default-ops dummy ocf:pacemaker:Stateful --master"
         )
         ac(output, "")
         self.assertEquals(retVal, 0)

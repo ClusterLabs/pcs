@@ -905,13 +905,15 @@ Colocation Constraints:
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create stateful1 stateful --master")
+        o,r = pcs("resource create stateful1 ocf:pacemaker:Stateful --master")
         ac(o, """\
 Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
 """)
         assert r == 0
 
-        o,r = pcs("resource create stateful2 stateful --group statefulG")
+        o,r = pcs(
+            "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
+        )
         ac(o, """\
 Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
 """)
@@ -1022,13 +1024,17 @@ Colocation Constraints:
         ac(output, "")
         self.assertEquals(0, returnVal)
 
-        output, returnVal = pcs("resource create stateful1 stateful --master")
+        output, returnVal = pcs(
+            "resource create stateful1 ocf:pacemaker:Stateful --master"
+        )
         ac(output, """\
 Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
 """)
         self.assertEquals(0, returnVal)
 
-        output, returnVal = pcs("resource create stateful2 stateful --group statefulG")
+        output, returnVal = pcs(
+            "resource create stateful2 ocf:pacemaker:Stateful --group statefulG"
+        )
         ac(output, """\
 Warning: changing a monitor operation interval from 10 to 11 to make the operation unique
 """)
@@ -1608,7 +1614,7 @@ Colocation Constraints:
 
     def testMissingRole(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
-        o,r = pcs("resource create stateful0 Stateful --master")
+        o,r = pcs("resource create stateful0 ocf:pacemaker:Stateful --master")
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope constraints --xml-text '<constraints><rsc_location id=\"cli-prefer-stateful0-master\" role=\"Master\" rsc=\"stateful0-master\" node=\"rh7-1\" score=\"INFINITY\"/><rsc_location id=\"cli-ban-stateful0-master-on-rh7-1\" rsc=\"stateful0-master\" role=\"Slave\" node=\"rh7-1\" score=\"-INFINITY\"/></constraints>'")
 
         o,r = pcs("constraint")
