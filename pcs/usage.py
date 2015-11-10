@@ -1,4 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import re
+
 
 examples = ""
 def full_usage():
@@ -14,8 +20,8 @@ def full_usage():
     out += strip_extras(status([],False))
     out += strip_extras(config([],False))
     out += strip_extras(pcsd([],False))
-    print out.strip()
-    print "Examples:\n" + examples.replace(" \ ","")
+    print(out.strip())
+    print("Examples:\n" + examples.replace(" \ ",""))
 
 def strip_extras(text):
     global examples
@@ -89,7 +95,7 @@ def sub_usage(args, output):
 def dict_depth(d, depth=0):
     if not isinstance(d, dict) or not d:
         return depth
-    return max(dict_depth(v, depth+1) for k, v in d.iteritems())
+    return max(dict_depth(v, depth+1) for k, v in d.items())
 
 def sub_gen_code(level,item,prev_level=[],spaces=""):
     out = ""
@@ -133,7 +139,7 @@ def sub_generate_bash_completion():
     tree["config"] = generate_tree(config([],False))
     tree["pcsd"] = generate_tree(pcsd([],False))
     tree["node"] = generate_tree(node([], False))
-    print """
+    print("""
     _pcs()
     {
     local cur cur1 cur2 cur3
@@ -143,11 +149,11 @@ def sub_generate_bash_completion():
     if [ "$COMP_CWORD" -gt "1" ]; then cur2="${COMP_WORDS[COMP_CWORD-2]}";fi
     if [ "$COMP_CWORD" -gt "2" ]; then cur3="${COMP_WORDS[COMP_CWORD-3]}";fi
 
-    """
-    print sub_gen_code(3,tree,[])
-    print sub_gen_code(2,tree,[])
-    print sub_gen_code(1,tree,[])
-    print """
+    """)
+    print(sub_gen_code(3,tree,[]))
+    print(sub_gen_code(2,tree,[]))
+    print(sub_gen_code(1,tree,[]))
+    print("""
     if [ $COMP_CWORD -eq 1 ]; then
         COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config pcsd node" -- $cur) )
     fi
@@ -155,7 +161,7 @@ def sub_generate_bash_completion():
 
     }
     complete -F _pcs pcs
-    """
+    """)
 
 
 def generate_tree(usage_txt):
@@ -213,7 +219,7 @@ Commands:
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
     if pout:
-        print output
+        print(output)
     else:
         return output
                                                     
@@ -542,7 +548,7 @@ Notes:
 
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -772,7 +778,7 @@ Commands:
         the past 24 hours.
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -854,7 +860,7 @@ Examples:
     pcs stonith create MyStonith fence_virt pcmk_host_list=f1
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -888,7 +894,7 @@ Examples:
     pcs property set stonith-enabled=false
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -1022,7 +1028,7 @@ Commands:
         constraint, the constraint will be removed
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -1082,7 +1088,7 @@ Commands:
         parenthesis after permissions in 'pcs acl' output)
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -1120,7 +1126,7 @@ Commands:
         View xml version of status (output from crm_mon -r -1 -X)
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -1177,7 +1183,7 @@ Commands:
         messages.
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -1205,7 +1211,7 @@ Commands:
        connect to the local pcsd instance.
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output
 
@@ -1226,6 +1232,6 @@ Commands:
         if --all is specified all nodes will be removed from maintenance mode.
 """
     if pout:
-        print sub_usage(args, output)
+        print(sub_usage(args, output))
     else:
         return output

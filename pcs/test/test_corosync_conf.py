@@ -1,27 +1,34 @@
-import os
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import os.path
 import sys
 import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
+
 from pcs_test_functions import pcs, ac
 import corosync_conf
+
 
 class SectionTest(unittest.TestCase):
 
     def test_empty_section(self):
         section = corosync_conf.Section("mySection")
-        self.assertEquals(section.parent, None)
-        self.assertEquals(section.get_root(), section)
-        self.assertEquals(section.name, "mySection")
-        self.assertEquals(section.get_attributes(), [])
-        self.assertEquals(section.get_sections(), [])
+        self.assertEqual(section.parent, None)
+        self.assertEqual(section.get_root(), section)
+        self.assertEqual(section.name, "mySection")
+        self.assertEqual(section.get_attributes(), [])
+        self.assertEqual(section.get_sections(), [])
         ac(str(section), "")
 
     def test_attribute_add(self):
         section = corosync_conf.Section("mySection")
 
         section.add_attribute("name1", "value1")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -29,7 +36,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.add_attribute("name2", "value2")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -38,7 +45,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.add_attribute("name2", "value2")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -54,7 +61,7 @@ class SectionTest(unittest.TestCase):
         section.add_attribute("name3", "value3")
         section.add_attribute("name2", "value2a")
 
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -63,20 +70,20 @@ class SectionTest(unittest.TestCase):
                 ["name2", "value2a"],
             ]
         )
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes("name1"),
             [
                 ["name1", "value1"],
             ]
         )
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes("name2"),
             [
                 ["name2", "value2"],
                 ["name2", "value2a"],
             ]
         )
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes("nameX"),
             []
         )
@@ -85,7 +92,7 @@ class SectionTest(unittest.TestCase):
         section = corosync_conf.Section("mySection")
 
         section.set_attribute("name1", "value1")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -93,7 +100,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.set_attribute("name1", "value1")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -101,7 +108,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.set_attribute("name1", "value1a")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1a"],
@@ -109,7 +116,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.set_attribute("name2", "value2")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1a"],
@@ -118,7 +125,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.set_attribute("name1", "value1")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -128,7 +135,7 @@ class SectionTest(unittest.TestCase):
 
         section.add_attribute("name3", "value3")
         section.add_attribute("name2", "value2")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -138,7 +145,7 @@ class SectionTest(unittest.TestCase):
             ]
         )
         section.set_attribute("name2", "value2a")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -150,7 +157,7 @@ class SectionTest(unittest.TestCase):
         section.add_attribute("name1", "value1")
         section.add_attribute("name1", "value1")
         section.set_attribute("name1", "value1")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -169,7 +176,7 @@ class SectionTest(unittest.TestCase):
         attr = section.get_attributes()[1]
         attr[0] = "name2a"
         attr[1] = "value2a"
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -187,7 +194,7 @@ class SectionTest(unittest.TestCase):
         section.add_attribute("name2", "value2")
 
         section.del_attribute(section.get_attributes()[1])
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -196,7 +203,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.del_attribute(["name3", "value3"])
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -204,7 +211,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.del_attribute(["name3", "value3"])
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -219,7 +226,7 @@ class SectionTest(unittest.TestCase):
         section.add_attribute("name2", "value2")
 
         section.del_attributes_by_name("nameX")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -230,7 +237,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.del_attributes_by_name("name2", "value2")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -240,7 +247,7 @@ class SectionTest(unittest.TestCase):
 
         section.add_attribute("name2", "value2")
         section.add_attribute("name2", "value2a")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -250,7 +257,7 @@ class SectionTest(unittest.TestCase):
             ]
         )
         section.del_attributes_by_name("name2", "value2")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -260,7 +267,7 @@ class SectionTest(unittest.TestCase):
         )
 
         section.add_attribute("name3", "value3a")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -270,7 +277,7 @@ class SectionTest(unittest.TestCase):
             ]
         )
         section.del_attributes_by_name("name3")
-        self.assertEquals(
+        self.assertEqual(
             section.get_attributes(),
             [
                 ["name1", "value1"],
@@ -287,10 +294,10 @@ class SectionTest(unittest.TestCase):
         root.add_section(child1)
         child1.add_section(child1a)
         root.add_section(child2)
-        self.assertEquals(root.parent, None)
-        self.assertEquals(child1.parent.name, "root")
-        self.assertEquals(child1a.parent.name, "child1")
-        self.assertEquals(child2.parent.name, "root")
+        self.assertEqual(root.parent, None)
+        self.assertEqual(child1.parent.name, "root")
+        self.assertEqual(child1a.parent.name, "child1")
+        self.assertEqual(child2.parent.name, "root")
         ac(str(root), """\
 child1 {
     child1a {
@@ -302,7 +309,7 @@ child2 {
 """)
 
         child2.add_section(child1a)
-        self.assertEquals(child1a.parent.name, "child2")
+        self.assertEqual(child1a.parent.name, "child2")
         ac(str(root), """\
 child1 {
 }
@@ -381,7 +388,7 @@ child2 {
 """)
 
         ac(
-            "---\n".join(map(lambda x: str(x), root.get_sections())),
+            "---\n".join([str(x) for x in root.get_sections()]),
             """\
 child1 {
     childA {
@@ -413,7 +420,7 @@ child2 {
 """)
 
         ac(
-            "---\n".join(map(lambda x: str(x), root.get_sections("child1"))),
+            "---\n".join([str(x) for x in root.get_sections("child1")]),
             """\
 child1 {
     childA {
@@ -431,7 +438,7 @@ child1 {
 """)
 
         ac(
-            "---\n".join(map(lambda x: str(x), child1.get_sections("childA"))),
+            "---\n".join([str(x) for x in child1.get_sections("childA")]),
             """\
 childA {
     id: 1
@@ -443,7 +450,7 @@ childA {
 """)
 
         ac(
-            "---\n".join(map(lambda x: str(x), child1.get_sections("child2"))),
+            "---\n".join([str(x) for x in child1.get_sections("child2")]),
             ""
         )
 
@@ -502,7 +509,7 @@ child2 {
 """)
 
         child2.del_section(childb2)
-        self.assertEquals(childb2.parent, None)
+        self.assertEqual(childb2.parent, None)
         ac(str(root), """\
 child1 {
     childA {
@@ -530,7 +537,7 @@ child2 {
 """)
 
         root.del_section(child2)
-        self.assertEquals(child2.parent, None)
+        self.assertEqual(child2.parent, None)
         ac(str(root), """\
 child1 {
     childA {
@@ -549,12 +556,12 @@ child1 {
 
         self.assertRaises(ValueError, root.del_section, child2)
 
-        self.assertEquals(childa1.parent.name, "child1")
+        self.assertEqual(childa1.parent.name, "child1")
         self.assertRaises(ValueError, child2.del_section, childa1)
-        self.assertEquals(childa1.parent.name, "child1")
+        self.assertEqual(childa1.parent.name, "child1")
 
         child1.del_section(childb1)
-        self.assertEquals(childb1.parent, None)
+        self.assertEqual(childb1.parent, None)
         ac(str(root), """\
 child1 {
     childA {
@@ -568,16 +575,16 @@ child1 {
 """)
 
         child1.del_section(childa1)
-        self.assertEquals(childa1.parent, None)
+        self.assertEqual(childa1.parent, None)
         child1.del_section(childa2)
-        self.assertEquals(childa2.parent, None)
+        self.assertEqual(childa2.parent, None)
         ac(str(root), """\
 child1 {
 }
 """)
 
         root.del_section(child1)
-        self.assertEquals(child1.parent, None)
+        self.assertEqual(child1.parent, None)
         ac(str(root), "")
 
     def test_get_root(self):
@@ -587,9 +594,9 @@ child1 {
         root.add_section(child1)
         child1.add_section(child1a)
 
-        self.assertEquals(root.get_root().name, "root")
-        self.assertEquals(child1.get_root().name, "root")
-        self.assertEquals(child1a.get_root().name, "root")
+        self.assertEqual(root.get_root().name, "root")
+        self.assertEqual(child1.get_root().name, "root")
+        self.assertEqual(child1a.get_root().name, "root")
 
     def test_str(self):
         root = corosync_conf.Section("root")
@@ -754,7 +761,7 @@ name:foo:value
 name: foo:value
 """
         root = corosync_conf.parse_string(string)
-        self.assertEquals(root.get_attributes(), [["name", "foo:value"]])
+        self.assertEqual(root.get_attributes(), [["name", "foo:value"]])
         ac(str(root), parsed)
 
         string = """\
@@ -764,7 +771,7 @@ name :
 name: 
 """
         root = corosync_conf.parse_string(string)
-        self.assertEquals(root.get_attributes(), [["name", ""]])
+        self.assertEqual(root.get_attributes(), [["name", ""]])
         ac(str(root), parsed)
 
     def test_section(self):

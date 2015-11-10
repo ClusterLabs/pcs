@@ -1,4 +1,9 @@
-import os
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import os.path
 import sys
 import shutil
 import unittest
@@ -6,8 +11,10 @@ import xml.dom.minidom
 currentdir = os.path.dirname(os.path.abspath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
-from pcs_test_functions import pcs, ac
+
 import utils
+from pcs_test_functions import pcs, ac
+
 
 empty_cib = os.path.join(currentdir, "empty.xml")
 temp_cib = os.path.join(currentdir, "temp.xml")
@@ -214,15 +221,15 @@ class UtilsTest(unittest.TestCase):
             ),
             "myGroupMaster"
         )
-        self.assertEquals(
+        self.assertEqual(
             None,
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myResource")
         )
-        self.assertEquals(
+        self.assertEqual(
             None,
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myGroup")
         )
-        self.assertEquals(
+        self.assertEqual(
             None,
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myGroupedResource")
         )
@@ -259,19 +266,19 @@ class UtilsTest(unittest.TestCase):
         resources = dom.getElementsByTagName("resources")[0]
         resources.parentNode.replaceChild(new_resources, resources)
 
-        self.assertEquals(
+        self.assertEqual(
             None,
             utils.dom_get_resource_remote_node_name(
                 utils.dom_get_resource(dom, "dummy1")
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             None,
             utils.dom_get_resource_remote_node_name(
                 utils.dom_get_resource(dom, "dummy2")
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             "guest1",
             utils.dom_get_resource_remote_node_name(
                 utils.dom_get_resource(dom, "vm-guest1")
@@ -310,25 +317,25 @@ class UtilsTest(unittest.TestCase):
         resources = dom.getElementsByTagName("resources")[0]
         resources.parentNode.replaceChild(new_resources, resources)
 
-        self.assertEquals(
+        self.assertEqual(
             None,
             utils.dom_get_meta_attr_value(
                 utils.dom_get_resource(dom, "dummy1"), "foo"
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             None,
             utils.dom_get_meta_attr_value(
                 utils.dom_get_resource(dom, "dummy2"), "remote-node"
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             "guest1",
             utils.dom_get_meta_attr_value(
                 utils.dom_get_resource(dom, "vm-guest1"), "remote-node"
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             None,
             utils.dom_get_meta_attr_value(
                 utils.dom_get_resource(dom, "vm-guest1"), "foo"
@@ -366,10 +373,10 @@ class UtilsTest(unittest.TestCase):
             ),
             "cc1"
         )
-        self.assertEquals(None, utils.dom_get_element_with_id(dom, "dd", "bb1"))
-        self.assertEquals(None, utils.dom_get_element_with_id(dom, "bb", "bb4"))
-        self.assertEquals(None, utils.dom_get_element_with_id(dom, "bb", "cc1"))
-        self.assertEquals(
+        self.assertEqual(None, utils.dom_get_element_with_id(dom, "dd", "bb1"))
+        self.assertEqual(None, utils.dom_get_element_with_id(dom, "bb", "bb4"))
+        self.assertEqual(None, utils.dom_get_element_with_id(dom, "bb", "cc1"))
+        self.assertEqual(
             None,
             utils.dom_get_element_with_id(
                 utils.dom_get_element_with_id(dom, "bb", "bb2"),
@@ -407,42 +414,42 @@ class UtilsTest(unittest.TestCase):
             "bb2"
         )
 
-        self.assertEquals(None, utils.dom_get_parent_by_tag_name(bb1, "cc"))
-        self.assertEquals(None, utils.dom_get_parent_by_tag_name(cc1, "dd"))
-        self.assertEquals(None, utils.dom_get_parent_by_tag_name(cc1, "ee"))
+        self.assertEqual(None, utils.dom_get_parent_by_tag_name(bb1, "cc"))
+        self.assertEqual(None, utils.dom_get_parent_by_tag_name(cc1, "dd"))
+        self.assertEqual(None, utils.dom_get_parent_by_tag_name(cc1, "ee"))
 
     def testValidateConstraintResource(self):
         dom = self.get_cib_resources()
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myClone"),
             utils.validate_constraint_resource(dom, "myClone")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myGroupClone"),
             utils.validate_constraint_resource(dom, "myGroupClone")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myMaster"),
             utils.validate_constraint_resource(dom, "myMaster")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myGroupMaster"),
             utils.validate_constraint_resource(dom, "myGroupMaster")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myResource"),
             utils.validate_constraint_resource(dom, "myResource")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myGroup"),
             utils.validate_constraint_resource(dom, "myGroup")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myGroupedResource"),
             utils.validate_constraint_resource(dom, "myGroupedResource")
         )
 
-        self.assertEquals(
+        self.assertEqual(
             (False, "Resource 'myNonexistent' does not exist", None),
             utils.validate_constraint_resource(dom, "myNonexistent")
         )
@@ -451,7 +458,7 @@ class UtilsTest(unittest.TestCase):
             "%s is a clone resource, you should use the clone id: "
             "%s when adding constraints. Use --force to override."
         )
-        self.assertEquals(
+        self.assertEqual(
             (
                 False,
                 message % ("myClonedResource", "myClone"),
@@ -459,7 +466,7 @@ class UtilsTest(unittest.TestCase):
             ),
             utils.validate_constraint_resource(dom, "myClonedResource")
         )
-        self.assertEquals(
+        self.assertEqual(
             (
                 False,
                 message % ("myClonedGroup", "myGroupClone"),
@@ -467,7 +474,7 @@ class UtilsTest(unittest.TestCase):
             ),
             utils.validate_constraint_resource(dom, "myClonedGroup")
         )
-        self.assertEquals(
+        self.assertEqual(
             (
                 False,
                 message % ("myClonedGroupedResource", "myGroupClone"),
@@ -480,7 +487,7 @@ class UtilsTest(unittest.TestCase):
             "%s is a master/slave resource, you should use the master id: "
             "%s when adding constraints. Use --force to override."
         )
-        self.assertEquals(
+        self.assertEqual(
             (
                 False,
                 message % ("myMasteredResource", "myMaster"),
@@ -488,7 +495,7 @@ class UtilsTest(unittest.TestCase):
             ),
             utils.validate_constraint_resource(dom, "myMasteredResource")
         )
-        self.assertEquals(
+        self.assertEqual(
             (
                 False,
                 message % ("myMasteredGroup", "myGroupMaster"),
@@ -496,7 +503,7 @@ class UtilsTest(unittest.TestCase):
             ),
             utils.validate_constraint_resource(dom, "myMasteredGroup")
         )
-        self.assertEquals(
+        self.assertEqual(
             (
                 False,
                 message % ("myMasteredGroupedResource", "myGroupMaster"),
@@ -506,98 +513,98 @@ class UtilsTest(unittest.TestCase):
         )
 
         utils.pcs_options["--force"] = True
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myClone"),
             utils.validate_constraint_resource(dom, "myClonedResource")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myGroupClone"),
             utils.validate_constraint_resource(dom, "myClonedGroup")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myGroupClone"),
             utils.validate_constraint_resource(dom, "myClonedGroupedResource")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myMaster"),
             utils.validate_constraint_resource(dom, "myMasteredResource")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myGroupMaster"),
             utils.validate_constraint_resource(dom, "myMasteredGroup")
         )
-        self.assertEquals(
+        self.assertEqual(
             (True, "", "myGroupMaster"),
             utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
         )
 
     def testValidateXmlId(self):
-        self.assertEquals((True, ""), utils.validate_xml_id("dummy"))
-        self.assertEquals((True, ""), utils.validate_xml_id("DUMMY"))
-        self.assertEquals((True, ""), utils.validate_xml_id("dUmMy"))
-        self.assertEquals((True, ""), utils.validate_xml_id("dummy0"))
-        self.assertEquals((True, ""), utils.validate_xml_id("dum0my"))
-        self.assertEquals((True, ""), utils.validate_xml_id("dummy-"))
-        self.assertEquals((True, ""), utils.validate_xml_id("dum-my"))
-        self.assertEquals((True, ""), utils.validate_xml_id("dummy."))
-        self.assertEquals((True, ""), utils.validate_xml_id("dum.my"))
-        self.assertEquals((True, ""), utils.validate_xml_id("_dummy"))
-        self.assertEquals((True, ""), utils.validate_xml_id("dummy_"))
-        self.assertEquals((True, ""), utils.validate_xml_id("dum_my"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dummy"))
+        self.assertEqual((True, ""), utils.validate_xml_id("DUMMY"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dUmMy"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dummy0"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dum0my"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dummy-"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dum-my"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dummy."))
+        self.assertEqual((True, ""), utils.validate_xml_id("dum.my"))
+        self.assertEqual((True, ""), utils.validate_xml_id("_dummy"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dummy_"))
+        self.assertEqual((True, ""), utils.validate_xml_id("dum_my"))
 
-        self.assertEquals(
+        self.assertEqual(
             (False, "test id cannot be empty"),
             utils.validate_xml_id("", "test id")
         )
 
         msg = "invalid test id '%s', '%s' is not a valid first character for a test id"
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % ("0", "0")),
             utils.validate_xml_id("0", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % ("-", "-")),
             utils.validate_xml_id("-", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % (".", ".")),
             utils.validate_xml_id(".", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % (":", ":")),
             utils.validate_xml_id(":", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % ("0dummy", "0")),
             utils.validate_xml_id("0dummy", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % ("-dummy", "-")),
             utils.validate_xml_id("-dummy", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % (".dummy", ".")),
             utils.validate_xml_id(".dummy", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % (":dummy", ":")),
             utils.validate_xml_id(":dummy", "test id")
         )
 
         msg = "invalid test id '%s', '%s' is not a valid character for a test id"
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % ("dum:my", ":")),
             utils.validate_xml_id("dum:my", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % ("dummy:", ":")),
             utils.validate_xml_id("dummy:", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % ("dum?my", "?")),
             utils.validate_xml_id("dum?my", "test id")
         )
-        self.assertEquals(
+        self.assertEqual(
             (False, msg % ("dummy?", "?")),
             utils.validate_xml_id("dummy?", "test id")
         )
@@ -649,25 +656,25 @@ class UtilsTest(unittest.TestCase):
         self.assertFalse(utils.is_score("+10+INFINITY"))
 
     def test_get_timeout_seconds(self):
-        self.assertEquals(utils.get_timeout_seconds("10"), 10)
-        self.assertEquals(utils.get_timeout_seconds("10s"), 10)
-        self.assertEquals(utils.get_timeout_seconds("10sec"), 10)
-        self.assertEquals(utils.get_timeout_seconds("10m"), 600)
-        self.assertEquals(utils.get_timeout_seconds("10min"), 600)
-        self.assertEquals(utils.get_timeout_seconds("10h"), 36000)
-        self.assertEquals(utils.get_timeout_seconds("10hr"), 36000)
+        self.assertEqual(utils.get_timeout_seconds("10"), 10)
+        self.assertEqual(utils.get_timeout_seconds("10s"), 10)
+        self.assertEqual(utils.get_timeout_seconds("10sec"), 10)
+        self.assertEqual(utils.get_timeout_seconds("10m"), 600)
+        self.assertEqual(utils.get_timeout_seconds("10min"), 600)
+        self.assertEqual(utils.get_timeout_seconds("10h"), 36000)
+        self.assertEqual(utils.get_timeout_seconds("10hr"), 36000)
 
-        self.assertEquals(utils.get_timeout_seconds("1a1s"), None)
-        self.assertEquals(utils.get_timeout_seconds("10mm"), None)
-        self.assertEquals(utils.get_timeout_seconds("10mim"), None)
-        self.assertEquals(utils.get_timeout_seconds("aaa"), None)
-        self.assertEquals(utils.get_timeout_seconds(""), None)
+        self.assertEqual(utils.get_timeout_seconds("1a1s"), None)
+        self.assertEqual(utils.get_timeout_seconds("10mm"), None)
+        self.assertEqual(utils.get_timeout_seconds("10mim"), None)
+        self.assertEqual(utils.get_timeout_seconds("aaa"), None)
+        self.assertEqual(utils.get_timeout_seconds(""), None)
 
-        self.assertEquals(utils.get_timeout_seconds("1a1s", True), "1a1s")
-        self.assertEquals(utils.get_timeout_seconds("10mm", True), "10mm")
-        self.assertEquals(utils.get_timeout_seconds("10mim", True), "10mim")
-        self.assertEquals(utils.get_timeout_seconds("aaa", True), "aaa")
-        self.assertEquals(utils.get_timeout_seconds("", True), "")
+        self.assertEqual(utils.get_timeout_seconds("1a1s", True), "1a1s")
+        self.assertEqual(utils.get_timeout_seconds("10mm", True), "10mm")
+        self.assertEqual(utils.get_timeout_seconds("10mim", True), "10mim")
+        self.assertEqual(utils.get_timeout_seconds("aaa", True), "aaa")
+        self.assertEqual(utils.get_timeout_seconds("", True), "")
 
     def get_cib_status_lrm(self):
         cib_dom = self.get_cib_empty()
@@ -788,7 +795,7 @@ class UtilsTest(unittest.TestCase):
 </crm_mon>
         """).documentElement
 
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myResource", status),
             {
                 'message':
@@ -799,7 +806,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': ["rh70-node1"],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myClonedResource", status),
             {
                 'message':
@@ -811,7 +818,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myClone", status),
             {
                 'message':
@@ -823,7 +830,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myMasteredResource", status),
             {
                 'message':
@@ -835,7 +842,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': [],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myMaster", status),
             {
                 'message':
@@ -847,7 +854,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': [],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myGroupedResource", status),
             {
                 'message':
@@ -859,7 +866,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': ["rh70-node2"],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myGroup", status),
             {
                 'message':
@@ -871,7 +878,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': ["rh70-node2"],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myClonedGroupedResource", status),
             {
                 'message':
@@ -884,7 +891,7 @@ class UtilsTest(unittest.TestCase):
                     "rh70-node3"],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myClonedGroup", status),
             {
                 'message':
@@ -897,7 +904,7 @@ class UtilsTest(unittest.TestCase):
                     "rh70-node3"],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myGroupClone", status),
             {
                 'message':
@@ -910,7 +917,7 @@ class UtilsTest(unittest.TestCase):
                     "rh70-node3"],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myMasteredGroupedResource", status),
             {
                 'message':
@@ -922,7 +929,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': [],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myMasteredGroup", status),
             {
                 'message':
@@ -934,7 +941,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': [],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myGroupMaster", status),
             {
                 'message':
@@ -946,7 +953,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': [],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("notMyResource", status),
             {
                 'message':
@@ -957,7 +964,7 @@ class UtilsTest(unittest.TestCase):
                 'nodes_started': [],
             }
         )
-        self.assertEquals(
+        self.assertEqual(
             utils.resource_running_on("myStoppedResource", status),
             {
                 'message':
@@ -995,9 +1002,9 @@ Node addresses: 192.168.122.61
 2 M 2 rh66-node2
 3 M 1 rh66-node3
 """)
-        self.assertEquals(True, parsed["quorate"])
-        self.assertEquals(2, parsed["quorum"])
-        self.assertEquals(
+        self.assertEqual(True, parsed["quorate"])
+        self.assertEqual(2, parsed["quorum"])
+        self.assertEqual(
             [
                 {"name": "rh66-node1", "votes": 3, "local": False},
                 {"name": "rh66-node2", "votes": 2, "local": True},
@@ -1031,9 +1038,9 @@ Node addresses: 192.168.122.61
 2 X 2 rh66-node2
 3 X 1 rh66-node3
 """)
-        self.assertEquals(False, parsed["quorate"])
-        self.assertEquals(2, parsed["quorum"])
-        self.assertEquals(
+        self.assertEqual(False, parsed["quorate"])
+        self.assertEqual(2, parsed["quorum"])
+        self.assertEqual(
             [
                 {"name": "rh66-node1", "votes": 3, "local": True},
             ],
@@ -1041,7 +1048,7 @@ Node addresses: 192.168.122.61
         )
 
         parsed = utils.parse_cman_quorum_info("")
-        self.assertEquals(None, parsed)
+        self.assertEqual(None, parsed)
 
         parsed = utils.parse_cman_quorum_info("""\
 Version: 6.2.0
@@ -1068,7 +1075,7 @@ Node addresses: 192.168.122.61
 2 M 2 rh66-node2
 3 M 1 rh66-node3
 """)
-        self.assertEquals(None, parsed)
+        self.assertEqual(None, parsed)
 
         parsed = utils.parse_cman_quorum_info("""\
 Version: 6.2.0
@@ -1095,7 +1102,7 @@ Node addresses: 192.168.122.61
 2 M 2 rh66-node2
 3 M 1 rh66-node3
 """)
-        self.assertEquals(None, parsed)
+        self.assertEqual(None, parsed)
 
         parsed = utils.parse_cman_quorum_info("""\
 Version: 6.2.0
@@ -1122,7 +1129,7 @@ Node addresses: 192.168.122.61
 2 M Foo rh66-node2
 3 M 1 rh66-node3
 """)
-        self.assertEquals(None, parsed)
+        self.assertEqual(None, parsed)
 
     def test_parse_quorumtool_output(self):
         parsed = utils.parse_quorumtool_output("""\
@@ -1150,9 +1157,9 @@ Membership information
          2          2         NR rh70-node2 (local)
          3          1         NR rh70-node3
 """)
-        self.assertEquals(True, parsed["quorate"])
-        self.assertEquals(2, parsed["quorum"])
-        self.assertEquals(
+        self.assertEqual(True, parsed["quorate"])
+        self.assertEqual(2, parsed["quorum"])
+        self.assertEqual(
             [
                 {"name": "rh70-node1", "votes": 3, "local": False},
                 {"name": "rh70-node2", "votes": 2, "local": True},
@@ -1184,9 +1191,9 @@ Membership information
     Nodeid      Votes    Qdevice Name
              1          1         NR rh70-node1 (local)
 """)
-        self.assertEquals(False, parsed["quorate"])
-        self.assertEquals(2, parsed["quorum"])
-        self.assertEquals(
+        self.assertEqual(False, parsed["quorate"])
+        self.assertEqual(2, parsed["quorum"])
+        self.assertEqual(
             [
                 {"name": "rh70-node1", "votes": 1, "local": True},
             ],
@@ -1194,7 +1201,7 @@ Membership information
         )
 
         parsed = utils.parse_quorumtool_output("")
-        self.assertEquals(None, parsed)
+        self.assertEqual(None, parsed)
 
         parsed = utils.parse_quorumtool_output("""\
 Quorum information
@@ -1221,7 +1228,7 @@ Membership information
          2          1         NR rh70-node2
          3          1         NR rh70-node3
 """)
-        self.assertEquals(None, parsed)
+        self.assertEqual(None, parsed)
 
         parsed = utils.parse_quorumtool_output("""\
 Quorum information
@@ -1248,7 +1255,7 @@ Membership information
          2          1         NR rh70-node2
          3          1         NR rh70-node3
 """)
-        self.assertEquals(None, parsed)
+        self.assertEqual(None, parsed)
 
         parsed = utils.parse_quorumtool_output("""\
 Quorum information
@@ -1275,13 +1282,13 @@ Membership information
          2        foo         NR rh70-node2
          3          1         NR rh70-node3
 """)
-        self.assertEquals(None, parsed)
+        self.assertEqual(None, parsed)
 
     def test_is_node_stop_cause_quorum_loss(self):
         quorum_info = {
             "quorate": False,
         }
-        self.assertEquals(
+        self.assertEqual(
             False,
             utils.is_node_stop_cause_quorum_loss(quorum_info, True)
         )
@@ -1293,7 +1300,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": False},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             False,
             utils.is_node_stop_cause_quorum_loss(quorum_info, True)
         )
@@ -1305,7 +1312,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": True},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             True,
             utils.is_node_stop_cause_quorum_loss(quorum_info, True)
         )
@@ -1319,7 +1326,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": True},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             False,
             utils.is_node_stop_cause_quorum_loss(quorum_info, True)
         )
@@ -1333,7 +1340,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": False},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             False,
             utils.is_node_stop_cause_quorum_loss(quorum_info, True)
         )
@@ -1347,7 +1354,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": False},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             True,
             utils.is_node_stop_cause_quorum_loss(quorum_info, True)
         )
@@ -1362,7 +1369,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": False},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             False,
             utils.is_node_stop_cause_quorum_loss(
                 quorum_info, False, ["rh70-node3"]
@@ -1378,7 +1385,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": False},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             False,
             utils.is_node_stop_cause_quorum_loss(
                 quorum_info, False, ["rh70-node2"]
@@ -1394,7 +1401,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": False},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             True,
             utils.is_node_stop_cause_quorum_loss(
                 quorum_info, False, ["rh70-node1"]
@@ -1410,7 +1417,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": False},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             False,
             utils.is_node_stop_cause_quorum_loss(
                 quorum_info, False, ["rh70-node2", "rh70-node3"]
@@ -1426,7 +1433,7 @@ Membership information
                 {"name": "rh70-node3", "votes": 1, "local": False},
             ],
         }
-        self.assertEquals(
+        self.assertEqual(
             True,
             utils.is_node_stop_cause_quorum_loss(
                 quorum_info, False, ["rh70-node2", "rh70-node3"]
@@ -1435,7 +1442,7 @@ Membership information
 
     def test_get_operations_from_transitions(self):
         transitions = utils.parse(os.path.join(currentdir, "transitions01.xml"))
-        self.assertEquals(
+        self.assertEqual(
             [
                 {
                     'id': 'dummy',
@@ -1478,7 +1485,7 @@ Membership information
         )
 
         transitions = utils.parse(os.path.join(currentdir, "transitions02.xml"))
-        self.assertEquals(
+        self.assertEqual(
             [
                 {
                     "id": "RemoteNode",
@@ -1518,7 +1525,7 @@ Membership information
         cib_dom = self.get_cib_resources()
 
         operations = []
-        self.assertEquals(
+        self.assertEqual(
             {},
             utils.get_resources_location_from_operations(cib_dom, operations)
         )
@@ -1531,7 +1538,7 @@ Membership information
                 "on_node": "rh7-1",
             },
         ]
-        self.assertEquals(
+        self.assertEqual(
             {
                 'myResource': {
                     'id': 'myResource',
@@ -1569,7 +1576,7 @@ Membership information
                 "on_node": "rh7-3",
             },
         ]
-        self.assertEquals(
+        self.assertEqual(
             {
                 'myResource': {
                     'id': 'myResource',
@@ -1607,7 +1614,7 @@ Membership information
                 "on_node": "rh7-3",
             },
         ]
-        self.assertEquals(
+        self.assertEqual(
             {
                 'myResource': {
                     'id': 'myResource',
@@ -1651,7 +1658,7 @@ Membership information
                 "on_node": "rh7-3",
             },
         ]
-        self.assertEquals(
+        self.assertEqual(
             {
                 'myUniqueClonedResource:0': {
                     'id': 'myUniqueClonedResource:0',
@@ -1689,7 +1696,7 @@ Membership information
                 "on_node": "rh7-3",
             },
         ]
-        self.assertEquals(
+        self.assertEqual(
             {
                 'myMasteredGroupedResource:0': {
                     'id': 'myMasteredGroupedResource',
@@ -1727,7 +1734,7 @@ Membership information
                 "on_node": "rh7-2",
             },
         ]
-        self.assertEquals(
+        self.assertEqual(
             {
                 "myResource": {
                     "id": "myResource",
@@ -1744,7 +1751,7 @@ Membership information
             isinstance(node, xml.dom.minidom.Element),
             "element with id '%s' not found" % node_id
         )
-        self.assertEquals(node.getAttribute("id"), node_id)
+        self.assertEqual(node.getAttribute("id"), node_id)
 
 
 if __name__ == "__main__":

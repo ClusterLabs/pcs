@@ -17,7 +17,7 @@ ifeq ($(UNAME_OS_GNU),true)
 endif
 
 ifndef PYTHON_SITELIB
-  PYTHON_SITELIB=$(shell python2 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+  PYTHON_SITELIB=$(shell python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
 endif
 ifeq ($(PYTHON_SITELIB), /usr/lib/python2.6/dist-packages)
   EXTRA_SETUP_OPTS="--install-layout=deb"
@@ -54,7 +54,7 @@ endif
 MANDIR=/usr/share/man
 
 ifndef PREFIX
-  PREFIX=$(shell prefix=`python2 -c "import sys; print(sys.prefix)"` || prefix="/usr"; echo $$prefix)
+  PREFIX=$(shell prefix=`python -c "import sys; print(sys.prefix)"` || prefix="/usr"; echo $$prefix)
 endif
 
 ifndef systemddir
@@ -82,7 +82,7 @@ else
 endif
 
 install: bash_completion
-	python2 setup.py install --prefix ${DESTDIR}${PREFIX} ${EXTRA_SETUP_OPTS}
+	python setup.py install --prefix ${DESTDIR}${PREFIX} ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	chmod 755 ${DESTDIR}${PYTHON_SITELIB}/pcs/pcs.py
 	ln -fs ${PYTHON_SITELIB}/pcs/pcs.py ${DESTDIR}${PREFIX}/sbin/pcs
@@ -150,11 +150,11 @@ endif
 	rm -rf ${DESTDIR}/var/lib/pcsd
 
 tarball: bash_completion
-	python2 setup.py sdist --formats=tar
-	python2 maketarballs.py
+	python setup.py sdist --formats=tar
+	python maketarballs.py
 
 newversion:
-	python2 newversion.py
+	python newversion.py
 
 bash_completion:
-	cd pcs ; python2 -c 'import usage;  usage.sub_generate_bash_completion()' > bash_completion.d.pcs ; cd ..
+	cd pcs ; python -c 'import usage;  usage.sub_generate_bash_completion()' > bash_completion.d.pcs ; cd ..

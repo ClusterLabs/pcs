@@ -1,10 +1,18 @@
-import os,sys
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import os
+import sys
 import shutil
 import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir) 
+sys.path.insert(0, parentdir)
+
 import utils
-from pcs_test_functions import pcs,ac
+from pcs_test_functions import pcs, ac
+
 
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
@@ -43,8 +51,12 @@ class StonithTest(unittest.TestCase):
         ac(output,"")
 
         output, returnVal = pcs(temp_cib, "stonith show test9")
+        ac(output, """\
+ Resource: test9 (class=stonith type=fence_ilo)
+  Attributes: pcmk_status_action=xxx
+  Operations: monitor interval=60s (test9-monitor-interval-60s)
+""")
         assert returnVal == 0
-        ac(output, ' Resource: test9 (class=stonith type=fence_ilo)\n  Attributes: pcmk_status_action=xxx \n  Operations: monitor interval=60s (test9-monitor-interval-60s)\n')
 
         output, returnVal = pcs(temp_cib, "stonith delete test9")
         assert returnVal == 0
@@ -69,8 +81,12 @@ class StonithTest(unittest.TestCase):
         assert output == 'Error: unable to find resource \'apc-fencing\'\n',[output]
 
         output, returnVal = pcs(temp_cib, 'stonith show apc-fencing')
+        ac(output, """\
+ Resource: apc-fencing (class=stonith type=fence_apc)
+  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"
+  Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)
+""")
         assert returnVal == 0
-        assert output == ' Resource: apc-fencing (class=stonith type=fence_apc)\n  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05" \n  Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)\n',[output]
 
         output, returnVal = pcs(temp_cib, 'stonith delete apc-fencing')
         assert returnVal == 0
@@ -89,16 +105,55 @@ class StonithTest(unittest.TestCase):
         assert output == " Resource: test2 (class=stonith type=fence_ilo)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n",[output]
 
         output, returnVal = pcs(temp_cib, "stonith show --full")
+        ac(output, """\
+ Resource: test1 (class=stonith type=fence_noxist)
+  Operations: monitor interval=60s (test1-monitor-interval-60s)
+ Resource: test2 (class=stonith type=fence_ilo)
+  Operations: monitor interval=60s (test2-monitor-interval-60s)
+ Resource: test3 (class=stonith type=fence_ilo)
+  Attributes: ipaddr=test login=testA
+  Operations: monitor interval=60s (test3-monitor-interval-60s)
+""")
         assert returnVal == 0
-        assert output == " Resource: test1 (class=stonith type=fence_noxist)\n  Operations: monitor interval=60s (test1-monitor-interval-60s)\n Resource: test2 (class=stonith type=fence_ilo)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n Resource: test3 (class=stonith type=fence_ilo)\n  Attributes: ipaddr=test login=testA \n  Operations: monitor interval=60s (test3-monitor-interval-60s)\n",[output]
 
         output, returnVal = pcs(temp_cib, 'stonith create test-fencing fence_apc pcmk_host_list="rhel7-node1 rhel7-node2" op monitor interval=61s --force')
         assert returnVal == 0
         ac(output,"")
 
         output, returnVal = pcs(temp_cib, 'config show')
+        ac(output, """\
+Cluster Name: test99
+Corosync Nodes:
+ rh7-1 rh7-2
+Pacemaker Nodes:
+
+Resources:
+
+Stonith Devices:
+ Resource: test1 (class=stonith type=fence_noxist)
+  Operations: monitor interval=60s (test1-monitor-interval-60s)
+ Resource: test2 (class=stonith type=fence_ilo)
+  Operations: monitor interval=60s (test2-monitor-interval-60s)
+ Resource: test3 (class=stonith type=fence_ilo)
+  Attributes: ipaddr=test login=testA
+  Operations: monitor interval=60s (test3-monitor-interval-60s)
+ Resource: test-fencing (class=stonith type=fence_apc)
+  Attributes: pcmk_host_list="rhel7-node1
+  Operations: monitor interval=61s (test-fencing-monitor-interval-61s)
+Fencing Levels:
+
+Location Constraints:
+Ordering Constraints:
+Colocation Constraints:
+
+Resources Defaults:
+ No defaults set
+Operations Defaults:
+ No defaults set
+
+Cluster Properties:
+""")
         assert returnVal == 0
-        assert output == 'Cluster Name: test99\nCorosync Nodes:\n rh7-1 rh7-2 \nPacemaker Nodes:\n \n\nResources: \n\nStonith Devices: \n Resource: test1 (class=stonith type=fence_noxist)\n  Operations: monitor interval=60s (test1-monitor-interval-60s)\n Resource: test2 (class=stonith type=fence_ilo)\n  Operations: monitor interval=60s (test2-monitor-interval-60s)\n Resource: test3 (class=stonith type=fence_ilo)\n  Attributes: ipaddr=test login=testA \n  Operations: monitor interval=60s (test3-monitor-interval-60s)\n Resource: test-fencing (class=stonith type=fence_apc)\n  Attributes: pcmk_host_list="rhel7-node1 \n  Operations: monitor interval=61s (test-fencing-monitor-interval-61s)\nFencing Levels: \n\nLocation Constraints:\nOrdering Constraints:\nColocation Constraints:\n\nResources Defaults:\n No defaults set\nOperations Defaults:\n No defaults set\n\nCluster Properties:\n',[output]
 
     def test_stonith_create_provides_unfencing(self):
         if utils.is_rhel6():
@@ -109,28 +164,28 @@ class StonithTest(unittest.TestCase):
             "stonith create f1 fence_scsi"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "stonith create f2 fence_scsi meta provides=unfencing"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "stonith create f3 fence_scsi meta provides=something"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "stonith create f4 fence_xvm meta provides=something"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "stonith show --full")
         ac(output, """\
@@ -147,7 +202,7 @@ class StonithTest(unittest.TestCase):
   Meta Attrs: provides=something 
   Operations: monitor interval=60s (f4-monitor-interval-60s)
 """)
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
     def test_stonith_create_provides_unfencing_rhel6(self):
         if not utils.is_rhel6():
@@ -158,48 +213,48 @@ class StonithTest(unittest.TestCase):
             "stonith create f1 fence_mpath key=abc"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "stonith create f2 fence_mpath key=abc meta provides=unfencing"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "stonith create f3 fence_mpath key=abc meta provides=something"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "stonith create f4 fence_xvm meta provides=something"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "stonith show --full")
         ac(output, """\
  Resource: f1 (class=stonith type=fence_mpath)
-  Attributes: key=abc 
+  Attributes: key=abc
   Meta Attrs: provides=unfencing 
   Operations: monitor interval=60s (f1-monitor-interval-60s)
  Resource: f2 (class=stonith type=fence_mpath)
-  Attributes: key=abc 
+  Attributes: key=abc
   Meta Attrs: provides=unfencing 
   Operations: monitor interval=60s (f2-monitor-interval-60s)
  Resource: f3 (class=stonith type=fence_mpath)
-  Attributes: key=abc 
+  Attributes: key=abc
   Meta Attrs: provides=unfencing 
   Operations: monitor interval=60s (f3-monitor-interval-60s)
  Resource: f4 (class=stonith type=fence_xvm)
   Meta Attrs: provides=something 
   Operations: monitor interval=60s (f4-monitor-interval-60s)
 """)
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
     def testStonithFenceConfirm(self):
         output, returnVal = pcs(temp_cib, "stonith fence blah blah")
@@ -216,8 +271,12 @@ class StonithTest(unittest.TestCase):
         ac(output,"")
 
         output, returnVal = pcs(temp_cib, "stonith show F1")
+        ac(output, """\
+ Resource: F1 (class=stonith type=fence_apc)
+  Attributes: pcmk_host_list="nodea nodeb"
+  Operations: monitor interval=60s (F1-monitor-interval-60s)
+""")
         assert returnVal == 0
-        assert output == ' Resource: F1 (class=stonith type=fence_apc)\n  Attributes: pcmk_host_list="nodea nodeb" \n  Operations: monitor interval=60s (F1-monitor-interval-60s)\n',[output]
 
     def testPcmkHostAllowsMissingPort(self):
         # Test that port is not required when pcmk_host_argument or
@@ -233,28 +292,28 @@ class StonithTest(unittest.TestCase):
 #""")
 #        self.assertEquals(returnVal, 1)
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib,
             'stonith create apc-2 fence_apc params ipaddr="ip" login="apc" action="reboot" pcmk_host_map="buzz-01:1;buzz-02:2"'
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib,
             'stonith create apc-3 fence_apc params ipaddr="ip" login="apc" action="reboot" pcmk_host_list="buzz-01,buzz-02"'
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib,
             'stonith create apc-4 fence_apc params ipaddr="ip" login="apc" action="reboot" pcmk_host_argument="buzz-01"'
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
     def testFenceLevels(self):
         output, returnVal = pcs(temp_cib, "stonith level remove 1 rh7-2 F1")
@@ -557,67 +616,67 @@ class StonithTest(unittest.TestCase):
         output, returnVal = pcs(
             temp_cib, "stonith create n1-ipmi fence_ilo --force"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(
             temp_cib, "stonith create n2-ipmi fence_ilo --force"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(
             temp_cib, "stonith create n1-apc1 fence_apc --force"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(
             temp_cib, "stonith create n1-apc2 fence_apc --force"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(
             temp_cib, "stonith create n2-apc1 fence_apc --force"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(
             temp_cib, "stonith create n2-apc2 fence_apc --force"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(
             temp_cib, "stonith create n2-apc3 fence_apc --force"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 n1-ipmi")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(
             temp_cib, "stonith level add 2 rh7-1 n1-apc1,n1-apc2,n2-apc2"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-2 n2-ipmi")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(
             temp_cib, "stonith level add 2 rh7-2 n2-apc1,n2-apc2,n2-apc3"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "")
 
         output, returnVal = pcs(temp_cib, "stonith")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, """\
  n1-ipmi\t(stonith:fence_ilo):\tStopped
  n2-ipmi\t(stonith:fence_ilo):\tStopped
@@ -635,11 +694,11 @@ class StonithTest(unittest.TestCase):
 """)
 
         output, returnVal = pcs(temp_cib, "stonith delete n2-apc2")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "Deleting Resource - n2-apc2\n")
 
         output, returnVal = pcs(temp_cib, "stonith")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, """\
  n1-ipmi\t(stonith:fence_ilo):\tStopped
  n2-ipmi\t(stonith:fence_ilo):\tStopped
@@ -656,11 +715,11 @@ class StonithTest(unittest.TestCase):
 """)
 
         output, returnVal = pcs(temp_cib, "stonith delete n2-apc1")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "Deleting Resource - n2-apc1\n")
 
         output, returnVal = pcs(temp_cib, "stonith")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, """\
  n1-ipmi\t(stonith:fence_ilo):\tStopped
  n2-ipmi\t(stonith:fence_ilo):\tStopped
@@ -676,11 +735,11 @@ class StonithTest(unittest.TestCase):
 """)
 
         output, returnVal = pcs(temp_cib, "stonith delete n2-apc3")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "Deleting Resource - n2-apc3\n")
 
         output, returnVal = pcs(temp_cib, "stonith")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, """\
  n1-ipmi\t(stonith:fence_ilo):\tStopped
  n2-ipmi\t(stonith:fence_ilo):\tStopped
@@ -694,11 +753,11 @@ class StonithTest(unittest.TestCase):
 """)
 
         output, returnVal = pcs(temp_cib, "resource delete n1-apc1")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "Deleting Resource - n1-apc1\n")
 
         output, returnVal = pcs(temp_cib, "stonith")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, """\
  n1-ipmi\t(stonith:fence_ilo):\tStopped
  n2-ipmi\t(stonith:fence_ilo):\tStopped
@@ -711,11 +770,11 @@ class StonithTest(unittest.TestCase):
 """)
 
         output, returnVal = pcs(temp_cib, "resource delete n1-apc2")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, "Deleting Resource - n1-apc2\n")
 
         output, returnVal = pcs(temp_cib, "stonith")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         ac(output, """\
  n1-ipmi\t(stonith:fence_ilo):\tStopped
  n2-ipmi\t(stonith:fence_ilo):\tStopped

@@ -1,13 +1,18 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import sys
+import xml.dom.minidom
+from xml.dom.minidom import parseString
+from collections import defaultdict
+
 import usage
 import utils
 import resource
 import rule as rule_utils
-import xml.dom.minidom
-import xml.etree.ElementTree as ET
-from xml.dom.minidom import getDOMImplementation
-from xml.dom.minidom import parseString
-from collections import defaultdict
+
 
 OPTIONS_ACTION = ("start", "promote", "demote", "stop")
 DEFAULT_ACTION = "start"
@@ -97,12 +102,12 @@ def colocation_show(argv):
     (dom,constraintsElement) = getCurrentConstraints()
 
     resource_colocation_sets = []
-    print "Colocation Constraints:"
+    print("Colocation Constraints:")
     for co_loc in constraintsElement.getElementsByTagName('rsc_colocation'):
         if not co_loc.getAttribute("rsc"):
             resource_colocation_sets.append(co_loc)
         else:
-            print "  " + colocation_el_to_string(co_loc, showDetail)
+            print("  " + colocation_el_to_string(co_loc, showDetail))
     print_sets(resource_colocation_sets, showDetail)
 
 def colocation_el_to_string(co_loc, showDetail=False):
@@ -144,7 +149,7 @@ def colocation_rm(argv):
     if elementFound == True:
         utils.replace_cib_configuration(dom)
     else:
-        print "No matching resources found in ordering list"
+        print("No matching resources found in ordering list")
 
 
 # When passed an array of arguments if the first argument doesn't have an '='
@@ -363,12 +368,12 @@ def order_show(argv):
     (dom,constraintsElement) = getCurrentConstraints()
 
     resource_order_sets = []
-    print "Ordering Constraints:"
+    print("Ordering Constraints:")
     for ord_loc in constraintsElement.getElementsByTagName('rsc_order'):
         if not ord_loc.getAttribute("first"):
             resource_order_sets.append(ord_loc)
         else:
-            print "  " + order_el_to_string(ord_loc, showDetail)
+            print("  " + order_el_to_string(ord_loc, showDetail))
     print_sets(resource_order_sets,showDetail)
 
 def order_el_to_string(ord_loc, showDetail=False):
@@ -407,16 +412,16 @@ def order_el_to_string(ord_loc, showDetail=False):
     ])
     if oc_options:
         oc_options = "(Options: " + oc_options + ")"
-    return " ".join(filter(None, [
+    return " ".join([arg for arg in [
         first_action, oc_resource1, "then", then_action, oc_resource2,
         score_text, oc_sym, oc_options, oc_id_out
-    ]))
+    ] if arg])
 
 def print_sets(sets,showDetail):
     if len(sets) != 0:
-        print "  Resource Sets:"
+        print("  Resource Sets:")
         for ro in sets:
-            print "    " + set_constraint_el_to_string(ro, showDetail)
+            print("    " + set_constraint_el_to_string(ro, showDetail))
 
 def set_constraint_el_to_string(constraint_el, showDetail=False):
     set_list = []
@@ -761,7 +766,9 @@ def order_add(argv,returnElementOnly=False):
                     "  " + order_el_to_string(dup, True) for dup in duplicates
                 ])
             )
-    print "Adding " + resource1 + " " + resource2 + " ("+scorekind+")" + options
+    print(
+        "Adding " + resource1 + " " + resource2 + " ("+scorekind+")" + options
+    )
 
     if returnElementOnly == False:
         utils.replace_cib_configuration(dom)
@@ -811,7 +818,7 @@ def location_show(argv):
     ruleshash = defaultdict(list)
     all_loc_constraints = constraintsElement.getElementsByTagName('rsc_location')
 
-    print "Location Constraints:"
+    print("Location Constraints:")
     for rsc_loc in all_loc_constraints:
         lc_node = rsc_loc.getAttribute("node")
         lc_rsc = rsc_loc.getAttribute("rsc")
@@ -856,35 +863,35 @@ def location_show(argv):
         else:
             rschash[lc_rsc] = [(lc_id,lc_node,lc_score, lc_role, lc_resource_discovery)]
 
-    nodelist = list(set(nodehashon.keys() + nodehashoff.keys()))
-    rsclist = list(set(rschashon.keys() + rschashoff.keys()))
+    nodelist = list(set(list(nodehashon.keys()) + list(nodehashoff.keys())))
+    rsclist = list(set(list(rschashon.keys()) + list(rschashoff.keys())))
 
     if byNode == True:
         for node in nodelist:
             if len(valid_noderes) != 0:
                 if node not in valid_noderes:
                     continue
-            print "  Node: " + node
+            print("  Node: " + node)
 
-            if (node in nodehashon):
-                print "    Allowed to run:"
-                for options in nodehashon[node]:
-                    print "      " + options[1] +  " (" + options[0] + ")",
-                    if (options[3] != ""):
-                        print "(role: "+options[3]+")",
-                    if (options[4] != ""):
-                        print "(resource-discovery="+options[4]+")",
-                    print "Score: "+ options[2]
-
-            if (node in nodehashoff):
-                print "    Not allowed to run:"
-                for options in nodehashoff[node]:
-                    print "      " + options[1] +  " (" + options[0] + ")",
-                    if (options[3] != ""):
-                        print "(role: "+options[3]+")",
-                    if (options[4] != ""):
-                        print "(resource-discovery="+options[4]+")",
-                    print "Score: "+ options[2]
+            nodehash_label = (
+                (nodehashon, "    Allowed to run:")
+                (nodehashoff, "    Not allowed to run:")
+            )
+            for nodehash, label in nodehash_label:
+                if node in nodehash:
+                    print(label)
+                    for options in nodehash[node]:
+                        line_parts = [
+                            "      " + options[1] + " (" + options[0] + ")",
+                        ]
+                        if options[3]:
+                            line_parts.append("(role: {0})".format(options[3]))
+                        if options[4]:
+                            line_parts.append(
+                                "(resource-discovery={0})".format(options[4])
+                            )
+                        line_parts.append("Score: " + options[2])
+                        print(" ".join(line_parts))
         show_location_rules(ruleshash,showDetail)
     else:
         rsclist.sort()
@@ -892,33 +899,30 @@ def location_show(argv):
             if len(valid_noderes) != 0:
                 if rsc not in valid_noderes:
                     continue
-            print "  Resource: " + rsc
-            if (rsc in rschashon):
-                for options in rschashon[rsc]:
-                    if options[1] == "":
-                        continue
-                    print "    Enabled on:",
-                    print options[1],
-                    print "(score:"+options[2]+")",
-                    if (options[3] != ""):
-                        print "(role: "+options[3]+")",
-                    if (options[4] != ""):
-                        print "(resource-discovery="+options[4]+")",
-                    if showDetail:
-                        print "(id:"+options[0]+")",
-                    print
-            if (rsc in rschashoff):
-                for options in rschashoff[rsc]:
-                    print "    Disabled on:",
-                    print options[1],
-                    print "(score:"+options[2]+")",
-                    if (options[3] != ""):
-                        print "(role: "+options[3]+")",
-                    if (options[4] != ""):
-                        print "(resource-discovery="+options[4]+")",
-                    if showDetail:
-                        print "(id:"+options[0]+")",
-                    print 
+            print("  Resource: " + rsc)
+            rschash_label = (
+                (rschashon, "    Enabled on:"),
+                (rschashoff, "    Disabled on:"),
+            )
+            for rschash, label in rschash_label:
+                if rsc in rschash:
+                    for options in rschash[rsc]:
+                        if not options[1]:
+                            continue
+                        line_parts = [
+                            label,
+                            options[1],
+                            "(score:{0})".format(options[2]),
+                        ]
+                        if options[3]:
+                            line_parts.append("(role: {0})".format(options[3]))
+                        if options[4]:
+                            line_parts.append(
+                                "(resource-discovery={0})".format(options[4])
+                            )
+                        if showDetail:
+                            line_parts.append("(id:{0})".format(options[0]))
+                        print(" ".join(line_parts))
             miniruleshash={}
             miniruleshash["Resource: " + rsc] = ruleshash["Resource: " + rsc]
             show_location_rules(miniruleshash,showDetail, True)
@@ -928,7 +932,7 @@ def show_location_rules(ruleshash,showDetail,noheader=False):
     for rsc in ruleshash:
         constrainthash= defaultdict(list)
         if not noheader:
-            print "  " + rsc
+            print("  " + rsc)
         for rule in ruleshash[rsc]:
             constraint_id = rule.parentNode.getAttribute("id")
             constrainthash[constraint_id].append(rule)
@@ -942,11 +946,11 @@ def show_location_rules(ruleshash,showDetail,noheader=False):
             else:
                 constraint_option_info = ""
 
-            print "    Constraint: " + constraint_id + constraint_option_info
+            print("    Constraint: " + constraint_id + constraint_option_info)
             for rule in constrainthash[constraint_id]:
-                print rule_utils.ExportDetailed().get_string(
+                print(rule_utils.ExportDetailed().get_string(
                     rule, showDetail, "      "
-                )
+                ))
 
 def location_prefer(argv):
     rsc = argv.pop(0)
@@ -1008,7 +1012,7 @@ def location_add(argv,rm=False):
                 if '=' in arg:
                     options.append(arg.split('=',1))
                 else:
-                    print "Error: bad option '%s'" % arg
+                    print("Error: bad option '%s'" % arg)
                     usage.constraint(["location add"])
                     sys.exit(1)
                 if options[-1][0] != "resource-discovery" and "--force" not in utils.pcs_options:
@@ -1207,7 +1211,7 @@ def constraint_rm(argv,returnStatus=False, constraintsElement=None, passed_dom=N
         if returnStatus:
             return True
     else:
-        print >> sys.stderr, "Error: Unable to find constraint - '%s'" % c_id
+        utils.err("Unable to find constraint - '%s'" % c_id, False)
         if returnStatus:
             return False
         sys.exit(1)
@@ -1219,21 +1223,21 @@ def constraint_ref(argv):
         sys.exit(1)
 
     for arg in argv:
-        print "Resource: %s" % arg
+        print("Resource: %s" % arg)
         constraints,set_constraints = find_constraints_containing(arg)
         if len(constraints) == 0 and len(set_constraints) == 0:
-            print "  No Matches."
+            print("  No Matches.")
         else:
             for constraint in constraints:
-                print "  " + constraint
+                print("  " + constraint)
             for constraint in set_constraints:
-                print "  " + constraint
+                print("  " + constraint)
 
 def remove_constraints_containing(resource_id,output=False,constraints_element = None, passed_dom=None):
     constraints,set_constraints = find_constraints_containing(resource_id, passed_dom)
     for c in constraints:
         if output == True:
-            print "Removing Constraint - " + c
+            print("Removing Constraint - " + c)
         if constraints_element != None:
             constraint_rm([c], True, constraints_element, passed_dom=passed_dom)
         else:
@@ -1249,14 +1253,14 @@ def remove_constraints_containing(resource_id,output=False,constraints_element =
                 pn = c.parentNode
                 pn.removeChild(c)
                 if output == True:
-                    print "Removing %s from set %s" % (resource_id,pn.getAttribute("id"))
+                    print("Removing %s from set %s" % (resource_id,pn.getAttribute("id")))
                 if pn.getElementsByTagName("resource_ref").length == 0:
-                    print "Removing set %s" % pn.getAttribute("id")
+                    print("Removing set %s" % pn.getAttribute("id"))
                     pn2 = pn.parentNode
                     pn2.removeChild(pn)
                     if pn2.getElementsByTagName("resource_set").length == 0:
                         pn2.parentNode.removeChild(pn2)
-                        print "Removing constraint %s" % pn2.getAttribute("id")
+                        print("Removing constraint %s" % pn2.getAttribute("id"))
         if passed_dom:
             return dom
         utils.replace_cib_configuration(dom)
@@ -1308,7 +1312,7 @@ def find_constraints_containing(resource_id, passed_dom=None):
 def remove_constraints_containing_node(dom, node, output=False):
     for constraint in find_constraints_containing_node(dom, node):
         if output:
-            print "Removing Constraint - %s" % constraint.getAttribute("id")
+            print("Removing Constraint - %s" % constraint.getAttribute("id"))
         constraint.parentNode.removeChild(constraint)
     return dom
 
@@ -1376,19 +1380,21 @@ def constraint_rule(argv):
         cib = utils.get_cib_etree()
         temp_id = argv.pop(0)
         constraints = cib.find('.//constraints')
-        loc_cons = cib.findall('.//rsc_location')
+        loc_cons = cib.findall(str('.//rsc_location'))
 
-        rules = cib.findall('.//rule')
+        rules = cib.findall(str('.//rule'))
         for loc_con in loc_cons:
             for rule in loc_con:
                 if rule.get("id") == temp_id:
                     if len(loc_con) > 1:
-                        print "Removing Rule:",rule.get("id")
+                        print("Removing Rule: {0}".format(rule.get("id")))
                         loc_con.remove(rule)
                         found = True
                         break
                     else:
-                        print "Removing Constraint:",loc_con.get("id") 
+                        print(
+                            "Removing Constraint: {0}".format(loc_con.get("id"))
+                        )
                         constraints.remove(loc_con)
                         found = True
                         break

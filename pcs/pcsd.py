@@ -1,11 +1,17 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import sys
-import json
 import os
 import errno
+import json
 
 import usage
 import utils
 import settings
+
 
 def pcsd_cmd(argv):
     if len(argv) == 0:
@@ -51,25 +57,25 @@ def pcsd_certkey(argv):
 
     try:
         try:
-            os.chmod(settings.pcsd_cert_location, 0700)
+            os.chmod(settings.pcsd_cert_location, 0o700)
         except OSError: # If the file doesn't exist, we don't care
             pass
 
         try:
-            os.chmod(settings.pcsd_key_location, 0700)
+            os.chmod(settings.pcsd_key_location, 0o700)
         except OSError: # If the file doesn't exist, we don't care
             pass
 
-        with os.fdopen(os.open(settings.pcsd_cert_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0700), 'wb') as myfile:
+        with os.fdopen(os.open(settings.pcsd_cert_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), 'w') as myfile:
             myfile.write(cert)
 
-        with os.fdopen(os.open(settings.pcsd_key_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0700), 'wb') as myfile:
+        with os.fdopen(os.open(settings.pcsd_key_location, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), 'w') as myfile:
             myfile.write(key)
 
     except IOError as e:
         utils.err(e)
 
-    print "Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect"
+    print("Certificate and key updated, you may need to restart pcsd (service pcsd restart) for new settings to take effect")
 
 def pcsd_sync_certs(argv, exit_after_error=True):
     error = False
@@ -101,7 +107,7 @@ def pcsd_sync_certs(argv, exit_after_error=True):
                     sys.exit(1)
                 else:
                     return
-            print
+            print()
         except (KeyError, AttributeError):
             utils.err("Unable to communicate with pcsd", exit_after_error)
             return
@@ -163,5 +169,5 @@ def pcsd_clear_auth(argv):
 
     if len(output) > 0:
         for o in output:
-            print "Error: " + o
+            print("Error: " + o)
         sys.exit(1)

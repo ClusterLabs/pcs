@@ -1,6 +1,13 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import re
 import xml.dom.minidom
+
 import utils
+
 
 # main functions
 
@@ -34,7 +41,7 @@ def dom_rule_add(dom_element, options, rule_argv):
         utils.err("can not specify both score and score-attribute")
     if options.get("score") and not utils.is_score(options["score"]):
         # preserving legacy behaviour
-        print (
+        print(
             "Warning: invalid score '%s', setting score-attribute=pingd instead"
             % options["score"]
         )
@@ -79,7 +86,7 @@ def dom_rule_add(dom_element, options, rule_argv):
     # add options into rule xml
     if not options.get("score") and not options.get("score-attribute"):
         options["score"] = "INFINITY"
-    for name, value in options.iteritems():
+    for name, value in options.items():
         if name != "id" and value is not None:
             dom_rule.setAttribute(name, value)
     # score or score-attribute is required for the nested rules in order to have
@@ -260,8 +267,9 @@ class ExportAsExpression(object):
 
     def list_attributes(self, element):
         attributes = utils.dom_attrs_to_list(element, with_id=False)
-        if self.normalize:
-            attributes.sort()
+        # sort it always to get the same output for the same input as dict is
+        # unordered
+        attributes.sort()
         return attributes
 
 
@@ -440,7 +448,8 @@ class SymbolTable(object):
         if not self.has_symbol(symbol_id):
             class SymbolClass(superclass):
                 pass
-            SymbolClass.__name__ = "symbol_" + symbol_id
+            # enforce str to be both python2 and python3 compatible
+            SymbolClass.__name__ = str("symbol_" + symbol_id)
             SymbolClass.symbol_id = symbol_id
             SymbolClass.left_binding_power = binding_power
             if expression_func:
@@ -616,8 +625,13 @@ class DateCommonValue(object):
         return False
 
     def __str__(self):
+        # sort it always to get the same output for the same input as dict is
+        # unordered
         return " ".join(
-            ["%s=%s" % (name, value) for name, value in self.parts.iteritems()]
+            [
+                "%s=%s" % (name, value)
+                for name, value in sorted(self.parts.items())
+            ]
         )
 
 
@@ -640,7 +654,7 @@ class DateSpecValue(DateCommonValue):
         super(DateSpecValue, self).__init__(parts_string, self.KEYWORD)
 
     def validate(self):
-        for name, value in self.parts.iteritems():
+        for name, value in self.parts.items():
             if not self.valid_part(name, value):
                 raise SyntaxError(
                     "invalid %s '%s' in '%s'"
@@ -677,7 +691,7 @@ class DateDurationValue(DateCommonValue):
         super(DateDurationValue, self).__init__(parts_string, self.KEYWORD)
 
     def validate(self):
-        for name, value in self.parts.iteritems():
+        for name, value in self.parts.items():
             if not value.isdigit():
                 raise SyntaxError(
                     "invalid %s '%s' in '%s'"
@@ -859,7 +873,7 @@ class CibBuilder(object):
             "date_spec",
             dom_expression.getAttribute("id") + "-datespec"
         )
-        for key, value in syntactic_tree.children[0].value.parts.iteritems():
+        for key, value in syntactic_tree.children[0].value.parts.items():
             dom_datespec.setAttribute(key, value)
 
     def build_expression(self, dom_element, syntactic_tree):
@@ -912,7 +926,7 @@ class CibBuilder(object):
                     dom_expression.getAttribute("id") + "-duration"
                 )
                 duration = syntactic_tree.children[2].children[0].value
-                for key, value in duration.parts.iteritems():
+                for key, value in duration.parts.items():
                     dom_duration.setAttribute(key, value)
             else:
                 dom_expression.setAttribute(

@@ -1,10 +1,15 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import sys
+from xml.dom.minidom import parseString
+import xml.etree.ElementTree as ET
+
 import usage
 import utils
 import settings
-import xml.dom.minidom
-from xml.dom.minidom import parseString
-import xml.etree.ElementTree as ET
 
 def property_cmd(argv):
     if len(argv) == 0:
@@ -27,7 +32,7 @@ def set_property(argv):
     for arg in argv:
         args = arg.split('=')
         if (len(args) != 2):
-            print "Invalid Property: " + arg
+            print("Invalid Property: " + arg)
             continue
         if "--node" in utils.pcs_options:
             utils.set_node_attribute(args[0], args[1], utils.pcs_options["--node"])
@@ -68,18 +73,18 @@ def list_property(argv):
             properties
         )
 
-    print "Cluster Properties:"
-    for prop,val in sorted(properties.iteritems()):
-        print " " + prop + ": " + val
+    print("Cluster Properties:")
+    for prop,val in sorted(properties.items()):
+        print(" " + prop + ": " + val)
 
     node_attributes = utils.get_node_attributes()
     if node_attributes:
-        print "Node Attributes:"
+        print("Node Attributes:")
         for node in sorted(node_attributes):
-            print " " + node + ":",
+            line_parts = [" " + node + ":"]
             for attr in node_attributes[node]:
-                print attr,
-            print
+                line_parts.append(attr)
+            print(" ".join(line_parts))
 
 def get_default_properties():
     (output, retVal) = utils.run([settings.pengine_binary, "metadata"])

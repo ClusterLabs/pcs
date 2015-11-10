@@ -1,11 +1,18 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import os
 import sys
 import shutil
 import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
+
 import utils
 from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
+
 
 empty_cib = "empty-withnodes.xml"
 temp_cib = "temp.xml"
@@ -92,22 +99,22 @@ class ClusterTest(unittest.TestCase):
 
     def test_cluster_setup_bad_args(self):
         output, returnVal = pcs(temp_cib, "cluster setup")
-        self.assertEquals(
+        self.assertEqual(
             "Error: A cluster name (--name <name>) is required to setup a cluster\n",
             output
         )
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "cluster setup --name cname")
         self.assertTrue(output.startswith("\nUsage: pcs cluster setup..."))
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "cluster setup cname rh7-1 rh7-2")
-        self.assertEquals(
+        self.assertEqual(
             "Error: A cluster name (--name <name>) is required to setup a cluster\n",
             output
         )
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
     def test_cluster_setup_hostnames_resolving(self):
         output, returnVal = pcs(
@@ -118,7 +125,7 @@ class ClusterTest(unittest.TestCase):
 Error: Unable to resolve all hostnames, use --force to override
 Warning: Unable to resolve hostname: nonexistant-address
 """)
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
@@ -127,7 +134,7 @@ Warning: Unable to resolve hostname: nonexistant-address
         ac(output, """\
 Warning: Unable to resolve hostname: nonexistant-address
 """)
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
     def test_cluster_setup_file_exists(self):
         if utils.is_rhel6():
@@ -137,8 +144,8 @@ Warning: Unable to resolve hostname: nonexistant-address
             temp_cib,
             "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         corosync_conf = """\
 totem {
     version: 2
@@ -178,12 +185,12 @@ logging {
             temp_cib,
             "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-2 rh7-3"
         )
-        self.assertEquals("""\
+        self.assertEqual("""\
 Error: corosync.conf.tmp already exists, use --force to overwrite
 """,
             output
         )
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, corosync_conf)
@@ -192,8 +199,8 @@ Error: corosync.conf.tmp already exists, use --force to overwrite
             temp_cib,
             "cluster setup --force --local --corosync_conf=corosync.conf.tmp --name cname rh7-2 rh7-3"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -236,8 +243,8 @@ logging {
             temp_cib,
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         cluster_conf = """\
 <cluster config_version="9" name="cname">
   <fence_daemon/>
@@ -275,12 +282,12 @@ logging {
             temp_cib,
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-2 rh7-3"
         )
-        self.assertEquals("""\
+        self.assertEqual("""\
 Error: cluster.conf.tmp already exists, use --force to overwrite
 """,
             output
         )
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, cluster_conf)
@@ -289,8 +296,8 @@ Error: cluster.conf.tmp already exists, use --force to overwrite
             temp_cib,
             "cluster setup --force --local --cluster_conf=cluster.conf.tmp --name cname rh7-2 rh7-3"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -334,8 +341,8 @@ Error: cluster.conf.tmp already exists, use --force to overwrite
             temp_cib,
             "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -374,8 +381,8 @@ logging {
             temp_cib,
             "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3"
         )
-        self.assertEquals("rh7-3: successfully added!\n", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("rh7-3: successfully added!\n", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -418,8 +425,8 @@ logging {
             temp_cib,
             "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3"
         )
-        self.assertEquals(0, returnVal)
-        self.assertEquals("rh7-3: successfully removed!\n", output)
+        self.assertEqual(0, returnVal)
+        self.assertEqual("rh7-3: successfully removed!\n", output)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -458,8 +465,8 @@ logging {
             temp_cib,
             "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3,192.168.1.3"
         )
-        self.assertEquals("rh7-3,192.168.1.3: successfully added!\n", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("rh7-3,192.168.1.3: successfully added!\n", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -503,8 +510,8 @@ logging {
             temp_cib,
             "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-2"
         )
-        self.assertEquals(0, returnVal)
-        self.assertEquals("rh7-2: successfully removed!\n", output)
+        self.assertEqual(0, returnVal)
+        self.assertEqual("rh7-2: successfully removed!\n", output)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -544,8 +551,8 @@ logging {
             temp_cib,
             "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3,192.168.1.3"
         )
-        self.assertEquals(0, returnVal)
-        self.assertEquals("rh7-3,192.168.1.3: successfully removed!\n", output)
+        self.assertEqual(0, returnVal)
+        self.assertEqual("rh7-3,192.168.1.3: successfully removed!\n", output)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -585,8 +592,8 @@ logging {
             temp_cib,
             "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --auto_tie_breaker=1"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -625,8 +632,8 @@ logging {
             temp_cib,
             "cluster localnode add --corosync_conf=corosync.conf.tmp rh7-3"
         )
-        self.assertEquals(output, "rh7-3: successfully added!\n")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(output, "rh7-3: successfully added!\n")
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -670,8 +677,8 @@ logging {
             temp_cib,
             "cluster localnode remove --corosync_conf=corosync.conf.tmp rh7-3"
         )
-        self.assertEquals("rh7-3: successfully removed!\n", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("rh7-3: successfully removed!\n", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -715,8 +722,8 @@ logging {
             temp_cib,
             "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 rh7-3"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -764,8 +771,8 @@ logging {
             temp_cib,
             "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --transport udp"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -814,7 +821,7 @@ logging {
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2"
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -852,7 +859,7 @@ logging {
             "cluster localnode add --cluster_conf=cluster.conf.tmp rh7-3"
         )
         ac(output, "rh7-3: successfully added!\n")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -897,7 +904,7 @@ logging {
             "cluster localnode remove --cluster_conf=cluster.conf.tmp rh7-3"
         )
         ac(output, "rh7-3: successfully removed!\n")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
@@ -936,7 +943,7 @@ logging {
             "cluster localnode add --cluster_conf=cluster.conf.tmp rh7-3,192.168.1.3"
         )
         ac(output, "rh7-3,192.168.1.3: successfully added!\n")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
@@ -983,7 +990,7 @@ logging {
             "cluster localnode remove --cluster_conf=cluster.conf.tmp rh7-2"
         )
         ac(output, "rh7-2: successfully removed!\n")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
@@ -1023,7 +1030,7 @@ logging {
             "cluster localnode remove --cluster_conf=cluster.conf.tmp rh7-3,192.168.1.3"
         )
         ac(output, "rh7-3,192.168.1.3: successfully removed!\n")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
@@ -1060,7 +1067,7 @@ logging {
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 rh7-3"
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -1112,7 +1119,7 @@ logging {
         ac(output, """\
 Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
 """)
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -1153,8 +1160,8 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
             temp_cib,
             "cluster setup --local --corosync_conf=corosync.conf.tmp --name cname rh7-1 rh7-2 --ipv6"
         )
-        self.assertEquals("", output)
-        self.assertEquals(0, returnVal)
+        self.assertEqual("", output)
+        self.assertEqual(0, returnVal)
         with open("corosync.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -1201,7 +1208,7 @@ logging {
         ac(output, """\
 Warning: --ipv6 ignored as it is not supported on CMAN clusters
 """)
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -1720,7 +1727,7 @@ logging {
             "cluster setup --local --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr0 1.1.2.0"
         )
         ac(output, "Error: --addr0 can only be used once\n")
-        self.assertEquals(returnVal, 1)
+        self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
@@ -1730,14 +1737,14 @@ logging {
 Error: blah is an unknown RRP mode, use --force to override
 Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 """)
-        self.assertEquals(returnVal, 1)
+        self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
             "cluster setup --transport udp --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0"
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
@@ -1786,7 +1793,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
             "cluster setup --transport udp --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
@@ -1835,7 +1842,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
             "cluster setup --transport udp --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
@@ -1884,7 +1891,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
 
         with open("cluster.conf.tmp") as f:
             data = f.read()
@@ -1936,7 +1943,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
             output,
             "Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n"
         )
-        self.assertEquals(returnVal, 1)
+        self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
@@ -1946,7 +1953,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
             output,
             "Warning: using a RRP mode of 'active' is not supported or tested\n"
         )
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -1997,7 +2004,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
 Error: using a RRP mode of 'active' is not supported or tested, use --force to override
 Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 """)
-        self.assertEquals(returnVal, 1)
+        self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
@@ -2007,7 +2014,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
 Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 Warning: using a RRP mode of 'active' is not supported or tested
 """)
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -2054,7 +2061,7 @@ Warning: using a RRP mode of 'active' is not supported or tested
         ac(output, """\
 Error: You cannot specify more than two addresses for a node: rh7-2,192.168.99.2,192.168.99.3
 """)
-        self.assertEquals(returnVal, 1)
+        self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
@@ -2063,7 +2070,7 @@ Error: You cannot specify more than two addresses for a node: rh7-2,192.168.99.2
         ac(output, """\
 Error: if one node is configured for RRP, all nodes must be configured for RRP
 """)
-        self.assertEquals(returnVal, 1)
+        self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
@@ -2073,14 +2080,14 @@ Error: if one node is configured for RRP, all nodes must be configured for RRP
 Error: --addr0 and --addr1 can only be used with --transport=udp
 Warning: Using udpu transport on a CMAN cluster, cluster restart is required after node add or remove
 """)
-        self.assertEquals(returnVal, 1)
+        self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
             "cluster setup --local --cluster_conf=cluster.conf.tmp --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2"
         )
         ac(output, "")
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -2160,7 +2167,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
         ac(output, """\
 Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 """)
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, cluster_conf)
@@ -2174,7 +2181,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
         ac(output, """\
 Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
 """)
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, cluster_conf)
@@ -2193,7 +2200,7 @@ Warning: --auto_tie_breaker ignored as it is not supported on CMAN clusters
 Warning: --last_man_standing ignored as it is not supported on CMAN clusters
 Warning: --last_man_standing_window ignored as it is not supported on CMAN clusters
 """)
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -2283,7 +2290,7 @@ logging {
         ac(output, """\
 Warning: --token_coefficient ignored as it is not supported on CMAN clusters
 """)
-        self.assertEquals(returnVal, 0)
+        self.assertEqual(returnVal, 0)
         with open("cluster.conf.tmp") as f:
             data = f.read()
             ac(data, """\
@@ -2443,7 +2450,7 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
 
     def testClusterUpgrade(self):
         if not isMinimumPacemakerVersion(1,1,11):
-            print "WARNING: Unable to test cluster upgrade because pacemaker is older than 1.1.11"
+            print("WARNING: Unable to test cluster upgrade because pacemaker is older than 1.1.11")
             return
         with open(temp_cib) as myfile:
             data = myfile.read()

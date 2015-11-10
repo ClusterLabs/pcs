@@ -1,10 +1,18 @@
-import os,sys
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import os.path
+import sys
 import difflib
 import subprocess
 import re
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir) 
+sys.path.insert(0,parentdir)
+
 import utils
+
 
 pcs_location = "../pcs.py"
 
@@ -39,14 +47,13 @@ def ac(a,b):
     if a != b:
         d = difflib.Differ()
         diff = d.compare(b.splitlines(1),a.splitlines(1))
-        print ""
-        print "".join(diff)
+        print("")
+        print("".join(diff))
         assert False,[a]
 
 def isMinimumPacemakerVersion(cmajor,cminor,crev):
-    p = subprocess.Popen(["crm_mon","--version"], stdout=subprocess.PIPE)
-    (stdout, stderr) = p.communicate()
-    pacemaker_version =  stdout.split("\n")[0]
+    output, retval = utils.run(["crm_mon", "--version"])
+    pacemaker_version = output.split("\n")[0]
     r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
     m = r.match(pacemaker_version)
     major = int(m.group(1))

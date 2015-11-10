@@ -1,12 +1,19 @@
-import os
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import os.path
 import sys
 import shutil
 import unittest
 import xml.dom.minidom
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
-from pcs_test_functions import pcs,ac
+
+from pcs_test_functions import pcs, ac
 import rule
+
 
 empty_cib = "empty.xml"
 temp_cib = "temp.xml"
@@ -15,7 +22,7 @@ class DateValueTest(unittest.TestCase):
 
     def testParse(self):
         for value, item in enumerate(rule.DateCommonValue.allowed_items, 1):
-            self.assertEquals(
+            self.assertEqual(
                 str(value),
                 rule.DateCommonValue("%s=%s" % (item, value)).parts[item]
             )
@@ -24,23 +31,23 @@ class DateValueTest(unittest.TestCase):
             "hours=1 monthdays=2 weekdays=3 yeardays=4 months=5 weeks=6 "
             "years=7 weekyears=8 moon=9"
         )
-        self.assertEquals("1", value.parts["hours"])
-        self.assertEquals("2", value.parts["monthdays"])
-        self.assertEquals("3", value.parts["weekdays"])
-        self.assertEquals("4", value.parts["yeardays"])
-        self.assertEquals("5", value.parts["months"])
-        self.assertEquals("6", value.parts["weeks"])
-        self.assertEquals("7", value.parts["years"])
-        self.assertEquals("8", value.parts["weekyears"])
-        self.assertEquals("9", value.parts["moon"])
+        self.assertEqual("1", value.parts["hours"])
+        self.assertEqual("2", value.parts["monthdays"])
+        self.assertEqual("3", value.parts["weekdays"])
+        self.assertEqual("4", value.parts["yeardays"])
+        self.assertEqual("5", value.parts["months"])
+        self.assertEqual("6", value.parts["weeks"])
+        self.assertEqual("7", value.parts["years"])
+        self.assertEqual("8", value.parts["weekyears"])
+        self.assertEqual("9", value.parts["moon"])
 
         value = rule.DateCommonValue("hours=1 monthdays=2 hours=3")
-        self.assertEquals("2", value.parts["monthdays"])
-        self.assertEquals("3", value.parts["hours"])
+        self.assertEqual("2", value.parts["monthdays"])
+        self.assertEqual("3", value.parts["hours"])
 
         value = rule.DateCommonValue(" hours=1   monthdays=2   hours=3 ")
-        self.assertEquals("2", value.parts["monthdays"])
-        self.assertEquals("3", value.parts["hours"])
+        self.assertEqual("2", value.parts["monthdays"])
+        self.assertEqual("3", value.parts["hours"])
 
         self.assertSyntaxError(
             "missing one of 'hours=', 'monthdays=', 'weekdays=', 'yeardays=', "
@@ -71,7 +78,7 @@ class DateValueTest(unittest.TestCase):
 
     def testDurationValidate(self):
         for value, item in enumerate(rule.DateCommonValue.allowed_items, 1):
-            self.assertEquals(
+            self.assertEqual(
                 str(value),
                 rule.DateDurationValue("%s=%s" % (item, value)).parts[item]
             )
@@ -95,17 +102,17 @@ class DateValueTest(unittest.TestCase):
     def testDateSpecValidation(self):
         for item in rule.DateCommonValue.allowed_items:
             value = 1
-            self.assertEquals(
+            self.assertEqual(
                 str(value),
                 rule.DateSpecValue("%s=%s" % (item, value)).parts[item]
             )
-            self.assertEquals(
+            self.assertEqual(
                 "%s-%s" % (value, value + 1),
                 rule.DateSpecValue(
                     "%s=%s-%s" % (item, value, value + 1)
                 ).parts[item]
             )
-        self.assertEquals(
+        self.assertEqual(
             "hours=9-16 weekdays=1-5",
             str(rule.DateSpecValue("hours=9-16 weekdays=1-5"))
         )
@@ -187,7 +194,7 @@ class DateValueTest(unittest.TestCase):
         try:
             value_class(parts_string)
         except rule.SyntaxError as e:
-            self.assertEquals(syntax_error, str(e))
+            self.assertEqual(syntax_error, str(e))
 
 
 class ParserTest(unittest.TestCase):
@@ -211,12 +218,12 @@ class ParserTest(unittest.TestCase):
         )
 
     def testSingleLiteralDatespec(self):
-        self.assertEquals(
+        self.assertEqual(
             "(date-spec (literal hours=1))",
             str(self.parser.parse(["date-spec", "hours=1"]))
         )
-        self.assertEquals(
-            "(date-spec (literal hours=1-14 months=1 monthdays=20-30))",
+        self.assertEqual(
+            "(date-spec (literal hours=1-14 monthdays=20-30 months=1))",
             str(self.parser.parse([
                 "date-spec", "hours=1-14 months=1 monthdays=20-30"
             ]))
@@ -224,27 +231,27 @@ class ParserTest(unittest.TestCase):
         self.assertUnexpectedEndOfInput(["date-spec"])
 
     def testSimpleExpression(self):
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (literal node1))",
             str(self.parser.parse(["#uname", "eq", "node1"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(ne (literal #uname) (literal node2))",
             str(self.parser.parse(["#uname", "ne", "node2"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(gt (literal int) (literal 123))",
             str(self.parser.parse(["int", "gt", "123"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(gte (literal int) (literal 123))",
             str(self.parser.parse(["int", "gte", "123"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(lt (literal int) (literal 123))",
             str(self.parser.parse(["int", "lt", "123"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(lte (literal int) (literal 123))",
             str(self.parser.parse(["int", "lte", "123"]))
         )
@@ -289,11 +296,11 @@ class ParserTest(unittest.TestCase):
         )
 
     def testDefinedExpression(self):
-        self.assertEquals(
+        self.assertEqual(
             "(defined (literal pingd))",
             str(self.parser.parse(["defined", "pingd"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(not_defined (literal pingd))",
             str(self.parser.parse(["not_defined", "pingd"]))
         )
@@ -323,35 +330,35 @@ class ParserTest(unittest.TestCase):
         )
 
     def testTypeExpression(self):
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (string (literal node1)))",
             str(self.parser.parse(["#uname", "eq", "string", "node1"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (integer (literal 12345)))",
             str(self.parser.parse(["#uname", "eq", "integer", "12345"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (integer (literal -12345)))",
             str(self.parser.parse(["#uname", "eq", "integer", "-12345"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (version (literal 1)))",
             str(self.parser.parse(["#uname", "eq", "version", "1"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (version (literal 1.2.3)))",
             str(self.parser.parse(["#uname", "eq", "version", "1.2.3"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (string (literal string)))",
             str(self.parser.parse(["#uname", "eq", "string", "string"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (string (literal and)))",
             str(self.parser.parse(["#uname", "eq", "string", "and"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(ne (literal #uname) (string (literal integer))) "
                 "(ne (literal #uname) (string (literal version)))"
@@ -380,15 +387,15 @@ class ParserTest(unittest.TestCase):
         )
 
     def testDateExpression(self):
-        self.assertEquals(
+        self.assertEqual(
             "(gt (literal date) (literal 2014-06-26))",
             str(self.parser.parse(["date", "gt", "2014-06-26"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(lt (literal date) (literal 2014-06-26))",
             str(self.parser.parse(["date", "lt", "2014-06-26"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(in_range "
                 "(literal date) (literal 2014-06-26) (literal 2014-07-26)"
             ")",
@@ -396,7 +403,7 @@ class ParserTest(unittest.TestCase):
                 "date", "in_range", "2014-06-26", "to", "2014-07-26"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(in_range "
                 "(literal date) "
                 "(literal 2014-06-26) (duration (literal years=1))"
@@ -467,7 +474,7 @@ class ParserTest(unittest.TestCase):
         )
 
     def testAndOrExpression(self):
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(ne (literal #uname) (literal node1)) "
                 "(ne (literal #uname) (literal node2))"
@@ -476,7 +483,7 @@ class ParserTest(unittest.TestCase):
                 "#uname", "ne", "node1", "and", "#uname", "ne", "node2"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(or "
                 "(eq (literal #uname) (literal node1)) "
                 "(eq (literal #uname) (literal node2))"
@@ -485,7 +492,7 @@ class ParserTest(unittest.TestCase):
                 "#uname", "eq", "node1", "or", "#uname", "eq", "node2"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(and "
                     "(ne (literal #uname) (literal node1)) "
@@ -499,7 +506,7 @@ class ParserTest(unittest.TestCase):
                 "and", "#uname", "ne", "node3"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(or "
                 "(and "
                     "(ne (literal #uname) (literal node1)) "
@@ -513,7 +520,7 @@ class ParserTest(unittest.TestCase):
                 "or", "#uname", "eq", "node3"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(or "
                     "(eq (literal #uname) (literal node1)) "
@@ -527,7 +534,7 @@ class ParserTest(unittest.TestCase):
                 "and", "#uname", "ne", "node3"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(defined (literal pingd)) "
                 "(lte (literal pingd) (literal 1))"
@@ -536,7 +543,7 @@ class ParserTest(unittest.TestCase):
                 "defined", "pingd", "and", "pingd", "lte", "1"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(or "
                 "(gt (literal pingd) (literal 1)) "
                 "(not_defined (literal pingd))"
@@ -547,7 +554,7 @@ class ParserTest(unittest.TestCase):
         )
 
     def testAndOrExpressionDateSpec(self):
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(ne (literal #uname) (literal node1)) "
                 "(date-spec (literal hours=1-12))"
@@ -556,7 +563,7 @@ class ParserTest(unittest.TestCase):
                 "#uname", "ne", "node1", "and", "date-spec", "hours=1-12"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(or "
                 "(date-spec (literal monthdays=1-12)) "
                 "(ne (literal #uname) (literal node1))"
@@ -565,7 +572,7 @@ class ParserTest(unittest.TestCase):
                 "date-spec", "monthdays=1-12", "or", "#uname", "ne", "node1"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(or "
                 "(date-spec (literal monthdays=1-10)) "
                 "(date-spec (literal monthdays=11-20))"
@@ -578,7 +585,7 @@ class ParserTest(unittest.TestCase):
         )
 
     def testAndOrExpressionDate(self):
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(ne (literal #uname) (literal node1)) "
                 "(in_range "
@@ -591,7 +598,7 @@ class ParserTest(unittest.TestCase):
                 "date", "in_range", "2014-06-26", "to", "2014-07-26"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(in_range "
                     "(literal date) (literal 2014-06-26) (literal 2014-07-26)"
@@ -653,19 +660,19 @@ class ParserTest(unittest.TestCase):
             "'defined', 'not_defined', 'date-spec'",
             ["(", "#uname", ")"]
         )
-        self.assertEquals(
+        self.assertEqual(
             "(date-spec (literal hours=1))",
             str(self.parser.parse(["(", "date-spec", "hours=1", ")"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(eq (literal #uname) (literal node1))",
             str(self.parser.parse(["(", "#uname", "eq", "node1", ")"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(defined (literal pingd))",
             str(self.parser.parse(["(", "defined", "pingd", ")"]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(ne (literal #uname) (literal node1)) "
                 "(ne (literal #uname) (literal node2))"
@@ -676,7 +683,7 @@ class ParserTest(unittest.TestCase):
                 ")"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(ne (literal #uname) (literal node1)) "
                 "(ne (literal #uname) (literal node2))"
@@ -687,7 +694,7 @@ class ParserTest(unittest.TestCase):
                 "(", "#uname", "ne", "node2", ")"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(or "
                 "(and "
                     "(ne (literal #uname) (literal node1)) "
@@ -702,7 +709,7 @@ class ParserTest(unittest.TestCase):
                 "or", "#uname", "eq", "node3"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(ne (literal #uname) (literal node1)) "
                 "(or "
@@ -716,7 +723,7 @@ class ParserTest(unittest.TestCase):
                 "(", "#uname", "ne", "node2", "or", "#uname", "eq", "node3", ")"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(and "
                 "(ne (literal #uname) (literal node1)) "
                 "(or "
@@ -736,7 +743,7 @@ class ParserTest(unittest.TestCase):
                 ")", ")"
             ]))
         )
-        self.assertEquals(
+        self.assertEqual(
             "(in_range "
                 "(literal date) (literal 2014-06-26) (literal 2014-07-26)"
             ")",
@@ -771,7 +778,7 @@ class ParserTest(unittest.TestCase):
         try:
             self.parser.parse(program)
         except rule.SyntaxError as e:
-            self.assertEquals(syntax_error, str(e))
+            self.assertEqual(syntax_error, str(e))
 
 
 class CibBuilderTest(unittest.TestCase):
@@ -1256,36 +1263,36 @@ class TokenPreprocessorTest(unittest.TestCase):
         self.preprocessor = rule.TokenPreprocessor()
 
     def testNoChanges(self):
-        self.assertEquals([], self.preprocessor.run([]))
-        self.assertEquals(
+        self.assertEqual([], self.preprocessor.run([]))
+        self.assertEqual(
             ["#uname", "eq", "node1"],
             self.preprocessor.run(["#uname", "eq", "node1"])
         )
 
     def testDateSpec(self):
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec"],
             self.preprocessor.run(["date-spec"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "hours=14"],
             self.preprocessor.run(["date-spec", "hours=14"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "hours weeks=6 months= moon=1"],
             self.preprocessor.run(
                 ["date-spec", "hours", "weeks=6", "months=", "moon=1"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "foo", "hours=14"],
             self.preprocessor.run(["date-spec", "foo", "hours=14"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "hours=14", "foo", "hours=14"],
             self.preprocessor.run(["date-spec", "hours=14", "foo", "hours=14"])
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 "date-spec",
                 "hours=1 monthdays=2 weekdays=3 yeardays=4 months=5 "
@@ -1297,13 +1304,13 @@ class TokenPreprocessorTest(unittest.TestCase):
                 "months=5","weeks=6", "years=7", "weekyears=8", "moon=9"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["#uname", "eq", "node1", "or", "date-spec", "hours=14"],
             self.preprocessor.run([
                 "#uname", "eq", "node1", "or", "date-spec", "hours=14"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "hours=14", "or", "#uname", "eq", "node1"],
             self.preprocessor.run([
                 "date-spec", "hours=14", "or", "#uname", "eq", "node1",
@@ -1311,29 +1318,29 @@ class TokenPreprocessorTest(unittest.TestCase):
         )
 
     def testDuration(self):
-        self.assertEquals(
+        self.assertEqual(
             ["duration"],
             self.preprocessor.run(["duration"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["duration", "hours=14"],
             self.preprocessor.run(["duration", "hours=14"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["duration", "hours weeks=6 months= moon=1"],
             self.preprocessor.run(
                 ["duration", "hours", "weeks=6", "months=", "moon=1"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["duration", "foo", "hours=14"],
             self.preprocessor.run(["duration", "foo", "hours=14"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["duration", "hours=14", "foo", "hours=14"],
             self.preprocessor.run(["duration", "hours=14", "foo", "hours=14"])
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 "duration",
                 "hours=1 monthdays=2 weekdays=3 yeardays=4 months=5 "
@@ -1345,13 +1352,13 @@ class TokenPreprocessorTest(unittest.TestCase):
                 "months=5","weeks=6", "years=7", "weekyears=8", "moon=9"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["#uname", "eq", "node1", "or", "duration", "hours=14"],
             self.preprocessor.run([
                 "#uname", "eq", "node1", "or", "duration", "hours=14"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["duration", "hours=14", "or", "#uname", "eq", "node1"],
             self.preprocessor.run([
                 "duration", "hours=14", "or", "#uname", "eq", "node1",
@@ -1359,49 +1366,49 @@ class TokenPreprocessorTest(unittest.TestCase):
         )
 
     def testOperationDatespec(self):
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "weeks=6 moon=1"],
             self.preprocessor.run(
                 ["date-spec", "operation=date_spec", "weeks=6", "moon=1"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "weeks=6 moon=1"],
             self.preprocessor.run(
                 ["date-spec", "weeks=6", "operation=date_spec", "moon=1"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "weeks=6", "foo", "moon=1"],
             self.preprocessor.run(
                 ["date-spec", "weeks=6", "operation=date_spec", "foo", "moon=1"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "weeks=6", "foo", "operation=date_spec", "moon=1"],
             self.preprocessor.run(
                 ["date-spec", "weeks=6", "foo", "operation=date_spec", "moon=1"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "weeks=6 moon=1"],
             self.preprocessor.run(
                 ["date-spec", "weeks=6", "moon=1", "operation=date_spec"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "weeks=6 moon=1", "foo"],
             self.preprocessor.run(
                 ["date-spec", "weeks=6", "moon=1", "operation=date_spec", "foo"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec"],
             self.preprocessor.run(
                 ["date-spec", "operation=date_spec"]
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date-spec", "weeks=6", "operation=foo", "moon=1"],
             self.preprocessor.run(
                 ["date-spec", "weeks=6", "operation=foo", "moon=1"]
@@ -1410,50 +1417,50 @@ class TokenPreprocessorTest(unittest.TestCase):
 
     def testDateLegacySyntax(self):
         # valid syntax
-        self.assertEquals(
+        self.assertEqual(
             ["date", "gt", "2014-06-26"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "gt"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "lt", "2014-06-26"],
             self.preprocessor.run([
                 "date", "end=2014-06-26", "lt"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "in_range", "2014-06-26", "to", "2014-07-26"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "end=2014-07-26", "in_range"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "in_range", "2014-06-26", "to", "2014-07-26"],
             self.preprocessor.run([
                 "date", "end=2014-07-26", "start=2014-06-26", "in_range"
             ])
         )
 
-        self.assertEquals(
+        self.assertEqual(
             ["date", "gt", "2014-06-26", "foo"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "gt", "foo"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "lt", "2014-06-26", "foo"],
             self.preprocessor.run([
                 "date", "end=2014-06-26", "lt", "foo"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "in_range", "2014-06-26", "to", "2014-07-26", "foo"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "end=2014-07-26", "in_range", "foo"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "in_range", "2014-06-26", "to", "2014-07-26", "foo"],
             self.preprocessor.run([
                 "date", "end=2014-07-26", "start=2014-06-26", "in_range", "foo"
@@ -1461,73 +1468,73 @@ class TokenPreprocessorTest(unittest.TestCase):
         )
 
         # invalid syntax - no change
-        self.assertEquals(
+        self.assertEqual(
             ["date"],
             self.preprocessor.run([
                 "date"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "start=2014-06-26"],
             self.preprocessor.run([
                 "date", "start=2014-06-26"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "end=2014-06-26"],
             self.preprocessor.run([
                 "date", "end=2014-06-26"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "start=2014-06-26", "end=2014-07-26"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "end=2014-07-26"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "start=2014-06-26", "end=2014-07-26", "lt"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "end=2014-07-26", "lt"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "start=2014-06-26", "lt", "foo"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "lt", "foo"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "start=2014-06-26", "end=2014-07-26", "gt", "foo"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "end=2014-07-26", "gt", "foo"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "end=2014-06-26", "gt"],
             self.preprocessor.run([
                 "date", "end=2014-06-26", "gt"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "start=2014-06-26", "in_range", "foo"],
             self.preprocessor.run([
                 "date", "start=2014-06-26", "in_range", "foo"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["date", "end=2014-07-26", "in_range"],
             self.preprocessor.run([
                 "date", "end=2014-07-26", "in_range"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["foo", "start=2014-06-26", "gt"],
             self.preprocessor.run([
                 "foo", "start=2014-06-26", "gt"
             ])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["foo", "end=2014-06-26", "lt"],
             self.preprocessor.run([
                 "foo", "end=2014-06-26", "lt"
@@ -1535,59 +1542,59 @@ class TokenPreprocessorTest(unittest.TestCase):
         )
 
     def testParenthesis(self):
-        self.assertEquals(
+        self.assertEqual(
             ["("],
             self.preprocessor.run(["("])
         )
-        self.assertEquals(
+        self.assertEqual(
             [")"],
             self.preprocessor.run([")"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["(", "(", ")", ")"],
             self.preprocessor.run(["(", "(", ")", ")"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["(", "(", ")", ")"],
             self.preprocessor.run(["(())"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["a", "(", "b", ")", "c"],
             self.preprocessor.run(["a", "(", "b", ")", "c"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["a", "(", "b", "c", ")", "d"],
             self.preprocessor.run(["a", "(", "b", "c", ")", "d"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["a", ")", "b", "(", "c"],
             self.preprocessor.run(["a", ")", "b", "(", "c"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["a", "(", "b", ")", "c"],
             self.preprocessor.run(["a", "(b)", "c"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["a", "(", "b", ")", "c"],
             self.preprocessor.run(["a(", "b", ")c"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["a", "(", "b", ")", "c"],
             self.preprocessor.run(["a(b)c"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["aA", "(", "bB", ")", "cC"],
             self.preprocessor.run(["aA(bB)cC"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["(", "aA", "(", "bB", ")", "cC", ")"],
             self.preprocessor.run(["(aA(bB)cC)"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["(", "aA", "(", "(", "bB", ")", "cC", ")"],
             self.preprocessor.run(["(aA(", "(bB)cC)"])
         )
-        self.assertEquals(
+        self.assertEqual(
             ["(", "aA", "(", "(", "(", "bB", ")", "cC", ")"],
             self.preprocessor.run(["(aA(", "(", "(bB)cC)"])
         )
@@ -1748,21 +1755,21 @@ class DomRuleAddTest(unittest.TestCase):
             "constraint location dummy1 rule #uname eq node1"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "constraint location dummy1 rule id=MyRule score=100 role=master #uname eq node2"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "constraint location dummy1 rule id=complexRule (#uname eq node3 and foo gt version 1.2) or (date-spec hours=12-23 weekdays=1-5 and date in_range 2014-07-26 to duration months=1)"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint location show --full")
         ac(output, """\
@@ -1785,7 +1792,7 @@ Location Constraints:
           Expression: date in_range 2014-07-26 to duration  (id:complexRule-rule-1-expr-1)
             Duration: months=1  (id:complexRule-rule-1-expr-1-duration)
 """)
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint location show")
         ac(output, """\
@@ -1808,7 +1815,7 @@ Location Constraints:
           Expression: date in_range 2014-07-26 to duration
             Duration: months=1
 """)
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
     def test_invalid_score(self):
         output, returnVal = pcs(
@@ -1820,7 +1827,7 @@ Location Constraints:
             "Warning: invalid score 'pingd', setting score-attribute=pingd "
                 "instead\n"
         )
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint location show --full")
         ac(output, """\
@@ -1830,7 +1837,7 @@ Location Constraints:
       Rule: score-attribute=pingd  (id:location-dummy1-rule)
         Expression: defined pingd  (id:location-dummy1-rule-expr)
 """)
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
     def test_invalid_rule(self):
         output, returnVal = pcs(
@@ -1838,7 +1845,7 @@ Location Constraints:
             "constraint location dummy1 rule score=100"
         )
         ac(output, "Error: no rule expression was specified\n")
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
@@ -1849,7 +1856,7 @@ Location Constraints:
             "Error: '#uname eq' is not a valid rule expression: unexpected end "
                 "of rule\n"
         )
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
@@ -1860,7 +1867,7 @@ Location Constraints:
             "Error: 'string #uname eq node1' is not a valid rule expression: "
                 "unexpected 'string' before 'eq'\n"
         )
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
     def test_ivalid_options(self):
         output, returnVal = pcs(
@@ -1868,14 +1875,14 @@ Location Constraints:
             "constraint location dummy1 rule role=foo #uname eq node1"
         )
         ac(output, "Error: invalid role 'foo', use 'master' or 'slave'\n")
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "constraint location dummy1 rule score=100 score-attribute=pingd #uname eq node1"
         )
         ac(output, "Error: can not specify both score and score-attribute\n")
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
@@ -1886,18 +1893,18 @@ Location Constraints:
             "Error: invalid rule id '1foo', '1' is not a valid first character "
                 "for a rule id\n"
         )
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint location show --full")
         ac(output, "Location Constraints:\n")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
             "constraint location dummy1 rule id=MyRule #uname eq node1"
         )
         ac(output, "")
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint location show --full")
         ac(output, """\
@@ -1907,7 +1914,7 @@ Location Constraints:
       Rule: score=INFINITY  (id:MyRule)
         Expression: #uname eq node1  (id:MyRule-expr)
 """)
-        self.assertEquals(0, returnVal)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
@@ -1917,7 +1924,7 @@ Location Constraints:
             output,
             "Error: id 'MyRule' is already in use, please specify another one\n"
         )
-        self.assertEquals(1, returnVal)
+        self.assertEqual(1, returnVal)
 
     def assertExpressionXml(self, rule_expression, rule_xml):
         cib_dom = xml.dom.minidom.parse("empty.xml")

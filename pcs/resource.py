@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import sys
 import os
 import xml.dom.minidom
@@ -5,13 +10,13 @@ from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
 import re
 import textwrap
-import xml.etree.ElementTree as ET
 import time
 
 import usage
 import utils
 import constraint
 import stonith
+
 
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
@@ -212,9 +217,9 @@ def resource_list_available(argv):
         except xml.parsers.expat.ExpatError:
             sd = ""
         finally:
-            return full_res_name + sd + "\n"
+            return full_res_name + sd
 
-    ret = ""
+    ret = []
     if len(argv) != 0:
         filter_string = argv[0]
     else:
@@ -233,23 +238,23 @@ def resource_list_available(argv):
                 continue
 
             if "--nodesc" in utils.pcs_options:
-                ret += full_res_name + "\n"
+                ret.append(full_res_name)
                 continue
 
             metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
             if metadata == False:
                 continue
-            ret += get_name_and_desc(
+            ret.append(get_name_and_desc(
                 "ocf:" + provider + ":" + resource,
                 metadata
-            )
+            ))
 
     # lsb agents
     lsb_dir = "/etc/init.d/"
     agents = sorted(os.listdir(lsb_dir))
     for agent in agents:
         if os.access(lsb_dir + agent, os.X_OK):
-            ret += "lsb:" + agent + "\n"
+            ret.append("lsb:" + agent)
 
     # systemd agents
     if utils.is_systemctl():
@@ -258,7 +263,7 @@ def resource_list_available(argv):
     for agent in agents:
         match = re.search(r'^([\S]*)\.service',agent)
         if match:
-            ret += "systemd:" + match.group(1) + "\n"
+            ret.append("systemd:" + match.group(1))
 
     # nagios metadata
     nagios_metadata_path = "/usr/share/pacemaker/nagios/plugins-metadata"
@@ -270,16 +275,16 @@ def resource_list_available(argv):
             if full_res_name.lower().endswith(".xml"):
                 full_res_name = full_res_name[:-len(".xml")]
             if "--nodesc" in utils.pcs_options:
-                ret += full_res_name + "\n"
+                ret.append(full_res_name)
                 continue
             try:
-                ret += get_name_and_desc(
+                ret.append(get_name_and_desc(
                     full_res_name,
                     open(
                         os.path.join(nagios_metadata_path, metadata_file),
                         "r"
                     ).read()
-                )
+                ))
             except EnvironmentError as e:
                 pass
 
@@ -290,16 +295,15 @@ def resource_list_available(argv):
             "Do you have resource agents installed?"
         )
     if filter_string != "":
-        rlines = ret.split("\n")
         found = False
-        for rline in rlines:
+        for rline in ret:
             if rline.lower().find(filter_string.lower()) != -1:
-                print rline
+                print(rline)
                 found = True
         if not found:
             utils.err("No resource agents matching the filter.")
     else:
-        print ret,
+        print("\n".join(ret))
 
 def resource_parse_options(metadata, standard, provider, resource):
     try:
@@ -325,15 +329,15 @@ def resource_parse_options(metadata, standard, provider, resource):
 
         if short_desc:
             title_1 += " - " + format_desc(len(title_1 + " - "), short_desc)
-        print title_1
-        print 
+        print(title_1)
+        print()
         if long_desc:
-            print long_desc
-            print
+            print(long_desc)
+            print()
 
         params = dom.documentElement.getElementsByTagName("parameter")
         if len(params) > 0:
-            print "Resource options:"
+            print("Resource options:")
         for param in params:
             name = param.getAttribute("name")
             if param.getAttribute("required") == "1":
@@ -346,7 +350,7 @@ def resource_parse_options(metadata, standard, provider, resource):
                 desc = "No description available"
             indent = name.__len__() + 4
             desc = format_desc(indent, desc)
-            print "  " + name + ": " + desc
+            print("  " + name + ": " + desc)
     except xml.parsers.expat.ExpatError as e:
         utils.err("Unable to parse xml for '%s': %s" % (resource, e))
 
@@ -500,7 +504,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                         while interval in action_intervals[op_action]:
                             interval += 1
                         op[key] = "interval=%s" % interval
-                        print (
+                        print(
                             ("Warning: changing a %s operation interval from %s"
                                 + " to %s to make the operation unique")
                             % (op_action, old_interval, interval)
@@ -561,15 +565,15 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
         dom, clone_id = resource_clone_create(dom, [ra_id] + clone_opts)
         if "--group" in utils.pcs_options:
-            print "Warning: --group ignored when creating a clone"
+            print("Warning: --group ignored when creating a clone")
         if "--master" in utils.pcs_options:
-            print "Warning: --master ignored when creating a clone"
+            print("Warning: --master ignored when creating a clone")
     elif "--master" in utils.pcs_options:
         dom, master_id = resource_master_create(
             dom, [ra_id] + master_meta_values
         )
         if "--group" in utils.pcs_options:
-            print "Warning: --group ignored when creating a master"
+            print("Warning: --group ignored when creating a master")
     elif "--group" in utils.pcs_options:
         groupname = utils.pcs_options["--group"]
         dom = resource_group_add(dom, groupname, [ra_id])
@@ -583,7 +587,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(ra_id)
         if retval == 0 and running_on["is_running"]:
-            print running_on["message"]
+            print(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -743,16 +747,16 @@ def resource_move(argv,clear=False,ban=False):
                 warning_action = "running"
                 if "--master" in utils.pcs_options:
                     warning_action = "being promoted"
-                print ("Warning: Creating location constraint {0} with a score "
+                print(("Warning: Creating location constraint {0} with a score "
                     + "of -INFINITY for resource {1} on node {2}.").format(
                         warning_constraint, warning_resource, warning_node
-                    )
-                print ("This will prevent {0} from {1} on {2} until the "
+                    ))
+                print(("This will prevent {0} from {1} on {2} until the "
                     + "constraint is removed. This will be the case even if {3}"
                     + " is the last node in the cluster.").format(
                         warning_resource, warning_action, warning_node,
                         warning_node
-                    )
+                    ))
 
     if "--wait" in utils.pcs_options:
         args = ["crm_resource", "--wait"]
@@ -778,7 +782,7 @@ def resource_move(argv,clear=False,ban=False):
         ):
             error = True
         if not error:
-            print running_on["message"]
+            print(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -795,13 +799,13 @@ def resource_standards(return_output=False):
     output = output.strip()
     if return_output == True:
         return output
-    print output
+    print(output)
 
 def resource_providers():
     output, retval = utils.run(["crm_resource","--list-ocf-providers"],True)
     # Return value is ignored because it contains the number of providers
     # returned, not an error code
-    print output.strip()
+    print(output.strip())
 
 def resource_agents(argv):
     if len(argv) > 1:
@@ -818,7 +822,7 @@ def resource_agents(argv):
         preg = re.compile(r'\d+ agents found for standard.*$', re.MULTILINE)
         output = preg.sub("", output)
         output = output.strip()
-        print output
+        print(output)
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
@@ -991,7 +995,7 @@ def resource_update(res_id,args):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(res_id)
         if retval == 0:
-            print running_on["message"]
+            print(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1018,7 +1022,7 @@ def resource_update_clone_master(
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(clone.getAttribute("id"))
         if retval == 0:
-            print running_on["message"]
+            print(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1235,7 +1239,7 @@ def resource_meta(res_id, argv):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(res_id)
         if retval == 0:
-            print running_on["message"]
+            print(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1378,7 +1382,7 @@ def resource_group(argv):
             output, retval = utils.run(args)
             running_on = utils.resource_running_on(group_name)
             if retval == 0:
-                print running_on["message"]
+                print(running_on["message"])
             else:
                 msg = []
                 if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1444,7 +1448,7 @@ def resource_clone(argv):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(clone_id)
         if retval == 0:
-            print running_on["message"]
+            print(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1555,7 +1559,7 @@ def resource_clone_master_remove(argv):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(resource_id)
         if retval == 0:
-            print running_on["message"]
+            print(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1595,7 +1599,7 @@ def resource_master(argv):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(master_id)
         if retval == 0:
-            print running_on["message"]
+            print(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1716,7 +1720,7 @@ def resource_master_remove(argv):
                 dom, resource_id, constraints_element=constraints_element
             )
     master.parentNode.removeChild(master)
-    print "Removing Master - " + master_id
+    print("Removing Master - " + master_id)
     utils.replace_cib_configuration(dom)
 
 def resource_remove(resource_id, output = True):
@@ -1726,10 +1730,10 @@ def resource_remove(resource_id, output = True):
         resource_id = cloned_resource.getAttribute("id")
 
     if utils.does_exist('//group[@id="'+resource_id+'"]'):
-        print "Removing group: " + resource_id + " (and all resources within group)"
+        print("Removing group: " + resource_id + " (and all resources within group)")
         group = utils.get_cib_xpath('//group[@id="'+resource_id+'"]')
         group_dom = parseString(group)
-        print "Stopping all resources in group: %s..." % resource_id
+        print("Stopping all resources in group: %s..." % resource_id)
         resource_disable([resource_id])
         if not "--force" in utils.pcs_options and not utils.usefile:
             output, retval = utils.run(["crm_resource", "--wait"])
@@ -1808,7 +1812,7 @@ def resource_remove(resource_id, output = True):
             if retval != 0 and output:
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
-        print "Stopped"
+        print("Stopped")
 
     utils.replace_cib_configuration(
         remove_resource_references(utils.get_cib_dom(), resource_id, output)
@@ -1834,7 +1838,7 @@ def resource_remove(resource_id, output = True):
         else:
             args = ["cibadmin", "-o", "resources", "-D", "--xpath", "//primitive[@id='"+resource_id+"']"]
         if output == True:
-            print "Deleting Resource - " + resource_id
+            print("Deleting Resource - " + resource_id)
         output,retVal = utils.run(args)
         if retVal != 0:
             utils.err("unable to remove resource: %s, it may still be referenced in constraints." % resource_id)
@@ -1879,7 +1883,7 @@ def resource_remove(resource_id, output = True):
 
         args = ["cibadmin", "-o", "resources", "-D", "--xpath", to_remove_xpath]
         if output == True:
-            print "Deleting Resource ("+msg+") - " + resource_id
+            print("Deleting Resource ("+msg+") - " + resource_id)
         cmdoutput,retVal = utils.run(args)
         if retVal != 0:
             if output == True:
@@ -2056,10 +2060,10 @@ def resource_group_list(argv):
         elements = [element]
 
     for e in elements:
-        print e.getAttribute("id") + ":",
+        line_parts = [e.getAttribute("id") + ":"]
         for resource in e.getElementsByTagName("primitive"):
-            print resource.getAttribute("id"),
-        print ""
+            line_parts.append(resource.getAttribute("id"))
+        print(" ".join(line_parts))
 
 def resource_show(argv, stonith=False):
     if "--groups" in utils.pcs_options:
@@ -2077,7 +2081,7 @@ def resource_show(argv, stonith=False):
                 print_node(child,1)
         return
 
-    if len(argv) == 0:    
+    if len(argv) == 0:
         output, retval = utils.run(["crm_mon", "-1", "-r"])
         if retval != 0:
             utils.err("unable to get cluster status from crm_mon\n"+output.rstrip())
@@ -2096,26 +2100,25 @@ def resource_show(argv, stonith=False):
                 elif in_resources:
                     if not has_resources:
                         if not stonith:
-                            print "NO resources configured"
+                            print("NO resources configured")
                         else:
-                            print "NO stonith devices configured"
+                            print("NO stonith devices configured")
                     return
                 continue
             if in_resources:
                 if not preg.match(line) and not stonith:
                     has_resources = True
-                    print line
+                    print(line)
                 elif preg.match(line) and stonith:
                     has_resources = True
-                    print line
+                    print(line)
         return
 
-    preg = re.compile(r'.*xml:\n',re.DOTALL)
     root = utils.get_cib_etree()
     resources = root.find(".//resources")
     resource_found = False
     for arg in argv:
-        for child in resources.findall(".//*"):
+        for child in resources.findall(str(".//*")):
             if "id" in child.attrib and child.attrib["id"] == arg and ((stonith and utils.is_stonith_resource(arg)) or (not stonith and not utils.is_stonith_resource(arg))):
                 print_node(child,1)
                 resource_found = True
@@ -2130,7 +2133,7 @@ def resource_disable(argv):
 
     resource = argv[0]
     if not is_managed(resource):
-        print "Warning: '%s' is unmanaged" % resource
+        print("Warning: '%s' is unmanaged" % resource)
 
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
@@ -2147,7 +2150,7 @@ def resource_disable(argv):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(resource)
         if retval == 0 and not running_on["is_running"]:
-            print running_on["message"]
+            print(running_on["message"])
             return True
         else:
             msg = []
@@ -2199,7 +2202,7 @@ def resource_enable(argv):
 
     for res in resources_to_enable:
         if not is_managed(res):
-            print "Warning: '{0}' is unmanaged".format(res)
+            print("Warning: '{0}' is unmanaged".format(res))
 
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
@@ -2217,7 +2220,7 @@ def resource_enable(argv):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(resource)
         if retval == 0 and running_on["is_running"]:
-            print running_on["message"]
+            print(running_on["message"])
             return True
         else:
             msg = []
@@ -2244,7 +2247,7 @@ def resource_restart(argv):
 
     real_res = utils.dom_get_resource_clone_ms_parent(dom, resource)
     if real_res:
-        print "Warning: using %s... (if a resource is a clone or master/slave you must use the clone or master/slave name" % real_res.getAttribute("id")
+        print("Warning: using %s... (if a resource is a clone or master/slave you must use the clone or master/slave name" % real_res.getAttribute("id"))
         resource = real_res.getAttribute("id")
 
     args = ["crm_resource", "--restart", "--resource", resource]
@@ -2264,7 +2267,7 @@ def resource_restart(argv):
     if retval != 0:
         utils.err(output)
 
-    print "%s successfully restarted" % resource
+    print("%s successfully restarted" % resource)
 
 def resource_force_action(action, argv):
     if len(argv) < 1:
@@ -2328,7 +2331,7 @@ def resource_force_action(action, argv):
         utils.err("stonith devices are not supported")
         sys.exit(retval)
 
-    print output,
+    print(output, end="")
     sys.exit(retval)
 
 def resource_manage(argv, set_managed):
@@ -2442,29 +2445,29 @@ def resource_failcount(argv):
                         utils.err("Unable to remove failcounts from %s on %s\n" % (resource,ta_node) + output)
                     fail_counts_removed = fail_counts_removed + 1
                 else:
-                    output_dict[ta_node] = " " + ta_node + ": " + nvp.getAttribute("value") + "\n"
+                    output_dict[ta_node] = " " + ta_node + ": " + nvp.getAttribute("value")
                 break
 
     if resource_command == "reset":
         if fail_counts_removed == 0:
-            print "No failcounts needed resetting"
+            print("No failcounts needed resetting")
     if resource_command == "show":
-        output = ""
-        for key in sorted(output_dict.iterkeys()):
-            output += output_dict[key]
+        output = []
+        for key in sorted(output_dict.keys()):
+            output.append(output_dict[key])
 
 
-        if output == "":
+        if not output:
             if all_nodes:
-                print "No failcounts for %s" % resource
+                print("No failcounts for %s" % resource)
             else:
-                print "No failcounts for %s on %s" % (resource,node)
+                print("No failcounts for %s on %s" % (resource,node))
         else:
             if all_nodes:
-                print "Failcounts for %s" % resource
+                print("Failcounts for %s" % resource)
             else:
-                print "Failcounts for %s on %s" % (resource,node)
-            print output,
+                print("Failcounts for %s on %s" % (resource,node))
+            print("\n".join(output))
 
 
 def show_defaults(def_type, indent=""):
@@ -2473,48 +2476,48 @@ def show_defaults(def_type, indent=""):
     if len(defs) > 0:
         defs = defs[0]
     else:
-        print indent + "No defaults set"
+        print(indent + "No defaults set")
         return
 
     foundDefault = False
     for d in defs.getElementsByTagName("nvpair"):
-        print indent + d.getAttribute("name") + ": " + d.getAttribute("value")
+        print(indent + d.getAttribute("name") + ": " + d.getAttribute("value"))
         foundDefault = True
 
     if not foundDefault:
-        print indent + "No defaults set"
+        print(indent + "No defaults set")
 
 def set_default(def_type, argv):
     for arg in argv:
         args = arg.split('=')
         if (len(args) != 2):
-            print "Invalid Property: " + arg
+            print("Invalid Property: " + arg)
             continue
         utils.setAttribute(def_type, args[0], args[1])
 
 def print_node(node, tab = 0):
     spaces = " " * tab
     if node.tag == "group":
-        print spaces + "Group: " + node.attrib["id"] + get_attrs(node,' (',')')
+        print(spaces + "Group: " + node.attrib["id"] + get_attrs(node,' (',')'))
         print_instance_vars_string(node, spaces)
         print_meta_vars_string(node, spaces)
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
     if node.tag == "clone":
-        print spaces + "Clone: " + node.attrib["id"] + get_attrs(node,' (',')')
+        print(spaces + "Clone: " + node.attrib["id"] + get_attrs(node,' (',')'))
         print_instance_vars_string(node, spaces)
         print_meta_vars_string(node, spaces)
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
     if node.tag == "primitive":
-        print spaces + "Resource: " + node.attrib["id"] + get_attrs(node,' (',')')
+        print(spaces + "Resource: " + node.attrib["id"] + get_attrs(node,' (',')'))
         print_instance_vars_string(node, spaces)
         print_meta_vars_string(node, spaces)
         print_operations(node, spaces)
     if node.tag == "master":
-        print spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')')
+        print(spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
         print_instance_vars_string(node, spaces)
         print_meta_vars_string(node, spaces)
         print_operations(node, spaces)
@@ -2522,29 +2525,29 @@ def print_node(node, tab = 0):
             print_node(child, tab + 1)
 
 def print_instance_vars_string(node, spaces):
-    output = ""
-    ivars = node.findall("instance_attributes/nvpair")
+    output = []
+    ivars = node.findall(str("instance_attributes/nvpair"))
     for ivar in ivars:
         name = ivar.attrib["name"]
         value = ivar.attrib["value"]
-        if value.find(" ") != -1:
+        if " " in value:
             value = '"' + value + '"'
-        output += name + "=" + value + " "
-    if output != "":
-        print spaces + " Attributes: " + output
+        output.append(name + "=" + value)
+    if output:
+        print(spaces + " Attributes: " + " ".join(output))
 
 def print_meta_vars_string(node, spaces):
     output = ""
-    mvars = node.findall("meta_attributes/nvpair")
+    mvars = node.findall(str("meta_attributes/nvpair"))
     for mvar in mvars:
         output += mvar.attrib["name"] + "=" + mvar.attrib["value"] + " "
     if output != "":
-        print spaces + " Meta Attrs: " + output
+        print(spaces + " Meta Attrs: " + output)
 
 def print_operations(node, spaces):
     indent = len(spaces) + len(" Operations: ")
     output = ""
-    ops = node.findall("operations/op")
+    ops = node.findall(str("operations/op"))
     first = True
     for op in ops:
         if not first:
@@ -2556,7 +2559,7 @@ def print_operations(node, spaces):
             if attr in ["id","name"] :
                 continue
             output += attr + "=" + val + " "
-        for child in op.findall(".//nvpair"):
+        for child in op.findall(str(".//nvpair")):
             output += child.get("name") + "=" + child.get("value") + " "
 
         output += "(" + op.attrib["id"] + ")"
@@ -2564,7 +2567,7 @@ def print_operations(node, spaces):
 
     output = output.rstrip()
     if output != "":
-        print spaces + " Operations: " + output
+        print(spaces + " Operations: " + output)
 
 def operation_to_string(op_el):
     parts = []
@@ -2596,14 +2599,14 @@ def resource_cleanup(res_id):
     if retval != 0:
         utils.err("Unable to cleanup resource: %s" % res_id + "\n" + output)
     else:
-        print output
+        print(output)
 
 def resource_cleanup_all():
     (output, retval) = utils.run(["crm_resource", "-C"])
     if retval != 0:
         utils.err("Unexpected error occured. 'crm_resource -C' err_code: %s\n%s" % (retval, output))
     else:
-        print output
+        print(output)
 
 def resource_history(args):
     dom = utils.get_cib_dom()
@@ -2618,18 +2621,18 @@ def resource_history(args):
             resources[res_id][rsc_op.getAttribute("call-id")] = [res_id, rsc_op]
     
     for res in sorted(resources):
-        print "Resource: %s" % res
+        print("Resource: %s" % res)
         for cid in sorted(resources[res]):
             (last_date,retval) = utils.run(["date","-d", "@" + resources[res][cid][1].getAttribute("last-rc-change")])
             last_date = last_date.rstrip()
             rc_code = resources[res][cid][1].getAttribute("rc-code")
             operation = resources[res][cid][1].getAttribute("operation") 
             if rc_code != "0":
-                print "  Failed on %s" % last_date
+                print("  Failed on %s" % last_date)
             elif operation == "stop":
-                print "  Stopped on node xx on %s" % last_date
+                print("  Stopped on node xx on %s" % last_date)
             elif operation == "start":
-                print "  Started on node xx %s" % last_date
+                print("  Started on node xx %s" % last_date)
 
 def resource_relocate(argv):
     if len(argv) < 1:
@@ -2710,7 +2713,7 @@ def resource_relocate_get_locations(cib_dom, resources=None):
     )
     # filter out non-requested resources
     if not resources:
-        return locations.values()
+        return list(locations.values())
     return [
         val for val in locations.values()
         if val["id"] in updated_resources
@@ -2732,7 +2735,7 @@ def resource_relocate_show(cib_dom):
             in_status = False
             in_status_resources = False
             in_transitions = True
-            print
+            print()
         elif line.strip() == "":
             if in_status:
                 in_status = False
@@ -2743,7 +2746,7 @@ def resource_relocate_show(cib_dom):
                 in_status_resources = False
                 in_transitions = False
         if in_status or in_status_resources or in_transitions:
-            print line
+            print(line)
 
 def resource_relocate_location_to_str(location):
     message = "Creating location constraint: {res} prefers {node}=INFINITY{role}"
@@ -2774,7 +2777,7 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
         if not("start_on_node" in location or "promote_on_node" in location):
             continue
         anything_changed = True
-        print resource_relocate_location_to_str(location)
+        print(resource_relocate_location_to_str(location))
         constraint_id = utils.find_unique_id(
             cib_dom,
             RESOURCE_RELOCATE_CONSTRAINT_PREFIX + location["id_for_constraint"]
@@ -2795,9 +2798,9 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
         utils.replace_cib_configuration(cib_dom)
 
     # wait for resources to move
-    print
-    print "Waiting for resources to move..."
-    print
+    print()
+    print("Waiting for resources to move...")
+    print()
     if not dry:
         output, retval = utils.run(["crm_resource", "--wait"])
         if retval != 0:
@@ -2820,7 +2823,7 @@ def resource_relocate_clear(cib_dom):
         for location_el in constraint_el.getElementsByTagName("rsc_location"):
             location_id = location_el.getAttribute("id")
             if location_id.startswith(RESOURCE_RELOCATE_CONSTRAINT_PREFIX):
-                print "Removing constraint {0}".format(location_id)
+                print("Removing constraint {0}".format(location_id))
                 location_el.parentNode.removeChild(location_el)
     return cib_dom
 

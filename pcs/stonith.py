@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import sys
 import re
 import glob
@@ -87,19 +92,22 @@ def stonith_list_available(argv):
         if not "--nodesc" in utils.pcs_options:
             metadata = utils.get_stonith_metadata(fd)
             if metadata == False:
-                print >> sys.stderr, "Error: no metadata for %s" % fd
+                utils.err("no metadata for %s" % fd, False)
                 continue
             try:
                 dom = parseString(metadata)
             except Exception:
-                print >> sys.stderr, "Error: unable to parse metadata for fence agent: %s" % (fd_name)
+                utils.err(
+                    "unable to parse metadata for fence agent: %s" % (fd_name),
+                    False
+                )
                 continue
             ra = dom.documentElement
             shortdesc = ra.getAttribute("shortdesc")
 
             if len(shortdesc) > 0:
                 sd = " - " +  resource.format_desc(fd_name.__len__() + 3, shortdesc)
-        print fd_name + sd
+        print(fd_name + sd)
 
 def stonith_list_options(stonith_agent):
     metadata = utils.get_stonith_metadata(utils.fence_bin + stonith_agent)
@@ -125,12 +133,12 @@ def stonith_list_options(stonith_agent):
 
     if short_desc:
         title += " - " + resource.format_desc(len(title + " - "), short_desc)
-    print title
-    print
+    print(title)
+    print()
     if long_desc:
-        print long_desc
-        print
-    print "Stonith options:"
+        print(long_desc)
+        print()
+    print("Stonith options:")
 
     params = dom.documentElement.getElementsByTagName("parameter")
     for param in params:
@@ -145,20 +153,20 @@ def stonith_list_options(stonith_agent):
             desc = "No description available"
         indent = name.__len__() + 4
         desc = resource.format_desc(indent, desc)
-        print "  " + name + ": " + desc
+        print("  " + name + ": " + desc)
 
     default_stonith_options = utils.get_default_stonith_options()
     for do in default_stonith_options:
         name = do.attrib["name"]
         desc = ""
-        if len(do.findall("shortdesc")) > 0:
-            if do.findall("shortdesc")[0].text:
-                desc = do.findall("shortdesc")[0].text.strip()
+        if len(do.findall(str("shortdesc"))) > 0:
+            if do.findall(str("shortdesc"))[0].text:
+                desc = do.findall(str("shortdesc"))[0].text.strip()
         if not desc:
             desc = "No description available"
         indent = len(name) + 4
         desc = resource.format_desc(indent, desc)
-        print "  " + name + ": " + desc
+        print("  " + name + ": " + desc)
 
 def stonith_create(argv):
     if len(argv) < 2:
@@ -215,7 +223,7 @@ def stonith_level(argv):
     elif subcmd == "verify":
         stonith_level_verify()
     else:
-        print "pcs stonith level: invalid option -- '%s'" % subcmd
+        print("pcs stonith level: invalid option -- '%s'" % subcmd)
         usage.stonith(["level"])
         sys.exit(1)
 
@@ -373,13 +381,12 @@ def stonith_level_show():
     if len(node_levels.keys()) == 0:
         return
 
-    nodes = node_levels.keys()
-    nodes.sort()
+    nodes = sorted(node_levels.keys())
 
     for node in nodes:
-        print " Node: " + node
+        print(" Node: " + node)
         for level in sorted(node_levels[node], key=lambda x: int(x[0])):
-            print "  Level " + level[0] + " - " + level[1]
+            print("  Level " + level[0] + " - " + level[1])
 
 
 def stonith_fence(argv):
@@ -396,7 +403,7 @@ def stonith_fence(argv):
     if retval != 0:
         utils.err("unable to fence '%s'\n" % node + output)
     else:
-        print "Node: %s fenced" % node
+        print("Node: %s fenced" % node)
 
 def stonith_confirm(argv):
     if len(argv) != 1:
@@ -409,7 +416,7 @@ def stonith_confirm(argv):
     if retval != 0:
         utils.err("unable to confirm fencing of node '%s'\n" % node + output)
     else:
-        print "Node: %s confirmed fenced" % node
+        print("Node: %s confirmed fenced" % node)
 
 def stonith_does_agent_provide_unfencing(metadata_string):
     try:
