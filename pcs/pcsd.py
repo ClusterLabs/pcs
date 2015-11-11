@@ -115,7 +115,7 @@ def pcsd_sync_certs(argv, exit_after_error=True):
         utils.err("Unable to sync pcsd certificates", exit_after_error)
         return
 
-    print("Restaring pcsd on the nodes in order to reload the certificates...")
+    print("Restarting pcsd on the nodes in order to reload the certificates...")
     pcsd_data = {
         "nodes": nodes_restart,
     }
