@@ -271,6 +271,11 @@
         {{ordering_set_constraints-table constraints=resource.ordering_set_constraints}}
         {{colocation_constraints-table constraints=resource.colocation_constraints}}
         {{meta_attributes-table resource=resource}}
+        {{#if utilization_support}}
+          {{#if resource.is_primitive}}
+            {{utilization-table entity=resource utilization=resource.utilization type="resource"}}
+          {{/if}}
+        {{/if}}
         <br style="clear:left;">
       {{/unless}}
     </div>
@@ -492,6 +497,58 @@ Use the 'Add' button to submit the form.">
 		    </div>
 		  </td>
 		</tr>
+    </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/utilization-table">
+    <table style="clear:left; float:left;">
+      <tr>
+        <td {{action toggleBody}} class="datatable_header hover-pointer">
+          {{#if show_content}}
+            <span class="downarrow sprites"></span>
+          {{else}}
+            <span class="rightarrow sprites"></span>
+          {{/if}}
+          <span style="text-transform: capitalize;">{{type}} Utilization Attributes ({{util_count}})</span>
+        </td>
+      </tr>
+      {{#if show_content}}
+      <tr>
+        <td>
+          <div class="utilization_table">
+            <table class="datatable">
+              <tr>
+                <th>Utilization Attribute</th><th>Value</th><th>Remove</th>
+              </tr>
+              {{#each util in utilization}}
+              <tr>
+                <td>{{util.name}}</td>
+                <td>{{util.value}}</td>
+                <td style="text-align: center;">
+                  <a {{action remove util.name}} class="remove" href="#">X</a>
+                </td>
+              </tr>
+              {{else}}
+              <tr>
+                <td style="color: gray;">NONE</td><td></td><td></td>
+              </tr>
+              {{/each}}
+              <tr {{bind-attr id=form_id}}>
+                <td>
+                  <input type="text" name="new_utilization_name" size="20">
+                </td>
+                <td>
+                  <input type="text" name="new_utilization_value" size="20">
+                </td>
+                <td>
+                  <button {{action add form_id}} type="button" name="add">Add</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+      {{/if}}
     </table>
   </script>
   

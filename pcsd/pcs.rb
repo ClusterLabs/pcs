@@ -750,6 +750,23 @@ def get_node_attributes(session, cib_dom=nil)
   return node_attrs
 end
 
+def get_nodes_utilization(cib_dom)
+  return {} unless cib_dom
+  utilization = {}
+  cib_dom.elements.each(
+    '/cib/configuration/nodes/node/utilization/nvpair'
+  ) { |e|
+    node = e.parent.parent.attributes['uname']
+    utilization[node] ||= []
+    utilization[node] << {
+      :id => e.attributes['id'],
+      :name => e.attributes['name'],
+      :value => e.attributes['value']
+    }
+  }
+  return utilization
+end
+
 def get_fence_levels(session, cib_dom=nil)
   unless cib_dom
     cib_dom = get_cib_dom(session)
@@ -767,6 +784,7 @@ def get_fence_levels(session, cib_dom=nil)
       'devices' => e.attributes['devices']
     }
   }
+
   fence_levels.each { |_, val| val.sort_by! { |obj| obj['level'].to_i }}
   return fence_levels
 end
@@ -1649,6 +1667,7 @@ def get_node_status(session, cib_dom)
       :username => session[:username],
       :fence_levels => get_fence_levels(session, cib_dom),
       :node_attr => node_attrs_to_v2(get_node_attributes(session, cib_dom)),
+      :nodes_utilization => get_nodes_utilization(cib_dom),
       :known_nodes => []
   }
 

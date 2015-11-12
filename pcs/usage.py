@@ -514,6 +514,14 @@ Commands:
     relocate clear
         Remove all constraints created by the 'relocate run' command.
 
+    utilization [<resource id> [<name>=<value> ...]]
+        Add specified utilization options to specified resource. If resource is
+        not specified, shows utilization of all resources. If utilization
+        options are not specified, shows utilization of specified resource.
+        Utilization option should be in format name=value, value has to be
+        integer. Options may be removed by setting an option without a value.
+        Example: pcs resource utilization TestResource cpu= ram=20
+
 Examples:
 
     pcs resource show
@@ -1230,6 +1238,14 @@ Commands:
         Remove node(s) from maintenance mode, if no node or options are
         specified the current node will be removed from maintenance mode,
         if --all is specified all nodes will be removed from maintenance mode.
+
+    utilization [<node> [<name>=<value> ...]]
+        Add specified utilization options to specified node. If node is not
+        specified, shows utilization of all nodes. If utilization options are
+        not specified, shows utilization of specified node. Utilization option
+        should be in format name=value, value has to be integer. Options may be
+        removed by setting an option without a value.
+        Example: pcs node utilization node1 cpu=4 ram=
 """
     if pout:
         print(sub_usage(args, output))

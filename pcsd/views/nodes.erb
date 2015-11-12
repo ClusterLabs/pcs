@@ -300,6 +300,11 @@
               </td>
               </tr>
             </table>
+            {{#if Pcs.nodesController.utilization_support}}
+            <table style="clear:left; float:left; margin-top: 25px;"><tr><td>
+            {{utilization-table entity=Pcs.nodesController.cur_node utilization=Pcs.nodesController.cur_node.utilization}}
+            </td></tr></table>
+            {{/if}}
     </div>
     </div>
     </td>

@@ -97,7 +97,9 @@ def remote(params, request, session)
       :resource_master => method(:resource_master),
       :resource_clone => method(:resource_clone),
       :resource_unclone => method(:resource_unclone),
-      :resource_ungroup => method(:resource_ungroup)
+      :resource_ungroup => method(:resource_ungroup),
+      :set_resource_utilization => method(:set_resource_utilization),
+      :set_node_utilization => method(:set_node_utilization)
   }
 
   command = params[:command].to_sym
@@ -2264,6 +2266,56 @@ def resource_unclone(params, request, session)
   if retval != 0
     return [400, 'Unable to unclone ' +
       "'#{params[:resource_id]}': #{stderr.join('')}"
+    ]
+  end
+  return 200
+end
+
+def set_resource_utilization(params, reqest, session)
+  unless allowed_for_local_cluster(session, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+
+  unless params[:resource_id] and params[:name]
+    return 400, 'resource_id and name are required'
+  end
+
+  res_id = params[:resource_id]
+  name = params[:name]
+  value = params[:value] if params[:value] else ''
+
+  _, stderr, retval = run_cmd(
+    session, PCS, 'resource', 'utilization', res_id, "#{name}=#{value}"
+  )
+
+  if retval != 0
+    return [400, "Unable to set utilization '#{name}=#{value}' for " +
+      "resource '#{res_id}': #{stderr.join('')}"
+    ]
+  end
+  return 200
+end
+
+def set_node_utilization(params, reqest, session)
+  unless allowed_for_local_cluster(session, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+
+  unless params[:node] and params[:name]
+    return 400, 'node and name are required'
+  end
+
+  node = params[:node]
+  name = params[:name]
+  value = params[:value] if params[:value] else ''
+
+  _, stderr, retval = run_cmd(
+    session, PCS, 'node', 'utilization', node, "#{name}=#{value}"
+  )
+
+  if retval != 0
+    return [400, "Unable to set utilization '#{name}=#{value}' for node " +
+      "'#{res_id}': #{stderr.join('')}"
     ]
   end
   return 200

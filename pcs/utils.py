@@ -1116,6 +1116,12 @@ def dom_get_element_with_id(dom, tag_name, element_id):
             return elem
     return None
 
+def dom_get_node(dom, node_name):
+    for e in dom.getElementsByTagName("node"):
+        if e.hasAttribute("uname") and e.getAttribute("uname") == node_name:
+            return e
+    return None
+
 def dom_get_children_by_tag_name(dom_el, tag_name):
     return [
         node
@@ -1589,10 +1595,12 @@ def get_node_attributes():
     dom = parseString(node_config).documentElement
     for node in dom.getElementsByTagName("node"):
         nodename = node.getAttribute("uname")
-        for nvp in node.getElementsByTagName("nvpair"):
-            if nodename not in nas:
-                nas[nodename] = []
-            nas[nodename].append(nvp.getAttribute("name") + "=" + nvp.getAttribute("value"))
+        for attributes in node.getElementsByTagName("instance_attributes"):
+            for nvp in attributes.getElementsByTagName("nvpair"):
+                if nodename not in nas:
+                    nas[nodename] = []
+                nas[nodename].append(nvp.getAttribute("name") + "=" + nvp.getAttribute("value"))
+            break
     return nas
 
 def set_node_attribute(prop, value, node):
@@ -2324,3 +2332,106 @@ def is_node_stop_cause_quorum_loss(quorum_info, local=True, node_list=None):
         votes_after_stop += node_info["votes"]
     return votes_after_stop < quorum_info["quorum"]
 
+def dom_prepare_child_element(dom_element, tag_name, id_prefix=""):
+    dom = dom_element.ownerDocument
+    child_elements = []
+    for child in dom_element.childNodes:
+        if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name:
+            child_elements.append(child)
+
+    if len(child_elements) == 0:
+        child_element = dom.createElement(tag_name)
+        child_element.setAttribute(
+            "id", id_prefix + tag_name
+        )
+        dom_element.appendChild(child_element)
+    else:
+        child_element = child_elements[0]
+    return child_element
+
+def dom_update_nv_pair(dom_element, name, value, id_prefix=""):
+    dom = dom_element.ownerDocument
+    element_found = False
+    for el in dom_element.getElementsByTagName("nvpair"):
+        if el.getAttribute("name") == name:
+            element_found = True
+            if value == "":
+                dom_element.removeChild(el)
+            else:
+                el.setAttribute("value", value)
+            break
+    if not element_found and value != "":
+        el = dom.createElement("nvpair")
+        el.setAttribute("id", id_prefix + name)
+        el.setAttribute("name", name)
+        el.setAttribute("value", value)
+        dom_element.appendChild(el)
+    return dom_element
+
+# Passed an array of strings ["a=b","c=d"], return array of tuples
+# [("a","b"),("c","d")]
+def convert_args_to_tuples(ra_values):
+    ret = []
+    for ra_val in ra_values:
+        if ra_val.count("=") != 0:
+            split_val = ra_val.split("=", 1)
+            ret.append((split_val[0],split_val[1]))
+    return ret
+
+def is_int(val):
+    try:
+        int(val)
+        return True
+    except ValueError:
+        return False
+
+def dom_update_utilization(dom_element, attributes, id_prefix=""):
+    utilization = dom_prepare_child_element(
+        dom_element,
+        "utilization",
+        id_prefix + dom_element.getAttribute("id") + "-"
+    )
+
+    for name, value in attributes:
+        if value != "" and not is_int(value):
+            err(
+                "Value of utilization attribute must be integer: "
+                "'{0}={1}'".format(name, value)
+            )
+        dom_update_nv_pair(
+            utilization,
+            name,
+            value.strip(),
+            utilization.getAttribute("id") + "-"
+        )
+
+def dom_update_meta_attr(dom_element, attributes):
+    meta_attributes = dom_prepare_child_element(
+        dom_element, "meta_attributes", dom_element.getAttribute("id") + "-"
+    )
+
+    for name, value in attributes:
+        dom_update_nv_pair(
+            meta_attributes,
+            name,
+            value,
+            meta_attributes.getAttribute("id") + "-"
+        )
+
+def get_utilization(element):
+    utilization = {}
+    for e in element.getElementsByTagName("utilization"):
+        for u in e.getElementsByTagName("nvpair"):
+            name = u.getAttribute("name")
+            value = u.getAttribute("value") if u.hasAttribute("value") else ""
+            utilization[name] = value
+        # Use just first element of utilization attributes. We don't support
+        # utilization with rules just yet.
+        break
+    return utilization
+
+def get_utilization_str(element):
+    output = []
+    for name, value in sorted(get_utilization(element).items()):
+        output.append(name + "=" + value)
+    return " ".join(output)

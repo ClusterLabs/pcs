@@ -205,6 +205,61 @@ Pcs = Ember.Application.createWithMixins({
   }
 });
 
+Pcs.UtilizationTableComponent = Ember.Component.extend({
+  entity: null,
+  type: "node", // node or resource
+  form_id: Ember.computed("type", function() {
+    return "new_" + this.get("type") + "_utilization";
+  }),
+  show_content: false,
+  utilization: [],
+  last_count: 0,
+  util_count: function() {
+    var l = 0;
+    if (this.utilization) {
+      l = this.utilization.length;
+    }
+    //this is needed for not showing/hiding table on each update
+    if (this.last_count != l) {
+      if (l > 0) {
+        this.set('show_content', true);
+      } else {
+        this.set('show_content', false);
+      }
+    }
+    this.set("last_count", l);
+    return l;
+  }.property("utilization"),
+  actions: {
+    toggleBody: function() {
+      this.toggleProperty('show_content');
+    },
+    remove: function(name) {
+      set_utilization(this.type, this.entity.get("id"), name, "");
+    },
+    add: function(form_id) {
+      var id = "#" + form_id;
+      var name = $(id + " input[name='new_utilization_name']").val();
+      if (name == "") {
+        return;
+      }
+      var value = $(id + " input[name='new_utilization_value']").val().trim();
+      if (!is_integer(value)) {
+        alert("Value of utilization attribute has to be integer.");
+        return;
+      }
+      set_utilization(
+        this.type,
+        this.entity.get("id"),
+        name,
+        value
+      );
+      fade_in_out($(id));
+      $(id + " input").val("");
+    }
+  }
+});
+
 Pcs.Updater = Ember.Object.extend({
   timeout: 20000,
   first_run: true,
@@ -750,6 +805,7 @@ Pcs.PrimitiveObj = Pcs.ResourceObj.extend({
   instance_attr: [],
   instance_status: [],
   operations: [],
+  utilization: [],
   resource_type: Ember.computed.alias('agentname'),
   is_primitive: true,
   nodes_running_on: function() {
@@ -1006,6 +1062,7 @@ Pcs.Setting = Ember.Object.extend({
 
 Pcs.Clusternode = Ember.Object.extend({
   name: null,
+  id: Ember.computed.alias("name"),
   status: null,
   status_unknown: function() {
     return this.get('status') == "unknown";
@@ -1137,6 +1194,7 @@ Pcs.Clusternode = Ember.Object.extend({
   }.property("pcsd_enabled"),
   location_constraints: null,
   node_attrs: [],
+  utilization: [],
   is_in_maintenance: function() {
     var self = this;
     var result = false;
@@ -1626,6 +1684,7 @@ Pcs.selectedNodeController = Ember.Object.createWithMixins({
 
 Pcs.nodesController = Ember.ArrayController.createWithMixins({
   content: [],
+  utilization_support: false,
   cur_node: null,
   cur_node_attr: function () {
     var nc = this;
@@ -1699,6 +1758,12 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
         nodes_checked[value.name] = true;
     });
 
+    if (data["nodes_utilization"]) {
+      self.set("utilization_support", true);
+    } else {
+      self.set("utilization_support", false);
+    }
+
     $.each(data['node_list'], function(_, node_obj) {
       var node_id = node_obj.name;
       if ($.inArray(node_id, corosync_nodes_online) > -1) {
@@ -1743,6 +1808,11 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
         node_attr = data["node_attr"][node_id];
       }
 
+      var utilization = [];
+      if (data["nodes_utilization"] && data["nodes_utilization"][node_id]) {
+        utilization = data["nodes_utilization"][node_id];
+      }
+
       found = false;
       var node = null;
       $.each(self.content, function(key, pre_existing_node) {
@@ -1768,6 +1838,7 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
           node.set("node_attrs", node_attr);
           node.set("fence_levels", data["fence_levels"]);
           node.set("status", node_obj["status"]);
+          node.set("utilization", utilization);
         }
       });
 
@@ -1792,7 +1863,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
           node_id: node_obj["id"],
           node_attrs: node_attr,
           fence_levels: data["fence_levels"],
-          status: node_obj["status"]
+          status: node_obj["status"],
+          utilization: utilization
         });
       }
       var pathname = window.location.pathname.split('/');

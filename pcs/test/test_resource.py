@@ -4303,6 +4303,89 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 """)
         self.assertEqual(0, retVal)
 
+    def testResrourceUtilizationSet(self):
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy test1=10"
+        )
+        ac("", output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_large_cib, "resource utilization dummy1")
+        expected_out = """\
+Resource Utilization:
+ dummy1: \n"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_large_cib, "resource utilization dummy")
+        expected_out = """\
+Resource Utilization:
+ dummy: test1=10
+"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy test1=-10 test4=1234"
+        )
+        ac("", output)
+        self.assertEqual(0, returnVal)
+        output, returnVal = pcs(temp_large_cib, "resource utilization dummy")
+        expected_out = """\
+Resource Utilization:
+ dummy: test1=-10 test4=1234
+"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy1 test2=321 empty="
+        )
+        ac("", output)
+        self.assertEqual(0, returnVal)
+        output, returnVal = pcs(temp_large_cib, "resource utilization dummy1")
+        expected_out = """\
+Resource Utilization:
+ dummy1: test2=321
+"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_large_cib, "resource utilization")
+        expected_out = """\
+Resource Utilization:
+ dummy: test1=-10 test4=1234
+ dummy1: test2=321
+"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+def test_resource_utilization_set_invalid(self):
+        output, returnVal = pcs(temp_large_cib, "resource utilization dummy0")
+        expected_out = """\
+Error: Unable to find a resource: dummy0
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy0 test=10"
+        )
+        expected_out = """\
+Error: Unable to find a resource: dummy0
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy1 test1=10 test=int"
+        )
+        expected_out = """\
+Error: Value of utilization attribute must be integer: 'test=int'
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
 if __name__ == "__main__":
     unittest.main()
 

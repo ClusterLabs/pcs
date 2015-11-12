@@ -155,6 +155,13 @@ def resource_cmd(argv):
         resource_history(argv)
     elif (sub_cmd == "relocate"):
         resource_relocate(argv)
+    elif (sub_cmd == "utilization"):
+        if len(argv) == 0:
+            print_resources_utilization()
+        elif len(argv) == 1:
+            print_resource_utilization(argv.pop(0))
+        else:
+            set_resource_utilization(argv.pop(0), argv)
     else:
         usage.resource()
         sys.exit(1)
@@ -539,7 +546,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     primitive_values.insert(0,("id",ra_id))
     meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
     if not "--force" in utils.pcs_options and utils.does_resource_have_options(ra_type):
-        params = convert_args_to_tuples(ra_values)
+        params = utils.convert_args_to_tuples(ra_values)
         bad_opts, missing_req_opts = utils.validInstanceAttributes(ra_id, params , get_full_ra_type(ra_type, True))
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
@@ -880,7 +887,7 @@ def resource_update(res_id,args):
     else:
         instance_attributes = instance_attributes[0]
     
-    params = convert_args_to_tuples(ra_values)
+    params = utils.convert_args_to_tuples(ra_values)
     if not "--force" in utils.pcs_options and (resource.getAttribute("class") == "ocf" or resource.getAttribute("class") == "stonith"):
         resClass = resource.getAttribute("class")
         resProvider = resource.getAttribute("provider")
@@ -920,7 +927,7 @@ def resource_update(res_id,args):
     else:
         meta_attributes = meta_attributes[0]
     
-    meta_attrs = convert_args_to_tuples(meta_values)
+    meta_attrs = utils.convert_args_to_tuples(meta_values)
     for (key,val) in meta_attrs:
         meta_found = False
         for ma in meta_attributes.getElementsByTagName("nvpair"):
@@ -957,7 +964,7 @@ def resource_update(res_id,args):
             continue
 
         op_role = ""
-        op_vars = convert_args_to_tuples(element[1:])
+        op_vars = utils.convert_args_to_tuples(element[1:])
 
         for k,v in op_vars:
             if k == "role":
@@ -1046,7 +1053,7 @@ def resource_operation_add(
         utils.err ("Unable to find resource: %s" % res_id)
 
     op_name = argv.pop(0)
-    op_properties = convert_args_to_tuples(argv)
+    op_properties = utils.convert_args_to_tuples(argv)
 
     if validate:
         if "=" in op_name:
@@ -1175,7 +1182,7 @@ def resource_operation_remove(res_id, argv):
     if len(argv) == 0:
         remove_all = True
 
-    op_properties = convert_args_to_tuples(argv)
+    op_properties = utils.convert_args_to_tuples(argv)
     op_properties.append(('name', op_name))
     found_match = False
     for op in resource.getElementsByTagName("op"):
@@ -1206,29 +1213,15 @@ def resource_operation_remove(res_id, argv):
 
 def resource_meta(res_id, argv):
     dom = utils.get_cib_dom()
-    allowed_elements = ["primitive","group","clone","master"]
-    elems = []
-    element_found = False
-    for ae in allowed_elements:
-        elems = elems + dom.getElementsByTagName(ae)
-    for elem in elems:
-        if elem.getAttribute("id") == res_id:
-            element_found = True
-            break
+    resource_el = utils.dom_get_any_resource(dom, res_id)
 
-    if not element_found:
+    if resource_el is None:
         utils.err("unable to find a resource/clone/master/group: %s" % res_id)
-
-    meta_attributes = prepare_meta_attributes_element(elem)
 
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
 
-    update_meta_attributes(
-        meta_attributes,
-        convert_args_to_tuples(argv),
-        res_id + "-meta_attributes-"
-    )
+    utils.dom_update_meta_attr(resource_el, utils.convert_args_to_tuples(argv))
 
     utils.replace_cib_configuration(dom)
 
@@ -1249,50 +1242,12 @@ def resource_meta(res_id, argv):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
-def prepare_meta_attributes_element(resource_el):
-    # Make sure we only check direct children for meta_attributes
-    dom = resource_el.ownerDocument
-    meta_attributes = []
-    for child in resource_el.childNodes:
-        if child.nodeType == child.ELEMENT_NODE and child.tagName == "meta_attributes":
-            meta_attributes.append(child)
-
-    if len(meta_attributes) == 0:
-        meta_attributes = dom.createElement("meta_attributes")
-        meta_attributes.setAttribute(
-            "id", resource_el.getAttribute("id") + "-meta_attributes"
-        )
-        resource_el.appendChild(meta_attributes)
-    else:
-        meta_attributes = meta_attributes[0]
-    return meta_attributes
-
-def update_meta_attributes(meta_attributes, meta_attrs, id_prefix):
-    dom = meta_attributes.ownerDocument
-    for (key,val) in meta_attrs:
-        meta_found = False
-        for ma in meta_attributes.getElementsByTagName("nvpair"):
-            if ma.getAttribute("name") == key:
-                meta_found = True
-                if val == "":
-                    meta_attributes.removeChild(ma)
-                else:
-                    ma.setAttribute("value", val)
-                break
-        if not meta_found:
-            ma = dom.createElement("nvpair")
-            ma.setAttribute("id", id_prefix + key)
-            ma.setAttribute("name", key)
-            ma.setAttribute("value", val)
-            meta_attributes.appendChild(ma)
-    return meta_attributes
-
 def convert_args_to_meta_attrs(meta_attrs, ra_id):
     if len(meta_attrs) == 0:
         return []
 
     meta_vars = []
-    tuples = convert_args_to_tuples(meta_attrs)
+    tuples = utils.convert_args_to_tuples(meta_attrs)
     attribute_id = ra_id + "-meta_attributes"
     for (a,b) in tuples:
         meta_vars.append(("nvpair",[("name",a),("value",b),("id",attribute_id+"-"+a)],[]))
@@ -1300,7 +1255,7 @@ def convert_args_to_meta_attrs(meta_attrs, ra_id):
     return [ret]
 
 def convert_args_to_instance_variables(ra_values, ra_id):
-    tuples = convert_args_to_tuples(ra_values)
+    tuples = utils.convert_args_to_tuples(ra_values)
     ivs = []
     attribute_id = ra_id + "-instance_attributes"
     for (a,b) in tuples:
@@ -1308,15 +1263,6 @@ def convert_args_to_instance_variables(ra_values, ra_id):
     ret = ("instance_attributes", [[("id"),(attribute_id)]], ivs)
     return [ret]
 
-# Passed an array of strings ["a=b","c=d"], return array of tuples
-# [("a","b"),("c","d")]
-def convert_args_to_tuples(ra_values):
-    ret = []
-    for ra_val in ra_values:
-        if ra_val.count("=") != 0:
-            split_val = ra_val.split("=", 1)
-            ret.append((split_val[0],split_val[1]))
-    return ret
 
 # Passed a resource type (ex. ocf:heartbeat:IPaddr2 or IPaddr2) and returns
 # a list of tuples mapping the types to xml attributes
@@ -1480,7 +1426,6 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
     if element.parentNode.tagName == "group" and element.parentNode.getElementsByTagName("primitive").length <= 1:
         element.parentNode.parentNode.removeChild(element.parentNode)
 
-    meta = None
     if update_existing:
         if element.parentNode.tagName != "clone":
             utils.err("%s is not currently a clone" % name)
@@ -1498,12 +1443,8 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
         clone.setAttribute("id", utils.find_unique_id(cib_dom, name + "-clone"))
         clone.appendChild(element)
         re.appendChild(clone)
-    if meta is None:
-        meta = cib_dom.createElement("meta_attributes")
-        meta.setAttribute("id",name + "-clone-meta_attributes")
-        clone.appendChild(meta)
 
-    update_meta_attributes(meta, convert_args_to_tuples(argv), name + "-")
+    utils.dom_update_meta_attr(clone, utils.convert_args_to_tuples(argv))
 
     return cib_dom, clone.getAttribute("id")
 
@@ -1663,26 +1604,10 @@ def resource_master_create(dom, argv, update=False, master_id=None):
         resources.appendChild(master_element)
 
     if len(argv) > 0:
-        meta = None
-        for child in master_element.childNodes:
-            if child.nodeType != xml.dom.Node.ELEMENT_NODE:
-                continue
-            if child.tagName == "meta_attributes":
-                meta = child
-        if meta == None:
-            meta = dom.createElement("meta_attributes")
-            meta.setAttribute(
-                "id", master_element.getAttribute("id") + "-meta_attributes"
-            )
-            master_element.appendChild(meta)
-
-        update_meta_attributes(
-            meta,
-            convert_args_to_tuples(argv),
-            meta.getAttribute("id") + "-"
+        utils.dom_update_meta_attr(
+            master_element,
+            utils.convert_args_to_tuples(argv)
         )
-        if len(meta.getElementsByTagName("nvpair")) == 0:
-            master_element.removeChild(meta)
     return dom, master_element.getAttribute("id")
 
 def resource_master_remove(argv):
@@ -2515,6 +2440,7 @@ def print_node(node, tab = 0):
         print(spaces + "Resource: " + node.attrib["id"] + get_attrs(node,' (',')'))
         print_instance_vars_string(node, spaces)
         print_meta_vars_string(node, spaces)
+        print_utilization_string(node, spaces)
         print_operations(node, spaces)
     if node.tag == "master":
         print(spaces + "Master: " + node.attrib["id"] + get_attrs(node, ' (', ')'))
@@ -2523,6 +2449,14 @@ def print_node(node, tab = 0):
         print_operations(node, spaces)
         for child in node:
             print_node(child, tab + 1)
+
+def print_utilization_string(element, spaces):
+    output = []
+    mvars = element.findall("utilization/nvpair")
+    for mvar in mvars:
+        output.append(mvar.attrib["name"] + "=" + mvar.attrib["value"])
+    if output:
+        print(spaces + " Utilization: " + " ".join(output))
 
 def print_instance_vars_string(node, spaces):
     output = []
@@ -2681,11 +2615,16 @@ def resource_relocate_set_stickiness(cib_dom, resources=None):
                 [el.getAttribute("id") for el in res_and_children]
             )
             for res_or_child in res_and_children:
-                meta_attributes = prepare_meta_attributes_element(res_or_child)
-                meta_attributes = update_meta_attributes(
+                meta_attributes = utils.dom_prepare_child_element(
+                    res_or_child,
+                    "meta_attributes",
+                    res_or_child.getAttribute("id") + "-"
+                )
+                utils.dom_update_nv_pair(
                     meta_attributes,
-                    [["resource-stickiness", "0"]],
-                    meta_attributes.getAttribute("id")
+                    "resource-stickiness",
+                    "0",
+                    meta_attributes.getAttribute("id") + "-"
                 )
     # resources don't exist
     if resources:
@@ -2827,3 +2766,33 @@ def resource_relocate_clear(cib_dom):
                 location_el.parentNode.removeChild(location_el)
     return cib_dom
 
+def set_resource_utilization(resource_id, argv):
+    cib = utils.get_cib_dom()
+    resource_el = utils.dom_get_resource(cib, resource_id)
+    if resource_el is None:
+        utils.err("Unable to find a resource: {0}".format(resource_id))
+
+    utils.dom_update_utilization(resource_el, utils.convert_args_to_tuples(argv))
+    utils.replace_cib_configuration(cib)
+
+def print_resource_utilization(resource_id):
+    cib = utils.get_cib_dom()
+    resource_el = utils.dom_get_resource(cib, resource_id)
+    if resource_el is None:
+        utils.err("Unable to find a resource: {0}".format(resource_id))
+    utilization = utils.get_utilization_str(resource_el)
+
+    print("Resource Utilization:")
+    print(" {0}: {1}".format(resource_id, utilization))
+
+def print_resources_utilization():
+    cib = utils.get_cib_dom()
+    utilization = {}
+    for resource_el in cib.getElementsByTagName("primitive"):
+        u = utils.get_utilization_str(resource_el)
+        if u:
+           utilization[resource_el.getAttribute("id")] = u
+
+    print("Resource Utilization:")
+    for resource in sorted(utilization):
+        print(" {0}: {1}".format(resource, utilization[resource]))

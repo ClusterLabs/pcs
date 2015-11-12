@@ -138,5 +138,84 @@ Cluster Properties:
 """
         ac(expected_out, output)
 
+    def test_node_utilization_set(self):
+        output, returnVal = pcs(temp_cib, "node utilization rh7-1 test1=10")
+        ac("", output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "node utilization rh7-2")
+        expected_out = """\
+Node Utilization:
+ rh7-2: \n"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "node utilization rh7-1")
+        expected_out = """\
+Node Utilization:
+ rh7-1: test1=10
+"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "node utilization rh7-1 test1=-10 test4=1234"
+        )
+        ac("", output)
+        self.assertEqual(0, returnVal)
+        output, returnVal = pcs(temp_cib, "node utilization rh7-1")
+        expected_out = """\
+Node Utilization:
+ rh7-1: test1=-10 test4=1234
+"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "node utilization rh7-2 test2=321 empty="
+        )
+        ac("", output)
+        self.assertEqual(0, returnVal)
+        output, returnVal = pcs(temp_cib, "node utilization rh7-2")
+        expected_out = """\
+Node Utilization:
+ rh7-2: test2=321
+"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(temp_cib, "node utilization")
+        expected_out = """\
+Node Utilization:
+ rh7-1: test1=-10 test4=1234
+ rh7-2: test2=321
+"""
+        ac(expected_out, output)
+        self.assertEqual(0, returnVal)
+
+    def test_node_utilization_set_invalid(self):
+        output, returnVal = pcs(temp_cib, "node utilization rh7-0")
+        expected_out = """\
+Error: Unable to find a node: rh7-0
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "node utilization rh7-0 test=10")
+        expected_out = """\
+Error: Unable to find a node: rh7-0
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_cib, "node utilization rh7-1 test1=10 test=int"
+        )
+        expected_out = """\
+Error: Value of utilization attribute must be integer: 'test=int'
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
 if __name__ == "__main__":
     unittest.main()

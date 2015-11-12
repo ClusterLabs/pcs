@@ -16,6 +16,7 @@ import utils
 from pcs_test_functions import pcs, ac
 
 
+cib_with_nodes =  os.path.join(currentdir, "empty-withnodes.xml")
 empty_cib = os.path.join(currentdir, "empty.xml")
 temp_cib = os.path.join(currentdir, "temp.xml")
 
@@ -23,6 +24,9 @@ class UtilsTest(unittest.TestCase):
 
     def get_cib_empty(self):
         return xml.dom.minidom.parse(empty_cib)
+
+    def get_cib_with_nodes_minidom(self):
+        return xml.dom.minidom.parse(cib_with_nodes)
 
     def get_cib_resources(self):
         cib_dom = self.get_cib_empty()
@@ -1746,6 +1750,236 @@ Membership information
             utils.get_resources_location_from_operations(cib_dom, operations)
         )
 
+    def test_is_int(self):
+        self.assertTrue(utils.is_int("-999"))
+        self.assertTrue(utils.is_int("-1"))
+        self.assertTrue(utils.is_int("0"))
+        self.assertTrue(utils.is_int("1"))
+        self.assertTrue(utils.is_int("99999"))
+        self.assertTrue(utils.is_int(" 99999  "))
+        self.assertFalse(utils.is_int("0.0"))
+        self.assertFalse(utils.is_int("-1.0"))
+        self.assertFalse(utils.is_int("-0.1"))
+        self.assertFalse(utils.is_int("0.001"))
+        self.assertFalse(utils.is_int("-999999.1"))
+        self.assertFalse(utils.is_int("0.0001"))
+        self.assertFalse(utils.is_int(""))
+        self.assertFalse(utils.is_int("   "))
+        self.assertFalse(utils.is_int("A"))
+        self.assertFalse(utils.is_int("random 15 47 text  "))
+
+    def test_dom_get_node(self):
+        cib = self.get_cib_with_nodes_minidom()
+        #assertIsNone is not supported in python 2.6
+        self.assertTrue(utils.dom_get_node(cib, "non-existing-node") is None)
+        node = utils.dom_get_node(cib, "rh7-1")
+        self.assertEqual(node.getAttribute("uname"), "rh7-1")
+        self.assertEqual(node.getAttribute("id"), "1")
+
+    def test_dom_prepare_child_element(self):
+        cib = self.get_cib_with_nodes_minidom()
+        node = cib.getElementsByTagName("node")[0]
+        self.assertEqual(len(get_child_elemets(node)), 0)
+        child = utils.dom_prepare_child_element(node, "utilization", "rh7-1-")
+        self.assertEqual(len(get_child_elemets(node)), 1)
+        self.assertEqual(child, get_child_elemets(node)[0])
+        self.assertEqual(get_child_elemets(node)[0].tagName, "utilization")
+        self.assertEqual(
+            get_child_elemets(node)[0].getAttribute("id"), "rh7-1-utilization"
+        )
+        child2 = utils.dom_prepare_child_element(node, "utilization", "rh7-1-")
+        self.assertEqual(len(get_child_elemets(node)), 1)
+        self.assertEqual(child, child2)
+
+    def test_dom_update_nv_pair_add(self):
+        nv_set = xml.dom.minidom.parseString("<nvset/>").documentElement
+        utils.dom_update_nv_pair(nv_set, "test_name", "test_val", "prefix-")
+        self.assertEqual(len(get_child_elemets(nv_set)), 1)
+        pair = get_child_elemets(nv_set)[0]
+        self.assertEqual(pair.getAttribute("name"), "test_name")
+        self.assertEqual(pair.getAttribute("value"), "test_val")
+        self.assertEqual(pair.getAttribute("id"), "prefix-test_name")
+        utils.dom_update_nv_pair(nv_set, "another_name", "value", "prefix2-")
+        self.assertEqual(len(get_child_elemets(nv_set)), 2)
+        self.assertEqual(pair, get_child_elemets(nv_set)[0])
+        pair = get_child_elemets(nv_set)[1]
+        self.assertEqual(pair.getAttribute("name"), "another_name")
+        self.assertEqual(pair.getAttribute("value"), "value")
+        self.assertEqual(pair.getAttribute("id"), "prefix2-another_name")
+
+    def test_dom_update_nv_pair_update(self):
+        nv_set = xml.dom.minidom.parseString("""
+        <nv_set>
+            <nvpair id="prefix-test_name" name="test_name" value="test_val"/>
+            <nvpair id="prefix2-another_name" name="another_name" value="value"/>
+        </nv_set>
+        """).documentElement
+        utils.dom_update_nv_pair(nv_set, "test_name", "new_value")
+        self.assertEqual(len(get_child_elemets(nv_set)), 2)
+        pair1 = get_child_elemets(nv_set)[0]
+        pair2 = get_child_elemets(nv_set)[1]
+        self.assertEqual(pair1.getAttribute("name"), "test_name")
+        self.assertEqual(pair1.getAttribute("value"), "new_value")
+        self.assertEqual(pair1.getAttribute("id"), "prefix-test_name")
+        self.assertEqual(pair2.getAttribute("name"), "another_name")
+        self.assertEqual(pair2.getAttribute("value"), "value")
+        self.assertEqual(pair2.getAttribute("id"), "prefix2-another_name")
+
+    def test_dom_update_nv_pair_remove(self):
+        nv_set = xml.dom.minidom.parseString("""
+        <nv_set>
+            <nvpair id="prefix-test_name" name="test_name" value="test_val"/>
+            <nvpair id="prefix2-another_name" name="another_name" value="value"/>
+        </nv_set>
+        """).documentElement
+        utils.dom_update_nv_pair(nv_set, "non_existing_name", "")
+        self.assertEqual(len(get_child_elemets(nv_set)), 2)
+        utils.dom_update_nv_pair(nv_set, "another_name", "")
+        self.assertEqual(len(get_child_elemets(nv_set)), 1)
+        pair = get_child_elemets(nv_set)[0]
+        self.assertEqual(pair.getAttribute("name"), "test_name")
+        self.assertEqual(pair.getAttribute("value"), "test_val")
+        self.assertEqual(pair.getAttribute("id"), "prefix-test_name")
+        utils.dom_update_nv_pair(nv_set, "test_name", "")
+        self.assertEqual(len(get_child_elemets(nv_set)), 0)
+
+    def test_convert_args_to_tuples(self):
+        out = utils.convert_args_to_tuples(
+            ["invalid_string", "key=value", "key2=val=ue", "k e y= v a l u e "]
+        )
+        self.assertEqual(
+            out,
+            [("key", "value"), ("key2", "val=ue"), ("k e y", " v a l u e ")]
+        )
+
+    def test_dom_update_utilization_invalid(self):
+        el = xml.dom.minidom.parseString("""
+        <resource id="test_id"/>
+        """).documentElement
+        self.assertRaises(
+            SystemExit,
+            utils.dom_update_utilization, el, [("name", "invalid_val")]
+        )
+
+        self.assertRaises(
+            SystemExit,
+            utils.dom_update_utilization, el, [("name", "0.01")]
+        )
+
+    def test_dom_update_utilization_add(self):
+        el = xml.dom.minidom.parseString("""
+        <resource id="test_id"/>
+        """).documentElement
+        utils.dom_update_utilization(
+            el, [("name", ""), ("key", "-1"), ("keys", "90")]
+        )
+
+        self.assertEqual(len(get_child_elemets(el)), 1)
+        u = get_child_elemets(el)[0]
+        self.assertEqual(u.tagName, "utilization")
+        self.assertEqual(u.getAttribute("id"), "test_id-utilization")
+        self.assertEqual(len(get_child_elemets(u)), 2)
+
+        self.assertEqual(
+            get_child_elemets(u)[0].getAttribute("id"), "test_id-utilization-key"
+        )
+        self.assertEqual(get_child_elemets(u)[0].getAttribute("name"), "key")
+        self.assertEqual(get_child_elemets(u)[0].getAttribute("value"), "-1")
+        self.assertEqual(
+            get_child_elemets(u)[1].getAttribute("id"), "test_id-utilization-keys"
+        )
+        self.assertEqual(get_child_elemets(u)[1].getAttribute("name"), "keys")
+        self.assertEqual(get_child_elemets(u)[1].getAttribute("value"), "90")
+
+    def test_dom_update_utilization_update_remove(self):
+        el = xml.dom.minidom.parseString("""
+        <resource id="test_id">
+            <utilization id="test_id-utilization">
+                <nvpair id="test_id-utilization-key" name="key" value="-1"/>
+                <nvpair id="test_id-utilization-keys" name="keys" value="90"/>
+            </utilization>
+        </resource>
+        """).documentElement
+        utils.dom_update_utilization(
+            el, [("key", "100"), ("keys", "")]
+        )
+
+        u = get_child_elemets(el)[0]
+        self.assertEqual(len(get_child_elemets(u)), 1)
+        self.assertEqual(
+            get_child_elemets(u)[0].getAttribute("id"), "test_id-utilization-key"
+        )
+        self.assertEqual(get_child_elemets(u)[0].getAttribute("name"), "key")
+        self.assertEqual(get_child_elemets(u)[0].getAttribute("value"), "100")
+
+    def test_dom_update_meta_attr_add(self):
+        el = xml.dom.minidom.parseString("""
+        <resource id="test_id"/>
+        """).documentElement
+        utils.dom_update_meta_attr(
+            el, [("name", ""), ("key", "test"), ("key2", "val")]
+        )
+
+        self.assertEqual(len(get_child_elemets(el)), 1)
+        u = get_child_elemets(el)[0]
+        self.assertEqual(u.tagName, "meta_attributes")
+        self.assertEqual(u.getAttribute("id"), "test_id-meta_attributes")
+        self.assertEqual(len(get_child_elemets(u)), 2)
+
+        self.assertEqual(
+            get_child_elemets(u)[0].getAttribute("id"), "test_id-meta_attributes-key"
+        )
+        self.assertEqual(get_child_elemets(u)[0].getAttribute("name"), "key")
+        self.assertEqual(get_child_elemets(u)[0].getAttribute("value"), "test")
+        self.assertEqual(
+            get_child_elemets(u)[1].getAttribute("id"), "test_id-meta_attributes-key2"
+        )
+        self.assertEqual(get_child_elemets(u)[1].getAttribute("name"), "key2")
+        self.assertEqual(get_child_elemets(u)[1].getAttribute("value"), "val")
+
+    def test_dom_update_meta_attr_update_remove(self):
+        el = xml.dom.minidom.parseString("""
+        <resource id="test_id">
+            <meta_attributes id="test_id-utilization">
+                <nvpair id="test_id-meta_attributes-key" name="key" value="test"/>
+                <nvpair id="test_id-meta_attributes-key2" name="key2" value="val"/>
+            </meta_attributes>
+        </resource>
+        """).documentElement
+        utils.dom_update_meta_attr(
+            el, [("key", "another_val"), ("key2", "")]
+        )
+
+        u = get_child_elemets(el)[0]
+        self.assertEqual(len(get_child_elemets(u)), 1)
+        self.assertEqual(
+            get_child_elemets(u)[0].getAttribute("id"), "test_id-meta_attributes-key"
+        )
+        self.assertEqual(get_child_elemets(u)[0].getAttribute("name"), "key")
+        self.assertEqual(get_child_elemets(u)[0].getAttribute("value"), "another_val")
+
+    def test_get_utilization(self):
+        el = xml.dom.minidom.parseString("""
+        <resource id="test_id">
+            <utilization id="test_id-utilization">
+                <nvpair id="test_id-utilization-key" name="key" value="-1"/>
+                <nvpair id="test_id-utilization-keys" name="keys" value="90"/>
+            </utilization>
+        </resource>
+        """).documentElement
+        self.assertEqual({"key": "-1", "keys": "90"}, utils.get_utilization(el))
+
+    def test_get_utilization_str(self):
+        el = xml.dom.minidom.parseString("""
+        <resource id="test_id">
+            <utilization id="test_id-utilization">
+                <nvpair id="test_id-utilization-key" name="key" value="-1"/>
+                <nvpair id="test_id-utilization-keys" name="keys" value="90"/>
+            </utilization>
+        </resource>
+        """).documentElement
+        self.assertEqual("key=-1 keys=90", utils.get_utilization_str(el))
+
     def assert_element_id(self, node, node_id):
         self.assertTrue(
             isinstance(node, xml.dom.minidom.Element),
@@ -1753,6 +1987,8 @@ Membership information
         )
         self.assertEqual(node.getAttribute("id"), node_id)
 
+def get_child_elemets(el):
+    return [e for e in el.childNodes if e.nodeType == xml.dom.minidom.Node.ELEMENT_NODE]
 
 if __name__ == "__main__":
     unittest.main()

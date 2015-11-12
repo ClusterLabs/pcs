@@ -35,7 +35,7 @@
   <td id="node_info" colspan=2>
     <div id="<%=@myView%>_info_div">
     <% if @myView == "resource" %>
-      {{resource-edit resource=Pcs.resourcesContainer.cur_resource page_name="Resource" old_pcsd=Pcs.resourcesContainer.is_version_1}}
+      {{resource-edit resource=Pcs.resourcesContainer.cur_resource page_name="Resource" old_pcsd=Pcs.resourcesContainer.is_version_1 utilization_support=Pcs.nodesController.utilization_support}}
     <% else %>
       {{resource-edit resource=Pcs.resourcesContainer.cur_fence page_name="Fence device" stonith=1 old_pcsd=Pcs.resourcesContainer.is_version_1}}
     <% end %>

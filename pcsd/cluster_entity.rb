@@ -233,6 +233,14 @@ module ClusterEntity
       @name = name
       @value = value
     end
+
+    def self.from_dom(nvpair_dom_element)
+      return NvPair.new(
+        nvpair_dom_element.attributes['id'],
+        nvpair_dom_element.attributes['name'],
+        nvpair_dom_element.attributes['value']
+      )
+    end
   end
 
   class NvSet < JSONable
@@ -365,11 +373,7 @@ module ClusterEntity
       )
         @id = resource_cib_element.attributes['id']
         resource_cib_element.elements.each('meta_attributes/nvpair') { |e|
-          @meta_attr << NvPair.new(
-            e.attributes['id'],
-            e.attributes['name'],
-            e.attributes['value']
-          )
+          @meta_attr << ClusterEntity::NvPair.from_dom(e)
         }
       end
     end
@@ -481,7 +485,7 @@ module ClusterEntity
 
   class Primitive < Resource
     attr_accessor :agentname, :_class, :provider, :type, :stonith,
-                  :instance_attr, :crm_status, :operations
+                  :instance_attr, :crm_status, :operations, :utilization
 
     def initialize(primitive_cib_element=nil, rsc_status=nil, parent=nil,
         operations=nil)
@@ -495,6 +499,7 @@ module ClusterEntity
       @instance_attr = ClusterEntity::NvSet.new
       @crm_status = []
       @operations = []
+      @utilization = ClusterEntity::NvSet.new
       cib = primitive_cib_element
       if primitive_cib_element and primitive_cib_element.name == 'primitive'
         @_class = cib.attributes['class']
@@ -505,11 +510,10 @@ module ClusterEntity
         ]) if @_class and @type
 
         cib.elements.each('instance_attributes/nvpair') { |e|
-          @instance_attr << NvPair.new(
-            e.attributes['id'],
-            e.attributes['name'],
-            e.attributes['value']
-          )
+          @instance_attr << ClusterEntity::NvPair.from_dom(e)
+        }
+        cib.elements.each('utilization/nvpair') { |e|
+          @utilization << ClusterEntity::NvPair.from_dom(e)
         }
         @stonith = @_class == 'stonith'
         if @id and rsc_status
@@ -605,6 +609,7 @@ module ClusterEntity
             [:@agentname, :@provider, :@type, :@stonith]
           )
         )
+        hash[:utilization] = @utilization.to_status
         hash[:instance_attr] = @instance_attr.to_status
         hash[:class] = @_class
 

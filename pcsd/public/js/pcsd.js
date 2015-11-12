@@ -2465,3 +2465,39 @@ function is_cib_true(value) {
   }
   return false;
 }
+
+function set_utilization(type, entity_id, name, value) {
+  var data = {
+    name: name,
+    value: value
+  };
+  if (type == "node") {
+    data["node"] = entity_id;
+  } else if (type == "resource") {
+    data["resource_id"] = entity_id;
+  } else return false;
+  var url = get_cluster_remote_url() + "set_" + type + "_utilization";
+
+  $.ajax({
+    type: 'POST',
+    url: url,
+    data: data,
+    timeout: pcs_timeout,
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to set utilization: "
+        + ajax_simple_error(xhr, status, error)
+      );
+    },
+    complete: function() {
+      Pcs.update();
+    }
+  });
+}
+
+function is_integer(str) {
+  if (Number(str) === str && str % 1 === 0) // if argument isn't string but number
+    return true;
+  var n = ~~Number(str);
+  return String(n) === str;
+}

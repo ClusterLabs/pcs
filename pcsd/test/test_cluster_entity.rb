@@ -315,6 +315,16 @@ class TestPrimitive < Test::Unit::TestCase
       '10'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
+    utilization = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'dummy1-utilization-test_name',
+      'test_name',
+      '-10'
+    ) << ClusterEntity::NvPair.new(
+      'dummy1-utilization-another_one',
+      'another_one',
+      '0'
+    )
+    assert_equal_NvSet(utilization, obj.utilization)
     assert_equal('dummy1', obj.id)
     assert(obj.error_list.empty?)
     assert(obj.warning_list.empty?)
@@ -352,6 +362,16 @@ class TestPrimitive < Test::Unit::TestCase
       '10'
     )
     assert_equal_NvSet(meta_attr, obj.meta_attr)
+    utilization = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'dummy1-utilization-test_name',
+      'test_name',
+      '-10'
+    ) << ClusterEntity::NvPair.new(
+      'dummy1-utilization-another_one',
+      'another_one',
+      '0'
+    )
+    assert_equal_NvSet(utilization, obj.utilization)
     assert_equal('dummy1', obj.id)
     assert(obj.error_list.empty?)
     assert(obj.warning_list.empty?)
@@ -410,6 +430,16 @@ class TestPrimitive < Test::Unit::TestCase
       'attr2',
       '10'
     )
+    utilization = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'dummy1-utilization-test_name',
+      'test_name',
+      '-10'
+    ) << ClusterEntity::NvPair.new(
+      'dummy1-utilization-another_one',
+      'another_one',
+      '0'
+    )
+    assert_equal_NvSet(utilization, obj.utilization)
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_equal('dummy1', obj.id)
     assert(obj.error_list.empty?)
@@ -509,6 +539,16 @@ class TestPrimitive < Test::Unit::TestCase
       'attr2',
       '10'
     )
+    utilization = ClusterEntity::NvSet.new << ClusterEntity::NvPair.new(
+      'dummy1-utilization-test_name',
+      'test_name',
+      '-10'
+    ) << ClusterEntity::NvPair.new(
+      'dummy1-utilization-another_one',
+      'another_one',
+      '0'
+    )
+    assert_equal_NvSet(utilization, obj.utilization)
     assert_equal_NvSet(meta_attr, obj.meta_attr)
     assert_equal('dummy1', obj.id)
     assert(obj.error_list.empty?)
@@ -834,6 +874,18 @@ class TestPrimitive < Test::Unit::TestCase
           "value": "10"
         }
       ],
+      "utilization": [
+        {
+          "id": "dummy1-utilization-test_name",
+          "name": "test_name",
+          "value": "-10"
+        },
+        {
+          "id": "dummy1-utilization-another_one",
+          "name": "another_one",
+          "value": "0"
+        }
+      ],
       "error_list": [],
       "warning_list": [],
       "class_type": "primitive",
@@ -1120,6 +1172,7 @@ class TestGroup < Test::Unit::TestCase
               "value": "3"
             }
           ],
+          "utilization": [],
           "error_list": [],
           "warning_list": [],
           "class_type": "primitive",
@@ -1167,6 +1220,7 @@ class TestGroup < Test::Unit::TestCase
               "value": "4"
             }
           ],
+          "utilization": [],
           "error_list": [],
           "warning_list": [],
           "class_type": "primitive",
@@ -1897,6 +1951,7 @@ class TestClone < Test::Unit::TestCase
             "value": "111"
           }
         ],
+        "utilization": [],
         "error_list": [],
         "warning_list": [],
         "class_type": "primitive",
@@ -2036,6 +2091,13 @@ class TestClone < Test::Unit::TestCase
                 "value": "6"
               }
             ],
+            "utilization": [
+              {
+                "id": "dummy6-utilization-util1",
+                "name": "util1",
+                "value": "8"
+              }
+            ],
             "error_list": [],
             "warning_list": [],
             "class_type": "primitive",
@@ -2122,6 +2184,7 @@ class TestClone < Test::Unit::TestCase
                 "value": "0"
               }
             ],
+            "utilization": [],
             "error_list": [],
             "warning_list": [],
             "class_type": "primitive",
@@ -2855,6 +2918,7 @@ class TestMasterSlave < Test::Unit::TestCase
             "value": "0"
           }
         ],
+        "utilization": [],
         "error_list": [],
         "warning_list": [],
         "class_type": "primitive",
@@ -2998,6 +3062,7 @@ class TestMasterSlave < Test::Unit::TestCase
                 "value": "1"
               }
             ],
+            "utilization": [],
             "error_list": [],
             "warning_list": [],
             "class_type": "primitive",
@@ -3084,6 +3149,7 @@ class TestMasterSlave < Test::Unit::TestCase
                 "value": "2"
               }
             ],
+            "utilization": [],
             "error_list": [],
             "warning_list": [],
             "class_type": "primitive",

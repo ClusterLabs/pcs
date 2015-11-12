@@ -45,6 +45,10 @@
         <instance_attributes id="dummy1-instance_attributes">
           <nvpair id="dummy1-instance_attributes-fake" name="fake" value="--test"/>
         </instance_attributes>
+        <utilization id="dummy1-utilization">
+          <nvpair id="dummy1-utilization-test_name" name="test_name" value="-10"/>
+          <nvpair id="dummy1-utilization-another_one" name="another_one" value="0"/>
+        </utilization>
         <operations>
           <op id="dummy1-start-interval-0s" interval="0s" name="start" timeout="20"/>
           <op id="dummy1-stop-interval-0s" interval="0s" name="stop" timeout="20"/>
@@ -58,6 +62,7 @@
       <group id="group1">
         <primitive class="ocf" id="dummy3" provider="heartbeat" type="Dummy">
           <instance_attributes id="dummy3-instance_attributes"/>
+          <utilization id="dummy3-utilization"/>
           <operations>
             <op id="dummy3-start-interval-0s" interval="0s" name="start" timeout="20"/>
             <op id="dummy3-stop-interval-0s" interval="0s" name="stop" timeout="20"/>
@@ -107,6 +112,9 @@
         <group id="group2">
           <primitive class="ocf" id="dummy6" provider="heartbeat" type="Dummy">
             <instance_attributes id="dummy6-instance_attributes"/>
+            <utilization id="dummy6-utilization">
+              <nvpair id="dummy6-utilization-util1" name="util1" value="8"/>
+            </utilization>
             <operations>
               <op id="dummy6-start-interval-0s" interval="0s" name="start" timeout="20"/>
               <op id="dummy6-stop-interval-0s" interval="0s" name="stop" timeout="20"/>

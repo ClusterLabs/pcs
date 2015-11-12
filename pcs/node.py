@@ -21,6 +21,13 @@ def node_cmd(argv):
         node_maintenance(argv)
     elif sub_cmd == "unmaintenance":
         node_maintenance(argv, False)
+    elif sub_cmd == "utilization":
+        if len(argv) == 0:
+            print_nodes_utilization()
+        elif len(argv) == 1:
+            print_node_utilization(argv.pop(0))
+        else:
+            set_node_utilization(argv.pop(0), argv)
     else:
         usage.node()
         sys.exit(1)
@@ -71,3 +78,35 @@ def node_maintenance(argv, on=True):
                 )
     if failed_count > 0:
         sys.exit(1)
+
+def set_node_utilization(node, argv):
+    cib = utils.get_cib_dom()
+    node_el = utils.dom_get_node(cib, node)
+    if node_el is None:
+        utils.err("Unable to find a node: {0}".format(node))
+
+    utils.dom_update_utilization(
+        node_el, utils.convert_args_to_tuples(argv), "nodes-"
+    )
+    utils.replace_cib_configuration(cib)
+
+def print_node_utilization(node):
+    cib = utils.get_cib_dom()
+    node_el = utils.dom_get_node(cib, node)
+    if node_el is None:
+        utils.err("Unable to find a node: {0}".format(node))
+    utilization = utils.get_utilization_str(node_el)
+
+    print("Node Utilization:")
+    print(" {0}: {1}".format(node, utilization))
+
+def print_nodes_utilization():
+    cib = utils.get_cib_dom()
+    utilization = {}
+    for node_el in cib.getElementsByTagName("node"):
+        u = utils.get_utilization_str(node_el)
+        if u:
+           utilization[node_el.getAttribute("uname")] = u
+    print("Node Utilization:")
+    for node in sorted(utilization):
+        print(" {0}: {1}".format(node, utilization[node]))
