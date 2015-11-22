@@ -600,6 +600,7 @@ Pcs.resourcesContainer = Ember.Object.create({
     var constraints = self.get_constraints(data["constraints"]);
     self.set('constraints', constraints);
     var resource_map = self.get('resource_map');
+    update_resource_form_groups($("#new_resource_agent"), self.get('group_list').sort());
     $.each(constraints, function(const_type, cons) {
       $.each(resource_map, function(resource_id, resource_obj) {
         if (resource_id in cons) {
