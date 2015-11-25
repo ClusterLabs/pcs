@@ -1785,6 +1785,7 @@ def getCorosyncNodesID(allow_failure=False):
     return cs_nodes
 
 # Warning, if a node has never started the hostname may be '(null)'
+#TODO This doesn't work on CMAN clusters at all and should be removed completely
 def getPacemakerNodesID(allow_failure=False):
     if os.getuid() == 0:
         (output, retval) = run(['crm_node', '-l'])
@@ -1812,6 +1813,7 @@ def getPacemakerNodesID(allow_failure=False):
     return pm_nodes
 
 def corosyncPacemakerNodeCheck():
+    # does not work on CMAN clusters
     pm_nodes = getPacemakerNodesID()
     cs_nodes = getCorosyncNodesID()
 
