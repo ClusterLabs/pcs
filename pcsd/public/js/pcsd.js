@@ -119,7 +119,6 @@ function create_group() {
           success: function() {
             Pcs.update();
             $("#add_group").dialog("close");
-            reload_current_resource();
           },
           error: function (xhr, status, error) {
             alert(
