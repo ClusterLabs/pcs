@@ -7,12 +7,11 @@ DISTRO_DEBIAN_VER_8=false
 ifeq ($(UNAME_OS_GNU),true)
   ifeq ($(DISTRO_DEBIAN),true)
     IS_DEBIAN=true
-    DISTRO_DEBIAN_VER_8 := $(shell if grep -q -i "8\|jessie" /etc/debian_version ; then echo true; else echo false; fi)
-    settings_x86_64 := $(shell if dpkg --print-architecture | grep -q -i "amd64" ; then echo true; else echo false; fi)
-    settings_i386=false
-    ifeq ($(settings_x86_64),false)
-      settings_i386 := $(shell if dpkg --print-architecture | grep -q -i "i386" ; then echo true; else echo false; fi)
-    endif
+    DISTRO_DEBIAN_VER_8 := $(shell if grep -q -i "^8\|jessie" /etc/debian_version ; then echo true; else echo false; fi)
+    # dpkg-architecture is in the optional dpkg-dev package, unfortunately.
+    #DEB_HOST_MULTIARCH := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+    # TODO: Use lsb_architecture to get the multiarch tuple if/when it becomes available in distributions.
+    DEB_HOST_MULTIARCH := $(shell dpkg -L libc6 | sed -nr 's|^/etc/ld\.so\.conf\.d/(.*)\.conf$$|\1|p')
   endif
 endif
 
@@ -66,18 +65,10 @@ ifndef initdir
 endif
 
 ifndef install_settings
-  install_settings=false
-else
-  ifeq ($(install_settings),true)
-    ifeq ($(settings_x86_64),true)
-      settings_file=settings.py.x86_64-linux-gnu.debian
-      settings_file_pcsd=settings.rb.x86_64-linux-gnu.debian
-    else
-      ifeq ($(settings_i386),true)
-        settings_file=settings.py.i386-linux-gnu.debian
-        settings_file_pcsd=settings.rb.i386-linux-gnu.debian
-      endif
-    endif
+  ifeq ($(IS_DEBIAN),true)
+    install_settings=true
+  else
+    install_settings=false
   endif
 endif
 
@@ -91,10 +82,13 @@ install: bash_completion
 ifeq ($(IS_DEBIAN),true)
   ifeq ($(install_settings),true)
 	rm -f  ${DESTDIR}${PYTHON_SITELIB}/pcs/settings.py
-	install -m755 pcs/${settings_file} ${DESTDIR}${PYTHON_SITELIB}/pcs/settings.py
+	tmp_settings=`mktemp`; \
+	        sed s/DEB_HOST_MULTIARCH/${DEB_HOST_MULTIARCH}/g pcs/settings.py.debian > $$tmp_settings; \
+	        install -m644 $$tmp_settings ${DESTDIR}${PYTHON_SITELIB}/pcs/settings.py; \
+	        rm -f $$tmp_settings
+	python -m compileall -fl ${DESTDIR}${PYTHON_SITELIB}/pcs/settings.py
   endif
 endif
-	
 
 install_pcsd:
 ifeq ($(BUILD_GEMS),true)
@@ -109,7 +103,10 @@ ifeq ($(IS_DEBIAN),true)
 	install  pcsd/pcsd.pam.debian ${DESTDIR}/etc/pam.d/pcsd
   ifeq ($(install_settings),true)
 	rm -f  ${DESTDIR}/usr/share/pcsd/settings.rb
-	install -m755 pcsd/${settings_file_pcsd} ${DESTDIR}/usr/share/pcsd/settings.rb
+	tmp_settings_pcsd=`mktemp`; \
+	        sed s/DEB_HOST_MULTIARCH/${DEB_HOST_MULTIARCH}/g pcsd/settings.rb.debian > $$tmp_settings_pcsd; \
+	        install -m644 $$tmp_settings_pcsd ${DESTDIR}/usr/share/pcsd/settings.rb; \
+	        rm -f $$tmp_settings_pcsd
   endif
   ifeq ($(IS_SYSTEMCTL),true)
 	install -d ${DESTDIR}/${systemddir}/system/

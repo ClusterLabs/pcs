@@ -8,13 +8,6 @@ To install pcs run the following in terminal
 # cd pcs-0.9.143
 # make install
 
-If you are using Debian or Debian-based distribution (such as Ubuntu), run
-the following instead:
-
-# tar -xzvf pcs-0.9.143.tar.gz
-# cd pcs-0.9.143
-# make install install_settings=true
-
 This will install pcs into /usr/sbin/pcs
 
 To create a cluster run the following commands on all nodes (replacing node1,
@@ -41,12 +34,6 @@ Fedora, and development packages installed)
 
 # cd pcsd ; make get_gems ; cd ..
 # make install_pcsd
-
-If you are using Debian or Debian-based distribution (such as Ubuntu), run
-the following instead:
-
-# cd pcsd ; make get_gems ; cd ..
-# make install_pcsd install_settings=true
 
 If you are using GNU/Linux its now time to:
 # systemctl daemon-reload

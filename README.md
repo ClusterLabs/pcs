@@ -15,14 +15,6 @@
    # make install
    ```
 
-   If you are using Debian or Debian-based distribution (such as Ubuntu), run the following instead:
-
-   ```shell
-   # tar -xzvf pcs-0.9.143.tar.gz
-   # cd pcs-0.9.143
-   # make install install_settings=true
-   ```
-
    This will install pcs into `/usr/sbin/pcs`.
 
 <br />
@@ -74,13 +66,6 @@
    ```shell
    # cd pcsd ; make get_gems ; cd ..
    # make install_pcsd
-   ```
-
-   If you are using Debian or Debian-based distribution (such as Ubuntu), run the following instead:
-
-   ```shell
-   # cd pcsd ; make get_gems ; cd ..
-   # make install_pcsd install_settings=true
    ```
 
    If you are using GNU/Linux its now time to:

@@ -26,8 +26,7 @@ new_version = ".".join(pcs_version_split)
 
 print(os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' setup.py"))
 print(os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/settings.py"))
-print(os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/settings.py.i386-linux-gnu.debian"))
-print(os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/settings.py.x86_64-linux-gnu.debian"))
+print(os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcs/settings.py.debian"))
 print(os.system("sed -i 's/"+settings.pcs_version+"/"+new_version + "/' pcsd/bootstrap.rb"))
 
 manpage_head = '.TH PCS "8" "{date}" "pcs {version}" "System Administration Utilities"'.format(
