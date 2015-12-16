@@ -1352,7 +1352,7 @@ def is_valid_resource(resource, caseInsensitiveCheck=False):
     elif resource.startswith("systemd:"):
         resource_split = resource.split(":",2)
         systemd_ra = resource_split[1]
-        if os.path.isfile("/usr/lib/systemd/system/" + systemd_ra + ".service"):
+        if os.path.isfile("/etc/systemd/system/" + systemd_ra + ".service") or os.path.isfile("/usr/lib/systemd/system/" + systemd_ra + ".service"):
             return True
         else:
             return False
