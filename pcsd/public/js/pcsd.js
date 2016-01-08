@@ -1,11 +1,19 @@
 var pcs_timeout = 30000;
 
 function curResource() {
-  return Pcs.resourcesContainer.get('cur_resource').get('id')
+  var obj = Pcs.resourcesContainer.get('cur_resource');
+  if (obj == null) {
+    return null;
+  }
+  return obj.get('id');
 }
 
 function curStonith() {
-  return Pcs.resourcesContainer.get('cur_fence').get('id')
+  var obj = Pcs.resourcesContainer.get('cur_fence');
+  if (obj == null) {
+    return null;
+  }
+  return obj.get('id');
 }
 
 function configure_menu_show(item) {
@@ -583,6 +591,9 @@ function disable_resource() {
 
 function cleanup_resource() {
   var resource = curResource();
+  if (resource == null) {
+    return;
+  }
   fade_in_out("#resource_cleanup_link");
   $.ajax({
     type: 'POST',
@@ -601,6 +612,9 @@ function cleanup_resource() {
 
 function cleanup_stonith() {
   var resource = curStonith();
+  if (resource == null) {
+    return;
+  }
   fade_in_out("#stonith_cleanup_link");
   $.ajax({
     type: 'POST',
@@ -1461,6 +1475,9 @@ function node_unmaintenance(node) {
 
 function remove_meta_attr(parent_id) {
   var resource_id = curResource();
+  if (resource_id == null) {
+    return;
+  }
   var attr = parent_id.attr("meta_attr_key");
   fade_in_out(parent_id.parent());
   Pcs.resourcesContainer.update_meta_attr(resource_id, attr);
@@ -1468,6 +1485,9 @@ function remove_meta_attr(parent_id) {
 
 function add_meta_attr(parent_id) {
   var resource_id = curResource();
+  if (resource_id == null) {
+    return;
+  }
   var attr = $(parent_id + " input[name='new_meta_key']").val();
   var value = $(parent_id + " input[name='new_meta_value']").val();
   fade_in_out($(parent_id));
@@ -2055,6 +2075,9 @@ function tree_view_checkbox_onchange(element) {
 }
 
 function resource_master(resource_id) {
+  if (resource_id == null) {
+    return;
+  }
   show_loading_screen();
   $.ajax({
     type: 'POST',
@@ -2074,6 +2097,9 @@ function resource_master(resource_id) {
 }
 
 function resource_clone(resource_id) {
+  if (resource_id == null) {
+    return;
+  }
   show_loading_screen();
   $.ajax({
     type: 'POST',
@@ -2093,6 +2119,9 @@ function resource_clone(resource_id) {
 }
 
 function resource_unclone(resource_id) {
+  if (resource_id == null) {
+    return;
+  }
   show_loading_screen();
   var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
   if (resource_obj.get('class_type') == 'clone') {
@@ -2116,6 +2145,9 @@ function resource_unclone(resource_id) {
 }
 
 function resource_ungroup(group_id) {
+  if (group_id == null) {
+    return;
+  }
   show_loading_screen();
   $.ajax({
     type: 'POST',
@@ -2135,6 +2167,9 @@ function resource_ungroup(group_id) {
 }
 
 function resource_change_group(resource_id, group_id) {
+  if (resource_id == null) {
+    return;
+  }
   show_loading_screen();
   var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
   var data = {

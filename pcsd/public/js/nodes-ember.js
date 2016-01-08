@@ -479,6 +479,9 @@ Pcs.resourcesContainer = Ember.Object.create({
   },
 
   enable_resource: function(resource_id) {
+    if (resource_id == null) {
+      return;
+    }
     $.ajax({
       type: 'POST',
       url: get_cluster_remote_url() + 'resource_start',
@@ -502,6 +505,9 @@ Pcs.resourcesContainer = Ember.Object.create({
   },
 
   disable_resource: function(resource_id) {
+    if (resource_id == null) {
+      return;
+    }
     $.ajax({
       type: 'POST',
       url: get_cluster_remote_url() + 'resource_stop',
