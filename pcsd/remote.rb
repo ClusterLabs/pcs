@@ -21,7 +21,6 @@ def remote(params, request, session)
       :cluster_status => method(:cluster_status_remote),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
-      :fix_auth_of_cluster => method(:fix_auth_of_cluster),
       :setup_cluster => method(:setup_cluster),
       :create_cluster => method(:create_cluster),
       :get_quorum_info => method(:get_quorum_info),
@@ -47,7 +46,6 @@ def remote(params, request, session)
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
       :resource_status => method(:resource_status),
-      :check_gui_status => method(:check_gui_status),
       :get_sw_versions => method(:get_sw_versions),
       :node_available => method(:remote_node_available),
       :add_node_all => lambda { |params_, request_, session_|
@@ -61,11 +59,9 @@ def remote(params, request, session)
       :cluster_destroy => method(:cluster_destroy),
       :get_wizard => method(:get_wizard),
       :wizard_submit => method(:wizard_submit),
-      :auth_gui_against_nodes => method(:auth_gui_against_nodes),
       :get_tokens => method(:get_tokens),
       :get_cluster_tokens => method(:get_cluster_tokens),
       :save_tokens => method(:save_tokens),
-      :add_node_to_cluster => method(:add_node_to_cluster),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition)
   }
   remote_cmd_with_pacemaker = {
@@ -731,49 +727,7 @@ def remote_pcsd_restart(params, request, session)
   return [200, 'success']
 end
 
-def check_gui_status(params, request, session)
-  node_results = {}
-  if params[:nodes] != nil and params[:nodes] != ""
-    node_array = params[:nodes].split(",")
-    online, offline, notauthorized = check_gui_status_of_nodes(
-      session, node_array
-    )
-    online.each { |node|
-      node_results[node] = "Online"
-    }
-    offline.each { |node|
-      node_results[node] = "Offline"
-    }
-    notauthorized.each { |node|
-      node_results[node] = "Unable to authenticate"
-    }
-  end
-  return JSON.generate(node_results)
-end
-
 def get_sw_versions(params, request, session)
-  if params[:nodes] != nil and params[:nodes] != ""
-    nodes = params[:nodes].split(",")
-    final_response = {}
-    threads = []
-    nodes.each {|node|
-      threads << Thread.new {
-        code, response = send_request_with_token(
-          session, node, 'get_sw_versions'
-        )
-        begin
-          node_response = JSON.parse(response)
-          if node_response and node_response["notoken"] == true
-            $logger.error("ERROR: bad token for #{node}")
-          end
-          final_response[node] = node_response
-        rescue JSON::ParserError => e
-        end
-      }
-    }
-    threads.each { |t| t.join }
-    return JSON.generate(final_response)
-  end
   versions = {
     "rhel" => get_rhel_version(),
     "pcs" => get_pcsd_version(),
@@ -1997,50 +1951,6 @@ def wizard_submit(params, request, session)
 
 end
 
-def auth_gui_against_nodes(params, request, session)
-  node_auth_error = {}
-  new_tokens = {}
-  threads = []
-  params.each { |node|
-    threads << Thread.new {
-      if node[0].end_with?("-pass") and node[0].length > 5
-        nodename = node[0][0..-6]
-        if params.has_key?("all")
-          pass = params["pass-all"]
-        else
-          pass = node[1]
-        end
-        data = {
-          'node-0' => nodename,
-          'username' => SUPERUSER,
-          'password' => pass,
-          'force' => 1,
-        }
-        node_auth_error[nodename] = 1
-        code, response = send_request(session, nodename, 'auth', true, data)
-        if 200 == code
-          token = response.strip
-          if not token.empty?
-            new_tokens[nodename] = token
-            node_auth_error[nodename] = 0
-          end
-        end
-      end
-    }
-  }
-  threads.each { |t| t.join }
-
-  if not new_tokens.empty?
-    cluster_nodes = get_corosync_nodes()
-    tokens_cfg = Cfgsync::PcsdTokens.from_file('')
-    sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
-      tokens_cfg, new_tokens, cluster_nodes, $cluster_name
-    )
-  end
-
-  return [200, JSON.generate({'node_auth_error' => node_auth_error})]
-end
-
 # not used anymore, left here for backward compatability reasons
 def get_tokens(params, request, session)
   # pcsd runs as root thus always returns hacluster's tokens
@@ -2087,70 +1997,6 @@ def save_tokens(params, request, session)
   else
     return [400, "Cannot update tokenfile."]
   end
-end
-
-def add_node_to_cluster(params, request, session)
-  clustername = params["clustername"]
-  new_node = params["new_nodename"]
-
-  if clustername == $cluster_name
-    if not allowed_for_local_cluster(session, Permissions::FULL)
-      return 403, 'Permission denied'
-    end
-  end
-
-  tokens = read_tokens
-
-  if not tokens.include? new_node
-    return [400, "New node is not authenticated."]
-  end
-
-  # Save the new node token on all nodes in a cluster the new node is beeing
-  # added to. Send the token to one node and let the cluster nodes synchronize
-  # it by themselves.
-  token_data = {"node:#{new_node}" => tokens[new_node]}
-  retval, out = send_cluster_request_with_token(
-    # new node doesn't have config with permissions yet
-    PCSAuth.getSuperuserSession(), clustername, '/save_tokens', true, token_data
-  )
-  # If the cluster runs an old pcsd which doesn't support /save_tokens,
-  # ignore 404 in order to not prevent the node to be added.
-  if retval != 404 and retval != 200
-    return [400, 'Failed to save the token of the new node in target cluster.']
-  end
-
-  retval, out = send_cluster_request_with_token(
-    session, clustername, "/add_node_all", true, params
-  )
-  if 403 == retval
-    return [retval, out]
-  end
-  if retval != 200
-    return [400, "Failed to add new node '#{new_node}' into cluster '#{clustername}': #{out}"]
-  end
-
-  return [200, "Node added successfully."]
-end
-
-def fix_auth_of_cluster(params, request, session)
-  if not params["clustername"]
-    return [400, "cluster name not defined"]
-  end
-
-  clustername = params["clustername"]
-  nodes = get_cluster_nodes(clustername)
-  tokens_data = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
-
-  retval, out = send_cluster_request_with_token(
-    PCSAuth.getSuperuserSession(), clustername, "/save_tokens", true,
-    tokens_data, true
-  )
-  if retval == 404
-    return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
-  elsif retval != 200
-    return [400, "Authentication failed."]
-  end
-  return [200, "Auhentication of nodes in cluster should be fixed."]
 end
 
 def resource_master(params, request, session)

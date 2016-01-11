@@ -356,315 +356,6 @@ if not DISABLE_GUI
     end
   end
 
-  get '/manage/?' do
-    @manage = true
-    erb :manage, :layout => :main
-  end
-
-  get '/clusters_overview' do
-    clusters_overview(params, request, session)
-  end
-
-  get '/permissions/?' do
-    @manage = true
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
-    @clusters = pcs_config.clusters.sort { |a, b| a.name <=> b.name }
-    erb :permissions, :layout => :main
-  end
-
-  get '/permissions_cluster_form/:cluster/?' do
-    @cluster_name = params[:cluster]
-    @error = nil
-    @permission_types = []
-    @permissions_dependencies = {}
-    @user_types = []
-    @users_permissions = []
-
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
-
-    if not pcs_config.is_cluster_name_in_use(@cluster_name)
-      @error = 'Cluster not found'
-    else
-      code, data = send_cluster_request_with_token(
-        session, @cluster_name, 'get_permissions'
-      )
-      if 404 == code
-        @error = 'Cluster is running an old version of pcsd which does not support permissions'
-      elsif 403 == code
-        @error = 'Permission denied'
-      elsif 200 != code
-        @error = 'Unable to load permissions of the cluster'
-      else
-        begin
-          permissions = JSON.parse(data)
-          if permissions['notoken'] or permissions['noresponse']
-            @error = 'Unable to load permissions of the cluster'
-          else
-            @permission_types = permissions['permission_types'] || []
-            @permissions_dependencies = permissions['permissions_dependencies'] || {}
-            @user_types = permissions['user_types'] || []
-            @users_permissions = permissions['users_permissions'] || []
-          end
-        rescue JSON::ParserError
-          @error = 'Unable to read permissions of the cluster'
-        end
-      end
-    end
-    erb :_permissions_cluster
-  end
-
-  post '/permissions_save/?' do
-    cluster_name = params['cluster_name']
-    params.delete('cluster_name')
-    new_params = {
-      'json_data' => JSON.generate(params)
-    }
-    return send_cluster_request_with_token(
-      session, cluster_name, "set_permissions", true, new_params
-    )
-  end
-
-  get '/managec/:cluster/main' do
-    @cluster_name = params[:cluster]
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
-    @clusters = pcs_config.clusters
-    @nodes = get_cluster_nodes(params[:cluster])
-    if @nodes == []
-      redirect '/manage/?error=badclustername&errorval=' + params[:cluster] + '#manage'
-    end
-    @resource_agents = get_resource_agents_avail(session)
-    @stonith_agents = get_stonith_agents_avail(session)
-    erb :nodes, :layout => :main
-  end
-
-  get '/managec/:cluster/status_all' do
-    status_all(params, request, session, get_cluster_nodes(params[:cluster]))
-  end
-
-  get '/managec/:cluster/cluster_status' do
-    cluster_status_gui(session, params[:cluster])
-  end
-
-  get '/managec/:cluster/overview_cluster' do
-    overview_cluster(params, request, session)
-  end
-
-  get '/managec/:cluster/cluster_properties' do
-    cluster = params[:cluster]
-    unless cluster
-      return 200, {}
-    end
-    code, out = send_cluster_request_with_token(session, cluster, 'get_cib')
-    if code == 403
-      return [403, 'Permission denied']
-    elsif code != 200
-      return [400, 'getting CIB failed']
-    end
-    begin
-      properties = getAllSettings(nil, REXML::Document.new(out))
-      code, out = send_cluster_request_with_token(
-        session, cluster, 'get_cluster_properties_definition'
-      )
-
-      if code == 403
-        return [403, 'Permission denied']
-      elsif code == 404
-        definition = {
-          'batch-limit' => {
-            'name' => 'batch-limit',
-            'source' => 'pengine',
-            'default' => '0',
-            'type' => 'integer',
-            'shortdesc' => 'The number of jobs that pacemaker is allowed to execute in parallel.',
-            'longdesc' => 'The "correct" value will depend on the speed and load of your network and cluster nodes.',
-            'readable_name' => 'Batch Limit',
-            'advanced' => false
-          },
-          'no-quorum-policy' => {
-            'name' => 'no-quorum-policy',
-            'source' => 'pengine',
-            'default' => 'stop',
-            'type' => 'enum',
-            'enum' => ['stop', 'freeze', 'ignore', 'suicide'],
-            'shortdesc' => 'What to do when the cluster does not have quorum.',
-            'longdesc' => 'Allowed values:
-    * ignore - continue all resource management
-    * freeze - continue resource management, but don\'t recover resources from nodes not in the affected partition
-    * stop - stop all resources in the affected cluster partition
-    * suicide - fence all nodes in the affected cluster partition',
-            'readable_name' => 'No Quorum Policy',
-            'advanced' => false
-          },
-          'symmetric-cluster' => {
-            'name' => 'symmetric-cluster',
-            'source' => 'pengine',
-            'default' => 'true',
-            'type' => 'boolean',
-            'shortdesc' => 'All resources can run anywhere by default.',
-            'longdesc' => 'All resources can run anywhere by default.',
-            'readable_name' => 'Symmetric',
-            'advanced' => false
-          },
-          'stonith-enabled' => {
-            'name' => 'stonith-enabled',
-            'source' => 'pengine',
-            'default' => 'true',
-            'type' => 'boolean',
-            'shortdesc' => 'Failed nodes are STONITH\'d',
-            'longdesc' => 'Failed nodes are STONITH\'d',
-            'readable_name' => 'Stonith Enabled',
-            'advanced' => false
-          },
-          'stonith-action' => {
-            'name' => 'stonith-action',
-            'source' => 'pengine',
-            'default' => 'reboot',
-            'type' => 'enum',
-            'enum' => ['reboot', 'poweroff', 'off'],
-            'shortdesc' => 'Action to send to STONITH device',
-            'longdesc' => 'Action to send to STONITH device Allowed values: reboot, poweroff, off',
-            'readable_name' => 'Stonith Action',
-            'advanced' => false
-          },
-          'cluster-delay' => {
-            'name' => 'cluster-delay',
-            'source' => 'pengine',
-            'default' => '60s',
-            'type' => 'time',
-            'shortdesc' => 'Round trip delay over the network (excluding action execution)',
-            'longdesc' => 'The "correct" value will depend on the speed and load of your network and cluster nodes.',
-            'readable_name' => 'Cluster Delay',
-            'advanced' => false
-          },
-          'stop-orphan-resources' => {
-            'name' => 'stop-orphan-resources',
-            'source' => 'pengine',
-            'default' => 'true',
-            'type' => 'boolean',
-            'shortdesc' => 'Should deleted resources be stopped',
-            'longdesc' => 'Should deleted resources be stopped',
-            'readable_name' => 'Stop Orphan Resources',
-            'advanced' => false
-          },
-          'stop-orphan-actions' => {
-            'name' => 'stop-orphan-actions',
-            'source' => 'pengine',
-            'default' => 'true',
-            'type' => 'boolean',
-            'shortdesc' => 'Should deleted actions be cancelled',
-            'longdesc' => 'Should deleted actions be cancelled',
-            'readable_name' => 'top Orphan Actions',
-            'advanced' => false
-          },
-          'start-failure-is-fatal' => {
-            'name' => 'start-failure-is-fatal',
-            'source' => 'pengine',
-            'default' => 'true',
-            'type' => 'boolean',
-            'shortdesc' => 'Always treat start failures as fatal',
-            'longdesc' => 'This was the old default. However when set to FALSE, the cluster will instead use the resource\'s failcount and value for resource-failure-stickiness',
-            'readable_name' => 'Start Failure is Fatal',
-            'advanced' => false
-          },
-          'pe-error-series-max' => {
-            'name' => 'pe-error-series-max',
-            'source' => 'pengine',
-            'default' => '-1',
-            'type' => 'integer',
-            'shortdesc' => 'The number of PE inputs resulting in ERRORs to save',
-            'longdesc' => 'Zero to disable, -1 to store unlimited.',
-            'readable_name' => 'PE Error Storage',
-            'advanced' => false
-          },
-          'pe-warn-series-max' => {
-            'name' => 'pe-warn-series-max',
-            'source' => 'pengine',
-            'default' => '5000',
-            'type' => 'integer',
-            'shortdesc' => 'The number of PE inputs resulting in WARNINGs to save',
-            'longdesc' => 'Zero to disable, -1 to store unlimited.',
-            'readable_name' => 'PE Warning Storage',
-            'advanced' => false
-          },
-          'pe-input-series-max' => {
-            'name' => 'pe-input-series-max',
-            'source' => 'pengine',
-            'default' => '4000',
-            'type' => 'integer',
-            'shortdesc' => 'The number of other PE inputs to save',
-            'longdesc' => 'Zero to disable, -1 to store unlimited.',
-            'readable_name' => 'PE Input Storage',
-            'advanced' => false
-          },
-          'enable-acl' => {
-            'name' => 'enable-acl',
-            'source' => 'cib',
-            'default' => 'false',
-            'type' => 'boolean',
-            'shortdesc' => 'Enable CIB ACL',
-            'longdesc' => 'Should pacemaker use ACLs to determine access to cluster',
-            'readable_name' => 'Enable ACLs',
-            'advanced' => false
-          },
-        }
-      elsif code != 200
-        return [400, 'getting properties definition failed']
-      else
-        definition = JSON.parse(out)
-      end
-  
-      definition.each { |name, prop|
-        prop['value'] = properties[name]
-      }
-      return [200, JSON.generate(definition)]
-    rescue
-      return [400, 'unable to get cluster properties']
-    end
-  end
-
-  get '/managec/:cluster/?*' do
-    raw_data = request.env["rack.input"].read
-    if params[:cluster]
-      send_cluster_request_with_token(
-        session, params[:cluster], "/" + params[:splat].join("/"), false, params,
-        true, raw_data
-      )
-    end
-  end
-
-  post '/managec/:cluster/?*' do
-    raw_data = request.env["rack.input"].read
-    if params[:cluster]
-      request = "/" + params[:splat].join("/")
-      code, out = send_cluster_request_with_token(
-        session, params[:cluster], request, true, params, true, raw_data
-      )
-
-      # backward compatibility layer BEGIN
-      # This code correctly remove constraints on pcs/pcsd version 0.9.137 and older
-      redirection = {
-          "/remove_constraint_remote" => "/resource_cmd/rm_constraint",
-          "/remove_constraint_rule_remote" => "/resource_cmd/rm_constraint_rule"
-      }
-      if code == 404 and redirection.key?(request)
-        code, out = send_cluster_request_with_token(
-          session, params[:cluster], redirection[request], true, params, false,
-          raw_data
-        )
-      end
-      # bcl END
-      return code, out
-    end
-  end
-
-  get '/manage/:node/?*' do
-    if params[:node]
-      return send_request_with_token(
-        session, params[:node], params[:splat].join("/"), false, {}, false
-      )
-    end
-  end
-
   post '/manage/existingcluster' do
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     node = params['node-name']
@@ -865,6 +556,455 @@ if not DISABLE_GUI
       session[:errorval] = sync_config.class.name
     end
     # do not reload nor redirect as that's done in js which called this
+  end
+
+  get '/manage/check_pcsd_status' do
+    node_results = {}
+    if params[:nodes] != nil and params[:nodes] != ''
+      node_array = params[:nodes].split(',')
+      online, offline, notauthorized = check_gui_status_of_nodes(
+        session, node_array
+      )
+      online.each { |node|
+        node_results[node] = 'Online'
+      }
+      offline.each { |node|
+        node_results[node] = 'Offline'
+      }
+      notauthorized.each { |node|
+        node_results[node] = 'Unable to authenticate'
+      }
+    end
+    return JSON.generate(node_results)
+  end
+
+  get '/manage/get_nodes_sw_versions' do
+    if params[:nodes] != nil and params[:nodes] != ''
+      nodes = params[:nodes].split(',')
+      final_response = {}
+      threads = []
+      nodes.each {|node|
+        threads << Thread.new {
+          code, response = send_request_with_token(
+            session, node, 'get_sw_versions'
+          )
+          begin
+            node_response = JSON.parse(response)
+            if node_response and node_response['notoken'] == true
+              $logger.error("ERROR: bad token for #{node}")
+            end
+            final_response[node] = node_response
+          rescue JSON::ParserError => e
+          end
+        }
+      }
+      threads.each { |t| t.join }
+      return JSON.generate(final_response)
+    end
+    return '{}'
+  end
+
+  post '/manage/auth_gui_against_nodes' do
+    node_auth_error = {}
+    new_tokens = {}
+    threads = []
+    params.each { |node|
+      threads << Thread.new {
+        if node[0].end_with?("-pass") and node[0].length > 5
+          nodename = node[0][0..-6]
+          if params.has_key?("all")
+            pass = params["pass-all"]
+          else
+            pass = node[1]
+          end
+          data = {
+            'node-0' => nodename,
+            'username' => SUPERUSER,
+            'password' => pass,
+            'force' => 1,
+          }
+          node_auth_error[nodename] = 1
+          code, response = send_request(session, nodename, 'auth', true, data)
+          if 200 == code
+            token = response.strip
+            if not token.empty?
+              new_tokens[nodename] = token
+              node_auth_error[nodename] = 0
+            end
+          end
+        end
+      }
+    }
+    threads.each { |t| t.join }
+
+    if not new_tokens.empty?
+      cluster_nodes = get_corosync_nodes()
+      tokens_cfg = Cfgsync::PcsdTokens.from_file('')
+      sync_successful, sync_responses = Cfgsync::save_sync_new_tokens(
+        tokens_cfg, new_tokens, cluster_nodes, $cluster_name
+      )
+    end
+
+    return [200, JSON.generate({'node_auth_error' => node_auth_error})]
+  end
+
+  get '/manage/?' do
+    @manage = true
+    erb :manage, :layout => :main
+  end
+
+  get '/clusters_overview' do
+    clusters_overview(params, request, session)
+  end
+
+  get '/permissions/?' do
+    @manage = true
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+    @clusters = pcs_config.clusters.sort { |a, b| a.name <=> b.name }
+    erb :permissions, :layout => :main
+  end
+
+  get '/permissions_cluster_form/:cluster/?' do
+    @cluster_name = params[:cluster]
+    @error = nil
+    @permission_types = []
+    @permissions_dependencies = {}
+    @user_types = []
+    @users_permissions = []
+
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+
+    if not pcs_config.is_cluster_name_in_use(@cluster_name)
+      @error = 'Cluster not found'
+    else
+      code, data = send_cluster_request_with_token(
+        session, @cluster_name, 'get_permissions'
+      )
+      if 404 == code
+        @error = 'Cluster is running an old version of pcsd which does not support permissions'
+      elsif 403 == code
+        @error = 'Permission denied'
+      elsif 200 != code
+        @error = 'Unable to load permissions of the cluster'
+      else
+        begin
+          permissions = JSON.parse(data)
+          if permissions['notoken'] or permissions['noresponse']
+            @error = 'Unable to load permissions of the cluster'
+          else
+            @permission_types = permissions['permission_types'] || []
+            @permissions_dependencies = permissions['permissions_dependencies'] || {}
+            @user_types = permissions['user_types'] || []
+            @users_permissions = permissions['users_permissions'] || []
+          end
+        rescue JSON::ParserError
+          @error = 'Unable to read permissions of the cluster'
+        end
+      end
+    end
+    erb :_permissions_cluster
+  end
+
+  get '/managec/:cluster/main' do
+    @cluster_name = params[:cluster]
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+    @clusters = pcs_config.clusters
+    @nodes = get_cluster_nodes(params[:cluster])
+    if @nodes == []
+      redirect '/manage/?error=badclustername&errorval=' + params[:cluster] + '#manage'
+    end
+    @resource_agents = get_resource_agents_avail(session)
+    @stonith_agents = get_stonith_agents_avail(session)
+    erb :nodes, :layout => :main
+  end
+
+  post '/managec/:cluster/permissions_save/?' do
+    new_params = {
+      'json_data' => JSON.generate(params)
+    }
+    return send_cluster_request_with_token(
+      session, params[:cluster], "set_permissions", true, new_params
+    )
+  end
+
+  get '/managec/:cluster/status_all' do
+    status_all(params, request, session, get_cluster_nodes(params[:cluster]))
+  end
+
+  get '/managec/:cluster/cluster_status' do
+    cluster_status_gui(session, params[:cluster])
+  end
+
+  get '/managec/:cluster/cluster_properties' do
+    cluster = params[:cluster]
+    unless cluster
+      return 200, {}
+    end
+    code, out = send_cluster_request_with_token(session, cluster, 'get_cib')
+    if code == 403
+      return [403, 'Permission denied']
+    elsif code != 200
+      return [400, 'getting CIB failed']
+    end
+    begin
+      properties = getAllSettings(nil, REXML::Document.new(out))
+      code, out = send_cluster_request_with_token(
+        session, cluster, 'get_cluster_properties_definition'
+      )
+
+      if code == 403
+        return [403, 'Permission denied']
+      elsif code == 404
+        definition = {
+          'batch-limit' => {
+            'name' => 'batch-limit',
+            'source' => 'pengine',
+            'default' => '0',
+            'type' => 'integer',
+            'shortdesc' => 'The number of jobs that pacemaker is allowed to execute in parallel.',
+            'longdesc' => 'The "correct" value will depend on the speed and load of your network and cluster nodes.',
+            'readable_name' => 'Batch Limit',
+            'advanced' => false
+          },
+          'no-quorum-policy' => {
+            'name' => 'no-quorum-policy',
+            'source' => 'pengine',
+            'default' => 'stop',
+            'type' => 'enum',
+            'enum' => ['stop', 'freeze', 'ignore', 'suicide'],
+            'shortdesc' => 'What to do when the cluster does not have quorum.',
+            'longdesc' => 'Allowed values:
+    * ignore - continue all resource management
+    * freeze - continue resource management, but don\'t recover resources from nodes not in the affected partition
+    * stop - stop all resources in the affected cluster partition
+    * suicide - fence all nodes in the affected cluster partition',
+            'readable_name' => 'No Quorum Policy',
+            'advanced' => false
+          },
+          'symmetric-cluster' => {
+            'name' => 'symmetric-cluster',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'All resources can run anywhere by default.',
+            'longdesc' => 'All resources can run anywhere by default.',
+            'readable_name' => 'Symmetric',
+            'advanced' => false
+          },
+          'stonith-enabled' => {
+            'name' => 'stonith-enabled',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'Failed nodes are STONITH\'d',
+            'longdesc' => 'Failed nodes are STONITH\'d',
+            'readable_name' => 'Stonith Enabled',
+            'advanced' => false
+          },
+          'stonith-action' => {
+            'name' => 'stonith-action',
+            'source' => 'pengine',
+            'default' => 'reboot',
+            'type' => 'enum',
+            'enum' => ['reboot', 'poweroff', 'off'],
+            'shortdesc' => 'Action to send to STONITH device',
+            'longdesc' => 'Action to send to STONITH device Allowed values: reboot, poweroff, off',
+            'readable_name' => 'Stonith Action',
+            'advanced' => false
+          },
+          'cluster-delay' => {
+            'name' => 'cluster-delay',
+            'source' => 'pengine',
+            'default' => '60s',
+            'type' => 'time',
+            'shortdesc' => 'Round trip delay over the network (excluding action execution)',
+            'longdesc' => 'The "correct" value will depend on the speed and load of your network and cluster nodes.',
+            'readable_name' => 'Cluster Delay',
+            'advanced' => false
+          },
+          'stop-orphan-resources' => {
+            'name' => 'stop-orphan-resources',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'Should deleted resources be stopped',
+            'longdesc' => 'Should deleted resources be stopped',
+            'readable_name' => 'Stop Orphan Resources',
+            'advanced' => false
+          },
+          'stop-orphan-actions' => {
+            'name' => 'stop-orphan-actions',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'Should deleted actions be cancelled',
+            'longdesc' => 'Should deleted actions be cancelled',
+            'readable_name' => 'top Orphan Actions',
+            'advanced' => false
+          },
+          'start-failure-is-fatal' => {
+            'name' => 'start-failure-is-fatal',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'Always treat start failures as fatal',
+            'longdesc' => 'This was the old default. However when set to FALSE, the cluster will instead use the resource\'s failcount and value for resource-failure-stickiness',
+            'readable_name' => 'Start Failure is Fatal',
+            'advanced' => false
+          },
+          'pe-error-series-max' => {
+            'name' => 'pe-error-series-max',
+            'source' => 'pengine',
+            'default' => '-1',
+            'type' => 'integer',
+            'shortdesc' => 'The number of PE inputs resulting in ERRORs to save',
+            'longdesc' => 'Zero to disable, -1 to store unlimited.',
+            'readable_name' => 'PE Error Storage',
+            'advanced' => false
+          },
+          'pe-warn-series-max' => {
+            'name' => 'pe-warn-series-max',
+            'source' => 'pengine',
+            'default' => '5000',
+            'type' => 'integer',
+            'shortdesc' => 'The number of PE inputs resulting in WARNINGs to save',
+            'longdesc' => 'Zero to disable, -1 to store unlimited.',
+            'readable_name' => 'PE Warning Storage',
+            'advanced' => false
+          },
+          'pe-input-series-max' => {
+            'name' => 'pe-input-series-max',
+            'source' => 'pengine',
+            'default' => '4000',
+            'type' => 'integer',
+            'shortdesc' => 'The number of other PE inputs to save',
+            'longdesc' => 'Zero to disable, -1 to store unlimited.',
+            'readable_name' => 'PE Input Storage',
+            'advanced' => false
+          },
+          'enable-acl' => {
+            'name' => 'enable-acl',
+            'source' => 'cib',
+            'default' => 'false',
+            'type' => 'boolean',
+            'shortdesc' => 'Enable CIB ACL',
+            'longdesc' => 'Should pacemaker use ACLs to determine access to cluster',
+            'readable_name' => 'Enable ACLs',
+            'advanced' => false
+          },
+        }
+      elsif code != 200
+        return [400, 'getting properties definition failed']
+      else
+        definition = JSON.parse(out)
+      end
+  
+      definition.each { |name, prop|
+        prop['value'] = properties[name]
+      }
+      return [200, JSON.generate(definition)]
+    rescue
+      return [400, 'unable to get cluster properties']
+    end
+  end
+
+  post '/managec/:cluster/fix_auth_of_cluster' do
+    clustername = params[:cluster]
+    unless clustername
+      return [400, "cluster name not defined"]
+    end
+
+    nodes = get_cluster_nodes(clustername)
+    tokens_data = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
+
+    retval, out = send_cluster_request_with_token(
+      PCSAuth.getSuperuserSession(), clustername, "/save_tokens", true,
+      tokens_data, true
+    )
+    if retval == 404
+      return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs cluster auth' command to authenticate the nodes."]
+    elsif retval != 200
+      return [400, "Authentication failed."]
+    end
+    return [200, "Auhentication of nodes in cluster should be fixed."]
+  end
+
+  post '/managec/:cluster/add_node_to_cluster' do
+    clustername = params[:cluster]
+    new_node = params["new_nodename"]
+
+    if clustername == $cluster_name
+      if not allowed_for_local_cluster(session, Permissions::FULL)
+        return 403, 'Permission denied'
+      end
+    end
+
+    tokens = read_tokens
+
+    if not tokens.include? new_node
+      return [400, "New node is not authenticated."]
+    end
+
+    # Save the new node token on all nodes in a cluster the new node is beeing
+    # added to. Send the token to one node and let the cluster nodes synchronize
+    # it by themselves.
+    token_data = {"node:#{new_node}" => tokens[new_node]}
+    retval, out = send_cluster_request_with_token(
+      # new node doesn't have config with permissions yet
+      PCSAuth.getSuperuserSession(), clustername, '/save_tokens', true, token_data
+    )
+    # If the cluster runs an old pcsd which doesn't support /save_tokens,
+    # ignore 404 in order to not prevent the node to be added.
+    if retval != 404 and retval != 200
+      return [400, 'Failed to save the token of the new node in target cluster.']
+    end
+
+    retval, out = send_cluster_request_with_token(
+      session, clustername, "/add_node_all", true, params
+    )
+    if 403 == retval
+      return [retval, out]
+    end
+    if retval != 200
+      return [400, "Failed to add new node '#{new_node}' into cluster '#{clustername}': #{out}"]
+    end
+
+    return [200, "Node added successfully."]
+  end
+
+  post '/managec/:cluster/?*' do
+    raw_data = request.env["rack.input"].read
+    if params[:cluster]
+      request = "/" + params[:splat].join("/")
+      code, out = send_cluster_request_with_token(
+        session, params[:cluster], request, true, params, true, raw_data
+      )
+
+      # backward compatibility layer BEGIN
+      # This code correctly remove constraints on pcs/pcsd version 0.9.137 and older
+      redirection = {
+          "/remove_constraint_remote" => "/resource_cmd/rm_constraint",
+          "/remove_constraint_rule_remote" => "/resource_cmd/rm_constraint_rule"
+      }
+      if code == 404 and redirection.key?(request)
+        code, out = send_cluster_request_with_token(
+          session, params[:cluster], redirection[request], true, params, false,
+          raw_data
+        )
+      end
+      # bcl END
+      return code, out
+    end
+  end
+
+  get '/managec/:cluster/?*' do
+    raw_data = request.env["rack.input"].read
+    if params[:cluster]
+      send_cluster_request_with_token(
+        session, params[:cluster], "/" + params[:splat].join("/"), false, params,
+        true, raw_data
+      )
+    end
   end
 
   get '/' do

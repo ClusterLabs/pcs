@@ -26,7 +26,7 @@
     <script type="text/javascript">
       permissions_dependencies["<%= h(@cluster_name) %>"] = <%= @permissions_dependencies.to_json %>;
     </script>
-    <form method="post" action="/permissions_save/">
+    <form method="post" action="/managec/<%= h(@cluster_name) %>/permissions_save/">
       <input type="hidden" name="cluster_name" value="<%= h(@cluster_name) %>">
       <table class="datatable">
         <tr>

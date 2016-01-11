@@ -188,8 +188,8 @@ function checkAddingNode(){
   }
 
   $.ajax({
-    type: 'POST',
-    url: '/remote/check_gui_status',
+    type: 'GET',
+    url: '/manage/check_pcsd_status',
     data: {"nodes": nodeName},
     timeout: pcs_timeout,
     success: function (data) {
@@ -213,10 +213,9 @@ function checkAddingNode(){
 
 function create_node(form) {
   var dataString = $(form).serialize();
-  dataString += "&clustername=" + get_cluster_name();
   $.ajax({
     type: "POST",
-    url: "/remote/add_node_to_cluster",
+    url: get_cluster_remote_url() + "add_node_to_cluster",
     data: dataString,
     success: function(returnValue) {
       $("#add_node_submit_btn").button("option", "disabled", false);
@@ -425,26 +424,6 @@ function get_checked_ids_from_nodelist(nodelist_id) {
   return ids;
 }
 
-function remote_node_update() {
-  node = $('#node_info_header_title_name').first().text();
-  $.ajax({
-    type: 'GET',
-    url: '/remote/status_all',
-    timeout: pcs_timeout,
-    success: function (data) {
-
-      data = jQuery.parseJSON(data);
-      node_data = data[node];
-
-      local_node_update(node, data);
-//      window.setTimeout(remote_node_update,pcs_timeout);
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-//      window.setTimeout(remote_node_update, 60000);
-    }
-  });
-}
-
 function local_node_update(node, data) {
   node_data = data[node];
 
@@ -521,7 +500,9 @@ function node_link_action(link_selector, url, label) {
 function setup_node_links() {
   Ember.debug("Setup node links");
   $("#node_start").click(function() {
-    node_link_action("#node_start", "/remote/cluster_start", "start");
+    node_link_action(
+      "#node_start", get_cluster_remote_url() +"cluster_start", "start"
+    );
   });
   $("#node_stop").click(function() {
     var node = $.trim($("#node_info_header_title_name").text());
@@ -529,13 +510,21 @@ function setup_node_links() {
     node_stop(node, false);
   });
   $("#node_restart").click(function() {
-    node_link_action("#node_restart", "/remote/node_restart", "restart");
+    node_link_action(
+      "#node_restart", get_cluster_remote_url() + "node_restart", "restart"
+    );
   });
   $("#node_standby").click(function() {
-    node_link_action("#node_standby", "/remote/node_standby", "standby");
+    node_link_action(
+      "#node_standby", get_cluster_remote_url() + "node_standby", "standby"
+    );
   });
   $("#node_unstandby").click(function() {
-    node_link_action("#node_unstandby", "/remote/node_unstandby", "unstandby");
+    node_link_action(
+      "#node_unstandby",
+      get_cluster_remote_url() + "node_unstandby",
+      "unstandby"
+    );
   });
 }
 
@@ -547,7 +536,7 @@ function node_stop(node, force) {
   }
   $.ajax({
     type: 'POST',
-    url: '/remote/cluster_stop',
+    url: get_cluster_remote_url() + 'cluster_stop',
     data: data,
     timeout: pcs_timeout,
     success: function() {
@@ -638,8 +627,8 @@ function checkExistingNode() {
   });
 
   $.ajax({
-    type: 'POST',
-    url: '/remote/check_gui_status',
+    type: 'GET',
+    url: '/manage/check_pcsd_status',
     data: {"nodes": node},
     timeout: pcs_timeout,
     success: function (data) {
@@ -662,15 +651,15 @@ function checkClusterNodes() {
   });
 
   $.ajax({
-    type: 'POST',
-    url: '/remote/check_gui_status',
+    type: 'GET',
+    url: '/manage/check_pcsd_status',
     data: {"nodes": nodes.join(",")},
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
       $.ajax({
-        type: 'POST',
-        url: '/remote/get_sw_versions',
+        type: 'GET',
+        url: '/manage/get_nodes_sw_versions',
         data: {"nodes": nodes.join(",")},
         timeout: pcs_timeout,
         success: function(data) {
@@ -692,7 +681,7 @@ function auth_nodes(dialog) {
   $("#auth_failed_error_msg").hide();
   $.ajax({
     type: 'POST',
-    url: '/remote/auth_gui_against_nodes',
+    url: '/manage/auth_gui_against_nodes',
     data: dialog.find("#auth_nodes_form").serialize(),
     timeout: pcs_timeout,
     success: function (data) {
@@ -2013,9 +2002,8 @@ function fix_auth_of_cluster() {
   show_loading_screen();
   var clustername = Pcs.clusterController.cur_cluster.name;
   $.ajax({
-    url: "/remote/fix_auth_of_cluster",
+    url: get_cluster_remote_url(clustername) + "fix_auth_of_cluster",
     type: "POST",
-    data: "clustername=" + clustername,
     success: function(data) {
       hide_loading_screen();
       Pcs.update();
@@ -2332,7 +2320,7 @@ function permissions_save_cluster(form) {
   var cluster_name = permissions_get_clustername(form);
   $.ajax({
     type: "POST",
-    url: "/permissions_save/",
+    url: get_cluster_remote_url(cluster_name) + "permissions_save",
     timeout: pcs_timeout,
     data: dataString,
     success: function() {
