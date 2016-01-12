@@ -26,7 +26,9 @@ prog="pcsd"
 config="/var/lib/pcsd"
 pidfile="/var/run/pcsd.pid"
 
+set -a
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+set +a
 
 lockfile=/var/lock/subsys/$prog
 
