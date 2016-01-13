@@ -1821,7 +1821,7 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
         metadata = get_metadata("/usr/lib/ocf/resource.d/" + resProvider + "/" + resType)
 
     if metadata == False:
-        err("Unable to find resource: ocf:%s:%s" % (resProvider, resType))
+        err("Unable to get metadata for resource: %s" % resource_type)
 
     missing_required_parameters = []
     valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
