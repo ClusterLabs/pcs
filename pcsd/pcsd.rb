@@ -434,8 +434,6 @@ if not DISABLE_GUI
     end
     @resource_agents = get_resource_agents_avail(session)
     @stonith_agents = get_stonith_agents_avail(session)
-    @config_options = getConfigOptions2(session, @nodes)
-
     erb :nodes, :layout => :main
   end
 
@@ -449,6 +447,179 @@ if not DISABLE_GUI
 
   get '/managec/:cluster/overview_cluster' do
     overview_cluster(params, request, session)
+  end
+
+  get '/managec/:cluster/cluster_properties' do
+    cluster = params[:cluster]
+    unless cluster
+      return 200, {}
+    end
+    code, out = send_cluster_request_with_token(session, cluster, 'get_cib')
+    if code == 403
+      return [403, 'Permission denied']
+    elsif code != 200
+      return [400, 'getting CIB failed']
+    end
+    begin
+      properties = getAllSettings(nil, REXML::Document.new(out))
+      code, out = send_cluster_request_with_token(
+        session, cluster, 'get_cluster_properties_definition'
+      )
+
+      if code == 403
+        return [403, 'Permission denied']
+      elsif code == 404
+        definition = {
+          'batch-limit' => {
+            'name' => 'batch-limit',
+            'source' => 'pengine',
+            'default' => '0',
+            'type' => 'integer',
+            'shortdesc' => 'The number of jobs that pacemaker is allowed to execute in parallel.',
+            'longdesc' => 'The "correct" value will depend on the speed and load of your network and cluster nodes.',
+            'readable_name' => 'Batch Limit',
+            'advanced' => false
+          },
+          'no-quorum-policy' => {
+            'name' => 'no-quorum-policy',
+            'source' => 'pengine',
+            'default' => 'stop',
+            'type' => 'enum',
+            'enum' => ['stop', 'freeze', 'ignore', 'suicide'],
+            'shortdesc' => 'What to do when the cluster does not have quorum.',
+            'longdesc' => 'Allowed values:
+    * ignore - continue all resource management
+    * freeze - continue resource management, but don\'t recover resources from nodes not in the affected partition
+    * stop - stop all resources in the affected cluster partition
+    * suicide - fence all nodes in the affected cluster partition',
+            'readable_name' => 'No Quorum Policy',
+            'advanced' => false
+          },
+          'symmetric-cluster' => {
+            'name' => 'symmetric-cluster',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'All resources can run anywhere by default.',
+            'longdesc' => 'All resources can run anywhere by default.',
+            'readable_name' => 'Symmetric',
+            'advanced' => false
+          },
+          'stonith-enabled' => {
+            'name' => 'stonith-enabled',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'Failed nodes are STONITH\'d',
+            'longdesc' => 'Failed nodes are STONITH\'d',
+            'readable_name' => 'Stonith Enabled',
+            'advanced' => false
+          },
+          'stonith-action' => {
+            'name' => 'stonith-action',
+            'source' => 'pengine',
+            'default' => 'reboot',
+            'type' => 'enum',
+            'enum' => ['reboot', 'poweroff', 'off'],
+            'shortdesc' => 'Action to send to STONITH device',
+            'longdesc' => 'Action to send to STONITH device Allowed values: reboot, poweroff, off',
+            'readable_name' => 'Stonith Action',
+            'advanced' => false
+          },
+          'cluster-delay' => {
+            'name' => 'cluster-delay',
+            'source' => 'pengine',
+            'default' => '60s',
+            'type' => 'time',
+            'shortdesc' => 'Round trip delay over the network (excluding action execution)',
+            'longdesc' => 'The "correct" value will depend on the speed and load of your network and cluster nodes.',
+            'readable_name' => 'Cluster Delay',
+            'advanced' => false
+          },
+          'stop-orphan-resources' => {
+            'name' => 'stop-orphan-resources',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'Should deleted resources be stopped',
+            'longdesc' => 'Should deleted resources be stopped',
+            'readable_name' => 'Stop Orphan Resources',
+            'advanced' => false
+          },
+          'stop-orphan-actions' => {
+            'name' => 'stop-orphan-actions',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'Should deleted actions be cancelled',
+            'longdesc' => 'Should deleted actions be cancelled',
+            'readable_name' => 'top Orphan Actions',
+            'advanced' => false
+          },
+          'start-failure-is-fatal' => {
+            'name' => 'start-failure-is-fatal',
+            'source' => 'pengine',
+            'default' => 'true',
+            'type' => 'boolean',
+            'shortdesc' => 'Always treat start failures as fatal',
+            'longdesc' => 'This was the old default. However when set to FALSE, the cluster will instead use the resource\'s failcount and value for resource-failure-stickiness',
+            'readable_name' => 'Start Failure is Fatal',
+            'advanced' => false
+          },
+          'pe-error-series-max' => {
+            'name' => 'pe-error-series-max',
+            'source' => 'pengine',
+            'default' => '-1',
+            'type' => 'integer',
+            'shortdesc' => 'The number of PE inputs resulting in ERRORs to save',
+            'longdesc' => 'Zero to disable, -1 to store unlimited.',
+            'readable_name' => 'PE Error Storage',
+            'advanced' => false
+          },
+          'pe-warn-series-max' => {
+            'name' => 'pe-warn-series-max',
+            'source' => 'pengine',
+            'default' => '5000',
+            'type' => 'integer',
+            'shortdesc' => 'The number of PE inputs resulting in WARNINGs to save',
+            'longdesc' => 'Zero to disable, -1 to store unlimited.',
+            'readable_name' => 'PE Warning Storage',
+            'advanced' => false
+          },
+          'pe-input-series-max' => {
+            'name' => 'pe-input-series-max',
+            'source' => 'pengine',
+            'default' => '4000',
+            'type' => 'integer',
+            'shortdesc' => 'The number of other PE inputs to save',
+            'longdesc' => 'Zero to disable, -1 to store unlimited.',
+            'readable_name' => 'PE Input Storage',
+            'advanced' => false
+          },
+          'enable-acl' => {
+            'name' => 'enable-acl',
+            'source' => 'cib',
+            'default' => 'false',
+            'type' => 'boolean',
+            'shortdesc' => 'Enable CIB ACL',
+            'longdesc' => 'Should pacemaker use ACLs to determine access to cluster',
+            'readable_name' => 'Enable ACLs',
+            'advanced' => false
+          },
+        }
+      elsif code != 200
+        return [400, 'getting properties definition failed']
+      else
+        definition = JSON.parse(out)
+      end
+  
+      definition.each { |name, prop|
+        prop['value'] = properties[name]
+      }
+      return [200, JSON.generate(definition)]
+    rescue
+      return [400, 'unable to get cluster properties']
+    end
   end
 
   get '/managec/:cluster/?*' do
@@ -727,161 +898,11 @@ else
 
 end
 
-def getConfigOptions2(session, cluster_nodes)
-  config_options = {}
-  general_page = []
-#  general_page << ConfigOption.new("Cluster Delay Time", "cluster-delay",  "int", 4, "Seconds") 
-#  general_page << ConfigOption.new("Batch Limit", "cdt",  "int", 4) 
-#  general_page << ConfigOption.new("Default Action Timeout", "cdt",  "int", 4, "Seconds") 
-#  general_page << ConfigOption.new("During timeout should cluster stop all active resources", "res_stop", "radio", "4", "", ["Yes","No"])
-
-#  general_page << ConfigOption.new("PE Error Storage", "res_stop", "radio", "4", "", ["Yes","No"])
-#  general_page << ConfigOption.new("PE Warning Storage", "res_stop", "radio", "4", "", ["Yes","No"])
-#  general_page << ConfigOption.new("PE Input Storage", "res_stop", "radio", "4", "", ["Yes","No"])
-  config_options["general"] = general_page
-
-  pacemaker_page = []
-  pacemaker_page << ConfigOption.new("Batch Limit", "batch-limit",  "int", 4, "jobs", {},  'The number of jobs that pacemaker is allowed to execute in parallel. The "correct" value will depend on the speed and load of your network and cluster nodes.')
-  pacemaker_page << ConfigOption.new("No Quorum Policy", "no-quorum-policy",  "dropdown","" ,"", {"ignore" => "Ignore","freeze" => "Freeze", "stop" => "Stop", "suicide" => "Suicide"}, 'What to do when the cluster does not have quorum. Allowed values:
-  * ignore - continue all resource management
-  * freeze - continue resource management, but don\'t recover resources from nodes not in the affected partition
-  * stop - stop all resources in the affected cluster partition
-  * suicide - fence all nodes in the affected cluster partition')
-  pacemaker_page << ConfigOption.new("Symmetric", "symmetric-cluster", "check",nil ,nil,nil,'Can all resources run on any node by default?')
-  pacemaker_page << ConfigOption.new("Stonith Enabled", "stonith-enabled", "check",nil,nil,nil,'Should failed nodes and nodes with resources that can\'t be stopped be shot? If you value your data, set up a STONITH device and enable this.
-If checked, the cluster will refuse to start resources unless one or more STONITH resources have been configured also.')
-  pacemaker_page << ConfigOption.new("Stonith Action", "stonith-action",  "dropdown","" ,"", {"reboot" => "Reboot","off" => "Off", "poweroff" => "Poweroff"},'Action to send to STONITH device. Allowed values: reboot, off. The value poweroff is also allowed, but is only used for legacy devices.') 
-  pacemaker_page << ConfigOption.new("Cluster Delay", "cluster-delay",  "int", 4,nil,nil,'Round trip delay over the network (excluding action execution). The "correct" value will depend on the speed and load of your network and cluster nodes.') 
-  pacemaker_page << ConfigOption.new("Stop Orphan Resources", "stop-orphan-resources", "check",nil,nil,nil,'Should deleted resources be stopped?')
-  pacemaker_page << ConfigOption.new("Stop Orphan Actions", "stop-orphan-actions", "check",nil,nil,nil,'Should deleted actions be cancelled?'
-                                    )
-  pacemaker_page << ConfigOption.new("Start Failure is Fatal", "start-failure-is-fatal", "check",nil,nil,nil,'When unchecked, the cluster will instead use the resource\'s failcount and value for resource-failure-stickiness.')
-  pacemaker_page << ConfigOption.new("PE Error Storage", "pe-error-series-max", "int", "4",nil,nil,'The number of policy engine (PE) inputs resulting in ERRORs to save. Used when reporting problems.')
-  pacemaker_page << ConfigOption.new("PE Warning Storage", "pe-warn-series-max", "int", "4",nil,nil,'The number of PE inputs resulting in WARNINGs to save. Used when reporting problems.')
-  pacemaker_page << ConfigOption.new("PE Input Storage", "pe-input-series-max", "int", "4",nil,nil,'The number of "normal" PE inputs to save. Used when reporting problems.')
-  pacemaker_page << ConfigOption.new("Enable ACLs", "enable-acl", "check", nil,nil,nil,'Should pacemaker use ACLs to determine access to cluster')
-  config_options["pacemaker"] = pacemaker_page
-
-  allconfigoptions = []
-  config_options.each { |i,k| k.each { |j| allconfigoptions << j } }
-  ConfigOption.getDefaultValues(allconfigoptions)
-  ConfigOption.loadValues(session, allconfigoptions, cluster_nodes)
-  return config_options
-end
-
 class Node
   attr_accessor :active, :id, :name, :hostname
 
   def initialize(id=nil, name=nil, hostname=nil, active=nil)
     @id, @name, @hostname, @active = id, name, hostname, active
-  end
-end
-
-
-class ConfigOption
-  attr_accessor :name, :configname, :type, :size, :units, :options, :default, :value, :desc
-  def initialize(name, configname, type="str", size = 10, units = "", options = [], desc = "")
-    @name = name
-    @configname = configname
-    @type = type
-    @size = size
-    @units = units
-    @options = options
-    @desc = desc
-  end
-
-  def self.loadValues(session, cos, node_list)
-    code, output = send_nodes_request_with_token(session, node_list, "get_cib")
-    $logger.info(code)
-    if code != 200
-      $logger.info "Error: unable to load cib"
-      $logger.info output
-      return
-    end
-
-    doc = REXML::Document.new(output)
-
-    cos.each {|co|
-      prop_found = false
-      doc.elements.each("cib/configuration/crm_config/cluster_property_set/nvpair[@name='#{co.configname}']") { |e|
-        co.value = e.attributes["value"]
-        prop_found = true
-      }
-      if prop_found == false
-        co.value = co.default
-      end
-    }
-  end
-
-  def self.getDefaultValues(cos)
-    [PENGINE, CIB_BINARY].each { |command|
-      metadata = `#{command} metadata`
-      begin
-        doc = REXML::Document.new(metadata)
-        cos.each { |co|
-          doc.elements.each("resource-agent/parameters/parameter[@name='#{co.configname}']/content") { |e|
-            co.default = e.attributes["default"]
-            break
-          }
-        }
-      rescue
-        $logger.error("Failed to parse #{command} metadata")
-      end
-    }
-  end
-
-  def checked(option)
-    case type
-    when "radio"
-      val = value
-      if option == "Yes"
-        if val == "true"
-          return "checked"
-        end
-      else
-        if val == "false"
-          return "checked"
-        end
-      end
-    when "check"
-      if value == "true" || value == "on"
-        return "checked"
-      else
-        return ""
-      end
-    when "dropdown"
-      if value == option
-        return "selected"
-      end
-    end
-  end
-
-  def html
-    paramname = "config[#{configname}]"
-    hidden_paramname = "hidden[#{configname}]"
-    case type
-    when "int"
-      return "<input name=\"#{paramname}\" value=\"#{value}\" type=text size=#{size}>"
-    when "str"
-      return "<input name=\"#{paramname}\" value=\"#{value}\" type=text size=#{size}>"
-    when "radio"
-      ret = ""
-      options.each {|option|
-        ret += "<input type=radio #{checked(option)} name=\"#{paramname}\" value=\"#{option}\">#{option}"
-      }
-      return ret
-    when "check"
-      ret = "<input type=checkbox name=\"#{paramname}\" " + self.checked(nil) + ">"
-      ret += "<input type=hidden name=\"#{hidden_paramname}\" value=\"off\">"
-      return ret
-    when "dropdown"
-      ret = "<select name=\"#{paramname}\">"
-      options.each {|key, option|
-        ret += "<option #{checked(key)} value=\"#{key}\">#{option}</option>"
-      }
-      ret += "</select>"
-      return ret
-    end
   end
 end
 

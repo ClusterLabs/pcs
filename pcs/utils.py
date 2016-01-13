@@ -66,6 +66,12 @@ fence_bin = settings.fence_agent_binaries
 
 score_regexp = re.compile(r'^[+-]?((INFINITY)|(\d+))$')
 
+CIB_BOOLEAN_TRUE = ["true", "on", "yes", "y", "1"]
+CIB_BOOLEAN_FALSE = ["false", "off", "no", "n", "0"]
+
+class UnknownPropertyException(Exception):
+    pass
+
 def simple_cache(func):
     cache = {}
     def wrapper(*args):
@@ -1550,43 +1556,6 @@ def set_unmanaged(resource):
             "is-managed", "--meta", "--parameter-value", "false"]
     return run(args)
 
-def is_valid_property(prop):
-    output, retval = run([settings.pengine_binary, "metadata"])
-    if retval != 0:
-        err("unable to run pengine\n" + output)
-
-# whitelisted properties
-    if prop in ["enable-acl"]:
-        return True
-
-    dom = parseString(output)
-    properties = dom.getElementsByTagName("parameter");
-    for p in properties:
-        if p.getAttribute("name") == prop:
-            return True
-
-    output, retval = run([settings.crmd_binary, "metadata"])
-    if retval != 0:
-        err("unable to run crmd\n" + output)
-
-    dom = parseString(output)
-    properties = dom.getElementsByTagName("parameter");
-    for p in properties:
-        if p.getAttribute("name") == prop:
-            return True
-
-    output, retval = run([settings.cib_binary, "metadata"])
-    if retval != 0:
-        err("unable to run cib\n" + output)
-
-    dom = parseString(output)
-    properties = dom.getElementsByTagName("parameter");
-    for p in properties:
-        if p.getAttribute("name") == prop:
-            return True
-
-    return False
-
 def get_node_attributes():
     node_config = get_cib_xpath("//nodes")
     nas = {}
@@ -1622,39 +1591,36 @@ def set_node_attribute(prop, value, node):
 
 # If the property exists, remove it and replace it with the new property
 # If the value is blank, then we just remove it
-def set_cib_property(prop, value):
-    crm_config = get_cib_xpath("//crm_config")
-    if (crm_config == ""):
-        err("unable to get crm_config, is pacemaker running?")
-    property_found = False
-    document = parseString(crm_config)
-    crm_config = document.documentElement
-    cluster_property_set = crm_config.getElementsByTagName("cluster_property_set")
-    if len(cluster_property_set) == 0:
-        cluster_property_set = document.createElement("cluster_property_set")
-        cluster_property_set.setAttribute("id", "cib-bootstrap-options")
-        crm_config.appendChild(cluster_property_set) 
+def set_cib_property(prop, value, cib_dom=None):
+    update_cib = cib_dom is None
+    if update_cib:
+        crm_config = get_cib_xpath("//crm_config")
+        if crm_config == "":
+            err("unable to get crm_config, is pacemaker running?")
+        crm_config = parseString(crm_config).documentElement
     else:
-        cluster_property_set = cluster_property_set[0]
+        document = cib_dom.getElementsByTagName("crm_config")
+        if len(document) == 0:
+            err("unable to get crm_config, is pacemaker running?")
+        crm_config = document[0]
+
+    property_found = False
+    cluster_property_set = dom_prepare_child_element(
+        crm_config, "cluster_property_set", "cib-bootstrap-options"
+    )
+
     for child in cluster_property_set.getElementsByTagName("nvpair"):
-        if (child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE):
-            break
-        if (child.getAttribute("name") == prop):
-            child.parentNode.removeChild(child)
+        if child.getAttribute("name") == prop:
             property_found = True
             break
+    if not property_found and value == "" and "--force" not in pcs_options:
+        err("can't remove property: '{0}' that doesn't exist".format(prop))
+    dom_update_nv_pair(
+        cluster_property_set, prop, value, "cib-bootstrap-options-"
+    )
 
-# If the value is empty we don't add it to the cluster
-    if value != "":
-        new_property = document.createElement("nvpair")
-        new_property.setAttribute("id","cib-bootstrap-options-"+prop)
-        new_property.setAttribute("name",prop)
-        new_property.setAttribute("value",value)
-        cluster_property_set.appendChild(new_property)
-    elif not property_found and "--force" not in pcs_options:
-        err("can't remove property: '%s' that doesn't exist" % (prop))
-
-    replace_cib_configuration(crm_config)
+    if update_cib:
+        replace_cib_configuration(crm_config)
 
 def setAttribute(a_type, a_name, a_value):
     args = ["crm_attribute", "--type", a_type, "--attr-name", a_name,
@@ -2018,7 +1984,10 @@ def verify_cert_key_pair(cert, key):
 # Does pacemaker consider a variable as true in cib?
 # See crm_is_true in pacemaker/lib/common/utils.c
 def is_cib_true(var):
-    return var.lower() in ("true", "on", "yes", "y", "1")
+    return var.lower() in CIB_BOOLEAN_TRUE
+
+def is_cib_boolean(val):
+    return val.lower() in CIB_BOOLEAN_TRUE + CIB_BOOLEAN_FALSE
 
 def is_systemctl():
     systemctl_paths = [
@@ -2334,7 +2303,7 @@ def is_node_stop_cause_quorum_loss(quorum_info, local=True, node_list=None):
         votes_after_stop += node_info["votes"]
     return votes_after_stop < quorum_info["quorum"]
 
-def dom_prepare_child_element(dom_element, tag_name, id_prefix=""):
+def dom_prepare_child_element(dom_element, tag_name, id):
     dom = dom_element.ownerDocument
     child_elements = []
     for child in dom_element.childNodes:
@@ -2343,9 +2312,7 @@ def dom_prepare_child_element(dom_element, tag_name, id_prefix=""):
 
     if len(child_elements) == 0:
         child_element = dom.createElement(tag_name)
-        child_element.setAttribute(
-            "id", id_prefix + tag_name
-        )
+        child_element.setAttribute("id", find_unique_id(dom, id))
         dom_element.appendChild(child_element)
     else:
         child_element = child_elements[0]
@@ -2391,7 +2358,7 @@ def dom_update_utilization(dom_element, attributes, id_prefix=""):
     utilization = dom_prepare_child_element(
         dom_element,
         "utilization",
-        id_prefix + dom_element.getAttribute("id") + "-"
+        id_prefix + dom_element.getAttribute("id") + "-utilization"
     )
 
     for name, value in attributes:
@@ -2409,7 +2376,9 @@ def dom_update_utilization(dom_element, attributes, id_prefix=""):
 
 def dom_update_meta_attr(dom_element, attributes):
     meta_attributes = dom_prepare_child_element(
-        dom_element, "meta_attributes", dom_element.getAttribute("id") + "-"
+        dom_element,
+        "meta_attributes",
+        dom_element.getAttribute("id") + "-meta_attributes"
     )
 
     for name, value in attributes:
@@ -2437,3 +2406,127 @@ def get_utilization_str(element):
     for name, value in sorted(get_utilization(element).items()):
         output.append(name + "=" + value)
     return " ".join(output)
+
+def is_valid_cluster_property(prop_def_dict, property, value):
+    if property not in prop_def_dict:
+        raise UnknownPropertyException(
+            "unknown cluster property: '{0}'".format(property)
+        )
+    return is_valid_cib_value(
+        prop_def_dict[property]["type"],
+        value,
+        prop_def_dict[property].get("enum", [])
+    )
+
+
+def is_valid_cib_value(type, value, enum_options=[]):
+    type = type.lower()
+    if type == "enum":
+        return value in enum_options
+    elif type == "boolean":
+        return is_cib_boolean(value)
+    elif type == "integer":
+        return is_score(value)
+    elif type == "time":
+        return get_timeout_seconds(value) is not None
+    else:
+        return True
+
+
+def get_cluster_property_default(prop_def_dict, prop):
+    if prop not in prop_def_dict:
+        raise UnknownPropertyException(
+            "unknown cluster property: '{0}'".format(prop)
+        )
+    return prop_def_dict[prop]["default"]
+
+
+def get_cluster_properties_definition():
+    # we don't want to change these properties
+    banned_props = ["dc-version", "cluster-infrastructure"]
+    basic_props = [
+        "batch-limit", "no-quorum-policy", "symmetric-cluster", "enable-acl",
+        "stonith-enabled", "stonith-action", "pe-input-series-max",
+        "stop-orphan-resources", "stop-orphan-actions", "cluster-delay",
+        "start-failure-is-fatal", "pe-error-series-max", "pe-warn-series-max"
+        ]
+    readable_names = {
+        "batch-limit": "Batch Limit",
+        "no-quorum-policy": "No Quorum Policy",
+        "symmetric-cluster": "Symmetric",
+        "stonith-enabled": "Stonith Enabled",
+        "stonith-action": "Stonith Action",
+        "cluster-delay": "Cluster Delay",
+        "stop-orphan-resources": "Stop Orphan Resources",
+        "stop-orphan-actions": "Stop Orphan Actions",
+        "start-failure-is-fatal": "Start Failure is Fatal",
+        "pe-error-series-max": "PE Error Storage",
+        "pe-warn-series-max": "PE Warning Storage",
+        "pe-input-series-max": "PE Input Storage",
+        "enable-acl": "Enable ACLs"
+    }
+    sources = [
+        {
+            "name": "pengine",
+            "path": settings.pengine_binary
+        },
+        {
+            "name": "crmd",
+            "path": settings.crmd_binary
+        },
+        {
+            "name": "cib",
+            "path": settings.cib_binary
+        }
+    ]
+    definition = {}
+    for source in sources:
+        output, retval = run([source["path"], "metadata"])
+        if retval != 0:
+            err("unable to run {0}\n".format(source["name"]) + output)
+        etree = ET.fromstring(output)
+        for e in etree.findall("./parameters/parameter"):
+            prop = get_cluster_property_from_xml(e)
+            if prop["name"] not in banned_props:
+                prop["source"] = source["name"]
+                prop["advanced"] = prop["name"] not in basic_props
+                if prop["name"] in readable_names:
+                    prop["readable_name"] = readable_names[prop["name"]]
+                else:
+                    prop["readable_name"] = prop["name"]
+                definition[prop["name"]] = prop
+    return definition
+
+
+def get_cluster_property_from_xml(etree_el):
+    property = {
+        "name": etree_el.get("name"),
+        "shortdesc": etree_el.find("shortdesc").text,
+        "longdesc": etree_el.find("longdesc").text
+    }
+    if property["shortdesc"] is None:
+        property["shortdesc"] = ""
+    if property["longdesc"] is None:
+        property["longdesc"] = ""
+
+    content = etree_el.find("content")
+    if content is None:
+        property["type"] = ""
+        property["default"] = ""
+    else:
+        property["type"] = content.get("type", "")
+        property["default"] = content.get("default", "")
+
+    if property["type"] == "enum":
+        property["enum"] = []
+        if property["longdesc"]:
+            values = property["longdesc"].split("  Allowed values: ")
+            if len(values) == 2:
+                property["enum"] = values[1].split(", ")
+                property["longdesc"] = values[0]
+        if property["default"] not in property["enum"]:
+            property["enum"].append(property["default"])
+
+    if property["longdesc"] == property["shortdesc"]:
+        property["longdesc"] = ""
+    return property

@@ -551,6 +551,43 @@ Use the 'Add' button to submit the form.">
       {{/if}}
     </table>
   </script>
+
+  <script type="text/x-handlebars" data-template-name="components/value-selector">
+    {{selector-helper content value prompt}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/cluster-property">
+    <td>
+      <span style="float: left;">
+        {{prop.readable_name}}
+      </span>
+      <span style="margin-left: 0.5em" class="infoicon sprites" {{bind-attr title=prop.description}}></span>
+    </td>
+    <td>
+      {{#if prop.is_boolean}}
+        {{value-selector
+            prompt="(Default)"
+            content=boolean_options
+            value=prop.cur_val
+            name=prop.form_name
+        }}
+      {{else}}{{#if prop.is_enum}}
+        {{value-selector
+            prompt="(Default)"
+            content=prop.enum_show
+            value=prop.cur_val
+            name=prop.form_name
+        }}
+      {{else}}
+      {{input
+          type="text"
+          name=prop.form_name
+          value=prop.cur_val
+          placeholder=prop.default
+      }}
+      {{/if}}{{/if}}
+    </td>
+  </script>
   
   <script type="text/x-handlebars">
 <div id="wrapper">

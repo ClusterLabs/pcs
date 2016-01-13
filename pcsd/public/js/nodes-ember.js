@@ -108,7 +108,6 @@ Pcs = Ember.Application.createWithMixins({
       success: function(data) {
         Pcs.resourcesContainer.update(data);
         Pcs.nodesController.update(data);
-        Pcs.settingsController.update(data);
         Pcs.aclsController.update(data);
         Pcs.set("cluster_settings",data.cluster_settings);
         Pcs.set('need_ring1_address', false);
@@ -127,6 +126,7 @@ Pcs = Ember.Application.createWithMixins({
           var cur_resource = self.get('cur_resource');
           var resource_map = self.get('resource_map');
           if (first_run) {
+            refresh_cluster_properties();
             setup_node_links();
             Pcs.nodesController.load_node($('#node_list_row').find('.node_selected').first(),true);
             Pcs.aclsController.load_role($('#acls_list_row').find('.node_selected').first(), true);
@@ -203,6 +203,47 @@ Pcs = Ember.Application.createWithMixins({
       }
     });
   }
+});
+
+Pcs.ValueSelectorComponent = Ember.Component.extend({
+  tagName: 'select',
+  attributeBindings: ['name'],
+  name: null,
+  prompt: "Select one value",
+  show_prompt: true,
+  content: [],
+  value: null,
+  _change: function() {
+    var selectedIndex = this.$()[0].selectedIndex,
+      content = this.get('content'),
+      prompt = this.get('show_prompt');
+
+    if (!content || !content.get('length')) { return; }
+    if (prompt && selectedIndex === 0) { this.set('value', ""); return; }
+
+    if (prompt) { selectedIndex -= 1; }
+    this.set('value', content.objectAt(selectedIndex)['value']);
+  },
+  init: function() {
+    this._super();
+    this.on("change", this, this._change);
+  }
+});
+
+Pcs.ClusterPropertyComponent = Ember.Component.extend({
+  tagName: 'tr',
+  prop: null,
+  attributeBindings: ['name'],
+  boolean_options: [
+    {
+      name: "true",
+      value: "true"
+    },
+    {
+      name: "false",
+      value: "false"
+    }
+  ]
 });
 
 Pcs.UtilizationTableComponent = Ember.Component.extend({
@@ -1063,8 +1104,47 @@ Pcs.ResourcesRoute = Ember.Route.extend({
 
 Pcs.Setting = Ember.Object.extend({
   name: null,
+  readable_name: null,
+  form_name: function() {
+    return "config[" + this.get("name") + "]";
+  }.property("name"),
   value: null,
-  type: null
+  cur_val: Ember.computed.oneWay('value'),
+  type: null,
+  source: "",
+  default: null,
+  advanced: false,
+  longdesc: "",
+  shortdesc: "",
+  description: function() {
+    var self = this;
+    var desc = $("<div>").text(self.get("shortdesc")).html();
+    if (self.get("longdesc")) {
+      desc += "<br><br>";
+      desc += $("<div>").text(self.get("longdesc")).html();
+    }
+    desc += "<br><br>";
+    desc += $("<div>").text("Default value: " + self.get("default")).html();
+    return desc;
+  }.property("longdesc", "shortdesc"),
+  is_boolean: function() {
+    return (this.get("type") == "boolean");
+  }.property("type"),
+  is_enum: function() {
+    return (this.get("type") == "enum");
+  }.property("type"),
+  enum: [],
+  enum_show: function() {
+    var self = this;
+    var out = [];
+    $.each(self.get("enum"), function(_, val) {
+      out.push({
+        name: val,
+        value: val
+      });
+    });
+    return out;
+  }.property("enum.@each")
 });
 
 Pcs.Clusternode = Ember.Object.extend({
@@ -1663,22 +1743,72 @@ Pcs.aclsController = Ember.ArrayController.createWithMixins({
   }
 });
 
-Pcs.settingsController = Ember.ArrayController.create({
-  content: [],
-  update: function(data) {
+Pcs.settingsController = Ember.Controller.create({
+  properties: [],
+  filtered: [],
+  show_advanced: false,
+  filter: "",
+  update: function(properties_definition) {
     var self = this;
-    var settings = {};
-    self.set('content',[]);
-    if (data["cluster_settings"]) {
-      $.each(data["cluster_settings"], function(k2, v2) {
-        var setting = Pcs.Setting.create({
-          name: k2,
-          value: v2
-        });
-        self.pushObject(setting);
-      });
-    }
+    var new_properties = [];
+    var property;
+    var value;
+    $.each(properties_definition, function(_, prop_def) {
+      property = Pcs.Setting.create(prop_def);
+      value = property.get("value");
+      if (value) {
+        switch (property.get("type")) {
+          case "boolean":
+            value = (is_cib_true(value)) ? "true" : "false";
+            break;
+          case "enum":
+            if (property.get("enum").indexOf(value) == -1) {
+              property.get("enum").push(value);
+            }
+        }
+        property.set("value", value);
+      }
+      new_properties.pushObject(property);
+    });
+    // first basic and then advanced
+    self.set("properties", new_properties.sort(function(a,b) {
+      if (!a.get("advanced") && b.get("advanced")) {
+        return -1;
+      } else if (a.get("advanced") && !b.get("advanced")) {
+        return 1;
+      } else {
+        return a.get('name').localeCompare(b.get('name'));
+      }
+    }));
   }
+});
+
+Pcs.settingsController.reopen({
+  filtered: function() {
+    var self = this;
+    var substr = self.get("filter").toLowerCase();
+    
+    var to_show = [];
+    $.each(self.get("properties"), function(_, e) {
+      if (self.get("show_advanced")) {
+        to_show.pushObject(e);
+      } else if (!e.get("advanced")) {
+        to_show.pushObject(e);
+      }
+    });
+
+    if (!substr) {
+      return to_show;
+    }
+    
+    var filtered = [];
+    $.each(to_show, function(_, e) {
+      if (e.get("name").toLowerCase().includes(substr) || e.get("readable_name").toLowerCase().includes(substr)) {
+        filtered.pushObject(e);
+      }
+    });
+    return filtered;
+  }.property("properties", "filter", "show_advanced")
 });
 
 Pcs.selectedNodeController = Ember.Object.createWithMixins({

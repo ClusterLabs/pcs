@@ -2618,7 +2618,7 @@ def resource_relocate_set_stickiness(cib_dom, resources=None):
                 meta_attributes = utils.dom_prepare_child_element(
                     res_or_child,
                     "meta_attributes",
-                    res_or_child.getAttribute("id") + "-"
+                    res_or_child.getAttribute("id") + "-meta_attributes"
                 )
                 utils.dom_update_nv_pair(
                     meta_attributes,

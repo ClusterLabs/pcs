@@ -117,21 +117,213 @@ class PropertyTest(unittest.TestCase):
         assert r==0
 
     def testBadProperties(self):
-        o,r = pcs("property set xxxx=zzzz")
-        assert r==1
+        o,r = pcs(temp_cib, "property set xxxx=zzzz")
+        self.assertEqual(r, 1)
         ac(o,"Error: unknown cluster property: 'xxxx', (use --force to override)\n")
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, "Cluster Properties:\n")
 
-        output, returnVal = pcs("property set =5678 --force")
-        ac(output, "Error: property name cannot be empty\n")
-        assert returnVal == 1
+        output, returnVal = pcs(temp_cib, "property set =5678 --force")
+        ac(output, "Error: empty property name: '=5678'\n")
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, "Cluster Properties:\n")
 
-        o,r = pcs("property unset zzzzz")
-        assert r==1
+        output, returnVal = pcs(temp_cib, "property set =5678")
+        ac(output, "Error: empty property name: '=5678'\n")
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, "Cluster Properties:\n")
+
+        output, returnVal = pcs(temp_cib, "property set bad_format")
+        ac(output, "Error: invalid property format: 'bad_format'\n")
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, "Cluster Properties:\n")
+
+        output, returnVal = pcs(temp_cib, "property set bad_format --force")
+        ac(output, "Error: invalid property format: 'bad_format'\n")
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, "Cluster Properties:\n")
+
+        o,r = pcs(temp_cib, "property unset zzzzz")
+        self.assertEqual(r, 1)
         ac(o,"Error: can't remove property: 'zzzzz' that doesn't exist\n")
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, "Cluster Properties:\n")
 
-        o,r = pcs("property unset zzzz --force")
-        assert r==0
+        o,r = pcs(temp_cib, "property unset zzzz --force")
+        self.assertEqual(r, 0)
         ac(o,"")
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, "Cluster Properties:\n")
+
+    def test_set_property_validation_enum(self):
+        output, returnVal = pcs(
+            temp_cib, "property set no-quorum-policy=freeze"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ no-quorum-policy: freeze
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set no-quorum-policy=freeze --force"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ no-quorum-policy: freeze
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set no-quorum-policy=not_valid_value"
+        )
+        ac(
+            output,
+            "Error: invalid value of property: "
+            "'no-quorum-policy=not_valid_value', (use --force to override)\n"
+        )
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ no-quorum-policy: freeze
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set no-quorum-policy=not_valid_value --force"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ no-quorum-policy: not_valid_value
+"""
+        )
+
+    def test_set_property_validation_boolean(self):
+        output, returnVal = pcs(temp_cib, "property set enable-acl=TRUE")
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ enable-acl: TRUE
+"""
+        )
+
+        output, returnVal = pcs(temp_cib, "property set enable-acl=no")
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ enable-acl: no
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set enable-acl=TRUE --force"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ enable-acl: TRUE
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set enable-acl=not_valid_value"
+        )
+        ac(
+            output,
+            "Error: invalid value of property: "
+            "'enable-acl=not_valid_value', (use --force to override)\n"
+        )
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ enable-acl: TRUE
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set enable-acl=not_valid_value --force"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ enable-acl: not_valid_value
+"""
+        )
+
+    def test_set_property_validation_integer(self):
+        output, returnVal = pcs(
+            temp_cib, "property set default-resource-stickiness=0"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ default-resource-stickiness: 0
+"""
+        )
+
+
+        output, returnVal = pcs(
+            temp_cib, "property set default-resource-stickiness=-10"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ default-resource-stickiness: -10
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set default-resource-stickiness=0 --force"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ default-resource-stickiness: 0
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set default-resource-stickiness=0.1"
+        )
+        ac(
+            output,
+            "Error: invalid value of property: "
+            "'default-resource-stickiness=0.1', (use --force to override)\n"
+        )
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ default-resource-stickiness: 0
+"""
+        )
+
+        output, returnVal = pcs(
+            temp_cib, "property set default-resource-stickiness=0.1 --force"
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(temp_cib, "property list")
+        ac(o, """Cluster Properties:
+ default-resource-stickiness: 0.1
+"""
+        )
 
 if __name__ == "__main__":
     unittest.main()

@@ -885,7 +885,7 @@ Commands:
         properties and their defaults.
         Run 'man pengine' and 'man crmd' to get a description of the properties.
 
-    set [--force] [--node <nodename>] <property>=[<value>]
+    set [--force] [--node <nodename>] <property>=[<value>] ...
         Set specific pacemaker properties (if the value is blank then the
         property is removed from the configuration).  If a property is not
         recognized by pcs the property will not be created unless the

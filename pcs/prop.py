@@ -4,44 +4,81 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
+import json
 from xml.dom.minidom import parseString
-import xml.etree.ElementTree as ET
 
 import usage
 import utils
-import settings
 
 def property_cmd(argv):
     if len(argv) == 0:
         argv = ["list"]
 
     sub_cmd = argv.pop(0)
-    if (sub_cmd == "help"):
+    if sub_cmd == "help":
         usage.property(argv)
-    elif (sub_cmd == "set"):
+    elif sub_cmd == "set":
         set_property(argv)
-    elif (sub_cmd == "unset"):
+    elif sub_cmd == "unset":
         unset_property(argv)
-    elif (sub_cmd == "list" or sub_cmd == "show"):
+    elif sub_cmd == "list" or sub_cmd == "show":
         list_property(argv)
+    elif sub_cmd == "get_cluster_properties_definition":
+        print(json.dumps(utils.get_cluster_properties_definition()))
     else:
         usage.property()
         sys.exit(1)
 
+
 def set_property(argv):
+    prop_def_dict = utils.get_cluster_properties_definition()
+    nodes_attr = "--node" in utils.pcs_options
+    failed = False
+    forced = "--force" in utils.pcs_options
+    properties = {}
     for arg in argv:
         args = arg.split('=')
-        if (len(args) != 2):
-            print("Invalid Property: " + arg)
-            continue
-        if "--node" in utils.pcs_options:
-            utils.set_node_attribute(args[0], args[1], utils.pcs_options["--node"])
-        elif ("--force" in utils.pcs_options) or utils.is_valid_property(args[0]):
-            if not args[0]:
-                utils.err("property name cannot be empty")
-            utils.set_cib_property(args[0],args[1])
+        if len(args) != 2:
+            utils.err("invalid property format: '{0}'".format(arg), False)
+            failed = True
+        elif not args[0]:
+            utils.err("empty property name: '{0}'".format(arg), False)
+            failed = True
+        elif nodes_attr or forced or args[1].strip() == "":
+            properties[args[0]] = args[1]
         else:
-            utils.err("unknown cluster property: '%s', (use --force to override)" % args[0])
+            try:
+                if utils.is_valid_cluster_property(
+                    prop_def_dict, args[0], args[1]
+                ):
+                    properties[args[0]] = args[1]
+                else:
+                    utils.err(
+                        "invalid value of property: '{0}', (use --force to "
+                        "override)".format(arg),
+                        False
+                    )
+                    failed = True
+            except utils.UnknownPropertyException:
+                utils.err(
+                    "unknown cluster property: '{0}', (use --force to "
+                    "override)".format(args[0]),
+                    False
+                )
+                failed = True
+
+    if failed:
+        sys.exit(1)
+
+    if nodes_attr:
+        for prop, value in properties.items():
+            utils.set_node_attribute(prop, value, utils.pcs_options["--node"])
+    else:
+        cib_dom = utils.get_cib_dom()
+        for prop, value in properties.items():
+            utils.set_cib_property(prop, value, cib_dom)
+        utils.replace_cib_configuration(cib_dom)
+
 
 def unset_property(argv):
     if len(argv) < 1:
@@ -52,8 +89,10 @@ def unset_property(argv):
         for arg in argv:
             utils.set_node_attribute(arg, "",utils.pcs_options["--node"])
     else:
+        cib_dom = utils.get_cib_dom()
         for arg in argv:
-            utils.set_cib_property(arg, "")
+            utils.set_cib_property(arg, "", cib_dom)
+        utils.replace_cib_configuration(cib_dom)
 
 def list_property(argv):
     print_all = False
@@ -87,32 +126,10 @@ def list_property(argv):
             print(" ".join(line_parts))
 
 def get_default_properties():
-    (output, retVal) = utils.run([settings.pengine_binary, "metadata"])
-    if retVal != 0:
-        utils.err("unable to get pengine metadata\n"+output)
-    pe_root = ET.fromstring(output)
-
-    (output, retVal) = utils.run([settings.crmd_binary, "metadata"])
-    if retVal != 0:
-        utils.err("unable to get crmd metadata\n"+output)
-    crmd_root = ET.fromstring(output)
-    
-    (output, retVal) = utils.run([settings.cib_binary, "metadata"])
-    if retVal != 0:
-        utils.err("unable to get cib metadata\n"+output)
-    cib_root = ET.fromstring(output)
-
     parameters = {}
-    for root in [pe_root, crmd_root, cib_root]:
-        for param in root.getiterator('parameter'):
-            name = param.attrib["name"]
-            content = param.find("content")
-            if content is not None:
-                default = content.attrib["default"]
-            else:
-                default = ""
-
-            parameters[name] =  default
+    prop_def_dict = utils.get_cluster_properties_definition()
+    for name, prop in prop_def_dict.items():
+        parameters[name] = prop["default"]
     return parameters
 
 def get_set_properties(prop_name=None, defaults=None):

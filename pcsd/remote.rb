@@ -3,6 +3,7 @@ require 'uri'
 require 'open4'
 require 'set'
 require 'timeout'
+require 'rexml/document'
 
 require 'pcs.rb'
 require 'resource.rb'
@@ -65,6 +66,7 @@ def remote(params, request, session)
       :get_cluster_tokens => method(:get_cluster_tokens),
       :save_tokens => method(:save_tokens),
       :add_node_to_cluster => method(:add_node_to_cluster),
+      :get_cluster_properties_definition => method(:get_cluster_properties_definition)
   }
   remote_cmd_with_pacemaker = {
       :resource_start => method(:resource_start),
@@ -1905,63 +1907,43 @@ def add_group(params, request, session)
 end
 
 def update_cluster_settings(params, request, session)
-  settings = params["config"]
-  hidden_settings = params["hidden"]
-  hidden_settings.each{|name,val|
-    found = false
-    settings.each{|name2,val2|
-      if name == name2
-        found = true
-        break
-      end
-    }
-    if not found
-      settings[name] = val
+  properties = params['config']
+  to_update = []
+  current = getAllSettings(session)
+  properties.each { |prop, val|
+    val.strip!
+    if not current.include?(prop) and val != '' # add
+      to_update << prop
+    elsif current.include?(prop) and val == '' # remove
+      to_update << prop
+    elsif current.include?(prop) and current[prop] != val # update
+      to_update << prop
     end
   }
-  settings.each { |_, val| val.strip!() }
 
-  binary_settings = []
-  changed_settings = []
-  old_settings = {}
-  getConfigOptions2(
-    PCSAuth.getSuperuserSession(), get_nodes().flatten()
-  ).values().flatten().each { |opt|
-    binary_settings << opt.configname if "check" == opt.type
-    # if we don't know current value of an option, consider it changed
-    next if opt.value.nil?
-    if "check" == opt.type
-      old_settings[opt.configname] = is_cib_true(opt.value)
-    else
-      old_settings[opt.configname] = opt.value
-    end
-  }
-  settings.each { |key, val|
-    new_val = binary_settings.include?(key) ? is_cib_true(val) : val
-    # if we don't know current value of an option, consider it changed
-    if (not old_settings.key?(key)) or (old_settings[key] != new_val)
-      changed_settings << key.downcase()
-    end
-  }
-  if changed_settings.include?('enable-acl')
+  if to_update.count { |x| x.downcase == 'enable-acl' } > 0
     if not allowed_for_local_cluster(session, Permissions::GRANT)
       return 403, 'Permission denied'
     end
   end
-  if changed_settings.count { |x| x != 'enable-acl' } > 0
+  if to_update.count { |x| x.downcase != 'enable-acl' } > 0
     if not allowed_for_local_cluster(session, Permissions::WRITE)
       return 403, 'Permission denied'
     end
   end
 
-  changed_settings.each { |name|
-    val = settings[name]
-    if name == "enable-acl"
-      run_cmd(session, PCS, "property", "set", name + "=" + val, "--force")
-    else
-      run_cmd(session, PCS, "property", "set", name + "=" + val)
+  if to_update.empty?
+    $logger.info('No properties to update')
+  else
+    cmd_args = []
+    to_update.each { |prop|
+      cmd_args << "#{prop.downcase}=#{properties[prop]}"
+    }
+    stdout, stderr, retval = run_cmd(session, PCS, 'property', 'set', *cmd_args)
+    if retval != 0
+      return [400, stderr.join('').gsub(', (use --force to override)', '')]
     end
-  }
+  end
   return [200, "Update Successful"]
 end
 
@@ -2319,4 +2301,17 @@ def set_node_utilization(params, reqest, session)
     ]
   end
   return 200
+end
+
+def get_cluster_properties_definition(params, request, session)
+  unless allowed_for_local_cluster(session, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  stdout, _, retval = run_cmd(
+    session, PCS, 'property', 'get_cluster_properties_definition'
+  )
+  if retval == 0
+    return [200, stdout]
+  end
+  return [400, '{}']
 end

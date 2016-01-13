@@ -8,17 +8,20 @@ import sys
 import shutil
 import unittest
 import xml.dom.minidom
+import xml.etree.cElementTree as ET
 currentdir = os.path.dirname(os.path.abspath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 import utils
-from pcs_test_functions import pcs, ac
+from pcs_test_functions import pcs, ac, get_child_elements
 
 
 cib_with_nodes =  os.path.join(currentdir, "empty-withnodes.xml")
 empty_cib = os.path.join(currentdir, "empty.xml")
 temp_cib = os.path.join(currentdir, "temp.xml")
+
+unittest.TestCase.maxDiff = None
 
 class UtilsTest(unittest.TestCase):
 
@@ -1779,30 +1782,34 @@ Membership information
     def test_dom_prepare_child_element(self):
         cib = self.get_cib_with_nodes_minidom()
         node = cib.getElementsByTagName("node")[0]
-        self.assertEqual(len(get_child_elemets(node)), 0)
-        child = utils.dom_prepare_child_element(node, "utilization", "rh7-1-")
-        self.assertEqual(len(get_child_elemets(node)), 1)
-        self.assertEqual(child, get_child_elemets(node)[0])
-        self.assertEqual(get_child_elemets(node)[0].tagName, "utilization")
-        self.assertEqual(
-            get_child_elemets(node)[0].getAttribute("id"), "rh7-1-utilization"
+        self.assertEqual(len(get_child_elements(node)), 0)
+        child = utils.dom_prepare_child_element(
+            node, "utilization", "rh7-1-utilization"
         )
-        child2 = utils.dom_prepare_child_element(node, "utilization", "rh7-1-")
-        self.assertEqual(len(get_child_elemets(node)), 1)
+        self.assertEqual(len(get_child_elements(node)), 1)
+        self.assertEqual(child, get_child_elements(node)[0])
+        self.assertEqual(get_child_elements(node)[0].tagName, "utilization")
+        self.assertEqual(
+            get_child_elements(node)[0].getAttribute("id"), "rh7-1-utilization"
+        )
+        child2 = utils.dom_prepare_child_element(
+            node, "utilization", "rh7-1-utilization"
+        )
+        self.assertEqual(len(get_child_elements(node)), 1)
         self.assertEqual(child, child2)
 
     def test_dom_update_nv_pair_add(self):
         nv_set = xml.dom.minidom.parseString("<nvset/>").documentElement
         utils.dom_update_nv_pair(nv_set, "test_name", "test_val", "prefix-")
-        self.assertEqual(len(get_child_elemets(nv_set)), 1)
-        pair = get_child_elemets(nv_set)[0]
+        self.assertEqual(len(get_child_elements(nv_set)), 1)
+        pair = get_child_elements(nv_set)[0]
         self.assertEqual(pair.getAttribute("name"), "test_name")
         self.assertEqual(pair.getAttribute("value"), "test_val")
         self.assertEqual(pair.getAttribute("id"), "prefix-test_name")
         utils.dom_update_nv_pair(nv_set, "another_name", "value", "prefix2-")
-        self.assertEqual(len(get_child_elemets(nv_set)), 2)
-        self.assertEqual(pair, get_child_elemets(nv_set)[0])
-        pair = get_child_elemets(nv_set)[1]
+        self.assertEqual(len(get_child_elements(nv_set)), 2)
+        self.assertEqual(pair, get_child_elements(nv_set)[0])
+        pair = get_child_elements(nv_set)[1]
         self.assertEqual(pair.getAttribute("name"), "another_name")
         self.assertEqual(pair.getAttribute("value"), "value")
         self.assertEqual(pair.getAttribute("id"), "prefix2-another_name")
@@ -1815,9 +1822,9 @@ Membership information
         </nv_set>
         """).documentElement
         utils.dom_update_nv_pair(nv_set, "test_name", "new_value")
-        self.assertEqual(len(get_child_elemets(nv_set)), 2)
-        pair1 = get_child_elemets(nv_set)[0]
-        pair2 = get_child_elemets(nv_set)[1]
+        self.assertEqual(len(get_child_elements(nv_set)), 2)
+        pair1 = get_child_elements(nv_set)[0]
+        pair2 = get_child_elements(nv_set)[1]
         self.assertEqual(pair1.getAttribute("name"), "test_name")
         self.assertEqual(pair1.getAttribute("value"), "new_value")
         self.assertEqual(pair1.getAttribute("id"), "prefix-test_name")
@@ -1833,15 +1840,15 @@ Membership information
         </nv_set>
         """).documentElement
         utils.dom_update_nv_pair(nv_set, "non_existing_name", "")
-        self.assertEqual(len(get_child_elemets(nv_set)), 2)
+        self.assertEqual(len(get_child_elements(nv_set)), 2)
         utils.dom_update_nv_pair(nv_set, "another_name", "")
-        self.assertEqual(len(get_child_elemets(nv_set)), 1)
-        pair = get_child_elemets(nv_set)[0]
+        self.assertEqual(len(get_child_elements(nv_set)), 1)
+        pair = get_child_elements(nv_set)[0]
         self.assertEqual(pair.getAttribute("name"), "test_name")
         self.assertEqual(pair.getAttribute("value"), "test_val")
         self.assertEqual(pair.getAttribute("id"), "prefix-test_name")
         utils.dom_update_nv_pair(nv_set, "test_name", "")
-        self.assertEqual(len(get_child_elemets(nv_set)), 0)
+        self.assertEqual(len(get_child_elements(nv_set)), 0)
 
     def test_convert_args_to_tuples(self):
         out = utils.convert_args_to_tuples(
@@ -1874,22 +1881,22 @@ Membership information
             el, [("name", ""), ("key", "-1"), ("keys", "90")]
         )
 
-        self.assertEqual(len(get_child_elemets(el)), 1)
-        u = get_child_elemets(el)[0]
+        self.assertEqual(len(get_child_elements(el)), 1)
+        u = get_child_elements(el)[0]
         self.assertEqual(u.tagName, "utilization")
         self.assertEqual(u.getAttribute("id"), "test_id-utilization")
-        self.assertEqual(len(get_child_elemets(u)), 2)
+        self.assertEqual(len(get_child_elements(u)), 2)
 
         self.assertEqual(
-            get_child_elemets(u)[0].getAttribute("id"), "test_id-utilization-key"
+            get_child_elements(u)[0].getAttribute("id"), "test_id-utilization-key"
         )
-        self.assertEqual(get_child_elemets(u)[0].getAttribute("name"), "key")
-        self.assertEqual(get_child_elemets(u)[0].getAttribute("value"), "-1")
+        self.assertEqual(get_child_elements(u)[0].getAttribute("name"), "key")
+        self.assertEqual(get_child_elements(u)[0].getAttribute("value"), "-1")
         self.assertEqual(
-            get_child_elemets(u)[1].getAttribute("id"), "test_id-utilization-keys"
+            get_child_elements(u)[1].getAttribute("id"), "test_id-utilization-keys"
         )
-        self.assertEqual(get_child_elemets(u)[1].getAttribute("name"), "keys")
-        self.assertEqual(get_child_elemets(u)[1].getAttribute("value"), "90")
+        self.assertEqual(get_child_elements(u)[1].getAttribute("name"), "keys")
+        self.assertEqual(get_child_elements(u)[1].getAttribute("value"), "90")
 
     def test_dom_update_utilization_update_remove(self):
         el = xml.dom.minidom.parseString("""
@@ -1904,13 +1911,13 @@ Membership information
             el, [("key", "100"), ("keys", "")]
         )
 
-        u = get_child_elemets(el)[0]
-        self.assertEqual(len(get_child_elemets(u)), 1)
+        u = get_child_elements(el)[0]
+        self.assertEqual(len(get_child_elements(u)), 1)
         self.assertEqual(
-            get_child_elemets(u)[0].getAttribute("id"), "test_id-utilization-key"
+            get_child_elements(u)[0].getAttribute("id"), "test_id-utilization-key"
         )
-        self.assertEqual(get_child_elemets(u)[0].getAttribute("name"), "key")
-        self.assertEqual(get_child_elemets(u)[0].getAttribute("value"), "100")
+        self.assertEqual(get_child_elements(u)[0].getAttribute("name"), "key")
+        self.assertEqual(get_child_elements(u)[0].getAttribute("value"), "100")
 
     def test_dom_update_meta_attr_add(self):
         el = xml.dom.minidom.parseString("""
@@ -1920,22 +1927,22 @@ Membership information
             el, [("name", ""), ("key", "test"), ("key2", "val")]
         )
 
-        self.assertEqual(len(get_child_elemets(el)), 1)
-        u = get_child_elemets(el)[0]
+        self.assertEqual(len(get_child_elements(el)), 1)
+        u = get_child_elements(el)[0]
         self.assertEqual(u.tagName, "meta_attributes")
         self.assertEqual(u.getAttribute("id"), "test_id-meta_attributes")
-        self.assertEqual(len(get_child_elemets(u)), 2)
+        self.assertEqual(len(get_child_elements(u)), 2)
 
         self.assertEqual(
-            get_child_elemets(u)[0].getAttribute("id"), "test_id-meta_attributes-key"
+            get_child_elements(u)[0].getAttribute("id"), "test_id-meta_attributes-key"
         )
-        self.assertEqual(get_child_elemets(u)[0].getAttribute("name"), "key")
-        self.assertEqual(get_child_elemets(u)[0].getAttribute("value"), "test")
+        self.assertEqual(get_child_elements(u)[0].getAttribute("name"), "key")
+        self.assertEqual(get_child_elements(u)[0].getAttribute("value"), "test")
         self.assertEqual(
-            get_child_elemets(u)[1].getAttribute("id"), "test_id-meta_attributes-key2"
+            get_child_elements(u)[1].getAttribute("id"), "test_id-meta_attributes-key2"
         )
-        self.assertEqual(get_child_elemets(u)[1].getAttribute("name"), "key2")
-        self.assertEqual(get_child_elemets(u)[1].getAttribute("value"), "val")
+        self.assertEqual(get_child_elements(u)[1].getAttribute("name"), "key2")
+        self.assertEqual(get_child_elements(u)[1].getAttribute("value"), "val")
 
     def test_dom_update_meta_attr_update_remove(self):
         el = xml.dom.minidom.parseString("""
@@ -1950,13 +1957,13 @@ Membership information
             el, [("key", "another_val"), ("key2", "")]
         )
 
-        u = get_child_elemets(el)[0]
-        self.assertEqual(len(get_child_elemets(u)), 1)
+        u = get_child_elements(el)[0]
+        self.assertEqual(len(get_child_elements(u)), 1)
         self.assertEqual(
-            get_child_elemets(u)[0].getAttribute("id"), "test_id-meta_attributes-key"
+            get_child_elements(u)[0].getAttribute("id"), "test_id-meta_attributes-key"
         )
-        self.assertEqual(get_child_elemets(u)[0].getAttribute("name"), "key")
-        self.assertEqual(get_child_elemets(u)[0].getAttribute("value"), "another_val")
+        self.assertEqual(get_child_elements(u)[0].getAttribute("name"), "key")
+        self.assertEqual(get_child_elements(u)[0].getAttribute("value"), "another_val")
 
     def test_get_utilization(self):
         el = xml.dom.minidom.parseString("""
@@ -1980,15 +1987,227 @@ Membership information
         """).documentElement
         self.assertEqual("key=-1 keys=90", utils.get_utilization_str(el))
 
+    def test_get_cluster_property_from_xml_enum(self):
+        el = ET.fromstring("""
+        <parameter name="no-quorum-policy" unique="0">
+            <shortdesc lang="en">What to do when the cluster does not have quorum</shortdesc>
+            <content type="enum" default="stop"/>
+            <longdesc lang="en">What to do when the cluster does not have quorum  Allowed values: stop, freeze, ignore, suicide</longdesc>
+        </parameter>
+        """)
+        expected = {
+            "name": "no-quorum-policy",
+            "shortdesc": "What to do when the cluster does not have quorum",
+            "longdesc": "",
+            "type": "enum",
+            "default": "stop",
+            "enum": ["stop", "freeze", "ignore", "suicide"]
+        }
+        self.assertEqual(expected, utils.get_cluster_property_from_xml(el))
+
+    def test_get_cluster_property_from_xml(self):
+        el = ET.fromstring("""
+        <parameter name="default-resource-stickiness" unique="0">
+            <shortdesc lang="en"></shortdesc>
+            <content type="integer" default="0"/>
+            <longdesc lang="en"></longdesc>
+        </parameter>
+        """)
+        expected = {
+            "name": "default-resource-stickiness",
+            "shortdesc": "",
+            "longdesc": "",
+            "type": "integer",
+            "default": "0"
+        }
+        self.assertEqual(expected, utils.get_cluster_property_from_xml(el))
+
+    def test_get_cluster_property_default(self):
+        definition = {
+            "default-resource-stickiness": {
+                "name": "default-resource-stickiness",
+                "shortdesc": "",
+                "longdesc": "",
+                "type": "integer",
+                "default": "0",
+                "source": "pengine"
+            },
+            "no-quorum-policy": {
+                "name": "no-quorum-policy",
+                "shortdesc": "What to do when the cluster does not have quorum",
+                "longdesc": "What to do when the cluster does not have quorum  Allowed values: stop, freeze, ignore, suicide",
+                "type": "enum",
+                "default": "stop",
+                "enum": ["stop", "freeze", "ignore", "suicide"],
+                "source": "pengine"
+            },
+            "enable-acl": {
+                "name": "enable-acl",
+                "shortdesc": "Enable CIB ACL",
+                "longdesc": "Enable CIB ACL",
+                "type": "boolean",
+                "default": "false",
+                "source": "cib"
+            }
+        }
+        self.assertEqual(
+            utils.get_cluster_property_default(
+                definition, "default-resource-stickiness"
+            ),
+            "0"
+        )
+        self.assertEqual(
+            utils.get_cluster_property_default(definition, "no-quorum-policy"),
+            "stop"
+        )
+        self.assertEqual(
+            utils.get_cluster_property_default(definition, "enable-acl"),
+            "false"
+        )
+        self.assertRaises(
+            utils.UnknownPropertyException,
+            utils.get_cluster_property_default, definition, "non-existing"
+        )
+
+    def test_is_valid_cib_value_unknown_type(self):
+        # should be always true
+        self.assertTrue(utils.is_valid_cib_value("unknown", "test"))
+        self.assertTrue(utils.is_valid_cib_value("string", "string value"))
+
+    def test_is_valid_cib_value_integer(self):
+        self.assertTrue(utils.is_valid_cib_value("integer", "0"))
+        self.assertTrue(utils.is_valid_cib_value("integer", "42"))
+        self.assertTrue(utils.is_valid_cib_value("integer", "-90"))
+        self.assertTrue(utils.is_valid_cib_value("integer", "+90"))
+        self.assertTrue(utils.is_valid_cib_value("integer", "INFINITY"))
+        self.assertTrue(utils.is_valid_cib_value("integer", "-INFINITY"))
+        self.assertTrue(utils.is_valid_cib_value("integer", "+INFINITY"))
+        self.assertFalse(utils.is_valid_cib_value("integer", "0.0"))
+        self.assertFalse(utils.is_valid_cib_value("integer", "-10.9"))
+        self.assertFalse(utils.is_valid_cib_value("integer", "string"))
+
+    def test_is_valid_cib_value_enum(self):
+        self.assertTrue(
+            utils.is_valid_cib_value("enum", "this", ["another", "this", "1"])
+        )
+        self.assertFalse(
+            utils.is_valid_cib_value("enum", "this", ["another", "this_not"])
+        )
+        self.assertFalse(utils.is_valid_cib_value("enum", "this", []))
+        self.assertFalse(utils.is_valid_cib_value("enum", "this"))
+
+    def test_is_valid_cib_value_boolean(self):
+        self.assertTrue(utils.is_valid_cib_value("boolean", "true"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "TrUe"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "TRUE"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "yes"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "on"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "y"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "Y"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "1"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "false"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "FaLse"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "FALSE"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "off"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "no"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "N"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "n"))
+        self.assertTrue(utils.is_valid_cib_value("boolean", "0"))
+        self.assertFalse(utils.is_valid_cib_value("boolean", "-1"))
+        self.assertFalse(utils.is_valid_cib_value("boolean", "not"))
+        self.assertFalse(utils.is_valid_cib_value("boolean", "random_string"))
+        self.assertFalse(utils.is_valid_cib_value("boolean", "truth"))
+
+    def test_is_valid_cib_value_time(self):
+        self.assertTrue(utils.is_valid_cib_value("time", "10"))
+        self.assertTrue(utils.is_valid_cib_value("time", "0"))
+        self.assertTrue(utils.is_valid_cib_value("time", "9s"))
+        self.assertTrue(utils.is_valid_cib_value("time", "10sec"))
+        self.assertTrue(utils.is_valid_cib_value("time", "10min"))
+        self.assertTrue(utils.is_valid_cib_value("time", "10m"))
+        self.assertTrue(utils.is_valid_cib_value("time", "10h"))
+        self.assertTrue(utils.is_valid_cib_value("time", "10hr"))
+        self.assertFalse(utils.is_valid_cib_value("time", "5.2"))
+        self.assertFalse(utils.is_valid_cib_value("time", "-10"))
+        self.assertFalse(utils.is_valid_cib_value("time", "10m 2s"))
+        self.assertFalse(utils.is_valid_cib_value("time", "hour"))
+        self.assertFalse(utils.is_valid_cib_value("time", "day"))
+
+    def test_validate_cluster_property(self):
+        definition = {
+            "default-resource-stickiness": {
+                "name": "default-resource-stickiness",
+                "shortdesc": "",
+                "longdesc": "",
+                "type": "integer",
+                "default": "0",
+                "source": "pengine"
+            },
+            "no-quorum-policy": {
+                "name": "no-quorum-policy",
+                "shortdesc": "What to do when the cluster does not have quorum",
+                "longdesc": "What to do when the cluster does not have quorum  Allowed values: stop, freeze, ignore, suicide",
+                "type": "enum",
+                "default": "stop",
+                "enum": ["stop", "freeze", "ignore", "suicide"],
+                "source": "pengine"
+            },
+            "enable-acl": {
+                "name": "enable-acl",
+                "shortdesc": "Enable CIB ACL",
+                "longdesc": "Enable CIB ACL",
+                "type": "boolean",
+                "default": "false",
+                "source": "cib"
+            }
+        }
+        self.assertTrue(utils.is_valid_cluster_property(
+            definition, "default-resource-stickiness", "10"
+        ))
+        self.assertTrue(utils.is_valid_cluster_property(
+            definition, "default-resource-stickiness", "-1"
+        ))
+        self.assertTrue(utils.is_valid_cluster_property(
+            definition, "no-quorum-policy", "freeze"
+        ))
+        self.assertTrue(utils.is_valid_cluster_property(
+            definition, "no-quorum-policy", "suicide"
+        ))
+        self.assertTrue(utils.is_valid_cluster_property(
+            definition, "enable-acl", "true"
+        ))
+        self.assertTrue(utils.is_valid_cluster_property(
+            definition, "enable-acl", "false"
+        ))
+        self.assertTrue(utils.is_valid_cluster_property(
+            definition, "enable-acl", "on"
+        ))
+        self.assertTrue(utils.is_valid_cluster_property(
+            definition, "enable-acl", "OFF"
+        ))
+        self.assertFalse(utils.is_valid_cluster_property(
+            definition, "default-resource-stickiness", "test"
+        ))
+        self.assertFalse(utils.is_valid_cluster_property(
+            definition, "default-resource-stickiness", "1.2"
+        ))
+        self.assertFalse(utils.is_valid_cluster_property(
+            definition, "no-quorum-policy", "invalid"
+        ))
+        self.assertFalse(utils.is_valid_cluster_property(
+            definition, "enable-acl", "not"
+        ))
+        self.assertRaises(
+            utils.UnknownPropertyException,
+            utils.is_valid_cluster_property, definition, "unknown", "value"
+        )
+
     def assert_element_id(self, node, node_id):
         self.assertTrue(
             isinstance(node, xml.dom.minidom.Element),
             "element with id '%s' not found" % node_id
         )
         self.assertEqual(node.getAttribute("id"), node_id)
-
-def get_child_elemets(el):
-    return [e for e in el.childNodes if e.nodeType == xml.dom.minidom.Node.ELEMENT_NODE]
 
 if __name__ == "__main__":
     unittest.main()

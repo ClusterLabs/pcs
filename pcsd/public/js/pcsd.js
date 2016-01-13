@@ -1780,23 +1780,54 @@ function remove_acl_item(id,item) {
   });
 }
 
-function update_cluster_settings(form) {
-  var data = form.serialize();
-  $('html, body, form, :input, :submit').css("cursor","wait");
+function update_cluster_settings() {
+  $("#cluster_properties button").prop("disabled", true);
+  var data = {
+    'hidden[hidden_input]': null // this is needed for backward compatibility 
+  };
+  $.each(Pcs.settingsController.get("properties"), function(_, prop) {
+    data[prop.get("form_name")] = prop.get("cur_val");
+  });
+  show_loading_screen();
   $.ajax({
     type: 'POST',
     url: get_cluster_remote_url() + 'update_cluster_settings',
     data: data,
     timeout: pcs_timeout,
     success: function() {
-      window.location.reload();
+      refresh_cluster_properties();
     },
     error: function (xhr, status, error) {
       alert(
         "Error updating configuration "
         + ajax_simple_error(xhr, status, error)
       );
-      $('html, body, form, :input, :submit').css("cursor","auto");
+      hide_loading_screen();
+      $("#cluster_properties button").prop("disabled", false);
+    }
+  });
+}
+
+function refresh_cluster_properties() {
+  Pcs.settingsController.set("filter", "");
+  $("#cluster_properties button").prop("disabled", true);
+  $.ajax({
+    url: get_cluster_remote_url() + "cluster_properties",
+    timeout: pcs_timeout,
+    dataType: "json",
+    success: function(data) {
+      Pcs.settingsController.update(data);
+    },
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to get cluster properties: "
+        + ajax_simple_error(xhr, status, error)
+      );
+      Pcs.settingsController.update({});
+    },
+    complete: function() {
+      hide_loading_screen();
+      $("#cluster_properties button").prop("disabled", false);
     }
   });
 }
@@ -2535,3 +2566,20 @@ function is_integer(str) {
   var n = ~~Number(str);
   return String(n) === str;
 }
+
+Ember.Handlebars.helper('selector-helper', function (content, value, place_holder, options) {
+  var out = "";
+  var line;
+  if (place_holder) {
+    out += '<option value="">' + place_holder + '</option>'; 
+  }
+  $.each(content, function(_, opt){
+    line = '<option value="' + opt["value"] + '"';
+    if (value == opt["value"]) {
+      line += ' selected="selected"'
+    }
+    line += ">" + Handlebars.Utils.escapeExpression(opt["name"]) + "</option>";
+    out += line + "\n";
+  });
+  return new Handlebars.SafeString(out);
+});

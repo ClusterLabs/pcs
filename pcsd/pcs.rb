@@ -20,42 +20,13 @@ def getAllSettings(session, cib_dom=nil)
   unless cib_dom
     cib_dom = get_cib_dom(session)
   end
-  stdout2, stderr2, retval2 = run_cmd(session, PENGINE, "metadata")
-  metadata = stdout2.join
   ret = {}
-  if cib_dom and retval2 == 0
-    doc = REXML::Document.new(metadata)
-
-    default = ""
-    el_type = ""
-    doc.elements.each("resource-agent/parameters/parameter") { |e|
-      name = e.attributes["name"]
-      name.gsub!(/-/,"_")
-      e.elements.each("content") { |c|
-        default = c.attributes["default"]
-        el_type = c.attributes["type"]
-      }
-      ret[name] = {"value" => default, "type" => el_type}
-    }
-
+  if cib_dom
     cib_dom.elements.each('/cib/configuration/crm_config//nvpair') { |e|
-      key = e.attributes['name']
-      val = e.attributes['value']
-      key.gsub!(/-/,"_")
-      if ret.has_key?(key)
-        if ret[key]["type"] == "boolean"
-          val == "true" ?  ret[key]["value"] = true : ret[key]["value"] = false
-        else
-          ret[key]["value"] = val
-        end
-
-      else
-        ret[key] = {"value" => val, "type" => "unknown"}
-      end
+      ret[e.attributes['name']] = e.attributes['value']
     }
-    return ret
   end
-  return {"error" => "Unable to get configuration settings"}
+  return ret
 end
 
 def add_fence_level(session, level, devices, node, remove = false)
@@ -1688,10 +1659,7 @@ def get_node_status(session, cib_dom)
     node_status[:constraints] = getAllConstraints(cib_dom.elements['/cib/configuration/constraints'])
   end
 
-  cluster_settings = getAllSettings(session, cib_dom)
-  if not cluster_settings.has_key?('error')
-    node_status[:cluster_settings] = cluster_settings
-  end
+  node_status[:cluster_settings] = getAllSettings(session, cib_dom)
 
   return node_status
 end

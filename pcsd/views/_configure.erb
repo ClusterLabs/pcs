@@ -14,24 +14,32 @@
 </tr>
 <tr id="configure_list_row" {{bind-attr style="Pcs.configure_page"}}>
   <td id="config" colspan=3>
-    <form>
-      <% @config_options.each { |page, options| %>
-        <table>
-          <% options.each { |co| %>
-            <tr title="<%= h(co.desc) %>">
-              <td class="label"><%= co.name %>:</td>
-              <td><%= co.html %><span class="units"><%= co.units %></span></td>
-            </tr>
-          <% } %>
-        </table>
-      <br>
-      <% } %>
-      <% if @config_options.length != 0 %>
-        <input type="submit" style="margin-left:20px;" class="text_field"
-          onclick="update_cluster_settings($(this).parent('form')); return false;"
-          value="Apply Changes"
-        >
-      <% end %>
+    {{input
+        type="text"
+        value=Pcs.settingsController.filter
+        placeholder="Filter"
+    }}
+    {{#if Pcs.settingsController.show_advanced}}
+      <button onclick="Pcs.settingsController.set('show_advanced', false);">Hide advanced settings</button>
+    {{else}}
+      <button onclick="Pcs.settingsController.set('show_advanced', true);">Show advanced settings</button>
+    {{/if}}
+    <form id="cluster_properties">
+      <table>
+        {{#each property in Pcs.settingsController.filtered}}
+          {{cluster-property prop=property name=property.name}}
+        {{else}}
+        <tr><td>No cluster properties available.</td></tr>
+        {{/each}}
+      </table>
+      {{#if Pcs.settingsController.filtered}}
+        <button onclick="update_cluster_settings(); return false;">
+          Apply Changes
+        </button>
+      {{/if}}
+      <button onclick="show_loading_screen(); refresh_cluster_properties(); return false;">
+        Refresh
+      </button>
     </form>
   </td>
 </tr>

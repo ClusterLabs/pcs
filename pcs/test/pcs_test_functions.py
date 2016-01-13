@@ -8,6 +8,7 @@ import sys
 import difflib
 import subprocess
 import re
+import xml.dom.minidom
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,parentdir)
 
@@ -64,3 +65,6 @@ def isMinimumPacemakerVersion(cmajor,cminor,crev):
         return True
     return False
 
+
+def get_child_elements(el):
+    return [e for e in el.childNodes if e.nodeType == xml.dom.minidom.Node.ELEMENT_NODE]
