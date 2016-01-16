@@ -292,9 +292,6 @@ def acl_permission(argv):
             acl_role(["create", role_id] + argv)
             return
 
-        if not argv:
-            usage.acl(["permission add"])
-            sys.exit(1)
         if not add_permissions_to_role(role, argv):
             usage.acl(["permission add"])
             sys.exit(1)
