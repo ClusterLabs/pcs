@@ -289,7 +289,7 @@ def acl_permission(argv):
                 found = True
                 break
         if found == False:
-            acl_role(["create", role_id] + argv) 
+            acl_role(["create", role_id] + argv)
             return
 
         if not argv:
@@ -350,7 +350,7 @@ def print_roles(dom):
             perm_name += " (" + perm.getAttribute("id") + ")"
             print(perm_name)
 
-def get_acls(dom):        
+def get_acls(dom):
     acls = dom.getElementsByTagName("acls")
     if len(acls) == 0:
         acls = dom.createElement("acls")

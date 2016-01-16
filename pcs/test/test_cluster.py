@@ -26,7 +26,7 @@ class ClusterTest(unittest.TestCase):
             os.unlink("cluster.conf.tmp")
 
     def testNodeStandby(self):
-        output, returnVal = pcs(temp_cib, "cluster standby rh7-1") 
+        output, returnVal = pcs(temp_cib, "cluster standby rh7-1")
         ac(output, "")
         assert returnVal == 0
 
@@ -44,7 +44,7 @@ class ClusterTest(unittest.TestCase):
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_cib, "cluster standby nonexistant-node") 
+        output, returnVal = pcs(temp_cib, "cluster standby nonexistant-node")
         assert returnVal == 1
         assert output == "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
 

@@ -1577,7 +1577,7 @@ def cluster_uidgid_rhel6(argv, silent_list = False):
         if not found and not silent_list:
             print("No uidgids configured in cluster.conf")
         return
-    
+
     command = argv.pop(0)
     uid=""
     gid=""
@@ -1609,7 +1609,7 @@ def cluster_uidgid_rhel6(argv, silent_list = False):
         # If we make a change, we sync out the changes to all nodes unless we're using -f
         if not utils.usefile:
             sync_nodes(utils.getNodesFromCorosyncConf(), utils.getCorosyncConf())
-         
+
     else:
         usage.cluster(["uidgid"])
         exit(1)
@@ -1664,7 +1664,7 @@ def cluster_uidgid(argv, silent_list = False):
             retval = utils.remove_uid_gid_file(uid,gid)
             if retval == False:
                 utils.err("no uidgid files with uid=%s and gid=%s found" % (uid,gid))
-         
+
     else:
         usage.cluster(["uidgid"])
         exit(1)
@@ -1728,7 +1728,7 @@ def cluster_verify(argv):
         nofilename = False
     elif len(argv) > 1:
         usage.cluster("verify")
-    
+
     options = []
     if "-V" in utils.pcs_options:
         options.append("-V")

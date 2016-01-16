@@ -484,7 +484,7 @@ def getCorosyncActiveNodes():
     nodename_re = re.compile(r"^nodelist\.node\.(\d+)\.ring0_addr.*= (.*)", re.M)
     nodestatus_re = re.compile(r"^runtime\.totem\.pg\.mrp\.srp\.members\.(\d+).status.*= (.*)", re.M)
     nodenameid_mapping_re = re.compile(r"nodelist\.node\.(\d+)\.nodeid.*= (\d+)", re.M)
-    
+
     nodes = nodename_re.findall(output)
     nodes_status = nodestatus_re.findall(output)
     nodes_mapping = nodenameid_mapping_re.findall(output)
@@ -1693,7 +1693,7 @@ def stonithCheck():
                 if prop.attrib["value"] == "off" or \
                         prop.attrib["value"] == "false":
                     return False
-        
+
     primitives = et.findall(str("configuration/resources/primitive"))
     for p in primitives:
         if p.attrib["class"] == "stonith":
@@ -1870,7 +1870,7 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
             #):
             missing_required_parameters.remove("port")
 
-    return bad_parameters, missing_required_parameters 
+    return bad_parameters, missing_required_parameters
 
 def getClusterName():
     if is_rhel6():
