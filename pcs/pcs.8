@@ -509,8 +509,8 @@ View current membership information as seen by corosync
 nodes [corosync|both|config]
 View current status of nodes from pacemaker. If 'corosync' is specified, print nodes currently configured in corosync, if 'both' is specified, print nodes from both corosync & pacemaker.  If 'config' is specified, print nodes from corosync & pacemaker configuration.
 .TP
-pcsd <node> ...
-Show the current status of pcsd on the specified nodes
+pcsd [<node>] ...
+Show the current status of pcsd on the specified nodes. When no nodes are specified, status of all nodes is displayed.
 .TP
 xml
 View xml version of status (output from crm_mon \fB\-r\fR \fB\-1\fR \fB\-X\fR)

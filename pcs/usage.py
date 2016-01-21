@@ -1128,8 +1128,9 @@ Commands:
         is specified, print nodes from both corosync & pacemaker.  If 'config'
         is specified, print nodes from corosync & pacemaker configuration.
 
-    pcsd <node> ...
-        Show the current status of pcsd on the specified nodes
+    pcsd [<node>] ...
+        Show the current status of pcsd on the specified nodes.
+        When no nodes are specified, status of all nodes is displayed.
 
     xml
         View xml version of status (output from crm_mon -r -1 -X)
