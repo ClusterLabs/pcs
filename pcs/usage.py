@@ -91,7 +91,7 @@ def sub_usage(args, output):
         return "\n" + usage + "\n" + ret.rstrip() + "\n"
     else:
         return output
-    
+
 def dict_depth(d, depth=0):
     if not isinstance(d, dict) or not d:
         return depth
@@ -222,7 +222,7 @@ Commands:
         print(output)
     else:
         return output
-                                                    
+
 
 def resource(args = [], pout = True):
     output = """
@@ -532,7 +532,7 @@ Examples:
 
 
     pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 \\
-               cidr_netmask=32 nic=eth2 op monitor interval=30s 
+               cidr_netmask=32 nic=eth2 op monitor interval=30s
       Create a new resource called 'VirtualIP' with options
 
     pcs resource create VirtualIP IPaddr2 ip=192.168.0.99 \\
@@ -821,7 +821,7 @@ Commands:
         Remove stonith id from configuration
 
     cleanup [<stonith id>]
-        Cleans up the stonith device in the lrmd (useful to reset the 
+        Cleans up the stonith device in the lrmd (useful to reset the
         status and failcount).  This tells the cluster to forget the
         operation history of a stonith device and re-detect its current state.
         This can be useful to purge knowledge of past failures that have

@@ -105,7 +105,7 @@ def list_property(argv):
         properties = get_default_properties()
     else:
         properties = {}
-        
+
     if "--defaults" not in utils.pcs_options:
         properties = get_set_properties(
             None if print_all else argv[0],
