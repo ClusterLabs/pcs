@@ -17,8 +17,12 @@ import utils
 
 pcs_location = "../pcs.py"
 
-# Run pcs with -f on specified file
 def pcs(testfile, args = ""):
+    """Run pcs with -f on specified file
+    Return tuple with:
+        shell stdoutdata
+        shell returncode
+    """
     if args == "":
         args = testfile
         testfile = "temp.xml"
