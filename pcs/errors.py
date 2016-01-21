@@ -1,0 +1,2 @@
+class CmdLineInputError(Exception):
+    pass

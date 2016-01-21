@@ -8,6 +8,7 @@ import sys
 import usage
 import utils
 import prop
+from errors import CmdLineInputError
 
 
 def acl_cmd(argv):
@@ -95,9 +96,15 @@ def acl_role(argv):
             element.setAttribute("description", description)
         acls.appendChild(element)
 
-        if not add_permissions_to_role(element, argv):
+        try:
+            permission_info_list = argv_to_permission_info_list(argv)
+            validation_result = validate_permissions(permission_info_list)
+            process_validation_result(validation_result)
+        except CmdLineInputError:
             usage.acl(["role create"])
             sys.exit(1)
+
+        add_permissions_to_role(element, permission_info_list)
         utils.replace_cib_configuration(dom)
 
     elif command == "delete":
@@ -292,9 +299,15 @@ def acl_permission(argv):
             acl_role(["create", role_id] + argv)
             return
 
-        if not add_permissions_to_role(role, argv):
+        try:
+            permission_info_list = argv_to_permission_info_list(argv)
+            validation_result = validate_permissions(permission_info_list)
+            process_validation_result(validation_result)
+        except CmdLineInputError:
             usage.acl(["permission add"])
             sys.exit(1)
+
+        add_permissions_to_role(role, permission_info_list)
         utils.replace_cib_configuration(dom)
 
     elif command == "delete":
@@ -359,27 +372,37 @@ def get_acls(dom):
         acls = acls[0]
     return (dom,acls)
 
-def add_permissions_to_role(role_element, argv):
+def add_permissions_to_role(role_element, permission_info_list):
     dom = role_element.ownerDocument
     role_id = role_element.getAttribute("id")
-    while argv:
-        if len(argv) < 3:
-            return False
-        rwd = argv.pop(0).lower()
-        if not rwd in ["read", "write", "deny"]:
-            return False
-        se = dom.createElement("acl_permission")
-        se.setAttribute("id", utils.find_unique_id(dom, role_id + "-" + rwd))
-        se.setAttribute("kind", rwd)
-        xp_id = argv.pop(0).lower()
-        if xp_id == "xpath":
-            xpath_query = argv.pop(0)
-            se.setAttribute("xpath", xpath_query)
-        elif xp_id == "id":
-            acl_ref = argv.pop(0)
-            se.setAttribute("reference", acl_ref)
-        else:
-            return False
-        role_element.appendChild(se)
-    return True
 
+    area_type_attribute_map = {
+        'xpath': 'xpath',
+        'id': 'reference',
+    }
+    for kind, area_type, area in permission_info_list:
+        kind = kind.lower()
+        se = dom.createElement("acl_permission")
+        se.setAttribute("id", utils.find_unique_id(dom, role_id + "-" + kind))
+        se.setAttribute("kind", kind)
+        se.setAttribute(area_type_attribute_map[area_type.lower()], area)
+        role_element.appendChild(se)
+
+def argv_to_permission_info_list(argv):
+    if len(argv) % 3 != 0:
+        raise CmdLineInputError()
+
+    return zip(argv[::3], argv[1::3], argv[2::3])
+
+def process_validation_result(validation_result):
+    if not validation_result:
+        raise CmdLineInputError()
+
+
+def validate_permissions(permission_info_list):
+    for kind, area_type, area in permission_info_list:
+        if not kind.lower() in ["read", "write", "deny"]:
+            return False
+        if not area_type.lower() in ["xpath", "id"]:
+            return False
+    return True
