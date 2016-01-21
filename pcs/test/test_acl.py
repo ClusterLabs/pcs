@@ -12,33 +12,40 @@ sys.path.insert(0,parentdir)
 
 import utils
 from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
+from pcs_test_functions import PcsRunner
+from test_assertions import AssertPcsMixin
 
 
 old_cib = "empty.xml"
 empty_cib = "empty-1.2.xml"
 temp_cib = "temp.xml"
 
-class ACLTest(unittest.TestCase):
+class ACLTest(unittest.TestCase, AssertPcsMixin):
+    pcs_runner = None
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy("corosync.conf.orig", "corosync.conf")
+        self.pcs_runner = PcsRunner(temp_cib)
 
     def testAutoUpgradeofCIB(self):
         old_temp_cib = temp_cib + "-old"
         shutil.copy(old_cib, old_temp_cib)
+        self.pcs_runner.testfile = old_temp_cib
 
-        o,r = pcs(old_temp_cib, "acl show")
-        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\n")
-        assert r == 0
+        self.assert_pcs_success(
+            'acl show',
+            stdout_full="ACLs are disabled, run 'pcs acl enable' to enable\n\n"
+        )
 
         with open(old_temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") != -1
             assert data.find("pacemaker-2.") == -1
 
-        o,r = pcs(old_temp_cib, "acl role create test_role read xpath my_xpath")
-        ac(o,"Cluster CIB has been upgraded to latest version\n")
-        assert r == 0
+        self.assert_pcs_success(
+            'acl role create test_role read xpath my_xpath',
+            stdout_full="Cluster CIB has been upgraded to latest version\n"
+        )
 
         with open(old_temp_cib) as myfile:
             data = myfile.read()
@@ -731,17 +738,17 @@ Role: role4
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(
-            "acl permission add role1 read id dummy readX xpath //resources"
+        self.assert_pcs_fail(
+          "acl permission add role1 read id dummy readX xpath //resources",
+          'Error: cannot add permissions, id "dummy" not'
+          +' exists.\n\nUsage: pcs acl permission add...'
         )
-        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
-        self.assertEqual(1, r)
 
-        o, r = pcs(
-            "acl permission add role1 read id dummy read xpathX //resources"
+        self.assert_pcs_fail(
+          "acl permission add role1 read id dummy read xpathX //resources",
+          'Error: cannot add permissions, id "dummy" not'
+          +' exists.\n\nUsage: pcs acl permission add...'
         )
-        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
-        self.assertEqual(1, r)
 
         o, r = pcs("acl")
         ac(o, """\
@@ -754,6 +761,40 @@ Role: role4
 """)
         self.assertEqual(0, r)
 
+    def test_can_add_permission_for_existing_id(self):
+        self.assert_pcs_success('acl role create role1')
+        self.assert_pcs_success('acl role create role2')
+        self.assert_pcs_success("acl permission add role1 read id role2")
+
+    def test_can_add_permission_for_existing_xpath(self):
+        self.assert_pcs_success('acl role create role1')
+        self.assert_pcs_success("acl permission add role1 read xpath //nodes")
+
+    def test_can_not_add_permission_for_nonexisting_id(self):
+        self.assert_pcs_success('acl role create role1')
+        self.assert_pcs_fail(
+            'acl permission add role1 read id non-existent-id',
+            'Error: cannot add permissions, id "non-existent-id"'
+            +' not exists.'
+        )
+
+    def test_can_not_add_permission_for_nonexisting_id_in_later_part(self):
+        self.assert_pcs_success('acl role create role1')
+        self.assert_pcs_success('acl role create role2')
+        self.assert_pcs_fail(
+            'acl permission add role1 read id role2 read id no-existent-id',
+            stdout_full = 'Error: cannot add permissions, id "no-existent-id"'
+            +' not exists.\n'
+        )
+    def test_can_create_role_with_permission_for_existing_id(self):
+        self.assert_pcs_success('acl role create role2')
+        self.assert_pcs_success('acl role create role1 read id role2')
+
+    def test_can_not_crate_role_with_permission_for_nonexisting_id(self):
+        self.assert_pcs_fail(
+            'acl role create role1 read id non-existent-id',
+            'Error: cannot add permissions, id "non-existent-id" not exists.'
+        )
 
 if __name__ == "__main__":
     if isMinimumPacemakerVersion(1,1,11):

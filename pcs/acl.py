@@ -9,7 +9,9 @@ import usage
 import utils
 import prop
 from errors import CmdLineInputError
-
+from errors import ErrorMessage
+from errors import error_codes
+from errors import exit_on_cmd_line_input_errror
 
 def acl_cmd(argv):
     if len(argv) == 0:
@@ -98,11 +100,10 @@ def acl_role(argv):
 
         try:
             permission_info_list = argv_to_permission_info_list(argv)
-            validation_result = validate_permissions(permission_info_list)
-            process_validation_result(validation_result)
-        except CmdLineInputError:
-            usage.acl(["role create"])
-            sys.exit(1)
+            validation_errors = validate_permissions(dom, permission_info_list)
+            process_validation_result(validation_errors)
+        except CmdLineInputError as e:
+            exit_on_cmd_line_input_errror(e, 'role create')
 
         add_permissions_to_role(element, permission_info_list)
         utils.replace_cib_configuration(dom)
@@ -301,11 +302,10 @@ def acl_permission(argv):
 
         try:
             permission_info_list = argv_to_permission_info_list(argv)
-            validation_result = validate_permissions(permission_info_list)
-            process_validation_result(validation_result)
-        except CmdLineInputError:
-            usage.acl(["permission add"])
-            sys.exit(1)
+            validation_errors = validate_permissions(dom, permission_info_list)
+            process_validation_result(validation_errors)
+        except CmdLineInputError as e:
+            exit_on_cmd_line_input_errror(e, 'permission add')
 
         add_permissions_to_role(role, permission_info_list)
         utils.replace_cib_configuration(dom)
@@ -390,19 +390,34 @@ def add_permissions_to_role(role_element, permission_info_list):
 
 def argv_to_permission_info_list(argv):
     if len(argv) % 3 != 0:
-        raise CmdLineInputError()
+        raise CmdLineInputError(show_usage=True)
 
     return zip(argv[::3], argv[1::3], argv[2::3])
 
-def process_validation_result(validation_result):
-    if not validation_result:
-        raise CmdLineInputError()
+def process_validation_result(validation_errors):
+    if not validation_errors:
+        return
+    cmd_line_error = CmdLineInputError()
+    for error in validation_errors:
+        if error.type == error_codes.BAD_USAGE:
+            cmd_line_error.show_usage = True
+        if error.type == error_codes.ID_NOT_FOUND:
+            cmd_line_error.message_list.append(
+                 'Error: cannot add permissions, id "{0}" not exists.'
+                 .format(error.info['id'] if error.info.has_key('id') else '')
+            )
+    raise cmd_line_error
 
 
-def validate_permissions(permission_info_list):
+def validate_permissions(dom, permission_info_list):
+    report = []
     for kind, area_type, area in permission_info_list:
         if not kind.lower() in ["read", "write", "deny"]:
-            return False
+            report.append(ErrorMessage(error_codes.BAD_USAGE))
         if not area_type.lower() in ["xpath", "id"]:
-            return False
-    return True
+            report.append(ErrorMessage(error_codes.BAD_USAGE))
+        if area_type == 'id' and not utils.does_id_exist(dom, area):
+            report.append(ErrorMessage(error_codes.ID_NOT_FOUND).set_info({
+                'id': area,
+            }))
+    return report

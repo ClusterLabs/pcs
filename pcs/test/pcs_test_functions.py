@@ -17,6 +17,16 @@ import utils
 
 pcs_location = "../pcs.py"
 
+class PcsRunner(object):
+    testfile = 'temp.xml'
+    def __init__(self, testfile='temp.xml'):
+        self.testfile = testfile
+
+
+    def run(self, args):
+        return pcs(self.testfile, args)
+
+
 def pcs(testfile, args = ""):
     """Run pcs with -f on specified file
     Return tuple with:
