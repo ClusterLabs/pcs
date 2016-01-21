@@ -31,6 +31,10 @@ def property_cmd(argv):
 
 
 def set_property(argv):
+    if not argv:
+        usage.property(['set'])
+        sys.exit(1)
+
     prop_def_dict = utils.get_cluster_properties_definition()
     nodes_attr = "--node" in utils.pcs_options
     failed = False
