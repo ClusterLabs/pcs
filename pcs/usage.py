@@ -249,7 +249,7 @@ Commands:
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
            [--clone <clone options> | --master <master options> |
-           --group <group name> [--before <resource id> | --after <resource id>]
+           --group <group id> [--before <resource id> | --after <resource id>]
            ] [--disabled] [--wait[=n]]
         Create specified resource.  If --clone is used a clone resource is
         created if --master is specified a master/slave resource is created.
@@ -415,7 +415,7 @@ Commands:
         otherwise.  If 'n' is not specified it defaults to 60 minutes.
         Example: pcs resource meta TestResource failure-timeout=50 stickiness=
 
-    group add <group name> <resource id> [resource id] ... [resource id]
+    group add <group id> <resource id> [resource id] ... [resource id]
               [--before <resource id> | --after <resource id>] [--wait[=n]]
         Add the specified resource to the group, creating the group if it does
         not exist.  If the resource is present in another group it is moved
@@ -426,7 +426,7 @@ Commands:
         appropriate) and then return 0 on success or 1 on error.  If 'n' is not
         specified it defaults to 60 minutes.
 
-    group remove <group name> <resource id> [resource id] ... [resource id]
+    group remove <group id> <resource id> [resource id] ... [resource id]
           [--wait[=n]]
         Remove the specified resource(s) from the group, removing the group if
         it no resources remain.  If --wait is specified, pcs will wait up to 'n'
@@ -434,7 +434,7 @@ Commands:
         appropriate) and then return 0 on success or 1 on error.  If 'n' is not
         specified it defaults to 60 minutes.
 
-    ungroup <group name> [resource id] ... [resource id] [--wait[=n]]
+    ungroup <group id> [resource id] ... [resource id] [--wait[=n]]
         Remove the group (Note: this does not remove any resources from the
         cluster) or if resources are specified, remove the specified resources
         from the group.  If --wait is specified, pcs will wait up to 'n' seconds
@@ -449,14 +449,14 @@ Commands:
         on success or 1 on error.  If 'n' is not specified it defaults to 60
         minutes.
 
-    unclone <resource id | group name> [--wait[=n]]
+    unclone <resource id | group id> [--wait[=n]]
         Remove the clone which contains the specified group or resource (the
         resource or group will not be removed).  If --wait is specified, pcs
         will wait up to 'n' seconds for the operation to finish (including
         stopping clone instances if appropriate) and then return 0 on success
         or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 
-    master [<master/slave name>] <resource id | group name> [options]
+    master [<master/slave id>] <resource id | group id> [options]
            [--wait[=n]]
         Configure a resource or group as a multi-state (master/slave) resource.
         If --wait is specified, pcs will wait up to 'n' seconds for the operation
@@ -951,12 +951,12 @@ Commands:
         nodes or resources are specified then we only show information about
         them.  If --full is specified show the internal constraint id's as well.
 
-    location add <id> <resource name> <node> <score> [resource-discovery=<option>]
-        Add a location constraint with the appropriate id, resource name,
+    location add <id> <resource id> <node> <score> [resource-discovery=<option>]
+        Add a location constraint with the appropriate id, resource id,
         node name and score. (For more advanced pacemaker usage)
 
-    location remove <id> [<resource name> <node> <score>]
-        Remove a location constraint with the appropriate id, resource name,
+    location remove <id> [<resource id> <node> <score>]
+        Remove a location constraint with the appropriate id, resource id,
         node name and score. (For more advanced pacemaker usage)
 
     order show [--full]
@@ -1056,39 +1056,39 @@ Commands:
     disable
         Disable access control lists
 
-    role create <role name> [description=<description>] [((read | write | deny)
+    role create <role id> [description=<description>] [((read | write | deny)
                                                 (xpath <query> | id <id>))...]
-        Create a role with the name and (optional) description specified.
+        Create a role with the id and (optional) description specified.
         Each role can also have an unlimited number of permissions
         (read/write/deny) applied to either an xpath query or the id
         of a specific element in the cib
 
-    role delete <role name>
+    role delete <role id>
         Delete the role specified and remove it from any users/groups it was
         assigned to
 
-    role assign <role name> [to] <username/group>
+    role assign <role id> [to] <username/group>
         Assign a role to a user or group already created with 'pcs acl
         user/group create'
 
-    role unassign <role name> [from] <username/group>
+    role unassign <role id> [from] <username/group>
         Remove a role from the specified user
 
-    user create <username> <role name> [<role name>]...
+    user create <username> <role id> [<role id>]...
         Create an ACL for the user specified and assign roles to the user
 
     user delete <username>
         Remove the user specified (and roles assigned will be unassigned for
         the specified user)
 
-    group create <group> <role name> [<role name>]...
+    group create <group> <role id> [<role id>]...
         Create an ACL for the group specified and assign roles to the group
 
     group delete <group>
         Remove the group specified (and roles assigned will be unassigned for
         the specified group)
 
-    permission add <role name> ((read | write | deny) (xpath <query> |
+    permission add <role id> ((read | write | deny) (xpath <query> |
                                                                 id <id>))...
         Add the listed permissions to the role specified
 

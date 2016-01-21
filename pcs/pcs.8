@@ -61,7 +61,7 @@ Show list of all available resources, optionally filtered by specified type, sta
 describe <standard:provider:type|type>
 Show options for the specified resource
 .TP
-create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group name> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
+create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group id> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
 Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created if \fB\-\-master\fR is specified a master/slave resource is created.  If \fB\-\-group\fR is specified the resource is added to the group named.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group.  If \fB\-\-disabled\fR is specified the resource is not started automatically.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.  If 'n' is not specified it defaults to 60 minutes.
 
 Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
@@ -129,22 +129,22 @@ Set default values for operations, if no options are passed, lists currently con
 meta <resource id | group id | master id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
 Add specified options to the specified resource, group, master/slave or clone.  Meta options should be in the format of name=value, options may be removed by setting an option without a value.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise.  If 'n' is not specified it defaults to 60 minutes.  Example: pcs resource meta TestResource failure\-timeout=50 stickiness=
 .TP
-group add <group name> <resource id> [resource id] ... [resource id] [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>] [\fB\-\-wait\fR[=n]]
+group add <group id> <resource id> [resource id] ... [resource id] [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>] [\fB\-\-wait\fR[=n]]
 Add the specified resource to the group, creating the group if it does not exist.  If the resource is present in another group it is moved to the new group.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resources relatively to some resource already existing in the group.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
-group remove <group name> <resource id> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
+group remove <group id> <resource id> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
 Remove the specified resource(s) from the group, removing the group if it no resources remain.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
-ungroup <group name> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
+ungroup <group id> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
 Remove the group (Note: this does not remove any resources from the cluster) or if resources are specified, remove the specified resources from the group.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and the return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
 clone <resource id | group id> [clone options]... [\fB\-\-wait\fR[=n]]
 Setup up the specified resource or group as a clone.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting clone instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
-unclone <resource id | group name> [\fB\-\-wait\fR[=n]]
+unclone <resource id | group id> [\fB\-\-wait\fR[=n]]
 Remove the clone which contains the specified group or resource (the resource or group will not be removed).  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including stopping clone instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
-master [<master/slave name>] <resource id | group name> [options] [\fB\-\-wait\fR[=n]]
+master [<master/slave id>] <resource id | group id> [options] [\fB\-\-wait\fR[=n]]
 Configure a resource or group as a multi\-state (master/slave) resource.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting and promoting resource instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.  Note: to remove a master you must remove the resource/group it contains.
 .TP
 manage <resource id> ... [resource n]
@@ -353,34 +353,34 @@ Enable access control lists
 disable
 Disable access control lists
 .TP
-role create <role name> [description=<description>] [((read | write | deny) (xpath <query> | id <id>))...]
-Create a role with the name and (optional) description specified.
+role create <role id> [description=<description>] [((read | write | deny) (xpath <query> | id <id>))...]
+Create a role with the id and (optional) description specified.
 Each role can also have an unlimited number of permissions
 (read/write/deny) applied to either an xpath query or the id
 of a specific element in the cib
 .TP
-role delete <role name>
+role delete <role id>
 Delete the role specified and remove it from any users/groups it was assigned to
 .TP
-role assign <role name> [to] <username/group>
+role assign <role id> [to] <username/group>
 Assign a role to a user or group already created with 'pcs acl user/group create'
 .TP
-role unassign <role name> [from] <username/group>
+role unassign <role id> [from] <username/group>
 Remove a role from the specified user
 .TP
-user create <username> <role name> [<role name>]...
+user create <username> <role id> [<role id>]...
 Create an ACL for the user specified and assign roles to the user
 .TP
 user delete <username>
 Remove the user specified (and roles assigned will be unassigned for the specified user)
 .TP
-group create <group> <role name> [<role name>]...
+group create <group> <role id> [<role id>]...
 Create an ACL for the group specified and assign roles to the group
 .TP
 group delete <group>
 Remove the group specified (and roles assigned will be unassigned for the specified group)
 .TP
-permission add <role name> ((read | write | deny) (xpath <query> | id <id>))...
+permission add <role id> ((read | write | deny) (xpath <query> | id <id>))...
 Add the listed permissions to the role specified
 .TP
 permission delete <permission id>
@@ -430,11 +430,11 @@ where duration options and date spec options are: hours, monthdays, weekdays, ye
 location show [resources|nodes [node id|resource id]...] [\fB\-\-full\fR]
 List all the current location constraints, if 'resources' is specified location constraints are displayed per resource (default), if 'nodes' is specified location constraints are displayed per node.  If specific nodes or resources are specified then we only show information about them.  If \fB\-\-full\fR is specified show the internal constraint id's as well.
 .TP
-location add <id> <resource name> <node> <score> [resource-discovery=<option>]
-Add a location constraint with the appropriate id, resource name, node name and score. (For more advanced pacemaker usage)
+location add <id> <resource id> <node> <score> [resource-discovery=<option>]
+Add a location constraint with the appropriate id, resource id, node name and score. (For more advanced pacemaker usage)
 .TP
-location remove <id> [<resource name> <node> <score>]
-Remove a location constraint with the appropriate id, resource name, node name and score. (For more advanced pacemaker usage)
+location remove <id> [<resource id> <node> <score>]
+Remove a location constraint with the appropriate id, resource id, node name and score. (For more advanced pacemaker usage)
 .TP
 order show [\fB\-\-full\fR]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
