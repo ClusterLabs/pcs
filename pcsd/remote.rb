@@ -2264,7 +2264,7 @@ def set_resource_utilization(params, reqest, session)
 
   res_id = params[:resource_id]
   name = params[:name]
-  value = params[:value] if params[:value] else ''
+  value = params[:value] || ''
 
   _, stderr, retval = run_cmd(
     session, PCS, 'resource', 'utilization', res_id, "#{name}=#{value}"
@@ -2289,7 +2289,7 @@ def set_node_utilization(params, reqest, session)
 
   node = params[:node]
   name = params[:name]
-  value = params[:value] if params[:value] else ''
+  value = params[:value] || ''
 
   _, stderr, retval = run_cmd(
     session, PCS, 'node', 'utilization', node, "#{name}=#{value}"
