@@ -852,7 +852,23 @@ function add_existing_dialog() {
 function update_existing_cluster_dialog(data) {
   for (var i in data) {
     if (data[i] == "Online") {
-      $('#add_existing_cluster_form').submit();
+      $.ajax({
+        type: "POST",
+        url: "/manage/existingcluster",
+        timeout: pcs_timeout,
+        data: $('#add_existing_cluster_form').serialize(),
+        success: function(data) {
+          if (data) {
+            alert("Operation Successful!\n\nWarnings:\n" + data);
+          }
+          $("#add_existing_cluster.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+          Pcs.update();
+        },
+        error: function (xhr, status, error) {
+          alert(xhr.responseText);
+          $("#add_existing_submit_btn").button("option", "disabled", false);
+        }
+      });
       return;
     } else if (data[i] == "Unable to authenticate") {
       auth_nodes_dialog([i], function() {$("#add_existing_submit_btn").trigger("click");});
@@ -988,7 +1004,6 @@ function update_create_cluster_dialog(nodes, version_info) {
   else {
     $("#addr0_addr1_mismatch_error_msg").hide();
   }
-
   if(versions) {
     if(cman_nodes.length > 0 && transport == "udpu") {
       if(noncman_nodes.length < 1 && ring1_nodes.length < 1) {
@@ -1028,7 +1043,23 @@ function update_create_cluster_dialog(nodes, version_info) {
   }
 
   if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes.length == 0 && cluster_name != "" && addr1_match == 1 && versions_check_ok == 1) {
-    $('#create_new_cluster_form').submit();
+    $.ajax({
+      type: "POST",
+      url: "/manage/newcluster",
+      timeout: pcs_timeout,
+      data: $('#create_new_cluster_form').serialize(),
+      success: function(data) {
+        if (data) {
+          alert("Operation Successful!\n\nWarnings:\n" + data);
+        }
+        $("#create_new_cluster.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
+        Pcs.update();
+      },
+      error: function (xhr, status, error) {
+        alert(xhr.responseText);
+        $("#create_cluster_submit_btn").button("option", "disabled", false);
+      }
+    });
   } else {
     $("#create_cluster_submit_btn").button("option", "disabled", false);
   }
@@ -1217,7 +1248,7 @@ function remove_cluster(ids) {
     timeout: pcs_timeout,
     success: function () {
       $("#dialog_verify_remove_clusters.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
-      location.reload();
+      Pcs.update();
     },
     error: function (xhr, status, error) {
       alert("Unable to remove cluster: " + res + " ("+error+")");

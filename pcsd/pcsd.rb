@@ -365,25 +365,23 @@ if not DISABLE_GUI
     begin
       status = JSON.parse(result)
     rescue JSON::ParserError
-      session[:error] = "genericerror"
-      session[:errorval] = 'Unable to communicate with remote pcsd.'
-      redirect '/manage'
+      return 400, "Unable to communicate with remote pcsd on node '#{node}'."
     end
+
+    warning_messages = []
 
     if status.has_key?("corosync_offline") and
       status.has_key?("corosync_online") then
       nodes = status["corosync_offline"] + status["corosync_online"]
 
-      if status["cluster_name"] == ""
-        session[:error] = "noname"
-        session[:errorval] = node
-        redirect '/manage'
+      if status["cluster_name"] == ''
+        return 400, "The node, '#{noname}', does not currently have a cluster
+ configured.  You must create a cluster using this node before adding it to pcsd."
       end
 
       if pcs_config.is_cluster_name_in_use(status["cluster_name"])
-        session[:error] = "duplicatename"
-        session[:errorval] = status["cluster_name"]
-        redirect '/manage'
+        return 400, "The cluster name, '#{status['cluster_name']}' has
+already been added to pcsd.  You may not add two clusters with the same name into pcsd."
       end
 
       # auth begin
@@ -391,19 +389,15 @@ if not DISABLE_GUI
         PCSAuth.getSuperuserSession(), node, '/get_cluster_tokens'
       )
       if retval == 404 # backward compatibility layer
-        session[:error] = "authimposible"
+        warning_messages << "Unable to do correct authentication of cluster because it is running old version of pcs/pcsd."
       else
         if retval != 200
-          session[:error] = "cannotgettokens"
-          session[:errorval] = status["cluster_name"]
-          redirect '/manage'
+          return 400, "Unable to get authentication info from cluster '#{status['cluster_name']}'."
         end
         begin
           new_tokens = JSON.parse(out)
         rescue
-          session[:error] = "cannotgettokens"
-          session[:errorval] = status["cluster_name"]
-          redirect '/manage'
+          return 400, "Unable to get authentication info from cluster '#{status['cluster_name']}'."
         end
 
         sync_config = Cfgsync::PcsdTokens.from_file('')
@@ -411,9 +405,7 @@ if not DISABLE_GUI
           sync_config, new_tokens, get_corosync_nodes(), $cluster_name
         )
         if not pushed
-          session[:error] = "configversionsconflict"
-          session[:errorval] = sync_config.class.name
-          redirect '/manage'
+          return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
         end
       end
       #auth end
@@ -425,20 +417,20 @@ if not DISABLE_GUI
         sync_config, get_corosync_nodes(), $cluster_name, true
       )
       if not pushed
-        session[:error] = 'configversionsconflict'
-        session[:errorval] = sync_config.class.name
+        return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
       end
-      redirect '/manage'
+      return 200, warning_messages.join("\n\n")
     else
-      redirect '/manage/?error=notauthorized#manage'
+      return 400, "Unable to communicate with remote pcsd on node '#{node}'."
     end
   end
 
   post '/manage/newcluster' do
     if not allowed_for_superuser(session)
-      session[:error] = "permissiondenied"
-      redirect '/manage'
+      return 400, 'Permission denied.'
     end
+
+    warning_messages = []
 
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     @manage = true
@@ -462,16 +454,12 @@ if not DISABLE_GUI
       end
     }
     if pcs_config.is_cluster_name_in_use(@cluster_name)
-      session[:error] = "duplicatename"
-      session[:errorval] = @cluster_name
-      redirect '/manage'
+      return 400, "The cluster name, '#{@cluster_name}' has already been added to pcsd.  You may not add two clusters with the same name into pcsd."
     end
 
     @nodes.each {|n|
       if pcs_config.is_node_in_use(n)
-        session[:error] = "duplicatenodename"
-        session[:errorval] = n
-        redirect '/manage'
+        return 400, "The node, '#{n}' is already configured in pcsd.  You may not add a node to two different clusters in pcsd."
       end
     }
 
@@ -482,12 +470,10 @@ if not DISABLE_GUI
         session, n, "/save_tokens", true, tokens
       )
       if retval == 404 # backward compatibility layer
-        session[:error] = "authimposible"
+        warning_messages << "Unable to do correct authentication of cluster on node '#{n}', because it is running old version of pcs/pcsd."
         break
       elsif retval != 200
-        session[:error] = "cannotsavetokens"
-        session[:errorval] = n
-        redirect '/manage'
+        return 400, "Unable to authenticate all nodes on node '#{n}'."
       end
     }
 
@@ -529,15 +515,13 @@ if not DISABLE_GUI
         break if pushed
       }
       if not pushed
-        session[:error] = 'configversionsconflict'
-        session[:errorval] = Cfgsync::PcsdSettings.name
+        return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
       end
     else
-      session[:error] = "unabletocreate"
-      session[:errorval] = out
+      return 400, "Unable to create new cluster. If cluster already exists on one or more of the nodes run 'pcs cluster destroy' on all nodes to remove current cluster configuration.\n\n#{node_to_send_to}: #{out}"
     end
 
-    redirect '/manage'
+    return warning_messages.join("\n\n")
   end
 
   post '/manage/removecluster' do
@@ -552,10 +536,8 @@ if not DISABLE_GUI
       sync_config, get_corosync_nodes(), $cluster_name, true
     )
     if not pushed
-      session[:error] = 'configversionsconflict'
-      session[:errorval] = sync_config.class.name
+      return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node.  Local node's configuration was updated.  Please repeat the last action if appropriate."
     end
-    # do not reload nor redirect as that's done in js which called this
   end
 
   get '/manage/check_pcsd_status' do
@@ -711,7 +693,7 @@ if not DISABLE_GUI
     @clusters = pcs_config.clusters
     @nodes = get_cluster_nodes(params[:cluster])
     if @nodes == []
-      redirect '/manage/?error=badclustername&errorval=' + params[:cluster] + '#manage'
+      redirect '/manage/'
     end
     @resource_agents = get_resource_agents_avail(session)
     @stonith_agents = get_stonith_agents_avail(session)

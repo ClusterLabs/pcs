@@ -427,39 +427,3 @@ Specify ring 1 address for each node if you want to use RRP." %>
     </div>
   </form>
 </div>
-<div id="manage_error" style="display: none;">
-  <br>
-  <% if @error == "badclustername" %>
-    The cluster name, '<%=@errorval%>' has not yet been configured in pcsd.  Use 'Add Existing' to add a node which is part of the cluster.
-  <% end %>
-  <% if @error == "noname" %>
-    The node, '<%= @errorval %>', does not currently have a cluster configured.  You must create a cluster using this node before adding it to pcsd.
-  <% end %>
-  <% if @error == "duplicatename" %>
-    The cluster name, '<%=@errorval%>' has already been added to pcsd.  You may not add two clusters with the same name into pcsd.
-  <% end %>
-  <% if @error == "duplicatenodename" %>
-    The node, '<%=@errorval%>' is already configured in pcsd.  You may not add a node to two different clusters in pcsd.
-  <% end %>
-  <% if @error == "cannotgettokens" %>
-    Unable to get authentication info from cluster '<%=@errorval%>'.
-  <% end %>
-  <% if @error == "cannotsavetokens" %>
-    Unable to authenticate all nodes on node '<%=@errorval%>'.
-  <% end %>
-  <% if @error == "authimposible" %>
-    Operation successful.<br>Unable to do correct authentication of cluster because it is running old version of pcs/pcsd.
-  <% end %>
-  <% if @error == "unabletocreate" %>
-    Unable to create new cluster. If cluster already exists on one or more of the nodes run 'pcs cluster destroy' on all nodes to remove current cluster configuration.<br><br><%=nl2br(@errorval)%>
-  <% end %>
-  <% if @error == "configversionsconflict" %>
-    Configuration conflict detected.<br><br>Some nodes had a newer configuration than the local node.  Local node's configuration was updated.  Please repeat the last action if appropriate.
-  <% end %>
-  <% if @error == "permissiondenied" %>
-    Permission denied.
-  <% end %>
-  <% if @error == "genericerror" %>
-    <%=nl2br(@errorval)%>
-  <% end %>
-</div>
