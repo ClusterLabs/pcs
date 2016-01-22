@@ -12,14 +12,17 @@ sys.path.insert(0, parentdir)
 
 import utils
 from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
+from pcs_test_functions import PcsRunner
+from pcs_test_assertions import AssertPcsMixin
 
 
 empty_cib = "empty-withnodes.xml"
 temp_cib = "temp.xml"
 
-class ClusterTest(unittest.TestCase):
+class ClusterTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
         if os.path.exists("corosync.conf.tmp"):
             os.unlink("corosync.conf.tmp")
         if os.path.exists("cluster.conf.tmp"):
@@ -2469,6 +2472,16 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
         o,r = pcs("cluster cib-upgrade")
         ac(o,"Cluster CIB has been upgraded to latest version\n")
         assert r == 0
+
+    def test_can_not_setup_cluster_for_unknown_transport_type(self):
+        self.assert_pcs_fail(
+            'cluster setup --local --corosync_conf=corosync.conf.tmp'
+                +" --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2"
+                +" --transport=unknown"
+            ,
+            "Error: unknown transport 'unknown', use --force to override\n"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

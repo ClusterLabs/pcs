@@ -1,6 +1,9 @@
-import difflib
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
-from pcs_test_functions import pcs
+import difflib
 
 def prepare_diff(first, second):
     return ''.join(
@@ -9,27 +12,27 @@ def prepare_diff(first, second):
 
 
 class AssertPcsMixin(object):
-    def assert_pcs_success(self, command, stdout_start=None, stdout_full=None):
+    def assert_pcs_success(self, command, stdout_full=None, stdout_start=None):
         full = stdout_full
         if stdout_start is None and stdout_full is None:
             full = ''
 
         self.assert_pcs_result(
             command,
-            stdout_start=stdout_start,
-            stdout_full=full
+            stdout_full=full,
+            stdout_start=stdout_start
         )
 
-    def assert_pcs_fail(self, command, stdout_start=None, stdout_full=None):
+    def assert_pcs_fail(self, command, stdout_full=None, stdout_start=None):
         self.assert_pcs_result(
             command,
-            stdout_start=stdout_start,
             stdout_full=stdout_full,
+            stdout_start=stdout_start,
             returncode=1
         )
 
     def assert_pcs_result(
-        self, command, stdout_start=None, stdout_full=None, returncode=0
+        self, command, stdout_full=None, stdout_start=None, returncode=0
     ):
         msg = 'Please specify exactly one: stdout_start or stdout_full'
         if stdout_start is None and stdout_full is None:
@@ -39,19 +42,27 @@ class AssertPcsMixin(object):
             raise Exception(msg +', both specified')
 
         stdout, pcs_returncode = self.pcs_runner.run(command)
-        self.assertEqual(returncode, pcs_returncode)
+        self.assertEqual(
+            returncode, pcs_returncode, (
+                'Expected return code "{0}", but was "{1}"'
+                +'\ncommand:\n{2}\nstdout:\n{3}'
+            ).format(returncode, pcs_returncode, command, stdout)
+        )
         if stdout_start:
             if not stdout.startswith(stdout_start):
                 self.assertTrue(
                     False,
-                    'Stdout not start as expected, diff is (expected 2nd):\n'
+                    'Stdout not start as expected\ncommand:\n'+command
+                    +'\ndiff is (expected 2nd):\n'
                     +prepare_diff(stdout[:len(stdout_start)], stdout_start)
+                    +'\nFull stdout:'+stdout
                 )
         else:
             #unicode vs non-unicode not solved here
             if stdout != stdout_full:
                 self.assertEqual(
                     stdout, stdout_full,
-                    'Stdout is not as expected, diff is(expected 2nd):\n'
+                    'Stdout is not as expected\ncommand:\n'+command
+                    +'\n diff is(expected 2nd):\n'
                     +prepare_diff(stdout, stdout_full)
                 )

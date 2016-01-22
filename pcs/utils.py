@@ -21,6 +21,10 @@ import tarfile
 import fcntl
 import getpass
 import base64
+
+
+from errors import ReportItem
+from errors import ReportItemSeverity
 try:
     # python2
     from urllib import urlencode as urllib_urlencode
@@ -2019,6 +2023,37 @@ def err(errorText, exit_after_error=True):
     if exit_after_error:
         sys.exit(1)
 
+
+def process_library_reports(report_item_list):
+    """
+    report_item_list list of ReportItem
+    """
+    critical_error = False
+    for report_item in report_item_list:
+        if report_item.severity == ReportItemSeverity.WARNING:
+            print("Warning: " + report_item.message)
+            continue
+
+        if report_item.severity != ReportItemSeverity.ERROR:
+            print(report_item.message)
+            continue
+
+        if report_item.forceable and "--force" in pcs_options:
+            # Let the user know what may be wrong even when --force is used,
+            # as it may be used for override early errors hiding later
+            # errors otherwise.
+            print("Warning: " + report_item.message)
+            continue
+
+        sys.stderr.write('Error: {0}{1}\n'.format(
+            report_item.message,
+            ", use --force to override" if report_item.forceable else ''
+        ))
+        critical_error = True
+
+    if critical_error:
+        sys.exit(1)
+
 def serviceStatus(prefix):
     if not is_systemctl():
         return
@@ -2530,3 +2565,15 @@ def get_cluster_property_from_xml(etree_el):
     if property["longdesc"] == property["shortdesc"]:
         property["longdesc"] = ""
     return property
+
+def get_acls(dom):
+    acls = dom.getElementsByTagName("acls")
+    if len(acls) == 0:
+        acls = dom.createElement("acls")
+        conf = dom.getElementsByTagName("configuration")
+        if len(conf) == 0:
+            utils.err("Unable to get configuration section of cib")
+        conf[0].appendChild(acls)
+    else:
+        acls = acls[0]
+    return acls

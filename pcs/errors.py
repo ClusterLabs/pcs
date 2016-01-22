@@ -1,29 +1,38 @@
-import sys
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import usage
 import error_codes
 
 class CmdLineInputError(Exception):
-    show_usage = False
-    message_list = []
+    pass
 
-    def __init__(self, show_usage=False):
-        self.show_usage = show_usage
+class ReportItemSeverity(object):
+    ERROR = 'ERROR'
+    WARNING = 'WARNING'
+    INFO = 'INFO'
 
-class ErrorMessage(object):
-    type = None
-    info = {}
+class ReportItem(object):
+    @classmethod
+    def error(cls, code, message_pattern, **kwargs):
+        return cls(code, ReportItemSeverity.ERROR, message_pattern, **kwargs)
 
-    def __init__(self, type):
-        self.type = type
+    @classmethod
+    def warning(cls, code, message_pattern, **kwargs):
+        return cls(code, ReportItemSeverity.WARNING, message_pattern, **kwargs)
 
-    def set_info(self, info):
-        self.info = info
-        return self
+    @classmethod
+    def info(cls, code, message_pattern, **kwargs):
+        return cls(code, ReportItemSeverity.INFO, message_pattern, **kwargs)
 
-def exit_on_cmd_line_input_errror(error, usage_name):
-    if error.message_list:
-        print('\n'.join(error.message_list))
-    if error.show_usage:
-        usage.acl([usage_name])
-    sys.exit(1)
+    def __init__(
+        self, code, severity, message_pattern, forceable=False, info=None
+    ):
+        self.code = code
+        self.severity = severity
+        self.forceable = forceable
+        self.message_pattern=message_pattern
+        self.info = info if info else dict()
+        self.message = self.message_pattern.format(**self.info)

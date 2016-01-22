@@ -13,3 +13,4 @@ test:
 	$(PYTHON) test_properties.py ${pyunit_flags}
 	$(PYTHON) test_acl.py ${pyunit_flags}
 	$(PYTHON) test_node.py ${pyunit_flags}
+	$(PYTHON) test_library_acl.py ${pyunit_flags}

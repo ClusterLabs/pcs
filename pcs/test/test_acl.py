@@ -13,7 +13,7 @@ sys.path.insert(0,parentdir)
 import utils
 from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
 from pcs_test_functions import PcsRunner
-from test_assertions import AssertPcsMixin
+from pcs_test_assertions import AssertPcsMixin
 
 
 old_cib = "empty.xml"
@@ -34,7 +34,7 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             'acl show',
-            stdout_full="ACLs are disabled, run 'pcs acl enable' to enable\n\n"
+            "ACLs are disabled, run 'pcs acl enable' to enable\n\n"
         )
 
         with open(old_temp_cib) as myfile:
@@ -44,7 +44,7 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             'acl role create test_role read xpath my_xpath',
-            stdout_full="Cluster CIB has been upgraded to latest version\n"
+            "Cluster CIB has been upgraded to latest version\n"
         )
 
         with open(old_temp_cib) as myfile:
@@ -740,14 +740,12 @@ Role: role4
 
         self.assert_pcs_fail(
           "acl permission add role1 read id dummy readX xpath //resources",
-          'Error: cannot add permissions, id "dummy" not'
-          +' exists.\n\nUsage: pcs acl permission add...'
+          stdout_start='\nUsage: pcs acl permission add...'
         )
 
         self.assert_pcs_fail(
           "acl permission add role1 read id dummy read xpathX //resources",
-          'Error: cannot add permissions, id "dummy" not'
-          +' exists.\n\nUsage: pcs acl permission add...'
+          stdout_start='\nUsage: pcs acl permission add...'
         )
 
         o, r = pcs("acl")
@@ -774,8 +772,7 @@ Role: role4
         self.assert_pcs_success('acl role create role1')
         self.assert_pcs_fail(
             'acl permission add role1 read id non-existent-id',
-            'Error: cannot add permissions, id "non-existent-id"'
-            +' not exists.'
+            'Error: id "non-existent-id" does not exist.\n'
         )
 
     def test_can_not_add_permission_for_nonexisting_id_in_later_part(self):
@@ -783,9 +780,17 @@ Role: role4
         self.assert_pcs_success('acl role create role2')
         self.assert_pcs_fail(
             'acl permission add role1 read id role2 read id no-existent-id',
-            stdout_full = 'Error: cannot add permissions, id "no-existent-id"'
-            +' not exists.\n'
+            'Error: id "no-existent-id" does not exist.\n'
         )
+
+    def test_can_not_add_permission_for_nonexisting_role_with_bad_id(self):
+        self.assert_pcs_success('acl role create role1')
+        self.assert_pcs_fail(
+            'acl permission add #bad-name read id role1',
+            "Error: invalid ACL role '#bad-name'"
+            +", '#' is not a valid first character for a ACL role\n"
+        )
+
     def test_can_create_role_with_permission_for_existing_id(self):
         self.assert_pcs_success('acl role create role2')
         self.assert_pcs_success('acl role create role1 read id role2')
@@ -793,7 +798,20 @@ Role: role4
     def test_can_not_crate_role_with_permission_for_nonexisting_id(self):
         self.assert_pcs_fail(
             'acl role create role1 read id non-existent-id',
-            'Error: cannot add permissions, id "non-existent-id" not exists.'
+            'Error: id "non-existent-id" does not exist.\n'
+        )
+
+    def test_can_not_create_role_with_bad_name(self):
+        self.assert_pcs_fail(
+            'acl role create #bad-name',
+            "Error: invalid ACL role '#bad-name'"
+            +", '#' is not a valid first character for a ACL role\n"
+        )
+
+    def test_fail_on_unknown_role_method(self):
+        self.assert_pcs_fail(
+            'acl role unknown whatever',
+            stdout_start="\nUsage: pcs acl role..."
         )
 
 if __name__ == "__main__":

@@ -30,7 +30,8 @@ import prop
 import resource
 import stonith
 import constraint
-
+from errors import ReportItem
+from errors import error_codes
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -359,7 +360,7 @@ def cluster_setup(argv):
         )
     if udpu_rrp and "rrp_mode" not in options["transport_options"]:
         options["transport_options"]["rrp_mode"] = "passive"
-    cluster_setup_print_messages(messages)
+    utils.process_library_reports(messages)
 
     # prepare config file
     if is_rhel6:
@@ -377,7 +378,7 @@ def cluster_setup(argv):
             options["totem_options"],
             options["quorum_options"]
         )
-    cluster_setup_print_messages(messages)
+    utils.process_library_reports(messages)
 
     # setup on the local node
     if "--local" in utils.pcs_options:
@@ -496,37 +497,37 @@ def cluster_setup_parse_options_corosync(options):
     if "--transport" in options:
         transport = options["--transport"]
         if transport not in ("udp", "udpu"):
-            messages.append({
-                "text": "unknown transport '{0}'".format(transport),
-                "type": "error",
-                "forceable": True,
-            })
+            messages.append(ReportItem.error(
+                error_codes.UNKNOWN_TRANSPORT,
+                "unknown transport '{transport}'",
+                info={'transport': transport},
+                forceable=True,
+            ))
     parsed["transport_options"]["transport"] = transport
 
     if transport == "udpu" and ("--addr0" in options or "--addr1" in options):
-        messages.append({
-            "text": "--addr0 and --addr1 can only be used with --transport=udp",
-            "type": "error",
-            "forceable": False,
-        })
-
+        messages.append(ReportItem.error(
+            error_codes.NON_UDP_TRANSPORT_ADDR_MISMATCH,
+            '--addr0 and --addr1 can only be used with --transport=udp',
+        ))
     rrpmode = None
     if "--rrpmode" in options or "--addr0" in options:
         rrpmode = "passive"
         if "--rrpmode" in options:
             rrpmode = options["--rrpmode"]
         if rrpmode not in ("passive", "active"):
-            messages.append({
-                "text": "{0} is an unknown RRP mode".format(rrpmode),
-                "type": "error",
-                "forceable": True,
-            })
+            messages.append(ReportItem.error(
+                error_codes.UNKNOWN_RRP_MODE,
+                '{rrpmode} is an unknown RRP mode',
+                info={'rrpmode': rrpmode},
+                forceable=True,
+            ))
         if rrpmode == "active":
-            messages.append({
-                "text": "using a RRP mode of 'active' is not supported or tested",
-                "type": "error",
-                "forceable": True,
-            })
+            messages.append(ReportItem.error(
+                error_codes.RRP_ACTIVE_NOT_SUPPORTED,
+                "using a RRP mode of 'active' is not supported or tested",
+                forceable=True,
+            ))
     if rrpmode:
         parsed["transport_options"]["rrp_mode"] = rrpmode
 
@@ -583,14 +584,20 @@ def cluster_setup_parse_options_corosync(options):
     for opt_name in (
         "--wait_for_all", "--auto_tie_breaker", "--last_man_standing"
     ):
-        if opt_name in options and options[opt_name] not in ("0", "1"):
-            messages.append({
-                "text": "'{0}' is not a valid value for {1}, use 0 or 1".format(
-                    options[opt_name], opt_name
-                ),
-                "type": "error",
-                "forceable": False,
-            })
+        allowed_values = ('0', '1')
+        if opt_name in options and options[opt_name] not in allowed_values:
+            messages.append(ReportItem.error(
+                error_codes.INVALID_OPTION_VALUE,
+                "'{option_value}' is not a valid value for {option_name}, "
+                    +"use {allowed_values}"
+                ,
+                info={
+                    'option_name': opt_name,
+                    'option_value': options[opt_name],
+                    'allowed_values_raw': allowed_values,
+                    'allowed_values': ' or '.join(allowed_values),
+                },
+            ))
 
     return parsed, messages
 
@@ -613,41 +620,38 @@ def cluster_setup_parse_options_cman(options):
         if "--broadcast1" not in options:
             ring_missing_broadcast = "1"
         if ring_missing_broadcast:
-            messages.append({
-                "text": (
-                    "Enabling broadcast for ring {0} as CMAN does not support "
-                    + "broadcast in only one ring"
-                ).format(ring_missing_broadcast),
-                "type": "warning",
-                "forceable": False,
-            })
+            messages.append(ReportItem.warning(
+                error_codes.CMAN_BROADCAST_ALL_RINGS,
+                'Enabling broadcast for ring {ring_missing_broadcast}'
+                    +' as CMAN does not support broadcast in only one ring'
+                ,
+                info={'ring_missing_broadcast': ring_missing_broadcast}
+            ))
     else:
         transport = "udp"
         if "--transport" in options:
             transport = options["--transport"]
             if transport not in ("udp", "udpu"):
-                messages.append({
-                    "text": "unknown transport '{0}'".format(transport),
-                    "type": "error",
-                    "forceable": True,
-                })
+                messages.append(ReportItem.error(
+                    error_codes.UNKNOWN_TRANSPORT,
+                    "unknown transport '{transport}'",
+                    info={'transport': transport},
+                    forceable=True,
+                ))
     parsed["transport_options"]["transport"] = transport
 
     if transport == "udpu":
-        messages.append({
-            "text": (
-                "Using udpu transport on a CMAN cluster, "
+        messages.append(ReportItem.warning(
+            error_codes.CMAN_UDPU_RESTART_REQUIRED,
+            "Using udpu transport on a CMAN cluster, "
                 + "cluster restart is required after node add or remove"
-            ),
-            "type": "warning",
-            "forceable": False,
-        })
+            ,
+        ))
     if transport == "udpu" and ("--addr0" in options or "--addr1" in options):
-        messages.append({
-            "text": "--addr0 and --addr1 can only be used with --transport=udp",
-            "type": "error",
-            "forceable": False,
-        })
+        messages.append(ReportItem.error(
+            error_codes.NON_UDP_TRANSPORT_ADDR_MISMATCH,
+            '--addr0 and --addr1 can only be used with --transport=udp',
+        ))
 
     rrpmode = None
     if "--rrpmode" in options or "--addr0" in options:
@@ -655,17 +659,18 @@ def cluster_setup_parse_options_cman(options):
         if "--rrpmode" in options:
             rrpmode = options["--rrpmode"]
         if rrpmode not in ("passive", "active"):
-            messages.append({
-                "text": "{0} is an unknown RRP mode".format(rrpmode),
-                "type": "error",
-                "forceable": True,
-            })
+            messages.append(ReportItem.error(
+                error_codes.UNKNOWN_RRP_MODE,
+                '{rrpmode} is an unknown RRP mode',
+                info={'rrpmode': rrpmode},
+                forceable=True,
+            ))
         if rrpmode == "active":
-            messages.append({
-                "text": "using a RRP mode of 'active' is not supported or tested",
-                "type": "error",
-                "forceable": True,
-            })
+            messages.append(ReportItem.error(
+                error_codes.RRP_ACTIVE_NOT_SUPPORTED,
+                "using a RRP mode of 'active' is not supported or tested",
+                forceable=True,
+            ))
     if rrpmode:
         parsed["transport_options"]["rrp_mode"] = rrpmode
 
@@ -708,14 +713,11 @@ def cluster_setup_parse_options_cman(options):
     )
     for opt_name in ignored_options_names:
         if opt_name in options:
-            text = "{0} ignored as it is not supported on CMAN clusters".format(
-                opt_name
-            )
-            messages.append({
-                "text": text,
-                "type": "warning",
-                "forceable": False,
-            })
+            messages.append(ReportItem.warning(
+                error_codes.IGNORED_CMAN_UNSUPPORTED_OPTION,
+                '{option_name} ignored as it is not supported on CMAN clusters',
+                info={'option_name': opt_name}
+            ))
 
     return parsed, messages
 
@@ -928,43 +930,18 @@ def cluster_setup_create_cluster_conf(
         output, retval = utils.run(cmd_prefix + cmd_item["cmd"])
         if retval != 0:
             if output:
-                messages.append({
-                    "text": output,
-                    "type": "plain",
-                })
-            messages.append({
-                "text": cmd_item["err"],
-                "type": "error",
-                "forceable": False,
-            })
+                messages.append(
+                    ReportItem.info(error_codes.COMMON_INFO, output)
+                )
+            messages.append(
+                ReportItem.error(error_codes.COMMON_ERROR, cmd_item["err"])
+            )
             conf_temp.close()
             return "", messages
     conf_temp.seek(0)
     cluster_conf = conf_temp.read()
     conf_temp.close()
     return cluster_conf, messages
-
-def cluster_setup_print_messages(messages):
-    critical_error = False
-    for msg in messages:
-        if msg["type"] == "error":
-            if msg["forceable"] and "--force" in utils.pcs_options:
-                # Let the user know what may be wrong even when --force is used,
-                # as it may be used for override early errors hiding later
-                # errors otherwise.
-                print("Warning: " + msg["text"])
-                continue
-            text = msg["text"]
-            if msg["forceable"]:
-                text += ", use --force to override"
-            critical_error = True
-            utils.err(text, False)
-        elif msg["type"] == "warning":
-            print("Warning: " + msg["text"])
-        else:
-            print(msg["text"])
-    if critical_error:
-        sys.exit(1)
 
 def get_local_network():
     args = ["/sbin/ip", "route"]
