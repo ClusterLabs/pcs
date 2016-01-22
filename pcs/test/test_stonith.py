@@ -30,9 +30,9 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "stonith create test2 fence_ilo")
+        output, returnVal = pcs(temp_cib, "stonith create test2 fence_apc")
         assert returnVal == 1
-        ac(output,"Error: missing required option(s): 'ipaddr, login' for resource type: stonith:fence_ilo (use --force to override)\n")
+        ac(output,"Error: missing required option(s): 'ipaddr, login' for resource type: stonith:fence_apc (use --force to override)\n")
 
         output, returnVal = pcs(temp_cib, "stonith create test2 fence_ilo --force")
         assert returnVal == 0
@@ -42,9 +42,9 @@ class StonithTest(unittest.TestCase):
         assert returnVal == 1
         assert output == "Error: resource option(s): 'bad_argument', are not recognized for resource type: 'stonith:fence_ilo' (use --force to override)\n",[output]
 
-        output, returnVal = pcs(temp_cib, "stonith create test9 fence_ilo pcmk_status_action=xxx")
+        output, returnVal = pcs(temp_cib, "stonith create test9 fence_apc pcmk_status_action=xxx")
         assert returnVal == 1
-        ac(output,"Error: missing required option(s): 'ipaddr, login' for resource type: stonith:fence_ilo (use --force to override)\n")
+        ac(output,"Error: missing required option(s): 'ipaddr, login' for resource type: stonith:fence_apc (use --force to override)\n")
 
         output, returnVal = pcs(temp_cib, "stonith create test9 fence_ilo pcmk_status_action=xxx --force")
         assert returnVal == 0
