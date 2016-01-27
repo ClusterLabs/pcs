@@ -1910,6 +1910,19 @@ def update_cluster_settings(params, request, session)
   properties = params['config']
   to_update = []
   current = getAllSettings(session)
+
+  # We need to be able to set cluster properties also from older version GUI.
+  # This code handles proper processing of checkboxes.
+  # === backward compatibility layer start ===
+  params['hidden'].each { |prop, val|
+    next if prop == 'hidden_input'
+    unless properties.include?(prop)
+      properties[prop] = val
+      to_update << prop
+    end
+  }
+  # === backward compatibility layer end ===
+
   properties.each { |prop, val|
     val.strip!
     if not current.include?(prop) and val != '' # add
