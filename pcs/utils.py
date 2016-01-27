@@ -2020,15 +2020,15 @@ def err(errorText, exit_after_error=True):
         sys.exit(1)
 
 def serviceStatus(prefix):
-    if is_systemctl():
-        print("Daemon Status:")
-        daemons = ["corosync", "pacemaker", "pcsd"]
-        out, ret = run(["systemctl", "is-active"] + daemons)
-        status = out.split("\n")
-        out, ret = run(["systemctl", "is-enabled"]+ daemons)
-        enabled = out.split("\n")
-        for i in range(len(daemons)):
-            print(prefix + daemons[i] + ": " + status[i] + "/" + enabled[i])
+    if not is_systemctl():
+        return
+    print("Daemon Status:")
+    for service in ["corosync", "pacemaker", "pcsd"]:
+        print('{0}{1}: {2}/{3}'.format(
+            prefix, service,
+            run(["systemctl", 'is-active', service])[0].strip(),
+            run(["systemctl", 'is-enabled', service])[0].strip()
+        ))
 
 def enableServices():
     if is_rhel6():
