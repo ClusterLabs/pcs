@@ -121,26 +121,31 @@ $thread_cfgsync = Thread.new {
 
 helpers do
   def protected!
-    if not PCSAuth.loginByToken(session, cookies) and not PCSAuth.isLoggedIn(session)
-      # If we're on /managec/<cluster_name>/main we redirect
-      match_expr = "/managec/(.*)/(.*)"
-      mymatch = request.path.match(match_expr)
-      on_managec_main = false
-      if mymatch and mymatch.length >= 3 and mymatch[2] == "main"
-        on_managec_main = true
-      end
-
-      if request.path.start_with?('/remote') or
-        (request.path.match(match_expr) and not on_managec_main) or
-        '/run_pcs' == request.path or
-        '/clusters_overview' == request.path or
-        request.path.start_with?('/permissions_')
-      then
-        $logger.info "ERROR: Request without authentication"
+    gui_request = ( # these are URLs for web pages
+      request.path == '/' or
+      request.path == '/manage' or
+      request.path == '/permissions' or
+      request.path.match('/managec/.+/main')
+    )
+    if request.path.start_with?('/remote/') or request.path == '/run_pcs'
+      unless PCSAuth.loginByToken(session, cookies)
         halt [401, '{"notauthorized":"true"}']
-      else
-        session[:pre_login_path] = request.path
-        redirect '/login'
+      end
+    else #/managec/* /manage/* /permissions
+      if !gui_request and
+        request.env['HTTP_X_REQUESTED_WITH'] != 'XMLHttpRequest'
+      then
+        # Accept non GUI requests only with header
+        # "X_REQUESTED_WITH: XMLHttpRequest". (check if they are send via AJAX).
+        # This prevents CSRF attack.
+        halt [401, '{"notauthorized":"true"}']
+      elsif not PCSAuth.isLoggedIn(session)
+        if gui_request
+          session[:pre_login_path] = request.path
+          redirect '/login'
+        else
+          halt [401, '{"notauthorized":"true"}']
+        end
       end
     end
   end
