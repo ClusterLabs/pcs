@@ -1287,19 +1287,19 @@ function remove_nodes(ids, force) {
 }
 
 function remove_resource(ids, force) {
-  var data = {
-    no_error_if_not_exists: true
-  };
+  var data = {};
   if (force) {
     data["force"] = force;
   }
-  var res = "";
-  for (var i=0; i<ids.length; i++) {
-    res += ids[i] + ", ";
-    var resid_name = "resid-" + ids[i];
-    data[resid_name] = true;
-  }
-  res = res.slice(0,-2);
+  var res_obj;
+  $.each(ids, function(_, id) {
+    res_obj = Pcs.resourcesContainer.get_resource_by_id(id);
+    if (!res_obj) {
+      return true; // continue
+    } else if ($.inArray(res_obj.get("parent_id"), ids) == -1) {
+      data["resid-" + id] = true;
+    }
+  });
 
   $.ajax({
     type: 'POST',
