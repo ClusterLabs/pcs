@@ -1977,10 +1977,20 @@ Deleting Resource (and group and M/S) - dummylarge
         o,r = pcs(temp_cib, "resource unmanage D1")
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource --full")
-        ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
+        os.system("CIB_file="+temp_cib+" crm_resource --resource AG --set-parameter is-managed --meta --parameter-value false --force > /dev/null")
 
-        os.system("CIB_file="+temp_cib+" crm_resource --resource AG --set-parameter is-managed --meta --parameter-value false")
+        o,r = pcs(temp_cib, "resource --full")
+        ac(o,"""\
+ Group: AG
+  Meta Attrs: is-managed=false 
+  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: is-managed=false 
+   Operations: monitor interval=60s (D1-monitor-interval-60s)
+  Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+   Meta Attrs: is-managed=false 
+   Operations: monitor interval=60s (D2-monitor-interval-60s)
+""")
+
 
         o,r = pcs(temp_cib, "resource manage AG")
         ac(o,"")
