@@ -65,14 +65,11 @@ if development?
 end
 
 before do
+  @auth_user = nil
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
   $cluster_name = get_cluster_name()
-  @errorval = session[:errorval]
-  @error = session[:error]
-  session[:errorval] = nil
-  session[:error] = nil
 end
 
 configure do
@@ -101,7 +98,7 @@ $thread_cfgsync = Thread.new {
           if cluster_name and !cluster_name.empty?()
             $logger.debug('Config files sync thread fetching')
             fetcher = Cfgsync::ConfigFetcher.new(
-              PCSAuth.getSuperuserSession(), Cfgsync::get_cfg_classes(),
+              PCSAuth.getSuperuserAuth(), Cfgsync::get_cfg_classes(),
               get_corosync_nodes(), cluster_name
             )
             cfgs_to_save, _ = fetcher.fetch()
@@ -128,7 +125,8 @@ helpers do
       request.path.match('/managec/.+/main')
     )
     if request.path.start_with?('/remote/') or request.path == '/run_pcs'
-      unless PCSAuth.loginByToken(session, cookies)
+      @auth_user = PCSAuth.loginByToken(cookies)
+      unless @auth_user
         halt [401, '{"notauthorized":"true"}']
       end
     else #/managec/* /manage/* /permissions
@@ -167,11 +165,11 @@ helpers do
 end
 
 get '/remote/?:command?' do
-  return remote(params, request, session)
+  return remote(params, request, @auth_user)
 end
 
 post '/remote/?:command?' do
-  return remote(params, request, session)
+  return remote(params, request, @auth_user)
 end
 
 post '/run_pcs' do
@@ -306,12 +304,12 @@ post '/run_pcs' do
   end
 
   if command_settings['only_superuser']
-    if not allowed_for_superuser(session)
+    if not allowed_for_superuser(@auth_user)
       return 403, 'Permission denied'
     end
   end
   if command_settings['permissions']
-    if not allowed_for_local_cluster(session, command_settings['permissions'])
+    if not allowed_for_local_cluster(@auth_user, command_settings['permissions'])
       return 403, 'Permission denied'
     end
   end
@@ -319,7 +317,7 @@ post '/run_pcs' do
   options = {}
   options['stdin'] = std_in if std_in
   std_out, std_err, retval = run_cmd_options(
-    session, options, PCS, *command_decoded
+    @auth_user, options, PCS, *command_decoded
   )
   result = {
     'status' => 'ok',
@@ -341,7 +339,11 @@ if not DISABLE_GUI
   end
 
   post '/login' do
-    if PCSAuth.loginByPassword(session, params['username'], params['password'])
+    auth_user = PCSAuth.loginByPassword(
+      params['username'], params['password']
+    )
+    if auth_user
+      PCSAuth.authUserToSession(auth_user, session)
       # Temporarily ignore pre_login_path until we come up with a list of valid
       # paths to redirect to (to prevent status_all issues)
       #    if session["pre_login_path"]
@@ -365,7 +367,7 @@ if not DISABLE_GUI
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     node = params['node-name']
     code, result = send_request_with_token(
-      PCSAuth.getSuperuserSession(), node, 'status'
+      PCSAuth.getSuperuserAuth(), node, 'status'
     )
     begin
       status = JSON.parse(result)
@@ -391,7 +393,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
 
       # auth begin
       retval, out = send_request_with_token(
-        PCSAuth.getSuperuserSession(), node, '/get_cluster_tokens'
+        PCSAuth.getSuperuserAuth(), node, '/get_cluster_tokens'
       )
       if retval == 404 # backward compatibility layer
         warning_messages << "Unable to do correct authentication of cluster because it is running old version of pcs/pcsd."
@@ -431,7 +433,8 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/manage/newcluster' do
-    if not allowed_for_superuser(session)
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    if not allowed_for_superuser(auth_user)
       return 400, 'Permission denied.'
     end
 
@@ -472,7 +475,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     tokens = add_prefix_to_keys(get_tokens_of_nodes(@nodes), "node:")
     @nodes.each {|n|
       retval, out = send_request_with_token(
-        session, n, "/save_tokens", true, tokens
+        auth_user, n, "/save_tokens", true, tokens
       )
       if retval == 404 # backward compatibility layer
         warning_messages << "Unable to do correct authentication of cluster on node '#{n}', because it is running old version of pcs/pcsd."
@@ -488,7 +491,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
       "Sending setup cluster request for: #{@cluster_name} to: #{node_to_send_to}"
     )
     code,out = send_request_with_token(
-      session,
+      auth_user,
       node_to_send_to,
       'setup_cluster',
       true,
@@ -546,11 +549,12 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/manage/check_pcsd_status' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     node_results = {}
     if params[:nodes] != nil and params[:nodes] != ''
       node_array = params[:nodes].split(',')
       online, offline, notauthorized = check_gui_status_of_nodes(
-        session, node_array
+        auth_user, node_array
       )
       online.each { |node|
         node_results[node] = 'Online'
@@ -566,6 +570,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/manage/get_nodes_sw_versions' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     if params[:nodes] != nil and params[:nodes] != ''
       nodes = params[:nodes].split(',')
       final_response = {}
@@ -573,7 +578,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
       nodes.each {|node|
         threads << Thread.new {
           code, response = send_request_with_token(
-            session, node, 'get_sw_versions'
+            auth_user, node, 'get_sw_versions'
           )
           begin
             node_response = JSON.parse(response)
@@ -581,7 +586,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
               $logger.error("ERROR: bad token for #{node}")
             end
             final_response[node] = node_response
-          rescue JSON::ParserError => e
+          rescue JSON::ParserError
           end
         }
       }
@@ -592,6 +597,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/manage/auth_gui_against_nodes' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     node_auth_error = {}
     new_tokens = {}
     threads = []
@@ -611,7 +617,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
             'force' => 1,
           }
           node_auth_error[nodename] = 1
-          code, response = send_request(session, nodename, 'auth', true, data)
+          code, response = send_request(auth_user, nodename, 'auth', true, data)
           if 200 == code
             token = response.strip
             if not token.empty?
@@ -641,7 +647,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/clusters_overview' do
-    clusters_overview(params, request, session)
+    clusters_overview(params, request, PCSAuth.sessionToAuthUser(session))
   end
 
   get '/permissions/?' do
@@ -652,6 +658,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/permissions_cluster_form/:cluster/?' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     @cluster_name = params[:cluster]
     @error = nil
     @permission_types = []
@@ -665,7 +672,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
       @error = 'Cluster not found'
     else
       code, data = send_cluster_request_with_token(
-        session, @cluster_name, 'get_permissions'
+        auth_user, @cluster_name, 'get_permissions'
       )
       if 404 == code
         @error = 'Cluster is running an old version of pcsd which does not support permissions'
@@ -693,6 +700,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/managec/:cluster/main' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     @cluster_name = params[:cluster]
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
     @clusters = pcs_config.clusters
@@ -700,34 +708,38 @@ already been added to pcsd.  You may not add two clusters with the same name int
     if @nodes == []
       redirect '/manage/'
     end
-    @resource_agents = get_resource_agents_avail(session)
-    @stonith_agents = get_stonith_agents_avail(session)
+    @resource_agents = get_resource_agents_avail(auth_user, params)
+    @stonith_agents = get_stonith_agents_avail(auth_user, params)
     erb :nodes, :layout => :main
   end
 
   post '/managec/:cluster/permissions_save/?' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     new_params = {
       'json_data' => JSON.generate(params)
     }
     return send_cluster_request_with_token(
-      session, params[:cluster], "set_permissions", true, new_params
+      auth_user, params[:cluster], "set_permissions", true, new_params
     )
   end
 
   get '/managec/:cluster/status_all' do
-    status_all(params, request, session, get_cluster_nodes(params[:cluster]))
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    status_all(params, request, auth_user, get_cluster_nodes(params[:cluster]))
   end
 
   get '/managec/:cluster/cluster_status' do
-    cluster_status_gui(session, params[:cluster])
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    cluster_status_gui(auth_user, params[:cluster])
   end
 
   get '/managec/:cluster/cluster_properties' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     cluster = params[:cluster]
     unless cluster
       return 200, {}
     end
-    code, out = send_cluster_request_with_token(session, cluster, 'get_cib')
+    code, out = send_cluster_request_with_token(auth_user, cluster, 'get_cib')
     if code == 403
       return [403, 'Permission denied']
     elsif code != 200
@@ -736,7 +748,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     begin
       properties = getAllSettings(nil, REXML::Document.new(out))
       code, out = send_cluster_request_with_token(
-        session, cluster, 'get_cluster_properties_definition'
+        auth_user, cluster, 'get_cluster_properties_definition'
       )
 
       if code == 403
@@ -905,7 +917,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     tokens_data = add_prefix_to_keys(get_tokens_of_nodes(nodes), "node:")
 
     retval, out = send_cluster_request_with_token(
-      PCSAuth.getSuperuserSession(), clustername, "/save_tokens", true,
+      PCSAuth.getSuperuserAuth(), clustername, "/save_tokens", true,
       tokens_data, true
     )
     if retval == 404
@@ -917,11 +929,12 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/managec/:cluster/add_node_to_cluster' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     clustername = params[:cluster]
     new_node = params["new_nodename"]
 
     if clustername == $cluster_name
-      if not allowed_for_local_cluster(session, Permissions::FULL)
+      if not allowed_for_local_cluster(auth_user, Permissions::FULL)
         return 403, 'Permission denied'
       end
     end
@@ -938,7 +951,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     token_data = {"node:#{new_node}" => tokens[new_node]}
     retval, out = send_cluster_request_with_token(
       # new node doesn't have config with permissions yet
-      PCSAuth.getSuperuserSession(), clustername, '/save_tokens', true, token_data
+      PCSAuth.getSuperuserAuth(), clustername, '/save_tokens', true, token_data
     )
     # If the cluster runs an old pcsd which doesn't support /save_tokens,
     # ignore 404 in order to not prevent the node to be added.
@@ -947,7 +960,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
 
     retval, out = send_cluster_request_with_token(
-      session, clustername, "/add_node_all", true, params
+      auth_user, clustername, "/add_node_all", true, params
     )
     if 403 == retval
       return [retval, out]
@@ -960,11 +973,12 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   post '/managec/:cluster/?*' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     raw_data = request.env["rack.input"].read
     if params[:cluster]
       request = "/" + params[:splat].join("/")
       code, out = send_cluster_request_with_token(
-        session, params[:cluster], request, true, params, true, raw_data
+        auth_user, params[:cluster], request, true, params, true, raw_data
       )
 
       # backward compatibility layer BEGIN
@@ -975,7 +989,12 @@ already been added to pcsd.  You may not add two clusters with the same name int
       }
       if code == 404 and redirection.key?(request)
         code, out = send_cluster_request_with_token(
-          session, params[:cluster], redirection[request], true, params, false,
+          auth_user,
+          params[:cluster],
+          redirection[request],
+          true,
+          params,
+          false,
           raw_data
         )
       end
@@ -985,11 +1004,17 @@ already been added to pcsd.  You may not add two clusters with the same name int
   end
 
   get '/managec/:cluster/?*' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
     raw_data = request.env["rack.input"].read
     if params[:cluster]
       send_cluster_request_with_token(
-        session, params[:cluster], "/" + params[:splat].join("/"), false, params,
-        true, raw_data
+        auth_user,
+        params[:cluster],
+        "/" + params[:splat].join("/"),
+        false,
+        params,
+        true,
+        raw_data
       )
     end
   end

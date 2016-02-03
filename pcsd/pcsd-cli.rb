@@ -26,7 +26,7 @@ end
 
 
 # bootstrap, emulate environment created by pcsd http server
-session = {}
+auth_user = {}
 PCS = get_pcs_path(File.expand_path(File.dirname(__FILE__)))
 $logger_device = StringIO.new
 $logger = configure_logger($logger_device)
@@ -35,28 +35,28 @@ $logger = configure_logger($logger_device)
 uid = Process.uid
 if 0 == uid
   if ENV['CIB_user'] and ENV['CIB_user'].strip != ''
-    session[:username] = ENV['CIB_user']
+    auth_user[:username] = ENV['CIB_user']
     if ENV['CIB_user_groups'] and ENV['CIB_user_groups'].strip != ''
-      session[:usergroups] = ENV['CIB_user_groups'].split(nil)
+      auth_user[:usergroups] = ENV['CIB_user_groups'].split(nil)
     else
-      session[:usergroups] = []
+      auth_user[:usergroups] = []
     end
   else
-    session[:username] = SUPERUSER
-    session[:usergroups] = []
+    auth_user[:username] = SUPERUSER
+    auth_user[:usergroups] = []
   end
 else
   username = Etc.getpwuid(uid).name
   if not PCSAuth.isUserAllowedToLogin(username)
     cli_exit('access_denied')
   else
-    session[:username] = username
+    auth_user[:username] = username
     success, groups = PCSAuth.getUsersGroups(username)
-    session[:usergroups] = success ? groups : []
+    auth_user[:usergroups] = success ? groups : []
   end
 end
 
-# continue environment setup with user set in session
+# continue environment setup with user set in auth_user
 $cluster_name = get_cluster_name()
 
 # get params and run a command
@@ -66,14 +66,14 @@ allowed_commands = {
     # returns tokens of the user who runs pcsd-cli, thus no permission check
     'only_superuser' => false,
     'permissions' => nil,
-    'call' => lambda { |params, session| read_tokens() },
+    'call' => lambda { |params, auth_user_| read_tokens() },
   },
   'auth' => {
     'only_superuser' => false,
     'permissions' => nil,
-    'call' => lambda { |params, session|
+    'call' => lambda { |params, auth_user_|
       auth_responses, sync_successful, sync_nodes_err, sync_responses = pcs_auth(
-        session, params['nodes'] || [], params['username'] || '',
+        auth_user_, params['nodes'] || [], params['username'] || '',
         params['password'] || '', params['force'], params['local']
       )
       return {
@@ -87,11 +87,11 @@ allowed_commands = {
   'send_local_configs' => {
     'only_superuser' => false,
     'permissions' => Permissions::FULL,
-    'call' => lambda { |params, session|
+    'call' => lambda { |params, auth_user_|
       send_local_configs_to_nodes(
         # for a case when sending to a node which is being added to a cluster
         # - the node doesn't have the config so it cannot check permissions
-        PCSAuth.getSuperuserSession(),
+        PCSAuth.getSuperuserAuth(),
         params['nodes'] || [],
         params['force'] || false,
         params['clear_local_cluster_permissions'] || false
@@ -101,15 +101,15 @@ allowed_commands = {
   'send_local_certs' => {
     'only_superuser' => false,
     'permissions' => Permissions::FULL,
-    'call' => lambda { |params, session|
-      send_local_certs_to_nodes(session, params['nodes'] || [])
+    'call' => lambda { |params, auth_user_|
+      send_local_certs_to_nodes(auth_user_, params['nodes'] || [])
     }
   },
   'pcsd_restart_nodes' => {
     'only_superuser' => false,
     'permissions' => nil,
-    'call' => lambda { |params, session|
-      pcsd_restart_nodes(session, params['nodes'] || [])
+    'call' => lambda { |params, auth_user_|
+      pcsd_restart_nodes(auth_user_, params['nodes'] || [])
     }
   },
 }
@@ -121,16 +121,16 @@ if allowed_commands.key?(command)
     cli_exit('bad_json_input', e.to_s)
   end
   if allowed_commands['only_superuser']
-    if not allowed_for_superuser(session)
+    if not allowed_for_superuser(auth_user)
       cli_exit('permission_denied')
     end
   end
   if allowed_commands['permissions']
-    if not allowed_for_local_cluster(session, command_settings['permissions'])
+    if not allowed_for_local_cluster(auth_user, command_settings['permissions'])
       cli_exit('permission_denied')
     end
   end
-  result = allowed_commands[command]['call'].call(params, session)
+  result = allowed_commands[command]['call'].call(params, auth_user)
   cli_exit('ok', nil, result)
 else
   cli_exit('bad_command')

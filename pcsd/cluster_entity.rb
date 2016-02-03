@@ -1018,7 +1018,7 @@ module ClusterEntity
       @pcsd_enabled = false
     end
 
-    def self.load_current_node(session, crm_dom=nil)
+    def self.load_current_node(crm_dom=nil)
       node = ClusterEntity::Node.new
       node.corosync = corosync_running?
       node.corosync_enabled = corosync_enabled?

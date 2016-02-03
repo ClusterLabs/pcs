@@ -1,10 +1,10 @@
 require 'pathname'
 
-def getResourcesGroups(session, get_fence_devices = false, get_all_options = false,
+def getResourcesGroups(auth_user, get_fence_devices = false, get_all_options = false,
   get_operations=false
 )
   stdout, stderror, retval = run_cmd(
-    session, CRM_MON, "--one-shot", "-r", "--as-xml"
+    auth_user, CRM_MON, "--one-shot", "-r", "--as-xml"
   )
   if retval != 0
     return [],[], retval
@@ -60,7 +60,7 @@ def getResourcesGroups(session, get_fence_devices = false, get_all_options = fal
   resource_list = resource_list.sort_by{|a| (a.group ? "1" : "0").to_s + a.group.to_s + "-" +  a.id}
 
   if get_all_options or get_operations
-    stdout, stderror, retval = run_cmd(session, "cibadmin", "-Q", "-l")
+    stdout, stderror, retval = run_cmd(auth_user, "cibadmin", "-Q", "-l")
     cib_output = stdout
     resources_inst_attr_map = {}
     resources_meta_attr_map = {}
@@ -167,7 +167,7 @@ def getAllConstraints(constraints_dom)
   return constraints
 end
 
-def getResourceMetadata(session, resourcepath)
+def getResourceMetadata(auth_user, resourcepath)
   options_required = {}
   options_optional = {}
   long_desc = ""
@@ -193,7 +193,7 @@ def getResourceMetadata(session, resourcepath)
     end
   else
     ENV['OCF_ROOT'] = OCF_ROOT
-    stdout, stderr, retval = run_cmd(session, resourcepath, 'meta-data')
+    stdout, stderr, retval = run_cmd(auth_user, resourcepath, 'meta-data')
     metadata = stdout.join
   end
 
@@ -244,9 +244,11 @@ def getResourceMetadata(session, resourcepath)
   [options_required, options_optional, [short_desc, long_desc]]
 end
 
-def getResourceAgents(session)
+def getResourceAgents(auth_user)
   resource_agent_list = {}
-  stdout, stderr, retval = run_cmd(session, PCS, "resource", "list", "--nodesc")
+  stdout, stderr, retval = run_cmd(
+    auth_user, PCS, "resource", "list", "--nodesc"
+  )
   if retval != 0
     $logger.error("Error running 'pcs resource list --nodesc")
     $logger.error(stdout + stderr)

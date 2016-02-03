@@ -35,60 +35,48 @@ class TestAuth < Test::Unit::TestCase
     password_file.write(JSON.pretty_generate(users))
     password_file.close()
 
-    session = {}
     cookies = {}
-    result = PCSAuth.loginByToken(session, cookies)
-    assert_equal(false, result)
-    assert_equal({}, session)
+    result = PCSAuth.loginByToken(cookies)
+    assert_equal(nil, result)
 
-    session = {}
     cookies = {'token' => 'tokenX'}
-    result = PCSAuth.loginByToken(session, cookies)
-    assert_equal(false, result)
-    assert_equal({}, session)
+    result = PCSAuth.loginByToken(cookies)
+    assert_equal(nil, result)
 
-    session = {}
     cookies = {'token' => 'token1'}
-    result = PCSAuth.loginByToken(session, cookies)
-    assert_equal(true, result)
+    result = PCSAuth.loginByToken(cookies)
     assert_equal(
       {:username => 'user1', :usergroups => ['group1', 'haclient']},
-      session
+      result
     )
 
-    session = {}
     cookies = {
       'token' => 'token1',
       'CIB_user' => 'userX',
       'CIB_user_groups' => PCSAuth.cookieUserEncode('groupX')
     }
-    result = PCSAuth.loginByToken(session, cookies)
-    assert_equal(true, result)
+    result = PCSAuth.loginByToken(cookies)
     assert_equal(
       {:username => 'user1', :usergroups => ['group1', 'haclient']},
-      session
+      result
     )
 
-    session = {}
     cookies = {'token' => 'tokenS'}
-    result = PCSAuth.loginByToken(session, cookies)
-    assert_equal(true, result)
+    result = PCSAuth.loginByToken(cookies)
     assert_equal(
       {:username => SUPERUSER, :usergroups => []},
-      session
+      result
     )
 
-    session = {}
     cookies = {
       'token' => 'tokenS',
       'CIB_user' => 'userX',
       'CIB_user_groups' => PCSAuth.cookieUserEncode('groupX')
     }
-    result = PCSAuth.loginByToken(session, cookies)
-    assert_equal(true, result)
+    result = PCSAuth.loginByToken(cookies)
     assert_equal(
       {:username => 'userX', :usergroups => ['groupX']},
-      session
+      result
     )
   end
 

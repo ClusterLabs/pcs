@@ -1,4 +1,4 @@
-def getFenceAgents(session, fence_agent = nil)
+def getFenceAgents(auth_user, fence_agent = nil)
   fence_agent_list = {}
   agents = Dir.glob('/usr/sbin/fence_' + '*')
   agents.each { |a|
@@ -7,7 +7,7 @@ def getFenceAgents(session, fence_agent = nil)
     next if fa.name == "fence_ack_manual"
 
     if fence_agent and a.sub(/.*\//,"") == fence_agent.sub(/.*:/,"")
-      required_options, optional_options, advanced_options, info = getFenceAgentMetadata(session, fa.name)
+      required_options, optional_options, advanced_options, info = getFenceAgentMetadata(auth_user, fa.name)
       fa.required_options = required_options
       fa.optional_options = optional_options
       fa.advanced_options = advanced_options
@@ -18,7 +18,7 @@ def getFenceAgents(session, fence_agent = nil)
   fence_agent_list
 end
 
-def getFenceAgentMetadata(session, fenceagentname)
+def getFenceAgentMetadata(auth_user, fenceagentname)
   options_required = {}
   options_optional = {}
   options_advanced = {
@@ -43,7 +43,7 @@ def getFenceAgentMetadata(session, fenceagentname)
     return [options_required, options_optional, options_advanced]
   end
   stdout, stderr, retval = run_cmd(
-    session, "/usr/sbin/#{fenceagentname}", '-o', 'metadata'
+    auth_user, "/usr/sbin/#{fenceagentname}", '-o', 'metadata'
   )
   metadata = stdout.join
   begin

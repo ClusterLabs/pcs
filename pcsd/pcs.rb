@@ -16,9 +16,9 @@ require 'resource.rb'
 require 'cluster_entity.rb'
 require 'auth.rb'
 
-def getAllSettings(session, cib_dom=nil)
+def getAllSettings(auth_user, cib_dom=nil)
   unless cib_dom
-    cib_dom = get_cib_dom(session)
+    cib_dom = get_cib_dom(auth_user)
   end
   ret = {}
   if cib_dom
@@ -29,36 +29,36 @@ def getAllSettings(session, cib_dom=nil)
   return ret
 end
 
-def add_fence_level(session, level, devices, node, remove = false)
+def add_fence_level(auth_user, level, devices, node, remove = false)
   if not remove
     stdout, stderr, retval = run_cmd(
-      session, PCS, "stonith", "level", "add", level, node, devices
+      auth_user, PCS, "stonith", "level", "add", level, node, devices
     )
     return retval,stdout, stderr
   else
     stdout, stderr, retval = run_cmd(
-      session, PCS, "stonith", "level", "remove", level, node, devices
+      auth_user, PCS, "stonith", "level", "remove", level, node, devices
     )
     return retval,stdout, stderr
   end
 end
 
-def add_node_attr(session, node, key, value)
+def add_node_attr(auth_user, node, key, value)
   stdout, stderr, retval = run_cmd(
-    session, PCS, "property", "set", "--node", node, key.to_s + '=' + value.to_s
+    auth_user, PCS, "property", "set", "--node", node, key.to_s + '=' + value.to_s
   )
   return retval
 end
 
-def add_meta_attr(session, resource, key, value)
+def add_meta_attr(auth_user, resource, key, value)
   stdout, stderr, retval = run_cmd(
-    session, PCS, "resource", "meta", resource, key.to_s + "=" + value.to_s
+    auth_user, PCS, "resource", "meta", resource, key.to_s + "=" + value.to_s
   )
   return retval
 end
 
 def add_location_constraint(
-  session, resource, node, score, force=false, autocorrect=true
+  auth_user, resource, node, score, force=false, autocorrect=true
 )
   if node == ""
     return "Bad node"
@@ -74,12 +74,12 @@ def add_location_constraint(
   cmd << '--force' if force
   cmd << '--autocorrect' if autocorrect
 
-  stdout, stderr, retval = run_cmd(session, *cmd)
+  stdout, stderr, retval = run_cmd(auth_user, *cmd)
   return retval, stderr.join(' ')
 end
 
 def add_location_constraint_rule(
-  session, resource, rule, score, force=false, autocorrect=true
+  auth_user, resource, rule, score, force=false, autocorrect=true
 )
   cmd = [PCS, "constraint", "location", resource, "rule"]
   if score != ''
@@ -92,12 +92,12 @@ def add_location_constraint_rule(
   cmd.concat(rule.shellsplit())
   cmd << '--force' if force
   cmd << '--autocorrect' if autocorrect
-  stdout, stderr, retval = run_cmd(session, *cmd)
+  stdout, stderr, retval = run_cmd(auth_user, *cmd)
   return retval, stderr.join(' ')
 end
 
 def add_order_constraint(
-    session, resourceA, resourceB, actionA, actionB, score, symmetrical=true,
+    auth_user, resourceA, resourceB, actionA, actionB, score, symmetrical=true,
     force=false, autocorrect=true
 )
   sym = symmetrical ? "symmetrical" : "nonsymmetrical"
@@ -110,12 +110,12 @@ def add_order_constraint(
   ]
   command << '--force' if force
   command << '--autocorrect' if autocorrect
-  stdout, stderr, retval = run_cmd(session, *command)
+  stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
 end
 
 def add_order_set_constraint(
-  session, resource_set_list, force=false, autocorrect=true
+  auth_user, resource_set_list, force=false, autocorrect=true
 )
   command = [PCS, "constraint", "order"]
   resource_set_list.each { |resource_set|
@@ -124,12 +124,12 @@ def add_order_set_constraint(
   }
   command << '--force' if force
   command << '--autocorrect' if autocorrect
-  stdout, stderr, retval = run_cmd(session, *command)
+  stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
 end
 
 def add_colocation_constraint(
-  session, resourceA, resourceB, score, force=false, autocorrect=true
+  auth_user, resourceA, resourceB, score, force=false, autocorrect=true
 )
   if score == "" or score == nil
     score = "INFINITY"
@@ -139,41 +139,41 @@ def add_colocation_constraint(
   ]
   command << '--force' if force
   command << '--autocorrect' if autocorrect
-  stdout, stderr, retval = run_cmd(session, *command)
+  stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
 end
 
-def remove_constraint(session, constraint_id)
+def remove_constraint(auth_user, constraint_id)
   stdout, stderror, retval = run_cmd(
-    session, PCS, "constraint", "remove", constraint_id
+    auth_user, PCS, "constraint", "remove", constraint_id
   )
   $logger.info stdout
   return retval
 end
 
-def remove_constraint_rule(session, rule_id)
+def remove_constraint_rule(auth_user, rule_id)
   stdout, stderror, retval = run_cmd(
-    session, PCS, "constraint", "rule", "remove", rule_id
+    auth_user, PCS, "constraint", "rule", "remove", rule_id
   )
   $logger.info stdout
   return retval
 end
 
-def add_acl_role(session, name, description)
+def add_acl_role(auth_user, name, description)
   cmd = [PCS, "acl", "role", "create", name.to_s]
   if description.to_s != ""
     cmd << "description=#{description.to_s}"
   end
-  stdout, stderror, retval = run_cmd(session, *cmd)
+  stdout, stderror, retval = run_cmd(auth_user, *cmd)
   if retval != 0
     return stderror.join("\n").strip
   end
   return ""
 end
 
-def add_acl_permission(session, acl_role_id, perm_type, xpath_id, query_id)
+def add_acl_permission(auth_user, acl_role_id, perm_type, xpath_id, query_id)
   stdout, stderror, retval = run_cmd(
-    session, PCS, "acl", "permission", "add", acl_role_id.to_s, perm_type.to_s,
+    auth_user, PCS, "acl", "permission", "add", acl_role_id.to_s, perm_type.to_s,
     xpath_id.to_s, query_id.to_s
   )
   if retval != 0
@@ -186,10 +186,10 @@ def add_acl_permission(session, acl_role_id, perm_type, xpath_id, query_id)
   return ""
 end
 
-def add_acl_usergroup(session, acl_role_id, user_group, name)
+def add_acl_usergroup(auth_user, acl_role_id, user_group, name)
   if (user_group == "user") or (user_group == "group")
     stdout, stderr, retval = run_cmd(
-      session, PCS, "acl", user_group, "create", name.to_s, acl_role_id.to_s
+      auth_user, PCS, "acl", user_group, "create", name.to_s, acl_role_id.to_s
     )
     if retval == 0
       return ""
@@ -199,7 +199,7 @@ def add_acl_usergroup(session, acl_role_id, user_group, name)
     end
   end
   stdout, stderror, retval = run_cmd(
-    session, PCS, "acl", "role", "assign", acl_role_id.to_s, name.to_s
+    auth_user, PCS, "acl", "role", "assign", acl_role_id.to_s, name.to_s
   )
   if retval != 0
     if stderror.empty?
@@ -211,9 +211,9 @@ def add_acl_usergroup(session, acl_role_id, user_group, name)
   return ""
 end
 
-def remove_acl_permission(session, acl_perm_id)
+def remove_acl_permission(auth_user, acl_perm_id)
   stdout, stderror, retval = run_cmd(
-    session, PCS, "acl", "permission", "delete", acl_perm_id.to_s
+    auth_user, PCS, "acl", "permission", "delete", acl_perm_id.to_s
   )
   if retval != 0
     if stderror.empty?
@@ -225,9 +225,9 @@ def remove_acl_permission(session, acl_perm_id)
   return ""
 end
 
-def remove_acl_usergroup(session, role_id, usergroup_id)
+def remove_acl_usergroup(auth_user, role_id, usergroup_id)
   stdout, stderror, retval = run_cmd(
-    session, PCS, "acl", "role", "unassign", role_id.to_s, usergroup_id.to_s,
+    auth_user, PCS, "acl", "role", "unassign", role_id.to_s, usergroup_id.to_s,
     "--autodelete"
   )
   if retval != 0
@@ -261,15 +261,15 @@ def get_cluster_nodes(cluster_name)
   return nodes
 end
 
-def send_cluster_request_with_token(session, cluster_name, request, post=false, data={}, remote=true, raw_data=nil)
+def send_cluster_request_with_token(auth_user, cluster_name, request, post=false, data={}, remote=true, raw_data=nil)
   $logger.info("SCRWT: " + request)
   nodes = get_cluster_nodes(cluster_name)
   return send_nodes_request_with_token(
-    session, nodes, request, post, data, remote, raw_data
+    auth_user, nodes, request, post, data, remote, raw_data
   )
 end
 
-def send_nodes_request_with_token(session, nodes, request, post=false, data={}, remote=true, raw_data=nil)
+def send_nodes_request_with_token(auth_user, nodes, request, post=false, data={}, remote=true, raw_data=nil)
   out = ""
   code = 0
   $logger.info("SNRWT: " + request)
@@ -291,7 +291,7 @@ def send_nodes_request_with_token(session, nodes, request, post=false, data={}, 
   for node in nodes
     $logger.info "SNRWT Node: #{node} Request: #{request}"
     code, out = send_request_with_token(
-      session, node, request, post, data, remote, raw_data
+      auth_user, node, request, post, data, remote, raw_data
     )
     # try next node if:
     # - current node does not support the request (old version of pcsd?) (404)
@@ -328,7 +328,7 @@ def send_nodes_request_with_token(session, nodes, request, post=false, data={}, 
   return code, out
 end
 
-def send_request_with_token(session, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={})
+def send_request_with_token(auth_user, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={})
   token = additional_tokens[node] || get_node_token(node)
   $logger.info "SRWT Node: #{node} Request: #{request}"
   if not token
@@ -339,11 +339,11 @@ def send_request_with_token(session, node, request, post=false, data={}, remote=
     'token' => token,
   }
   return send_request(
-    session, node, request, post, data, remote, raw_data, timeout, cookies_data
+    auth_user, node, request, post, data, remote, raw_data, timeout, cookies_data
   )
 end
 
-def send_request(session, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data=nil)
+def send_request(auth_user, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data=nil)
   cookies_data = {} if not cookies_data
   begin
     request = "/#{request}" if not request.start_with?("/")
@@ -374,10 +374,10 @@ def send_request(session, node, request, post=false, data={}, remote=true, raw_d
     # We cannot do it for CIB_user however to be backward compatible
     # so we at least remove disallowed characters.
     cookies_data_default['CIB_user'] = PCSAuth.cookieUserSafe(
-      session[:username].to_s
+      auth_user[:username].to_s
     )
     cookies_data_default['CIB_user_groups'] = PCSAuth.cookieUserEncode(
-      (session[:usergroups] || []).join(' ')
+      (auth_user[:usergroups] || []).join(' ')
     )
 
     cookies_data_default.update(cookies_data)
@@ -405,17 +405,17 @@ def send_request(session, node, request, post=false, data={}, remote=true, raw_d
   end
 end
 
-def add_node(session, new_nodename, all=false, auto_start=true)
+def add_node(auth_user, new_nodename, all=false, auto_start=true)
   if all
     command = [PCS, "cluster", "node", "add", new_nodename]
     if auto_start
       command << '--start'
       command << '--enable'
     end
-    out, stderror, retval = run_cmd(session, *command)
+    out, stderror, retval = run_cmd(auth_user, *command)
   else
     out, stderror, retval = run_cmd(
-      session, PCS, "cluster", "localnode", "add", new_nodename
+      auth_user, PCS, "cluster", "localnode", "add", new_nodename
     )
   end
   $logger.info("Adding #{new_nodename} to pcs_settings.conf")
@@ -431,15 +431,15 @@ def add_node(session, new_nodename, all=false, auto_start=true)
   return retval, out.join("\n") + stderror.join("\n")
 end
 
-def remove_node(session, new_nodename, all=false)
+def remove_node(auth_user, new_nodename, all=false)
   if all
     # we check for a quorum loss warning in remote_remove_nodes
     out, stderror, retval = run_cmd(
-      session, PCS, "cluster", "node", "remove", new_nodename, "--force"
+      auth_user, PCS, "cluster", "node", "remove", new_nodename, "--force"
     )
   else
     out, stderror, retval = run_cmd(
-      session, PCS, "cluster", "localnode", "remove", new_nodename
+      auth_user, PCS, "cluster", "localnode", "remove", new_nodename
     )
   end
   $logger.info("Removing #{new_nodename} from pcs_settings.conf")
@@ -457,7 +457,7 @@ end
 
 def get_current_node_name()
   stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserSession, CRM_NODE, "-n"
+    PCSAuth.getSuperuserAuth(), CRM_NODE, "-n"
   )
   if retval == 0 and stdout.length > 0
     return stdout[0].chomp()
@@ -468,7 +468,7 @@ end
 def get_local_node_id()
   if ISRHEL6
     out, errout, retval = run_cmd(
-      PCSAuth.getSuperuserSession, COROSYNC_CMAPCTL, "cluster.cman"
+      PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "cluster.cman"
     )
     if retval != 0
       return ""
@@ -479,7 +479,7 @@ def get_local_node_id()
     end
     local_node_name = match[1]
     out, errout, retval = run_cmd(
-      PCSAuth.getSuperuserSession,
+      PCSAuth.getSuperuserAuth(),
       CMAN_TOOL, "nodes", "-F", "id", "-n", local_node_name
     )
     if retval != 0
@@ -488,7 +488,7 @@ def get_local_node_id()
     return out[0].strip()
   end
   out, errout, retval = run_cmd(
-    PCSAuth.getSuperuserSession,
+    PCSAuth.getSuperuserAuth(),
     COROSYNC_CMAPCTL, "-g", "runtime.votequorum.this_node_id"
   )
   if retval != 0
@@ -504,7 +504,7 @@ end
 
 def get_corosync_nodes()
   stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserSession, PCS, "status", "nodes", "corosync"
+    PCSAuth.getSuperuserAuth(), PCS, "status", "nodes", "corosync"
   )
   if retval != 0
     return []
@@ -534,7 +534,7 @@ def get_nodes_status()
   pacemaker_standby = []
   in_pacemaker = false
   stdout, stderr, retval = run_cmd(
-    PCSAuth.getSuperuserSession, PCS, "status", "nodes", "both"
+    PCSAuth.getSuperuserAuth(), PCS, "status", "nodes", "both"
   )
   stdout.each {|l|
     l = l.chomp
@@ -577,7 +577,7 @@ def get_nodes_status()
 end
 
 def need_ring1_address?()
-  out, errout, retval = run_cmd(PCSAuth.getSuperuserSession, COROSYNC_CMAPCTL)
+  out, errout, retval = run_cmd(PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL)
   if retval != 0
     return false
   else
@@ -616,9 +616,9 @@ def is_cman_with_udpu_transport?
   return false
 end
 
-def get_resource_agents_avail(session)
+def get_resource_agents_avail(auth_user, params)
   code, result = send_cluster_request_with_token(
-    session, params[:cluster], 'get_avail_resource_agents'
+    auth_user, params[:cluster], 'get_avail_resource_agents'
   )
   return {} if 200 != code
   begin
@@ -633,9 +633,9 @@ def get_resource_agents_avail(session)
   end
 end
 
-def get_stonith_agents_avail(session)
+def get_stonith_agents_avail(auth_user, params)
   code, result = send_cluster_request_with_token(
-    session, params[:cluster], 'get_avail_fence_agents'
+    auth_user, params[:cluster], 'get_avail_fence_agents'
   )
   return {} if 200 != code
   begin
@@ -653,7 +653,7 @@ end
 def get_cluster_name()
   if ISRHEL6
     stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserSession, COROSYNC_CMAPCTL, "cluster"
+      PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "cluster"
     )
     if retval == 0
       stdout.each { |line|
@@ -674,7 +674,7 @@ def get_cluster_name()
   end
 
   stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserSession, COROSYNC_CMAPCTL, "totem.cluster_name"
+    PCSAuth.getSuperuserAuth(), COROSYNC_CMAPCTL, "totem.cluster_name"
   )
   if retval != 0 and not ISRHEL6
     # Cluster probably isn't running, try to get cluster name from
@@ -700,9 +700,9 @@ def get_cluster_name()
   end
 end
 
-def get_node_attributes(session, cib_dom=nil)
+def get_node_attributes(auth_user, cib_dom=nil)
   unless cib_dom
-    cib_dom = get_cib_dom(session)
+    cib_dom = get_cib_dom(auth_user)
     return {} unless cib_dom
   end
   node_attrs = {}
@@ -738,9 +738,9 @@ def get_nodes_utilization(cib_dom)
   return utilization
 end
 
-def get_fence_levels(session, cib_dom=nil)
+def get_fence_levels(auth_user, cib_dom=nil)
   unless cib_dom
-    cib_dom = get_cib_dom(session)
+    cib_dom = get_cib_dom(auth_user)
     return {} unless cib_dom
   end
 
@@ -760,9 +760,9 @@ def get_fence_levels(session, cib_dom=nil)
   return fence_levels
 end
 
-def get_acls(session, cib_dom=nil)
+def get_acls(auth_user, cib_dom=nil)
   unless cib_dom
-    cib_dom = get_cib_dom(session)
+    cib_dom = get_cib_dom(auth_user)
     return {} unless cib_dom
   end
 
@@ -806,14 +806,14 @@ def get_acls(session, cib_dom=nil)
   return acls
 end
 
-def enable_cluster(session)
-  stdout, stderror, retval = run_cmd(session, PCS, "cluster", "enable")
+def enable_cluster(auth_user)
+  stdout, stderror, retval = run_cmd(auth_user, PCS, "cluster", "enable")
   return false if retval != 0
   return true
 end
 
-def disable_cluster(session)
-  stdout, stderror, retval = run_cmd(session, PCS, "cluster", "disable")
+def disable_cluster(auth_user)
+  stdout, stderror, retval = run_cmd(auth_user, PCS, "cluster", "disable")
   return false if retval != 0
   return true
 end
@@ -839,7 +839,7 @@ end
 def get_corosync_version()
   begin
     stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserSession, COROSYNC, "-v"
+      PCSAuth.getSuperuserAuth(), COROSYNC, "-v"
     )
   rescue
     stdout = []
@@ -874,7 +874,7 @@ end
 def get_pacemaker_version()
   begin
     stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserSession, PACEMAKERD, "-$"
+      PCSAuth.getSuperuserAuth(), PACEMAKERD, "-$"
     )
   rescue
     stdout = []
@@ -900,7 +900,7 @@ end
 def get_cman_version()
   begin
     stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserSession, CMAN_TOOL, "-V"
+      PCSAuth.getSuperuserAuth(), CMAN_TOOL, "-V"
     )
   rescue
     stdout = []
@@ -949,12 +949,12 @@ def get_pcsd_version()
   return PCS_VERSION.split(".").collect { | x | x.to_i }
 end
 
-def run_cmd(session, *args)
+def run_cmd(auth_user, *args)
   options = {}
-  return run_cmd_options(session, options, *args)
+  return run_cmd_options(auth_user, options, *args)
 end
 
-def run_cmd_options(session, options, *args)
+def run_cmd_options(auth_user, options, *args)
   $logger.info("Running: " + args.join(" "))
   start = Time.now
   out = ""
@@ -972,9 +972,9 @@ def run_cmd_options(session, options, *args)
     $logger.debug(errout)
     $logger.debug("Duration: " + duration.to_s + "s")
   }
-  cib_user = session[:username]
+  cib_user = auth_user[:username]
   # when running 'id -Gn' to get the groups they are not defined yet
-  cib_groups = (session[:usergroups] || []).join(' ')
+  cib_groups = (auth_user[:usergroups] || []).join(' ')
   $logger.info("CIB USER: #{cib_user}, groups: #{cib_groups}")
   # Open4.popen4 reimplementation which sets ENV in a child process prior
   # to running an external process by exec
@@ -1048,7 +1048,7 @@ def add_prefix_to_keys(hash, prefix)
   return new_hash
 end
 
-def check_gui_status_of_nodes(session, nodes, check_mutuality=false, timeout=10)
+def check_gui_status_of_nodes(auth_user, nodes, check_mutuality=false, timeout=10)
   options = {}
   options[:check_auth_only] = '' if not check_mutuality
   threads = []
@@ -1060,7 +1060,7 @@ def check_gui_status_of_nodes(session, nodes, check_mutuality=false, timeout=10)
   nodes.each { |node|
     threads << Thread.new {
       code, response = send_request_with_token(
-        session, node, 'check_auth', false, options, true, nil, timeout
+        auth_user, node, 'check_auth', false, options, true, nil, timeout
       )
       if code == 200
         if check_mutuality
@@ -1094,7 +1094,7 @@ def check_gui_status_of_nodes(session, nodes, check_mutuality=false, timeout=10)
   return online_nodes, offline_nodes, not_authorized_nodes
 end
 
-def pcs_auth(session, nodes, username, password, force=false, local=true)
+def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
   # if no sync is needed, do not report a sync error
   sync_successful = true
   sync_failed_nodes = []
@@ -1102,7 +1102,7 @@ def pcs_auth(session, nodes, username, password, force=false, local=true)
   # check for already authorized nodes
   if not force
     online, offline, not_authenticated = check_gui_status_of_nodes(
-      session, nodes, true
+      auth_user, nodes, true
     )
     if not_authenticated.length < 1
       result = {}
@@ -1114,7 +1114,7 @@ def pcs_auth(session, nodes, username, password, force=false, local=true)
 
   # authorize the nodes locally (i.e. not bidirectionally)
   auth_responses = run_auth_requests(
-    session, nodes, nodes, username, password, force, true
+    auth_user, nodes, nodes, username, password, force, true
   )
 
   # get the tokens and sync them within the local cluster
@@ -1162,7 +1162,7 @@ def pcs_auth(session, nodes, username, password, force=false, local=true)
         nodes_to_auth << node if not cluster_nodes.include?(node)
       }
       auth_responses2 = run_auth_requests(
-        session, nodes_to_auth, nodes, username, password, force, false
+        auth_user, nodes_to_auth, nodes, username, password, force, false
       )
       auth_responses.update(auth_responses2)
     end
@@ -1171,7 +1171,7 @@ def pcs_auth(session, nodes, username, password, force=false, local=true)
   return auth_responses, sync_successful, sync_failed_nodes, sync_responses
 end
 
-def run_auth_requests(session, nodes_to_send, nodes_to_auth, username, password, force=false, local=true)
+def run_auth_requests(auth_user, nodes_to_send, nodes_to_auth, username, password, force=false, local=true)
   data = {}
   nodes_to_auth.each_with_index { |node, index|
     data["node-#{index}"] = node
@@ -1185,7 +1185,7 @@ def run_auth_requests(session, nodes_to_send, nodes_to_auth, username, password,
   threads = []
   nodes_to_send.each { |node|
     threads << Thread.new {
-      code, response = send_request(session, node, 'auth', true, data)
+      code, response = send_request(auth_user, node, 'auth', true, data)
       if 200 == code
         token = response.strip
         if '' == token
@@ -1203,7 +1203,7 @@ def run_auth_requests(session, nodes_to_send, nodes_to_auth, username, password,
 end
 
 def send_local_configs_to_nodes(
-  session, nodes, force=false, clear_local_permissions=false
+  auth_user, nodes, force=false, clear_local_permissions=false
 )
   configs = Cfgsync::get_configs_local(true)
   if clear_local_permissions
@@ -1212,12 +1212,12 @@ def send_local_configs_to_nodes(
     configs[Cfgsync::PcsdSettings.name].text = pcs_config.text()
   end
   publisher = Cfgsync::ConfigPublisher.new(
-    session, configs.values(), nodes, $cluster_name
+    auth_user, configs.values(), nodes, $cluster_name
   )
   return publisher.send(force)
 end
 
-def send_local_certs_to_nodes(session, nodes)
+def send_local_certs_to_nodes(auth_user, nodes)
   begin
     data = {
       'ssl_cert' => File.read(CRT_FILE),
@@ -1254,7 +1254,7 @@ def send_local_certs_to_nodes(session, nodes)
   nodes.each { |node|
     threads << Thread.new {
       code, response = send_request_with_token(
-        session, node, '/set_certs', true, data
+        auth_user, node, '/set_certs', true, data
       )
       node_response[node] = [code, response]
     }
@@ -1299,13 +1299,13 @@ def send_local_certs_to_nodes(session, nodes)
   }
 end
 
-def pcsd_restart_nodes(session, nodes)
+def pcsd_restart_nodes(auth_user, nodes)
   node_response = {}
   threads = []
   nodes.each { |node|
     threads << Thread.new {
       code, response = send_request_with_token(
-        session, node, '/pcsd_restart', true
+        auth_user, node, '/pcsd_restart', true
       )
       node_response[node] = [code, response]
     }
@@ -1373,7 +1373,7 @@ def verify_cert_key_pair(cert, key)
   key_modulus = nil
 
   stdout, stderr, retval = run_cmd_options(
-    PCSAuth.getSuperuserSession(),
+    PCSAuth.getSuperuserAuth(),
     {
       'stdin' => cert,
     },
@@ -1386,7 +1386,7 @@ def verify_cert_key_pair(cert, key)
   end
 
   stdout, stderr, retval = run_cmd_options(
-    PCSAuth.getSuperuserSession(),
+    PCSAuth.getSuperuserAuth(),
     {
       'stdin' => key,
     },
@@ -1414,7 +1414,7 @@ def verify_cookie_secret(secret)
   return []
 end
 
-def cluster_status_from_nodes(session, cluster_nodes, cluster_name)
+def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
   node_map = {}
   forbidden_nodes = {}
   overview = {
@@ -1431,7 +1431,7 @@ def cluster_status_from_nodes(session, cluster_nodes, cluster_name)
   cluster_nodes.uniq.each { |node|
     threads << Thread.new {
       code, response = send_request_with_token(
-        session,
+        auth_user,
         node,
         'status',
         false,
@@ -1622,7 +1622,7 @@ def get_node_uptime()
   return '%d day%s, %02d:%02d:%02d' % [dd, dd != 1?'s':'', hh, mm, ss]
 end
 
-def get_node_status(session, cib_dom)
+def get_node_status(auth_user, cib_dom)
   node_status = {
       :cluster_name => $cluster_name,
       :groups => [],
@@ -1634,10 +1634,10 @@ def get_node_status(session, cib_dom)
       :cluster_settings => {},
       :need_ring1_address => need_ring1_address?,
       :is_cman_with_udpu_transport => is_cman_with_udpu_transport?,
-      :acls => get_acls(session, cib_dom),
-      :username => session[:username],
-      :fence_levels => get_fence_levels(session, cib_dom),
-      :node_attr => node_attrs_to_v2(get_node_attributes(session, cib_dom)),
+      :acls => get_acls(auth_user, cib_dom),
+      :username => auth_user[:username],
+      :fence_levels => get_fence_levels(auth_user, cib_dom),
+      :node_attr => node_attrs_to_v2(get_node_attributes(auth_user, cib_dom)),
       :nodes_utilization => get_nodes_utilization(cib_dom),
       :known_nodes => []
   }
@@ -1659,7 +1659,7 @@ def get_node_status(session, cib_dom)
     node_status[:constraints] = getAllConstraints(cib_dom.elements['/cib/configuration/constraints'])
   end
 
-  node_status[:cluster_settings] = getAllSettings(session, cib_dom)
+  node_status[:cluster_settings] = getAllSettings(auth_user, cib_dom)
 
   return node_status
 end
@@ -1734,10 +1734,10 @@ def get_resource_by_id(id, cib_dom, crm_dom=nil, rsc_status=nil, operations=fals
   end
 end
 
-def get_crm_mon_dom(session)
+def get_crm_mon_dom(auth_user)
   begin
     stdout, _, retval = run_cmd(
-      session, CRM_MON, '--one-shot', '-r', '--as-xml'
+      auth_user, CRM_MON, '--one-shot', '-r', '--as-xml'
     )
     if retval == 0
       return REXML::Document.new(stdout.join("\n"))
@@ -1748,9 +1748,9 @@ def get_crm_mon_dom(session)
   return nil
 end
 
-def get_cib_dom(session)
+def get_cib_dom(auth_user)
   begin
-    stdout, _, retval = run_cmd(session, 'cibadmin', '-Q', '-l')
+    stdout, _, retval = run_cmd(auth_user, 'cibadmin', '-Q', '-l')
     if retval == 0
       return REXML::Document.new(stdout.join("\n"))
     end
@@ -1815,18 +1815,18 @@ def status_v1_to_v2(status)
   return new_status
 end
 
-def allowed_for_local_cluster(session, action)
+def allowed_for_local_cluster(auth_user, action)
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
   return pcs_config.permissions_local.allows?(
-    session[:username], session[:usergroups], action
+    auth_user[:username], auth_user[:usergroups], action
   )
 end
 
-def allowed_for_superuser(session)
+def allowed_for_superuser(auth_user)
   $logger.debug(
-    "permission check superuser username=#{session[:username]} groups=#{session[:groups]}"
+    "permission check superuser username=#{auth_user[:username]} groups=#{auth_user[:usergroups]}"
   )
-  if SUPERUSER != session[:username]
+  if SUPERUSER != auth_user[:username]
     $logger.debug('permission denied')
     return false
   end
