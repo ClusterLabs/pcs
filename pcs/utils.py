@@ -21,6 +21,7 @@ import tarfile
 import fcntl
 import getpass
 import base64
+import threading
 
 
 from errors import ReportItem
@@ -921,6 +922,21 @@ def run_node_threads(node_threads):
                 error_list.append(output)
             del node_threads[node]
     return error_list
+
+def run_parallel(worker_list, wait_seconds=1):
+    thread_list = []
+    for worker in worker_list:
+        thread = threading.Thread(target=worker)
+        thread.daemon = True
+        thread.start()
+        thread_list.append(thread)
+
+    while thread_list:
+        for thread in thread_list:
+            thread.join(wait_seconds)
+            if not thread.is_alive():
+                thread_list.remove(thread)
+
 
 # Check is something exists in the CIB, if it does return it, if not, return
 #  an empty string

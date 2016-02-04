@@ -14,6 +14,8 @@ import utils
 from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
 from pcs_test_functions import PcsRunner
 from pcs_test_assertions import AssertPcsMixin
+import cluster
+from cluster import NodeActionTask
 
 
 empty_cib = "empty-withnodes.xml"
@@ -2481,6 +2483,57 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
             ,
             "Error: unknown transport 'unknown', use --force to override\n"
         )
+
+class PrepareNodeNamesTest(unittest.TestCase):
+    def test_return_original_when_is_in_pacemaker_nodes(self):
+        node = 'test'
+        self.assertEqual(
+            node,
+            cluster.prepare_node_name(node, {1: node}, {})
+        )
+
+    def test_return_original_when_is_not_in_corosync_nodes(self):
+        node = 'test'
+        self.assertEqual(
+            node,
+            cluster.prepare_node_name(node, {}, {})
+        )
+
+    def test_return_original_when_corosync_id_not_in_pacemaker(self):
+        node = 'test'
+        self.assertEqual(
+            node,
+            cluster.prepare_node_name(node, {}, {1: node})
+        )
+
+    def test_return_modified_name(self):
+        node = 'test'
+        self.assertEqual(
+            'another (test)',
+            cluster.prepare_node_name(node, {1: 'another'}, {1: node})
+        )
+
+    def test_return_modified_name_with_pm_null_case(self):
+        node = 'test'
+        self.assertEqual(
+            '*Unknown* (test)',
+            cluster.prepare_node_name(node, {1: '(null)'}, {1: node})
+        )
+
+class NodeActionTaskTest(unittest.TestCase):
+    def test_can_run_action(self):
+        def action(node, arg, kwarg=None):
+            return (0, ':'.join([node, arg, kwarg]))
+
+        report_list = []
+        def report(node, returncode, output):
+            report_list.append('|'.join([node, str(returncode), output]))
+
+        task = NodeActionTask(report, action, 'node', 'arg', kwarg='kwarg')
+        task()
+
+        self.assertEqual(['node|0|node:arg:kwarg'], report_list)
+        self.assertEqual(0, task.returncode)
 
 
 if __name__ == "__main__":

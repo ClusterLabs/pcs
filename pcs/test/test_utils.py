@@ -9,6 +9,7 @@ import shutil
 import unittest
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
+from time import sleep
 currentdir = os.path.dirname(os.path.abspath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -2208,6 +2209,37 @@ Membership information
             "element with id '%s' not found" % node_id
         )
         self.assertEqual(node.getAttribute("id"), node_id)
+
+class RunParallelTest(unittest.TestCase):
+    def fixture_create_worker(self, log, name, sleepSeconds=0):
+        def worker():
+            sleep(sleepSeconds)
+            log.append(name)
+        return worker
+
+    def test_run_all_workers(self):
+        log = []
+        utils.run_parallel(
+            [
+                self.fixture_create_worker(log, 'first'),
+                self.fixture_create_worker(log, 'second'),
+            ],
+            wait_seconds=.1
+        )
+
+        self.assertEqual(log, ['first', 'second'])
+
+    def test_wait_for_slower_workers(self):
+        log = []
+        utils.run_parallel(
+            [
+                self.fixture_create_worker(log, 'first', .03),
+                self.fixture_create_worker(log, 'second'),
+            ],
+            wait_seconds=.01
+        )
+
+        self.assertEqual(log, ['second', 'first'])
 
 if __name__ == "__main__":
     unittest.main()

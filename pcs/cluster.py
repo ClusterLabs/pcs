@@ -273,34 +273,52 @@ def cluster_gui_status(argv,dont_exit = False):
 def cluster_certkey(argv):
     return pcsd.pcsd_certkey(argv)
 
+def prepare_node_name(node, pm_nodes, cs_nodes):
+    '''
+    Return pacemaker-corosync combined name for node if needed
+    pm_nodes dictionary pacemaker nodes id:node_name
+    cs_nodes dictionary corosync nodes id:node_name
+    '''
+    if node in pm_nodes.values():
+        return node
+
+    for cs_id, cs_name in cs_nodes.items():
+        if node == cs_name and cs_id in pm_nodes:
+            return '{0} ({1})'.format(
+                pm_nodes[cs_id] if pm_nodes[cs_id] != '(null)' else "*Unknown*",
+                node
+            )
+
+    return node
+
 # Check and see if pcsd is running on the nodes listed
-def check_nodes(nodes, prefix = ""):
-    bad_nodes = False
+def check_nodes(node_list, prefix=""):
+    """
+    Print pcsd status on node_list, return if there is any pcsd not online
+    """
     if not utils.is_rhel6():
-        pm_nodes = utils.getPacemakerNodesID(True)
-        cs_nodes = utils.getCorosyncNodesID(True)
-    for node in nodes:
-        status = utils.checkAuthorization(node)
+        pm_nodes = utils.getPacemakerNodesID(allow_failure=True)
+        cs_nodes = utils.getCorosyncNodesID(allow_failure=True)
 
-        if not utils.is_rhel6():
-            if node not in pm_nodes.values():
-                for n_id, n in cs_nodes.items():
-                    if node == n and n_id in pm_nodes:
-                        real_node_name = pm_nodes[n_id]
-                        if real_node_name == "(null)":
-                            real_node_name = "*Unknown*"
-                        node = real_node_name +  " (" + node + ")"
-                        break
+    STATUS_ONLINE = 0
+    status_desc_map = {
+        STATUS_ONLINE: 'Online',
+        3: 'Unable to authenticate'
+    }
+    report = lambda node, returncode, output: print("{0}{1}: {2}".format(
+        prefix,
+        node if utils.is_rhel6() else prepare_node_name(
+            node, pm_nodes, cs_nodes
+        ),
+        status_desc_map.get(returncode, 'Offline')
+    ))
+    task_list = [
+        NodeActionTask(report, utils.checkAuthorization, node)
+        for node in node_list
+    ]
+    utils.run_parallel(task_list)
 
-        if status[0] == 0:
-            print(prefix + node + ": Online")
-        elif status[0] == 3:
-            print(prefix + node + ": Unable to authenticate")
-            bad_nodes = True
-        else:
-            print(prefix + node + ": Offline")
-            bad_nodes = True
-    return bad_nodes
+    return any([task.returncode != STATUS_ONLINE for task in task_list])
 
 def cluster_setup(argv):
     if len(argv) < 2:
@@ -1849,6 +1867,22 @@ def cluster_quorum_unblock(argv):
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
     print("Waiting for nodes cancelled")
+
+class NodeActionTask(object):
+    def __init__(self, report, action, node, *args, **kwargs):
+        self.report = report
+        self.node = node
+        self.action = action
+        self.args = args
+        self.kwargs = kwargs
+        self.returncode = 0
+        self.output = ""
+
+    def __call__(self):
+        self.returncode, self.output = self.action(
+            self.node, *self.args, **self.kwargs
+        )
+        self.report(self.node, self.returncode, self.output)
 
 class NodeActionThread(threading.Thread):
     def __init__(self, node):

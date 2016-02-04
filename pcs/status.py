@@ -69,8 +69,9 @@ def full_status():
     print(output)
 
     if not utils.usefile:
-        print_pcsd_daemon_status()
-        print()
+        if  "--full" in utils.pcs_options:
+            print_pcsd_daemon_status()
+            print()
         utils.serviceStatus("  ")
 
 # Parse crm_mon for status
