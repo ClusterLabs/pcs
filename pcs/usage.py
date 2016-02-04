@@ -252,7 +252,7 @@ Commands:
            --group <group id> [--before <resource id> | --after <resource id>]
            ] [--disabled] [--wait[=n]]
         Create specified resource.  If --clone is used a clone resource is
-        created if --master is specified a master/slave resource is created.
+        created.  If --master is specified a master/slave resource is created.
         If --group is specified the resource is added to the group named.  You
         can use --before or --after to specify the position of the added
         resource relatively to some resource already existing in the group.
@@ -456,8 +456,7 @@ Commands:
         stopping clone instances if appropriate) and then return 0 on success
         or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 
-    master [<master/slave id>] <resource id | group id> [options]
-           [--wait[=n]]
+    master [<master/slave id>] <resource id | group id> [options] [--wait[=n]]
         Configure a resource or group as a multi-state (master/slave) resource.
         If --wait is specified, pcs will wait up to 'n' seconds for the operation
         to finish (including starting and promoting resource instances if
@@ -874,7 +873,7 @@ Examples:
 
 def property(args = [], pout = True):
     output = """
-Usage: pcs property <properties>...
+Usage: pcs property [commands]...
 Configure pacemaker properties
 
 Commands:
