@@ -1105,9 +1105,9 @@ def status(args = [], pout = True):
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    [status] [--full]
+    [status] [--full | --hide-inactive]
         View all information about the cluster and resources (--full provides
-        more details)
+        more details, --hide-inactive hides inactive resources)
 
     resources
         View current status of cluster resources

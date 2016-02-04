@@ -87,6 +87,8 @@ def main(argv):
             "miss_count_const=", "fail_recv_const=",
             "corosync_conf=", "cluster_conf=",
             "remote",
+            #in pcs status - do not display resorce status on inactive node
+            "hide-inactive",
         ]
         # pull out negative number arguments and add them back after getopt
         prev_arg = ""

@@ -40,10 +40,18 @@ def status_cmd(argv):
         sys.exit(1)
 
 def full_status():
+    if "--hide-inactive" in utils.pcs_options and "--full" in utils.pcs_options:
+        utils.err("you cannot specify both --hide-inactive and --full")
+
+    monitor_command = ["crm_mon", "--one-shot"]
+    if "--hide-inactive" not in utils.pcs_options:
+        monitor_command.append('--inactive')
     if "--full" in utils.pcs_options:
-        (output, retval) = utils.run(["crm_mon", "-1", "-r", "-R", "-A", "-f"])
-    else:
-        (output, retval) = utils.run(["crm_mon", "-1", "-r"])
+        monitor_command.extend(
+            ["--show-detail", "--show-node-attributes", "--failcounts"]
+        )
+
+    output, retval = utils.run(monitor_command)
 
     if (retval != 0):
         utils.err("cluster is not currently running on this node")
