@@ -19,6 +19,7 @@ require 'auth.rb'
 require 'wizard.rb'
 require 'cfgsync.rb'
 require 'permissions.rb'
+require 'session.rb'
 
 Dir["wizards/*.rb"].each {|file| require file}
 
@@ -43,11 +44,18 @@ rescue Errno::ENOENT
   File.open(COOKIE_FILE, 'w', 0700) {|f| f.write(secret)}
 end
 
-use Rack::Session::Cookie,
-  :expire_after => 60 * 60,
+session_lifetime = ENV['SESSION_LIFETIME'].to_i()
+session_lifetime = 60 * 60 unless session_lifetime > 0
+use SessionPoolLifetime,
+  :expire_after => session_lifetime,
   :secret => secret,
   :secure => true, # only send over HTTPS
   :httponly => true # don't provide to javascript
+
+# session storage instance
+# will be created by Rack later and fetched in "before" filter
+$session_storage = nil
+$session_storage_env = {}
 
 #use Rack::SSL
 
@@ -66,6 +74,13 @@ end
 
 before do
   @auth_user = nil
+
+  # get session storage instance from env
+  if not $session_storage and env[:__session_storage]
+    $session_storage = env[:__session_storage]
+    $session_storage_env = env
+  end
+
   if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
     protected! 
   end
@@ -113,6 +128,19 @@ $thread_cfgsync = Thread.new {
       $logger.debug('Config files sync thread finished')
     }
     sleep(Cfgsync::ConfigSyncControl.sync_thread_interval())
+  end
+}
+
+$thread_session_expired = Thread.new {
+  while true
+    sleep(60 * 5)
+    begin
+      if $session_storage
+        $session_storage.drop_expired($session_storage_env)
+      end
+    rescue => e
+      $logger.warn("Exception while removing expired sessions: #{e}")
+    end
   end
 }
 
@@ -334,7 +362,7 @@ if not DISABLE_GUI
   get('/login'){ erb :login, :layout => :main }
 
   get '/logout' do 
-    session.clear
+    session.destroy
     erb :login, :layout => :main
   end
 
