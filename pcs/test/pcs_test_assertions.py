@@ -49,20 +49,27 @@ class AssertPcsMixin(object):
             ).format(returncode, pcs_returncode, command, stdout)
         )
         if stdout_start:
-            if not stdout.startswith(stdout_start):
+            expected_start = '\n'.join(stdout_start)+'\n' \
+                if isinstance(stdout_start, list) else stdout_start
+
+            if not stdout.startswith(expected_start):
                 self.assertTrue(
                     False,
                     'Stdout not start as expected\ncommand:\n'+command
                     +'\ndiff is (expected 2nd):\n'
-                    +prepare_diff(stdout[:len(stdout_start)], stdout_start)
+                    +prepare_diff(stdout[:len(expected_start)], expected_start)
                     +'\nFull stdout:'+stdout
                 )
         else:
+            expected_full = '\n'.join(stdout_full)+'\n' \
+                if isinstance(stdout_full, list) else stdout_full
+
             #unicode vs non-unicode not solved here
-            if stdout != stdout_full:
+            if stdout != expected_full:
                 self.assertEqual(
-                    stdout, stdout_full,
+                    stdout, expected_full,
                     'Stdout is not as expected\ncommand:\n'+command
                     +'\n diff is(expected 2nd):\n'
-                    +prepare_diff(stdout, stdout_full)
+                    +prepare_diff(stdout, expected_full)
+                    +'\nFull stdout:'+stdout
                 )

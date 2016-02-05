@@ -14,6 +14,8 @@ sys.path.insert(0, parentdir)
 import utils
 from pcs_test_functions import pcs, ac
 import resource
+from pcs_test_functions import PcsRunner
+from pcs_test_assertions import AssertPcsMixin
 
 
 empty_cib = "empty.xml"
@@ -4395,6 +4397,43 @@ Error: Value of utilization attribute must be integer: 'test=int'
 """
             ac(expected_out, output)
             self.assertEqual(1, returnVal)
+
+class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy('empty-1.2.xml', temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def test_remove_referenced_primitive_resource(self):
+        self.assert_pcs_success('resource create dummy Dummy')
+        self.assert_pcs_success('acl role create read-dummy read id dummy')
+        self.assert_pcs_success('resource delete dummy', [
+            'Deleting Resource - dummy'
+        ])
+
+    def test_remove_group_with_referenced_primitive_resource(self):
+        self.assert_pcs_success('resource create dummy1 Dummy')
+        self.assert_pcs_success('resource create dummy2 Dummy')
+        self.assert_pcs_success('resource group add dummy-group dummy1 dummy2')
+        self.assert_pcs_success('acl role create read-dummy read id dummy2')
+        self.assert_pcs_success('resource delete dummy-group', [
+            'Removing group: dummy-group (and all resources within group)',
+            'Stopping all resources in group: dummy-group...',
+            'Deleting Resource - dummy1',
+            'Deleting Resource (and group) - dummy2',
+        ])
+
+    def test_remove_referenced_group(self):
+        self.assert_pcs_success('resource create dummy1 Dummy')
+        self.assert_pcs_success('resource create dummy2 Dummy')
+        self.assert_pcs_success('resource group add dummy-group dummy1 dummy2')
+        self.assert_pcs_success('acl role create acl-role-a read id dummy-group')
+        self.assert_pcs_success('resource delete dummy-group', [
+            'Removing group: dummy-group (and all resources within group)',
+            'Stopping all resources in group: dummy-group...',
+            'Deleting Resource - dummy1',
+            'Deleting Resource (and group) - dummy2',
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()

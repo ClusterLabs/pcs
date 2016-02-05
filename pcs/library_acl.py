@@ -128,3 +128,8 @@ def add_permissions_to_role(dom, role_id, permission_info_list):
         se.setAttribute("kind", permission)
         se.setAttribute(area_type_attribute_map[scope_type], scope)
         __find_role(dom, role_id).appendChild(se)
+
+def remove_permissions_referencing(dom, reference):
+    for permission in dom.getElementsByTagName("acl_permission"):
+        if permission.getAttribute("reference") == reference:
+            permission.parentNode.removeChild(permission)

@@ -174,5 +174,41 @@ class ProvideRoleTest(LibraryAclTest):
             '''.format(role_id))
         )
 
+class RemovePermissionForReferenceTest(LibraryAclTest):
+    def test_has_no_efect_when_id_not_referenced(self):
+        lib.remove_permissions_referencing(self.cib.dom, 'dummy')
+        self.assert_cib_equal(self.create_cib())
+
+    def test_remove_all_references(self):
+        self.cib.append_to_first_tag_name('configuration', '''
+            <acls>
+              <acl_role id="role1">
+                <acl_permission id="role1-read" kind="read" reference="dummy"/>
+                <acl_permission id="role1-read" kind="read" reference="dummy2"/>
+              </acl_role>
+              <acl_role id="role2">
+                <acl_permission id="role2-read" kind="read" reference="dummy"/>
+              </acl_role>
+            </acls>
+        ''')
+
+        lib.remove_permissions_referencing(self.cib.dom, 'dummy')
+
+        self.assert_cib_equal(
+            self.create_cib().append_to_first_tag_name('configuration', '''
+              <acls>
+                <acl_role id="role1">
+                  <acl_permission
+                    id="role1-read"
+                    kind="read"
+                    reference="dummy2"
+                  />
+                </acl_role>
+                <acl_role id="role2"/>
+              </acls>
+            ''')
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
