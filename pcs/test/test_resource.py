@@ -92,13 +92,13 @@ class ResourceTest(unittest.TestCase):
         ac(o,"Error: Unable to create resource 'ipaddr3', it is not installed on this system (use --force to override)\n")
 
     def testEmpty(self):
-        output, returnVal = pcs(temp_cib, "resource") 
+        output, returnVal = pcs(temp_cib, "resource")
         assert returnVal == 0, 'Unable to list resources'
         assert output == "NO resources configured\n", "Bad output"
 
 
     def testDescribe(self):
-        output, returnVal = pcs(temp_cib, "resource describe bad_resource") 
+        output, returnVal = pcs(temp_cib, "resource describe bad_resource")
         assert returnVal == 1
         assert output == "Error: Unable to find resource: bad_resource\n"
 
@@ -156,33 +156,33 @@ the health of a system via IPMI.
 
     def testAddResources(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
         assert output == "Error: unable to create resource/fence device 'ClusterIP', 'ClusterIP' already exists on this system\n",[output]
-    
+
         line = "resource create --no-default-ops ClusterIP2 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
         line = "resource create --no-default-ops ClusterIP3 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
         line = "resource create --no-default-ops ClusterIP4  ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
         line = "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
         line = "resource create --no-default-ops ClusterIP6  ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=31s start interval=32s op stop interval=33s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
         line = "resource create --no-default-ops ClusterIP7 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s --disabled"
@@ -309,17 +309,17 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
 
     def testAddBadResources(self):
         line = "resource create --no-default-ops bad_resource idontexist test=bad"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
         assert output == "Error: Unable to create resource 'idontexist', it is not installed on this system (use --force to override)\n",[output]
 
         line = "resource create --no-default-ops bad_resource2 idontexist2 test4=bad3 --force"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = "resource show --full"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         ac(output, """\
  Resource: bad_resource2 (class=ocf provider=heartbeat type=idontexist2)
@@ -334,20 +334,20 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
     def testDeleteResources(self):
 # Verify deleting resources works
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource delete'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
         line = "resource delete ClusterIP"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == "Deleting Resource - ClusterIP\n"
-        
+
         output, returnVal = pcs(temp_cib, "resource show ClusterIP")
         assert returnVal == 1
         assert output == "Error: unable to find resource 'ClusterIP'\n"
@@ -362,7 +362,7 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
 
     def testResourceShow(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
@@ -376,12 +376,12 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
 
     def testResourceUpdate(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource update'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
@@ -391,7 +391,7 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
 
     def testAddOperation(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         ac(output,"")
         assert returnVal == 0
 
@@ -404,17 +404,17 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
         assert o == "Error: remove_operation has been deprecated, please use 'op remove'\n"
 
         line = 'resource op add'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
         line = 'resource op remove'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
         line = 'resource op add ClusterIP monitor interval=31s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         ac(output, """\
 Error: operation monitor already specified for ClusterIP, use --force to override:
 monitor interval=30s (ClusterIP-monitor-interval-30s)
@@ -428,7 +428,7 @@ monitor interval=30s (ClusterIP-monitor-interval-30s)
         assert output == ""
 
         line = 'resource op add ClusterIP monitor interval=31s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         ac(output, """\
 Error: operation monitor with interval 31s already specified for ClusterIP:
 monitor interval=31s (ClusterIP-monitor-interval-31s)
@@ -436,7 +436,7 @@ monitor interval=31s (ClusterIP-monitor-interval-31s)
         assert returnVal == 1
 
         line = 'resource op add ClusterIP monitor interval=31'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         ac(output, """\
 Error: operation monitor with interval 31s already specified for ClusterIP:
 monitor interval=31s (ClusterIP-monitor-interval-31s)
@@ -659,37 +659,37 @@ monitor interval=60s (state-monitor-interval-60s)
 
     def testRemoveOperation(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource op add ClusterIP monitor interval=31s --force'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource op add ClusterIP monitor interval=32s --force'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource op remove ClusterIP-monitor-interval-32s-xxxxx'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
         assert output == "Error: unable to find operation id: ClusterIP-monitor-interval-32s-xxxxx\n"
 
         line = 'resource op remove ClusterIP-monitor-interval-32s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource op remove ClusterIP monitor interval=30s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource op remove ClusterIP monitor interval=30s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 1
         assert output == 'Error: Unable to find operation matching: monitor interval=30s\n'
 
@@ -702,7 +702,7 @@ monitor interval=60s (state-monitor-interval-60s)
         assert returnVal == 0
 
         line = 'resource op remove ClusterIP monitor interval=31s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
@@ -714,12 +714,12 @@ monitor interval=60s (state-monitor-interval-60s)
         assert returnVal == 0
 
         line = 'resource op add ClusterIP monitor interval=31s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource op add ClusterIP monitor interval=32s --force'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
@@ -750,37 +750,37 @@ monitor interval=60s (state-monitor-interval-60s)
 
     def testUpdateOperation(self):
         line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert output == ""
         assert returnVal == 0
 
         line = 'resource update ClusterIP op monitor interval=32s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource update ClusterIP op monitor interval=33s start interval=30s timeout=180s'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource update ClusterIP op'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource update ClusterIP op monitor'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
 
         line = 'resource show ClusterIP --full'
-        output, returnVal = pcs(temp_cib, line) 
+        output, returnVal = pcs(temp_cib, line)
         ac(output, """\
  Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
   Attributes: ip=192.168.0.99 cidr_netmask=32
@@ -978,7 +978,7 @@ monitor interval=20 (A-monitor-interval-20)
         o,r = pcs(temp_cib, "resource delete AGroup")
         ac(o,"Removing group: AGroup (and all resources within group)\nStopping all resources in group: AGroup...\nDeleting Resource - A1\nDeleting Resource - A2\nDeleting Resource (and group) - A3\n")
         assert r == 0
-        
+
         o,r = pcs(temp_cib, "resource show")
         assert r == 0
         ac(o,"NO resources configured\n")
