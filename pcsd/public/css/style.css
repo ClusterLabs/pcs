@@ -786,3 +786,7 @@ li.menuheader {
 .status-warning {
   color: #ff6600;
 }
+
+table.args-table td.reg {
+  width: 17em;
+}

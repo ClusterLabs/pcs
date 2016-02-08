@@ -13,6 +13,7 @@ from xml.dom.minidom import parseString
 import re
 import textwrap
 import time
+import json
 
 from pcs import (
     usage,
@@ -22,6 +23,7 @@ from pcs import (
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
 from pcs.lib.errors import LibraryError
+import pcs.lib.resource_agent as lib_ra
 
 
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62
@@ -173,6 +175,8 @@ def resource_cmd(argv):
             print_resource_utilization(argv.pop(0))
         else:
             set_resource_utilization(argv.pop(0), argv)
+    elif (sub_cmd == "get_resource_agent_info"):
+        get_resource_agent_info(argv)
     else:
         usage.resource()
         sys.exit(1)
@@ -2815,3 +2819,21 @@ def print_resources_utilization():
     print("Resource Utilization:")
     for resource in sorted(utilization):
         print(" {0}: {1}".format(resource, utilization[resource]))
+
+
+def get_resource_agent_info(argv):
+    if len(argv) != 1:
+        utils.err("One parameter expected")
+
+    agent = argv[0]
+    try:
+        metadata_dom = lib_ra.get_resource_agent_metadata(agent)
+        metadata = lib_ra.get_agent_desc(metadata_dom)
+        metadata["name"] = agent
+        metadata["parameters"] = lib_ra.get_resource_agent_parameters(
+            metadata_dom
+        )
+
+        print(json.dumps(metadata))
+    except lib_ra.LibraryError as e:
+        utils.process_library_reports(e.args)

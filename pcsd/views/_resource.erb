@@ -51,8 +51,20 @@
 	  <td class="bold">Class/Provider</td>
 	  <td>
 	    <%
+        resources = []
+        @resource_agents.keys.each { |res|
+          s = res.split(':', 3)
+          if s.length == 3
+            resources << "#{s[0]}::#{s[1]}:#{s[2]}"
+          elsif s.length == 2
+            resources << "#{s[0]}:#{s[1]}"
+          else
+            resources << res
+          end
+        }
+
 	      class_providers = []
-	      @resource_agents.keys.each {|k|
+        resources.each {|k|
 		class_providers << k[0,k.rindex(':')]
 	      }
 	      class_providers.uniq!
@@ -60,7 +72,7 @@
 	    %>
 	    <select id="resource_class_provider_selector">
 	      <% class_providers.each {|cp| %>
-		<option <%= "selected" if cp == "ocf:heartbeat" %> value="<%=cp%>"><%=cp%></option>
+		<option <%= "selected" if cp == "ocf::heartbeat" %> value="<%=cp%>"><%=cp%></option>
 	      <% } %>
 	    </select>
 	  </td>
@@ -69,36 +81,34 @@
 	  <td class="bold">Type</td>
 	  <td>
 	    <select id="all_ra_types" style="display:none;">
-	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |key| %>
+	      <% resources.sort_by{|a|a.downcase}.each { |key| %>
 		<option width=250px  value="<%=key%>"><%=key[(key.rindex(':')+1)..-1]%></option>
 	      <% } %>
 	    </select>
-	    <select id="add_ra_type" onchange="load_resource_form($('#new_resource_agent'), this.value);">
-	      <% @resource_agents.keys.sort_by{|a|a.downcase}.each { |key| %>
+	    <select id="add_ra_type" onchange="load_resource_form(this.value);">
+	      <% resources.sort_by{|a|a.downcase}.each { |key| %>
 		<option width=250px <%= key == "ocf::heartbeat:IPaddr2" ? "selected" : "" %> value="<%=key%>"><%=key%></option>
 	      <% } %>
 	    </select>
 	  </td>
 	</tr>
       </table>
-      <div id="new_resource_agent">
-      </div>
+      {{resource-form agent=Pcs.resourcesContainer.new_resource_agent_metadata groups=Pcs.resourcesContainer.groups_enum}}
     </div>
     <div id="add_stonith" style="display: none;">
       <table id="stonith_selector" style="clear:left;float:left;margin-top:25px;">
 	<tr>
 	  <td class="bold">Type</td>
 	  <td>
-	    <select id="add_stonith_type" onchange="load_resource_form($('#new_stonith_agent'),this.value,true);">
+	    <select id="add_stonith_type" onchange="load_resource_form(this.value,true);">
 	      <% @stonith_agents.keys.sort_by{|a|a.downcase}.each { |name| %>
-		<option width=250px <%= @stonith_agents[name]["type"] == "fence_apc" ? "selected" : "" %> value="<%=@stonith_agents[name]["type"]%>"><%=@stonith_agents[name]["type"]%></option>
+		<option width=250px <%= @stonith_agents[name]["type"] == "fence_apc" ? "selected" : "" %> value="stonith:<%=@stonith_agents[name]["type"]%>"><%=@stonith_agents[name]["type"]%></option>
 	    <% } %>
 	    </select>
 	  </td>
 	</tr>
       </table>
-      <div id="new_stonith_agent">
-      </div>
+        {{fence-form agent=Pcs.resourcesContainer.new_fence_agent_metadata}}
     </div>
     <div id="add_group" style="display: none;">
       <form method=POST onkeypress="if (event.keyCode == 13) {$(this).parent().parent().find('.ui-dialog-buttonpane button:eq(1)').trigger('click');return false;} " action="/resource_group_add">

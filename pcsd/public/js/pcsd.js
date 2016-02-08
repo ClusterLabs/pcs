@@ -234,20 +234,25 @@ function create_node(form) {
 // If update is set to true we update the resource instead of create it
 // if stonith is set to true we update/create a stonith agent
 function create_resource(form, update, stonith) {
-  dataString = $(form).serialize();
-  var resourceID = $(form).find("[name='name']").val(); 
-  url = get_cluster_remote_url() + $(form).attr("action");
+  var data = {};
+  $($(form).serializeArray()).each(function(index, obj) {
+    data[obj.name] = obj.value;
+  });
+  data["resource_type"] = data["resource_type"].replace("::", ":");
+  var url = get_cluster_remote_url() + $(form).attr("action");
   var name;
 
-  if (stonith)
+  if (stonith) {
     name = "fence device";
-  else
-    name = "resource"
+    data["resource_type"] = data["resource_type"].replace("stonith:", "");
+  } else {
+    name = "resource";
+  }
 
   ajax_wrapper({
     type: "POST",
     url: url,
-    data: dataString,
+    data: data,
     dataType: "json",
     success: function(returnValue) {
       $('input.apply_changes').show();
@@ -291,37 +296,12 @@ function disable_spaces(item) {
   });
 }
 
-function load_resource_form(item, ra, stonith) {
-  var data = { new: true, resourcename: ra};
-  var command;
-  if (!stonith)
-    command = "resource_metadata";
-  else
-    command = "fence_device_metadata";
-  
-  item.load(get_cluster_remote_url() + command, data);
-}
-
-function update_resource_form_groups(form, group_list) {
-  var select = $(form).find("select[name='resource_group']").first();
-  if (select.length < 1) {
-    return;
-  }
-  var selected = select.val();
-  var selected_valid = false;
-  var select_new = select.clone();
-  select_new.empty();
-  select_new.append('<option value="">None</options>');
-  $.each(group_list, function(index, group) {
-    select_new.append('<option value="' + group + '">' + group + '</options>');
-    if (selected == group) {
-      selected_valid = true;
-    }
-  });
-  if (selected_valid) {
-    select_new.val(selected);
-  }
-  select.replaceWith(select_new);
+function load_resource_form(agent_name, stonith) {
+  stonith = typeof stonith !== 'undefined' ? stonith : false;
+  var prop_name = "new_" + (stonith ? "fence" : "resource") + "_agent_metadata";
+  get_resource_agent_metadata(agent_name, function (data) {
+      Pcs.resourcesContainer.set(prop_name, Pcs.ResourceAgent.create(data));
+  }, stonith);
 }
 
 function verify_remove(remove_func, forceable, checklist_id, dialog_id, label, ok_text, title, remove_id) {
@@ -1184,36 +1164,6 @@ function load_row(node_row, ac, cur_elem, containing_elem, also_set, initial_loa
   });
 }
 
-function load_agent_form(resource_id, stonith) {
-  var url;
-  var form;
-  if (stonith) {
-    form = $("#stonith_agent_form");
-    url = '/managec/' + Pcs.cluster_name + '/fence_device_form';
-  } else {
-    form = $("#resource_agent_form");
-    url = '/managec/' + Pcs.cluster_name + '/resource_form?version=2';
-  }
-
-  form.empty();
-
-  var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
-  if (!resource_obj || !resource_obj.get('is_primitive'))
-    return;
-
-  var data = {resource: resource_id};
-
-  ajax_wrapper({
-    type: 'GET',
-    url: url,
-    data: data,
-    timeout: pcs_timeout,
-    success: function (data) {
-      Ember.run.next(function(){form.html(data);});
-    }
-  });
-}
-
 function show_loading_screen() {
   $("#loading_screen_progress_bar").progressbar({ value: 100});
   $("#loading_screen").dialog({
@@ -2072,6 +2022,40 @@ function auto_show_hide_constraints() {
   });
 }
 
+function get_resource_agent_metadata(agent, on_success, stonith) {
+  stonith = typeof stonith !== 'undefined' ? stonith : false;
+  var request = (stonith)
+    ? 'get_fence_agent_metadata'
+    : 'get_resource_agent_metadata';
+  ajax_wrapper({
+    url: get_cluster_remote_url() + request,
+    dataType: "json",
+    data: {agent: agent},
+    timeout: pcs_timeout,
+    success: on_success,
+    error: function (xhr, status, error) {
+      alert(
+        "Unable to get metadata for resource agent '" + agent + "' "
+        + ajax_simple_error(xhr, status, error)
+      );
+    }
+  })
+}
+
+function update_instance_attributes(resource_id) {
+  var res_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
+  if (!(res_obj && res_obj.get("is_primitive"))) {
+    return;
+  }
+  get_resource_agent_metadata(res_obj.get("resource_type"), function(data) {
+    var agent = Pcs.ResourceAgent.create(data);
+    res_obj.set("resource_agent", agent);
+    $.each(res_obj.get("instance_attr"), function(_, attr) {
+      agent.get_parameter(attr.name).set("value", attr.value);
+    });
+  }, res_obj.get("stonith"));
+}
+
 function tree_view_onclick(resource_id, auto) {
   auto = typeof auto !== 'undefined' ? auto : false;
   var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
@@ -2081,18 +2065,21 @@ function tree_view_onclick(resource_id, auto) {
   }
   if (resource_obj.get('stonith')) {
     Pcs.resourcesContainer.set('cur_fence', resource_obj);
-    if (!auto) window.location.hash = "/fencedevices/" + resource_id;
+    if (!auto) {
+      window.location.hash = "/fencedevices/" + resource_id;
+      update_instance_attributes(resource_id);
+    }
   } else {
     Pcs.resourcesContainer.set('cur_resource', resource_obj);
-    if (!auto) window.location.hash = "/resources/" + resource_id;
+
+    if (!auto) {
+      window.location.hash = "/resources/" + resource_id;
+      update_instance_attributes(resource_id);
+    }
     auto_show_hide_constraints();
   }
 
   tree_view_select(resource_id);
-
-  Ember.run.next(Pcs, function() {
-    load_agent_form(resource_id, resource_obj.get('stonith'));
-  });
 }
 
 function tree_view_select(element_id) {
@@ -2735,3 +2722,7 @@ Ember.Handlebars.helper('selector-helper', function (content, value, place_holde
   });
   return new Handlebars.SafeString(out);
 });
+
+function nl2br(text) {
+  return text.replace(/(?:\r\n|\r|\n)/g, '<br />');
+}

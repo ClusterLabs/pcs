@@ -171,16 +171,24 @@ Pcs = Ember.Application.createWithMixins({
 
           Ember.run.scheduleOnce('afterRender', Pcs, function () {
             if (self.get('cur_fence')) {
-              if (fence_change)
+              if (fence_change) {
+                if (first_run) {
+                  update_instance_attributes(self.get('cur_fence').get('id'));
+                }
                 tree_view_onclick(self.get('cur_fence').get('id'), true);
-              else
+              } else {
                 tree_view_select(self.get('cur_fence').get('id'));
+              }
             }
             if (self.get('cur_resource')) {
-              if (resource_change)
+              if (resource_change) {
+                if (first_run) {
+                  update_instance_attributes(self.get('cur_resource').get('id'));
+                }
                 tree_view_onclick(self.get('cur_resource').get('id'), true);
-              else
+              } else {
                 tree_view_select(self.get('cur_resource').get('id'));
+              }
             }
             Pcs.selectedNodeController.reset();
             disable_checkbox_clicks();
@@ -244,6 +252,26 @@ Pcs.ClusterPropertyComponent = Ember.Component.extend({
       value: "false"
     }
   ]
+});
+
+Pcs.ParametersTableComponent = Ember.Component.extend({
+  parameters: [],
+  show_content: false,
+  show_title: true,
+  table_name: "",
+  table_id: "",
+  content_style: function() {
+    return ("display: " + (this.get("show_content") ? "block" : "none"));
+  }.property("show_content"),
+  actions: {
+    toggleBody: function() {
+      this.toggleProperty('show_content');
+    }
+  }
+});
+
+Pcs.ParametersTableElementComponent = Ember.Component.extend({
+  tagName: "tr"
 });
 
 Pcs.UtilizationTableComponent = Ember.Component.extend({
@@ -385,6 +413,8 @@ Pcs.resourcesContainer = Ember.Object.create({
   constraints: {},
   group_list: [],
   data_version: null,
+  new_resource_agent_metadata: null,
+  new_fence_agent_metadata: null,
 
   get_resource_by_id: function(resource_id) {
     var resource_map = this.get('resource_map');
@@ -647,7 +677,6 @@ Pcs.resourcesContainer = Ember.Object.create({
     var constraints = self.get_constraints(data["constraints"]);
     self.set('constraints', constraints);
     var resource_map = self.get('resource_map');
-    update_resource_form_groups($("#new_resource_agent"), self.get('group_list').sort());
     $.each(constraints, function(const_type, cons) {
       $.each(resource_map, function(resource_id, resource_obj) {
         if (resource_id in cons) {
@@ -668,7 +697,18 @@ Pcs.resourcesContainer = Ember.Object.create({
 Pcs.resourcesContainer.reopen({
   is_version_1: function() {
     return (this.get("data_version") == '1');
-  }.property('data_version')
+  }.property('data_version'),
+  groups_enum: function() {
+    var self = this;
+    var res = [];
+    $.each(self.get("group_list"), function(_, group) {
+      res.push({
+        name: group,
+        value: group
+      });
+    });
+    return res;
+  }.property("group_list")
 });
 
 Pcs.ResourceObj = Ember.Object.extend({
@@ -846,6 +886,7 @@ Pcs.ResourceOperationObj = Ember.Object.extend({
 });
 
 Pcs.PrimitiveObj = Pcs.ResourceObj.extend({
+  resource_agent: null,
   agentname: null,
   provider: null,
   type: null,
@@ -900,6 +941,8 @@ Pcs.PrimitiveObj = Pcs.ResourceObj.extend({
 
 Pcs.GroupObj = Pcs.ResourceObj.extend({
   members: [],
+  //for internal usage
+  _members: [],
   is_group: true,
   children: Ember.computed.alias('members'),
 
@@ -919,20 +962,35 @@ Pcs.GroupObj = Pcs.ResourceObj.extend({
 
   refresh: function() {
     var self = this;
-    var members = self.get("members");
-    var member;
     var new_members = [];
-    $.each(members, function(i,v) {
-      member = Pcs.PrimitiveObj.create(v);
+    var member;
+    var old_members = {};
+    // Property 'members' is filled by constructor or update method, therefor
+    // properties 'members' and '_members' are now different. We need to update
+    // only old members and create new objects for new ones.
+    $.each(self.get("_members"), function(_, m) {
+      old_members[m.get("id")] = m;
+    });
+
+    $.each(self.get("members"), function(_,m) {
+      if (m.id in old_members) {
+        old_members[m.id].update(old_members[m.id], m);
+        member = old_members[m.id];
+      } else {
+        member = Pcs.PrimitiveObj.create(m);
+      }
       member.set('parent', self);
       new_members.push(member);
     });
     self.set("members", new_members);
+    self.set("_members", new_members);
   }
 });
 
 Pcs.MultiInstanceObj = Pcs.ResourceObj.extend({
   member: null,
+  //for internal usage
+  _member: null,
   children: function() {
     return [this.get('member')];
   }.property('member'),
@@ -956,16 +1014,34 @@ Pcs.MultiInstanceObj = Pcs.ResourceObj.extend({
   refresh: function() {
     var self = this;
     var member = self.get("member");
+    var old_member = self.get("_member");
     var new_member = null;
-    switch (member.class_type) {
-      case "primitive":
-        new_member = Pcs.PrimitiveObj.create(member);
-        break;
-      case "group":
-        new_member = Pcs.GroupObj.create(member);
+    // Property 'member' is filled by constructor or update method, therefor
+    // properties 'member' and '_member' are now different. We need to
+    // create new object only if there is no resource with same id and same
+    // type. Otherwise, we need to create new object.
+    if (!old_member) {
+      old_member = Pcs.resourcesContainer.get_resource_by_id(member.id);
+    }
+    if (
+      old_member &&
+      member.id == old_member.get("id") &&
+      member.class_type == old_member.get("class_type")
+    ) {
+      old_member.update(old_member, member);
+      new_member = old_member;
+    } else {
+      switch (member.class_type) {
+        case "primitive":
+          new_member = Pcs.PrimitiveObj.create(member);
+          break;
+        case "group":
+          new_member = Pcs.GroupObj.create(member);
+      }
     }
     new_member.set('parent', self);
     self.set("member", new_member);
+    self.set("_member", new_member);
   }
 });
 
@@ -977,6 +1053,99 @@ Pcs.MasterSlaveObj = Pcs.MultiInstanceObj.extend({
   masters: [],
   slaves: [],
   resource_type: 'Master/Slave'
+});
+
+Pcs.ResourceAgentParameter = Ember.Object.extend({
+  name: "",
+  readable_name: Ember.computed.alias("name"),
+  form_name: function() {
+    var name = "_res_param";
+    var val = this.get("value");
+    name += ((!val || val == "") ? "empty_" : "ne_");
+    return name + this.get("name");
+  }.property("name", "value"),
+  type: "string",
+  value: null,
+  cur_val: Ember.computed.oneWay("value"),
+  required: false,
+  advanced: false,
+  longdesc: "",
+  longdesc_html: function() {
+    return nl2br(htmlEncode(this.get("longdesc")));
+  }.property("longdesc"),
+  shortdesc: "",
+  "default": null,
+  description: function() {
+    var shortdesc = nl2br(htmlEncode(this.get("shortdesc")));
+    var longdesc = nl2br(htmlEncode(this.get("longdesc")));
+    if (longdesc == shortdesc) longdesc = "";
+    var def_val = this.get("default");
+    def_val = nl2br(htmlEncode((def_val) ? def_val : ""));
+    var desc = [];
+    if (shortdesc) desc.push(shortdesc);
+    if (longdesc) desc.push(longdesc);
+    if (def_val) desc.push("Default value: " + def_val);
+    return desc.join("<br /><br />");
+  }.property("longdesc", "shortdesc", "default")
+});
+
+Pcs.ResourceAgent = Ember.Object.extend({
+  name: "",
+  longdesc: "",
+  longdesc_html: function() {
+    return nl2br(htmlEncode(this.get("longdesc")));
+  }.property("longdesc"),
+  shortdesc: "",
+  parameters: [],
+  required_parameters: function() {
+    var self = this;
+    var args = [];
+    $.each(self.get("parameters"), function(_, arg) {
+      if (arg.get("required")) {
+        args.pushObject(arg);
+      }
+    });
+    return args;
+  }.property("parameters.@each"),
+  optional_parameters: function() {
+    var self = this;
+    var args = [];
+    $.each(self.get("parameters"), function(_, arg) {
+      if (!arg.get("required") && !arg.get("advanced")) {
+        args.pushObject(arg);
+      }
+    });
+    return args;
+  }.property("parameters.@each"),
+  advanced_parameters: function() {
+    var self = this;
+    var args = [];
+    $.each(self.get("parameters"), function(_, arg) {
+      if (!arg.get("required") && arg.get("advanced")) {
+        args.pushObject(arg);
+      }
+    });
+    return args;
+  }.property("parameters.@each"),
+  get_parameter: function(name) {
+    var self = this;
+    var res = null;
+    $.each(self.get("parameters"), function(_, arg) {
+      if (arg && arg.get("name") == name) {
+        res = arg;
+        return false; // break
+      }
+    });
+    return res;
+  },
+  init: function() {
+    var self = this;
+    var args = [];
+    $.each(self.get("parameters"), function(_, arg) {
+      args.pushObject(Pcs.ResourceAgentParameter.create(arg));
+    });
+    self.set("parameters", Ember.copy(args));
+  }
 });
 
 Pcs.Router.map(function() {

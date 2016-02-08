@@ -193,6 +193,25 @@
           <td class="bold" nowrap>Type:</td>
           <td class="reg" nowrap>{{resource.res_type}}</td>
         </tr>
+        {{#if resource.is_primitive}}
+          <tr>
+            <td>
+              <div class="bold">Description:</div>
+            </td>
+            <td>
+              <span class="reg" style="float:left;">
+                {{resource.resource_agent.shortdesc}}
+              </span>
+              <span {{bind-attr title=resource.resource_agent.longdesc_html}} onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>
+              <div class="long_desc_div reg" style="display:none; font-size:12px; max-width:350px;">{{{resource.resource_agent.longdesc_html}}}</div>
+            </td>
+          </tr>
+        {{/if}}
         {{#unless resource.stonith}}
         {{#if resource.is_primitive}}
           <tr>
@@ -280,10 +299,14 @@
       {{/unless}}
     </div>
     {{#if stonith}}
-      <div style="clear:left; margin-top: 2em;" id="stonith_agent_form"></div>
+      <div style="clear:left; margin-top: 2em;" id="stonith_agent_form">
+        {{fence-form resource=resource agent=resource.resource_agent}}
+      </div>
     {{else}}
     {{#if resource.is_primitive}}
-      <div style="clear:left; margin-top: 2em;" id="resource_agent_form"></div>
+      <div style="clear:left; margin-top: 2em;" id="resource_agent_form">
+        {{resource-form resource=resource agent=resource.resource_agent}}
+      </div>
     {{/if}}
     {{/if}}
   {{else}}
@@ -550,6 +573,222 @@ Use the 'Add' button to submit the form.">
       </tr>
       {{/if}}
     </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/parameters-table-element">
+    <td class="reg">
+      <span style="float: left;">
+        {{param.name}}
+      </span>
+      {{#if param.description}}
+        <span style="margin-left: 0.5em" class="infoicon sprites" {{bind-attr title=param.description}}></span>
+      {{/if}}
+    </td>
+    <td>
+      {{input
+          size="30"
+          type="text"
+          name=param.form_name
+          value=param.cur_val
+          placeholder=param.default
+      }}
+    </td>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/parameters-table">
+  {{#if parameters}}
+    <table style="clear:left; margin-top: 1em;" class="args-table">
+      {{#if show_title}}
+        <tr>
+          <td {{action toggleBody}} {{bind-attr id=table_id}} colspan="2" nowrap>
+            {{#if show_content}}
+              <span class="downarrow sprites"></span>
+            {{else}}
+              <span class="rightarrow sprites"></span>
+            {{/if}}
+            <span class="bold">{{table_name}}</span>
+          </td>
+        </tr>
+      {{/if}}
+      <tbody {{bind-attr style=content_style}}>
+        {{#each parameter in parameters}}
+          {{parameters-table-element param=parameter}}
+        {{/each}}
+      </tbody>
+    </table>
+  {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/resource-form">
+    <div style="clear:left; margin-top: 1em;">
+      <form method="post" action="/update_resource">
+        {{#if resource}}
+          <input type="hidden" name="resource_id" {{bind-attr value=resource.id}} />
+        {{/if}}
+        <input type="hidden" name="resource_type" {{bind-attr value=agent.name}} />
+        {{#unless resource}}
+          <div id="resource_group">
+            <table class="args-table">
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="bold">Description:</div>
+                  </td>
+                  <td>
+                    <span class="reg" style="float:left;">
+                      {{agent.shortdesc}}
+                    </span>
+                    <span {{bind-attr title=agent.longdesc_html}} onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td>
+                    <div class="long_desc_div reg" style="display:none; font-size:12px; max-width:350px;">{{{agent.longdesc_html}}}</div>
+                  </td>
+                </tr>
+                <tr title="Select a group to add the resource to.">
+                  <td nowrap>
+                    <div class="bold">
+                      Resource Group:
+                    </div>
+                  </td>
+                  <td>
+                    {{value-selector
+                        prompt="None"
+                        content=groups
+                        name="resource_group"
+                    }}
+                  </td>
+                </tr>
+                <tr title='Makes the resource run multiple times on the cluster. By default the resource will run once on each of the nodes.'>
+                  <td nowrap>
+                    <div class="bold">
+                      Clone:
+                    </div>
+                  </td>
+                  <td>
+                    <input type="hidden" name="_orig_resource_clone" value="">
+                    <input type=checkbox name="resource_clone">
+                  </td>
+                </tr>
+                <tr title='Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance. By default the resource will run on one node in Master mode and on all other nodes in Slave mode.'>
+                  <td nowrap>
+                    <div class="bold">
+                      Master/Slave:
+                    </div>
+                  </td>
+                  <td>
+                    <input type="hidden" name="_orig_resource_ms" value="">
+                    <input type=checkbox name="resource_ms" >
+                  </td>
+                </tr>
+                <tr title="Do not start the resource automatically after creating.">
+                  <td nowrap>
+                    <div class="bold"
+                      >Disabled:
+                    </div>
+                  </td>
+                  <td>
+                    <input type=checkbox name="disabled">
+                  </td>
+                </tr>
+                <tr>
+                  <td class="reg">
+                    Resource ID
+                  </td>
+                  <td>
+                    <input style="margin-right: 50px;" type="text" name="name" size="30" class="text_field">
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        {{/unless}}
+        {{parameters-table
+            table_name="Required Arguments"
+            parameters=agent.required_parameters
+            show_content=true
+        }}
+        {{parameters-table
+            table_name="Optional Arguments"
+            parameters=agent.optional_parameters
+        }}
+        {{#if resource}}
+          <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this)
+          .parents('form'),true); return false;" value="Apply Changes" style="margin-top: 1em;" />
+          <input type="button" onclick="tree_view_onclick(curResource()); return false;"  value="Refresh" />
+        {{else}}
+          <center>
+            <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this)
+            .parents('form'),false); return false;" value="Create Resource" style="margin-top: 1em;" />
+          </center>
+        {{/if}}
+      </form>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/fence-form">
+    <div style="clear:left; margin-top: 2em;">
+      <form method="post" action="/update_fence_device">
+        {{#if resource}}
+          <input type="hidden" name="resource_id" {{bind-attr value=resource.id}} />
+        {{/if}}
+        <input type="hidden" name="resource_type" {{bind-attr value=agent.name}} />
+        {{#unless resource}}
+          <table class="args-table">
+            <tbody>
+              <tr>
+                <td>
+                  <div class="bold">Description:</div>
+                </td>
+                <td>
+                  <span class="reg" style="float:left;">
+                    {{agent.shortdesc}}
+                  </span>
+                  <span {{bind-attr title=agent.longdesc_html}} onclick="$(this).closest('table').find('.long_desc_div').toggle();" class="infoicon sprites" style="margin-top:2px;"></span>
+                </td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <div class="long_desc_div reg" style="display:none; font-size:12px; max-width:350px;">{{{agent.longdesc_html}}}</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="reg">
+                  Fence Instance Name
+                </td>
+                <td>
+                  <input style="margin-right: 50px;" type="text" name="name" size="30" class="text_field">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        {{/unless}}
+        {{parameters-table
+            table_name="Required Arguments"
+            parameters=agent.required_parameters
+            show_content=true
+        }}
+        {{parameters-table
+            table_name="Optional Arguments"
+            parameters=agent.optional_parameters
+        }}
+        {{parameters-table
+            table_name="Advanced Arguments"
+            parameters=agent.advanced_parameters
+        }}
+        {{#if resource}}
+          <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this).parents('form'), true, true); return false;" value="Apply Changes" style="margin-top: 1em;" />
+          <input type="button" onclick="tree_view_onclick(curStonith()); return false;" value="Refresh" />
+        {{else}}
+          <center>
+            <input class="apply_changes" type="button" type="submit" onclick="$(this).hide();create_resource($(this).parents('form'), false, true); return false;" value="Create Fence Instance" style="margin-top: 1em;" />
+          </center>
+        {{/if}}
+      </form>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="components/value-selector">

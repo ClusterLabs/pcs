@@ -8,6 +8,7 @@ require 'openssl'
 require 'logger'
 require 'thread'
 require 'fileutils'
+require 'cgi'
 
 require 'bootstrap.rb'
 require 'resource.rb'
@@ -955,6 +956,177 @@ already been added to pcsd.  You may not add two clusters with the same name int
     end
   end
 
+  get '/managec/:cluster/get_resource_agent_metadata' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    cluster = params[:cluster]
+    resource_agent = params[:agent]
+    code, out = send_cluster_request_with_token(
+      auth_user,
+      cluster,
+      'get_resource_agent_metadata',
+      false,
+      {:resource_agent => resource_agent}
+    )
+    if code != 404
+      return [code, out]
+    end
+
+    code, out = send_cluster_request_with_token(
+      auth_user,
+      cluster,
+      'resource_metadata',
+      false,
+      {
+        # request /remote/resource_metadata accepts resource agent name only
+        # with single colon
+        :resourcename => resource_agent.sub('::', ':'),
+        :new => true
+      }
+    )
+    if code != 200
+      return [400, 'Unable to get meta-data of specified resource agent.']
+    end
+    desc_regex = Regexp.new(
+      '<span class="reg[^>]*>(?<short>[^>]*)&nbsp;</span>[^<]*' +
+        '<span title="(?<long>[^"]*)"'
+    )
+    parameters_regex = Regexp.new(
+      '<input type="hidden" name="resource_type"[^>]*>(?<required>[\s\S]*)' +
+        '<div class="bold">Optional Arguments:</div>(?<optional>[\S\s]*)' +
+        '<tr class="stop">'
+    )
+    parameter_regex = Regexp.new(
+      '<tr title="(?<longdesc>[^"]*)"[^>]*>[\s]*<td class="reg">\s*' +
+        '(?<name>[^<\s]*)\s*</td>\s*<td>\s*' +
+        '<input placeholder="(?<shortdesc>[^"]*)"'
+    )
+
+    desc = desc_regex.match(out)
+    unless desc
+      return [400, 'Unable to get meta-data of specified resource agent.']
+    end
+    result = {
+      :name => resource_agent,
+      :shortdesc => html2plain(desc[:short]),
+      :longdesc => html2plain(desc[:long]),
+      :parameters => []
+    }
+
+    parameters = parameters_regex.match(out)
+    parameters[:required].scan(parameter_regex) { |match|
+      result[:parameters] << {
+        :name => html2plain(match[1]),
+        :longdesc => html2plain(match[0]),
+        :shortdesc => html2plain(match[2]),
+        :type => 'string',
+        :required => true
+      }
+    }
+    parameters[:optional].scan(parameter_regex) { |match|
+      result[:parameters] << {
+        :name => html2plain(match[1]),
+        :longdesc => html2plain(match[0]),
+        :shortdesc => html2plain(match[2]),
+        :type => 'string',
+        :required => false
+      }
+    }
+    return [200, JSON.generate(result)]
+  end
+
+  get '/managec/:cluster/get_fence_agent_metadata' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    cluster = params[:cluster]
+    fence_agent = params[:agent]
+    code, out = send_cluster_request_with_token(
+      auth_user,
+      cluster,
+      'get_fence_agent_metadata',
+      false,
+      {:fence_agent => fence_agent}
+    )
+    if code != 404
+      return [code, out]
+    end
+
+    code, out = send_cluster_request_with_token(
+      auth_user,
+      cluster,
+      'fence_device_metadata',
+      false,
+      {
+        :resourcename => fence_agent.sub('stonith:', ''),
+        :new => true
+      }
+    )
+    if code != 200
+      return [400, 'Unable to get meta-data of specified fence agent.']
+    end
+    desc_regex = Regexp.new(
+      '<span class="reg[^>]*>(?<short>[^>]*)&nbsp;</span>[^<]*' +
+        '<span title="(?<long>[^"]*)"'
+    )
+    parameters_regex = Regexp.new(
+      '<input type="hidden" name="resource_type"[^>]*>(?<required>[\s\S]*)' +
+        '<div class="bold">Optional Arguments:</div>(?<optional>[\S\s]*)' +
+        '<div class="bold">Advanced Arguments:</div>(?<advanced>[\S\s]*)' +
+        '<tr class="stop">'
+    )
+    required_parameter_regex = Regexp.new(
+      '<tr title="(?<longdesc>[^"]*)[^>]*>[\s]*' +
+        '<td class="reg">\s*&nbsp;(?<name>[^<\s]*)\s*</td>\s*<td>\s*' +
+        '<input placeholder="(?<shortdesc>[^"]*)"'
+    )
+    other_parameter_regex = Regexp.new(
+      '<td class="reg">\s*&nbsp;(?<name>[^<\s]*)\s*</td>\s*<td>\s*' +
+        '<input placeholder="(?<shortdesc>[^"]*)"'
+    )
+
+    desc = desc_regex.match(out)
+    unless desc
+      return [400, 'Unable to get meta-data of specified fence agent.']
+    end
+    result = {
+      :name => fence_agent,
+      :shortdesc => html2plain(desc[:short]),
+      :longdesc => html2plain(desc[:long]),
+      :parameters => []
+    }
+
+    parameters = parameters_regex.match(out)
+    parameters[:required].scan(required_parameter_regex) { |match|
+      result[:parameters] << {
+        :name => html2plain(match[1]),
+        :longdesc => html2plain(match[0]),
+        :shortdesc => html2plain(match[2]),
+        :type => 'string',
+        :required => true,
+        :advanced => false
+      }
+    }
+    parameters[:optional].scan(other_parameter_regex) { |match|
+      result[:parameters] << {
+        :name => html2plain(match[0]),
+        :longdesc => '',
+        :shortdesc => html2plain(match[1]),
+        :type => 'string',
+        :required => false,
+        :advanced => false
+      }
+    }
+    parameters[:advanced].scan(other_parameter_regex) { |match|
+      result[:parameters] << {
+        :name => html2plain(match[0]),
+        :longdesc => '',
+        :shortdesc => html2plain(match[1]),
+        :type => 'string',
+        :required => false,
+        :advanced => true
+      }
+    }
+    return [200, JSON.generate(result)]
+  end
+
   post '/managec/:cluster/fix_auth_of_cluster' do
     clustername = params[:cluster]
     unless clustername
@@ -1104,6 +1276,10 @@ class Node
   def initialize(id=nil, name=nil, hostname=nil, active=nil)
     @id, @name, @hostname, @active = id, name, hostname, active
   end
+end
+
+def html2plain(text)
+  return CGI.unescapeHTML(text).gsub(/<br[^>]*>/, "\n")
 end
 
 helpers do

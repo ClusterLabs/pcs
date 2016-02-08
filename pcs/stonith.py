@@ -10,6 +10,7 @@ import re
 import glob
 from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
+import json
 
 from pcs import (
     resource,
@@ -17,6 +18,7 @@ from pcs import (
     utils,
 )
 from pcs.lib.errors import LibraryError
+import pcs.lib.resource_agent as lib_ra
 
 def exit_on_cmdline_input_errror(usage_name):
     usage.stonith([usage_name])
@@ -69,6 +71,8 @@ def stonith_cmd(argv):
             utils.process_library_reports(e.args)
     elif (sub_cmd == "confirm"):
         stonith_confirm(argv)
+    elif (sub_cmd == "get_fence_agent_info"):
+        get_fence_agent_info(argv)
     else:
         usage.stonith()
         sys.exit(1)
@@ -430,3 +434,25 @@ def stonith_does_agent_provide_unfencing(metadata_string):
         return False
     return False
 
+
+def get_fence_agent_info(argv):
+    if len(argv) != 1:
+        utils.err("One parameter expected")
+
+    agent = argv[0]
+    if not agent.startswith("stonith:"):
+        utils.err("Invalid fence agent name")
+
+    try:
+        metadata_dom = lib_ra.get_fence_agent_metadata(
+            agent.split("stonith:", 1)[1]
+        )
+        metadata = lib_ra.get_agent_desc(metadata_dom)
+        metadata["name"] = agent
+        metadata["parameters"] = lib_ra.get_fence_agent_parameters(
+            metadata_dom
+        )
+
+        print(json.dumps(metadata))
+    except lib_ra.LibraryError as e:
+        utils.process_library_reports(e.args)

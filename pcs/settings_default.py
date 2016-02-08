@@ -1,3 +1,5 @@
+import os.path
+
 pacemaker_binaries = "/usr/sbin/"
 corosync_binaries = "/usr/sbin/"
 ccs_binaries = "/usr/sbin/"
@@ -22,3 +24,6 @@ corosync_uidgid_dir = "/etc/corosync/uidgid.d/"
 cib_dir = "/var/lib/pacemaker/cib/"
 pacemaker_uname = "hacluster"
 pacemaker_gname = "haclient"
+ocf_root = "/usr/lib/ocf/"
+ocf_resources = os.path.join(ocf_root, "resource.d/")
+nagios_metadata_path = "/usr/share/pacemaker/nagios/plugins-metadata/"
