@@ -145,6 +145,10 @@ $thread_session_expired = Thread.new {
 }
 
 helpers do
+  def is_ajax?
+    return request.env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+  end
+
   def protected!
     gui_request = ( # these are URLs for web pages
       request.path == '/' or
@@ -158,9 +162,7 @@ helpers do
         halt [401, '{"notauthorized":"true"}']
       end
     else #/managec/* /manage/* /permissions
-      if !gui_request and
-        request.env['HTTP_X_REQUESTED_WITH'] != 'XMLHttpRequest'
-      then
+      if !gui_request and !is_ajax? then
         # Accept non GUI requests only with header
         # "X_REQUESTED_WITH: XMLHttpRequest". (check if they are send via AJAX).
         # This prevents CSRF attack.
@@ -361,9 +363,9 @@ end
 if not DISABLE_GUI
   get('/login'){ erb :login, :layout => :main }
 
-  get '/logout' do 
+  get '/logout' do
     session.destroy
-    erb :login, :layout => :main
+    redirect '/login'
   end
 
   post '/login' do
@@ -383,11 +385,19 @@ if not DISABLE_GUI
       #      end
       #      redirect plp
       #    else
-      redirect '/manage'
+      if is_ajax?
+        halt [200, "OK"]
+      else
+        redirect '/manage'
+      end
       #    end
     else
-      session["bad_login_name"] = params['username']
-      redirect '/login?badlogin=1'
+      if is_ajax?
+        halt [401, '{"notauthorized":"true"}']
+      else
+        session["bad_login_name"] = params['username']
+        redirect '/login?badlogin=1'
+      end
     end
   end
 

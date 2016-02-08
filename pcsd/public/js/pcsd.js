@@ -1,4 +1,6 @@
 var pcs_timeout = 30000;
+var login_dialog_opened = false;
+var ajax_queue = Array();
 
 function curResource() {
   var obj = Pcs.resourcesContainer.get('cur_resource');
@@ -120,7 +122,7 @@ function create_group() {
       "Create Group": function() {
         var data = $('#add_group > form').serialize();
         var url = get_cluster_remote_url() + "add_group";
-        $.ajax({
+        ajax_wrapper({
           type: "POST",
           url: url,
           data: data,
@@ -187,7 +189,7 @@ function checkAddingNode(){
     return false;
   }
 
-  $.ajax({
+  ajax_wrapper({
     type: 'GET',
     url: '/manage/check_pcsd_status',
     data: {"nodes": nodeName},
@@ -213,7 +215,7 @@ function checkAddingNode(){
 
 function create_node(form) {
   var dataString = $(form).serialize();
-  $.ajax({
+  ajax_wrapper({
     type: "POST",
     url: get_cluster_remote_url() + "add_node_to_cluster",
     data: dataString,
@@ -242,7 +244,7 @@ function create_resource(form, update, stonith) {
   else
     name = "resource"
 
-  $.ajax({
+  ajax_wrapper({
     type: "POST",
     url: url,
     data: dataString,
@@ -482,7 +484,7 @@ function fade_in_out(id) {
 function node_link_action(link_selector, url, label) {
   var node = $.trim($("#node_info_header_title_name").text());
   fade_in_out(link_selector);
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: url,
     data: {"name": node},
@@ -501,7 +503,7 @@ function setup_node_links() {
   Ember.debug("Setup node links");
   $("#node_start").click(function() {
     node_link_action(
-      "#node_start", get_cluster_remote_url() +"cluster_start", "start"
+      "#node_start", get_cluster_remote_url() + "cluster_start", "start"
     );
   });
   $("#node_stop").click(function() {
@@ -534,7 +536,7 @@ function node_stop(node, force) {
   if (force) {
     data["force"] = force;
   }
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'cluster_stop',
     data: data,
@@ -552,7 +554,7 @@ function node_stop(node, force) {
         */
         return;
       }
-      var message = "Unable to stop node '" + node + " " + ajax_simple_error(
+      var message = "Unable to stop node '" + node + "' " + ajax_simple_error(
         xhr, status, error
       );
       if (message.indexOf('--force') == -1) {
@@ -584,7 +586,7 @@ function cleanup_resource() {
     return;
   }
   fade_in_out("#resource_cleanup_link");
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'resource_cleanup',
     data: {"resource": resource},
@@ -605,7 +607,7 @@ function cleanup_stonith() {
     return;
   }
   fade_in_out("#stonith_cleanup_link");
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'resource_cleanup',
     data: {"resource": resource},
@@ -626,7 +628,7 @@ function checkExistingNode() {
     node = e.value;
   });
 
-  $.ajax({
+  ajax_wrapper({
     type: 'GET',
     url: '/manage/check_pcsd_status',
     data: {"nodes": node},
@@ -650,14 +652,14 @@ function checkClusterNodes() {
     }
   });
 
-  $.ajax({
+  ajax_wrapper({
     type: 'GET',
     url: '/manage/check_pcsd_status',
     data: {"nodes": nodes.join(",")},
     timeout: pcs_timeout,
     success: function (data) {
       mydata = jQuery.parseJSON(data);
-      $.ajax({
+      ajax_wrapper({
         type: 'GET',
         url: '/manage/get_nodes_sw_versions',
         data: {"nodes": nodes.join(",")},
@@ -679,7 +681,7 @@ function checkClusterNodes() {
 
 function auth_nodes(dialog) {
   $("#auth_failed_error_msg").hide();
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: '/manage/auth_gui_against_nodes',
     data: dialog.find("#auth_nodes_form").serialize(),
@@ -852,7 +854,7 @@ function add_existing_dialog() {
 function update_existing_cluster_dialog(data) {
   for (var i in data) {
     if (data[i] == "Online") {
-      $.ajax({
+      ajax_wrapper({
         type: "POST",
         url: "/manage/existingcluster",
         timeout: pcs_timeout,
@@ -1043,7 +1045,7 @@ function update_create_cluster_dialog(nodes, version_info) {
   }
 
   if (good_nodes != 0 && cant_connect_nodes == 0 && cant_auth_nodes.length == 0 && cluster_name != "" && addr1_match == 1 && versions_check_ok == 1) {
-    $.ajax({
+    ajax_wrapper({
       type: "POST",
       url: "/manage/newcluster",
       timeout: pcs_timeout,
@@ -1201,7 +1203,7 @@ function load_agent_form(resource_id, stonith) {
 
   var data = {resource: resource_id};
 
-  $.ajax({
+  ajax_wrapper({
     type: 'GET',
     url: url,
     data: data,
@@ -1241,7 +1243,7 @@ function remove_cluster(ids) {
   $.each(ids, function(_, cluster) {
     data[ "clusterid-" + cluster] = true;
   });
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: '/manage/removecluster',
     data: data,
@@ -1266,7 +1268,7 @@ function remove_nodes(ids, force) {
     data["force"] = force;
   }
 
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'remove_nodes',
     data: data,
@@ -1321,7 +1323,7 @@ function remove_resource(ids, force) {
     }
   });
 
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'remove_resource',
     data: data,
@@ -1362,7 +1364,7 @@ function add_remove_fence_level(parent_id,remove) {
     data["node"] = Pcs.nodesController.cur_node.name;
   }
   fade_in_out(parent_id.parent());
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'add_fence_level_remote',
     data: data,
@@ -1403,7 +1405,7 @@ function remove_node_attr(parent_id) {
   data["value"] = ""; // empty value will remove attribute
   fade_in_out(parent_id.parent());
 
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'add_node_attr_remote',
     data: data,
@@ -1428,7 +1430,7 @@ function add_node_attr(parent_id) {
   data["value"] = $(parent_id + " input[name='new_node_attr_value']").val();
   fade_in_out($(parent_id));
 
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'add_node_attr_remote',
     data: data,
@@ -1453,7 +1455,7 @@ function node_maintenance(node) {
     key: "maintenance",
     value: "on"
   };
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'add_node_attr_remote',
     data: data,
@@ -1476,7 +1478,7 @@ function node_unmaintenance(node) {
     key: "maintenance",
     value: ""
   };
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'add_node_attr_remote',
     data: data,
@@ -1533,7 +1535,7 @@ function add_constraint(parent_id, c_type, force) {
   }
   fade_in_out($(parent_id));
 
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + (
       data['node_id'] && (data['node_id'].trim().indexOf(' ') != -1)
@@ -1592,7 +1594,7 @@ function add_constraint_set(parent_id, c_type, force) {
   }
   fade_in_out($(parent_id))
 
-  $.ajax({
+  ajax_wrapper({
     type: "POST",
     url: get_cluster_remote_url() + "add_constraint_set_remote",
     data: data,
@@ -1641,7 +1643,7 @@ function reset_constraint_set_form(parent_id) {
 
 function remove_constraint(id) {
   fade_in_out($("[constraint_id='"+id+"']").parent());
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'remove_constraint_remote',
     data: {"constraint_id": id},
@@ -1660,7 +1662,7 @@ function remove_constraint(id) {
 
 function remove_constraint_rule(id) {
   fade_in_out($("[rule_id='"+id+"']").parent());
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'remove_constraint_rule_remote',
     data: {"rule_id": id},
@@ -1681,7 +1683,7 @@ function add_acl_role(form) {
   var data = {}
   data["name"] = $(form).find("input[name='name']").val().trim();
   data["description"] = $(form).find("input[name='description']").val().trim();
-  $.ajax({
+  ajax_wrapper({
     type: "POST",
     url: get_cluster_remote_url() + "add_acl_role",
     data: data,
@@ -1704,7 +1706,7 @@ function remove_acl_roles(ids) {
   for (var i = 0; i < ids.length; i++) {
     data["role-" + i] = ids[i];
   }
-  $.ajax({
+  ajax_wrapper({
     type: "POST",
     url: get_cluster_remote_url() + "remove_acl_roles",
     data: data,
@@ -1747,7 +1749,7 @@ function add_acl_item(parent_id, item_type) {
       break;
   }
   fade_in_out($(parent_id));
-  $.ajax({
+  ajax_wrapper({
     type: "POST",
     url: get_cluster_remote_url() + 'add_acl',
     data: data,
@@ -1783,7 +1785,7 @@ function remove_acl_item(id,item) {
       break;
   }
 
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'remove_acl',
     data: data,
@@ -1809,7 +1811,7 @@ function update_cluster_settings() {
     data[prop.get("form_name")] = prop.get("cur_val");
   });
   show_loading_screen();
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'update_cluster_settings',
     data: data,
@@ -1831,7 +1833,7 @@ function update_cluster_settings() {
 function refresh_cluster_properties() {
   Pcs.settingsController.set("filter", "");
   $("#cluster_properties button").prop("disabled", true);
-  $.ajax({
+  ajax_wrapper({
     url: get_cluster_remote_url() + "cluster_properties",
     timeout: pcs_timeout,
     dataType: "json",
@@ -2032,7 +2034,7 @@ function htmlEncode(s)
 function fix_auth_of_cluster() {
   show_loading_screen();
   var clustername = Pcs.clusterController.cur_cluster.name;
-  $.ajax({
+  ajax_wrapper({
     url: get_cluster_remote_url(clustername) + "fix_auth_of_cluster",
     type: "POST",
     success: function(data) {
@@ -2129,7 +2131,7 @@ function resource_master(resource_id) {
     return;
   }
   show_loading_screen();
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'resource_master',
     data: {resource_id: resource_id},
@@ -2151,7 +2153,7 @@ function resource_clone(resource_id) {
     return;
   }
   show_loading_screen();
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'resource_clone',
     data: {resource_id: resource_id},
@@ -2177,7 +2179,7 @@ function resource_unclone(resource_id) {
   if (resource_obj.get('class_type') == 'clone') {
     resource_id = resource_obj.get('member').get('id');
   }
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'resource_unclone',
     data: {resource_id: resource_id},
@@ -2199,7 +2201,7 @@ function resource_ungroup(group_id) {
     return;
   }
   show_loading_screen();
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'resource_ungroup',
     data: {group_id: group_id},
@@ -2236,7 +2238,7 @@ function resource_change_group(resource_id, group_id) {
     }
   }
 
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: get_cluster_remote_url() + 'resource_change_group',
     data: data,
@@ -2263,6 +2265,137 @@ function ajax_simple_error(xhr, status, error) {
     message = message + "\n\n" + $.trim(xhr.responseText);
   }
   return message;
+}
+
+function ajax_wrapper(options) {
+  // get original callback functions
+  var error_original = function(xhr, status, error) {};
+  if (options.error) {
+    error_original = options.error;
+  }
+  var complete_original = function(xhr, status) {};
+  if (options.complete) {
+    complete_original = options.complete;
+  }
+
+  // prepare new callback functions
+  var options_new = $.extend(true, {}, options);
+  // display login dialog on error
+  options_new.error = function(xhr, status, error) {
+    if (xhr.status == 401) {
+      ajax_queue.push(options);
+      if (!login_dialog_opened) {
+        login_dialog(function() {
+          var item;
+          while (ajax_queue.length > 0) {
+            item = ajax_queue.shift();
+            ajax_wrapper(item);
+          }
+        });
+      }
+    }
+    else {
+      error_original(xhr, status, error);
+    }
+  }
+  // Do not run complete function if login dialog is open.
+  // Once user is logged in again, the original complete function will be run
+  // in repeated ajax call run by login dialog on success.
+  options_new.complete = function(xhr, status) {
+    if (xhr.status == 401) {
+      return;
+    }
+    else {
+      complete_original(xhr, status);
+    }
+  }
+
+  // run ajax request or put it into a queue
+  if (login_dialog_opened) {
+    ajax_queue.push(options);
+  }
+  else {
+    $.ajax(options_new);
+  }
+}
+
+function login_dialog(on_success) {
+  var ok_button_id = "login_form_ok";
+  var ok_button_selector = "#" + ok_button_id;
+  var buttons = [
+    {
+      text: "Log In",
+      id: ok_button_id,
+      click: function() {
+        var me = $(this);
+        var my_dialog = $(this).dialog()
+        my_dialog.find("#login_form_denied").hide();
+        $(ok_button_selector).button("option", "disabled", true);
+        $.ajax({
+          type: "POST",
+          url: "/login",
+          data: my_dialog.find("#login_form").serialize(),
+          complete: function() {
+            $(ok_button_selector).button("option", "disabled", false);
+          },
+          success: function() {
+            my_dialog.find("#login_form_username").val("");
+            my_dialog.find("#login_form_password").val("");
+            me.dialog("destroy");
+            login_dialog_opened = false;
+            on_success();
+          },
+          error: function(xhr, status, error) {
+            if (xhr.status == 401) {
+              my_dialog.find("#login_form_denied").show();
+              my_dialog.find("#login_form_password").val("");
+            }
+            else {
+              alert("Login error " + ajax_simple_error(xhr, status, error));
+            }
+          },
+        });
+      },
+    },
+    {
+      text: "Cancel",
+      id: "login_form_cancel",
+      // cancel will close the dialog the same way as X button does
+      click: function() {
+        $(this).dialog("close");
+      },
+    },
+  ];
+  var dialog_obj = $("#dialog_login").dialog({
+    title: "Log In",
+    modal: true,
+    resizable: true,
+    width: 400,
+    buttons: buttons,
+    open: function(event, ui) {
+      login_dialog_opened = true;
+    },
+    create: function(event, ui) {
+      login_dialog_opened = true;
+    },
+    // make sure to logout the user on dialog close
+    close: function(event, ui) {
+      login_dialog_opened = false;
+      location = "/logout";
+    },
+  });
+  dialog_obj.find("#login_form_denied").hide();
+  // submit on enter
+  dialog_obj.keypress(function(e) {
+    if (
+      e.keyCode == $.ui.keyCode.ENTER
+      &&
+      !dialog_obj.parent().find(ok_button_selector).button("option", "disabled")
+    ) {
+      dialog_obj.parent().find(ok_button_selector).trigger("click");
+      return false;
+    }
+  });
 }
 
 var permissions_current_cluster;
@@ -2303,7 +2436,7 @@ function permissions_load_all() {
 
 function permissions_load_cluster(cluster_name, callback) {
   var element_id = "permissions_cluster_" + cluster_name;
-  $.ajax({
+  ajax_wrapper({
     type: "GET",
     url: "/permissions_cluster_form/" + cluster_name,
     timeout: pcs_timeout,
@@ -2349,7 +2482,7 @@ function permissions_show_cluster(cluster_name, list_row) {
 function permissions_save_cluster(form) {
   var dataString = $(form).serialize();
   var cluster_name = permissions_get_clustername(form);
-  $.ajax({
+  ajax_wrapper({
     type: "POST",
     url: get_cluster_remote_url(cluster_name) + "permissions_save",
     timeout: pcs_timeout,
@@ -2562,7 +2695,7 @@ function set_utilization(type, entity_id, name, value) {
   } else return false;
   var url = get_cluster_remote_url() + "set_" + type + "_utilization";
 
-  $.ajax({
+  ajax_wrapper({
     type: 'POST',
     url: url,
     data: data,

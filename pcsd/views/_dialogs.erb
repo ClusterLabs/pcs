@@ -1,3 +1,22 @@
+<div id="dialog_login" style="display:none;">
+  <form id="login_form">
+    <div>Your session has expired. Log in again, please.</div>
+    <div id="login_form_denied" style="color:red; display:none;">
+      Bad username or password
+    </div>
+    <table>
+      <tr>
+        <td><label for="login_form_username">Username:</label></td>
+        <td><input type="text" id="login_form_username" name="username"></td>
+      </tr>
+      <tr>
+        <td><label for="login_form_password">Password:</label></td>
+        <td><input type="password" id="login_form_password" name="password"></td>
+      </tr>
+    </table>
+  </form>
+</div>
+
 <div id="auth_nodes" style="display:none;">
   <form id="auth_nodes_form">
     Enter password for user 'hacluster' to authenticate nodes.<br>

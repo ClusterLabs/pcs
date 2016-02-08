@@ -69,7 +69,7 @@ Pcs = Ember.Application.createWithMixins({
         return;
       }
       Ember.debug("Empty Cluster Name");
-      $.ajax({
+      ajax_wrapper({
         url: "/clusters_overview",
         dataType: "json",
         timeout: 20000,
@@ -102,7 +102,7 @@ Pcs = Ember.Application.createWithMixins({
       });
       return;
     }
-    $.ajax({
+    ajax_wrapper({
       url: "cluster_status",
       dataType: "json",
       success: function(data) {
@@ -502,7 +502,7 @@ Pcs.resourcesContainer = Ember.Object.create({
       value: value
     };
 
-    $.ajax({
+    ajax_wrapper({
       type: 'POST',
       url: get_cluster_remote_url() + 'add_meta_attr_remote',
       data: data,
@@ -523,7 +523,7 @@ Pcs.resourcesContainer = Ember.Object.create({
     if (resource_id == null) {
       return;
     }
-    $.ajax({
+    ajax_wrapper({
       type: 'POST',
       url: get_cluster_remote_url() + 'resource_start',
       data: {resource: resource_id},
@@ -549,7 +549,7 @@ Pcs.resourcesContainer = Ember.Object.create({
     if (resource_id == null) {
       return;
     }
-    $.ajax({
+    ajax_wrapper({
       type: 'POST',
       url: get_cluster_remote_url() + 'resource_stop',
       data: {resource: resource_id},
