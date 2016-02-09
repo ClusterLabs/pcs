@@ -1791,11 +1791,7 @@ function refresh_cluster_properties() {
       Pcs.settingsController.update(data);
     },
     error: function (xhr, status, error) {
-      alert(
-        "Unable to get cluster properties: "
-        + ajax_simple_error(xhr, status, error)
-      );
-      Pcs.settingsController.update({});
+      Pcs.settingsController.set("error", true);
     },
     complete: function() {
       hide_loading_screen();

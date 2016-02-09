@@ -1922,6 +1922,7 @@ Pcs.settingsController = Ember.Controller.create({
   properties: [],
   filtered: [],
   show_advanced: false,
+  error: false,
   filter: "",
   update: function(properties_definition) {
     var self = this;
@@ -1955,6 +1956,7 @@ Pcs.settingsController = Ember.Controller.create({
         return a.get('name').localeCompare(b.get('name'));
       }
     }));
+    self.set("error", false);
   }
 });
 

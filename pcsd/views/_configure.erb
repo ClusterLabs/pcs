@@ -14,28 +14,32 @@
 </tr>
 <tr id="configure_list_row" {{bind-attr style="Pcs.configure_page"}}>
   <td id="config" colspan=3>
-    {{input
-        type="text"
-        value=Pcs.settingsController.filter
-        placeholder="Filter"
-    }}
-    {{#if Pcs.settingsController.show_advanced}}
-      <button onclick="Pcs.settingsController.set('show_advanced', false);">Hide advanced settings</button>
+    {{#if Pcs.settingsController.error}}
+      Unable to get cluster properties.<br/>
     {{else}}
-      <button onclick="Pcs.settingsController.set('show_advanced', true);">Show advanced settings</button>
-    {{/if}}
-    <form id="cluster_properties">
-      <table>
-        {{#each property in Pcs.settingsController.filtered}}
-          {{cluster-property prop=property name=property.name}}
-        {{else}}
-        <tr><td>No cluster properties available.</td></tr>
-        {{/each}}
-      </table>
-      {{#if Pcs.settingsController.filtered}}
-        <button onclick="update_cluster_settings(); return false;">
-          Apply Changes
-        </button>
+      {{input
+          type="text"
+          value=Pcs.settingsController.filter
+          placeholder="Filter"
+      }}
+      {{#if Pcs.settingsController.show_advanced}}
+        <button onclick="Pcs.settingsController.set('show_advanced', false);">Hide advanced settings</button>
+      {{else}}
+        <button onclick="Pcs.settingsController.set('show_advanced', true);">Show advanced settings</button>
+      {{/if}}
+      <form id="cluster_properties">
+        <table>
+          {{#each property in Pcs.settingsController.filtered}}
+            {{cluster-property prop=property name=property.name}}
+          {{else}}
+          <tr><td>No cluster properties available.</td></tr>
+          {{/each}}
+        </table>
+        {{#if Pcs.settingsController.filtered}}
+          <button onclick="update_cluster_settings(); return false;">
+            Apply Changes
+          </button>
+        {{/if}}
       {{/if}}
       <button onclick="show_loading_screen(); refresh_cluster_properties(); return false;">
         Refresh
