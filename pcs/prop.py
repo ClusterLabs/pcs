@@ -103,6 +103,9 @@ def list_property(argv):
     if len(argv) == 0:
         print_all = True
 
+    if "--all" in utils.pcs_options and "--defaults" in utils.pcs_options:
+        utils.err("you cannot specify both --all and --defaults")
+
     if "--all" in utils.pcs_options or "--defaults" in utils.pcs_options:
         if len(argv) != 0:
             utils.err("you cannot specify a property when using --all or --defaults")

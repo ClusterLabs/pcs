@@ -52,7 +52,7 @@ node
 Manage cluster nodes
 .SS "resource"
 .TP
-show [resource id] [\fB\-\-full\fR] [\fB\-\-groups\fR]
+[show [resource id]] [\fB\-\-full\fR] [\fB\-\-groups\fR]
 Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).
 .TP
 list [<standard|provider|type>] [\fB\-\-nodesc\fR]
@@ -299,7 +299,7 @@ report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D" H:M:S"]] de
 Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours.
 .SS "stonith"
 .TP
-show [stonith id] [\fB\-\-full\fR]
+[show [stonith id]] [\fB\-\-full\fR]
 Show all currently configured stonith devices or if a stonith id is specified show the options for the configured stonith device.  If \fB\-\-full\fR is specified all configured stonith options will be displayed
 .TP
 list [filter] [\fB\-\-nodesc\fR]
@@ -387,7 +387,7 @@ permission delete <permission id>
 Remove the permission id specified (permission id's are listed in parenthesis after permissions in 'pcs acl' output)
 .SS "property"
 .TP
-list|show [<property> | \fB\-\-all\fR | \fB\-\-defaults\fR]
+[list|show [<property> | \fB\-\-all\fR | \fB\-\-defaults\fR]] | [\fB\-\-all\fR | \fB\-\-defaults\fR]
 List property settings (default: lists configured properties).  If \fB\-\-defaults\fR is specified will show all property defaults, if \fB\-\-all\fR is specified, current configured properties will be shown with unset properties and their defaults.  Run 'man pengine' and 'man crmd' to get a description of the properties.
 .TP
 set [\fB\-\-force\fR | \fB\-\-node\fR <nodename>] <property>=[<value>] [<property>=[<value>] ...]

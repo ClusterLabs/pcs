@@ -230,7 +230,7 @@ Usage: pcs resource [commands]...
 Manage pacemaker resources
 
 Commands:
-    show [resource id] [--full] [--groups]
+    [show [resource id]] [--full] [--groups]
         Show all currently configured resources or if a resource is specified
         show the options for the configured resource.  If --full is specified
         all configured resource options will be displayed.  If --groups is
@@ -795,7 +795,7 @@ Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
 Commands:
-    show [stonith id] [--full]
+    [show [stonith id]] [--full]
         Show all currently configured stonith devices or if a stonith id is
         specified show the options for the configured stonith device.  If
         --full is specified all configured stonith options will be displayed
@@ -877,7 +877,7 @@ Usage: pcs property [commands]...
 Configure pacemaker properties
 
 Commands:
-    list|show [<property> | --all | --defaults]
+    [list|show [<property> | --all | --defaults]] | [--all | --defaults]
         List property settings (default: lists configured properties).
         If --defaults is specified will show all property defaults, if --all
         is specified, current configured properties will be shown with unset
