@@ -55,7 +55,7 @@ def cluster_cmd(argv):
     elif (sub_cmd == "status"):
         status.cluster_status(argv)
     elif (sub_cmd == "pcsd-status"):
-        cluster_gui_status(argv)
+        cluster_pcsd_status(argv)
     elif (sub_cmd == "certkey"):
         cluster_certkey(argv)
     elif (sub_cmd == "auth"):
@@ -255,7 +255,7 @@ def auth_nodes_do(nodes, username, password, force, local):
 
 # If no arguments get current cluster node status, otherwise get listed
 # nodes status
-def cluster_gui_status(argv,dont_exit = False):
+def cluster_pcsd_status(argv,dont_exit = False):
     bad_nodes = False
     if len(argv) == 0:
         nodes = utils.getNodesFromCorosyncConf()

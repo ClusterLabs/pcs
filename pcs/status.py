@@ -30,7 +30,7 @@ def status_cmd(argv):
     elif (sub_cmd == "nodes"):
         nodes_status(argv)
     elif (sub_cmd == "pcsd"):
-        cluster.cluster_gui_status(argv)
+        cluster.cluster_pcsd_status(argv)
     elif (sub_cmd == "xml"):
         xml_status()
     elif (sub_cmd == "corosync"):
@@ -247,7 +247,7 @@ def is_pacemaker_running():
 def print_pcsd_daemon_status():
     print("PCSD Status:")
     if os.getuid() == 0:
-        cluster.cluster_gui_status([], True)
+        cluster.cluster_pcsd_status([], True)
     else:
         err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
             ['status', 'pcsd'], True
