@@ -12,7 +12,6 @@ import tempfile
 import datetime
 import json
 import xml.dom.minidom
-import threading
 try:
     # python2
     from commands import getstatusoutput
@@ -291,7 +290,6 @@ def prepare_node_name(node, pm_nodes, cs_nodes):
 
     return node
 
-# Check and see if pcsd is running on the nodes listed
 def check_nodes(node_list, prefix=""):
     """
     Print pcsd status on node_list, return if there is any pcsd not online
@@ -305,20 +303,23 @@ def check_nodes(node_list, prefix=""):
         STATUS_ONLINE: 'Online',
         3: 'Unable to authenticate'
     }
-    report = lambda node, returncode, output: print("{0}{1}: {2}".format(
-        prefix,
-        node if utils.is_rhel6() else prepare_node_name(
-            node, pm_nodes, cs_nodes
-        ),
-        status_desc_map.get(returncode, 'Offline')
-    ))
-    task_list = [
-        NodeActionTask(report, utils.checkAuthorization, node)
-        for node in node_list
-    ]
-    utils.run_parallel(task_list)
+    status_list = []
+    def report(node, returncode, output):
+        print("{0}{1}: {2}".format(
+            prefix,
+            node if utils.is_rhel6() else prepare_node_name(
+                node, pm_nodes, cs_nodes
+            ),
+            status_desc_map.get(returncode, 'Offline')
+        ))
+        status_list.append(returncode)
 
-    return any([task.returncode != STATUS_ONLINE for task in task_list])
+    utils.run_parallel(
+        create_task_list(report, utils.checkAuthorization, node_list)
+    )
+
+    return any([status != STATUS_ONLINE for status in status_list])
+
 
 def cluster_setup(argv):
     if len(argv) < 2:
@@ -1002,10 +1003,7 @@ def start_cluster_all():
     start_cluster_nodes(utils.getNodesFromCorosyncConf())
 
 def start_cluster_nodes(nodes):
-    threads = dict()
-    for node in nodes:
-        threads[node] = NodeStartThread(node)
-    error_list = utils.run_node_threads(threads)
+    error_list = parallel_for_nodes(utils.startCluster, nodes, quiet=True)
     if error_list:
         utils.err("unable to start all nodes\n" + "\n".join(error_list))
 
@@ -1060,17 +1058,11 @@ def stop_cluster_nodes(nodes):
                 + "\n".join(error_list)
             )
 
-    threads = dict()
-    for node in nodes:
-        threads[node] = NodeStopPacemakerThread(node)
-    error_list = utils.run_node_threads(threads)
+    error_list = parallel_for_nodes(utils.stopPacemaker, nodes, quiet=True)
     if error_list:
         utils.err("unable to stop all nodes\n" + "\n".join(error_list))
 
-    threads = dict()
-    for node in nodes:
-        threads[node] = NodeStopCorosyncThread(node)
-    error_list = utils.run_node_threads(threads)
+    error_list = parallel_for_nodes(utils.stopCorosync, nodes, quiet=True)
     if error_list:
         utils.err("unable to stop all nodes\n" + "\n".join(error_list))
 
@@ -1138,16 +1130,11 @@ def disable_cluster_nodes(nodes):
 def destroy_cluster(argv):
     if len(argv) > 0:
         # stop pacemaker and resources while cluster is still quorate
-        threads = dict()
-        for node in argv:
-            threads[node] = NodeStopPacemakerThread(node)
-        error_list = utils.run_node_threads(threads)
+        nodes = argv
+        error_list = parallel_for_nodes(utils.stopPacemaker, nodes, quiet=True)
         # proceed with destroy regardless of errors
         # destroy will stop any remaining cluster daemons
-        threads = dict()
-        for node in argv:
-            threads[node] = NodeDestroyThread(node)
-        error_list = utils.run_node_threads(threads)
+        error_list = parallel_for_nodes(utils.destroyCluster, nodes, quiet=True)
         if error_list:
             utils.err("unable to destroy cluster\n" + "\n".join(error_list))
 
@@ -1868,46 +1855,25 @@ def cluster_quorum_unblock(argv):
     utils.set_cib_property("startup-fencing", startup_fencing)
     print("Waiting for nodes cancelled")
 
-class NodeActionTask(object):
-    def __init__(self, report, action, node, *args, **kwargs):
-        self.report = report
-        self.node = node
-        self.action = action
-        self.args = args
-        self.kwargs = kwargs
-        self.returncode = 0
-        self.output = ""
+def create_task(report, action, node, *args, **kwargs):
+    def worker():
+        returncode, output = action(node, *args, **kwargs)
+        report(node, returncode, output)
+    return worker
 
-    def __call__(self):
-        self.returncode, self.output = self.action(
-            self.node, *self.args, **self.kwargs
-        )
-        self.report(self.node, self.returncode, self.output)
+def create_task_list(report, action, node_list, *args, **kwargs):
+    return [
+        create_task(report, action, node, *args, **kwargs) for node in node_list
+    ]
 
-class NodeActionThread(threading.Thread):
-    def __init__(self, node):
-        super(NodeActionThread, self).__init__()
-        self.node = node
-        self.retval = 0
-        self.output = ""
-
-class NodeStartThread(NodeActionThread):
-    def run(self):
-        self.retval, self.output = utils.startCluster(self.node, quiet=True)
-
-class NodeStopPacemakerThread(NodeActionThread):
-    def run(self):
-        self.retval, self.output = utils.stopCluster(
-            self.node, quiet=True, pacemaker=True, corosync=False
-        )
-
-class NodeStopCorosyncThread(NodeActionThread):
-    def run(self):
-        self.retval, self.output = utils.stopCluster(
-            self.node, quiet=True, pacemaker=False, corosync=True
-        )
-
-class NodeDestroyThread(NodeActionThread):
-    def run(self):
-        self.retval, self.output = utils.destroyCluster(self.node, quiet=True)
-
+def parallel_for_nodes(action, node_list, *args, **kwargs):
+    error_list = []
+    def report(node, returncode, output):
+        message = '{0}: {1}'.format(node, output.strip())
+        print(message)
+        if returncode != 0:
+            error_list.append(message)
+    utils.run_parallel(
+        create_task_list(report, action, node_list, *args, **kwargs)
+    )
+    return error_list

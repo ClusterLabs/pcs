@@ -218,6 +218,16 @@ def setCorosyncConfig(node,config):
 def startCluster(node, quiet=False):
     return sendHTTPRequest(node, 'remote/cluster_start', None, False, not quiet)
 
+def stopPacemaker(node, quiet=False, force=True):
+   return stopCluster(
+        node, pacemaker=True, corosync=False, quiet=quiet, force=force
+    )
+
+def stopCorosync(node, quiet=False, force=True):
+   return stopCluster(
+        node, pacemaker=False, corosync=True, quiet=quiet, force=force
+    )
+
 def stopCluster(node, quiet=False, pacemaker=True, corosync=True, force=True):
     data = dict()
     if pacemaker and not corosync:
@@ -905,24 +915,6 @@ def map_for_error_list(callab, iterab):
             error_list.append(err)
     return error_list
 
-def run_node_threads(node_threads):
-    error_list = []
-    for node, thread in node_threads.items():
-        thread.daemon = True
-        thread.start()
-    while node_threads:
-        for node in list(node_threads.keys()):
-            thread = node_threads[node]
-            thread.join(1)
-            if thread.is_alive():
-                continue
-            output = node + ": " + thread.output.strip()
-            print(output)
-            if thread.retval != 0:
-                error_list.append(output)
-            del node_threads[node]
-    return error_list
-
 def run_parallel(worker_list, wait_seconds=1):
     thread_list = []
     for worker in worker_list:
@@ -936,7 +928,6 @@ def run_parallel(worker_list, wait_seconds=1):
             thread.join(wait_seconds)
             if not thread.is_alive():
                 thread_list.remove(thread)
-
 
 # Check is something exists in the CIB, if it does return it, if not, return
 #  an empty string

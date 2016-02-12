@@ -15,7 +15,7 @@ from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
 from pcs_test_functions import PcsRunner
 from pcs_test_assertions import AssertPcsMixin
 import cluster
-from cluster import NodeActionTask
+from cluster import create_task
 
 
 empty_cib = "empty-withnodes.xml"
@@ -2529,12 +2529,10 @@ class NodeActionTaskTest(unittest.TestCase):
         def report(node, returncode, output):
             report_list.append('|'.join([node, str(returncode), output]))
 
-        task = NodeActionTask(report, action, 'node', 'arg', kwarg='kwarg')
+        task = create_task(report, action, 'node', 'arg', kwarg='kwarg')
         task()
 
         self.assertEqual(['node|0|node:arg:kwarg'], report_list)
-        self.assertEqual(0, task.returncode)
-
 
 if __name__ == "__main__":
     unittest.main()
