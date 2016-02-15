@@ -1,10 +1,10 @@
 <div style="width:960px;margin-top: 25px;text-align:center;">
-  <% if params["badlogin"] == "1" %>
+  <% if session[:bad_login_name] %>
     <span style="color:red;font-size:24px;">Bad username or password</span>
   <% end %>
   <form action="/login" method="post">
     <table style="margin-left: auto; margin-right: auto;">
-      <tr><td style="text-align:right;">Username:</td><td><input type=text <%= "value='" +session[:bad_login_name] + "'" if params["badlogin"] and session[:bad_login_name] %> name=username></td></tr>
+      <tr><td style="text-align:right;">Username:</td><td><input type=text <%= "value='#{h(session[:bad_login_name])}'" if session[:bad_login_name] %> name=username></td></tr>
       <tr><td style="text-align:right;">Password:</td><td><input type=password name=password></td></tr>
       <tr><td align=center colspan=2><input type=submit name=Login value=Login></td></tr>
     </table>

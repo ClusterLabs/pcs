@@ -385,6 +385,7 @@ if not DISABLE_GUI
       #      end
       #      redirect plp
       #    else
+      session.delete(:bad_login_name)
       if is_ajax?
         halt [200, "OK"]
       else
@@ -395,8 +396,8 @@ if not DISABLE_GUI
       if is_ajax?
         halt [401, '{"notauthorized":"true"}']
       else
-        session["bad_login_name"] = params['username']
-        redirect '/login?badlogin=1'
+        session[:bad_login_name] = params['username']
+        redirect '/login'
       end
     end
   end
