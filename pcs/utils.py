@@ -793,6 +793,7 @@ def run(
             stdout=subprocess.PIPE,
             stderr=(subprocess.PIPE if ignore_stderr else subprocess.STDOUT),
             preexec_fn=subprocess_setup,
+            close_fds=True,
             env=env_var,
             # decodes newlines and in python3 also converts bytes to str
             universal_newlines=(not PYTHON2 and not binary_output)
