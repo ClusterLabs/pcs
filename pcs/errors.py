@@ -6,6 +6,9 @@ from __future__ import unicode_literals
 import usage
 import error_codes
 
+class LibraryError(Exception):
+    pass
+
 class CmdLineInputError(Exception):
     pass
 

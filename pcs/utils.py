@@ -24,8 +24,10 @@ import base64
 import threading
 
 
+from library_status_info import ClusterState
 from errors import ReportItem
 from errors import ReportItemSeverity
+from errors import LibraryError
 try:
     # python2
     from urllib import urlencode as urllib_urlencode
@@ -424,13 +426,13 @@ def getNodesFromCorosyncConf(conf_text=None):
     return nodes
 
 def getNodesFromPacemaker():
-    ret_nodes = []
-    root = get_cib_etree()
-    nodes = root.findall(str(".//node"))
-    for node in nodes:
-        ret_nodes.append(node.attrib["uname"])
-    ret_nodes.sort()
-    return ret_nodes
+    try:
+        return [
+            node.attrs.name
+            for node in ClusterState(getClusterStateXml()).node_section.nodes
+        ]
+    except LibraryError as e:
+        process_library_reports(e.args)
 
 def getCorosyncConf(conf=None):
     if not conf:
@@ -1682,12 +1684,15 @@ def get_terminal_password(message="Password: "):
         return get_terminal_input(message)
 
 # Returns an xml dom containing the current status of the cluster
+# DEPRECATED, please use ClusterState(getClusterStateXml()) instead
 def getClusterState():
-    (output, retval) = run(["crm_mon", "-1", "-X","-r"])
-    if (retval != 0):
+    return parseString(getClusterStateXml())
+
+def getClusterStateXml():
+    xml, returncode = run(["crm_mon", "--one-shot", "--as-xml", "--inactive"])
+    if returncode != 0:
         err("error running crm_mon, is pacemaker running?")
-    dom = parseString(output)
-    return dom
+    return xml
 
 def getNodeAttributes():
     dom = get_cib_dom()

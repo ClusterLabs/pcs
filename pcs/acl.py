@@ -12,7 +12,7 @@ from errors import CmdLineInputError
 from errors import ReportItem
 from errors import ReportItemSeverity
 from errors import error_codes
-from library_acl import LibraryError
+from errors import LibraryError
 from library_acl import create_role
 from library_acl import provide_role
 from library_acl import add_permissions_to_role

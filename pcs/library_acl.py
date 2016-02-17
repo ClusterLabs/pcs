@@ -7,9 +7,7 @@ import utils
 from errors import ReportItem
 from errors import ReportItemSeverity
 from errors import error_codes
-
-class LibraryError(Exception):
-    pass
+from errors import LibraryError
 
 class AclRoleNotFound(LibraryError):
     pass

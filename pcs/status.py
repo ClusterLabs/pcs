@@ -8,10 +8,11 @@ import os
 
 import resource
 import cluster
-import settings
 import usage
 import utils
+from errors import LibraryError
 
+from library_status_info import ClusterState
 
 def status_cmd(argv):
     if len(argv) == 0:
@@ -88,7 +89,14 @@ def nodes_status(argv):
 
     if len(argv) == 1 and (argv[0] == "config"):
         corosync_nodes = utils.getNodesFromCorosyncConf()
-        pacemaker_nodes = utils.getNodesFromPacemaker()
+        try:
+            pacemaker_nodes = sorted([
+                node.attrs.name for node
+                in ClusterState(utils.getClusterStateXml()).node_section.nodes
+                if node.attrs.type != 'remote'
+            ])
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
         print("Corosync Nodes:")
         if corosync_nodes:
             print(" " + " ".join(corosync_nodes))
@@ -259,4 +267,3 @@ def print_pcsd_daemon_status():
             print(std_out)
         else:
             print("Unable to get PCSD status")
-

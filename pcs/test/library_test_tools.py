@@ -7,7 +7,7 @@ import xml.dom.minidom
 from lxml.doctestcompare import LXMLOutputChecker
 from doctest import Example
 
-from library_acl import LibraryError
+from errors import LibraryError
 
 class LibraryAssertionMixin(object):
     def __find_report_info(self, report_info_list, report_item):
@@ -81,10 +81,11 @@ class XmlManipulation(object):
             xml.dom.minidom.parseString(xml_string).firstChild
         )
 
-    def append_to_first_tag_name(self, tag_name, xml_string):
-        self.__append_to_child(
-            self.dom.getElementsByTagName(tag_name)[0], xml_string
-        )
+    def append_to_first_tag_name(self, tag_name, *xml_string_list):
+        for xml_string in xml_string_list:
+            self.__append_to_child(
+                self.dom.getElementsByTagName(tag_name)[0], xml_string
+            )
         return self
 
 def get_xml_manipulation_creator(file_name):

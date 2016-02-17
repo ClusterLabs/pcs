@@ -11,6 +11,7 @@ stonithd_binary = "/usr/libexec/pacemaker/stonithd"
 pcs_version = "0.9.149"
 crm_report = pacemaker_binaries + "crm_report"
 crm_verify = pacemaker_binaries + "crm_verify"
+crm_mon_schema = '/usr/share/pacemaker/crm_mon.rng'
 pcsd_cert_location = "/var/lib/pcsd/pcsd.crt"
 pcsd_key_location = "/var/lib/pcsd/pcsd.key"
 pcsd_tokens_location = "/var/lib/pcsd/tokens"

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<crm_mon version="1.1.13">
+  <summary>
+      <current_dc present="false"/>
+      <nodes_configured number="0" expected_votes="unknown" />
+      <resources_configured number="0" />
+  </summary>
+  <nodes>
+  </nodes>
+</crm_mon>
