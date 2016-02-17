@@ -57,7 +57,7 @@ class LibraryAssertionMixin(object):
         except LibraryError as e:
             self.__check_error(e, list(report_info_list))
 
-    def assert_cib_equal(self, expected_cib, got_cib=None):
+    def assert_xml_equal(self, expected_cib, got_cib=None):
         got_cib = got_cib if got_cib else self.cib
         got_xml = got_cib.dom.toxml()
         expected_xml = expected_cib.dom.toxml()
@@ -72,7 +72,7 @@ class LibraryAssertionMixin(object):
             0
         ))
 
-class CibManipulation(object):
+class XmlManipulation(object):
     def __init__(self, file_name):
         self.dom = xml.dom.minidom.parse(file_name)
 
@@ -87,7 +87,7 @@ class CibManipulation(object):
         )
         return self
 
-def get_cib_manipulation_creator(file_name):
-    def create_cib_manipulation():
-       return CibManipulation(file_name)
-    return create_cib_manipulation
+def get_xml_manipulation_creator(file_name):
+    def create_xml_manipulation():
+       return XmlManipulation(file_name)
+    return create_xml_manipulation
