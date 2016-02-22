@@ -17,6 +17,8 @@ class PCSConfig
     input_clusters = []
     input_permissions = {}
 
+    # set a reasonable parseable default if got empty text
+    cfg_text = '{}' if cfg_text.empty?
     begin
       json = JSON.parse(cfg_text)
       if not(json.is_a?(Hash) and json.key?("format_version"))
@@ -161,6 +163,8 @@ class PCSTokens
     @data_version = 0
     @tokens = {}
 
+    # set a reasonable parseable default if got empty text
+    cfg_text = '{}' if cfg_text.empty?
     begin
       json = JSON.parse(cfg_text)
       if not(json.is_a?(Hash) and json.key?('format_version') and json.key?('tokens'))

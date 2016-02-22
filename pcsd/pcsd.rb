@@ -7,6 +7,7 @@ require 'webrick/https'
 require 'openssl'
 require 'logger'
 require 'thread'
+require 'fileutils'
 
 require 'bootstrap.rb'
 require 'resource.rb'
@@ -30,6 +31,12 @@ set :app_file, __FILE__
 def generate_cookie_secret
   return SecureRandom.hex(30)
 end
+
+# make sure basic pcsd configs exist
+FileUtils.touch([
+  Cfgsync::PcsdSettings.file_path,
+  Cfgsync::PcsdTokens.file_path,
+])
 
 begin
   secret = File.read(COOKIE_FILE)
