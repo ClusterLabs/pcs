@@ -53,9 +53,11 @@ class SessionPoolLifetime < Rack::Session::Pool
     return unless lifetime = @default_options[:expire_after]
     with_lock(env) {
       threshold = Time.now() - lifetime
-      @pool_timestamp.select { |sid, timestamp|
-        timestamp < threshold
-      }.keys.each { |sid|
+      sid_to_delete = []
+      @pool_timestamp.each { |sid, timestamp|
+        sid_to_delete << sid if timestamp < threshold
+      }
+      sid_to_delete.each { |sid|
         delete_session(sid)
       }
     }
