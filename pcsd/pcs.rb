@@ -242,7 +242,7 @@ end
 
 # Gets all of the nodes specified in the pcs config file for the cluster
 def get_cluster_nodes(cluster_name)
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   clusters = pcs_config.clusters
   cluster = nil
   for c in clusters
@@ -420,7 +420,7 @@ def add_node(auth_user, new_nodename, all=false, auto_start=true)
   end
   $logger.info("Adding #{new_nodename} to pcs_settings.conf")
   corosync_nodes = get_corosync_nodes()
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   pcs_config.update_cluster($cluster_name, corosync_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
   # on version conflict just go on, config will be corrected eventually
@@ -444,7 +444,7 @@ def remove_node(auth_user, new_nodename, all=false)
   end
   $logger.info("Removing #{new_nodename} from pcs_settings.conf")
   corosync_nodes = get_corosync_nodes()
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   pcs_config.update_cluster($cluster_name, corosync_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
   # on version conflict just go on, config will be corrected eventually

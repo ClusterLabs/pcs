@@ -133,7 +133,7 @@ def cluster_status_gui(auth_user, cluster_name, dont_update_config=false)
   new_cluster_nodes.uniq!
 
   if new_cluster_nodes.length > 0
-    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     if !(dont_update_config or config.cluster_nodes_equal?(cluster_name, new_cluster_nodes))
       old_cluster_nodes = config.get_nodes(cluster_name)
       $logger.info("Updating node list for: #{cluster_name} #{old_cluster_nodes}->#{new_cluster_nodes}")
@@ -624,7 +624,7 @@ def get_permissions_remote(params, request, auth_user)
     return 403, 'Permission denied'
   end
 
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   data = {
     'user_types' => Permissions::get_user_types(),
     'permission_types' => Permissions::get_permission_types(),
@@ -690,7 +690,7 @@ def set_permissions_remote(params, request, auth_user)
   perm_set = Permissions::PermissionsSet.new(perm_list)
 
   full_users_old = Set.new
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   pcs_config.permissions_local.entity_permissions_list.each{ |entity_perm|
     if entity_perm.allow_list.include?(Permissions::FULL)
       full_users_old << [entity_perm.type, entity_perm.name]
@@ -715,7 +715,7 @@ def set_permissions_remote(params, request, auth_user)
   end
 
   2.times {
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     pcs_config.permissions_local = perm_set
     sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
     pushed, _ = Cfgsync::save_sync_new_version(
@@ -807,7 +807,7 @@ def remote_remove_nodes(params, request, auth_user)
     retval, output = remove_node(auth_user, node, true)
     out = out + output.join("\n")
   }
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   if config.get_nodes($cluster_name) == nil or config.get_nodes($cluster_name).length == 0
     return [200,"No More Nodes"]
   end
@@ -1058,7 +1058,7 @@ def status_all(params, request, auth_user, nodes=[], dont_update_config=false)
 
   node_list.uniq!
   if node_list.length > 0
-    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
     old_node_list = config.get_nodes(params[:cluster])
     if !(dont_update_config or config.cluster_nodes_equal?(params[:cluster], node_list))
       $logger.info("Updating node list for: #{params[:cluster]} #{old_node_list}->#{node_list}")
@@ -1080,7 +1080,7 @@ def clusters_overview(params, request, auth_user)
   cluster_map = {}
   forbidden_clusters = {}
   threads = []
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   config.clusters.each { |cluster|
     threads << Thread.new {
       cluster_map[cluster.name] = {
@@ -1212,7 +1212,7 @@ def clusters_overview(params, request, auth_user)
 
   # update clusters in PCSConfig
   not_current_data = false
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
   cluster_map.each { |cluster, values|
     next if forbidden_clusters[cluster]
     nodes = []

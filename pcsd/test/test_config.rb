@@ -11,18 +11,8 @@ class TestConfig < Test::Unit::TestCase
     FileUtils.cp(File.join(CURRENT_DIR, 'pcs_settings.conf'), CFG_PCSD_SETTINGS)
   end
 
-  def test_parse_empty()
-    text = ''
-    cfg = PCSConfig.new(text)
-    assert_equal(0, cfg.clusters.length)
-    assert_equal(
-      [[
-        "error",
-        "Unable to parse pcs_settings file: A JSON text must at least contain two octets!"
-      ]],
-      $logger.log
-    )
-    assert_equal(
+  def fixture_empty_config()
+    return (
 '{
   "format_version": 2,
   "data_version": 0,
@@ -34,12 +24,88 @@ class TestConfig < Test::Unit::TestCase
 
     ]
   }
-}',
-      cfg.text
-    )
+}')
   end
 
-  def test_parse_format1()
+  def test_parse_empty()
+    text = ''
+    cfg = PCSConfig.new(text)
+    assert_equal(0, cfg.clusters.length)
+    assert_equal([], $logger.log)
+    assert_equal(fixture_empty_config, cfg.text)
+  end
+
+  def test_parse_hash_empty()
+    text = '{}'
+    cfg = PCSConfig.new(text)
+    assert_equal(
+      [['error', 'Unable to parse pcs_settings file: invalid file format']],
+      $logger.log
+    )
+    assert_equal(fixture_empty_config, cfg.text)
+  end
+
+  def test_parse_hash_no_version()
+    text =
+'{
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1",
+        "rh71-node2"
+      ]
+    }
+  ]
+}'
+    cfg = PCSConfig.new(text)
+    assert_equal(
+      [['error', 'Unable to parse pcs_settings file: invalid file format']],
+      $logger.log
+    )
+    assert_equal(fixture_empty_config, cfg.text)
+  end
+
+  def test_parse_malformed1()
+    text = '  '
+    cfg = PCSConfig.new(text)
+    assert_equal(
+      [[
+        'error',
+        "Unable to parse pcs_settings file: 757: unexpected token at ''"
+      ]],
+      $logger.log
+    )
+    assert_equal(fixture_empty_config, cfg.text)
+  end
+
+  def test_parse_malformed2()
+    text =
+'{
+  "data_version": 9,
+  "clusters": [
+    {
+      "name": "cluster71",
+      "nodes": [
+        "rh71-node1"
+        "rh71-node2"
+      ]
+    }
+  ]
+}'
+    cfg = PCSConfig.new(text)
+    assert_equal(
+      [[
+        'error',
+        "Unable to parse pcs_settings file: 399: unexpected token at '\"rh71-node2\"\n      ]\n    }\n  ]\n}'"
+      ]],
+      $logger.log
+    )
+    assert_equal(fixture_empty_config, cfg.text)
+  end
+
+  def test_parse_format1_empty()
     text = '[]'
     cfg = PCSConfig.new(text)
     assert_equal(0, cfg.clusters.length)
@@ -66,7 +132,9 @@ class TestConfig < Test::Unit::TestCase
 }',
       cfg.text
     )
+  end
 
+  def test_parse_format1_one_cluster()
     text = '
 [
   {
@@ -113,7 +181,7 @@ class TestConfig < Test::Unit::TestCase
     )
   end
 
-  def test_parse_format2()
+  def test_parse_format2_empty()
     text = '
 {
   "format_version": 2
@@ -123,22 +191,10 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(2, cfg.format_version)
     assert_equal(0, cfg.data_version)
     assert_equal(0, cfg.clusters.length)
-    assert_equal(
-'{
-  "format_version": 2,
-  "data_version": 0,
-  "clusters": [
+    assert_equal(fixture_empty_config, cfg.text)
+  end
 
-  ],
-  "permissions": {
-    "local_cluster": [
-
-    ]
-  }
-}',
-      cfg.text
-    )
-
+  def test_parse_format2_one_cluster()
     text =
 '{
   "format_version": 2,
@@ -165,7 +221,9 @@ class TestConfig < Test::Unit::TestCase
     assert_equal("cluster71", cfg.clusters[0].name)
     assert_equal(["rh71-node1", "rh71-node2"], cfg.clusters[0].nodes)
     assert_equal(text, cfg.text)
+  end
 
+  def test_parse_format2_two_clusters()
     text =
 '{
   "format_version": 2,
@@ -589,13 +647,7 @@ class TestTokens < Test::Unit::TestCase
     text = ''
     cfg = PCSTokens.new(text)
     assert_equal(0, cfg.tokens.length)
-    assert_equal(
-      [[
-        "error",
-        "Unable to parse tokens file: A JSON text must at least contain two octets!"
-      ]],
-      $logger.log
-    )
+    assert_equal([], $logger.log)
     assert_equal(
 '{
   "format_version": 2,

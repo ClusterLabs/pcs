@@ -18,13 +18,20 @@ class PCSConfig
     input_permissions = {}
 
     # set a reasonable parseable default if got empty text
-    cfg_text = '{}' if cfg_text.empty?
+    cfg_text = "{\"format_version\": #{CURRENT_FORMAT}}" if cfg_text.empty?
+
     begin
       json = JSON.parse(cfg_text)
-      if not(json.is_a?(Hash) and json.key?("format_version"))
+      if json.is_a?(Array)
         @format_version = 1
-      else
+      elsif (
+        json.is_a?(Hash) and
+        json.key?('format_version') and
+        json['format_version'].is_a?(Integer)
+      )
         @format_version = json["format_version"]
+      else
+        raise 'invalid file format'
       end
 
       if @format_version > CURRENT_FORMAT
@@ -164,7 +171,10 @@ class PCSTokens
     @tokens = {}
 
     # set a reasonable parseable default if got empty text
-    cfg_text = '{}' if cfg_text.empty?
+    if cfg_text.empty?
+      cfg_text = "{\"format_version\": #{CURRENT_FORMAT}, \"tokens\": {}}"
+    end
+
     begin
       json = JSON.parse(cfg_text)
       if not(json.is_a?(Hash) and json.key?('format_version') and json.key?('tokens'))
