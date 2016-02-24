@@ -4389,30 +4389,30 @@ Resource Utilization:
         self.assertEqual(0, returnVal)
 
     def test_resource_utilization_set_invalid(self):
-            output, returnVal = pcs(temp_large_cib, "resource utilization dummy0")
-            expected_out = """\
+        output, returnVal = pcs(temp_large_cib, "resource utilization dummy0")
+        expected_out = """\
 Error: Unable to find a resource: dummy0
 """
-            ac(expected_out, output)
-            self.assertEqual(1, returnVal)
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
 
-            output, returnVal = pcs(
-                temp_large_cib, "resource utilization dummy0 test=10"
-            )
-            expected_out = """\
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy0 test=10"
+        )
+        expected_out = """\
 Error: Unable to find a resource: dummy0
 """
-            ac(expected_out, output)
-            self.assertEqual(1, returnVal)
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
 
-            output, returnVal = pcs(
-                temp_large_cib, "resource utilization dummy1 test1=10 test=int"
-            )
-            expected_out = """\
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy1 test1=10 test=int"
+        )
+        expected_out = """\
 Error: Value of utilization attribute must be integer: 'test=int'
 """
-            ac(expected_out, output)
-            self.assertEqual(1, returnVal)
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
 
 class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):

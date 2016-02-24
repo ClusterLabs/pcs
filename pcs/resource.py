@@ -1633,7 +1633,7 @@ def resource_master_remove(argv):
             break
 
     if not master_found:
-            utils.err("Unable to find multi-state resource with id %s" % master_id)
+        utils.err("Unable to find multi-state resource with id %s" % master_id)
 
     constraints_element = dom.getElementsByTagName("constraints")
     if len(constraints_element) > 0:
@@ -2789,7 +2789,7 @@ def print_resources_utilization():
     for resource_el in cib.getElementsByTagName("primitive"):
         u = utils.get_utilization_str(resource_el)
         if u:
-           utilization[resource_el.getAttribute("id")] = u
+            utilization[resource_el.getAttribute("id")] = u
 
     print("Resource Utilization:")
     for resource in sorted(utilization):

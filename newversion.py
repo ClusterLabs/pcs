@@ -38,8 +38,8 @@ print(os.system("git diff"))
 print("Look good? (y/n)")
 choice = sys.stdin.read(1)
 if choice != "y":
-  print("Ok, exiting")
-  sys.exit(0)
+    print("Ok, exiting")
+    sys.exit(0)
 
 print(os.system("git commit -a -m 'Bumped to "+new_version+"'"))
 print(os.system("git tag "+new_version))

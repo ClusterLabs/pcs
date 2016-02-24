@@ -106,7 +106,7 @@ def print_nodes_utilization():
     for node_el in cib.getElementsByTagName("node"):
         u = utils.get_utilization_str(node_el)
         if u:
-           utilization[node_el.getAttribute("uname")] = u
+            utilization[node_el.getAttribute("uname")] = u
     print("Node Utilization:")
     for node in sorted(utilization):
         print(" {0}: {1}".format(node, utilization[node]))

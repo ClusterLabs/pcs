@@ -218,12 +218,12 @@ def startCluster(node, quiet=False):
     return sendHTTPRequest(node, 'remote/cluster_start', None, False, not quiet)
 
 def stopPacemaker(node, quiet=False, force=True):
-   return stopCluster(
+    return stopCluster(
         node, pacemaker=True, corosync=False, quiet=quiet, force=force
     )
 
 def stopCorosync(node, quiet=False, force=True):
-   return stopCluster(
+    return stopCluster(
         node, pacemaker=False, corosync=True, quiet=quiet, force=force
     )
 
@@ -252,12 +252,12 @@ def restoreConfig(node, tarball_data):
     return sendHTTPRequest(node, "remote/config_restore", data, False, True)
 
 def pauseConfigSyncing(node, delay_seconds=300):
-  data = urllib_urlencode({"sync_thread_pause": delay_seconds})
-  return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
+    data = urllib_urlencode({"sync_thread_pause": delay_seconds})
+    return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
 def resumeConfigSyncing(node):
-  data = urllib_urlencode({"sync_thread_resume": 1})
-  return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
+    data = urllib_urlencode({"sync_thread_resume": 1})
+    return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
 def canAddNodeToCluster(node):
     retval, output = sendHTTPRequest(

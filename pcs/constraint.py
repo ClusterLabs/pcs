@@ -638,22 +638,22 @@ def order_start(argv):
     then_action = DEFAULT_ACTION
     action = argv[0]
     if action in OPTIONS_ACTION:
-            first_action = action
-            argv.pop(0)
+        first_action = action
+        argv.pop(0)
 
     resource1 = argv.pop(0)
     if argv.pop(0) != "then":
         usage.constraint()
         sys.exit(1)
-    
+
     if len(argv) == 0:
         usage.constraint()
         sys.exit(1)
 
     action = argv[0]
     if action in OPTIONS_ACTION:
-            then_action = action
-            argv.pop(0)
+        then_action = action
+        argv.pop(0)
 
     if len(argv) == 0:
         usage.constraint()

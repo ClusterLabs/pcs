@@ -90,5 +90,5 @@ class XmlManipulation(object):
 
 def get_xml_manipulation_creator(file_name):
     def create_xml_manipulation():
-       return XmlManipulation(file_name)
+        return XmlManipulation(file_name)
     return create_xml_manipulation

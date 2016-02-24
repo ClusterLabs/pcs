@@ -1342,7 +1342,7 @@ def get_cib(argv):
             f = open(filename, 'w')
             output = utils.get_cib(scope)
             if output != "":
-                    f.write(output)
+                f.write(output)
             else:
                 utils.err("No data in the CIB")
         except IOError as e:

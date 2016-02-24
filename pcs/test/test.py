@@ -7,9 +7,9 @@ print(type(tree))
 print(type(root))
 
 if type(tree) == ET.ElementTree:
-  print("ELEMENT")
+    print("ELEMENT")
 else:
-  print("FAIL")
+    print("FAIL")
 
 check_id = "D4"
 print(root.find(".//primitive[id=D1]"))
