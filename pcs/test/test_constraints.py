@@ -266,13 +266,13 @@ Colocation Constraints:
     def testLocationConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
-        
+
         output, returnVal = pcs(temp_cib, "constraint location D5 avoids node1")
         assert returnVal == 0 and output == "", output
-        
+
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
         assert returnVal == 0 and output == "", output
-        
+
         output, returnVal = pcs(temp_cib, "constraint location D5 avoids node2")
         assert returnVal == 0 and output == "", output
 
@@ -290,7 +290,7 @@ Colocation Constraints:
 
         output, returnVal = pcs(temp_cib, "constraint location D6 prefers node1")
         assert returnVal == 0 and output == "", output
-        
+
         output, returnVal = pcs(temp_cib, "constraint remove blahblah")
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
 
@@ -377,7 +377,7 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "constraint")
         assert r == 0
         ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3-clone (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\n')
-        
+
     def testColocationSets(self):
         line = "resource create D7 Dummy"
         output, returnVal = pcs(temp_cib, line)
@@ -445,19 +445,19 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "resource delete D5")
         ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
         assert r == 0
-        
+
         o, r = pcs(temp_cib, "resource delete D6")
         ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
         assert r == 0
-        
+
         o, r = pcs(temp_cib, "constraint ref D7")
         ac(o,"Resource: D7\n  pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9\n")
         assert r == 0
-        
+
         o, r = pcs(temp_cib, "constraint ref D8")
         ac(o,"Resource: D8\n  pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9\n")
         assert r == 0
-        
+
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 sequential=foo")
         ac(output, "Error: invalid value 'foo' of option 'sequential', allowed values are: true, false\n")
         self.assertEqual(1, retValue)
@@ -681,11 +681,11 @@ Ordering Constraints:
     set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
     set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
-        
+
         o, r = pcs(temp_cib, "resource delete D5")
         ac(o,"Removing D5 from set pcs_rsc_set_D5_D6_D7\nRemoving D5 from set pcs_rsc_set_D5_D6-1\nDeleting Resource - D5\n")
         assert r == 0
-        
+
         o, r = pcs(temp_cib, "resource delete D6")
         ac(o,"Removing D6 from set pcs_rsc_set_D5_D6_D7\nRemoving D6 from set pcs_rsc_set_D5_D6-1\nRemoving set pcs_rsc_set_D5_D6-1\nDeleting Resource - D6\n")
         assert r == 0
@@ -795,11 +795,11 @@ Location Constraints:
 Ordering Constraints:
 Colocation Constraints:
 """)
-        
+
         o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule-1")
         ac(o,"Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n")
         assert r == 0
-        
+
         o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule-2")
         assert r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n", o
 

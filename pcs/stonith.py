@@ -213,7 +213,7 @@ def stonith_level(argv):
         if len(argv) < 1:
             usage.stonith(["level remove"])
             sys.exit(1)
-        
+
         node = ""
         devices = ""
         if len(argv) == 2:

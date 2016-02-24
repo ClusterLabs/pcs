@@ -983,10 +983,10 @@ def location_prefer(argv):
                     score = "-" + score
             node = nodeconf_a[0]
         location_add(["location-" +rsc+"-"+node+"-"+score,rsc,node,score])
-        
+
 
 def location_add(argv,rm=False):
-    if len(argv) < 4 and (rm == False or len(argv) < 1): 
+    if len(argv) < 4 and (rm == False or len(argv) < 1):
         usage.constraint()
         sys.exit(1)
 
@@ -1063,7 +1063,7 @@ def location_rule(argv):
     if len(argv) < 3:
         usage.constraint(["location", "rule"])
         sys.exit(1)
-    
+
     res_name = argv.pop(0)
     resource_valid, resource_error, correct_id \
         = utils.validate_constraint_resource(utils.get_cib_dom(), res_name)
@@ -1185,7 +1185,7 @@ def constraint_rm(argv,returnStatus=False, constraintsElement=None, passed_dom=N
         use_cibadmin = True
     else:
         use_cibadmin = False
-        
+
     for co in constraintsElement.childNodes[:]:
         if co.nodeType != xml.dom.Node.ELEMENT_NODE:
             continue

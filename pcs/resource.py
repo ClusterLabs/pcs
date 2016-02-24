@@ -489,7 +489,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     # If the user specifies an operation value and we find a similar one in
     # the default operations we remove if from the default operations
     op_values_agent = []
-    if "--no-default-ops" not in utils.pcs_options: 
+    if "--no-default-ops" not in utils.pcs_options:
         default_op_values = utils.get_default_op_values(ra_type)
         for def_op in default_op_values:
             match = False
@@ -876,7 +876,7 @@ def resource_update(res_id,args):
         master = None
         for m in dom.getElementsByTagName("master"):
             if m.getAttribute("id") == res_id:
-                master = r 
+                master = r
                 break
 
         if master:
@@ -2346,7 +2346,7 @@ def resource_failcount(argv):
         sys.exit(1)
 
     if len(argv) > 0:
-        node = argv.pop(0) 
+        node = argv.pop(0)
         all_nodes = False
     else:
         all_nodes = True
@@ -2558,7 +2558,7 @@ def resource_history(args):
             (last_date, dummy_retval) = utils.run(["date","-d", "@" + resources[res][cid][1].getAttribute("last-rc-change")])
             last_date = last_date.rstrip()
             rc_code = resources[res][cid][1].getAttribute("rc-code")
-            operation = resources[res][cid][1].getAttribute("operation") 
+            operation = resources[res][cid][1].getAttribute("operation")
             if rc_code != "0":
                 print("  Failed on %s" % last_date)
             elif operation == "stop":

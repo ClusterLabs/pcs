@@ -7,7 +7,7 @@ import os,sys
 import shutil
 import unittest
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir) 
+sys.path.insert(0,parentdir)
 import utils
 from pcs_test_functions import pcs,ac
 
@@ -19,7 +19,7 @@ class PropertyTest(unittest.TestCase):
         shutil.copy(empty_cib, temp_cib)
 
     def testEmpty(self):
-        output, returnVal = pcs(temp_cib, "property") 
+        output, returnVal = pcs(temp_cib, "property")
         assert returnVal == 0, 'Unable to list resources'
         assert output == "Cluster Properties:\n", [output]
 

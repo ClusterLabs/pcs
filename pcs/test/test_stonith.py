@@ -415,7 +415,7 @@ Cluster Properties:
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
         assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
-        
+
         output, returnVal = pcs(temp_cib, "stonith level clear rh7-1a")
         assert returnVal == 0
         output = ""
@@ -423,7 +423,7 @@ Cluster Properties:
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
         assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
-        
+
         output, returnVal = pcs(temp_cib, "stonith level clear rh7-1")
         assert returnVal == 0
         output = ""
@@ -431,7 +431,7 @@ Cluster Properties:
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
         assert output == ' Node: rh7-2\n  Level 2 - F2\n',[output]
-        
+
         output, returnVal = pcs(temp_cib, "stonith level add 2 rh7-1 F5,F2")
         assert returnVal == 0
         assert output == ""
@@ -443,7 +443,7 @@ Cluster Properties:
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
         assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
-        
+
         output, returnVal = pcs(temp_cib, "stonith level clear")
         assert returnVal == 0
         assert output == ""
@@ -505,7 +505,7 @@ Cluster Properties:
         o,r = pcs(temp_cib, "stonith level remove 5 rh7-1")
         assert r == 0
         assert o == ""
-        
+
         o,r = pcs(temp_cib, "stonith level remove 4 rh7-1 F2")
         assert r == 1
         assert o == "Error: unable to remove fencing level, fencing level for node: rh7-1, at level: 4, with device: F2 doesn't exist\n"
