@@ -5,8 +5,7 @@ from __future__ import unicode_literals
 
 import utils
 from errors import ReportItem
-from errors import ReportItemSeverity
-from errors import error_codes
+import error_codes
 from errors import LibraryError
 
 class AclRoleNotFound(LibraryError):

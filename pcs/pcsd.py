@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import sys
 import os
 import errno
-import json
 
 import usage
 import utils

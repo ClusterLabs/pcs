@@ -11,7 +11,7 @@ currentdir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(currentdir))
 
 import library_acl as lib
-from errors import error_codes
+import error_codes
 from errors import ReportItemSeverity as severities
 from library_test_tools import LibraryAssertionMixin
 from library_test_tools import get_xml_manipulation_creator

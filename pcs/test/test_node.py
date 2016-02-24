@@ -9,7 +9,6 @@ import unittest
 currentdir = os.path.dirname(os.path.abspath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
-import utils
 from pcs_test_functions import pcs,ac
 
 empty_cib = os.path.join(currentdir, "empty-withnodes.xml")

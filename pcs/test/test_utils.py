@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 import os.path
 import sys
-import shutil
 import unittest
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
@@ -15,7 +14,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 import utils
-from pcs_test_functions import pcs, ac, get_child_elements
+from pcs_test_functions import get_child_elements
 
 
 cib_with_nodes =  os.path.join(currentdir, "empty-withnodes.xml")

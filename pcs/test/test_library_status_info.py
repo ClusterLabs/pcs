@@ -12,13 +12,12 @@ from lxml import etree
 currentdir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(currentdir))
 
-from errors import LibraryError
 from library_status_info import ClusterState
 from library_status_info import _Attrs
 from library_status_info import _Children
 from library_test_tools import get_xml_manipulation_creator
 from library_test_tools import LibraryAssertionMixin
-from errors import error_codes
+import error_codes
 from errors import ReportItemSeverity as severities
 
 class AttrsTest(TestCase):

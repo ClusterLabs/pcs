@@ -30,7 +30,7 @@ import resource
 import stonith
 import constraint
 from errors import ReportItem
-from errors import error_codes
+import error_codes
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 

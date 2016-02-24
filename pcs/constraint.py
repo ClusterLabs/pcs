@@ -10,7 +10,6 @@ from collections import defaultdict
 
 import usage
 import utils
-import resource
 import rule as rule_utils
 
 

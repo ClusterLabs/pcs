@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import utils
 from library_status_info import ClusterState
-from errors import error_codes
+import error_codes
 from errors import ReportItem
 from errors import LibraryError
 

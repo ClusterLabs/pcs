@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import os.path
 import sys
 import difflib
-import subprocess
 import re
 import xml.dom.minidom
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

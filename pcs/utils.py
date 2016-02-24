@@ -18,14 +18,12 @@ import signal
 import time
 from io import BytesIO
 import tarfile
-import fcntl
 import getpass
 import base64
 import threading
 
 
 from library_status_info import ClusterState
-from errors import ReportItem
 from errors import ReportItemSeverity
 from errors import LibraryError
 try:
@@ -58,7 +56,6 @@ except ImportError:
     )
 
 import settings
-import resource
 import cluster
 import corosync_conf as corosync_conf_utils
 

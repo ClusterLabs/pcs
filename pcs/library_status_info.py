@@ -7,7 +7,7 @@ from lxml import etree
 import settings
 
 from errors import ReportItem
-from errors import error_codes
+import error_codes
 from errors import LibraryError
 
 '''
