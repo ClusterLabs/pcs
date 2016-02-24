@@ -66,7 +66,7 @@ def ac(a,b):
         assert False,[a]
 
 def isMinimumPacemakerVersion(cmajor,cminor,crev):
-    output, retval = utils.run(["crm_mon", "--version"])
+    output, dummy_retval = utils.run(["crm_mon", "--version"])
     pacemaker_version = output.split("\n")[0]
     r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
     m = r.match(pacemaker_version)

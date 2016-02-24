@@ -274,7 +274,7 @@ def resource_list_available(argv):
 
     # systemd agents
     if utils.is_systemctl():
-        agents, retval = utils.run(["systemctl", "list-unit-files", "--full"])
+        agents, dummy_retval = utils.run(["systemctl", "list-unit-files", "--full"])
         agents = agents.split("\n")
     for agent in agents:
         match = re.search(r'^([\S]*)\.service',agent)
@@ -301,7 +301,7 @@ def resource_list_available(argv):
                         "r"
                     ).read()
                 ))
-            except EnvironmentError as e:
+            except EnvironmentError:
                 pass
 
     # output
@@ -382,7 +382,7 @@ def resource_list_options(resource):
         try:
             with open("/usr/share/pacemaker/nagios/plugins-metadata/" + resource + ".xml",'r') as f:
                 resource_parse_options(f.read(), standard, None, resource)
-        except IOError as e:
+        except IOError:
             utils.err ("Unable to find resource: %s" % resource)
         return
 
@@ -414,13 +414,13 @@ def resource_list_options(resource):
         try:
             with open("/usr/share/pacemaker/nagios/plugins-metadata/" + resource + ".xml",'r') as f:
                 resource_parse_options(f.read(), "nagios", None, resource)
-        except IOError as e:
+        except IOError:
             utils.err ("Unable to find resource: %s" % resource)
 
 # Return the string formatted with a line length of 79 and indented
 def format_desc(indent, desc):
     desc = " ".join(desc.split())
-    rows, columns = utils.getTerminalSize()
+    dummy_rows, columns = utils.getTerminalSize()
     columns = int(columns)
     if columns < 40: columns = 40
     afterindent = columns - indent
@@ -429,7 +429,7 @@ def format_desc(indent, desc):
 
     for line in textwrap.wrap(desc, afterindent):
         if not first:
-            for i in range(0,indent):
+            for _ in range(0,indent):
                 output += " "
         output += line
         output += "\n"
@@ -536,8 +536,6 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     if not is_monitor_present:
         op_values.append(['monitor'])
 
-    op_values_all = op_values_agent + op_values
-
     if "--disabled" in utils.pcs_options:
         meta_values = [
             meta for meta in meta_values if not meta.startswith("target-role=")
@@ -579,13 +577,13 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         )
 
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
-        dom, clone_id = resource_clone_create(dom, [ra_id] + clone_opts)
+        dom, dummy_clone_id = resource_clone_create(dom, [ra_id] + clone_opts)
         if "--group" in utils.pcs_options:
             print("Warning: --group ignored when creating a clone")
         if "--master" in utils.pcs_options:
             print("Warning: --master ignored when creating a clone")
     elif "--master" in utils.pcs_options:
-        dom, master_id = resource_master_create(
+        dom, dummy_master_id = resource_master_create(
             dom, [ra_id] + master_meta_values
         )
         if "--group" in utils.pcs_options:
@@ -809,7 +807,7 @@ def resource_move(argv,clear=False,ban=False):
             utils.err("\n".join(msg).strip())
 
 def resource_standards(return_output=False):
-    output, retval = utils.run(["crm_resource","--list-standards"], True)
+    output, dummy_retval = utils.run(["crm_resource","--list-standards"], True)
     # Return value is ignored because it contains the number of standards
     # returned, not an error code
     output = output.strip()
@@ -818,7 +816,7 @@ def resource_standards(return_output=False):
     print(output)
 
 def resource_providers():
-    output, retval = utils.run(["crm_resource","--list-ocf-providers"],True)
+    output, dummy_retval = utils.run(["crm_resource","--list-ocf-providers"],True)
     # Return value is ignored because it contains the number of providers
     # returned, not an error code
     print(output.strip())
@@ -834,7 +832,7 @@ def resource_agents(argv):
         standards = output.split('\n')
 
     for s in standards:
-        output, retval = utils.run(["crm_resource", "--list-agents", s])
+        output, dummy_retval = utils.run(["crm_resource", "--list-agents", s])
         preg = re.compile(r'\d+ agents found for standard.*$', re.MULTILINE)
         output = preg.sub("", output)
         output = output.strip()
@@ -905,7 +903,7 @@ def resource_update(res_id,args):
             resource_type = resClass + ":" + resType
         else:
             resource_type = resClass + ":" + resProvider + ":" + resType
-        bad_opts, missing_req_opts = utils.validInstanceAttributes(res_id, params, resource_type)
+        bad_opts, dummy_missing_req_opts = utils.validInstanceAttributes(res_id, params, resource_type)
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
                     % (", ".join(bad_opts), utils.getResourceType(resource)))
@@ -1025,9 +1023,9 @@ def resource_update_clone_master(
     dom, clone, clone_type, res_id, args, wait, wait_timeout
 ):
     if clone_type == "clone":
-        dom, clone_id = resource_clone_create(dom, [res_id] + args, True)
+        dom, dummy_clone_id = resource_clone_create(dom, [res_id] + args, True)
     elif clone_type == "master":
-        dom, master_id = resource_master_create(dom, [res_id] + args, True)
+        dom, dummy_master_id = resource_master_create(dom, [res_id] + args, True)
 
     dom = utils.replace_cib_configuration(dom)
 
@@ -1439,14 +1437,6 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
         if element.parentNode.tagName != "clone":
             utils.err("%s is not currently a clone" % name)
         clone = element.parentNode
-        for child in clone.childNodes:
-            if (
-                child.nodeType == child.ELEMENT_NODE
-                and
-                child.tagName == "meta_attributes"
-            ):
-                meta = child
-                break
     else:
         clone = cib_dom.createElement("clone")
         clone.setAttribute("id", utils.find_unique_id(cib_dom, name + "-clone"))
@@ -1648,7 +1638,6 @@ def resource_master_remove(argv):
     constraints_element = dom.getElementsByTagName("constraints")
     if len(constraints_element) > 0:
         constraints_element = constraints_element[0]
-        constraints = []
         for resource_id in resources_to_cleanup:
             remove_resource_references(
                 dom, resource_id, constraints_element=constraints_element
@@ -1679,7 +1668,7 @@ def resource_remove(resource_id, output = True):
                 ):
                     res_id = res.getAttribute("id")
                     res_stopped = False
-                    for i in range(15):
+                    for _ in range(15):
                         time.sleep(1)
                         if not utils.resource_running_on(res_id)["is_running"]:
                             res_stopped = True
@@ -1733,7 +1722,7 @@ def resource_remove(resource_id, output = True):
         if retval != 0 and "unrecognized option '--wait'" in output:
             output = ""
             retval = 0
-            for i in range(15):
+            for _ in range(15):
                 time.sleep(1)
                 if not utils.resource_running_on(resource_id)["is_running"]:
                     break
@@ -1818,7 +1807,7 @@ def resource_remove(resource_id, output = True):
         args = ["cibadmin", "-o", "resources", "-D", "--xpath", to_remove_xpath]
         if output == True:
             print("Deleting Resource ("+msg+") - " + resource_id)
-        cmdoutput,retVal = utils.run(args)
+        dummy_cmdoutput,retVal = utils.run(args)
         if retVal != 0:
             if output == True:
                 utils.err("Unable to remove resource '%s' (do constraints exist?)" % (resource_id))
@@ -2555,7 +2544,6 @@ def resource_cleanup(argv):
 def resource_history(args):
     dom = utils.get_cib_dom()
     resources = {}
-    calls = {}
     lrm_res = dom.getElementsByTagName("lrm_resource")
     for res in lrm_res:
         res_id = res.getAttribute("id")
@@ -2567,7 +2555,7 @@ def resource_history(args):
     for res in sorted(resources):
         print("Resource: %s" % res)
         for cid in sorted(resources[res]):
-            (last_date,retval) = utils.run(["date","-d", "@" + resources[res][cid][1].getAttribute("last-rc-change")])
+            (last_date, dummy_retval) = utils.run(["date","-d", "@" + resources[res][cid][1].getAttribute("last-rc-change")])
             last_date = last_date.rstrip()
             rc_code = resources[res][cid][1].getAttribute("rc-code")
             operation = resources[res][cid][1].getAttribute("operation") 
@@ -2655,7 +2643,7 @@ def resource_relocate_get_locations(cib_dom, resources=None):
     updated_cib, updated_resources = resource_relocate_set_stickiness(
         cib_dom, resources
     )
-    simout, transitions, new_cib = utils.simulate_cib(updated_cib)
+    dummy_simout, transitions, new_cib = utils.simulate_cib(updated_cib)
     operation_list = utils.get_operations_from_transitions(transitions)
     locations = utils.get_resources_location_from_operations(
         new_cib, operation_list
@@ -2670,8 +2658,8 @@ def resource_relocate_get_locations(cib_dom, resources=None):
     ]
 
 def resource_relocate_show(cib_dom):
-    updated_cib, updated_resources = resource_relocate_set_stickiness(cib_dom)
-    simout, transitions, new_cib = utils.simulate_cib(updated_cib)
+    updated_cib, dummy_updated_resources = resource_relocate_set_stickiness(cib_dom)
+    simout, dummy_transitions, dummy_new_cib = utils.simulate_cib(updated_cib)
     in_status = False
     in_status_resources = False
     in_transitions = False

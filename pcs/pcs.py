@@ -63,12 +63,6 @@ def main(argv):
         # p = password (cluster auth), u = user (cluster auth),
         # V = verbose (cluster verify)
         pcs_short_options = "hf:p:u:V"
-        pcs_short_options_with_args = []
-        for c in pcs_short_options:
-            if c == ":":
-                pcs_short_options_with_args.append(prev_char)
-            prev_char = c
-
         pcs_long_options = [
             "debug", "version", "help", "fullhelp",
             "force", "autocorrect", "interactive", "autodelete",

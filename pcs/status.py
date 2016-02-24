@@ -233,23 +233,23 @@ def xml_status():
 
 def is_cman_running():
     if utils.is_systemctl():
-        output, retval = utils.run(["systemctl", "status", "cman.service"])
+        dummy_output, retval = utils.run(["systemctl", "status", "cman.service"])
     else:
-        output, retval = utils.run(["service", "cman", "status"])
+        dummy_output, retval = utils.run(["service", "cman", "status"])
     return retval == 0
 
 def is_corosyc_running():
     if utils.is_systemctl():
-        output, retval = utils.run(["systemctl", "status", "corosync.service"])
+        dummy_output, retval = utils.run(["systemctl", "status", "corosync.service"])
     else:
-        output, retval = utils.run(["service", "corosync", "status"])
+        dummy_output, retval = utils.run(["service", "corosync", "status"])
     return retval == 0
 
 def is_pacemaker_running():
     if utils.is_systemctl():
-        output, retval = utils.run(["systemctl", "status", "pacemaker.service"])
+        dummy_output, retval = utils.run(["systemctl", "status", "pacemaker.service"])
     else:
-        output, retval = utils.run(["service", "pacemaker", "status"])
+        dummy_output, retval = utils.run(["service", "pacemaker", "status"])
     return retval == 0
 
 def print_pcsd_daemon_status():
@@ -257,7 +257,7 @@ def print_pcsd_daemon_status():
     if os.getuid() == 0:
         cluster.cluster_pcsd_status([], True)
     else:
-        err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
+        err_msgs, exitcode, std_out, dummy_std_err = utils.call_local_pcsd(
             ['status', 'pcsd'], True
         )
         if err_msgs:

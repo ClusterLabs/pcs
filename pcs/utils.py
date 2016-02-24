@@ -529,13 +529,10 @@ def getCorosyncActiveNodes():
 def addNodeToCorosync(node):
 # Before adding, make sure node isn't already in corosync.conf
     node0, node1 = parse_multiring_node(node)
-    used_node_ids = []
-    num_nodes_in_conf = 0
     corosync_conf_text = getCorosyncConf()
     for c_node in getNodesFromCorosyncConf(conf_text=corosync_conf_text):
         if (c_node == node0) or (c_node == node1):
             err("node already exists in corosync.conf")
-        num_nodes_in_conf = num_nodes_in_conf + 1
     if "--corosync_conf" not in pcs_options:
         for c_node in getCorosyncActiveNodes():
             if (c_node == node0) or (c_node == node1):
@@ -608,13 +605,11 @@ def addNodeToClusterConf(node):
 
 def removeNodeFromCorosync(node):
     removed_node = False
-    num_nodes_in_conf = 0
     node0, node1 = parse_multiring_node(node)
 
     corosync_conf = getCorosyncConfParsed()
     for nodelist in corosync_conf.get_sections("nodelist"):
         for node in nodelist.get_sections("node"):
-            num_nodes_in_conf += 1
             ring0_attrs = node.get_attributes("ring0_addr")
             if ring0_attrs:
                 ring0_conf = ring0_attrs[0][1]
@@ -629,7 +624,7 @@ def removeNodeFromCorosync(node):
     return removed_node
 
 def removeNodeFromClusterConf(node):
-    node0, node1 = parse_multiring_node(node)
+    node0, dummy_node1 = parse_multiring_node(node)
     nodes = getNodesFromCorosyncConf()
     if node0 not in nodes:
         return False
@@ -808,7 +803,7 @@ def run(
             # decodes newlines and in python3 also converts bytes to str
             universal_newlines=(not PYTHON2 and not binary_output)
         )
-        output,stderror = p.communicate(string_for_stdin)
+        output, dummy_stderror = p.communicate(string_for_stdin)
         returnVal = p.returncode
         if "--debug" in pcs_options:
             print("Return Value: {0}".format(returnVal))
@@ -932,7 +927,7 @@ def run_parallel(worker_list, wait_seconds=1):
 #  an empty string
 def does_exist(xpath_query):
     args = ["cibadmin", "-Q", "--xpath", xpath_query]
-    output,retval = run(args)
+    dummy_output,retval = run(args)
     if (retval != 0):
         return False
     return True
@@ -1316,7 +1311,7 @@ def get_timeout_seconds(timeout, return_unknown=False):
     return timeout if return_unknown else None
 
 def check_pacemaker_supports_resource_wait():
-    output, retval = run(["crm_resource", "-?"])
+    output, dummy_retval = run(["crm_resource", "-?"])
     if "--wait" not in output:
         err("crm_resource does not support --wait, please upgrade pacemaker")
 
@@ -1691,11 +1686,6 @@ def getClusterStateXml():
         err("error running crm_mon, is pacemaker running?")
     return xml
 
-def getNodeAttributes():
-    dom = get_cib_dom()
-    nodes = dom.getElementsByTagName("node")
-
-
 # Returns true if stonith-enabled is not false/off & no stonith devices exist
 # So if the cluster can't start due to missing stonith devices return true
 def stonithCheck():
@@ -1737,7 +1727,7 @@ def getCorosyncNodesID(allow_failure=False):
 
         (output, retval) = run(['corosync-cmapctl', '-b', 'nodelist.node'])
     else:
-        err_msgs, retval, output, std_err = call_local_pcsd(
+        err_msgs, retval, output, dummy_std_err = call_local_pcsd(
             ['status', 'nodes', 'corosync-id'], True
         )
         if err_msgs:
@@ -1770,7 +1760,7 @@ def getPacemakerNodesID(allow_failure=False):
     if os.getuid() == 0:
         (output, retval) = run(['crm_node', '-l'])
     else:
-        err_msgs, retval, output, std_err = call_local_pcsd(
+        err_msgs, retval, output, dummy_std_err = call_local_pcsd(
             ['status', 'nodes', 'pacemaker-id'], True
         )
         if err_msgs:
@@ -1823,7 +1813,6 @@ def getResourceType(resource):
 # resource is a python minidom element of the resource from the cib
 def validInstanceAttributes(res_id, ra_values, resource_type):
     ra_values = dict(ra_values)
-    found = False
     stonithDevice = False
     resSplit = resource_type.split(":")
     if len(resSplit) == 2:
@@ -1865,7 +1854,7 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
         err("Unable to parse xml for '%s': %s" % (resource_type, e))
     except xml.etree.ElementTree.ParseError as e:
         err("Unable to parse xml for '%s': %s" % (resource_type, e))
-    for key,value in ra_values.items():
+    for key, dummy_value in ra_values.items():
         if key not in valid_parameters:
             bad_parameters.append(key)
         if key in missing_required_parameters:
@@ -1906,7 +1895,7 @@ def getClusterName():
                     cluster_name = attrs[1]
             if cluster_name:
                 return cluster_name
-        except (IOError, corosync_conf_utils.CorosyncConfException) as e:
+        except (IOError, corosync_conf_utils.CorosyncConfException):
             return ""
 
     return ""
@@ -1963,7 +1952,7 @@ def validate_xml_id(var, description="id"):
 
 def is_iso8601_date(var):
     # using pacemaker tool to check if a value is a valid pacemaker iso8601 date
-    output, retVal = run(["iso8601", "-d", var])
+    dummy_output, retVal = run(["iso8601", "-d", var])
     return retVal == 0
 
 def verify_cert_key_pair(cert, key):

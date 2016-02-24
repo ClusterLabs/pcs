@@ -98,7 +98,7 @@ def colocation_show(argv):
     else:
         showDetail = False
 
-    (dom,constraintsElement) = getCurrentConstraints()
+    (dummy_dom,constraintsElement) = getCurrentConstraints()
 
     resource_colocation_sets = []
     print("Colocation Constraints:")
@@ -364,7 +364,7 @@ def order_show(argv):
     else:
         showDetail = False
 
-    (dom,constraintsElement) = getCurrentConstraints()
+    (dummy_dom,constraintsElement) = getCurrentConstraints()
 
     resource_order_sets = []
     print("Ordering Constraints:")
@@ -809,7 +809,7 @@ def location_show(argv):
     else:
         valid_noderes = []
 
-    (dom,constraintsElement) = getCurrentConstraints()
+    (dummy_dom,constraintsElement) = getCurrentConstraints()
     nodehashon = {}
     nodehashoff = {}
     rschashon = {}
@@ -1358,7 +1358,6 @@ def constraint_rule(argv):
 
 
     constraint_id = None
-    rule_id = None
 
     if command == "add":
         constraint_id = argv.pop(0)
@@ -1381,7 +1380,6 @@ def constraint_rule(argv):
         constraints = cib.find('.//constraints')
         loc_cons = cib.findall(str('.//rsc_location'))
 
-        rules = cib.findall(str('.//rule'))
         for loc_con in loc_cons:
             for rule in loc_con:
                 if rule.get("id") == temp_id:

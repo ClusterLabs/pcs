@@ -219,7 +219,7 @@ def argv_to_permission_info_list(argv):
         argv[2::3]
     )
 
-    for permission, scope_type, scope in permission_info_list:
+    for permission, scope_type, dummy_scope in permission_info_list:
         if(
             permission not in ['read', 'write', 'deny']
             or

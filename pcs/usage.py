@@ -104,7 +104,6 @@ def sub_gen_code(level,item,prev_level=[],spaces=""):
         return ""
 
     out += 'case "${cur' + str(level) + '}" in\n'
-    next_level = []
     for key,val in item.items():
         if len(val) == 0:
             continue
@@ -167,7 +166,6 @@ def sub_generate_bash_completion():
 def generate_tree(usage_txt):
     ignore = True
     ret_hash = {}
-    cur_stack = []
     for l in usage_txt.split('\n'):
         if l.startswith("Commands:"):
             ignore = False

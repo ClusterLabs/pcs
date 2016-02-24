@@ -7,6 +7,7 @@ import sys
 import re
 import glob
 from xml.dom.minidom import parseString
+from xml.parsers.expat import ExpatError
 
 import usage
 import utils
@@ -122,7 +123,7 @@ def stonith_list_options(stonith_agent):
         utils.err("unable to get metadata for %s" % stonith_agent)
     try:
         dom = parseString(metadata)
-    except xml.parsers.expat.ExpatError as e:
+    except ExpatError as e:
         utils.err("Unable to parse xml for '%s': %s" % (stonith_agent, e))
 
     title = dom.documentElement.getAttribute("name") or stonith_agent
@@ -284,7 +285,6 @@ def stonith_level_rm(level, node, devices):
         ft = ft[0]
 
     fls = ft.getElementsByTagName("fencing-level")
-    fls_to_remove = []
 
     if node != "":
         if devices != "":
@@ -362,7 +362,6 @@ def stonith_level_verify():
     fls = dom.getElementsByTagName("fencing-level")
     for fl in fls:
         node = fl.getAttribute("target")
-        level = fl.getAttribute("index")
         devices = fl.getAttribute("devices")
         for dev in devices.split(","):
             if not utils.is_stonith_resource(dev):
@@ -441,7 +440,7 @@ def stonith_does_agent_provide_unfencing(metadata_string):
                         action.getAttribute("automatic") == "1"
                     ):
                         return True
-    except xml.parsers.expat.ExpatError as e:
+    except ExpatError:
         return False
     return False
 

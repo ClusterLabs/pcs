@@ -1145,8 +1145,8 @@ def stop_cluster(argv):
 
     if not "--force" in utils.pcs_options:
         if utils.is_rhel6():
-            output_status, retval = utils.run(["cman_tool", "status"])
-            output_nodes, retval = utils.run([
+            output_status, dummy_retval = utils.run(["cman_tool", "status"])
+            output_nodes, dummy_retval = utils.run([
                 "cman_tool", "nodes", "-F", "id,type,votes,name"
             ])
             if output_status == output_nodes:
@@ -1156,7 +1156,7 @@ def stop_cluster(argv):
                 output = output_status + "\n---Votes---\n" + output_nodes
             quorum_info = utils.parse_cman_quorum_info(output)
         else:
-            output, retval = utils.run(["corosync-quorumtool", "-p", "-s"])
+            output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
             # retval is 0 on success if node is not in partition with quorum
             # retval is 1 on error OR on success if node has quorum
             quorum_info = utils.parse_quorumtool_output(output)
@@ -1206,8 +1206,8 @@ def stop_cluster_corosync():
 
 def kill_cluster(argv):
     daemons = ["crmd", "pengine", "attrd", "lrmd", "stonithd", "cib", "pacemakerd", "corosync"]
-    output, retval = utils.run(["killall", "-9"] + daemons)
-#    if retval != 0:
+    dummy_output, dummy_retval = utils.run(["killall", "-9"] + daemons)
+#    if dummy_retval != 0:
 #        print "Error: unable to execute killall -9"
 #        print output
 #        sys.exit(1)

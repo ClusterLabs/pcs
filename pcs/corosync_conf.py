@@ -126,7 +126,7 @@ def _parse_section(lines, section):
         if not current_line or current_line[0] == "#":
             continue
         if "{" in current_line:
-            section_name, junk = current_line.rsplit("{", 1)
+            section_name, dummy_junk = current_line.rsplit("{", 1)
             new_section = Section(section_name.strip())
             section.add_section(new_section)
             _parse_section(lines, new_section)

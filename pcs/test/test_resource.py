@@ -1940,48 +1940,62 @@ Deleting Resource (and group and M/S) - dummylarge
         ac (output, ' Master: master-unmanage-master\n  Resource: master-unmanage (class=ocf provider=pacemaker type=Stateful)\n   Operations: monitor interval=60s (master-unmanage-monitor-interval-60s)\n')
 
     def testGroupManage(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group AG")
+        o, r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group AG")
+        self.assertEqual(r, 0)
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D2 Dummy --group AG")
+        o, r = pcs(temp_cib, "resource create --no-default-ops D2 Dummy --group AG")
+        self.assertEqual(r, 0)
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource --full")
+        o, r = pcs(temp_cib, "resource --full")
+        self.assertEqual(r, 0)
         ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
-        o,r = pcs(temp_cib, "resource unmanage AG")
+        o, r = pcs(temp_cib, "resource unmanage AG")
+        self.assertEqual(r, 0)
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource --full")
+        o, r = pcs(temp_cib, "resource --full")
+        self.assertEqual(r, 0)
         ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
-        o,r = pcs(temp_cib, "resource manage AG")
+        o, r = pcs(temp_cib, "resource manage AG")
+        self.assertEqual(r, 0)
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource --full")
+        o, r = pcs(temp_cib, "resource --full")
+        self.assertEqual(r, 0)
         ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
-        o,r = pcs(temp_cib, "resource unmanage D2")
+        o, r = pcs(temp_cib, "resource unmanage D2")
+        self.assertEqual(r, 0)
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource --full")
+        o, r = pcs(temp_cib, "resource --full")
+        self.assertEqual(r, 0)
         ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
-        o,r = pcs(temp_cib, "resource manage AG")
+        o, r = pcs(temp_cib, "resource manage AG")
+        self.assertEqual(r, 0)
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource --full")
+        o, r = pcs(temp_cib, "resource --full")
+        self.assertEqual(r, 0)
         ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
-        o,r = pcs(temp_cib, "resource unmanage D2")
+        o, r = pcs(temp_cib, "resource unmanage D2")
+        self.assertEqual(r, 0)
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource unmanage D1")
+        o, r = pcs(temp_cib, "resource unmanage D1")
+        self.assertEqual(r, 0)
         ac(o,"")
 
         os.system("CIB_file="+temp_cib+" crm_resource --resource AG --set-parameter is-managed --meta --parameter-value false --force > /dev/null")
 
-        o,r = pcs(temp_cib, "resource --full")
+        o, r = pcs(temp_cib, "resource --full")
+        self.assertEqual(r, 0)
         ac(o,"""\
  Group: AG
   Meta Attrs: is-managed=false 
@@ -1994,10 +2008,12 @@ Deleting Resource (and group and M/S) - dummylarge
 """)
 
 
-        o,r = pcs(temp_cib, "resource manage AG")
+        o, r = pcs(temp_cib, "resource manage AG")
+        self.assertEqual(r, 0)
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource --full")
+        o, r = pcs(temp_cib, "resource --full")
+        self.assertEqual(r, 0)
         ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
     def testMasterMetaCreate(self):
@@ -2610,11 +2626,11 @@ Deleting Resource (and group and M/S) - dummylarge
         assert output == "", [output]
 
         output, returnval = pcs(temp_cib, "resource update D2 blah=blah")
-        assert returnVal == 0
+        assert returnval == 0
         assert output == "", [output]
 
         output, returnval = pcs(temp_cib, "resource update D2")
-        assert returnVal == 0
+        assert returnval == 0
         assert output == "", [output]
 
     def testResourceMoveBanClear(self):
@@ -3906,7 +3922,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 0
 
     def testVirtualDomainResource(self):
-        o,r = pcs("resource describe VirtualDomain")
+        dummy_o,r = pcs("resource describe VirtualDomain")
         assert r == 0
 
     def testResourceMissingValues(self):
