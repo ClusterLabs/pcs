@@ -1,3 +1,8 @@
+'''
+The intention is put there knowledge about cluster state structure.
+Hide information about underlaying xml is desired too.
+'''
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -9,11 +14,6 @@ import settings
 from errors import ReportItem
 import error_codes
 from errors import LibraryError
-
-'''
-The intention is put there knowledge about cluster state structure.
-Hide information about underlaying xml is desired too.
-'''
 
 class _Attrs(object):
     def __init__(self, owner_name, attrib, required_attrs):
@@ -93,12 +93,12 @@ class _Element(object):
 
 class _SummaryNodes(_Element):
     required_attrs = {
-        'count': ('number', lambda x: int(x)),
+        'count': ('number', int),
     }
 
 class _SummaryResources(_Element):
     required_attrs = {
-        'count': ('number', lambda x: int(x)),
+        'count': ('number', int),
     }
 
 class _SummarySection(_Element):

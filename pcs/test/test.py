@@ -6,7 +6,7 @@ root = tree.getroot()
 print(type(tree))
 print(type(root))
 
-if type(tree) == ET.ElementTree:
+if isinstance(tree, ET.ElementTree):
     print("ELEMENT")
 else:
     print("FAIL")

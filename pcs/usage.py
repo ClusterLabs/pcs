@@ -8,7 +8,6 @@ import re
 
 examples = ""
 def full_usage():
-    global examples
     out = ""
     out += main(False)
     out += strip_extras(resource([],False))

@@ -1350,7 +1350,7 @@ def get_cib(argv):
 
 def cluster_node(argv):
     if len(argv) != 2:
-        usage.cluster();
+        usage.cluster()
         sys.exit(1)
 
     if argv[0] == "add":
@@ -1358,7 +1358,7 @@ def cluster_node(argv):
     elif argv[0] in ["remove","delete"]:
         add_node = False
     else:
-        usage.cluster();
+        usage.cluster()
         sys.exit(1)
 
     node = argv[1]

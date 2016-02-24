@@ -834,7 +834,7 @@ def location_show(argv):
 # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children of
 # rsc_location)
         if lc_score == "":
-            lc_score = "0";
+            lc_score = "0"
 
         if lc_score == "INFINITY":
             positive = True

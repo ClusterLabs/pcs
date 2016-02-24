@@ -2090,7 +2090,7 @@ def disableServices():
 
 def write_file(path, data, permissions=0o644, binary=False):
     if os.path.exists(path):
-        if not "--force" in pcs_options:
+        if "--force" not in pcs_options:
             return False, "'%s' already exists, use --force to overwrite" % path
         else:
             try:
@@ -2571,7 +2571,7 @@ def get_acls(dom):
         acls = dom.createElement("acls")
         conf = dom.getElementsByTagName("configuration")
         if len(conf) == 0:
-            utils.err("Unable to get configuration section of cib")
+            err("Unable to get configuration section of cib")
         conf[0].appendChild(acls)
     else:
         acls = acls[0]

@@ -111,9 +111,7 @@ def nodes_status(argv):
         online_nodes = utils.getCorosyncActiveNodes()
         offline_nodes = []
         for node in all_nodes:
-            if node in online_nodes:
-                next
-            else:
+            if node not in online_nodes:
                 offline_nodes.append(node)
 
         online_nodes.sort()

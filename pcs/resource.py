@@ -422,7 +422,8 @@ def format_desc(indent, desc):
     desc = " ".join(desc.split())
     dummy_rows, columns = utils.getTerminalSize()
     columns = int(columns)
-    if columns < 40: columns = 40
+    if columns < 40:
+        columns = 40
     afterindent = columns - indent
     output = ""
     first = True
