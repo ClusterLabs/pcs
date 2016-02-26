@@ -9,6 +9,13 @@ import unittest
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
 from time import sleep
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    #python 3
+    from io import StringIO
+
 currentdir = os.path.dirname(os.path.abspath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -1860,6 +1867,11 @@ Membership information
         )
 
     def test_dom_update_utilization_invalid(self):
+        #commands writes to stderr
+        #we want clean test output, so we capture it
+        tmp_stderr = sys.stderr
+        sys.stderr = StringIO()
+
         el = xml.dom.minidom.parseString("""
         <resource id="test_id"/>
         """).documentElement
@@ -1872,6 +1884,8 @@ Membership information
             SystemExit,
             utils.dom_update_utilization, el, [("name", "0.01")]
         )
+
+        sys.stderr = tmp_stderr
 
     def test_dom_update_utilization_add(self):
         el = xml.dom.minidom.parseString("""
