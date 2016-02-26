@@ -474,13 +474,14 @@ Commands:
         Set default values for resources, if no options are passed, lists
         currently configured defaults
 
-    cleanup [<resource id>]
-        Cleans up the resource in the lrmd (useful to reset the resource
-        status and failcount).  This tells the cluster to forget the
-        operation history of a resource and re-detect its current state.
-        This can be useful to purge knowledge of past failures that have
-        since been resolved. If a resource id is not specified then all
-        resources/stonith devices will be cleaned up.
+    cleanup [<resource id>] [--node <node>]
+        Cleans up the resource in the lrmd (useful to reset the resource status
+        and failcount).  This tells the cluster to forget the operation history
+        of a resource and re-detect its current state.  This can be useful to
+        purge knowledge of past failures that have since been resolved.  If a
+        resource id is not specified then all resources/stonith devices will be
+        cleaned up.  If a node is not specified then resources on all nodes
+        will be cleaned up.
 
     failcount show <resource id> [node]
         Show current failcount for specified resource from all nodes or
@@ -819,13 +820,14 @@ Commands:
     delete <stonith id>
         Remove stonith id from configuration
 
-    cleanup [<stonith id>]
-        Cleans up the stonith device in the lrmd (useful to reset the
-        status and failcount).  This tells the cluster to forget the
-        operation history of a stonith device and re-detect its current state.
-        This can be useful to purge knowledge of past failures that have
-        since been resolved. If a stonith id is not specified then all
-        resources/stonith devices will be cleaned up.
+    cleanup [<stonith id>] [--node <node>]
+        Cleans up the stonith device in the lrmd (useful to reset the status
+        and failcount).  This tells the cluster to forget the operation history
+        of a stonith device and re-detect its current state.  This can be
+        useful to purge knowledge of past failures that have since been
+        resolved.  If a stonith id is not specified then all resources/stonith
+        devices will be cleaned up.  If a node is not specified then resources
+        on all nodes will be cleaned up.
 
     level
         Lists all of the fencing levels currently configured

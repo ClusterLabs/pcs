@@ -21,9 +21,6 @@ from library_test_tools import LibraryAssertionMixin
 from errors import error_codes
 from errors import ReportItemSeverity as severities
 
-class Something():
-    pass
-
 class AttrsTest(TestCase):
     def test_get_declared_attr(self):
         attrs = _Attrs('test', {'node-name': 'node1'}, {'name': 'node-name'})
@@ -37,6 +34,13 @@ class AttrsTest(TestCase):
         attrs = _Attrs('test', {}, {'name': 'node-name'})
         self.assertRaises(AttributeError, lambda: attrs.name)
 
+    def test_attr_transformation_success(self):
+        attrs = _Attrs('test', {'number': '7'}, {'count': ('number', int)})
+        self.assertEqual(7, attrs.count)
+
+    def test_attr_transformation_fail(self):
+        attrs = _Attrs('test', {'number': 'abc'}, {'count': ('number', int)})
+        self.assertRaises(ValueError, lambda: attrs.count)
 
 class ChildrenTest(TestCase):
     def setUp(self):
@@ -91,7 +95,7 @@ class ClusterStatusTest(TestBase, LibraryAssertionMixin):
         )
 
 
-class WorkWithClusterStatusTest(TestBase):
+class WorkWithClusterStatusNodesTest(TestBase):
     def fixture_node_string(self, **kwargs):
         attrs = dict(name='name', id='id', type='member')
         attrs.update(kwargs)
@@ -138,6 +142,16 @@ class WorkWithClusterStatusTest(TestBase):
                 if node.attrs.type != 'remote'
             ]
         )
+
+
+class WorkWithClusterStatusSummaryTest(TestBase):
+    def test_nodes_count(self):
+        xml = self.covered_status.dom.toxml()
+        self.assertEqual(0, ClusterState(xml).summary.nodes.attrs.count)
+
+    def test_resources_count(self):
+        xml = self.covered_status.dom.toxml()
+        self.assertEqual(0, ClusterState(xml).summary.resources.attrs.count)
 
 if __name__ == "__main__":
     unittest.main()

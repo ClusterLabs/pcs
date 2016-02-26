@@ -17,10 +17,17 @@ import utils
 import constraint
 import stonith
 import library_acl as lib_acl
+import library_resource as lib_resource
+from errors import CmdLineInputError
+from errors import LibraryError
 
 
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
+
+def exit_on_cmdline_input_errror(usage_name):
+    usage.resource([usage_name])
+    sys.exit(1)
 
 def resource_cmd(argv):
     if len(argv) == 0:
@@ -147,11 +154,12 @@ def resource_cmd(argv):
         else:
             set_default("rsc_defaults", argv)
     elif (sub_cmd == "cleanup"):
-        if len(argv) == 0:
-            resource_cleanup_all()
-        else:
-            res_id = argv.pop(0)
-            resource_cleanup(res_id)
+        try:
+            resource_cleanup(argv)
+        except CmdLineInputError as e:
+            exit_on_cmdline_input_errror('cleanup')
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
     elif (sub_cmd == "history"):
         resource_history(argv)
     elif (sub_cmd == "relocate"):
@@ -2530,19 +2538,19 @@ def get_attrs(node, prepend_string = "", append_string = ""):
     else:
         return output.rstrip()
 
-def resource_cleanup(res_id):
-    (output, retval) = utils.run(["crm_resource", "-C", "-r", res_id])
-    if retval != 0:
-        utils.err("Unable to cleanup resource: %s" % res_id + "\n" + output)
-    else:
-        print(output)
+def resource_cleanup(argv):
+    resource = None
+    node = None
 
-def resource_cleanup_all():
-    (output, retval) = utils.run(["crm_resource", "-C"])
-    if retval != 0:
-        utils.err("Unexpected error occured. 'crm_resource -C' err_code: %s\n%s" % (retval, output))
-    else:
-        print(output)
+    if len(argv) > 1:
+        raise CmdLineInputError()
+    if argv:
+        resource = argv[0]
+    if "--node" in utils.pcs_options:
+        node = utils.pcs_options["--node"]
+    force = "--force" in utils.pcs_options
+
+    print(lib_resource.cleanup(resource, node, force))
 
 def resource_history(args):
     dom = utils.get_cib_dom()

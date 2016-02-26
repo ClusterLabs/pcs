@@ -11,6 +11,12 @@ from xml.dom.minidom import parseString
 import usage
 import utils
 import resource
+from errors import CmdLineInputError
+from errors import LibraryError
+
+def exit_on_cmdline_input_errror(usage_name):
+    usage.stonith([usage_name])
+    sys.exit(1)
 
 def stonith_cmd(argv):
     if len(argv) == 0:
@@ -51,11 +57,12 @@ def stonith_cmd(argv):
     elif (sub_cmd == "fence"):
         stonith_fence(argv)
     elif (sub_cmd == "cleanup"):
-        if len(argv) == 0:
-            resource.resource_cleanup_all()
-        else:
-            res_id = argv.pop(0)
-            resource.resource_cleanup(res_id)
+        try:
+            resource.resource_cleanup(argv)
+        except CmdLineInputError as e:
+            exit_on_cmdline_input_errror('cleanup')
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
     elif (sub_cmd == "confirm"):
         stonith_confirm(argv)
     else:

@@ -28,7 +28,12 @@ class _Attrs(object):
     def __getattr__(self, name):
         if name in self.required_attrs.keys():
             try:
-                return self.attrib[self.required_attrs[name]]
+                attr_specification = self.required_attrs[name]
+                if isinstance(attr_specification, basestring):
+                    return self.attrib[attr_specification]
+                else:
+                    attr_name, attr_transform = attr_specification
+                    return attr_transform(self.attrib[attr_name])
             except KeyError:
                 raise AttributeError(
                     "Missing attribute '{0}' ('{1}' in source) in '{2}'"
@@ -86,6 +91,22 @@ class _Element(object):
     def __getattr__(self, name):
         return getattr(self.children_access, name)
 
+class _SummaryNodes(_Element):
+    required_attrs = {
+        'count': ('number', lambda x: int(x)),
+    }
+
+class _SummaryResources(_Element):
+    required_attrs = {
+        'count': ('number', lambda x: int(x)),
+    }
+
+class _SummarySection(_Element):
+    sections = {
+        'nodes': ('nodes_configured', _SummaryNodes),
+        'resources': ('resources_configured', _SummaryResources),
+    }
+
 class _Node(_Element):
     required_attrs = {
         'name': 'name',
@@ -110,7 +131,8 @@ def _get_valid_cluster_state_dom(xml):
 
 class ClusterState(_Element):
     sections = {
-        'node_section': ('nodes', _NodeSection)
+        'summary': ('summary', _SummarySection),
+        'node_section': ('nodes', _NodeSection),
     }
 
     def __init__(self, xml):
