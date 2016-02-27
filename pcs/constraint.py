@@ -117,7 +117,7 @@ def colocation_el_to_string(co_loc, showDetail=False):
     score_text = "(score:" + co_score + ")"
     attrs_list = [
         "(%s:%s)" % (attr[0], attr[1])
-        for attr in co_loc.attributes.items()
+        for attr in sorted(co_loc.attributes.items())
         if attr[0] not in ("rsc", "with-rsc", "id", "score")
     ]
     if showDetail:
@@ -477,7 +477,7 @@ def set_add_resource_sets(elem, sets, cib):
                 if key not in allowed_options:
                     utils.err(
                         "invalid option '%s', allowed options are: %s"
-                        % (key, ", ".join(allowed_options.keys()))
+                        % (key, ", ".join(sorted(allowed_options.keys())))
                     )
                 if val not in allowed_options[key]:
                     utils.err(
@@ -939,7 +939,7 @@ def show_location_rules(ruleshash,showDetail,noheader=False):
             if rule.parentNode.getAttribute("resource-discovery"):
                 constraint_options[constraint_id].append("resource-discovery=%s" % rule.parentNode.getAttribute("resource-discovery"))
 
-        for constraint_id in constrainthash.keys():
+        for constraint_id in sorted(constrainthash.keys()):
             if constraint_id in constraint_options and len(constraint_options[constraint_id]) > 0:
                 constraint_option_info = " (" + " ".join(constraint_options[constraint_id]) + ")"
             else:
@@ -1229,7 +1229,7 @@ def constraint_ref(argv):
         else:
             for constraint in constraints:
                 print("  " + constraint)
-            for constraint in set_constraints:
+            for constraint in sorted(set_constraints):
                 print("  " + constraint)
 
 def remove_constraints_containing(resource_id,output=False,constraints_element = None, passed_dom=None):

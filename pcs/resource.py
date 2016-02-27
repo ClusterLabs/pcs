@@ -558,7 +558,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         bad_opts, missing_req_opts = utils.validInstanceAttributes(ra_id, params , get_full_ra_type(ra_type, True))
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
-                    % (", ".join(bad_opts), get_full_ra_type(ra_type, True)))
+                    % (", ".join(sorted(bad_opts)), get_full_ra_type(ra_type, True)))
         if len(missing_req_opts) != 0:
             utils.err(
                 "missing required option(s): '%s' for resource type: %s"
@@ -907,7 +907,7 @@ def resource_update(res_id,args):
         bad_opts, dummy_missing_req_opts = utils.validInstanceAttributes(res_id, params, resource_type)
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
-                    % (", ".join(bad_opts), utils.getResourceType(resource)))
+                    % (", ".join(sorted(bad_opts)), utils.getResourceType(resource)))
 
 
     for (key,val) in params:
@@ -2489,7 +2489,7 @@ def print_operations(node, spaces):
         else:
             first = False
         output += op.attrib["name"] + " "
-        for attr,val in op.attrib.items():
+        for attr,val in sorted(op.attrib.items()):
             if attr in ["id","name"] :
                 continue
             output += attr + "=" + val + " "
@@ -2506,7 +2506,7 @@ def print_operations(node, spaces):
 def operation_to_string(op_el):
     parts = []
     parts.append(op_el.getAttribute("name"))
-    for name, value in op_el.attributes.items():
+    for name, value in sorted(op_el.attributes.items()):
         if name in ["id", "name"]:
             continue
         parts.append(name + "=" + value)

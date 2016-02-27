@@ -1779,14 +1779,14 @@ Location Constraints:
       Rule: score=INFINITY  (id:location-dummy1-rule)
         Expression: #uname eq node1  (id:location-dummy1-rule-expr)
     Constraint: location-dummy1-1
-      Rule: score=100 role=master  (id:MyRule)
+      Rule: role=master score=100  (id:MyRule)
         Expression: #uname eq node2  (id:MyRule-expr)
     Constraint: location-dummy1-2
-      Rule: score=INFINITY boolean-op=or  (id:complexRule)
-        Rule: score=0 boolean-op=and  (id:complexRule-rule)
+      Rule: boolean-op=or score=INFINITY  (id:complexRule)
+        Rule: boolean-op=and score=0  (id:complexRule-rule)
           Expression: #uname eq node3  (id:complexRule-rule-expr)
           Expression: foo gt version 1.2  (id:complexRule-rule-expr-1)
-        Rule: score=0 boolean-op=and  (id:complexRule-rule-1)
+        Rule: boolean-op=and score=0  (id:complexRule-rule-1)
           Expression:  (id:complexRule-rule-1-expr)
             Date Spec: hours=12-23 weekdays=1-5  (id:complexRule-rule-1-expr-datespec)
           Expression: date in_range 2014-07-26 to duration  (id:complexRule-rule-1-expr-1)
@@ -1802,14 +1802,14 @@ Location Constraints:
       Rule: score=INFINITY
         Expression: #uname eq node1
     Constraint: location-dummy1-1
-      Rule: score=100 role=master
+      Rule: role=master score=100
         Expression: #uname eq node2
     Constraint: location-dummy1-2
-      Rule: score=INFINITY boolean-op=or
-        Rule: score=0 boolean-op=and
+      Rule: boolean-op=or score=INFINITY
+        Rule: boolean-op=and score=0
           Expression: #uname eq node3
           Expression: foo gt version 1.2
-        Rule: score=0 boolean-op=and
+        Rule: boolean-op=and score=0
           Expression:
             Date Spec: hours=12-23 weekdays=1-5
           Expression: date in_range 2014-07-26 to duration

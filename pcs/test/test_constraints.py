@@ -115,17 +115,17 @@ Location Constraints:
       Rule: score=-INFINITY  (id:location-D2-rule)
         Expression: #uname eq c00n04  (id:location-D2-rule-expr)
   Resource: D3
-    Constraint: location-D3-2
-      Rule: score=-INFINITY boolean-op=and  (id:location-D3-2-rule)
-        Expression: not_defined pingd  (id:location-D3-2-rule-expr)
-        Expression: pingd lte 0  (id:location-D3-2-rule-expr-1)
-    Constraint: location-D3-1
-      Rule: score=-INFINITY boolean-op=or  (id:location-D3-1-rule)
-        Expression: not_defined pingd  (id:location-D3-1-rule-expr)
-        Expression: pingd lte 0  (id:location-D3-1-rule-expr-1)
     Constraint: location-D3
       Rule: score-attribute=pingd  (id:location-D3-rule)
         Expression: defined pingd  (id:location-D3-rule-expr)
+    Constraint: location-D3-1
+      Rule: boolean-op=or score=-INFINITY  (id:location-D3-1-rule)
+        Expression: not_defined pingd  (id:location-D3-1-rule-expr)
+        Expression: pingd lte 0  (id:location-D3-1-rule-expr-1)
+    Constraint: location-D3-2
+      Rule: boolean-op=and score=-INFINITY  (id:location-D3-2-rule)
+        Expression: not_defined pingd  (id:location-D3-2-rule-expr)
+        Expression: pingd lte 0  (id:location-D3-2-rule-expr-1)
   Resource: D4
     Constraint: location-D4
       Rule: score=INFINITY  (id:location-D4-rule)
@@ -164,17 +164,17 @@ Location Constraints:
       Rule: score=-INFINITY  (id:location-D2-rule)
         Expression: #uname eq c00n04  (id:location-D2-rule-expr)
   Resource: D3
-    Constraint: location-D3-2
-      Rule: score=-INFINITY boolean-op=and  (id:location-D3-2-rule)
-        Expression: not_defined pingd  (id:location-D3-2-rule-expr)
-        Expression: pingd lte 0  (id:location-D3-2-rule-expr-1)
-    Constraint: location-D3-1
-      Rule: score=-INFINITY boolean-op=or  (id:location-D3-1-rule)
-        Expression: not_defined pingd  (id:location-D3-1-rule-expr)
-        Expression: pingd lte 0  (id:location-D3-1-rule-expr-1)
     Constraint: location-D3
       Rule: score-attribute=pingd  (id:location-D3-rule)
         Expression: defined pingd  (id:location-D3-rule-expr)
+    Constraint: location-D3-1
+      Rule: boolean-op=or score=-INFINITY  (id:location-D3-1-rule)
+        Expression: not_defined pingd  (id:location-D3-1-rule-expr)
+        Expression: pingd lte 0  (id:location-D3-1-rule-expr-1)
+    Constraint: location-D3-2
+      Rule: boolean-op=and score=-INFINITY  (id:location-D3-2-rule)
+        Expression: not_defined pingd  (id:location-D3-2-rule-expr)
+        Expression: pingd lte 0  (id:location-D3-2-rule-expr-1)
   Resource: D5
     Constraint: location-D5
       Rule: score=INFINITY  (id:location-D5-rule)
@@ -199,7 +199,7 @@ Colocation Constraints:
 Location Constraints:
   Resource: D1
     Constraint: location-D1
-      Rule: score=INFINITY boolean-op=or  (id:location-D1-rule)
+      Rule: boolean-op=or score=INFINITY  (id:location-D1-rule)
         Expression: not_defined pingd  (id:location-D1-rule-expr)
         Expression: pingd lte 0  (id:location-D1-rule-expr-1)
 Ordering Constraints:
@@ -423,7 +423,7 @@ Colocation Constraints:
         ac(o, """\
 Colocation Constraints:
   Resource Sets:
-    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9)
+    set D5 D6 D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9)
     set D5 D6 (id:pcs_rsc_set_D5_D6) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6)
     set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
@@ -437,7 +437,7 @@ Colocation Constraints:
         ac(o, """\
 Colocation Constraints:
   Resource Sets:
-    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9)
+    set D5 D6 D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9)
     set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
         assert r == 0
@@ -475,7 +475,7 @@ Colocation Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 foo=bar")
-        ac(output, "Error: invalid option 'foo', allowed options are: action, role, sequential, require-all\n")
+        ac(output, "Error: invalid option 'foo', allowed options are: action, require-all, role, sequential\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions foo=bar")
@@ -516,7 +516,20 @@ Colocation Constraints:
         assert r == 0
 
         o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\n  Resource: crd\n    Constraint: location-crd (resource-discovery=exclusive)\n      Rule: score=-INFINITY boolean-op=and  (id:location-crd-rule)\n        Expression: opsrole ne controller0  (id:location-crd-rule-expr)\n        Expression: opsrole ne controller1  (id:location-crd-rule-expr-1)\n  Resource: crd1\n    Constraint: location-crd1 (resource-discovery=exclusive)\n      Rule: score=-INFINITY  (id:location-crd1-rule)\n        Expression: opsrole2 ne controller2  (id:location-crd1-rule-expr)\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o, '\n'.join([
+            'Location Constraints:',
+            '  Resource: crd',
+            '    Constraint: location-crd (resource-discovery=exclusive)',
+            '      Rule: boolean-op=and score=-INFINITY  (id:location-crd-rule)',
+            '        Expression: opsrole ne controller0  (id:location-crd-rule-expr)',
+            '        Expression: opsrole ne controller1  (id:location-crd-rule-expr-1)',
+            '  Resource: crd1',
+            '    Constraint: location-crd1 (resource-discovery=exclusive)',
+            '      Rule: score=-INFINITY  (id:location-crd1-rule)',
+            '        Expression: opsrole2 ne controller2  (id:location-crd1-rule-expr)',
+            'Ordering Constraints:',
+            'Colocation Constraints:',
+        ])+'\n')
         assert r == 0
 
         o,r = pcs("constraint delete location-crd")
@@ -664,7 +677,7 @@ Colocation Constraints:
         ac(o,"""\
 Ordering Constraints:
   Resource Sets:
-    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
+    set D5 D6 D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
     set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D5_D6)
     set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
@@ -678,7 +691,7 @@ Ordering Constraints:
         ac(o,"""\
 Ordering Constraints:
   Resource Sets:
-    set D5 D6 D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
+    set D5 D6 D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
     set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
 """)
 
@@ -707,7 +720,7 @@ Ordering Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 foo=bar")
-        ac(output, "Error: invalid option 'foo', allowed options are: action, role, sequential, require-all\n")
+        ac(output, "Error: invalid option 'foo', allowed options are: action, require-all, role, sequential\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
@@ -749,9 +762,9 @@ Error: invalid symmetrical value 'foo', allowed values are: true, false
 Location Constraints:
 Ordering Constraints:
   Resource Sets:
-    set D7 sequential=false require-all=true (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start role=Stopped sequential=true require-all=false (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
+    set D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
     set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
-    set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions symmetrical=false kind=Mandatory (id:pcs_rsc_order_set_D1_D2)
+    set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions kind=Mandatory symmetrical=false (id:pcs_rsc_order_set_D1_D2)
 Colocation Constraints:
 """)
         self.assertEqual(0, retValue)
@@ -866,7 +879,7 @@ Colocation Constraints:
 Location Constraints:
   Resource: stateful0
     Constraint: location-stateful0
-      Rule: score=INFINITY role=master  (id:location-stateful0-rule)
+      Rule: role=master score=INFINITY  (id:location-stateful0-rule)
         Expression: #uname eq rh7-1  (id:location-stateful0-rule-expr)
 Ordering Constraints:
 Colocation Constraints:
@@ -1239,12 +1252,12 @@ Error: duplicate constraint already exists, use --force to override
 Location Constraints:
   Resource: stateful1-master
     Enabled on: rh7-1 (score:INFINITY) (id:location-stateful1-rh7-1-INFINITY)
-    Constraint: location-stateful1-master-1
-      Rule: score=INFINITY  (id:location-stateful1-master-1-rule)
-        Expression: #uname eq rh7-1  (id:location-stateful1-master-1-rule-expr)
     Constraint: location-stateful1-master
       Rule: score=INFINITY  (id:location-stateful1-master-rule)
         Expression: #uname eq rh7-1  (id:location-stateful1-master-rule-expr)
+    Constraint: location-stateful1-master-1
+      Rule: score=INFINITY  (id:location-stateful1-master-1-rule)
+        Expression: #uname eq rh7-1  (id:location-stateful1-master-1-rule-expr)
   Resource: statefulG-master
     Enabled on: rh7-1 (score:INFINITY) (id:location-statefulG-rh7-1-INFINITY)
     Constraint: location-statefulG-master
@@ -1589,12 +1602,12 @@ Error: duplicate constraint already exists, use --force to override
 Location Constraints:
   Resource: dummy-clone
     Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
-    Constraint: location-dummy-clone-1
-      Rule: score=INFINITY  (id:location-dummy-clone-1-rule)
-        Expression: #uname eq rh7-1  (id:location-dummy-clone-1-rule-expr)
     Constraint: location-dummy-clone
       Rule: score=INFINITY  (id:location-dummy-clone-rule)
         Expression: #uname eq rh7-1  (id:location-dummy-clone-rule-expr)
+    Constraint: location-dummy-clone-1
+      Rule: score=INFINITY  (id:location-dummy-clone-1-rule)
+        Expression: #uname eq rh7-1  (id:location-dummy-clone-1-rule-expr)
   Resource: dummyG-clone
     Enabled on: rh7-1 (score:INFINITY) (id:location-dummyG-rh7-1-INFINITY)
     Constraint: location-dummyG-clone
@@ -2285,7 +2298,7 @@ Error: duplicate constraint already exists, use --force to override
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D2-1
-    Rule: score=INFINITY boolean-op=or  (id:location-D2-1-rule)
+    Rule: boolean-op=or score=INFINITY  (id:location-D2-1-rule)
       Expression: #uname eq node1  (id:location-D2-1-rule-expr)
       Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
 """)
@@ -2297,7 +2310,7 @@ Error: duplicate constraint already exists, use --force to override
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D2-1
-    Rule: score=INFINITY boolean-op=or  (id:location-D2-1-rule)
+    Rule: boolean-op=or score=INFINITY  (id:location-D2-1-rule)
       Expression: #uname eq node1  (id:location-D2-1-rule-expr)
       Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
 """)
@@ -2313,24 +2326,24 @@ Error: duplicate constraint already exists, use --force to override
         ac(output, """\
 Location Constraints:
   Resource: D1
-    Constraint: location-D1-1
-      Rule: score=INFINITY  (id:location-D1-1-rule)
-        Expression: #uname eq node1  (id:location-D1-1-rule-expr)
     Constraint: location-D1
       Rule: score=INFINITY  (id:location-D1-rule)
         Expression: #uname eq node1  (id:location-D1-rule-expr)
+    Constraint: location-D1-1
+      Rule: score=INFINITY  (id:location-D1-1-rule)
+        Expression: #uname eq node1  (id:location-D1-1-rule-expr)
   Resource: D2
-    Constraint: location-D2-1
-      Rule: score=INFINITY boolean-op=or  (id:location-D2-1-rule)
-        Expression: #uname eq node1  (id:location-D2-1-rule-expr)
-        Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
-    Constraint: location-D2-2
-      Rule: score=INFINITY boolean-op=or  (id:location-D2-2-rule)
-        Expression: #uname eq node2  (id:location-D2-2-rule-expr)
-        Expression: #uname eq node1  (id:location-D2-2-rule-expr-1)
     Constraint: location-D2
       Rule: score=INFINITY  (id:location-D2-rule)
         Expression: #uname eq node1  (id:location-D2-rule-expr)
+    Constraint: location-D2-1
+      Rule: boolean-op=or score=INFINITY  (id:location-D2-1-rule)
+        Expression: #uname eq node1  (id:location-D2-1-rule-expr)
+        Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
+    Constraint: location-D2-2
+      Rule: boolean-op=or score=INFINITY  (id:location-D2-2-rule)
+        Expression: #uname eq node2  (id:location-D2-2-rule-expr)
+        Expression: #uname eq node1  (id:location-D2-2-rule-expr-1)
 Ordering Constraints:
 Colocation Constraints:
 """)

@@ -2719,7 +2719,7 @@ Colocation Constraints:
 Location Constraints:
   Resource: dummy
     Constraint: cli-prefer-dummy
-      Rule: score=INFINITY boolean-op=and  (id:cli-prefer-rule-dummy)
+      Rule: boolean-op=and score=INFINITY  (id:cli-prefer-rule-dummy)
         Expression: #uname eq string rh7-1  (id:cli-prefer-expr-dummy)
         Expression: date lt {datetime}  (id:cli-prefer-lifetime-end-dummy)
 Ordering Constraints:
@@ -2753,7 +2753,7 @@ This will prevent dummy from running on rh7-1 until the constraint is removed. T
 Location Constraints:
   Resource: dummy
     Constraint: cli-ban-dummy-on-rh7-1
-      Rule: score=-INFINITY boolean-op=and  (id:cli-ban-dummy-on-rh7-1-rule)
+      Rule: boolean-op=and score=-INFINITY  (id:cli-ban-dummy-on-rh7-1-rule)
         Expression: #uname eq string rh7-1  (id:cli-ban-dummy-on-rh7-1-expr)
         Expression: date lt {datetime}  (id:cli-ban-dummy-on-rh7-1-lifetime)
 Ordering Constraints:
