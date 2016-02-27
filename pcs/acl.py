@@ -213,11 +213,14 @@ def argv_to_permission_info_list(argv):
     if len(argv) % 3 != 0:
         raise CmdLineInputError()
 
-    permission_info_list = zip(
+    #wrapping by list,
+    #because in python3 zip() returns an iterator instead of a list
+    #and the loop below makes iteration over it
+    permission_info_list = list(zip(
         [permission.lower() for permission in argv[::3]],
         [scope_type.lower() for scope_type in argv[1::3]],
         argv[2::3]
-    )
+    ))
 
     for permission, scope_type, dummy_scope in permission_info_list:
         if(

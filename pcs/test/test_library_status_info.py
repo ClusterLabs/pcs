@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from unittest import TestCase
-import unittest.main
+import unittest
 import os.path
 import sys
 from lxml import etree

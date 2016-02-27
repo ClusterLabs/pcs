@@ -21,7 +21,7 @@ class LibraryAssertionMixin(object):
                 #extra info is ignored
                 all(
                     (k in report_item.info and report_item.info[k]==v)
-                    for k,v in report_info[2].iteritems()
+                    for k,v in report_info[2].items()
                 )
             ):
                 return report_info

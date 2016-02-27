@@ -29,11 +29,11 @@ class _Attrs(object):
         if name in self.required_attrs.keys():
             try:
                 attr_specification = self.required_attrs[name]
-                if isinstance(attr_specification, basestring):
-                    return self.attrib[attr_specification]
-                else:
+                if isinstance(attr_specification, tuple):
                     attr_name, attr_transform = attr_specification
                     return attr_transform(self.attrib[attr_name])
+                else:
+                    return self.attrib[attr_specification]
             except KeyError:
                 raise AttributeError(
                     "Missing attribute '{0}' ('{1}' in source) in '{2}'"

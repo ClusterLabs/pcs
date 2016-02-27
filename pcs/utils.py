@@ -1478,7 +1478,11 @@ def is_etree(var):
 # Replace only configuration section of cib with dom passed
 def replace_cib_configuration(dom):
     if is_etree(dom):
-        new_dom = ET.tostring(dom)
+        #etree returns string in bytes: b'xml'
+        #python 3 removed .encode() from byte strings
+        #run(...) calls subprocess.Popen.communicate which calls encode...
+        #so there is bytes to str conversion
+        new_dom = ET.tostring(dom).decode()
     else:
         new_dom = dom.toxml()
     output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-V", "--xml-pipe"],False,new_dom)
