@@ -232,12 +232,6 @@ Configure corosync & pacemaker to run on node boot on specified node(s), if node
 disable [\fB\-\-all\fR] [node] [...]
 Configure corosync & pacemaker to not run on node boot on specified node(s), if node is not specified then corosync & pacemaker are disabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are disabled on all nodes. (Note: this is the default after installation)
 .TP
-standby [<node>] | \fB\-\-all\fR
-Put specified node into standby mode (the node specified will no longer be able to host resources), if no node or options are specified the current node will be put into standby mode, if \fB\-\-all\fR is specified all nodes will be put into standby mode.
-.TP
-unstandby [<node>] | \fB\-\-all\fR
-Remove node from standby mode (the node specified will now be able to host resources), if no node or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode.
-.TP
 remote-node add <hostname> <resource id> [options]
 Enables the specified resource as a remote-node resource on the specified hostname (hostname should be the same as 'uname -n')
 .TP
@@ -554,11 +548,17 @@ clear-auth [\fB\-\-local\fR] [\fB\-\-remote\fR]
 Removes all system tokens which allow pcs/pcsd on the current system to authenticate with remote pcs/pcsd instances and vice\-versa.  After this command is run this node will need to be re\-authenticated with other nodes (using 'pcs cluster auth').  Using \fB\-\-local\fR only removes tokens used by local pcs (and pcsd if root) to connect to other pcsd instances, using \fB\-\-remote\fR clears authentication tokens used by remote systems to connect to the local pcsd instance.
 .SS "node"
 .TP
-maintenance [\fB\-\-all\fR] | [node]...
+maintenance [\fB\-\-all\fR] | [<node>]...
 Put specified node(s) into maintenance mode, if no node or options are specified the current node will be put into maintenance mode, if \fB\-\-all\fR is specified all nodes will be put into maintenace mode.
 .TP
-unmaintenance [\fB\-\-all\fR] | [node]...
+unmaintenance [\fB\-\-all\fR] | [<node>]...
 Remove node(s) from maintenance mode, if no node or options are specified the current node will be removed from maintenance mode, if \fB\-\-all\fR is specified all nodes will be removed from maintenance mode.
+.TP
+standby [\fB\-\-all\fR] | [<node>]
+Put specified node into standby mode (the node specified will no longer be able to host resources), if no node or options are specified the current node will be put into standby mode, if \fB\-\-all\fR is specified all nodes will be put into standby mode.
+.TP
+unstandby [\fB\-\-all\fR] | [<node>]
+Remove node from standby mode (the node specified will now be able to host resources), if no node or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode.
 .TP
 utilization [<node> [<name>=<value> ...]]
 Add specified utilization options to specified node. If node is not specified, shows utilization of all nodes. If utilization options are not specified, shows utilization of specified node. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs node utilization node1 cpu=4 ram=

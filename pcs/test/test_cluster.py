@@ -31,11 +31,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             os.unlink("cluster.conf.tmp")
 
     def testNodeStandby(self):
-        output, returnVal = pcs(temp_cib, "cluster standby rh7-1")
-        ac(output, "")
-        assert returnVal == 0
-
-        # try to standby node which is already in standby mode
+        # only basic test, standby subcommands were m oved to 'pcs node'
         output, returnVal = pcs(temp_cib, "cluster standby rh7-1")
         ac(output, "")
         assert returnVal == 0
@@ -43,19 +39,6 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         output, returnVal = pcs(temp_cib, "cluster unstandby rh7-1")
         ac(output, "")
         assert returnVal == 0
-
-        # try to unstandby node which is no in standby mode
-        output, returnVal = pcs(temp_cib, "cluster unstandby rh7-1")
-        ac(output, "")
-        assert returnVal == 0
-
-        output, returnVal = pcs(temp_cib, "cluster standby nonexistant-node")
-        assert returnVal == 1
-        assert output == "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
-
-        output, returnVal = pcs(temp_cib, "cluster unstandby nonexistant-node")
-        assert returnVal == 1
-        assert output == "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
 
     def testRemoteNode(self):
         o,r = pcs(temp_cib, "resource create D1 Dummy --no-default-ops")

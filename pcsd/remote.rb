@@ -310,7 +310,7 @@ def node_standby(params, request, auth_user)
       return 403, 'Permission denied'
     end
     $logger.info "Standby Node"
-    stdout, stderr, retval = run_cmd(auth_user, PCS, "cluster", "standby")
+    stdout, stderr, retval = run_cmd(auth_user, PCS, "node", "standby")
     return stdout
   end
 end
@@ -326,7 +326,7 @@ def node_unstandby(params, request, auth_user)
       return 403, 'Permission denied'
     end
     $logger.info "Unstandby Node"
-    stdout, stderr, retval = run_cmd(auth_user, PCS, "cluster", "unstandby")
+    stdout, stderr, retval = run_cmd(auth_user, PCS, "node", "unstandby")
     return stdout
   end
 end

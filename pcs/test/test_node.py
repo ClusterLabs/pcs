@@ -14,7 +14,7 @@ from pcs_test_functions import pcs,ac
 empty_cib = os.path.join(currentdir, "empty-withnodes.xml")
 temp_cib = os.path.join(currentdir, "temp.xml")
 
-class ClusterTest(unittest.TestCase):
+class NodeTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
 
@@ -136,6 +136,40 @@ Cluster Properties:
 Cluster Properties:
 """
         ac(expected_out, output)
+
+    def test_node_standby(self):
+        output, returnVal = pcs(temp_cib, "node standby rh7-1")
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+
+        # try to standby node which is already in standby mode
+        output, returnVal = pcs(temp_cib, "node standby rh7-1")
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+
+        output, returnVal = pcs(temp_cib, "node unstandby rh7-1")
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+
+        # try to unstandby node which is no in standby mode
+        output, returnVal = pcs(temp_cib, "node unstandby rh7-1")
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+
+        output, returnVal = pcs(temp_cib, "node standby nonexistant-node")
+        self.assertEqual(
+            output,
+            "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
+        )
+        self.assertEqual(returnVal, 1)
+
+        output, returnVal = pcs(temp_cib, "node unstandby nonexistant-node")
+        self.assertEqual(
+            output,
+            "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
+        )
+        self.assertEqual(returnVal, 1)
+
 
     def test_node_utilization_set(self):
         output, returnVal = pcs(temp_cib, "node utilization rh7-1 test1=10")
