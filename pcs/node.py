@@ -7,6 +7,8 @@ import sys
 
 import usage
 import utils
+from errors import LibraryError
+import library_pacemaker as lib_pacemaker
 
 
 def node_cmd(argv):
@@ -83,36 +85,21 @@ def node_maintenance(argv, on=True):
     if failed_count > 0:
         sys.exit(1)
 
-def node_standby(argv,standby=True):
-    if len(argv) > 1:
-        if standby:
-            usage.node(["standby"])
-        else:
-            usage.node(["unstandby"])
+def node_standby(argv, standby=True):
+    if (len(argv) > 1) or (len(argv) > 0 and "--all" in utils.pcs_options):
+        usage.node(["standby" if standby else "unstandby"])
         sys.exit(1)
 
-    nodes = utils.getNodesFromPacemaker()
+    all_nodes = "--all" in utils.pcs_options
+    node_list = [argv[0]] if argv else []
 
-    if "--all" not in utils.pcs_options:
-        options_node = []
-        if argv:
-            if argv[0] not in nodes:
-                utils.err(
-                    "node '%s' does not appear to exist in configuration"
-                    % argv[0]
-                )
-            else:
-                options_node = ["-N", argv[0]]
+    try:
         if standby:
-            utils.run(["crm_standby", "-v", "on"] + options_node)
+            lib_pacemaker.nodes_standby(node_list, all_nodes)
         else:
-            utils.run(["crm_standby", "-D"] + options_node)
-    else:
-        for node in nodes:
-            if standby:
-                utils.run(["crm_standby", "-v", "on", "-N", node])
-            else:
-                utils.run(["crm_standby", "-D", "-N", node])
+            lib_pacemaker.nodes_unstandby(node_list, all_nodes)
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
 
 def set_node_utilization(node, argv):
     cib = utils.get_cib_dom()
