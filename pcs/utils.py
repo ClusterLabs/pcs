@@ -21,11 +21,6 @@ import tarfile
 import getpass
 import base64
 import threading
-
-
-from library_status_info import ClusterState
-from errors import ReportItemSeverity
-from errors import LibraryError
 try:
     # python2
     from urllib import urlencode as urllib_urlencode
@@ -58,6 +53,10 @@ except ImportError:
 import settings
 import cluster
 import corosync_conf as corosync_conf_utils
+from errors import ReportItemSeverity
+from errors import LibraryError
+from library_status_info import ClusterState
+import library_pacemaker as lib_pacemaker
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -1295,27 +1294,14 @@ def get_default_op_values(ra_type):
     return return_list
 
 def get_timeout_seconds(timeout, return_unknown=False):
-    if timeout.isdigit():
-        return int(timeout)
-    suffix_multiplier = {
-        "s": 1,
-        "sec": 1,
-        "m": 60,
-        "min": 60,
-        "h": 3600,
-        "hr": 3600,
-    }
-    for suffix, multiplier in suffix_multiplier.items():
-        if timeout.endswith(suffix) and timeout[:-len(suffix)].isdigit():
-            return int(timeout[:-len(suffix)]) * multiplier
-    return timeout if return_unknown else None
+    return lib_pacemaker._get_timeout_seconds(timeout, return_unknown)
 
 def check_pacemaker_supports_resource_wait():
-    output, dummy_retval = run(["crm_resource", "-?"])
-    if "--wait" not in output:
+    if not lib_pacemaker._has_resource_wait_support():
         err("crm_resource does not support --wait, please upgrade pacemaker")
 
 def validate_wait_get_timeout():
+    # partially moved to lib.pacemaker
     check_pacemaker_supports_resource_wait()
     if usefile:
         err("Cannot use '-f' together with '--wait'")

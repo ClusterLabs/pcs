@@ -92,12 +92,21 @@ def node_standby(argv, standby=True):
 
     all_nodes = "--all" in utils.pcs_options
     node_list = [argv[0]] if argv else []
+    wait = False
+    timeout = None
+    if "--wait" in utils.pcs_options:
+        wait = True
+        timeout = utils.pcs_options["--wait"]
 
     try:
+        if wait:
+            valid_timeout = lib_pacemaker.get_valid_timeout_seconds(timeout)
         if standby:
             lib_pacemaker.nodes_standby(node_list, all_nodes)
         else:
             lib_pacemaker.nodes_unstandby(node_list, all_nodes)
+        if wait:
+            lib_pacemaker.wait_for_resources(valid_timeout)
     except LibraryError as e:
         utils.process_library_reports(e.args)
 

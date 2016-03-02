@@ -15,3 +15,4 @@ test:
 	$(PYTHON) test_node.py ${pyunit_flags}
 	$(PYTHON) test_library_acl.py ${pyunit_flags}
 	$(PYTHON) test_library_status_info.py ${pyunit_flags}
+	$(PYTHON) test_library_pacemaker.py ${pyunit_flags}

@@ -10,7 +10,56 @@ from errors import LibraryError
 from library_status_info import ClusterState
 
 
-def _nodes_standby_unstadby(standby=True, node_list=None, all_nodes=False):
+_PACEMAKER_WAIT_TIMEOUT_STATUS = 62
+
+def nodes_standby(node_list=None, all_nodes=False):
+    return _nodes_standby_unstandby(True, node_list, all_nodes)
+
+def nodes_unstandby(node_list=None, all_nodes=False):
+    return _nodes_standby_unstandby(False, node_list, all_nodes)
+
+def get_valid_timeout_seconds(timeout_candidate):
+    if not _has_resource_wait_support():
+        raise LibraryError(ReportItem.error(
+            error_codes.RESOURCE_WAIT_NOT_SUPPORTED,
+            "crm_resource does not support --wait, please upgrade pacemaker"
+        ))
+
+    if timeout_candidate is None:
+        return None
+
+    wait_timeout = _get_timeout_seconds(timeout_candidate)
+    if wait_timeout is None:
+        raise LibraryError(ReportItem.error(
+            error_codes.INVALID_TIMEOUT_VALUE,
+            "'{timeout}' is not a valid number of seconds to wait",
+            info={"timeout": timeout_candidate}
+        ))
+    return wait_timeout
+
+def wait_for_resources(timeout=None):
+    args = ["crm_resource", "--wait"]
+    if timeout is not None:
+        args.append("--timeout={0}".format(timeout))
+    output, retval = utils.run(args)
+    if retval != 0:
+        if retval == _PACEMAKER_WAIT_TIMEOUT_STATUS:
+            raise LibraryError(ReportItem.error(
+                error_codes.RESOURCE_WAIT_TIMED_OUT,
+                "waiting timeout\n\n{details}",
+                info={"details": output.strip()}
+            ))
+        else:
+            raise LibraryError(ReportItem.error(
+                error_codes.RESOURCE_WAIT_ERROR,
+                "{details}",
+                info={"details": output.strip()}
+            ))
+
+def _nodes_standby_unstandby(standby=True, node_list=None, all_nodes=False):
+    # TODO once we switch to editing CIB instead of running crm_stanby, we
+    # cannot always relly on getClusterState. If we're not editing a CIB from
+    # a live cluster, there is no status.
     known_nodes = [
         node.attrs.name
         for node in ClusterState(utils.getClusterStateXml()).node_section.nodes
@@ -30,7 +79,8 @@ def _nodes_standby_unstadby(standby=True, node_list=None, all_nodes=False):
         if report:
             raise LibraryError(*report)
 
-    # TODO edit CIB directly instead of running commands for each node
+    # TODO Edit CIB directly instead of running commands for each node; be aware
+    # remote nodes might not be in the CIB yet so we need to put them there.
     cmd_template = ["crm_standby"]
     cmd_template.extend(["-v", "on"] if standby else ["-D"])
     cmd_list = []
@@ -50,8 +100,23 @@ def _nodes_standby_unstadby(standby=True, node_list=None, all_nodes=False):
     if report:
         raise LibraryError(*report)
 
-def nodes_standby(node_list=None, all_nodes=False):
-    return _nodes_standby_unstadby(True, node_list, all_nodes)
+def _has_resource_wait_support():
+    # returns 1 on success so we don't care about retval
+    output, dummy_retval = utils.run(["crm_resource", "-?"])
+    return "--wait" in output
 
-def nodes_unstandby(node_list=None, all_nodes=False):
-    return _nodes_standby_unstadby(False, node_list, all_nodes)
+def _get_timeout_seconds(timeout, return_unknown=False):
+    if timeout.isdigit():
+        return int(timeout)
+    suffix_multiplier = {
+        "s": 1,
+        "sec": 1,
+        "m": 60,
+        "min": 60,
+        "h": 3600,
+        "hr": 3600,
+    }
+    for suffix, multiplier in suffix_multiplier.items():
+        if timeout.endswith(suffix) and timeout[:-len(suffix)].isdigit():
+            return int(timeout[:-len(suffix)]) * multiplier
+    return timeout if return_unknown else None
