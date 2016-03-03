@@ -213,6 +213,11 @@ def setCorosyncConfig(node,config):
         if status != 0:
             err("Unable to set corosync config: {0}".format(data))
 
+def getPacemakerNodeStatus(node):
+    return sendHTTPRequest(
+        node, "remote/pacemaker_node_status", None, False, False
+    )
+
 def startCluster(node, quiet=False):
     return sendHTTPRequest(node, 'remote/cluster_start', None, False, not quiet)
 
@@ -374,6 +379,9 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
     except urllib_HTTPError as e:
         if "--debug" in pcs_options:
             print("Response Code: " + str(e.code))
+            html = e.read().decode("utf-8")
+            print("--Debug Response Start--\n{0}".format(html), end="")
+            print("--Debug Response End--")
         if e.code == 401:
             output = (
                 3,
@@ -1300,11 +1308,12 @@ def check_pacemaker_supports_resource_wait():
     if not lib_pacemaker._has_resource_wait_support():
         err("crm_resource does not support --wait, please upgrade pacemaker")
 
-def validate_wait_get_timeout():
+def validate_wait_get_timeout(need_cib_support=True):
     # partially moved to lib.pacemaker
-    check_pacemaker_supports_resource_wait()
-    if usefile:
-        err("Cannot use '-f' together with '--wait'")
+    if need_cib_support:
+        check_pacemaker_supports_resource_wait()
+        if usefile:
+            err("Cannot use '-f' together with '--wait'")
     wait_timeout = pcs_options["--wait"]
     if wait_timeout is None:
         return wait_timeout
@@ -1670,6 +1679,7 @@ def get_terminal_password(message="Password: "):
 def getClusterState():
     return parseString(getClusterStateXml())
 
+# DEPRECATED, please use lib.pacemaker.get_cluster_status_xml in new code
 def getClusterStateXml():
     xml, returncode = run(["crm_mon", "--one-shot", "--as-xml", "--inactive"])
     if returncode != 0:

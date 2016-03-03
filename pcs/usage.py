@@ -572,8 +572,9 @@ Commands:
         the remote nodes with each other).  Using --force forces
         re-authentication to occur.
 
-    setup [--start] [--local] [--enable] --name <cluster name> <node1[,node1-altaddr]>
-            [node2[,node2-altaddr]] [..] [--transport <udpu|udp>] [--rrpmode active|passive]
+    setup [--start [--wait[=<n>]]] [--local] [--enable] --name <cluster name>
+            <node1[,node1-altaddr]> [<node2[,node2-altaddr]>] [...]
+            [--transport udpu|udp] [--rrpmode active|passive]
             [--addr0 <addr/net> [[[--mcast0 <address>] [--mcastport0 <port>]
                             [--ttl0 <ttl>]] | [--broadcast0]]
             [--addr1 <addr/net> [[[--mcast1 <address>] [--mcastport1 <port>]
@@ -586,6 +587,7 @@ Commands:
         Configure corosync and sync configuration out to listed nodes.
         --local will only perform changes on the local node,
         --start will also start the cluster on the specified nodes,
+        --wait will wait up to 'n' seconds for the nodes to start,
         --enable will enable corosync and pacemaker on node startup,
         --transport allows specification of corosync transport (default: udpu;
             udp for CMAN clusters),
@@ -628,11 +630,12 @@ Commands:
         ttl defaults to 1. If --broadcast is specified, --mcast0/1,
         --mcastport0/1 & --ttl0/1 are ignored.
 
-    start [--all] [node] [...]
+    start [--all] [node] [...] [--wait[=<n>]]
         Start corosync & pacemaker on specified node(s), if a node is not
         specified then corosync & pacemaker are started on the local node.
         If --all is specified then corosync & pacemaker are started on all
-        nodes.
+        nodes.  If --wait is specified, wait up to 'n' seconds for nodes
+        to start.
 
     stop [--all] [node] [...]
         Stop corosync & pacemaker on specified node(s), if a node is not
@@ -719,11 +722,12 @@ Commands:
         --config is recommended.  Do not specify a scope if you need to edit
         the whole CIB or be warned in the case of outdated CIB.
 
-    node add <node[,node-altaddr]> [--start] [--enable]
+    node add <node[,node-altaddr]> [--start [--wait[=<n>]]] [--enable]
         Add the node to corosync.conf and corosync on all nodes in the cluster
-        and sync the new corosync.conf to the new node.  If --start is specified
-        also start corosync/pacemaker on the new node, if --enable is specified
-        enable corosync/pacemaker on new node.
+        and sync the new corosync.conf to the new node.  If --start is
+        specified also start corosync/pacemaker on the new node, if --wait is
+        sepcified wait up to 'n' seconds for the new node to start.  If --enable
+        is specified enable corosync/pacemaker on new node.
         When using Redundant Ring Protocol (RRP) with udpu transport, specify
         the ring 0 address first followed by a ',' and then the ring 1 address.
 

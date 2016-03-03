@@ -9,11 +9,16 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from lxml import etree
-import settings
 
+import settings
+import utils
 from errors import ReportItem
 import error_codes
 from errors import LibraryError
+
+# breaks import loop
+def _is_cib_true(var):
+    return utils.is_cib_true(var)
 
 class _Attrs(object):
     def __init__(self, owner_name, attrib, required_attrs):
@@ -109,8 +114,19 @@ class _SummarySection(_Element):
 
 class _Node(_Element):
     required_attrs = {
+        'id': 'id',
         'name': 'name',
         'type': 'type',
+        'online': ('online', _is_cib_true),
+        'standby': ('standby', _is_cib_true),
+        'standby_onfail': ('standby_onfail', _is_cib_true),
+        'maintenance': ('maintenance', _is_cib_true),
+        'pending': ('pending', _is_cib_true),
+        'unclean': ('unclean', _is_cib_true),
+        'shutdown': ('shutdown', _is_cib_true),
+        'expected_up': ('expected_up', _is_cib_true),
+        'is_dc': ('is_dc', _is_cib_true),
+        'resources_running': ('resources_running', int),
     }
 
 class _NodeSection(_Element):

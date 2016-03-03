@@ -11,6 +11,7 @@ import socket
 import tempfile
 import datetime
 import json
+import time
 import xml.dom.minidom
 try:
     # python2
@@ -31,7 +32,9 @@ import stonith
 import constraint
 import node
 from errors import ReportItem
+from errors import LibraryError
 import error_codes
+import library_pacemaker as lib_pacemaker
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -329,6 +332,11 @@ def cluster_setup(argv):
 
     is_rhel6 = utils.is_rhel6()
     cluster_name = argv[0]
+    wait = False
+    wait_timeout = None
+    if "--start" in utils.pcs_options and "--wait" in utils.pcs_options:
+        wait_timeout = utils.validate_wait_get_timeout(False)
+        wait = True
 
     # get nodes' addresses
     udpu_rrp = False
@@ -434,6 +442,8 @@ def cluster_setup(argv):
             start_cluster([])
         if "--enable" in utils.pcs_options:
             enable_cluster([])
+        if wait:
+            wait_for_nodes_started([], wait_timeout)
 
     # setup on remote nodes
     else:
@@ -502,6 +512,9 @@ def cluster_setup(argv):
         # sync certificates as the last step because it restarts pcsd
         print()
         pcsd.pcsd_sync_certs([], exit_after_error=False)
+        if wait:
+            print()
+            wait_for_nodes_started(primary_addr_list, wait_timeout)
 
 def cluster_setup_parse_options_corosync(options):
     messages = []
@@ -974,8 +987,16 @@ def get_local_network():
         utils.err("unable to determine network address, is interface up?")
 
 def start_cluster(argv):
+    wait = False
+    wait_timeout = None
+    if "--wait" in utils.pcs_options:
+        wait_timeout = utils.validate_wait_get_timeout(False)
+        wait = True
+
     if len(argv) > 0:
         start_cluster_nodes(argv)
+        if wait:
+            wait_for_nodes_started(argv, wait_timeout)
         return
 
     print("Starting Cluster...")
@@ -999,14 +1020,84 @@ def start_cluster(argv):
     if retval != 0:
         print(output)
         utils.err("unable to start pacemaker")
+    if wait:
+        wait_for_nodes_started([], wait_timeout)
 
 def start_cluster_all():
-    start_cluster_nodes(utils.getNodesFromCorosyncConf())
+    wait = False
+    wait_timeout = None
+    if "--wait" in utils.pcs_options:
+        wait_timeout = utils.validate_wait_get_timeout(False)
+        wait = True
+
+    all_nodes = utils.getNodesFromCorosyncConf()
+    start_cluster_nodes(all_nodes)
+
+    if wait:
+        wait_for_nodes_started(all_nodes, wait_timeout)
 
 def start_cluster_nodes(nodes):
     error_list = parallel_for_nodes(utils.startCluster, nodes, quiet=True)
     if error_list:
         utils.err("unable to start all nodes\n" + "\n".join(error_list))
+
+def is_node_fully_started(node_status):
+    return (
+        "online" in node_status and "pending" in node_status
+        and
+        node_status["online"] and not node_status["pending"]
+    )
+
+def wait_for_local_node_started(stop_at, interval):
+    try:
+        while True:
+            node_status = lib_pacemaker.get_local_node_status()
+            if is_node_fully_started(node_status):
+                return 0, "Started"
+            if datetime.datetime.now() > stop_at:
+                return 1, "Waiting timeout"
+            time.sleep(interval)
+    except LibraryError as e:
+        return 1, "Unable to get node status: {0}".format(
+            "\n".join([item.message for item in e.args])
+        )
+
+def wait_for_remote_node_started(node, stop_at, interval):
+    while True:
+        code, output = utils.getPacemakerNodeStatus(node)
+        # HTTP error, permission denied or unable to auth
+        # there is no point in trying again as it won't get magically fixed
+        if code in [1, 3, 4]:
+            return 1, output
+        if code == 0:
+            try:
+                status = json.loads(output)
+                if (is_node_fully_started(status)):
+                    return 0, "Started"
+            except (ValueError, KeyError):
+                # this won't get fixed either
+                return 1, "Unable to get node status"
+        if datetime.datetime.now() > stop_at:
+            return 1, "Waiting timeout"
+        time.sleep(interval)
+
+def wait_for_nodes_started(node_list, timeout=None):
+    timeout = 60 * 15 if timeout is None else timeout
+    interval = 2
+    stop_at = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
+    print("Waiting for node(s) to start...")
+    if not node_list:
+        code, output = wait_for_local_node_started(stop_at, interval)
+        if code != 0:
+            utils.err(output)
+        else:
+            print(output)
+    else:
+        error_list = parallel_for_nodes(
+            wait_for_remote_node_started, node_list, stop_at, interval
+        )
+        if error_list:
+            utils.err("unable to verify all nodes have started")
 
 def stop_cluster_all():
     stop_cluster_nodes(utils.getNodesFromCorosyncConf())
@@ -1348,6 +1439,11 @@ def cluster_node(argv):
         utils.err(output)
 
     if add_node == True:
+        wait = False
+        wait_timeout = None
+        if "--start" in utils.pcs_options and "--wait" in utils.pcs_options:
+            wait_timeout = utils.validate_wait_get_timeout(False)
+            wait = True
         need_ring1_address = utils.need_ring1_address(utils.getCorosyncConf())
         if not node1 and need_ring1_address:
             utils.err(
@@ -1416,6 +1512,9 @@ def cluster_node(argv):
         if utils.is_cman_with_udpu_transport():
             print("Warning: Using udpu transport on a CMAN cluster, "
                 + "cluster restart is required to apply node addition")
+        if wait:
+            print()
+            wait_for_nodes_started([node0], wait_timeout)
     else:
         if node0 not in utils.getNodesFromCorosyncConf():
             utils.err(

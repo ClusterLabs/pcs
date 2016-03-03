@@ -65,6 +65,7 @@ def remote(params, request, auth_user)
       :get_cluster_properties_definition => method(:get_cluster_properties_definition)
   }
   remote_cmd_with_pacemaker = {
+      :pacemaker_node_status => method(:remote_pacemaker_node_status),
       :resource_start => method(:resource_start),
       :resource_stop => method(:resource_stop),
       :resource_cleanup => method(:resource_cleanup),
@@ -189,9 +190,13 @@ def cluster_start(params, request, auth_user)
       return 403, 'Permission denied'
     end
     $logger.info "Starting Daemons"
-    output =  `#{PCS} cluster start`
+    output, stderr, retval = run_cmd(auth_user, PCS, 'cluster', 'start')
     $logger.debug output
-    return output
+    if retval != 0
+      return [400, (output + stderr).join]
+    else
+      return output
+    end
   end
 end
 
@@ -901,6 +906,18 @@ def create_cluster(params, request, auth_user)
     cluster_start(params, request, auth_user)
   else
     return "Failed"
+  end
+end
+
+def remote_pacemaker_node_status(params, request, auth_user)
+  if not allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  output, stderr, retval = run_cmd(auth_user, PCS, 'node', 'pacemaker-status')
+  if retval != 0
+    return [400, stderr]
+  else
+    return output
   end
 end
 

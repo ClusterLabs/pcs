@@ -10,7 +10,45 @@ from errors import LibraryError
 from library_status_info import ClusterState
 
 
-_PACEMAKER_WAIT_TIMEOUT_STATUS = 62
+__PACEMAKER_EXIT_CODE_WAIT_TIMEOUT = 62
+
+class PacemakerException(Exception):
+    pass
+
+class PacemakerNotRunningException(PacemakerException):
+    pass
+
+def get_cluster_status_xml():
+    output, retval = utils.run(
+        ["crm_mon", "--one-shot", "--as-xml", "--inactive"]
+    )
+    if retval != 0:
+        raise PacemakerNotRunningException()
+    return output
+
+def get_local_node_status():
+    try:
+        cluster_status = ClusterState(get_cluster_status_xml())
+    except PacemakerNotRunningException:
+        return {"offline": True}
+    node_name = __get_local_node_name()
+    for node_status in cluster_status.node_section.nodes:
+        if node_status.attrs.name == node_name:
+            result = {
+                "offline": False,
+            }
+            for attr in (
+                'id', 'name', 'type', 'online', 'standby', 'standby_onfail',
+                'maintenance', 'pending', 'unclean', 'shutdown', 'expected_up',
+                'is_dc', 'resources_running',
+            ):
+                result[attr] = getattr(node_status.attrs, attr)
+            return result
+    raise LibraryError(ReportItem.error(
+        error_codes.NODE_NOT_FOUND,
+        "node '{node}' does not appear to exist in configuration",
+        info={"node": node_name}
+    ))
 
 def nodes_standby(node_list=None, all_nodes=False):
     return _nodes_standby_unstandby(True, node_list, all_nodes)
@@ -43,7 +81,7 @@ def wait_for_resources(timeout=None):
         args.append("--timeout={0}".format(timeout))
     output, retval = utils.run(args)
     if retval != 0:
-        if retval == _PACEMAKER_WAIT_TIMEOUT_STATUS:
+        if retval == __PACEMAKER_EXIT_CODE_WAIT_TIMEOUT:
             raise LibraryError(ReportItem.error(
                 error_codes.RESOURCE_WAIT_TIMED_OUT,
                 "waiting timeout\n\n{details}",
@@ -99,6 +137,34 @@ def _nodes_standby_unstandby(standby=True, node_list=None, all_nodes=False):
             ))
     if report:
         raise LibraryError(*report)
+
+def __get_local_node_name():
+    def __get_error(reason):
+        ReportItem.error(
+            error_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+            "unable to get local node name from pacemaker: {reason}",
+            info={"reason": reason}
+        )
+
+    # It would be possible to run "crm_node --name" to get the name in one call,
+    # but it returns false names when cluster is not running (or we are on
+    # a remote node). Getting node id first is reliable since it fails in those
+    # cases.
+    output, retval = utils.run(["crm_node", "--cluster-id"])
+    if retval != 0:
+        raise LibraryError(__get_error("node id not found"))
+    node_id = output.strip()
+
+    output, retval = utils.run(
+        ["crm_node", "--name-for-id={0}".format(node_id)]
+    )
+    if retval != 0:
+        raise LibraryError(__get_error("node name not found"))
+    node_name = output.strip()
+
+    if node_name == "(null)":
+        raise LibraryError(__get_error("node name is null"))
+    return node_name
 
 def _has_resource_wait_support():
     # returns 1 on success so we don't care about retval

@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
+import json
 
 import usage
 import utils
@@ -34,6 +35,9 @@ def node_cmd(argv):
             print_node_utilization(argv.pop(0))
         else:
             set_node_utilization(argv.pop(0), argv)
+    # pcs-to-pcsd use only
+    elif sub_cmd == "pacemaker-status":
+        node_pacemaker_status()
     else:
         usage.node()
         sys.exit(1)
@@ -141,3 +145,9 @@ def print_nodes_utilization():
     print("Node Utilization:")
     for node in sorted(utilization):
         print(" {0}: {1}".format(node, utilization[node]))
+
+def node_pacemaker_status():
+    try:
+        print(json.dumps(lib_pacemaker.get_local_node_status()))
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
