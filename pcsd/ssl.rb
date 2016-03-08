@@ -26,6 +26,46 @@ def generate_cert_key_pair(server_name)
   return crt, key
 end
 
+def get_ssl_options()
+  default_options = (
+    OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3 |
+    OpenSSL::SSL::OP_NO_TLSv1 | OpenSSL::SSL::OP_NO_TLSv1_1
+  )
+  if ENV['PCSD_SSL_OPTIONS']
+    options = 0
+    ENV['PCSD_SSL_OPTIONS'].split(',').each { |op|
+      op_cleaned = op.strip()
+      begin
+        if not op_cleaned.start_with?('OP_')
+          raise NameError.new('options must start with OP_')
+        end
+        op_constant = OpenSSL::SSL.const_get(op_cleaned)
+        options |= op_constant
+      rescue NameError => e
+        $logger.error(
+          "SSL configuration error '#{e}', unknown SSL option '#{op}'"
+        )
+        exit
+      rescue => e
+        $logger.error("SSL configuration error '#{e}'")
+        exit
+      end
+    }
+    return options
+  end
+  return default_options
+end
+
+def run_server(server, webrick_options)
+  ciphers = 'DEFAULT:!RC4:!3DES:@STRENGTH!'
+  ciphers = ENV['PCSD_SSL_CIPHERS'] if ENV['PCSD_SSL_CIPHERS']
+  # no need to validate ciphers, ssl context will validate them for us
+
+  server.run(Sinatra::Application, webrick_options) { |server_instance|
+    server_instance.ssl_context.ciphers = ciphers
+  }
+end
+
 if not File.exists?(CRT_FILE) or not File.exists?(KEY_FILE)
   crt, key = generate_cert_key_pair(server_name)
   File.open(CRT_FILE, 'w',0700) {|f| f.write(crt)}
@@ -55,7 +95,7 @@ webrick_options = {
   :SSLCertificate     => OpenSSL::X509::Certificate.new(crt),
   :SSLPrivateKey      => OpenSSL::PKey::RSA.new(key),
   :SSLCertName        => [[ "CN", server_name ]],
-  :SSLOptions         => OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3,
+  :SSLOptions         => get_ssl_options(),
 }
 
 server = ::Rack::Handler::WEBrick
@@ -79,9 +119,9 @@ end
 
 require 'pcsd'
 begin
-  server.run(Sinatra::Application, webrick_options)
+  run_server(server, webrick_options)
 rescue Errno::EAFNOSUPPORT
   webrick_options[:BindAddress] = '0.0.0.0'
   webrick_options[:Host] = '0.0.0.0'
-  server.run(Sinatra::Application, webrick_options)
+  run_server(server, webrick_options)
 end
