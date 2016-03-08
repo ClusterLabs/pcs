@@ -51,7 +51,7 @@ rescue Errno::ENOENT
   File.open(COOKIE_FILE, 'w', 0700) {|f| f.write(secret)}
 end
 
-session_lifetime = ENV['SESSION_LIFETIME'].to_i()
+session_lifetime = ENV['PCSD_SESSION_LIFETIME'].to_i()
 session_lifetime = 60 * 60 unless session_lifetime > 0
 use SessionPoolLifetime,
   :expire_after => session_lifetime,
@@ -95,7 +95,9 @@ before do
 end
 
 configure do
-  DISABLE_GUI = (ENV['DISABLE_GUI'] and ENV['DISABLE_GUI'].downcase == 'true')
+  DISABLE_GUI = (
+    ENV['PCSD_DISABLE_GUI'] and ENV['PCSD_DISABLE_GUI'].downcase == 'true'
+  )
   PCS = get_pcs_path(File.expand_path(File.dirname(__FILE__)))
   logger = File.open("/var/log/pcsd/pcsd.log", "a+", 0600)
   STDOUT.reopen(logger)
