@@ -56,13 +56,21 @@ def get_ssl_options()
   return default_options
 end
 
-def run_server(server, webrick_options)
+def run_server(server, webrick_options, secondary_addrs)
+  primary_addr = webrick_options[:BindAddress]
+  port = webrick_options[:Port]
+
   ciphers = 'DEFAULT:!RC4:!3DES:@STRENGTH!'
   ciphers = ENV['PCSD_SSL_CIPHERS'] if ENV['PCSD_SSL_CIPHERS']
   # no need to validate ciphers, ssl context will validate them for us
 
+  $logger.info("Listening on #{primary_addr} port #{port}")
   server.run(Sinatra::Application, webrick_options) { |server_instance|
     server_instance.ssl_context.ciphers = ciphers
+    secondary_addrs.each { |addr|
+      $logger.info("Adding listener on #{addr} port #{port}")
+      server_instance.listen(addr, port)
+    }
   }
 end
 
@@ -86,10 +94,22 @@ else
   end
 end
 
+default_bind = true
+primary_addr = '::'
+secondary_addrs = []
+if ENV['PCSD_BIND_ADDR']
+  user_addrs = ENV['PCSD_BIND_ADDR'].split(',').collect { |x| x.strip() }
+  if not user_addrs.empty?
+    default_bind = false
+    primary_addr = user_addrs.shift()
+    secondary_addrs = user_addrs
+  end
+end
+
 webrick_options = {
   :Port               => 2224,
-  :BindAddress        => '::',
-  :Host               => '::',
+  :BindAddress        => primary_addr,
+  :Host               => primary_addr,
   :SSLEnable          => true,
   :SSLVerifyClient    => OpenSSL::SSL::VERIFY_NONE,
   :SSLCertificate     => OpenSSL::X509::Certificate.new(crt),
@@ -119,9 +139,14 @@ end
 
 require 'pcsd'
 begin
-  run_server(server, webrick_options)
+  run_server(server, webrick_options, secondary_addrs)
 rescue Errno::EAFNOSUPPORT
-  webrick_options[:BindAddress] = '0.0.0.0'
-  webrick_options[:Host] = '0.0.0.0'
-  run_server(server, webrick_options)
+  if default_bind
+    primary_addr = '0.0.0.0'
+    webrick_options[:BindAddress] = primary_addr
+    webrick_options[:Host] = primary_addr
+    run_server(server, webrick_options, secondary_addrs)
+  else
+    raise
+  end
 end
