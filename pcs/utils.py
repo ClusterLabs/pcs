@@ -51,12 +51,10 @@ except ImportError:
     )
 
 import settings
-import cluster
 import corosync_conf as corosync_conf_utils
 from errors import ReportItemSeverity
 from errors import LibraryError
 from library_status_info import ClusterState
-import library_pacemaker as lib_pacemaker
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -105,8 +103,15 @@ def checkAndUpgradeCIB(major,minor,rev):
     if cmajor > major or (cmajor == major and cminor > minor) or (cmajor == major and cminor == minor and crev >= rev):
         return False
     else:
-        cluster.cluster_upgrade()
+        cluster_upgrade()
         return True
+
+def cluster_upgrade():
+    output, retval = run(["cibadmin", "--upgrade", "--force"])
+    if retval != 0:
+        err("unable to upgrade cluster: %s" % output)
+    print("Cluster CIB has been upgraded to latest version")
+
 
 # Check status of node
 def checkStatus(node):
@@ -855,6 +860,62 @@ def run_pcsdcli(command, data=None):
         }
     return output_json, retval
 
+def auth_nodes_do(nodes, username, password, force, local):
+    pcsd_data = {
+        'nodes': list(set(nodes)),
+        'username': username,
+        'password': password,
+        'force': force,
+        'local': local,
+    }
+    output, retval = run_pcsdcli('auth', pcsd_data)
+    if retval == 0 and output['status'] == 'access_denied':
+        err('Access denied')
+    if retval == 0 and output['status'] == 'ok' and output['data']:
+        failed = False
+        try:
+            if not output['data']['sync_successful']:
+                err(
+                    "Some nodes had a newer tokens than the local node. "
+                    + "Local node's tokens were updated. "
+                    + "Please repeat the authentication if needed."
+                )
+            for node, result in output['data']['auth_responses'].items():
+                if result['status'] == 'ok':
+                    print("{0}: Authorized".format(node))
+                elif result['status'] == 'already_authorized':
+                    print("{0}: Already authorized".format(node))
+                elif result['status'] == 'bad_password':
+                    err(
+                        "{0}: Username and/or password is incorrect".format(node),
+                        False
+                    )
+                    failed = True
+                elif result['status'] == 'noresponse':
+                    err("Unable to communicate with {0}".format(node), False)
+                    failed = True
+                else:
+                    err("Unexpected response from {0}".format(node), False)
+                    failed = True
+            if output['data']['sync_nodes_err']:
+                err(
+                    (
+                        "Unable to synchronize and save tokens on nodes: {0}. "
+                        + "Are they authorized?"
+                    ).format(
+                        ", ".join(output['data']['sync_nodes_err'])
+                    ),
+                    False
+                )
+                failed = True
+        except:
+            err('Unable to communicate with pcsd')
+        if failed:
+            sys.exit(1)
+        return
+    err('Unable to communicate with pcsd')
+
+
 def call_local_pcsd(argv, interactive_auth=False, std_in=None):
     # some commands cannot be run under a non-root account
     # so we pass those commands to locally running pcsd to execute them
@@ -874,7 +935,7 @@ def call_local_pcsd(argv, interactive_auth=False, std_in=None):
         print('Please authenticate yourself to the local pcsd')
         username = get_terminal_input('Username: ')
         password = get_terminal_password()
-        cluster.auth_nodes_do(["localhost"], username, password, True, True)
+        auth_nodes_do(["localhost"], username, password, True, True)
         print()
         code, output = sendHTTPRequest(
             "localhost", "run_pcs", data_send, False, False
@@ -929,6 +990,47 @@ def run_parallel(worker_list, wait_seconds=1):
             thread.join(wait_seconds)
             if not thread.is_alive():
                 thread_list.remove(thread)
+
+def create_task(report, action, node, *args, **kwargs):
+    def worker():
+        returncode, output = action(node, *args, **kwargs)
+        report(node, returncode, output)
+    return worker
+
+def create_task_list(report, action, node_list, *args, **kwargs):
+    return [
+        create_task(report, action, node, *args, **kwargs) for node in node_list
+    ]
+
+def parallel_for_nodes(action, node_list, *args, **kwargs):
+    error_list = []
+    def report(node, returncode, output):
+        message = '{0}: {1}'.format(node, output.strip())
+        print(message)
+        if returncode != 0:
+            error_list.append(message)
+    run_parallel(
+        create_task_list(report, action, node_list, *args, **kwargs)
+    )
+    return error_list
+
+def prepare_node_name(node, pm_nodes, cs_nodes):
+    '''
+    Return pacemaker-corosync combined name for node if needed
+    pm_nodes dictionary pacemaker nodes id:node_name
+    cs_nodes dictionary corosync nodes id:node_name
+    '''
+    if node in pm_nodes.values():
+        return node
+
+    for cs_id, cs_name in cs_nodes.items():
+        if node == cs_name and cs_id in pm_nodes:
+            return '{0} ({1})'.format(
+                pm_nodes[cs_id] if pm_nodes[cs_id] != '(null)' else "*Unknown*",
+                node
+            )
+
+    return node
 
 # Check is something exists in the CIB, if it does return it, if not, return
 #  an empty string
@@ -1302,10 +1404,28 @@ def get_default_op_values(ra_type):
     return return_list
 
 def get_timeout_seconds(timeout, return_unknown=False):
-    return lib_pacemaker._get_timeout_seconds(timeout, return_unknown)
+    if timeout.isdigit():
+        return int(timeout)
+    suffix_multiplier = {
+        "s": 1,
+        "sec": 1,
+        "m": 60,
+        "min": 60,
+        "h": 3600,
+        "hr": 3600,
+    }
+    for suffix, multiplier in suffix_multiplier.items():
+        if timeout.endswith(suffix) and timeout[:-len(suffix)].isdigit():
+            return int(timeout[:-len(suffix)]) * multiplier
+    return timeout if return_unknown else None
+
+def _has_resource_wait_support():
+    # returns 1 on success so we don't care about retval
+    output, dummy_retval = run(["crm_resource", "-?"])
+    return "--wait" in output
 
 def check_pacemaker_supports_resource_wait():
-    if not lib_pacemaker._has_resource_wait_support():
+    if not _has_resource_wait_support():
         err("crm_resource does not support --wait, please upgrade pacemaker")
 
 def validate_wait_get_timeout(need_cib_support=True):

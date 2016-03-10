@@ -35,6 +35,7 @@ from errors import ReportItem
 from errors import LibraryError
 import error_codes
 import library_pacemaker as lib_pacemaker
+from utils import parallel_for_nodes
 
 pcs_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -58,7 +59,7 @@ def cluster_cmd(argv):
     elif (sub_cmd == "status"):
         status.cluster_status(argv)
     elif (sub_cmd == "pcsd-status"):
-        cluster_pcsd_status(argv)
+        status.cluster_pcsd_status(argv)
     elif (sub_cmd == "certkey"):
         cluster_certkey(argv)
     elif (sub_cmd == "auth"):
@@ -100,7 +101,7 @@ def cluster_cmd(argv):
     elif (sub_cmd == "cib-push"):
         cluster_push(argv)
     elif (sub_cmd == "cib-upgrade"):
-        cluster_upgrade()
+        utils.cluster_upgrade()
     elif (sub_cmd == "edit"):
         cluster_edit(argv)
     elif (sub_cmd == "node"):
@@ -193,7 +194,7 @@ def auth_nodes(nodes):
         if password == None:
             password = utils.get_terminal_password()
 
-        auth_nodes_do(
+        utils.auth_nodes_do(
             set_nodes, username, password, '--force' in utils.pcs_options,
             '--local' in utils.pcs_options
         )
@@ -201,128 +202,8 @@ def auth_nodes(nodes):
         for node in set_nodes:
             print(node + ": Already authorized")
 
-def auth_nodes_do(nodes, username, password, force, local):
-    pcsd_data = {
-        'nodes': list(set(nodes)),
-        'username': username,
-        'password': password,
-        'force': force,
-        'local': local,
-    }
-    output, retval = utils.run_pcsdcli('auth', pcsd_data)
-    if retval == 0 and output['status'] == 'access_denied':
-        utils.err('Access denied')
-    if retval == 0 and output['status'] == 'ok' and output['data']:
-        failed = False
-        try:
-            if not output['data']['sync_successful']:
-                utils.err(
-                    "Some nodes had a newer tokens than the local node. "
-                    + "Local node's tokens were updated. "
-                    + "Please repeat the authentication if needed."
-                )
-            for node, result in output['data']['auth_responses'].items():
-                if result['status'] == 'ok':
-                    print("{0}: Authorized".format(node))
-                elif result['status'] == 'already_authorized':
-                    print("{0}: Already authorized".format(node))
-                elif result['status'] == 'bad_password':
-                    utils.err(
-                        "{0}: Username and/or password is incorrect".format(node),
-                        False
-                    )
-                    failed = True
-                elif result['status'] == 'noresponse':
-                    utils.err("Unable to communicate with {0}".format(node), False)
-                    failed = True
-                else:
-                    utils.err("Unexpected response from {0}".format(node), False)
-                    failed = True
-            if output['data']['sync_nodes_err']:
-                utils.err(
-                    (
-                        "Unable to synchronize and save tokens on nodes: {0}. "
-                        + "Are they authorized?"
-                    ).format(
-                        ", ".join(output['data']['sync_nodes_err'])
-                    ),
-                    False
-                )
-                failed = True
-        except:
-            utils.err('Unable to communicate with pcsd')
-        if failed:
-            sys.exit(1)
-        return
-    utils.err('Unable to communicate with pcsd')
-
-# If no arguments get current cluster node status, otherwise get listed
-# nodes status
-def cluster_pcsd_status(argv,dont_exit = False):
-    bad_nodes = False
-    if len(argv) == 0:
-        nodes = utils.getNodesFromCorosyncConf()
-        if len(nodes) == 0:
-            if utils.is_rhel6():
-                utils.err("no nodes found in cluster.conf")
-            else:
-                utils.err("no nodes found in corosync.conf")
-        bad_nodes = check_nodes(nodes, "  ")
-    else:
-        bad_nodes = check_nodes(argv, "  ")
-    if bad_nodes and not dont_exit:
-        sys.exit(2)
-
 def cluster_certkey(argv):
     return pcsd.pcsd_certkey(argv)
-
-def prepare_node_name(node, pm_nodes, cs_nodes):
-    '''
-    Return pacemaker-corosync combined name for node if needed
-    pm_nodes dictionary pacemaker nodes id:node_name
-    cs_nodes dictionary corosync nodes id:node_name
-    '''
-    if node in pm_nodes.values():
-        return node
-
-    for cs_id, cs_name in cs_nodes.items():
-        if node == cs_name and cs_id in pm_nodes:
-            return '{0} ({1})'.format(
-                pm_nodes[cs_id] if pm_nodes[cs_id] != '(null)' else "*Unknown*",
-                node
-            )
-
-    return node
-
-def check_nodes(node_list, prefix=""):
-    """
-    Print pcsd status on node_list, return if there is any pcsd not online
-    """
-    if not utils.is_rhel6():
-        pm_nodes = utils.getPacemakerNodesID(allow_failure=True)
-        cs_nodes = utils.getCorosyncNodesID(allow_failure=True)
-
-    STATUS_ONLINE = 0
-    status_desc_map = {
-        STATUS_ONLINE: 'Online',
-        3: 'Unable to authenticate'
-    }
-    status_list = []
-    def report(node, returncode, output):
-        print("{0}{1}: {2}".format(
-            prefix,
-            node if utils.is_rhel6() else prepare_node_name(
-                node, pm_nodes, cs_nodes
-            ),
-            status_desc_map.get(returncode, 'Offline')
-        ))
-        status_list.append(returncode)
-
-    utils.run_parallel(
-        create_task_list(report, utils.checkAuthorization, node_list)
-    )
-
-    return any([status != STATUS_ONLINE for status in status_list])
 
 
 def cluster_setup(argv):
@@ -1318,12 +1199,6 @@ def cluster_push(argv):
     else:
         print("CIB updated")
 
-def cluster_upgrade():
-    output, retval = utils.run(["cibadmin", "--upgrade", "--force"])
-    if retval != 0:
-        utils.err("unable to upgrade cluster: %s" % output)
-    print("Cluster CIB has been upgraded to latest version")
-
 def cluster_edit(argv):
     if 'EDITOR' in os.environ:
         if len(argv) > 1:
@@ -1924,25 +1799,3 @@ def cluster_quorum_unblock(argv):
     utils.set_cib_property("startup-fencing", startup_fencing)
     print("Waiting for nodes cancelled")
 
-def create_task(report, action, node, *args, **kwargs):
-    def worker():
-        returncode, output = action(node, *args, **kwargs)
-        report(node, returncode, output)
-    return worker
-
-def create_task_list(report, action, node_list, *args, **kwargs):
-    return [
-        create_task(report, action, node, *args, **kwargs) for node in node_list
-    ]
-
-def parallel_for_nodes(action, node_list, *args, **kwargs):
-    error_list = []
-    def report(node, returncode, output):
-        message = '{0}: {1}'.format(node, output.strip())
-        print(message)
-        if returncode != 0:
-            error_list.append(message)
-    utils.run_parallel(
-        create_task_list(report, action, node_list, *args, **kwargs)
-    )
-    return error_list

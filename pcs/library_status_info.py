@@ -11,14 +11,13 @@ from __future__ import unicode_literals
 from lxml import etree
 
 import settings
-import utils
 from errors import ReportItem
 import error_codes
 from errors import LibraryError
 
-# breaks import loop
+# !DUPLICITY WITH UTILS (hope temporary)
 def _is_cib_true(var):
-    return utils.is_cib_true(var)
+    return var.lower() in ["true", "on", "yes", "y", "1"]
 
 class _Attrs(object):
     def __init__(self, owner_name, attrib, required_attrs):

@@ -57,7 +57,7 @@ def nodes_unstandby(node_list=None, all_nodes=False):
     return _nodes_standby_unstandby(False, node_list, all_nodes)
 
 def get_valid_timeout_seconds(timeout_candidate):
-    if not _has_resource_wait_support():
+    if not utils._has_resource_wait_support():
         raise LibraryError(ReportItem.error(
             error_codes.RESOURCE_WAIT_NOT_SUPPORTED,
             "crm_resource does not support --wait, please upgrade pacemaker"
@@ -66,7 +66,7 @@ def get_valid_timeout_seconds(timeout_candidate):
     if timeout_candidate is None:
         return None
 
-    wait_timeout = _get_timeout_seconds(timeout_candidate)
+    wait_timeout = utils.get_timeout_seconds(timeout_candidate)
     if wait_timeout is None:
         raise LibraryError(ReportItem.error(
             error_codes.INVALID_TIMEOUT_VALUE,
@@ -165,24 +165,3 @@ def __get_local_node_name():
     if node_name == "(null)":
         raise LibraryError(__get_error("node name is null"))
     return node_name
-
-def _has_resource_wait_support():
-    # returns 1 on success so we don't care about retval
-    output, dummy_retval = utils.run(["crm_resource", "-?"])
-    return "--wait" in output
-
-def _get_timeout_seconds(timeout, return_unknown=False):
-    if timeout.isdigit():
-        return int(timeout)
-    suffix_multiplier = {
-        "s": 1,
-        "sec": 1,
-        "m": 60,
-        "min": 60,
-        "h": 3600,
-        "hr": 3600,
-    }
-    for suffix, multiplier in suffix_multiplier.items():
-        if timeout.endswith(suffix) and timeout[:-len(suffix)].isdigit():
-            return int(timeout[:-len(suffix)]) * multiplier
-    return timeout if return_unknown else None

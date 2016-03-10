@@ -7,7 +7,6 @@ import sys
 import os
 
 import resource
-import cluster
 import usage
 import utils
 from errors import LibraryError
@@ -31,7 +30,7 @@ def status_cmd(argv):
     elif (sub_cmd == "nodes"):
         nodes_status(argv)
     elif (sub_cmd == "pcsd"):
-        cluster.cluster_pcsd_status(argv)
+        cluster_pcsd_status(argv)
     elif (sub_cmd == "xml"):
         xml_status()
     elif (sub_cmd == "corosync"):
@@ -253,7 +252,7 @@ def is_pacemaker_running():
 def print_pcsd_daemon_status():
     print("PCSD Status:")
     if os.getuid() == 0:
-        cluster.cluster_pcsd_status([], True)
+        cluster_pcsd_status([], True)
     else:
         err_msgs, exitcode, std_out, dummy_std_err = utils.call_local_pcsd(
             ['status', 'pcsd'], True
@@ -265,3 +264,50 @@ def print_pcsd_daemon_status():
             print(std_out)
         else:
             print("Unable to get PCSD status")
+
+def check_nodes(node_list, prefix=""):
+    """
+    Print pcsd status on node_list, return if there is any pcsd not online
+    """
+    if not utils.is_rhel6():
+        pm_nodes = utils.getPacemakerNodesID(allow_failure=True)
+        cs_nodes = utils.getCorosyncNodesID(allow_failure=True)
+
+    STATUS_ONLINE = 0
+    status_desc_map = {
+        STATUS_ONLINE: 'Online',
+        3: 'Unable to authenticate'
+    }
+    status_list = []
+    def report(node, returncode, output):
+        print("{0}{1}: {2}".format(
+            prefix,
+            node if utils.is_rhel6() else utils.prepare_node_name(
+                node, pm_nodes, cs_nodes
+            ),
+            status_desc_map.get(returncode, 'Offline')
+        ))
+        status_list.append(returncode)
+
+    utils.run_parallel(
+        utils.create_task_list(report, utils.checkAuthorization, node_list)
+    )
+
+    return any([status != STATUS_ONLINE for status in status_list])
+
+# If no arguments get current cluster node status, otherwise get listed
+# nodes status
+def cluster_pcsd_status(argv, dont_exit=False):
+    bad_nodes = False
+    if len(argv) == 0:
+        nodes = utils.getNodesFromCorosyncConf()
+        if len(nodes) == 0:
+            if utils.is_rhel6():
+                utils.err("no nodes found in cluster.conf")
+            else:
+                utils.err("no nodes found in corosync.conf")
+        bad_nodes = check_nodes(nodes, "  ")
+    else:
+        bad_nodes = check_nodes(argv, "  ")
+    if bad_nodes and not dont_exit:
+        sys.exit(2)

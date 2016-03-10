@@ -15,7 +15,6 @@ import time
 import usage
 import utils
 import constraint
-import stonith
 import library_acl as lib_acl
 import library_resource as lib_resource
 from errors import CmdLineInputError
@@ -1815,13 +1814,31 @@ def resource_remove(resource_id, output = True):
             return False
     return True
 
+def stonith_level_rm_device(cib_dom, stn_id):
+    topology_el_list = cib_dom.getElementsByTagName("fencing-topology")
+    if not topology_el_list:
+        return cib_dom
+    topology_el = topology_el_list[0]
+    for level_el in topology_el.getElementsByTagName("fencing-level"):
+        device_list = level_el.getAttribute("devices").split(",")
+        if stn_id in device_list:
+            new_device_list = [dev for dev in device_list if dev != stn_id]
+            if new_device_list:
+                level_el.setAttribute("devices", ",".join(new_device_list))
+            else:
+                level_el.parentNode.removeChild(level_el)
+    if not topology_el.getElementsByTagName("fencing-level"):
+        topology_el.parentNode.removeChild(topology_el)
+    return cib_dom
+
+
 def remove_resource_references(
     dom, resource_id, output=False, constraints_element=None
 ):
     constraint.remove_constraints_containing(
         resource_id, output, constraints_element, dom
     )
-    stonith.stonith_level_rm_device(dom, resource_id)
+    stonith_level_rm_device(dom, resource_id)
     lib_acl.remove_permissions_referencing(dom, resource_id)
     return dom
 
