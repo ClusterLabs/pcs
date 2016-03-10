@@ -1,32 +1,35 @@
-#!/usr/bin/env python
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import sys
-import os
 import getopt
+import os
+import sys
 
-import usage
-import cluster
-import resource
-import stonith
-import prop
-import constraint
-import acl
-import utils
-import status
-import settings
-import config
-import pcsd
-import node
+from pcs import (
+    acl,
+    cluster,
+    config,
+    constraint,
+    node,
+    pcsd,
+    prop,
+    resource,
+    settings,
+    status,
+    stonith,
+    usage,
+    utils,
+)
 
 
 usefile = False
 filename = ""
-def main(argv):
+def main(argv=None):
+    argv = argv if argv else sys.argv[1:]
     utils.subprocess_setup()
     global filename, usefile
     orig_argv = argv[:]
@@ -220,6 +223,3 @@ def main(argv):
             sys.exit(exitcode)
             return
     cmd_map[command](argv)
-
-if __name__ == "__main__":
-    main(sys.argv[1:])

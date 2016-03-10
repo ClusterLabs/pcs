@@ -1,23 +1,27 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import os
-import sys
 import shutil
 import unittest
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir)
 
-from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
+from pcs.test.pcs_test_functions import (
+    pcs,
+    ac,
+    isMinimumPacemakerVersion,
+)
+from pcs.test.tools.resources import get_test_resource as rc
 
 
-empty_cib = "empty.xml"
-empty_cib_1_2 = "empty-1.2.xml"
-temp_cib = "temp.xml"
-large_cib = "large.xml"
-temp_large_cib = "temp-large.xml"
+empty_cib = rc("empty.xml")
+empty_cib_1_2 = rc("empty-1.2.xml")
+temp_cib = rc("temp.xml")
+large_cib = rc("large.xml")
+temp_large_cib = rc("temp-large.xml")
 
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
@@ -2539,7 +2543,3 @@ Colocation Constraints:
     set D2 D1 (id:pcs_rsc_set_D2_D1) setoptions score=100 (id:id4)
 """)
         self.assertEqual(0, returnVal)
-
-if __name__ == "__main__":
-    unittest.main()
-

@@ -1,21 +1,20 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import os
-import sys
 import shutil
 import unittest
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parentdir)
 
-import utils
-from pcs_test_functions import pcs, ac
+from pcs.test.pcs_test_functions import pcs, ac
+from pcs.test.tools.resources import get_test_resource as rc
 
+from pcs import utils
 
-empty_cib = "empty.xml"
-temp_cib = "temp.xml"
+empty_cib = rc("empty.xml")
+temp_cib = rc("temp.xml")
 
 class StonithTest(unittest.TestCase):
     def setUp(self):
@@ -805,7 +804,3 @@ Cluster Properties:
 
         o,r = pcs(temp_cib, "status")
         assert "WARNING: no stonith devices and " not in o
-
-if __name__ == "__main__":
-    unittest.main()
-

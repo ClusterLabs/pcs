@@ -1,18 +1,24 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import sys
 
-import usage
-import utils
-import prop
-from errors import CmdLineInputError
-from errors import LibraryError
-from library_acl import create_role
-from library_acl import provide_role
-from library_acl import add_permissions_to_role
+from pcs import (
+    prop,
+    usage,
+    utils,
+)
+from pcs.library_acl import (
+    add_permissions_to_role,
+    create_role,
+    provide_role,
+)
+from pcs.errors import CmdLineInputError
+from pcs.errors import LibraryError
 
 def exit_on_cmdline_input_errror(usage_name):
     usage.acl([usage_name])

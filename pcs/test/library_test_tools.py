@@ -1,13 +1,15 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import xml.dom.minidom
 from lxml.doctestcompare import LXMLOutputChecker
 from doctest import Example
 
-from errors import LibraryError
+from pcs.errors import LibraryError
 
 class LibraryAssertionMixin(object):
     def __find_report_info(self, report_info_list, report_item):

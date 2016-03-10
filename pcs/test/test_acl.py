@@ -1,29 +1,30 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import os.path
-import sys
 import shutil
 import unittest
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir)
 
-from pcs_test_functions import pcs, ac, isMinimumPacemakerVersion
-from pcs_test_functions import PcsRunner
-from pcs_test_assertions import AssertPcsMixin
+from pcs.test.pcs_test_assertions import AssertPcsMixin
+from pcs.test.pcs_test_functions import (
+    pcs,
+    ac,
+    PcsRunner,
+)
+from pcs.test.tools.resources import get_test_resource as rc
 
-
-old_cib = "empty.xml"
-empty_cib = "empty-1.2.xml"
-temp_cib = "temp.xml"
+old_cib = rc("empty.xml")
+empty_cib = rc("empty-1.2.xml")
+temp_cib = rc("temp.xml")
 
 class ACLTest(unittest.TestCase, AssertPcsMixin):
     pcs_runner = None
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
-        shutil.copy("corosync.conf.orig", "corosync.conf")
+        shutil.copy(rc("corosync.conf.orig"), rc("corosync.conf"))
         self.pcs_runner = PcsRunner(temp_cib)
 
     def testAutoUpgradeofCIB(self):
@@ -812,9 +813,3 @@ Role: role4
             'acl role unknown whatever',
             stdout_start="\nUsage: pcs acl role..."
         )
-
-if __name__ == "__main__":
-    if isMinimumPacemakerVersion(1,1,11):
-        unittest.main()
-    else:
-        print("WARNING: Pacemaker version is too old (must be >= 1.1.11) to test acls")

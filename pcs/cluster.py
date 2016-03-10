@@ -1,7 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import os
 import subprocess
@@ -20,24 +22,24 @@ except ImportError:
     # python3
     from subprocess import getstatusoutput
 
-import settings
-import usage
-import utils
-import corosync_conf as corosync_conf_utils
-import pcsd
-import status
-import prop
-import resource
-import stonith
-import constraint
-import node
-from errors import ReportItem
-from errors import LibraryError
-import error_codes
-import library_pacemaker as lib_pacemaker
-from utils import parallel_for_nodes
-
-pcs_dir = os.path.dirname(os.path.realpath(__file__))
+from pcs import (
+    constraint,
+    corosync_conf as corosync_conf_utils,
+    error_codes,
+    library_pacemaker as lib_pacemaker,
+    node,
+    pcsd,
+    prop,
+    resource,
+    settings,
+    status,
+    stonith,
+    usage,
+    utils,
+)
+from pcs.errors import ReportItem
+from pcs.errors import LibraryError
+from pcs.utils import parallel_for_nodes
 
 def cluster_cmd(argv):
     if len(argv) == 0:

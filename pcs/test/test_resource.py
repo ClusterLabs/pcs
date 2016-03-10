@@ -1,33 +1,39 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import os
-import sys
 import shutil
 import re
 import unittest
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parentdir)
 
-import utils
-from pcs_test_functions import pcs, ac
-import resource
-from pcs_test_functions import PcsRunner
-from pcs_test_assertions import AssertPcsMixin
+from pcs.test.pcs_test_assertions import AssertPcsMixin
+from pcs.test.pcs_test_functions import (
+    pcs,
+    ac,
+    PcsRunner,
+)
+from pcs.test.tools.resources import get_test_resource as rc
 
+from pcs import utils
+from pcs import resource
 
-empty_cib = "empty.xml"
-temp_cib = "temp.xml"
-large_cib = "large.xml"
-temp_large_cib = "temp-large.xml"
+empty_cib = rc("empty.xml")
+temp_cib = rc("temp.xml")
+large_cib = rc("large.xml")
+temp_large_cib  = rc("temp-large.xml")
 
 class ResourceTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy(large_cib, temp_large_cib)
-        shutil.copy("corosync.conf.orig", "corosync.conf")
+        shutil.copy(
+            rc("corosync.conf.orig"),
+            rc("corosync.conf")
+        )
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self,temp_cib):
@@ -4416,7 +4422,7 @@ Error: Value of utilization attribute must be integer: 'test=int'
 
 class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy('empty-1.2.xml', temp_cib)
+        shutil.copy(rc('empty-1.2.xml'), temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_remove_referenced_primitive_resource(self):
@@ -4449,8 +4455,3 @@ class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
             'Deleting Resource - dummy1',
             'Deleting Resource (and group) - dummy2',
         ])
-
-
-if __name__ == "__main__":
-    unittest.main()
-

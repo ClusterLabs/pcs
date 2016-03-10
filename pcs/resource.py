@@ -1,7 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import sys
 import os
@@ -12,13 +14,15 @@ import re
 import textwrap
 import time
 
-import usage
-import utils
-import constraint
-import library_acl as lib_acl
-import library_resource as lib_resource
-from errors import CmdLineInputError
-from errors import LibraryError
+from pcs import (
+    usage,
+    utils,
+    constraint,
+    library_acl as lib_acl,
+    library_resource as lib_resource,
+)
+from pcs.errors import CmdLineInputError
+from pcs.errors import LibraryError
 
 
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62

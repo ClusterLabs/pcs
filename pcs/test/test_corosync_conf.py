@@ -1,16 +1,15 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import os.path
-import sys
 import unittest
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parentdir)
 
-from pcs_test_functions import ac
-import corosync_conf
+from pcs.test.pcs_test_functions import ac
+
+from pcs import corosync_conf
 
 
 class SectionTest(unittest.TestCase):
@@ -1176,7 +1175,3 @@ quorum {
 }
 """
         ac(str(corosync_conf.parse_string(string)), parsed)
-
-
-if __name__ == "__main__":
-    unittest.main()

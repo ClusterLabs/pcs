@@ -1,18 +1,18 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import os,sys
 import shutil
 import unittest
-currentdir = os.path.dirname(os.path.abspath(__file__))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
-from pcs_test_functions import pcs,ac
 
-empty_cib = os.path.join(currentdir, "empty-withnodes.xml")
-temp_cib = os.path.join(currentdir, "temp.xml")
+from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.pcs_test_functions import pcs, ac
+
+empty_cib = rc("empty-withnodes.xml")
+temp_cib = rc("temp.xml")
 
 class NodeTest(unittest.TestCase):
     def setUp(self):
@@ -249,6 +249,3 @@ Error: Value of utilization attribute must be integer: 'test=int'
 """
         ac(expected_out, output)
         self.assertEqual(1, returnVal)
-
-if __name__ == "__main__":
-    unittest.main()

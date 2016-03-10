@@ -1,22 +1,20 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import os.path
-import sys
 import shutil
 import unittest
 import xml.dom.minidom
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parentdir)
 
+from pcs import rule
 from pcs_test_functions import pcs, ac
-import rule
+from pcs.test.tools.resources import get_test_resource as rc
 
-
-empty_cib = "empty.xml"
-temp_cib = "temp.xml"
+empty_cib = rc("empty.xml")
+temp_cib = rc("temp.xml")
 
 class DateValueTest(unittest.TestCase):
 
@@ -1242,7 +1240,7 @@ class CibBuilderTest(unittest.TestCase):
         )
 
     def assertExpressionXml(self, rule_expression, rule_xml):
-        cib_dom = xml.dom.minidom.parse("empty.xml")
+        cib_dom = xml.dom.minidom.parse(empty_cib)
         constraints = cib_dom.getElementsByTagName("constraints")[0]
         constraint_el = constraints.appendChild(
             cib_dom.createElement("rsc_location")
@@ -1927,7 +1925,7 @@ Location Constraints:
         self.assertEqual(1, returnVal)
 
     def assertExpressionXml(self, rule_expression, rule_xml):
-        cib_dom = xml.dom.minidom.parse("empty.xml")
+        cib_dom = xml.dom.minidom.parse(empty_cib)
         constraints = cib_dom.getElementsByTagName("constraints")[0]
         constraint_el = constraints.appendChild(
             cib_dom.createElement("rsc_location")
@@ -1939,8 +1937,3 @@ Location Constraints:
             constraint_el.toprettyxml(indent="    "),
             rule_xml.lstrip().rstrip(" ")
         )
-
-
-if __name__ == "__main__":
-    unittest.main()
-

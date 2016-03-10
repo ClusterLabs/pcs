@@ -1,24 +1,26 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 from unittest import TestCase
 import unittest
-import os.path
-import sys
 from lxml import etree
 
-currentdir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(currentdir))
+from pcs.test.library_test_tools import get_xml_manipulation_creator
+from pcs.test.library_test_tools import LibraryAssertionMixin
+from pcs.test.tools.resources import get_test_resource as rc
 
-from library_status_info import ClusterState
-from library_status_info import _Attrs
-from library_status_info import _Children
-from library_test_tools import get_xml_manipulation_creator
-from library_test_tools import LibraryAssertionMixin
-import error_codes
-from errors import ReportItemSeverity as severities
+from pcs.library_status_info import (
+    ClusterState,
+    _Attrs,
+    _Children,
+)
+
+import pcs.error_codes as error_codes
+from pcs.errors import ReportItemSeverity as severities
 
 class AttrsTest(TestCase):
     def test_get_declared_attr(self):
@@ -68,7 +70,7 @@ class ChildrenTest(TestCase):
 class TestBase(TestCase):
     def setUp(self):
         self.create_covered_status = get_xml_manipulation_creator(
-            os.path.join(currentdir, 'resources', 'crm_mon.minimal.xml')
+            rc('crm_mon.minimal.xml')
         )
         self.covered_status = self.create_covered_status()
 
@@ -151,6 +153,3 @@ class WorkWithClusterStatusSummaryTest(TestBase):
     def test_resources_count(self):
         xml = self.covered_status.dom.toxml()
         self.assertEqual(0, ClusterState(xml).summary.resources.attrs.count)
-
-if __name__ == "__main__":
-    unittest.main()

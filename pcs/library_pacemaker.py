@@ -3,11 +3,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import utils
-import error_codes
-from errors import ReportItem
-from errors import LibraryError
-from library_status_info import ClusterState
+from pcs import utils
+from pcs import error_codes
+from pcs.errors import ReportItem
+from pcs.errors import LibraryError
+from pcs.library_status_info import ClusterState
 
 
 __PACEMAKER_EXIT_CODE_WAIT_TIMEOUT = 62

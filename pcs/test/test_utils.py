@@ -1,9 +1,10 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import os.path
 import sys
 import unittest
 import xml.dom.minidom
@@ -16,17 +17,14 @@ except ImportError:
     #python 3
     from io import StringIO
 
-currentdir = os.path.dirname(os.path.abspath(__file__))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
+from pcs.test.pcs_test_functions import get_child_elements
+from pcs.test.tools.resources import get_test_resource as rc
 
-import utils
-from pcs_test_functions import get_child_elements
+from pcs import utils
 
-
-cib_with_nodes =  os.path.join(currentdir, "empty-withnodes.xml")
-empty_cib = os.path.join(currentdir, "empty.xml")
-temp_cib = os.path.join(currentdir, "temp.xml")
+cib_with_nodes =  rc("empty-withnodes.xml")
+empty_cib = rc("empty.xml")
+temp_cib = rc("temp.xml")
 
 unittest.TestCase.maxDiff = None
 
@@ -1434,7 +1432,7 @@ Membership information
         )
 
     def test_get_operations_from_transitions(self):
-        transitions = utils.parse(os.path.join(currentdir, "transitions01.xml"))
+        transitions = utils.parse(rc("transitions01.xml"))
         self.assertEqual(
             [
                 {
@@ -1477,7 +1475,7 @@ Membership information
             utils.get_operations_from_transitions(transitions)
         )
 
-        transitions = utils.parse(os.path.join(currentdir, "transitions02.xml"))
+        transitions = utils.parse(rc("transitions02.xml"))
         self.assertEqual(
             [
                 {
@@ -2282,6 +2280,3 @@ class NodeActionTaskTest(unittest.TestCase):
         task()
 
         self.assertEqual(['node|0|node:arg:kwarg'], report_list)
-
-if __name__ == "__main__":
-    unittest.main()

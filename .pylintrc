@@ -78,9 +78,10 @@ max-bool-expr=6
 
 [LOGGING]
 # Ignore imports when computing similarities.
+# unfortunately don't work with from abc import (...similar lines...
 ignore-imports=yes
 # Minimum lines number of a similarity.
-min-similarity-lines=5
+min-similarity-lines=9
 
 
 [VARIABLES]
@@ -91,7 +92,7 @@ dummy-variables-rgx=_$|dummy
 
 [FORMAT]
 # Maximum number of lines in a module
-max-module-lines=4456
+max-module-lines=4462
 # Maximum number of characters on a single line.
 max-line-length=1291
 

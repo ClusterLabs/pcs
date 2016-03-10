@@ -1,1 +1,1 @@
-from settings_default import *
+from pcs.settings_default import *

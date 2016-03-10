@@ -1,4 +1,4 @@
-from settings_default import *
+from pcs.settings_default import *
 pengine_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/pengine"
 crmd_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/crmd"
 cib_binary = "/usr/lib/DEB_HOST_MULTIARCH/pacemaker/cib"

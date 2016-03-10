@@ -1,16 +1,20 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import sys
 import xml.dom.minidom
 from xml.dom.minidom import parseString
 from collections import defaultdict
 
-import usage
-import utils
-import rule as rule_utils
+from pcs import (
+    rule as rule_utils,
+    usage,
+    utils,
+)
 
 
 OPTIONS_ACTION = ("start", "promote", "demote", "stop")

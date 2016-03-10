@@ -1,15 +1,19 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import sys
 import json
 
-import usage
-import utils
-from errors import LibraryError
-import library_pacemaker as lib_pacemaker
+from pcs import (
+    library_pacemaker as lib_pacemaker,
+    usage,
+    utils,
+)
+from pcs.errors import LibraryError
 
 
 def node_cmd(argv):

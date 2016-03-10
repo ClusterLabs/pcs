@@ -1,27 +1,23 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import unittest
-import os.path
-import sys
 
-currentdir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(currentdir))
+from pcs.test.library_test_tools import LibraryAssertionMixin
+from pcs.test.library_test_tools import get_xml_manipulation_creator
+from pcs.test.tools.resources import get_test_resource as rc
 
-import library_acl as lib
-import error_codes
-from errors import ReportItemSeverity as severities
-from library_test_tools import LibraryAssertionMixin
-from library_test_tools import get_xml_manipulation_creator
-
+from pcs import library_acl as lib
+from pcs import error_codes
+from pcs.errors import ReportItemSeverity as severities
 
 class LibraryAclTest(unittest.TestCase, LibraryAssertionMixin):
     def setUp(self):
-        self.create_cib = get_xml_manipulation_creator(
-            os.path.join(currentdir, "empty.xml")
-        )
+        self.create_cib = get_xml_manipulation_creator(rc("empty.xml"))
         self.cib = self.create_cib()
 
     def fixture_add_role(self, role_id):
@@ -208,7 +204,3 @@ class RemovePermissionForReferenceTest(LibraryAclTest):
               </acls>
             ''')
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

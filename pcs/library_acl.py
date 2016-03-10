@@ -1,12 +1,14 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import utils
-from errors import ReportItem
-import error_codes
-from errors import LibraryError
+from pcs import utils
+from pcs import error_codes
+from pcs.errors import LibraryError
+from pcs.errors import ReportItem
 
 class AclRoleNotFound(LibraryError):
     pass

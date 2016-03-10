@@ -1,7 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import sys
 import re
@@ -9,11 +11,13 @@ import glob
 from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
 
-import usage
-import utils
-import resource
-from errors import CmdLineInputError
-from errors import LibraryError
+from pcs import (
+    resource,
+    usage,
+    utils,
+)
+from pcs.errors import CmdLineInputError
+from pcs.errors import LibraryError
 
 def exit_on_cmdline_input_errror(usage_name):
     usage.stonith([usage_name])

@@ -1,7 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import os
 import sys
@@ -21,6 +23,8 @@ import tarfile
 import getpass
 import base64
 import threading
+
+
 try:
     # python2
     from urllib import urlencode as urllib_urlencode
@@ -50,11 +54,13 @@ except ImportError:
         URLError as urllib_URLError
     )
 
-import settings
-import corosync_conf as corosync_conf_utils
-from errors import ReportItemSeverity
-from errors import LibraryError
-from library_status_info import ClusterState
+from pcs import (
+    settings,
+    corosync_conf as corosync_conf_utils,
+)
+from pcs.library_status_info import ClusterState
+from pcs.errors import ReportItemSeverity
+from pcs.errors import LibraryError
 
 
 PYTHON2 = sys.version[0] == "2"

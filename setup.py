@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
-setup(name='pcs',
+setup(
+    name='pcs',
     version='0.9.149',
     description='Pacemaker Configuration System',
     author='Chris Feist',
@@ -10,5 +11,10 @@ setup(name='pcs',
     url='http://github.com/feist/pcs',
     packages=['pcs'],
     package_data={'pcs':['bash_completion.d.pcs','pcs.8']},
-    py_modules=['pcs']
-    )
+    py_modules=['pcs'],
+    entry_points={
+        'console_scripts': [
+            'pcs = pcs.cli:main',
+        ],
+    },
+)

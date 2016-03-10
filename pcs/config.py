@@ -1,7 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import sys
 import os
@@ -26,15 +28,17 @@ try:
 except ImportError:
     no_clufter = True
 
-import settings
-import utils
-import cluster
-import constraint
-import prop
-import resource
-import status
-import stonith
-import usage
+from pcs import (
+    cluster,
+    constraint,
+    prop,
+    resource,
+    settings,
+    status,
+    stonith,
+    usage,
+    utils,
+)
 
 
 def config_cmd(argv):

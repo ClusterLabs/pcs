@@ -1,24 +1,27 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import os.path
-import sys
 import difflib
 import re
 import xml.dom.minidom
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0,parentdir)
 
-import utils
+from pcs.test.tools.resources import get_test_resource as rc
 
+from pcs import utils
 
-pcs_location = "../pcs.py"
+pcs_location = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "pcs"
+)
+temp_cib = rc("temp.xml")
 
 class PcsRunner(object):
-    testfile = 'temp.xml'
-    def __init__(self, testfile='temp.xml'):
+    def __init__(self, testfile=temp_cib):
         self.testfile = testfile
 
 
@@ -34,7 +37,7 @@ def pcs(testfile, args = ""):
     """
     if args == "":
         args = testfile
-        testfile = "temp.xml"
+        testfile = temp_cib
     arg_split = args.split()
     arg_split_temp = []
     in_quote = False
@@ -50,9 +53,11 @@ def pcs(testfile, args = ""):
 
     conf_opts = []
     if "--corosync_conf" not in args:
-        conf_opts.append("--corosync_conf=corosync.conf")
+        corosync_conf = rc("corosync.conf")
+        conf_opts.append("--corosync_conf="+corosync_conf)
     if "--cluster_conf" not in args:
-        conf_opts.append("--cluster_conf=cluster.conf")
+        cluster_conf = rc("cluster.conf")
+        conf_opts.append("--cluster_conf="+cluster_conf)
     return utils.run([pcs_location, "-f", testfile] + conf_opts + arg_split_temp)
 
 # Compare output and print usable diff (diff b a)
