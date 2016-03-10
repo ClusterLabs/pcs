@@ -6,7 +6,6 @@ from __future__ import (
 )
 
 from unittest import TestCase
-import unittest
 from lxml import etree
 
 from pcs.test.library_test_tools import get_xml_manipulation_creator

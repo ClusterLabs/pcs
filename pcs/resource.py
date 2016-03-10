@@ -467,12 +467,12 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
 
     # If we're not using --force, try to change the case of ra_type to match any
     # installed resources
-    if not "--force" in utils.pcs_options:
+    if "--force" not in utils.pcs_options:
         new_ra_type = utils.is_valid_resource(ra_type, True)
         if new_ra_type != True and new_ra_type != False:
             ra_type = new_ra_type
 
-    if not utils.is_valid_resource(ra_type) and not ("--force" in utils.pcs_options):
+    if not utils.is_valid_resource(ra_type) and "--force" not in utils.pcs_options:
         utils.err ("Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type)
 
     if utils.does_id_exist(dom, ra_id):
@@ -556,7 +556,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     primitive_values = get_full_ra_type(ra_type)
     primitive_values.insert(0,("id",ra_id))
     meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
-    if not "--force" in utils.pcs_options and utils.does_resource_have_options(ra_type):
+    if "--force" not in utils.pcs_options and utils.does_resource_have_options(ra_type):
         params = utils.convert_args_to_tuples(ra_values)
         bad_opts, missing_req_opts = utils.validInstanceAttributes(ra_id, params , get_full_ra_type(ra_type, True))
         if len(bad_opts) != 0:
@@ -899,7 +899,7 @@ def resource_update(res_id,args):
         instance_attributes = instance_attributes[0]
 
     params = utils.convert_args_to_tuples(ra_values)
-    if not "--force" in utils.pcs_options and (resource.getAttribute("class") == "ocf" or resource.getAttribute("class") == "stonith"):
+    if "--force" not in utils.pcs_options and (resource.getAttribute("class") == "ocf" or resource.getAttribute("class") == "stonith"):
         resClass = resource.getAttribute("class")
         resProvider = resource.getAttribute("provider")
         resType = resource.getAttribute("type")
@@ -1031,7 +1031,7 @@ def resource_update_clone_master(
     elif clone_type == "master":
         dom, dummy_master_id = resource_master_create(dom, [res_id] + args, True)
 
-    dom = utils.replace_cib_configuration(dom)
+    utils.replace_cib_configuration(dom)
 
     if wait:
         args = ["crm_resource", "--wait"]
@@ -1662,7 +1662,7 @@ def resource_remove(resource_id, output = True):
         group_dom = parseString(group)
         print("Stopping all resources in group: %s..." % resource_id)
         resource_disable([resource_id])
-        if not "--force" in utils.pcs_options and not utils.usefile:
+        if "--force" not in utils.pcs_options and not utils.usefile:
             output, retval = utils.run(["crm_resource", "--wait"])
             if retval != 0 and "unrecognized option '--wait'" in output:
                 output = ""
@@ -1713,7 +1713,7 @@ def resource_remove(resource_id, output = True):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
 
     if (
-        not "--force" in utils.pcs_options
+        "--force" not in utils.pcs_options
         and
         not utils.usefile
         and

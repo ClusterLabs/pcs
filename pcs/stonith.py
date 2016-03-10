@@ -101,7 +101,7 @@ def stonith_list_available(argv):
     for fd in fence_devices_filtered:
         sd = ""
         fd_name = fd[10:]
-        if not "--nodesc" in utils.pcs_options:
+        if "--nodesc" not in utils.pcs_options:
             metadata = utils.get_stonith_metadata(fd)
             if metadata == False:
                 utils.err("no metadata for %s" % fd, False)
@@ -245,7 +245,7 @@ def stonith_level_add(level, node, devices):
     if not re.search(r'^\d+$', level) or re.search(r'^0+$', level):
         utils.err("invalid level '{0}', use a positive integer".format(level))
     level = level.lstrip('0')
-    if not "--force" in utils.pcs_options:
+    if "--force" not in utils.pcs_options:
         for dev in devices.split(","):
             if not utils.is_stonith_resource(dev):
                 utils.err("%s is not a stonith id (use --force to override)" % dev)

@@ -995,7 +995,7 @@ def stop_cluster_nodes(nodes):
         )
 
     stopping_all = set(nodes) >= set(all_nodes)
-    if not "--force" in utils.pcs_options and not stopping_all:
+    if "--force" not in utils.pcs_options and not stopping_all:
         error_list = []
         for node in nodes:
             retval, data = utils.get_remote_quorumtool_output(node)
@@ -1087,7 +1087,7 @@ def stop_cluster(argv):
         stop_cluster_nodes(argv)
         return
 
-    if not "--force" in utils.pcs_options:
+    if "--force" not in utils.pcs_options:
         if utils.is_rhel6():
             output_status, dummy_retval = utils.run(["cman_tool", "status"])
             output_nodes, dummy_retval = utils.run([
@@ -1397,7 +1397,7 @@ def cluster_node(argv):
             utils.err(
                 "node '%s' does not appear to exist in configuration" % node0
             )
-        if not "--force" in utils.pcs_options:
+        if "--force" not in utils.pcs_options:
             retval, data = utils.get_remote_quorumtool_output(node0)
             if retval != 0:
                 utils.err(
