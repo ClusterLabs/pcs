@@ -12,14 +12,14 @@ from pcs.test.library_test_tools import get_xml_manipulation_creator
 from pcs.test.library_test_tools import LibraryAssertionMixin
 from pcs.test.tools.resources import get_test_resource as rc
 
-from pcs.library_status_info import (
+from pcs.lib.pacemaker_state import (
     ClusterState,
     _Attrs,
     _Children,
 )
 
-import pcs.error_codes as error_codes
-from pcs.errors import ReportItemSeverity as severities
+import pcs.lib.error_codes as error_codes
+from pcs.lib.errors import ReportItemSeverity as severities
 
 class AttrsTest(TestCase):
     def test_get_declared_attr(self):

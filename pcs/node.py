@@ -9,11 +9,11 @@ import sys
 import json
 
 from pcs import (
-    library_pacemaker as lib_pacemaker,
     usage,
     utils,
 )
-from pcs.errors import LibraryError
+from pcs.lib.errors import LibraryError
+import pcs.lib.pacemaker as lib_pacemaker
 
 
 def node_cmd(argv):

@@ -11,9 +11,9 @@ from pcs.test.library_test_tools import LibraryAssertionMixin
 from pcs.test.library_test_tools import get_xml_manipulation_creator
 from pcs.test.tools.resources import get_test_resource as rc
 
-from pcs import library_acl as lib
-from pcs import error_codes
-from pcs.errors import ReportItemSeverity as severities
+from pcs.lib.cib import acl as lib
+from pcs.lib import error_codes
+from pcs.lib.errors import ReportItemSeverity as severities
 
 class LibraryAclTest(unittest.TestCase, LibraryAssertionMixin):
     def setUp(self):

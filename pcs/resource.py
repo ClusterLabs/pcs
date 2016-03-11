@@ -18,11 +18,10 @@ from pcs import (
     usage,
     utils,
     constraint,
-    library_acl as lib_acl,
-    library_resource as lib_resource,
 )
-from pcs.errors import CmdLineInputError
-from pcs.errors import LibraryError
+import pcs.lib.cib.acl as lib_acl
+import pcs.lib.pacemaker as lib_pacemaker
+from pcs.lib.errors import LibraryError
 
 
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62
@@ -159,7 +158,7 @@ def resource_cmd(argv):
     elif (sub_cmd == "cleanup"):
         try:
             resource_cleanup(argv)
-        except CmdLineInputError as e:
+        except utils.CmdLineInputError as e:
             exit_on_cmdline_input_errror('cleanup')
         except LibraryError as e:
             utils.process_library_reports(e.args)
@@ -2554,14 +2553,14 @@ def resource_cleanup(argv):
     node = None
 
     if len(argv) > 1:
-        raise CmdLineInputError()
+        raise utils.CmdLineInputError()
     if argv:
         resource = argv[0]
     if "--node" in utils.pcs_options:
         node = utils.pcs_options["--node"]
     force = "--force" in utils.pcs_options
 
-    print(lib_resource.cleanup(resource, node, force))
+    print(lib_pacemaker.resource_cleanup(resource, node, force))
 
 def resource_history(args):
     dom = utils.get_cib_dom()

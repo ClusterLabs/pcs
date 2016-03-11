@@ -13,8 +13,8 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.errors import LibraryError
-from pcs.library_status_info import ClusterState
+from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker_state import ClusterState
 
 def status_cmd(argv):
     if len(argv) == 0:

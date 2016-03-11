@@ -8,9 +8,6 @@ from __future__ import (
 class LibraryError(Exception):
     pass
 
-class CmdLineInputError(Exception):
-    pass
-
 class ReportItemSeverity(object):
     ERROR = 'ERROR'
     WARNING = 'WARNING'

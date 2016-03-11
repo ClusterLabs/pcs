@@ -58,9 +58,8 @@ from pcs import (
     settings,
     corosync_conf as corosync_conf_utils,
 )
-from pcs.library_status_info import ClusterState
-from pcs.errors import ReportItemSeverity
-from pcs.errors import LibraryError
+from pcs.lib.pacemaker_state import ClusterState
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -77,6 +76,9 @@ CIB_BOOLEAN_TRUE = ["true", "on", "yes", "y", "1"]
 CIB_BOOLEAN_FALSE = ["false", "off", "no", "n", "0"]
 
 class UnknownPropertyException(Exception):
+    pass
+
+class CmdLineInputError(Exception):
     pass
 
 def simple_cache(func):

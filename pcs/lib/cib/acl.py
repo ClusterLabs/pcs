@@ -6,9 +6,8 @@ from __future__ import (
 )
 
 from pcs import utils
-from pcs import error_codes
-from pcs.errors import LibraryError
-from pcs.errors import ReportItem
+from pcs.lib import error_codes
+from pcs.lib.errors import LibraryError, ReportItem
 
 class AclRoleNotFound(LibraryError):
     pass

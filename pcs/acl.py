@@ -12,13 +12,12 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.library_acl import (
+from pcs.lib.cib.acl import (
     add_permissions_to_role,
     create_role,
     provide_role,
 )
-from pcs.errors import CmdLineInputError
-from pcs.errors import LibraryError
+from pcs.lib.errors import LibraryError
 
 def exit_on_cmdline_input_errror(usage_name):
     usage.acl([usage_name])
@@ -84,7 +83,7 @@ def acl_role(argv):
     if command == "create":
         try:
             run_create_role(argv)
-        except CmdLineInputError as e:
+        except utils.CmdLineInputError as e:
             exit_on_cmdline_input_errror('role create')
         except LibraryError as e:
             utils.process_library_reports(e.args)
@@ -173,7 +172,7 @@ def acl_permission(argv):
     if command == "add":
         try:
             run_permission_add(argv)
-        except CmdLineInputError as e:
+        except utils.CmdLineInputError as e:
             exit_on_cmdline_input_errror('permission add')
         except LibraryError as e:
             utils.process_library_reports(e.args)
@@ -217,7 +216,7 @@ def print_roles(dom):
 
 def argv_to_permission_info_list(argv):
     if len(argv) % 3 != 0:
-        raise CmdLineInputError()
+        raise utils.CmdLineInputError()
 
     #wrapping by list,
     #because in python3 zip() returns an iterator instead of a list
@@ -234,13 +233,13 @@ def argv_to_permission_info_list(argv):
             or
             scope_type not in ['xpath', 'id']
         ):
-            raise CmdLineInputError()
+            raise utils.CmdLineInputError()
 
     return permission_info_list
 
 def run_create_role(argv):
     if len(argv) < 1:
-        raise CmdLineInputError()
+        raise utils.CmdLineInputError()
     role_id = argv.pop(0)
     description = ""
     desc_key = 'description='
@@ -362,7 +361,7 @@ def run_role_unassign(argv):
 
 def run_permission_add(argv):
     if len(argv) < 4:
-        raise CmdLineInputError()
+        raise utils.CmdLineInputError()
     role_id = argv.pop(0)
     permission_info_list = argv_to_permission_info_list(argv)
 

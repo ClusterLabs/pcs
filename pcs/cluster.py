@@ -25,8 +25,6 @@ except ImportError:
 from pcs import (
     constraint,
     corosync_conf as corosync_conf_utils,
-    error_codes,
-    library_pacemaker as lib_pacemaker,
     node,
     pcsd,
     prop,
@@ -37,9 +35,12 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.errors import ReportItem
-from pcs.errors import LibraryError
 from pcs.utils import parallel_for_nodes
+from pcs.lib import (
+    error_codes,
+    pacemaker as lib_pacemaker,
+)
+from pcs.lib.errors import ReportItem, LibraryError
 
 def cluster_cmd(argv):
     if len(argv) == 0:

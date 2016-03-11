@@ -12,10 +12,9 @@ from __future__ import (
 
 from lxml import etree
 
-from pcs import error_codes
 from pcs import settings
-from pcs.errors import LibraryError
-from pcs.errors import ReportItem
+from pcs.lib import error_codes
+from pcs.lib.errors import LibraryError, ReportItem
 
 #DUPLICITY WITH UTILS (hope temporary)
 def _is_cib_true(var):

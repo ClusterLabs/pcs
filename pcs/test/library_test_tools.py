@@ -9,7 +9,7 @@ import xml.dom.minidom
 from lxml.doctestcompare import LXMLOutputChecker
 from doctest import Example
 
-from pcs.errors import LibraryError
+from pcs.lib.errors import LibraryError
 
 class LibraryAssertionMixin(object):
     def __find_report_info(self, report_info_list, report_item):
