@@ -17,7 +17,7 @@ from pcs.lib.errors import ReportItemSeverity as severities
 
 class LibraryAclTest(unittest.TestCase, LibraryAssertionMixin):
     def setUp(self):
-        self.create_cib = get_xml_manipulation_creator(rc("empty.xml"))
+        self.create_cib = get_xml_manipulation_creator(rc("cib-empty.xml"))
         self.cib = self.create_cib()
 
     def fixture_add_role(self, role_id):

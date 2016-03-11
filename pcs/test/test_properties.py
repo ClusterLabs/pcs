@@ -13,8 +13,8 @@ from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs import utils
 
-empty_cib = rc("empty.xml")
-temp_cib = rc("temp.xml")
+empty_cib = rc("cib-empty.xml")
+temp_cib = rc("temp-cib.xml")
 
 class PropertyTest(unittest.TestCase):
     def setUp(self):

@@ -21,19 +21,15 @@ from pcs.test.tools.resources import get_test_resource as rc
 from pcs import utils
 from pcs import resource
 
-empty_cib = rc("empty.xml")
-temp_cib = rc("temp.xml")
-large_cib = rc("large.xml")
-temp_large_cib  = rc("temp-large.xml")
+empty_cib = rc("cib-empty.xml")
+temp_cib = rc("temp-cib.xml")
+large_cib = rc("cib-large.xml")
+temp_large_cib  = rc("temp-cib-large.xml")
 
 class ResourceTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy(large_cib, temp_large_cib)
-        shutil.copy(
-            rc("corosync.conf.orig"),
-            rc("corosync.conf")
-        )
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self,temp_cib):
@@ -3880,15 +3876,6 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"Error: ClusterIP5 is already a master/slave resource\n")
         assert r == 1
 
-#    def testMasterLargeFile(self):
-#        o,r = pcs("largefile.xml","resource")
-#        ac(o,"")
-#        assert r == 0
-
-#        o,r = pcs("largefile.xml","resource master lxc-ms-master-4")
-#        ac(o,"")
-#        assert r == 0
-
     def groupMSAndClone(self):
         o,r = pcs("resource create --no-default-ops D1 Dummy --clone")
         ac(o,"")
@@ -4422,7 +4409,7 @@ Error: Value of utilization attribute must be integer: 'test=int'
 
 class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc('empty-1.2.xml'), temp_cib)
+        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_remove_referenced_primitive_resource(self):

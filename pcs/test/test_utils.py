@@ -22,9 +22,9 @@ from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs import utils
 
-cib_with_nodes =  rc("empty-withnodes.xml")
-empty_cib = rc("empty.xml")
-temp_cib = rc("temp.xml")
+cib_with_nodes = rc("cib-empty-withnodes.xml")
+empty_cib = rc("cib-empty.xml")
+temp_cib = rc("temp-cib.xml")
 
 unittest.TestCase.maxDiff = None
 

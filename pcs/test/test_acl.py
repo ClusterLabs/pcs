@@ -16,28 +16,25 @@ from pcs.test.pcs_test_functions import (
 )
 from pcs.test.tools.resources import get_test_resource as rc
 
-old_cib = rc("empty.xml")
-empty_cib = rc("empty-1.2.xml")
-temp_cib = rc("temp.xml")
+old_cib = rc("cib-empty.xml")
+empty_cib = rc("cib-empty-1.2.xml")
+temp_cib = rc("temp-cib.xml")
 
 class ACLTest(unittest.TestCase, AssertPcsMixin):
     pcs_runner = None
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
-        shutil.copy(rc("corosync.conf.orig"), rc("corosync.conf"))
         self.pcs_runner = PcsRunner(temp_cib)
 
     def testAutoUpgradeofCIB(self):
-        old_temp_cib = temp_cib + "-old"
-        shutil.copy(old_cib, old_temp_cib)
-        self.pcs_runner.testfile = old_temp_cib
+        shutil.copy(old_cib, temp_cib)
 
         self.assert_pcs_success(
             'acl show',
             "ACLs are disabled, run 'pcs acl enable' to enable\n\n"
         )
 
-        with open(old_temp_cib) as myfile:
+        with open(temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") != -1
             assert data.find("pacemaker-2.") == -1
@@ -47,7 +44,7 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
             "Cluster CIB has been upgraded to latest version\n"
         )
 
-        with open(old_temp_cib) as myfile:
+        with open(temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") == -1
             assert data.find("pacemaker-2.") != -1

@@ -17,11 +17,10 @@ from pcs.test.pcs_test_functions import (
 from pcs.test.tools.resources import get_test_resource as rc
 
 
-empty_cib = rc("empty.xml")
-empty_cib_1_2 = rc("empty-1.2.xml")
-temp_cib = rc("temp.xml")
-large_cib = rc("large.xml")
-temp_large_cib = rc("temp-large.xml")
+empty_cib = rc("cib-empty.xml")
+empty_cib_1_2 = rc("cib-empty-1.2.xml")
+temp_cib = rc("temp-cib.xml")
+large_cib = rc("cib-large.xml")
 
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
@@ -1646,45 +1645,45 @@ Colocation Constraints:
         assert r == 0
 
     def testManyConstraints(self):
-        shutil.copy(large_cib, temp_large_cib)
+        shutil.copy(large_cib, temp_cib)
 
-        output, returnVal = pcs(temp_large_cib, "constraint location dummy prefers rh7-1")
+        output, returnVal = pcs(temp_cib, "constraint location dummy prefers rh7-1")
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint location show resources dummy --full")
+        output, returnVal = pcs(temp_cib, "constraint location show resources dummy --full")
         ac(output, "Location Constraints:\n  Resource: dummy\n    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)\n")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint location remove location-dummy-rh7-1-INFINITY")
+        output, returnVal = pcs(temp_cib, "constraint location remove location-dummy-rh7-1-INFINITY")
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint colocation add dummy1 with dummy2")
+        output, returnVal = pcs(temp_cib, "constraint colocation add dummy1 with dummy2")
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint colocation remove dummy1 dummy2")
+        output, returnVal = pcs(temp_cib, "constraint colocation remove dummy1 dummy2")
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint order dummy1 then dummy2")
+        output, returnVal = pcs(temp_cib, "constraint order dummy1 then dummy2")
         ac(output, "Adding dummy1 dummy2 (kind: Mandatory) (Options: first-action=start then-action=start)\n")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint order remove dummy1")
+        output, returnVal = pcs(temp_cib, "constraint order remove dummy1")
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint location dummy prefers rh7-1")
+        output, returnVal = pcs(temp_cib, "constraint location dummy prefers rh7-1")
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint location show resources dummy --full")
+        output, returnVal = pcs(temp_cib, "constraint location show resources dummy --full")
         ac(output, "Location Constraints:\n  Resource: dummy\n    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)\n")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "constraint remove location-dummy-rh7-1-INFINITY")
+        output, returnVal = pcs(temp_cib, "constraint remove location-dummy-rh7-1-INFINITY")
         ac(output, "")
         assert returnVal == 0
 

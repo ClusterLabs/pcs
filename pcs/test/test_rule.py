@@ -13,8 +13,8 @@ from pcs import rule
 from pcs_test_functions import pcs, ac
 from pcs.test.tools.resources import get_test_resource as rc
 
-empty_cib = rc("empty.xml")
-temp_cib = rc("temp.xml")
+empty_cib = rc("cib-empty.xml")
+temp_cib = rc("temp-cib.xml")
 
 class DateValueTest(unittest.TestCase):
 

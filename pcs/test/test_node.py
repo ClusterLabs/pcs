@@ -11,8 +11,8 @@ import unittest
 from pcs.test.tools.resources import get_test_resource as rc
 from pcs.test.pcs_test_functions import pcs, ac
 
-empty_cib = rc("empty-withnodes.xml")
-temp_cib = rc("temp.xml")
+empty_cib = rc("cib-empty-withnodes.xml")
+temp_cib = rc("temp-cib.xml")
 
 class NodeTest(unittest.TestCase):
     def setUp(self):

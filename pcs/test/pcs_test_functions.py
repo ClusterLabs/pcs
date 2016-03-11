@@ -18,7 +18,7 @@ pcs_location = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "pcs"
 )
-temp_cib = rc("temp.xml")
+temp_cib = rc("temp-cib.xml")
 
 class PcsRunner(object):
     def __init__(self, testfile=temp_cib):

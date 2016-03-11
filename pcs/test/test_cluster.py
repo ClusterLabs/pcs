@@ -20,10 +20,10 @@ from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs import utils
 
-empty_cib = rc("empty-withnodes.xml")
-temp_cib = rc("temp.xml")
-cluster_conf_tmp = rc("cluster.conf.tmp")
+empty_cib = rc("cib-empty-withnodes.xml")
+temp_cib = rc("temp-cib.xml")
 cluster_conf_file = rc("cluster.conf")
+cluster_conf_tmp = rc("cluster.conf.tmp")
 corosync_conf_tmp = rc("corosync.conf.tmp")
 
 class ClusterTest(unittest.TestCase, AssertPcsMixin):
