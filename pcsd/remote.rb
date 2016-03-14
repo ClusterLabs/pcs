@@ -69,12 +69,8 @@ def remote(params, request, auth_user)
       :resource_start => method(:resource_start),
       :resource_stop => method(:resource_stop),
       :resource_cleanup => method(:resource_cleanup),
-      :resource_form => method(:resource_form),
-      :fence_device_form => method(:fence_device_form),
       :update_resource => method(:update_resource),
       :update_fence_device => method(:update_fence_device),
-      :resource_metadata => method(:resource_metadata),
-      :fence_device_metadata => method(:fence_device_metadata),
       :get_avail_resource_agents => method(:get_avail_resource_agents),
       :get_avail_fence_agents => method(:get_avail_fence_agents),
       :remove_resource => method(:remove_resource),
@@ -1363,56 +1359,6 @@ def resource_start(params, request, auth_user)
   end
 end
 
-def resource_form(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-
-  cib_dom = get_cib_dom(auth_user)
-  @cur_resource = get_resource_by_id(params[:resource], cib_dom)
-  @groups = get_resource_groups(cib_dom)
-  @version = params[:version]
-
-  if @cur_resource.instance_of?(ClusterEntity::Primitive) and !@cur_resource.stonith
-    @cur_resource_group = @cur_resource.get_group
-    @cur_resource_clone = @cur_resource.get_clone
-    @cur_resource_ms = @cur_resource.get_master
-    @resource = ResourceAgent.new(@cur_resource.agentname)
-    if @cur_resource.provider == 'heartbeat'
-      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(auth_user, HEARTBEAT_AGENTS_DIR + @cur_resource.type)
-    elsif @cur_resource.provider == 'pacemaker'
-      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(auth_user, PACEMAKER_AGENTS_DIR + @cur_resource.type)
-    elsif @cur_resource._class == 'nagios'
-      @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(auth_user, NAGIOS_METADATA_DIR + @cur_resource.type + '.xml')
-    end
-    @existing_resource = true
-    if @resource
-      erb :resourceagentform
-    else
-      "Can't find resource"
-    end
-  else
-    "Resource #{params[:resource]} doesn't exist"
-  end
-end
-
-def fence_device_form(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-
-  @cur_resource = get_resource_by_id(params[:resource], get_cib_dom(auth_user))
-
-  if @cur_resource.instance_of?(ClusterEntity::Primitive) and @cur_resource.stonith
-    @resource_agents = getFenceAgents(auth_user, @cur_resource.agentname)
-    @existing_resource = true
-    @fenceagent = @resource_agents[@cur_resource.type]
-    erb :fenceagentform
-  else
-    "Can't find fence device"
-  end
-end
-
 # Creates resource if params[:resource_id] is not set
 def update_resource (params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
@@ -1540,42 +1486,8 @@ def get_avail_fence_agents(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
-  agents = getFenceAgents(auth_user)
+  agents = getFenceAgents()
   return JSON.generate(agents)
-end
-
-def resource_metadata(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  return 200 if not params[:resourcename] or params[:resourcename] == ""
-  resource_name = params[:resourcename][params[:resourcename].rindex(':')+1..-1]
-  class_provider = params[:resourcename][0,params[:resourcename].rindex(':')]
-
-  @resource = ResourceAgent.new(params[:resourcename])
-  if class_provider == "ocf:heartbeat"
-    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(auth_user, HEARTBEAT_AGENTS_DIR + resource_name)
-  elsif class_provider == "ocf:pacemaker"
-    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(auth_user, PACEMAKER_AGENTS_DIR + resource_name)
-  elsif class_provider == 'nagios'
-    @resource.required_options, @resource.optional_options, @resource.info = getResourceMetadata(auth_user, NAGIOS_METADATA_DIR + resource_name + '.xml')
-  end
-  @new_resource = params[:new]
-  @resources, @groups = getResourcesGroups(auth_user)
-
-  erb :resourceagentform
-end
-
-def fence_device_metadata(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  return 200 if not params[:resourcename] or params[:resourcename] == ""
-  @fenceagent = FenceAgent.new(params[:resourcename])
-  @fenceagent.required_options, @fenceagent.optional_options, @fenceagent.advanced_options, @fenceagent.info = getFenceAgentMetadata(auth_user, params[:resourcename])
-  @new_fenceagent = params[:new]
-  
-  erb :fenceagentform
 end
 
 def remove_resource(params, request, auth_user)
