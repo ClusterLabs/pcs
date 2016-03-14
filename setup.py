@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='pcs',
@@ -9,7 +9,7 @@ setup(
     author='Chris Feist',
     author_email='cfeist@redhat.com',
     url='http://github.com/feist/pcs',
-    packages=['pcs', 'pcs.lib', 'pcs.lib.cib'],
+    packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]),
     package_data={'pcs':['bash_completion.d.pcs','pcs.8']},
     entry_points={
         'console_scripts': [
