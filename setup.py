@@ -9,9 +9,8 @@ setup(
     author='Chris Feist',
     author_email='cfeist@redhat.com',
     url='http://github.com/feist/pcs',
-    packages=['pcs'],
+    packages=['pcs', 'pcs.lib', 'pcs.lib.cib'],
     package_data={'pcs':['bash_completion.d.pcs','pcs.8']},
-    py_modules=['pcs'],
     entry_points={
         'console_scripts': [
             'pcs = pcs.cli:main',
