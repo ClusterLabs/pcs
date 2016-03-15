@@ -5,6 +5,8 @@ from __future__ import (
     unicode_literals,
 )
 
+from lxml import etree
+
 from pcs import utils
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
@@ -26,6 +28,66 @@ def get_cluster_status_xml():
     if retval != 0:
         raise PacemakerNotRunningException()
     return output
+
+def get_cib_xml(scope=None):
+    command = ["cibadmin", "--local", "--query"]
+    if scope:
+        command.append("--scope={0}".format(scope))
+    output, retval = utils.run(command)
+    if retval != 0:
+        if retval == 6 and scope:
+            raise LibraryError(ReportItem.error(
+                error_codes.CIB_LOAD_ERROR_BAD_SCOPE,
+                "unable to get cib, scope '{scope}' not present in cib",
+                info={
+                    "scope": scope,
+                    "external_exitcode": retval,
+                    "external_output": output,
+                }
+            ))
+        else:
+            raise LibraryError(ReportItem.error(
+                error_codes.CIB_LOAD_ERROR,
+                "unable to get cib",
+                info={
+                    "external_exitcode": retval,
+                    "external_output": output,
+                }
+            ))
+    return output
+
+def get_cib(xml):
+    try:
+        return etree.fromstring(xml)
+    except (etree.XMLSyntaxError, etree.DocumentInvalid):
+        raise LibraryError(ReportItem.error(
+            error_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+            "unable to get cib"
+        ))
+
+def replace_cib_configuration(tree):
+    #etree returns bytes: b'xml'
+    #python 3 removed .encode() from bytes
+    #run(...) calls subprocess.Popen.communicate which calls encode...
+    #so here is bytes to str conversion
+    xml = etree.tostring(tree).decode()
+    output, retval = utils.run(
+        [
+            "cibadmin",
+            "--replace", "--scope", "configuration", "--verbose", "--xml-pipe"
+        ],
+        False,
+        xml
+    )
+    if retval != 0:
+        raise LibraryError(ReportItem.error(
+            error_codes.CIB_PUSH_ERROR,
+            "Unable to update cib\n{external_output}",
+            info={
+                "external_exitcode": retval,
+                "external_output": output,
+            }
+        ))
 
 def get_local_node_status():
     try:
@@ -78,18 +140,18 @@ def resource_cleanup(resource, node, force):
 
     if retval != 0:
         if resource is not None:
-            text = "Unable to cleanup resource: {resource}\n{crm_output}"
+            text = "Unable to cleanup resource: {resource}\n{external_output}"
         else:
             text = (
                 "Unexpected error occured. 'crm_resource -C' err_code: "
-                + "{crm_exitcode}\n{crm_output}"
+                + "{external_exitcode}\n{external_output}"
             )
         raise LibraryError(ReportItem.error(
             error_codes.RESOURCE_CLEANUP_ERROR,
             text,
             info={
-                "crm_exitcode": retval,
-                "crm_output": output,
+                "external_exitcode": retval,
+                "external_output": output,
                 "resource": resource,
                 "node": node,
             }

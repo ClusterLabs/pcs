@@ -60,6 +60,7 @@ from pcs import (
 )
 from pcs.lib.pacemaker_state import ClusterState
 from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.pacemaker_values import validate_id as lib_validate_id
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -1619,6 +1620,7 @@ def is_valid_cib_scope(scope):
     ]
 
 # Checks to see if id exists in the xml dom passed
+# DEPRECATED use lxml version available in pcs.lib.cib.tools
 def does_id_exist(dom, check_id):
     if is_etree(dom):
         for elem in dom.findall(str(".//*")):
@@ -1633,6 +1635,7 @@ def does_id_exist(dom, check_id):
 
 # Returns check_id if it doesn't exist in the dom, otherwise it adds an integer
 # to the end of the id and increments it until a unique id is found
+# DEPRECATED use lxml version available in pcs.lib.cib.tools
 def find_unique_id(dom, check_id):
     counter = 1
     temp_id = check_id
@@ -2056,26 +2059,10 @@ def is_score(var):
     return score_regexp.match(var) is not None
 
 def validate_xml_id(var, description="id"):
-    # see NCName definition
-    # http://www.w3.org/TR/REC-xml-names/#NT-NCName
-    # http://www.w3.org/TR/REC-xml/#NT-Name
-    if len(var) < 1:
-        return False, "%s cannot be empty" % description
-    first_char_re = re.compile("[a-zA-Z_]")
-    if not first_char_re.match(var[0]):
-        return (
-            False,
-            "invalid %s '%s', '%s' is not a valid first character for a %s"
-                % (description, var, var[0], description)
-        )
-    char_re = re.compile("[a-zA-Z0-9_.-]")
-    for char in var[1:]:
-        if not char_re.match(char):
-            return (
-                False,
-                "invalid %s '%s', '%s' is not a valid character for a %s"
-                    % (description, var, char, description)
-            )
+    try:
+        lib_validate_id(var, description)
+    except LibraryError as e:
+        return False, e.args[0].message
     return True, ""
 
 def is_iso8601_date(var):
@@ -2693,6 +2680,7 @@ def get_cluster_property_from_xml(etree_el):
         property["longdesc"] = ""
     return property
 
+# DEPRECATED use lxml version available in pcs.lib.cib.tools
 def get_acls(dom):
     acls = dom.getElementsByTagName("acls")
     if len(acls) == 0:

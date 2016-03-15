@@ -1842,7 +1842,7 @@ def remove_resource_references(
         resource_id, output, constraints_element, dom
     )
     stonith_level_rm_device(dom, resource_id)
-    lib_acl.remove_permissions_referencing(dom, resource_id)
+    lib_acl.dom_remove_permissions_referencing(dom, resource_id)
     return dom
 
 # This removes a resource from a group, but keeps it in the config

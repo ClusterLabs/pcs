@@ -12,6 +12,7 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.lib.pacemaker import get_cib_xml, get_cib, replace_cib_configuration
 from pcs.lib.cib.acl import (
     add_permissions_to_role,
     create_role,
@@ -247,10 +248,10 @@ def run_create_role(argv):
         description = argv.pop(0)[len(desc_key):]
     permission_info_list = argv_to_permission_info_list(argv)
 
-    dom = utils.get_cib_dom()
-    create_role(dom, role_id, description)
-    add_permissions_to_role(dom, role_id, permission_info_list)
-    utils.replace_cib_configuration(dom)
+    cib = get_cib(get_cib_xml())
+    create_role(cib, role_id, description)
+    add_permissions_to_role(cib, role_id, permission_info_list)
+    replace_cib_configuration(cib)
 
 def run_role_delete(argv):
     if len(argv) < 1:
@@ -365,10 +366,10 @@ def run_permission_add(argv):
     role_id = argv.pop(0)
     permission_info_list = argv_to_permission_info_list(argv)
 
-    dom = utils.get_cib_dom()
-    provide_role(dom, role_id)
-    add_permissions_to_role(dom, role_id, permission_info_list)
-    utils.replace_cib_configuration(dom)
+    cib = get_cib(get_cib_xml())
+    provide_role(cib, role_id)
+    add_permissions_to_role(cib, role_id, permission_info_list)
+    replace_cib_configuration(cib)
 
 def run_permission_delete(argv):
     dom = utils.get_cib_dom()

@@ -75,7 +75,7 @@ class TestBase(TestCase):
 
 class ClusterStatusTest(TestBase, LibraryAssertionMixin):
     def test_minimal_crm_mon_is_valid(self):
-        ClusterState(self.covered_status.dom.toxml())
+        ClusterState(str(self.covered_status))
 
     def test_refuse_invalid_xml(self):
         self.assert_raise_library_error(
@@ -90,7 +90,7 @@ class ClusterStatusTest(TestBase, LibraryAssertionMixin):
         )
 
         self.assert_raise_library_error(
-            lambda: ClusterState(self.covered_status.dom.toxml()),
+            lambda: ClusterState(str(self.covered_status)),
             (severities.ERROR, error_codes.BAD_CLUSTER_STATE_FORMAT, {})
         )
 
@@ -121,7 +121,7 @@ class WorkWithClusterStatusNodesTest(TestBase):
             self.fixture_node_string(name='node1', id='1'),
             self.fixture_node_string(name='node2', id='2'),
         )
-        xml = self.covered_status.dom.toxml()
+        xml = str(self.covered_status)
         self.assertEqual(
             ['node1', 'node2'],
             [node.attrs.name for node in ClusterState(xml).node_section.nodes]
@@ -133,7 +133,7 @@ class WorkWithClusterStatusNodesTest(TestBase):
             self.fixture_node_string(name='node1', id='1'),
             self.fixture_node_string(name='node2', type='remote', id='2'),
         )
-        xml = self.covered_status.dom.toxml()
+        xml = str(self.covered_status)
         self.assertEqual(
             ['node1'],
             [
@@ -146,9 +146,9 @@ class WorkWithClusterStatusNodesTest(TestBase):
 
 class WorkWithClusterStatusSummaryTest(TestBase):
     def test_nodes_count(self):
-        xml = self.covered_status.dom.toxml()
+        xml = str(self.covered_status)
         self.assertEqual(0, ClusterState(xml).summary.nodes.attrs.count)
 
     def test_resources_count(self):
-        xml = self.covered_status.dom.toxml()
+        xml = str(self.covered_status)
         self.assertEqual(0, ClusterState(xml).summary.resources.attrs.count)

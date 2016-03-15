@@ -5,8 +5,8 @@ from __future__ import (
     unicode_literals,
 )
 
-import xml.dom.minidom
 from lxml.doctestcompare import LXMLOutputChecker
+from lxml import etree
 from doctest import Example
 
 from pcs.lib.errors import LibraryError
@@ -61,8 +61,8 @@ class LibraryAssertionMixin(object):
 
     def assert_xml_equal(self, expected_cib, got_cib=None):
         got_cib = got_cib if got_cib else self.cib
-        got_xml = got_cib.dom.toxml()
-        expected_xml = expected_cib.dom.toxml()
+        got_xml = str(got_cib)
+        expected_xml = str(expected_cib)
 
         checker = LXMLOutputChecker()
         if checker.check_output(expected_xml, got_xml, 0):
@@ -76,19 +76,24 @@ class LibraryAssertionMixin(object):
 
 class XmlManipulation(object):
     def __init__(self, file_name):
-        self.dom = xml.dom.minidom.parse(file_name)
+        self.tree = etree.parse(file_name)
 
     def __append_to_child(self, element, xml_string):
-        element.appendChild(
-            xml.dom.minidom.parseString(xml_string).firstChild
-        )
+        element.append(etree.fromstring(xml_string))
 
     def append_to_first_tag_name(self, tag_name, *xml_string_list):
         for xml_string in xml_string_list:
             self.__append_to_child(
-                self.dom.getElementsByTagName(tag_name)[0], xml_string
+                self.tree.find(".//{0}".format(tag_name)), xml_string
             )
         return self
+
+    def __str__(self):
+        #etree returns string in bytes: b'xml'
+        #python 3 removed .encode() from byte strings
+        #run(...) calls subprocess.Popen.communicate which calls encode...
+        #so there is bytes to str conversion
+        return etree.tostring(self.tree).decode()
 
 def get_xml_manipulation_creator(file_name):
     def create_xml_manipulation():

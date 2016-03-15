@@ -29,7 +29,7 @@ class LibraryAclTest(unittest.TestCase, LibraryAssertionMixin):
 class CreateRoleTest(LibraryAclTest):
     def test_create_for_new_role_id(self):
         role_id = 'new-id'
-        lib.create_role(self.cib.dom, role_id)
+        lib.create_role(self.cib.tree, role_id)
 
         self.assert_xml_equal(
             self.create_cib().append_to_first_tag_name(
@@ -40,10 +40,10 @@ class CreateRoleTest(LibraryAclTest):
 
     def test_refuse_invalid_id(self):
         self.assert_raise_library_error(
-            lambda: lib.create_role(self.cib.dom, '#invalid'),
+            lambda: lib.create_role(self.cib.tree, '#invalid'),
             (
                 severities.ERROR,
-                error_codes.ID_IS_NOT_VALID,
+                error_codes.INVALID_ID,
                 {'id': '#invalid'},
             ),
         )
@@ -52,7 +52,7 @@ class CreateRoleTest(LibraryAclTest):
         role_id = 'role1'
         self.fixture_add_role(role_id)
         self.assert_raise_library_error(
-            lambda: lib.create_role(self.cib.dom, role_id),
+            lambda: lib.create_role(self.cib.tree, role_id),
             (
                 severities.ERROR,
                 error_codes.ACL_ROLE_ALREADY_EXISTS,
@@ -67,7 +67,7 @@ class CreateRoleTest(LibraryAclTest):
         )
 
         self.assert_raise_library_error(
-            lambda: lib.create_role(self.cib.dom, 'node-id'),
+            lambda: lib.create_role(self.cib.tree, 'node-id'),
             (
                 severities.ERROR,
                 error_codes.ID_ALREADY_EXISTS,
@@ -81,7 +81,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
         self.fixture_add_role(role_id)
 
         lib.add_permissions_to_role(
-            self.cib.dom, role_id, [('read', 'xpath', '/whatever')]
+            self.cib.tree, role_id, [('read', 'xpath', '/whatever')]
         )
 
         self.assert_xml_equal(
@@ -99,7 +99,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
         role_id = 'role1'
         self.assert_raise_library_error(
             lambda: lib.add_permissions_to_role(
-                self.cib.dom, role_id, [('read', 'xpath', '/whatever')]
+                self.cib.tree, role_id, [('read', 'xpath', '/whatever')]
             ),
             (
                 severities.ERROR,
@@ -114,7 +114,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
 
         self.assert_raise_library_error(
             lambda: lib.add_permissions_to_role(
-                self.cib.dom, role_id, [('readX', 'xpathX', '/whatever')]
+                self.cib.tree, role_id, [('readX', 'xpathX', '/whatever')]
             ),
             (
                 severities.ERROR,
@@ -134,7 +134,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
 
         self.assert_raise_library_error(
             lambda: lib.add_permissions_to_role(
-                self.cib.dom, role_id, [('read', 'id', 'non-existent')]
+                self.cib.tree, role_id, [('read', 'id', 'non-existent')]
             ),
             (
                 severities.ERROR,
@@ -146,7 +146,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
 class ProvideRoleTest(LibraryAclTest):
     def test_add_role_for_nonexisting_id(self):
         role_id = 'new-id'
-        lib.provide_role(self.cib.dom, role_id)
+        lib.provide_role(self.cib.tree, role_id)
 
         self.assert_xml_equal(
             self.create_cib().append_to_first_tag_name('configuration', '''
@@ -160,7 +160,7 @@ class ProvideRoleTest(LibraryAclTest):
         self.fixture_add_role('role1')
 
         role_id = 'role1'
-        lib.provide_role(self.cib.dom, role_id)
+        lib.provide_role(self.cib.tree, role_id)
 
         self.assert_xml_equal(
             self.create_cib().append_to_first_tag_name('configuration', '''
@@ -172,7 +172,7 @@ class ProvideRoleTest(LibraryAclTest):
 
 class RemovePermissionForReferenceTest(LibraryAclTest):
     def test_has_no_efect_when_id_not_referenced(self):
-        lib.remove_permissions_referencing(self.cib.dom, 'dummy')
+        lib.remove_permissions_referencing(self.cib.tree, 'dummy')
         self.assert_xml_equal(self.create_cib())
 
     def test_remove_all_references(self):
@@ -188,7 +188,7 @@ class RemovePermissionForReferenceTest(LibraryAclTest):
             </acls>
         ''')
 
-        lib.remove_permissions_referencing(self.cib.dom, 'dummy')
+        lib.remove_permissions_referencing(self.cib.tree, 'dummy')
 
         self.assert_xml_equal(
             self.create_cib().append_to_first_tag_name('configuration', '''
