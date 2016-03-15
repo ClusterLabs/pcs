@@ -73,7 +73,7 @@ ifndef install_settings
 endif
 
 install: bash_completion
-	python setup.py install --prefix ${DESTDIR}${PREFIX} ${EXTRA_SETUP_OPTS}
+	python setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	mv ${DESTDIR}${PREFIX}/bin/pcs ${DESTDIR}${PREFIX}/sbin/pcs
 	install -D pcs/bash_completion.d.pcs ${DESTDIR}/etc/bash_completion.d/pcs
