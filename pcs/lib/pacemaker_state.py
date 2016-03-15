@@ -10,6 +10,8 @@ from __future__ import (
     unicode_literals,
 )
 
+import os.path
+
 from lxml import etree
 
 from pcs import settings
@@ -137,7 +139,8 @@ class _NodeSection(_Element):
 def _get_valid_cluster_state_dom(xml):
     try:
         dom = etree.fromstring(xml)
-        etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
+        if os.path.isfile(settings.crm_mon_schema):
+            etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
         return dom
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
         raise LibraryError(ReportItem.error(
