@@ -11,6 +11,26 @@ from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
 
 
+__BOOLEAN_TRUE = ["true", "on", "yes", "y", "1"]
+__BOOLEAN_FALSE = ["false", "off", "no", "n", "0"]
+
+
+def is_true(val):
+    """
+    Does pacemaker consider a value to be true?
+    See crm_is_true in pacemaker/lib/common/utils.c
+    var checked value
+    """
+    return val.lower() in __BOOLEAN_TRUE
+
+def is_boolean(val):
+    """
+    Does pacemaker consider a value to be a boolean?
+    See crm_is_true in pacemaker/lib/common/utils.c
+    val checked value
+    """
+    return val.lower() in __BOOLEAN_TRUE + __BOOLEAN_FALSE
+
 def validate_id(id_candidate, description="id"):
     """
     Validate a pacemaker id, raise LibraryError on invalid id.

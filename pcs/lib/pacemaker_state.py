@@ -17,10 +17,7 @@ from lxml import etree
 from pcs import settings
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
-
-#DUPLICITY WITH UTILS (hope temporary)
-def _is_cib_true(var):
-    return var.lower() in ["true", "on", "yes", "y", "1"]
+from pcs.lib.pacemaker_values import is_true
 
 class _Attrs(object):
     def __init__(self, owner_name, attrib, required_attrs):
@@ -119,15 +116,15 @@ class _Node(_Element):
         'id': 'id',
         'name': 'name',
         'type': 'type',
-        'online': ('online', _is_cib_true),
-        'standby': ('standby', _is_cib_true),
-        'standby_onfail': ('standby_onfail', _is_cib_true),
-        'maintenance': ('maintenance', _is_cib_true),
-        'pending': ('pending', _is_cib_true),
-        'unclean': ('unclean', _is_cib_true),
-        'shutdown': ('shutdown', _is_cib_true),
-        'expected_up': ('expected_up', _is_cib_true),
-        'is_dc': ('is_dc', _is_cib_true),
+        'online': ('online', is_true),
+        'standby': ('standby', is_true),
+        'standby_onfail': ('standby_onfail', is_true),
+        'maintenance': ('maintenance', is_true),
+        'pending': ('pending', is_true),
+        'unclean': ('unclean', is_true),
+        'shutdown': ('shutdown', is_true),
+        'expected_up': ('expected_up', is_true),
+        'is_dc': ('is_dc', is_true),
         'resources_running': ('resources_running', int),
     }
 

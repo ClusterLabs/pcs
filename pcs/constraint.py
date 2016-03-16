@@ -15,6 +15,7 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.lib.pacemaker_values import is_true
 
 
 OPTIONS_ACTION = ("start", "promote", "demote", "stop")
@@ -393,7 +394,7 @@ def order_el_to_string(ord_loc, showDetail=False):
     if (
         ord_loc.getAttribute("symmetrical")
         and
-        not utils.is_cib_true(ord_loc.getAttribute("symmetrical"))
+        not is_true(ord_loc.getAttribute("symmetrical"))
     ):
         oc_sym = "(non-symmetrical)"
     if oc_kind != "":

@@ -13,6 +13,7 @@ from pcs import (
     utils,
 )
 from pcs.lib.pacemaker import get_cib_xml, get_cib, replace_cib_configuration
+from pcs.lib.pacemaker_values import is_true
 from pcs.lib.cib.acl import (
     add_permissions_to_role,
     create_role,
@@ -59,7 +60,7 @@ def acl_show(argv):
 
     properties = prop.get_set_properties(defaults=prop.get_default_properties())
     acl_enabled = properties.get("enable-acl", "").lower()
-    if utils.is_cib_true(acl_enabled):
+    if is_true(acl_enabled):
         print("ACLs are enabled")
     else:
         print("ACLs are disabled, run 'pcs acl enable' to enable")

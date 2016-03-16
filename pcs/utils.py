@@ -60,7 +60,7 @@ from pcs import (
 )
 from pcs.lib.pacemaker_state import ClusterState
 from pcs.lib.errors import LibraryError, ReportItemSeverity
-from pcs.lib.pacemaker_values import validate_id as lib_validate_id
+from pcs.lib.pacemaker_values import validate_id, is_boolean
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -72,9 +72,6 @@ pcs_options = {}
 fence_bin = settings.fence_agent_binaries
 
 score_regexp = re.compile(r'^[+-]?((INFINITY)|(\d+))$')
-
-CIB_BOOLEAN_TRUE = ["true", "on", "yes", "y", "1"]
-CIB_BOOLEAN_FALSE = ["false", "off", "no", "n", "0"]
 
 class UnknownPropertyException(Exception):
     pass
@@ -2060,7 +2057,7 @@ def is_score(var):
 
 def validate_xml_id(var, description="id"):
     try:
-        lib_validate_id(var, description)
+        validate_id(var, description)
     except LibraryError as e:
         return False, e.args[0].message
     return True, ""
@@ -2098,14 +2095,6 @@ def verify_cert_key_pair(cert, key):
             errors.append("Certificate does not match the key")
 
     return errors
-
-# Does pacemaker consider a variable as true in cib?
-# See crm_is_true in pacemaker/lib/common/utils.c
-def is_cib_true(var):
-    return var.lower() in CIB_BOOLEAN_TRUE
-
-def is_cib_boolean(val):
-    return val.lower() in CIB_BOOLEAN_TRUE + CIB_BOOLEAN_FALSE
 
 def is_systemctl():
     systemctl_paths = [
@@ -2573,7 +2562,7 @@ def is_valid_cib_value(type, value, enum_options=[]):
     if type == "enum":
         return value in enum_options
     elif type == "boolean":
-        return is_cib_boolean(value)
+        return is_boolean(value)
     elif type == "integer":
         return is_score(value)
     elif type == "time":
