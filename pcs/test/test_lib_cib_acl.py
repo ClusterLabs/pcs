@@ -8,7 +8,7 @@ from __future__ import (
 import unittest
 
 from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.library_test_tools import get_xml_manipulation_creator
+from pcs.test.library_test_tools import get_xml_manipulation_creator_from_file
 from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs.lib.cib import acl as lib
@@ -17,7 +17,7 @@ from pcs.lib.errors import ReportItemSeverity as severities
 
 class LibraryAclTest(unittest.TestCase, LibraryAssertionMixin):
     def setUp(self):
-        self.create_cib = get_xml_manipulation_creator(rc("cib-empty.xml"))
+        self.create_cib = get_xml_manipulation_creator_from_file(rc("cib-empty.xml"))
         self.cib = self.create_cib()
 
     def fixture_add_role(self, role_id):
@@ -31,7 +31,7 @@ class CreateRoleTest(LibraryAclTest):
         role_id = 'new-id'
         lib.create_role(self.cib.tree, role_id)
 
-        self.assert_xml_equal(
+        self.assert_cib_equal(
             self.create_cib().append_to_first_tag_name(
                 'configuration',
                 '<acls><acl_role id="{0}"/></acls>'.format(role_id)
@@ -84,7 +84,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
             self.cib.tree, role_id, [('read', 'xpath', '/whatever')]
         )
 
-        self.assert_xml_equal(
+        self.assert_cib_equal(
             self.create_cib().append_to_first_tag_name('configuration', '''
               <acls>
                 <acl_role id="{0}">
@@ -148,7 +148,7 @@ class ProvideRoleTest(LibraryAclTest):
         role_id = 'new-id'
         lib.provide_role(self.cib.tree, role_id)
 
-        self.assert_xml_equal(
+        self.assert_cib_equal(
             self.create_cib().append_to_first_tag_name('configuration', '''
               <acls>
                 <acl_role id="{0}"/>
@@ -162,7 +162,7 @@ class ProvideRoleTest(LibraryAclTest):
         role_id = 'role1'
         lib.provide_role(self.cib.tree, role_id)
 
-        self.assert_xml_equal(
+        self.assert_cib_equal(
             self.create_cib().append_to_first_tag_name('configuration', '''
               <acls>
                 <acl_role id="{0}"/>
@@ -173,7 +173,7 @@ class ProvideRoleTest(LibraryAclTest):
 class RemovePermissionForReferenceTest(LibraryAclTest):
     def test_has_no_efect_when_id_not_referenced(self):
         lib.remove_permissions_referencing(self.cib.tree, 'dummy')
-        self.assert_xml_equal(self.create_cib())
+        self.assert_cib_equal(self.create_cib())
 
     def test_remove_all_references(self):
         self.cib.append_to_first_tag_name('configuration', '''
@@ -190,7 +190,7 @@ class RemovePermissionForReferenceTest(LibraryAclTest):
 
         lib.remove_permissions_referencing(self.cib.tree, 'dummy')
 
-        self.assert_xml_equal(
+        self.assert_cib_equal(
             self.create_cib().append_to_first_tag_name('configuration', '''
               <acls>
                 <acl_role id="role1">

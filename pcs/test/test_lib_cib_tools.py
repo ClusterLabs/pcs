@@ -8,7 +8,7 @@ from __future__ import (
 import unittest
 
 from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.library_test_tools import get_xml_manipulation_creator
+from pcs.test.library_test_tools import get_xml_manipulation_creator_from_file
 from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs.lib import error_codes
@@ -18,7 +18,7 @@ from pcs.lib.cib import tools as lib
 
 class CibToolsTest(unittest.TestCase):
     def setUp(self):
-        self.create_cib = get_xml_manipulation_creator(rc("cib-empty.xml"))
+        self.create_cib = get_xml_manipulation_creator_from_file(rc("cib-empty.xml"))
         self.cib = self.create_cib()
 
     def fixture_add_primitive_with_id(self, element_id):
@@ -84,7 +84,7 @@ class GetConfigurationTest(CibToolsTest, LibraryAssertionMixin):
 
 class GetAclsTest(CibToolsTest):
     def setUp(self):
-        self.create_cib = get_xml_manipulation_creator(rc("cib-empty-1.2.xml"))
+        self.create_cib = get_xml_manipulation_creator_from_file(rc("cib-empty-1.2.xml"))
         self.cib = self.create_cib()
 
     def test_success_if_exists(self):

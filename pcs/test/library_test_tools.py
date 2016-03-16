@@ -59,24 +59,24 @@ class LibraryAssertionMixin(object):
         except LibraryError as e:
             self.__check_error(e, list(report_info_list))
 
-    def assert_xml_equal(self, expected_cib, got_cib=None):
+    def assert_cib_equal(self, expected_cib, got_cib=None):
         got_cib = got_cib if got_cib else self.cib
         got_xml = str(got_cib)
         expected_xml = str(expected_cib)
+        assert_xml_equal(expected_xml, got_xml)
 
-        checker = LXMLOutputChecker()
-        if checker.check_output(expected_xml, got_xml, 0):
-            return
-
-        raise AssertionError(checker.output_difference(
-            Example("", expected_xml),
-            got_xml,
-            0
-        ))
 
 class XmlManipulation(object):
-    def __init__(self, file_name):
-        self.tree = etree.parse(file_name)
+    @classmethod
+    def from_file(cls, file_name):
+        return cls(etree.parse(file_name).getroot())
+
+    @classmethod
+    def from_str(cls, string):
+        return cls(etree.fromstring(string))
+
+    def __init__(self, tree):
+        self.tree = tree
 
     def __append_to_child(self, element, xml_string):
         element.append(etree.fromstring(xml_string))
@@ -95,7 +95,16 @@ class XmlManipulation(object):
         #so there is bytes to str conversion
         return etree.tostring(self.tree).decode()
 
-def get_xml_manipulation_creator(file_name):
-    def create_xml_manipulation():
-        return XmlManipulation(file_name)
-    return create_xml_manipulation
+
+def get_xml_manipulation_creator_from_file(file_name):
+    return lambda: XmlManipulation.from_file(file_name)
+
+
+def assert_xml_equal(expected_xml, got_xml):
+    checker = LXMLOutputChecker()
+    if not checker.check_output(expected_xml, got_xml, 0):
+        raise AssertionError(checker.output_difference(
+            Example("", expected_xml),
+            got_xml,
+            0
+        ))

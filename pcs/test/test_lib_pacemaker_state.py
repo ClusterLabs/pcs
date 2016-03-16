@@ -8,7 +8,7 @@ from __future__ import (
 from unittest import TestCase
 from lxml import etree
 
-from pcs.test.library_test_tools import get_xml_manipulation_creator
+from pcs.test.library_test_tools import get_xml_manipulation_creator_from_file
 from pcs.test.library_test_tools import LibraryAssertionMixin
 from pcs.test.tools.resources import get_test_resource as rc
 
@@ -68,7 +68,7 @@ class ChildrenTest(TestCase):
 
 class TestBase(TestCase):
     def setUp(self):
-        self.create_covered_status = get_xml_manipulation_creator(
+        self.create_covered_status = get_xml_manipulation_creator_from_file(
             rc('crm_mon.minimal.xml')
         )
         self.covered_status = self.create_covered_status()
