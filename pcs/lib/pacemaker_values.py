@@ -31,6 +31,45 @@ def is_boolean(val):
     """
     return val.lower() in __BOOLEAN_TRUE + __BOOLEAN_FALSE
 
+def timeout_to_seconds(timeout, return_unknown=False):
+    """
+    Transform pacemaker style timeout to number of seconds
+    timeout timeout string
+    return_unknown if timeout is not valid then return None on False or timeout
+        on True (default False)
+    """
+    if timeout.isdigit():
+        return int(timeout)
+    suffix_multiplier = {
+        "s": 1,
+        "sec": 1,
+        "m": 60,
+        "min": 60,
+        "h": 3600,
+        "hr": 3600,
+    }
+    for suffix, multiplier in suffix_multiplier.items():
+        if timeout.endswith(suffix) and timeout[:-len(suffix)].isdigit():
+            return int(timeout[:-len(suffix)]) * multiplier
+    return timeout if return_unknown else None
+
+def get_valid_timeout_seconds(timeout_candidate):
+    """
+    Transform pacemaker style timeout to number of seconds, raise LibraryError
+        on invalid timeout
+    timeout_candidate timeout string or None
+    """
+    if timeout_candidate is None:
+        return None
+    wait_timeout = timeout_to_seconds(timeout_candidate)
+    if wait_timeout is None:
+        raise LibraryError(ReportItem.error(
+            error_codes.INVALID_TIMEOUT_VALUE,
+            "'{timeout}' is not a valid number of seconds to wait",
+            info={"timeout": timeout_candidate}
+        ))
+    return wait_timeout
+
 def validate_id(id_candidate, description="id"):
     """
     Validate a pacemaker id, raise LibraryError on invalid id.

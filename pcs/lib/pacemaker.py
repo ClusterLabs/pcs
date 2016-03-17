@@ -5,9 +5,10 @@ from __future__ import (
     unicode_literals,
 )
 
+import os.path
 from lxml import etree
 
-from pcs import utils
+from pcs import settings
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
 from pcs.lib.pacemaker_state import ClusterState
@@ -15,25 +16,33 @@ from pcs.lib.pacemaker_state import ClusterState
 
 __PACEMAKER_EXIT_CODE_WAIT_TIMEOUT = 62
 
-class PacemakerException(Exception):
+class CrmMonErrorException(LibraryError):
     pass
 
-class PacemakerNotRunningException(PacemakerException):
-    pass
+# syntactic sugar for getting a full path to a pacemaker executable
+def __exec(name):
+    return os.path.join(settings.pacemaker_binaries, name)
 
-def get_cluster_status_xml():
-    output, retval = utils.run(
-        ["crm_mon", "--one-shot", "--as-xml", "--inactive"]
+def get_cluster_status_xml(runner):
+    output, retval = runner.run(
+        [__exec("crm_mon"), "--one-shot", "--as-xml", "--inactive"]
     )
     if retval != 0:
-        raise PacemakerNotRunningException()
+        raise CrmMonErrorException(ReportItem.error(
+            error_codes.CRM_MON_ERROR,
+            "error running crm_mon, is pacemaker running?",
+            info={
+                "external_exitcode": retval,
+                "external_output": output,
+            }
+        ))
     return output
 
-def get_cib_xml(scope=None):
-    command = ["cibadmin", "--local", "--query"]
+def get_cib_xml(runner, scope=None):
+    command = [__exec("cibadmin"), "--local", "--query"]
     if scope:
         command.append("--scope={0}".format(scope))
-    output, retval = utils.run(command)
+    output, retval = runner.run(command)
     if retval != 0:
         if retval == 6 and scope:
             raise LibraryError(ReportItem.error(
@@ -65,15 +74,15 @@ def get_cib(xml):
             "unable to get cib"
         ))
 
-def replace_cib_configuration(tree):
+def replace_cib_configuration(runner, tree):
     #etree returns bytes: b'xml'
     #python 3 removed .encode() from bytes
     #run(...) calls subprocess.Popen.communicate which calls encode...
     #so here is bytes to str conversion
     xml = etree.tostring(tree).decode()
-    output, retval = utils.run(
+    output, retval = runner.run(
         [
-            "cibadmin",
+            __exec("cibadmin"),
             "--replace", "--scope", "configuration", "--verbose", "--xml-pipe"
         ],
         False,
@@ -89,12 +98,12 @@ def replace_cib_configuration(tree):
             }
         ))
 
-def get_local_node_status():
+def get_local_node_status(runner):
     try:
-        cluster_status = ClusterState(get_cluster_status_xml())
-    except PacemakerNotRunningException:
+        cluster_status = ClusterState(get_cluster_status_xml(runner))
+    except CrmMonErrorException:
         return {"offline": True}
-    node_name = __get_local_node_name()
+    node_name = __get_local_node_name(runner)
     for node_status in cluster_status.node_section.nodes:
         if node_status.attrs.name == node_name:
             result = {
@@ -113,10 +122,10 @@ def get_local_node_status():
         info={"node": node_name}
     ))
 
-def resource_cleanup(resource, node, force):
+def resource_cleanup(runner, resource, node, force):
     if not force and not node and not resource:
         operation_threshold = 100
-        summary = ClusterState(utils.getClusterStateXml()).summary
+        summary = ClusterState(get_cluster_status_xml(runner)).summary
         operations = summary.nodes.attrs.count * summary.resources.attrs.count
         if operations > operation_threshold:
             raise LibraryError(ReportItem.error(
@@ -130,13 +139,13 @@ def resource_cleanup(resource, node, force):
                 forceable=True
             ))
 
-    cmd = ["crm_resource", "--cleanup"]
+    cmd = [__exec("crm_resource"), "--cleanup"]
     if resource:
         cmd.extend(["--resource", resource])
     if node:
         cmd.extend(["--node", node])
 
-    output, retval = utils.run(cmd)
+    output, retval = runner.run(cmd)
 
     if retval != 0:
         if resource is not None:
@@ -158,36 +167,29 @@ def resource_cleanup(resource, node, force):
         ))
     return output
 
-def nodes_standby(node_list=None, all_nodes=False):
-    return _nodes_standby_unstandby(True, node_list, all_nodes)
+def nodes_standby(runner, node_list=None, all_nodes=False):
+    return __nodes_standby_unstandby(runner, True, node_list, all_nodes)
 
-def nodes_unstandby(node_list=None, all_nodes=False):
-    return _nodes_standby_unstandby(False, node_list, all_nodes)
+def nodes_unstandby(runner, node_list=None, all_nodes=False):
+    return __nodes_standby_unstandby(runner, False, node_list, all_nodes)
 
-def get_valid_timeout_seconds(timeout_candidate):
-    if not utils._has_resource_wait_support():
+def has_resource_wait_support(runner):
+    # returns 1 on success so we don't care about retval
+    output, dummy_retval = runner.run([__exec("crm_resource"), "-?"])
+    return "--wait" in output
+
+def ensure_resource_wait_support(runner):
+    if not has_resource_wait_support(runner):
         raise LibraryError(ReportItem.error(
             error_codes.RESOURCE_WAIT_NOT_SUPPORTED,
             "crm_resource does not support --wait, please upgrade pacemaker"
         ))
 
-    if timeout_candidate is None:
-        return None
-
-    wait_timeout = utils.get_timeout_seconds(timeout_candidate)
-    if wait_timeout is None:
-        raise LibraryError(ReportItem.error(
-            error_codes.INVALID_TIMEOUT_VALUE,
-            "'{timeout}' is not a valid number of seconds to wait",
-            info={"timeout": timeout_candidate}
-        ))
-    return wait_timeout
-
-def wait_for_resources(timeout=None):
-    args = ["crm_resource", "--wait"]
+def wait_for_resources(runner, timeout=None):
+    args = [__exec("crm_resource"), "--wait"]
     if timeout is not None:
         args.append("--timeout={0}".format(timeout))
-    output, retval = utils.run(args)
+    output, retval = runner.run(args)
     if retval != 0:
         if retval == __PACEMAKER_EXIT_CODE_WAIT_TIMEOUT:
             raise LibraryError(ReportItem.error(
@@ -202,14 +204,14 @@ def wait_for_resources(timeout=None):
                 info={"details": output.strip()}
             ))
 
-def _nodes_standby_unstandby(standby=True, node_list=None, all_nodes=False):
+def __nodes_standby_unstandby(
+    runner, standby=True, node_list=None, all_nodes=False
+):
     # TODO once we switch to editing CIB instead of running crm_stanby, we
     # cannot always relly on getClusterState. If we're not editing a CIB from
     # a live cluster, there is no status.
-    known_nodes = [
-        node.attrs.name
-        for node in ClusterState(utils.getClusterStateXml()).node_section.nodes
-    ]
+    state = ClusterState(get_cluster_status_xml(runner)).node_section.nodes
+    known_nodes = [node.attrs.name for node in state]
 
     if all_nodes:
         node_list = known_nodes
@@ -227,7 +229,7 @@ def _nodes_standby_unstandby(standby=True, node_list=None, all_nodes=False):
 
     # TODO Edit CIB directly instead of running commands for each node; be aware
     # remote nodes might not be in the CIB yet so we need to put them there.
-    cmd_template = ["crm_standby"]
+    cmd_template = [__exec("crm_standby")]
     cmd_template.extend(["-v", "on"] if standby else ["-D"])
     cmd_list = []
     if node_list:
@@ -237,7 +239,7 @@ def _nodes_standby_unstandby(standby=True, node_list=None, all_nodes=False):
         cmd_list.append(cmd_template)
     report = []
     for cmd in cmd_list:
-        output, retval = utils.run(cmd)
+        output, retval = runner.run(cmd)
         if retval != 0:
             report.append(ReportItem.error(
                 error_codes.COMMON_ERROR,
@@ -246,7 +248,7 @@ def _nodes_standby_unstandby(standby=True, node_list=None, all_nodes=False):
     if report:
         raise LibraryError(*report)
 
-def __get_local_node_name():
+def __get_local_node_name(runner):
     def __get_error(reason):
         ReportItem.error(
             error_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
@@ -258,13 +260,13 @@ def __get_local_node_name():
     # but it returns false names when cluster is not running (or we are on
     # a remote node). Getting node id first is reliable since it fails in those
     # cases.
-    output, retval = utils.run(["crm_node", "--cluster-id"])
+    output, retval = runner.run([__exec("crm_node"), "--cluster-id"])
     if retval != 0:
         raise LibraryError(__get_error("node id not found"))
     node_id = output.strip()
 
-    output, retval = utils.run(
-        ["crm_node", "--name-for-id={0}".format(node_id)]
+    output, retval = runner.run(
+        [__exec("crm_node"), "--name-for-id={0}".format(node_id)]
     )
     if retval != 0:
         raise LibraryError(__get_error("node name not found"))

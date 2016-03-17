@@ -23,6 +23,7 @@ import tarfile
 import getpass
 import base64
 import threading
+import logging
 
 
 try:
@@ -58,9 +59,15 @@ from pcs import (
     settings,
     corosync_conf as corosync_conf_utils,
 )
-from pcs.lib.pacemaker_state import ClusterState
 from pcs.lib.errors import LibraryError, ReportItemSeverity
-from pcs.lib.pacemaker_values import validate_id, is_boolean
+from pcs.lib.external import CommandRunner
+from pcs.lib.pacemaker import has_resource_wait_support
+from pcs.lib.pacemaker_state import ClusterState
+from pcs.lib.pacemaker_values import (
+    validate_id,
+    is_boolean,
+    timeout_to_seconds as get_timeout_seconds,
+)
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -772,6 +779,7 @@ def subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 # Run command, with environment and return (output, retval)
+# DEPRECATED, please use lib.external.CommandRunner via utils.cmd_runner()
 def run(
     args, ignore_stderr=False, string_for_stdin=None, env_extend=None,
     binary_output=False
@@ -833,6 +841,14 @@ def run(
         err("unable to locate command: " + args[0])
 
     return output, returnVal
+
+@simple_cache
+def cmd_runner():
+    env_vars = dict()
+    if usefile:
+        env_vars["CIB_file"] = filename
+    env_vars.update(os.environ)
+    return CommandRunner(logging.getLogger("old_cli"), env_vars)
 
 def run_pcsdcli(command, data=None):
     if not data:
@@ -1409,33 +1425,11 @@ def get_default_op_values(ra_type):
 
     return return_list
 
-def get_timeout_seconds(timeout, return_unknown=False):
-    if timeout.isdigit():
-        return int(timeout)
-    suffix_multiplier = {
-        "s": 1,
-        "sec": 1,
-        "m": 60,
-        "min": 60,
-        "h": 3600,
-        "hr": 3600,
-    }
-    for suffix, multiplier in suffix_multiplier.items():
-        if timeout.endswith(suffix) and timeout[:-len(suffix)].isdigit():
-            return int(timeout[:-len(suffix)]) * multiplier
-    return timeout if return_unknown else None
-
-def _has_resource_wait_support():
-    # returns 1 on success so we don't care about retval
-    output, dummy_retval = run(["crm_resource", "-?"])
-    return "--wait" in output
-
 def check_pacemaker_supports_resource_wait():
-    if not _has_resource_wait_support():
+    if not has_resource_wait_support(cmd_runner()):
         err("crm_resource does not support --wait, please upgrade pacemaker")
 
 def validate_wait_get_timeout(need_cib_support=True):
-    # partially moved to lib.pacemaker
     if need_cib_support:
         check_pacemaker_supports_resource_wait()
         if usefile:

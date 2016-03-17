@@ -249,10 +249,10 @@ def run_create_role(argv):
         description = argv.pop(0)[len(desc_key):]
     permission_info_list = argv_to_permission_info_list(argv)
 
-    cib = get_cib(get_cib_xml())
+    cib = get_cib(get_cib_xml(utils.cmd_runner()))
     create_role(cib, role_id, description)
     add_permissions_to_role(cib, role_id, permission_info_list)
-    replace_cib_configuration(cib)
+    replace_cib_configuration(utils.cmd_runner(), cib)
 
 def run_role_delete(argv):
     if len(argv) < 1:
@@ -367,10 +367,10 @@ def run_permission_add(argv):
     role_id = argv.pop(0)
     permission_info_list = argv_to_permission_info_list(argv)
 
-    cib = get_cib(get_cib_xml())
+    cib = get_cib(get_cib_xml(utils.cmd_runner()))
     provide_role(cib, role_id)
     add_permissions_to_role(cib, role_id, permission_info_list)
-    replace_cib_configuration(cib)
+    replace_cib_configuration(utils.cmd_runner(), cib)
 
 def run_permission_delete(argv):
     dom = utils.get_cib_dom()

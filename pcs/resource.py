@@ -23,6 +23,7 @@ from pcs import (
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker_values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
 
 
@@ -520,7 +521,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                 continue
             match = re.match("interval=(.+)", op_setting)
             if match:
-                interval = utils.get_timeout_seconds(match.group(1))
+                interval = timeout_to_seconds(match.group(1))
                 if interval is not None:
                     if interval in action_intervals[op_action]:
                         old_interval = interval
@@ -1138,7 +1139,7 @@ def resource_operation_add(
                     "operation %s with interval %ss already specified for %s:\n%s"
                     % (
                         op_el.getAttribute("name"),
-                        utils.get_timeout_seconds(
+                        timeout_to_seconds(
                             op_el.getAttribute("interval"), True
                         ),
                         res_id,
@@ -2564,7 +2565,9 @@ def resource_cleanup(argv):
         node = utils.pcs_options["--node"]
     force = "--force" in utils.pcs_options
 
-    print(lib_pacemaker.resource_cleanup(resource, node, force))
+    print(lib_pacemaker.resource_cleanup(
+        utils.cmd_runner(), resource, node, force
+    ))
 
 def resource_history(args):
     dom = utils.get_cib_dom()

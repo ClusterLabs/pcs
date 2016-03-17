@@ -67,6 +67,30 @@ class BooleanTest(TestCase):
         self.assertFalse(lib.is_boolean("NO!"))
 
 
+class TimeoutTest(TestCase, LibraryAssertionMixin):
+    def test_valid(self):
+        self.assertEqual(10, lib.timeout_to_seconds("10"))
+        self.assertEqual(10, lib.timeout_to_seconds("10s"))
+        self.assertEqual(10, lib.timeout_to_seconds("10sec"))
+        self.assertEqual(600, lib.timeout_to_seconds("10m"))
+        self.assertEqual(600, lib.timeout_to_seconds("10min"))
+        self.assertEqual(36000, lib.timeout_to_seconds("10h"))
+        self.assertEqual(36000, lib.timeout_to_seconds("10hr"))
+
+    def test_invalid(self):
+        self.assertEqual(None, lib.timeout_to_seconds("1a1s"))
+        self.assertEqual(None, lib.timeout_to_seconds("10mm"))
+        self.assertEqual(None, lib.timeout_to_seconds("10mim"))
+        self.assertEqual(None, lib.timeout_to_seconds("aaa"))
+        self.assertEqual(None, lib.timeout_to_seconds(""))
+
+        self.assertEqual("1a1s", lib.timeout_to_seconds("1a1s", True))
+        self.assertEqual("10mm", lib.timeout_to_seconds("10mm", True))
+        self.assertEqual("10mim", lib.timeout_to_seconds("10mim", True))
+        self.assertEqual("aaa", lib.timeout_to_seconds("aaa", True))
+        self.assertEqual("", lib.timeout_to_seconds("", True))
+
+
 class ValidateIdTest(TestCase, LibraryAssertionMixin):
     def test_valid(self):
         self.assertEqual(None, lib.validate_id("dummy"))

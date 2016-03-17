@@ -19,7 +19,6 @@ import pwd
 import grp
 import time
 
-logging.basicConfig() # clufter needs logging set before imported
 try:
     import clufter.format_manager
     import clufter.filter_manager

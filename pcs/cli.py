@@ -8,6 +8,8 @@ from __future__ import (
 import getopt
 import os
 import sys
+import logging
+logging.basicConfig()
 
 from pcs import (
     acl,
@@ -142,6 +144,16 @@ def main(argv=None):
     if len(argv) == 0:
         usage.main()
         sys.exit(1)
+
+    logger = logging.getLogger("old_cli")
+    logger.propagate = 0
+    logger.handlers = []
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    logger.addHandler(handler)
+    logger.setLevel(
+        logging.DEBUG if "--debug" in utils.pcs_options else logging.INFO
+    )
 
     command = argv.pop(0)
     if (command == "-h" or command == "help"):

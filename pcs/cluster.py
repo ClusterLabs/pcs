@@ -935,7 +935,9 @@ def is_node_fully_started(node_status):
 def wait_for_local_node_started(stop_at, interval):
     try:
         while True:
-            node_status = lib_pacemaker.get_local_node_status()
+            node_status = lib_pacemaker.get_local_node_status(
+                utils.cmd_runner()
+            )
             if is_node_fully_started(node_status):
                 return 0, "Started"
             if datetime.datetime.now() > stop_at:

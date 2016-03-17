@@ -14,6 +14,7 @@ from pcs import (
 )
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker as lib_pacemaker
+from pcs.lib.pacemaker_values import get_valid_timeout_seconds
 
 
 def node_cmd(argv):
@@ -108,13 +109,18 @@ def node_standby(argv, standby=True):
 
     try:
         if wait:
-            valid_timeout = lib_pacemaker.get_valid_timeout_seconds(timeout)
+            lib_pacemaker.ensure_resource_wait_support(utils.cmd_runner())
+            valid_timeout = get_valid_timeout_seconds(timeout)
         if standby:
-            lib_pacemaker.nodes_standby(node_list, all_nodes)
+            lib_pacemaker.nodes_standby(
+                utils.cmd_runner(), node_list, all_nodes
+            )
         else:
-            lib_pacemaker.nodes_unstandby(node_list, all_nodes)
+            lib_pacemaker.nodes_unstandby(
+                utils.cmd_runner(), node_list, all_nodes
+            )
         if wait:
-            lib_pacemaker.wait_for_resources(valid_timeout)
+            lib_pacemaker.wait_for_resources(utils.cmd_runner(), valid_timeout)
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
@@ -152,6 +158,8 @@ def print_nodes_utilization():
 
 def node_pacemaker_status():
     try:
-        print(json.dumps(lib_pacemaker.get_local_node_status()))
+        print(json.dumps(
+            lib_pacemaker.get_local_node_status(utils.cmd_runner())
+        ))
     except LibraryError as e:
         utils.process_library_reports(e.args)
