@@ -1789,7 +1789,7 @@ def getTerminalSize(fd=1):
 
 def get_terminal_input(message=None):
     if message:
-        sys.stdout.write('Username: ')
+        sys.stdout.write(message)
         sys.stdout.flush()
     if PYTHON2:
         return raw_input("")
