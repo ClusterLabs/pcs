@@ -431,7 +431,7 @@ if not DISABLE_GUI
       nodes = status["corosync_offline"] + status["corosync_online"]
 
       if status["cluster_name"] == ''
-        return 400, "The node, '#{noname}', does not currently have a cluster
+        return 400, "The node, '#{node}', does not currently have a cluster
  configured.  You must create a cluster using this node before adding it to pcsd."
       end
 
