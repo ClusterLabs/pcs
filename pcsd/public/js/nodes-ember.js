@@ -1281,7 +1281,7 @@ Pcs.Setting = Ember.Object.extend({
   cur_val: Ember.computed.oneWay('value'),
   type: null,
   source: "",
-  default: null,
+  "default": null,
   advanced: false,
   longdesc: "",
   shortdesc: "",
@@ -1302,7 +1302,7 @@ Pcs.Setting = Ember.Object.extend({
   is_enum: function() {
     return (this.get("type") == "enum");
   }.property("type"),
-  enum: [],
+  "enum": [],
   enum_show: function() {
     var self = this;
     var out = [];
