@@ -50,16 +50,13 @@ module Cfgsync
 
     def self.from_file(default=nil)
       begin
+        return self.on_file_missing(default) if not File::exist?(@file_path)
         file = nil
         file = File.open(@file_path, File::RDONLY)
         file.flock(File::LOCK_SH)
         return self.from_text(file.read())
       rescue => e
-        $logger.warn(
-          "Cannot read config '#{@name}' from '#{@file_path}': #{e.message}"
-        )
-        return self.from_text(default) if default
-        raise
+        return self.on_file_read_error(e, default)
       ensure
         unless file.nil?
           file.flock(File::LOCK_UN)
@@ -155,6 +152,22 @@ module Cfgsync
 
     protected
 
+    def self.on_file_missing(default)
+      $logger.warn(
+        "Cannot read config '#{@name}' from '#{@file_path}': No such file"
+      )
+      return self.from_text(default) if default
+      raise SystemCallError.new(@file_path, Errno::ENOENT::Errno)
+    end
+
+    def self.on_file_read_error(exception, default)
+      $logger.warn(
+        "Cannot read config '#{@name}' from '#{@file_path}': #{exception.message}"
+      )
+      return self.from_text(default) if default
+      raise exception
+    end
+
     def initialize(text)
       self.text = text
     end
@@ -166,7 +179,7 @@ module Cfgsync
     end
 
     def get_hash()
-      return Digest::SHA1.hexdigest(self.text)
+      return Digest::SHA1.hexdigest(self.text || '')
     end
   end
 
@@ -177,6 +190,17 @@ module Cfgsync
     @file_perm = 0644
 
     protected
+
+    def self.on_file_missing(default)
+      return self.from_text(nil)
+    end
+
+    def self.on_file_read_error(exception, default)
+      $logger.warn(
+        "Cannot read config '#{@name}' from '#{@file_path}': #{exception.message}"
+      )
+      return self.from_text('')
+    end
 
     def get_version()
       return PCSConfig.new(self.text).data_version
@@ -207,6 +231,17 @@ module Cfgsync
     end
 
     protected
+
+    def self.on_file_missing(default)
+      return self.from_text(nil)
+    end
+
+    def self.on_file_read_error(exception, default)
+      $logger.warn(
+        "Cannot read config '#{@name}' from '#{@file_path}': #{exception.message}"
+      )
+      return self.from_text('')
+    end
 
     def get_version()
       return PCSTokens.new(self.text).data_version

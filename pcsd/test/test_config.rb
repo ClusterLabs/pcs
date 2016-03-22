@@ -11,6 +11,30 @@ class TestConfig < Test::Unit::TestCase
     FileUtils.cp(File.join(CURRENT_DIR, 'pcs_settings.conf'), CFG_PCSD_SETTINGS)
   end
 
+  def fixture_nil_config()
+    return (
+'{
+  "format_version": 2,
+  "data_version": 0,
+  "clusters": [
+
+  ],
+  "permissions": {
+    "local_cluster": [
+      {
+        "type": "group",
+        "name": "haclient",
+        "allow": [
+          "grant",
+          "read",
+          "write"
+        ]
+      }
+    ]
+  }
+}')
+  end
+
   def fixture_empty_config()
     return (
 '{
@@ -27,8 +51,24 @@ class TestConfig < Test::Unit::TestCase
 }')
   end
 
+  def test_parse_nil()
+    text = nil
+    cfg = PCSConfig.new(text)
+    assert_equal(0, cfg.clusters.length)
+    assert_equal([], $logger.log)
+    assert_equal(fixture_nil_config, cfg.text)
+  end
+
   def test_parse_empty()
     text = ''
+    cfg = PCSConfig.new(text)
+    assert_equal(0, cfg.clusters.length)
+    assert_equal([], $logger.log)
+    assert_equal(fixture_empty_config, cfg.text)
+  end
+
+  def test_parse_whitespace()
+    text = "  \n  "
     cfg = PCSConfig.new(text)
     assert_equal(0, cfg.clusters.length)
     assert_equal([], $logger.log)
@@ -67,20 +107,7 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(fixture_empty_config, cfg.text)
   end
 
-  def test_parse_malformed1()
-    text = '  '
-    cfg = PCSConfig.new(text)
-    assert_equal(
-      [[
-        'error',
-        "Unable to parse pcs_settings file: 757: unexpected token at ''"
-      ]],
-      $logger.log
-    )
-    assert_equal(fixture_empty_config, cfg.text)
-  end
-
-  def test_parse_malformed2()
+  def test_parse_malformed()
     text =
 '{
   "data_version": 9,
@@ -643,20 +670,39 @@ class TestTokens < Test::Unit::TestCase
     FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
   end
 
-  def test_parse_empty()
-    text = ''
-    cfg = PCSTokens.new(text)
-    assert_equal(0, cfg.tokens.length)
-    assert_equal([], $logger.log)
-    assert_equal(
+  def fixture_empty_config()
+    return(
 '{
   "format_version": 2,
   "data_version": 0,
   "tokens": {
   }
-}',
-      cfg.text
+}'
     )
+  end
+
+  def test_parse_nil()
+    text = nil
+    cfg = PCSTokens.new(text)
+    assert_equal(0, cfg.tokens.length)
+    assert_equal([], $logger.log)
+    assert_equal(fixture_empty_config(), cfg.text)
+  end
+
+  def test_parse_empty()
+    text = ''
+    cfg = PCSTokens.new(text)
+    assert_equal(0, cfg.tokens.length)
+    assert_equal([], $logger.log)
+    assert_equal(fixture_empty_config(), cfg.text)
+  end
+
+  def test_parse_whitespace()
+    text = "  \n  "
+    cfg = PCSTokens.new(text)
+    assert_equal(0, cfg.tokens.length)
+    assert_equal([], $logger.log)
+    assert_equal(fixture_empty_config(), cfg.text)
   end
 
   def test_parse_format1()

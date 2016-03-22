@@ -152,8 +152,8 @@ end
 
 
 class TestPcsdSettings < Test::Unit::TestCase
-  def setup()
-    FileUtils.cp(File.join(CURRENT_DIR, "pcs_settings.conf"), CFG_PCSD_SETTINGS)
+  def teardown()
+    FileUtils.rm(CFG_PCSD_SETTINGS, {:force => true})
   end
 
   def test_basics()
@@ -206,16 +206,23 @@ class TestPcsdSettings < Test::Unit::TestCase
   end
 
   def test_file()
+    FileUtils.cp(File.join(CURRENT_DIR, "pcs_settings.conf"), CFG_PCSD_SETTINGS)
     cfg = Cfgsync::PcsdSettings.from_file()
     assert_equal(9, cfg.version)
     assert_equal("ac032803c5190d735cd94a702d42c5c6358013b8", cfg.hash)
+  end
+
+  def test_file_missing()
+    cfg = Cfgsync::PcsdSettings.from_file()
+    assert_equal(0, cfg.version)
+    assert_equal('da39a3ee5e6b4b0d3255bfef95601890afd80709', cfg.hash)
   end
 end
 
 
 class TestPcsdTokens < Test::Unit::TestCase
-  def setup()
-    FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
+  def teardown()
+    FileUtils.rm(CFG_PCSD_TOKENS, {:force => true})
   end
 
   def test_basics()
@@ -253,9 +260,16 @@ class TestPcsdTokens < Test::Unit::TestCase
   end
 
   def test_file()
+    FileUtils.cp(File.join(CURRENT_DIR, 'tokens'), CFG_PCSD_TOKENS)
     cfg = Cfgsync::PcsdTokens.from_file()
     assert_equal(9, cfg.version)
     assert_equal('571afb6abc603f527462818e7dfe278a8a1f64a7', cfg.hash)
+  end
+
+  def test_file_missing()
+    cfg = Cfgsync::PcsdTokens.from_file()
+    assert_equal(0, cfg.version)
+    assert_equal('da39a3ee5e6b4b0d3255bfef95601890afd80709', cfg.hash)
   end
 end
 

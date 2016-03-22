@@ -242,7 +242,7 @@ end
 
 # Gets all of the nodes specified in the pcs config file for the cluster
 def get_cluster_nodes(cluster_name)
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   clusters = pcs_config.clusters
   cluster = nil
   for c in clusters
@@ -420,7 +420,7 @@ def add_node(auth_user, new_nodename, all=false, auto_start=true)
   end
   $logger.info("Adding #{new_nodename} to pcs_settings.conf")
   corosync_nodes = get_corosync_nodes()
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update_cluster($cluster_name, corosync_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
   # on version conflict just go on, config will be corrected eventually
@@ -444,7 +444,7 @@ def remove_node(auth_user, new_nodename, all=false)
   end
   $logger.info("Removing #{new_nodename} from pcs_settings.conf")
   corosync_nodes = get_corosync_nodes()
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   pcs_config.update_cluster($cluster_name, corosync_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
   # on version conflict just go on, config will be corrected eventually
@@ -1003,12 +1003,12 @@ def is_cib_true(var)
 end
 
 def read_tokens()
-  return PCSTokens.new(Cfgsync::PcsdTokens.from_file('').text()).tokens
+  return PCSTokens.new(Cfgsync::PcsdTokens.from_file().text()).tokens
 end
 
 def write_tokens(tokens)
   begin
-    cfg = PCSTokens.new(Cfgsync::PcsdTokens.from_file('').text())
+    cfg = PCSTokens.new(Cfgsync::PcsdTokens.from_file().text())
     cfg.tokens = tokens
     Cfgsync::PcsdTokens.from_text(cfg.text()).save()
   rescue
@@ -1124,7 +1124,7 @@ def pcs_auth(auth_user, nodes, username, password, force=false, local=true)
   }
   if not new_tokens.empty?
     cluster_nodes = get_corosync_nodes()
-    tokens_cfg = Cfgsync::PcsdTokens.from_file('')
+    tokens_cfg = Cfgsync::PcsdTokens.from_file()
     # only tokens used in pcsd-to-pcsd communication can and need to be synced
     # those are accessible only when running under root account
     if Process.uid != 0
@@ -1816,7 +1816,7 @@ def status_v1_to_v2(status)
 end
 
 def allowed_for_local_cluster(auth_user, action)
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file('{}').text())
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   return pcs_config.permissions_local.allows?(
     auth_user[:username], auth_user[:usergroups], action
   )
