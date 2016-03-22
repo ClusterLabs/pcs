@@ -4,5 +4,8 @@
 /dist/
 /pcs/bash_completion.d.pcs
 /pcsd/pcs_settings.conf
+/pcsd/pcs_settings.conf.*
 /pcsd/pcs_users.conf
+/pcsd/.bundle
+/pcsd/vendor
 
