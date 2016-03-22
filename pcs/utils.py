@@ -1955,29 +1955,32 @@ def validInstanceAttributes(res_id, ra_values, resource_type):
         err("Unable to get metadata for resource: %s" % resource_type)
 
     missing_required_parameters = []
-    valid_parameters = ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
-    valid_parameters = valid_parameters + ["stonith-timeout", "priority", "timeout"]
-    valid_parameters = valid_parameters + ["pcmk_reboot_action", "pcmk_poweroff_action", "pcmk_list_action", "pcmk_monitor_action", "pcmk_status_action"]
-    for a in ["off","on","status","list","metadata","monitor", "reboot"]:
-        valid_parameters.append("pcmk_" + a + "_action")
-        valid_parameters.append("pcmk_" + a + "_timeout")
-        valid_parameters.append("pcmk_" + a + "_retries")
+    valid_parameters = []
+    if stonithDevice:
+        valid_parameters += ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
+        valid_parameters += ["stonith-timeout", "priority", "timeout"]
+        valid_parameters += ["pcmk_reboot_action", "pcmk_poweroff_action", "pcmk_list_action", "pcmk_monitor_action", "pcmk_status_action"]
+        for a in ["off","on","status","list","metadata","monitor", "reboot"]:
+            valid_parameters.append("pcmk_" + a + "_action")
+            valid_parameters.append("pcmk_" + a + "_timeout")
+            valid_parameters.append("pcmk_" + a + "_retries")
     bad_parameters = []
     try:
         actions = ET.fromstring(metadata).find("parameters")
-        for action in actions.findall(str("parameter")):
-            valid_parameters.append(action.attrib["name"])
-            if "required" in action.attrib and action.attrib["required"] == "1":
+        if actions is not None:
+            for action in actions.findall(str("parameter")):
+                valid_parameters.append(action.attrib["name"])
+                if "required" in action.attrib and action.attrib["required"] == "1":
 # If a default value is set, then the attribute isn't really required (for 'action' on stonith devices only)
-                default_exists = False
-                if action.attrib["name"] == "action" and stonithDevice:
-                    for ch in action:
-                        if ch.tag == "content" and "default" in ch.attrib:
-                            default_exists = True
-                            break
+                    default_exists = False
+                    if action.attrib["name"] == "action" and stonithDevice:
+                        for ch in action:
+                            if ch.tag == "content" and "default" in ch.attrib:
+                                default_exists = True
+                                break
 
-                if not default_exists:
-                    missing_required_parameters.append(action.attrib["name"])
+                    if not default_exists:
+                        missing_required_parameters.append(action.attrib["name"])
     except xml.parsers.expat.ExpatError as e:
         err("Unable to parse xml for '%s': %s" % (resource_type, e))
     except xml.etree.ElementTree.ParseError as e:

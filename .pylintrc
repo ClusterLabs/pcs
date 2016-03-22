@@ -99,4 +99,4 @@ max-line-length=1291
 [ELIF]
 
 # Maximum number of nested blocks for function / method body
-max-nested-blocks=6
+max-nested-blocks=7
