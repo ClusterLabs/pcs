@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+import os
 try:
     # python 2
     from pipes import quote as shell_quote
@@ -17,6 +18,10 @@ import sys
 
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
+
+
+def is_path_runnable(path):
+    return os.path.isfile(path) and os.access(path, os.X_OK)
 
 
 class CommandRunner(object):

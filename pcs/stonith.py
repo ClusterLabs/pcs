@@ -445,6 +445,7 @@ def get_fence_agent_info(argv):
 
     try:
         metadata_dom = lib_ra.get_fence_agent_metadata(
+            utils.cmd_runner(),
             agent.split("stonith:", 1)[1]
         )
         metadata = lib_ra.get_agent_desc(metadata_dom)

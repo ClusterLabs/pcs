@@ -2830,7 +2830,10 @@ def get_resource_agent_info(argv):
 
     agent = argv[0]
     try:
-        metadata_dom = lib_ra.get_resource_agent_metadata(agent)
+        metadata_dom = lib_ra.get_resource_agent_metadata(
+            utils.cmd_runner(),
+            agent
+        )
         metadata = lib_ra.get_agent_desc(metadata_dom)
         metadata["name"] = agent
         metadata["parameters"] = lib_ra.get_resource_agent_parameters(

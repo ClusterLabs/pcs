@@ -8,12 +8,12 @@ from __future__ import (
 import os
 from lxml import etree
 
-from pcs import utils
 from pcs import settings
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError
 from pcs.lib.errors import ReportItem
 from pcs.lib.pacemaker_values import is_true
+from pcs.lib.external import is_path_runnable
 
 
 class UnsupportedResourceAgent(LibraryError):
@@ -36,11 +36,7 @@ class InvalidMetadataFormat(LibraryError):
     pass
 
 
-def _is_bin_runnable(path):
-    return os.path.isfile(path) and os.access(path, os.X_OK)
-
-
-def _is_path_abs(path):
+def __is_path_abs(path):
     return path == os.path.abspath(path)
 
 
@@ -140,7 +136,7 @@ def _get_pcmk_advanced_stonith_parameters():
     return definition
 
 
-def get_fence_agent_metadata(fence_agent):
+def get_fence_agent_metadata(runner, fence_agent):
     """
     Returns dom of metadata for specified fence agent
 
@@ -158,8 +154,8 @@ def get_fence_agent_metadata(fence_agent):
 
     if not (
         fence_agent.startswith("fence_") and
-        _is_path_abs(script_path) and
-        _is_bin_runnable(script_path)
+        __is_path_abs(script_path) and
+        is_path_runnable(script_path)
     ):
         raise AgentNotFound(ReportItem.error(
             error_codes.INVALID_RESOURCE_NAME,
@@ -167,7 +163,7 @@ def get_fence_agent_metadata(fence_agent):
             info={"agent_name": fence_agent}
         ))
 
-    output, retval = utils.run([script_path, "-o", "metadata"])
+    output, retval = runner.run([script_path, "-o", "metadata"])
 
     if retval != 0:
         raise __get_error({
@@ -194,7 +190,7 @@ def _get_nagios_resource_agent_metadata(agent):
     agent_name = "nagios:" + agent
     metadata_path = os.path.join(settings.nagios_metadata_path, agent + ".xml")
 
-    if not _is_path_abs(metadata_path):
+    if not __is_path_abs(metadata_path):
         raise AgentNotFound(ReportItem.error(
             error_codes.INVALID_RESOURCE_NAME,
             "resource agent '{agent_name}' not found.",
@@ -215,7 +211,7 @@ def _get_nagios_resource_agent_metadata(agent):
         ))
 
 
-def _get_ocf_resource_agent_metadata(provider, agent):
+def _get_ocf_resource_agent_metadata(runner, provider, agent):
     """
     Returns metadata dom for specified ocf resource agent
 
@@ -233,14 +229,14 @@ def _get_ocf_resource_agent_metadata(provider, agent):
 
     script_path = os.path.join(settings.ocf_resources, provider, agent)
 
-    if not _is_path_abs(script_path) or not _is_bin_runnable(script_path):
+    if not __is_path_abs(script_path) or not is_path_runnable(script_path):
         raise AgentNotFound(ReportItem.error(
             error_codes.INVALID_RESOURCE_NAME,
             "resource agent '{agent_name}' not found.",
             info={"agent_name": agent_name}
         ))
 
-    output, retval = utils.run(
+    output, retval = runner.run(
         [script_path, "meta-data"],
         env_extend={"OCF_ROOT": settings.ocf_root}
     )
@@ -325,7 +321,7 @@ def get_resource_agent_parameters(metadata_dom):
     return _get_agent_parameters(metadata_dom)
 
 
-def get_resource_agent_metadata(agent):
+def get_resource_agent_metadata(runner, agent):
     """
     Returns metadata of specified agent as dom
 
@@ -340,7 +336,7 @@ def get_resource_agent_metadata(agent):
         agent_info = agent.split("ocf::", 1)[1].split(":", 1)
         if len(agent_info) != 2:
             raise error
-        return _get_ocf_resource_agent_metadata(*agent_info)
+        return _get_ocf_resource_agent_metadata(runner, *agent_info)
     elif agent.startswith("nagios:"):
         return _get_nagios_resource_agent_metadata(agent.split("nagios:", 1)[1])
     else:
