@@ -14,7 +14,9 @@ from pcs.lib.errors import LibraryError, ReportItem
 from pcs.lib.pacemaker_state import ClusterState
 
 
-__PACEMAKER_EXIT_CODE_WAIT_TIMEOUT = 62
+__EXITCODE_WAIT_TIMEOUT = 62
+__EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 6
+__RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD = 100
 
 class CrmMonErrorException(LibraryError):
     pass
@@ -44,9 +46,9 @@ def get_cib_xml(runner, scope=None):
         command.append("--scope={0}".format(scope))
     output, retval = runner.run(command)
     if retval != 0:
-        if retval == 6 and scope:
+        if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
             raise LibraryError(ReportItem.error(
-                error_codes.CIB_LOAD_ERROR_BAD_SCOPE,
+                error_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
                 "unable to get cib, scope '{scope}' not present in cib",
                 info={
                     "scope": scope,
@@ -85,8 +87,7 @@ def replace_cib_configuration(runner, tree):
             __exec("cibadmin"),
             "--replace", "--scope", "configuration", "--verbose", "--xml-pipe"
         ],
-        False,
-        xml
+        stdin_string=xml
     )
     if retval != 0:
         raise LibraryError(ReportItem.error(
@@ -122,12 +123,11 @@ def get_local_node_status(runner):
         info={"node": node_name}
     ))
 
-def resource_cleanup(runner, resource, node, force):
+def resource_cleanup(runner, resource=None, node=None, force=False):
     if not force and not node and not resource:
-        operation_threshold = 100
         summary = ClusterState(get_cluster_status_xml(runner)).summary
         operations = summary.nodes.attrs.count * summary.resources.attrs.count
-        if operations > operation_threshold:
+        if operations > __RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD:
             raise LibraryError(ReportItem.error(
                 error_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
                 "Cleaning up all resources on all nodes will execute more "
@@ -135,7 +135,7 @@ def resource_cleanup(runner, resource, node, force):
                     + "negatively impact the responsiveness of the cluster. "
                     + "Consider specifying resource and/or node"
                 ,
-                info={"threshold": operation_threshold},
+                info={"threshold":__RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD},
                 forceable=True
             ))
 
@@ -191,41 +191,48 @@ def wait_for_resources(runner, timeout=None):
         args.append("--timeout={0}".format(timeout))
     output, retval = runner.run(args)
     if retval != 0:
-        if retval == __PACEMAKER_EXIT_CODE_WAIT_TIMEOUT:
+        if retval == __EXITCODE_WAIT_TIMEOUT:
             raise LibraryError(ReportItem.error(
                 error_codes.RESOURCE_WAIT_TIMED_OUT,
-                "waiting timeout\n\n{details}",
-                info={"details": output.strip()}
+                "waiting timeout\n\n{external_output}",
+                info={
+                    "external_exitcode": retval,
+                    "external_output": output.strip(),
+                }
             ))
         else:
             raise LibraryError(ReportItem.error(
                 error_codes.RESOURCE_WAIT_ERROR,
-                "{details}",
-                info={"details": output.strip()}
+                "{external_output}",
+                info={
+                    "external_exitcode": retval,
+                    "external_output": output.strip(),
+                }
             ))
 
 def __nodes_standby_unstandby(
     runner, standby=True, node_list=None, all_nodes=False
 ):
-    # TODO once we switch to editing CIB instead of running crm_stanby, we
-    # cannot always relly on getClusterState. If we're not editing a CIB from
-    # a live cluster, there is no status.
-    state = ClusterState(get_cluster_status_xml(runner)).node_section.nodes
-    known_nodes = [node.attrs.name for node in state]
+    if node_list or all_nodes:
+        # TODO once we switch to editing CIB instead of running crm_stanby, we
+        # cannot always relly on getClusterState. If we're not editing a CIB
+        # from a live cluster, there is no status.
+        state = ClusterState(get_cluster_status_xml(runner)).node_section.nodes
+        known_nodes = [node.attrs.name for node in state]
 
-    if all_nodes:
-        node_list = known_nodes
-    elif node_list:
-        report = []
-        for node in node_list:
-            if node not in known_nodes:
-                report.append(ReportItem.error(
-                    error_codes.NODE_NOT_FOUND,
-                    "node '{node}' does not appear to exist in configuration",
-                    info={"node": node}
-                ))
-        if report:
-            raise LibraryError(*report)
+        if all_nodes:
+            node_list = known_nodes
+        elif node_list:
+            report = []
+            for node in node_list:
+                if node not in known_nodes:
+                    report.append(ReportItem.error(
+                        error_codes.NODE_NOT_FOUND,
+                        "node '{node}' does not appear to exist in configuration",
+                        info={"node": node}
+                    ))
+            if report:
+                raise LibraryError(*report)
 
     # TODO Edit CIB directly instead of running commands for each node; be aware
     # remote nodes might not be in the CIB yet so we need to put them there.
@@ -250,7 +257,7 @@ def __nodes_standby_unstandby(
 
 def __get_local_node_name(runner):
     def __get_error(reason):
-        ReportItem.error(
+        return ReportItem.error(
             error_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
             "unable to get local node name from pacemaker: {reason}",
             info={"reason": reason}
