@@ -24,6 +24,7 @@ from pcs import (
 )
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
+from pcs.cli.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
@@ -163,7 +164,7 @@ def resource_cmd(argv):
     elif (sub_cmd == "cleanup"):
         try:
             resource_cleanup(argv)
-        except utils.CmdLineInputError as e:
+        except CmdLineInputError as e:
             exit_on_cmdline_input_errror('cleanup')
         except LibraryError as e:
             utils.process_library_reports(e.args)
@@ -2547,7 +2548,7 @@ def resource_cleanup(argv):
     node = None
 
     if len(argv) > 1:
-        raise utils.CmdLineInputError()
+        raise CmdLineInputError()
     if argv:
         resource = argv[0]
     if "--node" in utils.pcs_options:

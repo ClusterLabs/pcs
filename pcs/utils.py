@@ -88,9 +88,6 @@ score_regexp = re.compile(r'^[+-]?((INFINITY)|(\d+))$')
 class UnknownPropertyException(Exception):
     pass
 
-class CmdLineInputError(Exception):
-    pass
-
 def getValidateWithVersion(dom):
     cib = dom.getElementsByTagName("cib")
     if len(cib) != 1:

@@ -11,12 +11,13 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.cli.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 from pcs.lib.commands import quorum as lib_quorum
 
 # TODO vvv move to better place and make it reusable vvv
 # TODO it is used in resource.py as well
-class ErrorWithMessage(utils.CmdLineInputError):
+class ErrorWithMessage(CmdLineInputError):
     pass
 
 class MissingOptionValue(ErrorWithMessage):
@@ -70,19 +71,19 @@ def quorum_cmd(argv):
         elif sub_cmd == "update":
             quorum_update_cmd(argv_next)
         else:
-            raise utils.CmdLineInputError()
+            raise CmdLineInputError()
 
     except LibraryError as e:
         utils.process_library_reports(e.args)
     except ErrorWithMessage as e:
         utils.err(e.message)
-    except utils.CmdLineInputError:
+    except CmdLineInputError:
         usage.quorum(argv)
         sys.exit(1)
 
 def quorum_device_cmd(argv):
     if len(argv) < 1:
-        raise utils.CmdLineInputError()
+        raise CmdLineInputError()
 
     sub_cmd, argv_next = argv[0], argv[1:]
     try:
@@ -93,13 +94,13 @@ def quorum_device_cmd(argv):
         elif sub_cmd == "update":
             quorum_device_update_cmd(argv_next)
         else:
-            raise utils.CmdLineInputError()
+            raise CmdLineInputError()
     except ModelSpecifiedMoreThanOnce:
         utils.err("Model can be specified only once")
 
 def quorum_config_cmd(argv):
     if argv:
-        raise utils.CmdLineInputError()
+        raise CmdLineInputError()
     config = lib_quorum.get_config(utils.get_lib_env())
     print(quorum_config_to_str(config))
 
@@ -144,7 +145,7 @@ def quorum_device_add_cmd(argv):
 
 def quorum_device_remove_cmd(argv):
     if argv:
-        raise utils.CmdLineInputError()
+        raise CmdLineInputError()
 
     lib_env = utils.get_lib_env()
     lib_quorum.remove_device(lib_env)
@@ -157,7 +158,7 @@ def quorum_device_remove_cmd(argv):
 def quorum_device_update_cmd(argv):
     model, model_options, generic_options = prepare_device_options(argv)
     if model:
-        raise utils.CmdLineInputError()
+        raise CmdLineInputError()
 
     lib_env = utils.get_lib_env()
     lib_quorum.update_device(lib_env, model_options, generic_options)
@@ -170,7 +171,7 @@ def quorum_device_update_cmd(argv):
 def quorum_update_cmd(argv):
     options = prepare_options(argv)
     if not options:
-        raise utils.CmdLineInputError()
+        raise CmdLineInputError()
 
     lib_env = utils.get_lib_env()
     lib_quorum.set_options(lib_env, options)

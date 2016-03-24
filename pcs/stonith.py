@@ -16,6 +16,7 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.cli.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 
@@ -64,7 +65,7 @@ def stonith_cmd(argv):
     elif (sub_cmd == "cleanup"):
         try:
             resource.resource_cleanup(argv)
-        except utils.CmdLineInputError as e:
+        except CmdLineInputError as e:
             exit_on_cmdline_input_errror('cleanup')
         except LibraryError as e:
             utils.process_library_reports(e.args)
