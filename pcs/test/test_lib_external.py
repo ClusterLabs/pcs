@@ -6,12 +6,9 @@ from __future__ import (
 )
 
 import unittest
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
-
 import logging
+
+from pcs.test.tools.pcs_mock import mock
 from pcs.test.library_test_tools import LibraryAssertionMixin
 
 from pcs.lib import error_codes
@@ -199,7 +196,7 @@ Return value: {1}
             )
         )
 
-        mock_process.communicate.assert_not_called()
+        mock_process.communicate.assert_called_once_with(None)
         self.assert_popen_called_with(
             mock_popen,
             command,

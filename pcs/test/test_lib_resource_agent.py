@@ -10,11 +10,7 @@ import unittest
 
 from lxml import etree
 
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
-
+from pcs.test.tools.pcs_mock import mock
 from pcs.test.library_test_tools import LibraryAssertionMixin
 from pcs.test.library_test_tools import assert_xml_equal
 from pcs.test.library_test_tools import XmlManipulation as XmlMan
