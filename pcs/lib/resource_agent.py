@@ -218,7 +218,7 @@ def _get_ocf_resource_agent_metadata(runner, provider, agent):
     provider -- resource agent provider
     agent -- resource agent name
     """
-    agent_name = "ocf::" + provider + ":" + agent
+    agent_name = "ocf:" + provider + ":" + agent
 
     def __get_error(info):
         return UnableToGetAgentMetadata(ReportItem.error(
@@ -332,11 +332,11 @@ def get_resource_agent_metadata(runner, agent):
         "resource agent '{agent}' is not supported",
         info={"agent": agent}
     ))
-    if agent.startswith("ocf::"):
-        agent_info = agent.split("ocf::", 1)[1].split(":", 1)
-        if len(agent_info) != 2:
+    if agent.startswith("ocf:"):
+        agent_info = agent.split(":", 2)
+        if len(agent_info) != 3:
             raise error
-        return _get_ocf_resource_agent_metadata(runner, *agent_info)
+        return _get_ocf_resource_agent_metadata(runner, *agent_info[1:])
     elif agent.startswith("nagios:"):
         return _get_nagios_resource_agent_metadata(agent.split("nagios:", 1)[1])
     else:

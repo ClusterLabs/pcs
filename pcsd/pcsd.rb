@@ -971,9 +971,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
       'resource_metadata',
       false,
       {
-        # request /remote/resource_metadata accepts resource agent name only
-        # with single colon
-        :resourcename => resource_agent.sub('::', ':'),
+        :resourcename => resource_agent,
         :new => true
       }
     )

@@ -51,17 +51,7 @@
 	  <td class="bold">Class/Provider</td>
 	  <td>
 	    <%
-        resources = []
-        @resource_agents.keys.each { |res|
-          s = res.split(':', 3)
-          if s.length == 3
-            resources << "#{s[0]}::#{s[1]}:#{s[2]}"
-          elsif s.length == 2
-            resources << "#{s[0]}:#{s[1]}"
-          else
-            resources << res
-          end
-        }
+        resources = @resource_agents.keys
 
 	      class_providers = []
         resources.each {|k|
@@ -72,7 +62,7 @@
 	    %>
 	    <select id="resource_class_provider_selector">
 	      <% class_providers.each {|cp| %>
-		<option <%= "selected" if cp == "ocf::heartbeat" %> value="<%=cp%>"><%=cp%></option>
+		<option <%= "selected" if cp == "ocf:heartbeat" %> value="<%=cp%>"><%=cp%></option>
 	      <% } %>
 	    </select>
 	  </td>
@@ -87,7 +77,7 @@
 	    </select>
 	    <select id="add_ra_type" onchange="load_resource_form(this.value);">
 	      <% resources.sort_by{|a|a.downcase}.each { |key| %>
-		<option width=250px <%= key == "ocf::heartbeat:IPaddr2" ? "selected" : "" %> value="<%=key%>"><%=key%></option>
+		<option width=250px <%= key == "ocf:heartbeat:IPaddr2" ? "selected" : "" %> value="<%=key%>"><%=key%></option>
 	      <% } %>
 	    </select>
 	  </td>

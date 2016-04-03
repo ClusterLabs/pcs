@@ -295,7 +295,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf::{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
             )
         )
 
@@ -315,7 +315,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf::{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
             )
         )
 
@@ -335,7 +335,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf::{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
             )
         )
 
@@ -356,7 +356,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "ocf::{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
             )
         )
 
@@ -381,7 +381,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "ocf::{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
             )
         )
 
@@ -565,7 +565,7 @@ class FilterFenceAgentParametersTest(LibraryResourceTest):
 class GetResourceAgentMetadata(LibraryResourceTest):
     def test_unsupported_class(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        agent = "class::provider:agent"
+        agent = "class:provider:agent"
 
         assert_raise_library_error(
             lambda: lib_ra.get_resource_agent_metadata(mock_runner, agent),
@@ -580,7 +580,7 @@ class GetResourceAgentMetadata(LibraryResourceTest):
 
     def test_ocf_no_provider(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        agent = "ocf::agent"
+        agent = "ocf:agent"
 
         assert_raise_library_error(
             lambda: lib_ra.get_resource_agent_metadata(mock_runner, agent),
@@ -596,7 +596,7 @@ class GetResourceAgentMetadata(LibraryResourceTest):
     @mock.patch("pcs.lib.resource_agent._get_ocf_resource_agent_metadata")
     def test_ocf_ok(self, mock_obj):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        agent = "ocf::provider:agent"
+        agent = "ocf:provider:agent"
 
         lib_ra.get_resource_agent_metadata(mock_runner, agent)
 

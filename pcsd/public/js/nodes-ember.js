@@ -895,7 +895,13 @@ Pcs.PrimitiveObj = Pcs.ResourceObj.extend({
   instance_status: [],
   operations: [],
   utilization: [],
-  resource_type: Ember.computed.alias('agentname'),
+  resource_type: function() {
+    var agent = this.get("agentname");
+    if (agent) {
+      return agent.replace("::", ":");
+    }
+    return agent;
+  }.property("agentname"),
   is_primitive: true,
   nodes_running_on: function() {
     var self = this;
