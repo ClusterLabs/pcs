@@ -134,22 +134,27 @@ def _parse_section(lines, section):
             _parse_section(lines, new_section)
         elif "}" in current_line:
             if not section.parent:
-                raise ParseErrorException("Unexpected closing brace")
+                raise UnexpectedClosingBraceException()
             return
         elif ":" in current_line:
             section.add_attribute(
                 *[x.strip() for x in current_line.split(":", 1)]
             )
     if section.parent:
-        raise ParseErrorException("Missing closing brace")
+        raise MissingClosingBraceException()
 
 
-class CorosyncConfException(Exception):
+class CorosyncConfParserException(Exception):
     pass
 
-class CircularParentshipException(CorosyncConfException):
+class CircularParentshipException(CorosyncConfParserException):
     pass
 
-class ParseErrorException(CorosyncConfException):
+class ParseErrorException(CorosyncConfParserException):
     pass
 
+class MissingClosingBraceException(ParseErrorException):
+    pass
+
+class UnexpectedClosingBraceException(ParseErrorException):
+    pass

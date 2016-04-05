@@ -55,12 +55,10 @@ except ImportError:
         URLError as urllib_URLError
     )
 
-from pcs import (
-    settings,
-    corosync_conf as corosync_conf_utils,
-)
+from pcs import settings
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.external import CommandRunner
+import pcs.lib.corosync.config_parser as corosync_conf_utils
 from pcs.lib.pacemaker import has_resource_wait_support
 from pcs.lib.pacemaker_state import ClusterState
 from pcs.lib.pacemaker_values import (
@@ -477,7 +475,7 @@ def getCorosyncConfParsed(conf=None, text=None):
             err("Unable to parse cluster.conf: %s" % e)
     try:
         return corosync_conf_utils.parse_string(conf_text)
-    except corosync_conf_utils.CorosyncConfException as e:
+    except corosync_conf_utils.CorosyncConfParserException as e:
         err("Unable to parse corosync.conf: %s" % e)
 
 def setCorosyncConf(corosync_config, conf_file=None):
@@ -2020,7 +2018,7 @@ def getClusterName():
                     cluster_name = attrs[1]
             if cluster_name:
                 return cluster_name
-        except (IOError, corosync_conf_utils.CorosyncConfException):
+        except (IOError, corosync_conf_utils.CorosyncConfParserException):
             return ""
 
     return ""

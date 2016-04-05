@@ -9,13 +9,13 @@ import unittest
 
 from pcs.test.pcs_test_functions import ac
 
-from pcs import corosync_conf
+from pcs.lib.corosync import config_parser
 
 
 class SectionTest(unittest.TestCase):
 
     def test_empty_section(self):
-        section = corosync_conf.Section("mySection")
+        section = config_parser.Section("mySection")
         self.assertEqual(section.parent, None)
         self.assertEqual(section.get_root(), section)
         self.assertEqual(section.name, "mySection")
@@ -24,7 +24,7 @@ class SectionTest(unittest.TestCase):
         ac(str(section), "")
 
     def test_attribute_add(self):
-        section = corosync_conf.Section("mySection")
+        section = config_parser.Section("mySection")
 
         section.add_attribute("name1", "value1")
         self.assertEqual(
@@ -54,7 +54,7 @@ class SectionTest(unittest.TestCase):
         )
 
     def test_attribute_get(self):
-        section = corosync_conf.Section("mySection")
+        section = config_parser.Section("mySection")
         section.add_attribute("name1", "value1")
         section.add_attribute("name2", "value2")
         section.add_attribute("name3", "value3")
@@ -88,7 +88,7 @@ class SectionTest(unittest.TestCase):
         )
 
     def test_attribute_set(self):
-        section = corosync_conf.Section("mySection")
+        section = config_parser.Section("mySection")
 
         section.set_attribute("name1", "value1")
         self.assertEqual(
@@ -166,7 +166,7 @@ class SectionTest(unittest.TestCase):
         )
 
     def test_attribute_change(self):
-        section = corosync_conf.Section("mySection")
+        section = config_parser.Section("mySection")
         section.add_attribute("name1", "value1")
         section.add_attribute("name2", "value2")
         section.add_attribute("name3", "value3")
@@ -186,7 +186,7 @@ class SectionTest(unittest.TestCase):
         )
 
     def test_attribute_del(self):
-        section = corosync_conf.Section("mySection")
+        section = config_parser.Section("mySection")
         section.add_attribute("name1", "value1")
         section.add_attribute("name2", "value2")
         section.add_attribute("name3", "value3")
@@ -218,7 +218,7 @@ class SectionTest(unittest.TestCase):
         )
 
     def test_attribute_del_by_name(self):
-        section = corosync_conf.Section("mySection")
+        section = config_parser.Section("mySection")
         section.add_attribute("name1", "value1")
         section.add_attribute("name2", "value2")
         section.add_attribute("name3", "value3")
@@ -285,10 +285,10 @@ class SectionTest(unittest.TestCase):
         )
 
     def test_section_add(self):
-        root = corosync_conf.Section("root")
-        child1 = corosync_conf.Section("child1")
-        child1a = corosync_conf.Section("child1a")
-        child2 = corosync_conf.Section("child2")
+        root = config_parser.Section("root")
+        child1 = config_parser.Section("child1")
+        child1a = config_parser.Section("child1a")
+        child2 = config_parser.Section("child2")
 
         root.add_section(child1)
         child1.add_section(child1a)
@@ -320,28 +320,28 @@ child2 {
 """)
 
         self.assertRaises(
-            corosync_conf.CircularParentshipException,
+            config_parser.CircularParentshipException,
             child1a.add_section, child1a
         )
         self.assertRaises(
-            corosync_conf.CircularParentshipException,
+            config_parser.CircularParentshipException,
             child1a.add_section, child2
         )
         self.assertRaises(
-            corosync_conf.CircularParentshipException,
+            config_parser.CircularParentshipException,
             child1a.add_section, root
         )
 
     def test_section_get(self):
-        root = corosync_conf.Section("")
-        child1 = corosync_conf.Section("child1")
-        child2 = corosync_conf.Section("child2")
-        childa1 = corosync_conf.Section("childA")
-        childa2 = corosync_conf.Section("childA")
-        childa3 = corosync_conf.Section("childA")
-        childa4 = corosync_conf.Section("childA")
-        childb1 = corosync_conf.Section("childB")
-        childb2 = corosync_conf.Section("childB")
+        root = config_parser.Section("")
+        child1 = config_parser.Section("child1")
+        child2 = config_parser.Section("child2")
+        childa1 = config_parser.Section("childA")
+        childa2 = config_parser.Section("childA")
+        childa3 = config_parser.Section("childA")
+        childa4 = config_parser.Section("childA")
+        childb1 = config_parser.Section("childB")
+        childb2 = config_parser.Section("childB")
         childa1.add_attribute("id", "1")
         childa2.add_attribute("id", "2")
         childa3.add_attribute("id", "3")
@@ -454,15 +454,15 @@ childA {
         )
 
     def test_section_del(self):
-        root = corosync_conf.Section("")
-        child1 = corosync_conf.Section("child1")
-        child2 = corosync_conf.Section("child2")
-        childa1 = corosync_conf.Section("childA")
-        childa2 = corosync_conf.Section("childA")
-        childa3 = corosync_conf.Section("childA")
-        childa4 = corosync_conf.Section("childA")
-        childb1 = corosync_conf.Section("childB")
-        childb2 = corosync_conf.Section("childB")
+        root = config_parser.Section("")
+        child1 = config_parser.Section("child1")
+        child2 = config_parser.Section("child2")
+        childa1 = config_parser.Section("childA")
+        childa2 = config_parser.Section("childA")
+        childa3 = config_parser.Section("childA")
+        childa4 = config_parser.Section("childA")
+        childb1 = config_parser.Section("childB")
+        childb2 = config_parser.Section("childB")
         childa1.add_attribute("id", "1")
         childa2.add_attribute("id", "2")
         childa3.add_attribute("id", "3")
@@ -587,9 +587,9 @@ child1 {
         ac(str(root), "")
 
     def test_get_root(self):
-        root = corosync_conf.Section("root")
-        child1 = corosync_conf.Section("child1")
-        child1a = corosync_conf.Section("child1a")
+        root = config_parser.Section("root")
+        child1 = config_parser.Section("child1")
+        child1a = config_parser.Section("child1a")
         root.add_section(child1)
         child1.add_section(child1a)
 
@@ -598,7 +598,7 @@ child1 {
         self.assertEqual(child1a.get_root().name, "root")
 
     def test_str(self):
-        root = corosync_conf.Section("root")
+        root = config_parser.Section("root")
         ac(str(root), "")
 
         root.add_attribute("name1", "value1")
@@ -614,7 +614,7 @@ name2: value2a
 name3: value3
 """)
 
-        child1 = corosync_conf.Section("child1")
+        child1 = config_parser.Section("child1")
         root.add_section(child1)
         ac(str(root), """\
 name1: value1
@@ -640,7 +640,7 @@ child1 {
 }
 """)
 
-        child2 = corosync_conf.Section("child2")
+        child2 = config_parser.Section("child2")
         child2.add_attribute("name2.1", "value2.1")
         root.add_section(child2)
         ac(str(root), """\
@@ -659,7 +659,7 @@ child2 {
 }
 """)
 
-        child2a = corosync_conf.Section("child2a")
+        child2a = config_parser.Section("child2a")
         child2a.add_attribute("name2.a.1", "value2.a.1")
         child2.add_section(child2a)
         ac(str(root), """\
@@ -682,10 +682,10 @@ child2 {
 }
 """)
 
-        child3 = corosync_conf.Section("child3")
+        child3 = config_parser.Section("child3")
         root.add_section(child3)
-        child3.add_section(corosync_conf.Section("child3a"))
-        child3.add_section(corosync_conf.Section("child3b"))
+        child3.add_section(config_parser.Section("child3a"))
+        child3.add_section(config_parser.Section("child3b"))
         ac(str(root), """\
 name1: value1
 name2: value2
@@ -718,7 +718,7 @@ child3 {
 class ParserTest(unittest.TestCase):
 
     def test_empty(self):
-        ac(str(corosync_conf.parse_string("")), "")
+        ac(str(config_parser.parse_string("")), "")
 
     def test_attributes(self):
         string = """\
@@ -727,7 +727,7 @@ name:value\
         parsed = """\
 name: value
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string = """\
 name:value
@@ -737,7 +737,7 @@ name:value
 name: value
 name: value
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string = """\
   name1:value1  
@@ -751,7 +751,7 @@ name2: value2
 name3: value3
 name4: value4
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string = """\
 name:foo:value
@@ -759,7 +759,7 @@ name:foo:value
         parsed = """\
 name: foo:value
 """
-        root = corosync_conf.parse_string(string)
+        root = config_parser.parse_string(string)
         self.assertEqual(root.get_attributes(), [["name", "foo:value"]])
         ac(str(root), parsed)
 
@@ -769,7 +769,7 @@ name :
         parsed = """\
 name: 
 """
-        root = corosync_conf.parse_string(string)
+        root = config_parser.parse_string(string)
         self.assertEqual(root.get_attributes(), [["name", ""]])
         ac(str(root), parsed)
 
@@ -782,7 +782,7 @@ section1 {
 section1 {
 }
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string = """\
 section1 {
@@ -801,7 +801,7 @@ section1 {
     }
 }
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string = """\
 section1 {
@@ -834,7 +834,7 @@ section2 {
     }
 }
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string = """\
 section1 {
@@ -847,8 +847,8 @@ section1 {
 }
 """
         self.assertRaises(
-            corosync_conf.ParseErrorException,
-            corosync_conf.parse_string, string
+            config_parser.UnexpectedClosingBraceException,
+            config_parser.parse_string, string
         )
 
         string = """\
@@ -860,24 +860,24 @@ section1 {
 }
 """
         self.assertRaises(
-            corosync_conf.ParseErrorException,
-            corosync_conf.parse_string, string
+            config_parser.MissingClosingBraceException,
+            config_parser.parse_string, string
         )
 
         string = """\
 section1 {
 """
         self.assertRaises(
-            corosync_conf.ParseErrorException,
-            corosync_conf.parse_string, string
+            config_parser.MissingClosingBraceException,
+            config_parser.parse_string, string
         )
 
         string = """\
 }
 """
         self.assertRaises(
-            corosync_conf.ParseErrorException,
-            corosync_conf.parse_string, string
+            config_parser.UnexpectedClosingBraceException,
+            config_parser.parse_string, string
         )
 
 
@@ -898,7 +898,7 @@ name2: value2#junk3
 name3: value3 #junk4
 name4 # junk5: value4
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string= """\
 # junk1
@@ -919,15 +919,15 @@ section2 # junk2 {
 section3 {
 }
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string = """\
 section {
 #}
 """
         self.assertRaises(
-            corosync_conf.ParseErrorException,
-            corosync_conf.parse_string, string
+            config_parser.MissingClosingBraceException,
+            config_parser.parse_string, string
         )
 
         string = """\
@@ -935,8 +935,8 @@ section {
 }
 """
         self.assertRaises(
-            corosync_conf.ParseErrorException,
-            corosync_conf.parse_string, string
+            config_parser.UnexpectedClosingBraceException,
+            config_parser.parse_string, string
         )
 
     def test_full(self):
@@ -1056,7 +1056,7 @@ logging {
 quorum {
 }
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
 
         string = """\
 # Please read the corosync.conf.5 manual page
@@ -1174,4 +1174,4 @@ nodelist {
 quorum {
 }
 """
-        ac(str(corosync_conf.parse_string(string)), parsed)
+        ac(str(config_parser.parse_string(string)), parsed)
