@@ -5,6 +5,9 @@ from __future__ import (
     unicode_literals,
 )
 
+import base64
+import inspect
+import json
 import os
 try:
     # python 2
@@ -12,9 +15,37 @@ try:
 except ImportError:
     # python 3
     from shlex import quote as shell_quote
+import re
 import signal
+import ssl
 import subprocess
 import sys
+try:
+    # python2
+    from urllib import urlencode as urllib_urlencode
+except ImportError:
+    # python3
+    from urllib.parse import urlencode as urllib_urlencode
+try:
+    # python2
+    from urllib2 import (
+        build_opener as urllib_build_opener,
+        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
+        HTTPSHandler as urllib_HTTPSHandler,
+        HTTPError as urllib_HTTPError,
+        URLError as urllib_URLError
+    )
+except ImportError:
+    # python3
+    from urllib.request import (
+        build_opener as urllib_build_opener,
+        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
+        HTTPSHandler as urllib_HTTPSHandler
+    )
+    from urllib.error import (
+        HTTPError as urllib_HTTPError,
+        URLError as urllib_URLError
+    )
 
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
@@ -81,3 +112,217 @@ class CommandRunner(object):
             ).format(args=log_args, retval=retval, output=output)
         )
         return output, retval
+
+
+class NodeCommunicationException(Exception):
+    # pylint: disable=super-init-not-called
+    def __init__(self, node, command, reason):
+        self.node = node
+        self.command = command
+        self.reason = reason
+
+
+class NodeConnectionException(NodeCommunicationException):
+    pass
+
+
+class NodeAuthenticationException(NodeCommunicationException):
+    pass
+
+
+class NodePermissionDeniedException(NodeCommunicationException):
+    pass
+
+
+class NodeUnsupportedCommandException(NodeCommunicationException):
+    pass
+
+
+def node_communicator_exception_to_report_item(e):
+    """
+    Transform NodeCommunicationException to ReportItem
+    """
+    if e.__class__ == NodeAuthenticationException:
+        return ReportItem.error(
+            error_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+            "Unable to authenticate to {node} ({reason})",
+            info={
+                "node": e.node,
+                "command": e.command,
+                "reason": "HTTP error: {0}".format(e.reason),
+            }
+        )
+    if e.__class__ == NodePermissionDeniedException:
+        return ReportItem.error(
+            error_codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED,
+            "{node}: Permission denied ({reason})",
+            info={
+                "node": e.node,
+                "command": e.command,
+                "reason": "HTTP error: {0}".format(e.reason),
+            }
+        )
+    if e.__class__ == NodeUnsupportedCommandException:
+        return ReportItem.error(
+            error_codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND,
+            "{node}: Unsupported command ({reason})",
+            info={
+                "node": e.node,
+                "command": e.command,
+                "reason": "HTTP error: {0}".format(e.reason),
+            }
+        )
+    if e.__class__ == NodeCommunicationException:
+        return ReportItem.error(
+            error_codes.NODE_COMMUNICATION_ERROR,
+            "Error connecting to {node} ({reason})",
+            info={
+                "node": e.node,
+                "command": e.command,
+                "reason": "HTTP error: {0}".format(e.reason),
+            }
+        )
+    if e.__class__ == NodeConnectionException:
+        return ReportItem.error(
+            error_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+            "Unable to connect to {node} ({reason})",
+            info={
+                "node": e.node,
+                "command": e.command,
+                "reason": e.reason,
+            }
+        )
+    raise e
+
+class NodeCommunicator(object):
+    """
+    Sends requests to nodes
+    """
+
+    @classmethod
+    def format_data_dict(cls, data):
+        """
+        Encode data for transport (only plain dict is supported)
+        """
+        return urllib_urlencode(data)
+
+    @classmethod
+    def format_data_json(cls, data):
+        """
+        Encode data for transport (more complex data than in format_data_dict)
+        """
+        return json.dumps(data)
+
+    def __init__(self, logger, auth_tokens, user=None, groups=None):
+        """
+        auth_tokens authorization tokens for nodes: {node: token}
+        user username
+        groups groups the user is member of
+        """
+        self._logger = logger
+        self._auth_tokens = auth_tokens
+        self._user = user
+        self._groups = groups
+
+    def call_node(self, node_addr, request, data):
+        """
+        Send a request to a node
+        node_addr destination node, instance of NodeAddresses
+        request command to be run on the node
+        data command parameters, encoded by format_data_* method
+        """
+        return self.call_host(node_addr.ring0, request, data)
+
+    def call_host(self, host, request, data):
+        """
+        Send a request to a host
+        host host address
+        request command to be run on the host
+        data command parameters, encoded by format_data_* method
+        """
+        opener = self.__get_opener()
+        url = "https://{host}:2224/{request}".format(
+            host=("[{0}]".format(host) if ":" in host else host),
+            request=request
+        )
+        cookies = self.__prepare_cookies(host)
+        if cookies:
+            opener.addheaders.append(("Cookie", ";".join(cookies)))
+
+        msg = "Sending HTTP Request to: {url}"
+        if data:
+            msg += "\n--Debug Input Start--\n{data}\n--Debug Input End--"
+        self._logger.debug(msg.format(url=url, data=data))
+        result_msg = (
+            "Finished calling: {url}\nResponse Code: {code}"
+            + "\n--Debug Response Start--\n{response}\n--Debug Response End--"
+        )
+
+        try:
+            # python3 requires data to be bytes not str
+            if data:
+                data = data.encode("utf-8")
+            result = opener.open(url, data)
+            # python3 returns bytes not str
+            response_data = result.read().decode("utf-8")
+            self._logger.debug(result_msg.format(
+                url=url,
+                code=result.getcode(),
+                response=response_data
+            ))
+            return response_data
+        except urllib_HTTPError as e:
+            # python3 returns bytes not str
+            response_data = e.read().decode("utf-8")
+            self._logger.debug(result_msg.format(
+                url=url,
+                code=e.code,
+                response=response_data
+            ))
+            if e.code == 401:
+                raise NodeAuthenticationException(host, request, e.code)
+            elif e.code == 403:
+                raise NodePermissionDeniedException(host, request, e.code)
+            elif e.code == 404:
+                raise NodeUnsupportedCommandException(host, request, e.code)
+            else:
+                raise NodeCommunicationException(host, request, e.code)
+        except urllib_URLError as e:
+            msg = "Unable to connect to {node} ({reason})"
+            self._logger.debug(msg.format(node=host, reason=e.reason))
+            raise NodeConnectionException(host, request, e.reason)
+
+    def __get_opener(self):
+        # enable self-signed certificates
+        # https://www.python.org/dev/peps/pep-0476/
+        # http://bugs.python.org/issue21308
+        if (
+            hasattr(ssl, "_create_unverified_context")
+            and
+            "context" in inspect.getargspec(urllib_HTTPSHandler.__init__).args
+        ):
+            opener = urllib_build_opener(
+                urllib_HTTPSHandler(context=ssl._create_unverified_context()),
+                urllib_HTTPCookieProcessor()
+            )
+        else:
+            opener = urllib_build_opener(urllib_HTTPCookieProcessor())
+        return opener
+
+    def __prepare_cookies(self, host):
+        # Let's be safe about characters in variables (they can come from env)
+        # and do base64. We cannot do it for CIB_user however to be backward
+        # compatible so we at least remove disallowed characters.
+        cookies = []
+        if host in self._auth_tokens:
+            cookies.append("token={0}".format(self._auth_tokens[host]))
+        if self._user:
+            cookies.append("CIB_user={0}".format(
+                re.sub(r"[^!-~]", "", self._user).replace(";", "")
+            ))
+        if self._groups:
+            cookies.append("CIB_user_groups={0}".format(
+                # python3 requires the value to be bytes not str
+                base64.b64encode(" ".join(self._groups).encode("utf-8"))
+            ))
+        return cookies

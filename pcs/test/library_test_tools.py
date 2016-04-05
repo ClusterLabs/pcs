@@ -34,8 +34,10 @@ class LibraryAssertionMixin(object):
             )))
         )
 
-    def __check_error(self, e, report_info_list):
-        for report_item in e.args:
+    def assert_equal_report_item_list(
+        self, real_report_item_list, report_info_list
+    ):
+        for report_item in real_report_item_list:
             report_info_list.remove(
                 self.__find_report_info(report_info_list, report_item)
             )
@@ -57,7 +59,7 @@ class LibraryAssertionMixin(object):
             callableObj()
             raise AssertionError('LibraryError not raised')
         except LibraryError as e:
-            self.__check_error(e, list(report_info_list))
+            self.assert_equal_report_item_list(e.args, list(report_info_list))
 
     def assert_cib_equal(self, expected_cib, got_cib=None):
         got_cib = got_cib if got_cib else self.cib
