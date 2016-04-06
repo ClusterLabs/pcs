@@ -70,6 +70,7 @@ from pcs.lib.pacemaker_values import (
     timeout_to_seconds as get_timeout_seconds,
 )
 from pcs.lib.env import LibraryEnvironment
+from pcs.common.tools import simple_cache
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -87,14 +88,6 @@ class UnknownPropertyException(Exception):
 
 class CmdLineInputError(Exception):
     pass
-
-def simple_cache(func):
-    cache = {}
-    def wrapper(*args):
-        if args not in cache:
-            cache[args] = func()
-        return cache[args]
-    return wrapper
 
 def getValidateWithVersion(dom):
     cib = dom.getElementsByTagName("cib")
