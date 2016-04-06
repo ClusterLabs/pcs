@@ -611,3 +611,79 @@ class GetResourceAgentMetadata(LibraryResourceTest):
 
         mock_obj.assert_called_once_with("agent")
         mock_runner.run.assert_not_called()
+
+
+class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
+    def test_all_advanced(self):
+        xml = """
+            <resource-agent>
+                <parameters>
+                    <parameter name="test_param" required="0">
+                        <longdesc>
+                            Long description
+                        </longdesc>
+                        <shortdesc>short description</shortdesc>
+                        <content type="test_type" default="default_value" />
+                    </parameter>
+                    <parameter name="another parameter"/>
+                </parameters>
+            </resource-agent>
+        """
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        mock_runner.run.return_value = (xml, 0)
+        self.assertEqual(
+            [
+                {
+                    "name": "test_param",
+                    "longdesc": "Long description",
+                    "shortdesc": "short description",
+                    "type": "test_type",
+                    "required": False,
+                    "default": "default_value",
+                    "advanced": True
+                },
+                {
+                    "name": "another parameter",
+                    "longdesc": "",
+                    "shortdesc": "",
+                    "type": "string",
+                    "required": False,
+                    "default": None,
+                    "advanced": True
+                }
+            ],
+            lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner)
+        )
+        mock_runner.run.assert_called_once_with(
+            [settings.stonithd_binary, "metadata"]
+        )
+
+    def test_failed_to_get_xml(self):
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        mock_runner.run.return_value = ("", 1)
+        self.assert_raise_library_error(
+            lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner),
+            (
+                Severities.ERROR,
+                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                {}
+            )
+        )
+        mock_runner.run.assert_called_once_with(
+            [settings.stonithd_binary, "metadata"]
+        )
+
+    def test_invalid_xml(self):
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        mock_runner.run.return_value = ("invalid XML", 0)
+        self.assert_raise_library_error(
+            lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner),
+            (
+                Severities.ERROR,
+                error_codes.INVALID_METADATA_FORMAT,
+                {}
+            )
+        )
+        mock_runner.run.assert_called_once_with(
+            [settings.stonithd_binary, "metadata"]
+        )

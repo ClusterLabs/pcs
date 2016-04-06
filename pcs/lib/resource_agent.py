@@ -14,6 +14,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.errors import ReportItem
 from pcs.lib.pacemaker_values import is_true
 from pcs.lib.external import is_path_runnable
+from pcs.common.tools import simple_cache
 
 
 class UnsupportedResourceAgent(LibraryError):
@@ -47,6 +48,13 @@ def __get_text_from_dom_element(element):
         return element.text.strip()
 
 
+def __get_invalid_metadata_format_exception():
+    return InvalidMetadataFormat(ReportItem.error(
+        error_codes.INVALID_METADATA_FORMAT,
+        "invalid agent metadata format"
+    ))
+
+
 def _get_parameter(parameter_dom):
     """
     Returns dictionary that describes parameter.
@@ -63,10 +71,7 @@ def _get_parameter(parameter_dom):
     parameter_dom -- parameter dom element
     """
     if parameter_dom.tag != "parameter" or parameter_dom.get("name") is None:
-        raise InvalidMetadataFormat(ReportItem.error(
-            error_codes.INVALID_METADATA_FORMAT,
-            "invalid agent metadata format"
-        ))
+        raise __get_invalid_metadata_format_exception()
 
     longdesc = __get_text_from_dom_element(parameter_dom.find("longdesc"))
     shortdesc = __get_text_from_dom_element(parameter_dom.find("shortdesc"))
@@ -94,10 +99,7 @@ def _get_agent_parameters(metadata_dom):
     metadata_dom -- agent's metadata dom
     """
     if metadata_dom.tag != "resource-agent":
-        raise InvalidMetadataFormat(ReportItem.error(
-            error_codes.INVALID_METADATA_FORMAT,
-            "invalid agent metadata format"
-        ))
+        raise __get_invalid_metadata_format_exception()
 
     params_el = metadata_dom.find("parameters")
     if params_el is None:
@@ -108,32 +110,27 @@ def _get_agent_parameters(metadata_dom):
     ]
 
 
-def _get_pcmk_advanced_stonith_parameters():
+def _get_pcmk_advanced_stonith_parameters(runner):
     """Returns advanced instance attributes for stonith devices"""
-    params = [
-        "pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_arg_map",
-        "pcmk_host_argument", "pcmk_list_cmd", "pcmk_monitor_cmd", "priority",
-        "pcmk_poweroff_action", "pcmk_status_cmd", "stonith-timeout", "timeout",
-        "pcmk_delay_max"
-    ]
+    @simple_cache
+    def __get_stonithd_parameters():
+        output, retval = runner.run([settings.stonithd_binary, "metadata"])
+        if retval != 0:
+            raise UnableToGetAgentMetadata(ReportItem.error(
+                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                "unable to get metadata of stonithd",
+                info={"external_exitcode": retval, "external_output": output}
+            ))
 
-    for a in ["off", "on", "status", "list", "metadata", "monitor", "reboot"]:
-        params.append("pcmk_{0}_action".format(a))
-        params.append("pcmk_{0}_timeout".format(a))
-        params.append("pcmk_{0}_retries".format(a))
+        try:
+            params = _get_agent_parameters(etree.fromstring(output))
+            for param in params:
+                param.update({"advanced": True})
+            return params
+        except etree.XMLSyntaxError:
+            raise __get_invalid_metadata_format_exception()
 
-    definition = []
-    for param in params:
-        definition.append({
-            "name": param,
-            "longdesc": "",
-            "shortdesc": "",
-            "type": "string",
-            "default": None,
-            "required": False,
-            "advanced": True
-        })
-    return definition
+    return __get_stonithd_parameters()
 
 
 def get_fence_agent_metadata(runner, fence_agent):
@@ -269,10 +266,7 @@ def get_agent_desc(metadata_dom):
     metadata_dom -- metadata dom of agent
     """
     if metadata_dom.tag != "resource-agent":
-        raise InvalidMetadataFormat(ReportItem.error(
-            error_codes.INVALID_METADATA_FORMAT,
-            "invalid agent metadata format"
-        ))
+        raise __get_invalid_metadata_format_exception()
 
     shortdesc_el = metadata_dom.find("shortdesc")
     if shortdesc_el is None:
@@ -299,7 +293,7 @@ def _filter_fence_agent_parameters(parameters):
     ]
 
 
-def get_fence_agent_parameters(metadata_dom):
+def get_fence_agent_parameters(runner, metadata_dom):
     """
     Returns complete list of parameters for fence agent from it's metadata.
 
@@ -307,7 +301,7 @@ def get_fence_agent_parameters(metadata_dom):
     """
     return (
         _filter_fence_agent_parameters(_get_agent_parameters(metadata_dom)) +
-        _get_pcmk_advanced_stonith_parameters()
+        _get_pcmk_advanced_stonith_parameters(runner)
     )
 
 

@@ -443,15 +443,17 @@ def get_fence_agent_info(argv):
     if not agent.startswith("stonith:"):
         utils.err("Invalid fence agent name")
 
+    runner = utils.cmd_runner()
+
     try:
         metadata_dom = lib_ra.get_fence_agent_metadata(
-            utils.cmd_runner(),
+            runner,
             agent.split("stonith:", 1)[1]
         )
         metadata = lib_ra.get_agent_desc(metadata_dom)
         metadata["name"] = agent
         metadata["parameters"] = lib_ra.get_fence_agent_parameters(
-            metadata_dom
+            runner, metadata_dom
         )
 
         print(json.dumps(metadata))
