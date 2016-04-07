@@ -17,7 +17,9 @@ def full_usage():
     out += strip_extras(stonith([],False))
     out += strip_extras(property([],False))
     out += strip_extras(constraint([],False))
+    out += strip_extras(node([],False))
     out += strip_extras(acl([],False))
+    out += strip_extras(quorum([],False))
     out += strip_extras(status([],False))
     out += strip_extras(config([],False))
     out += strip_extras(pcsd([],False))
@@ -135,6 +137,7 @@ def sub_generate_bash_completion():
     tree["property"] = generate_tree(property([],False))
     tree["acl"] = generate_tree(acl([],False))
     tree["constraint"] = generate_tree(constraint([],False))
+    tree["quorum"] = generate_tree(quorum([],False))
     tree["status"] = generate_tree(status([],False))
     tree["config"] = generate_tree(config([],False))
     tree["pcsd"] = generate_tree(pcsd([],False))
@@ -155,7 +158,7 @@ def sub_generate_bash_completion():
     print(sub_gen_code(1,tree,[]))
     print("""
     if [ $COMP_CWORD -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config pcsd node" -- $cur) )
+        COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config pcsd node quorum" -- $cur) )
     fi
     return 0
 
@@ -210,6 +213,7 @@ Commands:
     constraint  Set resource constraints
     property    Set pacemaker properties
     acl         Set pacemaker access control lists
+    quorum      Manage cluster quorum settings
     status      View cluster status
     config      View and manage cluster configuration
     pcsd        Manage pcs daemon
@@ -1260,6 +1264,22 @@ Commands:
         should be in format name=value, value has to be integer. Options may be
         removed by setting an option without a value.
         Example: pcs node utilization node1 cpu=4 ram=
+"""
+    if pout:
+        print(sub_usage(args, output))
+    else:
+        return output
+
+def quorum(args=[], pout=True):
+    output = """
+Usage: pcs quorum <command>
+Manage cluster quorum settings
+
+Commands:
+    update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]
+            [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
+        Add/Change quorum options.  At least one option must be specified.
+        Options are documented in corosync's votequorum(5) man page.
 """
     if pout:
         print(sub_usage(args, output))

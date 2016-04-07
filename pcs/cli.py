@@ -19,6 +19,7 @@ from pcs import (
     node,
     pcsd,
     prop,
+    quorum,
     resource,
     settings,
     status,
@@ -170,6 +171,7 @@ def main(argv=None):
         "config": config.config_cmd,
         "pcsd": pcsd.pcsd_cmd,
         "node": node.node_cmd,
+        "quorum": quorum.quorum_cmd,
     }
     if command not in cmd_map:
         usage.main()

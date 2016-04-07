@@ -69,6 +69,7 @@ from pcs.lib.pacemaker_values import (
     is_boolean,
     timeout_to_seconds as get_timeout_seconds,
 )
+from pcs.lib.env import LibraryEnvironment
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -2669,3 +2670,36 @@ def get_acls(dom):
     else:
         acls = acls[0]
     return acls
+
+def get_lib_env():
+    user = None
+    groups = None
+    if os.geteuid() == 0:
+        for name in ("CIB_user", "CIB_user_groups"):
+            if name in os.environ and os.environ[name].strip():
+                value = os.environ[name].strip()
+                if "CIB_user" == name:
+                    user = value
+                else:
+                    groups = value.split(" ")
+
+    cib_data = None
+    if usefile:
+        cib_data = get_cib()
+
+    corosync_conf_data = None
+    if "--corosync_conf" in pcs_options:
+        conf = pcs_options["--corosync_conf"]
+        try:
+            corosync_conf_data = open(conf).read()
+        except IOError as e:
+            err("Unable to read %s: %s" % (conf, e.strerror))
+
+    return LibraryEnvironment(
+        logging.getLogger("old_cli"),
+        user,
+        groups,
+        cib_data,
+        corosync_conf_data,
+        auth_tokens_getter=readTokens,
+    )

@@ -39,6 +39,9 @@ Set pacemaker properties
 acl
 Set pacemaker access control lists
 .TP
+quorum
+Manage cluster quorum settings
+.TP
 status
 View cluster status
 .TP
@@ -483,6 +486,10 @@ where duration options and date spec options are: hours, monthdays, weekdays, ye
 .TP
 rule remove <rule id>
 Remove a rule if a rule id is specified, if rule is last rule in its constraint, the constraint will be removed
+.SS "quorum"
+.TP
+update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
+Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.
 .SS "status"
 .TP
 [status] [\fB\-\-full\fR | \fB\-\-hide-inactive\fR]
