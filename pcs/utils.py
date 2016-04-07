@@ -57,7 +57,10 @@ except ImportError:
 
 from pcs import settings
 from pcs.lib.errors import LibraryError, ReportItemSeverity
-from pcs.lib.external import CommandRunner
+from pcs.lib.external import (
+    is_cman_cluster,
+    CommandRunner,
+)
 import pcs.lib.corosync.config_parser as corosync_conf_utils
 from pcs.lib.pacemaker import has_resource_wait_support
 from pcs.lib.pacemaker_state import ClusterState
@@ -2104,17 +2107,7 @@ def is_systemctl():
 
 @simple_cache
 def is_rhel6():
-    # Checking corosync version works in most cases and supports non-rhel
-    # distributions as well as running (manually compiled) corosync2 on rhel6.
-    # - corosync2 does not support cman at all
-    # - corosync1 runs with cman on rhel6
-    # - corosync1 can be used without cman, but we don't support it anyways
-    # - corosync2 is the default result if errors occur
-    output, retval = run(["corosync", "-v"])
-    if retval != 0:
-        return False
-    match = re.search(r"version\D+(\d+)", output)
-    return match and match.group(1) == "1"
+    return is_cman_cluster(cmd_runner())
 
 def err(errorText, exit_after_error=True):
     sys.stderr.write("Error: %s\n" % errorText)

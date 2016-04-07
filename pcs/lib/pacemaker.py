@@ -76,12 +76,7 @@ def get_cib(xml):
             "unable to get cib"
         ))
 
-def replace_cib_configuration(runner, tree):
-    #etree returns bytes: b'xml'
-    #python 3 removed .encode() from bytes
-    #run(...) calls subprocess.Popen.communicate which calls encode...
-    #so here is bytes to str conversion
-    xml = etree.tostring(tree).decode()
+def replace_cib_configuration_xml(runner, xml):
     output, retval = runner.run(
         [
             __exec("cibadmin"),
@@ -98,6 +93,14 @@ def replace_cib_configuration(runner, tree):
                 "external_output": output,
             }
         ))
+
+def replace_cib_configuration(runner, tree):
+    #etree returns bytes: b'xml'
+    #python 3 removed .encode() from bytes
+    #run(...) calls subprocess.Popen.communicate which calls encode...
+    #so here is bytes to str conversion
+    xml = etree.tostring(tree).decode()
+    return replace_cib_configuration_xml(runner, xml)
 
 def get_local_node_status(runner):
     try:

@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 from unittest import TestCase
+import os.path
 import logging
 try:
     # python2
@@ -23,9 +24,11 @@ except ImportError:
 from pcs.test.tools.pcs_mock import mock
 from pcs.test.library_test_tools import LibraryAssertionMixin
 
+from pcs import settings
 from pcs.lib import error_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 import pcs.lib.external as lib
+
 
 @mock.patch("subprocess.Popen", autospec=True)
 class CommandRunnerTest(TestCase, LibraryAssertionMixin):
@@ -628,3 +631,60 @@ class NodeCommunicatorExceptionTransformTest(TestCase, LibraryAssertionMixin):
             raised = True
             self.assertEqual(e, exc)
         self.assertTrue(raised)
+
+
+class IsCmanClusterTest(TestCase):
+    def template_test(self, is_cman, corosync_output, corosync_retval=0):
+        mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+        mock_runner.run.return_value = (corosync_output, corosync_retval)
+        self.assertEqual(is_cman, lib.is_cman_cluster(mock_runner))
+        mock_runner.run.assert_called_once_with([
+            os.path.join(settings.corosync_binaries, "corosync"),
+            "-v"
+        ])
+
+    def test_is_not_cman(self):
+        self.template_test(
+            False,
+            """\
+Corosync Cluster Engine, version '2.3.4'
+Copyright (c) 2006-2009 Red Hat, Inc.
+"""
+        )
+
+    def test_is_cman(self):
+        self.template_test(
+            True,
+            """\
+Corosync Cluster Engine, version '1.4.7'
+Copyright (c) 2006-2009 Red Hat, Inc.
+"""
+        )
+
+    def test_bad_version_format(self):
+        self.template_test(
+            False,
+            """\
+Corosync Cluster Engine, nonsense '2.3.4'
+Copyright (c) 2006-2009 Red Hat, Inc.
+"""
+        )
+
+    def test_no_version(self):
+        self.template_test(
+            False,
+            """\
+Corosync Cluster Engine
+Copyright (c) 2006-2009 Red Hat, Inc.
+"""
+        )
+
+    def test_corosync_error(self):
+        self.template_test(
+            False,
+            """\
+Corosync Cluster Engine, version '1.4.7'
+Copyright (c) 2006-2009 Red Hat, Inc.
+""",
+            1
+        )

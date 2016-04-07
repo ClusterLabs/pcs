@@ -1,0 +1,118 @@
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
+
+from pcs.lib.external import (
+    is_cman_cluster,
+    CommandRunner,
+    NodeCommunicator,
+)
+from pcs.lib.corosync.live import (
+    get_local_corosync_conf,
+)
+from pcs.lib.pacemaker import (
+    get_cib,
+    replace_cib_configuration_xml,
+)
+
+
+class LibraryEnvironment(object):
+    # pylint: disable=too-many-instance-attributes
+
+    def __init__(
+        self,
+        logger,
+        user_login=None,
+        user_groups=None,
+        cib_data=None,
+        corosync_conf_data=None,
+        auth_tokens_getter=None,
+    ):
+        self._logger = logger
+        self._user_login = user_login
+        self._user_groups = [] if user_groups is None else user_groups
+        self._cib_data = cib_data
+        self._corosync_conf_data = corosync_conf_data
+        self._is_cman_cluster = None
+        # TODO tokens probably should not be inserted from outside, but we're
+        # postponing dealing with them, because it's not that easy to move
+        # related code currently - it's in pcsd
+        self._auth_tokens_getter = auth_tokens_getter
+        self._auth_tokens = None
+
+    @property
+    def logger(self):
+        return self._logger
+
+    @property
+    def user_login(self):
+        return self._user_login
+
+    @property
+    def user_groups(self):
+        return self._user_groups
+
+    @property
+    def is_cman_cluster(self):
+        if self._is_cman_cluster is None:
+            self._is_cman_cluster = is_cman_cluster(self.cmd_runner())
+        return self._is_cman_cluster
+
+    def get_cib_xml(self):
+        if self.is_cib_live:
+            return get_cib(self.cmd_runner())
+        else:
+            return self._cib_data
+
+    def push_cib_xml(self, cib_data):
+        if self.is_cib_live:
+            replace_cib_configuration_xml(self.cmd_runner(), cib_data)
+        else:
+            self._cib_data = cib_data
+
+    @property
+    def is_cib_live(self):
+        return self._cib_data is None
+
+    def get_corosync_conf(self):
+        if self._corosync_conf_data is None:
+            return get_local_corosync_conf()
+        else:
+            return self._corosync_conf_data
+
+    def push_corosync_conf(self, corosync_conf_data):
+        if self.is_corosync_conf_live:
+            # push_corosync_conf is missing for now, it has not been needed yet
+            raise NotImplementedError()
+        else:
+            self._corosync_conf_data = corosync_conf_data
+
+    @property
+    def is_corosync_conf_live(self):
+        return self._corosync_conf_data is None
+
+    def cmd_runner(self):
+        runner_env = dict()
+        if self.user_login:
+            runner_env["CIB_user"] = self.user_login
+        return CommandRunner(self.logger, runner_env)
+
+    def node_communicator(self):
+        return NodeCommunicator(
+            self.logger,
+            self.__get_auth_tokens(),
+            self.user_login,
+            self.user_groups
+        )
+
+    def __get_auth_tokens(self):
+        if self._auth_tokens is None:
+            if self._auth_tokens_getter:
+                self._auth_tokens = self._auth_tokens_getter()
+            else:
+                self._auth_tokens = {}
+        return self._auth_tokens
+

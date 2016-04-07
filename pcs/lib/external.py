@@ -49,10 +49,31 @@ except ImportError:
 
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
+from pcs import settings
 
 
 def is_path_runnable(path):
     return os.path.isfile(path) and os.access(path, os.X_OK)
+
+
+def is_cman_cluster(runner):
+    """
+    Detect if underlaying locally installed cluster is CMAN based
+    """
+    # Checking corosync version works in most cases and supports non-rhel
+    # distributions as well as running (manually compiled) corosync2 on rhel6.
+    # - corosync2 does not support cman at all
+    # - corosync1 runs with cman on rhel6
+    # - corosync1 can be used without cman, but we don't support it anyways
+    # - corosync2 is the default result if errors occur
+    output, retval = runner.run([
+        os.path.join(settings.corosync_binaries, "corosync"),
+        "-v"
+    ])
+    if retval != 0:
+        return False
+    match = re.search(r"version\D+(\d+)", output)
+    return match is not None and match.group(1) == "1"
 
 
 class CommandRunner(object):
