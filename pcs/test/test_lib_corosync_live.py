@@ -6,13 +6,10 @@ from __future__ import (
 )
 
 from unittest import TestCase
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 
 import os.path
 
+from pcs.test.tools.pcs_mock import mock
 from pcs.test.library_test_tools import LibraryAssertionMixin
 from pcs.test.tools.resources import get_test_resource as rc
 

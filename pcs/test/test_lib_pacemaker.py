@@ -6,10 +6,6 @@ from __future__ import (
 )
 
 import unittest
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 
 import os.path
 
@@ -18,6 +14,7 @@ from pcs.test.library_test_tools import (
     assert_xml_equal,
     XmlManipulation,
 )
+from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs import settings
