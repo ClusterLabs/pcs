@@ -43,7 +43,7 @@ def get_pcs_path(pcsd_path)
   end
 end
 
-PCS_VERSION = '0.9.149'
+PCS_VERSION = '0.9.150'
 COROSYNC = COROSYNC_BINARIES + "corosync"
 ISRHEL6 = is_rhel6
 ISSYSTEMCTL = is_systemctl
