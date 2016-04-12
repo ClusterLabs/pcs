@@ -51,8 +51,12 @@ def prepare_options(cmdline_args):
 
 
 def quorum_cmd(argv):
+    if len(argv) < 1:
+        usage.quorum()
+        sys.exit(1)
+
+    sub_cmd = argv.pop(0)
     try:
-        sub_cmd = argv.pop(0)
         if sub_cmd == "help":
             usage.quorum(argv)
         elif sub_cmd == "update":
@@ -66,9 +70,6 @@ def quorum_cmd(argv):
         utils.err(e.message)
     except utils.CmdLineInputError:
         usage.quorum([sub_cmd] + argv)
-        sys.exit(1)
-    except IndexError:
-        usage.quorum()
         sys.exit(1)
 
 def quorum_update_cmd(argv):
