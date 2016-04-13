@@ -10,8 +10,11 @@ import unittest
 import xml.dom.minidom
 
 from pcs import rule
-from pcs_test_functions import pcs, ac
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.misc import (
+    ac,
+    get_test_resource as rc,
+)
+from pcs.test.tools.pcs_runner import pcs
 
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")

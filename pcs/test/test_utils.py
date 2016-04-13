@@ -17,8 +17,8 @@ except ImportError:
     #python 3
     from io import StringIO
 
-from pcs.test.pcs_test_functions import get_child_elements
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.xml import dom_get_child_elements
+from pcs.test.tools.misc import get_test_resource as rc
 
 from pcs import utils
 
@@ -1766,34 +1766,35 @@ Membership information
     def test_dom_prepare_child_element(self):
         cib = self.get_cib_with_nodes_minidom()
         node = cib.getElementsByTagName("node")[0]
-        self.assertEqual(len(get_child_elements(node)), 0)
+        self.assertEqual(len(dom_get_child_elements(node)), 0)
         child = utils.dom_prepare_child_element(
             node, "utilization", "rh7-1-utilization"
         )
-        self.assertEqual(len(get_child_elements(node)), 1)
-        self.assertEqual(child, get_child_elements(node)[0])
-        self.assertEqual(get_child_elements(node)[0].tagName, "utilization")
+        self.assertEqual(len(dom_get_child_elements(node)), 1)
+        self.assertEqual(child, dom_get_child_elements(node)[0])
+        self.assertEqual(dom_get_child_elements(node)[0].tagName, "utilization")
         self.assertEqual(
-            get_child_elements(node)[0].getAttribute("id"), "rh7-1-utilization"
+            dom_get_child_elements(node)[0].getAttribute("id"),
+            "rh7-1-utilization"
         )
         child2 = utils.dom_prepare_child_element(
             node, "utilization", "rh7-1-utilization"
         )
-        self.assertEqual(len(get_child_elements(node)), 1)
+        self.assertEqual(len(dom_get_child_elements(node)), 1)
         self.assertEqual(child, child2)
 
     def test_dom_update_nv_pair_add(self):
         nv_set = xml.dom.minidom.parseString("<nvset/>").documentElement
         utils.dom_update_nv_pair(nv_set, "test_name", "test_val", "prefix-")
-        self.assertEqual(len(get_child_elements(nv_set)), 1)
-        pair = get_child_elements(nv_set)[0]
+        self.assertEqual(len(dom_get_child_elements(nv_set)), 1)
+        pair = dom_get_child_elements(nv_set)[0]
         self.assertEqual(pair.getAttribute("name"), "test_name")
         self.assertEqual(pair.getAttribute("value"), "test_val")
         self.assertEqual(pair.getAttribute("id"), "prefix-test_name")
         utils.dom_update_nv_pair(nv_set, "another_name", "value", "prefix2-")
-        self.assertEqual(len(get_child_elements(nv_set)), 2)
-        self.assertEqual(pair, get_child_elements(nv_set)[0])
-        pair = get_child_elements(nv_set)[1]
+        self.assertEqual(len(dom_get_child_elements(nv_set)), 2)
+        self.assertEqual(pair, dom_get_child_elements(nv_set)[0])
+        pair = dom_get_child_elements(nv_set)[1]
         self.assertEqual(pair.getAttribute("name"), "another_name")
         self.assertEqual(pair.getAttribute("value"), "value")
         self.assertEqual(pair.getAttribute("id"), "prefix2-another_name")
@@ -1806,9 +1807,9 @@ Membership information
         </nv_set>
         """).documentElement
         utils.dom_update_nv_pair(nv_set, "test_name", "new_value")
-        self.assertEqual(len(get_child_elements(nv_set)), 2)
-        pair1 = get_child_elements(nv_set)[0]
-        pair2 = get_child_elements(nv_set)[1]
+        self.assertEqual(len(dom_get_child_elements(nv_set)), 2)
+        pair1 = dom_get_child_elements(nv_set)[0]
+        pair2 = dom_get_child_elements(nv_set)[1]
         self.assertEqual(pair1.getAttribute("name"), "test_name")
         self.assertEqual(pair1.getAttribute("value"), "new_value")
         self.assertEqual(pair1.getAttribute("id"), "prefix-test_name")
@@ -1824,15 +1825,15 @@ Membership information
         </nv_set>
         """).documentElement
         utils.dom_update_nv_pair(nv_set, "non_existing_name", "")
-        self.assertEqual(len(get_child_elements(nv_set)), 2)
+        self.assertEqual(len(dom_get_child_elements(nv_set)), 2)
         utils.dom_update_nv_pair(nv_set, "another_name", "")
-        self.assertEqual(len(get_child_elements(nv_set)), 1)
-        pair = get_child_elements(nv_set)[0]
+        self.assertEqual(len(dom_get_child_elements(nv_set)), 1)
+        pair = dom_get_child_elements(nv_set)[0]
         self.assertEqual(pair.getAttribute("name"), "test_name")
         self.assertEqual(pair.getAttribute("value"), "test_val")
         self.assertEqual(pair.getAttribute("id"), "prefix-test_name")
         utils.dom_update_nv_pair(nv_set, "test_name", "")
-        self.assertEqual(len(get_child_elements(nv_set)), 0)
+        self.assertEqual(len(dom_get_child_elements(nv_set)), 0)
 
     def test_convert_args_to_tuples(self):
         out = utils.convert_args_to_tuples(
@@ -1872,22 +1873,36 @@ Membership information
             el, [("name", ""), ("key", "-1"), ("keys", "90")]
         )
 
-        self.assertEqual(len(get_child_elements(el)), 1)
-        u = get_child_elements(el)[0]
+        self.assertEqual(len(dom_get_child_elements(el)), 1)
+        u = dom_get_child_elements(el)[0]
         self.assertEqual(u.tagName, "utilization")
         self.assertEqual(u.getAttribute("id"), "test_id-utilization")
-        self.assertEqual(len(get_child_elements(u)), 2)
+        self.assertEqual(len(dom_get_child_elements(u)), 2)
 
         self.assertEqual(
-            get_child_elements(u)[0].getAttribute("id"), "test_id-utilization-key"
+            dom_get_child_elements(u)[0].getAttribute("id"),
+            "test_id-utilization-key"
         )
-        self.assertEqual(get_child_elements(u)[0].getAttribute("name"), "key")
-        self.assertEqual(get_child_elements(u)[0].getAttribute("value"), "-1")
         self.assertEqual(
-            get_child_elements(u)[1].getAttribute("id"), "test_id-utilization-keys"
+            dom_get_child_elements(u)[0].getAttribute("name"),
+            "key"
         )
-        self.assertEqual(get_child_elements(u)[1].getAttribute("name"), "keys")
-        self.assertEqual(get_child_elements(u)[1].getAttribute("value"), "90")
+        self.assertEqual(
+            dom_get_child_elements(u)[0].getAttribute("value"),
+            "-1"
+        )
+        self.assertEqual(
+            dom_get_child_elements(u)[1].getAttribute("id"),
+            "test_id-utilization-keys"
+        )
+        self.assertEqual(
+            dom_get_child_elements(u)[1].getAttribute("name"),
+            "keys"
+        )
+        self.assertEqual(
+            dom_get_child_elements(u)[1].getAttribute("value"),
+            "90"
+        )
 
     def test_dom_update_utilization_update_remove(self):
         el = xml.dom.minidom.parseString("""
@@ -1902,13 +1917,20 @@ Membership information
             el, [("key", "100"), ("keys", "")]
         )
 
-        u = get_child_elements(el)[0]
-        self.assertEqual(len(get_child_elements(u)), 1)
+        u = dom_get_child_elements(el)[0]
+        self.assertEqual(len(dom_get_child_elements(u)), 1)
         self.assertEqual(
-            get_child_elements(u)[0].getAttribute("id"), "test_id-utilization-key"
+            dom_get_child_elements(u)[0].getAttribute("id"),
+            "test_id-utilization-key"
         )
-        self.assertEqual(get_child_elements(u)[0].getAttribute("name"), "key")
-        self.assertEqual(get_child_elements(u)[0].getAttribute("value"), "100")
+        self.assertEqual(
+            dom_get_child_elements(u)[0].getAttribute("name"),
+            "key"
+        )
+        self.assertEqual(
+            dom_get_child_elements(u)[0].getAttribute("value"),
+            "100"
+        )
 
     def test_dom_update_meta_attr_add(self):
         el = xml.dom.minidom.parseString("""
@@ -1918,22 +1940,36 @@ Membership information
             el, [("name", ""), ("key", "test"), ("key2", "val")]
         )
 
-        self.assertEqual(len(get_child_elements(el)), 1)
-        u = get_child_elements(el)[0]
+        self.assertEqual(len(dom_get_child_elements(el)), 1)
+        u = dom_get_child_elements(el)[0]
         self.assertEqual(u.tagName, "meta_attributes")
         self.assertEqual(u.getAttribute("id"), "test_id-meta_attributes")
-        self.assertEqual(len(get_child_elements(u)), 2)
+        self.assertEqual(len(dom_get_child_elements(u)), 2)
 
         self.assertEqual(
-            get_child_elements(u)[0].getAttribute("id"), "test_id-meta_attributes-key"
+            dom_get_child_elements(u)[0].getAttribute("id"),
+            "test_id-meta_attributes-key"
         )
-        self.assertEqual(get_child_elements(u)[0].getAttribute("name"), "key")
-        self.assertEqual(get_child_elements(u)[0].getAttribute("value"), "test")
         self.assertEqual(
-            get_child_elements(u)[1].getAttribute("id"), "test_id-meta_attributes-key2"
+            dom_get_child_elements(u)[0].getAttribute("name"),
+            "key"
         )
-        self.assertEqual(get_child_elements(u)[1].getAttribute("name"), "key2")
-        self.assertEqual(get_child_elements(u)[1].getAttribute("value"), "val")
+        self.assertEqual(
+            dom_get_child_elements(u)[0].getAttribute("value"),
+            "test"
+        )
+        self.assertEqual(
+            dom_get_child_elements(u)[1].getAttribute("id"),
+            "test_id-meta_attributes-key2"
+        )
+        self.assertEqual(
+            dom_get_child_elements(u)[1].getAttribute("name"),
+            "key2"
+        )
+        self.assertEqual(
+            dom_get_child_elements(u)[1].getAttribute("value"),
+            "val"
+        )
 
     def test_dom_update_meta_attr_update_remove(self):
         el = xml.dom.minidom.parseString("""
@@ -1948,13 +1984,20 @@ Membership information
             el, [("key", "another_val"), ("key2", "")]
         )
 
-        u = get_child_elements(el)[0]
-        self.assertEqual(len(get_child_elements(u)), 1)
+        u = dom_get_child_elements(el)[0]
+        self.assertEqual(len(dom_get_child_elements(u)), 1)
         self.assertEqual(
-            get_child_elements(u)[0].getAttribute("id"), "test_id-meta_attributes-key"
+            dom_get_child_elements(u)[0].getAttribute("id"),
+            "test_id-meta_attributes-key"
         )
-        self.assertEqual(get_child_elements(u)[0].getAttribute("name"), "key")
-        self.assertEqual(get_child_elements(u)[0].getAttribute("value"), "another_val")
+        self.assertEqual(
+            dom_get_child_elements(u)[0].getAttribute("name"),
+            "key"
+        )
+        self.assertEqual(
+            dom_get_child_elements(u)[0].getAttribute("value"),
+            "another_val"
+        )
 
     def test_get_utilization(self):
         el = xml.dom.minidom.parseString("""

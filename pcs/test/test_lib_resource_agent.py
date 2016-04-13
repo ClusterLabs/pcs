@@ -5,15 +5,17 @@ from __future__ import (
     unicode_literals,
 )
 
+from unittest import TestCase
 import os.path
-import unittest
 
 from lxml import etree
 
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_xml_equal,
+)
 from pcs.test.tools.pcs_mock import mock
-from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.library_test_tools import assert_xml_equal
-from pcs.test.library_test_tools import XmlManipulation as XmlMan
+from pcs.test.tools.xml import XmlManipulation as XmlMan
 
 
 from pcs import settings
@@ -23,7 +25,7 @@ from pcs.lib.errors import ReportItemSeverity as Severities
 from pcs.lib.external import CommandRunner
 
 
-class LibraryResourceTest(unittest.TestCase, LibraryAssertionMixin):
+class LibraryResourceTest(TestCase):
     pass
 
 
@@ -66,7 +68,7 @@ class GetParameterTest(LibraryResourceTest):
 
     def test_no_name(self):
         xml = '<parameter />'
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_parameter(etree.XML(xml)),
             (
                 Severities.ERROR,
@@ -85,7 +87,7 @@ class GetParameterTest(LibraryResourceTest):
                 <content type="test_type" default="default_value" />
             </param>
         """
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_parameter(etree.XML(xml)),
             (
                 Severities.ERROR,
@@ -157,7 +159,7 @@ class GetAgentParametersTest(LibraryResourceTest):
                 </parameters>
             </resource-agent>
         """
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_agent_parameters(etree.XML(xml)),
             (
                 Severities.ERROR,
@@ -174,7 +176,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_obj.return_value = True
         agent_name = "agent"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
@@ -191,7 +193,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_obj.return_value = True
         agent_name = "fence_agent/../fence"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
@@ -208,7 +210,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_obj.return_value = False
         agent_name = "fence_agent"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
@@ -226,7 +228,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_runner.run.return_value = ("", 1)
         agent_name = "fence_ipmi"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
@@ -247,7 +249,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_is_runnable.return_value = True
         agent_name = "fence_ipmi"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
@@ -286,7 +288,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider/../provider2"
         agent = "agent"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
@@ -306,7 +308,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider"
         agent = "agent/../agent2"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
@@ -326,7 +328,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider"
         agent = "agent"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
@@ -347,7 +349,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         mock_runner.run.return_value = ("", 1)
         mock_is_runnable.return_value = True
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
@@ -372,7 +374,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         mock_runner.run.return_value = ("not xml", 0)
         mock_is_runnable.return_value = True
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
@@ -413,7 +415,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
 class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
     def test_relative_path_name(self):
         agent = "agent/../agent2"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
             (
                 Severities.ERROR,
@@ -426,7 +428,7 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
     def test_file_opening_exception(self, mock_obj):
         agent = "agent"
         mock_obj.side_effect = IOError()
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
             (
                 Severities.ERROR,
@@ -439,7 +441,7 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
     def test_invalid_xml(self, mock_obj):
         agent = "agent"
         mock_obj.side_effect = etree.XMLSyntaxError(None, None, None, None)
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
             (
                 Severities.ERROR,
@@ -465,7 +467,7 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
 class GetAgentDescTest(LibraryResourceTest):
     def test_invalid_metadata_format(self):
         xml = "<xml />"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra.get_agent_desc(etree.XML(xml)),
             (
                 Severities.ERROR,
@@ -565,7 +567,7 @@ class GetResourceAgentMetadata(LibraryResourceTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         agent = "class::provider:agent"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra.get_resource_agent_metadata(mock_runner, agent),
             (
                 Severities.ERROR,
@@ -580,7 +582,7 @@ class GetResourceAgentMetadata(LibraryResourceTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         agent = "ocf::agent"
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib_ra.get_resource_agent_metadata(mock_runner, agent),
             (
                 Severities.ERROR,

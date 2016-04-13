@@ -7,7 +7,7 @@ from __future__ import (
 
 from unittest import TestCase
 
-from pcs.test.library_test_tools import LibraryAssertionMixin
+from pcs.test.tools.assertions import assert_raise_library_error
 
 import pcs.lib.error_codes as error_codes
 from pcs.lib.errors import ReportItemSeverity as severity
@@ -67,7 +67,7 @@ class BooleanTest(TestCase):
         self.assertFalse(lib.is_boolean("NO!"))
 
 
-class TimeoutTest(TestCase, LibraryAssertionMixin):
+class TimeoutTest(TestCase):
     def test_valid(self):
         self.assertEqual(10, lib.timeout_to_seconds("10"))
         self.assertEqual(10, lib.timeout_to_seconds("10s"))
@@ -91,7 +91,7 @@ class TimeoutTest(TestCase, LibraryAssertionMixin):
         self.assertEqual("", lib.timeout_to_seconds("", True))
 
 
-class ValidateIdTest(TestCase, LibraryAssertionMixin):
+class ValidateIdTest(TestCase):
     def test_valid(self):
         self.assertEqual(None, lib.validate_id("dummy"))
         self.assertEqual(None, lib.validate_id("DUMMY"))
@@ -107,7 +107,7 @@ class ValidateIdTest(TestCase, LibraryAssertionMixin):
         self.assertEqual(None, lib.validate_id("dum_my"))
 
     def test_invalid_empty(self):
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("", "test id"),
             (
                 severity.ERROR,
@@ -132,56 +132,56 @@ class ValidateIdTest(TestCase, LibraryAssertionMixin):
 
         info["id"] = "0"
         info["invalid_character"] = "0"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("0", desc),
             report
         )
 
         info["id"] = "-"
         info["invalid_character"] = "-"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("-", desc),
             report
         )
 
         info["id"] = "."
         info["invalid_character"] = "."
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id(".", desc),
             report
         )
 
         info["id"] = ":"
         info["invalid_character"] = ":"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id(":", desc),
             report
         )
 
         info["id"] = "0dummy"
         info["invalid_character"] = "0"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("0dummy", desc),
             report
         )
 
         info["id"] = "-dummy"
         info["invalid_character"] = "-"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("-dummy", desc),
             report
         )
 
         info["id"] = ".dummy"
         info["invalid_character"] = "."
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id(".dummy", desc),
             report
         )
 
         info["id"] = ":dummy"
         info["invalid_character"] = ":"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id(":dummy", desc),
             report
         )
@@ -198,28 +198,28 @@ class ValidateIdTest(TestCase, LibraryAssertionMixin):
 
         info["id"] = "dum:my"
         info["invalid_character"] = ":"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("dum:my", desc),
             report
         )
 
         info["id"] = "dummy:"
         info["invalid_character"] = ":"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("dummy:", desc),
             report
         )
 
         info["id"] = "dum?my"
         info["invalid_character"] = "?"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("dum?my", desc),
             report
         )
 
         info["id"] = "dummy?"
         info["invalid_character"] = "?"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.validate_id("dummy?", desc),
             report
         )

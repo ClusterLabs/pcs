@@ -5,18 +5,18 @@ from __future__ import (
     unicode_literals,
 )
 
-import unittest
+from unittest import TestCase
 
-from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.library_test_tools import get_xml_manipulation_creator_from_file
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.lib import error_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 
 from pcs.lib.cib import tools as lib
 
-class CibToolsTest(unittest.TestCase):
+class CibToolsTest(TestCase):
     def setUp(self):
         self.create_cib = get_xml_manipulation_creator_from_file(rc("cib-empty.xml"))
         self.cib = self.create_cib()
@@ -63,7 +63,7 @@ class FindUniqueIdTest(CibToolsTest):
         self.fixture_add_primitive_with_id("myId-3")
         self.assertEqual("myId-2", lib.find_unique_id(self.cib.tree, "myId"))
 
-class GetConfigurationTest(CibToolsTest, LibraryAssertionMixin):
+class GetConfigurationTest(CibToolsTest):
     def test_success_if_exists(self):
         self.assertEqual(
             "configuration",
@@ -73,7 +73,7 @@ class GetConfigurationTest(CibToolsTest, LibraryAssertionMixin):
     def test_raise_if_missing(self):
         for conf in self.cib.tree.findall(".//configuration"):
             conf.getparent().remove(conf)
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_configuration(self.cib.tree),
             (
                 severities.ERROR,

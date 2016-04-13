@@ -9,12 +9,12 @@ import os
 import shutil
 import unittest
 
-from pcs.test.pcs_test_functions import (
-    pcs,
+from pcs.test.tools.misc import (
     ac,
-    isMinimumPacemakerVersion,
+    get_test_resource as rc,
+    is_minimum_pacemaker_version,
 )
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.pcs_runner import pcs
 
 
 empty_cib = rc("cib-empty.xml")
@@ -227,7 +227,7 @@ Colocation Constraints:
         assert r == 0
 
     def testOrderConstraintRequireAll(self):
-        if not isMinimumPacemakerVersion(1,1,12):
+        if not is_minimum_pacemaker_version(1, 1, 12):
             print("WARNING: Pacemaker version is too old (must be >= 1.1.12) to test require-all")
             return
 
@@ -498,7 +498,7 @@ Colocation Constraints:
         self.assertEqual(0, retValue)
 
     def testConstraintResourceDiscovery(self):
-        if not isMinimumPacemakerVersion(1,1,12):
+        if not is_minimum_pacemaker_version(1, 1, 12):
             print("WARNING: Pacemaker version is too old (must be >= 1.1.12) to test resource-discovery")
             return
 

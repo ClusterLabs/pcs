@@ -7,8 +7,8 @@ from __future__ import (
 
 from unittest import TestCase
 
-from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.misc import get_test_resource as rc
 
 import pcs.lib.error_codes as error_codes
 from pcs.lib.errors import ReportItemSeverity as severity
@@ -16,7 +16,7 @@ from pcs.lib.errors import ReportItemSeverity as severity
 import pcs.lib.corosync.config_facade as lib
 
 
-class FromStringTest(TestCase, LibraryAssertionMixin):
+class FromStringTest(TestCase):
     def test_success(self):
         config = open(rc("corosync.conf")).read()
         facade = lib.ConfigFacade.from_string(config)
@@ -25,7 +25,7 @@ class FromStringTest(TestCase, LibraryAssertionMixin):
 
     def test_parse_error_missing_brace(self):
         config = "section {"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.ConfigFacade.from_string(config),
             (
                 severity.ERROR,
@@ -36,7 +36,7 @@ class FromStringTest(TestCase, LibraryAssertionMixin):
 
     def test_parse_error_unexpected_brace(self):
         config = "}"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.ConfigFacade.from_string(config),
             (
                 severity.ERROR,
@@ -214,7 +214,7 @@ quorum {
         )
 
 
-class SetQuorumOptionsTest(TestCase, LibraryAssertionMixin):
+class SetQuorumOptionsTest(TestCase):
     def test_add_missing_section(self):
         config = ""
         facade = lib.ConfigFacade.from_string(config)
@@ -300,7 +300,7 @@ quorum {
             "last_man_standing": "0",
             "last_man_standing_window": "250",
         }
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: facade.set_quorum_options(options),
             (
                 severity.ERROR,
@@ -327,7 +327,7 @@ quorum {
             "last_man_standing_window": "lmsw",
             "wait_for_all": "wfa",
         }
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: facade.set_quorum_options(options),
             (
                 severity.ERROR,
@@ -383,7 +383,7 @@ quorum {
             "nonsense1": "0",
             "nonsense2": "doesnt matter",
         }
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: facade.set_quorum_options(options),
             (
                 severity.ERROR,

@@ -9,14 +9,16 @@ import os
 import shutil
 import unittest
 
-from pcs.test.pcs_test_assertions import AssertPcsMixin
-from pcs.test.pcs_test_functions import (
-    pcs,
+from pcs.test.tools.assertions import AssertPcsMixin
+from pcs.test.tools.misc import (
     ac,
-    isMinimumPacemakerVersion,
+    get_test_resource as rc,
+    is_minimum_pacemaker_version,
+)
+from pcs.test.tools.pcs_runner import (
+    pcs,
     PcsRunner,
 )
-from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs import utils
 
@@ -29,7 +31,7 @@ corosync_conf_tmp = rc("corosync.conf.tmp")
 class ClusterTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib, corosync_conf_tmp)
         if os.path.exists(corosync_conf_tmp):
             os.unlink(corosync_conf_tmp)
         if os.path.exists(cluster_conf_tmp):
@@ -2550,7 +2552,7 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
             ac(o, "No uidgids configured in cluster.conf\n")
 
     def testClusterUpgrade(self):
-        if not isMinimumPacemakerVersion(1,1,11):
+        if not is_minimum_pacemaker_version(1, 1, 11):
             print("WARNING: Unable to test cluster upgrade because pacemaker is older than 1.1.11")
             return
         with open(temp_cib) as myfile:
@@ -2573,10 +2575,6 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
 
     def test_can_not_setup_cluster_for_unknown_transport_type(self):
         self.assert_pcs_fail(
-            'cluster setup --local --corosync_conf={0}'
-                .format(corosync_conf_tmp)
-                +" --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2"
-                +" --transport=unknown"
-            ,
+            "cluster setup --local --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2 --transport=unknown",
             "Error: unknown transport 'unknown', use --force to override\n"
         )

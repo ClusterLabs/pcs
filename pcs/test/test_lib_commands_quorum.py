@@ -8,9 +8,9 @@ from __future__ import (
 import logging
 from unittest import TestCase
 
+from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
-from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs.lib.external import NodeAuthenticationException
 from pcs.lib.env import LibraryEnvironment
@@ -31,7 +31,7 @@ from pcs.lib.commands import quorum as lib
     "node_communicator",
     lambda self: "mock node communicator"
 )
-class SetQuorumOptionsTest(TestCase, LibraryAssertionMixin):
+class SetQuorumOptionsTest(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
 
@@ -51,7 +51,7 @@ class SetQuorumOptionsTest(TestCase, LibraryAssertionMixin):
         self, mock_get_local, mock_set_remote, mock_reload
     ):
         lib_env = LibraryEnvironment(self.mock_logger)
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.set_options(lib_env, {}),
             (
                 severity.ERROR,
@@ -193,7 +193,7 @@ class SetQuorumOptionsTest(TestCase, LibraryAssertionMixin):
         self.assertEqual(2, len(nodes))
 
         new_options = {"wait_for_all": "1"}
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.set_options(lib_env, new_options),
             (
                 severity.ERROR,
@@ -254,7 +254,7 @@ class SetQuorumOptionsTest(TestCase, LibraryAssertionMixin):
         lib_env = LibraryEnvironment(self.mock_logger)
 
         new_options = {"invalid": "option"}
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.set_options(lib_env, new_options),
             (
                 severity.ERROR,
@@ -288,7 +288,7 @@ class SetQuorumOptionsTest(TestCase, LibraryAssertionMixin):
         lib_env = LibraryEnvironment(self.mock_logger)
 
         new_options = {"wait_for_all": "1"}
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.set_options(lib_env, new_options),
             (
                 severity.ERROR,

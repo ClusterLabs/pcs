@@ -8,9 +8,9 @@ from __future__ import (
 from unittest import TestCase
 from lxml import etree
 
-from pcs.test.library_test_tools import get_xml_manipulation_creator_from_file
-from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.lib.pacemaker_state import (
     ClusterState,
@@ -73,12 +73,12 @@ class TestBase(TestCase):
         )
         self.covered_status = self.create_covered_status()
 
-class ClusterStatusTest(TestBase, LibraryAssertionMixin):
+class ClusterStatusTest(TestBase):
     def test_minimal_crm_mon_is_valid(self):
         ClusterState(str(self.covered_status))
 
     def test_refuse_invalid_xml(self):
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: ClusterState('invalid xml'),
             (severities.ERROR, error_codes.BAD_CLUSTER_STATE_FORMAT, {})
         )
@@ -89,7 +89,7 @@ class ClusterStatusTest(TestBase, LibraryAssertionMixin):
             '<node without="required attributes" />'
         )
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: ClusterState(str(self.covered_status)),
             (severities.ERROR, error_codes.BAD_CLUSTER_STATE_FORMAT, {})
         )

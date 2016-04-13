@@ -7,7 +7,7 @@ from __future__ import (
 
 import unittest
 
-from pcs.test.pcs_test_functions import ac
+from pcs.test.tools.misc import ac
 
 from pcs.lib.corosync import config_parser
 

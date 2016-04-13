@@ -8,8 +8,11 @@ from __future__ import (
 import shutil
 import unittest
 
-from pcs_test_functions import pcs, ac
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.misc import (
+    ac,
+    get_test_resource as rc,
+)
+from pcs.test.tools.pcs_runner import pcs
 
 from pcs import utils
 

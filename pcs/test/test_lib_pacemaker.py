@@ -5,17 +5,16 @@ from __future__ import (
     unicode_literals,
 )
 
-import unittest
-
+from unittest import TestCase
 import os.path
 
-from pcs.test.library_test_tools import (
-    LibraryAssertionMixin,
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
     assert_xml_equal,
-    XmlManipulation,
 )
+from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.xml import XmlManipulation
 
 from pcs import settings
 from pcs.lib import error_codes
@@ -24,7 +23,7 @@ from pcs.lib.errors import ReportItemSeverity as Severity
 from pcs.lib.external import CommandRunner
 
 
-class LibraryPacemakerTest(unittest.TestCase, LibraryAssertionMixin):
+class LibraryPacemakerTest(TestCase):
     def path(self, name):
         return os.path.join(settings.pacemaker_binaries, name)
 
@@ -81,7 +80,7 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_error, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_cluster_status_xml(mock_runner),
             (
                 Severity.ERROR,
@@ -115,7 +114,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_error, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_cib_xml(mock_runner),
             (
                 Severity.ERROR,
@@ -155,7 +154,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_error, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_cib_xml(mock_runner, scope=scope),
             (
                 Severity.ERROR,
@@ -182,7 +181,7 @@ class GetCibTest(LibraryPacemakerTest):
 
     def test_invalid_xml(self):
         xml = "<invalid><xml />"
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_cib(xml),
             (
                 Severity.ERROR,
@@ -220,7 +219,7 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_error, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.replace_cib_configuration(
                     mock_runner,
                     XmlManipulation.from_str(xml).tree
@@ -263,7 +262,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_xml, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
@@ -330,7 +329,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
         ]
         mock_runner.run.side_effect = return_value_list
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
@@ -360,7 +359,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
         ]
         mock_runner.run.side_effect = return_value_list
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
@@ -394,7 +393,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
         ]
         mock_runner.run.side_effect = return_value_list
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
@@ -428,7 +427,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
         ]
         mock_runner.run.side_effect = return_value_list
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
@@ -473,7 +472,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (self.fixture_status_xml(1000, 1000), 0)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.resource_cleanup(mock_runner),
             (
                 Severity.ERROR,
@@ -547,7 +546,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_error, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.resource_cleanup(mock_runner),
             (
                 Severity.ERROR,
@@ -575,7 +574,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         ]
         mock_runner.run.side_effect = return_value_list
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.resource_cleanup(mock_runner),
             (
                 Severity.ERROR,
@@ -626,7 +625,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
     @mock.patch("pcs.lib.pacemaker.has_resource_wait_support", autospec=True)
     def test_ensure_support_error(self, mock_obj):
         mock_obj.return_value = False
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.ensure_resource_wait_support(mock.Mock()),
             (
                 Severity.ERROR,
@@ -669,7 +668,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_error, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.wait_for_resources(mock_runner),
             (
                 Severity.ERROR,
@@ -691,7 +690,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_error, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.wait_for_resources(mock_runner),
             (
                 Severity.ERROR,
@@ -831,7 +830,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (str(self.status), 0)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.nodes_standby(mock_runner, ["node_2"]),
             (
                 Severity.ERROR,
@@ -849,7 +848,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (str(self.status), 0)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.nodes_unstandby(mock_runner, ["node_2", "node_3"]),
             (
                 Severity.ERROR,
@@ -871,7 +870,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (expected_error, expected_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.nodes_unstandby(mock_runner),
             (
                 Severity.ERROR,
@@ -905,7 +904,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
         ]
         mock_runner.run.side_effect = return_value_list
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.nodes_standby(mock_runner, all_nodes=True),
             (
                 Severity.ERROR,

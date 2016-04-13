@@ -9,9 +9,9 @@ from unittest import TestCase
 
 import os.path
 
+from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
-from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.tools.resources import get_test_resource as rc
 
 from pcs import settings
 from pcs.lib import error_codes
@@ -22,7 +22,7 @@ from pcs.lib.external import CommandRunner, NodeCommunicator
 from pcs.lib.corosync import live as lib
 
 
-class GetLocalCorosyncConfTest(TestCase, LibraryAssertionMixin):
+class GetLocalCorosyncConfTest(TestCase):
     def test_success(self):
         path = rc("corosync.conf")
         settings.corosync_conf_file = path
@@ -34,7 +34,7 @@ class GetLocalCorosyncConfTest(TestCase, LibraryAssertionMixin):
     def test_error(self):
         path = rc("corosync.conf.nonexistent")
         settings.corosync_conf_file = path
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lib.get_local_corosync_conf,
             (
                 severity.ERROR,
@@ -47,7 +47,7 @@ class GetLocalCorosyncConfTest(TestCase, LibraryAssertionMixin):
         )
 
 
-class ReloadConfigTest(TestCase, LibraryAssertionMixin):
+class ReloadConfigTest(TestCase):
     def path(self, name):
         return os.path.join(settings.corosync_binaries, name)
 
@@ -69,7 +69,7 @@ class ReloadConfigTest(TestCase, LibraryAssertionMixin):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (cmd_output, cmd_retval)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.reload_config(mock_runner),
             (
                 severity.ERROR,

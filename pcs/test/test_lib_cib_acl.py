@@ -5,17 +5,20 @@ from __future__ import (
     unicode_literals,
 )
 
-import unittest
+from unittest import TestCase
 
-from pcs.test.library_test_tools import LibraryAssertionMixin
-from pcs.test.library_test_tools import get_xml_manipulation_creator_from_file
-from pcs.test.tools.resources import get_test_resource as rc
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_xml_equal,
+)
+from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.lib.cib import acl as lib
 from pcs.lib import error_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 
-class LibraryAclTest(unittest.TestCase, LibraryAssertionMixin):
+class LibraryAclTest(TestCase):
     def setUp(self):
         self.create_cib = get_xml_manipulation_creator_from_file(rc("cib-empty.xml"))
         self.cib = self.create_cib()
@@ -25,6 +28,12 @@ class LibraryAclTest(unittest.TestCase, LibraryAssertionMixin):
             'configuration',
             '<acls><acl_role id="{0}"/></acls>'.format(role_id)
         )
+
+    def assert_cib_equal(self, expected_cib):
+        got_xml = str(self.cib)
+        expected_xml = str(expected_cib)
+        assert_xml_equal(expected_xml, got_xml)
+
 
 class CreateRoleTest(LibraryAclTest):
     def test_create_for_new_role_id(self):
@@ -39,7 +48,7 @@ class CreateRoleTest(LibraryAclTest):
         )
 
     def test_refuse_invalid_id(self):
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.create_role(self.cib.tree, '#invalid'),
             (
                 severities.ERROR,
@@ -51,7 +60,7 @@ class CreateRoleTest(LibraryAclTest):
     def test_refuse_existing_role_id(self):
         role_id = 'role1'
         self.fixture_add_role(role_id)
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.create_role(self.cib.tree, role_id),
             (
                 severities.ERROR,
@@ -66,7 +75,7 @@ class CreateRoleTest(LibraryAclTest):
             '<node id="node-id" uname="node-hostname"/>'
         )
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.create_role(self.cib.tree, 'node-id'),
             (
                 severities.ERROR,
@@ -97,7 +106,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
 
     def test_refuse_add_for_nonexistent_role_id(self):
         role_id = 'role1'
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.add_permissions_to_role(
                 self.cib.tree, role_id, [('read', 'xpath', '/whatever')]
             ),
@@ -112,7 +121,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
         role_id = 'role1'
         self.fixture_add_role(role_id)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.add_permissions_to_role(
                 self.cib.tree, role_id, [('readX', 'xpathX', '/whatever')]
             ),
@@ -132,7 +141,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
         role_id = 'role1'
         self.fixture_add_role(role_id)
 
-        self.assert_raise_library_error(
+        assert_raise_library_error(
             lambda: lib.add_permissions_to_role(
                 self.cib.tree, role_id, [('read', 'id', 'non-existent')]
             ),
