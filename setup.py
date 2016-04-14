@@ -25,7 +25,7 @@ setup(
     package_data={'pcs':['bash_completion.d.pcs','pcs.8']},
     entry_points={
         'console_scripts': [
-            'pcs = pcs.cli:main',
+            'pcs = pcs.app:main',
         ],
     },
     cmdclass={
