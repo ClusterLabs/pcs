@@ -19,6 +19,7 @@ from pcs import (
     usage,
     utils,
     constraint,
+    settings,
 )
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
@@ -227,20 +228,14 @@ def parse_resource_options(argv, with_clone=False):
 # List available resources
 # TODO make location more easily configurable
 def resource_list_available(argv):
-    def get_name_and_desc(full_res_name, metadata):
+    def get_name_and_desc(agent_name, shortdesc):
         sd = ""
-        try:
-            dom = parseString(metadata)
-            shortdesc = dom.documentElement.getElementsByTagName("shortdesc")
-            if len(shortdesc) > 0:
-                sd = " - " +  format_desc(
-                    len(full_res_name + " - "),
-                    shortdesc[0].firstChild.nodeValue.strip().replace("\n", " ")
-                )
-        except xml.parsers.expat.ExpatError:
-            sd = ""
-        finally:
-            return full_res_name + sd
+        if len(shortdesc) > 0:
+            sd = " - " + format_desc(
+                len(agent_name + " - "),
+                shortdesc.replace("\n", " ")
+            )
+        return agent_name + sd
 
     ret = []
     if len(argv) != 0:
@@ -249,10 +244,11 @@ def resource_list_available(argv):
         filter_string = ""
 
     # ocf agents
-    os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
-    providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
+    providers = sorted(os.listdir(settings.ocf_resources))
     for provider in providers:
-        resources = sorted(os.listdir("/usr/lib/ocf/resource.d/" + provider))
+        resources = sorted(os.listdir(os.path.join(
+            settings.ocf_resources, provider
+        )))
         for resource in resources:
             if resource.startswith(".") or resource == "ocf-shellfuncs":
                 continue
@@ -264,13 +260,16 @@ def resource_list_available(argv):
                 ret.append(full_res_name)
                 continue
 
-            metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
-            if metadata == False:
-                continue
-            ret.append(get_name_and_desc(
-                "ocf:" + provider + ":" + resource,
-                metadata
-            ))
+            try:
+                metadata = lib_ra.get_resource_agent_metadata(
+                    utils.cmd_runner(), full_res_name
+                )
+                ret.append(get_name_and_desc(
+                    full_res_name,
+                    lib_ra.get_agent_desc(metadata)["shortdesc"]
+                ))
+            except LibraryError:
+                pass
 
     # lsb agents
     lsb_dir = "/etc/init.d/"
@@ -289,9 +288,8 @@ def resource_list_available(argv):
             ret.append("systemd:" + match.group(1))
 
     # nagios metadata
-    nagios_metadata_path = "/usr/share/pacemaker/nagios/plugins-metadata"
-    if os.path.isdir(nagios_metadata_path):
-        for metadata_file in sorted(os.listdir(nagios_metadata_path)):
+    if os.path.isdir(settings.nagios_metadata_path):
+        for metadata_file in sorted(os.listdir(settings.nagios_metadata_path)):
             if metadata_file.startswith("."):
                 continue
             full_res_name = "nagios:" + metadata_file
@@ -301,14 +299,15 @@ def resource_list_available(argv):
                 ret.append(full_res_name)
                 continue
             try:
+                metadata = lib_ra.get_resource_agent_metadata(
+                    utils.cmd_runner(),
+                    full_res_name
+                )
                 ret.append(get_name_and_desc(
                     full_res_name,
-                    open(
-                        os.path.join(nagios_metadata_path, metadata_file),
-                        "r"
-                    ).read()
+                    lib_ra.get_agent_desc(metadata)["shortdesc"]
                 ))
-            except EnvironmentError:
+            except LibraryError:
                 pass
 
     # output
@@ -328,101 +327,81 @@ def resource_list_available(argv):
     else:
         print("\n".join(ret))
 
-def resource_parse_options(metadata, standard, provider, resource):
-    try:
-        short_desc = ""
-        long_desc = ""
-        dom = parseString(metadata)
-        long_descs = dom.documentElement.getElementsByTagName("longdesc")
-        for ld in long_descs:
-            if ld.parentNode.tagName == "resource-agent" and ld.firstChild:
-                long_desc = ld.firstChild.data.strip()
-                break
 
-        short_descs = dom.documentElement.getElementsByTagName("shortdesc")
-        for sd in short_descs:
-            if sd.parentNode.tagName == "resource-agent" and sd.firstChild:
-                short_desc = sd.firstChild.data.strip()
-                break
-
-        if provider:
-            title_1 = "%s:%s:%s" % (standard, provider, resource)
-        else:
-            title_1 = "%s:%s" % (standard, resource)
-
-        if short_desc:
-            title_1 += " - " + format_desc(len(title_1 + " - "), short_desc)
-        print(title_1)
+def resource_print_options(agent_name, desc, params):
+    if desc["shortdesc"]:
+        agent_name += " - " + format_desc(
+            len(agent_name + " - "), desc["shortdesc"]
+        )
+    print(agent_name)
+    print()
+    if desc["longdesc"]:
+        print(desc["longdesc"])
         print()
-        if long_desc:
-            print(long_desc)
-            print()
 
-        params = dom.documentElement.getElementsByTagName("parameter")
-        if len(params) > 0:
-            print("Resource options:")
-        for param in params:
-            name = param.getAttribute("name")
-            if param.getAttribute("required") == "1":
-                name += " (required)"
-            desc = ""
-            longdesc_els = param.getElementsByTagName("longdesc")
-            if longdesc_els and longdesc_els[0].firstChild:
-                desc = longdesc_els[0].firstChild.nodeValue.strip().replace("\n", " ")
+    if len(params) > 0:
+        print("Resource options:")
+    for param in params:
+        if param.get("advanced", False):
+            continue
+        name = param["name"]
+        if param["required"]:
+            name += " (required)"
+        desc = param["longdesc"].replace("\n", " ")
+        if not desc:
+            desc = param["shortdesc"].replace("\n", " ")
             if not desc:
                 desc = "No description available"
-            indent = name.__len__() + 4
-            desc = format_desc(indent, desc)
-            print("  " + name + ": " + desc)
-    except xml.parsers.expat.ExpatError as e:
-        utils.err("Unable to parse xml for '%s': %s" % (resource, e))
+        indent = len(name) + 4
+        desc = format_desc(indent, desc)
+        print("  " + name + ": " + desc)
+
 
 def resource_list_options(resource):
+    runner = utils.cmd_runner()
+
+    def get_desc_params(agent_name):
+        metadata_dom = lib_ra.get_resource_agent_metadata(
+            runner, agent_name
+        )
+        desc = lib_ra.get_agent_desc(metadata_dom)
+        params = lib_ra.get_resource_agent_parameters(metadata_dom)
+        return desc, params
+
     found_resource = False
-    resource = get_full_ra_type(resource,True)
 
-    # we know this is the nagios resource standard
-    if "nagios:" in resource:
-        resource_split = resource.split(":",2)
-        resource = resource_split[1]
-        standard = "nagios"
-        try:
-            with open("/usr/share/pacemaker/nagios/plugins-metadata/" + resource + ".xml",'r') as f:
-                resource_parse_options(f.read(), standard, None, resource)
-        except IOError:
-            utils.err ("Unable to find resource: %s" % resource)
+    try:
+        descriptions, parameters = get_desc_params(resource)
+        resource_print_options(resource, descriptions, parameters)
         return
-
-    # we know this is the nagios resource standard
-    if "ocf:" in resource:
-        resource_split = resource.split(":",3)
-        provider = resource_split[1]
-        resource = resource_split[2]
-        standard = "ocf"
-        metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
-        if metadata:
-            resource_parse_options(metadata, standard, provider, resource)
-        else:
-            utils.err ("Unable to find resource: %s" % resource)
-        return
+    except lib_ra.UnsupportedResourceAgent:
+        pass
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
 
     # no standard was give, lets search all ocf providers first
-    providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
+    providers = sorted(os.listdir(settings.ocf_resources))
     for provider in providers:
-        metadata = utils.get_metadata("/usr/lib/ocf/resource.d/" + provider + "/" + resource)
-        if metadata == False:
+        if not os.path.exists(
+            os.path.join(settings.ocf_resources, provider, resource)
+        ):
             continue
-        else:
-            resource_parse_options(metadata, "ocf", provider, resource)
-            found_resource = True
+        try:
+            agent = "ocf:{0}:{1}".format(provider, resource)
+            descriptions, parameters = get_desc_params(agent)
+            resource_print_options(agent, descriptions, parameters)
+            return
+        except LibraryError:
+            pass
 
     # still not found, now lets look at nagios plugins
     if not found_resource:
         try:
-            with open("/usr/share/pacemaker/nagios/plugins-metadata/" + resource + ".xml",'r') as f:
-                resource_parse_options(f.read(), "nagios", None, resource)
-        except IOError:
-            utils.err ("Unable to find resource: %s" % resource)
+            agent = "nagios:" + resource
+            descriptions, parameters = get_desc_params(agent)
+            resource_print_options(agent, descriptions, parameters)
+        except LibraryError:
+            utils.err("Unable to find resource: {0}".format(resource))
 
 # Return the string formatted with a line length of 79 and indented
 def format_desc(indent, desc):
@@ -562,7 +541,15 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
     meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
     if "--force" not in utils.pcs_options and utils.does_resource_have_options(ra_type):
         params = utils.convert_args_to_tuples(ra_values)
-        bad_opts, missing_req_opts = utils.validInstanceAttributes(ra_id, params , get_full_ra_type(ra_type, True))
+        bad_opts, missing_req_opts = [], []
+        try:
+            bad_opts, missing_req_opts = lib_ra.validate_instance_attributes(
+                utils.cmd_runner(),
+                dict(params),
+                get_full_ra_type(ra_type, True)
+            )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
                     % (", ".join(sorted(bad_opts)), get_full_ra_type(ra_type, True)))
@@ -911,7 +898,13 @@ def resource_update(res_id,args):
             resource_type = resClass + ":" + resType
         else:
             resource_type = resClass + ":" + resProvider + ":" + resType
-        bad_opts, dummy_missing_req_opts = utils.validInstanceAttributes(res_id, params, resource_type)
+        bad_opts = []
+        try:
+            bad_opts, _ = lib_ra.validate_instance_attributes(
+                utils.cmd_runner(), dict(params), resource_type
+            )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
                     % (", ".join(sorted(bad_opts)), utils.getResourceType(resource)))

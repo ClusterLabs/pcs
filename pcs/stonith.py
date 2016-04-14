@@ -8,9 +8,8 @@ from __future__ import (
 import sys
 import re
 import glob
-from xml.dom.minidom import parseString
-from xml.parsers.expat import ExpatError
 import json
+import os
 
 from pcs import (
     resource,
@@ -103,85 +102,34 @@ def stonith_list_available(argv):
 
     for fd in fence_devices_filtered:
         sd = ""
-        fd_name = fd[10:]
+        agent_name = os.path.basename(fd)
         if "--nodesc" not in utils.pcs_options:
-            metadata = utils.get_stonith_metadata(fd)
-            if metadata == False:
-                utils.err("no metadata for %s" % fd, False)
-                continue
             try:
-                dom = parseString(metadata)
-            except Exception:
+                metadata = lib_ra.get_fence_agent_metadata(
+                    utils.cmd_runner(), agent_name
+                )
+                shortdesc = lib_ra.get_agent_desc(metadata)["shortdesc"]
+                if shortdesc:
+                    sd = " - " + resource.format_desc(
+                        len(agent_name) + 3, shortdesc
+                    )
+            except LibraryError as e:
                 utils.err(
-                    "unable to parse metadata for fence agent: %s" % (fd_name),
-                    False
+                    e.args[-1].message, False
                 )
                 continue
-            ra = dom.documentElement
-            shortdesc = ra.getAttribute("shortdesc")
-
-            if len(shortdesc) > 0:
-                sd = " - " +  resource.format_desc(fd_name.__len__() + 3, shortdesc)
-        print(fd_name + sd)
+        print(agent_name + sd)
 
 def stonith_list_options(stonith_agent):
-    metadata = utils.get_stonith_metadata(utils.fence_bin + stonith_agent)
-    if not metadata:
-        utils.err("unable to get metadata for %s" % stonith_agent)
+    runner = utils.cmd_runner()
     try:
-        dom = parseString(metadata)
-    except ExpatError as e:
-        utils.err("Unable to parse xml for '%s': %s" % (stonith_agent, e))
+        metadata = lib_ra.get_fence_agent_metadata(runner, stonith_agent)
+        desc = lib_ra.get_agent_desc(metadata)
+        params = lib_ra.get_fence_agent_parameters(runner, metadata)
+        resource.resource_print_options(stonith_agent, desc, params)
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
 
-    title = dom.documentElement.getAttribute("name") or stonith_agent
-    short_desc = dom.documentElement.getAttribute("shortdesc")
-    if not short_desc:
-        for sd in dom.documentElement.getElementsByTagName("shortdesc"):
-            if sd.parentNode.tagName == "resource-agent" and sd.firstChild:
-                short_desc = sd.firstChild.data.strip()
-                break
-    long_desc = ""
-    for ld in dom.documentElement.getElementsByTagName("longdesc"):
-        if ld.parentNode.tagName == "resource-agent" and ld.firstChild:
-            long_desc = ld.firstChild.data.strip()
-            break
-
-    if short_desc:
-        title += " - " + resource.format_desc(len(title + " - "), short_desc)
-    print(title)
-    print()
-    if long_desc:
-        print(long_desc)
-        print()
-    print("Stonith options:")
-
-    params = dom.documentElement.getElementsByTagName("parameter")
-    for param in params:
-        name = param.getAttribute("name")
-        if param.getAttribute("required") == "1":
-            name += " (required)"
-        desc = ""
-        shortdesc_els = param.getElementsByTagName("shortdesc")
-        if shortdesc_els and shortdesc_els[0].firstChild:
-            desc = shortdesc_els[0].firstChild.nodeValue.strip().replace("\n", " ")
-        if not desc:
-            desc = "No description available"
-        indent = name.__len__() + 4
-        desc = resource.format_desc(indent, desc)
-        print("  " + name + ": " + desc)
-
-    default_stonith_options = utils.get_default_stonith_options()
-    for do in default_stonith_options:
-        name = do.attrib["name"]
-        desc = ""
-        if len(do.findall(str("shortdesc"))) > 0:
-            if do.findall(str("shortdesc"))[0].text:
-                desc = do.findall(str("shortdesc"))[0].text.strip()
-        if not desc:
-            desc = "No description available"
-        indent = len(name) + 4
-        desc = resource.format_desc(indent, desc)
-        print("  " + name + ": " + desc)
 
 def stonith_create(argv):
     if len(argv) < 2:
@@ -193,13 +141,19 @@ def stonith_create(argv):
     st_values, op_values, meta_values = resource.parse_resource_options(
         argv, with_clone=False
     )
-    metadata = utils.get_stonith_metadata("/usr/sbin/" + stonith_type)
-    if metadata:
+
+    try:
+        metadata = lib_ra.get_fence_agent_metadata(
+            utils.cmd_runner(), stonith_type
+        )
         if stonith_does_agent_provide_unfencing(metadata):
             meta_values = [
                 meta for meta in meta_values if not meta.startswith("provides=")
             ]
             meta_values.append("provides=unfencing")
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+
     resource.resource_create(
         stonith_id, "stonith:" + stonith_type, st_values, op_values, meta_values
     )
@@ -414,24 +368,16 @@ def stonith_confirm(argv):
     else:
         print("Node: %s confirmed fenced" % node)
 
-def stonith_does_agent_provide_unfencing(metadata_string):
-    try:
-        dom = parseString(metadata_string)
-        for agent in utils.dom_get_children_by_tag_name(dom, "resource-agent"):
-            for actions in utils.dom_get_children_by_tag_name(agent, "actions"):
-                for action in utils.dom_get_children_by_tag_name(
-                    actions, "action"
-                ):
-                    if (
-                        action.getAttribute("name") == "on"
-                        and
-                        action.getAttribute("on_target") == "1"
-                        and
-                        action.getAttribute("automatic") == "1"
-                    ):
-                        return True
-    except ExpatError:
-        return False
+def stonith_does_agent_provide_unfencing(metadata_dom):
+    for action in lib_ra.get_agent_actions(metadata_dom):
+        if (
+            action["name"] == "on" and
+            "on_target" in action and
+            action["on_target"] == "1" and
+            "automatic" in action and
+            action["automatic"] == "1"
+        ):
+            return True
     return False
 
 

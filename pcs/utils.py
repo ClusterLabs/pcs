@@ -61,6 +61,7 @@ from pcs.lib.external import (
     is_cman_cluster,
     CommandRunner,
 )
+import pcs.lib.resource_agent as lib_ra
 import pcs.lib.corosync.config_parser as corosync_conf_utils
 from pcs.lib.pacemaker import has_resource_wait_support
 from pcs.lib.pacemaker_state import ClusterState
@@ -1388,37 +1389,31 @@ def does_resource_have_options(ra_type):
 # Given a resource agent (ocf:heartbeat:XXX) return an list of default
 # operations or an empty list if unable to find any default operations
 def get_default_op_values(ra_type):
-    allowable_operations = ["monitor","start","stop","promote","demote"]
-    ra_split = ra_type.split(':')
-    if len(ra_split) != 3:
-        return []
-
-    ra_path = "/usr/lib/ocf/resource.d/" + ra_split[1] + "/" + ra_split[2]
-    metadata = get_metadata(ra_path)
-
-    if metadata == False:
-        return []
-
-    return_list = []
+    allowable_operations = ["monitor", "start", "stop", "promote", "demote"]
+    default_ops = []
     try:
-        root = ET.fromstring(metadata)
-        actions = root.findall(str(".//actions/action"))
-        for action in actions:
-            if action.attrib["name"] in allowable_operations:
-                new_operation = []
-                new_operation.append(action.attrib["name"])
-                for attrib in action.attrib:
-                    value = action.attrib[attrib]
-                    if attrib == "name" or (attrib == "depth" and value == "0"):
-                        continue
-                    new_operation.append(attrib + "=" + value)
-                return_list.append(new_operation)
-    except xml.parsers.expat.ExpatError as e:
-        err("Unable to parse xml for '%s': %s" % (ra_type, e))
-    except xml.etree.ElementTree.ParseError as e:
-        err("Unable to parse xml for '%s': %s" % (ra_type, e))
+        metadata = lib_ra.get_resource_agent_metadata(cmd_runner(), ra_type)
+        actions = lib_ra.get_agent_actions(metadata)
 
-    return return_list
+        for action in actions:
+            if action["name"] not in allowable_operations:
+                continue
+            op = [action["name"]]
+            for key in action.keys():
+                if key != "name" and (key != "depth" or action[key] != "0"):
+                    op.append("{0}={1}".format(key, action[key]))
+            default_ops.append(op)
+    except (
+        lib_ra.UnsupportedResourceAgent,
+        lib_ra.AgentNotFound,
+        lib_ra.UnableToGetAgentMetadata
+    ):
+        return []
+    except LibraryError as e:
+        process_library_reports(e.args)
+
+    return default_ops
+
 
 def check_pacemaker_supports_resource_wait():
     if not has_resource_wait_support(cmd_runner()):
@@ -1440,104 +1435,67 @@ def validate_wait_get_timeout(need_cib_support=True):
         )
     return wait_timeout
 
+
+def is_file_abs_path(path):
+    return path == os.path.abspath(path) and os.path.isfile(path)
+
 # Check and see if the specified resource (or stonith) type is present on the
 # file system and properly responds to a meta-data request
 def is_valid_resource(resource, caseInsensitiveCheck=False):
-    if resource.startswith("ocf:"):
-        resource_split = resource.split(":",3)
-        if len(resource_split) != 3:
-            err("ocf resource definition (" + resource + ") does not match the ocf:provider:name pattern")
-        providers = [resource_split[1]]
-        resource = resource_split[2]
-    elif resource.startswith("stonith:"):
-        resource_split = resource.split(":", 2)
-        stonith = resource_split[1]
-        metadata = get_stonith_metadata("/usr/sbin/" + stonith)
-        if metadata != False:
-            return True
+    try:
+        if resource.startswith("stonith:"):
+            lib_ra.get_fence_agent_metadata(
+                cmd_runner(), resource.split("stonith:", 1)[1]
+            )
         else:
-            return False
-    elif resource.startswith("nagios:"):
-        # search for nagios script
-        resource_split = resource.split(":", 2)
-        if os.path.isfile("/usr/share/pacemaker/nagios/plugins-metadata/%s.xml" % resource_split[1]):
-            return True
-        else:
-            return False
-    elif resource.startswith("lsb:"):
-        resource_split = resource.split(":",2)
-        lsb_ra = resource_split[1]
-        if os.path.isfile("/etc/init.d/" + lsb_ra):
-            return True
-        else:
-            return False
-    elif resource.startswith("systemd:"):
-        resource_split = resource.split(":",2)
-        systemd_ra = resource_split[1]
-        if os.path.isfile("/etc/systemd/system/" + systemd_ra + ".service") or os.path.isfile("/usr/lib/systemd/system/" + systemd_ra + ".service"):
-            return True
-        else:
-            return False
-    else:
-        providers = sorted(os.listdir("/usr/lib/ocf/resource.d"))
+            lib_ra.get_resource_agent_metadata(cmd_runner(), resource)
+        # return True if no exception was raised
+        return True
+    except lib_ra.UnsupportedResourceAgent:
+        pass
+    except LibraryError:
+        # agent not exists or obtaining metadata failed
+        return False
 
-    # search for ocf script
-    for provider in providers:
-        filepath = "/usr/lib/ocf/resource.d/" + provider + "/"
+    if resource.startswith("lsb:"):
+        agent = os.path.join("/etc/init.d/", resource.split(":", 1)[1])
+        return is_file_abs_path(agent)
+    elif resource.startswith("systemd:"):
+        _, agent_name = resource.split(":", 1)
+        agent1 = os.path.join(
+            "/etc/systemd/system/", agent_name + ".service"
+        )
+        agent2 = os.path.join(
+            "/usr/lib/systemd/system/", agent_name + ".service"
+        )
+        return is_file_abs_path(agent1) or is_file_abs_path(agent2)
+
+    # resource name is not full, maybe it's ocf resource
+    for provider in sorted(os.listdir(settings.ocf_resources)):
+        provider_path = os.path.join(settings.ocf_resources, provider)
         if caseInsensitiveCheck:
-            if os.path.isdir(filepath):
-                all_files = [ f for f in os.listdir(filepath ) ]
-                for f in all_files:
-                    if f.lower() == resource.lower() and os.path.isfile(filepath + f):
-                        return "ocf:" + provider + ":" + f
+            if os.path.isdir(provider_path):
+                for f in os.listdir(provider_path):
+                    if (
+                        f.lower() == resource.lower() and
+                        os.path.isfile(os.path.join(provider_path, f))
+                    ):
+                        return "ocf:{0}:{1}".format(provider, f)
                 continue
 
-        metadata = get_metadata(filepath + resource)
-        if metadata == False:
-            continue
-        else:
-            # found it
-            return True
-
+        if os.path.exists(
+            os.path.join(settings.ocf_resources, provider, resource)
+        ):
+            try:
+                lib_ra.get_resource_agent_metadata(
+                    cmd_runner(),
+                    "ocf:{0}:{1}".format(provider, resource)
+                )
+                return True
+            except LibraryError:
+                continue
     return False
 
-# Get metadata from resource agent
-def get_metadata(resource_agent_script):
-    os.environ['OCF_ROOT'] = "/usr/lib/ocf/"
-    if (not os.path.isfile(resource_agent_script)) or (not os.access(resource_agent_script, os.X_OK)):
-        return False
-
-    (metadata, retval) = run([resource_agent_script, "meta-data"],True)
-    if retval == 0:
-        return metadata
-    else:
-        return False
-
-def get_stonith_metadata(fence_agent_script):
-    if (not os.path.isfile(fence_agent_script)) or (not os.access(fence_agent_script, os.X_OK)):
-        return False
-    (metadata, retval) = run([fence_agent_script, "-o", "metadata"], True)
-    if retval == 0:
-        return metadata
-    else:
-        return False
-
-def get_default_stonith_options():
-    (metadata, retval) = run([settings.stonithd_binary, "metadata"],True)
-    if retval == 0:
-        root = ET.fromstring(metadata)
-        params = root.findall(str(".//parameter"))
-        default_params = []
-        for param in params:
-            adv_param = False
-            for short_desc in param.findall(str(".//shortdesc")):
-                if short_desc.text.startswith("Advanced use only"):
-                    adv_param = True
-            if adv_param == False:
-                default_params.append(param)
-        return default_params
-    else:
-        return []
 
 # Return matches from the CIB with the xpath_query
 def get_cib_xpath(xpath_query):
@@ -1922,78 +1880,6 @@ def getResourceType(resource):
     resProvider = resource.getAttribute("provider")
     resType = resource.getAttribute("type")
     return resClass + ":" + resProvider + ":" + resType
-
-# Returns empty array if all attributes are valid, otherwise return an array
-# of bad attributes
-# res_id is the resource id
-# ra_values is an array of 2 item tuples (key, value)
-# resource is a python minidom element of the resource from the cib
-def validInstanceAttributes(res_id, ra_values, resource_type):
-    ra_values = dict(ra_values)
-    stonithDevice = False
-    resSplit = resource_type.split(":")
-    if len(resSplit) == 2:
-        (resClass, resType) = resSplit
-        metadata = get_stonith_metadata(fence_bin + resType)
-        stonithDevice = True
-    else:
-        (resClass, resProvider, resType) = resource_type.split(":")
-        metadata = get_metadata("/usr/lib/ocf/resource.d/" + resProvider + "/" + resType)
-
-    if metadata == False:
-        err("Unable to get metadata for resource: %s" % resource_type)
-
-    missing_required_parameters = []
-    valid_parameters = []
-    if stonithDevice:
-        valid_parameters += ["pcmk_host_list", "pcmk_host_map", "pcmk_host_check", "pcmk_host_argument", "pcmk_arg_map", "pcmk_list_cmd", "pcmk_status_cmd", "pcmk_monitor_cmd"]
-        valid_parameters += ["stonith-timeout", "priority", "timeout"]
-        valid_parameters += ["pcmk_reboot_action", "pcmk_poweroff_action", "pcmk_list_action", "pcmk_monitor_action", "pcmk_status_action"]
-        for a in ["off","on","status","list","metadata","monitor", "reboot"]:
-            valid_parameters.append("pcmk_" + a + "_action")
-            valid_parameters.append("pcmk_" + a + "_timeout")
-            valid_parameters.append("pcmk_" + a + "_retries")
-    bad_parameters = []
-    try:
-        actions = ET.fromstring(metadata).find("parameters")
-        if actions is not None:
-            for action in actions.findall(str("parameter")):
-                valid_parameters.append(action.attrib["name"])
-                if "required" in action.attrib and action.attrib["required"] == "1":
-# If a default value is set, then the attribute isn't really required (for 'action' on stonith devices only)
-                    default_exists = False
-                    if action.attrib["name"] == "action" and stonithDevice:
-                        for ch in action:
-                            if ch.tag == "content" and "default" in ch.attrib:
-                                default_exists = True
-                                break
-
-                    if not default_exists:
-                        missing_required_parameters.append(action.attrib["name"])
-    except xml.parsers.expat.ExpatError as e:
-        err("Unable to parse xml for '%s': %s" % (resource_type, e))
-    except xml.etree.ElementTree.ParseError as e:
-        err("Unable to parse xml for '%s': %s" % (resource_type, e))
-    for key, dummy_value in ra_values.items():
-        if key not in valid_parameters:
-            bad_parameters.append(key)
-        if key in missing_required_parameters:
-            missing_required_parameters.remove(key)
-
-    if missing_required_parameters:
-        if resClass == "stonith" and "port" in missing_required_parameters:
-            # Temporarily make "port" an optional parameter. Once we are
-            # getting metadata from pacemaker, this will be reviewed and fixed.
-            #if (
-            #    "pcmk_host_argument" in ra_values
-            #    or
-            #    "pcmk_host_map" in ra_values
-            #    or
-            #    "pcmk_host_list" in ra_values
-            #):
-            missing_required_parameters.remove("port")
-
-    return bad_parameters, missing_required_parameters
 
 def getClusterName():
     if is_rhel6():

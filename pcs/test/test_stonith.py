@@ -26,11 +26,11 @@ class StonithTest(unittest.TestCase):
     def testStonithCreation(self):
         output, returnVal = pcs(temp_cib, "stonith create test1 fence_noxist")
         assert returnVal == 1
-        assert output == "Error: Unable to create resource 'stonith:fence_noxist', it is not installed on this system (use --force to override)\n"
+        assert output == "Error: fence agent 'fence_noxist' not found, use --force to override\n"
 
         output, returnVal = pcs(temp_cib, "stonith create test1 fence_noxist --force")
         assert returnVal == 0
-        assert output == ""
+        assert output == "Warning: fence agent 'fence_noxist' not found\n"
 
         output, returnVal = pcs(temp_cib, "stonith create test2 fence_apc")
         assert returnVal == 1
@@ -74,7 +74,7 @@ class StonithTest(unittest.TestCase):
 
 # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are allowed for
 # stonith agents
-        output, returnVal = pcs(temp_cib, 'stonith create apc-fencing fence_apc params ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"')
+        output, returnVal = pcs(temp_cib, 'stonith create apc-fencing fence_apc params ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"')
         assert returnVal == 0
         ac(output,"")
 
@@ -85,7 +85,7 @@ class StonithTest(unittest.TestCase):
         output, returnVal = pcs(temp_cib, 'stonith show apc-fencing')
         ac(output, """\
  Resource: apc-fencing (class=stonith type=fence_apc)
-  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" action="reboot" debug="1" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"
+  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"
   Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)
 """)
         assert returnVal == 0
@@ -287,7 +287,7 @@ Cluster Properties:
         # metadata from pacemaker, this will be reviewed and fixed.
         output, returnVal = pcs(
             temp_cib,
-            'stonith create apc-1 fence_apc params ipaddr="ip" login="apc" action="reboot"'
+            'stonith create apc-1 fence_apc params ipaddr="ip" login="apc"'
         )
 #        ac(output, """\
 #Error: missing required option(s): 'port' for resource type: stonith:fence_apc (use --force to override)
@@ -298,21 +298,21 @@ Cluster Properties:
 
         output, returnVal = pcs(
             temp_cib,
-            'stonith create apc-2 fence_apc params ipaddr="ip" login="apc" action="reboot" pcmk_host_map="buzz-01:1;buzz-02:2"'
+            'stonith create apc-2 fence_apc params ipaddr="ip" login="apc" pcmk_host_map="buzz-01:1;buzz-02:2"'
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib,
-            'stonith create apc-3 fence_apc params ipaddr="ip" login="apc" action="reboot" pcmk_host_list="buzz-01,buzz-02"'
+            'stonith create apc-3 fence_apc params ipaddr="ip" login="apc" pcmk_host_list="buzz-01,buzz-02"'
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib,
-            'stonith create apc-4 fence_apc params ipaddr="ip" login="apc" action="reboot" pcmk_host_argument="buzz-01"'
+            'stonith create apc-4 fence_apc params ipaddr="ip" login="apc" pcmk_host_argument="buzz-01"'
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
@@ -326,23 +326,23 @@ Cluster Properties:
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn action=reboot")
+        output, returnVal = pcs(temp_cib, "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn")
         assert returnVal == 0
         ac(output,"")
 
-        output, returnVal = pcs(temp_cib, "stonith create F2 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn action=reboot")
+        output, returnVal = pcs(temp_cib, "stonith create F2 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn")
         assert returnVal == 0
         ac(output,"")
 
-        output, returnVal = pcs(temp_cib, "stonith create F3 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn action=reboot")
+        output, returnVal = pcs(temp_cib, "stonith create F3 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn")
         assert returnVal == 0
         ac(output,"")
 
-        output, returnVal = pcs(temp_cib, "stonith create F4 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn action=reboot")
+        output, returnVal = pcs(temp_cib, "stonith create F4 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn")
         assert returnVal == 0
         ac(output,"")
 
-        output, returnVal = pcs(temp_cib, "stonith create F5 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn action=reboot")
+        output, returnVal = pcs(temp_cib, "stonith create F5 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn")
         assert returnVal == 0
         ac(output,"")
 
@@ -790,7 +790,7 @@ Cluster Properties:
         o,r = pcs(temp_cib, "status")
         assert "WARNING: no stonith devices and " in o
 
-        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn, action=reboot, pcmk_host_argument=node1")
+        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1")
         ac(o,"")
         assert r == 0
 
@@ -801,7 +801,7 @@ Cluster Properties:
         ac(o,"Deleting Resource - test_stonith\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn, action=reboot, pcmk_host_argument=node1 --clone")
+        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1 --clone")
         ac(o,"")
         assert r == 0
 

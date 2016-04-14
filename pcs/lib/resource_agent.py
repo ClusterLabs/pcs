@@ -51,7 +51,8 @@ def __get_text_from_dom_element(element):
 def __get_invalid_metadata_format_exception():
     return InvalidMetadataFormat(ReportItem.error(
         error_codes.INVALID_METADATA_FORMAT,
-        "invalid agent metadata format"
+        "invalid agent metadata format",
+        forceable=True
     ))
 
 
@@ -114,18 +115,25 @@ def _get_pcmk_advanced_stonith_parameters(runner):
     """Returns advanced instance attributes for stonith devices"""
     @simple_cache
     def __get_stonithd_parameters():
-        output, retval = runner.run([settings.stonithd_binary, "metadata"])
-        if retval != 0:
+        output, retval = runner.run(
+            [settings.stonithd_binary, "metadata"], ignore_stderr=True
+        )
+        if output.strip() == "":
             raise UnableToGetAgentMetadata(ReportItem.error(
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
                 "unable to get metadata of stonithd",
-                info={"external_exitcode": retval, "external_output": output}
+                info={"external_exitcode": retval, "external_output": output},
+                forceable=True
             ))
 
         try:
             params = _get_agent_parameters(etree.fromstring(output))
             for param in params:
-                param.update({"advanced": True})
+                param["longdesc"] = "{0}\n{1}".format(
+                    param["shortdesc"], param["longdesc"]
+                ).strip()
+                is_advanced = param["shortdesc"].startswith("Advanced use only")
+                param["advanced"] = is_advanced
             return params
         except etree.XMLSyntaxError:
             raise __get_invalid_metadata_format_exception()
@@ -144,7 +152,8 @@ def get_fence_agent_metadata(runner, fence_agent):
         return UnableToGetAgentMetadata(ReportItem.error(
             error_codes.UNABLE_TO_GET_AGENT_METADATA,
             "unable to get metadata of fence agent '{agent_name}'",
-            info=info
+            info=info,
+            forceable=True
         ))
 
     script_path = os.path.join(settings.fence_agent_binaries, fence_agent)
@@ -156,13 +165,16 @@ def get_fence_agent_metadata(runner, fence_agent):
     ):
         raise AgentNotFound(ReportItem.error(
             error_codes.INVALID_RESOURCE_NAME,
-            "fence agent '{agent_name}' not found.",
-            info={"agent_name": fence_agent}
+            "fence agent '{agent_name}' not found",
+            info={"agent_name": fence_agent},
+            forceable=True
         ))
 
-    output, retval = runner.run([script_path, "-o", "metadata"])
+    output, retval = runner.run(
+        [script_path, "-o", "metadata"], ignore_stderr=True
+    )
 
-    if retval != 0:
+    if output.strip() == "":
         raise __get_error({
             "agent_name": fence_agent,
             "external_exitcode": retval,
@@ -190,8 +202,9 @@ def _get_nagios_resource_agent_metadata(agent):
     if not __is_path_abs(metadata_path):
         raise AgentNotFound(ReportItem.error(
             error_codes.INVALID_RESOURCE_NAME,
-            "resource agent '{agent_name}' not found.",
-            info={"agent_name": agent_name}
+            "resource agent '{agent_name}' not found",
+            info={"agent_name": agent_name},
+            forceable=True
         ))
 
     try:
@@ -204,7 +217,8 @@ def _get_nagios_resource_agent_metadata(agent):
             info={
                 "agent_name": agent_name,
                 "error_info": str(e)
-            }
+            },
+            forceable=True
         ))
 
 
@@ -221,7 +235,8 @@ def _get_ocf_resource_agent_metadata(runner, provider, agent):
         return UnableToGetAgentMetadata(ReportItem.error(
             error_codes.UNABLE_TO_GET_AGENT_METADATA,
             "unable to get metadata of resource agent '{agent_name}'",
-            info=info
+            info=info,
+            forceable=True
         ))
 
     script_path = os.path.join(settings.ocf_resources, provider, agent)
@@ -229,16 +244,18 @@ def _get_ocf_resource_agent_metadata(runner, provider, agent):
     if not __is_path_abs(script_path) or not is_path_runnable(script_path):
         raise AgentNotFound(ReportItem.error(
             error_codes.INVALID_RESOURCE_NAME,
-            "resource agent '{agent_name}' not found.",
-            info={"agent_name": agent_name}
+            "resource agent '{agent_name}' not found",
+            info={"agent_name": agent_name},
+            forceable=True
         ))
 
     output, retval = runner.run(
         [script_path, "meta-data"],
-        env_extend={"OCF_ROOT": settings.ocf_root}
+        env_extend={"OCF_ROOT": settings.ocf_root},
+        ignore_stderr=True
     )
 
-    if retval != 0:
+    if output.strip() == "":
         raise __get_error({
             "agent_name": agent_name,
             "external_exitcode": retval,
@@ -324,7 +341,8 @@ def get_resource_agent_metadata(runner, agent):
     error = UnsupportedResourceAgent(ReportItem.error(
         error_codes.UNSUPPORTED_RESOURCE_AGENT,
         "resource agent '{agent}' is not supported",
-        info={"agent": agent}
+        info={"agent": agent},
+        forceable=True
     ))
     if agent.startswith("ocf:"):
         agent_info = agent.split(":", 2)
@@ -335,3 +353,75 @@ def get_resource_agent_metadata(runner, agent):
         return _get_nagios_resource_agent_metadata(agent.split("nagios:", 1)[1])
     else:
         raise error
+
+
+def _get_action(action_el):
+    """
+    Returns XML action element as dictionary, where all elements attributes
+    are key of dict
+
+    action_el -- action lxml.etree element
+    """
+    if action_el.tag != "action" or action_el.get("name") is None:
+        raise __get_invalid_metadata_format_exception()
+
+    return dict(action_el.items())
+
+
+def get_agent_actions(metadata_dom):
+    """
+    Returns list of actions from agents metadata
+
+    metadata_dom -- agent's metadata dom
+    """
+    if metadata_dom.tag != "resource-agent":
+        raise __get_invalid_metadata_format_exception()
+
+    actions_el = metadata_dom.find("actions")
+    if actions_el is None:
+        return []
+
+    return [
+        _get_action(action) for action in actions_el.iter("action")
+    ]
+
+
+def _validate_instance_attributes(agent_params, attrs):
+    valid_attrs = [attr["name"] for attr in agent_params]
+    required_missing = []
+
+    for attr in agent_params:
+        if attr["required"] and attr["name"] not in attrs:
+            required_missing.append(attr["name"])
+
+    return [attr for attr in attrs if attr not in valid_attrs], required_missing
+
+
+def validate_instance_attributes(runner, instance_attrs, agent):
+    """
+    Validates instance attributes according to specified agent.
+    Returns tuple of lists (<invalid attributes>, <missing required attributes>)
+
+    instance_attrs -- dictionary of instance attributes, where key is
+        attribute name and value is attribute value
+    agent -- full name (<class>:<agent> or <class>:<provider>:<agent>)
+        of resource/fence agent
+    """
+    if agent.startswith("stonith:"):
+        agent_params = get_fence_agent_parameters(
+            runner,
+            get_fence_agent_metadata(runner, agent.split("stonith:", 1)[1])
+        )
+        bad_attrs, missing_required = _validate_instance_attributes(
+            agent_params, instance_attrs
+        )
+        if "port" in missing_required:
+            # Temporarily make "port" an optional parameter. Once we are
+            # getting metadata from pacemaker, this will be reviewed and fixed.
+            missing_required.remove("port")
+        return bad_attrs, missing_required
+    else:
+        agent_params = get_resource_agent_parameters(
+            get_resource_agent_metadata(runner, agent)
+        )
+        return _validate_instance_attributes(agent_params, instance_attrs)
