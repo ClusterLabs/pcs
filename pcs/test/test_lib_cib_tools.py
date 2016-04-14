@@ -9,6 +9,7 @@ from unittest import TestCase
 
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.lib import error_codes
@@ -101,3 +102,22 @@ class GetAclsTest(CibToolsTest):
         acls = lib.get_acls(self.cib.tree)
         self.assertEqual("acls", acls.tag)
         self.assertEqual("configuration", acls.getparent().tag)
+
+@mock.patch('pcs.lib.cib.tools.does_id_exist')
+class ValidateIdDoesNotExistsTest(TestCase):
+    def test_success_when_id_does_not_exists(self, does_id_exists):
+        does_id_exists.return_value = False
+        lib.validate_id_does_not_exist("tree", "some-id")
+        does_id_exists.assert_called_once_with("tree", "some-id")
+
+    def test_raises_whne_id_exists(self, does_id_exists):
+        does_id_exists.return_value = True
+        assert_raise_library_error(
+            lambda: lib.validate_id_does_not_exist("tree", "some-id"),
+            (
+                severities.ERROR,
+                error_codes.ID_ALREADY_EXISTS,
+                {"id": "some-id"},
+            ),
+        )
+        does_id_exists.assert_called_once_with("tree", "some-id")

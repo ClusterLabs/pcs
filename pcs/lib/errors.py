@@ -35,3 +35,6 @@ class ReportItem(object):
         self.message_pattern=message_pattern
         self.info = info if info else dict()
         self.message = self.message_pattern.format(**self.info)
+
+    def __repr__(self):
+        return self.code+": "+str(self.info)

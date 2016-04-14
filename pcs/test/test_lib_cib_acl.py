@@ -57,18 +57,6 @@ class CreateRoleTest(LibraryAclTest):
             ),
         )
 
-    def test_refuse_existing_role_id(self):
-        role_id = 'role1'
-        self.fixture_add_role(role_id)
-        assert_raise_library_error(
-            lambda: lib.create_role(self.cib.tree, role_id),
-            (
-                severities.ERROR,
-                error_codes.ACL_ROLE_ALREADY_EXISTS,
-                {'id': role_id},
-            ),
-        )
-
     def test_refuse_existing_non_role_id(self):
         self.cib.append_to_first_tag_name(
             'nodes',

@@ -143,7 +143,7 @@ Role: role3
 
         o,r = pcs("acl role create role1")
         assert r == 1
-        ac(o,"Error: role role1 already exists\n")
+        ac(o,"Error: role1 already exists\n")
 
         o,r = pcs("acl user create user1")
         assert r == 1
@@ -558,7 +558,7 @@ User: user2
         assert r == 0
 
         o,r = pcs("acl role create role0")
-        ac(o,"Error: role role0 already exists\n")
+        ac(o,"Error: role0 already exists\n")
         assert r == 1
 
         o,r = pcs("acl role create role0d description='empty role'")

@@ -5,6 +5,8 @@ from __future__ import (
     unicode_literals,
 )
 
+from lxml import etree
+
 from pcs.lib.external import (
     is_cman_cluster,
     CommandRunner,
@@ -16,6 +18,7 @@ from pcs.lib.corosync.live import (
     get_local_corosync_conf,
 )
 from pcs.lib.pacemaker import (
+    get_cib,
     get_cib_xml,
     replace_cib_configuration_xml,
 )
@@ -69,11 +72,21 @@ class LibraryEnvironment(object):
         else:
             return self._cib_data
 
+    def get_cib(self):
+        return get_cib(self.get_cib_xml())
+
     def push_cib_xml(self, cib_data):
         if self.is_cib_live:
             replace_cib_configuration_xml(self.cmd_runner(), cib_data)
         else:
             self._cib_data = cib_data
+
+    def push_cib(self, cib):
+        #etree returns bytes: b'xml'
+        #python 3 removed .encode() from bytes
+        #run(...) calls subprocess.Popen.communicate which calls encode...
+        #so here is bytes to str conversion
+        self.push_cib_xml(etree.tostring(cib).decode())
 
     @property
     def is_cib_live(self):
@@ -117,4 +130,3 @@ class LibraryEnvironment(object):
             else:
                 self._auth_tokens = {}
         return self._auth_tokens
-

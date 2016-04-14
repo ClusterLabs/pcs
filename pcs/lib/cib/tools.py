@@ -9,6 +9,7 @@ from lxml import etree
 
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
+from pcs.lib.pacemaker_values import validate_id
 
 def does_id_exist(tree, check_id):
     """
@@ -17,6 +18,17 @@ def does_id_exist(tree, check_id):
     check_id id to check
     """
     return tree.find('.//*[@id="{0}"]'.format(check_id)) is not None
+
+def validate_id_does_not_exist(tree, id):
+    """
+    tree cib etree node
+    """
+    if does_id_exist(tree, id):
+        raise LibraryError(ReportItem.error(
+            error_codes.ID_ALREADY_EXISTS,
+            '{id} already exists',
+            info={'id': id}
+        ))
 
 def find_unique_id(tree, check_id):
     """
@@ -54,3 +66,24 @@ def get_acls(tree):
     if acls is None:
         acls = etree.SubElement(get_configuration(tree), "acls")
     return acls
+
+def get_constraints(tree):
+    """
+    Return 'constraint' element from tree
+    tree cib etree node
+    """
+    return tree.find(".//constraints")
+
+def find_parent(element, tag_names):
+    candidate = element
+    while True:
+        if candidate is None or candidate.tag in tag_names:
+            return candidate
+        candidate = candidate.getparent()
+
+def export_attributes(element):
+    return  dict((key, value) for key, value in element.attrib.items())
+
+def check_new_id_applicable(tree, description, id):
+    validate_id(id, description)
+    validate_id_does_not_exist(tree, id)

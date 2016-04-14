@@ -9,26 +9,14 @@ from lxml import etree
 
 from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
-from pcs.lib.pacemaker_values import validate_id
-from pcs.lib.cib.tools import does_id_exist, find_unique_id, get_acls
+from pcs.lib.cib.tools import (
+    does_id_exist,
+    find_unique_id, get_acls,
+    check_new_id_applicable,
+)
 
 class AclRoleNotFound(LibraryError):
     pass
-
-def __validate_role_id_for_create(tree, role_id):
-    validate_id(role_id, 'ACL role')
-    if tree.find('.//acl_role[@id="{0}"]'.format(role_id)) is not None:
-        raise LibraryError(ReportItem.error(
-            error_codes.ACL_ROLE_ALREADY_EXISTS,
-            'role {id} already exists',
-            info={'id': role_id}
-        ))
-    if does_id_exist(tree, role_id):
-        raise LibraryError(ReportItem.error(
-            error_codes.ID_ALREADY_EXISTS,
-            '{id} already exists',
-            info={'id': role_id}
-        ))
 
 def __validate_permissions(tree, permission_info_list):
     report = []
@@ -82,7 +70,7 @@ def create_role(tree, role_id, description=""):
     role_id id of desired role
     description role description
     """
-    __validate_role_id_for_create(tree, role_id)
+    check_new_id_applicable(tree, "ACL role", role_id)
     role = etree.SubElement(get_acls(tree), "acl_role", id=role_id)
     if description:
         role.set("description", description)

@@ -13,6 +13,7 @@ from pcs.lib.errors import LibraryError, ReportItem
 
 __BOOLEAN_TRUE = ["true", "on", "yes", "y", "1"]
 __BOOLEAN_FALSE = ["false", "off", "no", "n", "0"]
+SCORE_INFINITY = "INFINITY"
 
 
 def is_true(val):
@@ -120,3 +121,9 @@ def validate_id(id_candidate, description="id"):
                 }
             ))
 
+def is_score_value(value):
+    if not value:
+        return False
+    if value[0] in ("+", "-"):
+        return is_score_value(value[1:])
+    return value == SCORE_INFINITY or value.isdigit()
