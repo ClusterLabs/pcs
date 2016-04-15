@@ -59,6 +59,8 @@ def quorum_cmd(argv):
     try:
         if sub_cmd == "help":
             usage.quorum(argv)
+        elif sub_cmd == "config":
+            quorum_config_cmd(argv)
         elif sub_cmd == "update":
             quorum_update_cmd(argv)
         else:
@@ -71,6 +73,23 @@ def quorum_cmd(argv):
     except utils.CmdLineInputError:
         usage.quorum([sub_cmd] + argv)
         sys.exit(1)
+
+def quorum_config_cmd(argv):
+    if argv:
+        raise utils.CmdLineInputError()
+    config = lib_quorum.get_config(utils.get_lib_env())
+    print(quorum_config_to_str(config))
+
+def quorum_config_to_str(config, indent=""):
+    lines = []
+
+    lines.append("{i}Options:".format(i=indent))
+    if "options" in config and config["options"]:
+        for name, value in sorted(config["options"].items()):
+            lines.append("{i} {n}: {v}".format(i=indent, n=name, v=value))
+
+    return "\n".join(lines)
+
 
 def quorum_update_cmd(argv):
     options = prepare_options(argv)

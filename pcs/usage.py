@@ -1276,6 +1276,9 @@ Usage: pcs quorum <command>
 Manage cluster quorum settings
 
 Commands:
+    config
+        Show quorum configuration.
+
     update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]
             [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
         Add/Change quorum options.  At least one option must be specified.

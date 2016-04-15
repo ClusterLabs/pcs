@@ -31,6 +31,7 @@ from pcs import (
     cluster,
     constraint,
     prop,
+    quorum,
     resource,
     settings,
     status,
@@ -38,6 +39,8 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.lib.errors import LibraryError
+from pcs.lib.commands import quorum as lib_quorum
 
 
 def config_cmd(argv):
@@ -87,6 +90,14 @@ def config_show(argv):
     print()
     config_show_cib()
     cluster.cluster_uidgid([], True)
+    if "--corosync_conf" in utils.pcs_options or not utils.is_rhel6():
+        print()
+        print("Quorum:")
+        try:
+            config = lib_quorum.get_config(utils.get_lib_env())
+            print(quorum.quorum_config_to_str(config, indent=" "))
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
 
 def config_show_cib():
     print("Resources:")

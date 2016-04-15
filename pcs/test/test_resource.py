@@ -1545,6 +1545,9 @@ Operations Defaults:
  No defaults set
 
 Cluster Properties:
+
+Quorum:
+ Options:
 """)
 
     def testCloneRemove(self):
@@ -1704,6 +1707,9 @@ Operations Defaults:
  No defaults set
 
 Cluster Properties:
+
+Quorum:
+ Options:
 """)
 
         output, returnVal = pcs(temp_large_cib, "resource master dummylarge")

@@ -154,6 +154,9 @@ Operations Defaults:
  No defaults set
 
 Cluster Properties:
+
+Quorum:
+ Options:
 """)
         assert returnVal == 0
 
