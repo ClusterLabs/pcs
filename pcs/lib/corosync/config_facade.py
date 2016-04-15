@@ -83,19 +83,13 @@ class ConfigFacade(object):
 
     def set_quorum_options(self, options):
         """
-        Set options in "quorum" section
+        Set options in quorum section
         options quorum options dict
         """
         self.__validate_quorum_options(options)
         quorum_section_list = self.__ensure_section(self.config, "quorum")
-        for section in quorum_section_list[:-1]:
-            for name in options:
-                section.del_attributes_by_name(name)
-        for name, value in options.items():
-            if value == "":
-                quorum_section_list[-1].del_attributes_by_name(name)
-            else:
-                quorum_section_list[-1].set_attribute(name, value)
+        self.__set_section_options(quorum_section_list, options)
+        self.__update_two_node()
 
     def get_quorum_options(self):
         """
@@ -164,6 +158,33 @@ class ConfigFacade(object):
 
         if report:
             raise LibraryError(*report)
+
+    def __update_two_node(self):
+        auto_tie_breaker = False
+        for quorum in self.config.get_sections("quorum"):
+            for attr in quorum.get_attributes("auto_tie_breaker"):
+                auto_tie_breaker = attr[1] != "0"
+
+        if (
+            len(self.get_nodes()) == 2
+            and
+            not auto_tie_breaker
+        ):
+            quorum_section_list = self.__ensure_section(self.config, "quorum")
+            self.__set_section_options(quorum_section_list, {"two_node": "1"})
+        else:
+            for quorum in self.config.get_sections("quorum"):
+                quorum.del_attributes_by_name("two_node")
+
+    def __set_section_options(self, section_list, options):
+        for section in section_list[:-1]:
+            for name in options:
+                section.del_attributes_by_name(name)
+        for name, value in options.items():
+            if value == "":
+                section_list[-1].del_attributes_by_name(name)
+            else:
+                section_list[-1].set_attribute(name, value)
 
     def __ensure_section(self, parent_section, section_name):
         section_list = parent_section.get_sections(section_name)

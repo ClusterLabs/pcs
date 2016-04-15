@@ -53,7 +53,7 @@ class QuorumUpdateCmdTest(TestCase, AssertPcsMixin):
         ac(
             open(temp_conf).read(),
             open(coro_conf).read().replace(
-                "provider: corosync_votequorum",
-                "provider: corosync_votequorum\n    wait_for_all: 1"
+                "two_node: 1",
+                "two_node: 1\n    wait_for_all: 1"
             )
         )

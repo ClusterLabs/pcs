@@ -215,6 +215,13 @@ quorum {
 
 
 class SetQuorumOptionsTest(TestCase):
+    def get_two_node(self, facade):
+        two_node = None
+        for quorum in facade.config.get_sections("quorum"):
+            for dummy_name, value in quorum.get_attributes("two_node"):
+                two_node = value
+        return two_node
+
     def test_add_missing_section(self):
         config = ""
         facade = lib.ConfigFacade.from_string(config)
@@ -284,6 +291,62 @@ quorum {
             },
             test_facade.get_quorum_options()
         )
+
+    def test_2nodes_atb_on(self):
+        config = open(rc("corosync.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(2, len(facade.get_nodes()))
+
+        facade.set_quorum_options({"auto_tie_breaker": "1"})
+
+        self.assertEqual(
+            "1",
+            facade.get_quorum_options().get("auto_tie_breaker", None)
+        )
+        two_node = self.get_two_node(facade)
+        self.assertTrue(two_node is None or two_node == "0")
+
+    def test_2nodes_atb_off(self):
+        config = open(rc("corosync.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(2, len(facade.get_nodes()))
+
+        facade.set_quorum_options({"auto_tie_breaker": "0"})
+
+        self.assertEqual(
+            "0",
+            facade.get_quorum_options().get("auto_tie_breaker", None)
+        )
+        two_node = self.get_two_node(facade)
+        self.assertTrue(two_node == "1")
+
+    def test_3nodes_atb_on(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(3, len(facade.get_nodes()))
+
+        facade.set_quorum_options({"auto_tie_breaker": "1"})
+
+        self.assertEqual(
+            "1",
+            facade.get_quorum_options().get("auto_tie_breaker", None)
+        )
+        two_node = self.get_two_node(facade)
+        self.assertTrue(two_node is None or two_node == "0")
+
+    def test_3nodes_atb_off(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(3, len(facade.get_nodes()))
+
+        facade.set_quorum_options({"auto_tie_breaker": "0"})
+
+        self.assertEqual(
+            "0",
+            facade.get_quorum_options().get("auto_tie_breaker", None)
+        )
+        two_node = self.get_two_node(facade)
+        self.assertTrue(two_node is None or two_node == "0")
 
     def test_invalid_value_no_effect_on_config(self):
         config= """\
