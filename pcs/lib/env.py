@@ -14,7 +14,7 @@ from pcs.lib.corosync.live import (
     get_local_corosync_conf,
 )
 from pcs.lib.pacemaker import (
-    get_cib,
+    get_cib_xml,
     replace_cib_configuration_xml,
 )
 
@@ -63,7 +63,7 @@ class LibraryEnvironment(object):
 
     def get_cib_xml(self):
         if self.is_cib_live:
-            return get_cib(self.cmd_runner())
+            return get_cib_xml(self.cmd_runner())
         else:
             return self._cib_data
 

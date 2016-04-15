@@ -47,7 +47,7 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(1, mock_is_cman.call_count)
 
     @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
-    @mock.patch("pcs.lib.env.get_cib")
+    @mock.patch("pcs.lib.env.get_cib_xml")
     def test_cib_set(self, mock_get_cib, mock_push_cib):
         cib_data = "test cib data"
         new_cib_data = "new test cib data"
@@ -65,7 +65,7 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(0, mock_get_cib.call_count)
 
     @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
-    @mock.patch("pcs.lib.env.get_cib")
+    @mock.patch("pcs.lib.env.get_cib_xml")
     def test_cib_not_set(self, mock_get_cib, mock_push_cib):
         cib_data = "test cib data"
         new_cib_data = "new test cib data"
