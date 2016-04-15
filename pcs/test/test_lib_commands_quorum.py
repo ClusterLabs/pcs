@@ -21,6 +21,55 @@ from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.commands import quorum as lib
 
 
+class GetQuorumConfigTest(TestCase):
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
+    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    def test_disabled_on_cman(self, mock_get_local):
+        lib_env = LibraryEnvironment(self.mock_logger)
+        assert_raise_library_error(
+            lambda: lib.get_config(lib_env),
+            (
+                severity.ERROR,
+                error_codes.CMAN_UNSUPPORTED_COMMAND,
+                {}
+            )
+        )
+        mock_get_local.assert_not_called()
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    def test_no_options(self, mock_get_local):
+        original_conf = open(rc("corosync.conf")).read()
+        mock_get_local.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger)
+
+        self.assertEqual(
+            {
+                "options": {}
+            },
+            lib.get_config(lib_env)
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    def test_options(self, mock_get_local):
+        original_conf = "quorum {\nwait_for_all: 1\n}\n"
+        mock_get_local.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger)
+
+        self.assertEqual(
+            {
+                "options": {
+                    "wait_for_all": "1",
+                }
+            },
+            lib.get_config(lib_env)
+        )
+
+
 @mock.patch.object(
     LibraryEnvironment,
     "cmd_runner",

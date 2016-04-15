@@ -16,17 +16,24 @@ from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync import live as corosync_live
 
 
+def get_config(lib_env):
+    """
+    Extract and return quorum configuration from corosync.conf
+    lib_env LibraryEnvironment
+    """
+    __ensure_not_cman(lib_env)
+    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    return {
+        "options": cfg.get_quorum_options(),
+    }
+
 def set_options(lib_env, options):
     """
     Set corosync quorum options, distribute and reload corosync.conf if live
     lib_env LibraryEnvironment
     options quorum options (dict)
     """
-    if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:
-        raise LibraryError(ReportItem.error(
-            error_codes.CMAN_UNSUPPORTED_COMMAND,
-            "This command is not supported on CMAN clusters"
-        ))
+    __ensure_not_cman(lib_env)
 
     cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
     cfg.set_quorum_options(options)
@@ -64,3 +71,10 @@ def set_options(lib_env, options):
 
     else:
         lib_env.push_corosync_conf(exported_config)
+
+def __ensure_not_cman(lib_env):
+    if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:
+        raise LibraryError(ReportItem.error(
+            error_codes.CMAN_UNSUPPORTED_COMMAND,
+            "This command is not supported on CMAN clusters"
+        ))
