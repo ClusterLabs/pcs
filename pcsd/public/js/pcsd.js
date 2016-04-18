@@ -298,6 +298,9 @@ function disable_spaces(item) {
 
 function load_resource_form(agent_name, stonith) {
   stonith = typeof stonith !== 'undefined' ? stonith : false;
+  if (!agent_name) {
+    return;
+  }
   var prop_name = "new_" + (stonith ? "fence" : "resource") + "_agent_metadata";
   get_resource_agent_metadata(agent_name, function (data) {
       Pcs.resourcesContainer.set(prop_name, Pcs.ResourceAgent.create(data));
