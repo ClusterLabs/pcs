@@ -22,6 +22,10 @@ class Section(object):
     def name(self):
         return self._name
 
+    @property
+    def empty(self):
+        return not self._attr_list and not self._section_list
+
     def export(self, indent="    "):
         lines = []
         for attr in self._attr_list:

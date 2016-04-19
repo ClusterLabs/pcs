@@ -90,6 +90,7 @@ class ConfigFacade(object):
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         self.__set_section_options(quorum_section_list, options)
         self.__update_two_node()
+        self.__remove_empty_sections(self.config)
 
     def get_quorum_options(self):
         """
@@ -159,6 +160,147 @@ class ConfigFacade(object):
         if report:
             raise LibraryError(*report)
 
+    def has_quorum_device(self):
+        """
+        Check if quorum device is present in the config
+        """
+        for quorum in self.config.get_sections("quorum"):
+            for device in quorum.get_sections("device"):
+                if device.get_attributes("model"):
+                    return True
+        return False
+
+    def get_quorum_device_settings(self):
+        """
+        Get configurable options from quorum.device section
+        """
+        model = None
+        model_options = {}
+        generic_options = {}
+        # TODO filter options in output
+            # we're waiting for options specification
+        for quorum in self.config.get_sections("quorum"):
+            for device in quorum.get_sections("device"):
+                for name, value in device.get_attributes():
+                    if name == "model":
+                        model = value
+                    else:
+                        generic_options[name] = value
+                for subsection in device.get_sections():
+                    if subsection.name not in model_options:
+                        model_options[subsection.name] = {}
+                    model_options[subsection.name].update(
+                        subsection.get_attributes()
+                    )
+        return model, model_options.get(model, {}), generic_options
+
+    def add_quorum_device(self, model, model_options, generic_options):
+        """
+        Add quorum device configuration
+        model quorum device model
+        model_options model specific options dict
+        generic_options generic quorum device options dict
+        """
+        # validation
+        if self.has_quorum_device():
+            raise LibraryError(ReportItem.error(
+                error_codes.QDEVICE_ALREADY_DEFINED,
+                "quorum device is already defined"
+            ))
+        report = (
+            self.__validate_quorum_device_model(model)
+            +
+            self.__validate_quorum_device_model_options(model, model_options)
+            +
+            self.__validate_quorum_device_generic_options(generic_options)
+        )
+        if report:
+            raise LibraryError(*report)
+        # configuration cleanup
+        quorum_section_list = self.__ensure_section(self.config, "quorum")
+        self.__set_section_options(
+            quorum_section_list,
+            {
+                "allow_downscale": "",
+                "auto_tie_breaker": "",
+                "last_man_standing": "",
+                "last_man_standing_window": "",
+                "two_node": "",
+            }
+        )
+        for quorum in quorum_section_list:
+            for device in quorum.get_sections("device"):
+                quorum.del_section(device)
+        # TODO add default values for optional settings
+            # we're waiting for options specification
+        # add new configuration
+        quorum = quorum_section_list[-1]
+        new_device = config_parser.Section("device")
+        quorum.add_section(new_device)
+        self.__set_section_options([new_device], generic_options)
+        new_device.set_attribute("model", model)
+        new_model = config_parser.Section(model)
+        self.__set_section_options([new_model], model_options)
+        new_device.add_section(new_model)
+        self.__remove_empty_sections(self.config)
+
+    def update_quorum_device(self, model_options, generic_options):
+        """
+        Update existing quorum device configuration
+        model_options model specific options dict
+        generic_options generic quorum device options dict
+        """
+        # validation
+        if not self.has_quorum_device():
+            raise LibraryError(ReportItem.error(
+                error_codes.QDEVICE_NOT_DEFINED,
+                "no quorum device is defined in this cluster"
+            ))
+        model = None
+        for quorum in self.config.get_sections("quorum"):
+            for device in quorum.get_sections("device"):
+                for dummy_name, value in device.get_attributes("model"):
+                    model = value
+        report = (
+            self.__validate_quorum_device_model_options(model, model_options)
+            +
+            self.__validate_quorum_device_generic_options(generic_options)
+        )
+        if report:
+            raise LibraryError(*report)
+        # set new configuration
+        device_sections = []
+        model_sections = []
+        for quorum in self.config.get_sections("quorum"):
+            device_sections.extend(quorum.get_sections("device"))
+            for device in quorum.get_sections("device"):
+                model_sections.extend(device.get_sections(model))
+        self.__set_section_options(device_sections, generic_options)
+        self.__set_section_options(model_sections, model_options)
+        self.__remove_empty_sections(self.config)
+
+    def remove_quorum_device(self):
+        """
+        Remove all quorum device configuration
+        """
+        for quorum in self.config.get_sections("quorum"):
+            for device in quorum.get_sections("device"):
+                quorum.del_section(device)
+        self.__update_two_node()
+        self.__remove_empty_sections(self.config)
+
+    def __validate_quorum_device_model(self, model):
+        # TODO we're waiting for options specification
+        return []
+
+    def __validate_quorum_device_model_options(self, model, model_options):
+        # TODO we're waiting for options specification
+        return []
+
+    def __validate_quorum_device_generic_options(self, generic_options):
+        # TODO we're waiting for options specification
+        return []
+
     def __update_two_node(self):
         auto_tie_breaker = False
         for quorum in self.config.get_sections("quorum"):
@@ -169,6 +311,8 @@ class ConfigFacade(object):
             len(self.get_nodes()) == 2
             and
             not auto_tie_breaker
+            and
+            not self.has_quorum_device()
         ):
             quorum_section_list = self.__ensure_section(self.config, "quorum")
             self.__set_section_options(quorum_section_list, {"two_node": "1"})
@@ -193,3 +337,9 @@ class ConfigFacade(object):
             parent_section.add_section(new_section)
             section_list.append(new_section)
         return section_list
+
+    def __remove_empty_sections(self, parent_section):
+        for section in parent_section.get_sections():
+            self.__remove_empty_sections(section)
+            if section.empty:
+                parent_section.del_section(section)

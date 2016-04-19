@@ -21,7 +21,25 @@ class SectionTest(unittest.TestCase):
         self.assertEqual(section.name, "mySection")
         self.assertEqual(section.get_attributes(), [])
         self.assertEqual(section.get_sections(), [])
+        self.assertTrue(section.empty)
         ac(str(section), "")
+
+    def test_is_section_empty(self):
+        section = config_parser.Section("mySection")
+        self.assertTrue(section.empty)
+
+        section = config_parser.Section("mySection")
+        section.add_attribute("name", "value")
+        self.assertFalse(section.empty)
+
+        section = config_parser.Section("mySection")
+        section.add_section(config_parser.Section("subSection"))
+        self.assertFalse(section.empty)
+
+        section = config_parser.Section("mySection")
+        section.add_attribute("name", "value")
+        section.add_section(config_parser.Section("subSection"))
+        self.assertFalse(section.empty)
 
     def test_attribute_add(self):
         section = config_parser.Section("mySection")

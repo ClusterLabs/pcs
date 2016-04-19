@@ -6,9 +6,13 @@ from __future__ import (
 )
 
 from unittest import TestCase
+import re
 
 from pcs.test.tools.assertions import assert_raise_library_error
-from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.misc import (
+    ac,
+    get_test_resource as rc,
+)
 
 import pcs.lib.error_codes as error_codes
 from pcs.lib.errors import ReportItemSeverity as severity
@@ -239,13 +243,7 @@ quorum {
         config = ""
         facade = lib.ConfigFacade.from_string(config)
         facade.set_quorum_options({"wait_for_all": ""})
-        self.assertEqual(
-            """\
-quorum {
-}
-""",
-            facade.config.export()
-        )
+        self.assertEqual("", facade.config.export())
 
     def test_add_all_options(self):
         config = open(rc("corosync.conf")).read()
@@ -476,4 +474,533 @@ quorum {
         self.assertEqual(
             lib.ConfigFacade.from_string(config).get_quorum_options(),
             facade.get_quorum_options()
+        )
+
+
+class HasQuorumDeviceTest(TestCase):
+    def test_empty_config(self):
+        config = ""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertFalse(facade.has_quorum_device())
+
+    def test_no_device(self):
+        config = open(rc("corosync.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertFalse(facade.has_quorum_device())
+
+    def test_empty_device(self):
+        config = """\
+quorum {
+    device {
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertFalse(facade.has_quorum_device())
+
+    def test_device_set(self):
+        config = """\
+quorum {
+    device {
+        model: net
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertTrue(facade.has_quorum_device())
+
+    def test_no_model(self):
+        config = """\
+quorum {
+    device {
+        option: value
+        net {
+            host: 127.0.0.1
+        }
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertFalse(facade.has_quorum_device())
+
+
+class GetQuorumDeviceSettingsTest(TestCase):
+    def test_empty_config(self):
+        config = ""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(
+            (None, {}, {}),
+            facade.get_quorum_device_settings()
+        )
+
+    def test_no_device(self):
+        config = open(rc("corosync.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(
+            (None, {}, {}),
+            facade.get_quorum_device_settings()
+        )
+
+    def test_empty_device(self):
+        config = """\
+quorum {
+    device {
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(
+            (None, {}, {}),
+            facade.get_quorum_device_settings()
+        )
+
+    def test_no_model(self):
+        config = """\
+quorum {
+    device {
+        option: value
+        net {
+            host: 127.0.0.1
+        }
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(
+            (None, {}, {"option": "value"}),
+            facade.get_quorum_device_settings()
+        )
+
+    def test_configured_properly(self):
+        config = """\
+quorum {
+    device {
+        option: value
+        model: net
+        net {
+            host: 127.0.0.1
+        }
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(
+            ("net", {"host": "127.0.0.1"}, {"option": "value"}),
+            facade.get_quorum_device_settings()
+        )
+
+    def test_more_devices_one_quorum(self):
+        config = """\
+quorum {
+    device {
+        option0: valueX
+        option1: value1
+        model: disk
+        net {
+            host: 127.0.0.1
+        }
+    }
+    device {
+        option0: valueY
+        option2: value2
+        model: net
+        disk {
+            path: /dev/quorum_disk
+        }
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(
+            (
+                "net",
+                {"host": "127.0.0.1"},
+                {"option0": "valueY", "option1": "value1", "option2": "value2"}
+            ),
+            facade.get_quorum_device_settings()
+        )
+
+    def test_more_devices_more_quorum(self):
+        config = """\
+quorum {
+    device {
+        option0: valueX
+        option1: value1
+        model: disk
+        net {
+            host: 127.0.0.1
+        }
+    }
+}
+quorum {
+    device {
+        option0: valueY
+        option2: value2
+        model: net
+        disk {
+            path: /dev/quorum_disk
+        }
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(
+            (
+                "net",
+                {"host": "127.0.0.1"},
+                {"option0": "valueY", "option1": "value1", "option2": "value2"}
+            ),
+            facade.get_quorum_device_settings()
+        )
+
+
+class AddQuorumDeviceTest(TestCase):
+    # TODO test validation once implemented
+    def test_already_exists(self):
+        config = """\
+totem {
+    version: 2
+}
+
+quorum {
+    provider: corosync_votequorum
+
+    device {
+        option: value
+        model: net
+
+        net {
+            host: 127.0.0.1
+        }
+    }
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.add_quorum_device("net", {"host": "127.0.0.1"}, {}),
+            (
+                severity.ERROR,
+                error_codes.QDEVICE_ALREADY_DEFINED,
+                {}
+            )
+        )
+        ac(config, facade.config.export())
+
+    def test_success(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_quorum_device(
+            "net",
+            {"host": "127.0.0.1", "port": "4433"},
+            {"option": "value"}
+        )
+        ac(
+            config.replace(
+                "    provider: corosync_votequorum",
+                """\
+    provider: corosync_votequorum
+
+    device {
+        option: value
+        model: net
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }"""
+            ),
+            facade.config.export()
+        )
+
+    def test_remove_conflicting_options(self):
+        config = open(rc("corosync.conf")).read()
+        config = config.replace(
+            "    two_node: 1\n",
+            "\n".join([
+                "    two_node: 1",
+                "    auto_tie_breaker: 1",
+                "    last_man_standing: 1",
+                "    last_man_standing_window: 987",
+                "    allow_downscale: 1",
+                ""
+            ])
+        )
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_quorum_device(
+            "net",
+            {"host": "127.0.0.1", "port": "4433"},
+            {"option": "value"}
+        )
+        ac(
+            re.sub(
+                re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+                """\
+quorum {
+    provider: corosync_votequorum
+
+    device {
+        option: value
+        model: net
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }
+}""",
+                config
+            ),
+            facade.config.export()
+        )
+
+    def test_remove_old_configuration(self):
+        config = """\
+quorum {
+    provider: corosync_votequorum
+    device {
+        option: value_old1
+    }
+}
+quorum {
+    provider: corosync_votequorum
+    device {
+        option: value_old2
+    }
+}
+        """
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_quorum_device(
+            "net",
+            {"host": "127.0.0.1", "port": "4433"},
+            {"option": "value"}
+        )
+        ac(
+            """\
+quorum {
+    provider: corosync_votequorum
+}
+
+quorum {
+    provider: corosync_votequorum
+
+    device {
+        option: value
+        model: net
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }
+}
+"""
+            ,
+            facade.config.export()
+        )
+
+
+class UpdateQuorumDeviceTest(TestCase):
+    # TODO test validation once implemented
+    def test_not_existing(self):
+        config = open(rc("corosync.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.update_quorum_device({"host": "127.0.0.1"}, {}),
+            (
+                severity.ERROR,
+                error_codes.QDEVICE_NOT_DEFINED,
+                {}
+            )
+        )
+        ac(config, facade.config.export())
+
+    def test_update_model_options(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        config = re.sub(
+            re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+            """\
+quorum {
+    provider: corosync_votequorum
+
+    device {
+        option: value
+        model: net
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }
+}""",
+            config
+        )
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            {"host": "", "port": "4444", "new": "value"},
+            {}
+        )
+        ac(
+            config.replace(
+                "host: 127.0.0.1\n            port: 4433",
+                "port: 4444\n            new: value"
+            ),
+            facade.config.export()
+        )
+
+    def test_update_generic_options(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        config = re.sub(
+            re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+            """\
+quorum {
+    provider: corosync_votequorum
+
+    device {
+        option1: value1
+        option2: value2
+        model: net
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }
+}""",
+            config
+        )
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            {},
+            {"option1": "", "option2": "valueN", "option3": "value3"}
+        )
+        ac(
+            config.replace(
+                "option1: value1\n        option2: value2\n        model: net",
+                "option2: valueN\n        model: net\n        option3: value3",
+            ),
+            facade.config.export()
+        )
+
+    def test_update_both_options(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        config = re.sub(
+            re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+            """\
+quorum {
+    provider: corosync_votequorum
+
+    device {
+        option: value
+        model: net
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }
+}""",
+            config
+        )
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            {"port": "4444"},
+            {"option": "new_value"}
+        )
+        ac(
+            config
+                .replace("port: 4433", "port: 4444")
+                .replace("option: value", "option: new_value")
+            ,
+            facade.config.export()
+        )
+
+
+class RemoveQuorumDeviceTest(TestCase):
+    def test_empty_config(self):
+        config = ""
+        facade = lib.ConfigFacade.from_string(config)
+        facade.remove_quorum_device()
+        ac(
+            config,
+            facade.config.export()
+        )
+
+    def test_no_device(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.remove_quorum_device()
+        ac(
+            config,
+            facade.config.export()
+        )
+
+    def test_remove_all_devices(self):
+        config_no_devices = open(rc("corosync-3nodes.conf")).read()
+        config = re.sub(
+            re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+            """\
+quorum {
+    provider: corosync_votequorum
+
+    device {
+        option: value
+        model: net
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }
+
+    device {
+        option: value
+    }
+}
+
+quorum {
+    device {
+        option: value
+        model: disk
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }
+}""",
+            config_no_devices
+        )
+        facade = lib.ConfigFacade.from_string(config)
+        facade.remove_quorum_device()
+        ac(
+            config_no_devices,
+            facade.config.export()
+        )
+
+    def test_restore_two_node(self):
+        config_no_devices = open(rc("corosync.conf")).read()
+        config = re.sub(
+            re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
+            """\
+quorum {
+    provider: corosync_votequorum
+
+    device {
+        option: value
+        model: net
+
+        net {
+            host: 127.0.0.1
+            port: 4433
+        }
+    }
+}""",
+            config_no_devices
+        )
+        facade = lib.ConfigFacade.from_string(config)
+        facade.remove_quorum_device()
+        ac(
+            config_no_devices,
+            facade.config.export()
         )
