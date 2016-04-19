@@ -62,7 +62,8 @@ from pcs.lib.external import (
     CommandRunner,
 )
 import pcs.lib.resource_agent as lib_ra
-import pcs.lib.corosync.config_parser as corosync_conf_utils
+import pcs.lib.corosync.config_parser as corosync_conf_parser
+from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.pacemaker import has_resource_wait_support
 from pcs.lib.pacemaker_state import ClusterState
 from pcs.lib.pacemaker_values import (
@@ -472,8 +473,8 @@ def getCorosyncConfParsed(conf=None, text=None):
         except xml.parsers.expat.ExpatError as e:
             err("Unable to parse cluster.conf: %s" % e)
     try:
-        return corosync_conf_utils.parse_string(conf_text)
-    except corosync_conf_utils.CorosyncConfParserException as e:
+        return corosync_conf_parser.parse_string(conf_text)
+    except corosync_conf_parser.CorosyncConfParserException as e:
         err("Unable to parse corosync.conf: %s" % e)
 
 def setCorosyncConf(corosync_config, conf_file=None):
@@ -565,7 +566,7 @@ def addNodeToCorosync(node):
     if not nodelists:
         err("unable to find nodelist in corosync.conf")
     nodelist = nodelists[0]
-    new_node = corosync_conf_utils.Section("node")
+    new_node = corosync_conf_parser.Section("node")
     nodelist.add_section(new_node)
     new_node.add_attribute("ring0_addr", node0)
     if node1:
@@ -671,27 +672,9 @@ def removeNodeFromClusterConf(node):
     return True
 
 def autoset_2node_corosync(corosync_conf):
-    node_count = 0
-    auto_tie_breaker = False
-
-    for nodelist in corosync_conf.get_sections("nodelist"):
-        node_count += len(nodelist.get_sections("node"))
-    quorum_sections = corosync_conf.get_sections("quorum")
-    for quorum in quorum_sections:
-        for attr in quorum.get_attributes("auto_tie_breaker"):
-            auto_tie_breaker = attr[1] == "1"
-
-    if node_count == 2 and not auto_tie_breaker:
-        for quorum in quorum_sections:
-            quorum.set_attribute("two_node", "1")
-        if not quorum_sections:
-            quorum = corosync_conf_utils.Section("quorum")
-            quorum.add_attribute("two_node", "1")
-            corosync_conf.add_section(quorum)
-    else:
-        for quorum in quorum_sections:
-            quorum.del_attributes_by_name("two_node")
-    return corosync_conf
+    facade = corosync_conf_facade(corosync_conf)
+    facade._ConfigFacade__update_two_node()
+    return facade.config
 
 def getNextNodeID(corosync_conf):
     currentNodes = []
@@ -1892,7 +1875,7 @@ def getClusterName():
     else:
         try:
             f = open(settings.corosync_conf_file,'r')
-            conf = corosync_conf_utils.parse_string(f.read())
+            conf = corosync_conf_parser.parse_string(f.read())
             f.close()
             # mimic corosync behavior - the last cluster_name found is used
             cluster_name = None
@@ -1901,7 +1884,7 @@ def getClusterName():
                     cluster_name = attrs[1]
             if cluster_name:
                 return cluster_name
-        except (IOError, corosync_conf_utils.CorosyncConfParserException):
+        except (IOError, corosync_conf_parser.CorosyncConfParserException):
             return ""
 
     return ""
