@@ -15,25 +15,41 @@ if major == 2 and minor == 6:
 else:
     import unittest
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)
+)))
 
 def put_package_to_path():
-    package_dir = os.path.dirname(os.path.dirname(CURRENT_DIR))
-    sys.path.insert(0, package_dir)
+    sys.path.insert(0, PACKAGE_DIR)
 
 def discover_tests(test_name_list):
     loader = unittest.TestLoader()
     if test_name_list:
         return loader.loadTestsFromNames(test_name_list)
-    return loader.discover(CURRENT_DIR, pattern='test_*.py')
+    return loader.discover(PACKAGE_DIR, pattern='test_*.py')
 
-def run_tests(tests, verbose=False):
-    testRunner = unittest.runner.TextTestRunner(verbosity=2 if verbose else 1)
+def run_tests(tests, verbose=False, color=False):
+    resultclass = unittest.runner.TextTestResult
+    if color:
+        from pcs.test.tools.color_text_runner import ColorTextTestResult
+        resultclass = ColorTextTestResult
+
+    testRunner = unittest.runner.TextTestRunner(
+        verbosity=2 if verbose else 1,
+        resultclass=resultclass
+    )
     testRunner.run(tests)
 
 put_package_to_path()
-tests = discover_tests([arg for arg in sys.argv[1:] if arg != '-v'])
-run_tests(tests, verbose='-v' in sys.argv)
+tests = discover_tests([
+    arg for arg in sys.argv[1:] if arg not in ('-v', '--color')
+])
+run_tests(
+    tests,
+    verbose='-v' in sys.argv,
+    color="--color" in sys.argv,
+)
 
 # assume that we are in pcs root dir
 #
@@ -47,3 +63,6 @@ run_tests(tests, verbose='-v' in sys.argv)
 # IMPORTANT: in 2.6 module.class.method doesn't work but module.class works fine
 # pcs/test/suite.py test_acl.ACLTest -v
 # pcs/test/suite.py test_acl.ACLTest.testAutoUpgradeofCIB
+#
+# for colored test report
+# pcs/test/suite.py --color
