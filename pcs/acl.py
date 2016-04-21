@@ -19,7 +19,7 @@ from pcs.lib.cib.acl import (
     create_role,
     provide_role,
 )
-from pcs.cli.errors import CmdLineInputError
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
 def exit_on_cmdline_input_errror(usage_name):

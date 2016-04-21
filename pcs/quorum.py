@@ -11,45 +11,10 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.cli.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
+from pcs.cli.common.errors import CmdLineInputError, ErrorWithMessage
+from pcs.cli.common.parse_args import prepare_options, MissingOptionValue
 from pcs.lib.commands import quorum as lib_quorum
-
-# TODO vvv move to better place and make it reusable vvv
-# TODO it is used in resource.py as well
-class ErrorWithMessage(CmdLineInputError):
-    pass
-
-class MissingOptionValue(ErrorWithMessage):
-    def __init__(self, option_name):
-        self.message = "missing value of '{0}' option".format(option_name)
-        super(MissingOptionValue, self).__init__(self.message)
-
-class OptionWithoutKey(ErrorWithMessage):
-    def __init__(self, option):
-        self.message = "missing key in '{0}' option".format(option)
-        super(OptionWithoutKey, self).__init__(self.message)
-
-class InvalidChoose(ErrorWithMessage):
-    def __init__(self, name, allowed_values, given_value):
-        self.message = (
-            "invalid {0} value '{2}', allowed values are: {1}"
-            .format(name, ", ".join(allowed_values), given_value)
-        )
-        super(InvalidChoose, self).__init__(self.message)
-
-def prepare_options(cmdline_args):
-    options = {}
-    for arg in cmdline_args:
-        if "=" not in arg:
-            raise MissingOptionValue(arg)
-        if arg.startswith("="):
-            raise OptionWithoutKey(arg)
-
-        name, value = arg.split("=", 1)
-        options[name] = value
-    return options
-# TODO ^^^ move to better place and make it reusable ^^^
+from pcs.lib.errors import LibraryError
 
 class ModelSpecifiedMoreThanOnce(Exception):
     pass
@@ -181,7 +146,6 @@ def quorum_update_cmd(argv):
             utils.pcs_options["--corosync_conf"]
         )
 
-
 def prepare_device_options(argv):
     generic_argv = []
     model_argv = []
@@ -209,4 +173,3 @@ def prepare_device_options(argv):
     generic_options = prepare_options(generic_argv)
     model_options = prepare_options(model_argv)
     return model, model_options, generic_options
-

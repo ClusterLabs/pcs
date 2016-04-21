@@ -41,6 +41,10 @@ from pcs import (
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.commands import quorum as lib_quorum
+import pcs.cli.constraint_colocation.command as colocation_command
+import pcs.cli.constraint_order.command as order_command
+import pcs.cli.constraint_ticket.command as ticket_command
+from pcs.cli.common.lib_wrapper import Library
 
 
 def config_cmd(argv):
@@ -110,9 +114,15 @@ def config_show_cib():
     print("Fencing Levels:")
     print()
     stonith.stonith_level_show()
+
+    run_with_middleware = utils.get_middleware_decorator()
+    lib = Library(utils.get_cli_env())
     constraint.location_show([])
-    constraint.order_show([])
-    constraint.colocation_show([])
+    modificators = utils.get_modificators()
+    run_with_middleware(order_command.show, lib, [], modificators)
+    run_with_middleware(colocation_command.show, lib, [], modificators)
+    run_with_middleware(ticket_command.show, lib, [], modificators)
+
     print()
     del utils.pcs_options["--all"]
     print("Resources Defaults:")

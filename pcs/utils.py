@@ -25,7 +25,6 @@ import base64
 import threading
 import logging
 
-
 try:
     # python2
     from urllib import urlencode as urllib_urlencode
@@ -55,24 +54,31 @@ except ImportError:
         URLError as urllib_URLError
     )
 
-from pcs import settings
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+
+from pcs import  settings
+from pcs.cli.common.reports import (
+    process_library_reports as process_lib_reports
+)
+from pcs.common.tools import simple_cache
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
+import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.external import (
     is_cman_cluster,
     CommandRunner,
 )
 import pcs.lib.resource_agent as lib_ra
-import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.pacemaker import has_resource_wait_support
 from pcs.lib.pacemaker_state import ClusterState
-from pcs.lib.pacemaker_values import (
+from pcs.lib.pacemaker_values import(
     validate_id,
     is_boolean,
     timeout_to_seconds as get_timeout_seconds,
+    is_score_value,
 )
-from pcs.lib.env import LibraryEnvironment
-from pcs.common.tools import simple_cache
+from pcs.cli.common import middleware
+from pcs.cli.common.env import Env
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -83,7 +89,6 @@ filename = ""
 pcs_options = {}
 fence_bin = settings.fence_agent_binaries
 
-score_regexp = re.compile(r'^[+-]?((INFINITY)|(\d+))$')
 
 class UnknownPropertyException(Exception):
     pass
@@ -1531,8 +1536,10 @@ def replace_cib_configuration(dom):
         #run(...) calls subprocess.Popen.communicate which calls encode...
         #so there is bytes to str conversion
         new_dom = ET.tostring(dom).decode()
-    else:
+    elif hasattr(dom, "toxml"):
         new_dom = dom.toxml()
+    else:
+        new_dom = dom
     output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-V", "--xml-pipe"],False,new_dom)
     if retval != 0:
         err("Unable to update cib\n"+output)
@@ -1911,7 +1918,7 @@ def is_score_or_opt(var):
     return False
 
 def is_score(var):
-    return score_regexp.match(var) is not None
+    return is_score_value(var)
 
 def validate_xml_id(var, description="id"):
     try:
@@ -1979,31 +1986,7 @@ def process_library_reports(report_item_list):
     """
     report_item_list list of ReportItem
     """
-    critical_error = False
-    for report_item in report_item_list:
-        if report_item.severity == ReportItemSeverity.WARNING:
-            print("Warning: " + report_item.message)
-            continue
-
-        if report_item.severity != ReportItemSeverity.ERROR:
-            print(report_item.message)
-            continue
-
-        if report_item.forceable and "--force" in pcs_options:
-            # Let the user know what may be wrong even when --force is used,
-            # as it may be used for override early errors hiding later
-            # errors otherwise.
-            print("Warning: " + report_item.message)
-            continue
-
-        sys.stderr.write('Error: {0}{1}\n'.format(
-            report_item.message,
-            ", use --force to override" if report_item.forceable else ''
-        ))
-        critical_error = True
-
-    if critical_error:
-        sys.exit(1)
+    process_lib_reports(report_item_list, "--force" in pcs_options)
 
 def serviceStatus(prefix):
     if not is_systemctl():
@@ -2562,3 +2545,52 @@ def get_lib_env():
         corosync_conf_data,
         auth_tokens_getter=readTokens,
     )
+
+def get_cli_env():
+    user = None
+    groups = None
+    if os.geteuid() == 0:
+        for name in ("CIB_user", "CIB_user_groups"):
+            if name in os.environ and os.environ[name].strip():
+                value = os.environ[name].strip()
+                if "CIB_user" == name:
+                    user = value
+                else:
+                    groups = value.split(" ")
+
+    corosync_conf_data = None
+    if "--corosync_conf" in pcs_options:
+        conf = pcs_options["--corosync_conf"]
+        try:
+            corosync_conf_data = open(conf).read()
+        except IOError as e:
+            err("Unable to read %s: %s" % (conf, e.strerror))
+
+    env = Env()
+    env.user = user
+    env.groups = groups
+    env.corosync_conf_data = corosync_conf_data
+    env.auth_tokens_getter=readTokens
+    return env
+
+def get_middleware_decorator():
+    return middleware.build(
+        middleware.cib(
+            usefile,
+            get_cib() if usefile else None,
+            replace_cib_configuration,
+        ),
+    )
+
+def get_modificators():
+    #please keep in mind that this is not final implemetation
+    #beside missing support of other possible options, cases may arise that can
+    #not be solved using a dict - for example "wait" - maybe there will be
+    #global default for it and maybe there will appear need for local default...
+    #there is possible create class extending dict, so dict like access in
+    #commands is not an issue
+    return {
+        "full": "--full" in pcs_options,
+        "autocorrect": "--autocorrect" in pcs_options,
+        "force": "--force" in pcs_options,
+    }

@@ -147,6 +147,7 @@ Fencing Levels:
 Location Constraints:
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 
 Resources Defaults:
  No defaults set

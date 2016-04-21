@@ -9,12 +9,13 @@ import os
 import shutil
 import unittest
 
+from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
     is_minimum_pacemaker_version,
 )
-from pcs.test.tools.pcs_runner import pcs
+from pcs.test.tools.pcs_runner import pcs, PcsRunner
 
 
 empty_cib = rc("cib-empty.xml")
@@ -144,6 +145,7 @@ Location Constraints:
           Date Spec: years=2005  (id:location-D6-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
         o,r = pcs("constraint remove location-C1-group")
@@ -189,6 +191,7 @@ Location Constraints:
           Date Spec: years=2005  (id:location-D6-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
     def testAdvancedConstraintRule(self):
@@ -207,11 +210,12 @@ Location Constraints:
         Expression: pingd lte 0  (id:location-D1-rule-expr-1)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
     def testEmptyConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint")
-        assert returnVal == 0 and output == "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n", output
+        assert returnVal == 0 and output == "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n", output
 
     def testMultipleOrderConstraints(self):
         o,r = pcs("constraint order stop D1 then stop D2")
@@ -223,7 +227,7 @@ Colocation Constraints:
         assert r == 0
 
         o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
     def testOrderConstraintRequireAll(self):
@@ -245,6 +249,7 @@ Location Constraints:
 Ordering Constraints:
   start D1 then start D2 (kind:Mandatory) (Options: require-all=false) (id:order-D1-D2-mandatory)
 Colocation Constraints:
+Ticket Constraints:
 """)
         assert r == 0
 
@@ -260,11 +265,11 @@ Colocation Constraints:
 
         output, returnVal = pcs(temp_cib, "constraint --full")
         assert returnVal == 0
-        ac (output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\n")
+        ac (output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\nTicket Constraints:\n")
 
         output, returnVal = pcs(temp_cib, "constraint show --full")
         assert returnVal == 0
-        ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\n")
+        ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\nTicket Constraints:\n")
 
     def testLocationConstraints(self):
         output, returnVal = pcs(temp_cib, "constraint location D5 prefers node1")
@@ -281,7 +286,7 @@ Colocation Constraints:
 
         output, returnVal = pcs(temp_cib, "constraint")
         assert returnVal == 0
-        ac(output, "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY)\n    Disabled on: node2 (score:-INFINITY)\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(output, "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY)\n    Disabled on: node2 (score:-INFINITY)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
 
         output, returnVal = pcs(temp_cib, "constraint location add location-D5-node1-INFINITY ")
         assert returnVal == 1
@@ -379,7 +384,7 @@ Colocation Constraints:
 
         o, r = pcs(temp_cib, "constraint")
         assert r == 0
-        ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3-clone (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\n')
+        ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3-clone (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\nTicket Constraints:\n')
 
     def testColocationSets(self):
         line = "resource create D7 Dummy"
@@ -482,7 +487,7 @@ Colocation Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions foo=bar")
-        ac(output, "Error: invalid option 'foo', allowed options are: score, score-attribute, score-attribute-mangle, id\n")
+        ac(output, "Error: invalid option 'foo', allowed options are: id, score, score-attribute, score-attribute-mangle\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions score=foo")
@@ -532,6 +537,7 @@ Colocation Constraints:
             '        Expression: opsrole2 ne controller2  (id:location-crd1-rule-expr)',
             'Ordering Constraints:',
             'Colocation Constraints:',
+            'Ticket Constraints:',
         ])+'\n')
         assert r == 0
 
@@ -544,7 +550,7 @@ Colocation Constraints:
         assert r==0
 
         o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
         o,r = pcs("constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always")
@@ -556,7 +562,7 @@ Colocation Constraints:
         assert r == 0
 
         o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\n  Resource: crd\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=always) (id:my_constraint_id)\n  Resource: crd1\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=never) (id:my_constraint_id2)\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: crd\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=always) (id:my_constraint_id)\n  Resource: crd1\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=never) (id:my_constraint_id2)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
         o,r = pcs("constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test")
@@ -731,7 +737,7 @@ Ordering Constraints:
             "constraint order set D1 D2 setoptions foo=bar"
         )
         ac(output, """\
-Error: invalid option 'foo', allowed options are: kind, symmetrical, id
+Error: invalid option 'foo', allowed options are: id, kind, symmetrical
 """)
         self.assertEqual(1, retValue)
 
@@ -769,6 +775,7 @@ Ordering Constraints:
     set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
     set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions kind=Mandatory symmetrical=false (id:pcs_rsc_order_set_D1_D2)
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, retValue)
 
@@ -810,6 +817,7 @@ Location Constraints:
           Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
         o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule-1")
@@ -834,6 +842,7 @@ Location Constraints:
           Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
         o, r = pcs(temp_cib, "constraint rule remove location-D1-rh7-1-INFINITY-rule")
@@ -850,6 +859,7 @@ Location Constraints:
           Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
         o,r = pcs("constraint location D1 rule role=master")
@@ -886,6 +896,7 @@ Location Constraints:
         Expression: #uname eq rh7-1  (id:location-stateful0-rule-expr)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         assert r == 0
 
@@ -995,7 +1006,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 1
 
         o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
         o,r = pcs("constraint location stateful1 prefers rh7-1 --force")
@@ -1039,6 +1050,7 @@ Colocation Constraints:
   stateful1 with dummy1 (score:INFINITY) (id:colocation-stateful1-dummy1-INFINITY)
   Resource Sets:
     set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_stateful1_dummy1)
+Ticket Constraints:
 """)
         assert r == 0
 
@@ -1168,6 +1180,7 @@ Colocation Constraints:
   Resource Sets:
     set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_stateful1)
     set statefulG-master dummy1 (id:pcs_rsc_set_statefulG-master_dummy1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_statefulG_dummy1)
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -1282,6 +1295,7 @@ Colocation Constraints:
     set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_stateful1)
     set statefulG-master dummy1 (id:pcs_rsc_set_statefulG-master_dummy1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_statefulG_dummy1)
     set dummy1 stateful1-master (id:pcs_rsc_set_dummy1_stateful1-master-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_stateful1-1)
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -1353,7 +1367,7 @@ Colocation Constraints:
         assert r == 1
 
         o,r = pcs("constraint --full")
-        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
         o,r = pcs("constraint location dummy prefers rh7-1 --force")
@@ -1397,6 +1411,7 @@ Colocation Constraints:
   dummy with dummy1 (score:INFINITY) (id:colocation-dummy-dummy1-INFINITY)
   Resource Sets:
     set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy)
+Ticket Constraints:
 """)
         assert r == 0
 
@@ -1518,6 +1533,7 @@ Colocation Constraints:
   Resource Sets:
     set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy)
     set dummy1 dummyG-clone (id:pcs_rsc_set_dummy1_dummyG-clone) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummyG)
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -1632,6 +1648,7 @@ Colocation Constraints:
     set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy)
     set dummy1 dummyG-clone (id:pcs_rsc_set_dummy1_dummyG-clone) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummyG)
     set dummy1 dummy-clone (id:pcs_rsc_set_dummy1_dummy-clone-3) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy-1)
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -1641,7 +1658,7 @@ Colocation Constraints:
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope constraints --xml-text '<constraints><rsc_location id=\"cli-prefer-stateful0-master\" role=\"Master\" rsc=\"stateful0-master\" node=\"rh7-1\" score=\"INFINITY\"/><rsc_location id=\"cli-ban-stateful0-master-on-rh7-1\" rsc=\"stateful0-master\" role=\"Slave\" node=\"rh7-1\" score=\"-INFINITY\"/></constraints>'")
 
         o,r = pcs("constraint")
-        ac(o,"Location Constraints:\n  Resource: stateful0-master\n    Enabled on: rh7-1 (score:INFINITY) (role: Master)\n    Disabled on: rh7-1 (score:-INFINITY) (role: Slave)\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: stateful0-master\n    Enabled on: rh7-1 (score:INFINITY) (role: Master)\n    Disabled on: rh7-1 (score:-INFINITY) (role: Slave)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
     def testManyConstraints(self):
@@ -1723,6 +1740,7 @@ Ordering Constraints:
   start D6 then start D1-clone (kind:Mandatory) (id:order-D6-D1-mandatory)
 Colocation Constraints:
   D1-clone with D5 (score:INFINITY) (id:colocation-D1-D5-INFINITY)
+Ticket Constraints:
 """)
         assert returnVal == 0
 
@@ -1762,6 +1780,7 @@ Ordering Constraints:
   start D6 then start D1-master (kind:Mandatory) (id:order-D6-D1-mandatory)
 Colocation Constraints:
   D1-master with D5 (score:INFINITY) (id:colocation-D1-D5-INFINITY)
+Ticket Constraints:
 """)
         assert returnVal == 0
 
@@ -1805,6 +1824,7 @@ Ordering Constraints:
   start D6 then start DG-clone (kind:Mandatory) (id:order-D6-DG-mandatory)
 Colocation Constraints:
   DG-clone with D5 (score:INFINITY) (id:colocation-DG-D5-INFINITY)
+Ticket Constraints:
 """)
         assert returnVal == 0
 
@@ -1848,6 +1868,7 @@ Ordering Constraints:
   start D6 then start DG-master (kind:Mandatory) (id:order-D6-DG-mandatory)
 Colocation Constraints:
   DG-master with D5 (score:INFINITY) (id:colocation-DG-D5-INFINITY)
+Ticket Constraints:
 """)
         assert returnVal == 0
 
@@ -1896,6 +1917,7 @@ Location Constraints:
     Disabled on: guest1 (score:-400) (id:location-D2-guest1--400)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -1916,6 +1938,7 @@ Location Constraints:
     Disabled on: node2 (score:-300) (id:location-D2-node2--300)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -1951,6 +1974,7 @@ Location Constraints:
     Disabled on: guest1 (score:-400) (id:location-D2-guest1--400)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -1969,6 +1993,7 @@ Location Constraints:
     Disabled on: node2 (score:-300) (id:location-D2-node2--300)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2088,6 +2113,7 @@ Ordering Constraints:
   stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory)
   stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory-1)
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2170,6 +2196,7 @@ Colocation Constraints:
   D2 with D5 (score:INFINITY) (rsc-role:Started) (with-rsc-role:Started) (id:colocation-D2-D5-INFINITY)
   D2 with D5 (score:INFINITY) (rsc-role:Stopped) (with-rsc-role:Stopped) (id:colocation-D2-D5-INFINITY-1)
   D2 with D5 (score:INFINITY) (rsc-role:Stopped) (with-rsc-role:Stopped) (id:colocation-D2-D5-INFINITY-2)
+Ticket Constraints:
 """)
 
     def testDuplicateSetConstraints(self):
@@ -2263,6 +2290,7 @@ Colocation Constraints:
     set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)
     set D1 D2 (id:pcs_rsc_set_D1_D2-7) set D5 D6 (id:pcs_rsc_set_D5_D6-3) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6-1)
     set D6 D1 (id:pcs_rsc_set_D6_D1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D6_D1)
+Ticket Constraints:
 """)
 
     def testDuplicateLocationRules(self):
@@ -2349,6 +2377,7 @@ Location Constraints:
         Expression: #uname eq node1  (id:location-D2-2-rule-expr-1)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2390,7 +2419,7 @@ Error: id 'id1' is already in use, please specify another one
             "constraint colocation set D1 D2 setoptions id=3id"
         )
         ac(output, """\
-Error: invalid constraint id '3id', '3' is not a valid first character for a constraint id
+Error: invalid constraint colocation '3id', '3' is not a valid first character for a constraint colocation
 """)
         self.assertEqual(1, returnVal)
 
@@ -2406,7 +2435,7 @@ Error: invalid constraint id '3id', '3' is not a valid first character for a con
             "constraint colocation set D1 D2 setoptions id=id3"
         )
         ac(output, """\
-Error: id 'id3' is already in use, please specify another one
+Error: id3 already exists
 """)
         self.assertEqual(1, returnVal)
 
@@ -2422,7 +2451,7 @@ Error: id 'id3' is already in use, please specify another one
             "constraint order set D1 D2 setoptions id=5id"
         )
         ac(output, """\
-Error: invalid constraint id '5id', '5' is not a valid first character for a constraint id
+Error: invalid constraint order '5id', '5' is not a valid first character for a constraint order
 """)
         self.assertEqual(1, returnVal)
 
@@ -2438,7 +2467,7 @@ Error: invalid constraint id '5id', '5' is not a valid first character for a con
             "constraint order set D1 D2 setoptions id=id5"
         )
         ac(output, """\
-Error: id 'id5' is already in use, please specify another one
+Error: id5 already exists
 """)
         self.assertEqual(1, returnVal)
 
@@ -2540,5 +2569,94 @@ Colocation Constraints:
   Resource Sets:
     set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions score=INFINITY (id:id3)
     set D2 D1 (id:pcs_rsc_set_D2_D1) setoptions score=100 (id:id4)
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
+
+class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(empty_cib, temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+        self.assert_pcs_success('resource create A Dummy')
+        self.assert_pcs_success('resource create B Dummy')
+
+
+class CommonCreateWithSet(ConstraintBaseTest):
+    def test_refuse_when_resource_does_not_exist(self):
+        self.assert_pcs_fail(
+            'constraint ticket set A C setoptions ticket=T',
+            ["Error: Resource 'C' does not exist"]
+        )
+
+class TicketCreateWithSet(ConstraintBaseTest):
+    def test_create_ticket(self):
+        self.assert_pcs_success(
+            'constraint ticket set A B setoptions ticket=T loss-policy=fence'
+        )
+
+    def test_can_skip_loss_policy(self):
+        self.assert_pcs_success('constraint ticket set A B setoptions ticket=T')
+
+    def test_refuse_bad_loss_policy(self):
+        self.assert_pcs_fail(
+            'constraint ticket set A B setoptions ticket=T loss-policy=none',
+            [
+                "Error: invalid loss-policy value 'none', allowed values are: fence, stop,"
+                    +" freeze, demote"
+            ]
+        )
+
+    def test_refuse_when_ticket_option_is_missing(self):
+        self.assert_pcs_fail(
+            'constraint ticket set A B setoptions loss-policy=fence',
+            ["Error: required attribute 'ticket' is missing"]
+        )
+
+class TicketAdd(ConstraintBaseTest):
+    def test_create_ticket(self):
+        self.assert_pcs_success(
+            'constraint ticket add T master A loss-policy=fence'
+        )
+
+    def test_refuse_noexistent_resource_id(self):
+        self.assert_pcs_fail(
+            'constraint ticket add T master AA loss-policy=fence',
+            ["Error: Resource 'AA' does not exist"]
+        )
+
+    def test_refuse_invalid_role(self):
+        self.assert_pcs_fail(
+            'constraint ticket add T bad-role A loss-policy=fence',
+            [
+                "Error: invalid rsc-role 'bad-role', allowed values are: Stopped, Started,"
+                    +" Master, Slave"
+            ]
+        )
+
+    def test_refuse_duplicit_ticket(self):
+        self.assert_pcs_success(
+            'constraint ticket add T master A loss-policy=fence'
+        )
+        self.assert_pcs_fail(
+            'constraint ticket add T master A loss-policy=fence',
+            [
+                'Error: duplicate constraint already exists, use --force to override',
+                '  Master A loss-policy=fence ticket=T (id:pcs_rsc_ticket_T_A_Master)'
+            ]
+        )
+
+class TicketShow(ConstraintBaseTest):
+    def test_show_set(self):
+        self.assert_pcs_success('constraint ticket set A B setoptions ticket=T')
+        self.assert_pcs_success(
+            'constraint ticket add T master A loss-policy=fence'
+        )
+        self.assert_pcs_success(
+            'constraint ticket show',
+            [
+                "Ticket Constraints:",
+                "  Master A loss-policy=fence ticket=T",
+                "  Resource Sets:",
+                "    set A B setoptions ticket=T",
+            ]
+        )

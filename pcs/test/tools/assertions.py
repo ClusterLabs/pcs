@@ -145,10 +145,13 @@ def __find_report_info(report_info_list, report_item):
         if __report_item_equal(report_item, report_info):
             return report_info
     raise AssertionError(
-        "Unexpected report given: {0}"
-        .format(repr((
-            report_item.severity, report_item.code, report_item.info
-        )))
+        "Unexpected report given: \n{0} \nexpected reports are: \n{1}"
+        .format(
+            repr((
+                report_item.severity, report_item.code, report_item.info
+            )),
+            "\n".join(map(repr, report_info_list))
+        )
     )
 
 def __report_item_equal(real_report_item, report_item_info):

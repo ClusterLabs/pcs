@@ -16,7 +16,7 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.cli.errors import CmdLineInputError
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 

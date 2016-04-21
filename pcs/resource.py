@@ -20,11 +20,11 @@ from pcs import (
     utils,
     constraint,
     settings,
-    quorum,
 )
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
-from pcs.cli.errors import CmdLineInputError
+from pcs.cli.common.errors import CmdLineInputError, ErrorWithMessage
+from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
@@ -1433,8 +1433,8 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
     if op_values:
         utils.err("op settings must be changed on base resource, not the clone")
     try:
-        final_meta = quorum.prepare_options(generic_values + meta_values)
-    except quorum.ErrorWithMessage as e:
+        final_meta = prepare_options(generic_values + meta_values)
+    except ErrorWithMessage as e:
         utils.err(e.message)
     utils.dom_update_meta_attr(clone, sorted(final_meta.items()))
 
@@ -1600,8 +1600,8 @@ def resource_master_create(dom, argv, update=False, master_id=None):
         if op_values:
             utils.err("op settings must be changed on base resource, not the master")
         try:
-            final_meta = quorum.prepare_options(generic_values + meta_values)
-        except quorum.ErrorWithMessage as e:
+            final_meta = prepare_options(generic_values + meta_values)
+        except ErrorWithMessage as e:
             utils.err(e.message)
         utils.dom_update_meta_attr(master_element, list(final_meta.items()))
 

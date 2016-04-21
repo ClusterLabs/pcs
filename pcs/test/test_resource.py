@@ -1062,6 +1062,7 @@ Location Constraints:
     Enabled on: rh7-1 (score:INFINITY)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
         o,r = pcs(temp_cib, "resource ungroup AGroup")
@@ -1538,6 +1539,7 @@ Fencing Levels:
 Location Constraints:
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 
 Resources Defaults:
  No defaults set
@@ -1700,6 +1702,7 @@ Location Constraints:
     Enabled on: rh7-2 (score:INFINITY) (id:location-ClusterIP5-rh7-2-INFINITY)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 
 Resources Defaults:
  No defaults set
@@ -2144,7 +2147,7 @@ Deleting Resource (and group and M/S) - dummylarge
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint")
-        ac(o,"Location Constraints:\n  Resource: D0-clone\n    Enabled on: rh7-1 (score:INFINITY)\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: D0-clone\n    Enabled on: rh7-1 (score:INFINITY)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource unclone D0-clone")
@@ -2675,6 +2678,7 @@ Location Constraints:
     Enabled on: rh7-1 (score:INFINITY) (role: Started) (id:cli-prefer-dummy)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2687,6 +2691,7 @@ Colocation Constraints:
 Location Constraints:
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
         output, returnVal = pcs(temp_cib, "resource ban dummy rh7-1")
@@ -2703,6 +2708,7 @@ Location Constraints:
     Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-dummy-on-rh7-1)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2715,6 +2721,7 @@ Colocation Constraints:
 Location Constraints:
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
         output, returnVal = pcs(
@@ -2734,6 +2741,7 @@ Location Constraints:
         Expression: date lt {datetime}  (id:cli-prefer-lifetime-end-dummy)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2746,6 +2754,7 @@ Colocation Constraints:
 Location Constraints:
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
 
         output, returnVal = pcs(
@@ -2768,6 +2777,7 @@ Location Constraints:
         Expression: date lt {datetime}  (id:cli-ban-dummy-on-rh7-1-lifetime)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2844,6 +2854,7 @@ Location Constraints:
     Disabled on: rh7-1 (score:-INFINITY) (role: Started) (id:cli-ban-DG-clone-on-rh7-1)
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2856,6 +2867,7 @@ Colocation Constraints:
 Location Constraints:
 Ordering Constraints:
 Colocation Constraints:
+Ticket Constraints:
 """)
         self.assertEqual(0, returnVal)
 
@@ -2994,7 +3006,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
         o,r = pcs(temp_cib, "constraint")
         assert r == 0
-        ac(o,"Location Constraints:\n  Resource: DGroup\n    Enabled on: rh7-1 (score:INFINITY) (role: Started)\nOrdering Constraints:\nColocation Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: DGroup\n    Enabled on: rh7-1 (score:INFINITY) (role: Started)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
 
         o,r = pcs(temp_cib, "resource delete D1")
         ac(o,"Deleting Resource - D1\n")
@@ -4531,4 +4543,29 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
                stop interval=0s timeout=20 (dummy-stop-interval-0s)
                monitor interval=10 timeout=20 (dummy-monitor-interval-10)
 """
+        )
+
+class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(rc('cib-empty-1.2.xml'), temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def test_remove_ticket(self):
+        self.assert_pcs_success('resource create A Dummy')
+        self.assert_pcs_success(
+            'constraint ticket add T master A loss-policy=fence'
+        )
+        self.assert_pcs_success(
+            'constraint ticket show',
+            [
+                "Ticket Constraints:",
+                "  Master A loss-policy=fence ticket=T",
+            ]
+        )
+        self.assert_pcs_success(
+            "resource delete A",
+            [
+                "Removing Constraint - pcs_rsc_ticket_T_A_Master",
+                "Deleting Resource - A",
+            ]
         )
