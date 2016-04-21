@@ -914,8 +914,8 @@ Commands:
         Available options are kind=Optional/Mandatory/Serialize,
         symmetrical=true/false, require-all=true/false and id=<constraint-id>.
 
-    order set <resource1> <resource2> [resourceN]... [options] [set
-              <resourceX> <resourceY> ... [options]]
+    order set <resource1> [resourceN]... [options] [set
+              <resourceX> ... [options]]
               [setoptions [constraint_options]]
         Create an ordered set of resources.
         Available options are sequential=true/false, require-all=true/false,
@@ -941,8 +941,8 @@ Commands:
         A role can be master or slave (if no role is specified, it defaults to
         'started').
 
-    colocation set <resource1> <resource2> [resourceN]... [options]
-               [set <resourceX> <resourceY> ... [options]]
+    colocation set <resource1> [resourceN]... [options]
+               [set <resourceX> ... [options]]
                [setoptions [constraint_options]]
         Create a colocation constraint with a resource set.
         Available options are sequential=true/false, require-all=true/false,
@@ -952,6 +952,25 @@ Commands:
 
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with <source resource>
+
+    ticket show [--full]
+        List all current ticket constraints (if --full is specified show
+        the internal constraint id's as well).
+
+    ticket set <resource1> [resourceN]... [options]
+               [set <resourceX> ... [options]]
+               [setoptions [constraint_options]]
+        Create a ticket constraint with a resource set.
+        Available options are sequential=true/false, require-all=true/false,
+        action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
+        Required constraint option is ticket.
+        Available constraint option is loss-policy=fence/stop/freeze/demote
+
+    ticket add <ticket> [master|slave] <resource id> [options]
+               [id=constraint-id]
+        Crate a ticket constraint for <resource id>.
+        Available option is loss-policy=fence/stop/freeze/demote.
+        A role can be master, slave or started.
 
     remove [constraint id]...
         Remove constraint(s) or constraint rules with the specified id(s)
