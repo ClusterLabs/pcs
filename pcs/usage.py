@@ -100,36 +100,7 @@ def dict_depth(d, depth=0):
         return depth
     return max(dict_depth(v, depth+1) for k, v in d.items())
 
-def sub_gen_code(level,item,prev_level=[],spaces=""):
-    out = ""
-
-    if dict_depth(item) <= level:
-        return ""
-
-    out += 'case "${cur' + str(level) + '}" in\n'
-    for key,val in item.items():
-        if len(val) == 0:
-            continue
-        values = " ".join(val.keys())
-        values = values.replace("|"," ")
-        out += "  " + key + ")\n"
-        if len(val) > 0 and level != 1:
-            out += sub_gen_code(level-1,item[key],[] ,spaces + "  ")
-        else:
-            out += "    " + 'COMPREPLY=($(compgen -W "' + values + '" -- ${cur}))\n'
-            out += "    return 0\n"
-        out += "    ;;\n"
-    out += "  *)\n"
-    out += "  ;;\n"
-    out += 'esac\n'
-    temp = out.split('\n')
-    new_out = ""
-    for l in temp:
-        new_out += spaces + l + "\n"
-    return new_out
-
-
-def sub_generate_bash_completion():
+def generate_completion_tree_from_usage():
     tree = {}
     tree["resource"] = generate_tree(resource([],False))
     tree["cluster"] = generate_tree(cluster([],False))
@@ -142,30 +113,7 @@ def sub_generate_bash_completion():
     tree["config"] = generate_tree(config([],False))
     tree["pcsd"] = generate_tree(pcsd([],False))
     tree["node"] = generate_tree(node([], False))
-    print("""
-    _pcs()
-    {
-    local cur cur1 cur2 cur3
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    if [ "$COMP_CWORD" -gt "0" ]; then cur1="${COMP_WORDS[COMP_CWORD-1]}";fi
-    if [ "$COMP_CWORD" -gt "1" ]; then cur2="${COMP_WORDS[COMP_CWORD-2]}";fi
-    if [ "$COMP_CWORD" -gt "2" ]; then cur3="${COMP_WORDS[COMP_CWORD-3]}";fi
-
-    """)
-    print(sub_gen_code(3,tree,[]))
-    print(sub_gen_code(2,tree,[]))
-    print(sub_gen_code(1,tree,[]))
-    print("""
-    if [ $COMP_CWORD -eq 1 ]; then
-        COMPREPLY=( $(compgen -W "resource cluster stonith property acl constraint status config pcsd node quorum" -- $cur) )
-    fi
-    return 0
-
-    }
-    complete -F _pcs pcs
-    """)
-
+    return tree
 
 def generate_tree(usage_txt):
     ignore = True

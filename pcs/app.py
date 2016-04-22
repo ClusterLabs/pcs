@@ -28,10 +28,19 @@ from pcs import (
     utils,
 )
 
+from pcs.cli.common import completion
+
 
 usefile = False
 filename = ""
 def main(argv=None):
+    if completion.has_applicable_environment(os.environ):
+        print(completion.make_suggestions(
+            os.environ,
+            usage.generate_completion_tree_from_usage()
+        ))
+        sys.exit()
+
     argv = argv if argv else sys.argv[1:]
     utils.subprocess_setup()
     global filename, usefile

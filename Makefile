@@ -72,11 +72,11 @@ ifndef install_settings
   endif
 endif
 
-install: bash_completion
+install:
 	python setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	mv ${DESTDIR}${PREFIX}/bin/pcs ${DESTDIR}${PREFIX}/sbin/pcs
-	install -D pcs/bash_completion.d.pcs ${DESTDIR}/etc/bash_completion.d/pcs
+	install -D pcs/bash_completion.sh ${DESTDIR}/etc/bash_completion.d/pcs
 	install -m644 -D pcs/pcs.8 ${DESTDIR}/${MANDIR}/man8/pcs.8
 ifeq ($(IS_DEBIAN),true)
   ifeq ($(install_settings),true)
@@ -145,12 +145,9 @@ endif
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
 	rm -rf ${DESTDIR}/var/lib/pcsd
 
-tarball: bash_completion
+tarball:
 	python setup.py sdist --formats=tar
 	python maketarballs.py
 
 newversion:
 	python newversion.py
-
-bash_completion:
-	cd pcs ; python -c 'import usage;  usage.sub_generate_bash_completion()' > bash_completion.d.pcs ; cd ..
