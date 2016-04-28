@@ -102,19 +102,19 @@ class PrepareResourceSetListTest(TestCase):
     @mock.patch("pcs.lib.cib.constraint.constraint.resource_set.prepare_set")
     def test_build_corected_resource_set_list(self, mock_prepare_set):
         mock_prepare_set.side_effect = lambda _, resource_set: {
-            "id1": {"ids": ["E", "F"], "attrib": {"id": "id1"}},
-            "id2": {"ids": ["G", "H"], "attrib": {"id": "id2"}},
-        }[resource_set["attrib"]["id"]]
+            "id1": {"ids": ["E", "F"], "options": {"id": "id1"}},
+            "id2": {"ids": ["G", "H"], "options": {"id": "id2"}},
+        }[resource_set["options"]["id"]]
 
         self.assertEqual(
             [
-                {"ids": ["E", "F"], "attrib": {"id": "id1"}},
-                {"ids": ["G", "H"], "attrib": {"id": "id2"}},
+                {"ids": ["E", "F"], "options": {"id": "id1"}},
+                {"ids": ["G", "H"], "options": {"id": "id2"}},
             ],
             constraint.prepare_resource_set_list(
                 "cib", "can_repair_to_clone", "in_clone_allowed", [
-                    {"ids": ["A", "B"], "attrib": {"id": "id1"}},
-                    {"ids": ["C", "D"], "attrib": {"id": "id2"}},
+                    {"ids": ["A", "B"], "options": {"id": "id1"}},
+                    {"ids": ["C", "D"], "options": {"id": "id2"}},
                 ]
             )
         )
@@ -211,7 +211,7 @@ class CreateWithSetTest(TestCase):
             constraint_section,
             "ticket",
             {"a": "b"},
-            [{"ids": ["A", "B"], "attrib": {"c": "d"}}]
+            [{"ids": ["A", "B"], "options": {"c": "d"}}]
         )
         assert_xml_equal(etree.tostring(constraint_section).decode(), """
             <constraints>

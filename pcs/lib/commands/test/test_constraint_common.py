@@ -46,8 +46,8 @@ class CreateWithSetTest(TestCase):
             lambda cib, options, resource_set_list: options,
             self.env,
             [
-                {"ids": ["A", "B"], "attrib": {"role": "Master"}},
-                {"ids": ["E", "F"], "attrib": {"action": "start"}},
+                {"ids": ["A", "B"], "options": {"role": "Master"}},
+                {"ids": ["E", "F"], "options": {"action": "start"}},
             ],
             {"id":"some_id", "symmetrical": "true"},
             duplication_alowed=duplication_alowed
@@ -82,11 +82,11 @@ class CreateWithSetTest(TestCase):
                     'resource_sets': [
                         {
                             'ids': ['A', 'B'],
-                            'attrib': {'role':'Master', 'id':'pcs_rsc_set_A_B'}
+                            'options':{'role':'Master', 'id':'pcs_rsc_set_A_B'}
                         },
                         {
                             'ids': ['E', 'F'],
-                            'attrib': {'action':'start', 'id':'pcs_rsc_set_E_F'}
+                            'options':{'action':'start', 'id':'pcs_rsc_set_E_F'}
                         }
                     ],
                 }]
@@ -144,10 +144,10 @@ class ShowTest(TestCase):
     def test_returns_export_of_found_elements(self):
         tag_name = "rsc_some"
         self.create(tag_name, [
-            {"ids": ["A", "B"], "attrib": {"role": "Master"}},
+            {"ids": ["A", "B"], "options": {"role": "Master"}},
         ])
         self.create(tag_name, [
-            {"ids": ["E", "F"], "attrib": {"action": "start"}},
+            {"ids": ["E", "F"], "options": {"action": "start"}},
         ])
         etree.SubElement(self.constraint_section, tag_name).attrib.update({
             "id": "plain1", "is_plain": "true"
@@ -162,7 +162,7 @@ class ShowTest(TestCase):
                 {
                     'resource_sets': [{
                         'ids': ['A', 'B'],
-                        'attrib': {'role': 'Master', 'id': 'pcs_rsc_set_A_B'},
+                        'options': {'role': 'Master', 'id': 'pcs_rsc_set_A_B'},
                     }],
                     'attrib': {'symmetrical': 'true', 'id': 'some_id'}
                 },
@@ -170,7 +170,7 @@ class ShowTest(TestCase):
                      'attrib': {'symmetrical': 'true', 'id': 'some_id'},
                     'resource_sets': [{
                         'ids': ['E', 'F'],
-                        'attrib': {'action': 'start', 'id': 'pcs_rsc_set_E_F'}
+                        'options': {'action': 'start', 'id': 'pcs_rsc_set_E_F'}
                     }]
                 }
             ]

@@ -27,7 +27,7 @@ def create_with_set(
         options or if options not usable raises error
     env is library environment
     list resource_set_list is description of resource set, for example:
-        {"ids": ["A", "B"], "attrib": {"sequential": "true"}},
+        {"ids": ["A", "B"], "options": {"sequential": "true"}},
     dict constraint_options is base for building attributes of constraint tag
     bool resource_in_clone_alowed flag for allowing to reference id which is
         in tag clone or master

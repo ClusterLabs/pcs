@@ -10,13 +10,17 @@ def constraint_plain(type, constraint_info, with_id=False):
     return type + " ".join(prepare_attrs(constraint_info["attrib"], with_id))
 
 def resource_sets(set_list, with_id=True):
+    """
+    list of dict set_list see resource set
+        in pcs/lib/exchange_formats.md
+    """
     report = []
     for resource_set in set_list:
         report.extend(
-            ["set"] + resource_set["ids"] + options(resource_set["attrib"])
+            ["set"] + resource_set["ids"] + options(resource_set["options"])
         )
         if with_id:
-            report.append(id_from_options(resource_set["attrib"]))
+            report.append(id_from_options(resource_set["options"]))
 
     return report
 

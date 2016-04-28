@@ -23,10 +23,10 @@ ATTRIB = {
 
 def prepare_set(find_valid_id, resource_set):
     """return resource_set with corrected ids"""
-    validate_options(resource_set["attrib"])
+    validate_options(resource_set["options"])
     return {
         "ids": [find_valid_id(id) for id in resource_set["ids"]],
-        "attrib": resource_set["attrib"]
+        "options": resource_set["options"]
     }
 
 def validate_options(options):
@@ -50,7 +50,7 @@ def create(parent, resource_set):
     parent - lxml element for append new resource_set
     """
     element = etree.SubElement(parent, "resource_set")
-    element.attrib.update(resource_set["attrib"])
+    element.attrib.update(resource_set["options"])
     element.attrib["id"] = find_unique_id(
         parent.getroottree(),
         "pcs_rsc_set_{0}".format("_".join(resource_set["ids"]))
@@ -70,5 +70,5 @@ def get_resource_id_set_list(element):
 def export(element):
     return {
         "ids": get_resource_id_set_list(element),
-        "attrib": export_attributes(element),
+        "options": export_attributes(element),
     }

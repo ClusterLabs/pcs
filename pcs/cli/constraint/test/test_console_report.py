@@ -45,11 +45,11 @@ class ResourceSetsTest(TestCase):
                 [
                     {
                         "ids": ["a", "b"],
-                        "attrib": {"c": "d", "e": "f", "id": "some_id"},
+                        "options": {"c": "d", "e": "f", "id": "some_id"},
                     },
                     {
                         "ids": ["g", "h"],
-                        "attrib": {"i": "j", "k": "l", "id": "some_id_2"},
+                        "options": {"i": "j", "k": "l", "id": "some_id_2"},
                     },
                 ],
                 with_id=False
@@ -65,11 +65,11 @@ class ResourceSetsTest(TestCase):
             console_report.resource_sets([
                 {
                     "ids": ["a", "b"],
-                    "attrib": {"c": "d", "e": "f", "id": "some_id"},
+                    "options": {"c": "d", "e": "f", "id": "some_id"},
                 },
                 {
                     "ids": ["g", "h"],
-                    "attrib": {"i": "j", "k": "l", "id": "some_id_2"},
+                    "options": {"i": "j", "k": "l", "id": "some_id_2"},
                 },
             ])
         )

@@ -24,10 +24,10 @@ class PrepareSetTest(TestCase):
         find_valid_id = mock.Mock()
         find_valid_id.side_effect = lambda id: {"A": "AA", "B": "BB"}[id]
         self.assertEqual(
-            {"ids": ["AA", "BB"], "attrib": {"sequential": "true"}},
+            {"ids": ["AA", "BB"], "options": {"sequential": "true"}},
             resource_set.prepare_set(find_valid_id, {
                 "ids": ["A", "B"],
-                "attrib": {"sequential": "true"}
+                "options": {"sequential": "true"}
             })
         )
 
@@ -35,7 +35,7 @@ class PrepareSetTest(TestCase):
         assert_raise_library_error(
             lambda: resource_set.prepare_set(mock.Mock(), {
                 "ids": ["A", "B"],
-                "attrib": {"invalid_name": "true"}
+                "options": {"invalid_name": "true"}
             }),
             (severities.ERROR, error_codes.INVALID_OPTION, {
                 'allowed_raw': ['action', 'require-all', 'role', 'sequential'],
@@ -47,7 +47,7 @@ class PrepareSetTest(TestCase):
         assert_raise_library_error(
             lambda: resource_set.prepare_set(mock.Mock(), {
                 "ids": ["A", "B"],
-                "attrib": {"role": "invalid"}
+                "options": {"role": "invalid"}
             }),
             (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
                 'option_name': 'role',
@@ -61,8 +61,8 @@ class ExtractIdListTest(TestCase):
         self.assertEqual(
             [["A", "B"], ["C", "D"]],
             resource_set.extract_id_set_list([
-                {"ids": ["A", "B"], "attrib": {}},
-                {"ids": ["C", "D"], "attrib": {}},
+                {"ids": ["A", "B"], "options": {}},
+                {"ids": ["C", "D"], "options": {}},
             ])
         )
 
@@ -71,7 +71,7 @@ class CreateTest(TestCase):
         constraint_element = etree.Element("constraint")
         resource_set.create(
             constraint_element,
-            {"ids": ["A", "B"], "attrib": {"sequential": "true"}},
+            {"ids": ["A", "B"], "options": {"sequential": "true"}},
         )
         assert_xml_equal(etree.tostring(constraint_element).decode(), """
             <constraint>
@@ -101,6 +101,6 @@ class ExportTest(TestCase):
             etree.SubElement(element, "resource_ref").attrib["id"] = id
 
         self.assertEqual(
-            {'attrib': {'role': 'Master'}, 'ids': ['A', 'B']},
+            {'options': {'role': 'Master'}, 'ids': ['A', 'B']},
             resource_set.export(element)
         )

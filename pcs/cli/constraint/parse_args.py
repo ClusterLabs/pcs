@@ -13,7 +13,7 @@ def prepare_resource_sets(cmdline_args):
     return [
         {
             "ids": [id for id in args if "=" not in id],
-            "attrib": parse_args.prepare_options(
+            "options": parse_args.prepare_options(
                 [opt for opt in args if "=" in opt]
             ),
         } for args in parse_args.split_list(cmdline_args, "set")

@@ -13,8 +13,8 @@ from pcs.test.tools.pcs_mock import mock
 def fixture_constraint():
     return {
         "resource_sets": [
-            {"ids": ["a", "b"], "attrib": {"c": "d", "e": "f"}},
-            {"ids": ["g", "h"], "attrib": {"i": "j", "k": "l"}},
+            {"ids": ["a", "b"], "options": {"c": "d", "e": "f"}},
+            {"ids": ["g", "h"], "options": {"i": "j", "k": "l"}},
         ],
         "attrib": {"m": "n", "o":"p"}
     }

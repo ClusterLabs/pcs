@@ -15,11 +15,14 @@ class ConstraintTest(TestCase):
         mock_constraint_plain.return_value = "plain"
         self.assertEqual(
             'plain',
-            console_report.constraint("rsc_ticket", {"attrib": {"a": "b"}})
+            console_report.constraint(
+                "rsc_ticket",
+                "constraint_in_library_representation"
+            )
         )
         mock_constraint_plain.assert_called_once_with(
             "rsc_ticket",
-            {"attrib": {"a": "b"}},
+            "constraint_in_library_representation",
             True
         )
 
@@ -47,12 +50,12 @@ class ConstraintPlainTest(TestCase):
             "some constraint formated",
             console_report.constraint_plain(
                 "rsc_colocation",
-                {"attrib": {"a": "b"}},
+                "constraint_in_library_representation",
                 with_id=True
             )
         )
         mock_colocation_plain.assert_called_once_with(
-            {"attrib": {"a": "b"}},
+            "constraint_in_library_representation",
             True
         )
 
