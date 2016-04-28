@@ -4565,7 +4565,7 @@ class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource delete A",
             [
-                "Removing Constraint - pcs_rsc_ticket_T_A_Master",
+                "Removing Constraint - ticket-T-A-Master",
                 "Deleting Resource - A",
             ]
         )

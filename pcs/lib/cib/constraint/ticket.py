@@ -41,7 +41,7 @@ def _validate_options_common(options):
 def _create_id(cib, ticket, resource_id, resource_role):
     return tools.find_unique_id(
         cib,
-        "_".join(("pcs", TAG_NAME, ticket, resource_id, resource_role))
+        "-".join(('ticket', ticket, resource_id, resource_role))
     )
 
 def prepare_options_with_set(cib, options, resource_set_list):

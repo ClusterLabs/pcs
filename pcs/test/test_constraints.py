@@ -2641,7 +2641,7 @@ class TicketAdd(ConstraintBaseTest):
             'constraint ticket add T master A loss-policy=fence',
             [
                 'Error: duplicate constraint already exists, use --force to override',
-                '  Master A loss-policy=fence ticket=T (id:pcs_rsc_ticket_T_A_Master)'
+                '  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)'
             ]
         )
 

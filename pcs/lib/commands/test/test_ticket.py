@@ -42,7 +42,7 @@ class CreateTest(TestCase):
             str(cib.append_to_first_tag_name(
                 'constraints', """
                     <rsc_ticket
-                        id="pcs_rsc_ticket_ticketA_resourceA_Master"
+                        id="ticket-ticketA-resourceA-Master"
                         rsc="resourceA"
                         rsc-role="Master"
                         ticket="ticketA"
