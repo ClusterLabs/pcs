@@ -26,22 +26,6 @@ class ParseArgsTest(TestCase):
             )
         )
 
-    def test_parse_add_args2(self):
-        self.assertEqual(
-            parse_args.parse_add(
-                ["T", "resource1", "ticket=T", "loss-policy=fence"]
-            ),
-            (
-                "T",
-                "resource1",
-                "",
-                {
-                    "ticket": "T",
-                    "loss-policy": "fence",
-                }
-            )
-        )
-
     def test_parse_add_args_with_resource_role(self):
         self.assertEqual(
             parse_args.parse_add(
