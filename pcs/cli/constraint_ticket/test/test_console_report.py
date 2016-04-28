@@ -13,7 +13,7 @@ class ConstraintPlainTest(TestCase):
         self.assertEqual(
             "Master resourceA (id:some_id)",
             console_report.constraint_plain(
-                {"attrib": {
+                {"options": {
                     "rsc-role": "Master",
                     "rsc": "resourceA",
                     "id": "some_id"

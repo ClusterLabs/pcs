@@ -16,7 +16,7 @@ def fixture_constraint():
             {"ids": ["a", "b"], "options": {"c": "d", "e": "f"}},
             {"ids": ["g", "h"], "options": {"i": "j", "k": "l"}},
         ],
-        "attrib": {"m": "n", "o":"p"}
+        "options": {"m": "n", "o":"p"}
     }
 
 def fixture_constraint_console():
@@ -53,18 +53,18 @@ class ShowTest(TestCase):
         self.assertEqual(["caption"], command.show(
             "caption",
             load_constraints=lambda: {"plain": [], "with_resource_sets": []},
-            format_attrs=lambda: None,
+            format_options=lambda: None,
             modificators={"full": False}
         ))
 
     def test_show_constraints_full(self):
         load_constraints = mock.Mock()
         load_constraints.return_value = {
-            "plain": [{"attrib": {"id": "plain_id"}}],
+            "plain": [{"options": {"id": "plain_id"}}],
             "with_resource_sets": [fixture_constraint()]
         }
-        format_attrs = mock.Mock()
-        format_attrs.return_value = "plain constraint listing"
+        format_options = mock.Mock()
+        format_options.return_value = "plain constraint listing"
         self.assertEqual(
             [
                 "caption",
@@ -75,7 +75,7 @@ class ShowTest(TestCase):
             command.show(
                 "caption",
                 load_constraints,
-                format_attrs,
+                format_options,
                 {"full": True}
             )
         )

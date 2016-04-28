@@ -33,12 +33,12 @@ class ConstraintTest(TestCase):
             'with_set',
             console_report.constraint(
                 "rsc_ticket",
-                {"resource_sets": "some_resource_sets", "attrib": {"a": "b"}},
+                {"resource_sets": "some_resource_sets", "options": {"a": "b"}},
                 with_id=False
             )
         )
         mock_constraint_with_sets.assert_called_once_with(
-            {"resource_sets": "some_resource_sets", "attrib": {"a": "b"}},
+            {"resource_sets": "some_resource_sets", "options": {"a": "b"}},
             False
         )
 
@@ -64,7 +64,7 @@ class DuplicitConstraintsReportTest(TestCase):
     def test_translate_from_report_item(self, mock_constraint):
         report_item = mock.MagicMock()
         report_item.info = {
-            "constraint_info_list": [{"attrib": {"a": "b"}}],
+            "constraint_info_list": [{"options": {"a": "b"}}],
             "type": "rsc_some"
         }
         mock_constraint.return_value = "constraint info"

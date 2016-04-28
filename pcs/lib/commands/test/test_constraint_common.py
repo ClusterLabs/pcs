@@ -78,7 +78,7 @@ class CreateWithSetTest(TestCase):
             severities.ERROR, error_codes.DUPLICIT_CONSTRAINTS_EXIST, {
                 'type': 'rsc_some',
                 'constraint_info_list': [{
-                    'attrib': {'symmetrical': 'true', 'id': 'some_id'},
+                    'options': {'symmetrical': 'true', 'id': 'some_id'},
                     'resource_sets': [
                         {
                             'ids': ['A', 'B'],
@@ -157,17 +157,17 @@ class ShowTest(TestCase):
 
         self.assertEqual(
             constraint.show(tag_name, is_plain, self.env), {
-            'plain': [{"attrib": {'id': 'plain1', 'is_plain': 'true'}}],
+            'plain': [{"options": {'id': 'plain1', 'is_plain': 'true'}}],
             'with_resource_sets': [
                 {
                     'resource_sets': [{
                         'ids': ['A', 'B'],
                         'options': {'role': 'Master', 'id': 'pcs_rsc_set_A_B'},
                     }],
-                    'attrib': {'symmetrical': 'true', 'id': 'some_id'}
+                    'options': {'symmetrical': 'true', 'id': 'some_id'}
                 },
                 {
-                     'attrib': {'symmetrical': 'true', 'id': 'some_id'},
+                    'options': {'symmetrical': 'true', 'id': 'some_id'},
                     'resource_sets': [{
                         'ids': ['E', 'F'],
                         'options': {'action': 'start', 'id': 'pcs_rsc_set_E_F'}

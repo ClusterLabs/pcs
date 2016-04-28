@@ -7,7 +7,7 @@ from __future__ import (
 
 
 def constraint_plain(type, constraint_info, with_id=False):
-    return type + " ".join(prepare_attrs(constraint_info["attrib"], with_id))
+    return type + " ".join(prepare_options(constraint_info["options"], with_id))
 
 def resource_sets(set_list, with_id=True):
     """
@@ -24,35 +24,33 @@ def resource_sets(set_list, with_id=True):
 
     return report
 
-def options(attrs):
+def options(options_dict):
     return [
-        key+"="+value for key, value in sorted(attrs.items()) if key != "id"
+        key+"="+value
+        for key, value in sorted(options_dict.items())
+        if key != "id"
     ]
 
-def id_from_options(attrs):
-    return "(id:"+attrs.get("id", "")+")"
+def id_from_options(options_dict):
+    return "(id:"+options_dict.get("id", "")+")"
 
 def constraint_with_sets(constraint_info, with_id=True):
     """
-    dict constraint_info for example:
-        {"attrib": {"id": "id_constraint"}, "resource_sets": [{
-            "ids": ["resource_id_1", "resource_id_2"],
-            "attrib": {"id": "resource_set_id"}
-        }]}
-    bool with_id have to show id with attributes
+    dict constraint_info  see constraint in pcs/lib/exchange_formats.md
+    bool with_id have to show id with options_dict
     """
-    attributes = options(constraint_info["attrib"])
+    options_dict = options(constraint_info["options"])
     return " ".join(
         resource_sets(constraint_info["resource_sets"], with_id)
         +
-        (["setoptions"] + attributes if attributes else [])
+        (["setoptions"] + options_dict if options_dict else [])
         +
-        ([id_from_options(constraint_info["attrib"])] if with_id else [])
+        ([id_from_options(constraint_info["options"])] if with_id else [])
     )
 
-def prepare_attrs(attributes, with_id=True):
+def prepare_options(options_dict, with_id=True):
     return (
-        options(attributes)
+        options(options_dict)
         +
-        ([id_from_options(attributes)] if with_id else [])
+        ([id_from_options(options_dict)] if with_id else [])
     )

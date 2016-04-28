@@ -80,11 +80,11 @@ def export_with_set(element):
             resource_set.export(resource_set_item)
             for resource_set_item in element.findall(".//resource_set")
         ],
-        "attrib": export_attributes(element),
+        "options": export_attributes(element),
     }
 
 def export_plain(element):
-    return {"attrib": export_attributes(element)}
+    return {"options": export_attributes(element)}
 
 def create_id(cib, type_prefix, resource_set_list):
     id = "pcs_" +type_prefix +"".join([

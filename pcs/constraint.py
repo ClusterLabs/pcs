@@ -312,7 +312,7 @@ def colocation_add(argv):
                 "duplicate constraint already exists, use --force to override\n"
                 + "\n".join([
                     "  " + constraint_colocation.console_report.constraint_plain(
-                            {"attrib": dict(dup.attributes.items())},
+                            {"options": dict(dup.attributes.items())},
                             True
                         )
                     for dup in duplicates
@@ -508,7 +508,7 @@ def order_add(argv,returnElementOnly=False):
                 "duplicate constraint already exists, use --force to override\n"
                 + "\n".join([
                     "  " + constraint_order.console_report.constraint_plain(
-                            {"attrib": dict(dup.attributes.items())},
+                            {"options": dict(dup.attributes.items())},
                             True
                         ) for dup in duplicates
                 ])

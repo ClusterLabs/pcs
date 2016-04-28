@@ -21,11 +21,15 @@ from pcs.cli.constraint_ticket.console_report import (
 
 
 def constraint(type, constraint_info, with_id=True):
+    """
+    dict constraint_info  see constraint in pcs/lib/exchange_formats.md
+    bool with_id have to show id with options_dict
+    """
     if "resource_sets" in constraint_info:
         return constraint_with_sets(constraint_info, with_id)
     return constraint_plain(type, constraint_info, with_id)
 
-def constraint_plain(type, attributes, with_id=False):
+def constraint_plain(type, options_dict, with_id=False):
     """return console shape for any type of plain constraint"""
     type_report_map = {
         "rsc_colocation": colocation_plain,
@@ -34,9 +38,9 @@ def constraint_plain(type, attributes, with_id=False):
     }
 
     if type not in type_report_map:
-        return constraint_plain_default(type, attributes, with_id)
+        return constraint_plain_default(type, options_dict, with_id)
 
-    return type_report_map[type](attributes, with_id)
+    return type_report_map[type](options_dict, with_id)
 
 def duplicit_constraints_report(report_item):
     line_list = []

@@ -9,7 +9,7 @@ from unittest import TestCase
 from pcs.cli.constraint import console_report
 
 class OptionsTest(TestCase):
-    def test_get_options_from_attrs(self):
+    def test_get_console_options_from_lib_options(self):
         self.assertEqual(
             ["a=b", "c=d"],
             console_report.options({"c": "d", "a": "b", "id":"some_id"})
@@ -22,16 +22,16 @@ class IdFromOptionsTest(TestCase):
             console_report.id_from_options({"c": "d", "a": "b", "id":"some_id"})
         )
 
-class PrepareAttrsTest(TestCase):
-    def test_prepare_attrs_with_id(self):
+class PrepareOptionsTest(TestCase):
+    def test_prepare_options_with_id(self):
         self.assertEqual(
             ["a=b", "c=d", '(id:some_id)'],
-            console_report.prepare_attrs({"c": "d", "a": "b", "id":"some_id"})
+            console_report.prepare_options({"c": "d", "a": "b", "id":"some_id"})
         )
-    def test_prepare_attrs_without_id(self):
+    def test_prepare_options_without_id(self):
         self.assertEqual(
             ["a=b", "c=d"],
-            console_report.prepare_attrs(
+            console_report.prepare_options(
                 {"c": "d", "a": "b", "id":"some_id"},
                 with_id=False
             )
