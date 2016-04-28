@@ -40,22 +40,18 @@ class ConstraintTest(TestCase):
         )
 
 class ConstraintPlainTest(TestCase):
-    @mock.patch("pcs.cli.constraint_all.console_report.get_type_report_map")
-    def test_choose_right_reporter(self, mock_get_type_report_map):
-        mock_report_some_constraint = mock.Mock()
-        mock_report_some_constraint.return_value = "some constraint formated"
-        mock_get_type_report_map.return_value = {
-            "rsc_some" : mock_report_some_constraint,
-        }
+    @mock.patch("pcs.cli.constraint_all.console_report.colocation_plain")
+    def test_choose_right_reporter(self, mock_colocation_plain):
+        mock_colocation_plain.return_value = "some constraint formated"
         self.assertEqual(
             "some constraint formated",
             console_report.constraint_plain(
-                "rsc_some",
+                "rsc_colocation",
                 {"attrib": {"a": "b"}},
                 with_id=True
             )
         )
-        mock_report_some_constraint.assert_called_once_with(
+        mock_colocation_plain.assert_called_once_with(
             {"attrib": {"a": "b"}},
             True
         )

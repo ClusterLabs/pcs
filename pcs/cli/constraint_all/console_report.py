@@ -5,8 +5,6 @@ from __future__ import (
     unicode_literals,
 )
 
-from functools import partial
-
 from pcs.cli.constraint.console_report import (
     constraint_plain as constraint_plain_default,
     constraint_with_sets,
@@ -22,25 +20,23 @@ from pcs.cli.constraint_ticket.console_report import (
 )
 
 
-def get_type_report_map():
-    return {
-        "rsc_colocation": colocation_plain,
-        "rsc_order": order_plain,
-        "rsc_ticket": ticket_plain,
-    }
-
 def constraint(type, constraint_info, with_id=True):
     if "resource_sets" in constraint_info:
         return constraint_with_sets(constraint_info, with_id)
     return constraint_plain(type, constraint_info, with_id)
 
 def constraint_plain(type, attributes, with_id=False):
-    return (
-        get_type_report_map().get(
-            type,
-            partial(constraint_plain_default, type)
-        )(attributes, with_id)
-    )
+    """return console shape for any type of plain constraint"""
+    type_report_map = {
+        "rsc_colocation": colocation_plain,
+        "rsc_order": order_plain,
+        "rsc_ticket": ticket_plain,
+    }
+
+    if type not in type_report_map:
+        return constraint_plain_default(type, attributes, with_id)
+
+    return type_report_map[type](attributes, with_id)
 
 def duplicit_constraints_report(report_item):
     line_list = []
