@@ -22,9 +22,10 @@ ATTRIB = {
 }
 
 def prepare_set(find_valid_id, resource_set):
+    """return resource_set with corrected ids"""
     validate_options(resource_set["attrib"])
     return {
-        "ids": list(map(find_valid_id, resource_set["ids"])),
+        "ids": [find_valid_id(id) for id in resource_set["ids"]],
         "attrib": resource_set["attrib"]
     }
 
@@ -33,7 +34,9 @@ def validate_options(options):
     #constraint, so we use all attribs.
     for name, value in options.items():
         if name not in ATTRIB:
-            raise LibraryError(reports.invalid_option(list(ATTRIB), name))
+            raise LibraryError(
+                reports.invalid_option(list(ATTRIB.keys()), name)
+            )
         if value not in ATTRIB[name]:
             raise LibraryError(
                 reports.invalid_option_value(ATTRIB[name], name, value)

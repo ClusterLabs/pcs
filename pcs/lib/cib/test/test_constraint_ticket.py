@@ -119,6 +119,9 @@ class PrepareOptionsPlainTest(TestCase):
         )
 
 
+#Patch check_new_id_applicable is always desired when working with
+#prepare_options_with_set. Patched function raises when id not applicable
+#and do nothing when applicable - in this case tests do no actions with it
 @mock.patch("pcs.lib.cib.constraint.ticket.tools.check_new_id_applicable")
 class PrepareOptionsWithSetTest(TestCase):
     def setUp(self):
@@ -159,7 +162,7 @@ class PrepareOptionsWithSetTest(TestCase):
             invalid_id
         )
 
-    def test_refuse_unknown_lost_policy(self, mock_check_new_id_applicable):
+    def test_refuse_unknown_lost_policy(self, _):
         assert_raise_library_error(
             lambda: self.prepare({
                 "loss-policy": "unknown",
@@ -174,7 +177,7 @@ class PrepareOptionsWithSetTest(TestCase):
             }),
         )
 
-    def test_refuse_missing_ticket(self, mock_check_new_id_applicable):
+    def test_refuse_missing_ticket(self, _):
         assert_raise_library_error(
             lambda: self.prepare({"loss-policy": "stop", "id": "id"}),
             (

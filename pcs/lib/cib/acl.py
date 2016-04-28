@@ -11,7 +11,8 @@ from pcs.lib import error_codes
 from pcs.lib.errors import LibraryError, ReportItem
 from pcs.lib.cib.tools import (
     does_id_exist,
-    find_unique_id, get_acls,
+    find_unique_id,
+    get_acls,
     check_new_id_applicable,
 )
 

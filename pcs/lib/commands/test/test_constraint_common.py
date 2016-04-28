@@ -141,7 +141,7 @@ class ShowTest(TestCase):
             {"id":"some_id", "symmetrical": "true"},
         )
 
-    def test_returns_export_of_founded_elements(self):
+    def test_returns_export_of_found_elements(self):
         tag_name = "rsc_some"
         self.create(tag_name, [
             {"ids": ["A", "B"], "attrib": {"role": "Master"}},

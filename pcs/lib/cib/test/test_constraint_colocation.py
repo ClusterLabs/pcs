@@ -14,6 +14,9 @@ from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.pcs_mock import mock
 
 
+#Patch check_new_id_applicable is always desired when working with
+#prepare_options_with_set. Patched function raises when id not applicable
+#and do nothing when applicable - in this case tests do no actions with it
 @mock.patch("pcs.lib.cib.constraint.colocation.check_new_id_applicable")
 class PrepareOptionsWithSetTest(TestCase):
     def setUp(self):

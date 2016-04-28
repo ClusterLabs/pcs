@@ -24,8 +24,10 @@ def prepare_options_with_set(cib, options, resource_set_list):
     options = constraint.prepare_options(
         tuple(ATTRIB.keys()),
         options,
-        partial(constraint.create_id, cib, TAG_NAME, resource_set_list),
-        partial(check_new_id_applicable, cib, DESCRIPTION),
+        create_id=partial(
+            constraint.create_id, cib, TAG_NAME, resource_set_list
+        ),
+        validate_id=partial(check_new_id_applicable, cib, DESCRIPTION),
     )
 
     report = []

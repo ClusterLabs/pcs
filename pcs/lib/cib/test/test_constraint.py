@@ -49,7 +49,7 @@ class FindValidResourceId(TestCase):
             ),
         )
 
-    def test_return_same_id_when_is_resource_is_clone(self, mock_find_by_id, _):
+    def test_return_same_id_when_resource_is_clone(self, mock_find_by_id, _):
         mock_find_by_id.return_value = fixture_element("clone", "resourceA")
         self.assertEqual("resourceA", self.find(id="resourceA"))
 
@@ -99,13 +99,8 @@ class FindValidResourceId(TestCase):
         )
 
 class PrepareResourceSetListTest(TestCase):
-    @mock.patch("pcs.lib.cib.constraint.constraint.find_valid_resource_id")
     @mock.patch("pcs.lib.cib.constraint.constraint.resource_set.prepare_set")
-    def test_build_corected_resource_set_list(self, mock_prepare_set, _):
-        mock_prepare_set.return_value = {
-            "ids": ["C", "D"],
-            "attrib": {"id": "id"}
-        }
+    def test_build_corected_resource_set_list(self, mock_prepare_set):
         mock_prepare_set.side_effect = lambda _, resource_set: {
             "id1": {"ids": ["E", "F"], "attrib": {"id": "id1"}},
             "id2": {"ids": ["G", "H"], "attrib": {"id": "id2"}},
@@ -187,7 +182,7 @@ class CreateIdTest(TestCase):
         mock_extract.assert_called_once_with("resource_set_list")
         mock_find_id.assert_called_once_with("cib", "pcs_PREFIX_set_A_B_set_C")
 
-class CheckIsWithouDuplicationTest(TestCase):
+class CheckIsWithoutDuplicationTest(TestCase):
     @mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
     def test_raises_when_duplicit_element_found(self, export_with_set):
         export_with_set.return_value = "exported_duplicit_element"

@@ -50,18 +50,12 @@ class ShowConstraintsWithSetTest(TestCase):
 
 class ShowTest(TestCase):
     def test_show_only_caption_when_no_constraint_loaded(self):
-        load_constraints = mock.Mock()
-        load_constraints.return_value = {"plain": [], "with_resource_sets": []}
-        format_attrs = mock.Mock()
-        self.assertEqual(
-            ["caption"],
-            command.show(
-                "caption",
-                load_constraints,
-                format_attrs,
-                {"full": False}
-            )
-        )
+        self.assertEqual(["caption"], command.show(
+            "caption",
+            load_constraints=lambda: {"plain": [], "with_resource_sets": []},
+            format_attrs=lambda: None,
+            modificators={"full": False}
+        ))
 
     def test_show_constraints_full(self):
         load_constraints = mock.Mock()

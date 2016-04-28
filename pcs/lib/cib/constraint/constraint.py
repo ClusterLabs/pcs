@@ -54,6 +54,7 @@ def find_valid_resource_id(cib, can_repair_to_clone, in_clone_allowed, id):
 def prepare_resource_set_list(
     cib, can_repair_to_clone, in_clone_allowed, resource_set_list
 ):
+    """return resource_set_list with corrected ids"""
     find_valid_id = partial(
         find_valid_resource_id,
         cib, can_repair_to_clone, in_clone_allowed

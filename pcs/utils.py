@@ -1173,6 +1173,8 @@ def dom_get_resource_masterslave(dom, resource_id):
     return None
 
 # returns tuple (is_valid, error_message, correct_resource_id_if_exists)
+# there is a duplicate code in pcs/lib/cib/constraint/constraint.py
+# please use function in pcs/lib/cib/constraint/constraint.py
 def validate_constraint_resource(dom, resource_id):
     resource_el = (
         dom_get_clone(dom, resource_id)

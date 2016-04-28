@@ -14,6 +14,9 @@ from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.pcs_mock import mock
 
 
+#Patch check_new_id_applicable is always desired when working with
+#prepare_options_with_set. Patched function raises when id not applicable
+#and do nothing when applicable - in this case tests do no actions with it
 @mock.patch("pcs.lib.cib.constraint.order.check_new_id_applicable")
 class PrepareOptionsWithSetTest(TestCase):
     def setUp(self):
@@ -52,7 +55,7 @@ class PrepareOptionsWithSetTest(TestCase):
             invalid_id
         )
 
-    def test_refuse_unknown_kind(self, mock_check_new_id_applicable):
+    def test_refuse_unknown_kind(self, _):
         assert_raise_library_error(
             lambda: self.prepare({
                 "symmetrical": "true",
@@ -67,7 +70,7 @@ class PrepareOptionsWithSetTest(TestCase):
             }),
         )
 
-    def test_refuse_unknown_symmetrical(self, mock_check_new_id_applicable):
+    def test_refuse_unknown_symmetrical(self, _):
         assert_raise_library_error(
             lambda: self.prepare({
                 "symmetrical": "unknown",

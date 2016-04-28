@@ -964,7 +964,7 @@ Commands:
         Available options are sequential=true/false, require-all=true/false,
         action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
         Required constraint option is ticket.
-        Available constraint option is loss-policy=fence/stop/freeze/demote
+        Optional constraint option is loss-policy=fence/stop/freeze/demote
 
     ticket add <ticket> [master|slave] <resource id> [options]
                [id=constraint-id]

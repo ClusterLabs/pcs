@@ -44,6 +44,10 @@ def find_unique_id(tree, check_id):
         counter += 1
     return temp_id
 
+def check_new_id_applicable(tree, description, id):
+    validate_id(id, description)
+    validate_id_does_not_exist(tree, id)
+
 def get_configuration(tree):
     """
     Return 'configuration' element from tree, raise LibraryError if missing
@@ -83,7 +87,3 @@ def find_parent(element, tag_names):
 
 def export_attributes(element):
     return  dict((key, value) for key, value in element.attrib.items())
-
-def check_new_id_applicable(tree, description, id):
-    validate_id(id, description)
-    validate_id_does_not_exist(tree, id)
