@@ -22,10 +22,6 @@ from pcs.lib.cib.acl import (
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 
-def exit_on_cmdline_input_errror(usage_name):
-    usage.acl([usage_name])
-    sys.exit(1)
-
 def acl_cmd(argv):
     if len(argv) == 0:
         argv = ["show"]
@@ -87,7 +83,7 @@ def acl_role(argv):
         try:
             run_create_role(argv)
         except CmdLineInputError as e:
-            exit_on_cmdline_input_errror('role create')
+            utils.exit_on_cmdline_input_errror(e, 'acl', 'role create')
         except LibraryError as e:
             utils.process_library_reports(e.args)
 
@@ -176,7 +172,7 @@ def acl_permission(argv):
         try:
             run_permission_add(argv)
         except CmdLineInputError as e:
-            exit_on_cmdline_input_errror('permission add')
+            utils.exit_on_cmdline_input_errror(e, 'acl', 'permission add')
         except LibraryError as e:
             utils.process_library_reports(e.args)
 

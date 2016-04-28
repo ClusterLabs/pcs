@@ -55,7 +55,7 @@ except ImportError:
     )
 
 
-from pcs import  settings
+from pcs import settings, usage
 from pcs.cli.common.reports import (
     process_library_reports as process_lib_reports
 )
@@ -2596,3 +2596,7 @@ def get_modificators():
         "autocorrect": "--autocorrect" in pcs_options,
         "force": "--force" in pcs_options,
     }
+
+def exit_on_cmdline_input_errror(error, main_name, usage_name):
+    usage.show(main_name, [usage_name])
+    sys.exit(1)

@@ -20,10 +20,6 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 
-def exit_on_cmdline_input_errror(usage_name):
-    usage.stonith([usage_name])
-    sys.exit(1)
-
 def stonith_cmd(argv):
     if len(argv) == 0:
         argv = ["show"]
@@ -66,7 +62,7 @@ def stonith_cmd(argv):
         try:
             resource.resource_cleanup(argv)
         except CmdLineInputError as e:
-            exit_on_cmdline_input_errror('cleanup')
+            utils.exit_on_cmdline_input_errror(e, "stonith", 'cleanup')
         except LibraryError as e:
             utils.process_library_reports(e.args)
     elif (sub_cmd == "confirm"):

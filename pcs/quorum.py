@@ -42,9 +42,8 @@ def quorum_cmd(argv):
         utils.process_library_reports(e.args)
     except ErrorWithMessage as e:
         utils.err(e.message)
-    except CmdLineInputError:
-        usage.quorum(argv)
-        sys.exit(1)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "quorum", sub_cmd)
 
 def quorum_device_cmd(argv):
     if len(argv) < 1:

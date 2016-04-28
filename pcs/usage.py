@@ -1264,3 +1264,24 @@ Commands:
         print(sub_usage(args, output))
     else:
         return output
+
+def show(main_usage_name, rest_usage_names):
+    usage_map = {
+        "acl": acl,
+        "cluster": cluster,
+        "config": config,
+        "constraint": constraint,
+        "node": node,
+        "pcsd": pcsd,
+        "property": property,
+        "quorum": quorum,
+        "resource": resource,
+        "status": status,
+        "stonith": stonith,
+    }
+    if main_usage_name not in usage_map:
+        raise Exception(
+            "Bad usage name '{0}' there can be '{1}'"
+            .format(main_usage_name,  list(usage_map.keys()))
+        )
+    usage_map[main_usage_name](rest_usage_names)

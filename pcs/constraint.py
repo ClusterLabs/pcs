@@ -86,9 +86,8 @@ def constraint_cmd(argv):
                 )
             except ErrorWithMessage as e:
                 utils.err(e.message)
-            except CmdLineInputError:
-                usage.constraint(["order set"])
-                sys.exit(1)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(e, "constraint", 'order set')
             except LibraryError as e:
                 utils.process_library_reports(e.args)
         elif (sub_cmd2 in ["remove","delete"]):
@@ -124,9 +123,8 @@ def constraint_cmd(argv):
             utils.err(e.message)
         except LibraryError as e:
             utils.process_library_reports(e.args)
-        except CmdLineInputError:
-            usage.constraint([usage_name])
-            sys.exit(1)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "constraint", usage_name)
 
     elif (sub_cmd == "colocation"):
         if (len(argv) == 0):
@@ -146,9 +144,8 @@ def constraint_cmd(argv):
                 utils.err(e.message)
             except LibraryError as e:
                 utils.process_library_reports(e.args)
-            except CmdLineInputError:
-                usage.constraint(["colocation set"])
-                sys.exit(1)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(e, "constraint", "colocation set")
         elif (sub_cmd2 == "show"):
             run_with_middleware(colocation_command.show, lib, argv, modificators)
         else:

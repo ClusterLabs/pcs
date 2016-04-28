@@ -33,10 +33,6 @@ import pcs.lib.resource_agent as lib_ra
 PACEMAKER_WAIT_TIMEOUT_STATUS = 62
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
-def exit_on_cmdline_input_errror(usage_name):
-    usage.resource([usage_name])
-    sys.exit(1)
-
 def resource_cmd(argv):
     if len(argv) == 0:
         argv = ["show"]
@@ -165,7 +161,7 @@ def resource_cmd(argv):
         try:
             resource_cleanup(argv)
         except CmdLineInputError as e:
-            exit_on_cmdline_input_errror('cleanup')
+            utils.exit_on_cmdline_input_errror(e, "resource", 'cleanup')
         except LibraryError as e:
             utils.process_library_reports(e.args)
     elif (sub_cmd == "history"):
