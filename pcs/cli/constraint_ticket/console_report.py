@@ -13,10 +13,10 @@ def constraint_plain(constraint_info, with_id=False):
         [attributes.get("rsc-role", ""), attributes.get("rsc", "")]
         +
         prepare_attrs(
-            {
-                name:value for name, value in attributes.items()
+            dict(
+                (name, value) for name, value in attributes.items()
                 if name not in ["rsc-role", "rsc"]
-            },
+            ),
             with_id
         )
     )

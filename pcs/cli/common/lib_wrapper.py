@@ -43,10 +43,10 @@ def bind(cli_env, run_library_command):
     return run
 
 def bind_all(env, dictionary):
-    return wrapper({
-        exposed_fn: bind(env, library_fn)
+    return wrapper(dict(
+        (exposed_fn, bind(env, library_fn))
         for exposed_fn, library_fn in dictionary.items()
-    })
+    ))
 
 def get_module(env, name):
     if name not in _CACHE:
