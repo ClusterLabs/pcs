@@ -283,6 +283,11 @@ class ConfigFacade(object):
         """
         Remove all quorum device configuration
         """
+        if not self.has_quorum_device():
+            raise LibraryError(ReportItem.error(
+                error_codes.QDEVICE_NOT_DEFINED,
+                "no quorum device is defined in this cluster"
+            ))
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)

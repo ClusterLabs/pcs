@@ -920,19 +920,25 @@ class RemoveQuorumDeviceTest(TestCase):
     def test_empty_config(self):
         config = ""
         facade = lib.ConfigFacade.from_string(config)
-        facade.remove_quorum_device()
-        ac(
-            config,
-            facade.config.export()
+        assert_raise_library_error(
+            facade.remove_quorum_device,
+            (
+                severity.ERROR,
+                error_codes.QDEVICE_NOT_DEFINED,
+                {}
+            )
         )
 
     def test_no_device(self):
         config = open(rc("corosync-3nodes.conf")).read()
         facade = lib.ConfigFacade.from_string(config)
-        facade.remove_quorum_device()
-        ac(
-            config,
-            facade.config.export()
+        assert_raise_library_error(
+            facade.remove_quorum_device,
+            (
+                severity.ERROR,
+                error_codes.QDEVICE_NOT_DEFINED,
+                {}
+            )
         )
 
     def test_remove_all_devices(self):

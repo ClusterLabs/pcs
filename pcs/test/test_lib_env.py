@@ -80,8 +80,9 @@ class LibraryEnvironmentTest(TestCase):
         env.push_cib_xml(new_cib_data)
         self.assertEqual(1, mock_push_cib.call_count)
 
+    @mock.patch("pcs.lib.env.distribute_corosync_conf")
     @mock.patch("pcs.lib.env.get_local_corosync_conf")
-    def test_corosync_conf_set(self, mock_get_corosync):
+    def test_corosync_conf_set(self, mock_get_corosync, mock_distribute):
         corosync_data = "test corosync data"
         new_corosync_data = "new test corosync data"
         env = LibraryEnvironment(
@@ -95,15 +96,28 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(0, mock_get_corosync.call_count)
 
         env.push_corosync_conf(new_corosync_data)
+        self.assertEqual(0, mock_distribute.call_count)
 
         self.assertEqual(new_corosync_data, env.get_corosync_conf())
         self.assertEqual(0, mock_get_corosync.call_count)
 
+    @mock.patch("pcs.lib.env.distribute_corosync_conf")
+    @mock.patch("pcs.lib.env.CorosyncConfigFacade")
     @mock.patch("pcs.lib.env.get_local_corosync_conf")
-    def test_corosync_conf_not_set(self, mock_get_corosync):
+    def test_corosync_conf_not_set(
+        self, mock_get_corosync, mock_conf_facade, mock_distribute
+    ):
         corosync_data = "test corosync data"
         new_corosync_data = "new test corosync data"
+        corosync_node_list = "test node list"
         mock_get_corosync.return_value = corosync_data
+        mock_get_nodes = mock.MagicMock()
+        mock_get_nodes.return_value = corosync_node_list
+        mock_facade_instance = mock.MagicMock()
+        mock_facade_instance.get_nodes = mock_get_nodes
+        mock_conf_facade.from_string = mock.MagicMock(
+            return_value=mock_facade_instance
+        )
         env = LibraryEnvironment(self.mock_logger)
 
         self.assertTrue(env.is_corosync_conf_live)
@@ -111,9 +125,10 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(corosync_data, env.get_corosync_conf())
         self.assertEqual(1, mock_get_corosync.call_count)
 
-        self.assertRaises(
-            NotImplementedError,
-            env.push_corosync_conf,
+        env.push_corosync_conf(new_corosync_data)
+        mock_distribute.assert_called_once_with(
+            env,
+            corosync_node_list,
             new_corosync_data
         )
 

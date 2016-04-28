@@ -8,12 +8,7 @@ from __future__ import (
 
 from pcs.lib import error_codes
 from pcs.lib.errors import ReportItem, LibraryError
-from pcs.lib.external import (
-    NodeCommunicationException,
-    node_communicator_exception_to_report_item,
-)
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.corosync import live as corosync_live
 
 
 def get_config(lib_env):
@@ -23,8 +18,17 @@ def get_config(lib_env):
     """
     __ensure_not_cman(lib_env)
     cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    device = None
+    if cfg.has_quorum_device():
+        model, model_options, generic_options = cfg.get_quorum_device_settings()
+        device = {
+            "model": model,
+            "model_options": model_options,
+            "generic_options": generic_options,
+        }
     return {
         "options": cfg.get_quorum_options(),
+        "device": device,
     }
 
 def set_options(lib_env, options):
@@ -39,38 +43,50 @@ def set_options(lib_env, options):
     cfg.set_quorum_options(options)
     exported_config = cfg.config.export()
 
-    if lib_env.is_corosync_conf_live:
-        lib_env.logger.info("Sending updated corosync.conf to nodes...")
-        report = []
-        # TODO use parallel communication
-        for node in cfg.get_nodes():
-            try:
-                corosync_live.set_remote_corosync_conf(
-                    lib_env.node_communicator(),
-                    node,
-                    exported_config
-                )
-                lib_env.logger.info("{node}: Succeeded".format(node=node.label))
-            except NodeCommunicationException as e:
-                report.append(node_communicator_exception_to_report_item(e))
-                report.append(ReportItem.error(
-                    error_codes.NODE_COROSYNC_CONF_SAVE_ERROR,
-                    "{node}: Unable to set corosync config",
-                    info={"node": node.label}
-                ))
-            except Exception as e:
-                report.append(ReportItem.error(
-                    error_codes.COMMON_ERROR,
-                    str(e)
-                ))
-        if report:
-            raise LibraryError(*report)
+    lib_env.push_corosync_conf(exported_config)
 
-        corosync_live.reload_config(lib_env.cmd_runner())
-        lib_env.logger.info("Corosync configuration reloaded")
+def add_device(lib_env, model, model_options, generic_options):
+    """
+    Add quorum device to cluster, distribute and reload configs if live
+    model quorum device model
+    model_options model specific options dict
+    generic_options generic quorum device options dict
+    """
+    __ensure_not_cman(lib_env)
 
-    else:
-        lib_env.push_corosync_conf(exported_config)
+    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    cfg.add_quorum_device(model, model_options, generic_options)
+    exported_config = cfg.config.export()
+
+    # TODO validation, verification, certificates, etc.
+
+    lib_env.push_corosync_conf(exported_config)
+
+def update_device(lib_env, model_options, generic_options):
+    """
+    Change quorum device settings, distribute and reload configs if live
+    model_options model specific options dict
+    generic_options generic quorum device options dict
+    """
+    __ensure_not_cman(lib_env)
+
+    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    cfg.update_quorum_device(model_options, generic_options)
+    exported_config = cfg.config.export()
+
+    lib_env.push_corosync_conf(exported_config)
+
+def remove_device(lib_env):
+    """
+    Stop using quorum device, distribute and reload configs if live
+    """
+    __ensure_not_cman(lib_env)
+
+    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    cfg.remove_quorum_device()
+    exported_config = cfg.config.export()
+
+    lib_env.push_corosync_conf(exported_config)
 
 def __ensure_not_cman(lib_env):
     if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:
@@ -78,3 +94,4 @@ def __ensure_not_cman(lib_env):
             error_codes.CMAN_UNSUPPORTED_COMMAND,
             "This command is not supported on CMAN clusters"
         ))
+

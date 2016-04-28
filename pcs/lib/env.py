@@ -10,6 +10,8 @@ from pcs.lib.external import (
     CommandRunner,
     NodeCommunicator,
 )
+from pcs.lib.nodes_task import distribute_corosync_conf
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
     get_local_corosync_conf,
 )
@@ -85,8 +87,8 @@ class LibraryEnvironment(object):
 
     def push_corosync_conf(self, corosync_conf_data):
         if self.is_corosync_conf_live:
-            # push_corosync_conf is missing for now, it has not been needed yet
-            raise NotImplementedError()
+            cfg = CorosyncConfigFacade.from_string(corosync_conf_data)
+            distribute_corosync_conf(self, cfg.get_nodes(), corosync_conf_data)
         else:
             self._corosync_conf_data = corosync_conf_data
 
