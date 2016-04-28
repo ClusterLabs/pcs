@@ -20,9 +20,9 @@ def value_out_of_set(set_type, allowed_values, value):
         },
     )
 
-def required_attribute_is_missing(name):
+def required_option_is_missing(name):
     return ReportItem.error(
-        error_codes.REQUIRED_ATTRIBUTE_IS_MISSING,
+        error_codes.REQUIRED_OPTION_IS_MISSING,
         "required attribute '{name}' is missing",
         info={
             "name": name

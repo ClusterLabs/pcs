@@ -55,7 +55,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
     )
     report  = _validate_options_common(options)
     if "ticket" not in options:
-        report.append(reports.required_attribute_is_missing('ticket'))
+        report.append(reports.required_option_is_missing('ticket'))
     if report:
         raise LibraryError(*report)
     return options
@@ -66,11 +66,11 @@ def prepare_options_plain(cib, options, ticket, resource_id, resource_role):
     report  = _validate_options_common(options)
 
     if not ticket:
-        report.append(reports.required_attribute_is_missing('ticket'))
+        report.append(reports.required_option_is_missing('ticket'))
     options["ticket"] = ticket
 
     if not ticket:
-        report.append(reports.required_attribute_is_missing('rsc'))
+        report.append(reports.required_option_is_missing('rsc'))
     options["rsc"] = resource_id
 
     if resource_role:

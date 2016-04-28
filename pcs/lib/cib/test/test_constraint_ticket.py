@@ -182,7 +182,7 @@ class PrepareOptionsWithSetTest(TestCase):
             lambda: self.prepare({"loss-policy": "stop", "id": "id"}),
             (
                 severities.ERROR,
-                error_codes.REQUIRED_ATTRIBUTE_IS_MISSING,
+                error_codes.REQUIRED_OPTION_IS_MISSING,
                 {"name": "ticket"}
             )
         )
