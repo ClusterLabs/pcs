@@ -491,6 +491,15 @@ Remove a rule if a rule id is specified, if rule is last rule in its constraint,
 config
 Show quorum configuration.
 .TP
+device add [options] model <device model> [model options]
+Add quorum device to cluster.
+.TP
+device remove
+Remove quorum device from cluster.
+.TP
+device update [options] [model <model options>]
+Add/Change quorum device options.
+.TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
 Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.
 .SS "status"

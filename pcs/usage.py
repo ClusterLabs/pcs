@@ -1279,6 +1279,15 @@ Commands:
     config
         Show quorum configuration.
 
+    device add [options] model <device model> [model options]
+        Add quorum device to cluster.
+
+    device remove
+        Remove quorum device from cluster.
+
+    device update [options] [model <model options>]
+        Add/Change quorum device options.
+
     update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]
             [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
         Add/Change quorum options.  At least one option must be specified.

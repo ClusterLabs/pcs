@@ -49,20 +49,25 @@ def prepare_options(cmdline_args):
     return options
 # TODO ^^^ move to better place and make it reusable ^^^
 
+class ModelSpecifiedMoreThanOnce(Exception):
+    pass
+
 
 def quorum_cmd(argv):
     if len(argv) < 1:
         usage.quorum()
         sys.exit(1)
 
-    sub_cmd = argv.pop(0)
+    sub_cmd, argv_next = argv[0], argv[1:]
     try:
         if sub_cmd == "help":
             usage.quorum(argv)
         elif sub_cmd == "config":
-            quorum_config_cmd(argv)
+            quorum_config_cmd(argv_next)
+        elif sub_cmd == "device":
+            quorum_device_cmd(argv_next)
         elif sub_cmd == "update":
-            quorum_update_cmd(argv)
+            quorum_update_cmd(argv_next)
         else:
             raise utils.CmdLineInputError()
 
@@ -71,8 +76,25 @@ def quorum_cmd(argv):
     except ErrorWithMessage as e:
         utils.err(e.message)
     except utils.CmdLineInputError:
-        usage.quorum([sub_cmd] + argv)
+        usage.quorum(argv)
         sys.exit(1)
+
+def quorum_device_cmd(argv):
+    if len(argv) < 1:
+        raise utils.CmdLineInputError()
+
+    sub_cmd, argv_next = argv[0], argv[1:]
+    try:
+        if sub_cmd == "add":
+            quorum_device_add_cmd(argv_next)
+        elif sub_cmd == "remove":
+            quorum_device_remove_cmd(argv_next)
+        elif sub_cmd == "update":
+            quorum_device_update_cmd(argv_next)
+        else:
+            raise utils.CmdLineInputError()
+    except ModelSpecifiedMoreThanOnce:
+        utils.err("Model can be specified only once")
 
 def quorum_config_cmd(argv):
     if argv:
@@ -88,8 +110,61 @@ def quorum_config_to_str(config, indent=""):
         for name, value in sorted(config["options"].items()):
             lines.append("{i} {n}: {v}".format(i=indent, n=name, v=value))
 
+    if "device" in config and config["device"]:
+        lines.append("{i}Device:".format(i=indent))
+        for name, value in sorted(
+            config["device"].get("generic_options", {}).items()
+        ):
+            lines.append("{i} {n}: {v}".format(i=indent, n=name, v=value))
+        lines.append(
+            "{i} Model: {m}".format(
+                i=indent, m=config["device"].get("model", "")
+            )
+        )
+        for name, value in sorted(
+            config["device"].get("model_options", {}).items()
+        ):
+            lines.append("{i}  {n}: {v}".format(i=indent, n=name, v=value))
+
     return "\n".join(lines)
 
+def quorum_device_add_cmd(argv):
+    model, model_options, generic_options = prepare_device_options(argv)
+    if not model:
+        raise MissingOptionValue("model")
+
+    lib_env = utils.get_lib_env()
+    lib_quorum.add_device(lib_env, model, model_options, generic_options)
+    if "--corosync_conf" in utils.pcs_options:
+        utils.setCorosyncConf(
+            lib_env.get_corosync_conf(),
+            utils.pcs_options["--corosync_conf"]
+        )
+
+def quorum_device_remove_cmd(argv):
+    if argv:
+        raise utils.CmdLineInputError()
+
+    lib_env = utils.get_lib_env()
+    lib_quorum.remove_device(lib_env)
+    if "--corosync_conf" in utils.pcs_options:
+        utils.setCorosyncConf(
+            lib_env.get_corosync_conf(),
+            utils.pcs_options["--corosync_conf"]
+        )
+
+def quorum_device_update_cmd(argv):
+    model, model_options, generic_options = prepare_device_options(argv)
+    if model:
+        raise utils.CmdLineInputError()
+
+    lib_env = utils.get_lib_env()
+    lib_quorum.update_device(lib_env, model_options, generic_options)
+    if "--corosync_conf" in utils.pcs_options:
+        utils.setCorosyncConf(
+            lib_env.get_corosync_conf(),
+            utils.pcs_options["--corosync_conf"]
+        )
 
 def quorum_update_cmd(argv):
     options = prepare_options(argv)
@@ -103,4 +178,33 @@ def quorum_update_cmd(argv):
             lib_env.get_corosync_conf(),
             utils.pcs_options["--corosync_conf"]
         )
+
+
+def prepare_device_options(argv):
+    generic_argv = []
+    model_argv = []
+    model = None
+    in_model = False
+    in_model_options = False
+
+    for arg in argv:
+        if in_model:
+            if "=" in arg:
+                model_argv.append(arg)
+            else:
+                model = arg
+            in_model = False
+            in_model_options = True
+        elif arg.lower() == "model":
+            if in_model_options:
+                raise ModelSpecifiedMoreThanOnce()
+            in_model = True
+        elif in_model_options:
+            model_argv.append(arg)
+        else:
+            generic_argv.append(arg)
+
+    generic_options = prepare_options(generic_argv)
+    model_options = prepare_options(model_argv)
+    return model, model_options, generic_options
 
