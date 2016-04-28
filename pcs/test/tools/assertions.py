@@ -48,18 +48,27 @@ class AssertPcsMixin(object):
             pcs_returncode,
             (
                 'Expected return code "{0}", but was "{1}"'
-                + '\ncommand:\n{2}\nstdout:\n{3}'
+                + '\ncommand: {2}\nstdout:\n{3}'
             ).format(returncode, pcs_returncode, command, stdout)
+        )
+        message_template = (
+            "{reason}\ncommand: {cmd}\ndiff is (expected is 2nd):\n{diff}"
+            +
+            "\nFull stdout:\n{stdout}"
         )
         if stdout_start:
             expected_start = self.__prepare_output(stdout_start)
             if not stdout.startswith(expected_start):
                 self.assertTrue(
                     False,
-                    "Stdout does not start as expected\ncommand:\n" + command
-                    + "\ndiff is (expected is 2nd):\n"
-                    + prepare_diff(stdout[:len(expected_start)], expected_start)
-                    + "\nFull stdout:" + stdout
+                    message_template.format(
+                        reason="Stdout does not start as expected",
+                        cmd=command,
+                        diff=prepare_diff(
+                            stdout[:len(expected_start)], expected_start
+                        ),
+                        stdout=stdout
+                    )
                 )
         else:
             expected_full = self.__prepare_output(stdout_full)
@@ -67,10 +76,12 @@ class AssertPcsMixin(object):
                 self.assertEqual(
                     stdout,
                     expected_full,
-                    "Stdout is not as expected\ncommand:\n" + command
-                    + "\ndiff is (expected is 2nd):\n"
-                    + prepare_diff(stdout, expected_full)
-                    + "\nFull stdout:" + stdout
+                    message_template.format(
+                        reason="Stdout is not as expected",
+                        cmd=command,
+                        diff=prepare_diff(stdout, expected_full),
+                        stdout=stdout
+                    )
                 )
 
     def __prepare_output(self, output):
