@@ -20,6 +20,7 @@ from pcs import (
     utils,
     constraint,
     settings,
+    quorum,
 )
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
@@ -847,39 +848,22 @@ def resource_update(res_id,args):
         wait_timeout = utils.validate_wait_get_timeout()
         wait = True
 
-    resource = None
-    for r in dom.getElementsByTagName("primitive"):
-        if r.getAttribute("id") == res_id:
-            resource = r
-            break
-
+    resource = utils.dom_get_resource(dom, res_id)
     if not resource:
-        clone = None
-        for c in dom.getElementsByTagName("clone"):
-            if c.getAttribute("id") == res_id:
-                clone = r
-                break
-
+        clone = utils.dom_get_clone(dom, res_id)
         if clone:
-            for a in c.childNodes:
-                if a.localName == "primitive" or a.localName == "group":
-                    return resource_update_clone_master(
-                        dom, clone, "clone", a.getAttribute("id"), args,
-                        wait, wait_timeout
-                    )
-
-        master = None
-        for m in dom.getElementsByTagName("master"):
-            if m.getAttribute("id") == res_id:
-                master = r
-                break
-
+            clone_child = utils.dom_elem_get_clone_ms_resource(clone)
+            if clone_child:
+                child_id = clone_child.getAttribute("id")
+                return resource_update_clone_master(
+                    dom, clone, "clone", child_id, args, wait, wait_timeout
+                )
+        master = utils.dom_get_master(dom, res_id)
         if master:
             return resource_update_clone_master(
                 dom, master, "master", res_id, args, wait, wait_timeout
             )
-
-        utils.err ("Unable to find resource: %s" % res_id)
+        utils.err("Unable to find resource: %s" % res_id)
 
     instance_attributes = resource.getElementsByTagName("instance_attributes")
     if len(instance_attributes) == 0:
@@ -1444,7 +1428,14 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
         clone.appendChild(element)
         re.appendChild(clone)
 
-    utils.dom_update_meta_attr(clone, utils.convert_args_to_tuples(argv))
+    generic_values, op_values, meta_values = parse_resource_options(argv)
+    if op_values:
+        utils.err("op settings must be changed on base resource, not the clone")
+    try:
+        final_meta = quorum.prepare_options(generic_values + meta_values)
+    except quorum.ErrorWithMessage as e:
+        utils.err(e.message)
+    utils.dom_update_meta_attr(clone, sorted(final_meta.items()))
 
     return cib_dom, clone.getAttribute("id")
 
@@ -1604,10 +1595,15 @@ def resource_master_create(dom, argv, update=False, master_id=None):
         resources.appendChild(master_element)
 
     if len(argv) > 0:
-        utils.dom_update_meta_attr(
-            master_element,
-            utils.convert_args_to_tuples(argv)
-        )
+        generic_values, op_values, meta_values = parse_resource_options(argv)
+        if op_values:
+            utils.err("op settings must be changed on base resource, not the master")
+        try:
+            final_meta = quorum.prepare_options(generic_values + meta_values)
+        except quorum.ErrorWithMessage as e:
+            utils.err(e.message)
+        utils.dom_update_meta_attr(master_element, list(final_meta.items()))
+
     return dom, master_element.getAttribute("id")
 
 def resource_master_remove(argv):

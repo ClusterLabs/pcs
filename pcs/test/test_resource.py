@@ -1870,8 +1870,8 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "resource update clone-unmanage-clone meta is-managed=false")
-        assert returnVal == 0
-        ac (output, '')
+        ac(output, '')
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
         assert returnVal == 0
@@ -3042,8 +3042,13 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
 
         output,returnVal = pcs(temp_cib, "resource --full")
-        assert returnVal == 0
-        ac(output," Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n")
+        ac(output, """\
+ Clone: dlm-clone
+  Meta Attrs: clone-node-max=1 interleave=true ordered=true 
+  Resource: dlm (class=ocf provider=pacemaker type=controld)
+   Operations: monitor interval=10s (dlm-monitor-interval-10s)
+""")
+        self.assertEqual(0, returnVal)
 
         output, returnVal  = pcs(temp_cib, "resource delete dlm")
         assert returnVal == 0
@@ -3054,8 +3059,13 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
 
         output,returnVal = pcs(temp_cib, "resource --full")
-        assert returnVal == 0
-        assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
+        ac(output, """\
+ Clone: dlm-clone
+  Meta Attrs: clone-node-max=1 interleave=true ordered=true 
+  Resource: dlm (class=ocf provider=pacemaker type=controld)
+   Operations: monitor interval=10s (dlm-monitor-interval-10s)
+""")
+        self.assertEqual(0, returnVal)
 
         output, returnVal  = pcs(temp_cib, "resource delete dlm")
         assert returnVal == 0
@@ -3074,8 +3084,13 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert output == "Error: unable to create resource/fence device 'dlm-clone', 'dlm-clone' already exists on this system\n", [output]
 
         output,returnVal = pcs(temp_cib, "resource --full")
-        assert returnVal == 0
-        assert output == " Clone: dlm-clone\n  Meta Attrs: interleave=true clone-node-max=1 ordered=true \n  Resource: dlm (class=ocf provider=pacemaker type=controld)\n   Operations: monitor interval=10s (dlm-monitor-interval-10s)\n", [output]
+        ac(output, """\
+ Clone: dlm-clone
+  Meta Attrs: clone-node-max=1 interleave=true ordered=true 
+  Resource: dlm (class=ocf provider=pacemaker type=controld)
+   Operations: monitor interval=10s (dlm-monitor-interval-10s)
+""")
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_large_cib, "resource clone dummy1")
         ac(output, '')
@@ -3211,8 +3226,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o, ' Clone: D1-clone\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n')
 
         o, r = pcs(temp_cib, 'resource update D1-clone foo=bar')
-        assert r == 0
         ac(o, "")
+        self.assertEqual(0, r)
 
         o, r  = pcs(temp_cib, "resource --full")
         assert r == 0
@@ -4450,3 +4465,70 @@ class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
             'Deleting Resource - dummy1',
             'Deleting Resource (and group) - dummy2',
         ])
+
+class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(empty_cib, temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def test_no_op_allowed_in_clone_update(self):
+        self.assert_pcs_success("resource create dummy Dummy --clone")
+        self.assert_pcs_success(
+            "resource show dummy-clone",
+            """\
+ Clone: dummy-clone
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: start interval=0s timeout=20 (dummy-start-interval-0s)
+               stop interval=0s timeout=20 (dummy-stop-interval-0s)
+               monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+"""
+        )
+        self.assert_pcs_fail(
+            "resource update dummy-clone op stop timeout=300",
+            "Error: op settings must be changed on base resource, not the clone\n"
+        )
+        self.assert_pcs_fail(
+            "resource update dummy-clone foo=bar op stop timeout=300",
+            "Error: op settings must be changed on base resource, not the clone\n"
+        )
+        self.assert_pcs_success(
+            "resource show dummy-clone",
+            """\
+ Clone: dummy-clone
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: start interval=0s timeout=20 (dummy-start-interval-0s)
+               stop interval=0s timeout=20 (dummy-stop-interval-0s)
+               monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+"""
+        )
+
+    def test_no_op_allowed_in_master_update(self):
+        self.assert_pcs_success("resource create dummy Dummy --master")
+        self.assert_pcs_success(
+            "resource show dummy-master",
+            """\
+ Master: dummy-master
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: start interval=0s timeout=20 (dummy-start-interval-0s)
+               stop interval=0s timeout=20 (dummy-stop-interval-0s)
+               monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+"""
+        )
+        self.assert_pcs_fail(
+            "resource update dummy-master op stop timeout=300",
+            "Error: op settings must be changed on base resource, not the master\n"
+        )
+        self.assert_pcs_fail(
+            "resource update dummy-master foo=bar op stop timeout=300",
+            "Error: op settings must be changed on base resource, not the master\n"
+        )
+        self.assert_pcs_success(
+            "resource show dummy-master",
+            """\
+ Master: dummy-master
+  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+   Operations: start interval=0s timeout=20 (dummy-start-interval-0s)
+               stop interval=0s timeout=20 (dummy-stop-interval-0s)
+               monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+"""
+        )

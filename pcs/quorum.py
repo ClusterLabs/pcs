@@ -15,6 +15,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.commands import quorum as lib_quorum
 
 # TODO vvv move to better place and make it reusable vvv
+# TODO it is used in resource.py as well
 class ErrorWithMessage(utils.CmdLineInputError):
     pass
 
