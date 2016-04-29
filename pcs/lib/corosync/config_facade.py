@@ -329,7 +329,7 @@ class ConfigFacade(object):
         for section in section_list[:-1]:
             for name in options:
                 section.del_attributes_by_name(name)
-        for name, value in options.items():
+        for name, value in sorted(options.items()):
             if value == "":
                 section_list[-1].del_attributes_by_name(name)
             else:
