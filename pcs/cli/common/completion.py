@@ -95,7 +95,7 @@ def _find_suggestions(suggestion_tree, typed_word_list, word_under_cursor_idx):
 def _get_subcommands(suggestion_tree, previous_subcommand_list):
     subcommand_tree = suggestion_tree
     for subcommand in previous_subcommand_list:
-        if not subcommand_tree.has_key(subcommand):
+        if subcommand not in subcommand_tree:
             return []
         subcommand_tree = subcommand_tree[subcommand]
     return sorted(list(subcommand_tree.keys()))
