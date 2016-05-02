@@ -7,6 +7,7 @@ from __future__ import (
 from collections import namedtuple
 import logging
 
+#from pcs.lib import commands does not work: "commands" is package
 from pcs.lib.commands.constraint import colocation as constraint_colocation
 from pcs.lib.commands.constraint import order as constraint_order
 from pcs.lib.commands.constraint import ticket as constraint_ticket
@@ -72,6 +73,8 @@ def load_module(env, name):
             'show': constraint_ticket.show,
             'add': constraint_ticket.create,
         })
+
+    raise Exception("No library part '{0}'".format(name))
 
 class Library(object):
     def __init__(self, env):
