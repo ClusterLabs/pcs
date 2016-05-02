@@ -12,12 +12,14 @@ from pcs.lib.cib.tools import get_constraints
 import pcs.lib.commands.constraint.common
 
 
+#configure common constraint command
 show = partial(
     pcs.lib.commands.constraint.common.show,
     ticket.TAG_NAME,
     lambda element: element.attrib.has_key('rsc')
 )
 
+#configure common constraint command
 create_with_set = partial(
     pcs.lib.commands.constraint.common.create_with_set,
     ticket.TAG_NAME,
@@ -31,6 +33,16 @@ def create(
     resource_in_clone_alowed=False,
     duplication_alowed=False,
 ):
+    """
+    create ticket constraint
+    strint ticket_key ticket for constraining resource
+    dict options desired constraint attributes
+    bool resource_in_clone_alowed flag for allowing to reference id which is
+        in tag clone or master
+    bool duplication_alowed flag for allowing create duplicate element
+    callable duplicate_check takes two elements and decide if they are
+        duplicates
+    """
     cib = env.get_cib()
 
     options = ticket.prepare_options_plain(

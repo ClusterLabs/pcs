@@ -12,7 +12,10 @@ def create_with_set(create_with_set_library_call, argv, modificators):
     """
     callable create_with_set_library_call create constraint with set
     list argv part of comandline args
-    modificators dict like object with command modificators
+        see usage for  "constraint (colocation|resource|ticket) set"
+    dict like object modificators can contain
+        "force" allows resource in clone/master and constraint duplicity
+        "autocorrect" allows correct resource to its clone/master parent
     """
     resource_set_list, constraint_options = parse_args.prepare_set_args(argv)
     create_with_set_library_call(
