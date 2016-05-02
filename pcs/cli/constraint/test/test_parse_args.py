@@ -64,3 +64,8 @@ class PrepareSetArgvTest(TestCase):
         res_sets.return_value = [{"ids": [], "options": {"b": "c"}}]
         self.assertRaises(CmdLineInputError, lambda: prepare_set_args(["b=c"]))
         res_sets.assert_called_once_with(["b=c"])
+
+    def test_raises_when_setoption_more_than_once(self, res_sets, options):
+        self.assertRaises(CmdLineInputError, lambda: prepare_set_args(
+            ['A', 'b=c', 'setoptions', "c=d", "setoptions", "e=f"]
+        ))

@@ -20,6 +20,11 @@ def prepare_resource_sets(cmdline_args):
     ]
 
 def prepare_set_args(argv):
+    if argv.count("setoptions") > 1:
+        raise CmdLineInputError(
+            "Keyword 'setoptions' may be mentioned at most once"
+        )
+
     resource_set_args, constraint_options_args = (
         parse_args.split_list(argv, "setoptions")
         if "setoptions" in argv else (argv, [])
