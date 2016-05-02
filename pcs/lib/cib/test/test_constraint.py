@@ -228,3 +228,15 @@ class CreateWithSetTest(TestCase):
                 </ticket>
             </constraints>
         """)
+
+    def test_refuse_empty_resource_set_list(self):
+        constraint_section = etree.Element("constraints")
+        assert_raise_library_error(
+            lambda: constraint.create_with_set(
+                constraint_section,
+                "ticket",
+                {"a": "b"},
+                []
+            ),
+            (severities.ERROR, error_codes.EMPTY_RESOURCE_SET_LIST, {})
+        )

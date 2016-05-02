@@ -118,6 +118,8 @@ def check_is_without_duplication(
         ))
 
 def create_with_set(constraint_section, tag_name, options, resource_set_list):
+    if not resource_set_list:
+        raise LibraryError(reports.empty_resource_set_list())
     element = etree.SubElement(constraint_section, tag_name)
     element.attrib.update(options)
     for resource_set_item in resource_set_list:

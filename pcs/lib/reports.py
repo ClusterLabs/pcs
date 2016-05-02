@@ -41,6 +41,13 @@ def resource_for_constraint_is_multiplicable(
         },
     )
 
+def empty_resource_set_list():
+    return ReportItem.error(
+        error_codes.EMPTY_RESOURCE_SET_LIST,
+        "Resource set list is empty",
+    )
+
+
 def resource_does_not_exist(resource_id):
     return ReportItem.error(
         error_codes.RESOURCE_DOES_NOT_EXIST,
