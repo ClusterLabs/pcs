@@ -59,7 +59,7 @@ class ConstraintPlainTest(TestCase):
             True
         )
 
-class DuplicitConstraintsReportTest(TestCase):
+class DuplicateConstraintsReportTest(TestCase):
     @mock.patch("pcs.cli.constraint_all.console_report.constraint")
     def test_translate_from_report_item(self, mock_constraint):
         report_item = mock.MagicMock()
@@ -74,6 +74,6 @@ class DuplicitConstraintsReportTest(TestCase):
                 "duplicate constraint already exists{force}",
                 "  constraint info"
             ]),
-            console_report.duplicit_constraints_report(report_item)
+            console_report.duplicate_constraints_report(report_item)
 
         )

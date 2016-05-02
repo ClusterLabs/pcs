@@ -7,13 +7,13 @@ from __future__ import (
 
 import sys
 
-from pcs.cli.constraint_all.console_report import duplicit_constraints_report
+from pcs.cli.constraint_all.console_report import duplicate_constraints_report
 from pcs.lib import error_codes as codes
 from pcs.lib.errors import ReportItemSeverity
 
 
 __CODE_BUILDER_MAP = {
-    codes.DUPLICIT_CONSTRAINTS_EXIST: duplicit_constraints_report,
+    codes.DUPLICATE_CONSTRAINTS_EXIST: duplicate_constraints_report,
 }
 
 def _build_error_report(report_item):

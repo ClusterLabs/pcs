@@ -2642,7 +2642,7 @@ class TicketAdd(ConstraintBaseTest):
             ["Error: invalid value 'bad-role' of option 'rsc-role', allowed values are: Stopped, Started, Master, Slave"]
         )
 
-    def test_refuse_duplicit_ticket(self):
+    def test_refuse_duplicate_ticket(self):
         self.assert_pcs_success(
             'constraint ticket add T master A loss-policy=fence'
         )
@@ -2654,7 +2654,7 @@ class TicketAdd(ConstraintBaseTest):
             ]
         )
 
-    def test_accept_duplicit_ticket_with_force(self):
+    def test_accept_duplicate_ticket_with_force(self):
         self.assert_pcs_success(
             'constraint ticket add T master A loss-policy=fence'
         )

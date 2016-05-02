@@ -18,7 +18,7 @@ def create_with_set(
     can_repair_to_clone=False,
     resource_in_clone_alowed=False,
     duplication_alowed=False,
-    duplicity_check=None,
+    duplicate_check=None,
 ):
     """
     string tag_name is constraint tag name
@@ -31,8 +31,8 @@ def create_with_set(
     dict constraint_options is base for building attributes of constraint tag
     bool resource_in_clone_alowed flag for allowing to reference id which is
         in tag clone or master
-    bool duplication_alowed flag for allowing create duplicit element
-    callable duplicity_check takes two elements and decide if they are
+    bool duplication_alowed flag for allowing create duplicate element
+    callable duplicate_check takes two elements and decide if they are
         duplicates
     """
     cib = env.get_cib()
@@ -51,13 +51,13 @@ def create_with_set(
     )
 
     if not duplication_alowed:
-        if not duplicity_check:
-            duplicity_check = constraint.have_duplicit_resource_sets
+        if not duplicate_check:
+            duplicate_check = constraint.have_duplicate_resource_sets
 
         constraint.check_is_without_duplication(
             constraint_section,
             constraint_element,
-            are_duplicit=duplicity_check,
+            are_duplicate=duplicate_check,
             export_element=constraint.export_with_set,
         )
 

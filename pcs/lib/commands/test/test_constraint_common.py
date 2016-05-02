@@ -78,7 +78,7 @@ class CreateWithSetTest(TestCase):
     def test_refuse_duplicate(self):
         self.create()
         assert_raise_library_error(self.create, (
-            severities.ERROR, error_codes.DUPLICIT_CONSTRAINTS_EXIST, {
+            severities.ERROR, error_codes.DUPLICATE_CONSTRAINTS_EXIST, {
                 'type': 'rsc_some',
                 'constraint_info_list': [{
                     'options': {'symmetrical': 'true', 'id': 'some_id'},
@@ -96,7 +96,7 @@ class CreateWithSetTest(TestCase):
             }
         ))
 
-    def test_put_duplicit_constraint_when_duplication_allowed(self):
+    def test_put_duplicate_constraint_when_duplication_allowed(self):
         self.create()
         self.create(duplication_alowed=True)
 

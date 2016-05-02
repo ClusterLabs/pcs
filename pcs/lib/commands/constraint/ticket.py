@@ -22,7 +22,7 @@ create_with_set = partial(
     pcs.lib.commands.constraint.common.create_with_set,
     ticket.TAG_NAME,
     ticket.prepare_options_with_set,
-    duplicity_check=ticket.are_duplicit_with_resource_set,
+    duplicate_check=ticket.are_duplicate_with_resource_set,
 )
 
 def create(
@@ -49,7 +49,7 @@ def create(
         constraint.check_is_without_duplication(
             constraint_section,
             constraint_element,
-            are_duplicit=ticket.are_duplicit_plain,
+            are_duplicate=ticket.are_duplicate_plain,
             export_element=constraint.export_plain,
         )
 

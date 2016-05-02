@@ -88,7 +88,7 @@ def create_id(cib, type_prefix, resource_set_list):
     ])
     return find_unique_id(cib, id)
 
-def have_duplicit_resource_sets(element, other_element):
+def have_duplicate_resource_sets(element, other_element):
     get_id_set_list = lambda element: [
         resource_set.get_resource_id_set_list(resource_set_item)
         for resource_set_item in element.findall(".//resource_set")
@@ -96,24 +96,24 @@ def have_duplicit_resource_sets(element, other_element):
     return get_id_set_list(element) == get_id_set_list(other_element)
 
 def check_is_without_duplication(
-    constraint_section, element, are_duplicit, export_element
+    constraint_section, element, are_duplicate, export_element
 
 ):
-    duplicit_element_list = [
-        duplicit_element
-        for duplicit_element in constraint_section.findall(".//"+element.tag)
+    duplicate_element_list = [
+        duplicate_element
+        for duplicate_element in constraint_section.findall(".//"+element.tag)
         if(
-            element is not duplicit_element
+            element is not duplicate_element
             and
-            are_duplicit(element, duplicit_element)
+            are_duplicate(element, duplicate_element)
         )
     ]
 
-    if duplicit_element_list:
-        raise LibraryError(reports.duplicit_constraints_exist(
+    if duplicate_element_list:
+        raise LibraryError(reports.duplicate_constraints_exist(
             element.tag, [
-                export_element(duplicit_element)
-                for duplicit_element in duplicit_element_list
+                export_element(duplicate_element)
+                for duplicate_element in duplicate_element_list
             ]
         ))
 

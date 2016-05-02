@@ -189,22 +189,22 @@ class CreateIdTest(TestCase):
 
 class CheckIsWithoutDuplicationTest(TestCase):
     @mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
-    def test_raises_when_duplicit_element_found(self, export_with_set):
-        export_with_set.return_value = "exported_duplicit_element"
+    def test_raises_when_duplicate_element_found(self, export_with_set):
+        export_with_set.return_value = "exported_duplicate_element"
         constraint_section = mock.MagicMock()
         constraint_section.findall = mock.MagicMock()
-        constraint_section.findall.return_value = ["duplicit_element"]
+        constraint_section.findall.return_value = ["duplicate_element"]
         element = mock.MagicMock()
         element.tag = "constraint_type"
 
         assert_raise_library_error(
             lambda: constraint.check_is_without_duplication(
                 constraint_section, element,
-                are_duplicit=lambda e1, e2: True,
+                are_duplicate=lambda e1, e2: True,
                 export_element=constraint.export_with_set,
             ),
-            (severities.ERROR, error_codes.DUPLICIT_CONSTRAINTS_EXIST, {
-                'constraint_info_list': ['exported_duplicit_element'],
+            (severities.ERROR, error_codes.DUPLICATE_CONSTRAINTS_EXIST, {
+                'constraint_info_list': ['exported_duplicate_element'],
                 'type': 'constraint_type'
             }),
         )

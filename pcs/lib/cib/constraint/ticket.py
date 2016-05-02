@@ -107,15 +107,15 @@ def create_plain(constraint_section, options):
     element.attrib.update(options)
     return element
 
-def are_duplicit_plain(element, other_element):
+def are_duplicate_plain(element, other_element):
     return all(
         element.attrib.get(name, "") == other_element.attrib.get(name, "")
         for name in ("ticket", "rsc", "rsc-role")
     )
 
-def are_duplicit_with_resource_set(element, other_element):
+def are_duplicate_with_resource_set(element, other_element):
     return (
         element.attrib["ticket"] == other_element.attrib["ticket"]
         and
-        constraint.have_duplicit_resource_sets(element, other_element)
+        constraint.have_duplicate_resource_sets(element, other_element)
     )

@@ -225,9 +225,9 @@ class Element(object):
     def __init__(self, attrib):
         self.attrib = attrib
 
-class AreDuplicitPlain(TestCase):
-    def test_returns_true_for_duplicit_elements(self):
-        self.assertTrue(ticket.are_duplicit_plain(
+class AreDuplicatePlain(TestCase):
+    def test_returns_true_for_duplicate_elements(self):
+        self.assertTrue(ticket.are_duplicate_plain(
             Element({
                 "ticket": "ticket_key",
                 "rsc": "resurceA",
@@ -241,7 +241,7 @@ class AreDuplicitPlain(TestCase):
         ))
 
     def test_returns_false_for_different_elements(self):
-        self.assertFalse(ticket.are_duplicit_plain(
+        self.assertFalse(ticket.are_duplicate_plain(
             Element({
                 "ticket": "ticket_key",
                 "rsc": "resurceA",
@@ -254,22 +254,22 @@ class AreDuplicitPlain(TestCase):
             }),
         ))
 
-@mock.patch("pcs.lib.cib.constraint.ticket.constraint.have_duplicit_resource_sets")
-class AreDuplicitWithResourceSet(TestCase):
-    def test_returns_true_for_duplicit_elements(
-        self, mock_have_duplicit_resource_sets
+@mock.patch("pcs.lib.cib.constraint.ticket.constraint.have_duplicate_resource_sets")
+class AreDuplicateWithResourceSet(TestCase):
+    def test_returns_true_for_duplicate_elements(
+        self, mock_have_duplicate_resource_sets
     ):
-        mock_have_duplicit_resource_sets.return_value = True
-        self.assertTrue(ticket.are_duplicit_with_resource_set(
+        mock_have_duplicate_resource_sets.return_value = True
+        self.assertTrue(ticket.are_duplicate_with_resource_set(
             Element({"ticket": "ticket_key"}),
             Element({"ticket": "ticket_key"}),
         ))
 
     def test_returns_false_for_different_elements(
-        self, mock_have_duplicit_resource_sets
+        self, mock_have_duplicate_resource_sets
     ):
-        mock_have_duplicit_resource_sets.return_value = True
-        self.assertFalse(ticket.are_duplicit_with_resource_set(
+        mock_have_duplicate_resource_sets.return_value = True
+        self.assertFalse(ticket.are_duplicate_with_resource_set(
             Element({"ticket": "ticket_key"}),
             Element({"ticket": "X"}),
         ))

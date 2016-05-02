@@ -81,9 +81,9 @@ def invalid_option_value(allowed_values, option_name, option_value):
         },
     )
 
-def duplicit_constraints_exist(type, constraint_info_list):
+def duplicate_constraints_exist(type, constraint_info_list):
     return ReportItem.error(
-        error_codes.DUPLICIT_CONSTRAINTS_EXIST,
+        error_codes.DUPLICATE_CONSTRAINTS_EXIST,
         "duplicate constraint already exists",
         forceable=True,
         info={
