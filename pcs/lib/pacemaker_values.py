@@ -124,6 +124,5 @@ def validate_id(id_candidate, description="id"):
 def is_score_value(value):
     if not value:
         return False
-    if value[0] in ("+", "-"):
-        return is_score_value(value[1:])
-    return value == SCORE_INFINITY or value.isdigit()
+    unsigned_value = value[1:] if value[0] in ("+", "-") else value
+    return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()
