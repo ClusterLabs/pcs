@@ -225,34 +225,52 @@ class Element(object):
     def __init__(self, attrib):
         self.attrib = attrib
 
+    def update(self, attrib):
+        self.attrib.update(attrib)
+        return self
+
+
 class AreDuplicatePlain(TestCase):
+    def setUp(self):
+        self.first = Element({
+            "ticket": "ticket_key",
+            "rsc": "resurceA",
+            "rsc-role": "Master"
+        })
+        self.second = Element({
+            "ticket": "ticket_key",
+            "rsc": "resurceA",
+            "rsc-role": "Master"
+        })
+
     def test_returns_true_for_duplicate_elements(self):
-        self.assertTrue(ticket.are_duplicate_plain(
-            Element({
-                "ticket": "ticket_key",
-                "rsc": "resurceA",
-                "rsc-role": "Master"
-            }),
-            Element({
-                "ticket": "ticket_key",
-                "rsc": "resurceA",
-                "rsc-role": "Master"
-            }),
+        self.assertTrue(ticket.are_duplicate_plain(self.first, self.second))
+
+    def test_returns_false_for_different_ticket(self):
+        self.assertFalse(ticket.are_duplicate_plain(
+            self.first,
+            self.second.update({"ticket": "X"})
+        ))
+
+    def test_returns_false_for_different_resource(self):
+        self.assertFalse(ticket.are_duplicate_plain(
+            self.first,
+            self.second.update({"rsc": "Y"})
+        ))
+
+    def test_returns_false_for_different_role(self):
+        self.assertFalse(ticket.are_duplicate_plain(
+            self.first,
+            self.second.update({"rsc-role": "Z"})
         ))
 
     def test_returns_false_for_different_elements(self):
-        self.assertFalse(ticket.are_duplicate_plain(
-            Element({
-                "ticket": "ticket_key",
-                "rsc": "resurceA",
-                "rsc-role": "Master"
-            }),
-            Element({
-                "ticket": "X",
-                "rsc": "Y",
-                "rsc-role": "Z"
-            }),
-        ))
+        self.second.update({
+            "ticket": "X",
+            "rsc": "Y",
+            "rsc-role": "Z"
+        })
+        self.assertFalse(ticket.are_duplicate_plain(self.first, self.second))
 
 @mock.patch("pcs.lib.cib.constraint.ticket.constraint.have_duplicate_resource_sets")
 class AreDuplicateWithResourceSet(TestCase):

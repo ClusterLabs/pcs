@@ -58,6 +58,7 @@ class CreateWithSetTest(TestCase):
 
     def test_put_new_constraint_to_constraint_section(self):
         self.create()
+        self.env.push_cib.assert_called_once_with(self.cib)
         self.independent_cib.find(".//constraints").append(etree.XML("""
             <rsc_some id="some_id" symmetrical="true">
                   <resource_set id="pcs_rsc_set_A_B" role="Master">
@@ -77,6 +78,7 @@ class CreateWithSetTest(TestCase):
 
     def test_refuse_duplicate(self):
         self.create()
+        self.env.push_cib.assert_called_once_with(self.cib)
         assert_raise_library_error(self.create, (
             severities.ERROR, error_codes.DUPLICATE_CONSTRAINTS_EXIST, {
                 'type': 'rsc_some',
@@ -99,6 +101,12 @@ class CreateWithSetTest(TestCase):
     def test_put_duplicate_constraint_when_duplication_allowed(self):
         self.create()
         self.create(duplication_alowed=True)
+        expected_calls = [
+            mock.call(self.cib),
+            mock.call(self.cib),
+        ]
+        self.assertEqual(self.env.push_cib.call_count, len(expected_calls))
+        self.env.push_cib.assert_has_calls(expected_calls)
 
         constraint_section = self.independent_cib.find(".//constraints")
         constraint_section.append(etree.XML("""

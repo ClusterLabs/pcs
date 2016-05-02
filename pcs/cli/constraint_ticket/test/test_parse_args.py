@@ -9,7 +9,7 @@ from unittest import TestCase
 from pcs.cli.constraint_ticket import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 
-class ParseArgsTest(TestCase):
+class ParseAddTest(TestCase):
     def test_parse_add_args(self):
         self.assertEqual(
             parse_args.parse_add(
@@ -47,6 +47,22 @@ class ParseArgsTest(TestCase):
             CmdLineInputError,
             lambda: parse_args.parse_add(
                 ["T", "master", "resource1", "something_else"]
+            )
+        )
+
+    def test_raises_when_ticket_and_resource_not_specified(self):
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: parse_args.parse_add(
+                ["loss-policy=fence"]
+            )
+        )
+
+    def test_raises_when_resource_not_specified(self):
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: parse_args.parse_add(
+                ["T", "loss-policy=fence"]
             )
         )
 

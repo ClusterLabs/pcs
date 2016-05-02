@@ -41,6 +41,17 @@ class PrepareResourceSetsTest(TestCase):
 @mock.patch("pcs.cli.common.parse_args.prepare_options")
 @mock.patch("pcs.cli.constraint.parse_args.prepare_resource_sets")
 class PrepareSetArgvTest(TestCase):
+    def test_return_tuple_of_given_resource_set_list_and_options(
+        self, res_sets, options
+    ):
+        res_sets.return_value = [{"ids": "A"}]
+        options.return_value = 'O'
+
+        self.assertEqual(
+            ([{"ids": "A"}], "O"),
+            prepare_set_args(['A', 'b=c', "setoptions", "d=e"])
+        )
+
     def test_right_distribute_full_args(self, res_sets, options):
         prepare_set_args(['A', 'b=c', "setoptions", "d=e"])
         res_sets.assert_called_once_with(['A', 'b=c'])

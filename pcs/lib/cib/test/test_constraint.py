@@ -105,7 +105,7 @@ class FindValidResourceId(TestCase):
 
 class PrepareResourceSetListTest(TestCase):
     @mock.patch("pcs.lib.cib.constraint.constraint.resource_set.prepare_set")
-    def test_build_corected_resource_set_list(self, mock_prepare_set):
+    def test_correctly_propagete_sets_to_prepare_set(self, mock_prepare_set):
         mock_prepare_set.side_effect = lambda _, resource_set: {
             "id1": {"ids": ["E", "F"], "options": {"id": "id1"}},
             "id2": {"ids": ["G", "H"], "options": {"id": "id2"}},
@@ -123,6 +123,38 @@ class PrepareResourceSetListTest(TestCase):
                 ]
             )
         )
+
+    @mock.patch(
+        "pcs.lib.cib.constraint.constraint.find_valid_resource_id"
+    )
+    def test_correctly_prepare_and_use_find_valid_resource_id(
+        self, mock_find_id
+    ):
+        repair_map = {
+            "A": "E",
+            "B": "F",
+            "C": "G",
+            "D": "H",
+        }
+        mock_find_id.side_effect = lambda cib, repair, clone, id: repair_map[id]
+        self.assertEqual(
+            [
+                {"ids": ["E", "F"], "options": {}},
+                {"ids": ["G", "H"], "options": {}},
+            ],
+            constraint.prepare_resource_set_list(
+                "cib", "can_repair_to_clone", "in_clone_allowed", [
+                    {"ids": ["A", "B"], "options": {}},
+                    {"ids": ["C", "D"], "options": {}},
+                ]
+            )
+        )
+        expected_calls = [
+            mock.call("cib", "can_repair_to_clone", "in_clone_allowed", id)
+            for id in sorted(list(repair_map.keys()))
+        ]
+        self.assertEqual(mock_find_id.call_count, len(expected_calls))
+        mock_find_id.assert_has_calls(expected_calls)
 
 class PrepareOptionsTest(TestCase):
     def test_refuse_unknown_option(self):
@@ -187,19 +219,22 @@ class CreateIdTest(TestCase):
         mock_extract.assert_called_once_with("resource_set_list")
         mock_find_id.assert_called_once_with("cib", "pcs_PREFIX_set_A_B_set_C")
 
+def fixture_constraint_section(return_value):
+    constraint_section = mock.MagicMock()
+    constraint_section.findall = mock.MagicMock()
+    constraint_section.findall.return_value = return_value
+    return constraint_section
+
+@mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
 class CheckIsWithoutDuplicationTest(TestCase):
-    @mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
     def test_raises_when_duplicate_element_found(self, export_with_set):
         export_with_set.return_value = "exported_duplicate_element"
-        constraint_section = mock.MagicMock()
-        constraint_section.findall = mock.MagicMock()
-        constraint_section.findall.return_value = ["duplicate_element"]
         element = mock.MagicMock()
         element.tag = "constraint_type"
 
         assert_raise_library_error(
             lambda: constraint.check_is_without_duplication(
-                constraint_section, element,
+                fixture_constraint_section(["duplicate_element"]), element,
                 are_duplicate=lambda e1, e2: True,
                 export_element=constraint.export_with_set,
             ),
@@ -208,6 +243,17 @@ class CheckIsWithoutDuplicationTest(TestCase):
                 'type': 'constraint_type'
             }),
         )
+    def test_success_when_no_duplication_found(self, export_with_set):
+        export_with_set.return_value = "exported_duplicate_element"
+        element = mock.MagicMock()
+        element.tag = "constraint_type"
+        #no exception raised
+        constraint.check_is_without_duplication(
+            fixture_constraint_section([]), element,
+            are_duplicate=lambda e1, e2: True,
+            export_element=constraint.export_with_set,
+        )
+
 
 class CreateWithSetTest(TestCase):
     def test_put_new_constraint_to_constraint_section(self):
