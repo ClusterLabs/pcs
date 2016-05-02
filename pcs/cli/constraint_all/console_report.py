@@ -50,6 +50,6 @@ def duplicit_constraints_report(report_item):
         )
 
     return (
-        "duplicate constraint already exists, use --force to override\n"
+        "duplicate constraint already exists{force}\n"
         +"\n".join(["  "+line for line in line_list])
     )

@@ -71,7 +71,7 @@ class DuplicitConstraintsReportTest(TestCase):
 
         self.assertEqual(
             "\n".join([
-                "duplicate constraint already exists, use --force to override",
+                "duplicate constraint already exists{force}",
                 "  constraint info"
             ]),
             console_report.duplicit_constraints_report(report_item)

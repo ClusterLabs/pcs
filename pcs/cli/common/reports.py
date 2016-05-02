@@ -16,6 +16,16 @@ __CODE_BUILDER_MAP = {
     codes.DUPLICIT_CONSTRAINTS_EXIST: duplicit_constraints_report,
 }
 
+def _build_error_report(report_item):
+    get_template = __CODE_BUILDER_MAP.get(
+        report_item.code,
+        lambda report_item: report_item.message + "{force}"
+    )
+
+    return get_template(report_item).format(
+        force=", use --force to override" if report_item.forceable else ''
+    )
+
 def process_library_reports(report_item_list, is_forced=False):
     """
     report_item_list list of ReportItem
@@ -37,15 +47,9 @@ def process_library_reports(report_item_list, is_forced=False):
             print("Warning: " + report_item.message)
             continue
 
-        sys.stderr.write('Error: {0}{1}\n'.format(
-            #TODO in future this will be needed 1) extend for other severities
-            #2) probably lazy loading modules
-            __CODE_BUILDER_MAP[report_item.code](report_item)
-                if report_item.code in __CODE_BUILDER_MAP else
-                report_item.message
-            ,
-            ", use --force to override" if report_item.forceable else ''
-        ))
+        sys.stderr.write(
+            'Error: {0}\n'.format(_build_error_report(report_item))
+        )
         critical_error = True
 
     if critical_error:
