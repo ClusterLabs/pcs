@@ -6,34 +6,36 @@ from __future__ import (
 )
 
 from pcs.cli.constraint import parse_args, console_report
+from pcs.cli.common.console_report import indent
 
-def create_with_set(create_with_set, argv, modificators):
+def create_with_set(create_with_set_library_call, argv, modificators):
     """
-    callable create_with_set create constraint with set
+    callable create_with_set_library_call create constraint with set
     list argv part of comandline args
     modificators dict like object with command modificators
     """
     resource_set_list, constraint_options = parse_args.prepare_set_args(argv)
-    create_with_set(
+    create_with_set_library_call(
         resource_set_list, constraint_options,
         can_repair_to_clone=modificators["autocorrect"],
         resource_in_clone_alowed=modificators["force"],
         duplication_alowed=modificators["force"],
     )
 
-def show_constraints_with_set(constraint_list, show_detail):
+def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
     """
     return list of console lines with info about constraints
     list of dict constraint_list see constraint in pcs/lib/exchange_formats.md
     bool with_id have to show id with options
+    int indent_step is count of spaces for indenting
     """
-    return ["  Resource Sets:"] + [
-        "    "+console_report.constraint_with_sets(
-            constraint,
-            with_id=show_detail
-        )
-        for constraint in constraint_list
-    ]
+    return ["Resource Sets:"] + indent(
+        [
+            console_report.constraint_with_sets(constraint, with_id=show_detail)
+            for constraint in constraint_list
+        ],
+        indent_step=indent_step
+    )
 
 def show(caption, load_constraints, format_options, modificators):
     """
@@ -55,9 +57,11 @@ def show(caption, load_constraints, format_options, modificators):
     ])
 
     if constraints["with_resource_sets"]:
-        line_list.extend(show_constraints_with_set(
-            constraints["with_resource_sets"],
-            show_detail
-        ))
+        line_list.extend(
+            indent(show_constraints_with_set(
+                constraints["with_resource_sets"],
+                show_detail
+            ))
+        )
 
     return line_list

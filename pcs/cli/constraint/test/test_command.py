@@ -20,15 +20,15 @@ def fixture_constraint():
     }
 
 def fixture_constraint_console():
-    return "    set a b c=d e=f (id:) set g h i=j k=l (id:) setoptions m=n o=p (id:)"
+    return "  set a b c=d e=f (id:) set g h i=j k=l (id:) setoptions m=n o=p (id:)"
 
 
 class ShowConstraintsWithSetTest(TestCase):
     def test_return_line_list(self):
         self.assertEqual(
             [
-                "  Resource Sets:",
-                "    set a b c=d e=f set g h i=j k=l setoptions m=n o=p",
+                "Resource Sets:",
+                "  set a b c=d e=f set g h i=j k=l setoptions m=n o=p",
             ],
             command.show_constraints_with_set(
                 [fixture_constraint()],
@@ -39,7 +39,7 @@ class ShowConstraintsWithSetTest(TestCase):
     def test_return_line_list_with_id(self):
         self.assertEqual(
             [
-                "  Resource Sets:",
+                "Resource Sets:",
                 fixture_constraint_console(),
             ],
             command.show_constraints_with_set(
@@ -70,7 +70,7 @@ class ShowTest(TestCase):
                 "caption",
                 "  plain constraint listing",
                 "  Resource Sets:",
-                fixture_constraint_console(),
+                "  "+fixture_constraint_console(),
             ],
             command.show(
                 "caption",
