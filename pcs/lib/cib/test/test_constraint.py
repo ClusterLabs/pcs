@@ -70,10 +70,15 @@ class FindValidResourceId(TestCase):
 
         assert_raise_library_error(
             lambda: self.find(id="resourceA"),
-            (severities.ERROR, error_codes.RESOURCE_IS_IN_CLONE, {
-                "resource_id": "resourceA",
-                "clone_id": "clone_id"
-            }),
+            (
+                severities.ERROR,
+                error_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIPLICABLE,
+                {
+                    "resource_id": "resourceA",
+                    "parent_type": "clone",
+                    "parent_id": "clone_id",
+                }
+            ),
         )
 
     def test_return_clone_id_when_repair_allowed(

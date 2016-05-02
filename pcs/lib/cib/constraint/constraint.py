@@ -42,14 +42,9 @@ def find_valid_resource_id(cib, can_repair_to_clone, in_clone_allowed, id):
     if in_clone_allowed:
         return resource_element.attrib["id"]
 
-    if clone.tag == "master":
-        report = reports.resource_is_in_master
-    else:
-        report = reports.resource_is_in_clone
-
-    raise LibraryError(
-        report(resource_element.attrib["id"], clone.attrib["id"])
-    )
+    raise LibraryError(reports.resource_for_constraint_is_multiplicable(
+        resource_element.attrib["id"], clone.tag, clone.attrib["id"]
+    ))
 
 def prepare_resource_set_list(
     cib, can_repair_to_clone, in_clone_allowed, resource_set_list

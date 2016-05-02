@@ -982,11 +982,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 1
 
         o,r = pcs("constraint order set stateful1 dummy1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs("constraint order set dummy1 statefulG")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs("constraint colocation add stateful1 with dummy1")
@@ -998,11 +998,11 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 1
 
         o,r = pcs("constraint colocation set dummy1 stateful1")
-        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs("constraint colocation set statefulG dummy1")
-        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a master/slave resource, you should use the master id: statefulG-master when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs("constraint --full")
@@ -1343,11 +1343,11 @@ Ticket Constraints:
         assert r == 1
 
         o,r = pcs("constraint order set dummy1 dummy")
-        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs("constraint order set dummyG dummy1")
-        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs("constraint colocation add dummy with dummy1")
@@ -1359,11 +1359,11 @@ Ticket Constraints:
         assert r == 1
 
         o,r = pcs("constraint colocation set dummy1 dummy")
-        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs("constraint colocation set dummy1 dummyG")
-        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n")
         assert r == 1
 
         o,r = pcs("constraint --full")

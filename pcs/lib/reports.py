@@ -17,29 +17,27 @@ def required_option_is_missing(name):
         },
     )
 
-def resource_is_in_master(resource_id, master_id):
-    return ReportItem.error(
-        error_codes.RESOURCE_IS_IN_MASTER,
-        "{resource_id} is a master/slave resource, you should use the"
-            +" master id: {master_id} when adding constraints."
-            +" Use --force to override."
-        ,
-        info={
-            'resource_id': resource_id,
-            'master_id': master_id
-        },
-    )
-
-def resource_is_in_clone(resource_id, clone_id):
-    return ReportItem.error(
-        error_codes.RESOURCE_IS_IN_CLONE,
+def resource_for_constraint_is_multiplicable(
+    resource_id, parent_type, parent_id
+):
+    template = (
         "{resource_id} is a clone resource, you should use the"
-            +" clone id: {clone_id} when adding constraints."
-            +" Use --force to override."
-        ,
+        +" clone id: {parent_id} when adding constraints"
+    )
+    if parent_type != "clone":
+        template = (
+            "{resource_id} is a master/slave resource, you should use the"
+            +" master id: {parent_id} when adding constraints"
+        )
+
+    return ReportItem.error(
+        error_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIPLICABLE,
+        template,
+        forceable=True,
         info={
             'resource_id': resource_id,
-            'clone_id': clone_id
+            'parent_type': parent_type,
+            'parent_id': parent_id,
         },
     )
 
