@@ -24,7 +24,10 @@ def fixture_cib_and_constraints():
     resources_section = etree.SubElement(cib, "resources")
     for id in ("A", "B", "E", "F"):
         etree.SubElement(resources_section, "primitive").attrib["id"] = id
-    constraint_section = etree.SubElement(cib, "constraints")
+    constraint_section = etree.SubElement(
+        etree.SubElement(cib, "configuration"),
+        "constraints"
+    )
     return cib, constraint_section
 
 def fixture_env(cib):

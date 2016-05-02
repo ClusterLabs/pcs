@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 from unittest import TestCase
+from lxml import etree
 
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource as rc
@@ -78,10 +79,36 @@ class GetConfigurationTest(CibToolsTest):
             lambda: lib.get_configuration(self.cib.tree),
             (
                 severities.ERROR,
-                error_codes.CIB_CANNOT_FIND_CONFIGURATION,
-                {},
+                error_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
+                {
+                    "section": "configuration",
+                    "cib": etree.tostring(self.cib.tree)
+                },
             ),
         )
+
+class GetConstraintsTest(CibToolsTest):
+    def test_success_if_exists(self):
+        self.assertEqual(
+            "constraints",
+            lib.get_constraints(self.cib.tree).tag
+        )
+
+    def test_raise_if_missing(self):
+        for section in self.cib.tree.findall(".//configuration/constraints"):
+            section.getparent().remove(section)
+        assert_raise_library_error(
+            lambda: lib.get_constraints(self.cib.tree),
+            (
+                severities.ERROR,
+                error_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
+                {
+                    "section": "configuration/constraints",
+                    "cib": etree.tostring(self.cib.tree)
+                },
+            ),
+        )
+
 
 class GetAclsTest(CibToolsTest):
     def setUp(self):

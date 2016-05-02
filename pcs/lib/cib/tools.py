@@ -48,18 +48,29 @@ def check_new_id_applicable(tree, description, id):
     validate_id(id, description)
     validate_id_does_not_exist(tree, id)
 
+def _get_mandatory_section(tree, section_name):
+    """
+    Return required element from tree, raise LibraryError if missing
+    tree cib etree node
+    """
+    section = tree.find(".//{0}".format(section_name))
+    if section is not None:
+        return section
+    raise LibraryError(ReportItem.error(
+        error_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
+        "Unable to get {section} section of cib",
+        info={
+            "section": section_name,
+            "cib": etree.tostring(tree),
+        }
+    ))
+
 def get_configuration(tree):
     """
     Return 'configuration' element from tree, raise LibraryError if missing
     tree cib etree node
     """
-    conf = tree.find(".//configuration")
-    if conf is not None:
-        return conf
-    raise LibraryError(ReportItem.error(
-        error_codes.CIB_CANNOT_FIND_CONFIGURATION,
-        "Unable to get configuration section of cib"
-    ))
+    return _get_mandatory_section(tree, "configuration")
 
 def get_acls(tree):
     """
@@ -76,7 +87,7 @@ def get_constraints(tree):
     Return 'constraint' element from tree
     tree cib etree node
     """
-    return tree.find(".//constraints")
+    return _get_mandatory_section(tree, "configuration/constraints")
 
 def find_parent(element, tag_names):
     candidate = element
