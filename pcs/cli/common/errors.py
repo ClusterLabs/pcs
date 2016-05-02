@@ -6,13 +6,15 @@ from __future__ import (
 )
 
 class CmdLineInputError(Exception):
-    pass
-
-class ErrorWithMessage(CmdLineInputError):
-    def __init__(self, *args, **kwargs):
-        super(ErrorWithMessage, self).__init__(
-            self.build_message(*args, **kwargs)
-        )
-
-    def build_message(self, *args, **kwargs):
-        return args[0] if args else ""
+    """
+    Exception express that user entered incorrect commad in command line.
+    """
+    def __init__(self, message=None):
+        """
+        string message explain what was wrong with entered command
+        The routine which handles this exception behaves according to whether
+        the message was specified (prints this message to user) or not (prints
+        appropriate part of documentation)
+        """
+        super(CmdLineInputError, self).__init__(message)
+        self.message = message

@@ -15,7 +15,7 @@ from pcs.test.tools.misc import (
 from pcs.test.tools.pcs_runner import PcsRunner
 
 from pcs import quorum as quorum_cmd
-from pcs.cli.common.parse_args import OptionWithoutKey, MissingOptionValue
+from pcs.cli.common.errors import CmdLineInputError
 
 
 coro_conf = rc("corosync.conf")
@@ -305,7 +305,7 @@ class PrepareDeviceOptionsTest(TestCase):
 
     def test_mising_equals(self):
         self.assertRaises(
-            MissingOptionValue,
+            CmdLineInputError,
             lambda: quorum_cmd.prepare_device_options([
                 "a", "b=B", "model", "network", "c=C", "d=D"
             ])
@@ -313,7 +313,7 @@ class PrepareDeviceOptionsTest(TestCase):
 
     def test_mising_option_name(self):
         self.assertRaises(
-            OptionWithoutKey,
+            CmdLineInputError,
             lambda: quorum_cmd.prepare_device_options([
                 "a=A", "b=B", "model", "network", "=C", "d=D"
             ])

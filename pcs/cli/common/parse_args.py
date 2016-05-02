@@ -5,16 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.cli.common.errors import ErrorWithMessage
-
-
-class OptionWithoutKey(ErrorWithMessage):
-    def build_message(self, option): #pylint: disable=arguments-differ
-        return "missing key in '{0}' option".format(option)
-
-class MissingOptionValue(ErrorWithMessage):
-    def build_message(self, option_name): #pylint: disable=arguments-differ
-        return "missing value of '{0}' option".format(option_name)
+from pcs.cli.common.errors import CmdLineInputError
 
 def split_list(arg_list, separator):
     """return list of list of arg_list using separator as delimiter"""
@@ -27,9 +18,9 @@ def prepare_options(cmdline_args):
     options = {}
     for arg in cmdline_args:
         if "=" not in arg:
-            raise MissingOptionValue(arg)
+            raise CmdLineInputError("missing value of '{0}' option".format(arg))
         if arg.startswith("="):
-            raise OptionWithoutKey(arg)
+            raise CmdLineInputError("missing key in '{0}' option".format(arg))
 
         name, value = arg.split("=", 1)
         options[name] = value

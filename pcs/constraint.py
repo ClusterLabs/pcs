@@ -22,10 +22,7 @@ from pcs.cli import (
     constraint_order,
 )
 from pcs.cli.constraint_ticket import command as ticket_command
-from pcs.cli.common.errors import (
-    CmdLineInputError,
-    ErrorWithMessage,
-)
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.lib_wrapper import Library
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
@@ -84,8 +81,6 @@ def constraint_cmd(argv):
                     argv,
                     modificators
                 )
-            except ErrorWithMessage as e:
-                utils.err(e.message)
             except CmdLineInputError as e:
                 utils.exit_on_cmdline_input_errror(e, "constraint", 'order set')
             except LibraryError as e:
@@ -119,8 +114,6 @@ def constraint_cmd(argv):
                 argv[1:],
                 modificators
             )
-        except ErrorWithMessage as e:
-            utils.err(e.message)
         except LibraryError as e:
             utils.process_library_reports(e.args)
         except CmdLineInputError as e:
@@ -140,8 +133,6 @@ def constraint_cmd(argv):
             try:
 
                 run_with_middleware(colocation_command.create_with_set, lib, argv, modificators)
-            except ErrorWithMessage as e:
-                utils.err(e.message)
             except LibraryError as e:
                 utils.process_library_reports(e.args)
             except CmdLineInputError as e:

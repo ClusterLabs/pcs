@@ -23,7 +23,7 @@ from pcs import (
 )
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
-from pcs.cli.common.errors import CmdLineInputError, ErrorWithMessage
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_values import timeout_to_seconds
@@ -57,7 +57,10 @@ def resource_cmd(argv):
         ra_values, op_values, meta_values, clone_opts = parse_resource_options(
             argv, with_clone=True
         )
-        resource_create(res_id, res_type, ra_values, op_values, meta_values, clone_opts)
+        try:
+            resource_create(res_id, res_type, ra_values, op_values, meta_values, clone_opts)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "resource", 'create')
     elif (sub_cmd == "move"):
         resource_move(argv)
     elif (sub_cmd == "ban"):
@@ -75,7 +78,10 @@ def resource_cmd(argv):
             usage.resource()
             sys.exit(1)
         res_id = argv.pop(0)
-        resource_update(res_id,argv)
+        try:
+            resource_update(res_id,argv)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "resource", 'update')
     elif (sub_cmd == "add_operation"):
         utils.err("add_operation has been deprecated, please use 'op add'")
     elif (sub_cmd == "remove_operation"):
@@ -99,11 +105,17 @@ def resource_cmd(argv):
     elif (sub_cmd == "ungroup"):
         resource_group(["remove"] + argv)
     elif (sub_cmd == "clone"):
-        resource_clone(argv)
+        try:
+            resource_clone(argv)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "resource", 'clone')
     elif (sub_cmd == "unclone"):
         resource_clone_master_remove(argv)
     elif (sub_cmd == "master"):
-        resource_master(argv)
+        try:
+            resource_master(argv)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "resource", 'master')
     elif (sub_cmd == "enable"):
         resource_enable(argv)
     elif (sub_cmd == "disable"):
@@ -1428,10 +1440,7 @@ def resource_clone_create(cib_dom, argv, update_existing=False):
     generic_values, op_values, meta_values = parse_resource_options(argv)
     if op_values:
         utils.err("op settings must be changed on base resource, not the clone")
-    try:
-        final_meta = prepare_options(generic_values + meta_values)
-    except ErrorWithMessage as e:
-        utils.err(e.message)
+    final_meta = prepare_options(generic_values + meta_values)
     utils.dom_update_meta_attr(clone, sorted(final_meta.items()))
 
     return cib_dom, clone.getAttribute("id")
@@ -1595,10 +1604,7 @@ def resource_master_create(dom, argv, update=False, master_id=None):
         generic_values, op_values, meta_values = parse_resource_options(argv)
         if op_values:
             utils.err("op settings must be changed on base resource, not the master")
-        try:
-            final_meta = prepare_options(generic_values + meta_values)
-        except ErrorWithMessage as e:
-            utils.err(e.message)
+        final_meta = prepare_options(generic_values + meta_values)
         utils.dom_update_meta_attr(master_element, list(final_meta.items()))
 
     return dom, master_element.getAttribute("id")

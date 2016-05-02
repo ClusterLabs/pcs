@@ -2612,6 +2612,12 @@ class TicketCreateWithSet(ConstraintBaseTest):
             ["Error: required attribute 'ticket' is missing"]
         )
 
+    def test_refuse_when_option_is_invalid(self):
+        self.assert_pcs_fail(
+            'constraint ticket set A B setoptions loss-policy',
+            stdout_start=["Error: missing value of 'loss-policy' option"]
+        )
+
 class TicketAdd(ConstraintBaseTest):
     def test_create_ticket(self):
         self.assert_pcs_success(

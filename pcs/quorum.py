@@ -11,8 +11,8 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.cli.common.errors import CmdLineInputError, ErrorWithMessage
-from pcs.cli.common.parse_args import prepare_options, MissingOptionValue
+from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.commands import quorum as lib_quorum
 from pcs.lib.errors import LibraryError
 
@@ -40,8 +40,6 @@ def quorum_cmd(argv):
 
     except LibraryError as e:
         utils.process_library_reports(e.args)
-    except ErrorWithMessage as e:
-        utils.err(e.message)
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "quorum", sub_cmd)
 
@@ -97,7 +95,7 @@ def quorum_config_to_str(config, indent=""):
 def quorum_device_add_cmd(argv):
     model, model_options, generic_options = prepare_device_options(argv)
     if not model:
-        raise MissingOptionValue("model")
+        raise CmdLineInputError("missing value of 'model' option")
 
     lib_env = utils.get_lib_env()
     lib_quorum.add_device(lib_env, model, model_options, generic_options)

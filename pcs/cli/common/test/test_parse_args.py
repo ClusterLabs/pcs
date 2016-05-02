@@ -6,13 +6,14 @@ from __future__ import (
 )
 
 from unittest import TestCase
-from pcs.cli.common.parse_args import split_list, prepare_options, MissingOptionValue, OptionWithoutKey
+from pcs.cli.common.parse_args import split_list, prepare_options
+from pcs.cli.common.errors import CmdLineInputError
 
 
 class PrepareOptionsTest(TestCase):
     def test_refuse_option_without_value(self):
         self.assertRaises(
-            MissingOptionValue, lambda: prepare_options(['abc'])
+            CmdLineInputError, lambda: prepare_options(['abc'])
         )
 
     def test_prepare_option_dict_form_args(self):
@@ -23,7 +24,7 @@ class PrepareOptionsTest(TestCase):
 
     def test_refuse_option_without_key(self):
         self.assertRaises(
-            OptionWithoutKey, lambda: prepare_options(['=a'])
+            CmdLineInputError, lambda: prepare_options(['=a'])
         )
 
 class SplitListTest(TestCase):

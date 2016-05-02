@@ -2598,5 +2598,8 @@ def get_modificators():
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):
-    usage.show(main_name, [usage_name])
+    if error.message:
+        sys.stderr.write("Error: {0}\n".format(error.message))
+    else:
+        usage.show(main_name, [usage_name])
     sys.exit(1)
