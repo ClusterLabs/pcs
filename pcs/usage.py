@@ -966,11 +966,11 @@ Commands:
         Required constraint option is ticket.
         Optional constraint option is loss-policy=fence/stop/freeze/demote
 
-    ticket add <ticket> [master|slave] <resource id> [options]
+    ticket add <ticket> [<role>] <resource id> [options]
                [id=constraint-id]
         Crate a ticket constraint for <resource id>.
         Available option is loss-policy=fence/stop/freeze/demote.
-        A role can be master, slave or started.
+        A role can be master, slave, started or stopped.
 
     remove [constraint id]...
         Remove constraint(s) or constraint rules with the specified id(s)

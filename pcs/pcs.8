@@ -439,7 +439,7 @@ List all current ordering constraints (if \fB\-\-full\fR is specified show the i
 order [action] <resource id> then [action] <resource id> [options]
 Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start.  Available options are kind=Optional/Mandatory/Serialize, symmetrical=true/false, require-all=true/false and id=<constraint\-id>.
 .TP
-order set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]] [setoptions [constraint_options]]
+order set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
 Create an ordered set of resources. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.  Available constraint_options are id=<constraint\-id>, kind=Optional/Mandatory/Serialize and symmetrical=true/false.
 .TP
 order remove <resource1> [resourceN]...
@@ -451,7 +451,7 @@ List all current colocation constraints (if \fB\-\-full\fR is specified show the
 colocation add [master|slave] <source resource id> with [master|slave] <target resource id> [score] [options] [id=constraint\-id]
 Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY").  A role can be master or slave (if no role is specified, it defaults to 'started').
 .TP
-colocation set <resource1> <resource2> [resourceN]... [options] [set <resourceX> <resourceY> ... [options]] [setoptions [constraint_options]]
+colocation set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
 Create a colocation constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Available constraint_options are id, score, score-attribute and score-attribute-mangle.
 .TP
 colocation remove <source resource id> <target resource id>
@@ -463,8 +463,8 @@ List all current ticket constraints (if \fB\-\-full\fR is specified show the int
 ticket set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
 Create a ticket constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Required constraint option is ticket. Available constraint option is loss-policy=fence/stop/freeze/demote 
 .TP
-ticket add <ticket> [master|slave] <resource id> [options] [id=constraint\-id]
-Crate a ticket constraint for <resource id>. Available option is loss-policy=fence/stop/freeze/demote. A role can be master, slave or started.
+ticket add <ticket> [<role>] <resource id> [options] [id=constraint\-id]
+Crate a ticket constraint for <resource id>. Available option is loss-policy=fence/stop/freeze/demote. A role can be master, slave, started or stopped.
 .TP
 remove [constraint id]...
 Remove constraint(s) or constraint rules with the specified id(s)
