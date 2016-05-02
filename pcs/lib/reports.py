@@ -8,18 +8,6 @@ from __future__ import (
 from pcs.lib.errors import ReportItem
 from pcs.lib import error_codes
 
-def value_out_of_set(set_type, allowed_values, value):
-    return ReportItem.error(
-        error_codes.VALUE_OUT_OF_SET,
-        "invalid {set_type} '{value}', allowed values are: {allowed_values}",
-        info={
-            'set_type': set_type,
-            'value': value,
-            'allowed_values_raw': allowed_values,
-            'allowed_values': ", ".join(allowed_values)
-        },
-    )
-
 def required_option_is_missing(name):
     return ReportItem.error(
         error_codes.REQUIRED_OPTION_IS_MISSING,

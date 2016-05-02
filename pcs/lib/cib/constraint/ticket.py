@@ -30,9 +30,9 @@ def _validate_options_common(options):
     if "loss-policy" in options:
         loss_policy = options["loss-policy"].lower()
         if options["loss-policy"] not in ATTRIB["loss-policy"]:
-            report.append(reports.value_out_of_set(
-                'loss-policy value',
+            report.append(reports.invalid_option_value(
                 ATTRIB["loss-policy"],
+                'loss-policy',
                 options["loss-policy"]
             ))
         options["loss-policy"] = loss_policy
@@ -81,9 +81,9 @@ def prepare_options_plain(cib, options, ticket, resource_id, resource_role):
     if "rsc-role" in options:
         resource_role = options["rsc-role"].lower().capitalize()
         if resource_role not in ATTRIB_PLAIN["rsc-role"]:
-            report.append(reports.value_out_of_set(
-                'rsc-role',
+            report.append(reports.invalid_option_value(
                 ATTRIB_PLAIN["rsc-role"],
+                'rsc-role',
                 options["rsc-role"]
             ))
         options["rsc-role"] = resource_role

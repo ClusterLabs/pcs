@@ -34,17 +34,17 @@ def prepare_options_with_set(cib, options, resource_set_list):
     if "kind" in options:
         kind = options["kind"].lower().capitalize()
         if kind not in ATTRIB["kind"]:
-            report.append(reports.value_out_of_set(
-                'kind value', ATTRIB["kind"], options["kind"]
-            ))
+            report.append(reports.invalid_option_value(
+                ATTRIB["kind"], 'kind', options["kind"])
+            )
         options["kind"] = kind
 
     if "symmetrical" in options:
         symmetrical = options["symmetrical"].lower()
         if symmetrical not in ATTRIB["symmetrical"]:
-            report.append(reports.value_out_of_set(
-                'symmetrical value',
+            report.append(reports.invalid_option_value(
                 ATTRIB["symmetrical"],
+                'symmetrical',
                 options["symmetrical"]
             ))
         options["symmetrical"] = symmetrical

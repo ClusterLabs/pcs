@@ -746,7 +746,7 @@ Error: invalid option 'foo', allowed options are: id, kind, symmetrical
             "constraint order set D1 D2 setoptions kind=foo"
         )
         ac(output, """\
-Error: invalid kind value 'foo', allowed values are: Optional, Mandatory, Serialize
+Error: invalid value 'foo' of option 'kind', allowed values are: Optional, Mandatory, Serialize
 """)
         self.assertEqual(1, retValue)
 
@@ -755,7 +755,7 @@ Error: invalid kind value 'foo', allowed values are: Optional, Mandatory, Serial
             "constraint order set D1 D2 setoptions symmetrical=foo"
         )
         ac(output, """\
-Error: invalid symmetrical value 'foo', allowed values are: true, false
+Error: invalid value 'foo' of option 'symmetrical', allowed values are: true, false
 """)
         self.assertEqual(1, retValue)
 
@@ -2600,10 +2600,7 @@ class TicketCreateWithSet(ConstraintBaseTest):
     def test_refuse_bad_loss_policy(self):
         self.assert_pcs_fail(
             'constraint ticket set A B setoptions ticket=T loss-policy=none',
-            [
-                "Error: invalid loss-policy value 'none', allowed values are: fence, stop,"
-                    +" freeze, demote"
-            ]
+            ["Error: invalid value 'none' of option 'loss-policy', allowed values are: fence, stop, freeze, demote"]
         )
 
     def test_refuse_when_ticket_option_is_missing(self):
@@ -2633,10 +2630,7 @@ class TicketAdd(ConstraintBaseTest):
     def test_refuse_invalid_role(self):
         self.assert_pcs_fail(
             'constraint ticket add T bad-role A loss-policy=fence',
-            [
-                "Error: invalid rsc-role 'bad-role', allowed values are: Stopped, Started,"
-                    +" Master, Slave"
-            ]
+            ["Error: invalid value 'bad-role' of option 'rsc-role', allowed values are: Stopped, Started, Master, Slave"]
         )
 
     def test_refuse_duplicit_ticket(self):

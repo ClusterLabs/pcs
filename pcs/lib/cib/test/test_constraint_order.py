@@ -62,11 +62,11 @@ class PrepareOptionsWithSetTest(TestCase):
                 "kind": "unknown",
                 "id": "id",
             }),
-            (severities.ERROR, error_codes.VALUE_OUT_OF_SET, {
+            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'Optional, Mandatory, Serialize',
                 'allowed_values_raw': ('Optional', 'Mandatory', 'Serialize'),
-                'value': 'unknown',
-                'set_type': 'kind value'
+                'option_value': 'unknown',
+                'option_name': 'kind'
             }),
         )
 
@@ -77,11 +77,11 @@ class PrepareOptionsWithSetTest(TestCase):
                 "kind": "Optional",
                 "id": "id",
             }),
-            (severities.ERROR, error_codes.VALUE_OUT_OF_SET, {
+            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'true, false',
                 'allowed_values_raw': ('true', 'false'),
-                'value': 'unknown',
-                'set_type': 'symmetrical value'
+                'option_value': 'unknown',
+                'option_name': 'symmetrical'
             }),
         )
 

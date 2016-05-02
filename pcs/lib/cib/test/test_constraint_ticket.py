@@ -64,13 +64,13 @@ class PrepareOptionsPlainTest(TestCase):
                 {"id": "id"}, "ticket_key", "resourceA", "bad_role"
             ),
             (
-                severities.ERROR, error_codes.VALUE_OUT_OF_SET, {
+                severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
                     'allowed_values': 'Stopped, Started, Master, Slave',
                     'allowed_values_raw': (
                         'Stopped', 'Started', 'Master', 'Slave'
                     ),
-                    'value': 'bad_role',
-                    'set_type': 'rsc-role'
+                    'option_value': 'bad_role',
+                    'option_name': 'rsc-role'
                 }
             ),
         )
@@ -83,11 +83,11 @@ class PrepareOptionsPlainTest(TestCase):
                 "resourceA",
                 "master"
             ),
-            (severities.ERROR, error_codes.VALUE_OUT_OF_SET, {
+            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'fence, stop, freeze, demote',
                 'allowed_values_raw': ('fence', 'stop', 'freeze', 'demote'),
-                'value': 'unknown',
-                'set_type': 'loss-policy value'
+                'option_value': 'unknown',
+                'option_name': 'loss-policy'
             }),
         )
 
@@ -169,11 +169,11 @@ class PrepareOptionsWithSetTest(TestCase):
                 "ticket": "T",
                 "id": "id",
             }),
-            (severities.ERROR, error_codes.VALUE_OUT_OF_SET, {
+            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'fence, stop, freeze, demote',
                 'allowed_values_raw': ('fence', 'stop', 'freeze', 'demote'),
-                'value': 'unknown',
-                'set_type': 'loss-policy value'
+                'option_value': 'unknown',
+                'option_name': 'loss-policy'
             }),
         )
 
