@@ -60,7 +60,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
         raise LibraryError(*report)
     return options
 
-def prepare_options_plain(cib, options, ticket, resource_id, resource_role):
+def prepare_options_plain(cib, options, ticket, resource_id):
     options = options.copy()
 
     report  = _validate_options_common(options)
@@ -73,11 +73,6 @@ def prepare_options_plain(cib, options, ticket, resource_id, resource_role):
         report.append(reports.required_option_is_missing('rsc'))
     options["rsc"] = resource_id
 
-    if resource_role:
-        options["rsc-role"] = resource_role
-
-    #resource role can be teorethicaly there even if resource_role variable
-    #is empty
     if "rsc-role" in options:
         resource_role = options["rsc-role"].lower().capitalize()
         if resource_role not in ATTRIB_PLAIN["rsc-role"]:

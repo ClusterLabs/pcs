@@ -12,7 +12,10 @@ from pcs.lib import error_codes
 from pcs.lib.commands.constraint import ticket as ticket_command
 from pcs.lib.env import LibraryEnvironment as Env
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.assertions import assert_xml_equal, assert_raise_library_error
+from pcs.test.tools.assertions import (
+    assert_xml_equal,
+    assert_raise_library_error
+)
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
@@ -33,9 +36,10 @@ class CreateTest(TestCase):
         )
 
         env = Env(self.mock_logger, cib_data=str(cib))
-        ticket_command.create(
-                env, "ticketA", "resourceA", "master", {"loss-policy": "fence"}
-        )
+        ticket_command.create(env, "ticketA", "resourceA", {
+            "loss-policy": "fence",
+            "rsc-role": "master"
+        })
 
         assert_xml_equal(
             env.get_cib_xml(),

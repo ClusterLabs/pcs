@@ -33,20 +33,18 @@ class PrepareOptionsPlainTest(TestCase):
                 'ticket': 'ticket_key'
             },
             self.prepare(
-                {"loss-policy": "fence"},
+                {"loss-policy": "fence", "rsc-role": "master"},
                 "ticket_key",
                 "resourceA",
-                "master"
             )
         )
 
     def test_refuse_unknown_attributes(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"unknown": "nonsense"},
+                {"unknown": "nonsense", "rsc-role": "master"},
                 "ticket_key",
                 "resourceA",
-                "master"
             ),
             (
                 severities.ERROR,
@@ -61,7 +59,7 @@ class PrepareOptionsPlainTest(TestCase):
     def test_refuse_bad_role(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"id": "id"}, "ticket_key", "resourceA", "bad_role"
+                {"id": "id", "rsc-role": "bad_role"}, "ticket_key", "resourceA"
             ),
             (
                 severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
@@ -81,7 +79,6 @@ class PrepareOptionsPlainTest(TestCase):
                 { "loss-policy": "unknown", "ticket": "T", "id": "id"},
                 "ticket_key",
                 "resourceA",
-                "master"
             ),
             (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'fence, stop, freeze, demote',
@@ -94,28 +91,26 @@ class PrepareOptionsPlainTest(TestCase):
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
     def test_complete_id(self, mock_create_id, _):
         mock_create_id.return_value = "generated_id"
-        options = {"loss-policy": "freeze", "ticket": "T"}
+        options = {"loss-policy": "freeze", "ticket": "T", "rsc-role": "Master"}
         ticket_key = "ticket_key"
         resource_id = "resourceA"
-        resource_role = "Master"
         expected_options = options.copy()
         expected_options.update({
             "id": "generated_id",
             "rsc": resource_id,
-            "rsc-role": resource_role,
+            "rsc-role": "Master",
             "ticket": ticket_key,
         })
         self.assertEqual(expected_options, self.prepare(
             options,
             ticket_key,
             resource_id,
-            resource_role,
         ))
         mock_create_id.assert_called_once_with(
             self.cib,
             ticket_key,
             resource_id,
-            resource_role,
+            "Master",
         )
 
 

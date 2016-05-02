@@ -26,7 +26,7 @@ create_with_set = partial(
 )
 
 def create(
-    env, ticket_key, resource_id, resource_role, options,
+    env, ticket_key, resource_id, options,
     autocorrection_allowed=False,
     resource_in_clone_alowed=False,
     duplication_alowed=False,
@@ -40,7 +40,6 @@ def create(
         constraint.find_valid_resource_id(
             cib, autocorrection_allowed, resource_in_clone_alowed, resource_id
         ),
-        resource_role
     )
 
     constraint_section = get_constraints(cib)
