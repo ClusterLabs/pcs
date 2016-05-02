@@ -39,6 +39,23 @@ class PrepareOptionsPlainTest(TestCase):
             )
         )
 
+    @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
+    def test_does_not_include_role_if_not_presented(self, mock_create_id, _):
+        mock_create_id.return_value = "generated_id"
+        self.assertEqual(
+            {
+                'id': 'generated_id',
+                'loss-policy': 'fence',
+                'rsc': 'resourceA',
+                'ticket': 'ticket_key'
+            },
+            self.prepare(
+                {"loss-policy": "fence", "rsc-role": ""},
+                "ticket_key",
+                "resourceA",
+            )
+        )
+
     def test_refuse_unknown_attributes(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
@@ -72,6 +89,27 @@ class PrepareOptionsPlainTest(TestCase):
                 }
             ),
         )
+
+    def test_refuse_missing_ticket(self, _):
+        assert_raise_library_error(
+            lambda: self.prepare(
+                {"id": "id", "rsc-role": "master"}, "", "resourceA"
+            ),
+            (severities.ERROR, error_codes.REQUIRED_OPTION_IS_MISSING, {
+                'name': 'ticket'
+            }),
+        )
+
+    def test_refuse_missing_resource_id(self, _):
+        assert_raise_library_error(
+            lambda: self.prepare(
+                {"id": "id", "rsc-role": "master"}, "ticket_key", ""
+            ),
+            (severities.ERROR, error_codes.REQUIRED_OPTION_IS_MISSING, {
+                'name': 'rsc'
+            }),
+        )
+
 
     def test_refuse_unknown_lost_policy(self, mock_check_new_id_applicable):
         assert_raise_library_error(

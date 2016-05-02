@@ -69,19 +69,22 @@ def prepare_options_plain(cib, options, ticket, resource_id):
         report.append(reports.required_option_is_missing('ticket'))
     options["ticket"] = ticket
 
-    if not ticket:
+    if not resource_id:
         report.append(reports.required_option_is_missing('rsc'))
     options["rsc"] = resource_id
 
     if "rsc-role" in options:
-        resource_role = options["rsc-role"].lower().capitalize()
-        if resource_role not in ATTRIB_PLAIN["rsc-role"]:
-            report.append(reports.invalid_option_value(
-                ATTRIB_PLAIN["rsc-role"],
-                'rsc-role',
-                options["rsc-role"]
-            ))
-        options["rsc-role"] = resource_role
+        if options["rsc-role"]:
+            resource_role = options["rsc-role"].lower().capitalize()
+            if resource_role not in ATTRIB_PLAIN["rsc-role"]:
+                report.append(reports.invalid_option_value(
+                    ATTRIB_PLAIN["rsc-role"],
+                    'rsc-role',
+                    options["rsc-role"]
+                ))
+            options["rsc-role"] = resource_role
+        else:
+            del(options["rsc-role"])
 
     if report:
         raise LibraryError(*report)
@@ -94,7 +97,7 @@ def prepare_options_plain(cib, options, ticket, resource_id):
             cib,
             options["ticket"],
             resource_id,
-            options["rsc-role"]
+            options["rsc-role"] if "rsc-role" in options else "no-role"
         ),
         partial(tools.check_new_id_applicable, cib, DESCRIPTION)
     )
