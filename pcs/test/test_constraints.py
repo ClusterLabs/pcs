@@ -2419,7 +2419,7 @@ Error: id 'id1' is already in use, please specify another one
             "constraint colocation set D1 D2 setoptions id=3id"
         )
         ac(output, """\
-Error: invalid constraint colocation '3id', '3' is not a valid first character for a constraint colocation
+Error: invalid constraint id '3id', '3' is not a valid first character for a constraint id
 """)
         self.assertEqual(1, returnVal)
 
@@ -2451,7 +2451,7 @@ Error: id3 already exists
             "constraint order set D1 D2 setoptions id=5id"
         )
         ac(output, """\
-Error: invalid constraint order '5id', '5' is not a valid first character for a constraint order
+Error: invalid constraint id '5id', '5' is not a valid first character for a constraint id
 """)
         self.assertEqual(1, returnVal)
 
@@ -2596,6 +2596,11 @@ class TicketCreateWithSet(ConstraintBaseTest):
 
     def test_can_skip_loss_policy(self):
         self.assert_pcs_success('constraint ticket set A B setoptions ticket=T')
+        self.assert_pcs_success('constraint ticket show', stdout_full=[
+            "Ticket Constraints:",
+            "  Resource Sets:",
+            "    set A B setoptions ticket=T",
+        ])
 
     def test_refuse_bad_loss_policy(self):
         self.assert_pcs_fail(
@@ -2620,6 +2625,10 @@ class TicketAdd(ConstraintBaseTest):
         self.assert_pcs_success(
             'constraint ticket add T master A loss-policy=fence'
         )
+        self.assert_pcs_success('constraint ticket show', stdout_full=[
+            "Ticket Constraints:",
+            "  Master A loss-policy=fence ticket=T",
+        ])
 
     def test_refuse_noexistent_resource_id(self):
         self.assert_pcs_fail(
@@ -2644,6 +2653,19 @@ class TicketAdd(ConstraintBaseTest):
                 '  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)'
             ]
         )
+
+    def test_accept_duplicit_ticket_with_force(self):
+        self.assert_pcs_success(
+            'constraint ticket add T master A loss-policy=fence'
+        )
+        self.assert_pcs_success(
+            'constraint ticket add T master A loss-policy=fence --force'
+        )
+        self.assert_pcs_success('constraint ticket show', stdout_full=[
+            "Ticket Constraints:",
+            "  Master A loss-policy=fence ticket=T",
+            "  Master A loss-policy=fence ticket=T",
+        ])
 
 class TicketShow(ConstraintBaseTest):
     def test_show_set(self):

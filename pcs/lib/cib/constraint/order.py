@@ -14,7 +14,7 @@ from pcs.lib.errors import LibraryError
 
 
 TAG_NAME = "rsc_order"
-DESCRIPTION = "constraint order"
+DESCRIPTION = "constraint id"
 ATTRIB = {
     "symmetrical": ("true", "false"),
     "kind": ("Optional", "Mandatory", "Serialize"),

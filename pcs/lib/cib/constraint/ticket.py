@@ -15,7 +15,7 @@ from pcs.lib.cib import tools
 from pcs.lib.errors import LibraryError
 
 TAG_NAME = 'rsc_ticket'
-DESCRIPTION = "constraint ticket"
+DESCRIPTION = "constraint id"
 ATTRIB = {
     "loss-policy": ("fence", "stop", "freeze", "demote"),
     "ticket": None,

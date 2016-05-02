@@ -14,7 +14,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_values import is_score_value, SCORE_INFINITY
 
 TAG_NAME = 'rsc_colocation'
-DESCRIPTION = "constraint colocation"
+DESCRIPTION = "constraint id"
 SCORE_NAMES = ("score", "score-attribute", "score-attribute-mangle")
 
 def prepare_options_with_set(cib, options, resource_set_list):
