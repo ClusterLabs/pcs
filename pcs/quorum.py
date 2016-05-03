@@ -59,6 +59,10 @@ def quorum_device_cmd(argv):
             raise CmdLineInputError()
     except ModelSpecifiedMoreThanOnce:
         utils.err("Model can be specified only once")
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "quorum", "device {0}".format(sub_cmd)
+        )
 
 def quorum_config_cmd(argv):
     if argv:
