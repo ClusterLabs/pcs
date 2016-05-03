@@ -35,7 +35,7 @@ def create(
 ):
     """
     create ticket constraint
-    strint ticket_key ticket for constraining resource
+    string ticket_key ticket for constraining resource
     dict options desired constraint attributes
     bool resource_in_clone_alowed flag for allowing to reference id which is
         in tag clone or master
