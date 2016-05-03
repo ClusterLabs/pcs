@@ -42,7 +42,7 @@ def find_valid_resource_id(cib, can_repair_to_clone, in_clone_allowed, id):
     if in_clone_allowed:
         return resource_element.attrib["id"]
 
-    raise LibraryError(reports.resource_for_constraint_is_multiplicable(
+    raise LibraryError(reports.resource_for_constraint_is_multiinstance(
         resource_element.attrib["id"], clone.tag, clone.attrib["id"]
     ))
 

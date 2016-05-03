@@ -17,7 +17,7 @@ def required_option_is_missing(name):
         },
     )
 
-def resource_for_constraint_is_multiplicable(
+def resource_for_constraint_is_multiinstance(
     resource_id, parent_type, parent_id
 ):
     template = (
@@ -31,7 +31,7 @@ def resource_for_constraint_is_multiplicable(
         )
 
     return ReportItem.error(
-        error_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIPLICABLE,
+        error_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
         template,
         forceable=True,
         info={

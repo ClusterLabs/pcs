@@ -72,7 +72,7 @@ class FindValidResourceId(TestCase):
             lambda: self.find(id="resourceA"),
             (
                 severities.ERROR,
-                error_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIPLICABLE,
+                error_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
                 {
                     "resource_id": "resourceA",
                     "parent_type": "clone",
