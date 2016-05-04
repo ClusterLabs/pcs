@@ -235,7 +235,7 @@ class AddDeviceTest(TestCase, CmanMixin):
     def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
         lib_env = LibraryEnvironment(self.mock_logger)
         self.assert_disabled_on_cman(
-            lambda: lib.add_device(lib_env, "network", {"host": "10.0.0.1"}, {})
+            lambda: lib.add_device(lib_env, "net", {"host": "127.0.0.1"}, {})
         )
         mock_get_corosync.assert_not_called()
         mock_push_corosync.assert_not_called()
@@ -251,10 +251,22 @@ class AddDeviceTest(TestCase, CmanMixin):
             corosync_conf_data=original_conf
         )
 
-        lib.add_device(lib_env, "bad model", {}, {})
+        assert_raise_library_error(
+            lambda: lib.add_device(lib_env, "bad model", {}, {}),
+            (
+                severity.ERROR,
+                error_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "model",
+                    "option_value": "bad model",
+                    "allowed_values_raw": ("net", ),
+                },
+                True
+            )
+        )
 
         self.assertEqual(1, mock_get_corosync.call_count)
-        self.assertEqual(1, mock_push_corosync.call_count)
+        self.assertEqual(0, mock_push_corosync.call_count)
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_success(self, mock_get_corosync, mock_push_corosync):
@@ -264,9 +276,9 @@ class AddDeviceTest(TestCase, CmanMixin):
 
         lib.add_device(
             lib_env,
-            "network",
+            "net",
             {"host": "127.0.0.1"},
-            {"option": "value"}
+            {"timeout": "12345"}
         )
 
         mock_push_corosync.assert_called_once_with(
@@ -275,10 +287,10 @@ class AddDeviceTest(TestCase, CmanMixin):
                 """provider: corosync_votequorum
 
     device {
-        option: value
-        model: network
+        timeout: 12345
+        model: net
 
-        network {
+        net {
             host: 127.0.0.1
         }
     }
@@ -411,14 +423,14 @@ class UpdateDeviceTest(TestCase, CmanMixin):
         lib.update_device(
             lib_env,
             {"host": "127.0.0.2"},
-            {"option": "new_value"}
+            {"timeout": "12345"}
         )
 
         mock_push_corosync.assert_called_once_with(
             original_conf
                 .replace("host: 127.0.0.1", "host: 127.0.0.2")
                 .replace(
-                    "model: network",
-                    "model: network\n        option: new_value"
+                    "model: net",
+                    "model: net\n        timeout: 12345"
                 )
         )

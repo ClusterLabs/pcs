@@ -46,7 +46,7 @@ class QuorumConfigTest(TestBase):
             """\
 Options:
 Device:
- Model: network
+ Model: net
   host: 127.0.0.1
 """
         )
@@ -109,42 +109,42 @@ class DeviceAddTest(TestBase):
 
     def test_more_models(self):
         self.assert_pcs_fail(
-            "quorum device add model network host=127.0.0.1 model disk",
+            "quorum device add model net host=127.0.0.1 model disk",
             "Error: Model can be specified only once\n"
         )
 
     def test_device_already_set(self):
         self.fixture_conf_qdevice()
         self.assert_pcs_fail(
-            "quorum device add model network host=127.0.0.1",
+            "quorum device add model net host=127.0.0.1",
             "Error: quorum device is already defined\n"
         )
 
     def test_success_model_only(self):
         self.assert_pcs_success(
-            "quorum device add model network host=127.0.0.1"
+            "quorum device add model net host=127.0.0.1"
         )
         self.assert_pcs_success(
             "quorum config",
             """\
 Options:
 Device:
- Model: network
+ Model: net
   host: 127.0.0.1
 """
         )
 
     def test_succes_all_options(self):
         self.assert_pcs_success(
-            "quorum device add option=value model network host=127.0.0.1"
+            "quorum device add timeout=12345 model net host=127.0.0.1"
         )
         self.assert_pcs_success(
             "quorum config",
             """\
 Options:
 Device:
- option: value
- Model: network
+ timeout: 12345
+ Model: net
   host: 127.0.0.1
 """
         )
@@ -184,15 +184,15 @@ class DeviceUpdateTest(TestBase):
     def test_generic_options_change(self):
         self.fixture_conf_qdevice()
         self.assert_pcs_success(
-            "quorum device update option=new_value"
+            "quorum device update timeout=12345"
         )
         self.assert_pcs_success(
             "quorum config",
             """\
 Options:
 Device:
- option: new_value
- Model: network
+ timeout: 12345
+ Model: net
   host: 127.0.0.1
 """
         )
@@ -207,7 +207,7 @@ Device:
             """\
 Options:
 Device:
- Model: network
+ Model: net
   host: 127.0.0.2
 """
         )
@@ -215,15 +215,15 @@ Device:
     def test_both_options_change(self):
         self.fixture_conf_qdevice()
         self.assert_pcs_success(
-            "quorum device update option=new_value model host=127.0.0.2 port=1",
+            "quorum device update timeout=12345 model host=127.0.0.2 port=1",
         )
         self.assert_pcs_success(
             "quorum config",
             """\
 Options:
 Device:
- option: new_value
- Model: network
+ timeout: 12345
+ Model: net
   host: 127.0.0.2
   port: 1
 """
@@ -252,9 +252,9 @@ class PrepareDeviceOptionsTest(TestCase):
     def test_all_set(self):
         self.assertEqual(
             quorum_cmd.prepare_device_options([
-                "a=A", "b=B", "model", "network", "c=C", "d=D"
+                "a=A", "b=B", "model", "net", "c=C", "d=D"
             ]),
-            ("network", {"c": "C", "d": "D"}, {"a": "A", "b": "B"})
+            ("net", {"c": "C", "d": "D"}, {"a": "A", "b": "B"})
         )
 
     def test_missing_model_value(self):
@@ -298,16 +298,16 @@ class PrepareDeviceOptionsTest(TestCase):
     def test_missing_value(self):
         self.assertEqual(
             quorum_cmd.prepare_device_options([
-                "a=A", "b=", "model", "network", "c=", "d=D"
+                "a=A", "b=", "model", "net", "c=", "d=D"
             ]),
-            ("network", {"c": "", "d": "D"}, {"a": "A", "b": ""})
+            ("net", {"c": "", "d": "D"}, {"a": "A", "b": ""})
         )
 
     def test_mising_equals(self):
         self.assertRaises(
             CmdLineInputError,
             lambda: quorum_cmd.prepare_device_options([
-                "a", "b=B", "model", "network", "c=C", "d=D"
+                "a", "b=B", "model", "net", "c=C", "d=D"
             ])
         )
 
@@ -315,6 +315,6 @@ class PrepareDeviceOptionsTest(TestCase):
         self.assertRaises(
             CmdLineInputError,
             lambda: quorum_cmd.prepare_device_options([
-                "a=A", "b=B", "model", "network", "=C", "d=D"
+                "a=A", "b=B", "model", "net", "=C", "d=D"
             ])
         )

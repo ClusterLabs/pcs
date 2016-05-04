@@ -105,7 +105,7 @@ class ConfigFacade(object):
 
     def __validate_quorum_options(self, options):
         report = []
-        for name, value in options.items():
+        for name, value in sorted(options.items()):
 
             allowed_names = self.__class__.QUORUM_OPTIONS
             if name not in allowed_names:
@@ -136,7 +136,7 @@ class ConfigFacade(object):
                         info={
                             "option_name": name,
                             "option_value": value,
-                            "allowed_types_raw": ("integer", ),
+                            "allowed_values_raw": ("integer", ),
                             "allowed_values": "integer",
                         },
                     ))
@@ -177,8 +177,6 @@ class ConfigFacade(object):
         model = None
         model_options = {}
         generic_options = {}
-        # TODO filter options in output
-            # we're waiting for options specification
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 for name, value in device.get_attributes():
@@ -210,7 +208,11 @@ class ConfigFacade(object):
         report = (
             self.__validate_quorum_device_model(model)
             +
-            self.__validate_quorum_device_model_options(model, model_options)
+            self.__validate_quorum_device_model_options(
+                model,
+                model_options,
+                need_required=True
+            )
             +
             self.__validate_quorum_device_generic_options(generic_options)
         )
@@ -231,8 +233,6 @@ class ConfigFacade(object):
         for quorum in quorum_section_list:
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)
-        # TODO add default values for optional settings
-            # we're waiting for options specification
         # add new configuration
         quorum = quorum_section_list[-1]
         new_device = config_parser.Section("device")
@@ -242,6 +242,7 @@ class ConfigFacade(object):
         new_model = config_parser.Section(model)
         self.__set_section_options([new_model], model_options)
         new_device.add_section(new_model)
+        self.__update_two_node()
         self.__remove_empty_sections(self.config)
 
     def update_quorum_device(self, model_options, generic_options):
@@ -262,7 +263,11 @@ class ConfigFacade(object):
                 for dummy_name, value in device.get_attributes("model"):
                     model = value
         report = (
-            self.__validate_quorum_device_model_options(model, model_options)
+            self.__validate_quorum_device_model_options(
+                model,
+                model_options,
+                need_required=False
+            )
             +
             self.__validate_quorum_device_generic_options(generic_options)
         )
@@ -277,6 +282,7 @@ class ConfigFacade(object):
                 model_sections.extend(device.get_sections(model))
         self.__set_section_options(device_sections, generic_options)
         self.__set_section_options(model_sections, model_options)
+        self.__update_two_node()
         self.__remove_empty_sections(self.config)
 
     def remove_quorum_device(self):
@@ -295,35 +301,257 @@ class ConfigFacade(object):
         self.__remove_empty_sections(self.config)
 
     def __validate_quorum_device_model(self, model):
-        # TODO we're waiting for options specification
+        report = []
+
+        allowed_values = (
+            "net",
+        )
+        if model not in allowed_values:
+            report.append(ReportItem.error(
+                error_codes.INVALID_OPTION_VALUE,
+                "'{option_value}' is not a valid value for "
+                    + "{option_name}, use {allowed_values}"
+                ,
+                info={
+                    "option_name": "model",
+                    "option_value": model,
+                    "allowed_values_raw": allowed_values,
+                    "allowed_values": " or ".join(allowed_values),
+                },
+                forceable=True
+            ))
+
+        return report
+
+    def __validate_quorum_device_model_options(
+        self, model, model_options, need_required
+    ):
+        if model == "net":
+            return self.__validate_quorum_device_model_net_options(
+                model_options,
+                need_required
+            )
         return []
 
-    def __validate_quorum_device_model_options(self, model, model_options):
-        # TODO we're waiting for options specification
-        return []
+    def __validate_quorum_device_model_net_options(
+        self, model_options, need_required
+    ):
+        required_options = frozenset(["host"])
+        optional_options = frozenset([
+            "algorithm",
+            "connect_timeout",
+            "force_ip_version",
+            "port",
+            "tie_breaker",
+        ])
+        allowed_options = required_options | optional_options
+        model_options_names = frozenset(model_options.keys())
+        report = []
+
+        if need_required:
+            for missing in sorted(required_options - model_options_names):
+                report.append(ReportItem.error(
+                    error_codes.REQUIRED_OPTION_IS_MISSING,
+                    "required option '{name}' is missing",
+                    info={
+                        "name": missing,
+                    },
+                ))
+
+        for name, value in sorted(model_options.items()):
+            if name not in allowed_options:
+                report.append(ReportItem.error(
+                    error_codes.INVALID_OPTION,
+                    "invalid {type} option '{option}'"
+                        + ", allowed options are: {allowed}"
+                    ,
+                    info={
+                        "option": name,
+                        "type": "quorum device model",
+                        "allowed_raw": sorted(allowed_options),
+                        "allowed": " or ".join(sorted(allowed_options)),
+                    },
+                    forceable=True
+                ))
+                continue
+
+            if value == "":
+                # do not allow to remove required options
+                if name in required_options:
+                    report.append(ReportItem.error(
+                        error_codes.REQUIRED_OPTION_IS_MISSING,
+                        "required option '{name}' is missing",
+                        info={
+                            "name": name,
+                        },
+                    ))
+                else:
+                    continue
+
+            if name == "algorithm":
+                allowed_algorithms = ("2nodelms", "ffsplit", "lms")
+                if value not in allowed_algorithms:
+                    report.append(ReportItem.error(
+                        error_codes.INVALID_OPTION_VALUE,
+                        "'{option_value}' is not a valid value for "
+                            + "{option_name}, use {allowed_values}"
+                        ,
+                        info={
+                            "option_name": "algorithm",
+                            "option_value": value,
+                            "allowed_values_raw": allowed_algorithms,
+                            "allowed_values": " or ".join(allowed_algorithms),
+                        },
+                        forceable=True
+                    ))
+
+            if name == "connect_timeout":
+                minimum, maximum = 1000, 2*60*1000
+                if not (value.isdigit() and minimum <= int(value) <= maximum):
+                    min_max = "{min}-{max}".format(min=minimum, max=maximum)
+                    report.append(ReportItem.error(
+                        error_codes.INVALID_OPTION_VALUE,
+                        "'{option_value}' is not a valid value for "
+                            + "{option_name}, use {allowed_values}"
+                        ,
+                        info={
+                            "option_name": "connect_timeout",
+                            "option_value": value,
+                            "allowed_values_raw": (min_max, ),
+                            "allowed_values": min_max,
+                        },
+                        forceable=True
+                    ))
+
+            if name == "force_ip_version":
+                allowed_ip_version = ("0", "4", "6")
+                if value not in allowed_ip_version:
+                    report.append(ReportItem.error(
+                        error_codes.INVALID_OPTION_VALUE,
+                        "'{option_value}' is not a valid value for "
+                            + "{option_name}, use {allowed_values}"
+                        ,
+                        info={
+                            "option_name": "force_ip_version",
+                            "option_value": value,
+                            "allowed_values_raw": allowed_ip_version,
+                            "allowed_values": " or ".join(allowed_ip_version),
+                        },
+                        forceable=True
+                    ))
+
+            if name == "port":
+                minimum, maximum = 1, 65535
+                if not (value.isdigit() and minimum <= int(value) <= maximum):
+                    min_max = "{min}-{max}".format(min=minimum, max=maximum)
+                    report.append(ReportItem.error(
+                        error_codes.INVALID_OPTION_VALUE,
+                        "'{option_value}' is not a valid value for "
+                            + "{option_name}, use {allowed_values}"
+                        ,
+                        info={
+                            "option_name": "port",
+                            "option_value": value,
+                            "allowed_values_raw": (min_max, ),
+                            "allowed_values": min_max,
+                        },
+                        forceable=True
+                    ))
+
+            if name == "tie_breaker":
+                node_ids = [node.id for node in self.get_nodes()]
+                allowed_nonid = ["lowest", "highest"]
+                if value not in allowed_nonid + node_ids:
+                    allowed_values = tuple(allowed_nonid + ["valid node id"])
+                    report.append(ReportItem.error(
+                        error_codes.INVALID_OPTION_VALUE,
+                        "'{option_value}' is not a valid value for "
+                            + "{option_name}, use {allowed_values}"
+                        ,
+                        info={
+                            "option_name": "tie_breaker",
+                            "option_value": value,
+                            "allowed_values_raw": tuple(allowed_values),
+                            "allowed_values": " or ".join(allowed_values),
+                        },
+                        forceable=True
+                    ))
+
+        return report
 
     def __validate_quorum_device_generic_options(self, generic_options):
-        # TODO we're waiting for options specification
-        return []
+        optional_options = frozenset([
+            "sync_timeout",
+            "timeout",
+        ])
+        allowed_options = optional_options
+        report = []
+
+        for name, value in sorted(generic_options.items()):
+            if name not in allowed_options:
+                report.append(ReportItem.error(
+                    error_codes.INVALID_OPTION,
+                    "invalid {type} option '{option}'"
+                        + ", allowed options are: {allowed}"
+                    ,
+                    info={
+                        "option": name,
+                        "type": "quorum device",
+                        "allowed_raw": sorted(allowed_options),
+                        "allowed": " or ".join(sorted(allowed_options)),
+                    },
+                    # model is never allowed in generic options, it is passed
+                    # in its own argument
+                    forceable=(name != "model")
+                ))
+                continue
+
+            if value == "":
+                continue
+
+            if not value.isdigit():
+                report.append(ReportItem.error(
+                    error_codes.INVALID_OPTION_VALUE,
+                    "'{option_value}' is not a valid value for "
+                        + "{option_name}, use {allowed_values}"
+                    ,
+                    info={
+                        "option_name": name,
+                        "option_value": value,
+                        "allowed_values_raw": ("integer", ),
+                        "allowed_values": "integer",
+                    },
+                    forceable=True
+                ))
+
+        return report
 
     def __update_two_node(self):
+        # get relevant status
+        has_quorum_device = self.has_quorum_device()
+        has_two_nodes = len(self.get_nodes()) == 2
         auto_tie_breaker = False
         for quorum in self.config.get_sections("quorum"):
             for attr in quorum.get_attributes("auto_tie_breaker"):
                 auto_tie_breaker = attr[1] != "0"
-
-        if (
-            len(self.get_nodes()) == 2
-            and
-            not auto_tie_breaker
-            and
-            not self.has_quorum_device()
-        ):
+        # update two_node
+        if has_two_nodes and not auto_tie_breaker and not has_quorum_device:
             quorum_section_list = self.__ensure_section(self.config, "quorum")
             self.__set_section_options(quorum_section_list, {"two_node": "1"})
         else:
             for quorum in self.config.get_sections("quorum"):
                 quorum.del_attributes_by_name("two_node")
+        # update qdevice algorithm "lms" vs "2nodelms"
+        for quorum in self.config.get_sections("quorum"):
+            for device in quorum.get_sections("device"):
+                for net in device.get_sections("net"):
+                    algorithm = None
+                    for dummy_name, value in net.get_attributes("algorithm"):
+                        algorithm = value
+                    if algorithm == "lms" and has_two_nodes:
+                        net.set_attribute("algorithm", "2nodelms")
+                    elif algorithm == "2nodelms" and not has_two_nodes:
+                        net.set_attribute("algorithm", "lms")
 
     def __set_section_options(self, section_list, options):
         for section in section_list[:-1]:
