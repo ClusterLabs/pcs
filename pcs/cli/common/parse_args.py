@@ -15,7 +15,7 @@ def split_list(arg_list, separator):
 
 def prepare_options(cmdline_args):
     """return dictionary of options from comandline key=value args"""
-    options = {}
+    options = dict()
     for arg in cmdline_args:
         if "=" not in arg:
             raise CmdLineInputError("missing value of '{0}' option".format(arg))

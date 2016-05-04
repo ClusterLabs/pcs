@@ -14,9 +14,6 @@ from pcs.test.tools.misc import (
 )
 from pcs.test.tools.pcs_runner import PcsRunner
 
-from pcs import quorum as quorum_cmd
-from pcs.cli.common.errors import CmdLineInputError
-
 
 coro_conf = rc("corosync.conf")
 coro_qdevice_conf = rc("corosync-3nodes-qdevice.conf")
@@ -98,19 +95,25 @@ class DeviceAddTest(TestBase):
     def test_no_model_keyword(self):
         self.assert_pcs_fail(
             "quorum device add option=value host=127.0.0.1",
-            "Error: missing value of 'model' option\n"
+            stdout_start="\nUsage: pcs quorum <command>\n    device add "
         )
 
     def test_no_model_value(self):
         self.assert_pcs_fail(
             "quorum device add option=value model host=127.0.0.1",
-            "Error: missing value of 'model' option\n"
+            stdout_start="\nUsage: pcs quorum <command>\n    device add "
         )
 
     def test_more_models(self):
         self.assert_pcs_fail(
             "quorum device add model net host=127.0.0.1 model disk",
-            "Error: Model can be specified only once\n"
+            stdout_start="\nUsage: pcs quorum <command>\n    device add "
+        )
+
+    def test_model_in_options(self):
+        self.assert_pcs_fail(
+            "quorum device add model=disk model net host=127.0.0.1",
+            "Error: Model cannot be specified in generic options\n"
         )
 
     def test_device_already_set(self):
@@ -173,6 +176,12 @@ class DeviceRemoveTest(TestBase):
             "Options:\n"
         )
 
+    def test_bad_options(self):
+        self.assert_pcs_fail(
+            "quorum device remove net",
+            stdout_start="\nUsage: pcs quorum <command>\n    device remove\n"
+        )
+
 
 class DeviceUpdateTest(TestBase):
     def test_no_device(self):
@@ -183,9 +192,7 @@ class DeviceUpdateTest(TestBase):
 
     def test_generic_options_change(self):
         self.fixture_conf_qdevice()
-        self.assert_pcs_success(
-            "quorum device update timeout=12345"
-        )
+        self.assert_pcs_success("quorum device update timeout=12345")
         self.assert_pcs_success(
             "quorum config",
             """\
@@ -199,9 +206,7 @@ Device:
 
     def test_model_options_change(self):
         self.fixture_conf_qdevice()
-        self.assert_pcs_success(
-            "quorum device update model host=127.0.0.2"
-        )
+        self.assert_pcs_success("quorum device update model host=127.0.0.2")
         self.assert_pcs_success(
             "quorum config",
             """\
@@ -215,7 +220,7 @@ Device:
     def test_both_options_change(self):
         self.fixture_conf_qdevice()
         self.assert_pcs_success(
-            "quorum device update timeout=12345 model host=127.0.0.2 port=1",
+            "quorum device update timeout=12345 model host=127.0.0.2 port=1"
         )
         self.assert_pcs_success(
             "quorum config",
@@ -232,89 +237,11 @@ Device:
     def test_more_models(self):
         self.assert_pcs_fail(
             "quorum device update model host=127.0.0.2 model port=1",
-            "Error: Model can be specified only once\n"
+            stdout_start="\nUsage: pcs quorum <command>\n    device update "
         )
 
-
-class PrepareDeviceOptionsTest(TestCase):
-    def test_empty(self):
-        self.assertEqual(
-            quorum_cmd.prepare_device_options([]),
-            (None, {}, {})
-        )
-
-    def test_only_generic(self):
-        self.assertEqual(
-            quorum_cmd.prepare_device_options(["a=A", "b=B"]),
-            (None, {}, {"a": "A", "b": "B"})
-        )
-
-    def test_all_set(self):
-        self.assertEqual(
-            quorum_cmd.prepare_device_options([
-                "a=A", "b=B", "model", "net", "c=C", "d=D"
-            ]),
-            ("net", {"c": "C", "d": "D"}, {"a": "A", "b": "B"})
-        )
-
-    def test_missing_model_value(self):
-        self.assertEqual(
-            quorum_cmd.prepare_device_options([
-                "a=A", "b=B", "model", "c=C", "d=D"
-            ]),
-            (None, {"c": "C", "d": "D"}, {"a": "A", "b": "B"})
-        )
-
-    def test_no_model_value_nor_opts(self):
-        self.assertEqual(
-            quorum_cmd.prepare_device_options(["a=A", "b=B", "model"]),
-            (None, {}, {"a": "A", "b": "B"})
-        )
-
-    def test_model_2times(self):
-        self.assertEqual(
-            quorum_cmd.prepare_device_options([
-                "a=A", "b=B", "model", "model", "c=C", "d=D"
-            ]),
-            ("model", {"c": "C", "d": "D"}, {"a": "A", "b": "B"})
-        )
-
-    def test_model_3times(self):
-        self.assertRaises(
-            quorum_cmd.ModelSpecifiedMoreThanOnce,
-            lambda: quorum_cmd.prepare_device_options([
-                "a=A", "b=B", "model", "model", "model", "c=C", "d=D"
-            ])
-        )
-
-    def test_model_set_twice(self):
-        self.assertRaises(
-            quorum_cmd.ModelSpecifiedMoreThanOnce,
-            lambda: quorum_cmd.prepare_device_options([
-                "a=A", "model", "modelA", "c=C", "model", "modelB", "d=D"
-            ])
-        )
-
-    def test_missing_value(self):
-        self.assertEqual(
-            quorum_cmd.prepare_device_options([
-                "a=A", "b=", "model", "net", "c=", "d=D"
-            ]),
-            ("net", {"c": "", "d": "D"}, {"a": "A", "b": ""})
-        )
-
-    def test_mising_equals(self):
-        self.assertRaises(
-            CmdLineInputError,
-            lambda: quorum_cmd.prepare_device_options([
-                "a", "b=B", "model", "net", "c=C", "d=D"
-            ])
-        )
-
-    def test_mising_option_name(self):
-        self.assertRaises(
-            CmdLineInputError,
-            lambda: quorum_cmd.prepare_device_options([
-                "a=A", "b=B", "model", "net", "=C", "d=D"
-            ])
+    def test_model_in_options(self):
+        self.assert_pcs_fail(
+            "quorum device update model=disk",
+            "Error: Model cannot be specified in generic options\n"
         )

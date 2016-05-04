@@ -1246,13 +1246,13 @@ Commands:
     config
         Show quorum configuration.
 
-    device add [options] model <device model> [model options]
+    device add [generic options] model <device model> [model options]
         Add quorum device to cluster.
 
     device remove
         Remove quorum device from cluster.
 
-    device update [options] [model <model options>]
+    device update [generic options] [model <model options>]
         Add/Change quorum device options.
 
     update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]

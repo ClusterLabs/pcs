@@ -12,12 +12,9 @@ from pcs import (
     utils,
 )
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import prepare_options
+import pcs.cli.common.parse_args as parse_args
 from pcs.lib.commands import quorum as lib_quorum
 from pcs.lib.errors import LibraryError
-
-class ModelSpecifiedMoreThanOnce(Exception):
-    pass
 
 
 def quorum_cmd(argv):
@@ -57,8 +54,6 @@ def quorum_device_cmd(argv):
             quorum_device_update_cmd(argv_next)
         else:
             raise CmdLineInputError()
-    except ModelSpecifiedMoreThanOnce:
-        utils.err("Model can be specified only once")
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(
             e, "quorum", "device {0}".format(sub_cmd)
@@ -97,9 +92,21 @@ def quorum_config_to_str(config, indent=""):
     return "\n".join(lines)
 
 def quorum_device_add_cmd(argv):
-    model, model_options, generic_options = prepare_device_options(argv)
-    if not model:
-        raise CmdLineInputError("missing value of 'model' option")
+    # we expect "model" keyword once, followed by the actual model value
+    options_lists = parse_args.split_list(argv, "model")
+    if len(options_lists) != 2:
+        raise CmdLineInputError()
+    # check if model value was specified
+    if not options_lists[1] or "=" in options_lists[1][0]:
+        raise CmdLineInputError()
+    generic_options = parse_args.prepare_options(options_lists[0])
+    model = options_lists[1][0]
+    model_options = parse_args.prepare_options(options_lists[1][1:])
+
+    if "model" in generic_options:
+        raise CmdLineInputError(
+            "Model cannot be specified in generic options"
+        )
 
     lib_env = utils.get_lib_env()
     lib_quorum.add_device(lib_env, model, model_options, generic_options)
@@ -122,9 +129,21 @@ def quorum_device_remove_cmd(argv):
         )
 
 def quorum_device_update_cmd(argv):
-    model, model_options, generic_options = prepare_device_options(argv)
-    if model:
+    # we expect "model" keyword once
+    options_lists = parse_args.split_list(argv, "model")
+    if len(options_lists) == 1:
+        generic_options = parse_args.prepare_options(options_lists[0])
+        model_options = dict()
+    elif len(options_lists) == 2:
+        generic_options = parse_args.prepare_options(options_lists[0])
+        model_options = parse_args.prepare_options(options_lists[1])
+    else:
         raise CmdLineInputError()
+
+    if "model" in generic_options:
+        raise CmdLineInputError(
+            "Model cannot be specified in generic options"
+        )
 
     lib_env = utils.get_lib_env()
     lib_quorum.update_device(lib_env, model_options, generic_options)
@@ -135,7 +154,7 @@ def quorum_device_update_cmd(argv):
         )
 
 def quorum_update_cmd(argv):
-    options = prepare_options(argv)
+    options = parse_args.prepare_options(argv)
     if not options:
         raise CmdLineInputError()
 
@@ -146,31 +165,3 @@ def quorum_update_cmd(argv):
             lib_env.get_corosync_conf(),
             utils.pcs_options["--corosync_conf"]
         )
-
-def prepare_device_options(argv):
-    generic_argv = []
-    model_argv = []
-    model = None
-    in_model = False
-    in_model_options = False
-
-    for arg in argv:
-        if in_model:
-            if "=" in arg:
-                model_argv.append(arg)
-            else:
-                model = arg
-            in_model = False
-            in_model_options = True
-        elif arg.lower() == "model":
-            if in_model_options:
-                raise ModelSpecifiedMoreThanOnce()
-            in_model = True
-        elif in_model_options:
-            model_argv.append(arg)
-        else:
-            generic_argv.append(arg)
-
-    generic_options = prepare_options(generic_argv)
-    model_options = prepare_options(model_argv)
-    return model, model_options, generic_options
