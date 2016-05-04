@@ -77,7 +77,8 @@ class FindValidResourceId(TestCase):
                     "resource_id": "resourceA",
                     "parent_type": "clone",
                     "parent_id": "clone_id",
-                }
+                },
+                True
             ),
         )
 
@@ -238,10 +239,15 @@ class CheckIsWithoutDuplicationTest(TestCase):
                 are_duplicate=lambda e1, e2: True,
                 export_element=constraint.export_with_set,
             ),
-            (severities.ERROR, error_codes.DUPLICATE_CONSTRAINTS_EXIST, {
-                'constraint_info_list': ['exported_duplicate_element'],
-                'type': 'constraint_type'
-            }),
+            (
+                severities.ERROR,
+                error_codes.DUPLICATE_CONSTRAINTS_EXIST,
+                {
+                    'constraint_info_list': ['exported_duplicate_element'],
+                    'type': 'constraint_type'
+                },
+                True
+            ),
         )
     def test_success_when_no_duplication_found(self, export_with_set):
         export_with_set.return_value = "exported_duplicate_element"

@@ -107,12 +107,14 @@ def assert_report_item_equal(real_report_item, report_item_info):
                 repr((
                     report_item_info[0],
                     report_item_info[1],
-                    report_item_info[2]
+                    report_item_info[2],
+                    False if len(report_item_info) < 4 else report_item_info[3]
                 )),
                 repr((
                     real_report_item.severity,
                     real_report_item.code,
-                    real_report_item.info
+                    real_report_item.info,
+                    real_report_item.forceable
                 ))
             )
         )
@@ -148,7 +150,10 @@ def __find_report_info(report_info_list, report_item):
         "Unexpected report given: \n{0} \nexpected reports are: \n{1}"
         .format(
             repr((
-                report_item.severity, report_item.code, report_item.info
+                report_item.severity,
+                report_item.code,
+                report_item.info,
+                report_item.forceable
             )),
             "\n".join(map(repr, report_info_list))
         )
@@ -165,6 +170,12 @@ def __report_item_equal(real_report_item, report_item_info):
         all(
             (k in real_report_item.info and real_report_item.info[k] == v)
             for k, v in report_item_info[2].items()
+        )
+        and
+        (
+            real_report_item.forceable == (
+                False if len(report_item_info) < 4 else report_item_info[3]
+            )
         )
     )
 

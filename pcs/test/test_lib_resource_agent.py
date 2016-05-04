@@ -73,7 +73,8 @@ class GetParameterTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 
@@ -92,7 +93,8 @@ class GetParameterTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 
@@ -164,7 +166,8 @@ class GetAgentParametersTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 
@@ -181,7 +184,8 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": agent_name}
+                {"agent_name": agent_name},
+                True
             )
         )
 
@@ -198,7 +202,8 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": agent_name}
+                {"agent_name": agent_name},
+                True
             )
         )
 
@@ -215,7 +220,8 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": agent_name}
+                {"agent_name": agent_name},
+                True
             )
         )
 
@@ -233,7 +239,8 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": agent_name}
+                {"agent_name": agent_name},
+                True
             )
         )
 
@@ -254,7 +261,8 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": agent_name}
+                {"agent_name": agent_name},
+                True
             )
         )
 
@@ -295,7 +303,8 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
+                True
             )
         )
 
@@ -315,7 +324,8 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
+                True
             )
         )
 
@@ -335,7 +345,8 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
+                True
             )
         )
 
@@ -356,7 +367,8 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
+                True
             )
         )
 
@@ -382,7 +394,8 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)}
+                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
+                True
             )
         )
 
@@ -423,7 +436,8 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "nagios:" + agent}
+                {"agent_name": "nagios:" + agent},
+                True
             )
         )
 
@@ -436,7 +450,8 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "nagios:" + agent}
+                {"agent_name": "nagios:" + agent},
+                True
             )
         )
 
@@ -449,7 +464,8 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "nagios:" + agent}
+                {"agent_name": "nagios:" + agent},
+                True
             )
         )
 
@@ -475,7 +491,8 @@ class GetAgentDescTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 
@@ -575,7 +592,8 @@ class GetResourceAgentMetadata(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNSUPPORTED_RESOURCE_AGENT,
-                {}
+                {},
+                True
             )
         )
 
@@ -590,7 +608,8 @@ class GetResourceAgentMetadata(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNSUPPORTED_RESOURCE_AGENT,
-                {}
+                {},
+                True
             )
         )
 
@@ -673,7 +692,8 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {}
+                {},
+                True
             )
         )
         mock_runner.run.assert_called_once_with(
@@ -688,7 +708,8 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
         mock_runner.run.assert_called_once_with(
@@ -725,7 +746,8 @@ class GetActionTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 
@@ -736,7 +758,8 @@ class GetActionTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 
@@ -747,7 +770,8 @@ class GetActionTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 
@@ -791,7 +815,8 @@ class GetAgentActionsTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 
@@ -811,7 +836,8 @@ class GetAgentActionsTest(LibraryResourceTest):
             (
                 Severities.ERROR,
                 error_codes.INVALID_METADATA_FORMAT,
-                {}
+                {},
+                True
             )
         )
 

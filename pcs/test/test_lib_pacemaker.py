@@ -477,7 +477,8 @@ class ResourceCleanupTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 error_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
-                {}
+                {"threshold": 100},
+                True
             )
         )
 

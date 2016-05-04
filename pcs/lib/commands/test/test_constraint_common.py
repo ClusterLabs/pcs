@@ -80,7 +80,9 @@ class CreateWithSetTest(TestCase):
         self.create()
         self.env.push_cib.assert_called_once_with(self.cib)
         assert_raise_library_error(self.create, (
-            severities.ERROR, error_codes.DUPLICATE_CONSTRAINTS_EXIST, {
+            severities.ERROR,
+            error_codes.DUPLICATE_CONSTRAINTS_EXIST,
+            {
                 'type': 'rsc_some',
                 'constraint_info_list': [{
                     'options': {'symmetrical': 'true', 'id': 'some_id'},
@@ -95,7 +97,8 @@ class CreateWithSetTest(TestCase):
                         }
                     ],
                 }]
-            }
+            },
+            True
         ))
 
     def test_put_duplicate_constraint_when_duplication_allowed(self):
