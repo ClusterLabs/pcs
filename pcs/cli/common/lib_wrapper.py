@@ -11,6 +11,7 @@ import logging
 from pcs.lib.commands.constraint import colocation as constraint_colocation
 from pcs.lib.commands.constraint import order as constraint_order
 from pcs.lib.commands.constraint import ticket as constraint_ticket
+from pcs.lib.commands import quorum
 
 from pcs.lib.env import LibraryEnvironment
 
@@ -39,6 +40,8 @@ def bind(cli_env, run_library_command):
         #so we need reflect some changes to cli_env
         if not lib_env.is_cib_live:
             cli_env.cib_data = lib_env.get_cib_xml()
+        if not lib_env.is_corosync_conf_live:
+            cli_env.corosync_conf_data = lib_env.get_corosync_conf()
 
         return lib_call_result
     return run
@@ -72,6 +75,15 @@ def load_module(env, name):
             'set': constraint_ticket.create_with_set,
             'show': constraint_ticket.show,
             'add': constraint_ticket.create,
+        })
+
+    if name == "quorum":
+        return bind_all(env, {
+            "add_device": quorum.add_device,
+            "get_config": quorum.get_config,
+            "remove_device": quorum.remove_device,
+            "set_options": quorum.set_options,
+            "update_device": quorum.update_device,
         })
 
     raise Exception("No library part '{0}'".format(name))

@@ -2560,19 +2560,10 @@ def get_cli_env():
                 else:
                     groups = value.split(" ")
 
-    corosync_conf_data = None
-    if "--corosync_conf" in pcs_options:
-        conf = pcs_options["--corosync_conf"]
-        try:
-            corosync_conf_data = open(conf).read()
-        except IOError as e:
-            err("Unable to read %s: %s" % (conf, e.strerror))
-
     env = Env()
     env.user = user
     env.groups = groups
-    env.corosync_conf_data = corosync_conf_data
-    env.auth_tokens_getter=readTokens
+    env.auth_tokens_getter = readTokens
     return env
 
 def get_middleware_decorator():
@@ -2595,6 +2586,7 @@ def get_modificators():
         "full": "--full" in pcs_options,
         "autocorrect": "--autocorrect" in pcs_options,
         "force": "--force" in pcs_options,
+        "corosync_conf": pcs_options.get("--corosync_conf", None),
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):

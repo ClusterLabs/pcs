@@ -157,7 +157,7 @@ Operations Defaults:
 Cluster Properties:
 
 Quorum:
- Options:
+  Options:
 """)
         assert returnVal == 0
 

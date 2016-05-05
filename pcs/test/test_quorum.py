@@ -43,8 +43,8 @@ class QuorumConfigTest(TestBase):
             """\
 Options:
 Device:
- Model: net
-  host: 127.0.0.1
+  Model: net
+    host: 127.0.0.1
 """
         )
 
@@ -85,7 +85,7 @@ Options:
             "quorum config",
             """\
 Options:
- wait_for_all: 1
+  wait_for_all: 1
 """
         )
 
@@ -131,8 +131,8 @@ class DeviceAddTest(TestBase):
             """\
 Options:
 Device:
- Model: net
-  host: 127.0.0.1
+  Model: net
+    host: 127.0.0.1
 """
         )
 
@@ -145,9 +145,9 @@ Device:
             """\
 Options:
 Device:
- timeout: 12345
- Model: net
-  host: 127.0.0.1
+  timeout: 12345
+  Model: net
+    host: 127.0.0.1
 """
         )
 
@@ -212,9 +212,9 @@ class DeviceUpdateTest(TestBase):
             """\
 Options:
 Device:
- timeout: 12345
- Model: net
-  host: 127.0.0.1
+  timeout: 12345
+  Model: net
+    host: 127.0.0.1
 """
         )
 
@@ -226,8 +226,8 @@ Device:
             """\
 Options:
 Device:
- Model: net
-  host: 127.0.0.2
+  Model: net
+    host: 127.0.0.2
 """
         )
 
@@ -241,10 +241,10 @@ Device:
             """\
 Options:
 Device:
- timeout: 12345
- Model: net
-  host: 127.0.0.2
-  port: 1
+  timeout: 12345
+  Model: net
+    host: 127.0.0.2
+    port: 1
 """
         )
 

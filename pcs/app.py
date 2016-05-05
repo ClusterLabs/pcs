@@ -29,6 +29,7 @@ from pcs import (
 )
 
 from pcs.cli.common import completion
+from pcs.cli.common.lib_wrapper import Library
 
 
 usefile = False
@@ -180,7 +181,11 @@ def main(argv=None):
         "config": config.config_cmd,
         "pcsd": pcsd.pcsd_cmd,
         "node": node.node_cmd,
-        "quorum": quorum.quorum_cmd,
+        "quorum": lambda argv: quorum.quorum_cmd(
+            Library(utils.get_cli_env()),
+            argv,
+            utils.get_modificators()
+        ),
     }
     if command not in cmd_map:
         usage.main()

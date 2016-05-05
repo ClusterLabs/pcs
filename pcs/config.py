@@ -45,6 +45,7 @@ import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 import pcs.cli.constraint_ticket.command as ticket_command
 from pcs.cli.common.lib_wrapper import Library
+from pcs.cli.common.console_report import indent
 
 
 def config_cmd(argv):
@@ -99,7 +100,7 @@ def config_show(argv):
         print("Quorum:")
         try:
             config = lib_quorum.get_config(utils.get_lib_env())
-            print(quorum.quorum_config_to_str(config, indent=" "))
+            print("\n".join(indent(quorum.quorum_config_to_str(config))))
         except LibraryError as e:
             utils.process_library_reports(e.args)
 
