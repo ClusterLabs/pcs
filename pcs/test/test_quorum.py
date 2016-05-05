@@ -55,7 +55,6 @@ class QuorumUpdateCmdTest(TestBase):
             "quorum update",
             stdout_start="\nUsage: pcs quorum <command>\n    update "
         )
-        return
 
     def test_invalid_option(self):
         self.assert_pcs_fail(
@@ -153,7 +152,22 @@ Device:
         )
 
     def test_missing_required_options(self):
-        print("TODO implement {0}.{1}.test_missing_required_options".format(
+        self.assert_pcs_fail(
+            "quorum device add model net",
+            "Error: required option 'host' is missing\n"
+        )
+
+    def test_bad_options(self):
+        self.assert_pcs_fail(
+            "quorum device add a=b timeout=-1 model net host=127.0.0.1 port=x c=d",
+            """\
+Error: invalid quorum device model option 'c', allowed options are: algorithm or connect_timeout or force_ip_version or host or port or tie_breaker, use --force to override
+Error: 'x' is not a valid value for port, use 1-65535, use --force to override
+Error: invalid quorum device option 'a', allowed options are: sync_timeout or timeout, use --force to override
+Error: '-1' is not a valid value for timeout, use integer, use --force to override
+"""
+        )
+        print("TODO {0}.{1}.test_bad_options with --force".format(
             self.__module__,
             self.__class__.__name__
         ))
@@ -245,3 +259,26 @@ Device:
             "quorum device update model=disk",
             "Error: Model cannot be specified in generic options\n"
         )
+
+    def test_missing_required_options(self):
+        self.fixture_conf_qdevice()
+        self.assert_pcs_fail(
+            "quorum device update model host=",
+            "Error: required option 'host' is missing\n"
+        )
+
+    def test_bad_options(self):
+        self.fixture_conf_qdevice()
+        self.assert_pcs_fail(
+            "quorum device update a=b timeout=-1 model port=x c=d",
+            """\
+Error: invalid quorum device model option 'c', allowed options are: algorithm or connect_timeout or force_ip_version or host or port or tie_breaker, use --force to override
+Error: 'x' is not a valid value for port, use 1-65535, use --force to override
+Error: invalid quorum device option 'a', allowed options are: sync_timeout or timeout, use --force to override
+Error: '-1' is not a valid value for timeout, use integer, use --force to override
+"""
+        )
+        print("TODO {0}.{1}.test_bad_options with --force".format(
+            self.__module__,
+            self.__class__.__name__
+        ))
