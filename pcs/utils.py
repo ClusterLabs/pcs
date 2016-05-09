@@ -2575,6 +2575,11 @@ def get_middleware_decorator():
         ),
     )
 
+def get_middleware_corosync_conf_existing():
+    return middleware.corosync_conf_existing(
+        pcs_options.get("--corosync_conf", None)
+    )
+
 def get_modificators():
     #please keep in mind that this is not final implemetation
     #beside missing support of other possible options, cases may arise that can

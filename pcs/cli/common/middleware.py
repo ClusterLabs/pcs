@@ -30,9 +30,8 @@ def cib(use_local_cib, cib_content, write_cib):
             write_cib(lib.env.cib_data)
     return apply
 
-def corosync_conf_existing():
+def corosync_conf_existing(local_file_path):
     def apply(next_in_line, lib, argv, modificators):
-        local_file_path = modificators.get("corosync_conf", None)
         if local_file_path:
             try:
                 lib.env.corosync_conf_data = open(local_file_path).read()

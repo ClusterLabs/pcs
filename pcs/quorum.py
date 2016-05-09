@@ -19,7 +19,7 @@ from pcs.lib.errors import LibraryError
 
 def run_with_middleware(func, lib, argv, modificators):
     run = middleware.build(
-        middleware.corosync_conf_existing(),
+        utils.get_middleware_corosync_conf_existing(),
     )
     run(func, lib, argv, modificators)
 
