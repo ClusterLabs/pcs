@@ -29,7 +29,6 @@ from pcs import (
 )
 
 from pcs.cli.common import completion
-from pcs.cli.common.lib_wrapper import Library
 
 
 usefile = False
@@ -182,7 +181,7 @@ def main(argv=None):
         "pcsd": pcsd.pcsd_cmd,
         "node": node.node_cmd,
         "quorum": lambda argv: quorum.quorum_cmd(
-            Library(utils.get_cli_env()),
+            utils.get_library_wrapper(),
             argv,
             utils.get_modificators()
         ),

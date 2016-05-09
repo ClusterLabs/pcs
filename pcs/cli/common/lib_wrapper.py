@@ -4,7 +4,9 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
+from pcs.cli.common import middleware
 from collections import namedtuple
+from functools import partial
 import logging
 
 #from pcs.lib import commands does not work: "commands" is package
@@ -30,8 +32,8 @@ def cli_env_to_lib_env(cli_env):
         cli_env.auth_tokens_getter,
     )
 
-def bind(cli_env, run_library_command):
-    def run(*args, **kwargs):
+def bind(cli_env, run_with_middleware, run_library_command):
+    def run(cli_env, *args, **kwargs):
         lib_env = cli_env_to_lib_env(cli_env)
 
         lib_call_result = run_library_command(lib_env, *args, **kwargs)
@@ -44,53 +46,57 @@ def bind(cli_env, run_library_command):
             cli_env.corosync_conf_data = lib_env.get_corosync_conf()
 
         return lib_call_result
-    return run
+    return partial(run_with_middleware, run, cli_env)
 
-def bind_all(env, dictionary):
+def bind_all(env, run_with_middleware, dictionary):
     return wrapper(dict(
-        (exposed_fn, bind(env, library_fn))
+        (exposed_fn, bind(env, run_with_middleware, library_fn))
         for exposed_fn, library_fn in dictionary.items()
     ))
 
-def get_module(env, name):
+def get_module(env, middleware_factory, name):
     if name not in _CACHE:
-        _CACHE[name] = load_module(env, name)
+        _CACHE[name] = load_module(env, middleware_factory, name)
     return _CACHE[name]
 
-def load_module(env, name):
+
+def load_module(env, middleware_factory, name):
     if name == 'constraint_order':
-        return bind_all(env, {
+        return bind_all(env, middleware.build(middleware_factory.cib), {
             'set': constraint_order.create_with_set,
             'show': constraint_order.show,
         })
 
     if name == 'constraint_colocation':
-        return bind_all(env, {
+        return bind_all(env, middleware.build(middleware_factory.cib), {
             'set': constraint_colocation.create_with_set,
             'show': constraint_colocation.show,
         })
 
     if name == 'constraint_ticket':
-        return bind_all(env, {
+        return bind_all(env, middleware.build(middleware_factory.cib), {
             'set': constraint_ticket.create_with_set,
             'show': constraint_ticket.show,
             'add': constraint_ticket.create,
         })
 
     if name == "quorum":
-        return bind_all(env, {
-            "add_device": quorum.add_device,
-            "get_config": quorum.get_config,
-            "remove_device": quorum.remove_device,
-            "set_options": quorum.set_options,
-            "update_device": quorum.update_device,
-        })
+        return bind_all(
+            env, middleware.build(middleware_factory.corosync_conf_existing), {
+                "add_device": quorum.add_device,
+                "get_config": quorum.get_config,
+                "remove_device": quorum.remove_device,
+                "set_options": quorum.set_options,
+                "update_device": quorum.update_device,
+            }
+        )
 
     raise Exception("No library part '{0}'".format(name))
 
 class Library(object):
-    def __init__(self, env):
+    def __init__(self, env, middleware_factory):
         self.env = env
+        self.middleware_factory = middleware_factory
 
     def __getattr__(self, name):
-        return get_module(self.env, name)
+        return get_module(self.env, self.middleware_factory, name)

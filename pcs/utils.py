@@ -79,6 +79,7 @@ from pcs.lib.pacemaker_values import(
 )
 from pcs.cli.common import middleware
 from pcs.cli.common.env import Env
+from pcs.cli.common.lib_wrapper import Library
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -2566,19 +2567,21 @@ def get_cli_env():
     env.auth_tokens_getter = readTokens
     return env
 
-def get_middleware_decorator():
-    return middleware.build(
-        middleware.cib(
+def get_middleware_factory():
+    return middleware.create_middleware_factory(
+        cib=middleware.cib(
             usefile,
             get_cib() if usefile else None,
             replace_cib_configuration,
         ),
+        corosync_conf_existing=middleware.corosync_conf_existing(
+            pcs_options.get("--corosync_conf", None)
+        )
     )
 
-def get_middleware_corosync_conf_existing():
-    return middleware.corosync_conf_existing(
-        pcs_options.get("--corosync_conf", None)
-    )
+def get_library_wrapper():
+    return Library(get_cli_env(), get_middleware_factory())
+
 
 def get_modificators():
     #please keep in mind that this is not final implemetation

@@ -11,17 +11,10 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.cli.common import middleware
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
-
-def run_with_middleware(func, lib, argv, modificators):
-    run = middleware.build(
-        utils.get_middleware_corosync_conf_existing(),
-    )
-    run(func, lib, argv, modificators)
 
 def quorum_cmd(lib, argv, modificators):
     if len(argv) < 1:
@@ -33,11 +26,11 @@ def quorum_cmd(lib, argv, modificators):
         if sub_cmd == "help":
             usage.quorum(argv)
         elif sub_cmd == "config":
-            run_with_middleware(quorum_config_cmd, lib, argv_next, modificators)
+            quorum_config_cmd(lib, argv_next, modificators)
         elif sub_cmd == "device":
             quorum_device_cmd(lib, argv_next, modificators)
         elif sub_cmd == "update":
-            run_with_middleware(quorum_update_cmd, lib, argv_next, modificators)
+            quorum_update_cmd(lib, argv_next, modificators)
         else:
             raise CmdLineInputError()
     except LibraryError as e:
@@ -52,17 +45,11 @@ def quorum_device_cmd(lib, argv, modificators):
     sub_cmd, argv_next = argv[0], argv[1:]
     try:
         if sub_cmd == "add":
-            run_with_middleware(
-                quorum_device_add_cmd, lib, argv_next, modificators
-            )
+            quorum_device_add_cmd(lib, argv_next, modificators)
         elif sub_cmd == "remove":
-            run_with_middleware(
-                quorum_device_remove_cmd, lib, argv_next, modificators
-            )
+            quorum_device_remove_cmd(lib, argv_next, modificators)
         elif sub_cmd == "update":
-            run_with_middleware(
-                quorum_device_update_cmd, lib, argv_next, modificators
-            )
+            quorum_device_update_cmd(lib, argv_next, modificators)
         else:
             raise CmdLineInputError()
     except CmdLineInputError as e:

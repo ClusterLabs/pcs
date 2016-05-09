@@ -23,7 +23,6 @@ from pcs.cli import (
 )
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.lib_wrapper import Library
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.errors import LibraryError
@@ -38,8 +37,7 @@ OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 OPTIONS_KIND = order_attrib["kind"]
 
 def constraint_cmd(argv):
-    run_with_middleware = utils.get_middleware_decorator()
-    lib = Library(utils.get_cli_env())
+    lib = utils.get_library_wrapper()
     modificators = utils.get_modificators()
     if len(argv) == 0:
         argv = ["list"]
@@ -75,12 +73,7 @@ def constraint_cmd(argv):
 
         if (sub_cmd2 == "set"):
             try:
-                run_with_middleware(
-                    order_command.create_with_set,
-                    lib,
-                    argv,
-                    modificators
-                )
+                order_command.create_with_set(lib, argv, modificators)
             except CmdLineInputError as e:
                 utils.exit_on_cmdline_input_errror(e, "constraint", 'order set')
             except LibraryError as e:
@@ -88,12 +81,7 @@ def constraint_cmd(argv):
         elif (sub_cmd2 in ["remove","delete"]):
             order_rm(argv)
         elif (sub_cmd2 == "show"):
-            run_with_middleware(
-                order_command.show,
-                lib,
-                argv,
-                modificators
-            )
+            order_command.show(lib, argv, modificators)
         else:
             order_start([sub_cmd2] + argv)
     elif sub_cmd == "ticket":
@@ -108,12 +96,7 @@ def constraint_cmd(argv):
                 raise CmdLineInputError()
             usage_name = "ticket "+argv[0]
 
-            run_with_middleware(
-                command_map[argv[0]],
-                lib,
-                argv[1:],
-                modificators
-            )
+            command_map[argv[0]](lib, argv[1:], modificators)
         except LibraryError as e:
             utils.process_library_reports(e.args)
         except CmdLineInputError as e:
@@ -132,13 +115,13 @@ def constraint_cmd(argv):
         elif (sub_cmd2 == "set"):
             try:
 
-                run_with_middleware(colocation_command.create_with_set, lib, argv, modificators)
+                colocation_command.create_with_set(lib, argv, modificators)
             except LibraryError as e:
                 utils.process_library_reports(e.args)
             except CmdLineInputError as e:
                 utils.exit_on_cmdline_input_errror(e, "constraint", "colocation set")
         elif (sub_cmd2 == "show"):
-            run_with_middleware(colocation_command.show, lib, argv, modificators)
+            colocation_command.show(lib, argv, modificators)
         else:
             usage.constraint()
             sys.exit(1)
@@ -146,9 +129,9 @@ def constraint_cmd(argv):
         constraint_rm(argv)
     elif (sub_cmd == "show" or sub_cmd == "list"):
         location_show(argv)
-        run_with_middleware(order_command.show, lib, argv, modificators)
-        run_with_middleware(colocation_command.show, lib, argv, modificators)
-        run_with_middleware(ticket_command.show, lib, argv, modificators)
+        order_command.show(lib, argv, modificators)
+        colocation_command.show(lib, argv, modificators)
+        ticket_command.show(lib, argv, modificators)
     elif (sub_cmd == "ref"):
         constraint_ref(argv)
     elif (sub_cmd == "rule"):
