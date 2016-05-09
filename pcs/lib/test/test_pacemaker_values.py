@@ -9,7 +9,7 @@ from unittest import TestCase
 
 from pcs.test.tools.assertions import assert_raise_library_error
 
-import pcs.lib.error_codes as error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.pacemaker_values as lib
@@ -112,7 +112,7 @@ class ValidateIdTest(TestCase):
             lambda: lib.validate_id("", "test id"),
             (
                 severity.ERROR,
-                error_codes.INVALID_ID,
+                report_codes.INVALID_ID,
                 {
                     "id": "",
                     "description": "test id",
@@ -129,7 +129,7 @@ class ValidateIdTest(TestCase):
             "reason": "invalid first character",
             "invalid_character": "",
         }
-        report = (severity.ERROR, error_codes.INVALID_ID, info)
+        report = (severity.ERROR, report_codes.INVALID_ID, info)
 
         info["id"] = "0"
         info["invalid_character"] = "0"
@@ -195,7 +195,7 @@ class ValidateIdTest(TestCase):
             "reason": "invalid character",
             "invalid_character": "",
         }
-        report = (severity.ERROR, error_codes.INVALID_ID, info)
+        report = (severity.ERROR, report_codes.INVALID_ID, info)
 
         info["id"] = "dum:my"
         info["invalid_character"] = ":"

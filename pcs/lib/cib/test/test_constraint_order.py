@@ -7,7 +7,7 @@ from __future__ import (
 
 from unittest import TestCase
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.cib.constraint import order
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
@@ -62,7 +62,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 "kind": "unknown",
                 "id": "id",
             }),
-            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
+            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'Optional, Mandatory, Serialize',
                 'allowed_values_raw': ('Optional', 'Mandatory', 'Serialize'),
                 'option_value': 'unknown',
@@ -77,7 +77,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 "kind": "Optional",
                 "id": "id",
             }),
-            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
+            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'true, false',
                 'allowed_values_raw': ('true', 'false'),
                 'option_value': 'unknown',
@@ -95,7 +95,7 @@ class PrepareOptionsWithSetTest(TestCase):
             }),
             (
                 severities.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     'allowed_raw': [
                         'id',

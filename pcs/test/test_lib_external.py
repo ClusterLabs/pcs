@@ -28,7 +28,7 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.pcs_mock import mock
 
 from pcs import settings
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.external as lib
@@ -170,7 +170,7 @@ Return value: {1}
             lambda: runner.run(command),
             (
                 severity.ERROR,
-                error_codes.RUN_EXTERNAL_PROCESS_ERROR,
+                report_codes.RUN_EXTERNAL_PROCESS_ERROR,
                 {
                     "command_raw": command,
                     "command": command_str,
@@ -206,7 +206,7 @@ Return value: {1}
             lambda: runner.run(command),
             (
                 severity.ERROR,
-                error_codes.RUN_EXTERNAL_PROCESS_ERROR,
+                report_codes.RUN_EXTERNAL_PROCESS_ERROR,
                 {
                     "command_raw": command,
                     "command": command_str,
@@ -517,7 +517,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
             ),
             (
                 severity.ERROR,
-                error_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
                 {
                     "node": node,
                     "command": command,
@@ -537,7 +537,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
             ),
             (
                 severity.ERROR,
-                error_codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED,
+                report_codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED,
                 {
                     "node": node,
                     "command": command,
@@ -557,7 +557,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
             ),
             (
                 severity.ERROR,
-                error_codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND,
+                report_codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND,
                 {
                     "node": node,
                     "command": command,
@@ -577,7 +577,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
             ),
             (
                 severity.ERROR,
-                error_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                 {
                     "node": node,
                     "command": command,
@@ -597,7 +597,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
             ),
             (
                 severity.ERROR,
-                error_codes.NODE_COMMUNICATION_ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR,
                 {
                     "node": node,
                     "command": command,

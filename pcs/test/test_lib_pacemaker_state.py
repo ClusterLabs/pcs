@@ -18,7 +18,7 @@ from pcs.lib.pacemaker_state import (
     _Children,
 )
 
-import pcs.lib.error_codes as error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 
 class AttrsTest(TestCase):
@@ -80,7 +80,7 @@ class ClusterStatusTest(TestBase):
     def test_refuse_invalid_xml(self):
         assert_raise_library_error(
             lambda: ClusterState('invalid xml'),
-            (severities.ERROR, error_codes.BAD_CLUSTER_STATE_FORMAT, {})
+            (severities.ERROR, report_codes.BAD_CLUSTER_STATE_FORMAT, {})
         )
 
     def test_refuse_invalid_document(self):
@@ -91,7 +91,7 @@ class ClusterStatusTest(TestBase):
 
         assert_raise_library_error(
             lambda: ClusterState(str(self.covered_status)),
-            (severities.ERROR, error_codes.BAD_CLUSTER_STATE_FORMAT, {})
+            (severities.ERROR, report_codes.BAD_CLUSTER_STATE_FORMAT, {})
         )
 
 

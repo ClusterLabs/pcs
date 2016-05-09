@@ -8,7 +8,7 @@ from __future__ import (
 import sys
 
 from pcs.cli.constraint_all.console_report import duplicate_constraints_report
-from pcs.lib import error_codes as codes
+from pcs.common import report_codes as codes
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 

@@ -15,7 +15,7 @@ from pcs.test.tools.misc import (
     get_test_resource as rc,
 )
 
-import pcs.lib.error_codes as error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.corosync.config_facade as lib
@@ -34,7 +34,7 @@ class FromStringTest(TestCase):
             lambda: lib.ConfigFacade.from_string(config),
             (
                 severity.ERROR,
-                error_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
+                report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
                 {}
             )
         )
@@ -45,7 +45,7 @@ class FromStringTest(TestCase):
             lambda: lib.ConfigFacade.from_string(config),
             (
                 severity.ERROR,
-                error_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
+                report_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
                 {}
             )
         )
@@ -390,7 +390,7 @@ quorum {
             lambda: facade.set_quorum_options(reporter, options),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "wait_for_all",
                     "option_value": "nonsense",
@@ -418,7 +418,7 @@ quorum {
             lambda: facade.set_quorum_options(reporter, options),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "auto_tie_breaker",
                     "option_value": "atb",
@@ -428,7 +428,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "last_man_standing",
                     "option_value": "lms",
@@ -438,7 +438,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "last_man_standing_window",
                     "option_value": "lmsw",
@@ -448,7 +448,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "wait_for_all",
                     "option_value": "wfa",
@@ -475,7 +475,7 @@ quorum {
             lambda: facade.set_quorum_options(reporter, options),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "type": "quorum",
                     "option": "nonsense1",
@@ -487,7 +487,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "type": "quorum",
                     "option": "nonsense2",
@@ -712,7 +712,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.QDEVICE_ALREADY_DEFINED,
+                report_codes.QDEVICE_ALREADY_DEFINED,
                 {}
             )
         )
@@ -1003,7 +1003,7 @@ quorum {
             lambda: facade.add_quorum_device(reporter, "invalid", {}, {}),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "model",
                     "option_value": "invalid",
@@ -1022,7 +1022,7 @@ quorum {
             lambda: facade.add_quorum_device(reporter, "net", {}, {}),
             (
                 severity.ERROR,
-                error_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"name": "host"},
                 False
             )
@@ -1055,7 +1055,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "algorithm",
                     "option_value": "bad algorithm",
@@ -1065,7 +1065,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "option": "bad_model_option",
                     "type": "quorum device model",
@@ -1082,7 +1082,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "connect_timeout",
                     "option_value": "-1",
@@ -1092,7 +1092,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "force_ip_version",
                     "option_value": "3",
@@ -1102,13 +1102,13 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"name": "host"},
                 False
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "port",
                     "option_value": "65537",
@@ -1118,7 +1118,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "tie_breaker",
                     "option_value": "125",
@@ -1128,7 +1128,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "option": "bad_generic_option",
                     "type": "quorum device",
@@ -1138,7 +1138,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "option": "model",
                     "type": "quorum device",
@@ -1148,7 +1148,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "sync_timeout",
                     "option_value": "-3",
@@ -1158,7 +1158,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "timeout",
                     "option_value": "-2",
@@ -1202,7 +1202,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 {}
             )
         )
@@ -1274,7 +1274,7 @@ quorum {
             lambda: facade.update_quorum_device(reporter, {"host": ""}, {}),
             (
                 severity.ERROR,
-                error_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"name": "host"},
                 False
             )
@@ -1302,7 +1302,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "algorithm",
                     "option_value": "bad algorithm",
@@ -1312,7 +1312,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "option": "bad_model_option",
                     "type": "quorum device model",
@@ -1329,7 +1329,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "connect_timeout",
                     "option_value": "-1",
@@ -1339,7 +1339,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "force_ip_version",
                     "option_value": "3",
@@ -1349,7 +1349,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "port",
                     "option_value": "65537",
@@ -1359,7 +1359,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "tie_breaker",
                     "option_value": "125",
@@ -1429,7 +1429,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "option": "bad_generic_option",
                     "type": "quorum device",
@@ -1439,7 +1439,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "option": "model",
                     "type": "quorum device",
@@ -1449,7 +1449,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "sync_timeout",
                     "option_value": "-3",
@@ -1459,7 +1459,7 @@ quorum {
             ),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "timeout",
                     "option_value": "-2",
@@ -1479,7 +1479,7 @@ class RemoveQuorumDeviceTest(TestCase):
             facade.remove_quorum_device,
             (
                 severity.ERROR,
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 {}
             )
         )
@@ -1491,7 +1491,7 @@ class RemoveQuorumDeviceTest(TestCase):
             facade.remove_quorum_device,
             (
                 severity.ERROR,
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 {}
             )
         )

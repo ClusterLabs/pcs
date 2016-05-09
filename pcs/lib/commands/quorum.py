@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItem, LibraryError
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 
@@ -100,7 +100,7 @@ def remove_device(lib_env):
 def __ensure_not_cman(lib_env):
     if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:
         raise LibraryError(ReportItem.error(
-            error_codes.CMAN_UNSUPPORTED_COMMAND,
+            report_codes.CMAN_UNSUPPORTED_COMMAND,
             "This command is not supported on CMAN clusters"
         ))
 

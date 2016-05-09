@@ -47,7 +47,7 @@ except ImportError:
         URLError as urllib_URLError
     )
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import LibraryError, ReportItem
 from pcs import settings
 
@@ -117,7 +117,7 @@ class CommandRunner(object):
             retval = process.returncode
         except OSError as e:
             raise LibraryError(ReportItem.error(
-                error_codes.RUN_EXTERNAL_PROCESS_ERROR,
+                report_codes.RUN_EXTERNAL_PROCESS_ERROR,
                 "unable to run command {command_raw[0]}: {reason}",
                 info={
                     "command_raw": args,
@@ -165,7 +165,7 @@ def node_communicator_exception_to_report_item(e):
     """
     if e.__class__ == NodeAuthenticationException:
         return ReportItem.error(
-            error_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+            report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
             "Unable to authenticate to {node} ({reason})",
             info={
                 "node": e.node,
@@ -175,7 +175,7 @@ def node_communicator_exception_to_report_item(e):
         )
     if e.__class__ == NodePermissionDeniedException:
         return ReportItem.error(
-            error_codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED,
+            report_codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED,
             "{node}: Permission denied ({reason})",
             info={
                 "node": e.node,
@@ -185,7 +185,7 @@ def node_communicator_exception_to_report_item(e):
         )
     if e.__class__ == NodeUnsupportedCommandException:
         return ReportItem.error(
-            error_codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND,
+            report_codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND,
             "{node}: Unsupported command ({reason})",
             info={
                 "node": e.node,
@@ -195,7 +195,7 @@ def node_communicator_exception_to_report_item(e):
         )
     if e.__class__ == NodeCommunicationException:
         return ReportItem.error(
-            error_codes.NODE_COMMUNICATION_ERROR,
+            report_codes.NODE_COMMUNICATION_ERROR,
             "Error connecting to {node} ({reason})",
             info={
                 "node": e.node,
@@ -205,7 +205,7 @@ def node_communicator_exception_to_report_item(e):
         )
     if e.__class__ == NodeConnectionException:
         return ReportItem.error(
-            error_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+            report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
             "Unable to connect to {node} ({reason})",
             info={
                 "node": e.node,

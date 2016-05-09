@@ -9,7 +9,7 @@ import os.path
 from lxml import etree
 
 from pcs import settings
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import LibraryError, ReportItem
 from pcs.lib.pacemaker_state import ClusterState
 
@@ -31,7 +31,7 @@ def get_cluster_status_xml(runner):
     )
     if retval != 0:
         raise CrmMonErrorException(ReportItem.error(
-            error_codes.CRM_MON_ERROR,
+            report_codes.CRM_MON_ERROR,
             "error running crm_mon, is pacemaker running?",
             info={
                 "external_exitcode": retval,
@@ -48,7 +48,7 @@ def get_cib_xml(runner, scope=None):
     if retval != 0:
         if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
             raise LibraryError(ReportItem.error(
-                error_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
+                report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
                 "unable to get cib, scope '{scope}' not present in cib",
                 info={
                     "scope": scope,
@@ -58,7 +58,7 @@ def get_cib_xml(runner, scope=None):
             ))
         else:
             raise LibraryError(ReportItem.error(
-                error_codes.CIB_LOAD_ERROR,
+                report_codes.CIB_LOAD_ERROR,
                 "unable to get cib",
                 info={
                     "external_exitcode": retval,
@@ -72,7 +72,7 @@ def get_cib(xml):
         return etree.fromstring(xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
         raise LibraryError(ReportItem.error(
-            error_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+            report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
             "unable to get cib"
         ))
 
@@ -86,7 +86,7 @@ def replace_cib_configuration_xml(runner, xml):
     )
     if retval != 0:
         raise LibraryError(ReportItem.error(
-            error_codes.CIB_PUSH_ERROR,
+            report_codes.CIB_PUSH_ERROR,
             "Unable to update cib\n{external_output}",
             info={
                 "external_exitcode": retval,
@@ -121,7 +121,7 @@ def get_local_node_status(runner):
                 result[attr] = getattr(node_status.attrs, attr)
             return result
     raise LibraryError(ReportItem.error(
-        error_codes.NODE_NOT_FOUND,
+        report_codes.NODE_NOT_FOUND,
         "node '{node}' does not appear to exist in configuration",
         info={"node": node_name}
     ))
@@ -132,7 +132,7 @@ def resource_cleanup(runner, resource=None, node=None, force=False):
         operations = summary.nodes.attrs.count * summary.resources.attrs.count
         if operations > __RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD:
             raise LibraryError(ReportItem.error(
-                error_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
+                report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
                 "Cleaning up all resources on all nodes will execute more "
                     + "than {threshold} operations in the cluster, which may "
                     + "negatively impact the responsiveness of the cluster. "
@@ -159,7 +159,7 @@ def resource_cleanup(runner, resource=None, node=None, force=False):
                 + "{external_exitcode}\n{external_output}"
             )
         raise LibraryError(ReportItem.error(
-            error_codes.RESOURCE_CLEANUP_ERROR,
+            report_codes.RESOURCE_CLEANUP_ERROR,
             text,
             info={
                 "external_exitcode": retval,
@@ -184,7 +184,7 @@ def has_resource_wait_support(runner):
 def ensure_resource_wait_support(runner):
     if not has_resource_wait_support(runner):
         raise LibraryError(ReportItem.error(
-            error_codes.RESOURCE_WAIT_NOT_SUPPORTED,
+            report_codes.RESOURCE_WAIT_NOT_SUPPORTED,
             "crm_resource does not support --wait, please upgrade pacemaker"
         ))
 
@@ -196,7 +196,7 @@ def wait_for_resources(runner, timeout=None):
     if retval != 0:
         if retval == __EXITCODE_WAIT_TIMEOUT:
             raise LibraryError(ReportItem.error(
-                error_codes.RESOURCE_WAIT_TIMED_OUT,
+                report_codes.RESOURCE_WAIT_TIMED_OUT,
                 "waiting timeout\n\n{external_output}",
                 info={
                     "external_exitcode": retval,
@@ -205,7 +205,7 @@ def wait_for_resources(runner, timeout=None):
             ))
         else:
             raise LibraryError(ReportItem.error(
-                error_codes.RESOURCE_WAIT_ERROR,
+                report_codes.RESOURCE_WAIT_ERROR,
                 "{external_output}",
                 info={
                     "external_exitcode": retval,
@@ -230,7 +230,7 @@ def __nodes_standby_unstandby(
             for node in node_list:
                 if node not in known_nodes:
                     report.append(ReportItem.error(
-                        error_codes.NODE_NOT_FOUND,
+                        report_codes.NODE_NOT_FOUND,
                         "node '{node}' does not appear to exist in configuration",
                         info={"node": node}
                     ))
@@ -252,7 +252,7 @@ def __nodes_standby_unstandby(
         output, retval = runner.run(cmd)
         if retval != 0:
             report.append(ReportItem.error(
-                error_codes.COMMON_ERROR,
+                report_codes.COMMON_ERROR,
                 output
             ))
     if report:
@@ -261,7 +261,7 @@ def __nodes_standby_unstandby(
 def __get_local_node_name(runner):
     def __get_error(reason):
         return ReportItem.error(
-            error_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+            report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
             "unable to get local node name from pacemaker: {reason}",
             info={"reason": reason}
         )

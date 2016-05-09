@@ -35,8 +35,8 @@ from pcs import (
     utils,
 )
 from pcs.utils import parallel_for_nodes
+from pcs.common import report_codes
 from pcs.lib import (
-    error_codes,
     pacemaker as lib_pacemaker,
 )
 from pcs.lib.errors import ReportItem, LibraryError
@@ -415,7 +415,7 @@ def cluster_setup_parse_options_corosync(options):
         transport = options["--transport"]
         if transport not in ("udp", "udpu"):
             messages.append(ReportItem.error(
-                error_codes.UNKNOWN_TRANSPORT,
+                report_codes.UNKNOWN_TRANSPORT,
                 "unknown transport '{transport}'",
                 info={'transport': transport},
                 forceable=True,
@@ -424,7 +424,7 @@ def cluster_setup_parse_options_corosync(options):
 
     if transport == "udpu" and ("--addr0" in options or "--addr1" in options):
         messages.append(ReportItem.error(
-            error_codes.NON_UDP_TRANSPORT_ADDR_MISMATCH,
+            report_codes.NON_UDP_TRANSPORT_ADDR_MISMATCH,
             '--addr0 and --addr1 can only be used with --transport=udp',
         ))
     rrpmode = None
@@ -434,14 +434,14 @@ def cluster_setup_parse_options_corosync(options):
             rrpmode = options["--rrpmode"]
         if rrpmode not in ("passive", "active"):
             messages.append(ReportItem.error(
-                error_codes.UNKNOWN_RRP_MODE,
+                report_codes.UNKNOWN_RRP_MODE,
                 '{rrpmode} is an unknown RRP mode',
                 info={'rrpmode': rrpmode},
                 forceable=True,
             ))
         if rrpmode == "active":
             messages.append(ReportItem.error(
-                error_codes.RRP_ACTIVE_NOT_SUPPORTED,
+                report_codes.RRP_ACTIVE_NOT_SUPPORTED,
                 "using a RRP mode of 'active' is not supported or tested",
                 forceable=True,
             ))
@@ -504,7 +504,7 @@ def cluster_setup_parse_options_corosync(options):
         allowed_values = ('0', '1')
         if opt_name in options and options[opt_name] not in allowed_values:
             messages.append(ReportItem.error(
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 "'{option_value}' is not a valid value for {option_name}, "
                     +"use {allowed_values}"
                 ,
@@ -538,7 +538,7 @@ def cluster_setup_parse_options_cman(options):
             ring_missing_broadcast = "1"
         if ring_missing_broadcast:
             messages.append(ReportItem.warning(
-                error_codes.CMAN_BROADCAST_ALL_RINGS,
+                report_codes.CMAN_BROADCAST_ALL_RINGS,
                 'Enabling broadcast for ring {ring_missing_broadcast}'
                     +' as CMAN does not support broadcast in only one ring'
                 ,
@@ -550,7 +550,7 @@ def cluster_setup_parse_options_cman(options):
             transport = options["--transport"]
             if transport not in ("udp", "udpu"):
                 messages.append(ReportItem.error(
-                    error_codes.UNKNOWN_TRANSPORT,
+                    report_codes.UNKNOWN_TRANSPORT,
                     "unknown transport '{transport}'",
                     info={'transport': transport},
                     forceable=True,
@@ -559,14 +559,14 @@ def cluster_setup_parse_options_cman(options):
 
     if transport == "udpu":
         messages.append(ReportItem.warning(
-            error_codes.CMAN_UDPU_RESTART_REQUIRED,
+            report_codes.CMAN_UDPU_RESTART_REQUIRED,
             "Using udpu transport on a CMAN cluster, "
                 + "cluster restart is required after node add or remove"
             ,
         ))
     if transport == "udpu" and ("--addr0" in options or "--addr1" in options):
         messages.append(ReportItem.error(
-            error_codes.NON_UDP_TRANSPORT_ADDR_MISMATCH,
+            report_codes.NON_UDP_TRANSPORT_ADDR_MISMATCH,
             '--addr0 and --addr1 can only be used with --transport=udp',
         ))
 
@@ -577,14 +577,14 @@ def cluster_setup_parse_options_cman(options):
             rrpmode = options["--rrpmode"]
         if rrpmode not in ("passive", "active"):
             messages.append(ReportItem.error(
-                error_codes.UNKNOWN_RRP_MODE,
+                report_codes.UNKNOWN_RRP_MODE,
                 '{rrpmode} is an unknown RRP mode',
                 info={'rrpmode': rrpmode},
                 forceable=True,
             ))
         if rrpmode == "active":
             messages.append(ReportItem.error(
-                error_codes.RRP_ACTIVE_NOT_SUPPORTED,
+                report_codes.RRP_ACTIVE_NOT_SUPPORTED,
                 "using a RRP mode of 'active' is not supported or tested",
                 forceable=True,
             ))
@@ -631,7 +631,7 @@ def cluster_setup_parse_options_cman(options):
     for opt_name in ignored_options_names:
         if opt_name in options:
             messages.append(ReportItem.warning(
-                error_codes.IGNORED_CMAN_UNSUPPORTED_OPTION,
+                report_codes.IGNORED_CMAN_UNSUPPORTED_OPTION,
                 '{option_name} ignored as it is not supported on CMAN clusters',
                 info={'option_name': opt_name}
             ))
@@ -848,10 +848,10 @@ def cluster_setup_create_cluster_conf(
         if retval != 0:
             if output:
                 messages.append(
-                    ReportItem.info(error_codes.COMMON_INFO, output)
+                    ReportItem.info(report_codes.COMMON_INFO, output)
                 )
             messages.append(
-                ReportItem.error(error_codes.COMMON_ERROR, cmd_item["err"])
+                ReportItem.error(report_codes.COMMON_ERROR, cmd_item["err"])
             )
             conf_temp.close()
             return "", messages

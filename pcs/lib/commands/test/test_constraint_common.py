@@ -9,7 +9,7 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.commands.constraint import common as constraint
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import(
@@ -81,7 +81,7 @@ class CreateWithSetTest(TestCase):
         self.env.push_cib.assert_called_once_with(self.cib)
         assert_raise_library_error(self.create, (
             severities.ERROR,
-            error_codes.DUPLICATE_CONSTRAINTS_EXIST,
+            report_codes.DUPLICATE_CONSTRAINTS_EXIST,
             {
                 'type': 'rsc_some',
                 'constraint_info_list': [{

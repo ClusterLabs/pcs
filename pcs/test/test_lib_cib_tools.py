@@ -13,7 +13,7 @@ from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 
 from pcs.lib.cib import tools as lib
@@ -79,7 +79,7 @@ class GetConfigurationTest(CibToolsTest):
             lambda: lib.get_configuration(self.cib.tree),
             (
                 severities.ERROR,
-                error_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
+                report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
                 {
                     "section": "configuration",
                     "cib": etree.tostring(self.cib.tree)
@@ -101,7 +101,7 @@ class GetConstraintsTest(CibToolsTest):
             lambda: lib.get_constraints(self.cib.tree),
             (
                 severities.ERROR,
-                error_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
+                report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
                 {
                     "section": "configuration/constraints",
                     "cib": etree.tostring(self.cib.tree)
@@ -143,7 +143,7 @@ class ValidateIdDoesNotExistsTest(TestCase):
             lambda: lib.validate_id_does_not_exist("tree", "some-id"),
             (
                 severities.ERROR,
-                error_codes.ID_ALREADY_EXISTS,
+                report_codes.ID_ALREADY_EXISTS,
                 {"id": "some-id"},
             ),
         )

@@ -8,7 +8,7 @@ from __future__ import (
 import logging
 from unittest import TestCase
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.commands.constraint import ticket as ticket_command
 from pcs.lib.env import LibraryEnvironment as Env
 from pcs.lib.errors import ReportItemSeverity as severities
@@ -70,7 +70,7 @@ class CreateTest(TestCase):
             ),
             (
                 severities.ERROR,
-                error_codes.RESOURCE_DOES_NOT_EXIST,
+                report_codes.RESOURCE_DOES_NOT_EXIST,
                 {"resource_id": "resourceA"},
             ),
         )

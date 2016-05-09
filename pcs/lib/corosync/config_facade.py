@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItem, LibraryError
 from pcs.lib.corosync import config_parser
 from pcs.lib.node import NodeAddresses, NodeAddressesList
@@ -32,17 +32,17 @@ class ConfigFacade(object):
             return cls(config_parser.parse_string(config_string))
         except config_parser.MissingClosingBraceException:
             raise LibraryError(ReportItem.error(
-                error_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
+                report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
                 "Unable to parse corosync config: missing closing brace"
             ))
         except config_parser.UnexpectedClosingBraceException:
             raise LibraryError(ReportItem.error(
-                error_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
+                report_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
                 "Unable to parse corosync config: unexpected closing brace"
             ))
         except config_parser.CorosyncConfParserException:
             raise LibraryError(ReportItem.error(
-                error_codes.PARSE_ERROR_COROSYNC_CONF,
+                report_codes.PARSE_ERROR_COROSYNC_CONF,
                 "Unable to parse corosync config"
             ))
 
@@ -112,7 +112,7 @@ class ConfigFacade(object):
             allowed_names = self.__class__.QUORUM_OPTIONS
             if name not in allowed_names:
                 report.append(ReportItem.error(
-                    error_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTION,
                     "invalid {type} option '{option}'"
                         + ", allowed options are: {allowed}"
                     ,
@@ -131,7 +131,7 @@ class ConfigFacade(object):
             if name == "last_man_standing_window":
                 if not value.isdigit():
                     report.append(ReportItem.error(
-                        error_codes.INVALID_OPTION_VALUE,
+                        report_codes.INVALID_OPTION_VALUE,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -147,7 +147,7 @@ class ConfigFacade(object):
                 allowed_values = ("0", "1")
                 if value not in allowed_values:
                     report.append(ReportItem.error(
-                        error_codes.INVALID_OPTION_VALUE,
+                        report_codes.INVALID_OPTION_VALUE,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -205,7 +205,7 @@ class ConfigFacade(object):
         # validation
         if self.has_quorum_device():
             raise LibraryError(ReportItem.error(
-                error_codes.QDEVICE_ALREADY_DEFINED,
+                report_codes.QDEVICE_ALREADY_DEFINED,
                 "quorum device is already defined"
             ))
         report_processor.process_list(
@@ -257,7 +257,7 @@ class ConfigFacade(object):
         # validation
         if not self.has_quorum_device():
             raise LibraryError(ReportItem.error(
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 "no quorum device is defined in this cluster"
             ))
         model = None
@@ -292,7 +292,7 @@ class ConfigFacade(object):
         """
         if not self.has_quorum_device():
             raise LibraryError(ReportItem.error(
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 "no quorum device is defined in this cluster"
             ))
         for quorum in self.config.get_sections("quorum"):
@@ -309,7 +309,7 @@ class ConfigFacade(object):
         )
         if model not in allowed_values:
             report.append(ReportItem.error(
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 "'{option_value}' is not a valid value for "
                     + "{option_name}, use {allowed_values}"
                 ,
@@ -352,7 +352,7 @@ class ConfigFacade(object):
         if need_required:
             for missing in sorted(required_options - model_options_names):
                 report.append(ReportItem.error(
-                    error_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
                     "required option '{name}' is missing",
                     info={
                         "name": missing,
@@ -362,7 +362,7 @@ class ConfigFacade(object):
         for name, value in sorted(model_options.items()):
             if name not in allowed_options:
                 report.append(ReportItem.error(
-                    error_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTION,
                     "invalid {type} option '{option}'"
                         + ", allowed options are: {allowed}"
                     ,
@@ -380,7 +380,7 @@ class ConfigFacade(object):
                 # do not allow to remove required options
                 if name in required_options:
                     report.append(ReportItem.error(
-                        error_codes.REQUIRED_OPTION_IS_MISSING,
+                        report_codes.REQUIRED_OPTION_IS_MISSING,
                         "required option '{name}' is missing",
                         info={
                             "name": name,
@@ -393,7 +393,7 @@ class ConfigFacade(object):
                 allowed_algorithms = ("2nodelms", "ffsplit", "lms")
                 if value not in allowed_algorithms:
                     report.append(ReportItem.error(
-                        error_codes.INVALID_OPTION_VALUE,
+                        report_codes.INVALID_OPTION_VALUE,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -411,7 +411,7 @@ class ConfigFacade(object):
                 if not (value.isdigit() and minimum <= int(value) <= maximum):
                     min_max = "{min}-{max}".format(min=minimum, max=maximum)
                     report.append(ReportItem.error(
-                        error_codes.INVALID_OPTION_VALUE,
+                        report_codes.INVALID_OPTION_VALUE,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -428,7 +428,7 @@ class ConfigFacade(object):
                 allowed_ip_version = ("0", "4", "6")
                 if value not in allowed_ip_version:
                     report.append(ReportItem.error(
-                        error_codes.INVALID_OPTION_VALUE,
+                        report_codes.INVALID_OPTION_VALUE,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -446,7 +446,7 @@ class ConfigFacade(object):
                 if not (value.isdigit() and minimum <= int(value) <= maximum):
                     min_max = "{min}-{max}".format(min=minimum, max=maximum)
                     report.append(ReportItem.error(
-                        error_codes.INVALID_OPTION_VALUE,
+                        report_codes.INVALID_OPTION_VALUE,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -465,7 +465,7 @@ class ConfigFacade(object):
                 if value not in allowed_nonid + node_ids:
                     allowed_values = tuple(allowed_nonid + ["valid node id"])
                     report.append(ReportItem.error(
-                        error_codes.INVALID_OPTION_VALUE,
+                        report_codes.INVALID_OPTION_VALUE,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -491,7 +491,7 @@ class ConfigFacade(object):
         for name, value in sorted(generic_options.items()):
             if name not in allowed_options:
                 report.append(ReportItem.error(
-                    error_codes.INVALID_OPTION,
+                    report_codes.INVALID_OPTION,
                     "invalid {type} option '{option}'"
                         + ", allowed options are: {allowed}"
                     ,
@@ -512,7 +512,7 @@ class ConfigFacade(object):
 
             if not value.isdigit():
                 report.append(ReportItem.error(
-                    error_codes.INVALID_OPTION_VALUE,
+                    report_codes.INVALID_OPTION_VALUE,
                     "'{option_value}' is not a valid value for "
                         + "{option_name}, use {allowed_values}"
                     ,

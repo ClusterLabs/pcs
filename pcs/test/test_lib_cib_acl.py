@@ -15,7 +15,7 @@ from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.lib.cib import acl as lib
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severities
 
 class LibraryAclTest(TestCase):
@@ -52,7 +52,7 @@ class CreateRoleTest(LibraryAclTest):
             lambda: lib.create_role(self.cib.tree, '#invalid'),
             (
                 severities.ERROR,
-                error_codes.INVALID_ID,
+                report_codes.INVALID_ID,
                 {'id': '#invalid'},
             ),
         )
@@ -67,7 +67,7 @@ class CreateRoleTest(LibraryAclTest):
             lambda: lib.create_role(self.cib.tree, 'node-id'),
             (
                 severities.ERROR,
-                error_codes.ID_ALREADY_EXISTS,
+                report_codes.ID_ALREADY_EXISTS,
                 {'id': 'node-id'},
             ),
         )
@@ -100,7 +100,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
             ),
             (
                 severities.ERROR,
-                error_codes.ACL_ROLE_NOT_FOUND,
+                report_codes.ACL_ROLE_NOT_FOUND,
                 {'role_id': role_id},
             ),
         )
@@ -115,12 +115,12 @@ class AddPermissionsToRoleTest(LibraryAclTest):
             ),
             (
                 severities.ERROR,
-                error_codes.BAD_ACL_PERMISSION,
+                report_codes.BAD_ACL_PERMISSION,
                 {'permission': 'readX'},
             ),
             (
                 severities.ERROR,
-                error_codes.BAD_ACL_SCOPE_TYPE,
+                report_codes.BAD_ACL_SCOPE_TYPE,
                 {'scope_type': 'xpathX'},
             ),
         )
@@ -135,7 +135,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
             ),
             (
                 severities.ERROR,
-                error_codes.ID_NOT_FOUND,
+                report_codes.ID_NOT_FOUND,
                 {'id': 'non-existent'}
             ),
         )

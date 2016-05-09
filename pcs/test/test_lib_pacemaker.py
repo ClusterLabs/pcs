@@ -17,7 +17,7 @@ from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.xml import XmlManipulation
 
 from pcs import settings
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib import pacemaker as lib
 from pcs.lib.errors import ReportItemSeverity as Severity
 from pcs.lib.external import CommandRunner
@@ -84,7 +84,7 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
             lambda: lib.get_cluster_status_xml(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.CRM_MON_ERROR,
+                report_codes.CRM_MON_ERROR,
                 {
                     "external_exitcode": expected_retval,
                     "external_output": expected_error,
@@ -118,7 +118,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
             lambda: lib.get_cib_xml(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.CIB_LOAD_ERROR,
+                report_codes.CIB_LOAD_ERROR,
                 {
                     "external_exitcode": expected_retval,
                     "external_output": expected_error,
@@ -158,7 +158,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
             lambda: lib.get_cib_xml(mock_runner, scope=scope),
             (
                 Severity.ERROR,
-                error_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
+                report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
                 {
                     "scope": scope,
                     "external_exitcode": expected_retval,
@@ -185,7 +185,7 @@ class GetCibTest(LibraryPacemakerTest):
             lambda: lib.get_cib(xml),
             (
                 Severity.ERROR,
-                error_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+                report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
                 {
                 }
             )
@@ -227,7 +227,7 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
             ,
             (
                 Severity.ERROR,
-                error_codes.CIB_PUSH_ERROR,
+                report_codes.CIB_PUSH_ERROR,
                 {
                     "external_exitcode": expected_retval,
                     "external_output": expected_error,
@@ -266,7 +266,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.BAD_CLUSTER_STATE_FORMAT,
+                report_codes.BAD_CLUSTER_STATE_FORMAT,
                 {}
             )
         )
@@ -333,7 +333,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.NODE_NOT_FOUND,
+                report_codes.NODE_NOT_FOUND,
                 {"node": node_name_bad}
             )
         )
@@ -363,7 +363,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+                report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
                 {"reason": "node id not found"}
             )
         )
@@ -397,7 +397,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+                report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
                 {"reason": "node name not found"}
             )
         )
@@ -431,7 +431,7 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.get_local_node_status(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+                report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
                 {"reason": "node name is null"}
             )
         )
@@ -476,7 +476,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
             lambda: lib.resource_cleanup(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
+                report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
                 {"threshold": 100},
                 True
             )
@@ -551,7 +551,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
             lambda: lib.resource_cleanup(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.CRM_MON_ERROR,
+                report_codes.CRM_MON_ERROR,
                 {
                     "external_exitcode": expected_retval,
                     "external_output": expected_error,
@@ -579,7 +579,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
             lambda: lib.resource_cleanup(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.RESOURCE_CLEANUP_ERROR,
+                report_codes.RESOURCE_CLEANUP_ERROR,
                 {
                     "external_exitcode": expected_retval,
                     "external_output": expected_error,
@@ -630,7 +630,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             lambda: lib.ensure_resource_wait_support(mock.Mock()),
             (
                 Severity.ERROR,
-                error_codes.RESOURCE_WAIT_NOT_SUPPORTED,
+                report_codes.RESOURCE_WAIT_NOT_SUPPORTED,
                 {}
             )
         )
@@ -673,7 +673,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             lambda: lib.wait_for_resources(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.RESOURCE_WAIT_ERROR,
+                report_codes.RESOURCE_WAIT_ERROR,
                 {
                     "external_exitcode": expected_retval,
                     "external_output": expected_error,
@@ -695,7 +695,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             lambda: lib.wait_for_resources(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.RESOURCE_WAIT_TIMED_OUT,
+                report_codes.RESOURCE_WAIT_TIMED_OUT,
                 {
                     "external_exitcode": expected_retval,
                     "external_output": expected_error,
@@ -835,7 +835,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.nodes_standby(mock_runner, ["node_2"]),
             (
                 Severity.ERROR,
-                error_codes.NODE_NOT_FOUND,
+                report_codes.NODE_NOT_FOUND,
                 {"node": "node_2"}
             )
         )
@@ -853,12 +853,12 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.nodes_unstandby(mock_runner, ["node_2", "node_3"]),
             (
                 Severity.ERROR,
-                error_codes.NODE_NOT_FOUND,
+                report_codes.NODE_NOT_FOUND,
                 {"node": "node_2"}
             ),
             (
                 Severity.ERROR,
-                error_codes.NODE_NOT_FOUND,
+                report_codes.NODE_NOT_FOUND,
                 {"node": "node_3"}
             )
         )
@@ -875,7 +875,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.nodes_unstandby(mock_runner),
             (
                 Severity.ERROR,
-                error_codes.COMMON_ERROR,
+                report_codes.COMMON_ERROR,
                 {}
             )
         )
@@ -909,12 +909,12 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             lambda: lib.nodes_standby(mock_runner, all_nodes=True),
             (
                 Severity.ERROR,
-                error_codes.COMMON_ERROR,
+                report_codes.COMMON_ERROR,
                 {}
             ),
             (
                 Severity.ERROR,
-                error_codes.COMMON_ERROR,
+                report_codes.COMMON_ERROR,
                 {}
             )
         )

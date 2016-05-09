@@ -14,7 +14,7 @@ from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 
 from pcs import settings
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.lib.node import NodeAddresses
 from pcs.lib.external import CommandRunner, NodeCommunicator
@@ -38,7 +38,7 @@ class GetLocalCorosyncConfTest(TestCase):
             lib.get_local_corosync_conf,
             (
                 severity.ERROR,
-                error_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
+                report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
                 {
                     "path": path,
                     "reason": "No such file or directory",
@@ -73,7 +73,7 @@ class ReloadConfigTest(TestCase):
             lambda: lib.reload_config(mock_runner),
             (
                 severity.ERROR,
-                error_codes.COROSYNC_CONFIG_RELOAD_ERROR,
+                report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
                 {
                     "reason": cmd_output,
                 }

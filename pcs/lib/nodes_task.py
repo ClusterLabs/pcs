@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import ReportItem, LibraryError
 from pcs.lib.external import (
     NodeCommunicationException,
@@ -34,7 +34,7 @@ def distribute_corosync_conf(lib_env, node_addr_list, config_text):
         except NodeCommunicationException as e:
             report.append(node_communicator_exception_to_report_item(e))
             report.append(ReportItem.error(
-                error_codes.NODE_COROSYNC_CONF_SAVE_ERROR,
+                report_codes.NODE_COROSYNC_CONF_SAVE_ERROR,
                 "{node}: Unable to set corosync config",
                 info={"node": node.label}
             ))

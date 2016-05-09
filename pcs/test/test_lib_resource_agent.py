@@ -19,7 +19,7 @@ from pcs.test.tools.xml import XmlManipulation as XmlMan
 
 
 from pcs import settings
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib import resource_agent as lib_ra
 from pcs.lib.errors import ReportItemSeverity as Severities
 from pcs.lib.external import CommandRunner
@@ -72,7 +72,7 @@ class GetParameterTest(LibraryResourceTest):
             lambda: lib_ra._get_parameter(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -92,7 +92,7 @@ class GetParameterTest(LibraryResourceTest):
             lambda: lib_ra._get_parameter(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -165,7 +165,7 @@ class GetAgentParametersTest(LibraryResourceTest):
             lambda: lib_ra._get_agent_parameters(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -183,7 +183,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
-                error_codes.INVALID_RESOURCE_NAME,
+                report_codes.INVALID_RESOURCE_NAME,
                 {"agent_name": agent_name},
                 True
             )
@@ -201,7 +201,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
-                error_codes.INVALID_RESOURCE_NAME,
+                report_codes.INVALID_RESOURCE_NAME,
                 {"agent_name": agent_name},
                 True
             )
@@ -219,7 +219,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
-                error_codes.INVALID_RESOURCE_NAME,
+                report_codes.INVALID_RESOURCE_NAME,
                 {"agent_name": agent_name},
                 True
             )
@@ -238,7 +238,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
-                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 {"agent_name": agent_name},
                 True
             )
@@ -260,7 +260,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
             (
                 Severities.ERROR,
-                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 {"agent_name": agent_name},
                 True
             )
@@ -302,7 +302,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             ),
             (
                 Severities.ERROR,
-                error_codes.INVALID_RESOURCE_NAME,
+                report_codes.INVALID_RESOURCE_NAME,
                 {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
                 True
             )
@@ -323,7 +323,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             ),
             (
                 Severities.ERROR,
-                error_codes.INVALID_RESOURCE_NAME,
+                report_codes.INVALID_RESOURCE_NAME,
                 {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
                 True
             )
@@ -344,7 +344,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             ),
             (
                 Severities.ERROR,
-                error_codes.INVALID_RESOURCE_NAME,
+                report_codes.INVALID_RESOURCE_NAME,
                 {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
                 True
             )
@@ -366,7 +366,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             ),
             (
                 Severities.ERROR,
-                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
                 True
             )
@@ -393,7 +393,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
             ),
             (
                 Severities.ERROR,
-                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
                 True
             )
@@ -435,7 +435,7 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
             (
                 Severities.ERROR,
-                error_codes.INVALID_RESOURCE_NAME,
+                report_codes.INVALID_RESOURCE_NAME,
                 {"agent_name": "nagios:" + agent},
                 True
             )
@@ -449,7 +449,7 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
             (
                 Severities.ERROR,
-                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 {"agent_name": "nagios:" + agent},
                 True
             )
@@ -463,7 +463,7 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
             (
                 Severities.ERROR,
-                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 {"agent_name": "nagios:" + agent},
                 True
             )
@@ -490,7 +490,7 @@ class GetAgentDescTest(LibraryResourceTest):
             lambda: lib_ra.get_agent_desc(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -591,7 +591,7 @@ class GetResourceAgentMetadata(LibraryResourceTest):
             lambda: lib_ra.get_resource_agent_metadata(mock_runner, agent),
             (
                 Severities.ERROR,
-                error_codes.UNSUPPORTED_RESOURCE_AGENT,
+                report_codes.UNSUPPORTED_RESOURCE_AGENT,
                 {},
                 True
             )
@@ -607,7 +607,7 @@ class GetResourceAgentMetadata(LibraryResourceTest):
             lambda: lib_ra.get_resource_agent_metadata(mock_runner, agent),
             (
                 Severities.ERROR,
-                error_codes.UNSUPPORTED_RESOURCE_AGENT,
+                report_codes.UNSUPPORTED_RESOURCE_AGENT,
                 {},
                 True
             )
@@ -691,7 +691,7 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
             lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner),
             (
                 Severities.ERROR,
-                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 {},
                 True
             )
@@ -707,7 +707,7 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
             lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -745,7 +745,7 @@ class GetActionTest(LibraryResourceTest):
             lambda: lib_ra._get_action(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -757,7 +757,7 @@ class GetActionTest(LibraryResourceTest):
             lambda: lib_ra._get_action(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -769,7 +769,7 @@ class GetActionTest(LibraryResourceTest):
             lambda: lib_ra._get_action(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -814,7 +814,7 @@ class GetAgentActionsTest(LibraryResourceTest):
             lambda: lib_ra._get_action(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )
@@ -835,7 +835,7 @@ class GetAgentActionsTest(LibraryResourceTest):
             lambda: lib_ra._get_action(etree.XML(xml)),
             (
                 Severities.ERROR,
-                error_codes.INVALID_METADATA_FORMAT,
+                report_codes.INVALID_METADATA_FORMAT,
                 {},
                 True
             )

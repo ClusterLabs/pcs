@@ -15,7 +15,7 @@ import os.path
 from lxml import etree
 
 from pcs import settings
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import LibraryError, ReportItem
 from pcs.lib.pacemaker_values import is_true
 
@@ -141,7 +141,7 @@ def _get_valid_cluster_state_dom(xml):
         return dom
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
         raise LibraryError(ReportItem.error(
-            error_codes.BAD_CLUSTER_STATE_FORMAT,
+            report_codes.BAD_CLUSTER_STATE_FORMAT,
             'pacemaker produced state information in invalid format',
         ))
 

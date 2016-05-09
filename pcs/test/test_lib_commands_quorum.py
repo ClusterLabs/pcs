@@ -13,8 +13,8 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 
+from pcs.common import report_codes
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib import error_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 
 from pcs.lib.commands import quorum as lib
@@ -26,7 +26,7 @@ class CmanMixin(object):
             func,
             (
                 severity.ERROR,
-                error_codes.CMAN_UNSUPPORTED_COMMAND,
+                report_codes.CMAN_UNSUPPORTED_COMMAND,
                 {}
             )
         )
@@ -165,7 +165,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
             lambda: lib.set_options(lib_env, options),
             (
                 severity.ERROR,
-                error_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
+                report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
                 {}
             )
         )
@@ -200,7 +200,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
             lambda: lib.set_options(lib_env, new_options),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     "type": "quorum",
                     "option": "invalid",
@@ -227,7 +227,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
             lambda: lib.set_options(lib_env, new_options),
             (
                 severity.ERROR,
-                error_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
+                report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
                 {}
             )
         )
@@ -267,7 +267,7 @@ class AddDeviceTest(TestCase, CmanMixin):
             lambda: lib.add_device(lib_env, "bad model", {}, {}),
             (
                 severity.ERROR,
-                error_codes.INVALID_OPTION_VALUE,
+                report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "model",
                     "option_value": "bad model",
@@ -342,7 +342,7 @@ class RemoveDeviceTest(TestCase, CmanMixin):
             lambda: lib.remove_device(lib_env),
             (
                 severity.ERROR,
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 {}
             )
         )
@@ -358,7 +358,7 @@ class RemoveDeviceTest(TestCase, CmanMixin):
             lambda: lib.remove_device(lib_env),
             (
                 severity.ERROR,
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 {}
             )
         )
@@ -410,7 +410,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
             lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}),
             (
                 severity.ERROR,
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 {}
             )
         )
@@ -425,7 +425,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
             lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}),
             (
                 severity.ERROR,
-                error_codes.QDEVICE_NOT_DEFINED,
+                report_codes.QDEVICE_NOT_DEFINED,
                 {}
             )
         )

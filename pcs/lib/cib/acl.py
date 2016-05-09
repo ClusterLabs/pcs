@@ -7,7 +7,7 @@ from __future__ import (
 
 from lxml import etree
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import LibraryError, ReportItem
 from pcs.lib.cib.tools import (
     does_id_exist,
@@ -26,7 +26,7 @@ def __validate_permissions(tree, permission_info_list):
     for permission, scope_type, scope in permission_info_list:
         if not permission in allowed_permissions:
             report.append(ReportItem.error(
-                error_codes.BAD_ACL_PERMISSION,
+                report_codes.BAD_ACL_PERMISSION,
                 'bad permission "{permission}, expected {allowed_values}',
                 info={
                     'permission': permission,
@@ -37,7 +37,7 @@ def __validate_permissions(tree, permission_info_list):
 
         if not scope_type in allowed_scopes:
             report.append(ReportItem.error(
-                error_codes.BAD_ACL_SCOPE_TYPE,
+                report_codes.BAD_ACL_SCOPE_TYPE,
                 'bad scope type "{scope_type}, expected {allowed_values}',
                 info={
                     'scope_type': scope_type,
@@ -48,7 +48,7 @@ def __validate_permissions(tree, permission_info_list):
 
         if scope_type == 'id' and not does_id_exist(tree, scope):
             report.append(ReportItem.error(
-                error_codes.ID_NOT_FOUND,
+                report_codes.ID_NOT_FOUND,
                 'id "{id}" does not exist.',
                 info={'id': scope },
             ))
@@ -61,7 +61,7 @@ def __find_role(tree, role_id):
     if role is not None:
         return role
     raise AclRoleNotFound(ReportItem.error(
-        error_codes.ACL_ROLE_NOT_FOUND,
+        report_codes.ACL_ROLE_NOT_FOUND,
         'role id "{role_id}" does not exist.',
         info={'role_id': role_id},
     ))

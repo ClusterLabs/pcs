@@ -10,7 +10,7 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import(
@@ -44,7 +44,7 @@ class FindValidResourceId(TestCase):
             lambda: self.find(id="resourceA"),
             (
                 severities.ERROR,
-                error_codes.RESOURCE_DOES_NOT_EXIST,
+                report_codes.RESOURCE_DOES_NOT_EXIST,
                 {"resource_id": "resourceA"}
             ),
         )
@@ -72,7 +72,7 @@ class FindValidResourceId(TestCase):
             lambda: self.find(id="resourceA"),
             (
                 severities.ERROR,
-                error_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
+                report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
                 {
                     "resource_id": "resourceA",
                     "parent_type": "clone",
@@ -163,7 +163,7 @@ class PrepareOptionsTest(TestCase):
             lambda: constraint.prepare_options(
                 ("a", ), {"b": "c"}, mock.MagicMock(), mock.MagicMock()
             ),
-            (severities.ERROR, error_codes.INVALID_OPTION, {
+            (severities.ERROR, report_codes.INVALID_OPTION, {
                 'allowed_raw': ['a', 'id'],
                 'option': 'b',
                 'allowed': 'a, id'
@@ -241,7 +241,7 @@ class CheckIsWithoutDuplicationTest(TestCase):
             ),
             (
                 severities.ERROR,
-                error_codes.DUPLICATE_CONSTRAINTS_EXIST,
+                report_codes.DUPLICATE_CONSTRAINTS_EXIST,
                 {
                     'constraint_info_list': ['exported_duplicate_element'],
                     'type': 'constraint_type'
@@ -290,5 +290,5 @@ class CreateWithSetTest(TestCase):
                 {"a": "b"},
                 []
             ),
-            (severities.ERROR, error_codes.EMPTY_RESOURCE_SET_LIST, {})
+            (severities.ERROR, report_codes.EMPTY_RESOURCE_SET_LIST, {})
         )

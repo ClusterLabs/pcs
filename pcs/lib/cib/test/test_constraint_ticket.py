@@ -8,7 +8,7 @@ from __future__ import (
 from functools import partial
 from unittest import TestCase
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.cib.constraint import ticket
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
@@ -65,7 +65,7 @@ class PrepareOptionsPlainTest(TestCase):
             ),
             (
                 severities.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     'allowed_raw': ['id', 'loss-policy', 'rsc', 'rsc-role', 'ticket'],
                     'option': 'unknown',
@@ -79,7 +79,7 @@ class PrepareOptionsPlainTest(TestCase):
                 {"id": "id", "rsc-role": "bad_role"}, "ticket_key", "resourceA"
             ),
             (
-                severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
+                severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
                     'allowed_values': 'Stopped, Started, Master, Slave',
                     'allowed_values_raw': (
                         'Stopped', 'Started', 'Master', 'Slave'
@@ -95,7 +95,7 @@ class PrepareOptionsPlainTest(TestCase):
             lambda: self.prepare(
                 {"id": "id", "rsc-role": "master"}, "", "resourceA"
             ),
-            (severities.ERROR, error_codes.REQUIRED_OPTION_IS_MISSING, {
+            (severities.ERROR, report_codes.REQUIRED_OPTION_IS_MISSING, {
                 'name': 'ticket'
             }),
         )
@@ -105,7 +105,7 @@ class PrepareOptionsPlainTest(TestCase):
             lambda: self.prepare(
                 {"id": "id", "rsc-role": "master"}, "ticket_key", ""
             ),
-            (severities.ERROR, error_codes.REQUIRED_OPTION_IS_MISSING, {
+            (severities.ERROR, report_codes.REQUIRED_OPTION_IS_MISSING, {
                 'name': 'rsc'
             }),
         )
@@ -118,7 +118,7 @@ class PrepareOptionsPlainTest(TestCase):
                 "ticket_key",
                 "resourceA",
             ),
-            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
+            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'fence, stop, freeze, demote',
                 'allowed_values_raw': ('fence', 'stop', 'freeze', 'demote'),
                 'option_value': 'unknown',
@@ -202,7 +202,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 "ticket": "T",
                 "id": "id",
             }),
-            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
+            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
                 'allowed_values': 'fence, stop, freeze, demote',
                 'allowed_values_raw': ('fence', 'stop', 'freeze', 'demote'),
                 'option_value': 'unknown',
@@ -215,7 +215,7 @@ class PrepareOptionsWithSetTest(TestCase):
             lambda: self.prepare({"loss-policy": "stop", "id": "id"}),
             (
                 severities.ERROR,
-                error_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"name": "ticket"}
             )
         )

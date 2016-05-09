@@ -9,7 +9,7 @@ import os
 from lxml import etree
 
 from pcs import settings
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import LibraryError
 from pcs.lib.errors import ReportItem
 from pcs.lib.pacemaker_values import is_true
@@ -50,7 +50,7 @@ def __get_text_from_dom_element(element):
 
 def __get_invalid_metadata_format_exception():
     return InvalidMetadataFormat(ReportItem.error(
-        error_codes.INVALID_METADATA_FORMAT,
+        report_codes.INVALID_METADATA_FORMAT,
         "invalid agent metadata format",
         forceable=True
     ))
@@ -120,7 +120,7 @@ def _get_pcmk_advanced_stonith_parameters(runner):
         )
         if output.strip() == "":
             raise UnableToGetAgentMetadata(ReportItem.error(
-                error_codes.UNABLE_TO_GET_AGENT_METADATA,
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 "unable to get metadata of stonithd",
                 info={"external_exitcode": retval, "external_output": output},
                 forceable=True
@@ -150,7 +150,7 @@ def get_fence_agent_metadata(runner, fence_agent):
 
     def __get_error(info):
         return UnableToGetAgentMetadata(ReportItem.error(
-            error_codes.UNABLE_TO_GET_AGENT_METADATA,
+            report_codes.UNABLE_TO_GET_AGENT_METADATA,
             "unable to get metadata of fence agent '{agent_name}'",
             info=info,
             forceable=True
@@ -164,7 +164,7 @@ def get_fence_agent_metadata(runner, fence_agent):
         is_path_runnable(script_path)
     ):
         raise AgentNotFound(ReportItem.error(
-            error_codes.INVALID_RESOURCE_NAME,
+            report_codes.INVALID_RESOURCE_NAME,
             "fence agent '{agent_name}' not found",
             info={"agent_name": fence_agent},
             forceable=True
@@ -201,7 +201,7 @@ def _get_nagios_resource_agent_metadata(agent):
 
     if not __is_path_abs(metadata_path):
         raise AgentNotFound(ReportItem.error(
-            error_codes.INVALID_RESOURCE_NAME,
+            report_codes.INVALID_RESOURCE_NAME,
             "resource agent '{agent_name}' not found",
             info={"agent_name": agent_name},
             forceable=True
@@ -211,7 +211,7 @@ def _get_nagios_resource_agent_metadata(agent):
         return etree.parse(metadata_path).getroot()
     except Exception as e:
         raise UnableToGetAgentMetadata(ReportItem.error(
-            error_codes.UNABLE_TO_GET_AGENT_METADATA,
+            report_codes.UNABLE_TO_GET_AGENT_METADATA,
             "unable to get metadata of resource agent '{agent_name}': " +
             "{error_info}",
             info={
@@ -233,7 +233,7 @@ def _get_ocf_resource_agent_metadata(runner, provider, agent):
 
     def __get_error(info):
         return UnableToGetAgentMetadata(ReportItem.error(
-            error_codes.UNABLE_TO_GET_AGENT_METADATA,
+            report_codes.UNABLE_TO_GET_AGENT_METADATA,
             "unable to get metadata of resource agent '{agent_name}'",
             info=info,
             forceable=True
@@ -243,7 +243,7 @@ def _get_ocf_resource_agent_metadata(runner, provider, agent):
 
     if not __is_path_abs(script_path) or not is_path_runnable(script_path):
         raise AgentNotFound(ReportItem.error(
-            error_codes.INVALID_RESOURCE_NAME,
+            report_codes.INVALID_RESOURCE_NAME,
             "resource agent '{agent_name}' not found",
             info={"agent_name": agent_name},
             forceable=True
@@ -339,7 +339,7 @@ def get_resource_agent_metadata(runner, agent):
     agent -- agent name
     """
     error = UnsupportedResourceAgent(ReportItem.error(
-        error_codes.UNSUPPORTED_RESOURCE_AGENT,
+        report_codes.UNSUPPORTED_RESOURCE_AGENT,
         "resource agent '{agent}' is not supported",
         info={"agent": agent},
         forceable=True

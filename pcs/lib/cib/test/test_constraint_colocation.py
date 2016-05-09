@@ -7,7 +7,7 @@ from __future__ import (
 
 from unittest import TestCase
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.cib.constraint import colocation
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
@@ -60,7 +60,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 "score": "bad",
                 "id": "id",
             }),
-            (severities.ERROR, error_codes.INVALID_SCORE, {
+            (severities.ERROR, report_codes.INVALID_SCORE, {
                 'score': 'bad'
             }),
         )
@@ -72,7 +72,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 "score-attribute": "2",
                 "id": "id",
             }),
-            (severities.ERROR, error_codes.MULTIPLE_SCORE_OPTIONS, {}),
+            (severities.ERROR, report_codes.MULTIPLE_SCORE_OPTIONS, {}),
         )
 
     def test_refuse_unknown_attributes(self, _):
@@ -84,7 +84,7 @@ class PrepareOptionsWithSetTest(TestCase):
             }),
             (
                 severities.ERROR,
-                error_codes.INVALID_OPTION,
+                report_codes.INVALID_OPTION,
                 {
                     'option': 'unknown',
                     'allowed_raw': [

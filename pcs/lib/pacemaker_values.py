@@ -7,7 +7,7 @@ from __future__ import (
 
 import re
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.errors import LibraryError, ReportItem
 
 
@@ -65,7 +65,7 @@ def get_valid_timeout_seconds(timeout_candidate):
     wait_timeout = timeout_to_seconds(timeout_candidate)
     if wait_timeout is None:
         raise LibraryError(ReportItem.error(
-            error_codes.INVALID_TIMEOUT_VALUE,
+            report_codes.INVALID_TIMEOUT_VALUE,
             "'{timeout}' is not a valid number of seconds to wait",
             info={"timeout": timeout_candidate}
         ))
@@ -83,7 +83,7 @@ def validate_id(id_candidate, description="id"):
     # http://www.w3.org/TR/REC-xml/#NT-Name
     if len(id_candidate) < 1:
         raise LibraryError(ReportItem.error(
-            error_codes.INVALID_ID,
+            report_codes.INVALID_ID,
             "{description} cannot be empty",
             info={
                 "id": id_candidate,
@@ -94,7 +94,7 @@ def validate_id(id_candidate, description="id"):
     first_char_re = re.compile("[a-zA-Z_]")
     if not first_char_re.match(id_candidate[0]):
         raise LibraryError(ReportItem.error(
-            error_codes.INVALID_ID,
+            report_codes.INVALID_ID,
             "invalid {description} '{id}', '{invalid_character}' is not " +
                 "a valid first character for a {description}"
             ,
@@ -109,7 +109,7 @@ def validate_id(id_candidate, description="id"):
     for char in id_candidate[1:]:
         if not char_re.match(char):
             raise LibraryError(ReportItem.error(
-                error_codes.INVALID_ID,
+                report_codes.INVALID_ID,
                 "invalid {description} '{id}', '{invalid_character}' is not " +
                     "a valid character for a {description}"
                 ,

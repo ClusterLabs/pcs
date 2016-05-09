@@ -9,7 +9,7 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs.lib import error_codes
+from pcs.common import report_codes
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import(
@@ -37,7 +37,7 @@ class PrepareSetTest(TestCase):
                 "ids": ["A", "B"],
                 "options": {"invalid_name": "true"}
             }),
-            (severities.ERROR, error_codes.INVALID_OPTION, {
+            (severities.ERROR, report_codes.INVALID_OPTION, {
                 'allowed_raw': ['action', 'require-all', 'role', 'sequential'],
                 'option': 'invalid_name',
             }),
@@ -49,7 +49,7 @@ class PrepareSetTest(TestCase):
                 "ids": ["A", "B"],
                 "options": {"role": "invalid"}
             }),
-            (severities.ERROR, error_codes.INVALID_OPTION_VALUE, {
+            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
                 'option_name': 'role',
                 'allowed_values_raw': ('Stopped', 'Started', 'Master', 'Slave'),
                 'option_value': 'invalid',

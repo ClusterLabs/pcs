@@ -12,10 +12,10 @@ from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_mock import mock
 
+from pcs.common import report_codes
 from pcs.lib.external import NodeAuthenticationException
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.node import NodeAddresses, NodeAddressesList
-from pcs.lib import error_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.nodes_task as lib
@@ -113,7 +113,7 @@ class DistributeCorosyncConfTest(TestCase):
             ),
             (
                 severity.ERROR,
-                error_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
                 {
                     "node": nodes[1],
                     "command": "command",
@@ -122,7 +122,7 @@ class DistributeCorosyncConfTest(TestCase):
             ),
             (
                 severity.ERROR,
-                error_codes.NODE_COROSYNC_CONF_SAVE_ERROR,
+                report_codes.NODE_COROSYNC_CONF_SAVE_ERROR,
                 {
                     "node": nodes[1],
                 }
