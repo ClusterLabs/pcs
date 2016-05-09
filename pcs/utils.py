@@ -57,7 +57,8 @@ except ImportError:
 
 from pcs import settings, usage
 from pcs.cli.common.reports import (
-    process_library_reports as process_lib_reports
+    process_library_reports as process_lib_reports,
+    LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
 from pcs.common.tools import simple_cache
 from pcs.lib.env import LibraryEnvironment
@@ -2542,6 +2543,7 @@ def get_lib_env():
 
     return LibraryEnvironment(
         logging.getLogger("old_cli"),
+        LibraryReportProcessorToConsole(),
         user,
         groups,
         cib_data,

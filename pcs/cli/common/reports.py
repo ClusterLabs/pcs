@@ -9,12 +9,30 @@ import sys
 
 from pcs.cli.constraint_all.console_report import duplicate_constraints_report
 from pcs.lib import error_codes as codes
-from pcs.lib.errors import ReportItemSeverity
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
 __CODE_BUILDER_MAP = {
     codes.DUPLICATE_CONSTRAINTS_EXIST: duplicate_constraints_report,
 }
+
+
+class LibraryReportProcessorToConsole(object):
+    def process(self, report_item):
+        self.process_list([report_item])
+
+    def process_list(self, report_item_list):
+        errors = []
+        for report_item in report_item_list:
+            if report_item.severity == ReportItemSeverity.ERROR:
+                errors.append(report_item)
+            elif report_item.severity == ReportItemSeverity.WARNING:
+                print("Warning: " + report_item.message)
+            else:
+                print(report_item.message)
+        if errors:
+            raise LibraryError(*errors)
+
 
 def _build_error_report(report_item):
     get_template = __CODE_BUILDER_MAP.get(

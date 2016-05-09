@@ -9,6 +9,7 @@ import logging
 from unittest import TestCase
 
 from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 
@@ -35,10 +36,11 @@ class CmanMixin(object):
 class GetQuorumConfigTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_disabled_on_cman(self, mock_get_corosync):
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(lambda: lib.get_config(lib_env))
         mock_get_corosync.assert_not_called()
 
@@ -48,6 +50,7 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(
             self.mock_logger,
+            self.mock_reporter,
             corosync_conf_data=original_conf
         )
 
@@ -58,12 +61,13 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
             },
             lib.get_config(lib_env)
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_no_options(self, mock_get_corosync):
         original_conf = open(rc("corosync.conf")).read()
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertEqual(
             {
@@ -72,12 +76,13 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
             },
             lib.get_config(lib_env)
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_options(self, mock_get_corosync):
         original_conf = "quorum {\nwait_for_all: 1\n}\n"
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertEqual(
             {
@@ -88,6 +93,7 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
             },
             lib.get_config(lib_env)
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_device(self, mock_get_corosync):
@@ -106,7 +112,7 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
             }
         """
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertEqual(
             {
@@ -126,6 +132,7 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
             },
             lib.get_config(lib_env)
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
@@ -133,10 +140,11 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
 class SetQuorumOptionsTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(lambda: lib.set_options(lib_env, {}))
         mock_get_corosync.assert_not_called()
         mock_push_corosync.assert_not_called()
@@ -149,6 +157,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(
             self.mock_logger,
+            self.mock_reporter,
             corosync_conf_data=original_conf
         )
         options = {"wait_for_all": "1"}
@@ -167,7 +176,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
     def test_success(self, mock_get_corosync, mock_push_corosync):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         new_options = {"wait_for_all": "1"}
         lib.set_options(lib_env, new_options)
@@ -178,12 +187,13 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
                 "provider: corosync_votequorum\n    wait_for_all: 1\n",
             )
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_bad_options(self, mock_get_corosync, mock_push_corosync):
         original_conf = open(rc("corosync.conf")).read()
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         new_options = {"invalid": "option"}
         assert_raise_library_error(
@@ -210,7 +220,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
     def test_bad_config(self, mock_get_corosync, mock_push_corosync):
         original_conf = "invalid {\nconfig: this is"
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         new_options = {"wait_for_all": "1"}
         assert_raise_library_error(
@@ -230,10 +240,11 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
 class AddDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(
             lambda: lib.add_device(lib_env, "net", {"host": "127.0.0.1"}, {})
         )
@@ -248,6 +259,7 @@ class AddDeviceTest(TestCase, CmanMixin):
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(
             self.mock_logger,
+            self.mock_reporter,
             corosync_conf_data=original_conf
         )
 
@@ -272,7 +284,7 @@ class AddDeviceTest(TestCase, CmanMixin):
     def test_success(self, mock_get_corosync, mock_push_corosync):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         lib.add_device(
             lib_env,
@@ -297,6 +309,7 @@ class AddDeviceTest(TestCase, CmanMixin):
 """,
             )
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
@@ -304,10 +317,11 @@ class AddDeviceTest(TestCase, CmanMixin):
 class RemoveDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(lambda: lib.remove_device(lib_env))
         mock_get_corosync.assert_not_called()
         mock_push_corosync.assert_not_called()
@@ -320,6 +334,7 @@ class RemoveDeviceTest(TestCase, CmanMixin):
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(
             self.mock_logger,
+            self.mock_reporter,
             corosync_conf_data=original_conf
         )
 
@@ -337,7 +352,7 @@ class RemoveDeviceTest(TestCase, CmanMixin):
     def test_no_device(self, mock_get_corosync, mock_push_corosync):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         assert_raise_library_error(
             lambda: lib.remove_device(lib_env),
@@ -355,11 +370,12 @@ class RemoveDeviceTest(TestCase, CmanMixin):
         original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
         no_device_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         lib.remove_device(lib_env)
 
         mock_push_corosync.assert_called_once_with(no_device_conf)
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
@@ -367,10 +383,11 @@ class RemoveDeviceTest(TestCase, CmanMixin):
 class UpdateDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(
             lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {})
         )
@@ -385,6 +402,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(
             self.mock_logger,
+            self.mock_reporter,
             corosync_conf_data=original_conf
         )
 
@@ -401,7 +419,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
     def test_no_device(self, mock_get_corosync, mock_push_corosync):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         assert_raise_library_error(
             lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}),
@@ -418,7 +436,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
     def test_success(self, mock_get_corosync, mock_push_corosync):
         original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
         mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         lib.update_device(
             lib_env,
@@ -434,3 +452,4 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                     "model: net\n        timeout: 12345"
                 )
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)

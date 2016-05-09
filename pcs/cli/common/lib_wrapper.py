@@ -16,6 +16,9 @@ from pcs.lib.commands.constraint import colocation as constraint_colocation
 from pcs.lib.commands.constraint import order as constraint_order
 from pcs.lib.commands.constraint import ticket as constraint_ticket
 from pcs.lib.commands import quorum
+from pcs.cli.common.reports import (
+    LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
+)
 
 from pcs.lib.env import LibraryEnvironment
 
@@ -27,6 +30,7 @@ def wrapper(dictionary):
 def cli_env_to_lib_env(cli_env):
     return LibraryEnvironment(
         logging.getLogger("old_cli"),
+        LibraryReportProcessorToConsole(),
         cli_env.user,
         cli_env.groups,
         cli_env.cib_data,

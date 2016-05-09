@@ -8,6 +8,7 @@ from __future__ import (
 from unittest import TestCase
 import logging
 
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_mock import mock
 
 from pcs.lib.env import LibraryEnvironment
@@ -15,33 +16,46 @@ from pcs.lib.env import LibraryEnvironment
 class LibraryEnvironmentTest(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     def test_logger(self):
-        env = LibraryEnvironment(self.mock_logger)
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assertEqual(self.mock_logger, env.logger)
+
+    def test_report_processor(self):
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        self.assertEqual(self.mock_reporter, env.report_processor)
 
     def test_user_set(self):
         user = "testuser"
-        env = LibraryEnvironment(self.mock_logger, user_login=user)
+        env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            user_login=user
+        )
         self.assertEqual(user, env.user_login)
 
     def test_user_not_set(self):
-        env = LibraryEnvironment(self.mock_logger)
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assertEqual(None, env.user_login)
 
     def test_usergroups_set(self):
         groups = ["some", "group"]
-        env = LibraryEnvironment(self.mock_logger, user_groups=groups)
+        env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            user_groups=groups
+        )
         self.assertEqual(groups, env.user_groups)
 
     def test_usergroups_not_set(self):
-        env = LibraryEnvironment(self.mock_logger)
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assertEqual([], env.user_groups)
 
     @mock.patch("pcs.lib.env.is_cman_cluster")
     def test_is_cman_cluster(self, mock_is_cman):
         mock_is_cman.return_value = True
-        env = LibraryEnvironment(self.mock_logger)
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assertTrue(env.is_cman_cluster)
         self.assertTrue(env.is_cman_cluster)
         self.assertEqual(1, mock_is_cman.call_count)
@@ -51,7 +65,11 @@ class LibraryEnvironmentTest(TestCase):
     def test_cib_set(self, mock_get_cib, mock_push_cib):
         cib_data = "test cib data"
         new_cib_data = "new test cib data"
-        env = LibraryEnvironment(self.mock_logger, cib_data=cib_data)
+        env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            cib_data=cib_data
+        )
 
         self.assertFalse(env.is_cib_live)
 
@@ -70,7 +88,7 @@ class LibraryEnvironmentTest(TestCase):
         cib_data = "test cib data"
         new_cib_data = "new test cib data"
         mock_get_cib.return_value = cib_data
-        env = LibraryEnvironment(self.mock_logger)
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertTrue(env.is_cib_live)
 
@@ -87,6 +105,7 @@ class LibraryEnvironmentTest(TestCase):
         new_corosync_data = "new test corosync data"
         env = LibraryEnvironment(
             self.mock_logger,
+            self.mock_reporter,
             corosync_conf_data=corosync_data
         )
 
@@ -118,7 +137,7 @@ class LibraryEnvironmentTest(TestCase):
         mock_conf_facade.from_string = mock.MagicMock(
             return_value=mock_facade_instance
         )
-        env = LibraryEnvironment(self.mock_logger)
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertTrue(env.is_corosync_conf_live)
 
@@ -136,7 +155,7 @@ class LibraryEnvironmentTest(TestCase):
     def test_cmd_runner_no_options(self, mock_runner):
         expected_runner = mock.MagicMock()
         mock_runner.return_value = expected_runner
-        env = LibraryEnvironment(self.mock_logger)
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         runner = env.cmd_runner()
         self.assertEqual(expected_runner, runner)
         mock_runner.assert_called_once_with(self.mock_logger, {})
@@ -146,7 +165,11 @@ class LibraryEnvironmentTest(TestCase):
         expected_runner = mock.MagicMock()
         mock_runner.return_value = expected_runner
         user = "testuser"
-        env = LibraryEnvironment(self.mock_logger, user_login=user)
+        env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            user_login=user
+        )
         runner = env.cmd_runner()
         self.assertEqual(expected_runner, runner)
         mock_runner.assert_called_once_with(
@@ -158,7 +181,7 @@ class LibraryEnvironmentTest(TestCase):
     def test_node_communicator_no_options(self, mock_comm):
         expected_comm = mock.MagicMock()
         mock_comm.return_value = expected_comm
-        env = LibraryEnvironment(self.mock_logger)
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         comm = env.node_communicator()
         self.assertEqual(expected_comm, comm)
         mock_comm.assert_called_once_with(self.mock_logger, {}, None, [])
@@ -172,6 +195,7 @@ class LibraryEnvironmentTest(TestCase):
         tokens = {"node": "token"}
         env = LibraryEnvironment(
             self.mock_logger,
+            self.mock_reporter,
             user_login=user,
             user_groups=groups,
             auth_tokens_getter=lambda:tokens

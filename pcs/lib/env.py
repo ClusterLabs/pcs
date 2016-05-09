@@ -30,6 +30,7 @@ class LibraryEnvironment(object):
     def __init__(
         self,
         logger,
+        report_processor,
         user_login=None,
         user_groups=None,
         cib_data=None,
@@ -37,6 +38,7 @@ class LibraryEnvironment(object):
         auth_tokens_getter=None,
     ):
         self._logger = logger
+        self._report_processor = report_processor
         self._user_login = user_login
         self._user_groups = [] if user_groups is None else user_groups
         self._cib_data = cib_data
@@ -51,6 +53,10 @@ class LibraryEnvironment(object):
     @property
     def logger(self):
         return self._logger
+
+    @property
+    def report_processor(self):
+        return self._report_processor
 
     @property
     def user_login(self):

@@ -40,7 +40,7 @@ def set_options(lib_env, options):
     __ensure_not_cman(lib_env)
 
     cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
-    cfg.set_quorum_options(options)
+    cfg.set_quorum_options(lib_env.report_processor, options)
     exported_config = cfg.config.export()
 
     lib_env.push_corosync_conf(exported_config)
@@ -55,7 +55,12 @@ def add_device(lib_env, model, model_options, generic_options):
     __ensure_not_cman(lib_env)
 
     cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
-    cfg.add_quorum_device(model, model_options, generic_options)
+    cfg.add_quorum_device(
+        lib_env.report_processor,
+        model,
+        model_options,
+        generic_options
+    )
     exported_config = cfg.config.export()
 
     # TODO validation, verification, certificates, etc.
@@ -71,7 +76,11 @@ def update_device(lib_env, model_options, generic_options):
     __ensure_not_cman(lib_env)
 
     cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
-    cfg.update_quorum_device(model_options, generic_options)
+    cfg.update_quorum_device(
+        lib_env.report_processor,
+        model_options,
+        generic_options
+    )
     exported_config = cfg.config.export()
 
     lib_env.push_corosync_conf(exported_config)

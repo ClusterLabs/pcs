@@ -9,6 +9,7 @@ from unittest import TestCase
 import re
 
 from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
@@ -228,8 +229,9 @@ class SetQuorumOptionsTest(TestCase):
 
     def test_add_missing_section(self):
         config = ""
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
-        facade.set_quorum_options({"wait_for_all": "0"})
+        facade.set_quorum_options(reporter, {"wait_for_all": "0"})
         self.assertEqual(
             """\
 quorum {
@@ -238,15 +240,19 @@ quorum {
 """,
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_del_missing_section(self):
         config = ""
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
-        facade.set_quorum_options({"wait_for_all": ""})
+        facade.set_quorum_options(reporter, {"wait_for_all": ""})
         self.assertEqual("", facade.config.export())
+        self.assertEqual([], reporter.report_item_list)
 
     def test_add_all_options(self):
         config = open(rc("corosync.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         expected_options = {
             "auto_tie_breaker": "1",
@@ -254,13 +260,14 @@ quorum {
             "last_man_standing_window": "1000",
             "wait_for_all": "0",
         }
-        facade.set_quorum_options(expected_options)
+        facade.set_quorum_options(reporter, expected_options)
 
         test_facade = lib.ConfigFacade.from_string(facade.config.export())
         self.assertEqual(
             expected_options,
             test_facade.get_quorum_options()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_complex(self):
         config = """\
@@ -273,12 +280,16 @@ quorum {
     last_man_standing: 1
 }
 """
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
-        facade.set_quorum_options({
-            "auto_tie_breaker": "1",
-            "wait_for_all": "1",
-            "last_man_standing_window": "",
-        })
+        facade.set_quorum_options(
+            reporter,
+            {
+                "auto_tie_breaker": "1",
+                "wait_for_all": "1",
+                "last_man_standing_window": "",
+            }
+        )
 
         test_facade = lib.ConfigFacade.from_string(facade.config.export())
         self.assertEqual(
@@ -289,60 +300,73 @@ quorum {
             },
             test_facade.get_quorum_options()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_2nodes_atb_on(self):
         config = open(rc("corosync.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(2, len(facade.get_nodes()))
 
-        facade.set_quorum_options({"auto_tie_breaker": "1"})
+        facade.set_quorum_options(reporter, {"auto_tie_breaker": "1"})
 
         self.assertEqual(
             "1",
             facade.get_quorum_options().get("auto_tie_breaker", None)
         )
+        self.assertEqual([], reporter.report_item_list)
+
         two_node = self.get_two_node(facade)
         self.assertTrue(two_node is None or two_node == "0")
 
     def test_2nodes_atb_off(self):
         config = open(rc("corosync.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(2, len(facade.get_nodes()))
 
-        facade.set_quorum_options({"auto_tie_breaker": "0"})
+        facade.set_quorum_options(reporter, {"auto_tie_breaker": "0"})
 
         self.assertEqual(
             "0",
             facade.get_quorum_options().get("auto_tie_breaker", None)
         )
+        self.assertEqual([], reporter.report_item_list)
+
         two_node = self.get_two_node(facade)
         self.assertTrue(two_node == "1")
 
     def test_3nodes_atb_on(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(3, len(facade.get_nodes()))
 
-        facade.set_quorum_options({"auto_tie_breaker": "1"})
+        facade.set_quorum_options(reporter, {"auto_tie_breaker": "1"})
 
         self.assertEqual(
             "1",
             facade.get_quorum_options().get("auto_tie_breaker", None)
         )
+        self.assertEqual([], reporter.report_item_list)
+
         two_node = self.get_two_node(facade)
         self.assertTrue(two_node is None or two_node == "0")
 
     def test_3nodes_atb_off(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(3, len(facade.get_nodes()))
 
-        facade.set_quorum_options({"auto_tie_breaker": "0"})
+        facade.set_quorum_options(reporter, {"auto_tie_breaker": "0"})
 
         self.assertEqual(
             "0",
             facade.get_quorum_options().get("auto_tie_breaker", None)
         )
+        self.assertEqual([], reporter.report_item_list)
+
         two_node = self.get_two_node(facade)
         self.assertTrue(two_node is None or two_node == "0")
 
@@ -354,6 +378,7 @@ quorum {
     last_man_standing: 1
 }
 """
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         options = {
             "auto_tie_breaker": "",
@@ -362,7 +387,7 @@ quorum {
             "last_man_standing_window": "250",
         }
         assert_raise_library_error(
-            lambda: facade.set_quorum_options(options),
+            lambda: facade.set_quorum_options(reporter, options),
             (
                 severity.ERROR,
                 error_codes.INVALID_OPTION_VALUE,
@@ -381,6 +406,7 @@ quorum {
 
     def test_invalid_all_values(self):
         config= ""
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         options = {
             "auto_tie_breaker": "atb",
@@ -389,7 +415,7 @@ quorum {
             "wait_for_all": "wfa",
         }
         assert_raise_library_error(
-            lambda: facade.set_quorum_options(options),
+            lambda: facade.set_quorum_options(reporter, options),
             (
                 severity.ERROR,
                 error_codes.INVALID_OPTION_VALUE,
@@ -438,6 +464,7 @@ quorum {
 
     def test_invalid_option(self):
         config= ""
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         options = {
             "auto_tie_breaker": "1",
@@ -445,7 +472,7 @@ quorum {
             "nonsense2": "doesnt matter",
         }
         assert_raise_library_error(
-            lambda: facade.set_quorum_options(options),
+            lambda: facade.set_quorum_options(reporter, options),
             (
                 severity.ERROR,
                 error_codes.INVALID_OPTION,
@@ -674,9 +701,15 @@ quorum {
     }
 }
 """
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.add_quorum_device("net", {"host": "127.0.0.1"}, {}),
+            lambda: facade.add_quorum_device(
+                reporter,
+                "net",
+                {"host": "127.0.0.1"},
+                {}
+            ),
             (
                 severity.ERROR,
                 error_codes.QDEVICE_ALREADY_DEFINED,
@@ -687,8 +720,10 @@ quorum {
 
     def test_success_net_minimal(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
+            reporter,
             "net",
             {"host": "127.0.0.1"},
             {}
@@ -709,11 +744,14 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_success_net_full(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
+            reporter,
             "net",
             {
                 "host": "127.0.0.1",
@@ -751,11 +789,14 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_lms_3node(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
+            reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "lms"},
             {}
@@ -777,11 +818,14 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_2nodelms_3node(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
+            reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "2nodelms"},
             {}
@@ -803,11 +847,14 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_lms_2node(self):
         config = open(rc("corosync.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
+            reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "lms"},
             {}
@@ -829,11 +876,14 @@ quorum {
             ).replace("    two_node: 1\n", ""),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_2nodelms_2node(self):
         config = open(rc("corosync.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
+            reporter,
             "net",
             {"host": "127.0.0.1", "algorithm": "2nodelms"},
             {}
@@ -855,6 +905,7 @@ quorum {
             ).replace("    two_node: 1\n", ""),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_remove_conflicting_options(self):
         config = open(rc("corosync.conf")).read()
@@ -869,8 +920,10 @@ quorum {
                 ""
             ])
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
+            reporter,
             "net",
             {"host": "127.0.0.1"},
             {}
@@ -894,6 +947,7 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_remove_old_configuration(self):
         config = """\
@@ -910,8 +964,10 @@ quorum {
     }
 }
         """
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
+            reporter,
             "net",
             {"host": "127.0.0.1"},
             {}
@@ -937,12 +993,14 @@ quorum {
             ,
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_bad_model(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.add_quorum_device("invalid", {}, {}),
+            lambda: facade.add_quorum_device(reporter, "invalid", {}, {}),
             (
                 severity.ERROR,
                 error_codes.INVALID_OPTION_VALUE,
@@ -958,9 +1016,10 @@ quorum {
 
     def test_missing_required_options_net(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.add_quorum_device("net", {}, {}),
+            lambda: facade.add_quorum_device(reporter, "net", {}, {}),
             (
                 severity.ERROR,
                 error_codes.REQUIRED_OPTION_IS_MISSING,
@@ -972,9 +1031,11 @@ quorum {
 
     def test_bad_options_net(self):
         config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.add_quorum_device(
+                reporter,
                 "net",
                 {
                     "host": "",
@@ -1131,9 +1192,14 @@ quorum {
 
     def test_not_existing(self):
         config = open(rc("corosync.conf")).read()
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.update_quorum_device({"host": "127.0.0.1"}, {}),
+            lambda: facade.update_quorum_device(
+                reporter,
+                {"host": "127.0.0.1"},
+                {}
+            ),
             (
                 severity.ERROR,
                 error_codes.QDEVICE_NOT_DEFINED,
@@ -1146,8 +1212,10 @@ quorum {
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
+            reporter,
             {"host": "127.0.0.2", "port": "", "algorithm": "ffsplit"},
             {}
         )
@@ -1158,13 +1226,16 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_success_net_3node_2nodelms(self):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
+            reporter,
             {"algorithm": "2nodelms"},
             {}
         )
@@ -1175,13 +1246,15 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_success_net_doesnt_require_host(self):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
-        facade.update_quorum_device({"port": "4444"}, {})
+        facade.update_quorum_device(reporter, {"port": "4444"}, {})
         ac(
             config.replace(
                 "host: 127.0.0.1\n            port: 4433",
@@ -1189,14 +1262,16 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_net_host_cannot_be_removed(self):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.update_quorum_device({"host": ""}, {}),
+            lambda: facade.update_quorum_device(reporter, {"host": ""}, {}),
             (
                 severity.ERROR,
                 error_codes.REQUIRED_OPTION_IS_MISSING,
@@ -1210,9 +1285,11 @@ quorum {
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.update_quorum_device(
+                reporter,
                 {
                     "port": "65537",
                     "algorithm": "bad algorithm",
@@ -1297,8 +1374,10 @@ quorum {
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
+            reporter,
             {},
             {"timeout": "", "sync_timeout": "23456"}
         )
@@ -1309,13 +1388,16 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_success_both_options(self):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
+            reporter,
             {"port": "4444"},
             {"timeout": "23456"}
         )
@@ -1326,14 +1408,17 @@ quorum {
             ,
             facade.config.export()
         )
+        self.assertEqual([], reporter.report_item_list)
 
     def test_bad_generic_options(self):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
+        reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.update_quorum_device(
+                reporter,
                 {},
                 {
                     "timeout": "-2",

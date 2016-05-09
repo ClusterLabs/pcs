@@ -9,6 +9,7 @@ from unittest import TestCase
 import logging
 
 from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_mock import mock
 
 from pcs.lib.external import NodeAuthenticationException
@@ -33,6 +34,7 @@ import pcs.lib.nodes_task as lib
 class DistributeCorosyncConfTest(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     def assert_set_remote_corosync_conf_call(self, a_call, node_ring0, config):
         self.assertEqual("set_remote_corosync_conf", a_call[0])
@@ -49,7 +51,7 @@ class DistributeCorosyncConfTest(TestCase):
         node_addrs_list = NodeAddressesList(
             [NodeAddresses(addr) for addr in nodes]
         )
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         mock_corosync_live.set_remote_corosync_conf = mock.MagicMock()
         mock_corosync_live.reload_config = mock.MagicMock()
@@ -96,7 +98,7 @@ class DistributeCorosyncConfTest(TestCase):
         node_addrs_list = NodeAddressesList(
             [NodeAddresses(addr) for addr in nodes]
         )
-        lib_env = LibraryEnvironment(self.mock_logger)
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         mock_corosync_live.set_remote_corosync_conf = mock.MagicMock()
         def raiser(comm, node, conf):
