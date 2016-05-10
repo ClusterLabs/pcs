@@ -4,10 +4,12 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
-from pcs.cli.common import middleware
+
 from collections import namedtuple
 from functools import partial
 import logging
+
+from pcs.cli.common import middleware
 
 #from pcs.lib import commands does not work: "commands" is package
 from pcs.lib.commands.constraint import colocation as constraint_colocation
@@ -62,27 +64,41 @@ def get_module(env, middleware_factory, name):
 
 def load_module(env, middleware_factory, name):
     if name == 'constraint_order':
-        return bind_all(env, middleware.build(middleware_factory.cib), {
-            'set': constraint_order.create_with_set,
-            'show': constraint_order.show,
-        })
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                'set': constraint_order.create_with_set,
+                'show': constraint_order.show,
+            }
+        )
 
     if name == 'constraint_colocation':
-        return bind_all(env, middleware.build(middleware_factory.cib), {
-            'set': constraint_colocation.create_with_set,
-            'show': constraint_colocation.show,
-        })
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                'set': constraint_colocation.create_with_set,
+                'show': constraint_colocation.show,
+            }
+        )
 
     if name == 'constraint_ticket':
-        return bind_all(env, middleware.build(middleware_factory.cib), {
-            'set': constraint_ticket.create_with_set,
-            'show': constraint_ticket.show,
-            'add': constraint_ticket.create,
-        })
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                'set': constraint_ticket.create_with_set,
+                'show': constraint_ticket.show,
+                'add': constraint_ticket.create,
+            }
+        )
 
     if name == "quorum":
         return bind_all(
-            env, middleware.build(middleware_factory.corosync_conf_existing), {
+            env,
+            middleware.build(middleware_factory.corosync_conf_existing),
+            {
                 "add_device": quorum.add_device,
                 "get_config": quorum.get_config,
                 "remove_device": quorum.remove_device,
