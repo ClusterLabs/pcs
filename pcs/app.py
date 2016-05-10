@@ -155,15 +155,11 @@ def main(argv=None):
         usage.main()
         sys.exit(1)
 
+    # create a dummy logger
+    # we do not have a log file for cli (yet), but library requires a logger
     logger = logging.getLogger("old_cli")
     logger.propagate = 0
     logger.handlers = []
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("%(message)s"))
-    logger.addHandler(handler)
-    logger.setLevel(
-        logging.DEBUG if "--debug" in utils.pcs_options else logging.INFO
-    )
 
     command = argv.pop(0)
     if (command == "-h" or command == "help"):

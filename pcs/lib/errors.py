@@ -12,6 +12,7 @@ class ReportItemSeverity(object):
     ERROR = 'ERROR'
     WARNING = 'WARNING'
     INFO = 'INFO'
+    DEBUG = 'DEBUG'
 
 class ReportItem(object):
     @classmethod
@@ -25,6 +26,10 @@ class ReportItem(object):
     @classmethod
     def info(cls, code, message_pattern, **kwargs):
         return cls(code, ReportItemSeverity.INFO, message_pattern, **kwargs)
+
+    @classmethod
+    def debug(cls, code, message_pattern, **kwargs):
+        return cls(code, ReportItemSeverity.DEBUG, message_pattern, **kwargs)
 
     def __init__(
         self, code, severity, message_pattern, forceable=False, info=None

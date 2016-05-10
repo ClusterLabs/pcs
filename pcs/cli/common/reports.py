@@ -18,6 +18,9 @@ __CODE_BUILDER_MAP = {
 
 
 class LibraryReportProcessorToConsole(object):
+    def __init__(self, debug=False):
+        self.debug = debug
+
     def process(self, report_item):
         self.process_list([report_item])
 
@@ -28,7 +31,7 @@ class LibraryReportProcessorToConsole(object):
                 errors.append(report_item)
             elif report_item.severity == ReportItemSeverity.WARNING:
                 print("Warning: " + report_item.message)
-            else:
+            elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
                 print(report_item.message)
         if errors:
             raise LibraryError(*errors)

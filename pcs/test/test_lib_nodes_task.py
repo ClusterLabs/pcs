@@ -8,7 +8,10 @@ from __future__ import (
 from unittest import TestCase
 import logging
 
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_mock import mock
 
@@ -82,14 +85,31 @@ class DistributeCorosyncConfTest(TestCase):
             mock_corosync_live.mock_calls[2]
         )
 
-        logger_calls = [
-            mock.call("Sending updated corosync.conf to nodes..."),
-            mock.call("{0}: Succeeded".format(nodes[0])),
-            mock.call("{0}: Succeeded".format(nodes[1])),
-            mock.call("Corosync configuration reloaded"),
-        ]
-        self.assertEqual(self.mock_logger.info.call_count, len(logger_calls))
-        self.mock_logger.info.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED,
+                    {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    {"node": nodes[0]}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    {"node": nodes[1]}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_CONFIG_RELOADED,
+                    {}
+                ),
+            ]
+        )
 
     @mock.patch("pcs.lib.nodes_task.corosync_live")
     def test_one_node_down(self, mock_corosync_live):
@@ -149,9 +169,18 @@ class DistributeCorosyncConfTest(TestCase):
         )
         mock_corosync_live.reload_config.assert_not_called()
 
-        logger_calls = [
-            mock.call("Sending updated corosync.conf to nodes..."),
-            mock.call("{0}: Succeeded".format(nodes[0])),
-        ]
-        self.assertEqual(self.mock_logger.info.call_count, len(logger_calls))
-        self.mock_logger.info.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED,
+                    {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    {"node": nodes[0]}
+                ),
+            ]
+        )

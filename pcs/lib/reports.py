@@ -106,3 +106,85 @@ def invalid_score(score):
             "score": score,
         }
     )
+
+def run_external_process_started(argv, stdin):
+    msg = "Running: {argv}"
+    if stdin:
+        msg += "\n--Debug Input Start--\n{stdin}\n--Debug Input End--"
+    msg += "\n"
+    return ReportItem.debug(
+        report_codes.RUN_EXTERNAL_PROCESS_STARTED,
+        msg,
+        info={
+            "argv": argv,
+            "stdin": stdin,
+        }
+    )
+
+def run_external_process_finished(argv, retval, stdout):
+    return ReportItem.debug(
+        report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
+        "Finished running: {argv}\nReturn value: {return_value}"
+        + "\n--Debug Output Start--\n{stdout}\n--Debug Output End--\n",
+        info={
+            "argv": argv,
+            "return_value": retval,
+            "stdout": stdout,
+        }
+    )
+
+def node_communication_started(target, data):
+    msg = "Sending HTTP Request to: {target}"
+    if data:
+        msg += "\n--Debug Input Start--\n{data}\n--Debug Input End--"
+    msg += "\n"
+    return ReportItem.debug(
+        report_codes.NODE_COMMUNICATION_STARTED,
+        msg,
+        info={
+            "target": target,
+            "data": data,
+        }
+    )
+
+def node_communication_finished(target, retval, data):
+    return ReportItem.debug(
+        report_codes.NODE_COMMUNICATION_FINISHED,
+        "Finished calling: {target}\nResponse Code: {response_code}"
+        + "\n--Debug Response Start--\n{response_data}\n--Debug Response End--"
+        + "\n",
+        info={
+            "target": target,
+            "response_code": retval,
+            "response_data": data
+        }
+    )
+
+def node_communication_not_connected(node, reason):
+    return ReportItem.debug(
+        report_codes.NODE_COMMUNICATION_NOT_CONNECTED,
+        "Unable to connect to {node} ({reason})",
+        info={
+            "node": node,
+            "reason": reason,
+        }
+    )
+
+def corosync_config_distribution_started():
+    return ReportItem.info(
+        report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED,
+        "Sending updated corosync.conf to nodes..."
+    )
+
+def corosync_config_accepted_by_node(node):
+    return ReportItem.info(
+        report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+        "{node}: Succeeded",
+        info={"node": node}
+    )
+
+def corosync_config_reloaded():
+    return ReportItem.info(
+        report_codes.COROSYNC_CONFIG_RELOADED,
+        "Corosync configuration reloaded"
+    )

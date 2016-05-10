@@ -831,7 +831,11 @@ def cmd_runner():
     if usefile:
         env_vars["CIB_file"] = filename
     env_vars.update(os.environ)
-    return CommandRunner(logging.getLogger("old_cli"), env_vars)
+    return CommandRunner(
+        logging.getLogger("old_cli"),
+        get_report_processor(),
+        env_vars
+    )
 
 def run_pcsdcli(command, data=None):
     if not data:
@@ -2543,7 +2547,7 @@ def get_lib_env():
 
     return LibraryEnvironment(
         logging.getLogger("old_cli"),
-        LibraryReportProcessorToConsole(),
+        get_report_processor(),
         user,
         groups,
         cib_data,
@@ -2567,6 +2571,7 @@ def get_cli_env():
     env.user = user
     env.groups = groups
     env.auth_tokens_getter = readTokens
+    env.debug = "--debug" in pcs_options
     return env
 
 def get_middleware_factory():
@@ -2605,3 +2610,6 @@ def exit_on_cmdline_input_errror(error, main_name, usage_name):
     else:
         usage.show(main_name, [usage_name])
     sys.exit(1)
+
+def get_report_processor():
+    return LibraryReportProcessorToConsole(debug=("--debug" in pcs_options))

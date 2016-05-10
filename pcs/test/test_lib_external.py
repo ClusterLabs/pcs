@@ -24,7 +24,9 @@ except ImportError:
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_equal,
+    assert_report_item_list_equal,
 )
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_mock import mock
 
 from pcs import settings
@@ -38,6 +40,7 @@ import pcs.lib.external as lib
 class CommandRunnerTest(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     def assert_popen_called_with(self, mock_popen, args, kwargs):
         self.assertEqual(mock_popen.call_count, 1)
@@ -59,7 +62,7 @@ class CommandRunnerTest(TestCase):
         mock_process.returncode = expected_retval
         mock_popen.return_value = mock_process
 
-        runner = lib.CommandRunner(self.mock_logger)
+        runner = lib.CommandRunner(self.mock_logger, self.mock_reporter)
         real_output, real_retval = runner.run(command)
 
         self.assertEqual(real_output, expected_output)
@@ -81,6 +84,28 @@ Return value: {1}
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.DEBUG,
+                    report_codes.RUN_EXTERNAL_PROCESS_STARTED,
+                    {
+                        "argv": command_str,
+                        "stdin": None,
+                    }
+                ),
+                (
+                    severity.DEBUG,
+                    report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
+                    {
+                        "argv": command_str,
+                        "return_value": expected_retval,
+                        "stdout": expected_output,
+                    }
+                )
+            ]
+        )
 
     def test_env(self, mock_popen):
         expected_output = "expected output"
@@ -92,7 +117,11 @@ Return value: {1}
         mock_process.returncode = expected_retval
         mock_popen.return_value = mock_process
 
-        runner = lib.CommandRunner(self.mock_logger, {"a": "a", "b": "b"})
+        runner = lib.CommandRunner(
+            self.mock_logger,
+            self.mock_reporter,
+            {"a": "a", "b": "b"}
+        )
         real_output, real_retval = runner.run(
             command,
             env_extend={"b": "B", "c": "C"}
@@ -117,6 +146,28 @@ Return value: {1}
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.DEBUG,
+                    report_codes.RUN_EXTERNAL_PROCESS_STARTED,
+                    {
+                        "argv": command_str,
+                        "stdin": None,
+                    }
+                ),
+                (
+                    severity.DEBUG,
+                    report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
+                    {
+                        "argv": command_str,
+                        "return_value": expected_retval,
+                        "stdout": expected_output,
+                    }
+                )
+            ]
+        )
 
     def test_stdin(self, mock_popen):
         expected_output = "expected output"
@@ -129,7 +180,7 @@ Return value: {1}
         mock_process.returncode = expected_retval
         mock_popen.return_value = mock_process
 
-        runner = lib.CommandRunner(self.mock_logger)
+        runner = lib.CommandRunner(self.mock_logger, self.mock_reporter)
         real_output, real_retval = runner.run(command, stdin_string=stdin)
 
         self.assertEqual(real_output, expected_output)
@@ -155,6 +206,28 @@ Return value: {1}
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.DEBUG,
+                    report_codes.RUN_EXTERNAL_PROCESS_STARTED,
+                    {
+                        "argv": command_str,
+                        "stdin": stdin,
+                    }
+                ),
+                (
+                    severity.DEBUG,
+                    report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
+                    {
+                        "argv": command_str,
+                        "return_value": expected_retval,
+                        "stdout": expected_output,
+                    }
+                )
+            ]
+        )
 
     def test_popen_error(self, mock_popen):
         expected_error = "expected error"
@@ -165,7 +238,7 @@ Return value: {1}
         exception.strerror = expected_error
         mock_popen.side_effect = exception
 
-        runner = lib.CommandRunner(self.mock_logger)
+        runner = lib.CommandRunner(self.mock_logger, self.mock_reporter)
         assert_raise_library_error(
             lambda: runner.run(command),
             (
@@ -190,6 +263,19 @@ Return value: {1}
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.DEBUG,
+                    report_codes.RUN_EXTERNAL_PROCESS_STARTED,
+                    {
+                        "argv": command_str,
+                        "stdin": None,
+                    }
+                )
+            ]
+        )
 
     def test_communicate_error(self, mock_popen):
         expected_error = "expected error"
@@ -201,7 +287,7 @@ Return value: {1}
         mock_process.communicate.side_effect = exception
         mock_popen.return_value = mock_process
 
-        runner = lib.CommandRunner(self.mock_logger)
+        runner = lib.CommandRunner(self.mock_logger, self.mock_reporter)
         assert_raise_library_error(
             lambda: runner.run(command),
             (
@@ -226,6 +312,19 @@ Return value: {1}
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.DEBUG,
+                    report_codes.RUN_EXTERNAL_PROCESS_STARTED,
+                    {
+                        "argv": command_str,
+                        "stdin": None,
+                    }
+                )
+            ]
+        )
 
 
 @mock.patch(
@@ -235,6 +334,7 @@ Return value: {1}
 class NodeCommunicatorTest(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
 
     def fixture_response(self, response_code, response_data):
         response = mock.MagicMock(["getcode", "read"])
@@ -267,6 +367,35 @@ class NodeCommunicatorTest(TestCase):
             ))
         ]
 
+    def fixture_report_item_list_send(self, url, data):
+        return [
+            (
+                severity.DEBUG,
+                report_codes.NODE_COMMUNICATION_STARTED,
+                {
+                    "target": url,
+                    "data": data,
+                }
+            )
+        ]
+
+    def fixture_report_item_list(self, url, data, response_code, response_data):
+        return (
+            self.fixture_report_item_list_send(url, data)
+            +
+            [
+                (
+                    severity.DEBUG,
+                    report_codes.NODE_COMMUNICATION_FINISHED,
+                    {
+                        "target": url,
+                        "response_code": response_code,
+                        "response_data": response_data,
+                    }
+                )
+            ]
+        )
+
     def fixture_url(self, host, request):
         return "https://{host}:2224/{request}".format(
             host=host, request=request
@@ -284,7 +413,7 @@ class NodeCommunicatorTest(TestCase):
             expected_response_code, expected_response_data
         )
 
-        comm = lib.NodeCommunicator(self.mock_logger, {})
+        comm = lib.NodeCommunicator(self.mock_logger, self.mock_reporter, {})
         real_response = comm.call_host(host, request, data)
         self.assertEqual(expected_response_data, real_response)
 
@@ -301,6 +430,15 @@ class NodeCommunicatorTest(TestCase):
         )
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            self.fixture_report_item_list(
+                self.fixture_url(host, request),
+                data,
+                expected_response_code,
+                expected_response_data
+            )
+        )
 
     def test_ipv6(self, mock_get_opener):
         host = "cafe::1"
@@ -315,7 +453,11 @@ class NodeCommunicatorTest(TestCase):
             expected_response_code, expected_response_data
         )
 
-        comm = lib.NodeCommunicator(self.mock_logger, {host: token,})
+        comm = lib.NodeCommunicator(
+            self.mock_logger,
+            self.mock_reporter,
+            {host: token,}
+        )
         real_response = comm.call_host(host, request, data)
         self.assertEqual(expected_response_data, real_response)
 
@@ -334,6 +476,15 @@ class NodeCommunicatorTest(TestCase):
         )
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            self.fixture_report_item_list(
+                self.fixture_url("[{0}]".format(host), request),
+                data,
+                expected_response_code,
+                expected_response_data
+            )
+        )
 
     def test_auth_token(self, mock_get_opener):
         host = "test_host"
@@ -343,6 +494,7 @@ class NodeCommunicatorTest(TestCase):
 
         comm = lib.NodeCommunicator(
             self.mock_logger,
+            self.mock_reporter,
             {
                 "some_host": "some_token",
                 host: token,
@@ -361,7 +513,12 @@ class NodeCommunicatorTest(TestCase):
         mock_opener = mock.MagicMock()
         mock_get_opener.return_value = mock_opener
 
-        comm = lib.NodeCommunicator(self.mock_logger, {}, user=user)
+        comm = lib.NodeCommunicator(
+            self.mock_logger,
+            self.mock_reporter,
+            {},
+            user=user
+        )
         dummy_response = comm.call_host(host, "test_request", None)
 
         mock_opener.addheaders.append.assert_called_once_with(
@@ -374,7 +531,12 @@ class NodeCommunicatorTest(TestCase):
         mock_opener = mock.MagicMock()
         mock_get_opener.return_value = mock_opener
 
-        comm = lib.NodeCommunicator(self.mock_logger, {}, groups=groups)
+        comm = lib.NodeCommunicator(
+            self.mock_logger,
+            self.mock_reporter,
+            {},
+            groups=groups
+        )
         dummy_response = comm.call_host(host, "test_request", None)
 
         mock_opener.addheaders.append.assert_called_once_with(
@@ -394,6 +556,7 @@ class NodeCommunicatorTest(TestCase):
 
         comm = lib.NodeCommunicator(
             self.mock_logger,
+            self.mock_reporter,
             {host: token},
             user, groups
         )
@@ -424,7 +587,7 @@ class NodeCommunicatorTest(TestCase):
             expected_response_code, expected_response_data
         )
 
-        comm = lib.NodeCommunicator(self.mock_logger, {})
+        comm = lib.NodeCommunicator(self.mock_logger, self.mock_reporter, {})
         self.assertRaises(
             exception,
             lambda: comm.call_host(host, request, data)
@@ -443,6 +606,15 @@ class NodeCommunicatorTest(TestCase):
         )
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            self.fixture_report_item_list(
+                self.fixture_url(host, request),
+                data,
+                expected_response_code,
+                expected_response_data
+            )
+        )
 
     def test_no_authenticated(self, mock_get_opener):
         self.base_test_http_error(
@@ -481,7 +653,7 @@ class NodeCommunicatorTest(TestCase):
         mock_get_opener.return_value = mock_opener
         mock_opener.open.side_effect = urllib_URLError(expected_reason)
 
-        comm = lib.NodeCommunicator(self.mock_logger, {})
+        comm = lib.NodeCommunicator(self.mock_logger, self.mock_reporter, {})
         self.assertRaises(
             lib.NodeConnectionException,
             lambda: comm.call_host(host, request, data)
@@ -503,6 +675,22 @@ class NodeCommunicatorTest(TestCase):
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            self.fixture_report_item_list_send(
+                self.fixture_url(host, request),
+                data
+            )
+            +
+            [(
+                severity.DEBUG,
+                report_codes.NODE_COMMUNICATION_NOT_CONNECTED,
+                {
+                    "node": host,
+                    "reason": expected_reason,
+                }
+            )]
+        )
 
 
 class NodeCommunicatorExceptionTransformTest(TestCase):

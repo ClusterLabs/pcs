@@ -30,7 +30,7 @@ def wrapper(dictionary):
 def cli_env_to_lib_env(cli_env):
     return LibraryEnvironment(
         logging.getLogger("old_cli"),
-        LibraryReportProcessorToConsole(),
+        LibraryReportProcessorToConsole(cli_env.debug),
         cli_env.user,
         cli_env.groups,
         cli_env.cib_data,

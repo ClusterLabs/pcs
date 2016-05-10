@@ -48,6 +48,7 @@ except ImportError:
     )
 
 from pcs.common import report_codes
+from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItem
 from pcs import settings
 
@@ -77,8 +78,9 @@ def is_cman_cluster(runner):
 
 
 class CommandRunner(object):
-    def __init__(self, logger, env_vars=None):
+    def __init__(self, logger, reporter, env_vars=None):
         self._logger = logger
+        self._reporter = reporter
         self._env_vars = env_vars if env_vars else dict()
         self._python2 = sys.version[0] == "2"
 
@@ -94,6 +96,9 @@ class CommandRunner(object):
         if stdin_string:
             msg += "\n--Debug Input Start--\n{stdin}\n--Debug Input End--"
         self._logger.debug(msg.format(args=log_args, stdin=stdin_string))
+        self._reporter.process(
+            reports.run_external_process_started(log_args, stdin_string)
+        )
 
         try:
             process = subprocess.Popen(
@@ -131,6 +136,9 @@ class CommandRunner(object):
                 "Finished running: {args}\nReturn value: {retval}"
                 + "\n--Debug Output Start--\n{output}\n--Debug Output End--"
             ).format(args=log_args, retval=retval, output=output)
+        )
+        self._reporter.process(
+            reports.run_external_process_finished(log_args, retval, output)
         )
         return output, retval
 
@@ -234,13 +242,14 @@ class NodeCommunicator(object):
         """
         return json.dumps(data)
 
-    def __init__(self, logger, auth_tokens, user=None, groups=None):
+    def __init__(self, logger, reporter, auth_tokens, user=None, groups=None):
         """
         auth_tokens authorization tokens for nodes: {node: token}
         user username
         groups groups the user is member of
         """
         self._logger = logger
+        self._reporter = reporter
         self._auth_tokens = auth_tokens
         self._user = user
         self._groups = groups
@@ -274,6 +283,9 @@ class NodeCommunicator(object):
         if data:
             msg += "\n--Debug Input Start--\n{data}\n--Debug Input End--"
         self._logger.debug(msg.format(url=url, data=data))
+        self._reporter.process(
+            reports.node_communication_started(url, data)
+        )
         result_msg = (
             "Finished calling: {url}\nResponse Code: {code}"
             + "\n--Debug Response Start--\n{response}\n--Debug Response End--"
@@ -291,6 +303,11 @@ class NodeCommunicator(object):
                 code=result.getcode(),
                 response=response_data
             ))
+            self._reporter.process(
+                reports.node_communication_finished(
+                    url, result.getcode(), response_data
+                )
+            )
             return response_data
         except urllib_HTTPError as e:
             # python3 returns bytes not str
@@ -300,6 +317,9 @@ class NodeCommunicator(object):
                 code=e.code,
                 response=response_data
             ))
+            self._reporter.process(
+                reports.node_communication_finished(url, e.code, response_data)
+            )
             if e.code == 401:
                 raise NodeAuthenticationException(host, request, e.code)
             elif e.code == 403:
@@ -311,6 +331,9 @@ class NodeCommunicator(object):
         except urllib_URLError as e:
             msg = "Unable to connect to {node} ({reason})"
             self._logger.debug(msg.format(node=host, reason=e.reason))
+            self._reporter.process(
+                reports.node_communication_not_connected(host, e.reason)
+            )
             raise NodeConnectionException(host, request, e.reason)
 
     def __get_opener(self):

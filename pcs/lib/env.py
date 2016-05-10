@@ -119,11 +119,12 @@ class LibraryEnvironment(object):
         runner_env = dict()
         if self.user_login:
             runner_env["CIB_user"] = self.user_login
-        return CommandRunner(self.logger, runner_env)
+        return CommandRunner(self.logger, self.report_processor, runner_env)
 
     def node_communicator(self):
         return NodeCommunicator(
             self.logger,
+            self.report_processor,
             self.__get_auth_tokens(),
             self.user_login,
             self.user_groups

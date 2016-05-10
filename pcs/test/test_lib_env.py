@@ -158,7 +158,11 @@ class LibraryEnvironmentTest(TestCase):
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         runner = env.cmd_runner()
         self.assertEqual(expected_runner, runner)
-        mock_runner.assert_called_once_with(self.mock_logger, {})
+        mock_runner.assert_called_once_with(
+            self.mock_logger,
+            self.mock_reporter,
+            {}
+        )
 
     @mock.patch("pcs.lib.env.CommandRunner")
     def test_cmd_runner_all_options(self, mock_runner):
@@ -174,6 +178,7 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(expected_runner, runner)
         mock_runner.assert_called_once_with(
             self.mock_logger,
+            self.mock_reporter,
             {"CIB_user": user}
         )
 
@@ -184,7 +189,13 @@ class LibraryEnvironmentTest(TestCase):
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         comm = env.node_communicator()
         self.assertEqual(expected_comm, comm)
-        mock_comm.assert_called_once_with(self.mock_logger, {}, None, [])
+        mock_comm.assert_called_once_with(
+            self.mock_logger,
+            self.mock_reporter,
+            {},
+            None,
+            []
+        )
 
     @mock.patch("pcs.lib.env.NodeCommunicator")
     def test_node_communicator_all_options(self, mock_comm):
@@ -204,6 +215,7 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(expected_comm, comm)
         mock_comm.assert_called_once_with(
             self.mock_logger,
+            self.mock_reporter,
             tokens,
             user,
             groups

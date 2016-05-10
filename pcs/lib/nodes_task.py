@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 from pcs.common import report_codes
+from pcs.lib import reports
 from pcs.lib.errors import ReportItem, LibraryError
 from pcs.lib.external import (
     NodeCommunicationException,
@@ -20,7 +21,9 @@ def distribute_corosync_conf(lib_env, node_addr_list, config_text):
     node_addr_list nodes to send config to (NodeAddressesList instance)
     config_text text of corosync.conf
     """
-    lib_env.logger.info("Sending updated corosync.conf to nodes...")
+    lib_env.report_processor.process(
+        reports.corosync_config_distribution_started()
+    )
     report = []
     # TODO use parallel communication
     for node in node_addr_list:
@@ -30,7 +33,9 @@ def distribute_corosync_conf(lib_env, node_addr_list, config_text):
                 node,
                 config_text
             )
-            lib_env.logger.info("{node}: Succeeded".format(node=node.label))
+            lib_env.report_processor.process(
+                reports.corosync_config_accepted_by_node(node.label)
+            )
         except NodeCommunicationException as e:
             report.append(node_communicator_exception_to_report_item(e))
             report.append(ReportItem.error(
@@ -42,5 +47,4 @@ def distribute_corosync_conf(lib_env, node_addr_list, config_text):
         raise LibraryError(*report)
 
     corosync_live.reload_config(lib_env.cmd_runner())
-    lib_env.logger.info("Corosync configuration reloaded")
-
+    lib_env.report_processor.process(reports.corosync_config_reloaded())
