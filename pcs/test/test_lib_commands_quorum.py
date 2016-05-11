@@ -8,7 +8,10 @@ from __future__ import (
 import logging
 from unittest import TestCase
 
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
@@ -184,7 +187,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
         mock_push_corosync.assert_called_once_with(
             original_conf.replace(
                 "provider: corosync_votequorum\n",
-                "provider: corosync_votequorum\n    wait_for_all: 1\n",
+                "provider: corosync_votequorum\n    wait_for_all: 1\n"
             )
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
@@ -273,7 +276,7 @@ class AddDeviceTest(TestCase, CmanMixin):
                     "option_value": "bad model",
                     "allowed_values_raw": ("net", ),
                 },
-                True
+                "model"
             )
         )
 
@@ -306,10 +309,148 @@ class AddDeviceTest(TestCase, CmanMixin):
             host: 127.0.0.1
         }
     }
-""",
+"""
             )
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_invalid_options(self, mock_get_corosync, mock_push_corosync):
+        original_conf = open(rc("corosync-3nodes.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        assert_raise_library_error(
+            lambda: lib.add_device(
+                lib_env,
+                "net",
+                {"host": "127.0.0.1", },
+                {"bad_option": "bad_value", }
+            ),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "type": "quorum device",
+                    "option": "bad_option",
+                    "allowed_raw": [
+                        "sync_timeout",
+                        "timeout"
+                    ],
+                },
+                "options"
+            )
+        )
+
+        self.assertEqual(1, mock_get_corosync.call_count)
+        self.assertEqual(0, mock_push_corosync.call_count)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_invalid_options_forced(self, mock_get_corosync, mock_push_corosync):
+        original_conf = open(rc("corosync-3nodes.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        lib.add_device(
+            lib_env,
+            "net",
+            {"host": "127.0.0.1", },
+            {"bad_option": "bad_value", },
+            force_options=True
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "type": "quorum device",
+                        "option": "bad_option",
+                        "allowed_raw": [
+                            "sync_timeout",
+                            "timeout"
+                        ],
+                    },
+                )
+            ]
+        )
+        self.assertEqual(1, mock_get_corosync.call_count)
+        mock_push_corosync.assert_called_once_with(
+            original_conf.replace(
+                "provider: corosync_votequorum\n",
+                """provider: corosync_votequorum
+
+    device {
+        bad_option: bad_value
+        model: net
+
+        net {
+            host: 127.0.0.1
+        }
+    }
+"""
+            )
+        )
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_invalid_model(self, mock_get_corosync, mock_push_corosync):
+        original_conf = open(rc("corosync-3nodes.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        assert_raise_library_error(
+            lambda: lib.add_device(lib_env, "bad model", {}, {}),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "model",
+                    "option_value": "bad model",
+                    "allowed_values_raw": ("net", ),
+                },
+                "model"
+            )
+        )
+
+        self.assertEqual(1, mock_get_corosync.call_count)
+        self.assertEqual(0, mock_push_corosync.call_count)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_invalid_model_forced(self, mock_get_corosync, mock_push_corosync):
+        original_conf = open(rc("corosync-3nodes.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        lib.add_device(lib_env, "bad model", {}, {}, force_model=True)
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "model",
+                        "option_value": "bad model",
+                        "allowed_values_raw": ("net", ),
+                    },
+                )
+            ]
+        )
+        self.assertEqual(1, mock_get_corosync.call_count)
+        mock_push_corosync.assert_called_once_with(
+            original_conf.replace(
+                "provider: corosync_votequorum\n",
+                """provider: corosync_votequorum
+
+    device {
+        model: bad model
+    }
+"""
+            )
+        )
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
@@ -453,3 +594,71 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                 )
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_invalid_options(self, mock_get_corosync, mock_push_corosync):
+        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        assert_raise_library_error(
+            lambda: lib.update_device(
+                lib_env,
+                {},
+                {"bad_option": "bad_value", }
+            ),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "type": "quorum device",
+                    "option": "bad_option",
+                    "allowed_raw": [
+                        "sync_timeout",
+                        "timeout"
+                    ],
+                },
+                "options"
+            )
+        )
+
+        self.assertEqual(1, mock_get_corosync.call_count)
+        self.assertEqual(0, mock_push_corosync.call_count)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_invalid_options_forced(self, mock_get_corosync, mock_push_corosync):
+        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        lib.update_device(
+            lib_env,
+            {},
+            {"bad_option": "bad_value", },
+            force_options=True
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "type": "quorum device",
+                        "option": "bad_option",
+                        "allowed_raw": [
+                            "sync_timeout",
+                            "timeout"
+                        ],
+                    },
+                )
+            ]
+        )
+        self.assertEqual(1, mock_get_corosync.call_count)
+        mock_push_corosync.assert_called_once_with(
+            original_conf.replace(
+                "model: net",
+                "model: net\n        bad_option: bad_value"
+            )
+        )

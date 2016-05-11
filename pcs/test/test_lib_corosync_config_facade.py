@@ -8,7 +8,10 @@ from __future__ import (
 from unittest import TestCase
 import re
 
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import (
     ac,
@@ -713,7 +716,7 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.QDEVICE_ALREADY_DEFINED,
-                {}
+                {},
             )
         )
         ac(config, facade.config.export())
@@ -1009,10 +1012,42 @@ quorum {
                     "option_value": "invalid",
                     "allowed_values_raw": ("net", ),
                 },
-                True
+                "model"
             )
         )
         ac(config, facade.config.export())
+
+    def test_bad_model_forced(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_quorum_device(reporter, "invalid", {}, {}, force_model=True)
+        ac(
+            config.replace(
+                "    provider: corosync_votequorum",
+                """\
+    provider: corosync_votequorum
+
+    device {
+        model: invalid
+    }"""
+            ),
+            facade.config.export()
+        )
+        assert_report_item_list_equal(
+            reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "model",
+                        "option_value": "invalid",
+                        "allowed_values_raw": ("net", ),
+                    },
+                )
+            ]
+        )
 
     def test_missing_required_options_net(self):
         config = open(rc("corosync-3nodes.conf")).read()
@@ -1061,7 +1096,7 @@ quorum {
                     "option_value": "bad algorithm",
                     "allowed_values_raw": ("2nodelms", "ffsplit", "lms"),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1078,7 +1113,7 @@ quorum {
                         "tie_breaker",
                     ],
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1088,7 +1123,7 @@ quorum {
                     "option_value": "-1",
                     "allowed_values_raw": ("1000-120000", ),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1098,13 +1133,12 @@ quorum {
                     "option_value": "3",
                     "allowed_values_raw": ("0", "4", "6"),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"name": "host"},
-                False
             ),
             (
                 severity.ERROR,
@@ -1114,7 +1148,7 @@ quorum {
                     "option_value": "65537",
                     "allowed_values_raw": ("1-65535", ),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1124,7 +1158,7 @@ quorum {
                     "option_value": "125",
                     "allowed_values_raw": ("lowest", "highest", "valid node id"),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1134,7 +1168,7 @@ quorum {
                     "type": "quorum device",
                     "allowed_raw": ["sync_timeout", "timeout"],
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1154,7 +1188,7 @@ quorum {
                     "option_value": "-3",
                     "allowed_values_raw": ("integer", ),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1164,10 +1198,186 @@ quorum {
                     "option_value": "-2",
                     "allowed_values_raw": ("integer", ),
                 },
-                True
+                "options"
             )
         )
         ac(config, facade.config.export())
+
+    def test_mandatory_options_missing_net_forced(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.add_quorum_device(
+                reporter, "net", {}, {},
+                force_model=True, force_options=True
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"name": "host"},
+            )
+        )
+        ac(config, facade.config.export())
+
+    def test_mandatory_options_empty_net_forced(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.add_quorum_device(
+                reporter, "net", {"host": ""}, {},
+                force_model=True, force_options=True
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"name": "host"},
+            )
+        )
+        ac(config, facade.config.export())
+
+    def test_bad_options_net_forced(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_quorum_device(
+            reporter,
+            "net",
+            {
+                "host": "127.0.0.1",
+                "port": "65537",
+                "algorithm": "bad algorithm",
+                "connect_timeout": "-1",
+                "force_ip_version": "3",
+                "tie_breaker": "125",
+                "bad_model_option": "bad model value",
+            },
+            {
+                "timeout": "-2",
+                "sync_timeout": "-3",
+                "bad_generic_option": "bad generic value",
+            },
+            force_options=True
+        )
+        ac(
+            config.replace(
+                "    provider: corosync_votequorum",
+                """\
+    provider: corosync_votequorum
+
+    device {
+        bad_generic_option: bad generic value
+        sync_timeout: -3
+        timeout: -2
+        model: net
+
+        net {
+            algorithm: bad algorithm
+            bad_model_option: bad model value
+            connect_timeout: -1
+            force_ip_version: 3
+            host: 127.0.0.1
+            port: 65537
+            tie_breaker: 125
+        }
+    }"""
+            ),
+            facade.config.export()
+        )
+        assert_report_item_list_equal(
+            reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "algorithm",
+                        "option_value": "bad algorithm",
+                        "allowed_values_raw": ("2nodelms", "ffsplit", "lms"),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option": "bad_model_option",
+                        "type": "quorum device model",
+                        "allowed_raw": [
+                            "algorithm",
+                            "connect_timeout",
+                            "force_ip_version",
+                            "host",
+                            "port",
+                            "tie_breaker",
+                        ],
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "connect_timeout",
+                        "option_value": "-1",
+                        "allowed_values_raw": ("1000-120000", ),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "force_ip_version",
+                        "option_value": "3",
+                        "allowed_values_raw": ("0", "4", "6"),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "port",
+                        "option_value": "65537",
+                        "allowed_values_raw": ("1-65535", ),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "tie_breaker",
+                        "option_value": "125",
+                        "allowed_values_raw": ("lowest", "highest", "valid node id"),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option": "bad_generic_option",
+                        "type": "quorum device",
+                        "allowed_raw": ["sync_timeout", "timeout"],
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "sync_timeout",
+                        "option_value": "-3",
+                        "allowed_values_raw": ("integer", ),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "timeout",
+                        "option_value": "-2",
+                        "allowed_values_raw": ("integer", ),
+                    },
+                )
+            ]
+        )
 
 class UpdateQuorumDeviceTest(TestCase):
     def fixture_add_device(self, config):
@@ -1276,7 +1486,24 @@ quorum {
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"name": "host"},
-                False
+            )
+        )
+        ac(config, facade.config.export())
+
+    def test_net_host_cannot_be_removed_forced(self):
+        config = self.fixture_add_device(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.update_quorum_device(
+                reporter, {"host": ""}, {}, force_options=True
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"name": "host"},
             )
         )
         ac(config, facade.config.export())
@@ -1308,7 +1535,7 @@ quorum {
                     "option_value": "bad algorithm",
                     "allowed_values_raw": ("2nodelms", "ffsplit", "lms"),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1325,7 +1552,7 @@ quorum {
                         "tie_breaker",
                     ],
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1335,7 +1562,7 @@ quorum {
                     "option_value": "-1",
                     "allowed_values_raw": ("1000-120000", ),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1345,7 +1572,7 @@ quorum {
                     "option_value": "3",
                     "allowed_values_raw": ("0", "4", "6"),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1355,7 +1582,7 @@ quorum {
                     "option_value": "65537",
                     "allowed_values_raw": ("1-65535", ),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1365,10 +1592,110 @@ quorum {
                     "option_value": "125",
                     "allowed_values_raw": ("lowest", "highest", "valid node id"),
                 },
-                True
+                "options"
             ),
         )
         ac(config, facade.config.export())
+
+    def test_bad_net_options_forced(self):
+        config = self.fixture_add_device(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            reporter,
+            {
+                "port": "65537",
+                "algorithm": "bad algorithm",
+                "connect_timeout": "-1",
+                "force_ip_version": "3",
+                "tie_breaker": "125",
+                "bad_model_option": "bad model value",
+            },
+            {},
+            force_options=True
+        )
+        ac(
+            config.replace(
+                "            host: 127.0.0.1\n            port: 4433",
+                """\
+            host: 127.0.0.1
+            port: 65537
+            algorithm: bad algorithm
+            bad_model_option: bad model value
+            connect_timeout: -1
+            force_ip_version: 3
+            tie_breaker: 125"""
+            ),
+            facade.config.export()
+        )
+        assert_report_item_list_equal(
+            reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "algorithm",
+                        "option_value": "bad algorithm",
+                        "allowed_values_raw": ("2nodelms", "ffsplit", "lms"),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option": "bad_model_option",
+                        "type": "quorum device model",
+                        "allowed_raw": [
+                            "algorithm",
+                            "connect_timeout",
+                            "force_ip_version",
+                            "host",
+                            "port",
+                            "tie_breaker",
+                        ],
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "connect_timeout",
+                        "option_value": "-1",
+                        "allowed_values_raw": ("1000-120000", ),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "force_ip_version",
+                        "option_value": "3",
+                        "allowed_values_raw": ("0", "4", "6"),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "port",
+                        "option_value": "65537",
+                        "allowed_values_raw": ("1-65535", ),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "tie_breaker",
+                        "option_value": "125",
+                        "allowed_values_raw": ("lowest", "highest", "valid node id"),
+                    },
+                ),
+            ]
+        )
 
     def test_success_generic_options(self):
         config = self.fixture_add_device(
@@ -1435,7 +1762,7 @@ quorum {
                     "type": "quorum device",
                     "allowed_raw": ["sync_timeout", "timeout"],
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1455,7 +1782,7 @@ quorum {
                     "option_value": "-3",
                     "allowed_values_raw": ("integer", ),
                 },
-                True
+                "options"
             ),
             (
                 severity.ERROR,
@@ -1465,10 +1792,95 @@ quorum {
                     "option_value": "-2",
                     "allowed_values_raw": ("integer", ),
                 },
-                True
+                "options"
             )
         )
         ac(config, facade.config.export())
+
+    def test_bad_generic_options_cannot_force_model(self):
+        config = self.fixture_add_device(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.update_quorum_device(
+                reporter,
+                {},
+                {"model": "some model", },
+                force_options=True
+            ),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "option": "model",
+                    "type": "quorum device",
+                    "allowed_raw": ["sync_timeout", "timeout"],
+                }
+            )
+        )
+        ac(config, facade.config.export())
+
+    def test_bad_generic_options_forced(self):
+        config = self.fixture_add_device(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.update_quorum_device(
+            reporter,
+            {},
+            {
+                "timeout": "-2",
+                "sync_timeout": "-3",
+                "bad_generic_option": "bad generic value",
+            },
+            force_options=True
+        )
+        ac(
+            config.replace(
+                "        timeout: 12345\n        model: net",
+                """\
+        timeout: -2
+        model: net
+        bad_generic_option: bad generic value
+        sync_timeout: -3"""
+            ),
+            facade.config.export()
+        )
+        assert_report_item_list_equal(
+            reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option": "bad_generic_option",
+                        "type": "quorum device",
+                        "allowed_raw": ["sync_timeout", "timeout"],
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "sync_timeout",
+                        "option_value": "-3",
+                        "allowed_values_raw": ("integer", ),
+                    },
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "timeout",
+                        "option_value": "-2",
+                        "allowed_values_raw": ("integer", ),
+                    },
+                )
+            ]
+        )
 
 
 class RemoveQuorumDeviceTest(TestCase):

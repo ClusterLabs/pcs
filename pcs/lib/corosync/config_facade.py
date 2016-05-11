@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItem, LibraryError
+from pcs.lib.errors import ReportItem, ReportItemSeverity, LibraryError
 from pcs.lib.corosync import config_parser
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 
@@ -194,13 +194,16 @@ class ConfigFacade(object):
         return model, model_options.get(model, {}), generic_options
 
     def add_quorum_device(
-        self, report_processor, model, model_options, generic_options
+        self, report_processor, model, model_options, generic_options,
+        force_model=False, force_options=False,
     ):
         """
         Add quorum device configuration
         model quorum device model
         model_options model specific options dict
         generic_options generic quorum device options dict
+        force_model continue even if the model is not valid
+        force_options continue even if options are not valid
         """
         # validation
         if self.has_quorum_device():
@@ -209,15 +212,19 @@ class ConfigFacade(object):
                 "quorum device is already defined"
             ))
         report_processor.process_list(
-            self.__validate_quorum_device_model(model)
+            self.__validate_quorum_device_model(model, force_model)
             +
             self.__validate_quorum_device_model_options(
                 model,
                 model_options,
-                need_required=True
+                need_required=True,
+                force=force_options
             )
             +
-            self.__validate_quorum_device_generic_options(generic_options)
+            self.__validate_quorum_device_generic_options(
+                generic_options,
+                force=force_options
+            )
         )
         # configuration cleanup
         quorum_section_list = self.__ensure_section(self.config, "quorum")
@@ -247,12 +254,14 @@ class ConfigFacade(object):
         self.__remove_empty_sections(self.config)
 
     def update_quorum_device(
-        self, report_processor, model_options, generic_options
+        self, report_processor, model_options, generic_options,
+        force_options=False
     ):
         """
         Update existing quorum device configuration
         model_options model specific options dict
         generic_options generic quorum device options dict
+        force_options continue even if options are not valid
         """
         # validation
         if not self.has_quorum_device():
@@ -269,10 +278,14 @@ class ConfigFacade(object):
             self.__validate_quorum_device_model_options(
                 model,
                 model_options,
-                need_required=False
+                need_required=False,
+                force=force_options
             )
             +
-            self.__validate_quorum_device_generic_options(generic_options)
+            self.__validate_quorum_device_generic_options(
+                generic_options,
+                force=force_options
+            )
         )
         # set new configuration
         device_sections = []
@@ -301,15 +314,17 @@ class ConfigFacade(object):
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
 
-    def __validate_quorum_device_model(self, model):
+    def __validate_quorum_device_model(self, model, force_model=False):
         report = []
 
         allowed_values = (
             "net",
         )
         if model not in allowed_values:
-            report.append(ReportItem.error(
+            report.append(ReportItem(
                 report_codes.INVALID_OPTION_VALUE,
+                ReportItemSeverity.WARNING if force_model
+                    else ReportItemSeverity.ERROR,
                 "'{option_value}' is not a valid value for "
                     + "{option_name}, use {allowed_values}"
                 ,
@@ -319,23 +334,24 @@ class ConfigFacade(object):
                     "allowed_values_raw": allowed_values,
                     "allowed_values": " or ".join(allowed_values),
                 },
-                forceable=True
+                forceable=(False if force_model else "model")
             ))
 
         return report
 
     def __validate_quorum_device_model_options(
-        self, model, model_options, need_required
+        self, model, model_options, need_required, force=False
     ):
         if model == "net":
             return self.__validate_quorum_device_model_net_options(
                 model_options,
-                need_required
+                need_required,
+                force
             )
         return []
 
     def __validate_quorum_device_model_net_options(
-        self, model_options, need_required
+        self, model_options, need_required, force=False
     ):
         required_options = frozenset(["host"])
         optional_options = frozenset([
@@ -348,6 +364,10 @@ class ConfigFacade(object):
         allowed_options = required_options | optional_options
         model_options_names = frozenset(model_options.keys())
         report = []
+        severity = (
+            ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
+        )
+        forceable = False if force else "options"
 
         if need_required:
             for missing in sorted(required_options - model_options_names):
@@ -361,8 +381,9 @@ class ConfigFacade(object):
 
         for name, value in sorted(model_options.items()):
             if name not in allowed_options:
-                report.append(ReportItem.error(
+                report.append(ReportItem(
                     report_codes.INVALID_OPTION,
+                    severity,
                     "invalid {type} option '{option}'"
                         + ", allowed options are: {allowed}"
                     ,
@@ -372,7 +393,7 @@ class ConfigFacade(object):
                         "allowed_raw": sorted(allowed_options),
                         "allowed": " or ".join(sorted(allowed_options)),
                     },
-                    forceable=True
+                    forceable=forceable
                 ))
                 continue
 
@@ -392,8 +413,9 @@ class ConfigFacade(object):
             if name == "algorithm":
                 allowed_algorithms = ("2nodelms", "ffsplit", "lms")
                 if value not in allowed_algorithms:
-                    report.append(ReportItem.error(
+                    report.append(ReportItem(
                         report_codes.INVALID_OPTION_VALUE,
+                        severity,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -403,15 +425,16 @@ class ConfigFacade(object):
                             "allowed_values_raw": allowed_algorithms,
                             "allowed_values": " or ".join(allowed_algorithms),
                         },
-                        forceable=True
+                        forceable=forceable
                     ))
 
             if name == "connect_timeout":
                 minimum, maximum = 1000, 2*60*1000
                 if not (value.isdigit() and minimum <= int(value) <= maximum):
                     min_max = "{min}-{max}".format(min=minimum, max=maximum)
-                    report.append(ReportItem.error(
+                    report.append(ReportItem(
                         report_codes.INVALID_OPTION_VALUE,
+                        severity,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -421,14 +444,15 @@ class ConfigFacade(object):
                             "allowed_values_raw": (min_max, ),
                             "allowed_values": min_max,
                         },
-                        forceable=True
+                        forceable=forceable
                     ))
 
             if name == "force_ip_version":
                 allowed_ip_version = ("0", "4", "6")
                 if value not in allowed_ip_version:
-                    report.append(ReportItem.error(
+                    report.append(ReportItem(
                         report_codes.INVALID_OPTION_VALUE,
+                        severity,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -438,15 +462,16 @@ class ConfigFacade(object):
                             "allowed_values_raw": allowed_ip_version,
                             "allowed_values": " or ".join(allowed_ip_version),
                         },
-                        forceable=True
+                        forceable=forceable
                     ))
 
             if name == "port":
                 minimum, maximum = 1, 65535
                 if not (value.isdigit() and minimum <= int(value) <= maximum):
                     min_max = "{min}-{max}".format(min=minimum, max=maximum)
-                    report.append(ReportItem.error(
+                    report.append(ReportItem(
                         report_codes.INVALID_OPTION_VALUE,
+                        severity,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -456,7 +481,7 @@ class ConfigFacade(object):
                             "allowed_values_raw": (min_max, ),
                             "allowed_values": min_max,
                         },
-                        forceable=True
+                        forceable=forceable
                     ))
 
             if name == "tie_breaker":
@@ -464,8 +489,9 @@ class ConfigFacade(object):
                 allowed_nonid = ["lowest", "highest"]
                 if value not in allowed_nonid + node_ids:
                     allowed_values = tuple(allowed_nonid + ["valid node id"])
-                    report.append(ReportItem.error(
+                    report.append(ReportItem(
                         report_codes.INVALID_OPTION_VALUE,
+                        severity,
                         "'{option_value}' is not a valid value for "
                             + "{option_name}, use {allowed_values}"
                         ,
@@ -475,23 +501,32 @@ class ConfigFacade(object):
                             "allowed_values_raw": tuple(allowed_values),
                             "allowed_values": " or ".join(allowed_values),
                         },
-                        forceable=True
+                        forceable=forceable
                     ))
 
         return report
 
-    def __validate_quorum_device_generic_options(self, generic_options):
+    def __validate_quorum_device_generic_options(
+        self, generic_options, force=False
+    ):
         optional_options = frozenset([
             "sync_timeout",
             "timeout",
         ])
         allowed_options = optional_options
         report = []
+        severity = (
+            ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
+        )
+        forceable = False if force else "options"
 
         for name, value in sorted(generic_options.items()):
             if name not in allowed_options:
-                report.append(ReportItem.error(
+                # model is never allowed in generic options, it is passed
+                # in its own argument
+                report.append(ReportItem(
                     report_codes.INVALID_OPTION,
+                    severity if name != "model" else ReportItemSeverity.ERROR,
                     "invalid {type} option '{option}'"
                         + ", allowed options are: {allowed}"
                     ,
@@ -501,9 +536,7 @@ class ConfigFacade(object):
                         "allowed_raw": sorted(allowed_options),
                         "allowed": " or ".join(sorted(allowed_options)),
                     },
-                    # model is never allowed in generic options, it is passed
-                    # in its own argument
-                    forceable=(name != "model")
+                    forceable=(forceable if name != "model" else False)
                 ))
                 continue
 
@@ -511,8 +544,9 @@ class ConfigFacade(object):
                 continue
 
             if not value.isdigit():
-                report.append(ReportItem.error(
+                report.append(ReportItem(
                     report_codes.INVALID_OPTION_VALUE,
+                    severity,
                     "'{option_value}' is not a valid value for "
                         + "{option_name}, use {allowed_values}"
                     ,
@@ -522,7 +556,7 @@ class ConfigFacade(object):
                         "allowed_values_raw": ("integer", ),
                         "allowed_values": "integer",
                     },
-                    forceable=True
+                    forceable=forceable
                 ))
 
         return report

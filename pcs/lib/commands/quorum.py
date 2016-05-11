@@ -45,12 +45,17 @@ def set_options(lib_env, options):
 
     lib_env.push_corosync_conf(exported_config)
 
-def add_device(lib_env, model, model_options, generic_options):
+def add_device(
+    lib_env, model, model_options, generic_options, force_model=False,
+    force_options=False
+):
     """
     Add quorum device to cluster, distribute and reload configs if live
     model quorum device model
     model_options model specific options dict
     generic_options generic quorum device options dict
+    force_model continue even if the model is not valid
+    force_options continue even if options are not valid
     """
     __ensure_not_cman(lib_env)
 
@@ -59,7 +64,9 @@ def add_device(lib_env, model, model_options, generic_options):
         lib_env.report_processor,
         model,
         model_options,
-        generic_options
+        generic_options,
+        force_model,
+        force_options
     )
     exported_config = cfg.config.export()
 
@@ -67,11 +74,12 @@ def add_device(lib_env, model, model_options, generic_options):
 
     lib_env.push_corosync_conf(exported_config)
 
-def update_device(lib_env, model_options, generic_options):
+def update_device(lib_env, model_options, generic_options, force_options=False):
     """
     Change quorum device settings, distribute and reload configs if live
     model_options model specific options dict
     generic_options generic quorum device options dict
+    force_options continue even if options are not valid
     """
     __ensure_not_cman(lib_env)
 
@@ -79,7 +87,8 @@ def update_device(lib_env, model_options, generic_options):
     cfg.update_quorum_device(
         lib_env.report_processor,
         model_options,
-        generic_options
+        generic_options,
+        force_options
     )
     exported_config = cfg.config.export()
 
