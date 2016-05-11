@@ -111,7 +111,13 @@ def quorum_device_add_cmd(lib, argv, modificators):
             "Model cannot be specified in generic options"
         )
 
-    lib.quorum.add_device(model, model_options, generic_options)
+    lib.quorum.add_device(
+        model,
+        model_options,
+        generic_options,
+        force_model=modificators["force"],
+        force_options=modificators["force"]
+    )
 
 def quorum_device_remove_cmd(lib, argv, modificators):
     if argv:
@@ -136,7 +142,11 @@ def quorum_device_update_cmd(lib, argv, modificators):
             "Model cannot be specified in generic options"
         )
 
-    lib.quorum.update_device(model_options, generic_options)
+    lib.quorum.update_device(
+        model_options,
+        generic_options,
+        force_options=modificators["force"]
+    )
 
 def quorum_update_cmd(lib, argv, modificators):
     options = parse_args.prepare_options(argv)

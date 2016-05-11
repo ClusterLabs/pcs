@@ -49,7 +49,7 @@ Device:
         )
 
 
-class QuorumUpdateCmdTest(TestBase):
+class QuorumUpdateTest(TestBase):
     def test_no_options(self):
         self.assert_pcs_fail(
             "quorum update",
@@ -97,9 +97,18 @@ class DeviceAddTest(TestBase):
             stdout_start="\nUsage: pcs quorum <command>\n    device add "
         )
 
+        self.assert_pcs_fail(
+            "quorum device add option=value host=127.0.0.1 --force",
+            stdout_start="\nUsage: pcs quorum <command>\n    device add "
+        )
+
     def test_no_model_value(self):
         self.assert_pcs_fail(
             "quorum device add option=value model host=127.0.0.1",
+            stdout_start="\nUsage: pcs quorum <command>\n    device add "
+        )
+        self.assert_pcs_fail(
+            "quorum device add option=value model host=127.0.0.1 --force",
             stdout_start="\nUsage: pcs quorum <command>\n    device add "
         )
 
@@ -108,10 +117,18 @@ class DeviceAddTest(TestBase):
             "quorum device add model net host=127.0.0.1 model disk",
             stdout_start="\nUsage: pcs quorum <command>\n    device add "
         )
+        self.assert_pcs_fail(
+            "quorum device add model net host=127.0.0.1 model disk --force",
+            stdout_start="\nUsage: pcs quorum <command>\n    device add "
+        )
 
     def test_model_in_options(self):
         self.assert_pcs_fail(
             "quorum device add model=disk model net host=127.0.0.1",
+            "Error: Model cannot be specified in generic options\n"
+        )
+        self.assert_pcs_fail(
+            "quorum device add model=disk model net host=127.0.0.1 --force",
             "Error: Model cannot be specified in generic options\n"
         )
 
@@ -119,6 +136,10 @@ class DeviceAddTest(TestBase):
         self.fixture_conf_qdevice()
         self.assert_pcs_fail(
             "quorum device add model net host=127.0.0.1",
+            "Error: quorum device is already defined\n"
+        )
+        self.assert_pcs_fail(
+            "quorum device add model net host=127.0.0.1 --force",
             "Error: quorum device is already defined\n"
         )
 
@@ -156,6 +177,10 @@ Device:
             "quorum device add model net",
             "Error: required option 'host' is missing\n"
         )
+        self.assert_pcs_fail(
+            "quorum device add model net --force",
+            "Error: required option 'host' is missing\n"
+        )
 
     def test_bad_options(self):
         self.assert_pcs_fail(
@@ -167,16 +192,58 @@ Error: invalid quorum device option 'a', allowed options are: sync_timeout or ti
 Error: '-1' is not a valid value for timeout, use integer, use --force to override
 """
         )
-        print("TODO {0}.{1}.test_bad_options with --force".format(
-            self.__module__,
-            self.__class__.__name__
-        ))
+
+        self.assert_pcs_success(
+            "quorum device add a=b timeout=-1 model net host=127.0.0.1 port=x c=d --force",
+            """\
+Warning: invalid quorum device model option 'c', allowed options are: algorithm or connect_timeout or force_ip_version or host or port or tie_breaker
+Warning: 'x' is not a valid value for port, use 1-65535
+Warning: invalid quorum device option 'a', allowed options are: sync_timeout or timeout
+Warning: '-1' is not a valid value for timeout, use integer
+"""
+        )
+        self.assert_pcs_success(
+            "quorum config",
+            """\
+Options:
+Device:
+  a: b
+  timeout: -1
+  Model: net
+    c: d
+    host: 127.0.0.1
+    port: x
+"""
+        )
+
+    def test_bad_model(self):
+        self.assert_pcs_fail(
+            "quorum device add model invalid x=y",
+            "Error: 'invalid' is not a valid value for model, use net, use --force to override\n"
+        )
+        self.assert_pcs_success(
+            "quorum device add model invalid x=y --force",
+            "Warning: 'invalid' is not a valid value for model, use net\n"
+        )
+        self.assert_pcs_success(
+            "quorum config",
+            """\
+Options:
+Device:
+  Model: invalid
+    x: y
+"""
+        )
 
 
 class DeviceRemoveTest(TestBase):
     def test_no_device(self):
         self.assert_pcs_fail(
             "quorum device remove",
+            "Error: no quorum device is defined in this cluster\n"
+        )
+        self.assert_pcs_fail(
+            "quorum device remove --force",
             "Error: no quorum device is defined in this cluster\n"
         )
 
@@ -195,12 +262,20 @@ class DeviceRemoveTest(TestBase):
             "quorum device remove net",
             stdout_start="\nUsage: pcs quorum <command>\n    device remove\n"
         )
+        self.assert_pcs_fail(
+            "quorum device remove net --force",
+            stdout_start="\nUsage: pcs quorum <command>\n    device remove\n"
+        )
 
 
 class DeviceUpdateTest(TestBase):
     def test_no_device(self):
         self.assert_pcs_fail(
             "quorum device update option=new_value model host=127.0.0.2",
+            "Error: no quorum device is defined in this cluster\n"
+        )
+        self.assert_pcs_fail(
+            "quorum device update option=new_value model host=127.0.0.2 --force",
             "Error: no quorum device is defined in this cluster\n"
         )
 
@@ -253,10 +328,18 @@ Device:
             "quorum device update model host=127.0.0.2 model port=1",
             stdout_start="\nUsage: pcs quorum <command>\n    device update "
         )
+        self.assert_pcs_fail(
+            "quorum device update model host=127.0.0.2 model port=1 --force",
+            stdout_start="\nUsage: pcs quorum <command>\n    device update "
+        )
 
     def test_model_in_options(self):
         self.assert_pcs_fail(
             "quorum device update model=disk",
+            "Error: Model cannot be specified in generic options\n"
+        )
+        self.assert_pcs_fail(
+            "quorum device update model=disk --force",
             "Error: Model cannot be specified in generic options\n"
         )
 
@@ -264,6 +347,10 @@ Device:
         self.fixture_conf_qdevice()
         self.assert_pcs_fail(
             "quorum device update model host=",
+            "Error: required option 'host' is missing\n"
+        )
+        self.assert_pcs_fail(
+            "quorum device update model host= --force",
             "Error: required option 'host' is missing\n"
         )
 
@@ -278,7 +365,25 @@ Error: invalid quorum device option 'a', allowed options are: sync_timeout or ti
 Error: '-1' is not a valid value for timeout, use integer, use --force to override
 """
         )
-        print("TODO {0}.{1}.test_bad_options with --force".format(
-            self.__module__,
-            self.__class__.__name__
-        ))
+        self.assert_pcs_success(
+            "quorum device update a=b timeout=-1 model port=x c=d --force",
+            """\
+Warning: invalid quorum device model option 'c', allowed options are: algorithm or connect_timeout or force_ip_version or host or port or tie_breaker
+Warning: 'x' is not a valid value for port, use 1-65535
+Warning: invalid quorum device option 'a', allowed options are: sync_timeout or timeout
+Warning: '-1' is not a valid value for timeout, use integer
+"""
+        )
+        self.assert_pcs_success(
+            "quorum config",
+            """\
+Options:
+Device:
+  a: b
+  timeout: -1
+  Model: net
+    c: d
+    host: 127.0.0.1
+    port: x
+"""
+        )
