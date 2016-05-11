@@ -1097,3 +1097,81 @@ class IsDirNonemptyTest(TestCase):
         mock_isdir.return_value = True
         mock_listdir.return_value = ["a_file"]
         self.assertTrue(lib.is_dir_nonempty("path"))
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class IsServiceEnabledTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+        self.service = "service_name"
+
+    def test_systemctl_enabled(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("enabled\n", 0)
+        self.assertTrue(lib.is_service_enabled(self.mock_runner, self.service))
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "is-enabled", self.service + ".service"]
+        )
+
+    def test_systemctl_disabled(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("disabled\n", 2)
+        self.assertFalse(lib.is_service_enabled(self.mock_runner, self.service))
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "is-enabled", self.service + ".service"]
+        )
+
+    def test_not_systemctl_enabled(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        self.assertTrue(lib.is_service_enabled(self.mock_runner, self.service))
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig", self.service]
+        )
+
+    def test_not_systemctl_disabled(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 3)
+        self.assertFalse(lib.is_service_enabled(self.mock_runner, self.service))
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig", self.service]
+        )
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class IsServiceRunningTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+        self.service = "service_name"
+
+    def test_systemctl_running(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        self.assertTrue(lib.is_service_running(self.mock_runner, self.service))
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "is-active", self.service + ".service"]
+        )
+
+    def test_systemctl_not_running(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 2)
+        self.assertFalse(lib.is_service_running(self.mock_runner, self.service))
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "is-active", self.service + ".service"]
+        )
+
+    def test_not_systemctl_running(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        self.assertTrue(lib.is_service_running(self.mock_runner, self.service))
+        self.mock_runner.run.assert_called_once_with(
+            ["service", self.service, "status"]
+        )
+
+    def test_not_systemctl_not_running(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 3)
+        self.assertFalse(lib.is_service_running(self.mock_runner, self.service))
+        self.mock_runner.run.assert_called_once_with(
+            ["service", self.service, "status"]
+        )

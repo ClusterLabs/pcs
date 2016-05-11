@@ -16,6 +16,9 @@ require 'resource.rb'
 require 'cluster_entity.rb'
 require 'auth.rb'
 
+class NotImplementedException < NotImplementedError
+end
+
 def getAllSettings(auth_user, cib_dom=nil)
   unless cib_dom
     cib_dom = get_cib_dom(auth_user)
@@ -819,21 +822,11 @@ def disable_cluster(auth_user)
 end
 
 def corosync_running?()
-  if ISSYSTEMCTL
-    `systemctl status corosync.service`
-  else
-    `service corosync status`
-  end
-  return $?.success?
+  is_service_running?('corosync')
 end
 
 def corosync_enabled?()
-  if ISSYSTEMCTL
-    `systemctl is-enabled corosync.service`
-  else
-    `chkconfig corosync`
-  end
-  return $?.success?
+  is_service_enabled?('corosync')
 end
 
 def get_corosync_version()
@@ -854,21 +847,11 @@ def get_corosync_version()
 end
 
 def pacemaker_running?()
-  if ISSYSTEMCTL
-    `systemctl status pacemaker.service`
-  else
-    `service pacemaker status`
-  end
-  return $?.success?
+  is_service_running?('pacemaker')
 end
 
 def pacemaker_enabled?()
-  if ISSYSTEMCTL
-    `systemctl is-enabled pacemaker.service`
-  else
-    `chkconfig pacemaker`
-  end
-  return $?.success?
+  is_service_enabled?('pacemaker')
 end
 
 def get_pacemaker_version()
@@ -889,12 +872,7 @@ def get_pacemaker_version()
 end
 
 def cman_running?()
-  if ISSYSTEMCTL
-    `systemctl status cman.service`
-  else
-    `service cman status`
-  end
-  return $?.success?
+  is_service_running?('cman')
 end
 
 def get_cman_version()
@@ -937,12 +915,7 @@ def pcsd_restart()
 end
 
 def pcsd_enabled?()
-  if ISSYSTEMCTL
-    `systemctl is-enabled pcsd.service`
-  else
-    `chkconfig pcsd`
-  end
-  return $?.success?
+  is_service_enabled?('pcsd')
 end
 
 def get_pcsd_version()
@@ -1847,4 +1820,73 @@ def get_default_overview_node_list(clustername)
     }
   }
   return node_list
+end
+
+def is_service_enabled?(service)
+  if ISSYSTEMCTL
+    cmd = ['systemctl', 'is-enabled', "#{service}.service"]
+  else
+    cmd = ['chkconfig', service]
+  end
+  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
+  return (retcode == 0)
+end
+
+def is_service_running?(service)
+  if ISSYSTEMCTL
+    cmd = ['systemctl', 'status', "#{service}.service"]
+  else
+    cmd = ['service', service, 'status']
+  end
+  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
+  return (retcode == 0)
+end
+
+def is_service_installed?(service)
+  unless ISSYSTEMCTL
+    raise NotImplementedException.new('Not supported on non systemd systems.')
+  end
+  stdout, _, retcode = run_cmd(
+    PCSAuth.getSuperuserAuth(), PCS, 'resource', 'list', 'systemd'
+  )
+  if retcode != 0
+    return nil
+  end
+  stdout.each { |line|
+    if line.strip() == "systemd:#{service}"
+      return true
+    end
+  }
+  return false
+end
+
+def enable_service(service)
+  if ISSYSTEMCTL
+    cmd = ['systemctl', 'enable', "#{service}.service"]
+  else
+    cmd = ['chkconfig', service, 'on']
+  end
+  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
+  return (retcode == 0)
+end
+
+def disable_service(service)
+  if ISSYSTEMCTL
+    cmd = ['systemctl', 'disable', "#{service}.service"]
+  else
+    cmd = ['chkconfig', service, 'off']
+  end
+  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
+  return (retcode == 0)
+end
+
+def set_cluster_prop_force(auth_user, prop, val)
+  cmd = [PCS, 'property', 'set', "#{prop}=#{val}", '--force']
+  if pacemaker_running?
+    _, _, retcode = run_cmd(auth_user, *cmd)
+  else
+    cmd += ['-f', CIB_PATH]
+    _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
+  end
+  return (retcode == 0)
 end

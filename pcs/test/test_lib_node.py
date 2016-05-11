@@ -29,6 +29,44 @@ class NodeAddressesTest(TestCase):
         self.assertEqual(ring0, node.label)
         self.assertEqual(None, node.id)
 
+    def test_hash(self):
+        node0 = lib.NodeAddresses("node0")
+        another_node0 = lib.NodeAddresses("node0")
+        node1 = lib.NodeAddresses("node1")
+        self.assertEqual(hash(node0), hash(another_node0))
+        self.assertEqual(hash(node1), hash(node1))
+        self.assertNotEqual(hash(node0), hash(node1))
+
+    def test_equal(self):
+        node0 = lib.NodeAddresses("node0")
+        another_node0 = lib.NodeAddresses("node0")
+        node1 = lib.NodeAddresses("node1")
+        self.assertTrue(node0 == another_node0)
+        self.assertTrue(another_node0 == node0)
+        self.assertTrue(node1 == node1)
+        self.assertFalse(node1 == node0)
+        self.assertFalse(node0 == node1)
+
+    def test_not_equal(self):
+        node0 = lib.NodeAddresses("node0")
+        another_node0 = lib.NodeAddresses("node0")
+        node1 = lib.NodeAddresses("node1")
+        self.assertFalse(node0 != another_node0)
+        self.assertFalse(another_node0 != node0)
+        self.assertFalse(node1 != node1)
+        self.assertTrue(node0 != node1)
+        self.assertTrue(node1 != node0)
+
+    def test_less_than(self):
+        node0 = lib.NodeAddresses("node0")
+        another_node0 = lib.NodeAddresses("node0")
+        node1 = lib.NodeAddresses("node1")
+        self.assertFalse(node0 < another_node0)
+        self.assertFalse(another_node0 < node0)
+        self.assertFalse(node1 < node1)
+        self.assertTrue(node0 < node1)
+        self.assertFalse(node1 < node1)
+
 
 class NodeAddressesListTest(TestCase):
     def test_empty(self):
@@ -80,3 +118,13 @@ class NodeAddressesListTest(TestCase):
         self.assertEqual([node1, node2], list(nodes))
         self.assertEqual(node1, nodes[0])
         self.assertEqual(node2, nodes[1])
+
+    def test_find_by_label(self):
+        node0 = lib.NodeAddresses("node0")
+        node1 = lib.NodeAddresses("node1")
+        node_list = lib.NodeAddressesList([node0, node1])
+        self.assertEqual(node1, node_list.find_by_label("node1"))
+        self.assertEqual(node0, node_list.find_by_label("node0"))
+        self.assertRaises(
+            lib.NodeNotFound, lambda: node_list.find_by_label("node2")
+        )

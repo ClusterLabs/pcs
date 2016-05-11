@@ -1105,59 +1105,71 @@ def service_kill_success(services):
         }
     )
 
-def service_enable_error(service, reason):
+def service_enable_error(service, reason, node=None):
     """
     system service enable failed
     string service service name or description
     string reason error message
+    string node node on which service was enabled
     """
+    msg = "Unable to enable {service}: {reason}"
     return ReportItem.error(
         report_codes.SERVICE_ENABLE_ERROR,
-        "Unable to enable {service}: {reason}",
+        msg if node is None else "{node}: " + msg,
         info={
             "service": service,
             "reason": reason,
+            "node": node,
         }
     )
 
-def service_enable_success(service):
+def service_enable_success(service, node=None):
     """
     system service was enabled successfully
     string service service name or description
+    string node node on which service was enabled
     """
+    msg = "{service} enabled"
     return ReportItem.info(
         report_codes.SERVICE_ENABLE_SUCCESS,
-        "{service} enabled",
+        msg if node is None else "{node}: " + msg,
         info={
             "service": service,
+            "node": node,
         }
     )
 
-def service_disable_error(service, reason):
+def service_disable_error(service, reason, node=None):
     """
     system service disable failed
     string service service name or description
     string reason error message
+    string node node on which service was disabled
     """
+    msg = "Unable to disable {service}: {reason}"
     return ReportItem.error(
         report_codes.SERVICE_DISABLE_ERROR,
-        "Unable to disable {service}: {reason}",
+        msg if node is None else "{node}: " + msg,
         info={
             "service": service,
             "reason": reason,
+            "node": node,
         }
     )
 
-def service_disable_success(service):
+def service_disable_success(service, node=None):
     """
     system service was disabled successfully
     string service service name or description
+    string node node on which service was disabled
     """
+    msg = "{service} disabled"
     return ReportItem.info(
         report_codes.SERVICE_DISABLE_SUCCESS,
-        "{service} disabled",
+        msg if node is None else "{node}: " + msg,
         info={
             "service": service,
+            "node": node,
         }
     )
 
@@ -1238,4 +1250,164 @@ def resource_agent_general_error(agent=None):
         report_codes.AGENT_GENERAL_ERROR,
         msg if agent is None else msg + " '{agent}'",
         info={"agent": agent}
+    )
+
+
+def omitting_node(node):
+    """
+    warning that specified node will be omitted in following actions
+
+    node -- node name
+    """
+    return ReportItem.warning(
+        report_codes.OMITTING_NODE,
+        "Omitting node '{node}'",
+        info={"node": node}
+    )
+
+
+def sbd_check_started():
+    """
+    info that SBD pre-enabling checks started
+    """
+    return ReportItem.info(
+        report_codes.SBD_CHECK_STARTED,
+        "Running SBD pre-enabling checks..."
+    )
+
+
+def sbd_check_success(node):
+    """
+    info that SBD pre-enabling check finished without issues on specified node
+
+    node -- node name
+    """
+    return ReportItem.info(
+        report_codes.SBD_CHECK_SUCCESS,
+        "{node}: SBD pre-enabling checks done",
+        info={"node": node}
+    )
+
+
+def sbd_config_distribution_started():
+    """
+    distribution of SBD configuration started
+    """
+    return ReportItem.info(
+        report_codes.SBD_CONFIG_DISTRIBUTION_STARTED,
+        "Distributing SBD config..."
+    )
+
+
+def sbd_config_accepted_by_node(node):
+    """
+    info that SBD configuration has been saved successfully on specified node
+
+    node -- node name
+    """
+    return ReportItem.info(
+        report_codes.SBD_CONFIG_ACCEPTED_BY_NODE,
+        "{node}: SBD config saved",
+        info={"node": node}
+    )
+
+
+def unable_to_get_sbd_config(node, reason, severity=ReportItemSeverity.ERROR):
+    """
+    unable to get SBD config from specified node (communication or parsing
+    error)
+
+    node -- node name
+    reason -- reason of failure
+    """
+    return ReportItem(
+        report_codes.UNABLE_TO_GET_SBD_CONFIG,
+        severity,
+        "Unable to get SBD configuration from node '{node}': {reason}",
+        info={
+            "node": node,
+            "reason": reason
+        }
+    )
+
+
+def sbd_enabling_started():
+    """
+    enabling SBD service started
+    """
+    return ReportItem.info(
+        report_codes.SBD_ENABLING_STARTED,
+        "Enabling SBD service..."
+    )
+
+
+def sbd_disabling_started():
+    """
+    disabling SBD service started
+    """
+    return ReportItem.info(
+        report_codes.SBD_DISABLING_STARTED,
+        "Disabling SBD service..."
+    )
+
+
+def invalid_response_format(node):
+    """
+    error message that response in invalid format has been received from
+    specified node
+
+    node -- node name
+    """
+    return ReportItem.error(
+        report_codes.INVALID_RESPONSE_FORMAT,
+        "{node}: Invalid format of response",
+        info={"node": node}
+    )
+
+
+def sbd_not_installed(node):
+    """
+    sbd is not installed on specified node
+
+    node -- node name
+    """
+    return ReportItem.error(
+        report_codes.SBD_NOT_INSTALLED,
+        "SBD is not installed on node '{node}'",
+        info={"node": node}
+    )
+
+
+def watchdog_not_found(node, watchdog):
+    """
+    watchdog doesn't exist on specified node
+
+    node -- node name
+    watchdog -- watchdog device path
+    """
+    return ReportItem.error(
+        report_codes.WATCHDOG_NOT_FOUND,
+        "Watchdog '{watchdog}' does not exist on node '{node}'",
+        info={
+            "node": node,
+            "watchdog": watchdog
+        }
+    )
+
+
+def unable_to_get_sbd_status(node, reason):
+    """
+    there was (communication or parsing) failure during obtaining status of SBD
+    from specified node
+
+    node -- node name
+    reason -- reason of failure
+    """
+    return ReportItem.warning(
+        report_codes.UNABLE_TO_GET_SBD_STATUS,
+        "Unable to get status of SBD from node '{node}': {reason}",
+        info={
+            "node": node,
+            "reason": reason
+        }
     )

@@ -11,6 +11,7 @@ from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.external import (
+    NodeCommunicator,
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
@@ -115,3 +116,17 @@ def check_corosync_offline_on_nodes(
                 )
             )
     reporter.process_list(report_items)
+
+
+def node_check_auth(communicator, node):
+    """
+    Check authentication and online status of 'node'.
+
+    communicator -- NodeCommunicator
+    node -- NodeAddresses
+    """
+    communicator.call_node(
+        node,
+        "remote/check_auth",
+        NodeCommunicator.format_data_dict({"check_auth_only": 1})
+    )

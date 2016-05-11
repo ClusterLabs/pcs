@@ -190,6 +190,38 @@ def kill_services(runner, services):
             raise KillServicesError(list(services), output.rstrip())
 
 
+def is_service_enabled(runner, service):
+    """
+    Check if specified service is enabled in local system.
+
+    runner -- CommandRunner
+    service -- name of service
+    """
+    if is_systemctl():
+        _, retval = runner.run(
+            ["systemctl", "is-enabled", service + ".service"]
+        )
+    else:
+        _, retval = runner.run(["chkconfig", service])
+
+    return retval == 0
+
+
+def is_service_running(runner, service):
+    """
+    Check if specified service is currently running on local system.
+
+    runner -- CommandRunner
+    service -- name of service
+    """
+    if is_systemctl():
+        _, retval = runner.run(["systemctl", "is-active", service + ".service"])
+    else:
+        _, retval = runner.run(["service", service, "status"])
+
+    return retval == 0
+
+
 def is_cman_cluster(runner):
     """
     Detect if underlaying locally installed cluster is CMAN based

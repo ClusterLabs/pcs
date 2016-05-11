@@ -450,3 +450,13 @@ class CheckCorosyncOfflineTest(TestCase):
                 )
             ]
         )
+
+
+class NodeCheckAuthTest(TestCase):
+    def test_success(self):
+        mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+        node = NodeAddresses("node1")
+        lib.node_check_auth(mock_communicator, node)
+        mock_communicator.call_node.assert_called_once_with(
+            node, "remote/check_auth", "check_auth_only=1"
+        )

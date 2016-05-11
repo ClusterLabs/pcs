@@ -5,6 +5,8 @@ from __future__ import (
     unicode_literals,
 )
 
+import threading
+
 
 def simple_cache(func):
     cache = {
@@ -19,3 +21,15 @@ def simple_cache(func):
         return cache["value"]
 
     return wrapper
+
+
+def run_parallel(worker, data_list):
+    thread_list = []
+    for args, kwargs in data_list:
+        thread = threading.Thread(target=worker, args=args, kwargs=kwargs)
+        thread.daemon = True
+        thread_list.append(thread)
+        thread.start()
+
+    for thread in thread_list:
+        thread.join()

@@ -62,7 +62,14 @@ def remote(params, request, auth_user)
       :get_tokens => method(:get_tokens),
       :get_cluster_tokens => method(:get_cluster_tokens),
       :save_tokens => method(:save_tokens),
-      :get_cluster_properties_definition => method(:get_cluster_properties_definition)
+      :get_cluster_properties_definition => method(:get_cluster_properties_definition),
+      :check_sbd => method(:check_sbd),
+      :set_sbd_config => method(:set_sbd_config),
+      :get_sbd_config => method(:get_sbd_config),
+      :sbd_disable => method(:sbd_disable),
+      :sbd_enable => method(:sbd_enable),
+      :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
+      :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero)
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -100,19 +107,22 @@ def remote(params, request, auth_user)
   }
 
   command = params[:command].to_sym
-
-  if remote_cmd_without_pacemaker.include? command
-    return remote_cmd_without_pacemaker[command].call(
-      params, request, auth_user
-    )
-  elsif remote_cmd_with_pacemaker.include? command
-    if pacemaker_running?
-      return remote_cmd_with_pacemaker[command].call(params, request, auth_user)
+  begin
+    if remote_cmd_without_pacemaker.include? command
+      return remote_cmd_without_pacemaker[command].call(
+        params, request, auth_user
+      )
+    elsif remote_cmd_with_pacemaker.include? command
+      if pacemaker_running?
+        return remote_cmd_with_pacemaker[command].call(params, request, auth_user)
+      else
+        return [200,'{"pacemaker_not_running":true}']
+      end
     else
-      return [200,'{"pacemaker_not_running":true}']
+      return [404, "Unknown Request"]
     end
-  else
-    return [404, "Unknown Request"]
+  rescue NotImplementedException => e
+    return [501, "#{e}"]
   end
 end
 
@@ -2157,4 +2167,138 @@ def get_fence_agent_metadata(params, request, auth_user)
     return [400, stderr.join("\n")]
   end
   return [200, stdout.join("\n")]
+end
+
+def check_sbd(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  out = {
+    :sbd => {
+      :installed => is_service_installed?('sbd'),
+      :enabled => is_service_enabled?('sbd'),
+      :running => is_service_running?('sbd')
+    }
+  }
+  watchdog = param[:watchdog]
+  if watchdog
+    out[:watchdog] = {
+      :path => watchdog,
+      :exist => File.exist?(watchdog)
+    }
+  end
+  return [200, JSON.generate(out)]
+end
+
+def set_sbd_config(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  config = param[:config]
+  unless config
+    return [400, 'Parameter "config" required']
+  end
+
+  file = nil
+  begin
+    file = File.open(SBD_CONFIG, 'w')
+    file.flock(File::LOCK_EX)
+    file.write(config)
+  rescue => e
+    msg = "Unable to save SBD configuration: #{e}"
+    $logger.error(msg)
+    return [400, msg]
+  ensure
+    if file
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+  msg = 'SBD configuration saved.'
+  $logger.info(msg)
+  return [200, msg]
+end
+
+def get_sbd_config(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  out = []
+  file = nil
+  if not is_service_enabled?('sbd') and not is_service_running?('sbd')
+    return [400, 'SBD is not enabled']
+  end
+  begin
+    file = File.open(SBD_CONFIG, 'r')
+    file.flock(File::LOCK_SH)
+    out = file.readlines()
+  rescue => e
+    msg = "Unable to get SBD configuration: #{e}"
+    $logger.error(msg)
+    return [400, msg]
+  ensure
+    if file
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+  return [200, out.join('')]
+end
+
+def sbd_disable(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  if disable_service('sbd')
+    msg = 'SBD disabled'
+    $logger.info(msg)
+    return [200, msg]
+  else
+    msg = 'Disabling SBD failed'
+    $logger.error(msg)
+    return [400, msg]
+  end
+end
+
+def sbd_enable(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  if enable_service('sbd')
+    msg = 'SBD enabled'
+    $logger.info(msg)
+    return [200, msg]
+  else
+    msg = 'Enabling SBD failed'
+    $logger.error(msg)
+    return [400, msg]
+  end
+end
+
+def remove_stonith_watchdog_timeout(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  if set_cluster_prop_force(auth_user, 'stonith-watchdog-timeout', '')
+    $logger.info('Cluster property "stonith-watchdog-timeout" removed')
+    return [200, 'OK']
+  else
+    $logger.info('Failed to remove cluster property "stonith-watchdog-timeout"')
+    return [400, 'ERROR']
+  end
+end
+
+def set_stonith_watchdog_timeout_to_zero(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  if set_cluster_prop_force(auth_user, 'stonith-watchdog-timeout', '0')
+    $logger.info('Cluster property "stonith-watchdog-timeout" set to "0"')
+    return [200, 'OK']
+  else
+    $logger.info(
+      'Failed to set cluster property "stonith-watchdog-timeout"to 0'
+    )
+    return [400, 'ERROR']
+  end
 end

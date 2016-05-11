@@ -18,6 +18,8 @@ COROSYNC_BINARIES = "/usr/sbin/"
 CMAN_TOOL = "/usr/sbin/cman_tool"
 PACEMAKERD = "/usr/sbin/pacemakerd"
 CIBADMIN = "/usr/sbin/cibadmin"
+SBD_CONFIG = '/etc/sysconfig/sbd'
+CIB_PATH='/var/lib/pacemaker/cib/cib.xml'
 
 SUPERUSER = 'hacluster'
 ADMIN_GROUP = 'haclient'
