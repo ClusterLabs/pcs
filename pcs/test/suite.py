@@ -43,12 +43,21 @@ def run_tests(tests, verbose=False, color=False):
 
 put_package_to_path()
 tests = discover_tests([
-    arg for arg in sys.argv[1:] if arg not in ('-v', '--color')
+    arg for arg in sys.argv[1:] if arg not in ("-v", "--color", "--no-color")
 ])
 run_tests(
     tests,
-    verbose='-v' in sys.argv,
-    color="--color" in sys.argv,
+    verbose="-v" in sys.argv,
+    color=(
+        "--color" in sys.argv
+        or
+        (
+            sys.stdout.isatty()
+            and
+            sys.stderr.isatty()
+            and "--no-color" not in sys.argv
+        )
+    ),
 )
 
 # assume that we are in pcs root dir

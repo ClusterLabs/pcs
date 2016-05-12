@@ -27,9 +27,9 @@ def ac(a,b):
     Compare the actual output 'a' and an expected output 'b', print diff b a
     """
     if a != b:
-        print("")
-        print(prepare_diff(b, a))
-        assert False, [a]
+        raise AssertionError(
+            "strings not equal:\n{0}".format(prepare_diff(b, a))
+        )
 
 def get_test_resource(name):
     """Return full path to a test resource file specified by name"""

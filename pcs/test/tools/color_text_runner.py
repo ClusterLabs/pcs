@@ -59,9 +59,9 @@ class ColorTextTestResult(TextTestResult):
     def addFailure(self, test, err):
         super(TextTestResult, self).addFailure(test, err)
         if self.showAll:
-            self.stream.writeln(apply(["red", "bold"], "FAIL"))
+            self.stream.writeln(apply(["lightred", "bold"], "FAIL"))
         elif self.dots:
-            self.stream.write(apply(["red", "bold"], 'F'))
+            self.stream.write(apply(["lightred", "bold"], 'F'))
             self.stream.flush()
 
     def getDescription(self, test):
@@ -84,12 +84,11 @@ class ColorTextTestResult(TextTestResult):
                 +apply(["lightgrey"], ")")
             )
 
-    def __format_error(self, test):
+    def __format_test_name(self, test):
         return (
             test.__class__.__module__
-            +"."+test.__class__.__name__
-            +"."+test._testMethodName
-            +" \\"
+            + "." + test.__class__.__name__
+            + "." + test._testMethodName
         )
 
     def printErrors(self):
@@ -101,13 +100,13 @@ class ColorTextTestResult(TextTestResult):
         self.stream.writeln(self.separator1)
         self.stream.writeln()
         self.stream.writeln(
-            "for running failed tests only (error are first then failures):"
+            "for running failed tests only (errors are first then failures):"
         )
         self.stream.writeln()
-        for test, _ in self.errors:
-            self.stream.writeln(self.__format_error(test))
-        if self.errors:
-            self.stream.writeln("\\")
-        for test, _ in self.failures:
-            self.stream.writeln(self.__format_error(test))
+        self.stream.write(" \\\n".join(
+            [
+                self.__format_test_name(test)
+                for test, _ in self.errors + self.failures
+            ]
+        ))
         self.stream.writeln()
