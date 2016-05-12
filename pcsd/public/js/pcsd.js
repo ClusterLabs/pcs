@@ -456,7 +456,7 @@ function setNodeStatus(node, running) {
     $('.node_name:contains("'+node+'")').css('color','red');
   }
 }
-  
+
 
 function fade_in_out(id) {
   $(id).fadeTo(1000, 0.01, function() {
@@ -1758,7 +1758,7 @@ function remove_acl_item(id,item) {
 function update_cluster_settings() {
   $("#cluster_properties button").prop("disabled", true);
   var data = {
-    'hidden[hidden_input]': null // this is needed for backward compatibility 
+    'hidden[hidden_input]': null // this is needed for backward compatibility
   };
   $.each(Pcs.settingsController.get("properties"), function(_, prop) {
     data[prop.get("form_name")] = prop.get("cur_val");
@@ -2214,10 +2214,10 @@ function resource_change_group(resource_id, group_id) {
     resource_id: resource_id,
     group_id: group_id
   };
-  
+
   if (resource_obj.get('parent')) {
     if (resource_obj.get('parent').get('id') == group_id) {
-      return;  
+      return;
     }
     if (resource_obj.get('parent').get('class_type') == 'group') {
       data['old_group_id'] = resource_obj.get('parent').get('id');
@@ -2709,7 +2709,7 @@ Ember.Handlebars.helper('selector-helper', function (content, value, place_holde
   var out = "";
   var line;
   if (place_holder) {
-    out += '<option value="">' + place_holder + '</option>'; 
+    out += '<option value="">' + place_holder + '</option>';
   }
   $.each(content, function(_, opt){
     line = '<option value="' + opt["value"] + '"';

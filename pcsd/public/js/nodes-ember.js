@@ -1287,7 +1287,7 @@ Pcs.ACLsRoute = Ember.Route.extend({
 
 Pcs.ConfigurationRoute = Ember.Route.extend({
   setupController: function(controller, model) {
-    select_menu("CONFIGURE"); 
+    select_menu("CONFIGURE");
   }
 });
 
@@ -1296,7 +1296,7 @@ Pcs.ResourcesRoute = Ember.Route.extend({
     if (model) {
       select_menu("RESOURCES",model.name);
     } else {
-      select_menu("RESOURCES"); 
+      select_menu("RESOURCES");
     }
   },
   model: function(params) {
@@ -2040,7 +2040,7 @@ Pcs.settingsController.reopen({
   filtered: function() {
     var self = this;
     var substr = self.get("filter").toLowerCase();
-    
+
     var to_show = [];
     $.each(self.get("properties"), function(_, e) {
       if (self.get("show_advanced")) {
@@ -2053,7 +2053,7 @@ Pcs.settingsController.reopen({
     if (!substr) {
       return to_show;
     }
-    
+
     var filtered = [];
     $.each(to_show, function(_, e) {
       if (e.get("name").toLowerCase().includes(substr) || e.get("readable_name").toLowerCase().includes(substr)) {
