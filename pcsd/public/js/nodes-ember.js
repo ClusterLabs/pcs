@@ -468,90 +468,6 @@ Pcs.resourcesContainer = Ember.Object.create({
     return family;
   },
 
-  get_constraints: function(cons) {
-    var ord_con = {};
-    var loc_con = {};
-    var col_con = {};
-    var ord_set_con = {};
-    var res_loc_constraints = {};
-    var res_ord_constraints = {};
-    var res_ord_set_constraints = {};
-    var res_col_constraints = {};
-    if (cons) {
-      if (cons["rsc_location"]) {
-        $.each(cons["rsc_location"], function (key, value) {
-          loc_con[value["id"]] = value;
-        });
-      }
-      if (cons["rsc_order"]) {
-        $.each(cons["rsc_order"], function (key, value) {
-          if (value["sets"]) {
-            ord_set_con[value["id"]] = value;
-          }
-          else {
-            ord_con[value["id"]] = value;
-          }
-        });
-      }
-      if (cons["rsc_colocation"]) {
-        $.each(cons["rsc_colocation"], function (key, value) {
-          col_con[value["id"]] = value;
-        });
-      }
-    }
-
-    $.each(loc_con, function (key, value) {
-      res_loc_constraints[value["rsc"]] = res_loc_constraints[value["rsc"]] || [];
-      res_loc_constraints[value["rsc"]].push(value);
-    });
-    $.each(ord_con, function (key, value) {
-      first = $.extend({"other_rsc":value["then"],"before":false}, value);
-      if (value["first"] in res_ord_constraints)
-        res_ord_constraints[value["first"]].push(first);
-      else res_ord_constraints[value["first"]] = [first];
-      then = $.extend({"other_rsc":value["first"],"before":true}, value);
-      if (value["then"] in res_ord_constraints)
-        res_ord_constraints[value["then"]].push(then);
-      else res_ord_constraints[value["then"]] = [then];
-    });
-
-    $.each(ord_set_con, function(key, set_con) {
-      $.each(set_con["sets"], function(key, set) {
-        $.each(set["resources"], function(key, resource) {
-          res_ord_set_constraints[resource] = res_ord_set_constraints[resource] || [];
-          if (res_ord_set_constraints[resource].indexOf(set_con) != -1) {
-            return;
-          }
-          res_ord_set_constraints[resource].push(set_con);
-        })
-      })
-    });
-
-    $.each(col_con, function (key, value) {
-      if (value["score"] == "INFINITY")
-        value["together"] = "Together";
-      else if (value["score"] == "-INFINITY" || value["score"] < 0)
-        value["together"] = "Apart";
-      else if (value["score"] >= 0)
-        value["together"] = "Together";
-
-      first = $.extend({"other_rsc":value["with-rsc"],"first":true}, value);
-      if (value["rsc"] in res_col_constraints)
-        res_col_constraints[value["rsc"]].push(first);
-      else res_col_constraints[value["rsc"]] = [first];
-      second = $.extend({"other_rsc":value["rsc"],"first":false}, value);
-      if (value["with-rsc"] in res_col_constraints)
-        res_col_constraints[value["with-rsc"]].push(second);
-      else res_col_constraints[value["with-rsc"]] = [second];
-    });
-    return {
-      "location_constraints": res_loc_constraints,
-      "ordering_constraints": res_ord_constraints,
-      "ordering_set_constraints": res_ord_set_constraints,
-      "colocation_constraints": res_col_constraints
-    };
-  },
-
   update_meta_attr: function(resource_id, attr, value) {
     value = typeof value !== 'undefined' ? value.trim() : "";
     var data = {
@@ -702,7 +618,7 @@ Pcs.resourcesContainer = Ember.Object.create({
     self.delete_unused_resources("fence_list", top_resource_map);
     self.delete_unused_resources("resource_list", top_resource_map);
 
-    var constraints = self.get_constraints(data["constraints"]);
+    var constraints = constraint_resort(data["constraints"]);
     self.set('constraints', constraints);
     var resource_map = self.get('resource_map');
     $.each(constraints, function(const_type, cons) {
@@ -2338,3 +2254,138 @@ Pcs.set('updater', Pcs.Updater.create({
   update_function: Pcs._update,
   update_target: Pcs
 }));
+
+function constraint_extend(){
+  var new_object = {}
+  for(var i in arguments){
+    var extension = arguments[i];
+    Object.keys(extension).forEach(function(key){
+      new_object[key] = extension[key];
+    });
+  }
+  return new_object;
+}
+
+function constraint_set_create_resource_keyed_map(constraint){
+  groups = {}
+  constraint.sets.forEach(function(resource_set){
+    resource_set.resources.forEach(function(resource_id){
+      groups[resource_id] = constraint
+    })
+  });
+  return groups;
+}
+
+function constraint_order_create_resource_keyed_map(constraint){
+  var groups = {};
+  groups[constraint["first"]] = constraint_extend(constraint, {
+    "other_rsc": constraint["then"],
+    "before":false
+  });
+  groups[constraint["then"]] = constraint_extend(constraint, {
+    "other_rsc": constraint["first"],
+    "before":true
+  });
+  return groups;
+}
+
+function constraint_colocation_create_resource_keyed_map(constraint){
+  var together = {}
+  if(constraint.score == "INFINITY" || constraint.score >= 0){
+    together.together = "Together";
+  }
+  if(constraint.score == "-INFINITY" || constraint.score < 0){
+    together.together = "Apart";
+  }
+
+  var groups = {};
+  groups[constraint["rsc"]] = constraint_extend(constraint, together, {
+    "other_rsc": constraint["with-rsc"],
+    "first": true
+  });
+
+  groups[constraint["with-rsc"]] = constraint_extend(constraint, together, {
+    "other_rsc": constraint["rsc"],
+    "first": false
+  });
+  return groups;
+}
+
+function constraint_location_distribute_to_resource(constraint){
+  var groups = {};
+  groups[constraint["rsc"]] = constraint;
+  return groups;
+}
+
+/**
+  Return object with nested object on each attribute ("with_sets", "plain").
+  Nested object has related constraint list on each attribute (resource id).
+  Example: {
+    with_sets: {"resA": [{constraint}, ...], "resB": [{constraint}, ...]}
+    plain: {"resA": [{constraint}, ...]}
+  }
+
+  @param {array} constraint_list list of constraints to distribute
+  @param {object} group_distributors on attributes ("with_sets", "plain") are
+    distribution methods. If attribute undefined, constraint is not distributed
+*/
+function constraint_resort_part(constraint_list, group_distributors){
+  var constraint_groups = {with_sets: {}, plain: {}}
+
+  if( ! constraint_list){
+    return constraint_groups;
+  }
+
+  constraint_list.forEach(function(constraint){
+    var group_name = constraint.sets ? "with_sets" : "plain";
+    var group = constraint_groups[group_name];
+    var distribute = group_distributors[group_name];
+
+    if( ! distribute){
+      return;
+    }
+
+    var resource_constraint_map = distribute(constraint);
+
+    for(var resource_id in resource_constraint_map){
+      var extended_constraint = resource_constraint_map[resource_id];
+      group[resource_id] = group[resource_id] || [];
+      if(group[resource_id].indexOf(extended_constraint) == -1){
+        group[resource_id].push(extended_constraint);
+      }
+    }
+  });
+
+  return constraint_groups;
+}
+
+function constraint_resort(constraints){
+  if( ! constraints){
+    return {
+      location_constraints: {},
+      ordering_constraints: {},
+      ordering_set_constraints: {},
+      colocation_constraints: {},
+    };
+  }
+
+  var orders = constraint_resort_part(constraints.rsc_order, {
+    plain: constraint_order_create_resource_keyed_map,
+    with_sets: constraint_set_create_resource_keyed_map,
+  });
+
+  var colocations = constraint_resort_part(constraints.rsc_colocation, {
+    plain: constraint_colocation_create_resource_keyed_map,
+  });
+
+  var locations = constraint_resort_part(constraints.rsc_location, {
+    plain: constraint_location_distribute_to_resource,
+  })
+
+  return {
+    location_constraints: locations.plain,
+    ordering_constraints: orders.plain,
+    ordering_set_constraints: orders.with_sets,
+    colocation_constraints: colocations.plain,
+  };
+}
