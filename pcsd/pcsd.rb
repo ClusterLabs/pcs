@@ -83,7 +83,7 @@ before do
     $session_storage_env = env
   end
 
-  if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth'
+  if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth' and not request.path == '/login-status'
     protected! 
   end
   $cluster_name = get_cluster_name()
@@ -369,7 +369,19 @@ if not DISABLE_GUI
 
   get '/logout' do
     session.destroy
-    redirect '/login'
+    if is_ajax?
+      halt [200, "OK"]
+    else
+      redirect '/login'
+    end
+  end
+
+  get '/login-status' do
+    if PCSAuth.isLoggedIn(session)
+      halt [200, session[:random]]
+    else
+      halt [401, '{"notauthorized":"true"}']
+    end
   end
 
   post '/login' do
@@ -390,8 +402,9 @@ if not DISABLE_GUI
       #      redirect plp
       #    else
       session.delete(:bad_login_name)
+      session[:random] = "#{Time.now.to_i}-#{rand(100)}"
       if is_ajax?
-        halt [200, "OK"]
+        halt [200, session[:random]]
       else
         redirect '/manage'
       end
