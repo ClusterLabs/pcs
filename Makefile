@@ -4,6 +4,10 @@ DISTRO_DEBIAN := $(shell if [ -e /etc/debian_version ] ; then echo true; else ec
 IS_DEBIAN=false
 DISTRO_DEBIAN_VER_8=false
 
+ifndef PYTHON
+	PYTHON=python
+endif
+
 ifeq ($(UNAME_OS_GNU),true)
   ifeq ($(DISTRO_DEBIAN),true)
     IS_DEBIAN=true
@@ -16,7 +20,7 @@ ifeq ($(UNAME_OS_GNU),true)
 endif
 
 ifndef PYTHON_SITELIB
-  PYTHON_SITELIB=$(shell python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+  PYTHON_SITELIB=$(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
 endif
 ifeq ($(PYTHON_SITELIB), /usr/lib/python2.6/dist-packages)
   EXTRA_SETUP_OPTS="--install-layout=deb"
@@ -53,7 +57,7 @@ endif
 MANDIR=/usr/share/man
 
 ifndef PREFIX
-  PREFIX=$(shell prefix=`python -c "import sys; print(sys.prefix)"` || prefix="/usr"; echo $$prefix)
+  PREFIX=$(shell prefix=`$(PYTHON) -c "import sys; print(sys.prefix)"` || prefix="/usr"; echo $$prefix)
 endif
 
 ifndef systemddir
@@ -73,7 +77,7 @@ ifndef install_settings
 endif
 
 install:
-	python setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
+	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	mv ${DESTDIR}${PREFIX}/bin/pcs ${DESTDIR}${PREFIX}/sbin/pcs
 	install -D pcs/bash_completion.sh ${DESTDIR}/etc/bash_completion.d/pcs
@@ -85,7 +89,7 @@ ifeq ($(IS_DEBIAN),true)
 	        sed s/DEB_HOST_MULTIARCH/${DEB_HOST_MULTIARCH}/g pcs/settings.py.debian > $$tmp_settings; \
 	        install -m644 $$tmp_settings ${DESTDIR}${PYTHON_SITELIB}/pcs/settings.py; \
 	        rm -f $$tmp_settings
-	python -m compileall -fl ${DESTDIR}${PYTHON_SITELIB}/pcs/settings.py
+	$(PYTHON) -m compileall -fl ${DESTDIR}${PYTHON_SITELIB}/pcs/settings.py
   endif
 endif
 
@@ -146,8 +150,8 @@ endif
 	rm -rf ${DESTDIR}/var/lib/pcsd
 
 tarball:
-	python setup.py sdist --formats=tar
-	python maketarballs.py
+	$(PYTHON) setup.py sdist --formats=tar
+	$(PYTHON) maketarballs.py
 
 newversion:
-	python newversion.py
+	$(PYTHON) newversion.py
