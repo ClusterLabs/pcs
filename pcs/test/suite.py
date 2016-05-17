@@ -23,10 +23,20 @@ PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
 def put_package_to_path():
     sys.path.insert(0, PACKAGE_DIR)
 
+def prepare_test_name(test_name):
+    """
+    Sometimes we have test easy accessible with fs path format like:
+    "pcs/test/test_node"
+    but loader need it in module path format like:
+    "pcs.test.test_node"
+    so is practical accept fs path format and prepare it for loader
+    """
+    return test_name.replace("/", ".")
+
 def discover_tests(test_name_list):
     loader = unittest.TestLoader()
     if test_name_list:
-        return loader.loadTestsFromNames(test_name_list)
+        return loader.loadTestsFromNames(map(prepare_test_name, test_name_list))
     return loader.discover(PACKAGE_DIR, pattern='test_*.py')
 
 def run_tests(tests, verbose=False, color=False):
