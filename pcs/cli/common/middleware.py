@@ -20,10 +20,16 @@ def build(*middleware_list):
         return next_in_line(env, *args, **kwargs)
     return run
 
-def cib(use_local_cib, cib_content, write_cib):
+def cib(use_local_cib, load_cib_content, write_cib):
+    """
+    return configured middleware that cares about local cib
+    bool use_local_cib is flag if local cib was required
+    callable load_cib_content returns local cib content, take no params
+    callable write_cib put content of cib to required place
+    """
     def apply(next_in_line, env, *args, **kwargs):
         if use_local_cib:
-            env.cib_data = cib_content
+            env.cib_data = load_cib_content()
 
         result_of_next = next_in_line(env, *args, **kwargs)
 

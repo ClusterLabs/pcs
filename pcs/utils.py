@@ -2576,11 +2576,7 @@ def get_cli_env():
 
 def get_middleware_factory():
     return middleware.create_middleware_factory(
-        cib=middleware.cib(
-            usefile,
-            get_cib() if usefile else None,
-            replace_cib_configuration,
-        ),
+        cib=middleware.cib(usefile, get_cib, replace_cib_configuration),
         corosync_conf_existing=middleware.corosync_conf_existing(
             pcs_options.get("--corosync_conf", None)
         )
