@@ -86,8 +86,8 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
                 {
-                    "external_exitcode": expected_retval,
-                    "external_output": expected_error,
+                    "return_value": expected_retval,
+                    "stdout": expected_error,
                 }
             )
         )
@@ -120,8 +120,8 @@ class GetCibXmlTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.CIB_LOAD_ERROR,
                 {
-                    "external_exitcode": expected_retval,
-                    "external_output": expected_error,
+                    "return_value": expected_retval,
+                    "stdout": expected_error,
                 }
             )
         )
@@ -161,8 +161,8 @@ class GetCibXmlTest(LibraryPacemakerTest):
                 report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
                 {
                     "scope": scope,
-                    "external_exitcode": expected_retval,
-                    "external_output": expected_error,
+                    "return_value": expected_retval,
+                    "stdout": expected_error,
                 }
             )
         )
@@ -229,8 +229,8 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.CIB_PUSH_ERROR,
                 {
-                    "external_exitcode": expected_retval,
-                    "external_output": expected_error,
+                    "return_value": expected_retval,
+                    "stdout": expected_error,
                 }
             )
         )
@@ -478,7 +478,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
                 {"threshold": 100},
-                True
+                report_codes.FORCE_LOAD_THRESHOLD
             )
         )
 
@@ -553,8 +553,8 @@ class ResourceCleanupTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
                 {
-                    "external_exitcode": expected_retval,
-                    "external_output": expected_error,
+                    "return_value": expected_retval,
+                    "stdout": expected_error,
                 }
             )
         )
@@ -581,8 +581,8 @@ class ResourceCleanupTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.RESOURCE_CLEANUP_ERROR,
                 {
-                    "external_exitcode": expected_retval,
-                    "external_output": expected_error,
+                    "return_value": expected_retval,
+                    "stdout": expected_error,
                 }
             )
         )
@@ -675,8 +675,8 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.RESOURCE_WAIT_ERROR,
                 {
-                    "external_exitcode": expected_retval,
-                    "external_output": expected_error,
+                    "return_value": expected_retval,
+                    "stdout": expected_error,
                 }
             )
         )
@@ -697,8 +697,8 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.RESOURCE_WAIT_TIMED_OUT,
                 {
-                    "external_exitcode": expected_retval,
-                    "external_output": expected_error,
+                    "return_value": expected_retval,
+                    "stdout": expected_error,
                 }
             )
         )

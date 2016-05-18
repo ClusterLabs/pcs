@@ -37,9 +37,13 @@ class PrepareSetTest(TestCase):
                 "ids": ["A", "B"],
                 "options": {"invalid_name": "true"}
             }),
-            (severities.ERROR, report_codes.INVALID_OPTION, {
-                'allowed_raw': ['action', 'require-all', 'role', 'sequential'],
-                'option': 'invalid_name',
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_name": "invalid_name",
+                    "option_type": None,
+                    "allowed": ["action", "require-all", "role", "sequential"],
             }),
         )
 
@@ -51,7 +55,7 @@ class PrepareSetTest(TestCase):
             }),
             (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
                 'option_name': 'role',
-                'allowed_values_raw': ('Stopped', 'Started', 'Master', 'Slave'),
+                'allowed_values': ('Stopped', 'Started', 'Master', 'Slave'),
                 'option_value': 'invalid',
             }),
         )

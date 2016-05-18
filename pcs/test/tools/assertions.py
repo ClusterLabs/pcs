@@ -108,7 +108,7 @@ def assert_report_item_equal(real_report_item, report_item_info):
                     report_item_info[0],
                     report_item_info[1],
                     report_item_info[2],
-                    False if len(report_item_info) < 4 else report_item_info[3]
+                    None if len(report_item_info) < 4 else report_item_info[3]
                 )),
                 repr((
                     real_report_item.severity,
@@ -174,7 +174,7 @@ def __report_item_equal(real_report_item, report_item_info):
         and
         (
             real_report_item.forceable == (
-                False if len(report_item_info) < 4 else report_item_info[3]
+                None if len(report_item_info) < 4 else report_item_info[3]
             )
         )
     )

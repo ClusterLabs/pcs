@@ -115,7 +115,7 @@ class ValidateIdTest(TestCase):
                 report_codes.INVALID_ID,
                 {
                     "id": "",
-                    "description": "test id",
+                    "id_description": "test id",
                     "reason": "empty",
                 }
             )
@@ -125,7 +125,7 @@ class ValidateIdTest(TestCase):
         desc = "test id"
         info = {
             "id": "",
-            "description": desc,
+            "id_description": desc,
             "reason": "invalid first character",
             "invalid_character": "",
         }
@@ -191,7 +191,7 @@ class ValidateIdTest(TestCase):
         desc = "test id"
         info = {
             "id": "",
-            "description": desc,
+            "id_description": desc,
             "reason": "invalid character",
             "invalid_character": "",
         }

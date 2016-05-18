@@ -67,8 +67,9 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    'allowed_raw': ['id', 'loss-policy', 'rsc', 'rsc-role', 'ticket'],
-                    'option': 'unknown',
+                    "option_name": "unknown",
+                    "option_type": None,
+                    "allowed": ["id", "loss-policy", "rsc", "rsc-role", "ticket"],
                 }
             ),
         )
@@ -78,16 +79,11 @@ class PrepareOptionsPlainTest(TestCase):
             lambda: self.prepare(
                 {"id": "id", "rsc-role": "bad_role"}, "ticket_key", "resourceA"
             ),
-            (
-                severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                    'allowed_values': 'Stopped, Started, Master, Slave',
-                    'allowed_values_raw': (
-                        'Stopped', 'Started', 'Master', 'Slave'
-                    ),
-                    'option_value': 'bad_role',
-                    'option_name': 'rsc-role'
-                }
-            ),
+            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
+                'allowed_values': ('Stopped', 'Started', 'Master', 'Slave'),
+                'option_value': 'bad_role',
+                'option_name': 'rsc-role',
+            }),
         )
 
     def test_refuse_missing_ticket(self, _):
@@ -95,9 +91,13 @@ class PrepareOptionsPlainTest(TestCase):
             lambda: self.prepare(
                 {"id": "id", "rsc-role": "master"}, "", "resourceA"
             ),
-            (severities.ERROR, report_codes.REQUIRED_OPTION_IS_MISSING, {
-                'name': 'ticket'
-            }),
+            (
+                severities.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {
+                    "option_name": "ticket"
+                }
+            ),
         )
 
     def test_refuse_missing_resource_id(self, _):
@@ -105,9 +105,13 @@ class PrepareOptionsPlainTest(TestCase):
             lambda: self.prepare(
                 {"id": "id", "rsc-role": "master"}, "ticket_key", ""
             ),
-            (severities.ERROR, report_codes.REQUIRED_OPTION_IS_MISSING, {
-                'name': 'rsc'
-            }),
+            (
+                severities.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {
+                    "option_name": "rsc",
+                }
+            ),
         )
 
 
@@ -119,10 +123,9 @@ class PrepareOptionsPlainTest(TestCase):
                 "resourceA",
             ),
             (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'allowed_values': 'fence, stop, freeze, demote',
-                'allowed_values_raw': ('fence', 'stop', 'freeze', 'demote'),
+                'allowed_values': ('fence', 'stop', 'freeze', 'demote'),
                 'option_value': 'unknown',
-                'option_name': 'loss-policy'
+                'option_name': 'loss-policy',
             }),
         )
 
@@ -203,10 +206,9 @@ class PrepareOptionsWithSetTest(TestCase):
                 "id": "id",
             }),
             (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'allowed_values': 'fence, stop, freeze, demote',
-                'allowed_values_raw': ('fence', 'stop', 'freeze', 'demote'),
+                'allowed_values': ('fence', 'stop', 'freeze', 'demote'),
                 'option_value': 'unknown',
-                'option_name': 'loss-policy'
+                'option_name': 'loss-policy',
             }),
         )
 
@@ -216,7 +218,7 @@ class PrepareOptionsWithSetTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"name": "ticket"}
+                {"option_name": "ticket"}
             )
         )
 

@@ -6,7 +6,8 @@ from __future__ import (
 )
 
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItem, ReportItemSeverity, LibraryError
+from pcs.lib import reports
+from pcs.lib.errors import ReportItemSeverity, LibraryError
 from pcs.lib.corosync import config_parser
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 
@@ -31,20 +32,17 @@ class ConfigFacade(object):
         try:
             return cls(config_parser.parse_string(config_string))
         except config_parser.MissingClosingBraceException:
-            raise LibraryError(ReportItem.error(
-                report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
-                "Unable to parse corosync config: missing closing brace"
-            ))
+            raise LibraryError(
+                reports.corosync_config_parser_missing_closing_brace()
+            )
         except config_parser.UnexpectedClosingBraceException:
-            raise LibraryError(ReportItem.error(
-                report_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
-                "Unable to parse corosync config: unexpected closing brace"
-            ))
+            raise LibraryError(
+                reports.corosync_config_parser_unexpected_closing_brace()
+            )
         except config_parser.CorosyncConfParserException:
-            raise LibraryError(ReportItem.error(
-                report_codes.PARSE_ERROR_COROSYNC_CONF,
-                "Unable to parse corosync config"
-            ))
+            raise LibraryError(
+                reports.corosync_config_parser_other_error()
+            )
 
     def __init__(self, parsed_config):
         """
@@ -106,23 +104,14 @@ class ConfigFacade(object):
         return options
 
     def __validate_quorum_options(self, options):
-        report = []
+        report_items = []
         for name, value in sorted(options.items()):
 
             allowed_names = self.__class__.QUORUM_OPTIONS
             if name not in allowed_names:
-                report.append(ReportItem.error(
-                    report_codes.INVALID_OPTION,
-                    "invalid {type} option '{option}'"
-                        + ", allowed options are: {allowed}"
-                    ,
-                    info={
-                        "option": name,
-                        "type": "quorum",
-                        "allowed_raw": allowed_names,
-                        "allowed": " or ".join(allowed_names),
-                    },
-                ))
+                report_items.append(
+                    reports.invalid_option(name, allowed_names, "quorum")
+                )
                 continue
 
             if value == "":
@@ -130,36 +119,18 @@ class ConfigFacade(object):
 
             if name == "last_man_standing_window":
                 if not value.isdigit():
-                    report.append(ReportItem.error(
-                        report_codes.INVALID_OPTION_VALUE,
-                        "'{option_value}' is not a valid value for "
-                            + "{option_name}, use {allowed_values}"
-                        ,
-                        info={
-                            "option_name": name,
-                            "option_value": value,
-                            "allowed_values_raw": ("integer", ),
-                            "allowed_values": "integer",
-                        },
+                    report_items.append(reports.invalid_option_value(
+                        name, value, "positive integer"
                     ))
 
             else:
                 allowed_values = ("0", "1")
                 if value not in allowed_values:
-                    report.append(ReportItem.error(
-                        report_codes.INVALID_OPTION_VALUE,
-                        "'{option_value}' is not a valid value for "
-                            + "{option_name}, use {allowed_values}"
-                        ,
-                        info={
-                            "option_name": name,
-                            "option_value": value,
-                            "allowed_values_raw": allowed_values,
-                            "allowed_values": " or ".join(allowed_values),
-                        },
+                    report_items.append(reports.invalid_option_value(
+                        name, value, allowed_values
                     ))
 
-        return report
+        return report_items
 
     def has_quorum_device(self):
         """
@@ -207,10 +178,7 @@ class ConfigFacade(object):
         """
         # validation
         if self.has_quorum_device():
-            raise LibraryError(ReportItem.error(
-                report_codes.QDEVICE_ALREADY_DEFINED,
-                "quorum device is already defined"
-            ))
+            raise LibraryError(reports.qdevice_already_defined())
         report_processor.process_list(
             self.__validate_quorum_device_model(model, force_model)
             +
@@ -265,10 +233,7 @@ class ConfigFacade(object):
         """
         # validation
         if not self.has_quorum_device():
-            raise LibraryError(ReportItem.error(
-                report_codes.QDEVICE_NOT_DEFINED,
-                "no quorum device is defined in this cluster"
-            ))
+            raise LibraryError(reports.qdevice_not_defined())
         model = None
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
@@ -304,10 +269,7 @@ class ConfigFacade(object):
         Remove all quorum device configuration
         """
         if not self.has_quorum_device():
-            raise LibraryError(ReportItem.error(
-                report_codes.QDEVICE_NOT_DEFINED,
-                "no quorum device is defined in this cluster"
-            ))
+            raise LibraryError(reports.qdevice_not_defined())
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)
@@ -315,29 +277,22 @@ class ConfigFacade(object):
         self.__remove_empty_sections(self.config)
 
     def __validate_quorum_device_model(self, model, force_model=False):
-        report = []
+        report_items = []
 
         allowed_values = (
             "net",
         )
         if model not in allowed_values:
-            report.append(ReportItem(
-                report_codes.INVALID_OPTION_VALUE,
+            report_items.append(reports.invalid_option_value(
+                "model",
+                model,
+                allowed_values,
                 ReportItemSeverity.WARNING if force_model
                     else ReportItemSeverity.ERROR,
-                "'{option_value}' is not a valid value for "
-                    + "{option_name}, use {allowed_values}"
-                ,
-                info={
-                    "option_name": "model",
-                    "option_value": model,
-                    "allowed_values_raw": allowed_values,
-                    "allowed_values": " or ".join(allowed_values),
-                },
-                forceable=(False if force_model else "model")
+                None if force_model else report_codes.FORCE_QDEVICE_MODEL
             ))
 
-        return report
+        return report_items
 
     def __validate_quorum_device_model_options(
         self, model, model_options, need_required, force=False
@@ -363,148 +318,76 @@ class ConfigFacade(object):
         ])
         allowed_options = required_options | optional_options
         model_options_names = frozenset(model_options.keys())
-        report = []
+        report_items = []
         severity = (
             ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
         )
-        forceable = False if force else "options"
+        forceable = None if force else report_codes.FORCE_OPTIONS
 
         if need_required:
             for missing in sorted(required_options - model_options_names):
-                report.append(ReportItem.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
-                    "required option '{name}' is missing",
-                    info={
-                        "name": missing,
-                    },
-                ))
+                report_items.append(reports.required_option_is_missing(missing))
 
         for name, value in sorted(model_options.items()):
             if name not in allowed_options:
-                report.append(ReportItem(
-                    report_codes.INVALID_OPTION,
+                report_items.append(reports.invalid_option(
+                    name,
+                    allowed_options,
+                    "quorum device model",
                     severity,
-                    "invalid {type} option '{option}'"
-                        + ", allowed options are: {allowed}"
-                    ,
-                    info={
-                        "option": name,
-                        "type": "quorum device model",
-                        "allowed_raw": sorted(allowed_options),
-                        "allowed": " or ".join(sorted(allowed_options)),
-                    },
-                    forceable=forceable
+                    forceable
                 ))
                 continue
 
             if value == "":
                 # do not allow to remove required options
                 if name in required_options:
-                    report.append(ReportItem.error(
-                        report_codes.REQUIRED_OPTION_IS_MISSING,
-                        "required option '{name}' is missing",
-                        info={
-                            "name": name,
-                        },
-                    ))
+                    report_items.append(
+                        reports.required_option_is_missing(name)
+                    )
                 else:
                     continue
 
             if name == "algorithm":
-                allowed_algorithms = ("2nodelms", "ffsplit", "lms")
-                if value not in allowed_algorithms:
-                    report.append(ReportItem(
-                        report_codes.INVALID_OPTION_VALUE,
-                        severity,
-                        "'{option_value}' is not a valid value for "
-                            + "{option_name}, use {allowed_values}"
-                        ,
-                        info={
-                            "option_name": "algorithm",
-                            "option_value": value,
-                            "allowed_values_raw": allowed_algorithms,
-                            "allowed_values": " or ".join(allowed_algorithms),
-                        },
-                        forceable=forceable
+                allowed_values = ("2nodelms", "ffsplit", "lms")
+                if value not in allowed_values:
+                    report_items.append(reports.invalid_option_value(
+                        name, value, allowed_values, severity, forceable
                     ))
 
             if name == "connect_timeout":
                 minimum, maximum = 1000, 2*60*1000
                 if not (value.isdigit() and minimum <= int(value) <= maximum):
                     min_max = "{min}-{max}".format(min=minimum, max=maximum)
-                    report.append(ReportItem(
-                        report_codes.INVALID_OPTION_VALUE,
-                        severity,
-                        "'{option_value}' is not a valid value for "
-                            + "{option_name}, use {allowed_values}"
-                        ,
-                        info={
-                            "option_name": "connect_timeout",
-                            "option_value": value,
-                            "allowed_values_raw": (min_max, ),
-                            "allowed_values": min_max,
-                        },
-                        forceable=forceable
+                    report_items.append(reports.invalid_option_value(
+                        name, value, min_max, severity, forceable
                     ))
 
             if name == "force_ip_version":
-                allowed_ip_version = ("0", "4", "6")
-                if value not in allowed_ip_version:
-                    report.append(ReportItem(
-                        report_codes.INVALID_OPTION_VALUE,
-                        severity,
-                        "'{option_value}' is not a valid value for "
-                            + "{option_name}, use {allowed_values}"
-                        ,
-                        info={
-                            "option_name": "force_ip_version",
-                            "option_value": value,
-                            "allowed_values_raw": allowed_ip_version,
-                            "allowed_values": " or ".join(allowed_ip_version),
-                        },
-                        forceable=forceable
+                allowed_values = ("0", "4", "6")
+                if value not in allowed_values:
+                    report_items.append(reports.invalid_option_value(
+                        name, value, allowed_values, severity, forceable
                     ))
 
             if name == "port":
                 minimum, maximum = 1, 65535
                 if not (value.isdigit() and minimum <= int(value) <= maximum):
                     min_max = "{min}-{max}".format(min=minimum, max=maximum)
-                    report.append(ReportItem(
-                        report_codes.INVALID_OPTION_VALUE,
-                        severity,
-                        "'{option_value}' is not a valid value for "
-                            + "{option_name}, use {allowed_values}"
-                        ,
-                        info={
-                            "option_name": "port",
-                            "option_value": value,
-                            "allowed_values_raw": (min_max, ),
-                            "allowed_values": min_max,
-                        },
-                        forceable=forceable
+                    report_items.append(reports.invalid_option_value(
+                        name, value, min_max, severity, forceable
                     ))
 
             if name == "tie_breaker":
                 node_ids = [node.id for node in self.get_nodes()]
                 allowed_nonid = ["lowest", "highest"]
                 if value not in allowed_nonid + node_ids:
-                    allowed_values = tuple(allowed_nonid + ["valid node id"])
-                    report.append(ReportItem(
-                        report_codes.INVALID_OPTION_VALUE,
-                        severity,
-                        "'{option_value}' is not a valid value for "
-                            + "{option_name}, use {allowed_values}"
-                        ,
-                        info={
-                            "option_name": "tie_breaker",
-                            "option_value": value,
-                            "allowed_values_raw": tuple(allowed_values),
-                            "allowed_values": " or ".join(allowed_values),
-                        },
-                        forceable=forceable
+                    allowed_values = allowed_nonid + ["valid node id"]
+                    report_items.append(reports.invalid_option_value(
+                        name, value, allowed_values, severity, forceable
                     ))
 
-        return report
+        return report_items
 
     def __validate_quorum_device_generic_options(
         self, generic_options, force=False
@@ -514,29 +397,22 @@ class ConfigFacade(object):
             "timeout",
         ])
         allowed_options = optional_options
-        report = []
+        report_items = []
         severity = (
             ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
         )
-        forceable = False if force else "options"
+        forceable = None if force else report_codes.FORCE_OPTIONS
 
         for name, value in sorted(generic_options.items()):
             if name not in allowed_options:
                 # model is never allowed in generic options, it is passed
                 # in its own argument
-                report.append(ReportItem(
-                    report_codes.INVALID_OPTION,
+                report_items.append(reports.invalid_option(
+                    name,
+                    allowed_options,
+                    "quorum device",
                     severity if name != "model" else ReportItemSeverity.ERROR,
-                    "invalid {type} option '{option}'"
-                        + ", allowed options are: {allowed}"
-                    ,
-                    info={
-                        "option": name,
-                        "type": "quorum device",
-                        "allowed_raw": sorted(allowed_options),
-                        "allowed": " or ".join(sorted(allowed_options)),
-                    },
-                    forceable=(forceable if name != "model" else False)
+                    forceable if name != "model" else None
                 ))
                 continue
 
@@ -544,22 +420,11 @@ class ConfigFacade(object):
                 continue
 
             if not value.isdigit():
-                report.append(ReportItem(
-                    report_codes.INVALID_OPTION_VALUE,
-                    severity,
-                    "'{option_value}' is not a valid value for "
-                        + "{option_name}, use {allowed_values}"
-                    ,
-                    info={
-                        "option_name": name,
-                        "option_value": value,
-                        "allowed_values_raw": ("integer", ),
-                        "allowed_values": "integer",
-                    },
-                    forceable=forceable
+                report_items.append(reports.invalid_option_value(
+                    name, value, "positive integer", severity, forceable
                 ))
 
-        return report
+        return report_items
 
     def __update_two_node(self):
         # get relevant status

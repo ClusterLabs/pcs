@@ -5,9 +5,8 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.common import report_codes
 from pcs.lib import reports
-from pcs.lib.errors import ReportItem, LibraryError
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
@@ -24,7 +23,7 @@ def distribute_corosync_conf(lib_env, node_addr_list, config_text):
     lib_env.report_processor.process(
         reports.corosync_config_distribution_started()
     )
-    report = []
+    report_items = []
     # TODO use parallel communication
     for node in node_addr_list:
         try:
@@ -37,14 +36,14 @@ def distribute_corosync_conf(lib_env, node_addr_list, config_text):
                 reports.corosync_config_accepted_by_node(node.label)
             )
         except NodeCommunicationException as e:
-            report.append(node_communicator_exception_to_report_item(e))
-            report.append(ReportItem.error(
-                report_codes.NODE_COROSYNC_CONF_SAVE_ERROR,
-                "{node}: Unable to set corosync config",
-                info={"node": node.label}
-            ))
-    if report:
-        raise LibraryError(*report)
+            report_items.append(
+                node_communicator_exception_to_report_item(e)
+            )
+            report_items.append(
+                reports.corosync_config_distribution_node_error(node.label)
+            )
+    if report_items:
+        raise LibraryError(*report_items)
 
     corosync_live.reload_config(lib_env.cmd_runner())
     lib_env.report_processor.process(reports.corosync_config_reloaded())

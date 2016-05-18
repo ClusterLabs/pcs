@@ -63,10 +63,9 @@ class PrepareOptionsWithSetTest(TestCase):
                 "id": "id",
             }),
             (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'allowed_values': 'Optional, Mandatory, Serialize',
-                'allowed_values_raw': ('Optional', 'Mandatory', 'Serialize'),
+                'allowed_values': ('Optional', 'Mandatory', 'Serialize'),
                 'option_value': 'unknown',
-                'option_name': 'kind'
+                'option_name': 'kind',
             }),
         )
 
@@ -78,10 +77,9 @@ class PrepareOptionsWithSetTest(TestCase):
                 "id": "id",
             }),
             (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'allowed_values': 'true, false',
-                'allowed_values_raw': ('true', 'false'),
+                'allowed_values': ('true', 'false'),
                 'option_value': 'unknown',
-                'option_name': 'symmetrical'
+                'option_name': 'symmetrical',
             }),
         )
 
@@ -97,13 +95,9 @@ class PrepareOptionsWithSetTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    'allowed_raw': [
-                        'id',
-                        'kind',
-                        'symmetrical',
-                    ],
-                    'option': 'unknown',
-                    'allowed': 'id, kind, symmetrical'
+                    "option_name": "unknown",
+                    "option_type": None,
+                    "allowed": [ "id", "kind", "symmetrical"],
                 }
             ),
         )

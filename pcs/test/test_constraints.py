@@ -467,19 +467,19 @@ Colocation Constraints:
         assert r == 0
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 sequential=foo")
-        ac(output, "Error: invalid value 'foo' of option 'sequential', allowed values are: true, false\n")
+        ac(output, "Error: 'foo' is not a valid sequential value, use true, false\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 require-all=foo")
-        ac(output, "Error: invalid value 'foo' of option 'require-all', allowed values are: true, false\n")
+        ac(output, "Error: 'foo' is not a valid require-all value, use true, false\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 role=foo")
-        ac(output, "Error: invalid value 'foo' of option 'role', allowed values are: Stopped, Started, Master, Slave\n")
+        ac(output, "Error: 'foo' is not a valid role value, use Stopped, Started, Master, Slave\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 action=foo")
-        ac(output, "Error: invalid value 'foo' of option 'action', allowed values are: start, promote, demote, stop\n")
+        ac(output, "Error: 'foo' is not a valid action value, use start, promote, demote, stop\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 foo=bar")
@@ -713,19 +713,19 @@ Ordering Constraints:
         assert r == 0
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 sequential=foo")
-        ac(output, "Error: invalid value 'foo' of option 'sequential', allowed values are: true, false\n")
+        ac(output, "Error: 'foo' is not a valid sequential value, use true, false\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 require-all=foo")
-        ac(output, "Error: invalid value 'foo' of option 'require-all', allowed values are: true, false\n")
+        ac(output, "Error: 'foo' is not a valid require-all value, use true, false\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 role=foo")
-        ac(output, "Error: invalid value 'foo' of option 'role', allowed values are: Stopped, Started, Master, Slave\n")
+        ac(output, "Error: 'foo' is not a valid role value, use Stopped, Started, Master, Slave\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 action=foo")
-        ac(output, "Error: invalid value 'foo' of option 'action', allowed values are: start, promote, demote, stop\n")
+        ac(output, "Error: 'foo' is not a valid action value, use start, promote, demote, stop\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 foo=bar")
@@ -745,18 +745,14 @@ Error: invalid option 'foo', allowed options are: id, kind, symmetrical
             temp_cib,
             "constraint order set D1 D2 setoptions kind=foo"
         )
-        ac(output, """\
-Error: invalid value 'foo' of option 'kind', allowed values are: Optional, Mandatory, Serialize
-""")
+        ac(output, "Error: 'foo' is not a valid kind value, use Optional, Mandatory, Serialize\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
             temp_cib,
             "constraint order set D1 D2 setoptions symmetrical=foo"
         )
-        ac(output, """\
-Error: invalid value 'foo' of option 'symmetrical', allowed values are: true, false
-""")
+        ac(output, "Error: 'foo' is not a valid symmetrical value, use true, false\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
@@ -2434,9 +2430,7 @@ Error: invalid constraint id '3id', '3' is not a valid first character for a con
             temp_cib,
             "constraint colocation set D1 D2 setoptions id=id3"
         )
-        ac(output, """\
-Error: id3 already exists
-""")
+        ac(output, "Error: 'id3' already exists\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
@@ -2466,9 +2460,7 @@ Error: invalid constraint id '5id', '5' is not a valid first character for a con
             temp_cib,
             "constraint order set D1 D2 setoptions id=id5"
         )
-        ac(output, """\
-Error: id5 already exists
-""")
+        ac(output, "Error: 'id5' already exists\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
@@ -2605,13 +2597,13 @@ class TicketCreateWithSet(ConstraintBaseTest):
     def test_refuse_bad_loss_policy(self):
         self.assert_pcs_fail(
             'constraint ticket set A B setoptions ticket=T loss-policy=none',
-            ["Error: invalid value 'none' of option 'loss-policy', allowed values are: fence, stop, freeze, demote"]
+            ["Error: 'none' is not a valid loss-policy value, use fence, stop, freeze, demote"]
         )
 
     def test_refuse_when_ticket_option_is_missing(self):
         self.assert_pcs_fail(
             'constraint ticket set A B setoptions loss-policy=fence',
-            ["Error: required attribute 'ticket' is missing"]
+            ["Error: required option 'ticket' is missing"]
         )
 
     def test_refuse_when_option_is_invalid(self):
@@ -2639,7 +2631,7 @@ class TicketAdd(ConstraintBaseTest):
     def test_refuse_invalid_role(self):
         self.assert_pcs_fail(
             'constraint ticket add T bad-role A loss-policy=fence',
-            ["Error: invalid value 'bad-role' of option 'rsc-role', allowed values are: Stopped, Started, Master, Slave"]
+            ["Error: 'bad-role' is not a valid rsc-role value, use Stopped, Started, Master, Slave"]
         )
 
     def test_refuse_duplicate_ticket(self):

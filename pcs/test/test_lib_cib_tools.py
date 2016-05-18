@@ -6,7 +6,6 @@ from __future__ import (
 )
 
 from unittest import TestCase
-from lxml import etree
 
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource as rc
@@ -82,8 +81,7 @@ class GetConfigurationTest(CibToolsTest):
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
                 {
                     "section": "configuration",
-                    "cib": etree.tostring(self.cib.tree)
-                },
+                }
             ),
         )
 
@@ -104,8 +102,7 @@ class GetConstraintsTest(CibToolsTest):
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
                 {
                     "section": "configuration/constraints",
-                    "cib": etree.tostring(self.cib.tree)
-                },
+                }
             ),
         )
 

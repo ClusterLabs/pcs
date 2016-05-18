@@ -35,11 +35,11 @@ def validate_options(options):
     for name, value in options.items():
         if name not in ATTRIB:
             raise LibraryError(
-                reports.invalid_option(list(ATTRIB.keys()), name)
+                reports.invalid_option(name, list(ATTRIB.keys()), None)
             )
         if value not in ATTRIB[name]:
             raise LibraryError(
-                reports.invalid_option_value(ATTRIB[name], name, value)
+                reports.invalid_option_value(name, value, ATTRIB[name])
             )
 
 def extract_id_set_list(resource_set_list):

@@ -135,15 +135,15 @@ Role: role3
 
         o,r = pcs("acl role create user1")
         assert r == 1
-        ac(o,"Error: user1 already exists\n")
+        ac(o,"Error: 'user1' already exists\n")
 
         o,r = pcs("acl role create group1")
         assert r == 1
-        ac(o,"Error: group1 already exists\n")
+        ac(o,"Error: 'group1' already exists\n")
 
         o,r = pcs("acl role create role1")
         assert r == 1
-        ac(o,"Error: role1 already exists\n")
+        ac(o,"Error: 'role1' already exists\n")
 
         o,r = pcs("acl user create user1")
         assert r == 1
@@ -558,7 +558,7 @@ User: user2
         assert r == 0
 
         o,r = pcs("acl role create role0")
-        ac(o,"Error: role0 already exists\n")
+        ac(o,"Error: 'role0' already exists\n")
         assert r == 1
 
         o,r = pcs("acl role create role0d description='empty role'")
@@ -770,16 +770,16 @@ Role: role4
     def test_can_not_add_permission_for_nonexisting_id(self):
         self.assert_pcs_success('acl role create role1')
         self.assert_pcs_fail(
-            'acl permission add role1 read id non-existent-id',
-            'Error: id "non-existent-id" does not exist.\n'
+            "acl permission add role1 read id non-existent-id",
+            "Error: id 'non-existent-id' does not exist\n"
         )
 
     def test_can_not_add_permission_for_nonexisting_id_in_later_part(self):
         self.assert_pcs_success('acl role create role1')
         self.assert_pcs_success('acl role create role2')
         self.assert_pcs_fail(
-            'acl permission add role1 read id role2 read id no-existent-id',
-            'Error: id "no-existent-id" does not exist.\n'
+            "acl permission add role1 read id role2 read id non-existent-id",
+            "Error: id 'non-existent-id' does not exist\n"
         )
 
     def test_can_not_add_permission_for_nonexisting_role_with_bad_id(self):
@@ -796,8 +796,8 @@ Role: role4
 
     def test_can_not_crate_role_with_permission_for_nonexisting_id(self):
         self.assert_pcs_fail(
-            'acl role create role1 read id non-existent-id',
-            'Error: id "non-existent-id" does not exist.\n'
+            "acl role create role1 read id non-existent-id",
+            "Error: id 'non-existent-id' does not exist\n"
         )
 
     def test_can_not_create_role_with_bad_name(self):

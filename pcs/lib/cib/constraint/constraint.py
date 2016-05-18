@@ -9,19 +9,20 @@ from functools import partial
 
 from lxml import etree
 
+from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.tools import export_attributes, find_unique_id, find_parent
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
 def _validate_attrib_names(attrib_names, options):
     for option_name in options.keys():
         if option_name not in attrib_names:
-            raise LibraryError(reports.invalid_option(
-                attrib_names, option_name
-            ))
+            raise LibraryError(
+                reports.invalid_option(option_name, attrib_names, None)
+            )
 
 def find_valid_resource_id(cib, can_repair_to_clone, in_clone_allowed, id):
     resource_element = resource.find_by_id(cib, id)
@@ -42,8 +43,13 @@ def find_valid_resource_id(cib, can_repair_to_clone, in_clone_allowed, id):
     if in_clone_allowed:
         return resource_element.attrib["id"]
 
+    # TODO adapt to new reports and error forcing, send warning if forced
     raise LibraryError(reports.resource_for_constraint_is_multiinstance(
-        resource_element.attrib["id"], clone.tag, clone.attrib["id"]
+        resource_element.attrib["id"],
+        clone.tag,
+        clone.attrib["id"],
+        ReportItemSeverity.ERROR,
+        forceable=report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
     ))
 
 def prepare_resource_set_list(
@@ -110,11 +116,15 @@ def check_is_without_duplication(
     ]
 
     if duplicate_element_list:
+        # TODO adapt to new reports and error forcing, send warning if forced
         raise LibraryError(reports.duplicate_constraints_exist(
-            element.tag, [
+            element.tag,
+            [
                 export_element(duplicate_element)
                 for duplicate_element in duplicate_element_list
-            ]
+            ],
+            ReportItemSeverity.ERROR,
+            forceable=report_codes.FORCE_CONSTRAINT_DUPLICATE
         ))
 
 def create_with_set(constraint_section, tag_name, options, resource_set_list):

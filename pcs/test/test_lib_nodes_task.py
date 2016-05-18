@@ -123,7 +123,9 @@ class DistributeCorosyncConfTest(TestCase):
         mock_corosync_live.set_remote_corosync_conf = mock.MagicMock()
         def raiser(comm, node, conf):
             if node.ring0 == nodes[1]:
-                raise NodeAuthenticationException(nodes[1], "command", "401")
+                raise NodeAuthenticationException(
+                    nodes[1], "command", "HTTP error: 401"
+                )
         mock_corosync_live.set_remote_corosync_conf.side_effect = raiser
         mock_corosync_live.reload_config = mock.MagicMock()
 
@@ -142,7 +144,7 @@ class DistributeCorosyncConfTest(TestCase):
             ),
             (
                 severity.ERROR,
-                report_codes.NODE_COROSYNC_CONF_SAVE_ERROR,
+                report_codes.NODE_COROSYNC_CONFIG_SAVE_ERROR,
                 {
                     "node": nodes[1],
                 }

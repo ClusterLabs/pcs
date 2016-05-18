@@ -31,7 +31,9 @@ corosync_conf_tmp = rc("corosync.conf.tmp")
 class ClusterTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib, corosync_conf_tmp)
+        self.pcs_runner = PcsRunner(
+            temp_cib, corosync_conf_tmp, cluster_conf_tmp
+        )
         if os.path.exists(corosync_conf_tmp):
             os.unlink(corosync_conf_tmp)
         if os.path.exists(cluster_conf_tmp):
@@ -1281,7 +1283,10 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
             .format(corosync_conf_tmp)
         )
         assert r == 1
-        ac("Error: blah is an unknown RRP mode, use --force to override\n", o)
+        ac(
+            o,
+            "Error: 'blah' is not a valid RRP mode value, use passive, active, use --force to override\n"
+        )
 
         o,r = pcs(
             "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0"
@@ -1721,46 +1726,46 @@ logging {
             "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --wait_for_all=2"
             .format(corosync_conf_tmp)
         )
-        ac(o, "Error: '2' is not a valid value for --wait_for_all, use 0 or 1\n")
+        ac(o, "Error: '2' is not a valid --wait_for_all value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
             "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --wait_for_all=2"
             .format(corosync_conf_tmp)
         )
-        ac(o, "Error: '2' is not a valid value for --wait_for_all, use 0 or 1\n")
+        ac(o, "Error: '2' is not a valid --wait_for_all value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
             "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --auto_tie_breaker=2"
             .format(corosync_conf_tmp)
         )
-        ac(o, "Error: '2' is not a valid value for --auto_tie_breaker, use 0 or 1\n")
+        ac(o, "Error: '2' is not a valid --auto_tie_breaker value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
             "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --auto_tie_breaker=2"
             .format(corosync_conf_tmp)
         )
-        ac(o, "Error: '2' is not a valid value for --auto_tie_breaker, use 0 or 1\n")
+        ac(o, "Error: '2' is not a valid --auto_tie_breaker value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
             "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --last_man_standing=2"
             .format(corosync_conf_tmp)
         )
-        ac(o, "Error: '2' is not a valid value for --last_man_standing, use 0 or 1\n")
+        ac(o, "Error: '2' is not a valid --last_man_standing value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
             "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --last_man_standing=2"
             .format(corosync_conf_tmp)
         )
-        ac(o, "Error: '2' is not a valid value for --last_man_standing, use 0 or 1\n")
+        ac(o, "Error: '2' is not a valid --last_man_standing value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000"
+            "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1819,8 +1824,8 @@ logging {
             .format(cluster_conf_tmp)
         )
         ac(output, """\
-Error: blah is an unknown RRP mode, use --force to override
-Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+Error: 'blah' is not a valid RRP mode value, use passive, active, use --force to override
+Warning: Enabling broadcast for all rings as CMAN does not support broadcast in only one ring
 """)
         self.assertEqual(returnVal, 1)
 
@@ -2094,7 +2099,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
         )
         ac(output, """\
 Error: using a RRP mode of 'active' is not supported or tested, use --force to override
-Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+Warning: Enabling broadcast for all rings as CMAN does not support broadcast in only one ring
 """)
         self.assertEqual(returnVal, 1)
 
@@ -2104,7 +2109,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
             .format(cluster_conf_tmp)
         )
         ac(output, """\
-Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+Warning: Enabling broadcast for all rings as CMAN does not support broadcast in only one ring
 Warning: using a RRP mode of 'active' is not supported or tested
 """)
         self.assertEqual(returnVal, 0)
@@ -2168,7 +2173,7 @@ Error: if one node is configured for RRP, all nodes must be configured for RRP
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1 --transport=udpu"
+            "cluster setup --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1 --transport=udpu"
         )
         ac(output, """\
 Error: --addr0 and --addr1 can only be used with --transport=udp
@@ -2261,7 +2266,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
             .format(cluster_conf_tmp)
         )
         ac(output, """\
-Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+Warning: Enabling broadcast for all rings as CMAN does not support broadcast in only one ring
 """)
         self.assertEqual(returnVal, 0)
         with open(cluster_conf_tmp) as f:
@@ -2276,7 +2281,7 @@ Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in onl
             .format(cluster_conf_tmp)
         )
         ac(output, """\
-Warning: Enabling broadcast for ring 1 as CMAN does not support broadcast in only one ring
+Warning: Enabling broadcast for all rings as CMAN does not support broadcast in only one ring
 """)
         self.assertEqual(returnVal, 0)
         with open(cluster_conf_tmp) as f:
@@ -2574,7 +2579,93 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
         assert r == 0
 
     def test_can_not_setup_cluster_for_unknown_transport_type(self):
+        if utils.is_rhel6():
+            return
+
         self.assert_pcs_fail(
-            "cluster setup --local --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2 --transport=unknown",
-            "Error: unknown transport 'unknown', use --force to override\n"
+            "cluster setup --local --name cname rh7-1 rh7-2 --transport=unknown",
+            "Error: 'unknown' is not a valid transport value, use udp, udpu, use --force to override\n"
         )
+
+        self.assert_pcs_success(
+            "cluster setup --local --name cname rh7-1 rh7-2 --transport=unknown --force",
+            "Warning: 'unknown' is not a valid transport value, use udp, udpu\n"
+        )
+        with open(corosync_conf_tmp) as f:
+            data = f.read()
+            ac(data, """\
+totem {
+    version: 2
+    secauth: off
+    cluster_name: cname
+    transport: unknown
+}
+
+nodelist {
+    node {
+        ring0_addr: rh7-1
+        nodeid: 1
+    }
+
+    node {
+        ring0_addr: rh7-2
+        nodeid: 2
+    }
+}
+
+quorum {
+    provider: corosync_votequorum
+    two_node: 1
+}
+
+logging {
+    to_logfile: yes
+    logfile: /var/log/cluster/corosync.log
+    to_syslog: yes
+}
+""")
+
+    def test_can_not_setup_cluster_for_unknown_transport_type_rhel6(self):
+        if not utils.is_rhel6():
+            return
+
+        self.assert_pcs_fail(
+            "cluster setup --local --name cname rh7-1 rh7-2 --transport=rdma",
+            "Error: 'rdma' is not a valid transport value, use udp, udpu, use --force to override\n"
+        )
+
+        self.assert_pcs_success(
+            "cluster setup --local --name cname rh7-1 rh7-2 --transport=rdma --force",
+            "Warning: 'rdma' is not a valid transport value, use udp, udpu\n"
+        )
+        with open(cluster_conf_tmp) as f:
+            data = f.read()
+            ac(data, """\
+<cluster config_version="9" name="cname">
+  <fence_daemon/>
+  <clusternodes>
+    <clusternode name="rh7-1" nodeid="1">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-1"/>
+        </method>
+      </fence>
+    </clusternode>
+    <clusternode name="rh7-2" nodeid="2">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-2"/>
+        </method>
+      </fence>
+    </clusternode>
+  </clusternodes>
+  <cman broadcast="no" expected_votes="1" transport="rdma" two_node="1"/>
+  <fencedevices>
+    <fencedevice agent="fence_pcmk" name="pcmk-redirect"/>
+  </fencedevices>
+  <rm>
+    <failoverdomains/>
+    <resources/>
+  </rm>
+</cluster>
+""")

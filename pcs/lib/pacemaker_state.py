@@ -15,8 +15,8 @@ import os.path
 from lxml import etree
 
 from pcs import settings
-from pcs.common import report_codes
-from pcs.lib.errors import LibraryError, ReportItem
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_values import is_true
 
 class _Attrs(object):
@@ -140,10 +140,7 @@ def _get_valid_cluster_state_dom(xml):
             etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
         return dom
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
-        raise LibraryError(ReportItem.error(
-            report_codes.BAD_CLUSTER_STATE_FORMAT,
-            'pacemaker produced state information in invalid format',
-        ))
+        raise LibraryError(reports.cluster_state_invalid_format())
 
 class ClusterState(_Element):
     sections = {

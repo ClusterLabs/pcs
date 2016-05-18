@@ -7,8 +7,8 @@ from __future__ import (
 
 import re
 
-from pcs.common import report_codes
-from pcs.lib.errors import LibraryError, ReportItem
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 
 
 __BOOLEAN_TRUE = ["true", "on", "yes", "y", "1"]
@@ -64,11 +64,7 @@ def get_valid_timeout_seconds(timeout_candidate):
         return None
     wait_timeout = timeout_to_seconds(timeout_candidate)
     if wait_timeout is None:
-        raise LibraryError(ReportItem.error(
-            report_codes.INVALID_TIMEOUT_VALUE,
-            "'{timeout}' is not a valid number of seconds to wait",
-            info={"timeout": timeout_candidate}
-        ))
+        raise LibraryError(reports.invalid_timeout(timeout_candidate))
     return wait_timeout
 
 def validate_id(id_candidate, description="id"):
@@ -82,43 +78,19 @@ def validate_id(id_candidate, description="id"):
     # http://www.w3.org/TR/REC-xml-names/#NT-NCName
     # http://www.w3.org/TR/REC-xml/#NT-Name
     if len(id_candidate) < 1:
-        raise LibraryError(ReportItem.error(
-            report_codes.INVALID_ID,
-            "{description} cannot be empty",
-            info={
-                "id": id_candidate,
-                "description": description,
-                "reason": "empty",
-            }
+        raise LibraryError(reports.invalid_id_is_empty(
+            id_candidate, description
         ))
     first_char_re = re.compile("[a-zA-Z_]")
     if not first_char_re.match(id_candidate[0]):
-        raise LibraryError(ReportItem.error(
-            report_codes.INVALID_ID,
-            "invalid {description} '{id}', '{invalid_character}' is not " +
-                "a valid first character for a {description}"
-            ,
-            info={
-                "id": id_candidate,
-                "description": description,
-                "reason": "invalid first character",
-                "invalid_character": id_candidate[0],
-            }
+        raise LibraryError(reports.invalid_id_bad_char(
+            id_candidate, description, id_candidate[0], True
         ))
     char_re = re.compile("[a-zA-Z0-9_.-]")
     for char in id_candidate[1:]:
         if not char_re.match(char):
-            raise LibraryError(ReportItem.error(
-                report_codes.INVALID_ID,
-                "invalid {description} '{id}', '{invalid_character}' is not " +
-                    "a valid character for a {description}"
-                ,
-                info={
-                    "id": id_candidate,
-                    "description": description,
-                    "reason": "invalid character",
-                    "invalid_character": char,
-                }
+            raise LibraryError(reports.invalid_id_bad_char(
+                id_candidate, description, char, False
             ))
 
 def is_score_value(value):

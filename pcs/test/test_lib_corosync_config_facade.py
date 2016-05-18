@@ -397,8 +397,7 @@ quorum {
                 {
                     "option_name": "wait_for_all",
                     "option_value": "nonsense",
-                    "allowed_values_raw": ("0", "1"),
-                    "allowed_values": "0 or 1",
+                    "allowed_values": ("0", "1"),
                 }
             )
         )
@@ -425,8 +424,7 @@ quorum {
                 {
                     "option_name": "auto_tie_breaker",
                     "option_value": "atb",
-                    "allowed_values_raw": ("0", "1"),
-                    "allowed_values": "0 or 1",
+                    "allowed_values": ("0", "1"),
                 }
             ),
             (
@@ -435,8 +433,7 @@ quorum {
                 {
                     "option_name": "last_man_standing",
                     "option_value": "lms",
-                    "allowed_values_raw": ("0", "1"),
-                    "allowed_values": "0 or 1",
+                    "allowed_values": ("0", "1"),
                 }
             ),
             (
@@ -445,8 +442,7 @@ quorum {
                 {
                     "option_name": "last_man_standing_window",
                     "option_value": "lmsw",
-                    "allowed_values_raw": ("integer", ),
-                    "allowed_values": "integer",
+                    "allowed_values": "positive integer",
                 }
             ),
             (
@@ -455,8 +451,7 @@ quorum {
                 {
                     "option_name": "wait_for_all",
                     "option_value": "wfa",
-                    "allowed_values_raw": ("0", "1"),
-                    "allowed_values": "0 or 1",
+                    "allowed_values": ("0", "1"),
                 }
             )
         )
@@ -480,24 +475,28 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "type": "quorum",
-                    "option": "nonsense1",
-                    "allowed_raw": (
-                        "auto_tie_breaker", "last_man_standing",
-                        "last_man_standing_window", "wait_for_all"
-                    ),
+                    "option_name": "nonsense1",
+                    "option_type": "quorum",
+                    "allowed": [
+                        "auto_tie_breaker",
+                        "last_man_standing",
+                        "last_man_standing_window",
+                        "wait_for_all"
+                    ],
                 }
             ),
             (
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "type": "quorum",
-                    "option": "nonsense2",
-                    "allowed_raw": (
-                        "auto_tie_breaker", "last_man_standing",
-                        "last_man_standing_window", "wait_for_all"
-                    ),
+                    "option_name": "nonsense2",
+                    "option_type": "quorum",
+                    "allowed": [
+                        "auto_tie_breaker",
+                        "last_man_standing",
+                        "last_man_standing_window",
+                        "wait_for_all"
+                    ],
                 }
             )
         )
@@ -1010,9 +1009,9 @@ quorum {
                 {
                     "option_name": "model",
                     "option_value": "invalid",
-                    "allowed_values_raw": ("net", ),
+                    "allowed_values": ("net", ),
                 },
-                "model"
+                report_codes.FORCE_QDEVICE_MODEL
             )
         )
         ac(config, facade.config.export())
@@ -1043,7 +1042,7 @@ quorum {
                     {
                         "option_name": "model",
                         "option_value": "invalid",
-                        "allowed_values_raw": ("net", ),
+                        "allowed_values": ("net", ),
                     },
                 )
             ]
@@ -1058,8 +1057,7 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"name": "host"},
-                False
+                {"option_name": "host"}
             )
         )
         ac(config, facade.config.export())
@@ -1094,17 +1092,17 @@ quorum {
                 {
                     "option_name": "algorithm",
                     "option_value": "bad algorithm",
-                    "allowed_values_raw": ("2nodelms", "ffsplit", "lms"),
+                    "allowed_values": ("2nodelms", "ffsplit", "lms"),
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option": "bad_model_option",
-                    "type": "quorum device model",
-                    "allowed_raw": [
+                    "option_name": "bad_model_option",
+                    "option_type": "quorum device model",
+                    "allowed": [
                         "algorithm",
                         "connect_timeout",
                         "force_ip_version",
@@ -1113,7 +1111,7 @@ quorum {
                         "tie_breaker",
                     ],
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1121,9 +1119,9 @@ quorum {
                 {
                     "option_name": "connect_timeout",
                     "option_value": "-1",
-                    "allowed_values_raw": ("1000-120000", ),
+                    "allowed_values": "1000-120000",
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1131,14 +1129,14 @@ quorum {
                 {
                     "option_name": "force_ip_version",
                     "option_value": "3",
-                    "allowed_values_raw": ("0", "4", "6"),
+                    "allowed_values": ("0", "4", "6"),
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"name": "host"},
+                {"option_name": "host"}
             ),
             (
                 severity.ERROR,
@@ -1146,9 +1144,9 @@ quorum {
                 {
                     "option_name": "port",
                     "option_value": "65537",
-                    "allowed_values_raw": ("1-65535", ),
+                    "allowed_values": "1-65535",
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1156,29 +1154,28 @@ quorum {
                 {
                     "option_name": "tie_breaker",
                     "option_value": "125",
-                    "allowed_values_raw": ("lowest", "highest", "valid node id"),
+                    "allowed_values": ["lowest", "highest", "valid node id"],
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option": "bad_generic_option",
-                    "type": "quorum device",
-                    "allowed_raw": ["sync_timeout", "timeout"],
+                    "option_name": "bad_generic_option",
+                    "option_type": "quorum device",
+                    "allowed": ["sync_timeout", "timeout"],
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option": "model",
-                    "type": "quorum device",
-                    "allowed_raw": ["sync_timeout", "timeout"],
-                },
-                False
+                    "option_name": "model",
+                    "option_type": "quorum device",
+                    "allowed": ["sync_timeout", "timeout"],
+                }
             ),
             (
                 severity.ERROR,
@@ -1186,9 +1183,9 @@ quorum {
                 {
                     "option_name": "sync_timeout",
                     "option_value": "-3",
-                    "allowed_values_raw": ("integer", ),
+                    "allowed_values": "positive integer",
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1196,9 +1193,9 @@ quorum {
                 {
                     "option_name": "timeout",
                     "option_value": "-2",
-                    "allowed_values_raw": ("integer", ),
+                    "allowed_values": "positive integer",
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             )
         )
         ac(config, facade.config.export())
@@ -1215,7 +1212,7 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"name": "host"},
+                {"option_name": "host"}
             )
         )
         ac(config, facade.config.export())
@@ -1232,7 +1229,7 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"name": "host"},
+                {"option_name": "host"}
             )
         )
         ac(config, facade.config.export())
@@ -1294,16 +1291,16 @@ quorum {
                     {
                         "option_name": "algorithm",
                         "option_value": "bad algorithm",
-                        "allowed_values_raw": ("2nodelms", "ffsplit", "lms"),
-                    },
+                        "allowed_values": ("2nodelms", "ffsplit", "lms"),
+                    }
                 ),
                 (
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option": "bad_model_option",
-                        "type": "quorum device model",
-                        "allowed_raw": [
+                        "option_name": "bad_model_option",
+                        "option_type": "quorum device model",
+                        "allowed": [
                             "algorithm",
                             "connect_timeout",
                             "force_ip_version",
@@ -1311,7 +1308,7 @@ quorum {
                             "port",
                             "tie_breaker",
                         ],
-                    },
+                    }
                 ),
                 (
                     severity.WARNING,
@@ -1319,8 +1316,8 @@ quorum {
                     {
                         "option_name": "connect_timeout",
                         "option_value": "-1",
-                        "allowed_values_raw": ("1000-120000", ),
-                    },
+                        "allowed_values": "1000-120000",
+                    }
                 ),
                 (
                     severity.WARNING,
@@ -1328,8 +1325,8 @@ quorum {
                     {
                         "option_name": "force_ip_version",
                         "option_value": "3",
-                        "allowed_values_raw": ("0", "4", "6"),
-                    },
+                        "allowed_values": ("0", "4", "6"),
+                    }
                 ),
                 (
                     severity.WARNING,
@@ -1337,8 +1334,8 @@ quorum {
                     {
                         "option_name": "port",
                         "option_value": "65537",
-                        "allowed_values_raw": ("1-65535", ),
-                    },
+                        "allowed_values": "1-65535",
+                    }
                 ),
                 (
                     severity.WARNING,
@@ -1346,17 +1343,17 @@ quorum {
                     {
                         "option_name": "tie_breaker",
                         "option_value": "125",
-                        "allowed_values_raw": ("lowest", "highest", "valid node id"),
-                    },
+                        "allowed_values": ["lowest", "highest", "valid node id"],
+                    }
                 ),
                 (
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option": "bad_generic_option",
-                        "type": "quorum device",
-                        "allowed_raw": ["sync_timeout", "timeout"],
-                    },
+                        "option_name": "bad_generic_option",
+                        "option_type": "quorum device",
+                        "allowed": ["sync_timeout", "timeout"],
+                    }
                 ),
                 (
                     severity.WARNING,
@@ -1364,8 +1361,8 @@ quorum {
                     {
                         "option_name": "sync_timeout",
                         "option_value": "-3",
-                        "allowed_values_raw": ("integer", ),
-                    },
+                        "allowed_values": "positive integer",
+                    }
                 ),
                 (
                     severity.WARNING,
@@ -1373,8 +1370,8 @@ quorum {
                     {
                         "option_name": "timeout",
                         "option_value": "-2",
-                        "allowed_values_raw": ("integer", ),
-                    },
+                        "allowed_values": "positive integer",
+                    }
                 )
             ]
         )
@@ -1485,7 +1482,7 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"name": "host"},
+                {"option_name": "host"},
             )
         )
         ac(config, facade.config.export())
@@ -1503,7 +1500,7 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"name": "host"},
+                {"option_name": "host"},
             )
         )
         ac(config, facade.config.export())
@@ -1533,17 +1530,17 @@ quorum {
                 {
                     "option_name": "algorithm",
                     "option_value": "bad algorithm",
-                    "allowed_values_raw": ("2nodelms", "ffsplit", "lms"),
+                    "allowed_values": ("2nodelms", "ffsplit", "lms"),
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option": "bad_model_option",
-                    "type": "quorum device model",
-                    "allowed_raw": [
+                    "option_name": "bad_model_option",
+                    "option_type": "quorum device model",
+                    "allowed": [
                         "algorithm",
                         "connect_timeout",
                         "force_ip_version",
@@ -1552,7 +1549,7 @@ quorum {
                         "tie_breaker",
                     ],
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1560,9 +1557,9 @@ quorum {
                 {
                     "option_name": "connect_timeout",
                     "option_value": "-1",
-                    "allowed_values_raw": ("1000-120000", ),
+                    "allowed_values": "1000-120000",
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1570,9 +1567,9 @@ quorum {
                 {
                     "option_name": "force_ip_version",
                     "option_value": "3",
-                    "allowed_values_raw": ("0", "4", "6"),
+                    "allowed_values": ("0", "4", "6"),
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1580,9 +1577,9 @@ quorum {
                 {
                     "option_name": "port",
                     "option_value": "65537",
-                    "allowed_values_raw": ("1-65535", ),
+                    "allowed_values": "1-65535",
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1590,9 +1587,9 @@ quorum {
                 {
                     "option_name": "tie_breaker",
                     "option_value": "125",
-                    "allowed_values_raw": ("lowest", "highest", "valid node id"),
+                    "allowed_values": ["lowest", "highest", "valid node id"],
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
         )
         ac(config, facade.config.export())
@@ -1639,16 +1636,16 @@ quorum {
                     {
                         "option_name": "algorithm",
                         "option_value": "bad algorithm",
-                        "allowed_values_raw": ("2nodelms", "ffsplit", "lms"),
+                        "allowed_values": ("2nodelms", "ffsplit", "lms"),
                     },
                 ),
                 (
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option": "bad_model_option",
-                        "type": "quorum device model",
-                        "allowed_raw": [
+                        "option_name": "bad_model_option",
+                        "option_type": "quorum device model",
+                        "allowed": [
                             "algorithm",
                             "connect_timeout",
                             "force_ip_version",
@@ -1664,7 +1661,7 @@ quorum {
                     {
                         "option_name": "connect_timeout",
                         "option_value": "-1",
-                        "allowed_values_raw": ("1000-120000", ),
+                        "allowed_values": "1000-120000",
                     },
                 ),
                 (
@@ -1673,7 +1670,7 @@ quorum {
                     {
                         "option_name": "force_ip_version",
                         "option_value": "3",
-                        "allowed_values_raw": ("0", "4", "6"),
+                        "allowed_values": ("0", "4", "6"),
                     },
                 ),
                 (
@@ -1682,7 +1679,7 @@ quorum {
                     {
                         "option_name": "port",
                         "option_value": "65537",
-                        "allowed_values_raw": ("1-65535", ),
+                        "allowed_values": "1-65535",
                     },
                 ),
                 (
@@ -1691,7 +1688,7 @@ quorum {
                     {
                         "option_name": "tie_breaker",
                         "option_value": "125",
-                        "allowed_values_raw": ("lowest", "highest", "valid node id"),
+                        "allowed_values": ["lowest", "highest", "valid node id"],
                     },
                 ),
             ]
@@ -1758,21 +1755,20 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option": "bad_generic_option",
-                    "type": "quorum device",
-                    "allowed_raw": ["sync_timeout", "timeout"],
+                    "option_name": "bad_generic_option",
+                    "option_type": "quorum device",
+                    "allowed": ["sync_timeout", "timeout"],
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option": "model",
-                    "type": "quorum device",
-                    "allowed_raw": ["sync_timeout", "timeout"],
-                },
-                False
+                    "option_name": "model",
+                    "option_type": "quorum device",
+                    "allowed": ["sync_timeout", "timeout"],
+                }
             ),
             (
                 severity.ERROR,
@@ -1780,9 +1776,9 @@ quorum {
                 {
                     "option_name": "sync_timeout",
                     "option_value": "-3",
-                    "allowed_values_raw": ("integer", ),
+                    "allowed_values": "positive integer",
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             ),
             (
                 severity.ERROR,
@@ -1790,9 +1786,9 @@ quorum {
                 {
                     "option_name": "timeout",
                     "option_value": "-2",
-                    "allowed_values_raw": ("integer", ),
+                    "allowed_values": "positive integer",
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             )
         )
         ac(config, facade.config.export())
@@ -1814,9 +1810,9 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option": "model",
-                    "type": "quorum device",
-                    "allowed_raw": ["sync_timeout", "timeout"],
+                    "option_name": "model",
+                    "option_type": "quorum device",
+                    "allowed": ["sync_timeout", "timeout"],
                 }
             )
         )
@@ -1856,9 +1852,9 @@ quorum {
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option": "bad_generic_option",
-                        "type": "quorum device",
-                        "allowed_raw": ["sync_timeout", "timeout"],
+                        "option_name": "bad_generic_option",
+                        "option_type": "quorum device",
+                        "allowed": ["sync_timeout", "timeout"],
                     },
                 ),
                 (
@@ -1867,7 +1863,7 @@ quorum {
                     {
                         "option_name": "sync_timeout",
                         "option_value": "-3",
-                        "allowed_values_raw": ("integer", ),
+                        "allowed_values": "positive integer",
                     },
                 ),
                 (
@@ -1876,7 +1872,7 @@ quorum {
                     {
                         "option_name": "timeout",
                         "option_value": "-2",
-                        "allowed_values_raw": ("integer", ),
+                        "allowed_values": "positive integer",
                     },
                 )
             ]

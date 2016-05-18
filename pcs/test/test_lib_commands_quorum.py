@@ -205,14 +205,14 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "type": "quorum",
-                    "option": "invalid",
-                    "allowed_raw": (
+                    "option_name": "invalid",
+                    "option_type": "quorum",
+                    "allowed": [
                         "auto_tie_breaker",
                         "last_man_standing",
                         "last_man_standing_window",
                         "wait_for_all",
-                    ),
+                    ],
                 }
             )
         )
@@ -274,9 +274,9 @@ class AddDeviceTest(TestCase, CmanMixin):
                 {
                     "option_name": "model",
                     "option_value": "bad model",
-                    "allowed_values_raw": ("net", ),
+                    "allowed_values": ("net", ),
                 },
-                "model"
+                report_codes.FORCE_QDEVICE_MODEL
             )
         )
 
@@ -331,14 +331,11 @@ class AddDeviceTest(TestCase, CmanMixin):
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "type": "quorum device",
-                    "option": "bad_option",
-                    "allowed_raw": [
-                        "sync_timeout",
-                        "timeout"
-                    ],
+                    "option_name": "bad_option",
+                    "option_type": "quorum device",
+                    "allowed": ["sync_timeout", "timeout"],
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             )
         )
 
@@ -366,13 +363,10 @@ class AddDeviceTest(TestCase, CmanMixin):
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "type": "quorum device",
-                        "option": "bad_option",
-                        "allowed_raw": [
-                            "sync_timeout",
-                            "timeout"
-                        ],
-                    },
+                        "option_name": "bad_option",
+                        "option_type": "quorum device",
+                        "allowed": ["sync_timeout", "timeout"],
+                    }
                 )
             ]
         )
@@ -408,9 +402,9 @@ class AddDeviceTest(TestCase, CmanMixin):
                 {
                     "option_name": "model",
                     "option_value": "bad model",
-                    "allowed_values_raw": ("net", ),
+                    "allowed_values": ("net", ),
                 },
-                "model"
+                report_codes.FORCE_QDEVICE_MODEL
             )
         )
 
@@ -434,7 +428,7 @@ class AddDeviceTest(TestCase, CmanMixin):
                     {
                         "option_name": "model",
                         "option_value": "bad model",
-                        "allowed_values_raw": ("net", ),
+                        "allowed_values": ("net", ),
                     },
                 )
             ]
@@ -611,14 +605,11 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "type": "quorum device",
-                    "option": "bad_option",
-                    "allowed_raw": [
-                        "sync_timeout",
-                        "timeout"
-                    ],
+                    "option_name": "bad_option",
+                    "option_type": "quorum device",
+                    "allowed": ["sync_timeout", "timeout"],
                 },
-                "options"
+                report_codes.FORCE_OPTIONS
             )
         )
 
@@ -645,13 +636,10 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "type": "quorum device",
-                        "option": "bad_option",
-                        "allowed_raw": [
-                            "sync_timeout",
-                            "timeout"
-                        ],
-                    },
+                        "option_name": "bad_option",
+                        "option_type": "quorum device",
+                        "allowed": ["sync_timeout", "timeout"],
+                    }
                 )
             ]
         )

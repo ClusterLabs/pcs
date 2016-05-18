@@ -86,12 +86,13 @@ class PrepareOptionsWithSetTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    'option': 'unknown',
-                    'allowed_raw': [
-                        'id',
-                        'score',
-                        'score-attribute',
-                        'score-attribute-mangle',
+                    "option_name": "unknown",
+                    "option_type": None,
+                    "allowed": [
+                        "id",
+                        "score",
+                        "score-attribute",
+                        "score-attribute-mangle",
                     ],
                 }
             ),

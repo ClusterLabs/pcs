@@ -65,7 +65,7 @@ class DuplicateConstraintsReportTest(TestCase):
         report_item = mock.MagicMock()
         report_item.info = {
             "constraint_info_list": [{"options": {"a": "b"}}],
-            "type": "rsc_some"
+            "constraint_type": "rsc_some"
         }
         mock_constraint.return_value = "constraint info"
 

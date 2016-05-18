@@ -32,7 +32,7 @@ class ReportItem(object):
         return cls(code, ReportItemSeverity.DEBUG, message_pattern, **kwargs)
 
     def __init__(
-        self, code, severity, message_pattern, forceable=False, info=None
+        self, code, severity, message_pattern, forceable=None, info=None
     ):
         self.code = code
         self.severity = severity

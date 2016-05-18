@@ -7,64 +7,48 @@ from __future__ import (
 
 from lxml import etree
 
-from pcs.common import report_codes
-from pcs.lib.errors import LibraryError, ReportItem
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 from pcs.lib.cib.tools import (
+    check_new_id_applicable,
     does_id_exist,
     find_unique_id,
     get_acls,
-    check_new_id_applicable,
 )
 
 class AclRoleNotFound(LibraryError):
     pass
 
 def __validate_permissions(tree, permission_info_list):
-    report = []
+    report_items = []
     allowed_permissions = ["read", "write", "deny"]
     allowed_scopes = ["xpath", "id"]
     for permission, scope_type, scope in permission_info_list:
         if not permission in allowed_permissions:
-            report.append(ReportItem.error(
-                report_codes.BAD_ACL_PERMISSION,
-                'bad permission "{permission}, expected {allowed_values}',
-                info={
-                    'permission': permission,
-                    'allowed_values_raw': allowed_permissions,
-                    'allowed_values': ' or '.join(allowed_permissions)
-                },
+            report_items.append(reports.invalid_option_value(
+                "permission",
+                permission,
+                allowed_permissions
             ))
 
         if not scope_type in allowed_scopes:
-            report.append(ReportItem.error(
-                report_codes.BAD_ACL_SCOPE_TYPE,
-                'bad scope type "{scope_type}, expected {allowed_values}',
-                info={
-                    'scope_type': scope_type,
-                    'allowed_values_raw': allowed_scopes,
-                    'allowed_values': ' or '.join(allowed_scopes)
-                },
+            report_items.append(reports.invalid_option_value(
+                "scope type",
+                scope_type,
+                allowed_scopes
             ))
 
         if scope_type == 'id' and not does_id_exist(tree, scope):
-            report.append(ReportItem.error(
-                report_codes.ID_NOT_FOUND,
-                'id "{id}" does not exist.',
-                info={'id': scope },
-            ))
+            report_items.append(reports.id_not_found(scope, "id"))
 
-    if report:
-        raise LibraryError(*report)
+    if report_items:
+        raise LibraryError(*report_items)
 
 def __find_role(tree, role_id):
     role = tree.find('.//acl_role[@id="{0}"]'.format(role_id))
     if role is not None:
         return role
-    raise AclRoleNotFound(ReportItem.error(
-        report_codes.ACL_ROLE_NOT_FOUND,
-        'role id "{role_id}" does not exist.',
-        info={'role_id': role_id},
-    ))
+    raise AclRoleNotFound(reports.id_not_found(role_id, "role"))
 
 def create_role(tree, role_id, description=""):
     """

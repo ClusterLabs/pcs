@@ -9,8 +9,8 @@ import os.path
 from lxml import etree
 
 from pcs import settings
-from pcs.common import report_codes
-from pcs.lib.errors import LibraryError, ReportItem
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_state import ClusterState
 
 
@@ -30,14 +30,9 @@ def get_cluster_status_xml(runner):
         [__exec("crm_mon"), "--one-shot", "--as-xml", "--inactive"]
     )
     if retval != 0:
-        raise CrmMonErrorException(ReportItem.error(
-            report_codes.CRM_MON_ERROR,
-            "error running crm_mon, is pacemaker running?",
-            info={
-                "external_exitcode": retval,
-                "external_output": output,
-            }
-        ))
+        raise CrmMonErrorException(
+            reports.cluster_state_cannot_load(retval, output)
+        )
     return output
 
 def get_cib_xml(runner, scope=None):
@@ -47,34 +42,18 @@ def get_cib_xml(runner, scope=None):
     output, retval = runner.run(command)
     if retval != 0:
         if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
-            raise LibraryError(ReportItem.error(
-                report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
-                "unable to get cib, scope '{scope}' not present in cib",
-                info={
-                    "scope": scope,
-                    "external_exitcode": retval,
-                    "external_output": output,
-                }
-            ))
+            raise LibraryError(
+                reports.cib_load_error_scope_missing(scope, retval, output)
+            )
         else:
-            raise LibraryError(ReportItem.error(
-                report_codes.CIB_LOAD_ERROR,
-                "unable to get cib",
-                info={
-                    "external_exitcode": retval,
-                    "external_output": output,
-                }
-            ))
+            raise LibraryError(reports.cib_load_error(retval, output))
     return output
 
 def get_cib(xml):
     try:
         return etree.fromstring(xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
-        raise LibraryError(ReportItem.error(
-            report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
-            "unable to get cib"
-        ))
+        raise LibraryError(reports.cib_load_error_invalid_format())
 
 def replace_cib_configuration_xml(runner, xml):
     output, retval = runner.run(
@@ -85,14 +64,7 @@ def replace_cib_configuration_xml(runner, xml):
         stdin_string=xml
     )
     if retval != 0:
-        raise LibraryError(ReportItem.error(
-            report_codes.CIB_PUSH_ERROR,
-            "Unable to update cib\n{external_output}",
-            info={
-                "external_exitcode": retval,
-                "external_output": output,
-            }
-        ))
+        raise LibraryError(reports.cib_push_error(retval, output))
 
 def replace_cib_configuration(runner, tree):
     #etree returns bytes: b'xml'
@@ -120,27 +92,18 @@ def get_local_node_status(runner):
             ):
                 result[attr] = getattr(node_status.attrs, attr)
             return result
-    raise LibraryError(ReportItem.error(
-        report_codes.NODE_NOT_FOUND,
-        "node '{node}' does not appear to exist in configuration",
-        info={"node": node_name}
-    ))
+    raise LibraryError(reports.node_not_found(node_name))
 
 def resource_cleanup(runner, resource=None, node=None, force=False):
     if not force and not node and not resource:
         summary = ClusterState(get_cluster_status_xml(runner)).summary
         operations = summary.nodes.attrs.count * summary.resources.attrs.count
         if operations > __RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD:
-            raise LibraryError(ReportItem.error(
-                report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
-                "Cleaning up all resources on all nodes will execute more "
-                    + "than {threshold} operations in the cluster, which may "
-                    + "negatively impact the responsiveness of the cluster. "
-                    + "Consider specifying resource and/or node"
-                ,
-                info={"threshold":__RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD},
-                forceable=True
-            ))
+            raise LibraryError(
+                reports.resource_cleanup_too_time_consuming(
+                    __RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD
+                )
+            )
 
     cmd = [__exec("crm_resource"), "--cleanup"]
     if resource:
@@ -151,23 +114,9 @@ def resource_cleanup(runner, resource=None, node=None, force=False):
     output, retval = runner.run(cmd)
 
     if retval != 0:
-        if resource is not None:
-            text = "Unable to cleanup resource: {resource}\n{external_output}"
-        else:
-            text = (
-                "Unexpected error occured. 'crm_resource -C' err_code: "
-                + "{external_exitcode}\n{external_output}"
-            )
-        raise LibraryError(ReportItem.error(
-            report_codes.RESOURCE_CLEANUP_ERROR,
-            text,
-            info={
-                "external_exitcode": retval,
-                "external_output": output,
-                "resource": resource,
-                "node": node,
-            }
-        ))
+        raise LibraryError(
+            reports.resource_cleanup_error(retval, output, resource, node)
+        )
     return output
 
 def nodes_standby(runner, node_list=None, all_nodes=False):
@@ -183,10 +132,7 @@ def has_resource_wait_support(runner):
 
 def ensure_resource_wait_support(runner):
     if not has_resource_wait_support(runner):
-        raise LibraryError(ReportItem.error(
-            report_codes.RESOURCE_WAIT_NOT_SUPPORTED,
-            "crm_resource does not support --wait, please upgrade pacemaker"
-        ))
+        raise LibraryError(reports.resource_wait_not_supported())
 
 def wait_for_resources(runner, timeout=None):
     args = [__exec("crm_resource"), "--wait"]
@@ -195,23 +141,13 @@ def wait_for_resources(runner, timeout=None):
     output, retval = runner.run(args)
     if retval != 0:
         if retval == __EXITCODE_WAIT_TIMEOUT:
-            raise LibraryError(ReportItem.error(
-                report_codes.RESOURCE_WAIT_TIMED_OUT,
-                "waiting timeout\n\n{external_output}",
-                info={
-                    "external_exitcode": retval,
-                    "external_output": output.strip(),
-                }
-            ))
+            raise LibraryError(
+                reports.resource_wait_timed_out(retval, output.strip())
+            )
         else:
-            raise LibraryError(ReportItem.error(
-                report_codes.RESOURCE_WAIT_ERROR,
-                "{external_output}",
-                info={
-                    "external_exitcode": retval,
-                    "external_output": output.strip(),
-                }
-            ))
+            raise LibraryError(
+                reports.resource_wait_error(retval, output.strip())
+            )
 
 def __nodes_standby_unstandby(
     runner, standby=True, node_list=None, all_nodes=False
@@ -229,11 +165,7 @@ def __nodes_standby_unstandby(
             report = []
             for node in node_list:
                 if node not in known_nodes:
-                    report.append(ReportItem.error(
-                        report_codes.NODE_NOT_FOUND,
-                        "node '{node}' does not appear to exist in configuration",
-                        info={"node": node}
-                    ))
+                    report.append(reports.node_not_found(node))
             if report:
                 raise LibraryError(*report)
 
@@ -251,37 +183,33 @@ def __nodes_standby_unstandby(
     for cmd in cmd_list:
         output, retval = runner.run(cmd)
         if retval != 0:
-            report.append(ReportItem.error(
-                report_codes.COMMON_ERROR,
-                output
-            ))
+            report.append(reports.common_error(output))
     if report:
         raise LibraryError(*report)
 
 def __get_local_node_name(runner):
-    def __get_error(reason):
-        return ReportItem.error(
-            report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
-            "unable to get local node name from pacemaker: {reason}",
-            info={"reason": reason}
-        )
-
     # It would be possible to run "crm_node --name" to get the name in one call,
     # but it returns false names when cluster is not running (or we are on
     # a remote node). Getting node id first is reliable since it fails in those
     # cases.
     output, retval = runner.run([__exec("crm_node"), "--cluster-id"])
     if retval != 0:
-        raise LibraryError(__get_error("node id not found"))
+        raise LibraryError(
+            reports.pacemaker_local_node_name_not_found("node id not found")
+        )
     node_id = output.strip()
 
     output, retval = runner.run(
         [__exec("crm_node"), "--name-for-id={0}".format(node_id)]
     )
     if retval != 0:
-        raise LibraryError(__get_error("node name not found"))
+        raise LibraryError(
+            reports.pacemaker_local_node_name_not_found("node name not found")
+        )
     node_name = output.strip()
 
     if node_name == "(null)":
-        raise LibraryError(__get_error("node name is null"))
+        raise LibraryError(
+            reports.pacemaker_local_node_name_not_found("node name is null")
+        )
     return node_name

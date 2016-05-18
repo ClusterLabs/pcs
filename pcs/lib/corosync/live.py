@@ -8,8 +8,8 @@ from __future__ import (
 import os.path
 
 from pcs import settings
-from pcs.common import report_codes
-from pcs.lib.errors import ReportItem, LibraryError
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import NodeCommunicator
 
 def get_local_corosync_conf():
@@ -20,14 +20,7 @@ def get_local_corosync_conf():
     try:
         return open(path).read()
     except IOError as e:
-        raise LibraryError(ReportItem.error(
-            report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
-            "Unable to read {path}: {reason}",
-            info={
-                "path": path,
-                "reason": e.strerror
-            }
-        ))
+        raise LibraryError(reports.corosync_config_read_error(path, e.strerror))
 
 def set_remote_corosync_conf(node_communicator, node_addr, config_text):
     """
@@ -50,9 +43,7 @@ def reload_config(runner):
         "-R"
     ])
     if retval != 0 or "invalid option" in output:
-        raise LibraryError(ReportItem.error(
-            report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
-            "Unable to reload corosync configuration: {reason}",
-            info={"reason": output.rstrip()}
-        ))
+        raise LibraryError(
+            reports.corosync_config_reload_error(output.rstrip())
+        )
 

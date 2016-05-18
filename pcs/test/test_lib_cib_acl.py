@@ -100,8 +100,11 @@ class AddPermissionsToRoleTest(LibraryAclTest):
             ),
             (
                 severities.ERROR,
-                report_codes.ACL_ROLE_NOT_FOUND,
-                {'role_id': role_id},
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": role_id,
+                    "id_description": "role",
+                }
             ),
         )
 
@@ -115,13 +118,21 @@ class AddPermissionsToRoleTest(LibraryAclTest):
             ),
             (
                 severities.ERROR,
-                report_codes.BAD_ACL_PERMISSION,
-                {'permission': 'readX'},
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "permission",
+                    "option_value": "readX",
+                    "allowed_values": ["read", "write", "deny"],
+                }
             ),
             (
                 severities.ERROR,
-                report_codes.BAD_ACL_SCOPE_TYPE,
-                {'scope_type': 'xpathX'},
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "scope type",
+                    "option_value": "xpathX",
+                    "allowed_values": ["xpath", "id"],
+                }
             ),
         )
 

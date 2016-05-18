@@ -7,8 +7,8 @@ from __future__ import (
 
 from lxml import etree
 
-from pcs.common import report_codes
-from pcs.lib.errors import LibraryError, ReportItem
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_values import validate_id
 
 def does_id_exist(tree, check_id):
@@ -24,11 +24,7 @@ def validate_id_does_not_exist(tree, id):
     tree cib etree node
     """
     if does_id_exist(tree, id):
-        raise LibraryError(ReportItem.error(
-            report_codes.ID_ALREADY_EXISTS,
-            '{id} already exists',
-            info={'id': id}
-        ))
+        raise LibraryError(reports.id_already_exists(id))
 
 def find_unique_id(tree, check_id):
     """
@@ -56,14 +52,7 @@ def _get_mandatory_section(tree, section_name):
     section = tree.find(".//{0}".format(section_name))
     if section is not None:
         return section
-    raise LibraryError(ReportItem.error(
-        report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-        "Unable to get {section} section of cib",
-        info={
-            "section": section_name,
-            "cib": etree.tostring(tree),
-        }
-    ))
+    raise LibraryError(reports.cib_missing_mandatory_section(section_name))
 
 def get_configuration(tree):
     """

@@ -78,7 +78,7 @@ class FindValidResourceId(TestCase):
                     "parent_type": "clone",
                     "parent_id": "clone_id",
                 },
-                True
+                report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
             ),
         )
 
@@ -163,11 +163,15 @@ class PrepareOptionsTest(TestCase):
             lambda: constraint.prepare_options(
                 ("a", ), {"b": "c"}, mock.MagicMock(), mock.MagicMock()
             ),
-            (severities.ERROR, report_codes.INVALID_OPTION, {
-                'allowed_raw': ['a', 'id'],
-                'option': 'b',
-                'allowed': 'a, id'
-            }),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_name": "b",
+                    "option_type": None,
+                    "allowed": ["a", "id"],
+                }
+            ),
         )
 
     def test_complete_id(self):
@@ -244,9 +248,9 @@ class CheckIsWithoutDuplicationTest(TestCase):
                 report_codes.DUPLICATE_CONSTRAINTS_EXIST,
                 {
                     'constraint_info_list': ['exported_duplicate_element'],
-                    'type': 'constraint_type'
+                    'constraint_type': 'constraint_type'
                 },
-                True
+                report_codes.FORCE_CONSTRAINT_DUPLICATE
             ),
         )
     def test_success_when_no_duplication_found(self, export_with_set):

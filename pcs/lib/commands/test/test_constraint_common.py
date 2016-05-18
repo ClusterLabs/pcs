@@ -83,7 +83,7 @@ class CreateWithSetTest(TestCase):
             severities.ERROR,
             report_codes.DUPLICATE_CONSTRAINTS_EXIST,
             {
-                'type': 'rsc_some',
+                'constraint_type': 'rsc_some',
                 'constraint_info_list': [{
                     'options': {'symmetrical': 'true', 'id': 'some_id'},
                     'resource_sets': [
@@ -98,7 +98,7 @@ class CreateWithSetTest(TestCase):
                     ],
                 }]
             },
-            True
+            report_codes.FORCE_CONSTRAINT_DUPLICATE
         ))
 
     def test_put_duplicate_constraint_when_duplication_allowed(self):

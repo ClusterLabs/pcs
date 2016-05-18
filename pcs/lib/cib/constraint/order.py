@@ -30,26 +30,24 @@ def prepare_options_with_set(cib, options, resource_set_list):
         validate_id=partial(check_new_id_applicable, cib, DESCRIPTION),
     )
 
-    report = []
+    report_items = []
     if "kind" in options:
         kind = options["kind"].lower().capitalize()
         if kind not in ATTRIB["kind"]:
-            report.append(reports.invalid_option_value(
-                ATTRIB["kind"], 'kind', options["kind"])
-            )
+            report_items.append(reports.invalid_option_value(
+                "kind", options["kind"], ATTRIB["kind"]
+            ))
         options["kind"] = kind
 
     if "symmetrical" in options:
         symmetrical = options["symmetrical"].lower()
         if symmetrical not in ATTRIB["symmetrical"]:
-            report.append(reports.invalid_option_value(
-                ATTRIB["symmetrical"],
-                'symmetrical',
-                options["symmetrical"]
+            report_items.append(reports.invalid_option_value(
+                "symmetrical", options["symmetrical"], ATTRIB["symmetrical"]
             ))
         options["symmetrical"] = symmetrical
 
-    if report:
-        raise LibraryError(*report)
+    if report_items:
+        raise LibraryError(*report_items)
 
     return options

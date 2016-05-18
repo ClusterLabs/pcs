@@ -47,9 +47,8 @@ except ImportError:
         URLError as urllib_URLError
     )
 
-from pcs.common import report_codes
 from pcs.lib import reports
-from pcs.lib.errors import LibraryError, ReportItem
+from pcs.lib.errors import LibraryError
 from pcs import settings
 
 
@@ -121,15 +120,9 @@ class CommandRunner(object):
             output, dummy_stderror = process.communicate(stdin_string)
             retval = process.returncode
         except OSError as e:
-            raise LibraryError(ReportItem.error(
-                report_codes.RUN_EXTERNAL_PROCESS_ERROR,
-                "unable to run command {command_raw[0]}: {reason}",
-                info={
-                    "command_raw": args,
-                    "command": log_args,
-                    "reason": e.strerror
-                }
-            ))
+            raise LibraryError(
+                reports.run_external_process_error(log_args, e.strerror)
+            )
 
         self._logger.debug(
             (
@@ -171,56 +164,20 @@ def node_communicator_exception_to_report_item(e):
     """
     Transform NodeCommunicationException to ReportItem
     """
-    if e.__class__ == NodeAuthenticationException:
-        return ReportItem.error(
-            report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
-            "Unable to authenticate to {node} ({reason})",
-            info={
-                "node": e.node,
-                "command": e.command,
-                "reason": "HTTP error: {0}".format(e.reason),
-            }
-        )
-    if e.__class__ == NodePermissionDeniedException:
-        return ReportItem.error(
-            report_codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED,
-            "{node}: Permission denied ({reason})",
-            info={
-                "node": e.node,
-                "command": e.command,
-                "reason": "HTTP error: {0}".format(e.reason),
-            }
-        )
-    if e.__class__ == NodeUnsupportedCommandException:
-        return ReportItem.error(
-            report_codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND,
-            "{node}: Unsupported command ({reason})",
-            info={
-                "node": e.node,
-                "command": e.command,
-                "reason": "HTTP error: {0}".format(e.reason),
-            }
-        )
-    if e.__class__ == NodeCommunicationException:
-        return ReportItem.error(
-            report_codes.NODE_COMMUNICATION_ERROR,
-            "Error connecting to {node} ({reason})",
-            info={
-                "node": e.node,
-                "command": e.command,
-                "reason": "HTTP error: {0}".format(e.reason),
-            }
-        )
-    if e.__class__ == NodeConnectionException:
-        return ReportItem.error(
-            report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-            "Unable to connect to {node} ({reason})",
-            info={
-                "node": e.node,
-                "command": e.command,
-                "reason": e.reason,
-            }
-        )
+    exception_to_report = {
+        NodeAuthenticationException:
+            reports.node_communication_error_not_authorized,
+        NodePermissionDeniedException:
+            reports.node_communication_error_permission_denied,
+        NodeUnsupportedCommandException:
+            reports.node_communication_error_unsupported_command,
+        NodeCommunicationException:
+            reports.node_communication_error_other_error,
+        NodeConnectionException:
+            reports.node_communication_error_unable_to_connect,
+    }
+    if e.__class__ in exception_to_report:
+        return exception_to_report[e.__class__](e.node, e.command, e.reason)
     raise e
 
 class NodeCommunicator(object):
@@ -321,13 +278,21 @@ class NodeCommunicator(object):
                 reports.node_communication_finished(url, e.code, response_data)
             )
             if e.code == 401:
-                raise NodeAuthenticationException(host, request, e.code)
+                raise NodeAuthenticationException(
+                    host, request, "HTTP error: {0}".format(e.code)
+                )
             elif e.code == 403:
-                raise NodePermissionDeniedException(host, request, e.code)
+                raise NodePermissionDeniedException(
+                    host, request, "HTTP error: {0}".format(e.code)
+                )
             elif e.code == 404:
-                raise NodeUnsupportedCommandException(host, request, e.code)
+                raise NodeUnsupportedCommandException(
+                    host, request, "HTTP error: {0}".format(e.code)
+                )
             else:
-                raise NodeCommunicationException(host, request, e.code)
+                raise NodeCommunicationException(
+                    host, request, "HTTP error: {0}".format(e.code)
+                )
         except urllib_URLError as e:
             msg = "Unable to connect to {node} ({reason})"
             self._logger.debug(msg.format(node=host, reason=e.reason))

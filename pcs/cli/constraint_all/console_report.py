@@ -44,12 +44,12 @@ def constraint_plain(constraint_type, options_dict, with_id=False):
 
 def duplicate_constraints_report(report_item):
     line_list = []
-    for constraint_with_sets in report_item.info["constraint_info_list"]:
+    for constraint_info in report_item.info["constraint_info_list"]:
         line_list.append(
-            constraint(report_item.info["type"], constraint_with_sets)
+            constraint(report_item.info["constraint_type"], constraint_info)
         )
 
     return (
         "duplicate constraint already exists{force}\n"
-        +"\n".join(["  "+line for line in line_list])
+        + "\n".join(["  " + line for line in line_list])
     )

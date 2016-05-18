@@ -91,7 +91,7 @@ Return value: {1}
                     severity.DEBUG,
                     report_codes.RUN_EXTERNAL_PROCESS_STARTED,
                     {
-                        "argv": command_str,
+                        "command": command_str,
                         "stdin": None,
                     }
                 ),
@@ -99,7 +99,7 @@ Return value: {1}
                     severity.DEBUG,
                     report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
                     {
-                        "argv": command_str,
+                        "command": command_str,
                         "return_value": expected_retval,
                         "stdout": expected_output,
                     }
@@ -153,7 +153,7 @@ Return value: {1}
                     severity.DEBUG,
                     report_codes.RUN_EXTERNAL_PROCESS_STARTED,
                     {
-                        "argv": command_str,
+                        "command": command_str,
                         "stdin": None,
                     }
                 ),
@@ -161,7 +161,7 @@ Return value: {1}
                     severity.DEBUG,
                     report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
                     {
-                        "argv": command_str,
+                        "command": command_str,
                         "return_value": expected_retval,
                         "stdout": expected_output,
                     }
@@ -213,7 +213,7 @@ Return value: {1}
                     severity.DEBUG,
                     report_codes.RUN_EXTERNAL_PROCESS_STARTED,
                     {
-                        "argv": command_str,
+                        "command": command_str,
                         "stdin": stdin,
                     }
                 ),
@@ -221,7 +221,7 @@ Return value: {1}
                     severity.DEBUG,
                     report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
                     {
-                        "argv": command_str,
+                        "command": command_str,
                         "return_value": expected_retval,
                         "stdout": expected_output,
                     }
@@ -245,9 +245,8 @@ Return value: {1}
                 severity.ERROR,
                 report_codes.RUN_EXTERNAL_PROCESS_ERROR,
                 {
-                    "command_raw": command,
                     "command": command_str,
-                    "reason": expected_error
+                    "reason": expected_error,
                 }
             )
         )
@@ -270,7 +269,7 @@ Return value: {1}
                     severity.DEBUG,
                     report_codes.RUN_EXTERNAL_PROCESS_STARTED,
                     {
-                        "argv": command_str,
+                        "command": command_str,
                         "stdin": None,
                     }
                 )
@@ -294,9 +293,8 @@ Return value: {1}
                 severity.ERROR,
                 report_codes.RUN_EXTERNAL_PROCESS_ERROR,
                 {
-                    "command_raw": command,
                     "command": command_str,
-                    "reason": expected_error
+                    "reason": expected_error,
                 }
             )
         )
@@ -319,7 +317,7 @@ Return value: {1}
                     severity.DEBUG,
                     report_codes.RUN_EXTERNAL_PROCESS_STARTED,
                     {
-                        "argv": command_str,
+                        "command": command_str,
                         "stdin": None,
                     }
                 )
@@ -709,7 +707,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
                 {
                     "node": node,
                     "command": command,
-                    "reason": "HTTP error: {0}".format(reason),
+                    "reason": reason,
                 }
             )
         )
@@ -729,7 +727,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
                 {
                     "node": node,
                     "command": command,
-                    "reason": "HTTP error: {0}".format(reason),
+                    "reason": reason,
                 }
             )
         )
@@ -749,7 +747,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
                 {
                     "node": node,
                     "command": command,
-                    "reason": "HTTP error: {0}".format(reason),
+                    "reason": reason,
                 }
             )
         )
@@ -789,7 +787,7 @@ class NodeCommunicatorExceptionTransformTest(TestCase):
                 {
                     "node": node,
                     "command": command,
-                    "reason": "HTTP error: {0}".format(reason),
+                    "reason": reason,
                 }
             )
         )
