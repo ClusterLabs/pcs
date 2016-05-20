@@ -13,7 +13,10 @@ from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.misc import (
+    ac,
+    get_test_resource as rc,
+)
 from pcs.test.tools.pcs_mock import mock
 
 from pcs.common import report_codes
@@ -35,7 +38,7 @@ class CmanMixin(object):
         )
 
 
-@mock.patch.object(LibraryEnvironment, "get_corosync_conf")
+@mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 class GetQuorumConfigTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -139,7 +142,7 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
-@mock.patch.object(LibraryEnvironment, "get_corosync_conf")
+@mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 class SetQuorumOptionsTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -184,7 +187,9 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
         new_options = {"wait_for_all": "1"}
         lib.set_options(lib_env, new_options)
 
-        mock_push_corosync.assert_called_once_with(
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
             original_conf.replace(
                 "provider: corosync_votequorum\n",
                 "provider: corosync_votequorum\n    wait_for_all: 1\n"
@@ -239,7 +244,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
-@mock.patch.object(LibraryEnvironment, "get_corosync_conf")
+@mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 class AddDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -296,7 +301,9 @@ class AddDeviceTest(TestCase, CmanMixin):
             {"timeout": "12345"}
         )
 
-        mock_push_corosync.assert_called_once_with(
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
             original_conf.replace(
                 "provider: corosync_votequorum\n",
                 """provider: corosync_votequorum
@@ -371,7 +378,9 @@ class AddDeviceTest(TestCase, CmanMixin):
             ]
         )
         self.assertEqual(1, mock_get_corosync.call_count)
-        mock_push_corosync.assert_called_once_with(
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
             original_conf.replace(
                 "provider: corosync_votequorum\n",
                 """provider: corosync_votequorum
@@ -434,7 +443,9 @@ class AddDeviceTest(TestCase, CmanMixin):
             ]
         )
         self.assertEqual(1, mock_get_corosync.call_count)
-        mock_push_corosync.assert_called_once_with(
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
             original_conf.replace(
                 "provider: corosync_votequorum\n",
                 """provider: corosync_votequorum
@@ -448,7 +459,7 @@ class AddDeviceTest(TestCase, CmanMixin):
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
-@mock.patch.object(LibraryEnvironment, "get_corosync_conf")
+@mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 class RemoveDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -509,12 +520,16 @@ class RemoveDeviceTest(TestCase, CmanMixin):
 
         lib.remove_device(lib_env)
 
-        mock_push_corosync.assert_called_once_with(no_device_conf)
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
+            no_device_conf
+        )
         self.assertEqual([], self.mock_reporter.report_item_list)
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
-@mock.patch.object(LibraryEnvironment, "get_corosync_conf")
+@mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 class UpdateDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -579,7 +594,9 @@ class UpdateDeviceTest(TestCase, CmanMixin):
             {"timeout": "12345"}
         )
 
-        mock_push_corosync.assert_called_once_with(
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
             original_conf
                 .replace("host: 127.0.0.1", "host: 127.0.0.2")
                 .replace(
@@ -644,7 +661,9 @@ class UpdateDeviceTest(TestCase, CmanMixin):
             ]
         )
         self.assertEqual(1, mock_get_corosync.call_count)
-        mock_push_corosync.assert_called_once_with(
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
             original_conf.replace(
                 "model: net",
                 "model: net\n        bad_option: bad_value"

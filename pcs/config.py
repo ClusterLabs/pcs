@@ -263,7 +263,7 @@ def config_restore_remote(infile_name, infile_obj):
                     % node
                 )
                 continue
-        except (ValueError, NameError):
+        except (ValueError, NameError, LookupError):
             err_msgs.append("unable to determine status of the node %s" % node)
     if err_msgs:
         for msg in err_msgs:

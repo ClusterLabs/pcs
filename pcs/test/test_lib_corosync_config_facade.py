@@ -30,6 +30,7 @@ class FromStringTest(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(facade.__class__, lib.ConfigFacade)
         self.assertEqual(facade.config.export(), config)
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_parse_error_missing_brace(self):
         config = "section {"
@@ -67,6 +68,7 @@ class GetNodesTest(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         nodes = facade.get_nodes()
         self.assertEqual(0, len(nodes))
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_empty_nodelist(self):
         config = """\
@@ -76,6 +78,7 @@ nodelist {
         facade = lib.ConfigFacade.from_string(config)
         nodes = facade.get_nodes()
         self.assertEqual(0, len(nodes))
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_one_nodelist(self):
         config = """\
@@ -103,6 +106,7 @@ nodelist {
             ],
             nodes
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_more_nodelists(self):
         config = """\
@@ -132,6 +136,7 @@ nodelist {
             ],
             nodes
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
 
 class GetQuorumOptionsTest(TestCase):
@@ -140,6 +145,7 @@ class GetQuorumOptionsTest(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
         self.assertEqual({}, options)
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_empty_quorum(self):
         config = """\
@@ -149,6 +155,7 @@ quorum {
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
         self.assertEqual({}, options)
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_no_options(self):
         config = """\
@@ -159,6 +166,7 @@ quorum {
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
         self.assertEqual({}, options)
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_some_options(self):
         config = """\
@@ -182,6 +190,7 @@ quorum {
             },
             options
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_option_repeated(self):
         config = """\
@@ -198,6 +207,7 @@ quorum {
             },
             options
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_quorum_repeated(self):
         config = """\
@@ -220,6 +230,7 @@ quorum {
             },
             options
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
 
 class SetQuorumOptionsTest(TestCase):
@@ -235,6 +246,7 @@ class SetQuorumOptionsTest(TestCase):
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.set_quorum_options(reporter, {"wait_for_all": "0"})
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual(
             """\
 quorum {
@@ -250,6 +262,7 @@ quorum {
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.set_quorum_options(reporter, {"wait_for_all": ""})
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual("", facade.config.export())
         self.assertEqual([], reporter.report_item_list)
 
@@ -265,6 +278,7 @@ quorum {
         }
         facade.set_quorum_options(reporter, expected_options)
 
+        self.assertTrue(facade.need_stopped_cluster)
         test_facade = lib.ConfigFacade.from_string(facade.config.export())
         self.assertEqual(
             expected_options,
@@ -294,6 +308,7 @@ quorum {
             }
         )
 
+        self.assertTrue(facade.need_stopped_cluster)
         test_facade = lib.ConfigFacade.from_string(facade.config.export())
         self.assertEqual(
             {
@@ -313,6 +328,7 @@ quorum {
 
         facade.set_quorum_options(reporter, {"auto_tie_breaker": "1"})
 
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual(
             "1",
             facade.get_quorum_options().get("auto_tie_breaker", None)
@@ -330,6 +346,7 @@ quorum {
 
         facade.set_quorum_options(reporter, {"auto_tie_breaker": "0"})
 
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual(
             "0",
             facade.get_quorum_options().get("auto_tie_breaker", None)
@@ -347,6 +364,7 @@ quorum {
 
         facade.set_quorum_options(reporter, {"auto_tie_breaker": "1"})
 
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual(
             "1",
             facade.get_quorum_options().get("auto_tie_breaker", None)
@@ -364,6 +382,7 @@ quorum {
 
         facade.set_quorum_options(reporter, {"auto_tie_breaker": "0"})
 
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual(
             "0",
             facade.get_quorum_options().get("auto_tie_breaker", None)
@@ -401,6 +420,7 @@ quorum {
                 }
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual(
             lib.ConfigFacade.from_string(config).get_quorum_options(),
             facade.get_quorum_options()
@@ -455,6 +475,7 @@ quorum {
                 }
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual(
             lib.ConfigFacade.from_string(config).get_quorum_options(),
             facade.get_quorum_options()
@@ -500,6 +521,7 @@ quorum {
                 }
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual(
             lib.ConfigFacade.from_string(config).get_quorum_options(),
             facade.get_quorum_options()
@@ -511,11 +533,13 @@ class HasQuorumDeviceTest(TestCase):
         config = ""
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.has_quorum_device())
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_no_device(self):
         config = open(rc("corosync.conf")).read()
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.has_quorum_device())
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_empty_device(self):
         config = """\
@@ -526,6 +550,7 @@ quorum {
 """
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.has_quorum_device())
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_device_set(self):
         config = """\
@@ -537,6 +562,7 @@ quorum {
 """
         facade = lib.ConfigFacade.from_string(config)
         self.assertTrue(facade.has_quorum_device())
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_no_model(self):
         config = """\
@@ -551,6 +577,7 @@ quorum {
 """
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.has_quorum_device())
+        self.assertFalse(facade.need_stopped_cluster)
 
 
 class GetQuorumDeviceSettingsTest(TestCase):
@@ -561,6 +588,7 @@ class GetQuorumDeviceSettingsTest(TestCase):
             (None, {}, {}),
             facade.get_quorum_device_settings()
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_no_device(self):
         config = open(rc("corosync.conf")).read()
@@ -569,6 +597,7 @@ class GetQuorumDeviceSettingsTest(TestCase):
             (None, {}, {}),
             facade.get_quorum_device_settings()
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_empty_device(self):
         config = """\
@@ -582,6 +611,7 @@ quorum {
             (None, {}, {}),
             facade.get_quorum_device_settings()
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_no_model(self):
         config = """\
@@ -599,6 +629,7 @@ quorum {
             (None, {}, {"option": "value"}),
             facade.get_quorum_device_settings()
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_configured_properly(self):
         config = """\
@@ -617,6 +648,7 @@ quorum {
             ("net", {"host": "127.0.0.1"}, {"option": "value"}),
             facade.get_quorum_device_settings()
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_more_devices_one_quorum(self):
         config = """\
@@ -648,6 +680,7 @@ quorum {
             ),
             facade.get_quorum_device_settings()
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_more_devices_more_quorum(self):
         config = """\
@@ -681,6 +714,7 @@ quorum {
             ),
             facade.get_quorum_device_settings()
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
 
 class AddQuorumDeviceTest(TestCase):
@@ -718,6 +752,7 @@ quorum {
                 {},
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_success_net_minimal(self):
@@ -746,6 +781,7 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_success_net_full(self):
@@ -791,6 +827,7 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_lms_3node(self):
@@ -820,6 +857,7 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_2nodelms_3node(self):
@@ -849,6 +887,7 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_lms_2node(self):
@@ -878,6 +917,7 @@ quorum {
             ).replace("    two_node: 1\n", ""),
             facade.config.export()
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_2nodelms_2node(self):
@@ -907,6 +947,7 @@ quorum {
             ).replace("    two_node: 1\n", ""),
             facade.config.export()
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_remove_conflicting_options(self):
@@ -949,6 +990,7 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_remove_old_configuration(self):
@@ -995,6 +1037,7 @@ quorum {
             ,
             facade.config.export()
         )
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_bad_model(self):
@@ -1014,6 +1057,7 @@ quorum {
                 report_codes.FORCE_QDEVICE_MODEL
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_bad_model_forced(self):
@@ -1033,6 +1077,7 @@ quorum {
             ),
             facade.config.export()
         )
+        self.assertFalse(facade.need_stopped_cluster)
         assert_report_item_list_equal(
             reporter.report_item_list,
             [
@@ -1060,6 +1105,7 @@ quorum {
                 {"option_name": "host"}
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_bad_options_net(self):
@@ -1198,6 +1244,7 @@ quorum {
                 report_codes.FORCE_OPTIONS
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_mandatory_options_missing_net_forced(self):
@@ -1215,6 +1262,7 @@ quorum {
                 {"option_name": "host"}
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_mandatory_options_empty_net_forced(self):
@@ -1232,6 +1280,7 @@ quorum {
                 {"option_name": "host"}
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_bad_options_net_forced(self):
@@ -1257,6 +1306,7 @@ quorum {
             },
             force_options=True
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "    provider: corosync_votequorum",
@@ -1413,6 +1463,7 @@ quorum {
                 {}
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_success_model_options_net(self):
@@ -1426,6 +1477,7 @@ quorum {
             {"host": "127.0.0.2", "port": "", "algorithm": "ffsplit"},
             {}
         )
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "host: 127.0.0.1\n            port: 4433",
@@ -1446,6 +1498,7 @@ quorum {
             {"algorithm": "2nodelms"},
             {}
         )
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "port: 4433",
@@ -1462,6 +1515,7 @@ quorum {
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(reporter, {"port": "4444"}, {})
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "host: 127.0.0.1\n            port: 4433",
@@ -1485,6 +1539,7 @@ quorum {
                 {"option_name": "host"},
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_net_host_cannot_be_removed_forced(self):
@@ -1503,6 +1558,7 @@ quorum {
                 {"option_name": "host"},
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_bad_net_options(self):
@@ -1592,6 +1648,7 @@ quorum {
                 report_codes.FORCE_OPTIONS
             ),
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_bad_net_options_forced(self):
@@ -1613,6 +1670,7 @@ quorum {
             {},
             force_options=True
         )
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "            host: 127.0.0.1\n            port: 4433",
@@ -1705,6 +1763,7 @@ quorum {
             {},
             {"timeout": "", "sync_timeout": "23456"}
         )
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "timeout: 12345\n        model: net",
@@ -1725,6 +1784,7 @@ quorum {
             {"port": "4444"},
             {"timeout": "23456"}
         )
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config
                 .replace("port: 4433", "port: 4444")
@@ -1791,6 +1851,7 @@ quorum {
                 report_codes.FORCE_OPTIONS
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_bad_generic_options_cannot_force_model(self):
@@ -1816,6 +1877,7 @@ quorum {
                 }
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
     def test_bad_generic_options_forced(self):
@@ -1834,6 +1896,7 @@ quorum {
             },
             force_options=True
         )
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "        timeout: 12345\n        model: net",
@@ -1891,6 +1954,7 @@ class RemoveQuorumDeviceTest(TestCase):
                 {}
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_no_device(self):
         config = open(rc("corosync-3nodes.conf")).read()
@@ -1903,6 +1967,7 @@ class RemoveQuorumDeviceTest(TestCase):
                 {}
             )
         )
+        self.assertFalse(facade.need_stopped_cluster)
 
     def test_remove_all_devices(self):
         config_no_devices = open(rc("corosync-3nodes.conf")).read()
@@ -1942,6 +2007,7 @@ quorum {
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device()
+        self.assertFalse(facade.need_stopped_cluster)
         ac(
             config_no_devices,
             facade.config.export()
@@ -1969,6 +2035,7 @@ quorum {
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device()
+        self.assertFalse(facade.need_stopped_cluster)
         ac(
             config_no_devices,
             facade.config.export()

@@ -7,15 +7,20 @@ from __future__ import (
 
 from lxml import etree
 
+from pcs.lib import reports
 from pcs.lib.external import (
     is_cman_cluster,
     CommandRunner,
     NodeCommunicator,
 )
-from pcs.lib.nodes_task import distribute_corosync_conf
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
     get_local_corosync_conf,
+    reload_config as reload_corosync_config,
+)
+from pcs.lib.nodes_task import (
+    distribute_corosync_conf,
+    check_corosync_offline_on_nodes,
 )
 from pcs.lib.pacemaker import (
     get_cib,
@@ -98,16 +103,36 @@ class LibraryEnvironment(object):
     def is_cib_live(self):
         return self._cib_data is None
 
-    def get_corosync_conf(self):
+    def get_corosync_conf_data(self):
         if self._corosync_conf_data is None:
             return get_local_corosync_conf()
         else:
             return self._corosync_conf_data
 
-    def push_corosync_conf(self, corosync_conf_data):
+    def get_corosync_conf(self):
+        return CorosyncConfigFacade.from_string(self.get_corosync_conf_data())
+
+    def push_corosync_conf(self, corosync_conf_facade):
+        corosync_conf_data = corosync_conf_facade.config.export()
         if self.is_corosync_conf_live:
-            cfg = CorosyncConfigFacade.from_string(corosync_conf_data)
-            distribute_corosync_conf(self, cfg.get_nodes(), corosync_conf_data)
+            node_list = corosync_conf_facade.get_nodes()
+            if corosync_conf_facade.need_stopped_cluster:
+                check_corosync_offline_on_nodes(
+                    self.node_communicator(),
+                    self.report_processor,
+                    node_list
+                )
+            distribute_corosync_conf(
+                self.node_communicator(),
+                self.report_processor,
+                node_list,
+                corosync_conf_data
+            )
+            if not corosync_conf_facade.need_stopped_cluster:
+                reload_corosync_config(self.cmd_runner())
+                self.report_processor.process(
+                    reports.corosync_config_reloaded()
+                )
         else:
             self._corosync_conf_data = corosync_conf_data
 

@@ -8,7 +8,6 @@ from __future__ import (
 
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
-from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 
 
 def get_config(lib_env):
@@ -17,7 +16,7 @@ def get_config(lib_env):
     lib_env LibraryEnvironment
     """
     __ensure_not_cman(lib_env)
-    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    cfg = lib_env.get_corosync_conf()
     device = None
     if cfg.has_quorum_device():
         model, model_options, generic_options = cfg.get_quorum_device_settings()
@@ -38,12 +37,9 @@ def set_options(lib_env, options):
     options quorum options (dict)
     """
     __ensure_not_cman(lib_env)
-
-    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    cfg = lib_env.get_corosync_conf()
     cfg.set_quorum_options(lib_env.report_processor, options)
-    exported_config = cfg.config.export()
-
-    lib_env.push_corosync_conf(exported_config)
+    lib_env.push_corosync_conf(cfg)
 
 def add_device(
     lib_env, model, model_options, generic_options, force_model=False,
@@ -59,7 +55,7 @@ def add_device(
     """
     __ensure_not_cman(lib_env)
 
-    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    cfg = lib_env.get_corosync_conf()
     cfg.add_quorum_device(
         lib_env.report_processor,
         model,
@@ -68,11 +64,8 @@ def add_device(
         force_model,
         force_options
     )
-    exported_config = cfg.config.export()
-
     # TODO validation, verification, certificates, etc.
-
-    lib_env.push_corosync_conf(exported_config)
+    lib_env.push_corosync_conf(cfg)
 
 def update_device(lib_env, model_options, generic_options, force_options=False):
     """
@@ -82,17 +75,14 @@ def update_device(lib_env, model_options, generic_options, force_options=False):
     force_options continue even if options are not valid
     """
     __ensure_not_cman(lib_env)
-
-    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    cfg = lib_env.get_corosync_conf()
     cfg.update_quorum_device(
         lib_env.report_processor,
         model_options,
         generic_options,
         force_options
     )
-    exported_config = cfg.config.export()
-
-    lib_env.push_corosync_conf(exported_config)
+    lib_env.push_corosync_conf(cfg)
 
 def remove_device(lib_env):
     """
@@ -100,11 +90,9 @@ def remove_device(lib_env):
     """
     __ensure_not_cman(lib_env)
 
-    cfg = CorosyncConfigFacade.from_string(lib_env.get_corosync_conf())
+    cfg = lib_env.get_corosync_conf()
     cfg.remove_quorum_device()
-    exported_config = cfg.config.export()
-
-    lib_env.push_corosync_conf(exported_config)
+    lib_env.push_corosync_conf(cfg)
 
 def __ensure_not_cman(lib_env):
     if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:

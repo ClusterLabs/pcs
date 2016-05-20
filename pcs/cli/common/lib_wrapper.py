@@ -49,7 +49,7 @@ def bind(cli_env, run_with_middleware, run_library_command):
         if not lib_env.is_cib_live:
             cli_env.cib_data = lib_env.get_cib_xml()
         if not lib_env.is_corosync_conf_live:
-            cli_env.corosync_conf_data = lib_env.get_corosync_conf()
+            cli_env.corosync_conf_data = lib_env.get_corosync_conf_data()
 
         return lib_call_result
     return partial(run_with_middleware, run, cli_env)

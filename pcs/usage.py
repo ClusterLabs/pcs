@@ -1253,12 +1253,13 @@ Commands:
         Remove quorum device from cluster.
 
     device update [generic options] [model <model options>]
-        Add/Change quorum device options.
+        Add/Change quorum device options.  Requires cluster to be stopped.
 
     update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]
             [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
         Add/Change quorum options.  At least one option must be specified.
-        Options are documented in corosync's votequorum(5) man page.
+        Options are documented in corosync's votequorum(5) man page.  Requires
+        cluster to be stopped.
 """
     if pout:
         print(sub_usage(args, output))

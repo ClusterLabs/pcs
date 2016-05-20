@@ -50,10 +50,16 @@ class ConfigFacade(object):
         parsed_config parsed corosync config
         """
         self._config = parsed_config
+        # set to True if changes cannot be applied on running cluster
+        self._need_stopped_cluster = False
 
     @property
     def config(self):
         return self._config
+
+    @property
+    def need_stopped_cluster(self):
+        return self._need_stopped_cluster
 
     def get_nodes(self):
         """
@@ -91,6 +97,7 @@ class ConfigFacade(object):
         self.__set_section_options(quorum_section_list, options)
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
+        self._need_stopped_cluster = True
 
     def get_quorum_options(self):
         """
@@ -195,20 +202,29 @@ class ConfigFacade(object):
             )
         )
         # configuration cleanup
+        remove_need_stopped_cluster = {
+            "auto_tie_breaker": "",
+            "last_man_standing": "",
+            "last_man_standing_window": "",
+        }
+        need_stopped_cluster = False
         quorum_section_list = self.__ensure_section(self.config, "quorum")
-        self.__set_section_options(
-            quorum_section_list,
-            {
-                "allow_downscale": "",
-                "auto_tie_breaker": "",
-                "last_man_standing": "",
-                "last_man_standing_window": "",
-                "two_node": "",
-            }
-        )
         for quorum in quorum_section_list:
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)
+            for name, value in quorum.get_attributes():
+                if (
+                    name in remove_need_stopped_cluster
+                    and
+                    value not in ["", "0"]
+                ):
+                    need_stopped_cluster = True
+        attrs_to_remove = {
+            "allow_downscale": "",
+            "two_node": "",
+        }
+        attrs_to_remove.update(remove_need_stopped_cluster)
+        self.__set_section_options(quorum_section_list, attrs_to_remove)
         # add new configuration
         quorum = quorum_section_list[-1]
         new_device = config_parser.Section("device")
@@ -220,6 +236,10 @@ class ConfigFacade(object):
         new_device.add_section(new_model)
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
+        # update_two_node sets self._need_stopped_cluster when changing an
+        # algorithm lms <-> 2nodelms. We don't care about that, it's not really
+        # a change, as there was no qdevice before. So we override it.
+        self._need_stopped_cluster = need_stopped_cluster
 
     def update_quorum_device(
         self, report_processor, model_options, generic_options,
@@ -263,6 +283,7 @@ class ConfigFacade(object):
         self.__set_section_options(model_sections, model_options)
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
+        self._need_stopped_cluster = True
 
     def remove_quorum_device(self):
         """
@@ -450,8 +471,10 @@ class ConfigFacade(object):
                         algorithm = value
                     if algorithm == "lms" and has_two_nodes:
                         net.set_attribute("algorithm", "2nodelms")
+                        self._need_stopped_cluster = True
                     elif algorithm == "2nodelms" and not has_two_nodes:
                         net.set_attribute("algorithm", "lms")
+                        self._need_stopped_cluster = True
 
     def __set_section_options(self, section_list, options):
         for section in section_list[:-1]:

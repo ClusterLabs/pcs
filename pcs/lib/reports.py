@@ -454,8 +454,50 @@ def corosync_config_distribution_node_error(node):
     node string faulty node address / name
     """
     return ReportItem.error(
-        report_codes.NODE_COROSYNC_CONFIG_SAVE_ERROR,
+        report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
         "{node}: Unable to set corosync config",
+        info={"node": node}
+    )
+
+def corosync_not_running_check_started():
+    """
+    we are about to make sure corosync is not running on nodes
+    """
+    return ReportItem.info(
+        report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED,
+        "Checking corosync is not running on nodes..."
+    )
+
+def corosync_not_running_check_node_error(node):
+    """
+    communication error occured when checking corosync is not running on a node
+    node string faulty node address / name
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+        "{node}: Unable to check if corosync is not running",
+        info={"node": node}
+    )
+
+def corosync_not_running_on_node_ok(node):
+    """
+    corosync is not running on a node, which is ok
+    node string node address / name
+    """
+    return ReportItem.info(
+        report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+        "{node}: corosync is not running",
+        info={"node": node}
+    )
+
+def corosync_running_on_node_fail(node):
+    """
+    corosync is running on a node, which is not ok
+    node string node address / name
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_RUNNING_ON_NODE,
+        "{node}: corosync is running",
         info={"node": node}
     )
 
