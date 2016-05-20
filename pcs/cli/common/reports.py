@@ -43,9 +43,12 @@ def _build_error_report(report_item):
         lambda report_item: report_item.message + "{force}"
     )
 
-    return get_template(report_item).format(
-        force=", use --force to override" if report_item.forceable else ''
-    )
+    force_text = ""
+    if report_item.forceable == codes.SKIP_OFFLINE_NODES:
+        force_text = ", use --skip-offline to override"
+    elif report_item.forceable:
+        force_text = ", use --force to override"
+    return get_template(report_item).format(force=force_text)
 
 def process_library_reports(report_item_list, is_forced=False):
     """

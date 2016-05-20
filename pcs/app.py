@@ -80,7 +80,7 @@ def main(argv=None):
         pcs_short_options = "hf:p:u:V"
         pcs_long_options = [
             "debug", "version", "help", "fullhelp",
-            "force", "autocorrect", "interactive", "autodelete",
+            "force", "skip-offline", "autocorrect", "interactive", "autodelete",
             "all", "full", "groups", "local", "wait", "config",
             "start", "enable", "disabled", "off",
             "pacemaker", "corosync",

@@ -116,14 +116,17 @@ def quorum_device_add_cmd(lib, argv, modificators):
         model_options,
         generic_options,
         force_model=modificators["force"],
-        force_options=modificators["force"]
+        force_options=modificators["force"],
+        skip_offline_nodes=modificators["skip_offline_nodes"]
     )
 
 def quorum_device_remove_cmd(lib, argv, modificators):
     if argv:
         raise CmdLineInputError()
 
-    lib.quorum.remove_device()
+    lib.quorum.remove_device(
+        skip_offline_nodes=modificators["skip_offline_nodes"]
+    )
 
 def quorum_device_update_cmd(lib, argv, modificators):
     # we expect "model" keyword once
@@ -145,7 +148,8 @@ def quorum_device_update_cmd(lib, argv, modificators):
     lib.quorum.update_device(
         model_options,
         generic_options,
-        force_options=modificators["force"]
+        force_options=modificators["force"],
+        skip_offline_nodes=modificators["skip_offline_nodes"]
     )
 
 def quorum_update_cmd(lib, argv, modificators):
@@ -153,4 +157,7 @@ def quorum_update_cmd(lib, argv, modificators):
     if not options:
         raise CmdLineInputError()
 
-    lib.quorum.set_options(options)
+    lib.quorum.set_options(
+        options,
+        skip_offline_nodes=modificators["skip_offline_nodes"]
+    )

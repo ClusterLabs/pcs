@@ -2597,6 +2597,7 @@ def get_modificators():
         "full": "--full" in pcs_options,
         "autocorrect": "--autocorrect" in pcs_options,
         "force": "--force" in pcs_options,
+        "skip_offline_nodes": "--skip-offline" in pcs_options,
         "corosync_conf": pcs_options.get("--corosync_conf", None),
     }
 
