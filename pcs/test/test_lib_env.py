@@ -178,7 +178,8 @@ class LibraryEnvironmentTest(TestCase):
             "mock node communicator",
             self.mock_reporter,
             "mock node list",
-            new_corosync_data
+            new_corosync_data,
+            False
         )
         mock_reload.assert_called_once_with("mock cmd runner")
 
@@ -218,12 +219,14 @@ class LibraryEnvironmentTest(TestCase):
             "mock node communicator",
             self.mock_reporter,
             "mock node list",
+            False
         )
         mock_distribute.assert_called_once_with(
             "mock node communicator",
             self.mock_reporter,
             "mock node list",
-            new_corosync_data
+            new_corosync_data,
+            False
         )
         mock_reload.assert_not_called()
 
@@ -248,7 +251,7 @@ class LibraryEnvironmentTest(TestCase):
         corosync_data = open(rc("corosync.conf")).read()
         new_corosync_data = corosync_data.replace("version: 2", "version: 3")
         mock_get_corosync.return_value = corosync_data
-        def raiser(dummy_communicator, dummy_reporter, dummy_nodes):
+        def raiser(dummy_communicator, dummy_reporter, dummy_nodes, dummy_force):
             raise LibraryError(
                 reports.corosync_not_running_check_node_error("test node")
             )
@@ -275,6 +278,7 @@ class LibraryEnvironmentTest(TestCase):
             "mock node communicator",
             self.mock_reporter,
             "mock node list",
+            False
         )
         mock_distribute.assert_not_called()
         mock_reload.assert_not_called()

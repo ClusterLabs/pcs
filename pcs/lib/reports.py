@@ -348,84 +348,109 @@ def node_communication_not_connected(node, reason):
         }
     )
 
-def node_communication_error_not_authorized(node, command, reason):
+def node_communication_error_not_authorized(
+    node, command, reason,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     node rejected a request as we are not authorized
     node string node address / name
     reason string decription of the error
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+        severity,
         "Unable to authenticate to {node} ({reason}), try running 'pcs cluster auth'",
         info={
             "node": node,
             "command": command,
             "reason": reason,
-        }
+        },
+        forceable=forceable
     )
 
-def node_communication_error_permission_denied(node, command, reason):
+def node_communication_error_permission_denied(
+    node, command, reason,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     node rejected a request as we do not have permissions to run the request
     node string node address / name
     reason string decription of the error
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED,
+        severity,
         "{node}: Permission denied ({reason})",
         info={
             "node": node,
             "command": command,
             "reason": reason,
-        }
+        },
+        forceable=forceable
     )
 
-def node_communication_error_unsupported_command(node, command, reason):
+def node_communication_error_unsupported_command(
+    node, command, reason,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     node rejected a request as it does not support the request
     node string node address / name
     reason string decription of the error
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND,
+        severity,
         "{node}: Unsupported command ({reason}), try upgrading pcsd",
         info={
             "node": node,
             "command": command,
             "reason": reason,
-        }
+        },
+        forceable=forceable
     )
 
-def node_communication_error_other_error(node, command, reason):
+def node_communication_error_other_error(
+    node, command, reason,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     node rejected a request for another reason (may be faulty node)
     node string node address / name
     reason string decription of the error
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR,
+        severity,
         "Error connecting to {node} ({reason})",
         info={
             "node": node,
             "command": command,
             "reason": reason,
-        }
+        },
+        forceable=forceable
     )
 
-def node_communication_error_unable_to_connect(node, command, reason):
+def node_communication_error_unable_to_connect(
+    node, command, reason,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     we were unable to connect to a node
     node string node address / name
     reason string decription of the error
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+        severity,
         "Unable to connect to {node} ({reason})",
         info={
             "node": node,
             "command": command,
             "reason": reason,
-        }
+        },
+        forceable=forceable
     )
 
 def corosync_config_distribution_started():
@@ -448,15 +473,20 @@ def corosync_config_accepted_by_node(node):
         info={"node": node}
     )
 
-def corosync_config_distribution_node_error(node):
+def corosync_config_distribution_node_error(
+    node,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     communication error occured when saving corosync configuration to a node
     node string faulty node address / name
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+        severity,
         "{node}: Unable to set corosync config",
-        info={"node": node}
+        info={"node": node},
+        forceable=forceable
     )
 
 def corosync_not_running_check_started():
@@ -468,15 +498,20 @@ def corosync_not_running_check_started():
         "Checking corosync is not running on nodes..."
     )
 
-def corosync_not_running_check_node_error(node):
+def corosync_not_running_check_node_error(
+    node,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     communication error occured when checking corosync is not running on a node
     node string faulty node address / name
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+        severity,
         "{node}: Unable to check if corosync is not running",
-        info={"node": node}
+        info={"node": node},
+        forceable=forceable
     )
 
 def corosync_not_running_on_node_ok(node):

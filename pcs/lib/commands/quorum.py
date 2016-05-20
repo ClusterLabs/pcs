@@ -30,20 +30,21 @@ def get_config(lib_env):
         "device": device,
     }
 
-def set_options(lib_env, options):
+def set_options(lib_env, options, skip_offline_nodes=False):
     """
     Set corosync quorum options, distribute and reload corosync.conf if live
     lib_env LibraryEnvironment
     options quorum options (dict)
+    skip_offline_nodes continue even if not all nodes are accessible
     """
     __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
     cfg.set_quorum_options(lib_env.report_processor, options)
-    lib_env.push_corosync_conf(cfg)
+    lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
 def add_device(
     lib_env, model, model_options, generic_options, force_model=False,
-    force_options=False
+    force_options=False, skip_offline_nodes=False
 ):
     """
     Add quorum device to cluster, distribute and reload configs if live
@@ -52,6 +53,7 @@ def add_device(
     generic_options generic quorum device options dict
     force_model continue even if the model is not valid
     force_options continue even if options are not valid
+    skip_offline_nodes continue even if not all nodes are accessible
     """
     __ensure_not_cman(lib_env)
 
@@ -65,14 +67,18 @@ def add_device(
         force_options
     )
     # TODO validation, verification, certificates, etc.
-    lib_env.push_corosync_conf(cfg)
+    lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
-def update_device(lib_env, model_options, generic_options, force_options=False):
+def update_device(
+    lib_env, model_options, generic_options, force_options=False,
+    skip_offline_nodes=False
+):
     """
     Change quorum device settings, distribute and reload configs if live
     model_options model specific options dict
     generic_options generic quorum device options dict
     force_options continue even if options are not valid
+    skip_offline_nodes continue even if not all nodes are accessible
     """
     __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
@@ -82,17 +88,18 @@ def update_device(lib_env, model_options, generic_options, force_options=False):
         generic_options,
         force_options
     )
-    lib_env.push_corosync_conf(cfg)
+    lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
-def remove_device(lib_env):
+def remove_device(lib_env, skip_offline_nodes=False):
     """
     Stop using quorum device, distribute and reload configs if live
+    skip_offline_nodes continue even if not all nodes are accessible
     """
     __ensure_not_cman(lib_env)
 
     cfg = lib_env.get_corosync_conf()
     cfg.remove_quorum_device()
-    lib_env.push_corosync_conf(cfg)
+    lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
 def __ensure_not_cman(lib_env):
     if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:

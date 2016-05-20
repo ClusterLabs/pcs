@@ -112,7 +112,9 @@ class LibraryEnvironment(object):
     def get_corosync_conf(self):
         return CorosyncConfigFacade.from_string(self.get_corosync_conf_data())
 
-    def push_corosync_conf(self, corosync_conf_facade):
+    def push_corosync_conf(
+        self, corosync_conf_facade, skip_offline_nodes=False
+    ):
         corosync_conf_data = corosync_conf_facade.config.export()
         if self.is_corosync_conf_live:
             node_list = corosync_conf_facade.get_nodes()
@@ -120,13 +122,15 @@ class LibraryEnvironment(object):
                 check_corosync_offline_on_nodes(
                     self.node_communicator(),
                     self.report_processor,
-                    node_list
+                    node_list,
+                    skip_offline_nodes
                 )
             distribute_corosync_conf(
                 self.node_communicator(),
                 self.report_processor,
                 node_list,
-                corosync_conf_data
+                corosync_conf_data,
+                skip_offline_nodes
             )
             if not corosync_conf_facade.need_stopped_cluster:
                 reload_corosync_config(self.cmd_runner())

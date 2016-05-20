@@ -120,14 +120,16 @@ class DistributeCorosyncConfTest(TestCase):
                     "node": nodes[1],
                     "command": "command",
                     "reason" : "HTTP error: 401",
-                }
+                },
+                report_codes.SKIP_OFFLINE_NODES
             ),
             (
                 severity.ERROR,
                 report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
                 {
                     "node": nodes[1],
-                }
+                },
+                report_codes.SKIP_OFFLINE_NODES
             )
         )
 
@@ -163,6 +165,98 @@ class DistributeCorosyncConfTest(TestCase):
                     report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
                     {"node": nodes[0]}
                 ),
+                (
+                    severity.ERROR,
+                    report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                    {
+                        "node": nodes[1],
+                        "command": "command",
+                        "reason" : "HTTP error: 401",
+                    },
+                    report_codes.SKIP_OFFLINE_NODES
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    {
+                        "node": nodes[1],
+                    },
+                    report_codes.SKIP_OFFLINE_NODES
+                )
+            ]
+        )
+
+    @mock.patch("pcs.lib.nodes_task.corosync_live")
+    def test_one_node_down_forced(self, mock_corosync_live):
+        conf_text = "test conf text"
+        nodes = ["node1", "node2"]
+        node_addrs_list = NodeAddressesList(
+            [NodeAddresses(addr) for addr in nodes]
+        )
+        mock_corosync_live.set_remote_corosync_conf = mock.MagicMock()
+        def raiser(comm, node, conf):
+            if node.ring0 == nodes[1]:
+                raise NodeAuthenticationException(
+                    nodes[1], "command", "HTTP error: 401"
+                )
+        mock_corosync_live.set_remote_corosync_conf.side_effect = raiser
+
+        lib.distribute_corosync_conf(
+            self.mock_communicator,
+            self.mock_reporter,
+            node_addrs_list,
+            conf_text,
+            skip_offline_nodes=True
+        )
+
+        corosync_live_calls = [
+            mock.call.set_remote_corosync_conf(
+                "mock node communicator", nodes[0], conf_text
+            ),
+            mock.call.set_remote_corosync_conf(
+                "mock node communicator", nodes[1], conf_text
+            ),
+        ]
+        self.assertEqual(
+            len(corosync_live_calls),
+            len(mock_corosync_live.mock_calls)
+        )
+        self.assert_set_remote_corosync_conf_call(
+            mock_corosync_live.mock_calls[0], nodes[0], conf_text
+        )
+        self.assert_set_remote_corosync_conf_call(
+            mock_corosync_live.mock_calls[1], nodes[1], conf_text
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED,
+                    {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    {"node": nodes[0]}
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                    {
+                        "node": nodes[1],
+                        "command": "command",
+                        "reason" : "HTTP error: 401",
+                    }
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    {
+                        "node": nodes[1],
+                    }
+                ),
             ]
         )
 
@@ -182,6 +276,27 @@ class CheckCorosyncOfflineTest(TestCase):
             self.mock_communicator,
             self.mock_reporter,
             node_addrs_list
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED,
+                    {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    {"node": nodes[0]}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    {"node": nodes[1]}
+                ),
+            ]
         )
 
     def test_one_node_running(self):
@@ -230,14 +345,16 @@ class CheckCorosyncOfflineTest(TestCase):
                 report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
                 {
                     "node": nodes[0],
-                }
+                },
+                report_codes.SKIP_OFFLINE_NODES
             ),
             (
                 severity.ERROR,
                 report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
                 {
                     "node": nodes[1],
-                }
+                },
+                report_codes.SKIP_OFFLINE_NODES
             )
         )
 
@@ -267,13 +384,69 @@ class CheckCorosyncOfflineTest(TestCase):
                     "node": nodes[1],
                     "command": "command",
                     "reason" : "HTTP error: 401",
-                }
+                },
+                report_codes.SKIP_OFFLINE_NODES
             ),
             (
                 severity.ERROR,
                 report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
                 {
                     "node": nodes[1],
-                }
+                },
+                report_codes.SKIP_OFFLINE_NODES
             )
+        )
+
+    def test_errors_forced(self):
+        nodes = ["node1", "node2"]
+        node_addrs_list = NodeAddressesList(
+            [NodeAddresses(addr) for addr in nodes]
+        )
+        def side_effect(node, request, data):
+            if node.ring0 == nodes[1]:
+                raise NodeAuthenticationException(
+                    nodes[1], "command", "HTTP error: 401"
+                )
+            return '{' # invalid json
+        self.mock_communicator.call_node.side_effect = side_effect
+
+        lib.check_corosync_offline_on_nodes(
+            self.mock_communicator,
+            self.mock_reporter,
+            node_addrs_list,
+            skip_offline_nodes=True
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED,
+                    {}
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    {
+                        "node": nodes[0],
+                    }
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                    {
+                        "node": nodes[1],
+                        "command": "command",
+                        "reason" : "HTTP error: 401",
+                    }
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    {
+                        "node": nodes[1],
+                    }
+                )
+            ]
         )

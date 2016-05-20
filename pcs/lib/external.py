@@ -48,7 +48,7 @@ except ImportError:
     )
 
 from pcs.lib import reports
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs import settings
 
 
@@ -160,7 +160,9 @@ class NodeUnsupportedCommandException(NodeCommunicationException):
     pass
 
 
-def node_communicator_exception_to_report_item(e):
+def node_communicator_exception_to_report_item(
+    e, severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
     Transform NodeCommunicationException to ReportItem
     """
@@ -177,7 +179,13 @@ def node_communicator_exception_to_report_item(e):
             reports.node_communication_error_unable_to_connect,
     }
     if e.__class__ in exception_to_report:
-        return exception_to_report[e.__class__](e.node, e.command, e.reason)
+        return exception_to_report[e.__class__](
+            e.node,
+            e.command,
+            e.reason,
+            severity,
+            forceable
+        )
     raise e
 
 class NodeCommunicator(object):
