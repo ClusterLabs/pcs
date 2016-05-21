@@ -108,59 +108,6 @@ class FindValidResourceId(TestCase):
             self.find(in_clone_allowed=True, id="resourceA")
         )
 
-class PrepareResourceSetListTest(TestCase):
-    @mock.patch("pcs.lib.cib.constraint.constraint.resource_set.prepare_set")
-    def test_correctly_propagete_sets_to_prepare_set(self, mock_prepare_set):
-        mock_prepare_set.side_effect = lambda _, resource_set: {
-            "id1": {"ids": ["E", "F"], "options": {"id": "id1"}},
-            "id2": {"ids": ["G", "H"], "options": {"id": "id2"}},
-        }[resource_set["options"]["id"]]
-
-        self.assertEqual(
-            [
-                {"ids": ["E", "F"], "options": {"id": "id1"}},
-                {"ids": ["G", "H"], "options": {"id": "id2"}},
-            ],
-            constraint.prepare_resource_set_list(
-                "cib", "can_repair_to_clone", "in_clone_allowed", [
-                    {"ids": ["A", "B"], "options": {"id": "id1"}},
-                    {"ids": ["C", "D"], "options": {"id": "id2"}},
-                ]
-            )
-        )
-
-    @mock.patch(
-        "pcs.lib.cib.constraint.constraint.find_valid_resource_id"
-    )
-    def test_correctly_prepare_and_use_find_valid_resource_id(
-        self, mock_find_id
-    ):
-        repair_map = {
-            "A": "E",
-            "B": "F",
-            "C": "G",
-            "D": "H",
-        }
-        mock_find_id.side_effect = lambda cib, repair, clone, id: repair_map[id]
-        self.assertEqual(
-            [
-                {"ids": ["E", "F"], "options": {}},
-                {"ids": ["G", "H"], "options": {}},
-            ],
-            constraint.prepare_resource_set_list(
-                "cib", "can_repair_to_clone", "in_clone_allowed", [
-                    {"ids": ["A", "B"], "options": {}},
-                    {"ids": ["C", "D"], "options": {}},
-                ]
-            )
-        )
-        expected_calls = [
-            mock.call("cib", "can_repair_to_clone", "in_clone_allowed", id)
-            for id in sorted(list(repair_map.keys()))
-        ]
-        self.assertEqual(mock_find_id.call_count, len(expected_calls))
-        mock_find_id.assert_has_calls(expected_calls)
-
 class PrepareOptionsTest(TestCase):
     def test_refuse_unknown_option(self):
         assert_raise_library_error(

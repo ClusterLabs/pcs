@@ -5,7 +5,6 @@ from __future__ import (
     unicode_literals,
 )
 
-from functools import partial
 
 from lxml import etree
 
@@ -51,19 +50,6 @@ def find_valid_resource_id(cib, can_repair_to_clone, in_clone_allowed, id):
         ReportItemSeverity.ERROR,
         forceable=report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
     ))
-
-def prepare_resource_set_list(
-    cib, can_repair_to_clone, in_clone_allowed, resource_set_list
-):
-    """return resource_set_list with corrected ids"""
-    find_valid_id = partial(
-        find_valid_resource_id,
-        cib, can_repair_to_clone, in_clone_allowed
-    )
-    return [
-         resource_set.prepare_set(find_valid_id, resource_set_item)
-         for resource_set_item in resource_set_list
-    ]
 
 def prepare_options(attrib_names, options, create_id, validate_id):
     _validate_attrib_names(attrib_names+("id",), options)

@@ -10,8 +10,11 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib.cib.constraint import constraint
+from functools import partial
+
+from pcs.lib.cib.constraint import constraint, resource_set
 from pcs.lib.cib.tools import get_constraints
+
 
 def create_with_set(
     tag_name, prepare_options, env, resource_set_list, constraint_options,
@@ -37,17 +40,20 @@ def create_with_set(
     """
     cib = env.get_cib()
 
+    find_valid_resource_id = partial(
+        constraint.find_valid_resource_id,
+        cib, can_repair_to_clone, resource_in_clone_alowed
+    )
+
     constraint_section = get_constraints(cib)
     constraint_element = constraint.create_with_set(
         constraint_section,
         tag_name,
         prepare_options(cib, constraint_options, resource_set_list),
-        constraint.prepare_resource_set_list(
-            cib,
-            can_repair_to_clone,
-            resource_in_clone_alowed,
-            resource_set_list
-        )
+        [
+             resource_set.prepare_set(find_valid_resource_id, resource_set_item)
+             for resource_set_item in resource_set_list
+        ]
     )
 
     if not duplicate_check:
