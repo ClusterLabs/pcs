@@ -30,24 +30,23 @@ class LibraryReportProcessorToConsole(object):
             if report_item.severity == ReportItemSeverity.ERROR:
                 errors.append(report_item)
             elif report_item.severity == ReportItemSeverity.WARNING:
-                print("Warning: " + report_item.message)
+                print("Warning: " + _build_report_message(report_item))
             elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
                 print(report_item.message)
         if errors:
             raise LibraryError(*errors)
 
+def _prepare_force_text(report_item):
+    if report_item.forceable == codes.SKIP_OFFLINE_NODES:
+        return ", use --skip-offline to override"
+    return ", use --force to override" if report_item.forceable else ""
 
-def _build_error_report(report_item):
+def _build_report_message(report_item, force_text=""):
     get_template = __CODE_BUILDER_MAP.get(
         report_item.code,
         lambda report_item: report_item.message + "{force}"
     )
 
-    force_text = ""
-    if report_item.forceable == codes.SKIP_OFFLINE_NODES:
-        force_text = ", use --skip-offline to override"
-    elif report_item.forceable:
-        force_text = ", use --force to override"
     return get_template(report_item).format(force=force_text)
 
 def process_library_reports(report_item_list, is_forced=False):
@@ -71,9 +70,10 @@ def process_library_reports(report_item_list, is_forced=False):
             print("Warning: " + report_item.message)
             continue
 
-        sys.stderr.write(
-            'Error: {0}\n'.format(_build_error_report(report_item))
-        )
+        sys.stderr.write('Error: {0}\n'.format(_build_report_message(
+            report_item,
+            _prepare_force_text(report_item)
+        )))
         critical_error = True
 
     if critical_error:
