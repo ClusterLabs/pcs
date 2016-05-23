@@ -42,7 +42,7 @@ def create_with_set(
 
     find_valid_resource_id = partial(
         constraint.find_valid_resource_id,
-        cib, can_repair_to_clone, resource_in_clone_alowed
+        env.report_processor, cib, can_repair_to_clone, resource_in_clone_alowed
     )
 
     constraint_section = get_constraints(cib)

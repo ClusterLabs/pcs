@@ -23,8 +23,6 @@ empty_cib_1_2 = rc("cib-empty-1.2.xml")
 temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 
-
-
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
@@ -1020,7 +1018,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         o,r = pcs("constraint order set stateful1 dummy1 --force")
-        ac(o,"")
+        ac(o,"Warning: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints\n")
         assert r == 0
 
         o,r = pcs("constraint colocation add stateful1 with dummy1 --force")
@@ -1028,7 +1026,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 0
 
         o,r = pcs("constraint colocation set stateful1 dummy1 --force")
-        ac(o,"")
+        ac(o,"Warning: stateful1 is a master/slave resource, you should use the master id: stateful1-master when adding constraints\n")
         assert r == 0
 
         o,r = pcs("constraint --full")
@@ -1387,7 +1385,7 @@ Ticket Constraints:
         assert r == 0
 
         o,r = pcs("constraint order set dummy1 dummy --force")
-        ac(o,"")
+        ac(o,"Warning: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints\n")
         assert r == 0
 
         o,r = pcs("constraint colocation add dummy with dummy1 --force")
@@ -1395,7 +1393,7 @@ Ticket Constraints:
         assert r == 0
 
         o,r = pcs("constraint colocation set dummy1 dummy --force")
-        ac(o,"")
+        ac(o,"Warning: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints\n")
         assert r == 0
 
         o,r = pcs("constraint --full")

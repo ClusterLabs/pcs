@@ -129,8 +129,12 @@ def assert_report_item_list_equal(real_report_item_list, report_info_list):
         )
     if report_info_list:
         raise AssertionError(
-            "LibraryError is missing expected ReportItems:\n"
+            "LibraryError is missing expected ReportItems ("
+            +str(len(report_info_list))+"):\n"
             + "\n".join(map(repr, report_info_list))
+
+            + "\nreal ReportItems ("+str(len(real_report_item_list))+"):\n"
+            + "\n".join(map(repr, real_report_item_list))
         )
 
 def assert_raise_library_error(callableObj, *report_info_list):

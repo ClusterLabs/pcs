@@ -23,7 +23,9 @@ def _validate_attrib_names(attrib_names, options):
                 reports.invalid_option(option_name, attrib_names, None)
             )
 
-def find_valid_resource_id(cib, can_repair_to_clone, in_clone_allowed, id):
+def find_valid_resource_id(
+    report_processor, cib, can_repair_to_clone, in_clone_allowed, id
+):
     resource_element = resource.find_by_id(cib, id)
 
     if(resource_element is None):
@@ -37,17 +39,28 @@ def find_valid_resource_id(cib, can_repair_to_clone, in_clone_allowed, id):
         return resource_element.attrib["id"]
 
     if can_repair_to_clone:
+        #this is workaround for web ui, console should not use it, so we do not
+        #warn about it
         return clone.attrib["id"]
 
     if in_clone_allowed:
+        report_processor.process(
+            reports.resource_for_constraint_is_multiinstance(
+                resource_element.attrib["id"],
+                clone.tag,
+                clone.attrib["id"],
+                ReportItemSeverity.WARNING,
+            )
+        )
         return resource_element.attrib["id"]
 
-    # TODO adapt to new reports and error forcing, send warning if forced
     raise LibraryError(reports.resource_for_constraint_is_multiinstance(
         resource_element.attrib["id"],
         clone.tag,
         clone.attrib["id"],
         ReportItemSeverity.ERROR,
+        #repair to clone is workaround for web ui, so we put only information
+        #about one forceable possibility
         forceable=report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
     ))
 

@@ -35,8 +35,10 @@ def fixture_element(tag, id):
 class FindValidResourceId(TestCase):
     def setUp(self):
         self.cib = "cib"
+        self.report_processor = MockLibraryReportProcessor()
         self.find = partial(
             constraint.find_valid_resource_id,
+            self.report_processor,
             self.cib,
             can_repair_to_clone=False,
             in_clone_allowed=False,
@@ -96,6 +98,9 @@ class FindValidResourceId(TestCase):
             "clone_id",
             self.find(can_repair_to_clone=True, id="resourceA")
         )
+        assert_report_item_list_equal(
+            self.report_processor.report_item_list, []
+        )
 
     def test_return_resource_id_when_in_clone_allowed(
          self, mock_find_by_id, mock_find_parent
@@ -107,6 +112,15 @@ class FindValidResourceId(TestCase):
             "resourceA",
             self.find(in_clone_allowed=True, id="resourceA")
         )
+        assert_report_item_list_equal(self.report_processor.report_item_list, [(
+            severities.WARNING,
+            report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
+            {
+                "resource_id": "resourceA",
+                "parent_type": "clone",
+                "parent_id": "clone_id",
+            },
+        )])
 
 class PrepareOptionsTest(TestCase):
     def test_refuse_unknown_option(self):
