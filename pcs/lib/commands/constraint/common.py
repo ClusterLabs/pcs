@@ -50,16 +50,17 @@ def create_with_set(
         )
     )
 
-    if not duplication_alowed:
-        if not duplicate_check:
-            duplicate_check = constraint.have_duplicate_resource_sets
+    if not duplicate_check:
+        duplicate_check = constraint.have_duplicate_resource_sets
 
-        constraint.check_is_without_duplication(
-            constraint_section,
-            constraint_element,
-            are_duplicate=duplicate_check,
-            export_element=constraint.export_with_set,
-        )
+    constraint.check_is_without_duplication(
+        env.report_processor,
+        constraint_section,
+        constraint_element,
+        are_duplicate=duplicate_check,
+        export_element=constraint.export_with_set,
+        duplication_alowed=duplication_alowed,
+    )
 
     env.push_cib(cib)
 

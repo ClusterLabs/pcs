@@ -17,7 +17,11 @@ from pcs.test.tools.assertions import(
     assert_raise_library_error,
     assert_xml_equal,
 )
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.assertions import (
+    assert_report_item_list_equal,
+)
 
 
 def fixture_element(tag, id):
@@ -237,8 +241,10 @@ class CheckIsWithoutDuplicationTest(TestCase):
         element = mock.MagicMock()
         element.tag = "constraint_type"
 
+        report_processor = MockLibraryReportProcessor()
         assert_raise_library_error(
             lambda: constraint.check_is_without_duplication(
+                report_processor,
                 fixture_constraint_section(["duplicate_element"]), element,
                 are_duplicate=lambda e1, e2: True,
                 export_element=constraint.export_with_set,
@@ -258,10 +264,37 @@ class CheckIsWithoutDuplicationTest(TestCase):
         element = mock.MagicMock()
         element.tag = "constraint_type"
         #no exception raised
+        report_processor = MockLibraryReportProcessor()
         constraint.check_is_without_duplication(
-            fixture_constraint_section([]), element,
+            report_processor, fixture_constraint_section([]), element,
             are_duplicate=lambda e1, e2: True,
             export_element=constraint.export_with_set,
+        )
+    def test_report_when_duplication_allowed(self, export_with_set):
+        export_with_set.return_value = "exported_duplicate_element"
+        element = mock.MagicMock()
+        element.tag = "constraint_type"
+
+        report_processor = MockLibraryReportProcessor()
+        constraint.check_is_without_duplication(
+            report_processor,
+            fixture_constraint_section(["duplicate_element"]), element,
+            are_duplicate=lambda e1, e2: True,
+            export_element=constraint.export_with_set,
+            duplication_alowed=True,
+        )
+        assert_report_item_list_equal(
+            report_processor.report_item_list,
+            [
+                (
+                    severities.WARNING,
+                    report_codes.DUPLICATE_CONSTRAINTS_EXIST,
+                    {
+                        'constraint_info_list': ['exported_duplicate_element'],
+                        'constraint_type': 'constraint_type'
+                    },
+                )
+            ]
         )
 
 

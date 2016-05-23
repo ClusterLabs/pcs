@@ -57,12 +57,13 @@ def create(
     constraint_section = get_constraints(cib)
     constraint_element = ticket.create_plain(constraint_section, options)
 
-    if not duplication_alowed:
-        constraint.check_is_without_duplication(
-            constraint_section,
-            constraint_element,
-            are_duplicate=ticket.are_duplicate_plain,
-            export_element=constraint.export_plain,
-        )
+    constraint.check_is_without_duplication(
+        env.report_processor,
+        constraint_section,
+        constraint_element,
+        are_duplicate=ticket.are_duplicate_plain,
+        export_element=constraint.export_plain,
+        duplication_alowed=duplication_alowed,
+    )
 
     env.push_cib(cib)

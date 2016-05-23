@@ -11,6 +11,9 @@ from lxml.doctestcompare import LXMLOutputChecker
 from pcs.lib.errors import LibraryError
 from pcs.test.tools.misc import prepare_diff
 
+def console_report(*lines):
+    #after lines append last new line
+    return "\n".join(lines + ("",))
 
 class AssertPcsMixin(object):
     """Run pcs command and assert its result"""
@@ -86,7 +89,7 @@ class AssertPcsMixin(object):
 
     def __prepare_output(self, output):
         if isinstance(output, list):
-            return "\n".join(output) + "\n"
+            return console_report(*output)
         return output
 
 

@@ -102,8 +102,9 @@ def have_duplicate_resource_sets(element, other_element):
     return get_id_set_list(element) == get_id_set_list(other_element)
 
 def check_is_without_duplication(
-    constraint_section, element, are_duplicate, export_element
-
+    report_processor,
+    constraint_section, element, are_duplicate, export_element,
+    duplication_alowed=False
 ):
     duplicate_element_list = [
         duplicate_element
@@ -114,18 +115,20 @@ def check_is_without_duplication(
             are_duplicate(element, duplicate_element)
         )
     ]
+    if not duplicate_element_list:
+        return
 
-    if duplicate_element_list:
-        # TODO adapt to new reports and error forcing, send warning if forced
-        raise LibraryError(reports.duplicate_constraints_exist(
-            element.tag,
-            [
-                export_element(duplicate_element)
-                for duplicate_element in duplicate_element_list
-            ],
-            ReportItemSeverity.ERROR,
-            forceable=report_codes.FORCE_CONSTRAINT_DUPLICATE
-        ))
+    report_processor.process(reports.duplicate_constraints_exist(
+        element.tag,
+        [
+            export_element(duplicate_element)
+            for duplicate_element in duplicate_element_list
+        ],
+        ReportItemSeverity.WARNING if duplication_alowed
+            else ReportItemSeverity.ERROR,
+        forceable=None if duplication_alowed
+            else report_codes.FORCE_CONSTRAINT_DUPLICATE,
+    ))
 
 def create_with_set(constraint_section, tag_name, options, resource_set_list):
     if not resource_set_list:

@@ -16,6 +16,7 @@ from pcs.test.tools.assertions import(
     assert_raise_library_error,
     assert_xml_equal,
 )
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_mock import mock
 
 
@@ -35,6 +36,7 @@ def fixture_env(cib):
     env.get_cib = mock.Mock()
     env.get_cib.return_value = cib
     env.push_cib = mock.Mock()
+    env.report_processor = MockLibraryReportProcessor()
     return env
 
 class CreateWithSetTest(TestCase):
