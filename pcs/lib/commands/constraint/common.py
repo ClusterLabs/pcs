@@ -49,8 +49,8 @@ def create_with_set(
     constraint_element = constraint.create_with_set(
         constraint_section,
         tag_name,
-        prepare_options(cib, constraint_options, resource_set_list),
-        [
+        options=prepare_options(cib, constraint_options, resource_set_list),
+        resource_set_list=[
              resource_set.prepare_set(find_valid_resource_id, resource_set_item)
              for resource_set_item in resource_set_list
         ]
