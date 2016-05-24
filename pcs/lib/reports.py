@@ -616,6 +616,15 @@ def qdevice_not_defined():
         "no quorum device is defined in this cluster"
     )
 
+def qdevice_remove_or_cluster_stop_needed():
+    """
+    operation cannot be executed, qdevice removal or cluster stop is needed
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_REMOVE_OR_CLUSTER_STOP_NEEDED,
+        "You need to stop the cluster or remove qdevice from cluster to continue"
+    )
+
 def cman_unsupported_command():
     """
     requested library command is not available as local cluster is CMAN based

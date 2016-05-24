@@ -814,7 +814,11 @@ def remote_remove_nodes(params, request, auth_user)
   if config.get_nodes($cluster_name) == nil or config.get_nodes($cluster_name).length == 0
     return [200,"No More Nodes"]
   end
-  return out
+  if retval != 0
+    return [400, out]
+  else
+    return [200, out]
+  end
 end
 
 def remote_remove_node(params, request, auth_user)

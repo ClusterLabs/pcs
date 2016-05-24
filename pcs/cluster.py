@@ -1310,6 +1310,9 @@ def cluster_node(argv):
                 "cluster is not configured for RRP, "
                 "you must not specify ring 1 address for the node"
             )
+        utils.check_qdevice_algorithm_and_running_cluster(
+            utils.getCorosyncConf(), add=True
+        )
         corosync_conf = None
         (canAdd, error) =  utils.canAddNodeToCluster(node0)
         if not canAdd:
@@ -1375,6 +1378,9 @@ def cluster_node(argv):
             utils.err(
                 "node '%s' does not appear to exist in configuration" % node0
             )
+        utils.check_qdevice_algorithm_and_running_cluster(
+            utils.getCorosyncConf(), add=False
+        )
         if "--force" not in utils.pcs_options:
             retval, data = utils.get_remote_quorumtool_output(node0)
             if retval != 0:

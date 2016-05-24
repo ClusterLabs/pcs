@@ -56,13 +56,15 @@ except ImportError:
 
 
 from pcs import settings, usage
+from pcs.common import report_codes
 from pcs.cli.common.reports import (
     process_library_reports as process_lib_reports,
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
 from pcs.common.tools import simple_cache
+from pcs.lib import reports
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.external import (
     is_cman_cluster,
@@ -71,6 +73,7 @@ from pcs.lib.external import (
 )
 import pcs.lib.resource_agent as lib_ra
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
+from pcs.lib.nodes_task import check_corosync_offline_on_nodes
 from pcs.lib.pacemaker import has_resource_wait_support
 from pcs.lib.pacemaker_state import ClusterState
 from pcs.lib.pacemaker_values import(
@@ -680,6 +683,51 @@ def autoset_2node_corosync(corosync_conf):
     facade = corosync_conf_facade(corosync_conf)
     facade._ConfigFacade__update_two_node()
     return facade.config
+
+# when adding or removing a node, changing number of nodes to or from two,
+# we need to change qdevice algorith lms <-> 2nodelms, which cannot be done when
+# the cluster is running
+def check_qdevice_algorithm_and_running_cluster(corosync_conf, add=True):
+    if is_rhel6():
+        return
+    facade = corosync_conf_facade.from_string(corosync_conf)
+    if not facade.has_quorum_device():
+        return
+    node_list = facade.get_nodes()
+    node_count_target = len(node_list) + (1 if add else -1)
+    model, model_opts, dummy_generic_opts = facade.get_quorum_device_settings()
+    if model != "net":
+        return
+    algorithm = model_opts.get("algorithm", "")
+    need_stopped = (
+        (algorithm == "lms" and node_count_target == 2)
+        or
+        (algorithm == "2nodelms" and node_count_target != 2)
+    )
+    if not need_stopped:
+        return
+
+    try:
+        lib_env = get_lib_env()
+        check_corosync_offline_on_nodes(
+            lib_env.node_communicator(),
+            lib_env.report_processor,
+            node_list,
+            get_modificators()["skip_offline_nodes"]
+        )
+    except LibraryError as e:
+        report_item_list = list(e.args)
+        for report_item in report_item_list:
+            if (
+                report_item.code == report_codes.COROSYNC_RUNNING_ON_NODE
+                and
+                report_item.severity == ReportItemSeverity.ERROR
+            ):
+                report_item_list.append(
+                    reports.qdevice_remove_or_cluster_stop_needed()
+                )
+                break
+        process_lib_reports(report_item_list)
 
 def getNextNodeID(corosync_conf):
     currentNodes = []
