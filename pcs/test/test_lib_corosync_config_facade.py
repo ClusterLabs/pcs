@@ -733,6 +733,7 @@ quorum {
 
         net {
             host: 127.0.0.1
+            algorithm: ffsplit
         }
     }
 }
@@ -743,7 +744,7 @@ quorum {
             lambda: facade.add_quorum_device(
                 reporter,
                 "net",
-                {"host": "127.0.0.1"},
+                {"host": "127.0.0.1", "algorithm": "ffsplit"},
                 {}
             ),
             (
@@ -762,7 +763,7 @@ quorum {
         facade.add_quorum_device(
             reporter,
             "net",
-            {"host": "127.0.0.1"},
+            {"host": "127.0.0.1", "algorithm": "ffsplit"},
             {}
         )
         ac(
@@ -775,6 +776,7 @@ quorum {
         model: net
 
         net {
+            algorithm: ffsplit
             host: 127.0.0.1
         }
     }"""
@@ -968,7 +970,7 @@ quorum {
         facade.add_quorum_device(
             reporter,
             "net",
-            {"host": "127.0.0.1"},
+            {"host": "127.0.0.1", "algorithm": "ffsplit"},
             {}
         )
         ac(
@@ -982,6 +984,7 @@ quorum {
         model: net
 
         net {
+            algorithm: ffsplit
             host: 127.0.0.1
         }
     }
@@ -1013,7 +1016,7 @@ quorum {
         facade.add_quorum_device(
             reporter,
             "net",
-            {"host": "127.0.0.1"},
+            {"host": "127.0.0.1", "algorithm": "ffsplit"},
             {}
         )
         ac(
@@ -1029,6 +1032,7 @@ quorum {
         model: net
 
         net {
+            algorithm: ffsplit
             host: 127.0.0.1
         }
     }
@@ -1103,6 +1107,11 @@ quorum {
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"option_name": "host"}
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"option_name": "algorithm"}
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1260,6 +1269,11 @@ quorum {
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"option_name": "host"}
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"option_name": "algorithm"}
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1271,13 +1285,18 @@ quorum {
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.add_quorum_device(
-                reporter, "net", {"host": ""}, {},
+                reporter, "net", {"host": "", "algorithm": ""}, {},
                 force_model=True, force_options=True
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"option_name": "host"}
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"option_name": "algorithm"}
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1508,7 +1527,7 @@ quorum {
         )
         self.assertEqual([], reporter.report_item_list)
 
-    def test_success_net_doesnt_require_host(self):
+    def test_success_net_doesnt_require_host_and_algorithm(self):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
@@ -1525,24 +1544,7 @@ quorum {
         )
         self.assertEqual([], reporter.report_item_list)
 
-    def test_net_host_cannot_be_removed(self):
-        config = self.fixture_add_device(
-            open(rc("corosync-3nodes.conf")).read()
-        )
-        reporter = MockLibraryReportProcessor()
-        facade = lib.ConfigFacade.from_string(config)
-        assert_raise_library_error(
-            lambda: facade.update_quorum_device(reporter, {"host": ""}, {}),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "host"},
-            )
-        )
-        self.assertFalse(facade.need_stopped_cluster)
-        ac(config, facade.config.export())
-
-    def test_net_host_cannot_be_removed_forced(self):
+    def test_net_required_options_cannot_be_removed(self):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
         )
@@ -1550,12 +1552,56 @@ quorum {
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.update_quorum_device(
-                reporter, {"host": ""}, {}, force_options=True
+                reporter,
+                {"host": "", "algorithm": ""},
+                {}
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {"option_name": "host"},
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"option_name": "algorithm"}
+            ),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "algorithm",
+                    "option_value": "",
+                    "allowed_values": ("2nodelms", "ffsplit", "lms")
+                },
+                report_codes.FORCE_OPTIONS
+            )
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        ac(config, facade.config.export())
+
+    def test_net_required_options_cannot_be_removed_forced(self):
+        config = self.fixture_add_device(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.update_quorum_device(
+                reporter,
+                {"host": "", "algorithm": ""},
+                {},
+                force_options=True
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"option_name": "host"},
+            ),
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"option_name": "algorithm"}
             )
         )
         self.assertFalse(facade.need_stopped_cluster)

@@ -297,7 +297,7 @@ class AddDeviceTest(TestCase, CmanMixin):
         lib.add_device(
             lib_env,
             "net",
-            {"host": "127.0.0.1"},
+            {"host": "127.0.0.1", "algorithm": "ffsplit"},
             {"timeout": "12345"}
         )
 
@@ -313,6 +313,7 @@ class AddDeviceTest(TestCase, CmanMixin):
         model: net
 
         net {
+            algorithm: ffsplit
             host: 127.0.0.1
         }
     }
@@ -331,7 +332,7 @@ class AddDeviceTest(TestCase, CmanMixin):
             lambda: lib.add_device(
                 lib_env,
                 "net",
-                {"host": "127.0.0.1", },
+                {"host": "127.0.0.1", "algorithm": "ffsplit"},
                 {"bad_option": "bad_value", }
             ),
             (
@@ -358,7 +359,7 @@ class AddDeviceTest(TestCase, CmanMixin):
         lib.add_device(
             lib_env,
             "net",
-            {"host": "127.0.0.1", },
+            {"host": "127.0.0.1", "algorithm": "ffsplit"},
             {"bad_option": "bad_value", },
             force_options=True
         )
@@ -390,6 +391,7 @@ class AddDeviceTest(TestCase, CmanMixin):
         model: net
 
         net {
+            algorithm: ffsplit
             host: 127.0.0.1
         }
     }

@@ -329,9 +329,8 @@ class ConfigFacade(object):
     def __validate_quorum_device_model_net_options(
         self, model_options, need_required, force=False
     ):
-        required_options = frozenset(["host"])
+        required_options = frozenset(["host", "algorithm"])
         optional_options = frozenset([
-            "algorithm",
             "connect_timeout",
             "force_ip_version",
             "port",
