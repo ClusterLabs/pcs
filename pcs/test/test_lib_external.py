@@ -858,3 +858,48 @@ Copyright (c) 2006-2009 Red Hat, Inc.
 """,
             1
         )
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class DisableServiceTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+        self.service = "service_name"
+
+    def test_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        lib.disable_service(self.mock_runner, self.service)
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "disable", self.service + ".service"]
+        )
+
+    def test_systemctl_failed(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 1)
+        self.assertRaises(
+            lib.DisableServiceError,
+            lambda: lib.disable_service(self.mock_runner, self.service)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "disable", self.service + ".service"]
+        )
+
+    def test_not_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        lib.disable_service(self.mock_runner, self.service)
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig", self.service, "off"]
+        )
+
+    def test_not_systemctl_failed(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 1)
+        self.assertRaises(
+            lib.DisableServiceError,
+            lambda: lib.disable_service(self.mock_runner, self.service)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig", self.service, "off"]
+        )

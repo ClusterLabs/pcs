@@ -67,6 +67,7 @@ import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.external import (
     is_cman_cluster,
     CommandRunner,
+    is_systemctl,
 )
 import pcs.lib.resource_agent as lib_ra
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
@@ -1968,17 +1969,6 @@ def verify_cert_key_pair(cert, key):
             errors.append("Certificate does not match the key")
 
     return errors
-
-def is_systemctl():
-    systemctl_paths = [
-        '/usr/bin/systemctl',
-        '/bin/systemctl',
-        '/var/run/systemd/system',
-    ]
-    for path in systemctl_paths:
-        if os.path.exists(path):
-            return True
-    return False
 
 @simple_cache
 def is_rhel6():

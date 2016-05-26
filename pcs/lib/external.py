@@ -49,11 +49,50 @@ except ImportError:
 
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.common.tools import simple_cache
 from pcs import settings
+
+
+class DisableServiceError(Exception):
+    pass
 
 
 def is_path_runnable(path):
     return os.path.isfile(path) and os.access(path, os.X_OK)
+
+
+@simple_cache
+def is_systemctl():
+    """
+    Check whenever is local system running on systemd.
+    Returns True if current system is systemctl compatible, False otherwise.
+    """
+    systemctl_paths = [
+        '/usr/bin/systemctl',
+        '/bin/systemctl',
+        '/var/run/systemd/system',
+    ]
+    for path in systemctl_paths:
+        if os.path.exists(path):
+            return True
+    return False
+
+
+def disable_service(runner, service):
+    """
+    Disable specified service in local system.
+    Raise DisableExceptionError or LibraryError on failure.
+
+    runner -- CommandRunner
+    service -- name of service
+    """
+    if is_systemctl():
+        _, retval = runner.run(["systemctl", "disable", service + ".service"])
+    else:
+        _, retval = runner.run(["chkconfig", service, "off"])
+
+    if retval != 0:
+        raise DisableServiceError()
 
 
 def is_cman_cluster(runner):
