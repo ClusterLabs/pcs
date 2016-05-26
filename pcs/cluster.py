@@ -1464,6 +1464,25 @@ def cluster_localnode(argv):
         else:
             success = utils.removeNodeFromClusterConf(node)
 
+# The removed node might be present in CIB. If it is, pacemaker will show it as
+# offline, no matter it's not in corosync / cman config any longer. We remove
+# the node by running 'crm_node -R <node>' on the node where the remove command
+# was ran. This only works if pacemaker is running. If it's not, we need
+# to remove the node manually from the CIB on all nodes.
+        if not utils.is_service_running("pacemaker"):
+            original_usefile, original_filename = utils.usefile, utils.filename
+            utils.usefile = True
+            utils.filename = os.path.join(settings.cib_dir, "cib.xml")
+            dummy_output, dummy_retval = utils.run([
+                "cibadmin",
+                "--delete-all",
+                "--force",
+                "--xpath=/cib/configuration/nodes/node[@uname='{0}']".format(
+                    node
+                ),
+            ])
+            utils.usefile, utils.filename = original_usefile, original_filename
+
         if success:
             print("%s: successfully removed!" % node)
         else:

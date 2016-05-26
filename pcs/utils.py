@@ -2045,6 +2045,14 @@ def serviceStatus(prefix):
             run(["systemctl", 'is-enabled', service])[0].strip()
         ))
 
+# TODO move to library
+def is_service_running(service):
+    if is_systemctl():
+        _, retval = run(["systemctl", "is-active", service + ".service"])
+    else:
+        _, retval = run(["service", service, "status"])
+    return retval == 0
+
 def enableServices():
     if is_rhel6():
         run(["chkconfig", "pacemaker", "on"])
