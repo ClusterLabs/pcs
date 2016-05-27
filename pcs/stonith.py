@@ -16,62 +16,63 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.resource_agent as lib_ra
 
 def stonith_cmd(argv):
+    lib = utils.get_library_wrapper()
+    modifiers = utils.get_modificators()
     if len(argv) == 0:
         argv = ["show"]
 
     sub_cmd = argv.pop(0)
-    if (sub_cmd == "help"):
-        usage.stonith(argv)
-    elif (sub_cmd == "list"):
-        stonith_list_available(argv)
-    elif (sub_cmd == "describe"):
-        if len(argv) == 1:
-            stonith_list_options(argv[0])
-        else:
-            usage.stonith()
-            sys.exit(1)
-    elif (sub_cmd == "create"):
-        stonith_create(argv)
-    elif (sub_cmd == "update"):
-        if len(argv) > 1:
-            stn_id = argv.pop(0)
-            resource.resource_update(stn_id,argv)
-        else:
-            usage.stonith(["update"])
-            sys.exit(1)
-    elif (sub_cmd == "delete"):
-        if len(argv) == 1:
-            stn_id = argv.pop(0)
-            resource.resource_remove(stn_id)
-        else:
-            usage.stonith(["delete"])
-            sys.exit(1)
-    elif (sub_cmd == "show"):
-        resource.resource_show(argv, True)
-        stonith_level([])
-    elif (sub_cmd == "level"):
-        stonith_level(argv)
-    elif (sub_cmd == "fence"):
-        stonith_fence(argv)
-    elif (sub_cmd == "cleanup"):
-        try:
+    try:
+        if (sub_cmd == "help"):
+            usage.stonith(argv)
+        elif (sub_cmd == "list"):
+            stonith_list_available(argv)
+        elif (sub_cmd == "describe"):
+            if len(argv) == 1:
+                stonith_list_options(argv[0])
+            else:
+                raise CmdLineInputError()
+        elif (sub_cmd == "create"):
+            stonith_create(argv)
+        elif (sub_cmd == "update"):
+            if len(argv) > 1:
+                stn_id = argv.pop(0)
+                resource.resource_update(stn_id,argv)
+            else:
+                raise CmdLineInputError()
+        elif (sub_cmd == "delete"):
+            if len(argv) == 1:
+                stn_id = argv.pop(0)
+                resource.resource_remove(stn_id)
+            else:
+                raise CmdLineInputError()
+        elif (sub_cmd == "show"):
+            resource.resource_show(argv, True)
+            stonith_level([])
+        elif (sub_cmd == "level"):
+            stonith_level(argv)
+        elif (sub_cmd == "fence"):
+            stonith_fence(argv)
+        elif (sub_cmd == "cleanup"):
             resource.resource_cleanup(argv)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "stonith", 'cleanup')
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-    elif (sub_cmd == "confirm"):
-        stonith_confirm(argv)
-    elif (sub_cmd == "get_fence_agent_info"):
-        get_fence_agent_info(argv)
-    else:
-        usage.stonith()
-        sys.exit(1)
+        elif (sub_cmd == "confirm"):
+            stonith_confirm(argv)
+        elif (sub_cmd == "get_fence_agent_info"):
+            get_fence_agent_info(argv)
+        elif (sub_cmd == "sbd"):
+            sbd_cmd(lib, argv, modifiers)
+        else:
+            raise CmdLineInputError()
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "stonith", sub_cmd)
 
 def stonith_list_available(argv):
     if len(argv) != 0:
@@ -427,3 +428,129 @@ def get_fence_agent_info(argv):
         )
     except LibraryError as e:
         utils.process_library_reports(e.args)
+
+
+def sbd_cmd(lib, argv, modifiers):
+    if len(argv) == 0:
+        raise CmdLineInputError()
+    cmd = argv.pop(0)
+    try:
+        if cmd == "enable":
+            sbd_enable(lib, argv, modifiers)
+        elif cmd == "disable":
+            sbd_disable(lib, argv, modifiers)
+        elif cmd == "status":
+            sbd_status(lib, argv, modifiers)
+        elif cmd == "config":
+            sbd_config(lib, argv, modifiers)
+        else:
+            raise CmdLineInputError()
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "stonith", "sbd {0}".format(cmd)
+        )
+
+
+def sbd_enable(lib, argv, modifiers):
+    sbd_cfg = parse_args.prepare_options(argv)
+    default_watchdog, watchdog_dict = _sbd_parse_watchdogs(
+        modifiers["watchdog"]
+    )
+    lib.sbd.enable_sbd(
+        default_watchdog,
+        watchdog_dict,
+        sbd_cfg,
+        allow_unknown_opts=modifiers["force"],
+        ignore_offline_nodes=modifiers["skip_offline_nodes"]
+    )
+    print(
+        "Warning: Cluster has to be restarted in order to apply these "
+        "changes."
+    )
+
+
+def _sbd_parse_watchdogs(watchdog_list):
+    default_watchdog = None
+    watchdog_dict = {}
+
+    for watchdog_node in watchdog_list:
+        if "@" not in watchdog_node:
+            if default_watchdog:
+                raise CmdLineInputError("Multiple default watchdogs.")
+            default_watchdog = watchdog_node
+        else:
+            watchdog, node_name = watchdog_node.rsplit("@", 1)
+            if node_name in watchdog_dict:
+                raise CmdLineInputError(
+                    "Multiple watchdog definitions for node '{node}'".format(
+                        node=node_name
+                    )
+                )
+            watchdog_dict[node_name] = watchdog
+
+    return default_watchdog, watchdog_dict
+
+
+def sbd_disable(lib, argv, modifiers):
+    if argv:
+        raise CmdLineInputError()
+
+    lib.sbd.disable_sbd(modifiers["skip_offline_nodes"])
+    print(
+        "Warning: Cluster has to be restarted in order to apply these "
+        "changes."
+    )
+
+
+def sbd_status(lib, argv, modifiers):
+    def _bool_to_str(val):
+        if val is None:
+            return "N/A"
+        return "YES" if val else " NO"
+
+    if argv:
+        raise CmdLineInputError()
+
+    status_list = lib.sbd.get_cluster_sbd_status()
+    if not len(status_list):
+        utils.err("Unable to get SBD status from any node.")
+
+    print("SBD STATUS")
+    print("<node name>: <installed> | <enabled> | <running>")
+    for node_status in status_list:
+        status = node_status["status"]
+        print("{node}: {installed} | {enabled} | {running}".format(
+            node=node_status["node"].label,
+            installed=_bool_to_str(status.get("installed")),
+            enabled=_bool_to_str(status.get("enabled")),
+            running=_bool_to_str(status.get("running"))
+        ))
+
+
+def sbd_config(lib, argv, modifiers):
+    if argv:
+        raise CmdLineInputError()
+
+    config_list = lib.sbd.get_cluster_sbd_config()
+
+    if not config_list:
+        utils.err("No config obtained.")
+
+    config = config_list[0]["config"]
+
+    filtered_options = ["SBD_WATCHDOG_DEV", "SBD_OPTS"]
+    for key, val in config.items():
+        if key in filtered_options:
+            continue
+        print("{key}={val}".format(key=key, val=val))
+
+    print()
+    print("Watchdogs:")
+    for config in config_list:
+        watchdog = "<unknown>"
+        if config["config"] is not None:
+            watchdog = config["config"].get("SBD_WATCHDOG_DEV", "<unknown>")
+        print("  {node}: {watchdog}".format(
+            node=config["node"].label,
+            watchdog=watchdog
+        ))

@@ -38,9 +38,16 @@ from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
 from pcs.lib import (
     pacemaker as lib_pacemaker,
+    sbd as lib_sbd,
     reports as lib_reports,
 )
-from pcs.lib.errors import ReportItemSeverity, LibraryError
+from pcs.lib.tools import environment_file_to_dict
+from pcs.lib.external import disable_service
+from pcs.lib.node import NodeAddresses
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity,
+)
 from pcs.lib.corosync import config_parser as corosync_conf_utils
 
 def cluster_cmd(argv):
@@ -1318,6 +1325,46 @@ def cluster_node(argv):
         if not canAdd:
             utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
 
+        try:
+            node_addr = NodeAddresses(node0, node1)
+            lib_env = utils.get_lib_env()
+            report_processor = lib_env.report_processor
+            node_communicator = lib_env.node_communicator()
+            if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
+                if "--watchdog" not in utils.pcs_options:
+                    watchdog = settings.sbd_watchdog_default
+                    print("Warning: using default watchdog '{0}'".format(
+                        watchdog
+                    ))
+                else:
+                    watchdog = utils.pcs_options["--watchdog"][0]
+
+                report_processor.process(lib_reports.sbd_check_started())
+                lib_sbd.check_sbd_on_node(
+                    report_processor, node_communicator, node_addr, watchdog
+                )
+                sbd_cfg = environment_file_to_dict(
+                    lib_sbd.get_local_sbd_config()
+                )
+                sbd_cfg["SBD_WATCHDOG_DEV"] = watchdog
+                report_processor.process(
+                    lib_reports.sbd_config_distribution_started()
+                )
+                lib_sbd.set_sbd_config_on_node(
+                    report_processor, node_communicator, node_addr, sbd_cfg
+                )
+                report_processor.process(lib_reports.sbd_enabling_started())
+                lib_sbd.enable_sbd_service_on_node(
+                    report_processor, node_communicator, node_addr
+                )
+            else:
+                report_processor.process(lib_reports.sbd_disabling_started())
+                lib_sbd.disable_sbd_service_on_node(
+                    report_processor, node_communicator, node_addr
+                )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
+
         for my_node in utils.getNodesFromCorosyncConf():
             retval, output = utils.addLocalNode(my_node, node0, node1)
             if retval != 0:
@@ -1469,7 +1516,7 @@ def cluster_localnode(argv):
 # the node by running 'crm_node -R <node>' on the node where the remove command
 # was ran. This only works if pacemaker is running. If it's not, we need
 # to remove the node manually from the CIB on all nodes.
-        if not utils.is_service_running("pacemaker"):
+        if not utils.is_service_running(utils.cmd_runner(), "pacemaker"):
             original_usefile, original_filename = utils.usefile, utils.filename
             utils.usefile = True
             utils.filename = os.path.join(settings.cib_dir, "cib.xml")
@@ -1641,6 +1688,11 @@ def cluster_destroy(argv):
         print("Killing any remaining services...")
         os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
         utils.disableServices()
+        try:
+            disable_service(utils.cmd_runner(), "sbd")
+        except:
+            # it's not a big deal if sbd disable fails
+            pass
 
         print("Removing all cluster configuration files...")
         if utils.is_rhel6():

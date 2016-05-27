@@ -15,7 +15,11 @@ from pcs.cli.common import middleware
 from pcs.lib.commands.constraint import colocation as constraint_colocation
 from pcs.lib.commands.constraint import order as constraint_order
 from pcs.lib.commands.constraint import ticket as constraint_ticket
-from pcs.lib.commands import quorum, qdevice
+from pcs.lib.commands import (
+    quorum,
+    qdevice,
+    sbd,
+)
 from pcs.cli.common.reports import (
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
@@ -122,6 +126,17 @@ def load_module(env, middleware_factory, name):
                 "kill": qdevice.qdevice_kill,
                 "enable": qdevice.qdevice_enable,
                 "disable": qdevice.qdevice_disable,
+            }
+        )
+    if name == "sbd":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "enable_sbd": sbd.enable_sbd,
+                "disable_sbd": sbd.disable_sbd,
+                "get_cluster_sbd_status": sbd.get_cluster_sbd_status,
+                "get_cluster_sbd_config": sbd.get_cluster_sbd_config
             }
         )
 

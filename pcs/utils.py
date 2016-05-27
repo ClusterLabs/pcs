@@ -69,6 +69,8 @@ import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.external import (
     is_cman_cluster,
     CommandRunner,
+    is_service_running,
+    is_service_enabled,
     is_systemctl,
 )
 import pcs.lib.resource_agent as lib_ra
@@ -1831,6 +1833,13 @@ def stonithCheck():
         if p.attrib["class"] == "stonith":
             return False
 
+    # check if SBD daemon is running
+    try:
+        if is_service_running(cmd_runner(), "sbd"):
+            return False
+    except LibraryError:
+        pass
+
     return True
 
 def getCorosyncNodesID(allow_failure=False):
@@ -2022,6 +2031,7 @@ def verify_cert_key_pair(cert, key):
 
     return errors
 
+
 @simple_cache
 def is_rhel6():
     return is_cman_cluster(cmd_runner())
@@ -2042,14 +2052,17 @@ def serviceStatus(prefix):
             run(["systemctl", 'is-active', service])[0].strip(),
             run(["systemctl", 'is-enabled', service])[0].strip()
         ))
-
-# TODO move to library
-def is_service_running(service):
-    if is_systemctl():
-        _, retval = run(["systemctl", "is-active", service + ".service"])
-    else:
-        _, retval = run(["service", service, "status"])
-    return retval == 0
+    try:
+        sbd_running = is_service_running(cmd_runner(), "sbd")
+        sbd_enabled = is_service_enabled(cmd_runner(), "sbd")
+        if sbd_enabled or sbd_running:
+            print("{prefix}sbd: {active}/{enabled}".format(
+                prefix=prefix,
+                active=("active" if sbd_running else "inactive"),
+                enabled=("enabled" if sbd_enabled else "disabled")
+            ))
+    except LibraryError:
+        pass
 
 def enableServices():
     if is_rhel6():
@@ -2645,6 +2658,7 @@ def get_modificators():
         "full": "--full" in pcs_options,
         "skip_offline_nodes": "--skip-offline" in pcs_options,
         "start": "--start" in pcs_options,
+        "watchdog": pcs_options.get("--watchdog", []),
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):

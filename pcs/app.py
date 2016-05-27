@@ -96,7 +96,7 @@ def main(argv=None):
             "token=", "token_coefficient=", "consensus=", "join=",
             "miss_count_const=", "fail_recv_const=",
             "corosync_conf=", "cluster_conf=",
-            "remote",
+            "remote", "watchdog=",
             #in pcs status - do not display resorce status on inactive node
             "hide-inactive",
         ]
@@ -124,10 +124,16 @@ def main(argv=None):
     argv = real_argv
     for o, a in pcs_options:
         if not o in utils.pcs_options:
+            if o == "--watchdog":
+                a = [a]
             utils.pcs_options[o] = a
         else:
             # If any options are a list then they've been entered twice which isn't valid
-            utils.err("%s can only be used once" % o)
+            if o != "--watchdog":
+                utils.err("%s can only be used once" % o)
+            else:
+                utils.pcs_options[o].append(a)
+
         if o == "-h" or o == "--help":
             if len(argv) == 0:
                 usage.main()

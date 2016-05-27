@@ -342,6 +342,27 @@ confirm <node>
 Confirm that the host specified is currently down.  This command should \fBONLY\fR be used when the node specified has already been confirmed to be down.
 
 .B WARNING: if this node is not actually down data corruption/cluster failure can occur.
+.TP
+sbd enable [\fB\-\-watchdog\fR=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ...
+Enable SBD in cluster. Default path for watchdog device is /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5), SBD_DELAY_START (default: no) and SBD_STARTMODE (default: clean).
+
+.B WARNING: Cluster has to be restarted in order to apply these changes.
+
+Example of enabling SBD in cluster with watchdogs on node1 will be /dev/watchdog2, on node2 /dev/watchdog1, /dev/watchdog0 on all other nodes and watchdog timeout will bet set to 10 seconds:
+
+pcs stonith sbd enable --watchdog=/dev/watchdog2@node1 --watchdog=/dev/watchdog1@node2 --watchdog=/dev/watchdog0 SBD_WATCHDOG_TIMEOUT=10
+
+.TP
+sbd disable
+Disable SBD in cluster.
+
+.B WARNING: Cluster has to be restarted in order to apply these changes.
+.TP
+sbd status
+Show status of SBD services in cluster.
+.TP
+sbd config
+Show SBD configuration in cluster.
 .SS "acl"
 .TP
 [show]
