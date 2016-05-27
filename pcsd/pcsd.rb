@@ -1087,16 +1087,20 @@ already been added to pcsd.  You may not add two clusters with the same name int
         '<input placeholder="(?<shortdesc>[^"]*)"'
     )
 
-    desc = desc_regex.match(out)
-    unless desc
-      return [400, 'Unable to get meta-data of specified fence agent.']
-    end
     result = {
       :name => fence_agent,
-      :shortdesc => html2plain(desc[:short]),
-      :longdesc => html2plain(desc[:long]),
+      :shortdesc => '',
+      :longdesc => '',
       :parameters => []
     }
+
+    # pcsd in version 0.9.137 (and older) does not provide description for
+    # fence agents
+    desc = desc_regex.match(out)
+    if desc
+      result[:shortdesc] = html2plain(desc[:short])
+      result[:longdesc] = html2plain(desc[:long])
+    end
 
     parameters = parameters_regex.match(out)
     parameters[:required].scan(required_parameter_regex) { |match|

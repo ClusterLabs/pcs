@@ -194,6 +194,7 @@
           <td class="reg" nowrap>{{resource.res_type}}</td>
         </tr>
         {{#if resource.is_primitive}}
+        {{#if resource.resource_agent.shortdesc}}
           <tr>
             <td>
               <div class="bold">Description:</div>
@@ -211,6 +212,7 @@
               <div class="long_desc_div reg" style="display:none; font-size:12px; max-width:350px;">{{{resource.resource_agent.longdesc_html}}}</div>
             </td>
           </tr>
+        {{/if}}
         {{/if}}
         {{#unless resource.stonith}}
         {{#if resource.is_primitive}}
@@ -738,6 +740,7 @@ Use the 'Add' button to submit the form.">
         {{#unless resource}}
           <table class="args-table">
             <tbody>
+              {{#if agent.shortdesc}}
               <tr>
                 <td>
                   <div class="bold">Description:</div>
@@ -755,6 +758,7 @@ Use the 'Add' button to submit the form.">
                   <div class="long_desc_div reg" style="display:none; font-size:12px; max-width:350px;">{{{agent.longdesc_html}}}</div>
                 </td>
               </tr>
+              {{/if}}
               <tr>
                 <td class="reg">
                   Fence Instance Name
