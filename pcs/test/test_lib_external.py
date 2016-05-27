@@ -903,3 +903,167 @@ class DisableServiceTest(TestCase):
         self.mock_runner.run.assert_called_once_with(
             ["chkconfig", self.service, "off"]
         )
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class EnableServiceTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+        self.service = "service_name"
+
+    def test_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        lib.enable_service(self.mock_runner, self.service)
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "enable", self.service + ".service"]
+        )
+
+    def test_systemctl_failed(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 1)
+        self.assertRaises(
+            lib.EnableServiceError,
+            lambda: lib.enable_service(self.mock_runner, self.service)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "enable", self.service + ".service"]
+        )
+
+    def test_not_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        lib.enable_service(self.mock_runner, self.service)
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig", self.service, "on"]
+        )
+
+    def test_not_systemctl_failed(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 1)
+        self.assertRaises(
+            lib.EnableServiceError,
+            lambda: lib.enable_service(self.mock_runner, self.service)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig", self.service, "on"]
+        )
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class StartServiceTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+        self.service = "service_name"
+
+    def test_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        lib.start_service(self.mock_runner, self.service)
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "start", self.service + ".service"]
+        )
+
+    def test_systemctl_failed(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 1)
+        self.assertRaises(
+            lib.StartServiceError,
+            lambda: lib.start_service(self.mock_runner, self.service)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "start", self.service + ".service"]
+        )
+
+    def test_not_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        lib.start_service(self.mock_runner, self.service)
+        self.mock_runner.run.assert_called_once_with(
+            ["service", self.service, "start"]
+        )
+
+    def test_not_systemctl_failed(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 1)
+        self.assertRaises(
+            lib.StartServiceError,
+            lambda: lib.start_service(self.mock_runner, self.service)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["service", self.service, "start"]
+        )
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class StopServiceTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+        self.service = "service_name"
+
+    def test_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        lib.stop_service(self.mock_runner, self.service)
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "stop", self.service + ".service"]
+        )
+
+    def test_systemctl_failed(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 1)
+        self.assertRaises(
+            lib.StopServiceError,
+            lambda: lib.stop_service(self.mock_runner, self.service)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "stop", self.service + ".service"]
+        )
+
+    def test_not_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        lib.stop_service(self.mock_runner, self.service)
+        self.mock_runner.run.assert_called_once_with(
+            ["service", self.service, "stop"]
+        )
+
+    def test_not_systemctl_failed(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 1)
+        self.assertRaises(
+            lib.StopServiceError,
+            lambda: lib.stop_service(self.mock_runner, self.service)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["service", self.service, "stop"]
+        )
+
+
+@mock.patch("os.listdir")
+@mock.patch("os.path.isdir")
+@mock.patch("os.path.exists")
+class IsDirNonemptyTest(TestCase):
+    def test_path_does_not_exist(self, mock_exists, mock_isdir, mock_listdir):
+        mock_exists.return_value = False
+        self.assertFalse(lib.is_dir_nonempty("path"))
+        mock_isdir.assert_not_called()
+        mock_listdir.assert_not_called()
+
+    def test_path_is_not_dir(self, mock_exists, mock_isdir, mock_listdir):
+        mock_exists.return_value = True
+        mock_isdir.return_value = False
+        self.assertTrue(lib.is_dir_nonempty("path"))
+        mock_listdir.assert_not_called()
+
+    def test_dir_is_empty(self, mock_exists, mock_isdir, mock_listdir):
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+        mock_listdir.return_value = []
+        self.assertFalse(lib.is_dir_nonempty("path"))
+
+    def test_dir_is_not_empty(self, mock_exists, mock_isdir, mock_listdir):
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+        mock_listdir.return_value = ["a_file"]
+        self.assertTrue(lib.is_dir_nonempty("path"))

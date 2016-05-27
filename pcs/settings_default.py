@@ -3,7 +3,17 @@ import os.path
 pacemaker_binaries = "/usr/sbin/"
 corosync_binaries = "/usr/sbin/"
 ccs_binaries = "/usr/sbin/"
-corosync_conf_file = "/etc/corosync/corosync.conf"
+corosync_conf_dir = "/etc/corosync/"
+corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
+corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d/")
+corosync_qdevice_net_server_certs_dir = os.path.join(
+    corosync_conf_dir,
+    "qdevice/net/qnetd/nssdb"
+)
+corosync_qdevice_net_client_certs_dir = os.path.join(
+    corosync_conf_dir,
+    "qdevice/net/node/nssdb"
+)
 cluster_conf_file = "/etc/cluster/cluster.conf"
 fence_agent_binaries = "/usr/sbin/"
 pengine_binary = "/usr/libexec/pacemaker/pengine"
@@ -20,7 +30,6 @@ pcsd_tokens_location = "/var/lib/pcsd/tokens"
 pcsd_users_conf_location = "/var/lib/pcsd/pcs_users.conf"
 pcsd_settings_conf_location = "/var/lib/pcsd/pcs_settings.conf"
 pcsd_exec_location = "/usr/lib/pcsd/"
-corosync_uidgid_dir = "/etc/corosync/uidgid.d/"
 cib_dir = "/var/lib/pacemaker/cib/"
 pacemaker_uname = "hacluster"
 pacemaker_gname = "haclient"

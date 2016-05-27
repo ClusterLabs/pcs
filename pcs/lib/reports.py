@@ -625,6 +625,75 @@ def qdevice_remove_or_cluster_stop_needed():
         "You need to stop the cluster or remove qdevice from cluster to continue"
     )
 
+def qdevice_already_initialized(model):
+    """
+    cannot create qdevice on local host, it has been already created
+    string model qdevice model
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_ALREADY_INITIALIZED,
+        "Quorum device '{model}' has been already initialized",
+        info={
+            "model": model,
+        }
+    )
+
+def qdevice_initialization_success(model):
+    """
+    qdevice was successfully initialized on local host
+    string model qdevice model
+    """
+    return ReportItem.info(
+        report_codes.QDEVICE_INITIALIZATION_SUCCESS,
+        "Quorum device '{model}' initialized",
+        info={
+            "model": model,
+        }
+    )
+
+def qdevice_initialization_error(model, reason):
+    """
+    an error occured when creating qdevice on local host
+    string model qdevice model
+    string reason an error message
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_INITIALIZATION_ERROR,
+        "Unable to initialize quorum device '{model}': {reason}",
+        info={
+            "model": model,
+            "reason": reason,
+        }
+    )
+
+def qdevice_destroy_success(model):
+    """
+    qdevice configuration successfully removed from local host
+    string model qdevice model
+    """
+    return ReportItem.info(
+        report_codes.QDEVICE_DESTROY_SUCCESS,
+        "Quorum device '{model}' configuration files removed",
+        info={
+            "model": model,
+        }
+    )
+
+def qdevice_destroy_error(model, reason):
+    """
+    an error occured when removing qdevice configuration from local host
+    string model qdevice model
+    string reason an error message
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_DESTROY_ERROR,
+        "Unable to destroy quorum device '{model}': {reason}",
+        info={
+            "model": model,
+            "reason": reason,
+        }
+    )
+
 def cman_unsupported_command():
     """
     requested library command is not available as local cluster is CMAN based
@@ -922,4 +991,142 @@ def cman_broadcast_all_rings():
         report_codes.CMAN_BROADCAST_ALL_RINGS,
         "Enabling broadcast for all rings as CMAN does not support "
             + "broadcast in only one ring"
+    )
+
+def service_start_started(service):
+    """
+    system service is being started
+    string service service name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_START_STARTED,
+        "Starting {service}...",
+        info={
+            "service": service,
+        }
+    )
+
+def service_start_error(service, reason):
+    """
+    system service start failed
+    string service service name or description
+    string reason error message
+    """
+    return ReportItem.error(
+        report_codes.SERVICE_START_ERROR,
+        "Unable to start {service}: {reason}",
+        info={
+            "service": service,
+            "reason": reason,
+        }
+    )
+
+def service_start_success(service):
+    """
+    system service was started successfully
+    string service service name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_START_SUCCESS,
+        "{service} started",
+        info={
+            "service": service,
+        }
+    )
+
+def service_stop_started(service):
+    """
+    system service is being stopped
+    string service service name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_STOP_STARTED,
+        "Stopping {service}...",
+        info={
+            "service": service,
+        }
+    )
+
+def service_stop_error(service, reason):
+    """
+    system service stop failed
+    string service service name or description
+    string reason error message
+    """
+    return ReportItem.error(
+        report_codes.SERVICE_STOP_ERROR,
+        "Unable to stop {service}: {reason}",
+        info={
+            "service": service,
+            "reason": reason,
+        }
+    )
+
+def service_stop_success(service):
+    """
+    system service was stopped successfully
+    string service service name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_STOP_SUCCESS,
+        "{service} stopped",
+        info={
+            "service": service,
+        }
+    )
+
+def service_enable_error(service, reason):
+    """
+    system service enable failed
+    string service service name or description
+    string reason error message
+    """
+    return ReportItem.error(
+        report_codes.SERVICE_ENABLE_ERROR,
+        "Unable to enable {service}: {reason}",
+        info={
+            "service": service,
+            "reason": reason,
+        }
+    )
+
+def service_enable_success(service):
+    """
+    system service was enabled successfully
+    string service service name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_ENABLE_SUCCESS,
+        "{service} enabled",
+        info={
+            "service": service,
+        }
+    )
+
+def service_disable_error(service, reason):
+    """
+    system service disable failed
+    string service service name or description
+    string reason error message
+    """
+    return ReportItem.error(
+        report_codes.SERVICE_DISABLE_ERROR,
+        "Unable to disable {service}: {reason}",
+        info={
+            "service": service,
+            "reason": reason,
+        }
+    )
+
+def service_disable_success(service):
+    """
+    system service was disabled successfully
+    string service service name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_DISABLE_SUCCESS,
+        "{service} disabled",
+        info={
+            "service": service,
+        }
     )

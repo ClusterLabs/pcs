@@ -53,12 +53,35 @@ from pcs.common.tools import simple_cache
 from pcs import settings
 
 
-class DisableServiceError(Exception):
+class ManageServiceError(Exception):
+    #pylint: disable=super-init-not-called
+    def __init__(self, service, message=None):
+        self.service = service
+        self.message = message
+
+class DisableServiceError(ManageServiceError):
+    pass
+
+class EnableServiceError(ManageServiceError):
+    pass
+
+class StartServiceError(ManageServiceError):
+    pass
+
+class StopServiceError(ManageServiceError):
     pass
 
 
 def is_path_runnable(path):
     return os.path.isfile(path) and os.access(path, os.X_OK)
+
+
+def is_dir_nonempty(path):
+    if not os.path.exists(path):
+        return False
+    if not os.path.isdir(path):
+        return True
+    return len(os.listdir(path)) > 0
 
 
 @simple_cache
@@ -81,18 +104,69 @@ def is_systemctl():
 def disable_service(runner, service):
     """
     Disable specified service in local system.
-    Raise DisableExceptionError or LibraryError on failure.
+    Raise DisableServiceError or LibraryError on failure.
 
     runner -- CommandRunner
     service -- name of service
     """
     if is_systemctl():
-        _, retval = runner.run(["systemctl", "disable", service + ".service"])
+        output, retval = runner.run([
+            "systemctl", "disable", service + ".service"
+        ])
     else:
-        _, retval = runner.run(["chkconfig", service, "off"])
-
+        output, retval = runner.run(["chkconfig", service, "off"])
     if retval != 0:
-        raise DisableServiceError()
+        raise DisableServiceError(service, output.rstrip())
+
+
+def enable_service(runner, service):
+    """
+    Enable specified service in local system.
+    Raise EnableServiceError or LibraryError on failure.
+
+    runner -- CommandRunner
+    service -- name of service
+    """
+    if is_systemctl():
+        output, retval = runner.run([
+            "systemctl", "enable", service + ".service"
+        ])
+    else:
+        output, retval = runner.run(["chkconfig", service, "on"])
+    if retval != 0:
+        raise EnableServiceError(service, output.rstrip())
+
+
+def start_service(runner, service):
+    """
+    Start specified service in local system
+    CommandRunner runner
+    string service service name
+    """
+    if is_systemctl():
+        output, retval = runner.run([
+            "systemctl", "start", "{0}.service".format(service)
+        ])
+    else:
+        output, retval = runner.run(["service", service, "start"])
+    if retval != 0:
+        raise StartServiceError(service, output.rstrip())
+
+
+def stop_service(runner, service):
+    """
+    Stop specified service in local system
+    CommandRunner runner
+    string service service name
+    """
+    if is_systemctl():
+        output, retval = runner.run([
+            "systemctl", "stop", "{0}.service".format(service)
+        ])
+    else:
+        output, retval = runner.run(["service", service, "stop"])
+    if retval != 0:
+        raise StopServiceError(service, output.rstrip())
 
 
 def is_cman_cluster(runner):
