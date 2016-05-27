@@ -19,6 +19,7 @@ from pcs import (
     node,
     pcsd,
     prop,
+    qdevice,
     quorum,
     resource,
     settings,
@@ -177,6 +178,11 @@ def main(argv=None):
         "pcsd": pcsd.pcsd_cmd,
         "node": node.node_cmd,
         "quorum": lambda argv: quorum.quorum_cmd(
+            utils.get_library_wrapper(),
+            argv,
+            utils.get_modificators()
+        ),
+        "qdevice": lambda argv: qdevice.qdevice_cmd(
             utils.get_library_wrapper(),
             argv,
             utils.get_modificators()

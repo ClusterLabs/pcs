@@ -15,7 +15,7 @@ from pcs.cli.common import middleware
 from pcs.lib.commands.constraint import colocation as constraint_colocation
 from pcs.lib.commands.constraint import order as constraint_order
 from pcs.lib.commands.constraint import ticket as constraint_ticket
-from pcs.lib.commands import quorum
+from pcs.lib.commands import quorum, qdevice
 from pcs.cli.common.reports import (
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
@@ -108,6 +108,19 @@ def load_module(env, middleware_factory, name):
                 "remove_device": quorum.remove_device,
                 "set_options": quorum.set_options,
                 "update_device": quorum.update_device,
+            }
+        )
+    if name == "qdevice":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "setup": qdevice.qdevice_setup,
+                "destroy": qdevice.qdevice_destroy,
+                "start": qdevice.qdevice_start,
+                "stop": qdevice.qdevice_stop,
+                "enable": qdevice.qdevice_enable,
+                "disable": qdevice.qdevice_disable,
             }
         )
 

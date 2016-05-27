@@ -19,6 +19,7 @@ def full_usage():
     out += strip_extras(constraint([],False))
     out += strip_extras(node([],False))
     out += strip_extras(acl([],False))
+    out += strip_extras(qdevice([],False))
     out += strip_extras(quorum([],False))
     out += strip_extras(status([],False))
     out += strip_extras(config([],False))
@@ -108,6 +109,7 @@ def generate_completion_tree_from_usage():
     tree["property"] = generate_tree(property([],False))
     tree["acl"] = generate_tree(acl([],False))
     tree["constraint"] = generate_tree(constraint([],False))
+    tree["qdevice"] = generate_tree(qdevice([],False))
     tree["quorum"] = generate_tree(quorum([],False))
     tree["status"] = generate_tree(status([],False))
     tree["config"] = generate_tree(config([],False))
@@ -161,6 +163,7 @@ Commands:
     constraint  Set resource constraints
     property    Set pacemaker properties
     acl         Set pacemaker access control lists
+    qdevice     Manage quorum device provider
     quorum      Manage cluster quorum settings
     status      View cluster status
     config      View and manage cluster configuration
@@ -1237,6 +1240,41 @@ Commands:
     else:
         return output
 
+def qdevice(args=[], pout=True):
+    output = """
+Usage: pcs qdevice <command>
+Manage quorum device provider
+
+Commands:
+    setup model <device model> [--enable] [--start]
+        Configure specified model of quorum device provider on local host.
+        Quorum device then may be added to clusters by "pcs quorum device add"
+        command.  --start will also start the provider.  --enable will configure
+        the provider to start on local host boot.
+
+    destroy <device model>
+        Disable and stop specified model of quorum device provider and delete
+        its configuration files.
+
+    start <device model>
+        Start specified model of quorum device provider on local host.
+
+    stop <device model>
+        Stop specified model of quorum device provider on local host.
+
+    enable <device model>
+        Configure specified model of quorum device provider to start on local
+        host boot.
+
+    disable <device model>
+        Configure specified model of quorum device provider to not start
+        on local host boot.
+"""
+    if pout:
+        print(sub_usage(args, output))
+    else:
+        return output
+
 def quorum(args=[], pout=True):
     output = """
 Usage: pcs quorum <command>
@@ -1247,7 +1285,8 @@ Commands:
         Show quorum configuration.
 
     device add [generic options] model <device model> [model options]
-        Add quorum device to cluster.
+        Add quorum device to cluster.  Quorum device needs to be created first
+        by "pcs qdevice setup" command.
 
     device remove
         Remove quorum device from cluster.
@@ -1275,6 +1314,7 @@ def show(main_usage_name, rest_usage_names):
         "node": node,
         "pcsd": pcsd,
         "property": property,
+        "qdevice": qdevice,
         "quorum": quorum,
         "resource": resource,
         "status": status,

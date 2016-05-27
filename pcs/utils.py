@@ -2640,11 +2640,13 @@ def get_modificators():
     #there is possible create class extending dict, so dict like access in
     #commands is not an issue
     return {
-        "full": "--full" in pcs_options,
         "autocorrect": "--autocorrect" in pcs_options,
-        "force": "--force" in pcs_options,
-        "skip_offline_nodes": "--skip-offline" in pcs_options,
         "corosync_conf": pcs_options.get("--corosync_conf", None),
+        "enable": "--enable" in pcs_options,
+        "force": "--force" in pcs_options,
+        "full": "--full" in pcs_options,
+        "skip_offline_nodes": "--skip-offline" in pcs_options,
+        "start": "--start" in pcs_options,
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):
