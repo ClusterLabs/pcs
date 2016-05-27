@@ -461,7 +461,7 @@ ticket show [\fB\-\-full\fR]
 List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 ticket set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
-Create a ticket constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Required constraint option is ticket. Available constraint option is loss-policy=fence/stop/freeze/demote 
+Create a ticket constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Required constraint option is ticket. Optional constraint option is loss-policy=fence/stop/freeze/demote 
 .TP
 ticket add <ticket> [<role>] <resource id> [options] [id=constraint\-id]
 Crate a ticket constraint for <resource id>. Available option is loss-policy=fence/stop/freeze/demote. A role can be master, slave, started or stopped.
@@ -507,10 +507,10 @@ device remove
 Remove quorum device from cluster.
 .TP
 device update [generic options] [model <model options>]
-Add/Change quorum device options.
+Add/Change quorum device options.  Requires cluster to be stopped.
 .TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
-Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.
+Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.  Requires cluster to be stopped.
 .SS "status"
 .TP
 [status] [\fB\-\-full\fR | \fB\-\-hide-inactive\fR]
