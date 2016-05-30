@@ -17,7 +17,7 @@ from pcs import (
     utils,
 )
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.resource_agent as lib_ra
 
 def stonith_cmd(argv):
@@ -110,6 +110,12 @@ def stonith_list_available(argv):
                     sd = " - " + resource.format_desc(
                         len(agent_name) + 3, shortdesc
                     )
+            except lib_ra.ResourceAgentLibError as e:
+                utils.process_library_reports([
+                    lib_ra.resource_agent_lib_error_to_report_item(
+                        e, ReportItemSeverity.WARNING
+                    )
+                ])
             except LibraryError as e:
                 utils.err(
                     e.args[-1].message, False
@@ -124,6 +130,10 @@ def stonith_list_options(stonith_agent):
         desc = lib_ra.get_agent_desc(metadata)
         params = lib_ra.get_fence_agent_parameters(runner, metadata)
         resource.resource_print_options(stonith_agent, desc, params)
+    except lib_ra.ResourceAgentLibError as e:
+        utils.process_library_reports(
+            [lib_ra.resource_agent_lib_error_to_report_item(e)]
+        )
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
@@ -148,6 +158,17 @@ def stonith_create(argv):
                 meta for meta in meta_values if not meta.startswith("provides=")
             ]
             meta_values.append("provides=unfencing")
+    except lib_ra.ResourceAgentLibError as e:
+        forced = utils.get_modificators().get("force", False)
+        if forced:
+            severity = ReportItemSeverity.WARNING
+        else:
+            severity = ReportItemSeverity.ERROR
+        utils.process_library_reports([
+            lib_ra.resource_agent_lib_error_to_report_item(
+                e, severity, not forced
+            )
+        ])
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
@@ -400,5 +421,9 @@ def get_fence_agent_info(argv):
         )
 
         print(json.dumps(metadata))
-    except lib_ra.LibraryError as e:
+    except lib_ra.ResourceAgentLibError as e:
+        utils.process_library_reports(
+            [lib_ra.resource_agent_lib_error_to_report_item(e)]
+        )
+    except LibraryError as e:
         utils.process_library_reports(e.args)

@@ -1160,3 +1160,82 @@ def service_disable_success(service):
             "service": service,
         }
     )
+
+
+def invalid_metadata_format(severity=ReportItemSeverity.ERROR, forceable=None):
+    """
+    Invalid format of metadata
+    """
+    return ReportItem(
+        report_codes.INVALID_METADATA_FORMAT,
+        severity,
+        "Invalid metadata format",
+        forceable=forceable
+    )
+
+
+def unable_to_get_agent_metadata(
+    agent, reason, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    There were some issues trying to get metadata of agent
+
+    agent -- agent which metadata were unable to obtain
+    reason -- reason of failure
+    """
+    return ReportItem(
+        report_codes.UNABLE_TO_GET_AGENT_METADATA,
+        severity,
+        "Unable to get metadata of '{agent}': {reason}",
+        info={
+            "agent": agent,
+            "reason": reason
+        },
+        forceable=forceable
+    )
+
+
+def agent_not_found(agent, severity=ReportItemSeverity.ERROR, forceable=None):
+    """
+    Specified agent doesn't exist
+
+    agent -- name of agent which doesn't exist
+    """
+    return ReportItem(
+        report_codes.AGENT_NOT_FOUND,
+        severity,
+        "Agent '{agent}' not found",
+        info={"agent": agent},
+        forceable=forceable
+    )
+
+
+def agent_not_supported(
+    agent, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Specified agent is not supported
+
+    agent -- name of agent which is not supported
+    """
+    return ReportItem(
+        report_codes.UNSUPPORTED_AGENT,
+        severity,
+        "Agent '{agent}' is not supported",
+        info={"agent": agent},
+        forceable=forceable
+    )
+
+
+def resource_agent_general_error(agent=None):
+    """
+    General not specific error of resource or fence agent.
+
+    agent -- agent name
+    """
+    msg = "Unspecified problem of resource/fence agent"
+    return ReportItem.error(
+        report_codes.AGENT_GENERAL_ERROR,
+        msg if agent is None else msg + " '{agent}'",
+        info={"agent": agent}
+    )

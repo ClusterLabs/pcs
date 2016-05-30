@@ -92,6 +92,31 @@ class AssertPcsMixin(object):
             return console_report(*output)
         return output
 
+    def assert_raises(
+        self, expected_exception, callable_obj, property_dict=None
+    ):
+        if property_dict is None:
+            property_dict = {}
+        try:
+            callable_obj()
+            raise AssertionError(
+                "No exception raised. Expected exception: {exception}".format(
+                    exception=expected_exception.__class__.__name__
+                )
+            )
+        except expected_exception as e:
+            for prop, value in property_dict.items():
+                try:
+                    self.assertEqual(value, getattr(e, prop))
+                except AttributeError:
+                    raise AssertionError(
+                        "Property {property} doesn't exist in exception"
+                        " {exception}".format(
+                            property=prop,
+                            exception=expected_exception.__class__.__name__
+                        )
+                    )
+
 
 def assert_xml_equal(expected_xml, got_xml):
     checker = LXMLOutputChecker()

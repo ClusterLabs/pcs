@@ -1451,6 +1451,10 @@ def get_default_op_values(ra_type):
         lib_ra.UnableToGetAgentMetadata
     ):
         return []
+    except lib_ra.ResourceAgentLibError as e:
+        process_library_reports(
+            [lib_ra.resource_agent_lib_error_to_report_item(e)]
+        )
     except LibraryError as e:
         process_library_reports(e.args)
 
@@ -1495,7 +1499,7 @@ def is_valid_resource(resource, caseInsensitiveCheck=False):
         return True
     except lib_ra.UnsupportedResourceAgent:
         pass
-    except LibraryError:
+    except (lib_ra.ResourceAgentLibError, LibraryError):
         # agent not exists or obtaining metadata failed
         return False
 
@@ -1534,7 +1538,7 @@ def is_valid_resource(resource, caseInsensitiveCheck=False):
                     "ocf:{0}:{1}".format(provider, resource)
                 )
                 return True
-            except LibraryError:
+            except (LibraryError, lib_ra.ResourceAgentLibError):
                 continue
     return False
 

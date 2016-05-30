@@ -11,21 +11,19 @@ import os.path
 from lxml import etree
 
 from pcs.test.tools.assertions import (
-    assert_raise_library_error,
     assert_xml_equal,
+    AssertPcsMixin,
 )
 from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.xml import XmlManipulation as XmlMan
 
 
 from pcs import settings
-from pcs.common import report_codes
 from pcs.lib import resource_agent as lib_ra
-from pcs.lib.errors import ReportItemSeverity as Severities
 from pcs.lib.external import CommandRunner
 
 
-class LibraryResourceTest(TestCase):
+class LibraryResourceTest(TestCase, AssertPcsMixin):
     pass
 
 
@@ -68,14 +66,9 @@ class GetParameterTest(LibraryResourceTest):
 
     def test_no_name(self):
         xml = '<parameter />'
-        assert_raise_library_error(
-            lambda: lib_ra._get_parameter(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_parameter(etree.XML(xml))
         )
 
     def test_invalid_element(self):
@@ -88,14 +81,9 @@ class GetParameterTest(LibraryResourceTest):
                 <content type="test_type" default="default_value" />
             </param>
         """
-        assert_raise_library_error(
-            lambda: lib_ra._get_parameter(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_parameter(etree.XML(xml))
         )
 
 
@@ -161,14 +149,9 @@ class GetAgentParametersTest(LibraryResourceTest):
                 </parameters>
             </resource-agent>
         """
-        assert_raise_library_error(
-            lambda: lib_ra._get_agent_parameters(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_agent_parameters(etree.XML(xml))
         )
 
 
@@ -178,15 +161,10 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_obj.return_value = True
         agent_name = "agent"
-
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.AgentNotFound,
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": agent_name},
-                True
-            )
+            {"agent": agent_name}
         )
 
         mock_runner.run.assert_not_called()
@@ -196,15 +174,10 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_obj.return_value = True
         agent_name = "fence_agent/../fence"
-
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.AgentNotFound,
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": agent_name},
-                True
-            )
+            {"agent": agent_name}
         )
 
         mock_runner.run.assert_not_called()
@@ -215,33 +188,24 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_obj.return_value = False
         agent_name = "fence_agent"
 
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.AgentNotFound,
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": agent_name},
-                True
-            )
+            {"agent": agent_name}
         )
-
         mock_runner.run.assert_not_called()
 
     @mock.patch("pcs.lib.resource_agent.is_path_runnable")
     def test_execution_failed(self, mock_is_runnable):
         mock_is_runnable.return_value = True
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("", 1)
+        mock_runner.run.return_value = ("error", 1)
         agent_name = "fence_ipmi"
 
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnableToGetAgentMetadata,
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
-            (
-                Severities.ERROR,
-                report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": agent_name},
-                True
-            )
+            {"agent": agent_name}
         )
 
         script_path = os.path.join(settings.fence_agent_binaries, agent_name)
@@ -255,15 +219,10 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         mock_runner.run.return_value = ("not xml", 0)
         mock_is_runnable.return_value = True
         agent_name = "fence_ipmi"
-
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnableToGetAgentMetadata,
             lambda: lib_ra.get_fence_agent_metadata(mock_runner, agent_name),
-            (
-                Severities.ERROR,
-                report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": agent_name},
-                True
-            )
+            {"agent": agent_name}
         )
 
         script_path = os.path.join(settings.fence_agent_binaries, agent_name)
@@ -296,16 +255,12 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider/../provider2"
         agent = "agent"
 
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.AgentNotFound,
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
-                True
-            )
+            {"agent": "ocf:{0}:{1}".format(provider, agent)}
         )
 
         mock_runner.run.assert_not_called()
@@ -317,16 +272,12 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider"
         agent = "agent/../agent2"
 
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.AgentNotFound,
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
-                True
-            )
+            {"agent": "ocf:{0}:{1}".format(provider, agent)}
         )
 
         mock_runner.run.assert_not_called()
@@ -338,16 +289,12 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider"
         agent = "agent"
 
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.AgentNotFound,
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
-                True
-            )
+            {"agent": "ocf:{0}:{1}".format(provider, agent)}
         )
 
         mock_runner.run.assert_not_called()
@@ -357,19 +304,15 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider"
         agent = "agent"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("", 1)
+        mock_runner.run.return_value = ("error", 1)
         mock_is_runnable.return_value = True
 
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnableToGetAgentMetadata,
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
-            (
-                Severities.ERROR,
-                report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
-                True
-            )
+            {"agent": "ocf:{0}:{1}".format(provider, agent)}
         )
 
         script_path = os.path.join(settings.ocf_resources, provider, agent)
@@ -387,16 +330,12 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         mock_runner.run.return_value = ("not xml", 0)
         mock_is_runnable.return_value = True
 
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnableToGetAgentMetadata,
             lambda: lib_ra._get_ocf_resource_agent_metadata(
                 mock_runner, provider, agent
             ),
-            (
-                Severities.ERROR,
-                report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "ocf:{0}:{1}".format(provider, agent)},
-                True
-            )
+            {"agent": "ocf:{0}:{1}".format(provider, agent)}
         )
 
         script_path = os.path.join(settings.ocf_resources, provider, agent)
@@ -431,42 +370,30 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
 class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
     def test_relative_path_name(self):
         agent = "agent/../agent2"
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.AgentNotFound,
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_RESOURCE_NAME,
-                {"agent_name": "nagios:" + agent},
-                True
-            )
+            {"agent": "nagios:" + agent}
         )
 
     @mock.patch("lxml.etree.parse")
     def test_file_opening_exception(self, mock_obj):
         agent = "agent"
         mock_obj.side_effect = IOError()
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnableToGetAgentMetadata,
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
-            (
-                Severities.ERROR,
-                report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "nagios:" + agent},
-                True
-            )
+            {"agent": "nagios:" + agent}
         )
 
     @mock.patch("lxml.etree.parse")
     def test_invalid_xml(self, mock_obj):
         agent = "agent"
         mock_obj.side_effect = etree.XMLSyntaxError(None, None, None, None)
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnableToGetAgentMetadata,
             lambda: lib_ra._get_nagios_resource_agent_metadata(agent),
-            (
-                Severities.ERROR,
-                report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent_name": "nagios:" + agent},
-                True
-            )
+            {"agent": "nagios:" + agent}
         )
 
     @mock.patch("lxml.etree.parse")
@@ -486,14 +413,9 @@ class GetNagiosResourceAgentMetadataTest(LibraryResourceTest):
 class GetAgentDescTest(LibraryResourceTest):
     def test_invalid_metadata_format(self):
         xml = "<xml />"
-        assert_raise_library_error(
-            lambda: lib_ra.get_agent_desc(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra.get_agent_desc(etree.XML(xml))
         )
 
     def test_no_desc(self):
@@ -586,15 +508,10 @@ class GetResourceAgentMetadata(LibraryResourceTest):
     def test_unsupported_class(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         agent = "class:provider:agent"
-
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnsupportedResourceAgent,
             lambda: lib_ra.get_resource_agent_metadata(mock_runner, agent),
-            (
-                Severities.ERROR,
-                report_codes.UNSUPPORTED_RESOURCE_AGENT,
-                {},
-                True
-            )
+            {"agent": agent}
         )
 
         mock_runner.run.assert_not_called()
@@ -603,14 +520,10 @@ class GetResourceAgentMetadata(LibraryResourceTest):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         agent = "ocf:agent"
 
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnsupportedResourceAgent,
             lambda: lib_ra.get_resource_agent_metadata(mock_runner, agent),
-            (
-                Severities.ERROR,
-                report_codes.UNSUPPORTED_RESOURCE_AGENT,
-                {},
-                True
-            )
+            {"agent": agent}
         )
 
         mock_runner.run.assert_not_called()
@@ -687,15 +600,12 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
     def test_failed_to_get_xml(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = ("", 1)
-        assert_raise_library_error(
+        self.assert_raises(
+            lib_ra.UnableToGetAgentMetadata,
             lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner),
-            (
-                Severities.ERROR,
-                report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {},
-                True
-            )
+            {"agent": "stonithd"}
         )
+
         mock_runner.run.assert_called_once_with(
             [settings.stonithd_binary, "metadata"], ignore_stderr=True
         )
@@ -703,15 +613,11 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
     def test_invalid_xml(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = ("invalid XML", 0)
-        assert_raise_library_error(
-            lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner)
         )
+
         mock_runner.run.assert_called_once_with(
             [settings.stonithd_binary, "metadata"], ignore_stderr=True
         )
@@ -741,38 +647,23 @@ class GetActionTest(LibraryResourceTest):
 
     def test_empty(self):
         xml = '<action />'
-        assert_raise_library_error(
-            lambda: lib_ra._get_action(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_action(etree.XML(xml))
         )
 
     def test_no_name(self):
         xml = '<action param="value" another_param="same_value" />'
-        assert_raise_library_error(
-            lambda: lib_ra._get_action(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_action(etree.XML(xml))
         )
 
     def test_not_action_element(self):
         xml = '<actions param="value" another_param="same_value" />'
-        assert_raise_library_error(
-            lambda: lib_ra._get_action(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_action(etree.XML(xml))
         )
 
 
@@ -810,14 +701,9 @@ class GetAgentActionsTest(LibraryResourceTest):
                 </actions>
             </agent>
         """
-        assert_raise_library_error(
-            lambda: lib_ra._get_action(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_action(etree.XML(xml))
         )
 
     def test_action_without_name(self):
@@ -831,14 +717,9 @@ class GetAgentActionsTest(LibraryResourceTest):
                 </actions>
             </resource-agent>
         """
-        assert_raise_library_error(
-            lambda: lib_ra._get_action(etree.XML(xml)),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_METADATA_FORMAT,
-                {},
-                True
-            )
+        self.assertRaises(
+            lib_ra.InvalidMetadataFormat,
+            lambda: lib_ra._get_action(etree.XML(xml))
         )
 
     def test_empty_actions(self):

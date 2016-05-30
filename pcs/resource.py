@@ -278,7 +278,7 @@ def resource_list_available(argv):
                     full_res_name,
                     lib_ra.get_agent_desc(metadata)["shortdesc"]
                 ))
-            except LibraryError:
+            except (LibraryError, lib_ra.ResourceAgentLibError):
                 pass
 
     # lsb agents
@@ -317,7 +317,7 @@ def resource_list_available(argv):
                     full_res_name,
                     lib_ra.get_agent_desc(metadata)["shortdesc"]
                 ))
-            except LibraryError:
+            except (LibraryError, lib_ra.ResourceAgentLibError):
                 pass
 
     # output
@@ -386,6 +386,10 @@ def resource_list_options(resource):
         return
     except lib_ra.UnsupportedResourceAgent:
         pass
+    except lib_ra.ResourceAgentLibError as e:
+        utils.process_library_reports(
+            [lib_ra.resource_agent_lib_error_to_report_item(e)]
+        )
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
@@ -401,7 +405,7 @@ def resource_list_options(resource):
             descriptions, parameters = get_desc_params(agent)
             resource_print_options(agent, descriptions, parameters)
             return
-        except LibraryError:
+        except (LibraryError, lib_ra.ResourceAgentLibError):
             pass
 
     # still not found, now lets look at nagios plugins
@@ -410,7 +414,7 @@ def resource_list_options(resource):
             agent = "nagios:" + resource
             descriptions, parameters = get_desc_params(agent)
             resource_print_options(agent, descriptions, parameters)
-        except LibraryError:
+        except (LibraryError, lib_ra.ResourceAgentLibError):
             utils.err("Unable to find resource: {0}".format(resource))
 
 # Return the string formatted with a line length of 79 and indented
@@ -557,6 +561,10 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
                 utils.cmd_runner(),
                 dict(params),
                 get_full_ra_type(ra_type, True)
+            )
+        except lib_ra.ResourceAgentLibError as e:
+            utils.process_library_reports(
+                [lib_ra.resource_agent_lib_error_to_report_item(e)]
             )
         except LibraryError as e:
             utils.process_library_reports(e.args)
@@ -895,6 +903,10 @@ def resource_update(res_id,args):
         try:
             bad_opts, _ = lib_ra.validate_instance_attributes(
                 utils.cmd_runner(), dict(params), resource_type
+            )
+        except lib_ra.ResourceAgentLibError as e:
+            utils.process_library_reports(
+                [lib_ra.resource_agent_lib_error_to_report_item(e)]
             )
         except LibraryError as e:
             utils.process_library_reports(e.args)
@@ -2833,5 +2845,9 @@ def get_resource_agent_info(argv):
         )
 
         print(json.dumps(metadata))
-    except lib_ra.LibraryError as e:
+    except lib_ra.ResourceAgentLibError as e:
+        utils.process_library_reports(
+            [lib_ra.resource_agent_lib_error_to_report_item(e)]
+        )
+    except LibraryError as e:
         utils.process_library_reports(e.args)

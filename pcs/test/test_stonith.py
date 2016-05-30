@@ -26,10 +26,10 @@ class StonithTest(unittest.TestCase):
     def testStonithCreation(self):
         output, returnVal = pcs(temp_cib, "stonith create test1 fence_noxist")
         assert returnVal == 1
-        assert output == "Error: fence agent 'fence_noxist' not found, use --force to override\n"
+        assert output == "Error: Agent 'fence_noxist' not found, use --force to override\n"
 
         output, returnVal = pcs(temp_cib, "stonith create test1 fence_noxist --force")
-        ac(output, "Warning: fence agent 'fence_noxist' not found\n")
+        ac(output, "Warning: Agent 'fence_noxist' not found\n")
         self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(temp_cib, "stonith create test2 fence_apc")
