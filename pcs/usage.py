@@ -1243,32 +1243,35 @@ Commands:
 def qdevice(args=[], pout=True):
     output = """
 Usage: pcs qdevice <command>
-Manage quorum device provider
+Manage quorum device provider on the local host
 
 Commands:
     setup model <device model> [--enable] [--start]
-        Configure specified model of quorum device provider on local host.
-        Quorum device then may be added to clusters by "pcs quorum device add"
-        command.  --start will also start the provider.  --enable will configure
-        the provider to start on local host boot.
+        Configure specified model of quorum device provider.  Quorum device then
+        may be added to clusters by "pcs quorum device add" command.
+        --start will also start the provider.  --enable will configure
+        the provider to start on boot.
 
     destroy <device model>
         Disable and stop specified model of quorum device provider and delete
         its configuration files.
 
     start <device model>
-        Start specified model of quorum device provider on local host.
+        Start specified model of quorum device provider.
 
     stop <device model>
-        Stop specified model of quorum device provider on local host.
+        Stop specified model of quorum device provider.
+
+    kill <device model>
+        Force specified model of quorum device provider to stop (performs
+        kill -9).
 
     enable <device model>
-        Configure specified model of quorum device provider to start on local
-        host boot.
+        Configure specified model of quorum device provider to start on boot.
 
     disable <device model>
         Configure specified model of quorum device provider to not start
-        on local host boot.
+        on boot.
 """
     if pout:
         print(sub_usage(args, output))

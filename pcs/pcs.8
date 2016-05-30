@@ -40,7 +40,7 @@ acl
 Set pacemaker access control lists
 .TP
 qdevice
-Manage quorum device provider
+Manage quorum device provider on the local host
 .TP
 quorum
 Manage cluster quorum settings
@@ -501,22 +501,25 @@ Remove a rule if a rule id is specified, if rule is last rule in its constraint,
 .SS "qdevice"
 .TP
 setup model <device model> [\fB\-\-enable\fR] [\fB\-\-start\fR]
-Configure specified model of quorum device provider on local host.  Quorum device then may be added to clusters by "pcs quorum device add" command.  \fB\-\-start\fR will also start the provider.  \fB\-\-enable\fR will configure the provider to start on local host boot.
+Configure specified model of quorum device provider.  Quorum device then may be added to clusters by "pcs quorum device add" command.  \fB\-\-start\fR will also start the provider.  \fB\-\-enable\fR will configure the provider to start on boot.
 .TP
 destroy <device model>
 Disable and stop specified model of quorum device provider and delete its configuration files.
 .TP
 start <device model>
-Start specified model of quorum device provider on local host.
+Start specified model of quorum device provider.
 .TP
 stop <device model>
-Stop specified model of quorum device provider on local host.
+Stop specified model of quorum device provider.
+.TP
+kill <device model>
+Force specified model of quorum device provider to stop (performs kill -9).
 .TP
 enable <device model>
-Configure specified model of quorum device provider to start on local host boot.
+Configure specified model of quorum device provider to start on boot.
 .TP
 disable <device model>
-Configure specified model of quorum device provider to not start on local host boot.
+Configure specified model of quorum device provider to not start on boot.
 .SS "quorum"
 .TP
 config

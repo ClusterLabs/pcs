@@ -119,6 +119,7 @@ def load_module(env, middleware_factory, name):
                 "destroy": qdevice.qdevice_destroy,
                 "start": qdevice.qdevice_start,
                 "stop": qdevice.qdevice_stop,
+                "kill": qdevice.qdevice_kill,
                 "enable": qdevice.qdevice_enable,
                 "disable": qdevice.qdevice_disable,
             }

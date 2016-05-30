@@ -31,6 +31,8 @@ def qdevice_cmd(lib, argv, modifiers):
             qdevice_start_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "stop":
             qdevice_stop_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "kill":
+            qdevice_kill_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "enable":
             qdevice_enable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
@@ -67,6 +69,12 @@ def qdevice_stop_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     model = argv[0]
     lib.qdevice.stop(model)
+
+def qdevice_kill_cmd(lib, argv, modifiers):
+    if len(argv) != 1:
+        raise CmdLineInputError()
+    model = argv[0]
+    lib.qdevice.kill(model)
 
 def qdevice_enable_cmd(lib, argv, modifiers):
     if len(argv) != 1:
