@@ -36,6 +36,55 @@ class QdeviceTestCase(TestCase):
         self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
 
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
+class QdeviceDisabledOnCmanTest(QdeviceTestCase):
+    def base_test(self, func):
+        assert_raise_library_error(
+            func,
+            (
+                severity.ERROR,
+                report_codes.CMAN_UNSUPPORTED_COMMAND,
+                {}
+            )
+        )
+
+    def test_setup(self):
+        self.base_test(
+            lambda: lib.qdevice_setup(self.lib_env, "bad model", False, False)
+        )
+
+    def test_destroy(self):
+        self.base_test(
+            lambda: lib.qdevice_destroy(self.lib_env, "bad model")
+        )
+
+    def test_enable(self):
+        self.base_test(
+            lambda: lib.qdevice_enable(self.lib_env, "bad model")
+        )
+
+    def test_disable(self):
+        self.base_test(
+            lambda: lib.qdevice_disable(self.lib_env, "bad model")
+        )
+
+    def test_start(self):
+        self.base_test(
+            lambda: lib.qdevice_start(self.lib_env, "bad model")
+        )
+
+    def test_stop(self):
+        self.base_test(
+            lambda: lib.qdevice_stop(self.lib_env, "bad model")
+        )
+
+    def test_kill(self):
+        self.base_test(
+            lambda: lib.qdevice_kill(self.lib_env, "bad model")
+        )
+
+
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 class QdeviceBadModelTest(QdeviceTestCase):
     def base_test(self, func):
         assert_raise_library_error(
@@ -90,6 +139,7 @@ class QdeviceBadModelTest(QdeviceTestCase):
 @mock.patch("pcs.lib.external.start_service")
 @mock.patch("pcs.lib.external.enable_service")
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_setup")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 @mock.patch.object(
     LibraryEnvironment,
     "cmd_runner",
@@ -263,6 +313,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
 @mock.patch("pcs.lib.external.stop_service")
 @mock.patch("pcs.lib.external.disable_service")
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_destroy")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 @mock.patch.object(
     LibraryEnvironment,
     "cmd_runner",
@@ -439,6 +490,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
 
 
 @mock.patch("pcs.lib.external.enable_service")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 @mock.patch.object(
     LibraryEnvironment,
     "cmd_runner",
@@ -482,6 +534,7 @@ class QdeviceNetEnableTest(QdeviceTestCase):
 
 
 @mock.patch("pcs.lib.external.disable_service")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 @mock.patch.object(
     LibraryEnvironment,
     "cmd_runner",
@@ -531,6 +584,7 @@ class QdeviceNetDisableTest(QdeviceTestCase):
 
 
 @mock.patch("pcs.lib.external.start_service")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 @mock.patch.object(
     LibraryEnvironment,
     "cmd_runner",
@@ -593,6 +647,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
 
 
 @mock.patch("pcs.lib.external.stop_service")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 @mock.patch.object(
     LibraryEnvironment,
     "cmd_runner",
@@ -655,6 +710,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
 
 
 @mock.patch("pcs.lib.external.kill_services")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 @mock.patch.object(
     LibraryEnvironment,
     "cmd_runner",
