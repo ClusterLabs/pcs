@@ -1040,6 +1040,36 @@ class StopServiceTest(TestCase):
         )
 
 
+class KillServicesTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+        self.services = ["service1", "service2"]
+
+    def test_success(self):
+        self.mock_runner.run.return_value = ("", 0)
+        lib.kill_services(self.mock_runner, self.services)
+        self.mock_runner.run.assert_called_once_with(
+            ["killall", "--quiet", "--signal", "9", "--"] + self.services
+        )
+
+    def test_failed(self):
+        self.mock_runner.run.return_value = ("error", 1)
+        self.assertRaises(
+            lib.KillServicesError,
+            lambda: lib.kill_services(self.mock_runner, self.services)
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["killall", "--quiet", "--signal", "9", "--"] + self.services
+        )
+
+    def test_service_not_running(self):
+        self.mock_runner.run.return_value = ("", 1)
+        lib.kill_services(self.mock_runner, self.services)
+        self.mock_runner.run.assert_called_once_with(
+            ["killall", "--quiet", "--signal", "9", "--"] + self.services
+        )
+
+
 @mock.patch("os.listdir")
 @mock.patch("os.path.isdir")
 @mock.patch("os.path.exists")

@@ -66,6 +66,13 @@ def qdevice_stop(lib_env, model):
     _check_model(model)
     _service_stop(lib_env, qdevice_net.qdevice_stop)
 
+def qdevice_kill(lib_env, model):
+    """
+    kill qdevice now on local host
+    """
+    _check_model(model)
+    _service_kill(lib_env, qdevice_net.qdevice_kill)
+
 def _check_model(model):
     if model != "net":
         raise LibraryError(
@@ -98,6 +105,17 @@ def _service_stop(lib_env, func):
         )
     lib_env.report_processor.process(
         reports.service_stop_success("quorum device")
+    )
+
+def _service_kill(lib_env, func):
+    try:
+        func(lib_env.cmd_runner())
+    except external.KillServicesError as e:
+        raise LibraryError(
+            reports.service_kill_error(e.service, e.message)
+        )
+    lib_env.report_processor.process(
+        reports.service_kill_success(["quorum device"])
     )
 
 def _service_enable(lib_env, func):

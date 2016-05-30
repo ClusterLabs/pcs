@@ -1075,6 +1075,36 @@ def service_stop_success(service):
         }
     )
 
+def service_kill_error(services, reason):
+    """
+    system services kill failed
+    iterable services services name or description
+    string reason error message
+    """
+    return ReportItem.error(
+        report_codes.SERVICE_KILL_ERROR,
+        "Unable to kill {services_str}: {reason}",
+        info={
+            "services": services,
+            "services_str": ", ".join(services),
+            "reason": reason,
+        }
+    )
+
+def service_kill_success(services):
+    """
+    system services were killed successfully
+    iterable services services name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_KILL_SUCCESS,
+        "{services_str} killed",
+        info={
+            "services": services,
+            "services_str": ", ".join(services),
+        }
+    )
+
 def service_enable_error(service, reason):
     """
     system service enable failed

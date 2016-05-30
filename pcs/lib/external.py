@@ -71,6 +71,9 @@ class StartServiceError(ManageServiceError):
 class StopServiceError(ManageServiceError):
     pass
 
+class KillServicesError(ManageServiceError):
+    pass
+
 
 def is_path_runnable(path):
     return os.path.isfile(path) and os.access(path, os.X_OK)
@@ -167,6 +170,24 @@ def stop_service(runner, service):
         output, retval = runner.run(["service", service, "stop"])
     if retval != 0:
         raise StopServiceError(service, output.rstrip())
+
+
+def kill_services(runner, services):
+    """
+    Kill specified services in local system
+    CommandRunner runner
+    iterable services service names
+    """
+    # make killall not report that a process is not running
+    output, retval = runner.run(
+        ["killall", "--quiet", "--signal", "9", "--"] + list(services)
+    )
+    # If a process isn't running, killall will still return 1 even with --quiet.
+    # We don't consider that an error, so we check for output string as well.
+    # If it's empty, no actuall error happened.
+    if retval != 0:
+        if output.strip():
+            raise KillServicesError(list(services), output.rstrip())
 
 
 def is_cman_cluster(runner):

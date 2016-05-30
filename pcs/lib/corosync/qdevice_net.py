@@ -66,3 +66,9 @@ def qdevice_stop(runner):
     stop qdevice now on local host
     """
     external.stop_service(runner, __service_name)
+
+def qdevice_kill(runner):
+    """
+    kill qdevice now on local host
+    """
+    external.kill_services(runner, [__service_name])

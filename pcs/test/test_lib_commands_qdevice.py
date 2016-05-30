@@ -23,6 +23,7 @@ from pcs.lib.external import (
     EnableServiceError,
     StartServiceError,
     StopServiceError,
+    KillServicesError,
 )
 
 import pcs.lib.commands.qdevice as lib
@@ -78,6 +79,11 @@ class QdeviceBadModelTest(QdeviceTestCase):
     def test_stop(self):
         self.base_test(
             lambda: lib.qdevice_stop(self.lib_env, "bad model")
+        )
+
+    def test_kill(self):
+        self.base_test(
+            lambda: lib.qdevice_kill(self.lib_env, "bad model")
         )
 
 
@@ -645,4 +651,53 @@ class QdeviceNetStopTest(QdeviceTestCase):
                     }
                 )
             ]
+        )
+
+
+@mock.patch("pcs.lib.external.kill_services")
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+class QdeviceNetKillTest(QdeviceTestCase):
+    def test_success(self, mock_net_kill):
+        lib.qdevice_kill(self.lib_env, "net")
+        mock_net_kill.assert_called_once_with(
+            "mock_runner",
+            ["corosync-qnetd"]
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_KILL_SUCCESS,
+                    {
+                        "services": ["quorum device"],
+                    }
+                )
+            ]
+        )
+
+    def test_failed(self, mock_net_kill):
+        mock_net_kill.side_effect = KillServicesError(
+            ["test service"],
+            "test error"
+        )
+
+        assert_raise_library_error(
+            lambda: lib.qdevice_kill(self.lib_env, "net"),
+            (
+                severity.ERROR,
+                report_codes.SERVICE_KILL_ERROR,
+                {
+                    "services": ["test service"],
+                    "reason": "test error",
+                }
+            )
+        )
+        mock_net_kill.assert_called_once_with(
+            "mock_runner",
+            ["corosync-qnetd"]
         )
