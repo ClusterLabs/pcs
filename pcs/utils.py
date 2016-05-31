@@ -58,7 +58,7 @@ except ImportError:
 from pcs import settings, usage
 from pcs.common import report_codes
 from pcs.cli.common.reports import (
-    process_library_reports as process_lib_reports,
+    process_library_reports,
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
 from pcs.common.tools import simple_cache
@@ -727,7 +727,7 @@ def check_qdevice_algorithm_and_running_cluster(corosync_conf, add=True):
                     reports.qdevice_remove_or_cluster_stop_needed()
                 )
                 break
-        process_lib_reports(report_item_list)
+        process_library_reports(report_item_list)
 
 def getNextNodeID(corosync_conf):
     currentNodes = []
@@ -2027,12 +2027,6 @@ def err(errorText, exit_after_error=True):
     if exit_after_error:
         sys.exit(1)
 
-
-def process_library_reports(report_item_list):
-    """
-    report_item_list list of ReportItem
-    """
-    process_lib_reports(report_item_list, "--force" in pcs_options)
 
 def serviceStatus(prefix):
     if not is_systemctl():

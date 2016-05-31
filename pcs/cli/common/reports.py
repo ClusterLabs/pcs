@@ -49,7 +49,7 @@ def _build_report_message(report_item, force_text=""):
 
     return get_template(report_item).format(force=force_text)
 
-def process_library_reports(report_item_list, is_forced=False):
+def process_library_reports(report_item_list):
     """
     report_item_list list of ReportItem
     """
@@ -61,13 +61,6 @@ def process_library_reports(report_item_list, is_forced=False):
 
         if report_item.severity != ReportItemSeverity.ERROR:
             print(report_item.message)
-            continue
-
-        if report_item.forceable and is_forced:
-            # Let the user know what may be wrong even when --force is used,
-            # as it may be used for override early errors hiding later
-            # errors otherwise.
-            print("Warning: " + report_item.message)
             continue
 
         sys.stderr.write('Error: {0}\n'.format(_build_report_message(
