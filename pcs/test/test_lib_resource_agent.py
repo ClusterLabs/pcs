@@ -11,8 +11,8 @@ import os.path
 from lxml import etree
 
 from pcs.test.tools.assertions import (
+    ExtendedAssertionsMixin,
     assert_xml_equal,
-    AssertPcsMixin,
 )
 from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.xml import XmlManipulation as XmlMan
@@ -23,7 +23,7 @@ from pcs.lib import resource_agent as lib_ra
 from pcs.lib.external import CommandRunner
 
 
-class LibraryResourceTest(TestCase, AssertPcsMixin):
+class LibraryResourceTest(TestCase, ExtendedAssertionsMixin):
     pass
 
 

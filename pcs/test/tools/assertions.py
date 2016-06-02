@@ -92,6 +92,8 @@ class AssertPcsMixin(object):
             return console_report(*output)
         return output
 
+
+class ExtendedAssertionsMixin(object):
     def assert_raises(
         self, expected_exception, callable_obj, property_dict=None
     ):
