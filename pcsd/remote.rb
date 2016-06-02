@@ -2225,9 +2225,6 @@ def get_sbd_config(param, request, auth_user)
   end
   out = []
   file = nil
-  if not is_service_enabled?('sbd') and not is_service_running?('sbd')
-    return [400, 'SBD is not enabled']
-  end
   begin
     file = File.open(SBD_CONFIG, 'r')
     file.flock(File::LOCK_SH)
