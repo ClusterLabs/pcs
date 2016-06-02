@@ -635,6 +635,13 @@ class NodeCommunicatorTest(TestCase):
             lib.NodeUnsupportedCommandException
         )
 
+    def test_command_unsuccessful(self, mock_get_opener):
+        self.base_test_http_error(
+            mock_get_opener,
+            400,
+            lib.NodeCommandUnsuccessfulException
+        )
+
     def test_other_error(self, mock_get_opener):
         self.base_test_http_error(
             mock_get_opener,
@@ -692,6 +699,26 @@ class NodeCommunicatorTest(TestCase):
 
 
 class NodeCommunicatorExceptionTransformTest(TestCase):
+    def test_transform_error_400(self):
+        node = "test_node"
+        command = "test_command"
+        reason = "test_reason"
+
+        assert_report_item_equal(
+            lib.node_communicator_exception_to_report_item(
+                lib.NodeCommandUnsuccessfulException(node, command, reason)
+            ),
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                {
+                    "node": node,
+                    "command": command,
+                    "reason": reason,
+                }
+            )
+        )
+
     def test_transform_error_401(self):
         node = "test_node"
         command = "test_command"

@@ -321,6 +321,8 @@ class NodeAuthenticationException(NodeCommunicationException):
 class NodePermissionDeniedException(NodeCommunicationException):
     pass
 
+class NodeCommandUnsuccessfulException(NodeCommunicationException):
+    pass
 
 class NodeUnsupportedCommandException(NodeCommunicationException):
     pass
@@ -332,6 +334,12 @@ def node_communicator_exception_to_report_item(
     """
     Transform NodeCommunicationException to ReportItem
     """
+    if isinstance(e, NodeCommandUnsuccessfulException):
+        return reports.node_communication_command_unsuccessful(
+            e.node,
+            e.command,
+            e.reason
+        )
     exception_to_report = {
         NodeAuthenticationException:
             reports.node_communication_error_not_authorized,
@@ -451,7 +459,14 @@ class NodeCommunicator(object):
             self._reporter.process(
                 reports.node_communication_finished(url, e.code, response_data)
             )
-            if e.code == 401:
+            if e.code == 400:
+                # old pcsd protocol: error messages are commonly passed in plain
+                # text in response body with HTTP code 400
+                # we need to be backward compatible with that
+                raise NodeCommandUnsuccessfulException(
+                    host, request, response_data
+                )
+            elif e.code == 401:
                 raise NodeAuthenticationException(
                     host, request, "HTTP error: {0}".format(e.code)
                 )

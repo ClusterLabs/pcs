@@ -26,6 +26,7 @@ from pcs.lib.external import (
     node_communicator_exception_to_report_item,
     NodeCommunicationException,
     NodeConnectionException,
+    NodeCommandUnsuccessfulException,
 )
 from pcs.lib.node import (
     NodeAddressesList,
@@ -304,6 +305,12 @@ def get_cluster_sbd_config(lib_env):
                 )
             })
             successful_node_list.append(node)
+        except NodeCommandUnsuccessfulException as e:
+            report_item_list.append(reports.unable_to_get_sbd_config(
+                node.label,
+                e.reason,
+                Severities.WARNING
+            ))
         except NodeCommunicationException as e:
             report_item_list.append(reports.unable_to_get_sbd_config(
                 node.label,
