@@ -160,6 +160,10 @@ def enable_sbd(
         lib_env.report_processor, lib_env.node_communicator(), online_nodes
     )
 
+    lib_env.report_processor.process(
+        reports.cluster_restart_required_to_apply_changes()
+    )
+
 
 def disable_sbd(lib_env, ignore_offline_nodes=False):
     """
@@ -181,6 +185,10 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
         lib_env.report_processor,
         lib_env.node_communicator(),
         node_list
+    )
+
+    lib_env.report_processor.process(
+        reports.cluster_restart_required_to_apply_changes()
     )
 
 

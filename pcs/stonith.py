@@ -463,10 +463,6 @@ def sbd_enable(lib, argv, modifiers):
         allow_unknown_opts=modifiers["force"],
         ignore_offline_nodes=modifiers["skip_offline_nodes"]
     )
-    print(
-        "Warning: Cluster has to be restarted in order to apply these "
-        "changes."
-    )
 
 
 def _sbd_parse_watchdogs(watchdog_list):
@@ -496,10 +492,6 @@ def sbd_disable(lib, argv, modifiers):
         raise CmdLineInputError()
 
     lib.sbd.disable_sbd(modifiers["skip_offline_nodes"])
-    print(
-        "Warning: Cluster has to be restarted in order to apply these "
-        "changes."
-    )
 
 
 def sbd_status(lib, argv, modifiers):

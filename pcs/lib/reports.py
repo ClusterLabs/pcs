@@ -1427,3 +1427,12 @@ def unable_to_get_sbd_status(node, reason):
             "reason": reason
         }
     )
+
+def cluster_restart_required_to_apply_changes():
+    """
+    warn user a cluster needs to be manually restarted to use new configuration
+    """
+    return ReportItem.warning(
+        report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES,
+        "Cluster restart is required in order to apply these changes."
+    )
