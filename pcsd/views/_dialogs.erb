@@ -55,3 +55,163 @@
   <p style="font-size:12px;">Are you sure you want to remove the following ACL role(s)?</p>
   <span class="name_list"></span>
 </div>
+
+<div id="enable_sbd_dialog" style="display:none;">
+  <form id="enable_sbd_form">
+    <table>
+      <tr>
+        <td class="darkdatatable_header">
+          Specify watchdog devices for nodes:
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table id="watchdog_table">
+          </table>
+        </td>
+      </tr>
+    </table>
+    <table style="margin-top: 20px;">
+      <tr>
+        <td class="darkdatatable_header">
+          SBD options:
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table id="sbd_options">
+            <tr>
+              <td>SBD_DELAY_START</td>
+              <td>
+                <select name="config[SBD_DELAY_START]">
+                  <option value="" selected>(default)</option>
+                  <option value="yes">yes</option>
+                  <option value="no">no</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td>SBD_STARTMODE</td>
+              <td>
+                <select name="config[SBD_STARTMODE]">
+                  <option value="" selected>(default)</option>
+                  <option value="clean">clean</option>
+                  <option value="always">always</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td>SBD_WATCHDOG_TIMEOUT</td>
+              <td>
+                <input
+                    type="text"
+                    name="config[SBD_WATCHDOG_TIMEOUT]"
+                    placeholder="5"
+                />
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <table>
+      <tr>
+        <td>
+          <label for="ignore_offline_nodes_enable_sbd">
+            ignore offline nodes
+          </label>
+        </td>
+        <td>
+          <input
+              id="ignore_offline_nodes_enable_sbd"
+              type="checkbox"
+              name="ignore_offline_nodes"
+          />
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+
+<div id="disable_sbd_dialog" style="display:none;">
+  <form id="disable_sbd_form">
+    Are you sure you want to disable SBD?
+    <table>
+      <tr>
+        <td>
+          <label for="ignore_offline_nodes_disable_sbd">
+            ignore offline nodes
+          </label>
+        </td>
+        <td>
+          <input
+              id="ignore_offline_nodes_disable_sbd"
+              type="checkbox"
+              name="ignore_offline_nodes"
+          />
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+
+<div id="sbd_status_dialog" style="display:none;">
+  <table>
+    <tr>
+      <td class="darkdatatable_header">SBD service status</td>
+    </tr>
+    <tr>
+      <td>
+        <table class="darkdatatable">
+          <tr>
+            <th>NODE</th>
+            <th>INSTALLED</th>
+            <th>ENABLED</th>
+            <th>RUNNING</th>
+          </tr>
+          {{#each node in Pcs.nodesController}}
+          <tr>
+            <td>{{node.name}}</td>
+            <td>{{bool-to-icon node.is_sbd_installed}}</td>
+            <td>{{bool-to-icon node.is_sbd_enabled}}</td>
+            <td>{{bool-to-icon node.is_sbd_running}}</td>
+          </tr>
+          {{/each}}
+        </table>
+      </td>
+    </tr>
+  </table>
+  {{#if Pcs.is_sbd_enabled_or_running}}
+  <table style="margin-top: 20px;">
+    <tr>
+      <td class="darkdatatable_header">SBD configuration</td>
+    </tr>
+    <tr>
+      <td>
+        {{{Pcs.sbd_config_table}}}
+      </td>
+    </tr>
+  </table>
+  <table style="margin-top: 20px;">
+    <tr>
+      <td class="darkdatatable_header">SBD watchdogs</td>
+    </tr>
+    <tr>
+      <td>
+        <table class="darkdatatable">
+          <tr>
+            <th>NODE</th>
+            <th>WATCHDOG</th>
+          </tr>
+          {{#each node in Pcs.nodesController}}
+          <tr>
+            <td>{{node.name}}</td>
+            <td>{{node.sbd_watchdog}}</td>
+          </tr>
+          {{/each}}
+        </table>
+      </td>
+    </tr>
+  </table>
+  {{/if}}
+</div>

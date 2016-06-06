@@ -136,7 +136,8 @@ def load_module(env, middleware_factory, name):
                 "enable_sbd": sbd.enable_sbd,
                 "disable_sbd": sbd.disable_sbd,
                 "get_cluster_sbd_status": sbd.get_cluster_sbd_status,
-                "get_cluster_sbd_config": sbd.get_cluster_sbd_config
+                "get_cluster_sbd_config": sbd.get_cluster_sbd_config,
+                "get_local_sbd_config": sbd.get_local_sbd_config,
             }
         )
 

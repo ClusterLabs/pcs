@@ -455,6 +455,8 @@ def sbd_cmd(lib, argv, modifiers):
             sbd_status(lib, argv, modifiers)
         elif cmd == "config":
             sbd_config(lib, argv, modifiers)
+        elif cmd == "local_config_in_json":
+            local_sbd_config(lib, argv, modifiers)
         else:
             raise CmdLineInputError()
     except CmdLineInputError as e:
@@ -558,3 +560,7 @@ def sbd_config(lib, argv, modifiers):
             node=config["node"].label,
             watchdog=watchdog
         ))
+
+
+def local_sbd_config(lib, argv, modifiers):
+    print(json.dumps(lib.sbd.get_local_sbd_config()))

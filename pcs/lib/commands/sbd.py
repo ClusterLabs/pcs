@@ -341,6 +341,11 @@ def get_cluster_sbd_config(lib_env):
     return config_list
 
 
+def get_local_sbd_config(lib_env):
+    __ensure_not_cman(lib_env)
+    return environment_file_to_dict(sbd.get_local_sbd_config())
+
+
 def _get_cluster_nodes(lib_env):
     return lib_env.get_corosync_conf().get_nodes()
 

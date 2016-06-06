@@ -69,7 +69,9 @@ def remote(params, request, auth_user)
       :sbd_disable => method(:sbd_disable),
       :sbd_enable => method(:sbd_enable),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
-      :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero)
+      :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
+      :remote_enable_sbd => method(:remote_enable_sbd),
+      :remote_disable_sbd => method(:remote_disable_sbd)
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -776,7 +778,9 @@ def remote_add_node(params, request, auth_user, all=false)
     if params[:new_ring1addr] != nil
       node += ',' + params[:new_ring1addr]
     end
-    retval, output = add_node(auth_user, node, all, auto_start)
+    retval, output = add_node(
+      auth_user, node, all, auto_start, params[:watchdog]
+    )
   end
 
   if retval == 0
@@ -2298,4 +2302,60 @@ def set_stonith_watchdog_timeout_to_zero(param, request, auth_user)
     )
     return [400, 'ERROR']
   end
+end
+
+def remote_enable_sbd(params, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+
+  arg_list = []
+
+  if ['true', '1', 'on'].include?(params[:ignore_offline_nodes])
+    arg_list << '--skip-offline'
+  end
+
+  params[:watchdog].each do |node, watchdog|
+    unless watchdog.strip.empty?
+      arg_list << "--watchdog=#{watchdog.strip}@#{node}"
+    end
+  end
+
+  params[:config].each do |option, value|
+    unless value.empty?
+      arg_list << "#{option}=#{value}"
+    end
+  end
+
+  _, stderr, retcode = run_cmd(
+    auth_user, PCS, 'stonith', 'sbd', 'enable', *arg_list
+  )
+
+  if retcode != 0
+    return [400, "Unable to enable sbd in cluster: #{stderr.join('')}"]
+  end
+
+  return [200, 'Sbd has been enabled.']
+end
+
+def remote_disable_sbd(params, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+
+  arg_list = []
+
+  if ['true', '1', 'on'].include?(params[:ignore_offline_nodes])
+    arg_list << '--skip-offline'
+  end
+
+  _, stderr, retcode = run_cmd(
+    auth_user, PCS, 'stonith', 'sbd', 'disable', *arg_list
+  )
+
+  if retcode != 0
+    return [400, "Unable to disable sbd in cluster: #{stderr.join('')}"]
+  end
+
+  return [200, 'Sbd has been disabled.']
 end

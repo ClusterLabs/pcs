@@ -21,6 +21,14 @@
   Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
     <% if @myView == "resource" %>
       <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="create_group();return false;">Create Group</a></div>
+    <% else %>
+        {{#if Pcs.is_sbd_supported}}
+        <div class="configurelight sprites"></div>
+        <div class="link">
+          &nbsp;
+          <a href="#" onclick="sbd_status_dialog();return false;">SBD</a>
+        </div>
+        {{/if}}
     <% end %>
     </td>
     <td class="borderbottom">&nbsp;</td>

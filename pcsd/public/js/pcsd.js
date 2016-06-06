@@ -2722,6 +2722,188 @@ Ember.Handlebars.helper('selector-helper', function (content, value, place_holde
   return new Handlebars.SafeString(out);
 });
 
+Ember.Handlebars.helper('bool-to-icon', function(value, options) {
+  var out = '<span class="sprites inverted ';
+  if (typeof(value) == 'undefined' || value == null) {
+    out += "questionmarkdark";
+  } else if (value) {
+    out += "checkdark"
+  } else {
+    out += "Xdark"
+  }
+  return new Handlebars.SafeString(out + '">&nbsp;</span>');
+});
+
 function nl2br(text) {
   return text.replace(/(?:\r\n|\r|\n)/g, '<br />');
+}
+
+function enable_sbd(dialog) {
+  ajax_wrapper({
+    type: 'POST',
+    url: get_cluster_remote_url() + "remote_enable_sbd",
+    data: dialog.find("#enable_sbd_form").serialize(),
+    timeout: pcs_timeout,
+    success: function() {
+      dialog.parent().find("#enable_sbd_btn").button(
+        "option", "disabled", false
+      );
+      dialog.dialog("close");
+      alert(
+        'SBD enabled! You have to restart cluster in order to apply changes.'
+      );
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      dialog.parent().find("#enable_sbd_btn").button(
+        "option", "disabled", false
+      );
+      xhr.responseText = xhr.responseText.replace(
+        "--skip-offline", "option 'ignore offline nodes'"
+      );
+      alert(
+        ajax_simple_error(xhr, status, error)
+      );
+    }
+  });
+}
+
+function enable_sbd_dialog(node_list) {
+  var buttonsOpts = [
+    {
+      text: "Enable SBD",
+      id: "enable_sbd_btn",
+      click: function() {
+        var dialog = $(this);
+        dialog.parent().find("#enable_sbd_btn").button(
+          "option", "disabled", true
+        );
+        enable_sbd(dialog);
+      }
+    },
+    {
+      text:"Cancel",
+      click: function () {
+        $(this).dialog("close");
+      }
+    }
+  ];
+
+  var dialog_obj = $("#enable_sbd_dialog").dialog({title: 'Enable SBD',
+    modal: true, resizable: false,
+    width: 'auto',
+    buttons: buttonsOpts
+  });
+
+  dialog_obj.keypress(function(e) {
+    if (
+      e.keyCode == $.ui.keyCode.ENTER &&
+      !dialog_obj.parent().find("#enable_sbd_btn").button("option", "disabled")
+    ) {
+      dialog_obj.parent().find("#enable_sbd_btn").trigger("click");
+      return false;
+    }
+  });
+  dialog_obj.find('#watchdog_table').empty();
+  $.each(node_list, function(_, node) {
+    dialog_obj.find("#watchdog_table").append(
+      '<tr>' +
+        '<td>' +
+          node + ':' +
+        '</td>' +
+        '<td>' +
+          '<input ' +
+            'type="text" ' +
+            'placeholder="/dev/watchdog" ' +
+            'name="watchdog[' + node + ']" ' +
+          '/>' +
+        '</td>' +
+      '</tr>'
+    )
+  });
+}
+
+function disable_sbd(dialog) {
+  ajax_wrapper({
+    type: 'POST',
+    url: get_cluster_remote_url() + "remote_disable_sbd",
+    data: dialog.find("#disable_sbd_form").serialize(),
+    timeout: pcs_timeout,
+    success: function() {
+      dialog.parent().find("#disable_sbd_btn").button(
+        "option", "disabled", false
+      );
+      dialog.dialog("close");
+      alert(
+        'SBD disabled! You have to restart cluster in order to apply changes.'
+      );
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      dialog.parent().find("#disable_sbd_btn").button(
+        "option", "disabled", false
+      );
+      xhr.responseText = xhr.responseText.replace(
+        "--skip-offline", "option 'ignore offline nodes'"
+      );
+      alert(ajax_simple_error(xhr, status, error));
+    }
+  });
+}
+
+function disable_sbd_dialog() {
+  var buttonsOpts = [
+    {
+      text: "Disable SBD",
+      id: "disable_sbd_btn",
+      click: function() {
+        var dialog = $(this);
+        dialog.parent().find("#disable_sbd_btn").button(
+          "option", "disabled", true
+        );
+        disable_sbd(dialog);
+      }
+    },
+    {
+      text:"Cancel",
+      click: function () {
+        $(this).dialog("close");
+      }
+    }
+  ];
+
+  $("#disable_sbd_dialog").dialog({
+    title: 'Disable SBD',
+    modal: true, resizable: false,
+    width: 'auto',
+    buttons: buttonsOpts
+  });
+}
+
+function sbd_status_dialog() {
+  var buttonsOpts = [
+    {
+      text: "Enable SBD",
+      click: function() {
+        enable_sbd_dialog(Pcs.nodesController.get_node_name_list());
+      }
+    },
+    {
+      text: "Disable SBD",
+      click: disable_sbd_dialog
+    },
+    {
+      text:"Close",
+      click: function () {
+        $(this).dialog("close");
+      }
+    }
+  ];
+
+  $("#sbd_status_dialog").dialog({
+    title: 'SBD',
+    modal: true, resizable: false,
+    width: 'auto',
+    buttons: buttonsOpts
+  });
 }

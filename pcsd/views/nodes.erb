@@ -185,6 +185,11 @@
                       {{/if}}
                       {{/if}}
                     </td></tr>
+                    {{#if Pcs.is_sbd_enabled_or_running }}
+                    <tr><td>sbd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
+                      {{{Pcs.nodesController.cur_node.sbd_status_str}}}
+                    </td></tr>
+                    {{/if}}
                     <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
                       {{#if Pcs.nodesController.cur_node.pcsd}}
                       <span id="pcsd_status" style="float:left" class="status">Running ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
@@ -335,6 +340,14 @@
         <td>Auto Start/Enable:</td>
         <td><input type="checkbox" name="auto_start" value="1" checked></td>
       </tr>
+      {{#if Pcs.is_sbd_enabled}}
+      <tr>
+        <td>SBD watchdog:</td>
+        <td>
+          <input type="text" name="watchdog" placeholder="/dev/watchdog" />
+        </td>
+      </tr>
+      {{/if}}
       {{#if Pcs.is_cman_with_udpu_transport}}
       <tr>
         <td colspan="2" style="color: orange">This is a CMAN cluster with UDPU transport,<br>cluster restart is required to apply node addition.</td>

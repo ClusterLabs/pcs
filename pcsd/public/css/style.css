@@ -548,6 +548,52 @@ table.datatable {
   border-style: solid;
 }
 
+/* dark data table*/
+
+.darkdatatable {
+  border-spacing: 0px;
+}
+
+.darkdatatable td, .darkdatatable th {
+  font-family: "Liberation";
+  font-size: 11px;
+  padding: 5px;
+}
+
+.darkdatatable td, .darkdatatable th{
+  text-align: left;
+  padding-left: 10;
+}
+
+.darkdatatable th {
+  font-weight: bold;
+  color: #ffffff;
+  border-bottom: 1px solid #898989;
+  background: #232323;
+}
+
+.darkdatatable td {
+  background: #191919;
+  border: 0px;
+}
+
+table.darkdatatable td, table.darkdatatable a {
+  color: #ffffff;
+}
+
+table.darkdatatable {
+  border-width: 1px 1px 1px 1px;
+  border-color: #898989;
+  border-style: solid;
+}
+
+.darkdatatable_header {
+  padding-left: 3px;
+  font-family: "Overpass";
+  font-size: 14px;
+  color: #c9c9c9;
+}
+
 .link {
   cursor:pointer;
   font-family: "Liberation";
@@ -618,6 +664,11 @@ tr td a.remove {
   width: 16px;
 }
 
+.inverted {
+  filter: invert(100%);
+  -webkit-filter: invert(100%);
+}
+
 .x { background-position: -32px -1px; }
 .xdark { background-position: -32px -17px; }
 .plus { background-position: -48px -1px; }
@@ -632,6 +683,7 @@ tr td a.remove {
 .unstandby { background-position: -368px -16px; }
 .cancel { background-position: -160px -17px; }
 .configure { background-position: -64px -16px; }
+.configurelight { background-position: -64px 0px; }
 .arrow { background-position: -544px -16px; }
 .move { background-position: -16px -17px; }
 .history { background-position: -256px -17px; }
@@ -639,6 +691,8 @@ tr td a.remove {
 .downarrow { background-position: -528px -1px; }
 .rightarrow { background-position: -544px -1px; }
 .infoicon {background-position: -256px -1px; }
+.Xdark { background-position: -160px -16px; }
+.questionmarkdark { background-position: -336px -16px; }
 
 .menuheader { position: relative; }
 .menuheader .label {

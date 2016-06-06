@@ -1000,7 +1000,7 @@ module ClusterEntity
   class Node < JSONable
     attr_accessor :id, :error_list, :warning_list, :status, :quorum, :uptime,
                   :name, :corosync, :pacemaker, :cman, :corosync_enabled,
-                  :pacemaker_enabled, :pcsd_enabled
+                  :pacemaker_enabled, :pcsd_enabled, :services, :sbd_config
 
     def initialize
       @id = nil
@@ -1010,22 +1010,49 @@ module ClusterEntity
       @quorum = nil
       @uptime = 'unknown'
       @name = nil
+      @services = {
+        :pacemaker => {
+          :running => nil,
+          :enabled => nil
+        },
+        :corosync => {
+          :running => nil,
+          :enabled => nil
+        },
+        :pcsd => {
+          :running => nil,
+          :enabled => nil
+        },
+        :sbd => {
+          :installed => nil,
+          :running => nil,
+          :enabled => nil
+        }
+      }
       @corosync = false
       @pacemaker = false
       @cman = false
       @corosync_enabled = false
       @pacemaker_enabled = false
       @pcsd_enabled = false
+      @sbd_config = nil
     end
 
     def self.load_current_node(crm_dom=nil)
       node = ClusterEntity::Node.new
-      node.corosync = corosync_running?
-      node.corosync_enabled = corosync_enabled?
-      node.pacemaker = pacemaker_running?
-      node.pacemaker_enabled = pacemaker_enabled?
-      node.cman = cman_running?
-      node.pcsd_enabled = pcsd_enabled?
+      node.services.each do |service, info|
+        info[:running] = is_service_running?(service.to_s)
+        info[:enabled] = is_service_enabled?(service.to_s)
+      end
+      if ISSYSTEMCTL
+        node.services[:sbd][:installed] = is_service_installed?('sbd')
+      end
+      node.corosync = node.services[:corosync][:running]
+      node.corosync_enabled = node.services[:corosync][:enabled]
+      node.pacemaker = node.services[:pacemaker][:running]
+      node.pacemaker_enabled = node.services[:pacemaker][:enabled]
+      node.cman = is_service_running?('cman')
+      node.pcsd_enabled = node.services[:pcsd][:enabled]
 
       node_online = (node.corosync and node.pacemaker)
       node.status =  node_online ? 'online' : 'offline'
@@ -1044,7 +1071,7 @@ module ClusterEntity
       else
         node.status = 'offline'
       end
-
+      node.sbd_config = get_parsed_local_sbd_config()
       return node
     end
   end

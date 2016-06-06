@@ -408,9 +408,12 @@ def send_request(auth_user, node, request, post=false, data={}, remote=true, raw
   end
 end
 
-def add_node(auth_user, new_nodename, all=false, auto_start=true)
+def add_node(auth_user, new_nodename, all=false, auto_start=true, watchdog=nil)
   if all
     command = [PCS, "cluster", "node", "add", new_nodename]
+    if watchdog and not watchdog.strip.empty?
+      command << "--watchdog=#{watchdog.strip}"
+    end
     if auto_start
       command << '--start'
       command << '--enable'
@@ -821,14 +824,6 @@ def disable_cluster(auth_user)
   return true
 end
 
-def corosync_running?()
-  is_service_running?('corosync')
-end
-
-def corosync_enabled?()
-  is_service_enabled?('corosync')
-end
-
 def get_corosync_version()
   begin
     stdout, stderror, retval = run_cmd(
@@ -850,10 +845,6 @@ def pacemaker_running?()
   is_service_running?('pacemaker')
 end
 
-def pacemaker_enabled?()
-  is_service_enabled?('pacemaker')
-end
-
 def get_pacemaker_version()
   begin
     stdout, stderror, retval = run_cmd(
@@ -869,10 +860,6 @@ def get_pacemaker_version()
     end
   end
   return nil
-end
-
-def cman_running?()
-  is_service_running?('cman')
 end
 
 def get_cman_version()
@@ -912,10 +899,6 @@ def pcsd_restart()
       `service pcsd restart`
     end
   }
-end
-
-def pcsd_enabled?()
-  is_service_enabled?('pcsd')
 end
 
 def get_pcsd_version()
@@ -1398,6 +1381,7 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
     :status => 'unknown',
     :node_list => [],
     :resource_list => [],
+    :available_features => [],
   }
 
   threads = []
@@ -1426,6 +1410,7 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
       }
       begin
         parsed_response = JSON.parse(response, {:symbolize_names => true})
+        parsed_response[:available_features] ||= []
         if parsed_response[:noresponse]
           node_map[node][:node] = {}
           node_map[node][:node].update(node_status_unknown)
@@ -1510,6 +1495,26 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
     }
   end
   status.delete(:node)
+  sbd_enabled = []
+  sbd_running = []
+  node_map.each { |_, cluster_status|
+    # create set of available features on all nodes
+    # it is intersection of available features from all nodes
+    if cluster_status[:node][:status] != 'unknown'
+      status[:available_features] &= cluster_status[:available_features]
+    end
+    if (
+      cluster_status[:node][:services] and
+      cluster_status[:node][:services][:sbd]
+    )
+      if cluster_status[:node][:services][:sbd][:enabled]
+        sbd_enabled << cluster_status[:node][:name]
+      end
+      if cluster_status[:node][:services][:sbd][:running]
+        sbd_running << cluster_status[:node][:name]
+      end
+    end
+  }
 
   if status[:quorate]
     fence_count = 0
@@ -1518,9 +1523,9 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
         fence_count += 1
       end
     }
-    if fence_count == 0
+    if fence_count == 0 and sbd_enabled.empty?
       status[:warning_list] << {
-        :message => 'No fence devices configured in the cluster',
+        :message => 'No fencing configured in the cluster',
       }
     end
 
@@ -1528,6 +1533,18 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
         not is_cib_true(status[:cluster_settings]['stonith-enabled'.to_sym])
       status[:warning_list] << {
         :message => 'Stonith is not enabled',
+      }
+    end
+    if sbd_enabled.length == node_map.length and sbd_running.empty?
+      status[:warning_list] << {
+        :message => 'SBD is enabled but not running. Restart of cluster is' +
+          ' required.'
+      }
+    end
+    if sbd_running.length == node_map.length and sbd_enabled.empty?
+      status[:warning_list] << {
+        :message => 'SBD is disabled but it is still running. Restart of' +
+          ' cluster is required.'
       }
     end
   end
@@ -1612,7 +1629,8 @@ def get_node_status(auth_user, cib_dom)
       :fence_levels => get_fence_levels(auth_user, cib_dom),
       :node_attr => node_attrs_to_v2(get_node_attributes(auth_user, cib_dom)),
       :nodes_utilization => get_nodes_utilization(cib_dom),
-      :known_nodes => []
+      :known_nodes => [],
+      :available_features => ['sbd']
   }
 
   nodes = get_nodes_status()
@@ -1889,4 +1907,17 @@ def set_cluster_prop_force(auth_user, prop, val)
     _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
   end
   return (retcode == 0)
+end
+
+def get_parsed_local_sbd_config()
+  cmd = [PCS, 'stonith', 'sbd', 'local_config_in_json']
+  out, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
+  if retcode != 0
+    return nil
+  end
+  begin
+    return JSON.parse(out.join(' '))
+  rescue JSON::ParserError
+    return nil
+  end
 end

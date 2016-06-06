@@ -38,6 +38,30 @@ Pcs = Ember.Application.createWithMixins({
     if (this.cur_page == "wizards") return "display: table-row;";
     else return "display: none;";
   }.property("cur_page"),
+  available_features: [],
+  is_sbd_supported: function() {
+    return (this.get("available_features").indexOf("sbd") != -1);
+  }.property("available_features"),
+  is_sbd_running: false,
+  is_sbd_enabled: false,
+  is_sbd_enabled_or_running: function() {
+    return (this.get("is_sbd_enabled") || this.get("is_sbd_running"));
+  }.property("is_sbd_enabled", "is_sbd_running"),
+  sbd_config: null,
+  sbd_config_table: function() {
+    if (!this.get("sbd_config")) {
+      return "no configuration obtained";
+    }
+    var out =
+      '<table class="darkdatatable"><tr><th>OPTION</th><th>VALUE</th></tr>\n';
+    var banned_options = ["SBD_OPTS", "SBD_WATCHDOG_DEV", "SBD_PACEMAKER"];
+    $.each(this.get("sbd_config"), function(opt, val) {
+      if (banned_options.indexOf(opt) == -1) {
+        out += '<tr><td>' + opt + '</td><td>' + val + '</td></tr>\n';
+      }
+    });
+    return out + '</table>';
+  }.property("sbd_config"),
 
   getResourcesFromID: function(resources) {
     var retArray = [];
@@ -112,6 +136,10 @@ Pcs = Ember.Application.createWithMixins({
         Pcs.set("cluster_settings",data.cluster_settings);
         Pcs.set('need_ring1_address', false);
         Pcs.set('is_cman_with_udpu_transport', false);
+        Pcs.set(
+          'available_features',
+          data['available_features'] ? data['available_features'] : []
+        );
         if (data['need_ring1_address']) {
           Pcs.set('need_ring1_address', true);
         }
@@ -1472,6 +1500,54 @@ Pcs.Clusternode = Ember.Object.extend({
   pcsd: null,
   corosync_daemon: null,
   pacemaker_daemon: null,
+  services: [],
+  sbd_config: null,
+  sbd_status: function() {
+    if (this.get("services") && this.get("services")["sbd"]) {
+      return this.get("services")["sbd"];
+    } else {
+      return {
+        installed: null,
+        enabled: null,
+        running: null
+      };
+    }
+  }.property("services"),
+  is_sbd_enabled: function() {
+    return this.get("sbd_status").enabled;
+  }.property("sbd_status"),
+  is_sbd_running: function() {
+    return this.get("sbd_status").running;
+  }.property("sbd_status"),
+  is_sbd_installed: function() {
+    return this.get("sbd_status").installed;
+  }.property("sbd_status"),
+  sbd_status_str: function() {
+    var running = 'Stopped';
+    var status_class = 'status-offline';
+    if (this.get("is_sbd_running") == null) {
+      running = 'Unknown';
+      status_class = 'status-unknown';
+    } else if (this.get("is_sbd_running")) {
+      status_class = 'status';
+      running = 'Running';
+    }
+    var starting = 'Disabled';
+    if (this.get("is_sbd_enabled") == null) {
+      starting = 'Unknown';
+    } else if (this.get("is_sbd_enabled")) {
+      starting = 'Enabled';
+    }
+    return '<span id="sbd_status" style="float:left" class="' + status_class
+      + '">' + running + ' (' + starting + ')</span>';
+  }.property("is_sbd_enabled", "is_sbd_enabled"),
+  sbd_watchdog: function() {
+    if (this.get("sbd_config") && this.get("sbd_config")["SBD_WATCHDOG_DEV"]) {
+      return this.get("sbd_config")["SBD_WATCHDOG_DEV"];
+    } else {
+      return "<unkown>";
+    }
+  }.property("sbd_config")
 });
 
 Pcs.Aclrole = Ember.Object.extend({
@@ -2030,6 +2106,14 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       window.location.hash = "/nodes/" + $(node_row).attr("nodeID");
   },
 
+  get_node_name_list: function() {
+    var node_list = [];
+    $.each(this.content, function(_, node) {
+      node_list.push(node.name);
+    });
+    return node_list;
+  },
+
   update: function(data){
     var self = this;
     var nodes = [];
@@ -2078,7 +2162,21 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       self.set("utilization_support", false);
     }
 
+    var is_sbd_enabled = false;
+    var is_sbd_running = false;
+    var sbd = null;
+    Pcs.set("sbd_config", null);
     $.each(data['node_list'], function(_, node_obj) {
+      if (node_obj["services"] && node_obj["services"]["sbd"]) {
+        sbd = node_obj["services"]["sbd"];
+        is_sbd_enabled = (is_sbd_enabled || sbd.enabled);
+        is_sbd_running = (is_sbd_running || sbd.running);
+      }
+
+      if (node_obj["sbd_config"]) {
+        Pcs.set("sbd_config", node_obj["sbd_config"]);
+      }
+
       var node_id = node_obj.name;
       if ($.inArray(node_id, corosync_nodes_online) > -1) {
         corosync_online = true;
@@ -2153,6 +2251,8 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
           node.set("fence_levels", data["fence_levels"]);
           node.set("status", node_obj["status"]);
           node.set("utilization", utilization);
+          node.set("services", node_obj["services"]);
+          node.set("sbd_config", node_obj["sbd_config"]);
         }
       });
 
@@ -2178,7 +2278,9 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
           node_attrs: node_attr,
           fence_levels: data["fence_levels"],
           status: node_obj["status"],
-          utilization: utilization
+          utilization: utilization,
+          services: node_obj["services"],
+          sbd_config: node_obj["sbd_config"]
         });
       }
       var pathname = window.location.pathname.split('/');
@@ -2203,6 +2305,9 @@ Pcs.nodesController = Ember.ArrayController.createWithMixins({
       self.set("cur_node", self.content[0]);
       self.content[0].set("cur_node",true);
     }
+
+    Pcs.set("is_sbd_enabled", is_sbd_enabled);
+    Pcs.set("is_sbd_running", is_sbd_running);
 
     nodesToRemove = [];
     $.each(self.content, function (key, node) {
