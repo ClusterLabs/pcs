@@ -336,9 +336,9 @@ fence <node> [\fB\-\-off\fR]
 Fence the node specified (if \fB\-\-off\fR is specified, use the 'off' API call to stonith which will turn the node off instead of rebooting it)
 .TP
 confirm <node> [\fB\-\-force\fR]
-Confirm that the host specified is currently down.  This command should \fBONLY\fR be used when the node specified has already been confirmed to be down.
+Confirm that the host specified is currently down.  This command should \fBONLY\fR be used when the node specified has already been confirmed to be powered off and to have no access to shared resources.
 
-.B WARNING: If this node is not actually down, data corruption/cluster failure can occur.  To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
+.B WARNING: If this node is not actually powered off or it does have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
 .TP
 sbd enable [\fB\-\-watchdog\fR=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ...
 Enable SBD in cluster. Default path for watchdog device is /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5), SBD_DELAY_START (default: no) and SBD_STARTMODE (default: clean).
@@ -553,9 +553,9 @@ device update [generic options] [model <model options>]
 Add/Change quorum device options.  Requires cluster to be stopped.
 .TP
 quorum unblock [\fB\-\-force\fR]
-Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be down.
+Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be powered off and to have no access to shared resources.
 
-.B WARNING: If the nodes are not actually down, data corruption/cluster failure can occur.  To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
+.B WARNING: If the nodes are not actually powered off or they do have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
 .TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
 Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.  Requires cluster to be stopped.

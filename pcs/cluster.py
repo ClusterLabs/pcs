@@ -1841,9 +1841,10 @@ def cluster_quorum_unblock(argv):
     if "--force" not in utils.pcs_options:
         answer = utils.get_terminal_input(
             (
-                "WARNING: If node(s) {nodes} are not down, data corruption"
-                + " and/or cluster failure may occur. Are you sure node(s)"
-                + " {nodes} are down? [y/N] "
+                "WARNING: If node(s) {nodes} are not powered off or they do"
+                + " have access to shared resources, data corruption and/or"
+                + " cluster failure may occur. Are you sure you want to"
+                + " continue? [y/N] "
             ).format(nodes=", ".join(unjoined_nodes))
         )
         if answer.lower() not in ["y", "yes"]:

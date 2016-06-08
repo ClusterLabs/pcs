@@ -798,11 +798,12 @@ Commands:
     confirm <node> [--force]
         Confirm that the host specified is currently down.  This command
         should ONLY be used when the node specified has already been confirmed
-        to be down.
+        to be powered off and to have no access to shared resources.
 
-        WARNING: If this node is not actually down, data corruption/cluster
-        failure can occur.  To prevent accidental running of this command,
-        --force or interactive user response is required in order to proceed.
+        WARNING: If this node is not actually powered off or it does have
+        access to shared resources, data corruption/cluster failure can occur.
+        To prevent accidental running of this command, --force or interactive
+        user response is required in order to proceed.
 
     sbd enable [--watchdog=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ...
         Enable SBD in cluster. Default path for watchdog device is
@@ -1321,12 +1322,14 @@ Commands:
         Cancel waiting for all nodes when establishing quorum.  Useful in
         situations where you know the cluster is inquorate, but you are
         confident that the cluster should proceed with resource management
-        regardless.  This command should ONLY be used when nodes the cluster is
-        waiting for have been confirmed to be down.
+        regardless.  This command should ONLY be used when nodes which
+        the cluster is waiting for have been confirmed to be powered off and
+        to have no access to shared resources.
 
-        WARNING: If the nodes are not actually down, data corruption/cluster
-        failure can occur.  To prevent accidental running of this command,
-        --force or interactive user response is required in order to proceed.
+        WARNING: If the nodes are not actually powered off or they do have
+        access to shared resources, data corruption/cluster failure can occur.
+        To prevent accidental running of this command, --force or interactive
+        user response is required in order to proceed.
 
     update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]
             [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]

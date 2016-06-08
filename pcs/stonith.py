@@ -382,9 +382,10 @@ def stonith_confirm(argv, skip_question=False):
     if not skip_question and "--force" not in utils.pcs_options:
         answer = utils.get_terminal_input(
             (
-                "WARNING: If node {node} is not down, data corruption and/or"
-                + " cluster failure may occur. Are you sure node {node} is"
-                + " down? [y/N] "
+                "WARNING: If node {node} is not powered off or it does"
+                + " have access to shared resources, data corruption and/or"
+                + " cluster failure may occur. Are you sure you want to"
+                + " continue? [y/N] "
             ).format(node=node)
         )
         if answer.lower() not in ["y", "yes"]:
