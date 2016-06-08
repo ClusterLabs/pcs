@@ -637,14 +637,13 @@ Commands:
         corosync.conf file (cluster.conf on systems running Corosync 1.x)
 
     cib [filename] [scope=<scope> | --config]
-        Get the raw xml from the CIB (Cluster Information Base).  If a
-        filename is provided, we save the cib to that file, otherwise the cib
-        is printed.  Specify scope to get a specific section of the CIB.  Valid
+        Get the raw xml from the CIB (Cluster Information Base).  If a filename
+        is provided, we save the CIB to that file, otherwise the CIB is
+        printed.  Specify scope to get a specific section of the CIB.  Valid
         values of the scope are: configuration, nodes, resources, constraints,
-        crm_config, rsc_defaults, op_defaults, status.  --config is the same
-        as scope=configuration.  Use of --config is recommended.  Do not specify
-        a scope if you need to get the whole CIB or be warned in the case
-        of outdated CIB on cib-push.
+        crm_config, rsc_defaults, op_defaults, status.  --config is the same as
+        scope=configuration.  Do not specify a scope if you want to edit
+        the saved CIB using pcs (pcs -f <command>).
 
     cib-push <filename> [scope=<scope> | --config]
         Push the raw xml from <filename> to the CIB (Cluster Information Base).
