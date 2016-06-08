@@ -253,11 +253,6 @@ Get current status of pcsd on nodes specified, or on all nodes configured in cor
 sync
 Sync corosync configuration to all nodes found from current corosync.conf file (cluster.conf on systems running Corosync 1.x)
 .TP
-quorum unblock [\fB\-\-force\fR]
-Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be down.
-
-.B WARNING: If the nodes are not actually down, data corruption/cluster failure can occur.  To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
-.TP
 cib [filename] [scope=<scope> | \fB\-\-config\fR]
 Get the raw xml from the CIB (Cluster Information Base).  If a filename is provided, we save the cib to that file, otherwise the cib is printed.  Specify scope to get a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults, status.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to get the whole CIB or be warned in the case of outdated CIB on cib-push.
 .TP
@@ -556,6 +551,11 @@ Remove quorum device from cluster.
 .TP
 device update [generic options] [model <model options>]
 Add/Change quorum device options.  Requires cluster to be stopped.
+.TP
+quorum unblock [\fB\-\-force\fR]
+Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be down.
+
+.B WARNING: If the nodes are not actually down, data corruption/cluster failure can occur.  To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
 .TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
 Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.  Requires cluster to be stopped.

@@ -11,6 +11,7 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.cluster import cluster_quorum_unblock
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
@@ -29,6 +30,8 @@ def quorum_cmd(lib, argv, modificators):
             quorum_config_cmd(lib, argv_next, modificators)
         elif sub_cmd == "device":
             quorum_device_cmd(lib, argv_next, modificators)
+        elif sub_cmd == "unblock":
+            cluster_quorum_unblock(argv_next)
         elif sub_cmd == "update":
             quorum_update_cmd(lib, argv_next, modificators)
         else:

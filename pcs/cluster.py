@@ -1817,7 +1817,7 @@ def cluster_remote_node(argv):
 
 def cluster_quorum_unblock(argv):
     if len(argv) > 0:
-        usage.cluster(["quorum", "unblock"])
+        usage.quorum(["unblock"])
         sys.exit(1)
 
     if utils.is_rhel6():

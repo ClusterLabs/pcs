@@ -636,17 +636,6 @@ Commands:
         Sync corosync configuration to all nodes found from current
         corosync.conf file (cluster.conf on systems running Corosync 1.x)
 
-    quorum unblock [--force]
-        Cancel waiting for all nodes when establishing quorum.  Useful in
-        situations where you know the cluster is inquorate, but you are
-        confident that the cluster should proceed with resource management
-        regardless.  This command should ONLY be used when nodes the cluster is
-        waiting for have been confirmed to be down.
-
-        WARNING: If the nodes are not actually down, data corruption/cluster
-        failure can occur.  To prevent accidental running of this command,
-        --force or interactive user response is required in order to proceed.
-
     cib [filename] [scope=<scope> | --config]
         Get the raw xml from the CIB (Cluster Information Base).  If a
         filename is provided, we save the cib to that file, otherwise the cib
@@ -1328,6 +1317,17 @@ Commands:
 
     device update [generic options] [model <model options>]
         Add/Change quorum device options.  Requires cluster to be stopped.
+
+    unblock [--force]
+        Cancel waiting for all nodes when establishing quorum.  Useful in
+        situations where you know the cluster is inquorate, but you are
+        confident that the cluster should proceed with resource management
+        regardless.  This command should ONLY be used when nodes the cluster is
+        waiting for have been confirmed to be down.
+
+        WARNING: If the nodes are not actually down, data corruption/cluster
+        failure can occur.  To prevent accidental running of this command,
+        --force or interactive user response is required in order to proceed.
 
     update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]
             [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
