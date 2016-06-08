@@ -347,7 +347,7 @@ Enable SBD in cluster. Default path for watchdog device is /dev/watchdog. Allowe
 
 Example of enabling SBD in cluster with watchdogs on node1 will be /dev/watchdog2, on node2 /dev/watchdog1, /dev/watchdog0 on all other nodes and watchdog timeout will bet set to 10 seconds:
 
-pcs stonith sbd enable --watchdog=/dev/watchdog2@node1 --watchdog=/dev/watchdog1@node2 --watchdog=/dev/watchdog0 SBD_WATCHDOG_TIMEOUT=10
+pcs stonith sbd enable \-\-watchdog=/dev/watchdog2@node1 \-\-watchdog=/dev/watchdog1@node2 \-\-watchdog=/dev/watchdog0 SBD_WATCHDOG_TIMEOUT=10
 
 .TP
 sbd disable
