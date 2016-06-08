@@ -636,11 +636,16 @@ Commands:
         Sync corosync configuration to all nodes found from current
         corosync.conf file (cluster.conf on systems running Corosync 1.x)
 
-    quorum unblock
+    quorum unblock [--force]
         Cancel waiting for all nodes when establishing quorum.  Useful in
         situations where you know the cluster is inquorate, but you are
         confident that the cluster should proceed with resource management
-        regardless.
+        regardless.  This command should ONLY be used when nodes the cluster is
+        waiting for have been confirmed to be down.
+
+        WARNING: If the nodes are not actually down, data corruption/cluster
+        failure can occur.  To prevent accidental running of this command,
+        --force or interactive user response is required in order to proceed.
 
     cib [filename] [scope=<scope> | --config]
         Get the raw xml from the CIB (Cluster Information Base).  If a
@@ -651,7 +656,6 @@ Commands:
         as scope=configuration.  Use of --config is recommended.  Do not specify
         a scope if you need to get the whole CIB or be warned in the case
         of outdated CIB on cib-push.
-
 
     cib-push <filename> [scope=<scope> | --config]
         Push the raw xml from <filename> to the CIB (Cluster Information Base).
@@ -803,13 +807,14 @@ Commands:
         Fence the node specified (if --off is specified, use the 'off' API
         call to stonith which will turn the node off instead of rebooting it)
 
-    confirm <node>
+    confirm <node> [--force]
         Confirm that the host specified is currently down.  This command
-        should ONLY be used when the node specified has already been
-        confirmed to be down.
+        should ONLY be used when the node specified has already been confirmed
+        to be down.
 
-        WARNING: if this node is not actually down data corruption/cluster
-        failure can occur.
+        WARNING: If this node is not actually down, data corruption/cluster
+        failure can occur.  To prevent accidental running of this command,
+        --force or interactive user response is required in order to proceed.
 
     sbd enable [--watchdog=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ...
         Enable SBD in cluster. Default path for watchdog device is

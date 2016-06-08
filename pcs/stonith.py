@@ -374,11 +374,22 @@ def stonith_fence(argv):
     else:
         print("Node: %s fenced" % node)
 
-def stonith_confirm(argv):
+def stonith_confirm(argv, skip_question=False):
     if len(argv) != 1:
         utils.err("must specify one (and only one) node to confirm fenced")
 
     node = argv.pop(0)
+    if not skip_question and "--force" not in utils.pcs_options:
+        answer = utils.get_terminal_input(
+            (
+                "WARNING: If node {node} is not down, data corruption and/or"
+                + " cluster failure may occur. Are you sure node {node} is"
+                + " down? [y/N] "
+            ).format(node=node)
+        )
+        if answer.lower() not in ["y", "yes"]:
+            print("Canceled")
+            return
     args = ["stonith_admin", "-C", node]
     output, retval = utils.run(args)
 

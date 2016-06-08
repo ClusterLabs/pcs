@@ -1838,8 +1838,19 @@ def cluster_quorum_unblock(argv):
     )
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
+    if "--force" not in utils.pcs_options:
+        answer = utils.get_terminal_input(
+            (
+                "WARNING: If node(s) {nodes} are not down, data corruption"
+                + " and/or cluster failure may occur. Are you sure node(s)"
+                + " {nodes} are down? [y/N] "
+            ).format(nodes=", ".join(unjoined_nodes))
+        )
+        if answer.lower() not in ["y", "yes"]:
+            print("Canceled")
+            return
     for node in unjoined_nodes:
-        stonith.stonith_confirm([node])
+        stonith.stonith_confirm([node], skip_question=True)
 
     output, retval = utils.run(
         ["corosync-cmapctl", "-s", "quorum.cancel_wait_for_all", "u8", "1"]
@@ -1854,5 +1865,5 @@ def cluster_quorum_unblock(argv):
         "false" if startup_fencing.lower() != "false" else "true"
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
-    print("Waiting for nodes cancelled")
+    print("Waiting for nodes canceled")
 

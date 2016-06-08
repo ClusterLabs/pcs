@@ -253,8 +253,10 @@ Get current status of pcsd on nodes specified, or on all nodes configured in cor
 sync
 Sync corosync configuration to all nodes found from current corosync.conf file (cluster.conf on systems running Corosync 1.x)
 .TP
-quorum unblock
-Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.
+quorum unblock [\fB\-\-force\fR]
+Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be down.
+
+.B WARNING: If the nodes are not actually down, data corruption/cluster failure can occur.  To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
 .TP
 cib [filename] [scope=<scope> | \fB\-\-config\fR]
 Get the raw xml from the CIB (Cluster Information Base).  If a filename is provided, we save the cib to that file, otherwise the cib is printed.  Specify scope to get a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults, status.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to get the whole CIB or be warned in the case of outdated CIB on cib-push.
@@ -338,10 +340,10 @@ Verifies all fence devices and nodes specified in fence levels exist
 fence <node> [\fB\-\-off\fR]
 Fence the node specified (if \fB\-\-off\fR is specified, use the 'off' API call to stonith which will turn the node off instead of rebooting it)
 .TP
-confirm <node>
+confirm <node> [\fB\-\-force\fR]
 Confirm that the host specified is currently down.  This command should \fBONLY\fR be used when the node specified has already been confirmed to be down.
 
-.B WARNING: if this node is not actually down data corruption/cluster failure can occur.
+.B WARNING: If this node is not actually down, data corruption/cluster failure can occur.  To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
 .TP
 sbd enable [\fB\-\-watchdog\fR=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ...
 Enable SBD in cluster. Default path for watchdog device is /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5), SBD_DELAY_START (default: no) and SBD_STARTMODE (default: clean).
