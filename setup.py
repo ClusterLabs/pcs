@@ -20,7 +20,7 @@ setup(
     description='Pacemaker Configuration System',
     author='Chris Feist',
     author_email='cfeist@redhat.com',
-    url='http://github.com/feist/pcs',
+    url='https://github.com/ClusterLabs/pcs',
     packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]),
     package_data={'pcs':['bash_completion.d.pcs','pcs.8']},
     entry_points={
