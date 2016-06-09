@@ -976,7 +976,7 @@ def node_status(params, request, auth_user)
 
   if not_authorized_nodes.length > 0
     node.warning_list << {
-      :message => 'Not authorized against node(s) ' + 
+      :message => 'Not authorized against node(s) ' +
         not_authorized_nodes.join(', '),
       :type => 'nodes_not_authorized',
       :node_list => not_authorized_nodes,
@@ -1522,7 +1522,7 @@ def remove_resource(params, request, auth_user)
       command << '--force' if force
       out, errout, retval = run_cmd(auth_user, *command)
       if retval != 0
-        unless out.index(" does not exist.") != -1 and no_error_if_not_exists  
+        unless out.index(" does not exist.") != -1 and no_error_if_not_exists
           errors += errout.join(' ').strip + "\n"
         end
       end
@@ -2015,7 +2015,7 @@ def resource_ungroup(params, request, auth_user)
   unless params[:group_id]
     return [400, 'group_id has to be specified.']
   end
-  
+
   _, stderr, retval = run_cmd(
     auth_user, PCS, 'resource', 'ungroup', params[:group_id]
   )
@@ -2035,7 +2035,7 @@ def resource_clone(params, request, auth_user)
   unless params[:resource_id]
     return [400, 'resource_id has to be specified.']
   end
-  
+
   _, stderr, retval = run_cmd(
     auth_user, PCS, 'resource', 'clone', params[:resource_id]
   )
