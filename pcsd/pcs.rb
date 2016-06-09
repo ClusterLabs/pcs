@@ -1497,10 +1497,13 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
   status.delete(:node)
   sbd_enabled = []
   sbd_running = []
+  sbd_disabled_node_list = []
   node_map.each { |_, cluster_status|
+    node_status = cluster_status[:node][:status]
+    node_name = cluster_status[:node][:name]
     # create set of available features on all nodes
     # it is intersection of available features from all nodes
-    if cluster_status[:node][:status] != 'unknown'
+    if node_status != 'unknown'
       status[:available_features] &= cluster_status[:available_features]
     end
     if (
@@ -1508,10 +1511,12 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
       cluster_status[:node][:services][:sbd]
     )
       if cluster_status[:node][:services][:sbd][:enabled]
-        sbd_enabled << cluster_status[:node][:name]
+        sbd_enabled << node_name
+      else
+        sbd_disabled_node_list << node_name if node_status != 'unknown'
       end
       if cluster_status[:node][:services][:sbd][:running]
-        sbd_running << cluster_status[:node][:name]
+        sbd_running << node_name
       end
     end
   }
@@ -1535,16 +1540,28 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
         :message => 'Stonith is not enabled',
       }
     end
-    if sbd_enabled.length == node_map.length and sbd_running.empty?
+    if not sbd_enabled.empty? and not sbd_disabled_node_list.empty?
       status[:warning_list] << {
-        :message => 'SBD is enabled but not running. Restart of cluster is' +
-          ' required.'
+        :message =>
+          "SBD is not enabled on node(s) #{sbd_disabled_node_list.join(', ')}",
+        :type => 'sbd_not_enabled_on_all_nodes',
+        :node_list => sbd_disabled_node_list
       }
     end
-    if sbd_running.length == node_map.length and sbd_enabled.empty?
+    if not sbd_enabled.empty? and sbd_running.empty?
+      # if there is SBD running on at least one node, SBD has to be running
+      # on all online/standby nodes in cluster (it is impossible to have
+      # online node without running SBD, pacemaker will shutdown/not start
+      # in case like this)
       status[:warning_list] << {
-        :message => 'SBD is disabled but it is still running. Restart of' +
-          ' cluster is required.'
+        :message =>
+          'SBD is enabled but not running. Restart of cluster is required.',
+      }
+    end
+    if sbd_enabled.empty? and not sbd_running.empty?
+      status[:warning_list] << {
+        :message =>
+          'SBD is disabled but still running. Restart of cluster is required.',
       }
     end
   end
