@@ -1010,25 +1010,14 @@ module ClusterEntity
       @quorum = nil
       @uptime = 'unknown'
       @name = nil
-      @services = {
-        :pacemaker => {
-          :running => nil,
-          :enabled => nil
-        },
-        :corosync => {
-          :running => nil,
-          :enabled => nil
-        },
-        :pcsd => {
-          :running => nil,
-          :enabled => nil
-        },
-        :sbd => {
+      @services = {}
+      [:pacemaker, :corosync, :pcsd, :cman, :sbd].each do |service|
+        @services[service] = {
           :installed => nil,
           :running => nil,
           :enabled => nil
         }
-      }
+      end
       @corosync = false
       @pacemaker = false
       @cman = false
@@ -1043,15 +1032,17 @@ module ClusterEntity
       node.services.each do |service, info|
         info[:running] = is_service_running?(service.to_s)
         info[:enabled] = is_service_enabled?(service.to_s)
-      end
-      if ISSYSTEMCTL
-        node.services[:sbd][:installed] = is_service_installed?('sbd')
+        if ISSYSTEMCTL
+          # temporary solution
+          # is_service_installed is implemented only for systemd systems
+          info[:installed] = is_service_installed?(service.to_s)
+        end
       end
       node.corosync = node.services[:corosync][:running]
       node.corosync_enabled = node.services[:corosync][:enabled]
       node.pacemaker = node.services[:pacemaker][:running]
       node.pacemaker_enabled = node.services[:pacemaker][:enabled]
-      node.cman = is_service_running?('cman')
+      node.cman = node.services[:cman][:running]
       node.pcsd_enabled = node.services[:pcsd][:enabled]
 
       node_online = (node.corosync and node.pacemaker)
