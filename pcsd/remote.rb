@@ -2332,7 +2332,7 @@ def remote_enable_sbd(params, request, auth_user)
   )
 
   if retcode != 0
-    return [400, "Unable to enable sbd in cluster: #{stderr.join('')}"]
+    return [400, "Unable to enable sbd in cluster:\n#{stderr.join('')}"]
   end
 
   return [200, 'Sbd has been enabled.']
@@ -2354,7 +2354,7 @@ def remote_disable_sbd(params, request, auth_user)
   )
 
   if retcode != 0
-    return [400, "Unable to disable sbd in cluster: #{stderr.join('')}"]
+    return [400, "Unable to disable sbd in cluster:\n#{stderr.join('')}"]
   end
 
   return [200, 'Sbd has been disabled.']

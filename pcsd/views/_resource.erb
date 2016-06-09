@@ -22,13 +22,14 @@
     <% if @myView == "resource" %>
       <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="create_group();return false;">Create Group</a></div>
     <% else %>
-        {{#if Pcs.is_sbd_supported}}
         <div class="configurelight sprites"></div>
-        <div class="link">
-          &nbsp;
-          <a href="#" onclick="sbd_status_dialog();return false;">SBD</a>
+        <div class="link"> &nbsp;
+          {{#if Pcs.is_sbd_supported}}
+            <a href="#" onclick="sbd_status_dialog();return false;">SBD</a>
+          {{else}}
+            <a href="#" onclick="alert('This cluster is running an old version of PCSD which does not support SBD.'); return false;">SBD</a>
+          {{/if}}
         </div>
-        {{/if}}
     <% end %>
     </td>
     <td class="borderbottom">&nbsp;</td>
