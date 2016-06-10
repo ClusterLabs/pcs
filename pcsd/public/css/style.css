@@ -844,3 +844,7 @@ li.menuheader {
 table.args-table td.reg {
   width: 17em;
 }
+
+.constraint-ticket-add-attribute {
+  vertical-align: top;
+}

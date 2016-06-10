@@ -1754,6 +1754,18 @@ def add_constraint_set_remote(params, request, auth_user)
       auth_user,
       params["resources"].values, params["force"], !params['disable_autocorrect']
     )
+  when "ticket"
+    unless params["options"]["ticket"]
+      return [400, "Error adding constraint ticket: option ticket missing"]
+    end
+    retval, error = add_ticket_set_constraint(
+      auth_user,
+      params["options"]["ticket"],
+      (params["options"]["loss-policy"] or ""),
+      params["resources"].values,
+      params["force"],
+      !params['disable_autocorrect']
+    )
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]
   end

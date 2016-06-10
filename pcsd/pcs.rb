@@ -131,6 +131,23 @@ def add_order_set_constraint(
   return retval, stderr.join(' ')
 end
 
+def add_ticket_set_constraint(
+  auth_user, ticket, loss_policy, resource_set_list, force=false,
+  autocorrect=true
+)
+  command = [PCS, 'constraint', 'ticket']
+  resource_set_list.each { |resource_set|
+    command << 'set'
+    command.concat(resource_set)
+  }
+  command << 'setoptions'
+  command << 'ticket=' + ticket
+  command << 'loss-policy=' + loss_policy if loss_policy
+  command << '--force' if force
+  stdout, stderr, retval = run_cmd(auth_user, *command)
+  return retval, stderr.join(' ')
+end
+
 def add_colocation_constraint(
   auth_user, resourceA, resourceB, score, force=false, autocorrect=true
 )

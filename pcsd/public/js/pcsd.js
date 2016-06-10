@@ -1527,10 +1527,21 @@ function add_constraint(parent_id, c_type, force) {
   });
 }
 
+function add_constraint_set_get_options(parent_id, constraint_type){
+  switch(constraint_type){
+    case "ticket": return {
+      ticket: $(parent_id + " input[name='ticket']").val().trim(),
+      "loss-policy": $(parent_id + " select[name='loss-policy']").val().trim(),
+    };
+  }
+  return {};
+}
+
 function add_constraint_set(parent_id, c_type, force) {
   var data = {
     resources: [],
-    disable_autocorrect: true
+    disable_autocorrect: true,
+    options: {},
   };
   $(parent_id + " input[name='resource_ids[]']").each(function(index, element) {
     var resources = element.value.trim();
@@ -1538,6 +1549,7 @@ function add_constraint_set(parent_id, c_type, force) {
       data['resources'].push(resources.split(/\s+/));
     }
   });
+  data.options = add_constraint_set_get_options(parent_id, c_type);
   data["c_type"] = c_type;
   if (force) {
     data["force"] = force;
@@ -1611,6 +1623,11 @@ function remove_constraint(id) {
       Pcs.update();
     }
   });
+}
+
+function remove_constraint_action(remover_element){
+  remove_constraint($(remover_element).parent().attr('constraint_id'));
+  return false;
 }
 
 function remove_constraint_rule(id) {
@@ -2007,7 +2024,14 @@ function get_list_view_element_id(element) {
 }
 
 function auto_show_hide_constraints() {
-  var cont = ["location_constraints", "ordering_constraints", "ordering_set_constraints", "colocation_constraints", "meta_attributes"];
+  var cont = [
+    "location_constraints",
+    "ordering_constraints",
+    "ordering_set_constraints",
+    "colocation_constraints",
+    "ticket_set_constraints",
+    "meta_attributes",
+  ];
   $.each(cont, function(index, name) {
     var elem = $("#" + name)[0];
     var cur_resource = Pcs.resourcesContainer.get('cur_resource');

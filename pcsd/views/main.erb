@@ -290,6 +290,7 @@
         {{location_constraints-table constraints=resource.location_constraints}}
         {{ordering_constraints-table constraints=resource.ordering_constraints resource_id=resource._id}}
         {{ordering_set_constraints-table constraints=resource.ordering_set_constraints}}
+        {{ticket_set_constraints-table constraints=resource.ticket_set_constraints}}
         {{colocation_constraints-table constraints=resource.colocation_constraints}}
         {{meta_attributes-table resource=resource}}
         {{#if utilization_support}}
@@ -342,7 +343,7 @@
 			  <td>{{cons.score}}</td>
 			  <td {{bind-attr constraint_id=cons.id}} style="text-align:center">
 			    {{#unless cons.temp}}
-				<a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+				<a onclick="return remove_constraint_action(this);" href="#" class="remove">X</a>
 			    {{/unless}}
 			  </td>
 			{{/if}}
@@ -382,7 +383,7 @@
 			    {{/if}}
 			    <td>{{cons.score}}</td>
 			    <td {{bind-attr constraint_id=cons.id}} style="text-align:center">
-				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+				  <a onclick="return remove_constraint_action(this);" href="#" class="remove">X</a>
 			    </td>
 			  </tr>
 			{{else}}
@@ -437,7 +438,7 @@
                 <tr>
                   <td>{{cons.id}}</td>
                   <td {{bind-attr constraint_id="cons.id"}} style="text-align:center;">
-                    <a onclick="remove_constraint($(this).parent().attr('constraint_id')); return false;" href="#" class="remove">X</a>
+                    <a onclick="return remove_constraint_action(this);" href="#" class="remove">X</a>
                   </td>
                 </tr>
                 {{#each set in cons.sets}}
@@ -464,6 +465,100 @@ Use the 'Add' button to submit the form.">
         </table>
   </script>
 
+  <script
+    type="text/x-handlebars"
+    data-template-name="components/ticket_set_constraints-table"
+  >
+    <table style="clear:left;float:left;">
+      <tr>
+        <td
+          id="ticket_set_constraints"
+          class="datatable_header hover-pointer"
+          style="display: block;"
+          onclick="show_hide_constraints(this)"
+        >
+          <span style="" class="downarrow sprites"></span>
+          <span style="display: none;" class="rightarrow sprites"></span>
+          Resource Ticket Set Preferences
+          ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div id="locationdep">
+            <table class="datatable">
+              <tr>
+                <th>Preference Name/Set of Resources</th>
+                <th>Ticket</th>
+                <th>Loss Policy</th>
+                <th style="text-align: center;">Remove</th>
+              </tr>
+              {{#each cons in constraints}}
+                <tr>
+                  <td>{{cons.id}}</td>
+                  <td>{{cons.ticket}}</td>
+                  <td>{{cons.loss-policy}}</td>
+                  <td
+                    {{bind-attr constraint_id="cons.id"}}
+                    style="text-align:center;"
+                  >
+                    <a
+                      onclick="return remove_constraint_action(this);"
+                      href="#"
+                      class="remove"
+                    >X</a>
+                  </td>
+                </tr>
+                {{#each set in cons.sets}}
+                <tr>
+                  <td style="padding-left:2em;" colspan="4">
+                    Set:{{#each rsc in set.resources}} {{rsc}}{{/each}}
+                  </td>
+                </tr>
+                {{/each}}
+              {{else}}
+                <tr><td style="color: gray;" colspan="4">NONE</td></tr>
+              {{/each}}
+              <tr id="new_ticket_constraint_resource_set" title="
+                Enter the resources you want to be in one set into the 'Set'
+                field separated by space.
+                Use the 'New Set' button to create more sets.
+                Use the 'Add' button to submit the form.
+              ">
+                <td>Set: <input type="text" name="resource_ids[]"></td>
+                <td class="constraint-ticket-add-attribute">
+                  <input type="text" name="ticket"/>
+                </td>
+                <td class="constraint-ticket-add-attribute">
+                  <select name="loss-policy"/>
+                    <option value="fence">fence</option>
+                    <option value="stop">stop</option>
+                    <option value="freeze">freeze</option>
+                    <option value="demote">demote</option>
+                  </selct>
+                </td>
+                <td style="vertical-align: bottom;">
+                  <button type="button" name="new-row"
+                    onclick="new_constraint_set_row(
+                      '#new_ticket_constraint_resource_set'
+                    );"
+                  >New Set</button>
+                  <button type="button" name="add"
+                    onclick="add_constraint_set(
+                      '#new_ticket_constraint_resource_set',
+                      'ticket',
+                      false
+                    );"
+                  >Add</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="components/colocation_constraints-table">
     <table style="clear:left;float:left">
 		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="colocation_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Colocation Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
@@ -476,7 +571,7 @@ Use the 'Add' button to submit the form.">
 			    <td>{{cons.together}}</td>
 			    <td>{{cons.score}}</td>
 			    <td {{bind-attr constraint_id=cons.id}} style="text-align:center">
-				  <a onclick="remove_constraint($(this).parent().attr('constraint_id'));return false;" href="#" class="remove">X</a>
+				  <a onclick="return remove_constraint_action(this);" href="#" class="remove">X</a>
 			    </td>
 			  </tr>
 			  {{else}}

@@ -2317,6 +2317,12 @@ function constraint_location_distribute_to_resource(constraint){
   return groups;
 }
 
+function constraint_ticket_distribute_to_resource(constraint){
+  var groups = {};
+  groups[constraint["rsc"]] = constraint;
+  return groups;
+}
+
 /**
   Return object with nested object on each attribute ("with_sets", "plain").
   Nested object has related constraint list on each attribute (resource id).
@@ -2380,12 +2386,19 @@ function constraint_resort(constraints){
 
   var locations = constraint_resort_part(constraints.rsc_location, {
     plain: constraint_location_distribute_to_resource,
-  })
+  });
+
+  var tickets = constraint_resort_part(constraints.rsc_ticket, {
+    plain: constraint_ticket_distribute_to_resource,
+    with_sets: constraint_set_create_resource_keyed_map,
+  });
 
   return {
     location_constraints: locations.plain,
     ordering_constraints: orders.plain,
     ordering_set_constraints: orders.with_sets,
+    ticket_constraints: tickets.plain,
+    ticket_set_constraints: tickets.with_sets,
     colocation_constraints: colocations.plain,
   };
 }
