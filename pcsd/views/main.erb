@@ -290,6 +290,7 @@
         {{location_constraints-table constraints=resource.location_constraints}}
         {{ordering_constraints-table constraints=resource.ordering_constraints resource_id=resource._id}}
         {{ordering_set_constraints-table constraints=resource.ordering_set_constraints}}
+        {{ticket_constraints-table constraints=resource.ticket_constraints resource_id=resource._id}}
         {{ticket_set_constraints-table constraints=resource.ticket_set_constraints}}
         {{colocation_constraints-table constraints=resource.colocation_constraints}}
         {{meta_attributes-table resource=resource}}
@@ -463,6 +464,93 @@ Use the 'Add' button to submit the form.">
             </div>
           </td></tr>
         </table>
+  </script>
+
+  <script
+    type="text/x-handlebars"
+    data-template-name="components/ticket_constraints-table"
+  >
+    <table style="clear:left;float:left;">
+      <tr>
+        <td
+          style="display: block;"
+          onclick="show_hide_constraints(this)"
+          class="datatable_header hover-pointer"
+          id="ticket_constraints"
+        >
+          <span style="" class="downarrow sprites"></span>
+          <span style="display: none;" class="rightarrow sprites"></span>
+          Resource Ticket Preferences
+          ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div id="locationdep">
+            <table class="datatable">
+              <tr>
+                <th>Ticket</th>
+                <th>Resource Role</th>
+                <th>Loss Policy</th>
+                <th>Remove</th>
+              </tr>
+              {{#each cons in constraints}}
+                <tr>
+                  <td>{{cons.ticket}}</td>
+                  <td>{{cons.rsc-role}}</td>
+                  <td>{{cons.loss-policy}}</td>
+                  <td
+                    {{bind-attr constraint_id=cons.id}}
+                    style="text-align:center"
+                  >
+                    <a
+                      onclick="return remove_constraint_action(this);"
+                      href="#"
+                      class="remove"
+                    >X</a>
+                  </td>
+                </tr>
+              {{else}}
+                <tr>
+                  <td colspan="4" style="color: gray;">NONE</td>
+                </tr>
+              {{/each}}
+              <tr id="new_ticket_constraint">
+                <td class="constraint-ticket-add-attribute">
+                  <input type="text" name="ticket"/>
+                </td>
+                <td class="constraint-ticket-add-attribute">
+                  <select name="role"/>
+                    <option value=""></option>
+                    <option value="Stopped">Stopped</option>
+                    <option value="Started">Started</option>
+                    <option value="Master">Master</option>
+                    <option value="Slave">Slave</option>
+                  </selct>
+                </td>
+                <td class="constraint-ticket-add-attribute">
+                  <select name="loss-policy"/>
+                    <option value="fence">fence</option>
+                    <option value="stop">stop</option>
+                    <option value="freeze">freeze</option>
+                    <option value="demote">demote</option>
+                  </selct>
+                </td>
+                <td>
+                  <button type="button" name="add"
+                    onclick="add_constraint(
+                      '#new_ticket_constraint',
+                      'ticket',
+                      false
+                    );"
+                  >Add</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+    </table>
   </script>
 
   <script

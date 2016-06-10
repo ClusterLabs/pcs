@@ -1712,6 +1712,12 @@ def add_constraint_remote(params, request, auth_user)
       auth_user,
       resA, resB, score, params["force"], !params['disable_autocorrect']
     )
+  when "ticket"
+    retval, error = add_ticket_constraint(
+      auth_user,
+      params["ticket"], params["res_id"], params["role"], params["loss-policy"],
+      params["force"], !params['disable_autocorrect']
+    )
   else
     return [400, "Unknown constraint type: #{params['c_type']}"]
   end

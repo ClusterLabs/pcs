@@ -131,6 +131,23 @@ def add_order_set_constraint(
   return retval, stderr.join(' ')
 end
 
+
+def add_ticket_constraint(
+    auth_user, ticket, resource_id, role, loss_policy,
+    force=false, autocorrect=true
+)
+  command = [PCS, "constraint", "ticket", "add", ticket]
+  if role
+    command << role
+  end
+  command << resource_id
+  command << 'loss-policy=' + loss_policy if loss_policy
+  command << '--force' if force
+  command << '--autocorrect' if autocorrect
+  stdout, stderr, retval = run_cmd(auth_user, *command)
+  return retval, stderr.join(' ')
+end
+
 def add_ticket_set_constraint(
   auth_user, ticket, loss_policy, resource_set_list, force=false,
   autocorrect=true

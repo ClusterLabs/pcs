@@ -1470,18 +1470,35 @@ function add_meta_attr(parent_id) {
   Pcs.resourcesContainer.update_meta_attr(resource_id, attr, value);
 }
 
+
+function add_constraint_prepare_data(parent_id, constraint_type){
+  var value = function(sibling){
+    var form_value = $(parent_id + " " + sibling).val();
+    return form_value ? form_value.trim() : form_value;
+  };
+  switch(constraint_type){
+    case "ticket": return {
+      ticket: value("input[name='ticket']"),
+      role: value("select[name='role']"),
+      "loss-policy": value("select[name='loss-policy']"),
+    };
+  }
+  return {
+    rule: value("input[name='node_id']"),
+    score: value("input[name='score']"),
+    target_res_id: value("input[name='target_res_id']"),
+    order: value("select[name='order']"),
+    target_action: value("select[name='target_action']"),
+    res_action: value("select[name='res_action']"),
+    colocation_type: value("select[name='colocate']"),
+  };
+}
+
 function add_constraint(parent_id, c_type, force) {
-  var data = {};
+  var data = add_constraint_prepare_data(parent_id, c_type);
   data["disable_autocorrect"] = true;
   data["res_id"] = Pcs.resourcesContainer.cur_resource.get('id');
   data["node_id"] = $(parent_id + " input[name='node_id']").val();
-  data["rule"] = $(parent_id + " input[name='node_id']").val();
-  data["score"] = $(parent_id + " input[name='score']").val();
-  data["target_res_id"] = $(parent_id + " input[name='target_res_id']").val();
-  data["order"] = $(parent_id + " select[name='order']").val();
-  data["target_action"] = $(parent_id + " select[name='target_action']").val();
-  data["res_action"] = $(parent_id + " select[name='res_action']").val();
-  data["colocation_type"] = $(parent_id + " select[name='colocate']").val();
   data["c_type"] = c_type;
   if (force) {
     data["force"] = force;
@@ -2029,6 +2046,7 @@ function auto_show_hide_constraints() {
     "ordering_constraints",
     "ordering_set_constraints",
     "colocation_constraints",
+    "ticket_constraints",
     "ticket_set_constraints",
     "meta_attributes",
   ];
