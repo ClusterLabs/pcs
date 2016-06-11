@@ -141,7 +141,7 @@ def add_ticket_constraint(
     command << role
   end
   command << resource_id
-  command << 'loss-policy=' + loss_policy if loss_policy
+  command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
   command << '--force' if force
   command << '--autocorrect' if autocorrect
   stdout, stderr, retval = run_cmd(auth_user, *command)
@@ -159,7 +159,7 @@ def add_ticket_set_constraint(
   }
   command << 'setoptions'
   command << 'ticket=' + ticket
-  command << 'loss-policy=' + loss_policy if loss_policy
+  command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
   command << '--force' if force
   stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
