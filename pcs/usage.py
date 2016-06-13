@@ -912,7 +912,7 @@ Commands:
         generated from the resource id. If resource-discovery is omitted it
         defaults to 'always'.
 
-    location show [resources|nodes [node id|resource id]...] [--full]
+    location [show [resources|nodes [node id|resource id]...] [--full]]
         List all the current location constraints, if 'resources' is specified
         location constraints are displayed per resource (default), if 'nodes'
         is specified location constraints are displayed per node.  If specific
@@ -927,7 +927,7 @@ Commands:
         Remove a location constraint with the appropriate id, resource id,
         node name and score. (For more advanced pacemaker usage)
 
-    order show [--full]
+    order [show] [--full]
         List all current ordering constraints (if --full is specified show
         the internal constraint id's as well).
 
@@ -950,7 +950,7 @@ Commands:
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
 
-    colocation show [--full]
+    colocation [show] [--full]
         List all current colocation constraints (if --full is specified show
         the internal constraint id's as well).
 
@@ -977,7 +977,7 @@ Commands:
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with <source resource>
 
-    ticket show [--full]
+    ticket [show] [--full]
         List all current ticket constraints (if --full is specified show
         the internal constraint id's as well).
 

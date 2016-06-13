@@ -92,11 +92,12 @@ def constraint_cmd(argv):
                 "add": ticket_command.add,
                 "show": ticket_command.show,
             }
-            if argv[0] not in command_map:
+            sub_command = argv[0] if argv else "show"
+            if sub_command not in command_map:
                 raise CmdLineInputError()
-            usage_name = "ticket "+argv[0]
+            usage_name = "ticket "+sub_command
 
-            command_map[argv[0]](lib, argv[1:], modificators)
+            command_map[sub_command](lib, argv[1:], modificators)
         except LibraryError as e:
             utils.process_library_reports(e.args)
         except CmdLineInputError as e:

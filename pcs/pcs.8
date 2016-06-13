@@ -445,7 +445,7 @@ Creates a location rule on the specified resource where the expression looks lik
 .br
 where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource-discovery is omitted it defaults to 'always'.
 .TP
-location show [resources|nodes [node id|resource id]...] [\fB\-\-full\fR]
+location [show [resources|nodes [node id|resource id]...] [\fB\-\-full\fR]]
 List all the current location constraints, if 'resources' is specified location constraints are displayed per resource (default), if 'nodes' is specified location constraints are displayed per node.  If specific nodes or resources are specified then we only show information about them.  If \fB\-\-full\fR is specified show the internal constraint id's as well.
 .TP
 location add <id> <resource id> <node> <score> [resource-discovery=<option>]
@@ -454,7 +454,7 @@ Add a location constraint with the appropriate id, resource id, node name and sc
 location remove <id> [<resource id> <node> <score>]
 Remove a location constraint with the appropriate id, resource id, node name and score. (For more advanced pacemaker usage)
 .TP
-order show [\fB\-\-full\fR]
+order [show] [\fB\-\-full\fR]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 order [action] <resource id> then [action] <resource id> [options]
@@ -466,7 +466,7 @@ Create an ordered set of resources. Available options are sequential=true/false,
 order remove <resource1> [resourceN]...
 Remove resource from any ordering constraint
 .TP
-colocation show [\fB\-\-full\fR]
+colocation [show] [\fB\-\-full\fR]
 List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 colocation add [master|slave] <source resource id> with [master|slave] <target resource id> [score] [options] [id=constraint\-id]
@@ -478,7 +478,7 @@ Create a colocation constraint with a resource set. Available options are sequen
 colocation remove <source resource id> <target resource id>
 Remove colocation constraints with <source resource>
 .TP
-ticket show [\fB\-\-full\fR]
+ticket [show] [\fB\-\-full\fR]
 List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 ticket set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
