@@ -268,7 +268,17 @@ def _filter_fence_agent_parameters(parameters):
 
     parameters -- list of fence agent parameters
     """
-    banned_parameters = ["debug", "action", "verbose", "version", "help"]
+    # we don't allow user to change these options, they are intended
+    # to be used interactively (command line), there is no point setting them
+    banned_parameters = ["debug", "verbose", "version", "help"]
+    # but still, we have to let user change 'action' because of backward
+    # compatibility, just marking it as not required
+    for param in parameters:
+        if param["name"] == "action":
+            param["shortdesc"] = param.get("shortdesc", "") + "\nWARNING: " +\
+                "specifying 'action' is deprecated and not necessary with " +\
+                "current Pacemaker versions"
+            param["required"] = False
     return [
         param for param in parameters if param["name"] not in banned_parameters
     ]

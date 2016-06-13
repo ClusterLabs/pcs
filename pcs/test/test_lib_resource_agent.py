@@ -498,7 +498,36 @@ class FilterFenceAgentParametersTest(LibraryResourceTest):
         self.assertEqual(
             [
                 {"name": "valid_param"},
+                {
+                    "name": "action",
+                    "required": False,
+                    "shortdesc":
+                        "\nWARNING: specifying 'action' is deprecated and not" +
+                        " necessary with current Pacemaker versions"
+                },
                 {"name": "another_param"}
+            ],
+            lib_ra._filter_fence_agent_parameters(params)
+        )
+
+    def test_action(self):
+        params = [
+            {
+                "name": "action",
+                "required": True,
+                "shortdesc": "Action"
+            }
+        ]
+
+        self.assertEqual(
+            [
+                {
+                    "name": "action",
+                    "required": False,
+                    "shortdesc":
+                        "Action\nWARNING: specifying 'action' is deprecated " +
+                        "and not necessary with current Pacemaker versions"
+                }
             ],
             lib_ra._filter_fence_agent_parameters(params)
         )
