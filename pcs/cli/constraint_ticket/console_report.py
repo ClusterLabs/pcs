@@ -13,14 +13,13 @@ def constraint_plain(constraint_info, with_id=False):
     bool with_id have to show id with options_dict
     """
     options = constraint_info["options"]
-    return " ".join(
-        [options.get("rsc-role", ""), options.get("rsc", "")]
-        +
-        prepare_options(
-            dict(
-                (name, value) for name, value in options.items()
-                if name not in ["rsc-role", "rsc"]
-            ),
-            with_id
-        )
-    )
+    role = options.get("rsc-role", "")
+    role_prefix = "{0} ".format(role) if role else ""
+
+    return role_prefix + " ".join([options.get("rsc", "")] + prepare_options(
+        dict(
+            (name, value) for name, value in options.items()
+            if name not in ["rsc-role", "rsc"]
+        ),
+        with_id
+    ))
