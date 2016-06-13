@@ -222,6 +222,19 @@ class PrepareOptionsWithSetTest(TestCase):
             )
         )
 
+    def test_refuse_empty_ticket(self, _):
+        assert_raise_library_error(
+            lambda: self.prepare({
+                "loss-policy": "stop",
+                "id": "id",
+                "ticket": " "
+            }),
+            (
+                severities.ERROR,
+                report_codes.REQUIRED_OPTION_IS_MISSING,
+                {"option_name": "ticket"}
+            )
+        )
 
 class Element(object):
     def __init__(self, attrib):

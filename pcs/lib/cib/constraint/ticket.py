@@ -52,7 +52,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
         validate_id=partial(tools.check_new_id_applicable, cib, DESCRIPTION),
     )
     report  = _validate_options_common(options)
-    if "ticket" not in options:
+    if "ticket" not in options or not options["ticket"].strip():
         report.append(reports.required_option_is_missing('ticket'))
     if report:
         raise LibraryError(*report)
