@@ -1503,7 +1503,7 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
     node_name = cluster_status[:node][:name]
     # create set of available features on all nodes
     # it is intersection of available features from all nodes
-    if node_status != 'unknown'
+    if node_status != 'unknown' and cluster_status[:available_features]
       status[:available_features] &= cluster_status[:available_features]
     end
     if (
