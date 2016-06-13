@@ -42,6 +42,11 @@ Pcs = Ember.Application.createWithMixins({
   is_sbd_supported: function() {
     return (this.get("available_features").indexOf("sbd") != -1);
   }.property("available_features"),
+  is_ticket_constraints_supported: function(){
+    return (
+      this.get("available_features").indexOf("ticket_constraints") != -1
+    );
+  }.property("available_features"),
   is_sbd_running: false,
   is_sbd_enabled: false,
   is_sbd_enabled_or_running: function() {

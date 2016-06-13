@@ -1681,7 +1681,7 @@ def get_node_status(auth_user, cib_dom)
       :node_attr => node_attrs_to_v2(get_node_attributes(auth_user, cib_dom)),
       :nodes_utilization => get_nodes_utilization(cib_dom),
       :known_nodes => [],
-      :available_features => ['sbd']
+      :available_features => ['sbd', 'ticket_constraints']
   }
 
   nodes = get_nodes_status()
