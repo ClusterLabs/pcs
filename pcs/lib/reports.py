@@ -654,6 +654,19 @@ def qdevice_already_initialized(model):
         }
     )
 
+def qdevice_not_initialized(model):
+    """
+    cannot work with qdevice on local host, it has not been created yet
+    string model qdevice model
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_NOT_INITIALIZED,
+        "Quorum device '{model}' has not been initialized yet",
+        info={
+            "model": model,
+        }
+    )
+
 def qdevice_initialization_success(model):
     """
     qdevice was successfully initialized on local host
@@ -678,6 +691,41 @@ def qdevice_initialization_error(model, reason):
         "Unable to initialize quorum device '{model}': {reason}",
         info={
             "model": model,
+            "reason": reason,
+        }
+    )
+
+def qdevice_certificate_distribution_started():
+    """
+    Qdevice certificates are about to be set up on nodes
+    """
+    return ReportItem.info(
+        report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+        "Setting up qdevice certificates on nodes..."
+    )
+
+def qdevice_certificate_import_error(reason):
+    """
+    an error occured when importing qdevice certificate to a node
+    string reason an error message
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+        "Unable to import quorum device certificate: {reason}",
+        info={
+            "reason": reason,
+        }
+    )
+
+def qdevice_certificate_sign_error(reason):
+    """
+    an error occured when signing qdevice certificate
+    string reason an error message
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_CERTIFICATE_SIGN_ERROR,
+        "Unable to sign quorum device certificate: {reason}",
+        info={
             "reason": reason,
         }
     )

@@ -132,6 +132,12 @@ def load_module(env, middleware_factory, name):
                 "kill": qdevice.qdevice_kill,
                 "enable": qdevice.qdevice_enable,
                 "disable": qdevice.qdevice_disable,
+                # following commands are internal use only, called from pcsd
+                "client_net_setup": qdevice.client_net_setup,
+                "client_net_import_certificate":
+                    qdevice.client_net_import_certificate,
+                "sign_net_cert_request":
+                    qdevice.qdevice_net_sign_certificate_request,
             }
         )
     if name == "sbd":

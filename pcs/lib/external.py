@@ -49,7 +49,11 @@ except ImportError:
 
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity
-from pcs.common.tools import simple_cache
+from pcs.common import report_codes
+from pcs.common.tools import (
+    simple_cache,
+    run_parallel as tools_run_parallel,
+)
 from pcs import settings
 
 
@@ -521,7 +525,7 @@ class NodeCommunicator(object):
                 # text in response body with HTTP code 400
                 # we need to be backward compatible with that
                 raise NodeCommandUnsuccessfulException(
-                    host, request, response_data
+                    host, request, response_data.rstrip()
                 )
             elif e.code == 401:
                 raise NodeAuthenticationException(
@@ -581,3 +585,39 @@ class NodeCommunicator(object):
                 base64.b64encode(" ".join(self._groups).encode("utf-8"))
             ))
         return cookies
+
+
+def parallel_nodes_communication_helper(
+    func, func_args_kwargs, reporter, skip_offline_nodes=False
+):
+    """
+    Help running node calls in parallel and handle communication exceptions.
+    Raise LibraryError on any failure.
+
+    function func function to be run, should be a function calling a node
+    iterable func_args_kwargs list of tuples: (*args, **kwargs)
+    bool skip_offline_nodes do not raise LibraryError if a node is unreachable
+    """
+    failure_severity = ReportItemSeverity.ERROR
+    failure_forceable = report_codes.SKIP_OFFLINE_NODES
+    if skip_offline_nodes:
+        failure_severity = ReportItemSeverity.WARNING
+        failure_forceable = None
+    report_items = []
+
+    def _parallel(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except NodeCommunicationException as e:
+            report_items.append(
+                node_communicator_exception_to_report_item(
+                    e,
+                    failure_severity,
+                    failure_forceable
+                )
+            )
+        except LibraryError as e:
+            report_items.extend(e.args)
+
+    tools_run_parallel(_parallel, func_args_kwargs)
+    reporter.process_list(report_items)

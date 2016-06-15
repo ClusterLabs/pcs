@@ -2661,6 +2661,7 @@ def get_modificators():
         "enable": "--enable" in pcs_options,
         "force": "--force" in pcs_options,
         "full": "--full" in pcs_options,
+        "name": pcs_options.get("--name", None),
         "skip_offline_nodes": "--skip-offline" in pcs_options,
         "start": "--start" in pcs_options,
         "watchdog": pcs_options.get("--watchdog", []),

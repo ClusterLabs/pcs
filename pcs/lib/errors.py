@@ -42,4 +42,8 @@ class ReportItem(object):
         self.message = self.message_pattern.format(**self.info)
 
     def __repr__(self):
-        return self.code+": "+str(self.info)
+        return "{severity} {code}: {info}".format(
+            severity=self.severity,
+            code=self.code,
+            info=self.info
+        )

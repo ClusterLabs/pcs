@@ -5,9 +5,14 @@ from __future__ import (
     unicode_literals,
 )
 
-
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
+from pcs.lib.corosync import qdevice_net, qdevice_client
+from pcs.lib.external import (
+    NodeCommunicationException,
+    node_communicator_exception_to_report_item,
+    parallel_nodes_communication_helper,
+)
 
 
 def get_config(lib_env):
@@ -58,6 +63,8 @@ def add_device(
     __ensure_not_cman(lib_env)
 
     cfg = lib_env.get_corosync_conf()
+    # Try adding qdevice to corosync.conf. This validates all the options and
+    # makes sure qdevice is not defined in corosync.conf yet.
     cfg.add_quorum_device(
         lib_env.report_processor,
         model,
@@ -66,8 +73,103 @@ def add_device(
         force_model,
         force_options
     )
-    # TODO validation, verification, certificates, etc.
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
+    if lib_env.is_corosync_conf_live:
+        # do model specific configuration
+        if model == "net":
+            _add_device_model_net(
+                lib_env,
+                # we are sure it's there, it was validated in add_quorum_device
+                model_options["host"],
+                cfg.get_cluster_name(),
+                cfg.get_nodes(),
+                skip_offline_nodes
+            )
+        # if model is not known to pcs and was forced, do not configure antyhing
+        # else but corosync.conf, as we do not know what to do anyways
+
+        # Since cluster is not running, we do not start qdevice service. We know
+        # it isn't running because qdevice caanot be added to a running cluster,
+        # and that us ensured by cfg.need_stopped_cluster and
+        # lib_env.push_corosync_conf.
+        communicator = lib_env.node_communicator()
+        parallel_nodes_communication_helper(
+            qdevice_client.remote_client_enable,
+            [
+                [(communicator, node), {}]
+                for node in cfg.get_nodes()
+            ],
+            lib_env.report_processor,
+            skip_offline_nodes
+        )
+
+def _add_device_model_net(
+    lib_env, qnetd_host, cluster_name, cluster_nodes, skip_offline_nodes
+):
+    """
+    setup cluster nodes for using qdevice model net
+    string qnetd_host address of qdevice provider (qnetd host)
+    string cluster_name name of the cluster to which qdevice is being added
+    NodeAddressesList cluster_nodes list of cluster nodes addresses
+    skip_offline_nodes continue even if not all nodes are accessible
+    """
+    communicator = lib_env.node_communicator()
+    runner = lib_env.cmd_runner()
+    reporter = lib_env.report_processor
+
+    reporter.process(
+        reports.qdevice_certificate_distribution_started()
+    )
+    # get qnetd CA certificate
+    try:
+        qnetd_ca_cert = qdevice_net.remote_qdevice_get_ca_certificate(
+            communicator,
+            qnetd_host
+        )
+    except NodeCommunicationException as e:
+        raise LibraryError(
+            node_communicator_exception_to_report_item(e)
+        )
+    # init certificate storage on all nodes
+    parallel_nodes_communication_helper(
+        qdevice_net.remote_client_setup,
+        [
+            ((communicator, node, qnetd_ca_cert), {})
+            for node in cluster_nodes
+        ],
+        reporter,
+        skip_offline_nodes
+    )
+    # create client certificate request
+    cert_request = qdevice_net.client_generate_certificate_request(
+        runner,
+        cluster_name
+    )
+    # sign the request on qnetd host
+    try:
+        signed_certificate = qdevice_net.remote_sign_certificate_request(
+            communicator,
+            qnetd_host,
+            cert_request,
+            cluster_name
+        )
+    except NodeCommunicationException as e:
+        raise LibraryError(
+            node_communicator_exception_to_report_item(e)
+        )
+    # transform the signed certificate to pk12 format which can sent to nodes
+    pk12 = qdevice_net.client_cert_request_to_pk12(runner, signed_certificate)
+    # distribute final certificate to nodes
+    parallel_nodes_communication_helper(
+        qdevice_net.remote_client_import_certificate_and_key,
+        [
+            ((communicator, node, pk12), {})
+            for node in cluster_nodes
+        ],
+        reporter,
+        skip_offline_nodes
+    )
 
 def update_device(
     lib_env, model_options, generic_options, force_options=False,

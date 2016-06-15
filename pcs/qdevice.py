@@ -37,12 +37,35 @@ def qdevice_cmd(lib, argv, modifiers):
             qdevice_enable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
             qdevice_disable_cmd(lib, argv_next, modifiers)
+        # following commands are internal use only, called from pcsd
+        elif sub_cmd == "sign-net-cert-request":
+            qdevice_sign_net_cert_request_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "net-client":
+            qdevice_net_client_cmd(lib, argv_next, modifiers)
         else:
             raise CmdLineInputError()
     except LibraryError as e:
         utils.process_library_reports(e.args)
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "qdevice", sub_cmd)
+
+# this is internal use only, called from pcsd
+def qdevice_net_client_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        utils.err("invalid command")
+
+    sub_cmd, argv_next = argv[0], argv[1:]
+    try:
+        if sub_cmd == "setup":
+            qdevice_net_client_setup_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "import-certificate":
+            qdevice_net_client_import_certificate_cmd(lib, argv_next, modifiers)
+        else:
+            raise CmdLineInputError("invalid command")
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except CmdLineInputError as e:
+        utils.err(e.message)
 
 def qdevice_setup_cmd(lib, argv, modifiers):
     if len(argv) != 2:
@@ -87,3 +110,29 @@ def qdevice_disable_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     model = argv[0]
     lib.qdevice.disable(model)
+
+# following commands are internal use only, called from pcsd
+
+def qdevice_net_client_setup_cmd(lib, argv, modifiers):
+    ca_certificate = _read_stdin()
+    lib.qdevice.client_net_setup(ca_certificate)
+
+def qdevice_net_client_import_certificate_cmd(lib, argv, modifiers):
+    certificate = _read_stdin()
+    lib.qdevice.client_net_import_certificate(certificate)
+
+def qdevice_sign_net_cert_request_cmd(lib, argv, modifiers):
+    certificate_request = _read_stdin()
+    print(
+        lib.qdevice.sign_net_cert_request(
+            certificate_request,
+            modifiers["name"]
+        )
+    )
+
+def _read_stdin():
+    # in python3 stdin returns str so we need to use buffer
+    if hasattr(sys.stdin, "buffer"):
+        return sys.stdin.buffer.read()
+    else:
+        return sys.stdin.read()

@@ -21,7 +21,12 @@ from pcs.test.tools.pcs_mock import mock
 
 from pcs.common import report_codes
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import ReportItemSeverity as severity
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity as severity,
+)
+from pcs.lib.external import NodeCommunicationException
+from pcs.lib.node import NodeAddresses, NodeAddressesList
 
 from pcs.lib.commands import quorum as lib
 
@@ -245,23 +250,31 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
+@mock.patch("pcs.lib.commands.quorum._add_device_model_net")
+@mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_enable")
 class AddDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
-    def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
+    def test_disabled_on_cman(
+        self, mock_client_enable, mock_add_net, mock_get_corosync,
+        mock_push_corosync
+    ):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(
             lambda: lib.add_device(lib_env, "net", {"host": "127.0.0.1"}, {})
         )
         mock_get_corosync.assert_not_called()
         mock_push_corosync.assert_not_called()
+        mock_add_net.assert_not_called()
+        mock_client_enable.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_enabled_on_cman_if_not_live(
-        self, mock_get_corosync, mock_push_corosync
+        self, mock_client_enable, mock_add_net, mock_get_corosync,
+        mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -287,9 +300,14 @@ class AddDeviceTest(TestCase, CmanMixin):
 
         self.assertEqual(1, mock_get_corosync.call_count)
         self.assertEqual(0, mock_push_corosync.call_count)
+        mock_add_net.assert_not_called()
+        mock_client_enable.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_success(self, mock_get_corosync, mock_push_corosync):
+    def test_success(
+        self, mock_client_enable, mock_add_net, mock_get_corosync,
+        mock_push_corosync
+    ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -321,9 +339,57 @@ class AddDeviceTest(TestCase, CmanMixin):
             )
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
+        self.assertEqual(1, len(mock_add_net.mock_calls))
+        self.assertEqual(3, len(mock_client_enable.mock_calls))
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_invalid_options(self, mock_get_corosync, mock_push_corosync):
+    def test_success_file(
+        self, mock_client_enable, mock_add_net, mock_get_corosync,
+        mock_push_corosync
+    ):
+        original_conf = open(rc("corosync-3nodes.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            corosync_conf_data=original_conf
+        )
+
+        lib.add_device(
+            lib_env,
+            "net",
+            {"host": "127.0.0.1", "algorithm": "ffsplit"},
+            {"timeout": "12345"}
+        )
+
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
+            original_conf.replace(
+                "provider: corosync_votequorum\n",
+                """provider: corosync_votequorum
+
+    device {
+        timeout: 12345
+        model: net
+
+        net {
+            algorithm: ffsplit
+            host: 127.0.0.1
+        }
+    }
+"""
+            )
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+        self.assertEqual(0, len(mock_add_net.mock_calls))
+        self.assertEqual(0, len(mock_client_enable.mock_calls))
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_invalid_options(
+        self, mock_client_enable, mock_add_net, mock_get_corosync,
+        mock_push_corosync
+    ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -349,9 +415,14 @@ class AddDeviceTest(TestCase, CmanMixin):
 
         self.assertEqual(1, mock_get_corosync.call_count)
         self.assertEqual(0, mock_push_corosync.call_count)
+        mock_add_net.assert_not_called()
+        mock_client_enable.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_invalid_options_forced(self, mock_get_corosync, mock_push_corosync):
+    def test_invalid_options_forced(
+        self, mock_client_enable, mock_add_net, mock_get_corosync,
+        mock_push_corosync
+    ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -398,9 +469,14 @@ class AddDeviceTest(TestCase, CmanMixin):
 """
             )
         )
+        self.assertEqual(1, len(mock_add_net.mock_calls))
+        self.assertEqual(3, len(mock_client_enable.mock_calls))
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_invalid_model(self, mock_get_corosync, mock_push_corosync):
+    def test_invalid_model(
+        self, mock_client_enable, mock_add_net, mock_get_corosync,
+        mock_push_corosync
+    ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -421,9 +497,14 @@ class AddDeviceTest(TestCase, CmanMixin):
 
         self.assertEqual(1, mock_get_corosync.call_count)
         self.assertEqual(0, mock_push_corosync.call_count)
+        mock_add_net.assert_not_called()
+        mock_client_enable.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_invalid_model_forced(self, mock_get_corosync, mock_push_corosync):
+    def test_invalid_model_forced(
+        self, mock_client_enable, mock_add_net, mock_get_corosync,
+        mock_push_corosync
+    ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -458,6 +539,606 @@ class AddDeviceTest(TestCase, CmanMixin):
 """
             )
         )
+        mock_add_net.assert_not_called() # invalid model - don't setup net model
+        self.assertEqual(3, len(mock_client_enable.mock_calls))
+
+
+@mock.patch(
+    "pcs.lib.commands.quorum.qdevice_net.remote_client_import_certificate_and_key"
+)
+@mock.patch("pcs.lib.commands.quorum.qdevice_net.client_cert_request_to_pk12")
+@mock.patch(
+    "pcs.lib.commands.quorum.qdevice_net.remote_sign_certificate_request"
+)
+@mock.patch(
+    "pcs.lib.commands.quorum.qdevice_net.client_generate_certificate_request"
+)
+@mock.patch("pcs.lib.commands.quorum.qdevice_net.remote_client_setup")
+@mock.patch(
+    "pcs.lib.commands.quorum.qdevice_net.remote_qdevice_get_ca_certificate"
+)
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+@mock.patch.object(
+    LibraryEnvironment,
+    "node_communicator",
+    lambda self: "mock_communicator"
+)
+class AddDeviceNetTest(TestCase):
+    #pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
+        self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        self.qnetd_host = "qnetd_host"
+        self.cluster_name = "clusterName"
+        self.nodes = NodeAddressesList([
+            NodeAddresses("node1"),
+            NodeAddresses("node2"),
+        ])
+        self.ca_cert = "CA certificate"
+        self.cert_request = "client certificate request"
+        self.signed_cert = "signed certificate"
+        self.final_cert = "final client certificate"
+
+    def test_success(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.return_value = self.ca_cert
+        mock_get_cert_request.return_value = self.cert_request
+        mock_sign_cert_request.return_value = self.signed_cert
+        mock_cert_to_pk12.return_value = self.final_cert
+        skip_offline_nodes = False
+
+        lib._add_device_model_net(
+            self.lib_env,
+            self.qnetd_host,
+            self.cluster_name,
+            self.nodes,
+            skip_offline_nodes
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                )
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        client_setup_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.ca_cert),
+            mock.call("mock_communicator", self.nodes[1], self.ca_cert),
+        ]
+        self.assertEqual(
+            len(client_setup_calls),
+            len(mock_client_setup.mock_calls)
+        )
+        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_get_cert_request.assert_called_once_with(
+            "mock_runner",
+            self.cluster_name
+        )
+        mock_sign_cert_request.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host,
+            self.cert_request,
+            self.cluster_name
+        )
+        mock_cert_to_pk12.assert_called_once_with(
+            "mock_runner",
+            self.signed_cert
+        )
+        client_import_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.final_cert),
+            mock.call("mock_communicator", self.nodes[1], self.final_cert),
+        ]
+        self.assertEqual(
+            len(client_import_calls),
+            len(mock_import_cert.mock_calls)
+        )
+        mock_import_cert.assert_has_calls(client_import_calls)
+
+    def test_error_get_ca_cert(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.side_effect = NodeCommunicationException(
+            "host", "command", "reason"
+        )
+        mock_get_cert_request.return_value = self.cert_request
+        mock_sign_cert_request.return_value = self.signed_cert
+        mock_cert_to_pk12.return_value = self.final_cert
+        skip_offline_nodes = False
+
+        assert_raise_library_error(
+            lambda: lib._add_device_model_net(
+                self.lib_env,
+                self.qnetd_host,
+                self.cluster_name,
+                self.nodes,
+                skip_offline_nodes
+            ),
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR,
+                {}
+            )
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                )
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        mock_client_setup.assert_not_called()
+        mock_get_cert_request.assert_not_called()
+        mock_sign_cert_request.assert_not_called()
+        mock_cert_to_pk12.assert_not_called()
+        mock_import_cert.assert_not_called()
+
+
+    def test_error_client_setup(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.return_value = self.ca_cert
+        def raiser(communicator, node, cert):
+            if node == self.nodes[1]:
+                raise NodeCommunicationException("host", "command", "reason")
+        mock_client_setup.side_effect = raiser
+        mock_get_cert_request.return_value = self.cert_request
+        mock_sign_cert_request.return_value = self.signed_cert
+        mock_cert_to_pk12.return_value = self.final_cert
+        skip_offline_nodes = False
+
+        assert_raise_library_error(
+            lambda: lib._add_device_model_net(
+                self.lib_env,
+                self.qnetd_host,
+                self.cluster_name,
+                self.nodes,
+                skip_offline_nodes
+            ),
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR,
+                {},
+                report_codes.SKIP_OFFLINE_NODES
+            )
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.NODE_COMMUNICATION_ERROR,
+                    {},
+                    report_codes.SKIP_OFFLINE_NODES
+                ),
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        client_setup_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.ca_cert),
+            mock.call("mock_communicator", self.nodes[1], self.ca_cert),
+        ]
+        self.assertEqual(
+            len(client_setup_calls),
+            len(mock_client_setup.mock_calls)
+        )
+        mock_client_setup.assert_has_calls(client_setup_calls)
+
+    def test_error_client_setup_skip_offline(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.return_value = self.ca_cert
+        def raiser(communicator, node, cert):
+            if node == self.nodes[1]:
+                raise NodeCommunicationException("host", "command", "reason")
+        mock_client_setup.side_effect = raiser
+        mock_get_cert_request.return_value = self.cert_request
+        mock_sign_cert_request.return_value = self.signed_cert
+        mock_cert_to_pk12.return_value = self.final_cert
+        skip_offline_nodes = True
+
+        lib._add_device_model_net(
+            self.lib_env,
+            self.qnetd_host,
+            self.cluster_name,
+            self.nodes,
+            skip_offline_nodes
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.NODE_COMMUNICATION_ERROR,
+                    {}
+                ),
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        client_setup_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.ca_cert),
+            mock.call("mock_communicator", self.nodes[1], self.ca_cert),
+        ]
+        self.assertEqual(
+            len(client_setup_calls),
+            len(mock_client_setup.mock_calls)
+        )
+        mock_client_setup.assert_has_calls(client_setup_calls)
+
+    def test_generate_cert_request_error(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.return_value = self.ca_cert
+        mock_get_cert_request.side_effect = LibraryError()
+        mock_sign_cert_request.return_value = self.signed_cert
+        mock_cert_to_pk12.return_value = self.final_cert
+        skip_offline_nodes = False
+
+        self.assertRaises(
+            LibraryError,
+            lambda: lib._add_device_model_net(
+                self.lib_env,
+                self.qnetd_host,
+                self.cluster_name,
+                self.nodes,
+                skip_offline_nodes
+            )
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                )
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        client_setup_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.ca_cert),
+            mock.call("mock_communicator", self.nodes[1], self.ca_cert),
+        ]
+        self.assertEqual(
+            len(client_setup_calls),
+            len(mock_client_setup.mock_calls)
+        )
+        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_get_cert_request.assert_called_once_with(
+            "mock_runner",
+            self.cluster_name
+        )
+        mock_sign_cert_request.assert_not_called()
+        mock_cert_to_pk12.assert_not_called()
+        mock_import_cert.assert_not_called()
+
+    def test_sign_certificate_error(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.return_value = self.ca_cert
+        mock_get_cert_request.return_value = self.cert_request
+        mock_sign_cert_request.side_effect = NodeCommunicationException(
+            "host", "command", "reason"
+        )
+        mock_cert_to_pk12.return_value = self.final_cert
+        skip_offline_nodes = False
+
+        assert_raise_library_error(
+            lambda: lib._add_device_model_net(
+                self.lib_env,
+                self.qnetd_host,
+                self.cluster_name,
+                self.nodes,
+                skip_offline_nodes
+            ),
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR,
+                {}
+            )
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                )
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        client_setup_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.ca_cert),
+            mock.call("mock_communicator", self.nodes[1], self.ca_cert),
+        ]
+        self.assertEqual(
+            len(client_setup_calls),
+            len(mock_client_setup.mock_calls)
+        )
+        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_get_cert_request.assert_called_once_with(
+            "mock_runner",
+            self.cluster_name
+        )
+        mock_sign_cert_request.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host,
+            self.cert_request,
+            self.cluster_name
+        )
+        mock_cert_to_pk12.assert_not_called()
+        mock_import_cert.assert_not_called()
+
+    def test_certificate_to_pk12_error(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.return_value = self.ca_cert
+        mock_get_cert_request.return_value = self.cert_request
+        mock_sign_cert_request.return_value = self.signed_cert
+        mock_cert_to_pk12.side_effect = LibraryError()
+        skip_offline_nodes = False
+
+        self.assertRaises(
+            LibraryError,
+            lambda: lib._add_device_model_net(
+                self.lib_env,
+                self.qnetd_host,
+                self.cluster_name,
+                self.nodes,
+                skip_offline_nodes
+            )
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                )
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        client_setup_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.ca_cert),
+            mock.call("mock_communicator", self.nodes[1], self.ca_cert),
+        ]
+        self.assertEqual(
+            len(client_setup_calls),
+            len(mock_client_setup.mock_calls)
+        )
+        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_get_cert_request.assert_called_once_with(
+            "mock_runner",
+            self.cluster_name
+        )
+        mock_sign_cert_request.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host,
+            self.cert_request,
+            self.cluster_name
+        )
+        mock_cert_to_pk12.assert_called_once_with(
+            "mock_runner",
+            self.signed_cert
+        )
+        mock_import_cert.assert_not_called()
+
+    def test_client_import_cert_error(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.return_value = self.ca_cert
+        mock_get_cert_request.return_value = self.cert_request
+        mock_sign_cert_request.return_value = self.signed_cert
+        mock_cert_to_pk12.return_value = self.final_cert
+        def raiser(communicator, node, cert):
+            if node == self.nodes[1]:
+                raise NodeCommunicationException("host", "command", "reason")
+        mock_import_cert.side_effect = raiser
+        skip_offline_nodes = False
+
+        assert_raise_library_error(
+            lambda: lib._add_device_model_net(
+                self.lib_env,
+                self.qnetd_host,
+                self.cluster_name,
+                self.nodes,
+                skip_offline_nodes
+            ),
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR,
+                {},
+                report_codes.SKIP_OFFLINE_NODES
+            )
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.NODE_COMMUNICATION_ERROR,
+                    {},
+                    report_codes.SKIP_OFFLINE_NODES
+                ),
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        client_setup_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.ca_cert),
+            mock.call("mock_communicator", self.nodes[1], self.ca_cert),
+        ]
+        self.assertEqual(
+            len(client_setup_calls),
+            len(mock_client_setup.mock_calls)
+        )
+        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_get_cert_request.assert_called_once_with(
+            "mock_runner",
+            self.cluster_name
+        )
+        mock_sign_cert_request.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host,
+            self.cert_request,
+            self.cluster_name
+        )
+        mock_cert_to_pk12.assert_called_once_with(
+            "mock_runner",
+            self.signed_cert
+        )
+        client_import_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.final_cert),
+            mock.call("mock_communicator", self.nodes[1], self.final_cert),
+        ]
+        self.assertEqual(
+            len(client_import_calls),
+            len(mock_import_cert.mock_calls)
+        )
+        mock_import_cert.assert_has_calls(client_import_calls)
+
+    def test_client_import_cert_error_skip_offline(
+        self, mock_get_ca, mock_client_setup, mock_get_cert_request,
+        mock_sign_cert_request, mock_cert_to_pk12, mock_import_cert
+    ):
+        mock_get_ca.return_value = self.ca_cert
+        mock_get_cert_request.return_value = self.cert_request
+        mock_sign_cert_request.return_value = self.signed_cert
+        mock_cert_to_pk12.return_value = self.final_cert
+        def raiser(communicator, node, cert):
+            if node == self.nodes[1]:
+                raise NodeCommunicationException("host", "command", "reason")
+        mock_import_cert.side_effect = raiser
+        skip_offline_nodes = True
+
+        lib._add_device_model_net(
+            self.lib_env,
+            self.qnetd_host,
+            self.cluster_name,
+            self.nodes,
+            skip_offline_nodes
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+                    {}
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.NODE_COMMUNICATION_ERROR,
+                    {}
+                ),
+            ]
+        )
+        mock_get_ca.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host
+        )
+        client_setup_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.ca_cert),
+            mock.call("mock_communicator", self.nodes[1], self.ca_cert),
+        ]
+        self.assertEqual(
+            len(client_setup_calls),
+            len(mock_client_setup.mock_calls)
+        )
+        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_get_cert_request.assert_called_once_with(
+            "mock_runner",
+            self.cluster_name
+        )
+        mock_sign_cert_request.assert_called_once_with(
+            "mock_communicator",
+            self.qnetd_host,
+            self.cert_request,
+            self.cluster_name
+        )
+        mock_cert_to_pk12.assert_called_once_with(
+            "mock_runner",
+            self.signed_cert
+        )
+        client_import_calls = [
+            mock.call("mock_communicator", self.nodes[0], self.final_cert),
+            mock.call("mock_communicator", self.nodes[1], self.final_cert),
+        ]
+        self.assertEqual(
+            len(client_import_calls),
+            len(mock_import_cert.mock_calls)
+        )
+        mock_import_cert.assert_has_calls(client_import_calls)
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")

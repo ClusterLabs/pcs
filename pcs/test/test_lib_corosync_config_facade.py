@@ -55,6 +55,38 @@ class FromStringTest(TestCase):
         )
 
 
+class GetClusterNametest(TestCase):
+    def test_no_name(self):
+        config = ""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual("", facade.get_cluster_name())
+        self.assertFalse(facade.need_stopped_cluster)
+
+    def test_empty_name(self):
+        config = "totem {\n cluster_name:\n}\n"
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual("", facade.get_cluster_name())
+        self.assertFalse(facade.need_stopped_cluster)
+
+    def test_one_name(self):
+        config = "totem {\n cluster_name: test\n}\n"
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual("test", facade.get_cluster_name())
+        self.assertFalse(facade.need_stopped_cluster)
+
+    def test_more_names(self):
+        config = "totem {\n cluster_name: test\n cluster_name: TEST\n}\n"
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual("TEST", facade.get_cluster_name())
+        self.assertFalse(facade.need_stopped_cluster)
+
+    def test_more_sections(self):
+        config = "totem{\ncluster_name:test\n}\ntotem{\ncluster_name:TEST\n}\n"
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual("TEST", facade.get_cluster_name())
+        self.assertFalse(facade.need_stopped_cluster)
+
+
 class GetNodesTest(TestCase):
     def assert_equal_nodelist(self, expected_nodes, real_nodelist):
         real_nodes = [
@@ -783,7 +815,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_success_net_full(self):
@@ -829,7 +861,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_lms_3node(self):
@@ -859,7 +891,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_2nodelms_3node(self):
@@ -889,7 +921,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_lms_2node(self):
@@ -919,7 +951,7 @@ quorum {
             ).replace("    two_node: 1\n", ""),
             facade.config.export()
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_2nodelms_2node(self):
@@ -949,7 +981,7 @@ quorum {
             ).replace("    two_node: 1\n", ""),
             facade.config.export()
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_remove_conflicting_options(self):
@@ -1041,7 +1073,7 @@ quorum {
             ,
             facade.config.export()
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_bad_model(self):
@@ -1081,7 +1113,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         assert_report_item_list_equal(
             reporter.report_item_list,
             [
@@ -1325,7 +1357,7 @@ quorum {
             },
             force_options=True
         )
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "    provider: corosync_votequorum",
@@ -2053,7 +2085,7 @@ quorum {
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device()
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config_no_devices,
             facade.config.export()
@@ -2081,7 +2113,7 @@ quorum {
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device()
-        self.assertFalse(facade.need_stopped_cluster)
+        self.assertTrue(facade.need_stopped_cluster)
         ac(
             config_no_devices,
             facade.config.export()

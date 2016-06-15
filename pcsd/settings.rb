@@ -21,6 +21,12 @@ CIBADMIN = "/usr/sbin/cibadmin"
 SBD_CONFIG = '/etc/sysconfig/sbd'
 CIB_PATH='/var/lib/pacemaker/cib/cib.xml'
 
+COROSYNC_QDEVICE_NET_SERVER_CERTS_DIR = "/etc/corosync/qdevice/net/qnetd/nssdb"
+COROSYNC_QDEVICE_NET_SERVER_CA_FILE = (
+  COROSYNC_QDEVICE_NET_SERVER_CERTS_DIR + "/qnetd-cacert.crt"
+)
+COROSYNC_QDEVICE_NET_CLIENT_CERTS_DIR = "/etc/corosync/qdevice/net/node/nssdb"
+
 SUPERUSER = 'hacluster'
 ADMIN_GROUP = 'haclient'
 $user_pass_file = "pcs_users.conf"

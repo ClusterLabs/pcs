@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 from unittest import TestCase
+import base64
 import logging
 
 from pcs.test.tools.pcs_mock import mock
@@ -81,6 +82,25 @@ class QdeviceDisabledOnCmanTest(QdeviceTestCase):
     def test_kill(self):
         self.base_test(
             lambda: lib.qdevice_kill(self.lib_env, "bad model")
+        )
+
+    def test_qdevice_net_sign_certificate_request(self):
+        self.base_test(
+            lambda: lib.qdevice_net_sign_certificate_request(
+                self.lib_env,
+                "certificate request",
+                "cluster name"
+            )
+        )
+
+    def test_client_net_setup(self):
+        self.base_test(
+            lambda: lib.client_net_setup(self.lib_env, "ca certificate")
+        )
+
+    def test_client_net_import_certificate(self):
+        self.base_test(
+            lambda: lib.client_net_import_certificate(self.lib_env, "cert")
         )
 
 
@@ -757,3 +777,140 @@ class QdeviceNetKillTest(QdeviceTestCase):
             "mock_runner",
             ["corosync-qnetd"]
         )
+
+
+@mock.patch(
+    "pcs.lib.commands.qdevice.qdevice_net.qdevice_sign_certificate_request"
+)
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
+    def test_success(self, mock_qdevice_func):
+        qdevice_func_input = "certificate request"
+        qdevice_func_output = "signed certificate"
+        mock_qdevice_func.return_value = qdevice_func_output
+        cluster_name = "clusterName"
+
+        self.assertEqual(
+            base64.b64encode(qdevice_func_output),
+            lib.qdevice_net_sign_certificate_request(
+                self.lib_env,
+                base64.b64encode(qdevice_func_input),
+                cluster_name
+            )
+        )
+
+        mock_qdevice_func.assert_called_once_with(
+            "mock_runner",
+            qdevice_func_input,
+            cluster_name
+        )
+
+    def test_bad_input(self, mock_qdevice_func):
+        qdevice_func_input = "certificate request"
+        cluster_name = "clusterName"
+
+        assert_raise_library_error(
+            lambda: lib.qdevice_net_sign_certificate_request(
+                self.lib_env,
+                qdevice_func_input,
+                cluster_name
+            ),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "qnetd certificate request",
+                    "option_value": qdevice_func_input,
+                    "allowed_values": ["base64 encoded certificate"],
+                }
+            )
+        )
+
+        mock_qdevice_func.assert_not_called()
+
+
+@mock.patch("pcs.lib.commands.qdevice.qdevice_net.client_setup")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+class ClientNetSetupTest(QdeviceTestCase):
+    def test_success(self, mock_qdevice_func):
+        qdevice_func_input = "CA certificate"
+
+        lib.client_net_setup(self.lib_env, base64.b64encode(qdevice_func_input))
+
+        mock_qdevice_func.assert_called_once_with(
+            "mock_runner",
+            qdevice_func_input
+        )
+
+    def test_bad_input(self, mock_qdevice_func):
+        qdevice_func_input = "CA certificate"
+
+        assert_raise_library_error(
+            lambda: lib.client_net_setup(self.lib_env, qdevice_func_input),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "qnetd CA certificate",
+                    "option_value": qdevice_func_input,
+                    "allowed_values": ["base64 encoded certificate"],
+                }
+            )
+        )
+
+        mock_qdevice_func.assert_not_called()
+
+
+@mock.patch(
+    "pcs.lib.commands.qdevice.qdevice_net.client_import_certificate_and_key"
+)
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+class ClientNetImportCertificateTest(QdeviceTestCase):
+    def test_success(self, mock_qdevice_func):
+        qdevice_func_input = "client certificate"
+
+        lib.client_net_import_certificate(
+            self.lib_env,
+            base64.b64encode(qdevice_func_input)
+        )
+
+        mock_qdevice_func.assert_called_once_with(
+            "mock_runner",
+            qdevice_func_input
+        )
+
+    def test_bad_input(self, mock_qdevice_func):
+        qdevice_func_input = "client certificate"
+
+        assert_raise_library_error(
+            lambda: lib.client_net_import_certificate(
+                self.lib_env,
+                qdevice_func_input
+            ),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "qnetd client certificate",
+                    "option_value": qdevice_func_input,
+                    "allowed_values": ["base64 encoded certificate"],
+                }
+            )
+        )
+
+        mock_qdevice_func.assert_not_called()

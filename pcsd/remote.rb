@@ -4,6 +4,7 @@ require 'open4'
 require 'set'
 require 'timeout'
 require 'rexml/document'
+require 'base64'
 
 require 'pcs.rb'
 require 'resource.rb'
@@ -71,7 +72,13 @@ def remote(params, request, auth_user)
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
       :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
       :remote_enable_sbd => method(:remote_enable_sbd),
-      :remote_disable_sbd => method(:remote_disable_sbd)
+      :remote_disable_sbd => method(:remote_disable_sbd),
+      :qdevice_net_get_ca_certificate => method(:qdevice_net_get_ca_certificate),
+      :qdevice_net_sign_node_certificate => method(:qdevice_net_sign_node_certificate),
+      :qdevice_net_client_init_certificate_storage => method(:qdevice_net_client_init_certificate_storage),
+      :qdevice_net_client_import_certificate => method(:qdevice_net_client_import_certificate),
+      :qdevice_client_enable => method(:qdevice_client_enable),
+      :qdevice_client_disable => method(:qdevice_client_disable),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -2376,4 +2383,99 @@ def remote_disable_sbd(params, request, auth_user)
   end
 
   return [200, 'Sbd has been disabled.']
+end
+
+def qdevice_net_get_ca_certificate(params, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  begin
+    return [
+      200,
+      Base64.encode64(File.read(COROSYNC_QDEVICE_NET_SERVER_CA_FILE))
+    ]
+  rescue => e
+    return [400, "Unable to read certificate: #{e}"]
+  end
+end
+
+def qdevice_net_sign_node_certificate(params, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  stdout, stderr, retval = run_cmd_options(
+    auth_user,
+    {'stdin' => params[:certificate_request]},
+    PCS, 'qdevice', 'sign-net-cert-request', '--name', params[:cluster_name]
+  )
+  if retval != 0
+    return [400, stderr.join('')]
+  end
+  return [200, stdout.join('')]
+end
+
+def qdevice_net_client_init_certificate_storage(params, request, auth_user)
+  # Last step of adding qdevice into a cluster is distribution of corosync.conf
+  # file with qdevice settings. This requires FULL permissions currently.
+  # If that gets relaxed, we can require lower permissions in here as well.
+  unless allowed_for_local_cluster(auth_user, Permissions::FULL)
+    return 403, 'Permission denied'
+  end
+  stdout, stderr, retval = run_cmd_options(
+    auth_user,
+    {'stdin' => params[:ca_certificate]},
+    PCS, 'qdevice', 'net-client', 'setup'
+  )
+  if retval != 0
+    return [400, stderr.join('')]
+  end
+  return [200, stdout.join('')]
+end
+
+def qdevice_net_client_import_certificate(params, request, auth_user)
+  # Last step of adding qdevice into a cluster is distribution of corosync.conf
+  # file with qdevice settings. This requires FULL permissions currently.
+  # If that gets relaxed, we can require lower permissions in here as well.
+  unless allowed_for_local_cluster(auth_user, Permissions::FULL)
+    return 403, 'Permission denied'
+  end
+  stdout, stderr, retval = run_cmd_options(
+    auth_user,
+    {'stdin' => params[:certificate]},
+    PCS, 'qdevice', 'net-client', 'import-certificate'
+  )
+  if retval != 0
+    return [400, stderr.join('')]
+  end
+  return [200, stdout.join('')]
+end
+
+def qdevice_client_disable(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  if disable_service('corosync-qdevice')
+    msg = 'corosync-qdevice disabled'
+    $logger.info(msg)
+    return [200, msg]
+  else
+    msg = 'Disabling corosync-qdevice failed'
+    $logger.error(msg)
+    return [400, msg]
+  end
+end
+
+def qdevice_client_enable(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  if enable_service('corosync-qdevice')
+    msg = 'corosync-qdevice enabled'
+    $logger.info(msg)
+    return [200, msg]
+  else
+    msg = 'Enabling corosync-qdevice failed'
+    $logger.error(msg)
+    return [400, msg]
+  end
 end
