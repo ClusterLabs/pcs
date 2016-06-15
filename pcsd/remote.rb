@@ -77,6 +77,7 @@ def remote(params, request, auth_user)
       :qdevice_net_sign_node_certificate => method(:qdevice_net_sign_node_certificate),
       :qdevice_net_client_init_certificate_storage => method(:qdevice_net_client_init_certificate_storage),
       :qdevice_net_client_import_certificate => method(:qdevice_net_client_import_certificate),
+      :qdevice_net_client_destroy => method(:qdevice_net_client_destroy),
       :qdevice_client_enable => method(:qdevice_client_enable),
       :qdevice_client_disable => method(:qdevice_client_disable),
   }
@@ -2443,6 +2444,24 @@ def qdevice_net_client_import_certificate(params, request, auth_user)
     auth_user,
     {'stdin' => params[:certificate]},
     PCS, 'qdevice', 'net-client', 'import-certificate'
+  )
+  if retval != 0
+    return [400, stderr.join('')]
+  end
+  return [200, stdout.join('')]
+end
+
+def qdevice_net_client_destroy(param, request, auth_user)
+  # When removing a qdevice from a cluster, an updated corosync.conf file
+  # with removed qdevice settings is distributed. This requires FULL permissions
+  # currently. If that gets relaxed, we can require lower permissions in here
+  # as well.
+  unless allowed_for_local_cluster(auth_user, Permissions::FULL)
+    return 403, 'Permission denied'
+  end
+  stdout, stderr, retval = run_cmd(
+    auth_user,
+    PCS, 'qdevice', 'net-client', 'destroy'
   )
   if retval != 0
     return [400, stderr.join('')]

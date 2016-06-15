@@ -60,6 +60,8 @@ def qdevice_net_client_cmd(lib, argv, modifiers):
             qdevice_net_client_setup_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "import-certificate":
             qdevice_net_client_import_certificate_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "destroy":
+            qdevice_net_client_destroy(lib, argv_next, modifiers)
         else:
             raise CmdLineInputError("invalid command")
     except LibraryError as e:
@@ -120,6 +122,9 @@ def qdevice_net_client_setup_cmd(lib, argv, modifiers):
 def qdevice_net_client_import_certificate_cmd(lib, argv, modifiers):
     certificate = _read_stdin()
     lib.qdevice.client_net_import_certificate(certificate)
+
+def qdevice_net_client_destroy(lib, argv, modifiers):
+    lib.qdevice.client_net_destroy()
 
 def qdevice_sign_net_cert_request_cmd(lib, argv, modifiers):
     certificate_request = _read_stdin()

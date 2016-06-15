@@ -103,6 +103,11 @@ class QdeviceDisabledOnCmanTest(QdeviceTestCase):
             lambda: lib.client_net_import_certificate(self.lib_env, "cert")
         )
 
+    def test_client_net_destroy(self):
+        self.base_test(
+            lambda: lib.client_net_destroy(self.lib_env)
+        )
+
 
 @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 class QdeviceBadModelTest(QdeviceTestCase):
@@ -914,3 +919,12 @@ class ClientNetImportCertificateTest(QdeviceTestCase):
         )
 
         mock_qdevice_func.assert_not_called()
+
+
+@mock.patch("pcs.lib.commands.qdevice.qdevice_net.client_destroy")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+class CleintNetDestroyTest(QdeviceTestCase):
+    def test_success(self, mock_qdevice_func):
+        lib.client_net_destroy(self.lib_env)
+        mock_qdevice_func.assert_called_once_with()
+

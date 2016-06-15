@@ -136,6 +136,7 @@ def load_module(env, middleware_factory, name):
                 "client_net_setup": qdevice.client_net_setup,
                 "client_net_import_certificate":
                     qdevice.client_net_import_certificate,
+                "client_net_destroy": qdevice.client_net_destroy,
                 "sign_net_cert_request":
                     qdevice.qdevice_net_sign_certificate_request,
             }

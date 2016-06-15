@@ -77,6 +77,8 @@ def add_device(
 
     if lib_env.is_corosync_conf_live:
         # do model specific configuration
+        # if model is not known to pcs and was forced, do not configure antyhing
+        # else but corosync.conf, as we do not know what to do anyways
         if model == "net":
             _add_device_model_net(
                 lib_env,
@@ -86,12 +88,10 @@ def add_device(
                 cfg.get_nodes(),
                 skip_offline_nodes
             )
-        # if model is not known to pcs and was forced, do not configure antyhing
-        # else but corosync.conf, as we do not know what to do anyways
 
         # Since cluster is not running, we do not start qdevice service. We know
-        # it isn't running because qdevice caanot be added to a running cluster,
-        # and that us ensured by cfg.need_stopped_cluster and
+        # it isn't running because qdevice cannot be added to a running cluster,
+        # and that is ensured by cfg.need_stopped_cluster and
         # lib_env.push_corosync_conf.
         communicator = lib_env.node_communicator()
         parallel_nodes_communication_helper(
@@ -112,7 +112,7 @@ def _add_device_model_net(
     string qnetd_host address of qdevice provider (qnetd host)
     string cluster_name name of the cluster to which qdevice is being added
     NodeAddressesList cluster_nodes list of cluster nodes addresses
-    skip_offline_nodes continue even if not all nodes are accessible
+    bool skip_offline_nodes continue even if not all nodes are accessible
     """
     communicator = lib_env.node_communicator()
     runner = lib_env.cmd_runner()
@@ -200,8 +200,50 @@ def remove_device(lib_env, skip_offline_nodes=False):
     __ensure_not_cman(lib_env)
 
     cfg = lib_env.get_corosync_conf()
+    model, dummy_options, dummy_options = cfg.get_quorum_device_settings()
     cfg.remove_quorum_device()
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
+    if lib_env.is_corosync_conf_live:
+        # handle model specific configuration
+        if model == "net":
+            _remove_device_model_net(
+                lib_env,
+                cfg.get_nodes(),
+                skip_offline_nodes
+            )
+
+        # Since cluster is not running, we do not stop qdevice service. We know
+        # it isn't running because qdevice cannot be added to a running cluster,
+        # and that is ensured by cfg.need_stopped_cluster and
+        # lib_env.push_corosync_conf.
+        communicator = lib_env.node_communicator()
+        parallel_nodes_communication_helper(
+            qdevice_client.remote_client_disable,
+            [
+                [(communicator, node), {}]
+                for node in cfg.get_nodes()
+            ],
+            lib_env.report_processor,
+            skip_offline_nodes
+        )
+
+def _remove_device_model_net(lib_env, cluster_nodes, skip_offline_nodes):
+    """
+    remove configuration used by qdevice model net
+    NodeAddressesList cluster_nodes list of cluster nodes addresses
+    bool skip_offline_nodes continue even if not all nodes are accessible
+    """
+    communicator = lib_env.node_communicator()
+    parallel_nodes_communication_helper(
+        qdevice_net.remote_client_destroy,
+        [
+            [(communicator, node), {}]
+            for node in cluster_nodes
+        ],
+        lib_env.report_processor,
+        skip_offline_nodes
+    )
 
 def __ensure_not_cman(lib_env):
     if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:

@@ -321,6 +321,17 @@ def remote_client_import_certificate_and_key(node_communicator, node, pk12):
         })
     )
 
+def remote_client_destroy(node_communicator, node):
+    """
+    delete qdevice client config files on a remote node
+    NodeAddresses node target node
+    """
+    return node_communicator.call_node(
+        node,
+        "remote/qdevice_net_client_destroy",
+        ""
+    )
+
 def _store_to_tmpfile(data, report_func):
     try:
         tmpfile = tempfile.NamedTemporaryFile(mode="wb", suffix=".pcs")

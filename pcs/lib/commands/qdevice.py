@@ -143,6 +143,13 @@ def client_net_import_certificate(lib_env, certificate):
         certificate_data
     )
 
+def client_net_destroy(lib_env):
+    """
+    delete qdevice client config files on local host
+    """
+    _ensure_not_cman(lib_env)
+    qdevice_net.client_destroy()
+
 def _ensure_not_cman(lib_env):
     if lib_env.is_cman_cluster:
         raise LibraryError(reports.cman_unsupported_command())

@@ -1143,21 +1143,29 @@ class AddDeviceNetTest(TestCase):
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
+@mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_disable")
+@mock.patch("pcs.lib.commands.quorum._remove_device_model_net")
 class RemoveDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
-    def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
+    def test_disabled_on_cman(
+        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
+        mock_push_corosync
+    ):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(lambda: lib.remove_device(lib_env))
         mock_get_corosync.assert_not_called()
         mock_push_corosync.assert_not_called()
+        mock_remove_net.assert_not_called()
+        mock_remote_disable.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_enabled_on_cman_if_not_live(
-        self, mock_get_corosync, mock_push_corosync
+        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
+        mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -1176,9 +1184,16 @@ class RemoveDeviceTest(TestCase, CmanMixin):
             )
         )
 
+        self.assertEqual(1, mock_get_corosync.call_count)
+        self.assertEqual(0, mock_push_corosync.call_count)
+        mock_remove_net.assert_not_called()
+        mock_remote_disable.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_no_device(self, mock_get_corosync, mock_push_corosync):
+    def test_no_device(
+        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
+        mock_push_corosync
+    ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -1192,10 +1207,16 @@ class RemoveDeviceTest(TestCase, CmanMixin):
             )
         )
 
-        mock_push_corosync.assert_not_called()
+        self.assertEqual(1, mock_get_corosync.call_count)
+        self.assertEqual(0, mock_push_corosync.call_count)
+        mock_remove_net.assert_not_called()
+        mock_remote_disable.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_success(self, mock_get_corosync, mock_push_corosync):
+    def test_success(
+        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
+        mock_push_corosync
+    ):
         original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
         no_device_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -1209,6 +1230,164 @@ class RemoveDeviceTest(TestCase, CmanMixin):
             no_device_conf
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
+        self.assertEqual(1, len(mock_remove_net.mock_calls))
+        self.assertEqual(3, len(mock_remote_disable.mock_calls))
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_file(
+        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
+        mock_push_corosync
+    ):
+        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        no_device_conf = open(rc("corosync-3nodes.conf")).read()
+        mock_get_corosync.return_value = original_conf
+        lib_env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            corosync_conf_data=original_conf
+        )
+
+        lib.remove_device(lib_env)
+
+        self.assertEqual(1, len(mock_push_corosync.mock_calls))
+        ac(
+            mock_push_corosync.mock_calls[0][1][0].config.export(),
+            no_device_conf
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+        self.assertEqual(0, len(mock_remove_net.mock_calls))
+        self.assertEqual(0, len(mock_remote_disable.mock_calls))
+
+
+@mock.patch("pcs.lib.commands.quorum.qdevice_net.remote_client_destroy")
+@mock.patch.object(
+    LibraryEnvironment,
+    "node_communicator",
+    lambda self: "mock_communicator"
+)
+class RemoveDeviceNetTest(TestCase):
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
+        self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        self.nodes = NodeAddressesList([
+            NodeAddresses("node1"),
+            NodeAddresses("node2"),
+        ])
+
+    def test_success(self, mock_client_destroy):
+        skip_offline_nodes = False
+
+        lib._remove_device_model_net(
+            self.lib_env,
+            self.nodes,
+            skip_offline_nodes
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+#               (
+#                   severity.INFO,
+#                   report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+#                   {}
+#               )
+            ]
+        )
+        client_destroy_calls = [
+            mock.call("mock_communicator", self.nodes[0]),
+            mock.call("mock_communicator", self.nodes[1]),
+        ]
+        self.assertEqual(
+            len(client_destroy_calls),
+            len(mock_client_destroy.mock_calls)
+        )
+        mock_client_destroy.assert_has_calls(client_destroy_calls)
+
+    def test_error_client_destroy(self, mock_client_destroy):
+        def raiser(communicator, node):
+            if node == self.nodes[1]:
+                raise NodeCommunicationException("host", "command", "reason")
+        mock_client_destroy.side_effect = raiser
+        skip_offline_nodes = False
+
+        assert_raise_library_error(
+            lambda: lib._remove_device_model_net(
+                self.lib_env,
+                self.nodes,
+                skip_offline_nodes
+            ),
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR,
+                {},
+                report_codes.SKIP_OFFLINE_NODES
+            )
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+#               (
+#                   severity.INFO,
+#                   report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+#                   {}
+#               )
+                (
+                    severity.ERROR,
+                    report_codes.NODE_COMMUNICATION_ERROR,
+                    {},
+                    report_codes.SKIP_OFFLINE_NODES
+                ),
+            ]
+        )
+        client_destroy_calls = [
+            mock.call("mock_communicator", self.nodes[0]),
+            mock.call("mock_communicator", self.nodes[1]),
+        ]
+        self.assertEqual(
+            len(client_destroy_calls),
+            len(mock_client_destroy.mock_calls)
+        )
+        mock_client_destroy.assert_has_calls(client_destroy_calls)
+
+    def test_error_client_destroy_skip_offline(self, mock_client_destroy):
+        def raiser(communicator, node):
+            if node == self.nodes[1]:
+                raise NodeCommunicationException("host", "command", "reason")
+        mock_client_destroy.side_effect = raiser
+        skip_offline_nodes = True
+
+        lib._remove_device_model_net(
+            self.lib_env,
+            self.nodes,
+            skip_offline_nodes
+        )
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+#               (
+#                   severity.INFO,
+#                   report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
+#                   {}
+#               )
+                (
+                    severity.WARNING,
+                    report_codes.NODE_COMMUNICATION_ERROR,
+                    {}
+                ),
+            ]
+        )
+        client_destroy_calls = [
+            mock.call("mock_communicator", self.nodes[0]),
+            mock.call("mock_communicator", self.nodes[1]),
+        ]
+        self.assertEqual(
+            len(client_destroy_calls),
+            len(mock_client_destroy.mock_calls)
+        )
+        mock_client_destroy.assert_has_calls(client_destroy_calls)
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")

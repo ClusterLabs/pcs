@@ -835,6 +835,31 @@ class RemoteClientImportCertificateAndKeyTest(TestCase):
         )
 
 
+class RemoteCLientDestroy(TestCase):
+    def test_success(self):
+        mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+        node = "node address"
+
+        lib.remote_client_destroy(mock_communicator, node)
+
+        mock_communicator.call_node.assert_called_once_with(
+            node,
+            "remote/qdevice_net_client_destroy",
+            ""
+        )
+
+    def test_comunication_error(self):
+        mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+        mock_communicator.call_node.side_effect = NodeCommunicationException(
+            "node address", "command", "reason"
+        )
+
+        self.assertRaises(
+            NodeCommunicationException,
+            lambda: lib.remote_client_destroy(mock_communicator, "node address")
+        )
+
+
 class GetOutputCertificateTest(TestCase):
     def setUp(self):
         self.file_path = get_test_resource("qdevice-certs/qnetd-cacert.crt")
