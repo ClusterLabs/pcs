@@ -210,7 +210,7 @@ the health of a system via IPMI.
  ClusterIP4\t(ocf::heartbeat:IPaddr2):\tStopped
  ClusterIP5\t(ocf::heartbeat:IPaddr2):\tStopped
  ClusterIP6\t(ocf::heartbeat:IPaddr2):\tStopped
- ClusterIP7\t(ocf::heartbeat:IPaddr2):\t(target-role:Stopped) Stopped
+ ClusterIP7\t(ocf::heartbeat:IPaddr2):\tStopped (disabled)
 """)
 
         output, returnVal = pcs(temp_cib, "resource show ClusterIP6 --full")
