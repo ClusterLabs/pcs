@@ -2488,7 +2488,11 @@ def qdevice_client_enable(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if enable_service('corosync-qdevice')
+  if not is_service_enabled?('corosync')
+    msg = 'corosync is not enabled, skipping'
+    $logger.info(msg)
+    return [200, msg]
+  elsif enable_service('corosync-qdevice')
     msg = 'corosync-qdevice enabled'
     $logger.info(msg)
     return [200, msg]

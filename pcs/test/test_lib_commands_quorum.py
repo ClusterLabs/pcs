@@ -338,7 +338,18 @@ class AddDeviceTest(TestCase, CmanMixin):
 """
             )
         )
-        self.assertEqual([], self.mock_reporter.report_item_list)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_ENABLE_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
+            ]
+        )
         self.assertEqual(1, len(mock_add_net.mock_calls))
         self.assertEqual(3, len(mock_client_enable.mock_calls))
 
@@ -446,7 +457,14 @@ class AddDeviceTest(TestCase, CmanMixin):
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     }
-                )
+                ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_ENABLE_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
             ]
         )
         self.assertEqual(1, mock_get_corosync.call_count)
@@ -522,7 +540,14 @@ class AddDeviceTest(TestCase, CmanMixin):
                         "option_value": "bad model",
                         "allowed_values": ("net", ),
                     },
-                )
+                ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_ENABLE_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
             ]
         )
         self.assertEqual(1, mock_get_corosync.call_count)
@@ -609,7 +634,21 @@ class AddDeviceNetTest(TestCase):
                     severity.INFO,
                     report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
                     {}
-                )
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    {
+                        "node": self.nodes[0].label
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    {
+                        "node": self.nodes[1].label
+                    }
+                ),
             ]
         )
         mock_get_ca.assert_called_once_with(
@@ -791,6 +830,20 @@ class AddDeviceNetTest(TestCase):
                     severity.WARNING,
                     report_codes.NODE_COMMUNICATION_ERROR,
                     {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    {
+                        "node": self.nodes[0].label
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    {
+                        "node": self.nodes[1].label
+                    }
                 ),
             ]
         )
@@ -1022,6 +1075,13 @@ class AddDeviceNetTest(TestCase):
                     {}
                 ),
                 (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    {
+                        "node": self.nodes[0].label
+                    }
+                ),
+                (
                     severity.ERROR,
                     report_codes.NODE_COMMUNICATION_ERROR,
                     {},
@@ -1095,6 +1155,13 @@ class AddDeviceNetTest(TestCase):
                     severity.INFO,
                     report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
                     {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    {
+                        "node": self.nodes[0].label
+                    }
                 ),
                 (
                     severity.WARNING,
@@ -1229,7 +1296,18 @@ class RemoveDeviceTest(TestCase, CmanMixin):
             mock_push_corosync.mock_calls[0][1][0].config.export(),
             no_device_conf
         )
-        self.assertEqual([], self.mock_reporter.report_item_list)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_DISABLE_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
+            ]
+        )
         self.assertEqual(1, len(mock_remove_net.mock_calls))
         self.assertEqual(3, len(mock_remote_disable.mock_calls))
 
@@ -1287,11 +1365,25 @@ class RemoveDeviceNetTest(TestCase):
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
-#               (
-#                   severity.INFO,
-#                   report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
-#                   {}
-#               )
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED,
+                    {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    {
+                        "node": self.nodes[0].label
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    {
+                        "node": self.nodes[1].label
+                    }
+                ),
             ]
         )
         client_destroy_calls = [
@@ -1328,11 +1420,18 @@ class RemoveDeviceNetTest(TestCase):
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
-#               (
-#                   severity.INFO,
-#                   report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
-#                   {}
-#               )
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED,
+                    {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    {
+                        "node": self.nodes[0].label
+                    }
+                ),
                 (
                     severity.ERROR,
                     report_codes.NODE_COMMUNICATION_ERROR,
@@ -1367,11 +1466,18 @@ class RemoveDeviceNetTest(TestCase):
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
-#               (
-#                   severity.INFO,
-#                   report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
-#                   {}
-#               )
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED,
+                    {}
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    {
+                        "node": self.nodes[0].label
+                    }
+                ),
                 (
                     severity.WARNING,
                     report_codes.NODE_COMMUNICATION_ERROR,

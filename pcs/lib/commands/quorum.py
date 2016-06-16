@@ -93,11 +93,14 @@ def add_device(
         # it isn't running because qdevice cannot be added to a running cluster,
         # and that is ensured by cfg.need_stopped_cluster and
         # lib_env.push_corosync_conf.
+        lib_env.report_processor.process(
+            reports.service_enable_started("corosync-qdevice")
+        )
         communicator = lib_env.node_communicator()
         parallel_nodes_communication_helper(
             qdevice_client.remote_client_enable,
             [
-                [(communicator, node), {}]
+                [(lib_env.report_processor, communicator, node), {}]
                 for node in cfg.get_nodes()
             ],
             lib_env.report_processor,
@@ -161,10 +164,17 @@ def _add_device_model_net(
     # transform the signed certificate to pk12 format which can sent to nodes
     pk12 = qdevice_net.client_cert_request_to_pk12(runner, signed_certificate)
     # distribute final certificate to nodes
+    def do_and_report(reporter, communicator, node, pk12):
+        qdevice_net.remote_client_import_certificate_and_key(
+            communicator, node, pk12
+        )
+        reporter.process(
+            reports.qdevice_certificate_accepted_by_node(node.label)
+        )
     parallel_nodes_communication_helper(
-        qdevice_net.remote_client_import_certificate_and_key,
+        do_and_report,
         [
-            ((communicator, node, pk12), {})
+            ((reporter, communicator, node, pk12), {})
             for node in cluster_nodes
         ],
         reporter,
@@ -217,11 +227,14 @@ def remove_device(lib_env, skip_offline_nodes=False):
         # it isn't running because qdevice cannot be added to a running cluster,
         # and that is ensured by cfg.need_stopped_cluster and
         # lib_env.push_corosync_conf.
+        lib_env.report_processor.process(
+            reports.service_disable_started("corosync-qdevice")
+        )
         communicator = lib_env.node_communicator()
         parallel_nodes_communication_helper(
             qdevice_client.remote_client_disable,
             [
-                [(communicator, node), {}]
+                [(lib_env.report_processor, communicator, node), {}]
                 for node in cfg.get_nodes()
             ],
             lib_env.report_processor,
@@ -234,11 +247,21 @@ def _remove_device_model_net(lib_env, cluster_nodes, skip_offline_nodes):
     NodeAddressesList cluster_nodes list of cluster nodes addresses
     bool skip_offline_nodes continue even if not all nodes are accessible
     """
+    reporter = lib_env.report_processor
     communicator = lib_env.node_communicator()
+
+    reporter.process(
+        reports.qdevice_certificate_removal_started()
+    )
+    def do_and_report(reporter, communicator, node):
+        qdevice_net.remote_client_destroy(communicator, node)
+        reporter.process(
+            reports.qdevice_certificate_removed_from_node(node.label)
+        )
     parallel_nodes_communication_helper(
-        qdevice_net.remote_client_destroy,
+        do_and_report,
         [
-            [(communicator, node), {}]
+            [(reporter, communicator, node), {}]
             for node in cluster_nodes
         ],
         lib_env.report_processor,

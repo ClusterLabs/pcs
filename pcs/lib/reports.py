@@ -704,6 +704,37 @@ def qdevice_certificate_distribution_started():
         "Setting up qdevice certificates on nodes..."
     )
 
+def qdevice_certificate_accepted_by_node(node):
+    """
+    Qdevice certificates have been saved to a node
+    string node node on which certificates have been saved
+    """
+    return ReportItem.info(
+        report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+        "{node}: Succeeded",
+        info={"node": node}
+    )
+
+def qdevice_certificate_removal_started():
+    """
+    Qdevice certificates are about to be removed from nodes
+    """
+    return ReportItem.info(
+        report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED,
+        "Removing qdevice certificates from nodes..."
+    )
+
+def qdevice_certificate_removed_from_node(node):
+    """
+    Qdevice certificates have been removed from a node
+    string node node on which certificates have been deleted
+    """
+    return ReportItem.info(
+        report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+        "{node}: Succeeded",
+        info={"node": node}
+    )
+
 def qdevice_certificate_import_error(reason):
     """
     an error occured when importing qdevice certificate to a node
@@ -1169,6 +1200,19 @@ def service_kill_success(services):
         }
     )
 
+def service_enable_started(service):
+    """
+    system service is being enabled
+    string service service name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_ENABLE_STARTED,
+        "Enabling {service}...",
+        info={
+            "service": service,
+        }
+    )
+
 def service_enable_error(service, reason, node=None):
     """
     system service enable failed
@@ -1191,7 +1235,7 @@ def service_enable_success(service, node=None):
     """
     system service was enabled successfully
     string service service name or description
-    string node node on which service was enabled
+    string node node on which service has been enabled
     """
     msg = "{service} enabled"
     return ReportItem.info(
@@ -1200,6 +1244,36 @@ def service_enable_success(service, node=None):
         info={
             "service": service,
             "node": node,
+        }
+    )
+
+def service_enable_skipped(service, reason, node=None):
+    """
+    enabling system service was skipped, no error occured
+    string service service name or description
+    string node node on which service has been requested to enable
+    """
+    msg = "not enabling {service} - {reason}"
+    return ReportItem.info(
+        report_codes.SERVICE_ENABLE_SKIPPED,
+        msg if node is None else "{node}: " + msg,
+        info={
+            "service": service,
+            "reason": reason,
+            "node": node,
+        }
+    )
+
+def service_disable_started(service):
+    """
+    system service is being disabled
+    string service service name or description
+    """
+    return ReportItem.info(
+        report_codes.SERVICE_DISABLE_STARTED,
+        "Disabling {service}...",
+        info={
+            "service": service,
         }
     )
 
@@ -1237,7 +1311,6 @@ def service_disable_success(service, node=None):
         }
     )
 
-
 def invalid_metadata_format(severity=ReportItemSeverity.ERROR, forceable=None):
     """
     Invalid format of metadata
@@ -1248,7 +1321,6 @@ def invalid_metadata_format(severity=ReportItemSeverity.ERROR, forceable=None):
         "Invalid metadata format",
         forceable=forceable
     )
-
 
 def unable_to_get_agent_metadata(
     agent, reason, severity=ReportItemSeverity.ERROR, forceable=None
