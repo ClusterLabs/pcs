@@ -870,6 +870,7 @@ def start_cluster(argv):
         return
 
     print("Starting Cluster...")
+    service_list = []
     if utils.is_rhel6():
 #   Verify that CMAN_QUORUM_TIMEOUT is set, if not, then we set it to 0
         retval, output = getstatusoutput('source /etc/sysconfig/cman ; [ -z "$CMAN_QUORUM_TIMEOUT" ]')
@@ -882,14 +883,15 @@ def start_cluster(argv):
             print(output)
             utils.err("unable to start cman")
     else:
-        output, retval = utils.run(["service", "corosync","start"])
+        service_list.append("corosync")
+        if utils.need_to_handle_qdevice_service():
+            service_list.append("corosync-qdevice")
+    service_list.append("pacemaker")
+    for service in service_list:
+        output, retval = utils.run(["service", service, "start"])
         if retval != 0:
             print(output)
-            utils.err("unable to start corosync")
-    output, retval = utils.run(["service", "pacemaker", "start"])
-    if retval != 0:
-        print(output)
-        utils.err("unable to start pacemaker")
+            utils.err("unable to start {0}".format(service))
     if wait:
         wait_for_nodes_started([], wait_timeout)
 
@@ -1132,13 +1134,18 @@ def stop_cluster_corosync():
             utils.err("unable to stop cman")
     else:
         print("Stopping Cluster (corosync)...")
-        output, retval = utils.run(["service", "corosync","stop"])
-        if retval != 0:
-            print(output)
-            utils.err("unable to stop corosync")
+        service_list = []
+        if utils.need_to_handle_qdevice_service():
+            service_list.append("corosync-qdevice")
+        service_list.append("corosync")
+        for service in service_list:
+            output, retval = utils.run(["service", service, "stop"])
+            if retval != 0:
+                print(output)
+                utils.err("unable to stop {0}".format(service))
 
 def kill_cluster(argv):
-    daemons = ["crmd", "pengine", "attrd", "lrmd", "stonithd", "cib", "pacemakerd", "corosync"]
+    daemons = ["crmd", "pengine", "attrd", "lrmd", "stonithd", "cib", "pacemakerd", "corosync-qdevice", "corosync"]
     dummy_output, dummy_retval = utils.run(["killall", "-9"] + daemons)
 #    if dummy_retval != 0:
 #        print "Error: unable to execute killall -9"

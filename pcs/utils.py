@@ -65,7 +65,6 @@ from pcs.common.tools import simple_cache
 from pcs.lib import reports
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError, ReportItemSeverity
-import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.external import (
     is_cman_cluster,
     CommandRunner,
@@ -74,6 +73,7 @@ from pcs.lib.external import (
     is_systemctl,
 )
 import pcs.lib.resource_agent as lib_ra
+import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.nodes_task import check_corosync_offline_on_nodes
 from pcs.lib.pacemaker import has_resource_wait_support
@@ -730,6 +730,19 @@ def check_qdevice_algorithm_and_running_cluster(corosync_conf, add=True):
                 )
                 break
         process_library_reports(report_item_list)
+
+# is it needed to handle corosync-qdevice service when managing cluster services
+def need_to_handle_qdevice_service():
+    if is_rhel6():
+        return False
+    try:
+        cfg = corosync_conf_facade.from_string(
+            open(settings.corosync_conf_file).read()
+        )
+        return cfg.has_quorum_device()
+    except (EnvironmentError, corosync_conf_parser.CorosyncConfParserException):
+        # corosync.conf not present or not valid => no qdevice specified
+        return False
 
 def getNextNodeID(corosync_conf):
     currentNodes = []
@@ -2073,25 +2086,29 @@ def enableServices():
     if is_rhel6():
         run(["chkconfig", "pacemaker", "on"])
     else:
-        if is_systemctl():
-            run(["systemctl", "enable", "corosync.service"])
-            run(["systemctl", "enable", "pacemaker.service"])
-        else:
-            run(["chkconfig", "corosync", "on"])
-            run(["chkconfig", "pacemaker", "on"])
+        service_list = ["corosync", "pacemaker"]
+        if need_to_handle_qdevice_service():
+            service_list.append("corosync-qdevice")
+        for service in service_list:
+            if is_systemctl():
+                run(["systemctl", "enable", "{0}.service".format(service)])
+            else:
+                run(["chkconfig", service, "on"])
 
 def disableServices():
     if is_rhel6():
         run(["chkconfig", "pacemaker", "off"])
-        run(["chkconfig", "corosync", "off"]) # Left here for users of old pcs
-                                              # which enabled corosync
+        # Left here for users of old pcs which enabled corosync
+        run(["chkconfig", "corosync", "off"])
     else:
-        if is_systemctl():
-            run(["systemctl", "disable", "corosync.service"])
-            run(["systemctl", "disable", "pacemaker.service"])
-        else:
-            run(["chkconfig", "corosync", "off"])
-            run(["chkconfig", "pacemaker", "off"])
+        service_list = ["corosync", "pacemaker"]
+        if need_to_handle_qdevice_service():
+            service_list.append("corosync-qdevice")
+        for service in service_list:
+            if is_systemctl():
+                run(["systemctl", "disable", "{0}.service".format(service)])
+            else:
+                run(["chkconfig", service, "off"])
 
 def write_file(path, data, permissions=0o644, binary=False):
     if os.path.exists(path):
