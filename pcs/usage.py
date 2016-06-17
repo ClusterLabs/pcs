@@ -217,7 +217,7 @@ Commands:
         to 60 minutes.
         Example: Create a new resource called 'VirtualIP' with IP address
             192.168.0.99, netmask of 32, monitored everything 30 seconds,
-            on eth2.
+            on eth2:
             pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \\
                 ip=192.168.0.99 cidr_netmask=32 nic=eth2 \\
                 op monitor interval=30s
@@ -606,7 +606,7 @@ Commands:
     kill
         Force corosync and pacemaker daemons to stop on the local node
         (performs kill -9). Note that init system (e.g. systemd) can detect that
-        cluster is not running and starts it again. If you want to stop cluster
+        cluster is not running and start it again. If you want to stop cluster
         on a node, run pcs cluster stop on that node.
 
     enable [--all] [node] [...]
@@ -750,7 +750,7 @@ Commands:
         used then descriptions of stonith agents are not printed.
 
     describe <stonith agent>
-        Show options for specified stonith agent
+        Show options for specified stonith agent.
 
     create <stonith id> <stonith device type> [stonith device options]
            [op <operation action> <operation options> [<operation action>
@@ -784,7 +784,7 @@ Commands:
         fenced.
 
     level remove <level> [node id] [stonith id] ... [stonith id]
-        Removes the fence level for the level, node and/or devices specified
+        Removes the fence level for the level, node and/or devices specified.
         If no nodes or devices are specified then the fence level is removed.
 
     level clear [node|stonith id(s)]
@@ -980,7 +980,7 @@ Commands:
         score-attribute-mangle.
 
     colocation remove <source resource id> <target resource id>
-        Remove colocation constraints with <source resource>.
+        Remove colocation constraints with specified resources.
 
     ticket [show] [--full]
         List all current ticket constraints (if --full is specified show

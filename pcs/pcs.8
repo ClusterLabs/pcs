@@ -70,7 +70,7 @@ Show options for the specified resource.
 create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group id> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
 Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created.  If \fB\-\-master\fR is specified a master/slave resource is created.  If \fB\-\-group\fR is specified the resource is added to the group named.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group.  If \fB\-\-disabled\fR is specified the resource is not started automatically.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.  If 'n' is not specified it defaults to 60 minutes.
 
-Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2. pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
+Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
 .TP
 delete <resource id|group id|master id|clone id>
 Deletes the resource, group, master or clone (and all resources within the group/master/clone).
@@ -193,11 +193,11 @@ Authenticate pcs to pcsd on nodes specified, or on all nodes configured in coros
 setup [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-local\fR] [\fB\-\-enable\fR] \fB\-\-name\fR <cluster name> <node1[,node1-altaddr]> [<node2[,node2-altaddr]>] [...] [\fB\-\-transport\fR udpu|udp] [\fB\-\-rrpmode\fR active|passive] [\fB\-\-addr0\fR <addr/net> [[[\fB\-\-mcast0\fR <address>] [\fB\-\-mcastport0\fR <port>] [\fB\-\-ttl0\fR <ttl>]] | [\fB\-\-broadcast0\fR]] [\fB\-\-addr1\fR <addr/net> [[[\fB\-\-mcast1\fR <address>] [\fB\-\-mcastport1\fR <port>] [\fB\-\-ttl1\fR <ttl>]] | [\fB\-\-broadcast1\fR]]]] [\fB\-\-wait_for_all\fR=<0|1>] [\fB\-\-auto_tie_breaker\fR=<0|1>] [\fB\-\-last_man_standing\fR=<0|1> [\fB\-\-last_man_standing_window\fR=<time in ms>]] [\fB\-\-ipv6\fR] [\fB\-\-token\fR <timeout>] [\fB\-\-token_coefficient\fR <timeout>] [\fB\-\-join\fR <timeout>] [\fB\-\-consensus\fR <timeout>] [\fB\-\-miss_count_const\fR <count>] [\fB\-\-fail_recv_const\fR <failures>]
 Configure corosync and sync configuration out to listed nodes. \fB\-\-local\fR will only perform changes on the local node, \fB\-\-start\fR will also start the cluster on the specified nodes, \fB\-\-wait\fR will wait up to 'n' seconds for the nodes to start, \fB\-\-enable\fR will enable corosync and pacemaker on node startup, \fB\-\-transport\fR allows specification of corosync transport (default: udpu; udp for CMAN clusters), \fB\-\-rrpmode\fR allows you to set the RRP mode of the system. Currently only 'passive' is supported or tested (using 'active' is not recommended). The \fB\-\-wait_for_all\fR, \fB\-\-auto_tie_breaker\fR, \fB\-\-last_man_standing\fR, \fB\-\-last_man_standing_window\fR options are all documented in corosync's votequorum(5) man page. These options are not supported on CMAN clusters.
 
-\fB\-\-ipv6\fR will configure corosync to use ipv6 (instead of ipv4)
+\fB\-\-ipv6\fR will configure corosync to use ipv6 (instead of ipv4).  This option is not supported on CMAN clusters.
 
 \fB\-\-token\fR <timeout> sets time in milliseconds until a token loss is declared after not receiving a token (default 1000 ms)
 
-\fB\-\-token_coefficient\fR <timeout> sets time in milliseconds used for clusters with at least 3 nodes as a coefficient for real token timeout calculation (token + (number_of_nodes - 2) * token_coefficient) (default 650 ms)
+\fB\-\-token_coefficient\fR <timeout> sets time in milliseconds used for clusters with at least 3 nodes as a coefficient for real token timeout calculation (token + (number_of_nodes - 2) * token_coefficient) (default 650 ms)  This option is not supported on CMAN clusters.
 
 \fB\-\-join\fR <timeout> sets time in milliseconds to wait for join messages (default 50 ms)
 
@@ -230,7 +230,7 @@ stop [\fB\-\-all\fR] [node] [...]
 Stop corosync & pacemaker on specified node(s), if a node is not specified then corosync & pacemaker are stopped on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are stopped on all nodes.
 .TP
 kill
-Force corosync and pacemaker daemons to stop on the local node (performs kill \-9). Note that init system (e.g. systemd) can detect that cluster is not running and starts it again. If you want to stop cluster on a node, run pcs cluster stop on that node.
+Force corosync and pacemaker daemons to stop on the local node (performs kill \-9). Note that init system (e.g. systemd) can detect that cluster is not running and start it again. If you want to stop cluster on a node, run pcs cluster stop on that node.
 .TP
 enable [\fB\-\-all\fR] [node] [...]
 Configure corosync & pacemaker to run on node boot on specified node(s), if node is not specified then corosync & pacemaker are enabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are enabled on all nodes.
@@ -324,7 +324,7 @@ level add <level> <node> <devices>
 Add the fencing level for the specified node with a comma separated list of devices (stonith ids) to attempt for that node at that level. Fence levels are attempted in numerical order (starting with 1) if a level succeeds (meaning all devices are successfully fenced in that level) then no other levels are tried, and the node is considered fenced.
 .TP
 level remove <level> [node id] [stonith id] ... [stonith id]
-Removes the fence level for the level, node and/or devices specified If no nodes or devices are specified then the fence level is removed.
+Removes the fence level for the level, node and/or devices specified.  If no nodes or devices are specified then the fence level is removed.
 .TP
 level clear [node|stonith id(s)]
 Clears the fence levels on the node (or stonith id) specified or clears all fence levels if a node/stonith id is not specified.  If more than one stonith id is specified they must be separated by a comma and no spaces.  Example: pcs stonith level clear dev_a,dev_b
@@ -372,10 +372,7 @@ disable
 Disable access control lists.
 .TP
 role create <role id> [description=<description>] [((read | write | deny) (xpath <query> | id <id>))...]
-Create a role with the id and (optional) description specified.
-Each role can also have an unlimited number of permissions
-(read/write/deny) applied to either an xpath query or the id
-of a specific element in the cib.
+Create a role with the id and (optional) description specified.  Each role can also have an unlimited number of permissions (read/write/deny) applied to either an xpath query or the id of a specific element in the cib.
 .TP
 role delete <role id>
 Delete the role specified and remove it from any users/groups it was assigned to.
@@ -476,7 +473,7 @@ colocation set <resource1> [resourceN]... [options] [set <resourceX> ... [option
 Create a colocation constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Available constraint_options are id, score, score-attribute and score-attribute-mangle.
 .TP
 colocation remove <source resource id> <target resource id>
-Remove colocation constraints with <source resource>.
+Remove colocation constraints with specified resources.
 .TP
 ticket [show] [\fB\-\-full\fR]
 List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
@@ -552,7 +549,7 @@ Remove quorum device from cluster.
 device update [generic options] [model <model options>]
 Add/Change quorum device options.  Requires cluster to be stopped.
 .TP
-quorum unblock [\fB\-\-force\fR]
+unblock [\fB\-\-force\fR]
 Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be powered off and to have no access to shared resources.
 
 .B WARNING: If the nodes are not actually powered off or they do have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
