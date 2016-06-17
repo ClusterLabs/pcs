@@ -28,7 +28,7 @@
     });
     var origMainTRHeight = 0;
     function resizeDialog() {
-      $('#add_resource').dialog('option','position','center');
+      $('#new_resource_agent').dialog('option','position','center');
     }
     function resizeTable(refresh) {
       if (refresh == true) {
@@ -305,13 +305,21 @@
       {{/unless}}
     </div>
     {{#if stonith}}
-      <div style="clear:left; margin-top: 2em;" id="stonith_agent_form">
-        {{fence-form resource=resource agent=resource.resource_agent}}
+      <div style="clear:left; margin-top: 2em;" id="stonith_info_div">
+        {{fence-form
+            resource=resource
+            agent=resource.resource_agent
+            table_id_suffix="_existing"
+        }}
       </div>
     {{else}}
     {{#if resource.is_primitive}}
-      <div style="clear:left; margin-top: 2em;" id="resource_agent_form">
-        {{resource-form resource=resource agent=resource.resource_agent}}
+      <div style="clear:left; margin-top: 2em;" id="resource_info_div">
+        {{resource-form
+            resource=resource
+            agent=resource.resource_agent
+            table_id_suffix="_existing"
+        }}
       </div>
     {{/if}}
     {{/if}}
@@ -715,7 +723,11 @@ Use the 'Add' button to submit the form.">
   <script type="text/x-handlebars" data-template-name="components/utilization-table">
     <table style="clear:left; float:left;">
       <tr>
-        <td {{action toggleBody}} class="datatable_header hover-pointer">
+        <td
+            {{action toggleBody}}
+            id="utilization_attributes"
+            class="datatable_header hover-pointer"
+        >
           {{#if show_content}}
             <span class="downarrow sprites"></span>
           {{else}}
@@ -789,7 +801,12 @@ Use the 'Add' button to submit the form.">
     <table style="clear:left; margin-top: 1em;" class="args-table">
       {{#if show_title}}
         <tr>
-          <td {{action toggleBody}} {{bind-attr id=table_id}} colspan="2" nowrap>
+          <td
+              {{action toggleBody}}
+              {{bind-attr id=table_id_full}}
+              colspan="2"
+              nowrap
+          >
             {{#if show_content}}
               <span class="downarrow sprites"></span>
             {{else}}
@@ -895,11 +912,15 @@ Use the 'Add' button to submit the form.">
           </div>
         {{/unless}}
         {{parameters-table
+            table_id="required_args"
+            table_id_suffix=table_id_suffix
             table_name="Required Arguments"
             parameters=agent.required_parameters
             show_content=true
         }}
         {{parameters-table
+            table_id="optional_args"
+            table_id_suffix=table_id_suffix
             table_name="Optional Arguments"
             parameters=agent.optional_parameters
         }}
@@ -958,15 +979,21 @@ Use the 'Add' button to submit the form.">
           </table>
         {{/unless}}
         {{parameters-table
+            table_id="required_fenceargs"
+            table_id_suffix=table_id_suffix
             table_name="Required Arguments"
             parameters=agent.required_parameters
             show_content=true
         }}
         {{parameters-table
+            table_id="optional_fenceargs"
+            table_id_suffix=table_id_suffix
             table_name="Optional Arguments"
             parameters=agent.optional_parameters
         }}
         {{parameters-table
+            table_id="advanced_fenceargs"
+            table_id_suffix=table_id_suffix
             table_name="Advanced Arguments"
             parameters=agent.advanced_parameters
         }}

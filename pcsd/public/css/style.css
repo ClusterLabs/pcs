@@ -787,7 +787,7 @@ li.menuheader {
   background-image: url(images/pbar-ani.gif);
 }
 
-#add_resource td, #add_stonith td, #create_new_cluster_form td {
+#new_resource_agent td, #new_stonith_agent td, #create_new_cluster_form td {
   color: white;
 }
 

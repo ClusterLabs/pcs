@@ -262,9 +262,9 @@ function create_resource(form, update, stonith) {
         Pcs.update();
         if (!update) {
           if (stonith)
-            $('#add_stonith').dialog('close');
+            $('#new_stonith_agent').dialog('close');
           else
-            $('#add_resource').dialog('close');
+            $('#new_resource_agent').dialog('close');
         } else {
           reload_current_resource();
         }

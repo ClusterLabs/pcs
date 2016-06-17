@@ -293,6 +293,10 @@ Pcs.ParametersTableComponent = Ember.Component.extend({
   show_title: true,
   table_name: "",
   table_id: "",
+  table_id_suffix: "",
+  table_id_full: function() {
+    return this.get("table_id") + this.get("table_id_suffix");
+  }.property("table_id", "table_id_suffix"),
   content_style: function() {
     return ("display: " + (this.get("show_content") ? "block" : "none"));
   }.property("show_content"),

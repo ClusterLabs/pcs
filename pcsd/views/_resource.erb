@@ -14,9 +14,9 @@
       Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
   <div class="plus sprites"></div><div class="link">&nbsp;
     <% if @myView == "resource" %>
-      <a href="#" onclick="$('#add_resource').dialog({title: 'Add Resource', modal:true, width: 'auto'});return false;">
+      <a href="#" onclick="$('#new_resource_agent').dialog({title: 'Add Resource', modal:true, width: 'auto'});return false;">
     <% else %>
-      <a href="#" onclick="$('#add_stonith').dialog({title: 'Add Fence Device', modal:true, width: 'auto'});return false;">
+      <a href="#" onclick="$('#new_stonith_agent').dialog({title: 'Add Fence Device', modal:true, width: 'auto'});return false;">
     <% end %>
   Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
     <% if @myView == "resource" %>
@@ -54,7 +54,7 @@
     <% if @myView == "resource" %>
       </div>
     </table>
-    <div id="add_resource" style="display: none;">
+    <div id="new_resource_agent" style="display: none;">
       <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
 	<tr>
 	  <td class="bold">Class/Provider</td>
@@ -92,9 +92,13 @@
 	  </td>
 	</tr>
       </table>
-      {{resource-form agent=Pcs.resourcesContainer.new_resource_agent_metadata groups=Pcs.resourcesContainer.groups_enum}}
+      {{resource-form
+          agent=Pcs.resourcesContainer.new_resource_agent_metadata
+          groups=Pcs.resourcesContainer.groups_enum
+          table_id_suffix="_new"
+      }}
     </div>
-    <div id="add_stonith" style="display: none;">
+    <div id="new_stonith_agent" style="display: none;">
       <table id="stonith_selector" style="clear:left;float:left;margin-top:25px;">
 	<tr>
 	  <td class="bold">Type</td>
@@ -107,7 +111,10 @@
 	  </td>
 	</tr>
       </table>
-        {{fence-form agent=Pcs.resourcesContainer.new_fence_agent_metadata}}
+      {{fence-form
+          agent=Pcs.resourcesContainer.new_fence_agent_metadata
+          table_id_suffix="_new"
+      }}
     </div>
     <div id="add_group" style="display: none;">
       <form method=POST onkeypress="if (event.keyCode == 13) {$(this).parent().parent().find('.ui-dialog-buttonpane button:eq(1)').trigger('click');return false;} " action="/resource_group_add">
