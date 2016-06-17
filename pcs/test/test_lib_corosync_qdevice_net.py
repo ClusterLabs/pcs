@@ -27,9 +27,9 @@ from pcs.lib.external import (
 import pcs.lib.corosync.qdevice_net as lib
 
 
-_qnetd_cert_dir = "/etc/corosync/qdevice/net/qnetd/nssdb"
-_qnetd_tool = "/usr/sbin/corosync-qnetd-certutil"
-_client_cert_dir = "/etc/corosync/qdevice/net/node/nssdb"
+_qnetd_cert_dir = "/etc/corosync/qnetd/nssdb"
+_qnetd_tool = "/usr/bin/corosync-qnetd-certutil"
+_client_cert_dir = "/etc/corosync/qdevice/net/nssdb"
 _client_tool = "/usr/sbin/corosync-qdevice-net-certutil"
 
 

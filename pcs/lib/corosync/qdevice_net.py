@@ -21,6 +21,14 @@ from pcs.lib.errors import LibraryError
 
 __model = "net"
 __service_name = "corosync-qnetd"
+__qnetd_certutil = os.path.join(
+    settings.corosync_qnet_binaries,
+    "corosync-qnetd-certutil"
+)
+__qdevice_certutil = os.path.join(
+    settings.corosync_binaries,
+    "corosync-qdevice-net-certutil"
+)
 
 def qdevice_setup(runner):
     """
@@ -30,8 +38,7 @@ def qdevice_setup(runner):
         raise LibraryError(reports.qdevice_already_initialized(__model))
 
     output, retval = runner.run([
-        os.path.join(settings.corosync_binaries, "corosync-qnetd-certutil"),
-        "-i"
+        __qnetd_certutil, "-i"
     ])
     if retval != 0:
         raise LibraryError(
@@ -104,8 +111,7 @@ def qdevice_sign_certificate_request(runner, cert_request, cluster_name):
     )
     # sign the request
     output, retval = runner.run([
-        os.path.join(settings.corosync_binaries, "corosync-qnetd-certutil"),
-        "-s", "-c", tmpfile.name, "-n", cluster_name
+        __qnetd_certutil, "-s", "-c", tmpfile.name, "-n", cluster_name
     ])
     tmpfile.close() # temp file is deleted on close
     if retval != 0:
@@ -143,11 +149,7 @@ def client_setup(runner, ca_certificate):
         )
     # initialize client's certificate storage
     output, retval = runner.run([
-        os.path.join(
-            settings.corosync_binaries,
-            "corosync-qdevice-net-certutil"
-        ),
-        "-i", "-c", ca_file_path
+        __qdevice_certutil, "-i", "-c", ca_file_path
     ])
     if retval != 0:
         raise LibraryError(
@@ -183,11 +185,7 @@ def client_generate_certificate_request(runner, cluster_name):
     if not client_initialized():
         raise LibraryError(reports.qdevice_not_initialized(__model))
     output, retval = runner.run([
-        os.path.join(
-            settings.corosync_binaries,
-            "corosync-qdevice-net-certutil"
-        ),
-        "-r", "-n", cluster_name
+        __qdevice_certutil, "-r", "-n", cluster_name
     ])
     if retval != 0:
         raise LibraryError(
@@ -213,11 +211,7 @@ def client_cert_request_to_pk12(runner, cert_request):
     )
     # transform it
     output, retval = runner.run([
-        os.path.join(
-            settings.corosync_binaries,
-            "corosync-qdevice-net-certutil"
-        ),
-        "-M", "-c", tmpfile.name
+        __qdevice_certutil, "-M", "-c", tmpfile.name
     ])
     tmpfile.close() # temp file is deleted on close
     if retval != 0:
@@ -242,11 +236,7 @@ def client_import_certificate_and_key(runner, pk12_certificate):
         reports.qdevice_certificate_import_error
     )
     output, retval = runner.run([
-        os.path.join(
-            settings.corosync_binaries,
-            "corosync-qdevice-net-certutil"
-        ),
-        "-m", "-c", tmpfile.name
+        __qdevice_certutil, "-m", "-c", tmpfile.name
     ])
     tmpfile.close() # temp file is deleted on close
     if retval != 0:

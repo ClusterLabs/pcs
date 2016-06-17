@@ -2,17 +2,18 @@ import os.path
 
 pacemaker_binaries = "/usr/sbin/"
 corosync_binaries = "/usr/sbin/"
+corosync_qnet_binaries = "/usr/bin/"
 ccs_binaries = "/usr/sbin/"
 corosync_conf_dir = "/etc/corosync/"
 corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
 corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d/")
 corosync_qdevice_net_server_certs_dir = os.path.join(
     corosync_conf_dir,
-    "qdevice/net/qnetd/nssdb"
+    "qnetd/nssdb"
 )
 corosync_qdevice_net_client_certs_dir = os.path.join(
     corosync_conf_dir,
-    "qdevice/net/node/nssdb"
+    "qdevice/net/nssdb"
 )
 corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
 cluster_conf_file = "/etc/cluster/cluster.conf"

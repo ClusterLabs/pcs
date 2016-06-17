@@ -18,8 +18,14 @@ COROSYNC_BINARIES = "/usr/sbin/"
 CMAN_TOOL = "/usr/sbin/cman_tool"
 PACEMAKERD = "/usr/sbin/pacemakerd"
 CIBADMIN = "/usr/sbin/cibadmin"
-SBD_CONFIG = '/etc/sysconfig/sbd'
-CIB_PATH='/var/lib/pacemaker/cib/cib.xml'
+SBD_CONFIG = "/etc/sysconfig/sbd"
+CIB_PATH = "/var/lib/pacemaker/cib/cib.xml"
+
+COROSYNC_QDEVICE_NET_SERVER_CERTS_DIR = "/etc/corosync/qnetd/nssdb"
+COROSYNC_QDEVICE_NET_SERVER_CA_FILE = (
+  COROSYNC_QDEVICE_NET_SERVER_CERTS_DIR + "/qnetd-cacert.crt"
+)
+COROSYNC_QDEVICE_NET_CLIENT_CERTS_DIR = "/etc/corosync/qdevice/net/nssdb"
 
 SUPERUSER = 'hacluster'
 ADMIN_GROUP = 'haclient'
