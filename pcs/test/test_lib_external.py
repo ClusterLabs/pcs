@@ -912,7 +912,9 @@ class DisableServiceTest(TestCase):
             ["systemctl", "disable", self.service + ".service"]
         )
 
-    def test_not_systemctl(self, mock_systemctl):
+    @mock.patch("pcs.lib.external.is_service_installed")
+    def test_not_systemctl(self, mock_is_installed, mock_systemctl):
+        mock_is_installed.return_value = True
         mock_systemctl.return_value = False
         self.mock_runner.run.return_value = ("", 0)
         lib.disable_service(self.mock_runner, self.service)
@@ -920,7 +922,9 @@ class DisableServiceTest(TestCase):
             ["chkconfig", self.service, "off"]
         )
 
-    def test_not_systemctl_failed(self, mock_systemctl):
+    @mock.patch("pcs.lib.external.is_service_installed")
+    def test_not_systemctl_failed(self, mock_is_installed, mock_systemctl):
+        mock_is_installed.return_value = True
         mock_systemctl.return_value = False
         self.mock_runner.run.return_value = ("", 1)
         self.assertRaises(
@@ -930,6 +934,15 @@ class DisableServiceTest(TestCase):
         self.mock_runner.run.assert_called_once_with(
             ["chkconfig", self.service, "off"]
         )
+
+    @mock.patch("pcs.lib.external.is_service_installed")
+    def test_not_systemctl_not_installed(
+            self, mock_is_installed, mock_systemctl
+    ):
+        mock_is_installed.return_value = False
+        mock_systemctl.return_value = False
+        lib.disable_service(self.mock_runner, self.service)
+        self.assertEqual(self.mock_runner.run.call_count, 0)
 
 
 @mock.patch("pcs.lib.external.is_systemctl")
@@ -1202,3 +1215,134 @@ class IsServiceRunningTest(TestCase):
         self.mock_runner.run.assert_called_once_with(
             ["service", self.service, "status"]
         )
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+@mock.patch("pcs.lib.external.get_systemd_services")
+@mock.patch("pcs.lib.external.get_non_systemd_services")
+class IsServiceInstalledTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+
+    def test_installed_systemd(
+        self, mock_non_systemd, mock_systemd, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = True
+        mock_systemd.return_value = ["service1", "service2"]
+        mock_non_systemd.return_value = []
+        self.assertTrue(lib.is_service_installed(self.mock_runner, "service2"))
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        mock_systemd.assert_called_once_with(self.mock_runner)
+        self.assertEqual(mock_non_systemd.call_count, 0)
+
+    def test_not_installed_systemd(
+            self, mock_non_systemd, mock_systemd, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = True
+        mock_systemd.return_value = ["service1", "service2"]
+        mock_non_systemd.return_value = []
+        self.assertFalse(lib.is_service_installed(self.mock_runner, "service3"))
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        mock_systemd.assert_called_once_with(self.mock_runner)
+        self.assertEqual(mock_non_systemd.call_count, 0)
+
+    def test_installed_not_systemd(
+            self, mock_non_systemd, mock_systemd, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = False
+        mock_systemd.return_value = []
+        mock_non_systemd.return_value = ["service1", "service2"]
+        self.assertTrue(lib.is_service_installed(self.mock_runner, "service2"))
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        mock_non_systemd.assert_called_once_with(self.mock_runner)
+        self.assertEqual(mock_systemd.call_count, 0)
+
+    def test_not_installed_not_systemd(
+            self, mock_non_systemd, mock_systemd, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = False
+
+        mock_systemd.return_value = []
+        mock_non_systemd.return_value = ["service1", "service2"]
+        self.assertFalse(lib.is_service_installed(self.mock_runner, "service3"))
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        mock_non_systemd.assert_called_once_with(self.mock_runner)
+        self.assertEqual(mock_systemd.call_count, 0)
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class GetSystemdServicesTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+
+    def test_success(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("""\
+pcsd.service                                disabled
+sbd.service                                 enabled
+pacemaker.service                           enabled
+
+3 unit files listed.
+""", 0)
+        self.assertEqual(
+            lib.get_systemd_services(self.mock_runner),
+            ["pcsd", "sbd", "pacemaker"]
+        )
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "list-unit-files", "--full"]
+        )
+
+    def test_failed(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("failed", 1)
+        self.assertEqual(lib.get_systemd_services(self.mock_runner), [])
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        self.mock_runner.run.assert_called_once_with(
+            ["systemctl", "list-unit-files", "--full"]
+        )
+
+    def test_not_systemd(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        self.assertEqual(lib.get_systemd_services(self.mock_runner), [])
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        self.assertEqual(self.mock_runner.call_count, 0)
+
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class GetNonSystemdServicesTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
+
+    def test_success(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("""\
+pcsd           	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+sbd            	0:off	1:on	2:on	3:on	4:on	5:on	6:off
+pacemaker      	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+""", 0)
+        self.assertEqual(
+            lib.get_non_systemd_services(self.mock_runner),
+            ["pcsd", "sbd", "pacemaker"]
+        )
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig"], ignore_stderr=True
+        )
+
+    def test_failed(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("failed", 1)
+        self.assertEqual(lib.get_non_systemd_services(self.mock_runner), [])
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig"], ignore_stderr=True
+        )
+
+    def test_systemd(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        self.assertEqual(lib.get_non_systemd_services(self.mock_runner), [])
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        self.assertEqual(self.mock_runner.call_count, 0)

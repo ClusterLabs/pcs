@@ -23,6 +23,7 @@ from pcs import (
 )
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
+from pcs.lib.external import get_systemd_services
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
@@ -289,13 +290,8 @@ def resource_list_available(argv):
             ret.append("lsb:" + agent)
 
     # systemd agents
-    if utils.is_systemctl():
-        agents, dummy_retval = utils.run(["systemctl", "list-unit-files", "--full"])
-        agents = agents.split("\n")
-    for agent in agents:
-        match = re.search(r'^([\S]*)\.service',agent)
-        if match:
-            ret.append("systemd:" + match.group(1))
+    for service in get_systemd_services(utils.cmd_runner()):
+        ret.append("systemd:{0}".format(service))
 
     # nagios metadata
     if os.path.isdir(settings.nagios_metadata_path):

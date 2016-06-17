@@ -117,6 +117,8 @@ def disable_service(runner, service):
             "systemctl", "disable", service + ".service"
         ])
     else:
+        if not is_service_installed(runner, service):
+            return
         output, retval = runner.run(["chkconfig", service, "off"])
     if retval != 0:
         raise DisableServiceError(service, output.rstrip())
@@ -220,6 +222,61 @@ def is_service_running(runner, service):
         _, retval = runner.run(["service", service, "status"])
 
     return retval == 0
+
+
+def is_service_installed(runner, service):
+    """
+    Check if specified service is installed on local system.
+
+    runner -- CommandRunner
+    service -- name of service
+    """
+    if is_systemctl():
+        return service in get_systemd_services(runner)
+    else:
+        return service in get_non_systemd_services(runner)
+
+
+def get_non_systemd_services(runner):
+    """
+    Returns list of all installed services on non systemd system.
+
+    runner -- CommandRunner
+    """
+    if is_systemctl():
+        return []
+
+    output, return_code = runner.run(["chkconfig"], ignore_stderr=True)
+    if return_code != 0:
+        return []
+
+    service_list = []
+    for service in output.split("\n"):
+        service = service.split(" ", 1)[0]
+        if service:
+            service_list.append(service)
+    return service_list
+
+
+def get_systemd_services(runner):
+    """
+    Returns list of all systemd services installed on local system.
+
+    runner -- CommandRunner
+    """
+    if not is_systemctl():
+        return []
+
+    output, return_code = runner.run(["systemctl", "list-unit-files", "--full"])
+    if return_code != 0:
+        return []
+
+    service_list = []
+    for service in output.split("\n"):
+        match = re.search(r'^([\S]*)\.service', service)
+        if match:
+            service_list.append(match.group(1))
+    return service_list
 
 
 def is_cman_cluster(runner):

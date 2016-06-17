@@ -1952,6 +1952,9 @@ def disable_service(service)
   if ISSYSTEMCTL
     cmd = ['systemctl', 'disable', "#{service}.service"]
   else
+    if not is_service_installed?(service)
+      return true
+    end
     cmd = ['chkconfig', service, 'off']
   end
   _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
