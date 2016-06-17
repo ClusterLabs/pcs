@@ -42,7 +42,11 @@ from pcs.lib import (
     reports as lib_reports,
 )
 from pcs.lib.tools import environment_file_to_dict
-from pcs.lib.external import disable_service
+from pcs.lib.external import (
+    disable_service,
+    NodeCommunicationException,
+    node_communicator_exception_to_report_item,
+)
 from pcs.lib.node import NodeAddresses
 from pcs.lib.errors import (
     LibraryError,
@@ -1364,6 +1368,10 @@ def cluster_node(argv):
                 )
         except LibraryError as e:
             utils.process_library_reports(e.args)
+        except NodeCommunicationException as e:
+            utils.process_library_reports(
+                node_communicator_exception_to_report_item(e)
+            )
 
         for my_node in utils.getNodesFromCorosyncConf():
             retval, output = utils.addLocalNode(my_node, node0, node1)
