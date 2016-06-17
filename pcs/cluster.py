@@ -44,6 +44,7 @@ from pcs.lib import (
 )
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
+    qdevice_net,
 )
 from pcs.lib.errors import (
     LibraryError,
@@ -1713,9 +1714,12 @@ def cluster_destroy(argv):
     else:
         print("Shutting down pacemaker/corosync services...")
         os.system("service pacemaker stop")
+        # returns error if qdevice is not running, it is safe to ignore it
+        # since we want it not to be running
+        os.system("service corosync-qdevice stop")
         os.system("service corosync stop")
         print("Killing any remaining services...")
-        os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
+        os.system("killall -q -9 corosync corosync-qdevice aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
         try:
             utils.disableServices()
         except:
@@ -1737,6 +1741,12 @@ def cluster_destroy(argv):
                 "pe*.bz2","cib.*"]
         for name in state_files:
             os.system("find /var/lib -name '"+name+"' -exec rm -f \{\} \;")
+        try:
+            qdevice_net.client_destroy()
+        except:
+            # errors from deleting other files are suppressed as well
+            # we do not want to fail if qdevice was not set up
+            pass
 
 def cluster_verify(argv):
     nofilename = True
