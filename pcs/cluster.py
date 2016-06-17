@@ -42,10 +42,12 @@ from pcs.lib import (
     sbd as lib_sbd,
     reports as lib_reports,
 )
+from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
     qdevice_net,
 )
+from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity,
@@ -1346,11 +1348,11 @@ def cluster_node(argv):
         if not canAdd:
             utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
 
+        lib_env = utils.get_lib_env()
+        report_processor = lib_env.report_processor
+        node_communicator = lib_env.node_communicator()
+        node_addr = NodeAddresses(node0, node1)
         try:
-            node_addr = NodeAddresses(node0, node1)
-            lib_env = utils.get_lib_env()
-            report_processor = lib_env.report_processor
-            node_communicator = lib_env.node_communicator()
             if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
                 if "--watchdog" not in utils.pcs_options:
                     watchdog = settings.sbd_watchdog_default
@@ -1423,6 +1425,25 @@ def cluster_node(argv):
                 except:
                     utils.err('Unable to communicate with pcsd')
 
+            # set qdevice-net certificates if needed
+            if not utils.is_rhel6():
+                try:
+                    conf_facade = corosync_conf_facade.from_string(
+                        corosync_conf
+                    )
+                    qdevice_model, qdevice_model_options, _ = conf_facade.get_quorum_device_settings()
+                    if qdevice_model == "net":
+                        _add_device_model_net(
+                            lib_env,
+                            qdevice_model_options["host"],
+                            conf_facade.get_cluster_name(),
+                            [node_addr],
+                            skip_offline_nodes=False
+                        )
+                except LibraryError as e:
+                    process_library_reports(e.args)
+
+            print("Setting up corosync...")
             utils.setCorosyncConfig(node0, corosync_conf)
             if "--enable" in utils.pcs_options:
                 retval, err = utils.enableCluster(node0)
