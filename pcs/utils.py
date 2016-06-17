@@ -2280,7 +2280,7 @@ def parse_cman_quorum_info(cman_info):
     in_node_list = False
     local_node_id = ""
     try:
-        for line in cman_info.split("\n"):
+        for line in cman_info.splitlines():
             line = line.strip()
             if not line:
                 continue
@@ -2292,12 +2292,13 @@ def parse_cman_quorum_info(cman_info):
                 parsed["node_list"].append({
                     "name": parts[3],
                     "votes": int(parts[2]),
-                    "local": local_node_id == parts[0]
+                    "local": local_node_id == parts[0],
                 })
             else:
                 if line == "---Votes---":
                     in_node_list = True
                     parsed["node_list"] = []
+                    parsed["qdevice_list"] = []
                     continue
                 if not ":" in line:
                     continue
@@ -2322,7 +2323,7 @@ def parse_quorumtool_output(quorumtool_output):
     parsed = {}
     in_node_list = False
     try:
-        for line in quorumtool_output.split("\n"):
+        for line in quorumtool_output.splitlines():
             line = line.strip()
             if not line:
                 continue
@@ -2331,15 +2332,25 @@ def parse_quorumtool_output(quorumtool_output):
                     # skip headers
                     continue
                 parts = line.split()
-                parsed["node_list"].append({
-                    "name": parts[3],
-                    "votes": int(parts[1]),
-                    "local": len(parts) > 4 and parts[4] == "(local)"
-                })
+                if parts[0] == "0":
+                    # this line has nodeid == 0, this is a qdevice line
+                    parsed["qdevice_list"].append({
+                        "name": parts[2],
+                        "votes": int(parts[1]),
+                        "local": False,
+                    })
+                else:
+                    # this line has non-zero nodeid, this is a node line
+                    parsed["node_list"].append({
+                        "name": parts[3],
+                        "votes": int(parts[1]),
+                        "local": len(parts) > 4 and parts[4] == "(local)",
+                    })
             else:
                 if line == "Membership information":
                     in_node_list = True
                     parsed["node_list"] = []
+                    parsed["qdevice_list"] = []
                     continue
                 if not ":" in line:
                     continue
@@ -2372,6 +2383,8 @@ def is_node_stop_cause_quorum_loss(quorum_info, local=True, node_list=None):
         if node_list and node_info["name"] in node_list:
             continue
         votes_after_stop += node_info["votes"]
+    for qdevice_info in quorum_info.get("qdevice_list", []):
+        votes_after_stop += qdevice_info["votes"]
     return votes_after_stop < quorum_info["quorum"]
 
 def dom_prepare_child_element(dom_element, tag_name, id):
