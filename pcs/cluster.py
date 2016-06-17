@@ -36,23 +36,26 @@ from pcs import (
 )
 from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
+from pcs.cli.common.reports import process_library_reports
 from pcs.lib import (
     pacemaker as lib_pacemaker,
     sbd as lib_sbd,
     reports as lib_reports,
 )
-from pcs.lib.tools import environment_file_to_dict
+from pcs.lib.corosync import (
+    config_parser as corosync_conf_utils,
+)
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity,
+)
 from pcs.lib.external import (
     disable_service,
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
 from pcs.lib.node import NodeAddresses
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity,
-)
-from pcs.lib.corosync import config_parser as corosync_conf_utils
+from pcs.lib.tools import environment_file_to_dict
 
 def cluster_cmd(argv):
     if len(argv) == 0:
@@ -288,7 +291,7 @@ def cluster_setup(argv):
         )
     if udpu_rrp and "rrp_mode" not in options["transport_options"]:
         options["transport_options"]["rrp_mode"] = "passive"
-    utils.process_library_reports(messages)
+    process_library_reports(messages)
 
     # prepare config file
     if is_rhel6:
@@ -306,7 +309,7 @@ def cluster_setup(argv):
             options["totem_options"],
             options["quorum_options"]
         )
-    utils.process_library_reports(messages)
+    process_library_reports(messages)
 
     # setup on the local node
     if "--local" in utils.pcs_options:
@@ -1037,14 +1040,20 @@ def enable_cluster(argv):
         enable_cluster_nodes(argv)
         return
 
-    utils.enableServices()
+    try:
+        utils.enableServices()
+    except LibraryError as e:
+        process_library_reports(e.args)
 
 def disable_cluster(argv):
     if len(argv) > 0:
         disable_cluster_nodes(argv)
         return
 
-    utils.disableServices()
+    try:
+        utils.disableServices()
+    except LibraryError as e:
+        process_library_reports(e.args)
 
 def enable_cluster_all():
     enable_cluster_nodes(utils.getNodesFromCorosyncConf())
@@ -1374,9 +1383,9 @@ def cluster_node(argv):
                     report_processor, node_communicator, node_addr
                 )
         except LibraryError as e:
-            utils.process_library_reports(e.args)
+            process_library_reports(e.args)
         except NodeCommunicationException as e:
-            utils.process_library_reports(
+            process_library_reports(
                 [node_communicator_exception_to_report_item(e)]
             )
 
@@ -1707,7 +1716,12 @@ def cluster_destroy(argv):
         os.system("service corosync stop")
         print("Killing any remaining services...")
         os.system("killall -q -9 corosync aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
-        utils.disableServices()
+        try:
+            utils.disableServices()
+        except:
+            # previously errors were suppressed in here, let's keep it that way
+            # for now
+            pass
         try:
             disable_service(utils.cmd_runner(), "sbd")
         except:

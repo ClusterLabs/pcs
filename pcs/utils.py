@@ -66,11 +66,15 @@ from pcs.lib import reports
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.external import (
-    is_cman_cluster,
     CommandRunner,
-    is_service_running,
-    is_service_enabled,
+    is_cman_cluster,
     is_systemctl,
+    is_service_enabled,
+    is_service_running,
+    disable_service,
+    DisableServiceError,
+    enable_service,
+    EnableServiceError,
 )
 import pcs.lib.resource_agent as lib_ra
 import pcs.lib.corosync.config_parser as corosync_conf_parser
@@ -2083,32 +2087,43 @@ def serviceStatus(prefix):
         pass
 
 def enableServices():
+    # do NOT handle SBD in here, it is started by pacemaker not systemd or init
     if is_rhel6():
-        run(["chkconfig", "pacemaker", "on"])
+        service_list = ["pacemaker"]
     else:
         service_list = ["corosync", "pacemaker"]
         if need_to_handle_qdevice_service():
             service_list.append("corosync-qdevice")
-        for service in service_list:
-            if is_systemctl():
-                run(["systemctl", "enable", "{0}.service".format(service)])
-            else:
-                run(["chkconfig", service, "on"])
+
+    report_item_list = []
+    for service in service_list:
+        try:
+            enable_service(cmd_runner(), service)
+        except EnableServiceError as e:
+            report_item_list.append(
+                reports.service_enable_error(e.service, e.message)
+            )
+    if report_item_list:
+        raise LibraryError(*report_item_list)
 
 def disableServices():
-    if is_rhel6():
-        run(["chkconfig", "pacemaker", "off"])
-        # Left here for users of old pcs which enabled corosync
-        run(["chkconfig", "corosync", "off"])
-    else:
-        service_list = ["corosync", "pacemaker"]
-        if need_to_handle_qdevice_service():
-            service_list.append("corosync-qdevice")
-        for service in service_list:
-            if is_systemctl():
-                run(["systemctl", "disable", "{0}.service".format(service)])
-            else:
-                run(["chkconfig", service, "off"])
+    # Disable corosync on RHEL6 as well - left here for users of old pcs which
+    # enabled corosync.
+    # do NOT handle SBD in here, it is started by pacemaker not systemd or init
+    service_list = ["corosync", "pacemaker"]
+    if need_to_handle_qdevice_service():
+        service_list.append("corosync-qdevice")
+
+    report_item_list = []
+    for service in service_list:
+        try:
+            disable_service(cmd_runner(), service)
+        except DisableServiceError as e:
+            report_item_list.append(
+                reports.service_disable_error(e.service, e.message)
+            )
+    if report_item_list:
+        raise LibraryError(*report_item_list)
 
 def write_file(path, data, permissions=0o644, binary=False):
     if os.path.exists(path):
