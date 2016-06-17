@@ -1913,7 +1913,16 @@ end
 
 def is_service_installed?(service)
   unless ISSYSTEMCTL
-    raise NotImplementedException.new('Not supported on non systemd systems.')
+    stdout, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), 'chkconfig')
+    if retcode != 0
+      return nil
+    end
+    stdout.each { |line|
+      if line.split(' ')[0] == service
+        return true
+      end
+      return false
+    }
   end
   stdout, _, retcode = run_cmd(
     PCSAuth.getSuperuserAuth(), PCS, 'resource', 'list', 'systemd'
