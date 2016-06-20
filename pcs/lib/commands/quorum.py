@@ -73,8 +73,10 @@ def add_device(
         force_model,
         force_options
     )
-    lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
+    # First setup certificates for qdevice, then send corosync.conf to nodes.
+    # If anything fails, nodes will not have corosync.conf with qdevice in it,
+    # so there is no effect on the cluster.
     if lib_env.is_corosync_conf_live:
         # do model specific configuration
         # if model is not known to pcs and was forced, do not configure antyhing
@@ -106,6 +108,9 @@ def add_device(
             lib_env.report_processor,
             skip_offline_nodes
         )
+
+    # everything set up, it's safe to tell the nodes to use qdevice
+    lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
 def _add_device_model_net(
     lib_env, qnetd_host, cluster_name, cluster_nodes, skip_offline_nodes
