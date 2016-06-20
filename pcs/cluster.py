@@ -1524,10 +1524,15 @@ def cluster_localnode(argv):
 # the node by running 'crm_node -R <node>' on the node where the remove command
 # was ran. This only works if pacemaker is running. If it's not, we need
 # to remove the node manually from the CIB on all nodes.
-        if not utils.is_service_running(utils.cmd_runner(), "pacemaker"):
+        cib_node_remove = None
+        if utils.usefile:
+            cib_node_remove = utils.filename
+        elif not utils.is_service_running(utils.cmd_runner(), "pacemaker"):
+            cib_node_remove = os.path.join(settings.cib_dir, "cib.xml")
+        if cib_node_remove:
             original_usefile, original_filename = utils.usefile, utils.filename
             utils.usefile = True
-            utils.filename = os.path.join(settings.cib_dir, "cib.xml")
+            utils.filename = cib_node_remove
             dummy_output, dummy_retval = utils.run([
                 "cibadmin",
                 "--delete-all",
