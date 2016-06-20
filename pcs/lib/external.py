@@ -251,7 +251,7 @@ def get_non_systemd_services(runner):
         return []
 
     service_list = []
-    for service in output.split("\n"):
+    for service in output.splitlines():
         service = service.split(" ", 1)[0]
         if service:
             service_list.append(service)
@@ -272,7 +272,7 @@ def get_systemd_services(runner):
         return []
 
     service_list = []
-    for service in output.split("\n"):
+    for service in output.splitlines():
         match = re.search(r'^([\S]*)\.service', service)
         if match:
             service_list.append(match.group(1))

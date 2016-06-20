@@ -1370,7 +1370,7 @@ def cluster_node(argv):
             utils.process_library_reports(e.args)
         except NodeCommunicationException as e:
             utils.process_library_reports(
-                node_communicator_exception_to_report_item(e)
+                [node_communicator_exception_to_report_item(e)]
             )
 
         for my_node in utils.getNodesFromCorosyncConf():
