@@ -47,3 +47,18 @@ def reload_config(runner):
             reports.corosync_config_reload_error(output.rstrip())
         )
 
+def get_quorum_status_text(runner):
+    """
+    Get runtime quorum status from the local node
+    """
+    output, retval = runner.run([
+        os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
+        "-p"
+    ])
+    # retval is 0 on success if node is not in partition with quorum
+    # retval is 1 on error OR on success if node has quorum
+    if retval not in [0, 1]:
+        raise LibraryError(
+            reports.corosync_quorum_get_status_error(output)
+        )
+    return output

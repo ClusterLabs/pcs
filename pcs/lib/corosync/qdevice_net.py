@@ -25,6 +25,10 @@ __qnetd_certutil = os.path.join(
     settings.corosync_qnet_binaries,
     "corosync-qnetd-certutil"
 )
+__qnetd_tool = os.path.join(
+    settings.corosync_qnet_binaries,
+    "corosync-qnetd-tool"
+)
 __qdevice_certutil = os.path.join(
     settings.corosync_binaries,
     "corosync-qdevice-net-certutil"
@@ -65,6 +69,35 @@ def qdevice_destroy():
         raise LibraryError(
             reports.qdevice_destroy_error(__model, e.strerror)
         )
+
+def qdevice_status_generic_text(runner, verbose=False):
+    """
+    get qdevice runtime status in plain text
+    bool verbose get more detailed output
+    """
+    cmd = [__qnetd_tool, "-s"]
+    if verbose:
+        cmd.append("-v")
+    output, retval = runner.run(cmd)
+    if retval != 0:
+        raise LibraryError(reports.qdevice_get_status_error(__model, output))
+    return output
+
+def qdevice_status_cluster_text(runner, cluster=None, verbose=False):
+    """
+    get qdevice runtime status in plain text
+    bool verbose get more detailed output
+    string cluster show information only about specified cluster
+    """
+    cmd = [__qnetd_tool, "-l"]
+    if verbose:
+        cmd.append("-v")
+    if cluster:
+        cmd.extend(["-c", cluster])
+    output, retval = runner.run(cmd)
+    if retval != 0:
+        raise LibraryError(reports.qdevice_get_status_error(__model, output))
+    return output
 
 def qdevice_enable(runner):
     """

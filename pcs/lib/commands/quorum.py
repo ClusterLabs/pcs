@@ -7,7 +7,11 @@ from __future__ import (
 
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
-from pcs.lib.corosync import qdevice_net, qdevice_client
+from pcs.lib.corosync import (
+    live as corosync_live,
+    qdevice_net,
+    qdevice_client
+)
 from pcs.lib.external import (
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
@@ -46,6 +50,21 @@ def set_options(lib_env, options, skip_offline_nodes=False):
     cfg = lib_env.get_corosync_conf()
     cfg.set_quorum_options(lib_env.report_processor, options)
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
+def status_text(lib_env):
+    """
+    Get quorum runtime status in plain text
+    """
+    __ensure_not_cman(lib_env)
+    return corosync_live.get_quorum_status_text(lib_env.cmd_runner())
+
+def status_device_text(lib_env, verbose=False):
+    """
+    Get quorum device client runtime status in plain text
+    bool verbose get more detailed output
+    """
+    __ensure_not_cman(lib_env)
+    return qdevice_client.get_status_text(lib_env.cmd_runner(), verbose)
 
 def add_device(
     lib_env, model, model_options, generic_options, force_model=False,

@@ -47,6 +47,22 @@ class GetLocalCorosyncConfTest(TestCase):
         )
 
 
+class SetRemoteCorosyncConfTest(TestCase):
+    def test_success(self):
+        config = "test {\nconfig: data\n}\n"
+        node = NodeAddresses("node1")
+        mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+        mock_communicator.call_node.return_value = "dummy return"
+
+        lib.set_remote_corosync_conf(mock_communicator, node, config)
+
+        mock_communicator.call_node.assert_called_once_with(
+            node,
+            "remote/set_corosync_conf",
+            "corosync_conf=test+%7B%0Aconfig%3A+data%0A%7D%0A"
+        )
+
+
 class ReloadConfigTest(TestCase):
     def path(self, name):
         return os.path.join(settings.corosync_binaries, name)
@@ -85,17 +101,43 @@ class ReloadConfigTest(TestCase):
         ])
 
 
-class SetRemoteCorosyncConfTest(TestCase):
+class GetQuorumStatusTextTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        self.quorum_tool = "/usr/sbin/corosync-quorumtool"
+
     def test_success(self):
-        config = "test {\nconfig: data\n}\n"
-        node = NodeAddresses("node1")
-        mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
-        mock_communicator.call_node.return_value = "dummy return"
-
-        lib.set_remote_corosync_conf(mock_communicator, node, config)
-
-        mock_communicator.call_node.assert_called_once_with(
-            node,
-            "remote/set_corosync_conf",
-            "corosync_conf=test+%7B%0Aconfig%3A+data%0A%7D%0A"
+        self.mock_runner.run.return_value = ("status info", 0)
+        self.assertEqual(
+            "status info",
+            lib.get_quorum_status_text(self.mock_runner)
         )
+        self.mock_runner.run.assert_called_once_with([
+            self.quorum_tool, "-p"
+        ])
+
+    def test_success_with_retval_1(self):
+        self.mock_runner.run.return_value = ("status info", 1)
+        self.assertEqual(
+            "status info",
+            lib.get_quorum_status_text(self.mock_runner)
+        )
+        self.mock_runner.run.assert_called_once_with([
+            self.quorum_tool, "-p"
+        ])
+
+    def test_error(self):
+        self.mock_runner.run.return_value = ("status error", 2)
+        assert_raise_library_error(
+            lambda: lib.get_quorum_status_text(self.mock_runner),
+            (
+                severity.ERROR,
+                report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
+                {
+                    "reason": "status error",
+                }
+            )
+        )
+        self.mock_runner.run.assert_called_once_with([
+            self.quorum_tool, "-p"
+        ])

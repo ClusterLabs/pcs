@@ -59,6 +59,11 @@ class QdeviceDisabledOnCmanTest(QdeviceTestCase):
             lambda: lib.qdevice_destroy(self.lib_env, "bad model")
         )
 
+    def test_status_text(self):
+        self.base_test(
+            lambda: lib.qdevice_status_text(self.lib_env, "bad model")
+        )
+
     def test_enable(self):
         self.base_test(
             lambda: lib.qdevice_enable(self.lib_env, "bad model")
@@ -133,6 +138,11 @@ class QdeviceBadModelTest(QdeviceTestCase):
     def test_destroy(self):
         self.base_test(
             lambda: lib.qdevice_destroy(self.lib_env, "bad model")
+        )
+
+    def test_status_text(self):
+        self.base_test(
+            lambda: lib.qdevice_status_text(self.lib_env, "bad model")
         )
 
     def test_enable(self):
@@ -512,6 +522,80 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 )
             ]
         )
+
+
+@mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_status_cluster_text")
+@mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_status_generic_text")
+@mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+class TestQdeviceNetStatusTextTest(QdeviceTestCase):
+    def test_success(self, mock_status_generic, mock_status_cluster):
+        mock_status_generic.return_value = "generic status info\n"
+        mock_status_cluster.return_value = "cluster status info\n"
+
+        self.assertEquals(
+            lib.qdevice_status_text(self.lib_env, "net"),
+             "generic status info\ncluster status info\n"
+        )
+
+        mock_status_generic.assert_called_once_with("mock_runner", False)
+        mock_status_cluster.assert_called_once_with("mock_runner", None, False)
+
+    def test_success_verbose(self, mock_status_generic, mock_status_cluster):
+        mock_status_generic.return_value = "generic status info\n"
+        mock_status_cluster.return_value = "cluster status info\n"
+
+        self.assertEquals(
+            lib.qdevice_status_text(self.lib_env, "net", verbose=True),
+             "generic status info\ncluster status info\n"
+        )
+
+        mock_status_generic.assert_called_once_with("mock_runner", True)
+        mock_status_cluster.assert_called_once_with("mock_runner", None, True)
+
+    def test_success_cluster(self, mock_status_generic, mock_status_cluster):
+        mock_status_generic.return_value = "generic status info\n"
+        mock_status_cluster.return_value = "cluster status info\n"
+
+        self.assertEquals(
+            lib.qdevice_status_text(self.lib_env, "net", cluster="name"),
+             "generic status info\ncluster status info\n"
+        )
+
+        mock_status_generic.assert_called_once_with("mock_runner", False)
+        mock_status_cluster.assert_called_once_with("mock_runner", "name", False)
+
+    def test_error_generic_status(
+        self, mock_status_generic, mock_status_cluster
+    ):
+        mock_status_generic.side_effect = LibraryError("mock_report_item")
+        mock_status_cluster.return_value = "cluster status info\n"
+
+        self.assertRaises(
+            LibraryError,
+            lambda: lib.qdevice_status_text(self.lib_env, "net")
+        )
+
+        mock_status_generic.assert_called_once_with("mock_runner", False)
+        mock_status_cluster.assert_not_called()
+
+    def test_error_cluster_status(
+        self, mock_status_generic, mock_status_cluster
+    ):
+        mock_status_generic.return_value = "generic status info\n"
+        mock_status_cluster.side_effect = LibraryError("mock_report_item")
+
+        self.assertRaises(
+            LibraryError,
+            lambda: lib.qdevice_status_text(self.lib_env, "net")
+        )
+
+        mock_status_generic.assert_called_once_with("mock_runner", False)
+        mock_status_cluster.assert_called_once_with("mock_runner", None, False)
 
 
 @mock.patch("pcs.lib.external.enable_service")
@@ -923,7 +1007,7 @@ class ClientNetImportCertificateTest(QdeviceTestCase):
 
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.client_destroy")
 @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-class CleintNetDestroyTest(QdeviceTestCase):
+class ClientNetDestroyTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
         lib.client_net_destroy(self.lib_env)
         mock_qdevice_func.assert_called_once_with()

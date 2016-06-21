@@ -34,7 +34,7 @@ def qdevice_setup(lib_env, model, enable, start):
 def qdevice_destroy(lib_env, model):
     """
     Stop and disable qdevice on local host and remove its configuration
-    string model qdevice model to initialize
+    string model qdevice model to destroy
     """
     _ensure_not_cman(lib_env)
     _check_model(model)
@@ -42,6 +42,22 @@ def qdevice_destroy(lib_env, model):
     _service_disable(lib_env, qdevice_net.qdevice_disable)
     qdevice_net.qdevice_destroy()
     lib_env.report_processor.process(reports.qdevice_destroy_success(model))
+
+def qdevice_status_text(lib_env, model, verbose=False, cluster=None):
+    """
+    Get runtime status of a quorum device in plain text
+    string model qdevice model to query
+    bool verbose get more detailed output
+    string cluster show information only about specified cluster
+    """
+    _ensure_not_cman(lib_env)
+    _check_model(model)
+    runner = lib_env.cmd_runner()
+    return (
+        qdevice_net.qdevice_status_generic_text(runner, verbose)
+        +
+        qdevice_net.qdevice_status_cluster_text(runner, cluster, verbose)
+    )
 
 def qdevice_enable(lib_env, model):
     """

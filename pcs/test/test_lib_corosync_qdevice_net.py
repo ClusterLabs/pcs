@@ -28,9 +28,10 @@ import pcs.lib.corosync.qdevice_net as lib
 
 
 _qnetd_cert_dir = "/etc/corosync/qnetd/nssdb"
-_qnetd_tool = "/usr/bin/corosync-qnetd-certutil"
+_qnetd_cert_tool = "/usr/bin/corosync-qnetd-certutil"
+_qnetd_tool = "/usr/bin/corosync-qnetd-tool"
 _client_cert_dir = "/etc/corosync/qdevice/net/nssdb"
-_client_tool = "/usr/sbin/corosync-qdevice-net-certutil"
+_client_cert_tool = "/usr/sbin/corosync-qdevice-net-certutil"
 
 
 class CertificateTestCase(TestCase):
@@ -51,7 +52,7 @@ class QdeviceSetupTest(TestCase):
         lib.qdevice_setup(self.mock_runner)
 
         mock_is_dir_nonempty.assert_called_once_with(_qnetd_cert_dir)
-        self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-i"])
+        self.mock_runner.run.assert_called_once_with([_qnetd_cert_tool, "-i"])
 
     def test_cert_db_exists(self, mock_is_dir_nonempty):
         mock_is_dir_nonempty.return_value = True
@@ -85,7 +86,7 @@ class QdeviceSetupTest(TestCase):
         )
 
         mock_is_dir_nonempty.assert_called_once_with(_qnetd_cert_dir)
-        self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-i"])
+        self.mock_runner.run.assert_called_once_with([_qnetd_cert_tool, "-i"])
 
 
 @mock.patch("pcs.lib.corosync.qdevice_net.shutil.rmtree")
@@ -118,6 +119,98 @@ class QdeviceDestroyTest(TestCase):
         mock_rmtree.assert_called_once_with(_qnetd_cert_dir)
 
 
+class QdeviceStatusGenericTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
+
+    def test_success(self):
+        self.mock_runner.run.return_value = ("status info", 0)
+        self.assertEqual(
+            "status info",
+            lib.qdevice_status_generic_text(self.mock_runner)
+        )
+        self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-s"])
+
+    def test_success_verbose(self):
+        self.mock_runner.run.return_value = ("status info", 0)
+        self.assertEqual(
+            "status info",
+            lib.qdevice_status_generic_text(self.mock_runner, True)
+        )
+        self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-s", "-v"])
+
+    def test_error(self):
+        self.mock_runner.run.return_value = ("status error", 1)
+        assert_raise_library_error(
+            lambda: lib.qdevice_status_generic_text(self.mock_runner),
+            (
+                severity.ERROR,
+                report_codes.QDEVICE_GET_STATUS_ERROR,
+                {
+                    "model": "net",
+                    "reason": "status error",
+                }
+            )
+        )
+        self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-s"])
+
+
+class QdeviceStatusClusterTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
+
+    def test_success(self):
+        self.mock_runner.run.return_value = ("status info", 0)
+        self.assertEqual(
+            "status info",
+            lib.qdevice_status_cluster_text(self.mock_runner)
+        )
+        self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-l"])
+
+    def test_success_verbose(self):
+        self.mock_runner.run.return_value = ("status info", 0)
+        self.assertEqual(
+            "status info",
+            lib.qdevice_status_cluster_text(self.mock_runner, verbose=True)
+        )
+        self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-l", "-v"])
+
+    def test_success_cluster(self):
+        self.mock_runner.run.return_value = ("status info", 0)
+        self.assertEqual(
+            "status info",
+            lib.qdevice_status_cluster_text(self.mock_runner, "cluster")
+        )
+        self.mock_runner.run.assert_called_once_with([
+            _qnetd_tool, "-l", "-c", "cluster"
+        ])
+
+    def test_success_cluster_verbose(self):
+        self.mock_runner.run.return_value = ("status info", 0)
+        self.assertEqual(
+            "status info",
+            lib.qdevice_status_cluster_text(self.mock_runner, "cluster", True)
+        )
+        self.mock_runner.run.assert_called_once_with([
+            _qnetd_tool, "-l", "-v", "-c", "cluster"
+        ])
+
+    def test_error(self):
+        self.mock_runner.run.return_value = ("status error", 1)
+        assert_raise_library_error(
+            lambda: lib.qdevice_status_cluster_text(self.mock_runner),
+            (
+                severity.ERROR,
+                report_codes.QDEVICE_GET_STATUS_ERROR,
+                {
+                    "model": "net",
+                    "reason": "status error",
+                }
+            )
+        )
+        self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-l"])
+
+
 @mock.patch("pcs.lib.corosync.qdevice_net._get_output_certificate")
 @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
 class QdeviceSignCertificateRequestTest(CertificateTestCase):
@@ -142,7 +235,8 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
             reports.qdevice_certificate_sign_error
         )
         self.mock_runner.run.assert_called_once_with([
-            _qnetd_tool, "-s", "-c", self.mock_tmpfile.name, "-n", "clusterName"
+            _qnetd_cert_tool,
+            "-s", "-c", self.mock_tmpfile.name, "-n", "clusterName"
         ])
         mock_get_cert.assert_called_once_with(
             "tool output",
@@ -219,7 +313,8 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
             reports.qdevice_certificate_sign_error
         )
         self.mock_runner.run.assert_called_once_with([
-            _qnetd_tool, "-s", "-c", self.mock_tmpfile.name, "-n", "clusterName"
+            _qnetd_cert_tool,
+            "-s", "-c", self.mock_tmpfile.name, "-n", "clusterName"
         ])
         mock_get_cert.assert_not_called()
 
@@ -246,7 +341,8 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
             reports.qdevice_certificate_sign_error
         )
         self.mock_runner.run.assert_called_once_with([
-            _qnetd_tool, "-s", "-c", self.mock_tmpfile.name, "-n", "clusterName"
+            _qnetd_cert_tool,
+            "-s", "-c", self.mock_tmpfile.name, "-n", "clusterName"
         ])
         mock_get_cert.assert_called_once_with(
             "tool output",
@@ -310,7 +406,7 @@ class ClientSetupTest(TestCase):
             open(self.ca_file_path).read()
         )
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-i", "-c", self.ca_file_path
+            _client_cert_tool, "-i", "-c", self.ca_file_path
         ])
         mock_destroy.assert_called_once_with()
 
@@ -335,7 +431,7 @@ class ClientSetupTest(TestCase):
             open(self.ca_file_path).read()
         )
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-i", "-c", self.ca_file_path
+            _client_cert_tool, "-i", "-c", self.ca_file_path
         ])
         mock_destroy.assert_called_once_with()
 
@@ -357,7 +453,7 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
         self.assertEqual(result, mock_get_cert.return_value)
 
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-r", "-n", "clusterName"
+            _client_cert_tool, "-r", "-n", "clusterName"
         ])
         self.assertEqual(1, len(mock_get_cert.mock_calls))
         self.assertEqual(
@@ -408,7 +504,7 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
             )
         )
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-r", "-n", "clusterName"
+            _client_cert_tool, "-r", "-n", "clusterName"
         ])
         mock_get_cert.assert_not_called()
 
@@ -436,7 +532,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
             reports.qdevice_certificate_import_error
         )
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-M", "-c", self.mock_tmpfile.name
+            _client_cert_tool, "-M", "-c", self.mock_tmpfile.name
         ])
         mock_get_cert.assert_called_once_with(
             "tool output",
@@ -514,7 +610,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
             reports.qdevice_certificate_import_error
         )
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-M", "-c", self.mock_tmpfile.name
+            _client_cert_tool, "-M", "-c", self.mock_tmpfile.name
         ])
         mock_get_cert.assert_not_called()
 
@@ -540,7 +636,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
             reports.qdevice_certificate_import_error
         )
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-M", "-c", self.mock_tmpfile.name
+            _client_cert_tool, "-M", "-c", self.mock_tmpfile.name
         ])
         mock_get_cert.assert_called_once_with(
             "tool output",
@@ -568,7 +664,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
             reports.qdevice_certificate_import_error
         )
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-m", "-c", self.mock_tmpfile.name
+            _client_cert_tool, "-m", "-c", self.mock_tmpfile.name
         ])
 
     @mock.patch(
@@ -645,7 +741,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
             reports.qdevice_certificate_import_error
         )
         self.mock_runner.run.assert_called_once_with([
-            _client_tool, "-m", "-c", self.mock_tmpfile.name
+            _client_cert_tool, "-m", "-c", self.mock_tmpfile.name
         ])
 
 

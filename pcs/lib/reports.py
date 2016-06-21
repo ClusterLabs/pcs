@@ -552,6 +552,19 @@ def corosync_running_on_node_fail(node):
         info={"node": node}
     )
 
+def corosync_quorum_get_status_error(reason):
+    """
+    unable to get runtime status of quorum on local node
+    string reason an error message
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
+        "Unable to get quorum status: {reason}",
+        info={
+            "reason": reason,
+        }
+    )
+
 def corosync_config_reloaded():
     """
     corosync configuration has been reloaded
@@ -783,6 +796,21 @@ def qdevice_destroy_error(model, reason):
     return ReportItem.error(
         report_codes.QDEVICE_DESTROY_ERROR,
         "Unable to destroy quorum device '{model}': {reason}",
+        info={
+            "model": model,
+            "reason": reason,
+        }
+    )
+
+def qdevice_get_status_error(model, reason):
+    """
+    unable to get runtime status of qdevice
+    string model qdevice model
+    string reason an error message
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_GET_STATUS_ERROR,
+        "Unable to get status of quorum device '{model}': {reason}",
         info={
             "model": model,
             "reason": reason,

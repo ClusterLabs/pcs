@@ -248,6 +248,73 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
         mock_push_corosync.assert_not_called()
 
 
+@mock.patch("pcs.lib.commands.quorum.corosync_live.get_quorum_status_text")
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+class StatusTextTest(TestCase, CmanMixin):
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
+        self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
+    def test_disabled_on_cman(self, mock_status):
+        self.assert_disabled_on_cman(
+            lambda: lib.status_text(self.lib_env)
+        )
+        mock_status.assert_not_called()
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success(self, mock_status):
+        mock_status.return_value = "status text"
+        self.assertEqual(
+            lib.status_text(self.lib_env),
+            "status text"
+        )
+        mock_status.assert_called_once_with("mock_runner")
+
+
+@mock.patch("pcs.lib.commands.quorum.qdevice_client.get_status_text")
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+class StatusDeviceTextTest(TestCase, CmanMixin):
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
+        self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
+    def test_disabled_on_cman(self, mock_status):
+        self.assert_disabled_on_cman(
+            lambda: lib.status_device_text(self.lib_env)
+        )
+        mock_status.assert_not_called()
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success(self, mock_status):
+        mock_status.return_value = "status text"
+        self.assertEqual(
+            lib.status_device_text(self.lib_env),
+            "status text"
+        )
+        mock_status.assert_called_once_with("mock_runner", False)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success_verbose(self, mock_status):
+        mock_status.return_value = "status text"
+        self.assertEqual(
+            lib.status_device_text(self.lib_env, True),
+            "status text"
+        )
+        mock_status.assert_called_once_with("mock_runner", True)
+
+
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 @mock.patch("pcs.lib.commands.quorum._add_device_model_net")
