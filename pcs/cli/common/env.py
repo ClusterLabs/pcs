@@ -8,6 +8,7 @@ from __future__ import (
 class Env(object):
     def __init__(self):
         self.cib_data = None
+        self.cib_upgraded = False
         self.user = None
         self.groups = None
         self.corosync_conf_data = None

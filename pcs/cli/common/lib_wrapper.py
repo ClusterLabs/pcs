@@ -42,6 +42,14 @@ def cli_env_to_lib_env(cli_env):
         cli_env.auth_tokens_getter,
     )
 
+def lib_env_to_cli_env(lib_env, cli_env):
+    if not lib_env.is_cib_live:
+        cli_env.cib_data = lib_env._get_cib_xml()
+        cli_env.cib_upgraded = lib_env.cib_upgraded
+    if not lib_env.is_corosync_conf_live:
+        cli_env.corosync_conf_data = lib_env.get_corosync_conf_data()
+    return cli_env
+
 def bind(cli_env, run_with_middleware, run_library_command):
     def run(cli_env, *args, **kwargs):
         lib_env = cli_env_to_lib_env(cli_env)
@@ -50,10 +58,7 @@ def bind(cli_env, run_with_middleware, run_library_command):
 
         #midlewares needs finish its work and they see only cli_env
         #so we need reflect some changes to cli_env
-        if not lib_env.is_cib_live:
-            cli_env.cib_data = lib_env.get_cib_xml()
-        if not lib_env.is_corosync_conf_live:
-            cli_env.corosync_conf_data = lib_env.get_corosync_conf_data()
+        lib_env_to_cli_env(lib_env, cli_env)
 
         return lib_call_result
     return partial(run_with_middleware, run, cli_env)

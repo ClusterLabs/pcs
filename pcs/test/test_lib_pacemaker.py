@@ -206,9 +206,25 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("cibadmin"), "--replace", "--scope", "configuration",
-                "--verbose", "--xml-pipe"
+                self.path("cibadmin"), "--replace", "--verbose", "--xml-pipe",
+                "--scope", "configuration"
             ],
+            stdin_string=xml
+        )
+
+    def test_cib_upgraded(self):
+        xml = "<xml/>"
+        expected_output = "expected output"
+        expected_retval = 0
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        mock_runner.run.return_value = (expected_output, expected_retval)
+
+        lib.replace_cib_configuration(
+            mock_runner, XmlManipulation.from_str(xml).tree, True
+        )
+
+        mock_runner.run.assert_called_once_with(
+            [self.path("cibadmin"), "--replace", "--verbose", "--xml-pipe"],
             stdin_string=xml
         )
 
@@ -237,8 +253,8 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("cibadmin"), "--replace", "--scope", "configuration",
-                "--verbose", "--xml-pipe"
+                self.path("cibadmin"), "--replace", "--verbose", "--xml-pipe",
+                "--scope", "configuration"
             ],
             stdin_string=xml
         )

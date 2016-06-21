@@ -5,8 +5,12 @@ from __future__ import (
     unicode_literals,
 )
 
+import os
+import re
+import tempfile
 from lxml import etree
 
+from pcs import settings
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_values import validate_id
@@ -87,3 +91,93 @@ def find_parent(element, tag_names):
 
 def export_attributes(element):
     return  dict((key, value) for key, value in element.attrib.items())
+
+
+def get_pacemaker_version_by_which_cib_was_validated(cib):
+    """
+    Return version of pacemaker which validated specified cib as tree.
+    Version is returned as tuple of integers: (<major>, <minor>, <revision>).
+    Raises LibraryError on any failure.
+
+    cib -- cib etree
+    """
+    version = cib.get("validate-with")
+    if version is None:
+        raise LibraryError(reports.cib_load_error_invalid_format())
+
+    regexp = re.compile(
+        r"pacemaker-(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"
+    )
+    match = regexp.match(version)
+    if not match:
+        raise LibraryError(reports.cib_load_error_invalid_format())
+    return (
+        int(match.group("major")),
+        int(match.group("minor")),
+        int(match.group("rev") or 0)
+    )
+
+
+def upgrade_cib(cib, runner):
+    """
+    Upgrade CIB to the latest schema of installed pacemaker. Returns upgraded
+    CIB as string.
+    Raises LibraryError on any failure.
+
+    cib -- cib etree
+    runner -- CommandRunner
+    """
+    temp_file = tempfile.NamedTemporaryFile("w+", suffix=".pcs")
+    temp_file.write(etree.tostring(cib).decode())
+    temp_file.flush()
+    output, retval = runner.run(
+        [
+            os.path.join(settings.pacemaker_binaries, "cibadmin"),
+            "--upgrade",
+            "--force"
+        ],
+        env_extend={"CIB_file": temp_file.name}
+    )
+
+    if retval != 0:
+        temp_file.close()
+        LibraryError(reports.cib_upgrade_failed(output))
+
+    try:
+        temp_file.seek(0)
+        return etree.fromstring(temp_file.read())
+    except (EnvironmentError, etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        LibraryError(reports.cib_upgrade_failed(str(e)))
+    finally:
+        temp_file.close()
+
+
+def ensure_cib_version(runner, cib, version):
+    """
+    This method ensures that specified cib is verified by pacemaker with
+    version 'version' or newer. If cib doesn't correspond to this version,
+    method will try to upgrade cib.
+    Returns cib which was verified by pacemaker version 'version' or later.
+    Raises LibraryError on any failure.
+
+    runner -- CommandRunner
+    cib -- cib tree
+    version -- tuple of integers (<major>, <minor>, <revision>)
+    """
+    current_version = get_pacemaker_version_by_which_cib_was_validated(
+        cib
+    )
+    if current_version >= version:
+        return None
+
+    upgraded_cib = upgrade_cib(cib, runner)
+    current_version = get_pacemaker_version_by_which_cib_was_validated(
+        upgraded_cib
+    )
+
+    if current_version >= version:
+        return upgraded_cib
+
+    raise LibraryError(reports.unable_to_upgrade_cib_to_required_version(
+        current_version, version
+    ))

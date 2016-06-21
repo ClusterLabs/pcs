@@ -1592,7 +1592,7 @@ def is_etree(var):
     )
 
 # Replace only configuration section of cib with dom passed
-def replace_cib_configuration(dom):
+def replace_cib_configuration(dom, cib_upgraded=False):
     if is_etree(dom):
         #etree returns string in bytes: b'xml'
         #python 3 removed .encode() from byte strings
@@ -1603,7 +1603,12 @@ def replace_cib_configuration(dom):
         new_dom = dom.toxml()
     else:
         new_dom = dom
-    output, retval = run(["cibadmin", "--replace", "-o", "configuration", "-V", "--xml-pipe"],False,new_dom)
+    cmd = ["cibadmin", "--replace", "-V", "--xml-pipe"]
+    if cib_upgraded:
+        print("CIB has been upgraded to the latest schema version.")
+    else:
+        cmd += ["-o", "configuration"]
+    output, retval = run(cmd, False, new_dom)
     if retval != 0:
         err("Unable to update cib\n"+output)
 

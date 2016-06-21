@@ -27,6 +27,7 @@ from pcs.lib.pacemaker import (
     get_cib_xml,
     replace_cib_configuration_xml,
 )
+from pcs.lib.cib.tools import ensure_cib_version
 
 
 class LibraryEnvironment(object):
@@ -54,6 +55,7 @@ class LibraryEnvironment(object):
         # related code currently - it's in pcsd
         self._auth_tokens_getter = auth_tokens_getter
         self._auth_tokens = None
+        self._cib_upgraded = False
 
     @property
     def logger(self):
@@ -77,27 +79,45 @@ class LibraryEnvironment(object):
             self._is_cman_cluster = is_cman_cluster(self.cmd_runner())
         return self._is_cman_cluster
 
-    def get_cib_xml(self):
+    @property
+    def cib_upgraded(self):
+        return self._cib_upgraded
+
+    def _get_cib_xml(self):
         if self.is_cib_live:
             return get_cib_xml(self.cmd_runner())
         else:
             return self._cib_data
 
-    def get_cib(self):
-        return get_cib(self.get_cib_xml())
+    def get_cib(self, minimal_version=None):
+        cib = get_cib(self._get_cib_xml())
+        if minimal_version is not None:
+            upgraded_cib = ensure_cib_version(
+                self.cmd_runner(), cib, minimal_version
+            )
+            if upgraded_cib is not None:
+                cib = upgraded_cib
+                self._cib_upgraded = True
+        return cib
 
-    def push_cib_xml(self, cib_data):
+    def _push_cib_xml(self, cib_data):
         if self.is_cib_live:
-            replace_cib_configuration_xml(self.cmd_runner(), cib_data)
+            replace_cib_configuration_xml(
+                self.cmd_runner(), cib_data, self._cib_upgraded
+            )
+            if self._cib_upgraded:
+                self._cib_upgraded = False
+                self.report_processor.process(reports.cib_upgrade_successful())
         else:
             self._cib_data = cib_data
+
 
     def push_cib(self, cib):
         #etree returns bytes: b'xml'
         #python 3 removed .encode() from bytes
         #run(...) calls subprocess.Popen.communicate which calls encode...
         #so here is bytes to str conversion
-        self.push_cib_xml(etree.tostring(cib).decode())
+        self._push_cib_xml(etree.tostring(cib).decode())
 
     @property
     def is_cib_live(self):

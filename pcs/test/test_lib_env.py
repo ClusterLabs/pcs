@@ -7,8 +7,13 @@ from __future__ import (
 
 from unittest import TestCase
 import logging
+from lxml import etree
 
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_xml_equal,
+    assert_report_item_list_equal,
+)
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
@@ -82,13 +87,13 @@ class LibraryEnvironmentTest(TestCase):
 
         self.assertFalse(env.is_cib_live)
 
-        self.assertEqual(cib_data, env.get_cib_xml())
+        self.assertEqual(cib_data, env._get_cib_xml())
         self.assertEqual(0, mock_get_cib.call_count)
 
-        env.push_cib_xml(new_cib_data)
+        env._push_cib_xml(new_cib_data)
         self.assertEqual(0, mock_push_cib.call_count)
 
-        self.assertEqual(new_cib_data, env.get_cib_xml())
+        self.assertEqual(new_cib_data, env._get_cib_xml())
         self.assertEqual(0, mock_get_cib.call_count)
 
     @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
@@ -101,11 +106,134 @@ class LibraryEnvironmentTest(TestCase):
 
         self.assertTrue(env.is_cib_live)
 
-        self.assertEqual(cib_data, env.get_cib_xml())
+        self.assertEqual(cib_data, env._get_cib_xml())
         self.assertEqual(1, mock_get_cib.call_count)
 
-        env.push_cib_xml(new_cib_data)
+        env._push_cib_xml(new_cib_data)
         self.assertEqual(1, mock_push_cib.call_count)
+
+    @mock.patch("pcs.lib.env.ensure_cib_version")
+    @mock.patch("pcs.lib.env.get_cib_xml")
+    def test_get_cib_no_version_live(
+            self, mock_get_cib_xml, mock_ensure_cib_version
+    ):
+        mock_get_cib_xml.return_value = '<cib/>'
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        assert_xml_equal('<cib/>', etree.tostring(env.get_cib()).decode())
+        self.assertEqual(1, mock_get_cib_xml.call_count)
+        self.assertEqual(0, mock_ensure_cib_version.call_count)
+        self.assertFalse(env.cib_upgraded)
+
+    @mock.patch("pcs.lib.env.ensure_cib_version")
+    @mock.patch("pcs.lib.env.get_cib_xml")
+    def test_get_cib_upgrade_live(
+        self, mock_get_cib_xml, mock_ensure_cib_version
+    ):
+        mock_get_cib_xml.return_value = '<cib/>'
+        mock_ensure_cib_version.return_value = etree.XML('<new_cib/>')
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        assert_xml_equal(
+            '<new_cib/>', etree.tostring(env.get_cib((1, 2, 3))).decode()
+        )
+        self.assertEqual(1, mock_get_cib_xml.call_count)
+        self.assertEqual(1, mock_ensure_cib_version.call_count)
+        self.assertTrue(env.cib_upgraded)
+
+    @mock.patch("pcs.lib.env.ensure_cib_version")
+    @mock.patch("pcs.lib.env.get_cib_xml")
+    def test_get_cib_no_upgrade_live(
+            self, mock_get_cib_xml, mock_ensure_cib_version
+    ):
+        mock_get_cib_xml.return_value = '<cib/>'
+        mock_ensure_cib_version.return_value = None
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        assert_xml_equal(
+            '<cib/>', etree.tostring(env.get_cib((1, 2, 3))).decode()
+        )
+        self.assertEqual(1, mock_get_cib_xml.call_count)
+        self.assertEqual(1, mock_ensure_cib_version.call_count)
+        self.assertFalse(env.cib_upgraded)
+
+    @mock.patch("pcs.lib.env.ensure_cib_version")
+    @mock.patch("pcs.lib.env.get_cib_xml")
+    def test_get_cib_no_version_file(
+            self, mock_get_cib_xml, mock_ensure_cib_version
+    ):
+        env = LibraryEnvironment(
+            self.mock_logger, self.mock_reporter, cib_data='<cib/>'
+        )
+        assert_xml_equal('<cib/>', etree.tostring(env.get_cib()).decode())
+        self.assertEqual(0, mock_get_cib_xml.call_count)
+        self.assertEqual(0, mock_ensure_cib_version.call_count)
+        self.assertFalse(env.cib_upgraded)
+
+    @mock.patch("pcs.lib.env.ensure_cib_version")
+    @mock.patch("pcs.lib.env.get_cib_xml")
+    def test_get_cib_upgrade_file(
+            self, mock_get_cib_xml, mock_ensure_cib_version
+    ):
+        mock_ensure_cib_version.return_value = etree.XML('<new_cib/>')
+        env = LibraryEnvironment(
+            self.mock_logger, self.mock_reporter, cib_data='<cib/>'
+        )
+        assert_xml_equal(
+            '<new_cib/>', etree.tostring(env.get_cib((1, 2, 3))).decode()
+        )
+        self.assertEqual(0, mock_get_cib_xml.call_count)
+        self.assertEqual(1, mock_ensure_cib_version.call_count)
+        self.assertTrue(env.cib_upgraded)
+
+    @mock.patch("pcs.lib.env.ensure_cib_version")
+    @mock.patch("pcs.lib.env.get_cib_xml")
+    def test_get_cib_no_upgrade_file(
+            self, mock_get_cib_xml, mock_ensure_cib_version
+    ):
+        mock_ensure_cib_version.return_value = None
+        env = LibraryEnvironment(
+            self.mock_logger, self.mock_reporter, cib_data='<cib/>'
+        )
+        assert_xml_equal(
+            '<cib/>', etree.tostring(env.get_cib((1, 2, 3))).decode()
+        )
+        self.assertEqual(0, mock_get_cib_xml.call_count)
+        self.assertEqual(1, mock_ensure_cib_version.call_count)
+        self.assertFalse(env.cib_upgraded)
+
+    @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
+    @mock.patch.object(
+        LibraryEnvironment,
+        "cmd_runner",
+        lambda self: "mock cmd runner"
+    )
+    def test_push_cib_not_upgraded_live(self, mock_replace_cib):
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        env.push_cib(etree.XML('<cib/>'))
+        mock_replace_cib.assert_called_once_with(
+            "mock cmd runner", '<cib/>', False
+        )
+        self.assertEqual([], env.report_processor.report_item_list)
+
+    @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
+    @mock.patch.object(
+        LibraryEnvironment,
+        "cmd_runner",
+        lambda self: "mock cmd runner"
+    )
+    def test_push_cib_upgraded_live(self, mock_replace_cib):
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        env._cib_upgraded = True
+        env.push_cib(etree.XML('<cib/>'))
+        mock_replace_cib.assert_called_once_with(
+            "mock cmd runner", '<cib/>', True
+        )
+        assert_report_item_list_equal(
+            env.report_processor.report_item_list,
+            [(
+                severity.INFO,
+                report_codes.CIB_UPGRADE_SUCCESSFUL,
+                {}
+            )]
+        )
 
     @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
     @mock.patch("pcs.lib.env.reload_corosync_config")

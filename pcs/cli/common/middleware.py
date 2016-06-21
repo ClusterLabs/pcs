@@ -34,7 +34,7 @@ def cib(use_local_cib, load_cib_content, write_cib):
         result_of_next = next_in_line(env, *args, **kwargs)
 
         if use_local_cib:
-            write_cib(env.cib_data)
+            write_cib(env.cib_data, env.cib_upgraded)
 
         return result_of_next
     return apply

@@ -1436,3 +1436,47 @@ def cluster_restart_required_to_apply_changes():
         report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES,
         "Cluster restart is required in order to apply these changes."
     )
+
+
+def cib_upgrade_successful():
+    """
+    Upgrade of CIB schema was successful.
+    """
+    return ReportItem.info(
+        report_codes.CIB_UPGRADE_SUCCESSFUL,
+        "CIB has been upgraded to the latest schema version."
+    )
+
+
+def cib_upgrade_failed(reason):
+    """
+    Upgrade of CIB schema failed.
+
+    reason -- reason of failure
+    """
+    return ReportItem.error(
+        report_codes.CIB_UPGRADE_FAILED,
+        "Upgrading of CIB to the latest schema failed: {reason}",
+        info={"reason": reason}
+    )
+
+
+def unable_to_upgrade_cib_to_required_version(
+    current_version, required_version
+):
+    """
+    Unable to upgrade CIB to minimal required schema version.
+
+    current_version -- current version of CIB schema
+    required_version -- required version of CIB schema
+    """
+    return ReportItem.error(
+        report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
+        "Unable to upgrade CIB to required schema version {required_version} "
+        "or higher. Current version is {current_version}. Newer version of "
+        "pacemaker is needed.",
+        info={
+            "required_version": "{0}.{1}.{2}".format(*required_version),
+            "current_version": "{0}.{1}.{2}".format(*current_version)
+        }
+    )

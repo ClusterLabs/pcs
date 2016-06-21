@@ -7,12 +7,15 @@ from __future__ import (
 
 from unittest import TestCase
 
+from lxml import etree
+
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.common import report_codes
+from pcs.lib.external import CommandRunner
 from pcs.lib.errors import ReportItemSeverity as severities
 
 from pcs.lib.cib import tools as lib
@@ -145,3 +148,107 @@ class ValidateIdDoesNotExistsTest(TestCase):
             ),
         )
         does_id_exists.assert_called_once_with("tree", "some-id")
+
+
+class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
+    def test_missing_attribute(self):
+        assert_raise_library_error(
+            lambda: lib.get_pacemaker_version_by_which_cib_was_validated(
+                etree.XML("<cib/>")
+            ),
+            (
+                severities.ERROR,
+                report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+                {}
+            )
+        )
+
+    def test_invalid_version(self):
+        assert_raise_library_error(
+            lambda: lib.get_pacemaker_version_by_which_cib_was_validated(
+                etree.XML('<cib validate-with="something-1.2.3"/>')
+            ),
+            (
+                severities.ERROR,
+                report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
+                {}
+            )
+        )
+
+    def test_no_revision(self):
+        self.assertEqual(
+            (1, 2, 0),
+            lib.get_pacemaker_version_by_which_cib_was_validated(
+                etree.XML('<cib validate-with="pacemaker-1.2"/>')
+            )
+        )
+
+    def test_with_revision(self):
+        self.assertEqual(
+            (1, 2, 3),
+            lib.get_pacemaker_version_by_which_cib_was_validated(
+                etree.XML('<cib validate-with="pacemaker-1.2.3"/>')
+            )
+        )
+
+
+@mock.patch("pcs.lib.cib.tools.upgrade_cib")
+class EnsureCibVersionTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        self.cib = etree.XML('<cib validate-with="pacemaker-2.3.4"/>')
+
+    def test_same_version(self, mock_upgrade_cib):
+        self.assertTrue(
+            lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 4)
+            ) is None
+        )
+        self.assertEqual(0, mock_upgrade_cib.run.call_count)
+
+    def test_higher_version(self, mock_upgrade_cib):
+        self.assertTrue(
+            lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 3)
+            ) is None
+        )
+        self.assertEqual(0, mock_upgrade_cib.call_count)
+
+    def test_upgraded_same_version(self, mock_upgrade_cib):
+        upgraded_cib = etree.XML('<cib validate-with="pacemaker-2.3.5"/>')
+        mock_upgrade_cib.return_value = upgraded_cib
+        self.assertEqual(
+            upgraded_cib,
+            lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 5)
+            )
+        )
+        mock_upgrade_cib.assert_called_once_with(self.cib, self.mock_runner)
+
+    def test_upgraded_higher_version(self, mock_upgrade_cib):
+        upgraded_cib = etree.XML('<cib validate-with="pacemaker-2.3.6"/>')
+        mock_upgrade_cib.return_value = upgraded_cib
+        self.assertEqual(
+            upgraded_cib,
+            lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 5)
+            )
+        )
+        mock_upgrade_cib.assert_called_once_with(self.cib, self.mock_runner)
+
+    def test_upgraded_lower_version(self, mock_upgrade_cib):
+        mock_upgrade_cib.return_value = self.cib
+        assert_raise_library_error(
+            lambda: lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 5)
+            ),
+            (
+                severities.ERROR,
+                report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
+                {
+                    "required_version": "2.3.5",
+                    "current_version": "2.3.4"
+                }
+            )
+        )
+        mock_upgrade_cib.assert_called_once_with(self.cib, self.mock_runner)
