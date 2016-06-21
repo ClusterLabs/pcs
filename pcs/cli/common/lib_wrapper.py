@@ -117,6 +117,8 @@ def load_module(env, middleware_factory, name):
                 "get_config": quorum.get_config,
                 "remove_device": quorum.remove_device,
                 "set_options": quorum.set_options,
+                "status": quorum.status_text,
+                "status_device": quorum.status_device_text,
                 "update_device": quorum.update_device,
             }
         )
@@ -125,6 +127,7 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(),
             {
+                "status": qdevice.qdevice_status_text,
                 "setup": qdevice.qdevice_setup,
                 "destroy": qdevice.qdevice_destroy,
                 "start": qdevice.qdevice_start,

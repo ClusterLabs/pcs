@@ -518,6 +518,9 @@ rule remove <rule id>
 Remove a rule if a rule id is specified, if rule is last rule in its constraint, the constraint will be removed.
 .SS "qdevice"
 .TP
+status <device model> [\fB\-\-full\fR] [<cluster name>]
+Show runtime status of specified model of quorum device provider.  Using \fB\-\-full\fR will give more detailed output.  If <cluster name> is specified, only information about the specified cluster will be displayed.
+.TP
 setup model <device model> [\fB\-\-enable\fR] [\fB\-\-start\fR]
 Configure specified model of quorum device provider.  Quorum device then may be added to clusters by "pcs quorum device add" command.  \fB\-\-start\fR will also start the provider.  \fB\-\-enable\fR will configure the provider to start on boot.
 .TP
@@ -543,11 +546,17 @@ Configure specified model of quorum device provider to not start on boot.
 config
 Show quorum configuration.
 .TP
+status
+Show quorum runtime status.
+.TP
 device add [generic options] model <device model> [model options]
 Add quorum device to cluster.  Quorum device needs to be created first by "pcs qdevice setup" command.
 .TP
 device remove
 Remove quorum device from cluster.
+.TP
+device status [\fB\-\-full\fR]
+Show quorum device runtime status.  Using \fB\-\-full\fR will give more detailed output.
 .TP
 device update [generic options] [model <model options>]
 Add/Change quorum device options.  Requires cluster to be stopped.

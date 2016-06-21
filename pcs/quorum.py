@@ -28,6 +28,8 @@ def quorum_cmd(lib, argv, modificators):
             usage.quorum(argv)
         elif sub_cmd == "config":
             quorum_config_cmd(lib, argv_next, modificators)
+        elif sub_cmd == "status":
+            quorum_status_cmd(lib, argv_next, modificators)
         elif sub_cmd == "device":
             quorum_device_cmd(lib, argv_next, modificators)
         elif sub_cmd == "unblock":
@@ -51,6 +53,8 @@ def quorum_device_cmd(lib, argv, modificators):
             quorum_device_add_cmd(lib, argv_next, modificators)
         elif sub_cmd == "remove":
             quorum_device_remove_cmd(lib, argv_next, modificators)
+        elif sub_cmd == "status":
+            quorum_device_status_cmd(lib, argv_next, modificators)
         elif sub_cmd == "update":
             quorum_device_update_cmd(lib, argv_next, modificators)
         else:
@@ -97,6 +101,21 @@ def quorum_config_to_str(config):
 
     return lines
 
+def quorum_status_cmd(lib, argv, modificators):
+    if argv:
+        raise CmdLineInputError()
+    print(lib.quorum.status())
+
+def quorum_update_cmd(lib, argv, modificators):
+    options = parse_args.prepare_options(argv)
+    if not options:
+        raise CmdLineInputError()
+
+    lib.quorum.set_options(
+        options,
+        skip_offline_nodes=modificators["skip_offline_nodes"]
+    )
+
 def quorum_device_add_cmd(lib, argv, modificators):
     # we expect "model" keyword once, followed by the actual model value
     options_lists = parse_args.split_list(argv, "model")
@@ -131,6 +150,11 @@ def quorum_device_remove_cmd(lib, argv, modificators):
         skip_offline_nodes=modificators["skip_offline_nodes"]
     )
 
+def quorum_device_status_cmd(lib, argv, modificators):
+    if argv:
+        raise CmdLineInputError()
+    print(lib.quorum.status_device(modificators["full"]))
+
 def quorum_device_update_cmd(lib, argv, modificators):
     # we expect "model" keyword once
     options_lists = parse_args.split_list(argv, "model")
@@ -152,15 +176,5 @@ def quorum_device_update_cmd(lib, argv, modificators):
         model_options,
         generic_options,
         force_options=modificators["force"],
-        skip_offline_nodes=modificators["skip_offline_nodes"]
-    )
-
-def quorum_update_cmd(lib, argv, modificators):
-    options = parse_args.prepare_options(argv)
-    if not options:
-        raise CmdLineInputError()
-
-    lib.quorum.set_options(
-        options,
         skip_offline_nodes=modificators["skip_offline_nodes"]
     )

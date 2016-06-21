@@ -23,6 +23,8 @@ def qdevice_cmd(lib, argv, modifiers):
     try:
         if sub_cmd == "help":
             usage.qdevice(argv)
+        elif sub_cmd == "status":
+            qdevice_status_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "setup":
             qdevice_setup_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "destroy":
@@ -68,6 +70,15 @@ def qdevice_net_client_cmd(lib, argv, modifiers):
         utils.process_library_reports(e.args)
     except CmdLineInputError as e:
         utils.err(e.message)
+
+def qdevice_status_cmd(lib, argv, modifiers):
+    if len(argv) < 1 or len(argv) > 2:
+        raise CmdLineInputError()
+    model = argv[0]
+    cluster = None if len(argv) < 2 else argv[1]
+    print(
+        lib.qdevice.status(model, modifiers["full"], cluster)
+    )
 
 def qdevice_setup_cmd(lib, argv, modifiers):
     if len(argv) != 2:

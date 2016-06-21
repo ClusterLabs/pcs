@@ -1275,6 +1275,11 @@ Usage: pcs qdevice <command>
 Manage quorum device provider on the local host
 
 Commands:
+    status <device model> [--full] [<cluster name>]
+        Show runtime status of specified model of quorum device provider.  Using
+        --full will give more detailed output.  If <cluster name> is specified,
+        only information about the specified cluster will be displayed.
+
     setup model <device model> [--enable] [--start]
         Configure specified model of quorum device provider.  Quorum device then
         may be added to clusters by "pcs quorum device add" command.
@@ -1316,12 +1321,19 @@ Commands:
     config
         Show quorum configuration.
 
+    status
+        Show quorum runtime status.
+
     device add [generic options] model <device model> [model options]
         Add quorum device to cluster.  Quorum device needs to be created first
         by "pcs qdevice setup" command.
 
     device remove
         Remove quorum device from cluster.
+
+    device status [--full]
+        Show quorum device runtime status.  Using --full will give more detailed
+        output.
 
     device update [generic options] [model <model options>]
         Add/Change quorum device options.  Requires cluster to be stopped.
