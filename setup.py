@@ -21,8 +21,14 @@ setup(
     author='Chris Feist',
     author_email='cfeist@redhat.com',
     url='https://github.com/ClusterLabs/pcs',
-    packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]),
-    package_data={'pcs':['bash_completion.d.pcs','pcs.8']},
+    packages=find_packages(),
+    package_data={'pcs':[
+        'bash_completion.sh',
+        'pcs.8',
+        'pcs',
+        'test/resources/*.xml',
+        'test/resources/*.conf',
+    ]},
     entry_points={
         'console_scripts': [
             'pcs = pcs.app:main',
