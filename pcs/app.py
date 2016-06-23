@@ -27,6 +27,7 @@ from pcs import (
     stonith,
     usage,
     utils,
+    alert,
 )
 
 from pcs.cli.common import completion
@@ -191,6 +192,11 @@ def main(argv=None):
         "qdevice": lambda argv: qdevice.qdevice_cmd(
             utils.get_library_wrapper(),
             argv,
+            utils.get_modificators()
+        ),
+        "alert": lambda args: alert.alert_cmd(
+            utils.get_library_wrapper(),
+            args,
             utils.get_modificators()
         ),
     }

@@ -38,6 +38,7 @@ from pcs import (
     stonith,
     usage,
     utils,
+    alert,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.commands import quorum as lib_quorum
@@ -121,6 +122,9 @@ def config_show_cib():
     order_command.show(lib, [], modificators)
     colocation_command.show(lib, [], modificators)
     ticket_command.show(lib, [], modificators)
+
+    print()
+    alert.print_alert_config(lib, [], modificators)
 
     print()
     del utils.pcs_options["--all"]

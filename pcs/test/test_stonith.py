@@ -149,6 +149,9 @@ Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
 
+Alerts:
+ No alerts defined
+
 Resources Defaults:
  No defaults set
 Operations Defaults:

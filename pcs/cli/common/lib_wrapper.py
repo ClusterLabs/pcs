@@ -19,6 +19,7 @@ from pcs.lib.commands import (
     quorum,
     qdevice,
     sbd,
+    alert,
 )
 from pcs.cli.common.reports import (
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
@@ -143,6 +144,20 @@ def load_module(env, middleware_factory, name):
                 "get_cluster_sbd_status": sbd.get_cluster_sbd_status,
                 "get_cluster_sbd_config": sbd.get_cluster_sbd_config,
                 "get_local_sbd_config": sbd.get_local_sbd_config,
+            }
+        )
+    if name == "alert":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "create_alert": alert.create_alert,
+                "update_alert": alert.update_alert,
+                "remove_alert": alert.remove_alert,
+                "add_recipient": alert.add_recipient,
+                "update_recipient": alert.update_recipient,
+                "remove_recipient": alert.remove_recipient,
+                "get_all_alerts": alert.get_all_alerts,
             }
         )
 

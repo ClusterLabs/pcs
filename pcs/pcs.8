@@ -56,6 +56,9 @@ Manage pcs daemon.
 .TP
 node
 Manage cluster nodes.
+.TP
+alert
+Manage pacemaker alerts.
 .SS "resource"
 .TP
 [show [resource id]] [\fB\-\-full\fR] [\fB\-\-groups\fR]
@@ -635,6 +638,28 @@ Remove node from standby mode (the node specified will now be able to host resou
 .TP
 utilization [<node> [<name>=<value> ...]]
 Add specified utilization options to specified node. If node is not specified, shows utilization of all nodes. If utilization options are not specified, shows utilization of specified node. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs node utilization node1 cpu=4 ram=
+.SS "alert"
+.TP
+[config|show]
+Show all configured alerts.
+.TP
+create path=<path> [id=<alert\-id>] [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
+Create new alert with specified path. Id will be automatically generated if it is not specified.
+.TP
+update <alert\-id> [path=<path>] [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
+Update existing alert with specified id.
+.TP
+remove <alert\-id>
+Remove alert with specified id.
+.TP
+recipient add <alert\-id> <recipient\-value> [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
+Add new recipient to specified alert.
+.TP
+recipient update <alert\-id> <recipient\-value> [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
+Update existing recipient identified by alert and it's value.
+.TP
+recipient remove <alert\-id> <recipient\-value>
+Remove specified recipient.
 .SH EXAMPLES
 .TP
 Show all resources

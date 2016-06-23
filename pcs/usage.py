@@ -24,6 +24,7 @@ def full_usage():
     out += strip_extras(status([],False))
     out += strip_extras(config([],False))
     out += strip_extras(pcsd([],False))
+    out += strip_extras(alert([], False))
     print(out.strip())
     print("Examples:\n" + examples.replace(" \ ",""))
 
@@ -115,6 +116,7 @@ def generate_completion_tree_from_usage():
     tree["config"] = generate_tree(config([],False))
     tree["pcsd"] = generate_tree(pcsd([],False))
     tree["node"] = generate_tree(node([], False))
+    tree["alert"] = generate_tree(alert([], False))
     return tree
 
 def generate_tree(usage_txt):
@@ -169,6 +171,7 @@ Commands:
     config      View and manage cluster configuration.
     pcsd        Manage pcs daemon.
     node        Manage cluster nodes.
+    alert       Set pacemaker alerts.
 """
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -1347,9 +1350,49 @@ Commands:
     else:
         return output
 
+
+def alert(args=[], pout=True):
+    output = """
+Usage: pcs alert <command>
+Set pacemaker alerts.
+
+Commands:
+    [config|show]
+        Show all configured alerts.
+
+    create path=<path> [id=<alert-id>] [description=<description>]
+            [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
+        Create new alert with specified path. Id will be automatically
+        generated if it is not specified.
+
+    update <alert-id> [path=<path>] [description=<description>]
+            [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
+        Update existing alert with specified id.
+
+    remove <alert-id>
+        Remove alert with specified id.
+
+    recipient add <alert-id> <recipient-value> [description=<description>]
+            [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
+        Add new recipient to specified alert.
+
+    recipient update <alert-id> <recipient-value> [description=<description>]
+            [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
+        Update existing recipient identified by alert and it's value.
+
+    recipient remove <alert-id> <recipient-value>
+        Remove specified recipient.
+"""
+    if pout:
+        print(sub_usage(args, output))
+    else:
+        return output
+
+
 def show(main_usage_name, rest_usage_names):
     usage_map = {
         "acl": acl,
+        "alert": alert,
         "cluster": cluster,
         "config": config,
         "constraint": constraint,
