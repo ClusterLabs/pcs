@@ -287,7 +287,7 @@ def remote_qdevice_get_ca_certificate(node_communicator, host):
             node_communicator.call_host(
                 host,
                 "remote/qdevice_net_get_ca_certificate",
-                ""
+                None
             )
         )
     except (TypeError, binascii.Error):
@@ -302,9 +302,9 @@ def remote_client_setup(node_communicator, node, qnetd_ca_certificate):
     return node_communicator.call_node(
         node,
         "remote/qdevice_net_client_init_certificate_storage",
-        external.NodeCommunicator.format_data_dict({
-            "ca_certificate": base64.b64encode(qnetd_ca_certificate),
-        })
+        external.NodeCommunicator.format_data_dict([
+            ("ca_certificate", base64.b64encode(qnetd_ca_certificate)),
+        ])
     )
 
 def remote_sign_certificate_request(
@@ -321,10 +321,10 @@ def remote_sign_certificate_request(
             node_communicator.call_host(
                 host,
                 "remote/qdevice_net_sign_node_certificate",
-                external.NodeCommunicator.format_data_dict({
-                    "certificate_request": base64.b64encode(cert_request),
-                    "cluster_name": cluster_name,
-                })
+                external.NodeCommunicator.format_data_dict([
+                    ("certificate_request", base64.b64encode(cert_request)),
+                    ("cluster_name", cluster_name),
+                ])
             )
         )
     except (TypeError, binascii.Error):
@@ -339,9 +339,9 @@ def remote_client_import_certificate_and_key(node_communicator, node, pk12):
     return node_communicator.call_node(
         node,
         "remote/qdevice_net_client_import_certificate",
-        external.NodeCommunicator.format_data_dict({
-            "certificate": base64.b64encode(pk12),
-        })
+        external.NodeCommunicator.format_data_dict([
+            ("certificate", base64.b64encode(pk12)),
+        ])
     )
 
 def remote_client_destroy(node_communicator, node):
@@ -352,7 +352,7 @@ def remote_client_destroy(node_communicator, node):
     return node_communicator.call_node(
         node,
         "remote/qdevice_net_client_destroy",
-        ""
+        None
     )
 
 def _store_to_tmpfile(data, report_func):

@@ -879,8 +879,8 @@ class QdeviceNetKillTest(QdeviceTestCase):
 )
 class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
-        qdevice_func_input = "certificate request"
-        qdevice_func_output = "signed certificate"
+        qdevice_func_input = "certificate request".encode("utf-8")
+        qdevice_func_output = "signed certificate".encode("utf-8")
         mock_qdevice_func.return_value = qdevice_func_output
         cluster_name = "clusterName"
 
@@ -900,7 +900,7 @@ class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
         )
 
     def test_bad_input(self, mock_qdevice_func):
-        qdevice_func_input = "certificate request"
+        qdevice_func_input = "certificate request".encode("utf-8")
         cluster_name = "clusterName"
 
         assert_raise_library_error(
@@ -932,7 +932,7 @@ class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
 )
 class ClientNetSetupTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
-        qdevice_func_input = "CA certificate"
+        qdevice_func_input = "CA certificate".encode("utf-8")
 
         lib.client_net_setup(self.lib_env, base64.b64encode(qdevice_func_input))
 
@@ -942,7 +942,7 @@ class ClientNetSetupTest(QdeviceTestCase):
         )
 
     def test_bad_input(self, mock_qdevice_func):
-        qdevice_func_input = "CA certificate"
+        qdevice_func_input = "CA certificate".encode("utf-8")
 
         assert_raise_library_error(
             lambda: lib.client_net_setup(self.lib_env, qdevice_func_input),
@@ -971,7 +971,7 @@ class ClientNetSetupTest(QdeviceTestCase):
 )
 class ClientNetImportCertificateTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
-        qdevice_func_input = "client certificate"
+        qdevice_func_input = "client certificate".encode("utf-8")
 
         lib.client_net_import_certificate(
             self.lib_env,
@@ -984,7 +984,7 @@ class ClientNetImportCertificateTest(QdeviceTestCase):
         )
 
     def test_bad_input(self, mock_qdevice_func):
-        qdevice_func_input = "client certificate"
+        qdevice_func_input = "client certificate".encode("utf-8")
 
         assert_raise_library_error(
             lambda: lib.client_net_import_certificate(

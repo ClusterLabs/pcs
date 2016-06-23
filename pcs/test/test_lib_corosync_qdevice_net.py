@@ -33,6 +33,8 @@ _qnetd_tool = "/usr/bin/corosync-qnetd-tool"
 _client_cert_dir = "/etc/corosync/qdevice/net/nssdb"
 _client_cert_tool = "/usr/sbin/corosync-qdevice-net-certutil"
 
+def cert_to_url(cert):
+    return base64.b64encode(cert).decode("utf-8").replace("=", "%3D")
 
 class CertificateTestCase(TestCase):
     def setUp(self):
@@ -221,7 +223,7 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
     def test_success(self, mock_tmp_store, mock_get_cert):
         mock_tmp_store.return_value = self.mock_tmpfile
         self.mock_runner.run.return_value = ("tool output", 0)
-        mock_get_cert.return_value = "new certificate"
+        mock_get_cert.return_value = "new certificate".encode("utf-8")
 
         result = lib.qdevice_sign_certificate_request(
             self.mock_runner,
@@ -399,11 +401,11 @@ class ClientSetupTest(TestCase):
     def test_success(self, mock_destroy):
         self.mock_runner.run.return_value = ("tool output", 0)
 
-        lib.client_setup(self.mock_runner, "certificate data")
+        lib.client_setup(self.mock_runner, "certificate data".encode("utf-8"))
 
         self.assertEqual(
-            "certificate data",
-            open(self.ca_file_path).read()
+            "certificate data".encode("utf-8"),
+            open(self.ca_file_path, "rb").read()
         )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-i", "-c", self.ca_file_path
@@ -415,7 +417,10 @@ class ClientSetupTest(TestCase):
         self.mock_runner.run.return_value = ("tool output error", 1)
 
         assert_raise_library_error(
-            lambda: lib.client_setup(self.mock_runner, "certificate data"),
+            lambda: lib.client_setup(
+                self.mock_runner,
+                "certificate data".encode("utf-8")
+            ),
             (
                 severity.ERROR,
                 report_codes.QDEVICE_INITIALIZATION_ERROR,
@@ -427,8 +432,8 @@ class ClientSetupTest(TestCase):
         )
 
         self.assertEqual(
-            "certificate data",
-            open(self.ca_file_path).read()
+            "certificate data".encode("utf-8"),
+            open(self.ca_file_path, "rb").read()
         )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-i", "-c", self.ca_file_path
@@ -444,7 +449,7 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
     )
     def test_success(self, mock_get_cert):
         self.mock_runner.run.return_value = ("tool output", 0)
-        mock_get_cert.return_value = "new certificate"
+        mock_get_cert.return_value = "new certificate".encode("utf-8")
 
         result = lib.client_generate_certificate_request(
             self.mock_runner,
@@ -519,7 +524,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
     def test_success(self, mock_tmp_store, mock_get_cert):
         mock_tmp_store.return_value = self.mock_tmpfile
         self.mock_runner.run.return_value = ("tool output", 0)
-        mock_get_cert.return_value = "new certificate"
+        mock_get_cert.return_value = "new certificate".encode("utf-8")
 
         result = lib.client_cert_request_to_pk12(
             self.mock_runner,
@@ -748,7 +753,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
 class RemoteQdeviceGetCaCertificate(TestCase):
     def test_success(self):
         mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
-        expected_result = "abcd"
+        expected_result = "abcd".encode("utf-8")
         mock_communicator.call_host.return_value = base64.b64encode(
             expected_result
         )
@@ -762,7 +767,7 @@ class RemoteQdeviceGetCaCertificate(TestCase):
         mock_communicator.call_host.assert_called_once_with(
             "qdevice host",
             "remote/qdevice_net_get_ca_certificate",
-            ""
+            None
         )
 
     def test_decode_error(self):
@@ -802,7 +807,7 @@ class RemoteClientSetupTest(TestCase):
     def test_success(self):
         mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
         node = "node address"
-        ca_cert = "CA certificate"
+        ca_cert = "CA certificate".encode("utf-8")
 
         lib.remote_client_setup(mock_communicator, node, ca_cert)
 
@@ -810,7 +815,7 @@ class RemoteClientSetupTest(TestCase):
             node,
             "remote/qdevice_net_client_init_certificate_storage",
             "ca_certificate={0}".format(
-                base64.b64encode(ca_cert).replace("=", "%3D")
+                cert_to_url(ca_cert)
             )
         )
 
@@ -825,7 +830,7 @@ class RemoteClientSetupTest(TestCase):
             lambda: lib.remote_client_setup(
                 mock_communicator,
                 "node address",
-                "ca cert"
+                "ca cert".encode("utf-8")
             )
         )
 
@@ -833,8 +838,8 @@ class RemoteClientSetupTest(TestCase):
 class RemoteSignCertificateRequestTest(TestCase):
     def test_success(self):
         mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
-        cert_request = "request"
-        expected_result = "abcd"
+        cert_request = "request".encode("utf-8")
+        expected_result = "abcd".encode("utf-8")
         host = "qdevice host"
         cluster_name = "ClusterName"
         mock_communicator.call_host.return_value = base64.b64encode(
@@ -853,7 +858,7 @@ class RemoteSignCertificateRequestTest(TestCase):
             host,
             "remote/qdevice_net_sign_node_certificate",
             "certificate_request={0}&cluster_name={1}".format(
-                base64.b64encode(cert_request).replace("=", "%3D"),
+                cert_to_url(cert_request),
                 cluster_name
             )
         )
@@ -866,7 +871,7 @@ class RemoteSignCertificateRequestTest(TestCase):
             lambda: lib.remote_sign_certificate_request(
                 mock_communicator,
                 "qdevice host",
-                "cert request",
+                "cert request".encode("utf-8"),
                 "cluster name"
             ),
             (
@@ -889,7 +894,7 @@ class RemoteSignCertificateRequestTest(TestCase):
             lambda: lib.remote_sign_certificate_request(
                 mock_communicator,
                 "qdevice host",
-                "cert request",
+                "cert request".encode("utf-8"),
                 "cluster name"
             )
         )
@@ -899,7 +904,7 @@ class RemoteClientImportCertificateAndKeyTest(TestCase):
     def test_success(self):
         mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
         node = "node address"
-        pk12_cert = "pk12 certificate"
+        pk12_cert = "pk12 certificate".encode("utf-8")
 
         lib.remote_client_import_certificate_and_key(
             mock_communicator,
@@ -911,7 +916,7 @@ class RemoteClientImportCertificateAndKeyTest(TestCase):
             node,
             "remote/qdevice_net_client_import_certificate",
             "certificate={0}".format(
-                base64.b64encode(pk12_cert).replace("=", "%3D")
+                cert_to_url(pk12_cert)
             )
         )
 
@@ -926,12 +931,12 @@ class RemoteClientImportCertificateAndKeyTest(TestCase):
             lambda: lib.remote_client_import_certificate_and_key(
                 mock_communicator,
                 "node address",
-                "pk12 cert"
+                "pk12 cert".encode("utf-8")
             )
         )
 
 
-class RemoteCLientDestroy(TestCase):
+class RemoteClientDestroy(TestCase):
     def test_success(self):
         mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
         node = "node address"
@@ -941,7 +946,7 @@ class RemoteCLientDestroy(TestCase):
         mock_communicator.call_node.assert_called_once_with(
             node,
             "remote/qdevice_net_client_destroy",
-            ""
+            None
         )
 
     def test_comunication_error(self):
@@ -959,7 +964,7 @@ class RemoteCLientDestroy(TestCase):
 class GetOutputCertificateTest(TestCase):
     def setUp(self):
         self.file_path = get_test_resource("qdevice-certs/qnetd-cacert.crt")
-        self.file_data = open(self.file_path, "r").read()
+        self.file_data = open(self.file_path, "rb").read()
 
     def test_success(self):
         cert_tool_output = """
@@ -1030,3 +1035,4 @@ some other line
                 }
             )
         )
+

@@ -37,7 +37,7 @@ def remote_client_enable(reporter, node_communicator, node):
     response = node_communicator.call_node(
         node,
         "remote/qdevice_client_enable",
-        ""
+        None
     )
     if response == "corosync is not enabled, skipping":
         reporter.process(
@@ -56,7 +56,7 @@ def remote_client_disable(reporter, node_communicator, node):
     """
     disable qdevice client service (corosync-qdevice) on a remote node
     """
-    node_communicator.call_node(node, "remote/qdevice_client_disable", "")
+    node_communicator.call_node(node, "remote/qdevice_client_disable", None)
     reporter.process(
         reports.service_disable_success("corosync-qdevice", node.label)
     )

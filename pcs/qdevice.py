@@ -139,12 +139,18 @@ def qdevice_net_client_destroy(lib, argv, modifiers):
 
 def qdevice_sign_net_cert_request_cmd(lib, argv, modifiers):
     certificate_request = _read_stdin()
-    print(
-        lib.qdevice.sign_net_cert_request(
-            certificate_request,
-            modifiers["name"]
-        )
+    signed = lib.qdevice.sign_net_cert_request(
+        certificate_request,
+        modifiers["name"]
     )
+    if sys.version_info.major > 2:
+        # In python3 base64.b64encode returns bytes.
+        # In python2 base64.b64encode returns string.
+        # Bytes is printed like this: b'bytes content'
+        # and we need to get rid of that b'', so we change bytes to string.
+        # Since it's base64encoded, it's safe to use ascii.
+        signed = signed.decode("ascii")
+    print(signed)
 
 def _read_stdin():
     # in python3 stdin returns str so we need to use buffer

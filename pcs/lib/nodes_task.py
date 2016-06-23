@@ -83,7 +83,7 @@ def check_corosync_offline_on_nodes(
     # TODO use parallel communication
     for node in node_addr_list:
         try:
-            status = node_communicator.call_node(node, "remote/status", "")
+            status = node_communicator.call_node(node, "remote/status", None)
             if not json.loads(status)["corosync"]:
                 reporter.process(
                     reports.corosync_not_running_on_node_ok(node.label)
