@@ -998,8 +998,8 @@ Commands:
         Create a ticket constraint with a resource set.
         Available options are sequential=true/false, require-all=true/false,
         action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
-        Required constraint option is ticket.
-        Optional constraint option is loss-policy=fence/stop/freeze/demote.
+        Required constraint option is ticket=<ticket>. Optional constraint
+        options are id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
 
     remove [constraint id]...
         Remove constraint(s) or constraint rules with the specified id(s).
