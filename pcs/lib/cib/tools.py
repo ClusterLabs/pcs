@@ -75,6 +75,15 @@ def get_acls(tree):
         acls = etree.SubElement(get_configuration(tree), "acls")
     return acls
 
+
+def get_alerts(tree):
+    """
+    Return 'alerts' element from tree, create a new one if missing
+    tree -- cib etree node
+    """
+    return get_sub_element(get_configuration(tree), "alerts")
+
+
 def get_constraints(tree):
     """
     Return 'constraint' element from tree
@@ -91,6 +100,30 @@ def find_parent(element, tag_names):
 
 def export_attributes(element):
     return  dict((key, value) for key, value in element.attrib.items())
+
+
+def get_sub_element(element, sub_element_tag, new_id=None, new_index=None):
+    """
+    Returns sub-element sub_element_tag of element. It will create new
+    element if such doesn't exist yet. Id of new element will be new_if if
+    it's not None. new_index specify where will be new element added, if None
+    it will be appended.
+
+    element -- parent element
+    sub_element_tag -- tag of wanted element
+    new_id -- id of new element
+    new_index -- index for new element
+    """
+    sub_element = element.find("./{0}".format(sub_element_tag))
+    if sub_element is None:
+        sub_element = etree.Element(sub_element_tag)
+        if new_id:
+            sub_element.set("id", new_id)
+        if new_index is None:
+            element.append(sub_element)
+        else:
+            element.insert(new_index, sub_element)
+    return sub_element
 
 
 def get_pacemaker_version_by_which_cib_was_validated(cib):

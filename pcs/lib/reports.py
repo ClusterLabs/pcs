@@ -1438,6 +1438,53 @@ def cluster_restart_required_to_apply_changes():
     )
 
 
+def cib_alert_recipient_already_exists(alert_id, recipient_value):
+    """
+    Error that recipient already exists.
+
+    alert_id -- id of alert to which recipient belongs
+    recipient_value -- value of recipient
+    """
+    return ReportItem.error(
+        report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
+        "Recipient '{recipient}' in alert '{alert}' already exists.",
+        info={
+            "recipient": recipient_value,
+            "alert": alert_id
+        }
+    )
+
+
+def cib_alert_recipient_not_found(alert_id, recipient_value):
+    """
+    Specified recipient not found.
+
+    alert_id -- id of alert to which recipient should belong
+    recipient_value -- recipient value
+    """
+    return ReportItem.error(
+        report_codes.CIB_ALERT_RECIPIENT_NOT_FOUND,
+        "Recipient '{recipient}' not found in alert '{alert}'.",
+        info={
+            "recipient": recipient_value,
+            "alert": alert_id
+        }
+    )
+
+
+def cib_alert_not_found(alert_id):
+    """
+    Alert with specified id doesn't exist.
+
+    alert_id -- id of alert
+    """
+    return ReportItem.error(
+        report_codes.CIB_ALERT_NOT_FOUND,
+        "Alert '{alert}' not found.",
+        info={"alert": alert_id}
+    )
+
+
 def cib_upgrade_successful():
     """
     Upgrade of CIB schema was successful.
