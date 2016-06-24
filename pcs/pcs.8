@@ -522,7 +522,7 @@ status <device model> [\fB\-\-full\fR] [<cluster name>]
 Show runtime status of specified model of quorum device provider.  Using \fB\-\-full\fR will give more detailed output.  If <cluster name> is specified, only information about the specified cluster will be displayed.
 .TP
 setup model <device model> [\fB\-\-enable\fR] [\fB\-\-start\fR]
-Configure specified model of quorum device provider.  Quorum device then may be added to clusters by "pcs quorum device add" command.  \fB\-\-start\fR will also start the provider.  \fB\-\-enable\fR will configure the provider to start on boot.
+Configure specified model of quorum device provider.  Quorum device then can be added to clusters by running "pcs quorum device add" command in a cluster.  \fB\-\-start\fR will also start the provider.  \fB\-\-enable\fR will configure the provider to start on boot.
 .TP
 destroy <device model>
 Disable and stop specified model of quorum device provider and delete its configuration files.
@@ -534,7 +534,7 @@ stop <device model>
 Stop specified model of quorum device provider.
 .TP
 kill <device model>
-Force specified model of quorum device provider to stop (performs kill -9).
+Force specified model of quorum device provider to stop (performs kill \-9).  Note that init system (e.g. systemd) can detect that the qdevice is not running and start it again.  If you want to stop the qdevice, run "pcs qdevice stop" command.
 .TP
 enable <device model>
 Configure specified model of quorum device provider to start on boot.
@@ -550,16 +550,16 @@ status
 Show quorum runtime status.
 .TP
 device add [generic options] model <device model> [model options]
-Add quorum device to cluster.  Quorum device needs to be created first by "pcs qdevice setup" command.
+Add a quorum device to the cluster.  Quorum device needs to be created first by "pcs qdevice setup" command.  It is not possible to use more than 1 quorum device in a cluster simultaneously.
 .TP
 device remove
-Remove quorum device from cluster.
+Remove a quorum device from the cluster.
 .TP
 device status [\fB\-\-full\fR]
 Show quorum device runtime status.  Using \fB\-\-full\fR will give more detailed output.
 .TP
 device update [generic options] [model <model options>]
-Add/Change quorum device options.  Requires cluster to be stopped.
+Add/Change quorum device options.  Requires the cluster to be stopped.  Note: If you want to change "host" option of qdevice model net, use "pcs quorum device remove" and "pcs quorum device add" commands to set up configuration properly unless old and new host is the same machine.
 .TP
 unblock [\fB\-\-force\fR]
 Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be powered off and to have no access to shared resources.
@@ -567,7 +567,7 @@ Cancel waiting for all nodes when establishing quorum.  Useful in situations whe
 .B WARNING: If the nodes are not actually powered off or they do have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
 .TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
-Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.  Requires cluster to be stopped.
+Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.  Requires the cluster to be stopped.
 .SS "status"
 .TP
 [status] [\fB\-\-full\fR | \fB\-\-hide-inactive\fR]

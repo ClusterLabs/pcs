@@ -1282,9 +1282,9 @@ Commands:
 
     setup model <device model> [--enable] [--start]
         Configure specified model of quorum device provider.  Quorum device then
-        may be added to clusters by "pcs quorum device add" command.
-        --start will also start the provider.  --enable will configure
-        the provider to start on boot.
+        can be added to clusters by running "pcs quorum device add" command
+        in a cluster.  --start will also start the provider.  --enable will
+        configure the provider to start on boot.
 
     destroy <device model>
         Disable and stop specified model of quorum device provider and delete
@@ -1297,8 +1297,10 @@ Commands:
         Stop specified model of quorum device provider.
 
     kill <device model>
-        Force specified model of quorum device provider to stop (performs
-        kill -9).
+        Force specified model of quorum device provider to stop (performs kill
+        -9).  Note that init system (e.g. systemd) can detect that the qdevice
+        is not running and start it again.  If you want to stop the qdevice, run
+        "pcs qdevice stop" command.
 
     enable <device model>
         Configure specified model of quorum device provider to start on boot.
@@ -1325,18 +1327,23 @@ Commands:
         Show quorum runtime status.
 
     device add [generic options] model <device model> [model options]
-        Add quorum device to cluster.  Quorum device needs to be created first
-        by "pcs qdevice setup" command.
+        Add a quorum device to the cluster.  Quorum device needs to be created
+        first by "pcs qdevice setup" command.  It is not possible to use more
+        than 1 quorum device in a cluster simultaneously.
 
     device remove
-        Remove quorum device from cluster.
+        Remove a quorum device from the cluster.
 
     device status [--full]
         Show quorum device runtime status.  Using --full will give more detailed
         output.
 
     device update [generic options] [model <model options>]
-        Add/Change quorum device options.  Requires cluster to be stopped.
+        Add/Change quorum device options.  Requires the cluster to be stopped.
+        Note: If you want to change "host" option of qdevice model net, use
+        "pcs quorum device remove" and "pcs quorum device add" commands
+        to set up configuration properly unless old and new host is the same
+        machine.
 
     unblock [--force]
         Cancel waiting for all nodes when establishing quorum.  Useful in
@@ -1355,7 +1362,7 @@ Commands:
             [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
         Add/Change quorum options.  At least one option must be specified.
         Options are documented in corosync's votequorum(5) man page.  Requires
-        cluster to be stopped.
+        the cluster to be stopped.
 """
     if pout:
         print(sub_usage(args, output))
