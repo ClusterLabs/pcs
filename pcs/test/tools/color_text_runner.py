@@ -64,6 +64,16 @@ class ColorTextTestResult(TextTestResult):
             self.stream.write(apply(["lightred", "bold"], 'F'))
             self.stream.flush()
 
+    def addSkip(self, test, reason):
+        super(TextTestResult, self).addSkip(test, reason)
+        if self.showAll:
+            self.stream.writeln(
+                apply(["blue", "bold"], "skipped {0!r}".format(reason))
+            )
+        elif self.dots:
+            self.stream.write(apply(["blue", "bold"], 's'))
+            self.stream.flush()
+
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
         if self.descriptions and doc_first_line:
