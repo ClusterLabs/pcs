@@ -360,7 +360,7 @@ class EnableSbdServiceTest(TestCase):
         node = NodeAddresses("node1")
         lib_sbd.enable_sbd_service(mock_communicator, node)
         mock_communicator.call_node.assert_called_once_with(
-            node, "remote/sbd_enable", ""
+            node, "remote/sbd_enable", None
         )
 
 
@@ -408,7 +408,7 @@ class DisableSbdServiceTest(TestCase):
         node = NodeAddresses("node1")
         lib_sbd.disable_sbd_service(mock_communicator, node)
         mock_communicator.call_node.assert_called_once_with(
-            node, "remote/sbd_disable", ""
+            node, "remote/sbd_disable", None
         )
 
 
@@ -456,7 +456,7 @@ class SetStonithWatchdogTimeoutToZeroTest(TestCase):
         node = NodeAddresses("node1")
         lib_sbd.set_stonith_watchdog_timeout_to_zero(mock_communicator, node)
         mock_communicator.call_node.assert_called_once_with(
-            node, "remote/set_stonith_watchdog_timeout_to_zero", ""
+            node, "remote/set_stonith_watchdog_timeout_to_zero", None
         )
 
 
@@ -520,7 +520,7 @@ class RemoveStonithWatchdogTimeoutTest(TestCase):
         node = NodeAddresses("node1")
         lib_sbd.remove_stonith_watchdog_timeout(mock_communicator, node)
         mock_communicator.call_node.assert_called_once_with(
-            node, "remote/remove_stonith_watchdog_timeout", ""
+            node, "remote/remove_stonith_watchdog_timeout", None
         )
 
 
@@ -584,7 +584,7 @@ class GetSbdConfigTest(TestCase):
         node = NodeAddresses("node1")
         lib_sbd.get_sbd_config(mock_communicator, node)
         mock_communicator.call_node.assert_called_once_with(
-            node, "remote/get_sbd_config", ""
+            node, "remote/get_sbd_config", None
         )
 
 

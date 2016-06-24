@@ -57,7 +57,7 @@ def check_sbd(communicator, node, watchdog):
     return communicator.call_node(
         node,
         "remote/check_sbd",
-        NodeCommunicator.format_data_dict({"watchdog": watchdog})
+        NodeCommunicator.format_data_dict([("watchdog", watchdog)])
     )
 
 
@@ -119,7 +119,7 @@ def set_sbd_config(communicator, node, config):
     communicator.call_node(
         node,
         "remote/set_sbd_config",
-        NodeCommunicator.format_data_dict({"config": config})
+        NodeCommunicator.format_data_dict([("config", config)])
     )
 
 
@@ -171,7 +171,7 @@ def enable_sbd_service(communicator, node):
     communicator -- NodeCommunicator
     node -- NodeAddresses
     """
-    communicator.call_node(node, "remote/sbd_enable", "")
+    communicator.call_node(node, "remote/sbd_enable", None)
 
 
 def enable_sbd_service_on_node(report_processor, node_communicator, node):
@@ -215,7 +215,7 @@ def disable_sbd_service(communicator, node):
     communicator -- NodeCommunicator
     node -- NodeAddresses
     """
-    communicator.call_node(node, "remote/sbd_disable", "")
+    communicator.call_node(node, "remote/sbd_disable", None)
 
 
 def disable_sbd_service_on_node(report_processor, node_communicator, node):
@@ -259,7 +259,7 @@ def set_stonith_watchdog_timeout_to_zero(communicator, node):
     node -- NodeAddresses
     """
     communicator.call_node(
-        node, "remote/set_stonith_watchdog_timeout_to_zero", ""
+        node, "remote/set_stonith_watchdog_timeout_to_zero", None
     )
 
 
@@ -292,7 +292,7 @@ def remove_stonith_watchdog_timeout(communicator, node):
     communicator -- NodeCommunicator
     node -- NodeAddresses
     """
-    communicator.call_node(node, "remote/remove_stonith_watchdog_timeout", "")
+    communicator.call_node(node, "remote/remove_stonith_watchdog_timeout", None)
 
 
 def remove_stonith_watchdog_timeout_on_all_nodes(node_communicator, node_list):
@@ -351,7 +351,7 @@ def get_sbd_config(communicator, node):
     communicator -- NodeCommunicator
     node -- NodeAddresses
     """
-    return communicator.call_node(node, "remote/get_sbd_config", "")
+    return communicator.call_node(node, "remote/get_sbd_config", None)
 
 
 def is_sbd_enabled(runner):
