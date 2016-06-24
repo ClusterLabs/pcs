@@ -27,14 +27,6 @@ class DistributeCorosyncConfTest(TestCase):
         self.mock_reporter = MockLibraryReportProcessor()
         self.mock_communicator = "mock node communicator"
 
-    def assert_set_remote_corosync_conf_call(self, a_call, node_ring0, config):
-        self.assertEqual("set_remote_corosync_conf", a_call[0])
-        self.assertEqual(3, len(a_call[1]))
-        self.assertEqual(self.mock_communicator, a_call[1][0])
-        self.assertEqual(node_ring0, a_call[1][1].ring0)
-        self.assertEqual(config, a_call[1][2])
-        self.assertEqual(0, len(a_call[2]))
-
     @mock.patch("pcs.lib.nodes_task.corosync_live")
     def test_success(self, mock_corosync_live):
         conf_text = "test conf text"
@@ -63,12 +55,10 @@ class DistributeCorosyncConfTest(TestCase):
             len(corosync_live_calls),
             len(mock_corosync_live.mock_calls)
         )
-        self.assert_set_remote_corosync_conf_call(
-            mock_corosync_live.mock_calls[0], nodes[0], conf_text
-        )
-        self.assert_set_remote_corosync_conf_call(
-            mock_corosync_live.mock_calls[1], nodes[1], conf_text
-        )
+        mock_corosync_live.set_remote_corosync_conf.assert_has_calls([
+            mock.call("mock node communicator", node_addrs_list[0], conf_text),
+            mock.call("mock node communicator", node_addrs_list[1], conf_text),
+        ], any_order=True)
 
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -145,12 +135,10 @@ class DistributeCorosyncConfTest(TestCase):
             len(corosync_live_calls),
             len(mock_corosync_live.mock_calls)
         )
-        self.assert_set_remote_corosync_conf_call(
-            mock_corosync_live.mock_calls[0], nodes[0], conf_text
-        )
-        self.assert_set_remote_corosync_conf_call(
-            mock_corosync_live.mock_calls[1], nodes[1], conf_text
-        )
+        mock_corosync_live.set_remote_corosync_conf.assert_has_calls([
+            mock.call("mock node communicator", node_addrs_list[0], conf_text),
+            mock.call("mock node communicator", node_addrs_list[1], conf_text),
+        ], any_order=True)
 
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -221,12 +209,10 @@ class DistributeCorosyncConfTest(TestCase):
             len(corosync_live_calls),
             len(mock_corosync_live.mock_calls)
         )
-        self.assert_set_remote_corosync_conf_call(
-            mock_corosync_live.mock_calls[0], nodes[0], conf_text
-        )
-        self.assert_set_remote_corosync_conf_call(
-            mock_corosync_live.mock_calls[1], nodes[1], conf_text
-        )
+        mock_corosync_live.set_remote_corosync_conf.assert_has_calls([
+            mock.call("mock node communicator", node_addrs_list[0], conf_text),
+            mock.call("mock node communicator", node_addrs_list[1], conf_text),
+        ], any_order=True)
 
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,

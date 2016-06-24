@@ -8,6 +8,7 @@ from __future__ import (
 import json
 
 from pcs.common import report_codes
+from pcs.common.tools import run_parallel as tools_run_parallel
 from pcs.lib import reports
 from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.external import (
@@ -33,11 +34,9 @@ def distribute_corosync_conf(
     if skip_offline_nodes:
         failure_severity = ReportItemSeverity.WARNING
         failure_forceable = None
-
-    reporter.process(reports.corosync_config_distribution_started())
     report_items = []
-    # TODO use parallel communication
-    for node in node_addr_list:
+
+    def _parallel(node):
         try:
             corosync_live.set_remote_corosync_conf(
                 node_communicator,
@@ -62,6 +61,12 @@ def distribute_corosync_conf(
                     failure_forceable
                 )
             )
+
+    reporter.process(reports.corosync_config_distribution_started())
+    tools_run_parallel(
+        _parallel,
+        [((node, ), {}) for node in node_addr_list]
+    )
     reporter.process_list(report_items)
 
 def check_corosync_offline_on_nodes(
@@ -77,11 +82,9 @@ def check_corosync_offline_on_nodes(
     if skip_offline_nodes:
         failure_severity = ReportItemSeverity.WARNING
         failure_forceable = None
-
-    reporter.process(reports.corosync_not_running_check_started())
     report_items = []
-    # TODO use parallel communication
-    for node in node_addr_list:
+
+    def _parallel(node):
         try:
             status = node_communicator.call_node(node, "remote/status", None)
             if not json.loads(status)["corosync"]:
@@ -115,6 +118,12 @@ def check_corosync_offline_on_nodes(
                     failure_forceable
                 )
             )
+
+    reporter.process(reports.corosync_not_running_check_started())
+    tools_run_parallel(
+        _parallel,
+        [((node, ), {}) for node in node_addr_list]
+    )
     reporter.process_list(report_items)
 
 
