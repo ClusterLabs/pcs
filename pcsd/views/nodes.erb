@@ -247,9 +247,8 @@
               </tr>
             </table>
             <table style="clear:left;float:left;margin-top:25px;">
-              <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Node Attributes ({{#if Pcs.nodesController.cur_node_attr.length}}{{Pcs.nodesController.cur_node_attr.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+              <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Node Attributes ({{#if Pcs.nodesController.cur_node_attr.length}}{{Pcs.nodesController.cur_node_attr.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites" id="node_attributes"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
               <tr><td>
-                <div id="node_attributes">
                   <table class="datatable">
                     <tr><th>Attribute</th><th>Value</th><th>Remove</th></tr>
                     {{#each attr in Pcs.nodesController.cur_node_attr}}
@@ -268,14 +267,12 @@
                       <td><button type="button" onclick="add_node_attr('#new_node_attr_col');" name="add">Add</button></td>
                     </tr>
                   </table>
-                </div>
               </td>
               </tr>
             </table>
             <table style="clear:left;float:left;margin-top:25px;">
-              <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Fence Levels ({{#if Pcs.nodesController.cur_node_fence_levels.length}}{{Pcs.nodesController.cur_node_fence_levels.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+              <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Fence Levels ({{#if Pcs.nodesController.cur_node_fence_levels.length}}{{Pcs.nodesController.cur_node_fence_levels.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites" id="fence_levels"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
               <tr><td>
-                <div id="fencelevels">
                   <table class="datatable">
                     <tr><th>Level</th><th>Fence Devices</th><th>Remove</th></tr>
                     {{#each Pcs.nodesController.cur_node_fence_levels}}
@@ -301,13 +298,16 @@
                       <td><button type="button" onclick="add_remove_fence_level($(this).parent());" name="add">Add</button></td>
                     </tr>
                   </table>
-                </div>
               </td>
               </tr>
             </table>
             {{#if Pcs.nodesController.utilization_support}}
             <table style="clear:left; float:left; margin-top: 25px;"><tr><td>
-            {{utilization-table entity=Pcs.nodesController.cur_node utilization=Pcs.nodesController.cur_node.utilization}}
+            {{utilization-table
+                entity=Pcs.nodesController.cur_node
+                utilization=Pcs.nodesController.cur_node.utilization
+                table_id="node_utilization_attributes"
+            }}
             </td></tr></table>
             {{/if}}
     </div>

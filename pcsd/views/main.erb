@@ -298,14 +298,19 @@
         {{meta_attributes-table resource=resource}}
         {{#if utilization_support}}
           {{#if resource.is_primitive}}
-            {{utilization-table entity=resource utilization=resource.utilization type="resource"}}
+            {{utilization-table
+                entity=resource
+                utilization=resource.utilization
+                type="resource"
+                table_id="resource_utilization_attributes"
+            }}
           {{/if}}
         {{/if}}
         <br style="clear:left;">
       {{/unless}}
     </div>
     {{#if stonith}}
-      <div style="clear:left; margin-top: 2em;" id="stonith_info_div">
+      <div style="clear:left; margin-top: 2em;" id="stonith_agent_form">
         {{fence-form
             resource=resource
             agent=resource.resource_agent
@@ -314,7 +319,7 @@
       </div>
     {{else}}
     {{#if resource.is_primitive}}
-      <div style="clear:left; margin-top: 2em;" id="resource_info_div">
+      <div style="clear:left; margin-top: 2em;" id="resource_agent_form">
         {{resource-form
             resource=resource
             agent=resource.resource_agent
@@ -725,7 +730,7 @@ Use the 'Add' button to submit the form.">
       <tr>
         <td
             {{action toggleBody}}
-            id="utilization_attributes"
+            {{bind-attr id=table_id}}
             class="datatable_header hover-pointer"
         >
           {{#if show_content}}
