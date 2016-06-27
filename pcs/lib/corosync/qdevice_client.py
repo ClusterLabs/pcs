@@ -60,3 +60,34 @@ def remote_client_disable(reporter, node_communicator, node):
     reporter.process(
         reports.service_disable_success("corosync-qdevice", node.label)
     )
+
+def remote_client_start(reporter, node_communicator, node):
+    """
+    start qdevice client service (corosync-qdevice) on a remote node
+    """
+    response = node_communicator.call_node(
+        node,
+        "remote/qdevice_client_start",
+        None
+    )
+    if response == "corosync is not running, skipping":
+        reporter.process(
+            reports.service_start_skipped(
+                "corosync-qdevice",
+                "corosync is not running",
+                node.label
+            )
+        )
+    else:
+        reporter.process(
+            reports.service_start_success("corosync-qdevice", node.label)
+        )
+
+def remote_client_stop(reporter, node_communicator, node):
+    """
+    stop qdevice client service (corosync-qdevice) on a remote node
+    """
+    node_communicator.call_node(node, "remote/qdevice_client_stop", None)
+    reporter.process(
+        reports.service_stop_success("corosync-qdevice", node.label)
+    )

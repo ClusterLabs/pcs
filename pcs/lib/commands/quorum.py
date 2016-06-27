@@ -110,10 +110,6 @@ def add_device(
                 skip_offline_nodes
             )
 
-        # Since cluster is not running, we do not start qdevice service. We know
-        # it isn't running because qdevice cannot be added to a running cluster,
-        # and that is ensured by cfg.need_stopped_cluster and
-        # lib_env.push_corosync_conf.
         lib_env.report_processor.process(
             reports.service_enable_started("corosync-qdevice")
         )
@@ -130,6 +126,22 @@ def add_device(
 
     # everything set up, it's safe to tell the nodes to use qdevice
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
+    # Now, when corosync.conf has been reloaded, we can start qdevice service.
+    if lib_env.is_corosync_conf_live:
+        lib_env.report_processor.process(
+            reports.service_start_started("corosync-qdevice")
+        )
+        communicator = lib_env.node_communicator()
+        parallel_nodes_communication_helper(
+            qdevice_client.remote_client_start,
+            [
+                [(lib_env.report_processor, communicator, node), {}]
+                for node in cfg.get_nodes()
+            ],
+            lib_env.report_processor,
+            skip_offline_nodes
+        )
 
 def _add_device_model_net(
     lib_env, qnetd_host, cluster_name, cluster_nodes, skip_offline_nodes
@@ -239,18 +251,7 @@ def remove_device(lib_env, skip_offline_nodes=False):
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
     if lib_env.is_corosync_conf_live:
-        # handle model specific configuration
-        if model == "net":
-            _remove_device_model_net(
-                lib_env,
-                cfg.get_nodes(),
-                skip_offline_nodes
-            )
-
-        # Since cluster is not running, we do not stop qdevice service. We know
-        # it isn't running because qdevice cannot be added to a running cluster,
-        # and that is ensured by cfg.need_stopped_cluster and
-        # lib_env.push_corosync_conf.
+        # disable qdevice
         lib_env.report_processor.process(
             reports.service_disable_started("corosync-qdevice")
         )
@@ -264,6 +265,27 @@ def remove_device(lib_env, skip_offline_nodes=False):
             lib_env.report_processor,
             skip_offline_nodes
         )
+        # stop qdevice
+        lib_env.report_processor.process(
+            reports.service_stop_started("corosync-qdevice")
+        )
+        communicator = lib_env.node_communicator()
+        parallel_nodes_communication_helper(
+            qdevice_client.remote_client_stop,
+            [
+                [(lib_env.report_processor, communicator, node), {}]
+                for node in cfg.get_nodes()
+            ],
+            lib_env.report_processor,
+            skip_offline_nodes
+        )
+        # handle model specific configuration
+        if model == "net":
+            _remove_device_model_net(
+                lib_env,
+                cfg.get_nodes(),
+                skip_offline_nodes
+            )
 
 def _remove_device_model_net(lib_env, cluster_nodes, skip_offline_nodes):
     """

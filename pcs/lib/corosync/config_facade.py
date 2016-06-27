@@ -210,19 +210,30 @@ class ConfigFacade(object):
         )
 
         # configuration cleanup
+        remove_need_stopped_cluster = {
+            "auto_tie_breaker": "",
+            "last_man_standing": "",
+            "last_man_standing_window": "",
+        }
+        need_stopped_cluster = False
         # remove old device settings
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         for quorum in quorum_section_list:
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)
+            for name, value in quorum.get_attributes():
+                if (
+                    name in remove_need_stopped_cluster
+                    and
+                    value not in ["", "0"]
+                ):
+                    need_stopped_cluster = True
         # remove conflicting quorum options
         attrs_to_remove = {
             "allow_downscale": "",
             "two_node": "",
-            "auto_tie_breaker": "",
-            "last_man_standing": "",
-            "last_man_standing_window": "",
         }
+        attrs_to_remove.update(remove_need_stopped_cluster)
         self.__set_section_options(quorum_section_list, attrs_to_remove)
         # remove nodes' votes
         for nodelist in self.config.get_sections("nodelist"):
@@ -241,10 +252,10 @@ class ConfigFacade(object):
         self.__update_qdevice_votes()
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
-        # Currently qdevice cannot be added to running corosync.
-        # If that changes, we still need cluster to be stopped when removing
-        # quorum options ATB or LMS.
-        self._need_stopped_cluster = True
+        # update_two_node sets self._need_stopped_cluster when changing an
+        # algorithm lms <-> 2nodelms. We don't care about that, it's not really
+        # a change, as there was no qdevice before. So we override it.
+        self._need_stopped_cluster = need_stopped_cluster
 
     def update_quorum_device(
         self, report_processor, model_options, generic_options,
@@ -302,7 +313,6 @@ class ConfigFacade(object):
                 quorum.del_section(device)
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
-        self._need_stopped_cluster = True
 
     def __validate_quorum_device_model(self, model, force_model=False):
         report_items = []

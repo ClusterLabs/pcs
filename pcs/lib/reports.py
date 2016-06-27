@@ -1129,31 +1129,55 @@ def service_start_started(service):
         }
     )
 
-def service_start_error(service, reason):
+def service_start_error(service, reason, node=None):
     """
     system service start failed
     string service service name or description
     string reason error message
+    string node node on which service has been requested to start
     """
+    msg = "Unable to start {service}: {reason}"
     return ReportItem.error(
         report_codes.SERVICE_START_ERROR,
-        "Unable to start {service}: {reason}",
+        msg if node is None else "{node}: " + msg,
         info={
             "service": service,
             "reason": reason,
+            "node": node,
         }
     )
 
-def service_start_success(service):
+def service_start_success(service, node=None):
     """
     system service was started successfully
     string service service name or description
+    string node node on which service has been requested to start
     """
+    msg = "{service} started"
     return ReportItem.info(
         report_codes.SERVICE_START_SUCCESS,
-        "{service} started",
+        msg if node is None else "{node}: " + msg,
         info={
             "service": service,
+            "node": node,
+        }
+    )
+
+def service_start_skipped(service, reason, node=None):
+    """
+    starting system service was skipped, no error occured
+    string service service name or description
+    string reason why the start has been skipped
+    string node node on which service has been requested to start
+    """
+    msg = "not starting {service} - {reason}"
+    return ReportItem.info(
+        report_codes.SERVICE_START_SKIPPED,
+        msg if node is None else "{node}: " + msg,
+        info={
+            "service": service,
+            "reason": reason,
+            "node": node,
         }
     )
 
@@ -1170,31 +1194,37 @@ def service_stop_started(service):
         }
     )
 
-def service_stop_error(service, reason):
+def service_stop_error(service, reason, node=None):
     """
     system service stop failed
     string service service name or description
     string reason error message
+    string node node on which service has been requested to stop
     """
+    msg = "Unable to stop {service}: {reason}"
     return ReportItem.error(
         report_codes.SERVICE_STOP_ERROR,
-        "Unable to stop {service}: {reason}",
+        msg if node is None else "{node}: " + msg,
         info={
             "service": service,
             "reason": reason,
+            "node": node,
         }
     )
 
-def service_stop_success(service):
+def service_stop_success(service, node=None):
     """
     system service was stopped successfully
     string service service name or description
+    string node node on which service has been requested to stop
     """
+    msg = "{service} stopped"
     return ReportItem.info(
         report_codes.SERVICE_STOP_SUCCESS,
-        "{service} stopped",
+        msg if node is None else "{node}: " + msg,
         info={
             "service": service,
+            "node": node,
         }
     )
 
@@ -1279,6 +1309,7 @@ def service_enable_skipped(service, reason, node=None):
     """
     enabling system service was skipped, no error occured
     string service service name or description
+    string reason why the enabling has been skipped
     string node node on which service has been requested to enable
     """
     msg = "not enabling {service} - {reason}"

@@ -10,6 +10,7 @@ from lxml import etree
 from pcs.lib import reports
 from pcs.lib.external import (
     is_cman_cluster,
+    is_service_running,
     CommandRunner,
     NodeCommunicator,
 )
@@ -152,7 +153,11 @@ class LibraryEnvironment(object):
                 corosync_conf_data,
                 skip_offline_nodes
             )
-            if not corosync_conf_facade.need_stopped_cluster:
+            if (
+                not corosync_conf_facade.need_stopped_cluster
+                and
+                is_service_running(self.cmd_runner(), "corosync")
+            ):
                 reload_corosync_config(self.cmd_runner())
                 self.report_processor.process(
                     reports.corosync_config_reloaded()

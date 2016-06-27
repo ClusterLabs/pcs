@@ -1965,6 +1965,23 @@ def disable_service(service)
   return (retcode == 0)
 end
 
+def start_service(service)
+  _, _, retcode = run_cmd(
+    PCSAuth.getSuperuserAuth(), "service", service, "start"
+  )
+  return (retcode == 0)
+end
+
+def stop_service(service)
+  if not is_service_installed?(service)
+    return true
+  end
+  _, _, retcode = run_cmd(
+    PCSAuth.getSuperuserAuth(), "service", service, "stop"
+  )
+  return (retcode == 0)
+end
+
 def set_cluster_prop_force(auth_user, prop, val)
   cmd = [PCS, 'property', 'set', "#{prop}=#{val}", '--force']
   if pacemaker_running?

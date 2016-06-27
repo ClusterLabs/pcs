@@ -268,6 +268,7 @@ class LibraryEnvironmentTest(TestCase):
         mock_reload.assert_not_called()
 
     @mock.patch("pcs.lib.env.reload_corosync_config")
+    @mock.patch("pcs.lib.env.is_service_running")
     @mock.patch("pcs.lib.env.distribute_corosync_conf")
     @mock.patch("pcs.lib.env.get_local_corosync_conf")
     @mock.patch.object(
@@ -285,12 +286,13 @@ class LibraryEnvironmentTest(TestCase):
         "cmd_runner",
         lambda self: "mock cmd runner"
     )
-    def test_corosync_conf_not_set(
-        self, mock_get_corosync, mock_distribute, mock_reload
+    def test_corosync_conf_not_set_online(
+        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload
     ):
         corosync_data = open(rc("corosync.conf")).read()
         new_corosync_data = corosync_data.replace("version: 2", "version: 3")
         mock_get_corosync.return_value = corosync_data
+        mock_is_running.return_value = True
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertTrue(env.is_corosync_conf_live)
@@ -309,7 +311,55 @@ class LibraryEnvironmentTest(TestCase):
             new_corosync_data,
             False
         )
+        mock_is_running.assert_called_once_with("mock cmd runner", "corosync")
         mock_reload.assert_called_once_with("mock cmd runner")
+
+    @mock.patch("pcs.lib.env.reload_corosync_config")
+    @mock.patch("pcs.lib.env.is_service_running")
+    @mock.patch("pcs.lib.env.distribute_corosync_conf")
+    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @mock.patch.object(
+        CorosyncConfigFacade,
+        "get_nodes",
+        lambda self: "mock node list"
+    )
+    @mock.patch.object(
+        LibraryEnvironment,
+        "node_communicator",
+        lambda self: "mock node communicator"
+    )
+    @mock.patch.object(
+        LibraryEnvironment,
+        "cmd_runner",
+        lambda self: "mock cmd runner"
+    )
+    def test_corosync_conf_not_set_offline(
+        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload
+    ):
+        corosync_data = open(rc("corosync.conf")).read()
+        new_corosync_data = corosync_data.replace("version: 2", "version: 3")
+        mock_get_corosync.return_value = corosync_data
+        mock_is_running.return_value = False
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        self.assertTrue(env.is_corosync_conf_live)
+
+        self.assertEqual(corosync_data, env.get_corosync_conf_data())
+        self.assertEqual(corosync_data, env.get_corosync_conf().config.export())
+        self.assertEqual(2, mock_get_corosync.call_count)
+
+        env.push_corosync_conf(
+            CorosyncConfigFacade.from_string(new_corosync_data)
+        )
+        mock_distribute.assert_called_once_with(
+            "mock node communicator",
+            self.mock_reporter,
+            "mock node list",
+            new_corosync_data,
+            False
+        )
+        mock_is_running.assert_called_once_with("mock cmd runner", "corosync")
+        mock_reload.assert_not_called()
 
     @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
     @mock.patch("pcs.lib.env.reload_corosync_config")

@@ -80,6 +80,8 @@ def remote(params, request, auth_user)
       :qdevice_net_client_destroy => method(:qdevice_net_client_destroy),
       :qdevice_client_enable => method(:qdevice_client_enable),
       :qdevice_client_disable => method(:qdevice_client_disable),
+      :qdevice_client_start => method(:qdevice_client_start),
+      :qdevice_client_stop => method(:qdevice_client_stop),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -2498,6 +2500,40 @@ def qdevice_client_enable(param, request, auth_user)
     return [200, msg]
   else
     msg = 'Enabling corosync-qdevice failed'
+    $logger.error(msg)
+    return [400, msg]
+  end
+end
+
+def qdevice_client_stop(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  if stop_service('corosync-qdevice')
+    msg = 'corosync-qdevice stopped'
+    $logger.info(msg)
+    return [200, msg]
+  else
+    msg = 'Stopping corosync-qdevice failed'
+    $logger.error(msg)
+    return [400, msg]
+  end
+end
+
+def qdevice_client_start(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  if not is_service_running?('corosync')
+    msg = 'corosync is not running, skipping'
+    $logger.info(msg)
+    return [200, msg]
+  elsif start_service('corosync-qdevice')
+    msg = 'corosync-qdevice started'
+    $logger.info(msg)
+    return [200, msg]
+  else
+    msg = 'Starting corosync-qdevice failed'
     $logger.error(msg)
     return [400, msg]
   end

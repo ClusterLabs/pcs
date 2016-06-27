@@ -816,7 +816,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_success_net_minimal_lms(self):
@@ -846,7 +846,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_success_remove_nodes_votes(self):
@@ -877,7 +877,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_success_net_full(self):
@@ -924,7 +924,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_lms_3node(self):
@@ -954,7 +954,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_2nodelms_3node(self):
@@ -984,7 +984,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_lms_2node(self):
@@ -1014,7 +1014,7 @@ quorum {
             ).replace("    two_node: 1\n", ""),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_succes_net_2nodelms_2node(self):
@@ -1044,7 +1044,7 @@ quorum {
             ).replace("    two_node: 1\n", ""),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_remove_conflicting_options(self):
@@ -1138,7 +1138,7 @@ quorum {
             ,
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         self.assertEqual([], reporter.report_item_list)
 
     def test_bad_model(self):
@@ -1178,7 +1178,7 @@ quorum {
             ),
             facade.config.export()
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         assert_report_item_list_equal(
             reporter.report_item_list,
             [
@@ -1422,7 +1422,7 @@ quorum {
             },
             force_options=True
         )
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         ac(
             config.replace(
                 "    provider: corosync_votequorum",
@@ -2157,7 +2157,7 @@ quorum {
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device()
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         ac(
             config_no_devices,
             facade.config.export()
@@ -2185,7 +2185,7 @@ quorum {
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device()
-        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_stopped_cluster)
         ac(
             config_no_devices,
             facade.config.export()

@@ -319,6 +319,7 @@ class StatusDeviceTextTest(TestCase, CmanMixin):
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 @mock.patch("pcs.lib.commands.quorum._add_device_model_net")
 @mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_enable")
+@mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_start")
 class AddDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -326,8 +327,8 @@ class AddDeviceTest(TestCase, CmanMixin):
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_disabled_on_cman(
-        self, mock_client_enable, mock_add_net, mock_get_corosync,
-        mock_push_corosync
+        self, mock_client_start, mock_client_enable, mock_add_net,
+        mock_get_corosync, mock_push_corosync
     ):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(
@@ -337,11 +338,12 @@ class AddDeviceTest(TestCase, CmanMixin):
         mock_push_corosync.assert_not_called()
         mock_add_net.assert_not_called()
         mock_client_enable.assert_not_called()
+        mock_client_start.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_enabled_on_cman_if_not_live(
-        self, mock_client_enable, mock_add_net, mock_get_corosync,
-        mock_push_corosync
+        self, mock_client_start, mock_client_enable, mock_add_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -369,11 +371,12 @@ class AddDeviceTest(TestCase, CmanMixin):
         self.assertEqual(0, mock_push_corosync.call_count)
         mock_add_net.assert_not_called()
         mock_client_enable.assert_not_called()
+        mock_client_start.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_success(
-        self, mock_client_enable, mock_add_net, mock_get_corosync,
-        mock_push_corosync
+        self, mock_client_start, mock_client_enable, mock_add_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -416,15 +419,23 @@ class AddDeviceTest(TestCase, CmanMixin):
                         "service": "corosync-qdevice",
                     }
                 ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_START_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
             ]
         )
         self.assertEqual(1, len(mock_add_net.mock_calls))
         self.assertEqual(3, len(mock_client_enable.mock_calls))
+        self.assertEqual(3, len(mock_client_start.mock_calls))
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_success_file(
-        self, mock_client_enable, mock_add_net, mock_get_corosync,
-        mock_push_corosync
+        self, mock_client_start, mock_client_enable, mock_add_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -462,13 +473,14 @@ class AddDeviceTest(TestCase, CmanMixin):
             )
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
-        self.assertEqual(0, len(mock_add_net.mock_calls))
-        self.assertEqual(0, len(mock_client_enable.mock_calls))
+        mock_add_net.assert_not_called()
+        mock_client_enable.assert_not_called()
+        mock_client_start.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_invalid_options(
-        self, mock_client_enable, mock_add_net, mock_get_corosync,
-        mock_push_corosync
+        self, mock_client_start, mock_client_enable, mock_add_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -497,11 +509,12 @@ class AddDeviceTest(TestCase, CmanMixin):
         self.assertEqual(0, mock_push_corosync.call_count)
         mock_add_net.assert_not_called()
         mock_client_enable.assert_not_called()
+        mock_client_start.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_invalid_options_forced(
-        self, mock_client_enable, mock_add_net, mock_get_corosync,
-        mock_push_corosync
+        self, mock_client_start, mock_client_enable, mock_add_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -534,6 +547,13 @@ class AddDeviceTest(TestCase, CmanMixin):
                         "service": "corosync-qdevice",
                     }
                 ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_START_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
             ]
         )
         self.assertEqual(1, mock_get_corosync.call_count)
@@ -559,11 +579,12 @@ class AddDeviceTest(TestCase, CmanMixin):
         )
         self.assertEqual(1, len(mock_add_net.mock_calls))
         self.assertEqual(3, len(mock_client_enable.mock_calls))
+        self.assertEqual(3, len(mock_client_start.mock_calls))
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_invalid_model(
-        self, mock_client_enable, mock_add_net, mock_get_corosync,
-        mock_push_corosync
+        self, mock_client_start, mock_client_enable, mock_add_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -587,11 +608,12 @@ class AddDeviceTest(TestCase, CmanMixin):
         self.assertEqual(0, mock_push_corosync.call_count)
         mock_add_net.assert_not_called()
         mock_client_enable.assert_not_called()
+        mock_client_start.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_invalid_model_forced(
-        self, mock_client_enable, mock_add_net, mock_get_corosync,
-        mock_push_corosync
+        self, mock_client_start, mock_client_enable, mock_add_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -618,6 +640,13 @@ class AddDeviceTest(TestCase, CmanMixin):
                         "service": "corosync-qdevice",
                     }
                 ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_START_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
             ]
         )
         self.assertEqual(1, mock_get_corosync.call_count)
@@ -636,6 +665,7 @@ class AddDeviceTest(TestCase, CmanMixin):
         )
         mock_add_net.assert_not_called() # invalid model - don't setup net model
         self.assertEqual(3, len(mock_client_enable.mock_calls))
+        self.assertEqual(3, len(mock_client_start.mock_calls))
 
 
 @mock.patch(
@@ -1280,8 +1310,9 @@ class AddDeviceNetTest(TestCase):
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
-@mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_disable")
 @mock.patch("pcs.lib.commands.quorum._remove_device_model_net")
+@mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_disable")
+@mock.patch("pcs.lib.commands.quorum.qdevice_client.remote_client_stop")
 class RemoveDeviceTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -1289,8 +1320,8 @@ class RemoveDeviceTest(TestCase, CmanMixin):
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_disabled_on_cman(
-        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
-        mock_push_corosync
+        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
+        mock_get_corosync, mock_push_corosync
     ):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(lambda: lib.remove_device(lib_env))
@@ -1298,11 +1329,12 @@ class RemoveDeviceTest(TestCase, CmanMixin):
         mock_push_corosync.assert_not_called()
         mock_remove_net.assert_not_called()
         mock_remote_disable.assert_not_called()
+        mock_remote_stop.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_enabled_on_cman_if_not_live(
-        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
-        mock_push_corosync
+        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -1325,11 +1357,12 @@ class RemoveDeviceTest(TestCase, CmanMixin):
         self.assertEqual(0, mock_push_corosync.call_count)
         mock_remove_net.assert_not_called()
         mock_remote_disable.assert_not_called()
+        mock_remote_stop.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_no_device(
-        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
-        mock_push_corosync
+        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
@@ -1348,11 +1381,12 @@ class RemoveDeviceTest(TestCase, CmanMixin):
         self.assertEqual(0, mock_push_corosync.call_count)
         mock_remove_net.assert_not_called()
         mock_remote_disable.assert_not_called()
+        mock_remote_stop.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_success(
-        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
-        mock_push_corosync
+        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
         no_device_conf = open(rc("corosync-3nodes.conf")).read()
@@ -1376,15 +1410,23 @@ class RemoveDeviceTest(TestCase, CmanMixin):
                         "service": "corosync-qdevice",
                     }
                 ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_STOP_STARTED,
+                    {
+                        "service": "corosync-qdevice",
+                    }
+                ),
             ]
         )
         self.assertEqual(1, len(mock_remove_net.mock_calls))
         self.assertEqual(3, len(mock_remote_disable.mock_calls))
+        self.assertEqual(3, len(mock_remote_stop.mock_calls))
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
     def test_success_file(
-        self, mock_remove_net, mock_remote_disable, mock_get_corosync,
-        mock_push_corosync
+        self, mock_remote_stop, mock_remote_disable, mock_remove_net,
+        mock_get_corosync, mock_push_corosync
     ):
         original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
         no_device_conf = open(rc("corosync-3nodes.conf")).read()
@@ -1403,8 +1445,9 @@ class RemoveDeviceTest(TestCase, CmanMixin):
             no_device_conf
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
-        self.assertEqual(0, len(mock_remove_net.mock_calls))
-        self.assertEqual(0, len(mock_remote_disable.mock_calls))
+        mock_remove_net.assert_not_called()
+        mock_remote_disable.assert_not_called()
+        mock_remote_stop.assert_not_called()
 
 
 @mock.patch("pcs.lib.commands.quorum.qdevice_net.remote_client_destroy")
