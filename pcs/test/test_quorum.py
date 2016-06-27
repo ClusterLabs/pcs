@@ -144,7 +144,7 @@ class DeviceAddTest(TestBase):
 
     def test_success_model_only(self):
         self.assert_pcs_success(
-            "quorum device add model net host=127.0.0.1 algorithm=ffsplit"
+            "quorum device add model net host=127.0.0.1 algorithm=lms"
         )
         self.assert_pcs_success(
             "quorum config",
@@ -152,7 +152,7 @@ class DeviceAddTest(TestBase):
 Options:
 Device:
   Model: net
-    algorithm: ffsplit
+    algorithm: 2nodelms
     host: 127.0.0.1
 """
         )
@@ -167,6 +167,7 @@ Device:
 Options:
 Device:
   timeout: 12345
+  votes: 1
   Model: net
     algorithm: ffsplit
     host: 127.0.0.1

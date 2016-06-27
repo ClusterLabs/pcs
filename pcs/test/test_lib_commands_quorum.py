@@ -396,6 +396,7 @@ class AddDeviceTest(TestCase, CmanMixin):
     device {
         timeout: 12345
         model: net
+        votes: 1
 
         net {
             algorithm: ffsplit
@@ -450,6 +451,7 @@ class AddDeviceTest(TestCase, CmanMixin):
     device {
         timeout: 12345
         model: net
+        votes: 1
 
         net {
             algorithm: ffsplit
@@ -545,6 +547,7 @@ class AddDeviceTest(TestCase, CmanMixin):
     device {
         bad_option: bad_value
         model: net
+        votes: 1
 
         net {
             algorithm: ffsplit

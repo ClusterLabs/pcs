@@ -208,11 +208,14 @@ class ConfigFacade(object):
                 force=force_options
             )
         )
+
         # configuration cleanup
+        # remove old device settings
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         for quorum in quorum_section_list:
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)
+        # remove conflicting quorum options
         attrs_to_remove = {
             "allow_downscale": "",
             "two_node": "",
@@ -221,6 +224,11 @@ class ConfigFacade(object):
             "last_man_standing_window": "",
         }
         self.__set_section_options(quorum_section_list, attrs_to_remove)
+        # remove nodes' votes
+        for nodelist in self.config.get_sections("nodelist"):
+            for node in nodelist.get_sections("node"):
+                node.del_attributes_by_name("quorum_votes")
+
         # add new configuration
         quorum = quorum_section_list[-1]
         new_device = config_parser.Section("device")
@@ -230,6 +238,7 @@ class ConfigFacade(object):
         new_model = config_parser.Section(model)
         self.__set_section_options([new_model], model_options)
         new_device.add_section(new_model)
+        self.__update_qdevice_votes()
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
         # Currently qdevice cannot be added to running corosync.
@@ -277,6 +286,7 @@ class ConfigFacade(object):
                 model_sections.extend(device.get_sections(model))
         self.__set_section_options(device_sections, generic_options)
         self.__set_section_options(model_sections, model_options)
+        self.__update_qdevice_votes()
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
         self._need_stopped_cluster = True
@@ -471,6 +481,29 @@ class ConfigFacade(object):
                     elif algorithm == "2nodelms" and not has_two_nodes:
                         net.set_attribute("algorithm", "lms")
                         self._need_stopped_cluster = True
+
+    def __update_qdevice_votes(self):
+        # ffsplit won't start if votes is missing or not set to 1
+        # for other algorithms it's required not to put votes at all
+        model = None
+        algorithm = None
+        device_sections = []
+        for quorum in self.config.get_sections("quorum"):
+            for device in quorum.get_sections("device"):
+                device_sections.append(device)
+                for dummy_name, value in device.get_attributes("model"):
+                    model = value
+        for device in device_sections:
+            for model_section in device.get_sections(model):
+                for dummy_name, value in model_section.get_attributes(
+                    "algorithm"
+                ):
+                    algorithm = value
+        if model == "net":
+            if algorithm == "ffsplit":
+                self.__set_section_options(device_sections, {"votes": "1"})
+            else:
+                self.__set_section_options(device_sections, {"votes": ""})
 
     def __set_section_options(self, section_list, options):
         for section in section_list[:-1]:

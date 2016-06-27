@@ -788,7 +788,7 @@ quorum {
         self.assertFalse(facade.need_stopped_cluster)
         ac(config, facade.config.export())
 
-    def test_success_net_minimal(self):
+    def test_success_net_minimal_ffsplit(self):
         config = open(rc("corosync-3nodes.conf")).read()
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
@@ -806,9 +806,71 @@ quorum {
 
     device {
         model: net
+        votes: 1
 
         net {
             algorithm: ffsplit
+            host: 127.0.0.1
+        }
+    }"""
+            ),
+            facade.config.export()
+        )
+        self.assertTrue(facade.need_stopped_cluster)
+        self.assertEqual([], reporter.report_item_list)
+
+    def test_success_net_minimal_lms(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        facade.add_quorum_device(
+            reporter,
+            "net",
+            {"host": "127.0.0.1", "algorithm": "lms"},
+            {}
+        )
+        ac(
+            config.replace(
+                "    provider: corosync_votequorum",
+                """\
+    provider: corosync_votequorum
+
+    device {
+        model: net
+
+        net {
+            algorithm: lms
+            host: 127.0.0.1
+        }
+    }"""
+            ),
+            facade.config.export()
+        )
+        self.assertTrue(facade.need_stopped_cluster)
+        self.assertEqual([], reporter.report_item_list)
+
+    def test_success_remove_nodes_votes(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        config_votes = config.replace("node {", "node {\nquorum_votes: 2")
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config_votes)
+        facade.add_quorum_device(
+            reporter,
+            "net",
+            {"host": "127.0.0.1", "algorithm": "lms"},
+            {}
+        )
+        ac(
+            config.replace(
+                "    provider: corosync_votequorum",
+                """\
+    provider: corosync_votequorum
+
+    device {
+        model: net
+
+        net {
+            algorithm: lms
             host: 127.0.0.1
         }
     }"""
@@ -848,6 +910,7 @@ quorum {
         sync_timeout: 34567
         timeout: 23456
         model: net
+        votes: 1
 
         net {
             algorithm: ffsplit
@@ -1014,6 +1077,7 @@ quorum {
 
     device {
         model: net
+        votes: 1
 
         net {
             algorithm: ffsplit
@@ -1062,6 +1126,7 @@ quorum {
 
     device {
         model: net
+        votes: 1
 
         net {
             algorithm: ffsplit
@@ -1478,8 +1543,8 @@ quorum {
         )
 
 class UpdateQuorumDeviceTest(TestCase):
-    def fixture_add_device(self, config):
-        return re.sub(
+    def fixture_add_device(self, config, votes=None):
+        with_device = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
             """\
 quorum {
@@ -1497,6 +1562,12 @@ quorum {
 }""",
             config
         )
+        if votes:
+            with_device = with_device.replace(
+                "model: net",
+                "model: net\n        votes: {0}".format(votes)
+            )
+        return with_device
 
     def test_not_existing(self):
         config = open(rc("corosync.conf")).read()
@@ -1519,7 +1590,8 @@ quorum {
 
     def test_success_model_options_net(self):
         config = self.fixture_add_device(
-            open(rc("corosync-3nodes.conf")).read()
+            open(rc("corosync-3nodes.conf")).read(),
+            votes="1"
         )
         reporter = MockLibraryReportProcessor()
         facade = lib.ConfigFacade.from_string(config)
