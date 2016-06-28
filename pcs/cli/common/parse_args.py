@@ -25,3 +25,24 @@ def prepare_options(cmdline_args):
         name, value = arg.split("=", 1)
         options[name] = value
     return options
+
+def split_by_keywords(arg_list, keyword_set, implicit_first_keyword=None):
+    grouped_args = dict([(keyword, []) for keyword in keyword_set])
+    if implicit_first_keyword:
+        grouped_args[implicit_first_keyword] = []
+
+    if not arg_list:
+        return grouped_args
+
+    if implicit_first_keyword:
+        current_keyword = implicit_first_keyword
+    elif arg_list[0] not in keyword_set:
+        raise CmdLineInputError()
+
+    for arg in arg_list:
+        if arg in list(grouped_args.keys()):
+            current_keyword = arg
+        else:
+            grouped_args[current_keyword].append(arg)
+
+    return grouped_args

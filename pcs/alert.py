@@ -6,16 +6,18 @@ from __future__ import (
 )
 
 import sys
+from functools import partial
 
 from pcs import (
     usage,
     utils,
 )
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import prepare_options
+from pcs.cli.common.parse_args import prepare_options, split_by_keywords
 from pcs.cli.common.console_report import indent
 from pcs.lib.errors import LibraryError
 
+parse_cmd_sections = partial(split_by_keywords, implicit_first_keyword="main")
 
 def alert_cmd(*args):
     argv = args[1]
@@ -67,16 +69,6 @@ def recipient_cmd(*args):
         )
 
 
-def parse_cmd_sections(arg_list, section_list):
-    output = dict([(section, []) for section in section_list + ["main"]])
-    cur_section = "main"
-    for arg in arg_list:
-        if arg in section_list:
-            cur_section = arg
-            continue
-        output[cur_section].append(arg)
-
-    return output
 
 
 def ensure_only_allowed_options(parameter_dict, allowed_list):
@@ -91,7 +83,7 @@ def alert_add(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError()
 
-    sections = parse_cmd_sections(argv, ["options", "meta"])
+    sections = parse_cmd_sections(argv, set(["options", "meta"]))
     main_args = prepare_options(sections["main"])
     ensure_only_allowed_options(main_args, ["id", "description", "path"])
 
@@ -110,7 +102,7 @@ def alert_update(lib, argv, modifiers):
 
     alert_id = argv[0]
 
-    sections = parse_cmd_sections(argv[1:], ["options", "meta"])
+    sections = parse_cmd_sections(argv[1:], set(["options", "meta"]))
     main_args = prepare_options(sections["main"])
     ensure_only_allowed_options(main_args, ["description", "path"])
 
@@ -137,7 +129,7 @@ def recipient_add(lib, argv, modifiers):
     alert_id = argv[0]
     recipient_value = argv[1]
 
-    sections = parse_cmd_sections(argv[2:], ["options", "meta"])
+    sections = parse_cmd_sections(argv[2:], set(["options", "meta"]))
     main_args = prepare_options(sections["main"])
     ensure_only_allowed_options(main_args, ["description", "id"])
 
@@ -158,7 +150,7 @@ def recipient_update(lib, argv, modifiers):
 
     recipient_id = argv[0]
 
-    sections = parse_cmd_sections(argv[1:], ["options", "meta"])
+    sections = parse_cmd_sections(argv[1:], set(["options", "meta"]))
     main_args = prepare_options(sections["main"])
     ensure_only_allowed_options(main_args, ["description", "value"])
 
