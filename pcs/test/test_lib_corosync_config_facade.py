@@ -971,130 +971,6 @@ quorum {
         self.assertFalse(facade.need_qdevice_reload)
         self.assertEqual([], reporter.report_item_list)
 
-    def test_succes_net_lms_3node(self):
-        config = open(rc("corosync-3nodes.conf")).read()
-        reporter = MockLibraryReportProcessor()
-        facade = lib.ConfigFacade.from_string(config)
-        facade.add_quorum_device(
-            reporter,
-            "net",
-            {"host": "127.0.0.1", "algorithm": "lms"},
-            {}
-        )
-        ac(
-            config.replace(
-                "    provider: corosync_votequorum",
-                """\
-    provider: corosync_votequorum
-
-    device {
-        model: net
-
-        net {
-            algorithm: lms
-            host: 127.0.0.1
-        }
-    }"""
-            ),
-            facade.config.export()
-        )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual([], reporter.report_item_list)
-
-    def test_succes_net_2nodelms_3node(self):
-        config = open(rc("corosync-3nodes.conf")).read()
-        reporter = MockLibraryReportProcessor()
-        facade = lib.ConfigFacade.from_string(config)
-        facade.add_quorum_device(
-            reporter,
-            "net",
-            {"host": "127.0.0.1", "algorithm": "2nodelms"},
-            {}
-        )
-        ac(
-            config.replace(
-                "    provider: corosync_votequorum",
-                """\
-    provider: corosync_votequorum
-
-    device {
-        model: net
-
-        net {
-            algorithm: lms
-            host: 127.0.0.1
-        }
-    }"""
-            ),
-            facade.config.export()
-        )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual([], reporter.report_item_list)
-
-    def test_succes_net_lms_2node(self):
-        config = open(rc("corosync.conf")).read()
-        reporter = MockLibraryReportProcessor()
-        facade = lib.ConfigFacade.from_string(config)
-        facade.add_quorum_device(
-            reporter,
-            "net",
-            {"host": "127.0.0.1", "algorithm": "lms"},
-            {}
-        )
-        ac(
-            config.replace(
-                "    provider: corosync_votequorum",
-                """\
-    provider: corosync_votequorum
-
-    device {
-        model: net
-
-        net {
-            algorithm: 2nodelms
-            host: 127.0.0.1
-        }
-    }"""
-            ).replace("    two_node: 1\n", ""),
-            facade.config.export()
-        )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual([], reporter.report_item_list)
-
-    def test_succes_net_2nodelms_2node(self):
-        config = open(rc("corosync.conf")).read()
-        reporter = MockLibraryReportProcessor()
-        facade = lib.ConfigFacade.from_string(config)
-        facade.add_quorum_device(
-            reporter,
-            "net",
-            {"host": "127.0.0.1", "algorithm": "2nodelms"},
-            {}
-        )
-        ac(
-            config.replace(
-                "    provider: corosync_votequorum",
-                """\
-    provider: corosync_votequorum
-
-    device {
-        model: net
-
-        net {
-            algorithm: 2nodelms
-            host: 127.0.0.1
-        }
-    }"""
-            ).replace("    two_node: 1\n", ""),
-            facade.config.export()
-        )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual([], reporter.report_item_list)
-
     def test_remove_conflicting_options(self):
         config = open(rc("corosync.conf")).read()
         config = config.replace(
@@ -1297,7 +1173,7 @@ quorum {
                 {
                     "option_name": "algorithm",
                     "option_value": "bad algorithm",
-                    "allowed_values": ("2nodelms", "ffsplit", "lms"),
+                    "allowed_values": ("ffsplit", "lms"),
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1514,7 +1390,7 @@ quorum {
                     {
                         "option_name": "algorithm",
                         "option_value": "bad algorithm",
-                        "allowed_values": ("2nodelms", "ffsplit", "lms"),
+                        "allowed_values": ("ffsplit", "lms"),
                     }
                 ),
                 (
@@ -1599,6 +1475,49 @@ quorum {
             ]
         )
 
+    def test_bad_options_net_disallowed_algorithms(self):
+        config = open(rc("corosync-3nodes.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.add_quorum_device(
+                reporter,
+                "net",
+                {"host": "127.0.0.1", "algorithm": "test"},
+                {}
+            ),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "algorithm",
+                    "option_value": "test",
+                    "allowed_values": ("ffsplit", "lms"),
+                },
+                report_codes.FORCE_OPTIONS
+            )
+        )
+
+        assert_raise_library_error(
+            lambda: facade.add_quorum_device(
+                reporter,
+                "net",
+                {"host": "127.0.0.1", "algorithm": "2nodelms"},
+                {}
+            ),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "algorithm",
+                    "option_value": "2nodelms",
+                    "allowed_values": ("ffsplit", "lms"),
+                },
+                report_codes.FORCE_OPTIONS
+            )
+        )
+
+
 class UpdateQuorumDeviceTest(TestCase):
     def fixture_add_device(self, config, votes=None):
         with_device = re.sub(
@@ -1669,28 +1588,6 @@ quorum {
         )
         self.assertEqual([], reporter.report_item_list)
 
-    def test_success_net_3node_2nodelms(self):
-        config = self.fixture_add_device(
-            open(rc("corosync-3nodes.conf")).read()
-        )
-        reporter = MockLibraryReportProcessor()
-        facade = lib.ConfigFacade.from_string(config)
-        facade.update_quorum_device(
-            reporter,
-            {"algorithm": "2nodelms"},
-            {}
-        )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertTrue(facade.need_qdevice_reload)
-        ac(
-            config.replace(
-                "port: 4433",
-                "port: 4433\n            algorithm: lms"
-            ),
-            facade.config.export()
-        )
-        self.assertEqual([], reporter.report_item_list)
-
     def test_success_net_doesnt_require_host_and_algorithm(self):
         config = self.fixture_add_device(
             open(rc("corosync-3nodes.conf")).read()
@@ -1737,7 +1634,7 @@ quorum {
                 {
                     "option_name": "algorithm",
                     "option_value": "",
-                    "allowed_values": ("2nodelms", "ffsplit", "lms")
+                    "allowed_values": ("ffsplit", "lms")
                 },
                 report_codes.FORCE_OPTIONS
             )
@@ -1799,7 +1696,7 @@ quorum {
                 {
                     "option_name": "algorithm",
                     "option_value": "bad algorithm",
-                    "allowed_values": ("2nodelms", "ffsplit", "lms"),
+                    "allowed_values": ("ffsplit", "lms"),
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -1909,7 +1806,7 @@ quorum {
                     {
                         "option_name": "algorithm",
                         "option_value": "bad algorithm",
-                        "allowed_values": ("2nodelms", "ffsplit", "lms"),
+                        "allowed_values": ("ffsplit", "lms"),
                     },
                 ),
                 (

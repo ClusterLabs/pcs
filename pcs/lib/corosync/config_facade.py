@@ -257,10 +257,6 @@ class ConfigFacade(object):
         self.__update_qdevice_votes()
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
-        # update_two_node sets self._need_qdevice_reload when changing an
-        # algorithm lms <-> 2nodelms. We don't care about that, it's not really
-        # a change, as there was no qdevice before. So we override it.
-        self._need_qdevice_reload = False
 
     def update_quorum_device(
         self, report_processor, model_options, generic_options,
@@ -391,7 +387,7 @@ class ConfigFacade(object):
                     continue
 
             if name == "algorithm":
-                allowed_values = ("2nodelms", "ffsplit", "lms")
+                allowed_values = ("ffsplit", "lms")
                 if value not in allowed_values:
                     report_items.append(reports.invalid_option_value(
                         name, value, allowed_values, severity, forceable
@@ -483,19 +479,6 @@ class ConfigFacade(object):
         else:
             for quorum in self.config.get_sections("quorum"):
                 quorum.del_attributes_by_name("two_node")
-        # update qdevice algorithm "lms" vs "2nodelms"
-        for quorum in self.config.get_sections("quorum"):
-            for device in quorum.get_sections("device"):
-                for net in device.get_sections("net"):
-                    algorithm = None
-                    for dummy_name, value in net.get_attributes("algorithm"):
-                        algorithm = value
-                    if algorithm == "lms" and has_two_nodes:
-                        net.set_attribute("algorithm", "2nodelms")
-                        self._need_qdevice_reload = True
-                    elif algorithm == "2nodelms" and not has_two_nodes:
-                        net.set_attribute("algorithm", "lms")
-                        self._need_qdevice_reload = True
 
     def __update_qdevice_votes(self):
         # ffsplit won't start if votes is missing or not set to 1

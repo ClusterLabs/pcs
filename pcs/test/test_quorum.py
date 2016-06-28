@@ -152,7 +152,7 @@ class DeviceAddTest(TestBase):
 Options:
 Device:
   Model: net
-    algorithm: 2nodelms
+    algorithm: lms
     host: 127.0.0.1
 """
         )
@@ -194,7 +194,7 @@ Error: required option 'host' is missing
         self.assert_pcs_fail(
             "quorum device add a=b timeout=-1 model net host=127.0.0.1 algorithm=x c=d",
             """\
-Error: 'x' is not a valid algorithm value, use 2nodelms, ffsplit, lms, use --force to override
+Error: 'x' is not a valid algorithm value, use ffsplit, lms, use --force to override
 Error: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker, use --force to override
 Error: invalid quorum device option 'a', allowed options are: sync_timeout, timeout, use --force to override
 Error: '-1' is not a valid timeout value, use positive integer, use --force to override
@@ -204,7 +204,7 @@ Error: '-1' is not a valid timeout value, use positive integer, use --force to o
         self.assert_pcs_success(
             "quorum device add a=b timeout=-1 model net host=127.0.0.1 algorithm=x c=d --force",
             """\
-Warning: 'x' is not a valid algorithm value, use 2nodelms, ffsplit, lms
+Warning: 'x' is not a valid algorithm value, use ffsplit, lms
 Warning: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker
 Warning: invalid quorum device option 'a', allowed options are: sync_timeout, timeout
 Warning: '-1' is not a valid timeout value, use positive integer
