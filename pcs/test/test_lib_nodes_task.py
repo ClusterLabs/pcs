@@ -45,20 +45,20 @@ class DistributeCorosyncConfTest(TestCase):
 
         corosync_live_calls = [
             mock.call.set_remote_corosync_conf(
-                "mock node communicator", nodes[0], conf_text
+                "mock node communicator", node_addrs_list[0], conf_text
             ),
             mock.call.set_remote_corosync_conf(
-                "mock node communicator", nodes[1], conf_text
+                "mock node communicator", node_addrs_list[1], conf_text
             ),
         ]
         self.assertEqual(
             len(corosync_live_calls),
             len(mock_corosync_live.mock_calls)
         )
-        mock_corosync_live.set_remote_corosync_conf.assert_has_calls([
-            mock.call("mock node communicator", node_addrs_list[0], conf_text),
-            mock.call("mock node communicator", node_addrs_list[1], conf_text),
-        ], any_order=True)
+        mock_corosync_live.set_remote_corosync_conf.assert_has_calls(
+            corosync_live_calls,
+            any_order=True
+        )
 
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -434,6 +434,134 @@ class CheckCorosyncOfflineTest(TestCase):
                         "node": nodes[1],
                     }
                 )
+            ]
+        )
+
+
+@mock.patch("pcs.lib.nodes_task.qdevice_client.remote_client_stop")
+@mock.patch("pcs.lib.nodes_task.qdevice_client.remote_client_start")
+class QdeviceReloadOnNodesTest(TestCase):
+    def setUp(self):
+        self.mock_reporter = MockLibraryReportProcessor()
+        self.mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)
+
+    def test_success(self, mock_remote_start, mock_remote_stop):
+        nodes = ["node1", "node2"]
+        node_addrs_list = NodeAddressesList(
+            [NodeAddresses(addr) for addr in nodes]
+        )
+
+        lib.qdevice_reload_on_nodes(
+            self.mock_communicator,
+            self.mock_reporter,
+            node_addrs_list
+        )
+
+        node_calls = [
+            mock.call(
+                self.mock_reporter, self.mock_communicator, node_addrs_list[0]
+            ),
+            mock.call(
+                self.mock_reporter, self.mock_communicator, node_addrs_list[1]
+            ),
+        ]
+        self.assertEqual(len(node_calls), len(mock_remote_stop.mock_calls))
+        self.assertEqual(len(node_calls), len(mock_remote_start.mock_calls))
+        mock_remote_stop.assert_has_calls(node_calls, any_order=True)
+        mock_remote_start.assert_has_calls(node_calls, any_order=True)
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CLIENT_RELOAD_STARTED,
+                    {}
+                ),
+            ]
+        )
+
+    def test_fail_doesnt_prevent_start(
+        self, mock_remote_start, mock_remote_stop
+    ):
+        nodes = ["node1", "node2"]
+        node_addrs_list = NodeAddressesList(
+            [NodeAddresses(addr) for addr in nodes]
+        )
+        def raiser(reporter, communicator, node):
+            if node.ring0 == nodes[1]:
+                raise NodeAuthenticationException(
+                    node.label, "command", "HTTP error: 401"
+                )
+        mock_remote_stop.side_effect = raiser
+
+        assert_raise_library_error(
+            lambda: lib.qdevice_reload_on_nodes(
+                self.mock_communicator,
+                self.mock_reporter,
+                node_addrs_list
+            ),
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                {
+                    "node": nodes[1],
+                    "command": "command",
+                    "reason" : "HTTP error: 401",
+                },
+                report_codes.SKIP_OFFLINE_NODES
+            )
+        )
+
+        node_calls = [
+            mock.call(
+                self.mock_reporter, self.mock_communicator, node_addrs_list[0]
+            ),
+            mock.call(
+                self.mock_reporter, self.mock_communicator, node_addrs_list[1]
+            ),
+        ]
+        self.assertEqual(len(node_calls), len(mock_remote_stop.mock_calls))
+        self.assertEqual(len(node_calls), len(mock_remote_start.mock_calls))
+        mock_remote_stop.assert_has_calls(node_calls, any_order=True)
+        mock_remote_start.assert_has_calls(node_calls, any_order=True)
+
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_CLIENT_RELOAD_STARTED,
+                    {}
+                ),
+                # why the same error twice?
+                # 1. Tested piece of code calls a function which puts an error
+                # into the reporter. The reporter raises an exception. The
+                # exception is caught in the tested piece of code, stored, and
+                # later put to reporter again.
+                # 2. Mock reporter remembers everything that goes through it
+                # and by the machanism described in 1 the error goes througt it
+                # twice.
+                (
+                    severity.ERROR,
+                    report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                    {
+                        "node": nodes[1],
+                        "command": "command",
+                        "reason" : "HTTP error: 401",
+                    },
+                    report_codes.SKIP_OFFLINE_NODES
+                ),
+                (
+                    severity.ERROR,
+                    report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                    {
+                        "node": nodes[1],
+                        "command": "command",
+                        "reason" : "HTTP error: 401",
+                    },
+                    report_codes.SKIP_OFFLINE_NODES
+                ),
             ]
         )
 

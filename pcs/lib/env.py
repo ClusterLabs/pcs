@@ -22,6 +22,7 @@ from pcs.lib.corosync.live import (
 from pcs.lib.nodes_task import (
     distribute_corosync_conf,
     check_corosync_offline_on_nodes,
+    qdevice_reload_on_nodes,
 )
 from pcs.lib.pacemaker import (
     get_cib,
@@ -153,14 +154,17 @@ class LibraryEnvironment(object):
                 corosync_conf_data,
                 skip_offline_nodes
             )
-            if (
-                not corosync_conf_facade.need_stopped_cluster
-                and
-                is_service_running(self.cmd_runner(), "corosync")
-            ):
+            if is_service_running(self.cmd_runner(), "corosync"):
                 reload_corosync_config(self.cmd_runner())
                 self.report_processor.process(
                     reports.corosync_config_reloaded()
+                )
+            if corosync_conf_facade.need_qdevice_reload:
+                qdevice_reload_on_nodes(
+                    self.node_communicator(),
+                    self.report_processor,
+                    node_list,
+                    skip_offline_nodes
                 )
         else:
             self._corosync_conf_data = corosync_conf_data

@@ -52,6 +52,8 @@ class ConfigFacade(object):
         self._config = parsed_config
         # set to True if changes cannot be applied on running cluster
         self._need_stopped_cluster = False
+        # set to True if qdevice reload is required to apply changes
+        self._need_qdevice_reload = False
 
     @property
     def config(self):
@@ -60,6 +62,10 @@ class ConfigFacade(object):
     @property
     def need_stopped_cluster(self):
         return self._need_stopped_cluster
+
+    @property
+    def need_qdevice_reload(self):
+        return self._need_qdevice_reload
 
     def get_cluster_name(self):
         cluster_name = ""
@@ -215,7 +221,6 @@ class ConfigFacade(object):
             "last_man_standing": "",
             "last_man_standing_window": "",
         }
-        need_stopped_cluster = False
         # remove old device settings
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         for quorum in quorum_section_list:
@@ -227,7 +232,7 @@ class ConfigFacade(object):
                     and
                     value not in ["", "0"]
                 ):
-                    need_stopped_cluster = True
+                    self._need_stopped_cluster = True
         # remove conflicting quorum options
         attrs_to_remove = {
             "allow_downscale": "",
@@ -252,10 +257,10 @@ class ConfigFacade(object):
         self.__update_qdevice_votes()
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
-        # update_two_node sets self._need_stopped_cluster when changing an
+        # update_two_node sets self._need_qdevice_reload when changing an
         # algorithm lms <-> 2nodelms. We don't care about that, it's not really
         # a change, as there was no qdevice before. So we override it.
-        self._need_stopped_cluster = need_stopped_cluster
+        self._need_qdevice_reload = False
 
     def update_quorum_device(
         self, report_processor, model_options, generic_options,
@@ -300,7 +305,7 @@ class ConfigFacade(object):
         self.__update_qdevice_votes()
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
-        self._need_stopped_cluster = True
+        self._need_qdevice_reload = True
 
     def remove_quorum_device(self):
         """
@@ -487,10 +492,10 @@ class ConfigFacade(object):
                         algorithm = value
                     if algorithm == "lms" and has_two_nodes:
                         net.set_attribute("algorithm", "2nodelms")
-                        self._need_stopped_cluster = True
+                        self._need_qdevice_reload = True
                     elif algorithm == "2nodelms" and not has_two_nodes:
                         net.set_attribute("algorithm", "lms")
-                        self._need_stopped_cluster = True
+                        self._need_qdevice_reload = True
 
     def __update_qdevice_votes(self):
         # ffsplit won't start if votes is missing or not set to 1

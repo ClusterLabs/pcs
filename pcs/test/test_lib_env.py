@@ -235,13 +235,24 @@ class LibraryEnvironmentTest(TestCase):
             )]
         )
 
+    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
     @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
     @mock.patch("pcs.lib.env.reload_corosync_config")
     @mock.patch("pcs.lib.env.distribute_corosync_conf")
     @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @mock.patch.object(
+        LibraryEnvironment,
+        "node_communicator",
+        lambda self: "mock node communicator"
+    )
+    @mock.patch.object(
+        LibraryEnvironment,
+        "cmd_runner",
+        lambda self: "mock cmd runner"
+    )
     def test_corosync_conf_set(
         self, mock_get_corosync, mock_distribute, mock_reload,
-        mock_check_offline
+        mock_check_offline, mock_qdevice_reload
     ):
         corosync_data = "totem {\n    version: 2\n}\n"
         new_corosync_data = "totem {\n    version: 3\n}\n"
@@ -266,7 +277,9 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(0, mock_get_corosync.call_count)
         mock_check_offline.assert_not_called()
         mock_reload.assert_not_called()
+        mock_qdevice_reload.assert_not_called()
 
+    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
     @mock.patch("pcs.lib.env.reload_corosync_config")
     @mock.patch("pcs.lib.env.is_service_running")
     @mock.patch("pcs.lib.env.distribute_corosync_conf")
@@ -287,7 +300,8 @@ class LibraryEnvironmentTest(TestCase):
         lambda self: "mock cmd runner"
     )
     def test_corosync_conf_not_set_online(
-        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload
+        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload,
+        mock_qdevice_reload
     ):
         corosync_data = open(rc("corosync.conf")).read()
         new_corosync_data = corosync_data.replace("version: 2", "version: 3")
@@ -313,7 +327,9 @@ class LibraryEnvironmentTest(TestCase):
         )
         mock_is_running.assert_called_once_with("mock cmd runner", "corosync")
         mock_reload.assert_called_once_with("mock cmd runner")
+        mock_qdevice_reload.assert_not_called()
 
+    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
     @mock.patch("pcs.lib.env.reload_corosync_config")
     @mock.patch("pcs.lib.env.is_service_running")
     @mock.patch("pcs.lib.env.distribute_corosync_conf")
@@ -334,7 +350,8 @@ class LibraryEnvironmentTest(TestCase):
         lambda self: "mock cmd runner"
     )
     def test_corosync_conf_not_set_offline(
-        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload
+        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload,
+        mock_qdevice_reload
     ):
         corosync_data = open(rc("corosync.conf")).read()
         new_corosync_data = corosync_data.replace("version: 2", "version: 3")
@@ -360,9 +377,68 @@ class LibraryEnvironmentTest(TestCase):
         )
         mock_is_running.assert_called_once_with("mock cmd runner", "corosync")
         mock_reload.assert_not_called()
+        mock_qdevice_reload.assert_not_called()
 
+    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
     @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
     @mock.patch("pcs.lib.env.reload_corosync_config")
+    @mock.patch("pcs.lib.env.is_service_running")
+    @mock.patch("pcs.lib.env.distribute_corosync_conf")
+    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @mock.patch.object(
+        CorosyncConfigFacade,
+        "get_nodes",
+        lambda self: "mock node list"
+    )
+    @mock.patch.object(
+        LibraryEnvironment,
+        "node_communicator",
+        lambda self: "mock node communicator"
+    )
+    @mock.patch.object(
+        LibraryEnvironment,
+        "cmd_runner",
+        lambda self: "mock cmd runner"
+    )
+    def test_corosync_conf_not_set_need_qdevice_reload_success(
+        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload,
+        mock_check_offline, mock_qdevice_reload
+    ):
+        corosync_data = open(rc("corosync.conf")).read()
+        new_corosync_data = corosync_data.replace("version: 2", "version: 3")
+        mock_get_corosync.return_value = corosync_data
+        mock_is_running.return_value = True
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+
+        self.assertTrue(env.is_corosync_conf_live)
+
+        self.assertEqual(corosync_data, env.get_corosync_conf_data())
+        self.assertEqual(corosync_data, env.get_corosync_conf().config.export())
+        self.assertEqual(2, mock_get_corosync.call_count)
+
+        conf_facade = CorosyncConfigFacade.from_string(new_corosync_data)
+        conf_facade._need_qdevice_reload = True
+        env.push_corosync_conf(conf_facade)
+        mock_check_offline.assert_not_called()
+        mock_distribute.assert_called_once_with(
+            "mock node communicator",
+            self.mock_reporter,
+            "mock node list",
+            new_corosync_data,
+            False
+        )
+        mock_reload.assert_called_once_with("mock cmd runner")
+        mock_qdevice_reload.assert_called_once_with(
+            "mock node communicator",
+            self.mock_reporter,
+            "mock node list",
+            False
+        )
+
+    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
+    @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
+    @mock.patch("pcs.lib.env.reload_corosync_config")
+    @mock.patch("pcs.lib.env.is_service_running")
     @mock.patch("pcs.lib.env.distribute_corosync_conf")
     @mock.patch("pcs.lib.env.get_local_corosync_conf")
     @mock.patch.object(
@@ -376,12 +452,13 @@ class LibraryEnvironmentTest(TestCase):
         lambda self: "mock node communicator"
     )
     def test_corosync_conf_not_set_need_offline_success(
-        self, mock_get_corosync, mock_distribute, mock_reload,
-        mock_check_offline
+        self, mock_get_corosync, mock_distribute, mock_is_running, mock_reload,
+        mock_check_offline, mock_qdevice_reload
     ):
         corosync_data = open(rc("corosync.conf")).read()
         new_corosync_data = corosync_data.replace("version: 2", "version: 3")
         mock_get_corosync.return_value = corosync_data
+        mock_is_running.return_value = False
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertTrue(env.is_corosync_conf_live)
@@ -407,7 +484,9 @@ class LibraryEnvironmentTest(TestCase):
             False
         )
         mock_reload.assert_not_called()
+        mock_qdevice_reload.assert_not_called()
 
+    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
     @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
     @mock.patch("pcs.lib.env.reload_corosync_config")
     @mock.patch("pcs.lib.env.distribute_corosync_conf")
@@ -424,7 +503,7 @@ class LibraryEnvironmentTest(TestCase):
     )
     def test_corosync_conf_not_set_need_offline_fail(
         self, mock_get_corosync, mock_distribute, mock_reload,
-        mock_check_offline
+        mock_check_offline, mock_qdevice_reload
     ):
         corosync_data = open(rc("corosync.conf")).read()
         new_corosync_data = corosync_data.replace("version: 2", "version: 3")
@@ -460,6 +539,7 @@ class LibraryEnvironmentTest(TestCase):
         )
         mock_distribute.assert_not_called()
         mock_reload.assert_not_called()
+        mock_qdevice_reload.assert_not_called()
 
     @mock.patch("pcs.lib.env.CommandRunner")
     def test_cmd_runner_no_options(self, mock_runner):

@@ -10,13 +10,17 @@ import json
 from pcs.common import report_codes
 from pcs.common.tools import run_parallel as tools_run_parallel
 from pcs.lib import reports
-from pcs.lib.errors import ReportItemSeverity
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.external import (
     NodeCommunicator,
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
+    parallel_nodes_communication_helper,
 )
-from pcs.lib.corosync import live as corosync_live
+from pcs.lib.corosync import (
+    live as corosync_live,
+    qdevice_client,
+)
 
 
 def distribute_corosync_conf(
@@ -126,6 +130,40 @@ def check_corosync_offline_on_nodes(
     )
     reporter.process_list(report_items)
 
+def qdevice_reload_on_nodes(
+    node_communicator, reporter, node_addr_list, skip_offline_nodes=False
+):
+    """
+    Reload corosync-qdevice configuration on cluster nodes
+    NodeAddressesList node_addr_list nodes to reload config on
+    bool skip_offline_nodes don't raise an error on node communication errors
+    """
+    reporter.process(reports.qdevice_client_reload_started())
+    parallel_params = [
+        [(reporter, node_communicator, node), {}]
+        for node in node_addr_list
+    ]
+    # catch an exception so we try to start qdevice on nodes where we stopped it
+    report_items = []
+    try:
+        parallel_nodes_communication_helper(
+            qdevice_client.remote_client_stop,
+            parallel_params,
+            reporter,
+            skip_offline_nodes
+        )
+    except LibraryError as e:
+        report_items.extend(e.args)
+    try:
+        parallel_nodes_communication_helper(
+            qdevice_client.remote_client_start,
+            parallel_params,
+            reporter,
+            skip_offline_nodes
+        )
+    except LibraryError as e:
+        report_items.extend(e.args)
+    reporter.process_list(report_items)
 
 def node_check_auth(communicator, node):
     """

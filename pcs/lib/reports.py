@@ -654,6 +654,15 @@ def qdevice_remove_or_cluster_stop_needed():
         "You need to stop the cluster or remove qdevice from cluster to continue"
     )
 
+def qdevice_client_reload_started():
+    """
+    qdevice client configuration is about to be reloaded on nodes
+    """
+    return ReportItem.info(
+        report_codes.QDEVICE_CLIENT_RELOAD_STARTED,
+        "Reloading qdevice configuration on nodes..."
+    )
+
 def qdevice_already_initialized(model):
     """
     cannot create qdevice on local host, it has been already created
