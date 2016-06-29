@@ -21,6 +21,8 @@ from pcs import (
     constraint,
     settings,
 )
+from pcs.settings import pacemaker_wait_timeout_status as \
+    PACEMAKER_WAIT_TIMEOUT_STATUS
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
 from pcs.lib.external import get_systemd_services
@@ -31,7 +33,6 @@ from pcs.lib.pacemaker_values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
 
 
-PACEMAKER_WAIT_TIMEOUT_STATUS = 62
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
 def resource_cmd(argv):

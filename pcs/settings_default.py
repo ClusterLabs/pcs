@@ -40,3 +40,4 @@ ocf_resources = os.path.join(ocf_root, "resource.d/")
 nagios_metadata_path = "/usr/share/pacemaker/nagios/plugins-metadata/"
 sbd_watchdog_default = "/dev/watchdog"
 sbd_config = "/etc/sysconfig/sbd"
+pacemaker_wait_timeout_status = 62

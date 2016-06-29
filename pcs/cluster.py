@@ -1171,6 +1171,9 @@ def cluster_push(argv):
 
     filename = None
     scope = None
+    timeout = None
+    if "--wait" in utils.pcs_options:
+        timeout = utils.validate_wait_get_timeout()
     for arg in argv:
         if "=" not in arg:
             filename = arg
@@ -1206,8 +1209,20 @@ def cluster_push(argv):
     output, retval = utils.run(command)
     if retval != 0:
         utils.err("unable to push cib\n" + output)
-    else:
-        print("CIB updated")
+    print("CIB updated")
+    if "--wait" not in utils.pcs_options:
+        return
+    cmd = ["crm_resource", "--wait"]
+    if timeout:
+        cmd.extend(["--timeout", timeout])
+    output, retval = utils.run(cmd)
+    if retval != 0:
+        msg = []
+        if retval == settings.pacemaker_wait_timeout_status:
+            msg.append("waiting timeout")
+        if output:
+            msg.append("\n" + output)
+        utils.err("\n".join(msg).strip())
 
 def cluster_edit(argv):
     if 'EDITOR' in os.environ:
