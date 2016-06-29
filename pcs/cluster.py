@@ -1399,6 +1399,8 @@ def cluster_node(argv):
             else:
                 print("%s: Corosync updated" % my_node)
                 corosync_conf = output
+        # corosync.conf must be reloaded before the new node is started
+        output, retval = utils.reloadCorosync()
         if corosync_conf != None:
             # send local cluster pcsd configs to the new node
             # may be used for sending corosync config as well in future
@@ -1456,7 +1458,6 @@ def cluster_node(argv):
             pcsd.pcsd_sync_certs([node0], exit_after_error=False)
         else:
             utils.err("Unable to update any nodes")
-        output, retval = utils.reloadCorosync()
         if utils.is_cman_with_udpu_transport():
             print("Warning: Using udpu transport on a CMAN cluster, "
                 + "cluster restart is required to apply node addition")
