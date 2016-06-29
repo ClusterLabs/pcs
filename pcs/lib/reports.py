@@ -627,6 +627,21 @@ def corosync_config_parser_other_error():
         "Unable to parse corosync config"
     )
 
+def corosync_options_incompatible_with_qdevice(options):
+    """
+    cannot set specified corosync options when qdevice is in use
+    iterable options incompatible options names
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE,
+        "These options cannot be set when the cluster uses a quorum device: "
+        + "{options_names_str}",
+        info={
+            "options_names": options,
+            "options_names_str": ", ".join(sorted(options)),
+        }
+    )
+
 def qdevice_already_defined():
     """
     qdevice is already set up in a cluster, when it was expected not to be

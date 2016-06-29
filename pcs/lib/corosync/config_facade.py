@@ -22,6 +22,12 @@ class ConfigFacade(object):
         "last_man_standing_window",
         "wait_for_all",
     )
+    QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE = (
+        "auto_tie_breaker",
+        "last_man_standing",
+        "last_man_standing_window",
+    )
+
 
     @classmethod
     def from_string(cls, config_string):
@@ -125,8 +131,9 @@ class ConfigFacade(object):
 
     def __validate_quorum_options(self, options):
         report_items = []
+        has_qdevice = self.has_quorum_device()
+        qdevice_incompatible_options = []
         for name, value in sorted(options.items()):
-
             allowed_names = self.__class__.QUORUM_OPTIONS
             if name not in allowed_names:
                 report_items.append(
@@ -136,6 +143,13 @@ class ConfigFacade(object):
 
             if value == "":
                 continue
+
+            if (
+                has_qdevice
+                and
+                name in self.__class__.QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE
+            ):
+                qdevice_incompatible_options.append(name)
 
             if name == "last_man_standing_window":
                 if not value.isdigit():
@@ -149,6 +163,13 @@ class ConfigFacade(object):
                     report_items.append(reports.invalid_option_value(
                         name, value, allowed_values
                     ))
+
+        if qdevice_incompatible_options:
+            report_items.append(
+                reports.corosync_options_incompatible_with_qdevice(
+                    qdevice_incompatible_options
+                )
+            )
 
         return report_items
 
@@ -216,11 +237,10 @@ class ConfigFacade(object):
         )
 
         # configuration cleanup
-        remove_need_stopped_cluster = {
-            "auto_tie_breaker": "",
-            "last_man_standing": "",
-            "last_man_standing_window": "",
-        }
+        remove_need_stopped_cluster = dict([
+            (name, "")
+            for name in self.__class__.QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE
+        ])
         # remove old device settings
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         for quorum in quorum_section_list:

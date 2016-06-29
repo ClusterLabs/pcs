@@ -586,6 +586,54 @@ quorum {
             facade.get_quorum_options()
         )
 
+    def test_qdevice_incompatible_options(self):
+        config = open(rc("corosync-3nodes-qdevice.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        options = {
+            "auto_tie_breaker": "1",
+            "last_man_standing": "1",
+            "last_man_standing_window": "250",
+        }
+        assert_raise_library_error(
+            lambda: facade.set_quorum_options(reporter, options),
+            (
+                severity.ERROR,
+                report_codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE,
+                {
+                    "options_names": [
+                        "auto_tie_breaker",
+                        "last_man_standing",
+                        "last_man_standing_window",
+                    ],
+                }
+            )
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        self.assertEqual(
+            lib.ConfigFacade.from_string(config).get_quorum_options(),
+            facade.get_quorum_options()
+        )
+
+    def test_qdevice_compatible_options(self):
+        config = open(rc("corosync-3nodes-qdevice.conf")).read()
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        expected_options = {
+            "wait_for_all": "1",
+        }
+        facade.set_quorum_options(reporter, expected_options)
+
+        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        test_facade = lib.ConfigFacade.from_string(facade.config.export())
+        self.assertEqual(
+            expected_options,
+            test_facade.get_quorum_options()
+        )
+        self.assertEqual([], reporter.report_item_list)
+
 
 class HasQuorumDeviceTest(TestCase):
     def test_empty_config(self):
