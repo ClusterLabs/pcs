@@ -74,7 +74,7 @@ def run_tests(tests, verbose=False, color=False):
         verbosity=2 if verbose else 1,
         resultclass=resultclass
     )
-    testRunner.run(tests)
+    return testRunner.run(tests)
 
 put_package_to_path()
 explicitly_enumerated_tests = [
@@ -85,7 +85,7 @@ explicitly_enumerated_tests = [
         "--all-but",
     )
 ]
-run_tests(
+test_result = run_tests(
     discover_tests(explicitly_enumerated_tests, "--all-but" in sys.argv),
     verbose="-v" in sys.argv,
     color=(
@@ -99,6 +99,8 @@ run_tests(
         )
     ),
 )
+if not test_result.wasSuccessful():
+    sys.exit(1)
 
 # assume that we are in pcs root dir
 #
