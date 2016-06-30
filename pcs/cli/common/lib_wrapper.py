@@ -116,6 +116,7 @@ def load_module(env, middleware_factory, name):
                 "add_device": quorum.add_device,
                 "get_config": quorum.get_config,
                 "remove_device": quorum.remove_device,
+                "set_expected_votes_live": quorum.set_expected_votes_live,
                 "set_options": quorum.set_options,
                 "status": quorum.status_text,
                 "status_device": quorum.status_device_text,

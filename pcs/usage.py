@@ -1352,6 +1352,10 @@ Commands:
         to set up configuration properly unless old and new host is the same
         machine.
 
+    expected-votes <votes>
+        Set expected votes in the live cluster to specified value.  This only
+        affects the live cluster, not changes any configuration files.
+
     unblock [--force]
         Cancel waiting for all nodes when establishing quorum.  Useful in
         situations where you know the cluster is inquorate, but you are

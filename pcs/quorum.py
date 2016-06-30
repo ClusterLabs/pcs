@@ -28,6 +28,8 @@ def quorum_cmd(lib, argv, modificators):
             usage.quorum(argv)
         elif sub_cmd == "config":
             quorum_config_cmd(lib, argv_next, modificators)
+        elif sub_cmd == "expected-votes":
+            quorum_expected_votes_cmd(lib, argv_next, modificators)
         elif sub_cmd == "status":
             quorum_status_cmd(lib, argv_next, modificators)
         elif sub_cmd == "device":
@@ -100,6 +102,11 @@ def quorum_config_to_str(config):
         lines.extend(indent(model_settings))
 
     return lines
+
+def quorum_expected_votes_cmd(lib, argv, modificators):
+    if len(argv) != 1:
+        raise CmdLineInputError()
+    lib.quorum.set_expected_votes_live(argv[0])
 
 def quorum_status_cmd(lib, argv, modificators):
     if argv:

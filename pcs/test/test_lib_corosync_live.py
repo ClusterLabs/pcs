@@ -141,3 +141,45 @@ class GetQuorumStatusTextTest(TestCase):
         self.mock_runner.run.assert_called_once_with([
             self.quorum_tool, "-p"
         ])
+
+
+class SetExpectedVotesTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
+
+    def path(self, name):
+        return os.path.join(settings.corosync_binaries, name)
+
+    def test_success(self):
+        cmd_retval = 0
+        cmd_output = "cmd output"
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        mock_runner.run.return_value = (cmd_output, cmd_retval)
+
+        lib.set_expected_votes(mock_runner, 3)
+
+        mock_runner.run.assert_called_once_with([
+            self.path("corosync-quorumtool"), "-e", "3"
+        ])
+
+    def test_error(self):
+        cmd_retval = 1
+        cmd_output = "cmd output"
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        mock_runner.run.return_value = (cmd_output, cmd_retval)
+
+        assert_raise_library_error(
+            lambda: lib.set_expected_votes(mock_runner, 3),
+            (
+                severity.ERROR,
+                report_codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR,
+                {
+                    "reason": cmd_output,
+                }
+            )
+        )
+
+        mock_runner.run.assert_called_once_with([
+            self.path("corosync-quorumtool"), "-e", "3"
+        ])
+

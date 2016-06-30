@@ -1750,3 +1750,46 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                 "model: net\n        bad_option: bad_value"
             )
         )
+
+
+@mock.patch("pcs.lib.commands.quorum.corosync_live.set_expected_votes")
+@mock.patch.object(
+    LibraryEnvironment,
+    "cmd_runner",
+    lambda self: "mock_runner"
+)
+class SetExpectedVotesLiveTest(TestCase, CmanMixin):
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
+    def test_disabled_on_cman(self, mock_set_votes):
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        self.assert_disabled_on_cman(
+            lambda: lib.set_expected_votes_live(lib_env, "5")
+        )
+        mock_set_votes.assert_not_called()
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_success(self, mock_set_votes):
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        lib.set_expected_votes_live(lib_env, "5")
+        mock_set_votes.assert_called_once_with("mock_runner", 5)
+
+    @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
+    def test_invalid_votes(self, mock_set_votes):
+        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        assert_raise_library_error(
+            lambda: lib.set_expected_votes_live(lib_env, "-5"),
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "expected votes",
+                    "option_value": "-5",
+                    "allowed_values": "positive integer",
+                }
+            )
+        )
+        mock_set_votes.assert_not_called()

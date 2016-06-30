@@ -563,6 +563,9 @@ Add/Change quorum device options.  Generic options and model options are all doc
 
 WARNING: If you want to change "host" option of qdevice model net, use "pcs quorum device remove" and "pcs quorum device add" commands to set up configuration properly unless old and new host is the same machine.
 .TP
+expected\-votes <votes>
+Set expected votes in the live cluster to specified value.  This only affects the live cluster, not changes any configuration files.
+.TP
 unblock [\fB\-\-force\fR]
 Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be powered off and to have no access to shared resources.
 

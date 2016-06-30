@@ -565,6 +565,19 @@ def corosync_quorum_get_status_error(reason):
         }
     )
 
+def corosync_quorum_set_expected_votes_error(reason):
+    """
+    unable to set expcted votes in a live cluster
+    string reason an error message
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR,
+        "Unable to set expected votes: {reason}",
+        info={
+            "reason": reason,
+        }
+    )
+
 def corosync_config_reloaded():
     """
     corosync configuration has been reloaded

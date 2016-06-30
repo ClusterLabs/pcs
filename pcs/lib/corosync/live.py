@@ -62,3 +62,18 @@ def get_quorum_status_text(runner):
             reports.corosync_quorum_get_status_error(output)
         )
     return output
+
+def set_expected_votes(runner, votes):
+    """
+    set expected votes in live cluster to specified value
+    """
+    output, retval = runner.run([
+        os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
+        # format votes to handle the case where they are int
+        "-e", "{0}".format(votes)
+    ])
+    if retval != 0:
+        raise LibraryError(
+            reports.corosync_quorum_set_expected_votes_error(output)
+        )
+    return output

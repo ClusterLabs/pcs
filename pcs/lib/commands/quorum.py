@@ -314,6 +314,27 @@ def _remove_device_model_net(lib_env, cluster_nodes, skip_offline_nodes):
         skip_offline_nodes
     )
 
+def set_expected_votes_live(lib_env, expected_votes):
+    """
+    set expected votes in live cluster to specified value
+    numeric expected_votes desired value of expected votes
+    """
+    if lib_env.is_cman_cluster:
+        raise LibraryError(reports.cman_unsupported_command())
+
+    try:
+        votes_int = int(expected_votes)
+        if votes_int < 1:
+            raise ValueError()
+    except ValueError:
+        raise LibraryError(reports.invalid_option_value(
+            "expected votes",
+            expected_votes,
+            "positive integer"
+        ))
+
+    corosync_live.set_expected_votes(lib_env.cmd_runner(), votes_int)
+
 def __ensure_not_cman(lib_env):
     if lib_env.is_corosync_conf_live and lib_env.is_cman_cluster:
         raise LibraryError(reports.cman_unsupported_command())
