@@ -1272,7 +1272,8 @@ Commands:
 def qdevice(args=[], pout=True):
     output = """
 Usage: pcs qdevice <command>
-Manage quorum device provider on the local host
+Manage quorum device provider on the local host, currently only 'net' model is
+supported.
 
 Commands:
     status <device model> [--full] [<cluster name>]
@@ -1317,7 +1318,7 @@ Commands:
 def quorum(args=[], pout=True):
     output = """
 Usage: pcs quorum <command>
-Manage cluster quorum settings
+Manage cluster quorum settings.
 
 Commands:
     config
@@ -1326,10 +1327,12 @@ Commands:
     status
         Show quorum runtime status.
 
-    device add [generic options] model <device model> [model options]
+    device add [<generic options>] model <device model> [<model options>]
         Add a quorum device to the cluster.  Quorum device needs to be created
         first by "pcs qdevice setup" command.  It is not possible to use more
-        than 1 quorum device in a cluster simultaneously.
+        than one quorum device in a cluster simultaneously.  Generic options,
+        model and model options are all documented in corosync's
+        corosync-qdevice(8) man page.
 
     device remove
         Remove a quorum device from the cluster.
@@ -1338,9 +1341,12 @@ Commands:
         Show quorum device runtime status.  Using --full will give more detailed
         output.
 
-    device update [generic options] [model <model options>]
-        Add/Change quorum device options.  Requires the cluster to be stopped.
-        Note: If you want to change "host" option of qdevice model net, use
+    device update [<generic options>] [model <model options>]
+        Add/Change quorum device options.  Generic options and model options are
+        all documented in corosync's corosync-qdevice(8) man page.  Requires
+        the cluster to be stopped.
+
+        WARNING: If you want to change "host" option of qdevice model net, use
         "pcs quorum device remove" and "pcs quorum device add" commands
         to set up configuration properly unless old and new host is the same
         machine.
