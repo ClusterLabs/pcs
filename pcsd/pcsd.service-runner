@@ -1,0 +1,13 @@
+#!/usr/bin/ruby
+# this file is a pcsd runner callable from a systemd unit
+# it also serves as a holder of a selinux context
+
+# add pcsd to the load path (ruby -I)
+libdir = File.dirname(__FILE__)
+$LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
+
+# change current directory (ruby -C)
+Dir.chdir('/var/lib/pcsd')
+
+# import and run pcsd
+require 'ssl'
