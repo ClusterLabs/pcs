@@ -128,6 +128,7 @@ else
 	install -m 644 pcsd/pcsd.service ${DESTDIR}/${systemddir}/system/
 # ${DESTDIR}${PREFIX}/lib/pcsd/pcsd holds the selinux context
 	install -m 755 pcsd/pcsd.service-runner ${DESTDIR}${PREFIX}/lib/pcsd/pcsd
+	rm ${DESTDIR}${PREFIX}/lib/pcsd/pcsd.service-runner
   else
 	install -m 755 -D pcsd/pcsd ${DESTDIR}/${initdir}/pcsd
   endif
