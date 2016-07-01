@@ -763,7 +763,7 @@ class AddDeviceNetTest(TestCase):
             len(client_setup_calls),
             len(mock_client_setup.mock_calls)
         )
-        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_client_setup.assert_has_calls(client_setup_calls, any_order=True)
         mock_get_cert_request.assert_called_once_with(
             "mock_runner",
             self.cluster_name
@@ -786,7 +786,7 @@ class AddDeviceNetTest(TestCase):
             len(client_import_calls),
             len(mock_import_cert.mock_calls)
         )
-        mock_import_cert.assert_has_calls(client_import_calls)
+        mock_import_cert.assert_has_calls(client_import_calls, any_order=True)
 
     def test_error_get_ca_cert(
         self, mock_get_ca, mock_client_setup, mock_get_cert_request,
@@ -894,7 +894,7 @@ class AddDeviceNetTest(TestCase):
             len(client_setup_calls),
             len(mock_client_setup.mock_calls)
         )
-        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_client_setup.assert_has_calls(client_setup_calls, any_order=True)
 
     def test_error_client_setup_skip_offline(
         self, mock_get_ca, mock_client_setup, mock_get_cert_request,
@@ -959,7 +959,7 @@ class AddDeviceNetTest(TestCase):
             len(client_setup_calls),
             len(mock_client_setup.mock_calls)
         )
-        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_client_setup.assert_has_calls(client_setup_calls, any_order=True)
 
     def test_generate_cert_request_error(
         self, mock_get_ca, mock_client_setup, mock_get_cert_request,
@@ -1004,7 +1004,7 @@ class AddDeviceNetTest(TestCase):
             len(client_setup_calls),
             len(mock_client_setup.mock_calls)
         )
-        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_client_setup.assert_has_calls(client_setup_calls, any_order=True)
         mock_get_cert_request.assert_called_once_with(
             "mock_runner",
             self.cluster_name
@@ -1062,7 +1062,7 @@ class AddDeviceNetTest(TestCase):
             len(client_setup_calls),
             len(mock_client_setup.mock_calls)
         )
-        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_client_setup.assert_has_calls(client_setup_calls, any_order=True)
         mock_get_cert_request.assert_called_once_with(
             "mock_runner",
             self.cluster_name
@@ -1119,7 +1119,7 @@ class AddDeviceNetTest(TestCase):
             len(client_setup_calls),
             len(mock_client_setup.mock_calls)
         )
-        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_client_setup.assert_has_calls(client_setup_calls, any_order=True)
         mock_get_cert_request.assert_called_once_with(
             "mock_runner",
             self.cluster_name
@@ -1201,7 +1201,7 @@ class AddDeviceNetTest(TestCase):
             len(client_setup_calls),
             len(mock_client_setup.mock_calls)
         )
-        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_client_setup.assert_has_calls(client_setup_calls, any_order=True)
         mock_get_cert_request.assert_called_once_with(
             "mock_runner",
             self.cluster_name
@@ -1224,7 +1224,7 @@ class AddDeviceNetTest(TestCase):
             len(client_import_calls),
             len(mock_import_cert.mock_calls)
         )
-        mock_import_cert.assert_has_calls(client_import_calls)
+        mock_import_cert.assert_has_calls(client_import_calls, any_order=True)
 
     def test_client_import_cert_error_skip_offline(
         self, mock_get_ca, mock_client_setup, mock_get_cert_request,
@@ -1282,7 +1282,7 @@ class AddDeviceNetTest(TestCase):
             len(client_setup_calls),
             len(mock_client_setup.mock_calls)
         )
-        mock_client_setup.assert_has_calls(client_setup_calls)
+        mock_client_setup.assert_has_calls(client_setup_calls, any_order=True)
         mock_get_cert_request.assert_called_once_with(
             "mock_runner",
             self.cluster_name
@@ -1305,7 +1305,7 @@ class AddDeviceNetTest(TestCase):
             len(client_import_calls),
             len(mock_import_cert.mock_calls)
         )
-        mock_import_cert.assert_has_calls(client_import_calls)
+        mock_import_cert.assert_has_calls(client_import_calls, any_order=True)
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
@@ -1507,7 +1507,10 @@ class RemoveDeviceNetTest(TestCase):
             len(client_destroy_calls),
             len(mock_client_destroy.mock_calls)
         )
-        mock_client_destroy.assert_has_calls(client_destroy_calls)
+        mock_client_destroy.assert_has_calls(
+            client_destroy_calls,
+            any_order=True
+        )
 
     def test_error_client_destroy(self, mock_client_destroy):
         def raiser(communicator, node):
@@ -1561,7 +1564,10 @@ class RemoveDeviceNetTest(TestCase):
             len(client_destroy_calls),
             len(mock_client_destroy.mock_calls)
         )
-        mock_client_destroy.assert_has_calls(client_destroy_calls)
+        mock_client_destroy.assert_has_calls(
+            client_destroy_calls,
+            any_order=True
+        )
 
     def test_error_client_destroy_skip_offline(self, mock_client_destroy):
         def raiser(communicator, node):
@@ -1606,7 +1612,10 @@ class RemoveDeviceNetTest(TestCase):
             len(client_destroy_calls),
             len(mock_client_destroy.mock_calls)
         )
-        mock_client_destroy.assert_has_calls(client_destroy_calls)
+        mock_client_destroy.assert_has_calls(
+            client_destroy_calls,
+            any_order=True
+        )
 
 
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
