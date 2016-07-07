@@ -1821,6 +1821,11 @@ def add_constraint_set_remote(params, request, auth_user)
       auth_user,
       params["resources"].values, params["force"], !params['disable_autocorrect']
     )
+  when "col"
+    retval, error = add_colocation_set_constraint(
+      auth_user,
+      params["resources"].values, params["force"], !params['disable_autocorrect']
+    )
   when "ticket"
     unless params["options"]["ticket"]
       return [400, "Error adding constraint ticket: option ticket missing"]

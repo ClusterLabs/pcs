@@ -2046,6 +2046,7 @@ function auto_show_hide_constraints() {
     "ordering_constraints",
     "ordering_set_constraints",
     "colocation_constraints",
+    "colocation_set_constraints",
     "ticket_constraints",
     "ticket_set_constraints",
     "meta_attributes",

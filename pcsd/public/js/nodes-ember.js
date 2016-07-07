@@ -47,6 +47,11 @@ Pcs = Ember.Application.createWithMixins({
       this.get("available_features").indexOf("ticket_constraints") != -1
     );
   }.property("available_features"),
+  is_supported_constraint_colocation_set: function() {
+    return (
+      this.get("available_features").indexOf("constraint_colocation_set") != -1
+    );
+  }.property("available_features"),
   is_sbd_running: false,
   is_sbd_enabled: false,
   is_sbd_enabled_or_running: function() {
@@ -767,6 +772,7 @@ Pcs.ResourceObj = Ember.Object.extend({
   ordering_constraints: [],
   ordering_set_constraints: [],
   colocation_constraints: [],
+  colocation_set_constraints: [],
 
   get_map: function() {
     var self = this;
@@ -2381,6 +2387,7 @@ function constraint_resort(constraints){
       ordering_constraints: {},
       ordering_set_constraints: {},
       colocation_constraints: {},
+      colocation_set_constraints: {},
     };
   }
 
@@ -2391,6 +2398,7 @@ function constraint_resort(constraints){
 
   var colocations = constraint_resort_part(constraints.rsc_colocation, {
     plain: constraint_colocation_create_resource_keyed_map,
+    with_sets: constraint_set_create_resource_keyed_map,
   });
 
   var locations = constraint_resort_part(constraints.rsc_location, {
@@ -2409,5 +2417,6 @@ function constraint_resort(constraints){
     ticket_constraints: tickets.plain,
     ticket_set_constraints: tickets.with_sets,
     colocation_constraints: colocations.plain,
+    colocation_set_constraints: colocations.with_sets,
   };
 }

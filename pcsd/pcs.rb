@@ -131,6 +131,19 @@ def add_order_set_constraint(
   return retval, stderr.join(' ')
 end
 
+def add_colocation_set_constraint(
+  auth_user, resource_set_list, force=false, autocorrect=true
+)
+  command = [PCS, "constraint", "colocation"]
+  resource_set_list.each { |resource_set|
+    command << "set"
+    command.concat(resource_set)
+  }
+  command << '--force' if force
+  command << '--autocorrect' if autocorrect
+  stdout, stderr, retval = run_cmd(auth_user, *command)
+  return retval, stderr.join(' ')
+end
 
 def add_ticket_constraint(
     auth_user, ticket, resource_id, role, loss_policy,
@@ -1681,7 +1694,11 @@ def get_node_status(auth_user, cib_dom)
       :node_attr => node_attrs_to_v2(get_node_attributes(auth_user, cib_dom)),
       :nodes_utilization => get_nodes_utilization(cib_dom),
       :known_nodes => [],
-      :available_features => ['sbd', 'ticket_constraints']
+      :available_features => [
+        'constraint_colocation_set',
+        'sbd',
+        'ticket_constraints',
+      ]
   }
 
   nodes = get_nodes_status()

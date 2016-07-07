@@ -291,6 +291,9 @@
         {{ordering_constraints-table constraints=resource.ordering_constraints resource_id=resource._id}}
         {{ordering_set_constraints-table constraints=resource.ordering_set_constraints}}
         {{colocation_constraints-table constraints=resource.colocation_constraints}}
+        {{#if Pcs.is_supported_constraint_colocation_set}}
+          {{colocation_set_constraints-table constraints=resource.colocation_set_constraints}}
+        {{/if}}
         {{#if Pcs.is_ticket_constraints_supported}}
           {{ticket_constraints-table constraints=resource.ticket_constraints resource_id=resource._id}}
           {{ticket_set_constraints-table constraints=resource.ticket_set_constraints}}
@@ -694,6 +697,47 @@ Use the 'Add' button to submit the form.">
 		  </td>
 		</tr>
 	      </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/colocation_set_constraints-table">
+    <table style="clear:left;float:left;">
+          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="colocation_set_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Colocation Set Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+          <tr><td>
+            <div id="locationdep">
+              <table class="datatable">
+                <tr>
+                  <th>Preference Name/Set of Resources</th>
+                  <th style="text-align: center;">Remove</th>
+                </tr>
+                {{#each cons in constraints}}
+                <tr>
+                  <td>{{cons.id}}</td>
+                  <td {{bind-attr constraint_id="cons.id"}} style="text-align:center;">
+                    <a onclick="return remove_constraint_action(this);" href="#" class="remove">X</a>
+                  </td>
+                </tr>
+                {{#each set in cons.sets}}
+                <tr>
+                  <td style="padding-left:2em;">Set:{{#each rsc in set.resources}} {{rsc}}{{/each}}</td>
+                  <td></td>
+                </tr>
+                {{/each}}
+                {{else}}
+                <tr><td style="color: gray;">NONE</td><td></td></tr>
+                {{/each}}
+                <tr id="new_res_col_set" title="Enter the resources you want to be in one set into the 'Set' field separated by space.
+Use the 'New Set' button to create more sets.
+Use the 'Add' button to submit the form.">
+                  <td>Set: <input type="text" name="resource_ids[]"></td>
+                  <td style="vertical-align: bottom;">
+                    <button type="button" onclick="new_constraint_set_row('#new_res_col_set');" name="new-row">New Set</button>
+                    <button type="button" onclick="add_constraint_set('#new_res_col_set', 'col', false);" name="add">Add</button>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td></tr>
+        </table>
   </script>
 
   <script type="text/x-handlebars" data-template-name="components/meta_attributes-table">
