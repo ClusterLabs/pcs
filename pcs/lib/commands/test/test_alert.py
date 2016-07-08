@@ -361,19 +361,17 @@ class AddRecipientTest(TestCase):
     def test_recipient_already_exists(self):
         assert_raise_library_error(
             lambda: cmd_alert.add_recipient(
-                self.mock_env, "alert", "value1", {}, {}
+                self.mock_env, "alert", "value1", {}, {},
+                recipient_id="alert-recipient"
             ),
             (
                 Severities.ERROR,
-                report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
-                {
-                    "recipient": "value1",
-                    "alert": "alert"
-                }
+                report_codes.ID_ALREADY_EXISTS,
+                {"id": "alert-recipient"}
             )
         )
 
-    def test_success(self):
+    def test_without_id(self):
         cmd_alert.add_recipient(
             self.mock_env,
             "alert",
@@ -411,6 +409,58 @@ class AddRecipientTest(TestCase):
                     >
                         <nvpair
                             id="alert-recipient-1-instance_attributes-attr1"
+                            name="attr1"
+                            value="val1"
+                        />
+                    </instance_attributes>
+                </recipient>
+            </alert>
+        </alerts>
+    </configuration>
+</cib>
+            """,
+            self.mock_env._get_cib_xml()
+        )
+
+    def test_with_id(self):
+        cmd_alert.add_recipient(
+            self.mock_env,
+            "alert",
+            "value",
+            {"attr1": "val1"},
+            {
+                "attr2": "val2",
+                "attr1": "val1"
+            },
+            recipient_id="my-recipient"
+        )
+        assert_xml_equal(
+            """
+<cib validate-with="pacemaker-2.5">
+    <configuration>
+        <alerts>
+            <alert id="alert" path="path">
+                <recipient id="alert-recipient" value="value1"/>
+                <recipient id="my-recipient" value="value">
+                    <meta_attributes
+                        id="my-recipient-meta_attributes"
+                    >
+                        <nvpair
+                            id="my-recipient-meta_attributes-attr1"
+                            name="attr1"
+                            value="val1"
+                        />
+                        <nvpair
+                            id="my-recipient-meta_attributes-attr2"
+                            name="attr2"
+                            value="val2"
+                        />
+                    </meta_attributes>
+                    <instance_attributes
+                        id="my-recipient-instance_attributes"
+                    >
+                        <nvpair
+                            id="my-recipient-instance_attributes-attr1"
                             name="attr1"
                             value="val1"
                         />
@@ -470,29 +520,29 @@ class UpdateRecipientTest(TestCase):
             self.mock_log, self.mock_rep, cib_data=cib
         )
 
-    def test_alert_not_found(self):
+    def test_empty_value(self):
         assert_raise_library_error(
             lambda: cmd_alert.update_recipient(
-                self.mock_env, "unknown", "recipient", {}, {}
+                self.mock_env, "alert-recipient-1", {}, {}, recipient_value=""
             ),
             (
                 Severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "unknown"}
+                report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
+                {"recipient": ""}
             )
         )
 
     def test_recipient_not_found(self):
         assert_raise_library_error(
             lambda: cmd_alert.update_recipient(
-                self.mock_env, "alert", "recipient", {}, {}
+                self.mock_env, "recipient", {}, {}
             ),
             (
                 Severities.ERROR,
-                report_codes.CIB_ALERT_RECIPIENT_NOT_FOUND,
+                report_codes.ID_NOT_FOUND,
                 {
-                    "recipient": "recipient",
-                    "alert": "alert"
+                    "id": "recipient",
+                    "id_description": "Recipient"
                 }
             )
         )
@@ -500,14 +550,14 @@ class UpdateRecipientTest(TestCase):
     def test_update_all(self):
         cmd_alert.update_recipient(
             self.mock_env,
-            "alert",
-            "value",
+            "alert-recipient-1",
             {"attr1": "value"},
             {
                 "attr1": "",
                 "attr3": "new_val"
             },
-            "desc"
+            recipient_value="new_val",
+            description="desc"
         )
         assert_xml_equal(
             """
@@ -518,7 +568,7 @@ class UpdateRecipientTest(TestCase):
                 <recipient id="alert-recipient" value="value1"/>
                 <recipient
                     id="alert-recipient-1"
-                    value="value"
+                    value="new_val"
                     description="desc"
                 >
                     <meta_attributes
@@ -575,35 +625,20 @@ class RemoveRecipientTest(TestCase):
             self.mock_log, self.mock_rep, cib_data=cib
         )
 
-    def test_alert_not_found(self):
-        assert_raise_library_error(
-            lambda: cmd_alert.remove_recipient(
-                self.mock_env, "unknown", "recipient"
-            ),
-            (
-                Severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "unknown"}
-            )
-        )
-
     def test_recipient_not_found(self):
         assert_raise_library_error(
             lambda: cmd_alert.remove_recipient(
-                self.mock_env, "alert", "recipient"
+                self.mock_env, "recipient"
             ),
             (
                 Severities.ERROR,
-                report_codes.CIB_ALERT_RECIPIENT_NOT_FOUND,
-                {
-                    "recipient": "recipient",
-                    "alert": "alert"
-                }
+                report_codes.ID_NOT_FOUND,
+                {"id": "recipient"}
             )
         )
 
     def test_success(self):
-        cmd_alert.remove_recipient(self.mock_env, "alert", "value1")
+        cmd_alert.remove_recipient(self.mock_env, "alert-recipient")
         assert_xml_equal(
             """
             <cib validate-with="pacemaker-2.5">

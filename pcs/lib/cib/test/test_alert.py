@@ -15,8 +15,10 @@ from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import(
     assert_raise_library_error,
     assert_xml_equal,
+    assert_report_item_list_equal,
 )
 from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
 
 @mock.patch("pcs.lib.cib.alert.update_nvset")
@@ -129,51 +131,143 @@ class GetAlertByIdTest(TestCase):
         )
 
 
-class GetRecipientTest(TestCase):
+class GetRecipientByIdTest(TestCase):
     def setUp(self):
         self.xml = etree.XML(
             """
-                <alert id="alert-1">
-                    <recipient id="rec-1" value="value1"/>
-                    <recipient id="rec-2" value="value2"/>
-                    <not_recipient value="value3"/>
-                    <recipients>
-                        <recipient id="rec-4" value="value4"/>
-                    </recipients>
-                </alert>
+                <cib>
+                    <configuration>
+                        <alerts>
+                            <alert id="alert-1">
+                                <recipient id="rec-1" value="value1"/>
+                                <not_recipient id="rec-3" value="value3"/>
+                                <recipients>
+                                    <recipient id="rec-4" value="value4"/>
+                                </recipients>
+                            </alert>
+                            <recipient id="rec-2" value="value2"/>
+                        </alerts>
+                        <alert id="alert-2"/>
+                    </configuration>
+                </cib>
             """
         )
 
     def test_exist(self):
         assert_xml_equal(
-            '<recipient id="rec-2" value="value2"/>',
-            etree.tostring(alert.get_recipient(self.xml, "value2")).decode()
+            '<recipient id="rec-1" value="value1"/>',
+            etree.tostring(
+                alert.get_recipient_by_id(self.xml, "rec-1")
+            ).decode()
         )
 
     def test_different_place(self):
         assert_raise_library_error(
-            lambda: alert.get_recipient(self.xml, "value4"),
+            lambda: alert.get_recipient_by_id(self.xml, "rec-4"),
             (
                 severities.ERROR,
-                report_codes.CIB_ALERT_RECIPIENT_NOT_FOUND,
+                report_codes.ID_NOT_FOUND,
                 {
-                    "alert": "alert-1",
-                    "recipient": "value4"
+                    "id": "rec-4",
+                    "id_description": "Recipient"
+                }
+            )
+        )
+
+    def test_not_in_alert(self):
+        assert_raise_library_error(
+            lambda: alert.get_recipient_by_id(self.xml, "rec-2"),
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "rec-2",
+                    "id_description": "Recipient"
                 }
             )
         )
 
     def test_not_recipient(self):
         assert_raise_library_error(
-            lambda: alert.get_recipient(self.xml, "value3"),
+            lambda: alert.get_recipient_by_id(self.xml, "rec-3"),
             (
                 severities.ERROR,
-                report_codes.CIB_ALERT_RECIPIENT_NOT_FOUND,
+                report_codes.ID_NOT_FOUND,
                 {
-                    "alert": "alert-1",
-                    "recipient": "value3"
+                    "id": "rec-3",
+                    "id_description": "Recipient"
                 }
             )
+        )
+
+
+class EnsureRecipientValueIsUniqueTest(TestCase):
+    def setUp(self):
+        self.mock_reporter = MockLibraryReportProcessor()
+        self.alert = etree.Element("alert", id="alert-1")
+        self.recipient = etree.SubElement(
+            self.alert, "recipient", id="rec-1", value="value1"
+        )
+
+    def test_is_unique_no_duplicity_allowed(self):
+        alert.ensure_recipient_value_is_unique(
+            self.mock_reporter, self.alert, "value2"
+        )
+        self.assertEqual(0, len(self.mock_reporter.report_item_list))
+
+    def test_same_recipient_no_duplicity_allowed(self):
+        alert.ensure_recipient_value_is_unique(
+            self.mock_reporter, self.alert, "value1", recipient_id="rec-1"
+        )
+        self.assertEqual(0, len(self.mock_reporter.report_item_list))
+
+    def test_same_recipient_duplicity_allowed(self):
+        alert.ensure_recipient_value_is_unique(
+            self.mock_reporter, self.alert, "value1", recipient_id="rec-1",
+            allow_duplicity=True
+        )
+        self.assertEqual(0, len(self.mock_reporter.report_item_list))
+
+    def test_not_unique_no_duplicity_allowed(self):
+        report_item = (
+            severities.ERROR,
+            report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
+            {
+                "alert": "alert-1",
+                "recipient": "value1"
+            },
+            report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE
+        )
+        assert_raise_library_error(
+            lambda: alert.ensure_recipient_value_is_unique(
+                self.mock_reporter, self.alert, "value1"
+            ),
+            report_item
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list, [report_item]
+        )
+
+    def test_is_unique_duplicity_allowed(self):
+        alert.ensure_recipient_value_is_unique(
+            self.mock_reporter, self.alert, "value2", allow_duplicity=True
+        )
+        self.assertEqual(0, len(self.mock_reporter.report_item_list))
+
+    def test_not_unique_duplicity_allowed(self):
+        alert.ensure_recipient_value_is_unique(
+            self.mock_reporter, self.alert, "value1", allow_duplicity=True
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [(
+                severities.WARNING,
+                report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
+                {
+                    "alert": "alert-1",
+                    "recipient": "value1"
+                }
+            )]
         )
 
 
@@ -462,6 +556,7 @@ class RemoveAlertTest(TestCase):
 
 class AddRecipientTest(TestCase):
     def setUp(self):
+        self.mock_reporter = MockLibraryReportProcessor()
         self.tree = etree.XML(
             """
             <cib>
@@ -476,11 +571,40 @@ class AddRecipientTest(TestCase):
             """
         )
 
-    def test_success(self):
+    def test_with_id(self):
+        assert_xml_equal(
+            '<recipient id="my-recipient" value="value1"/>',
+            etree.tostring(
+                alert.add_recipient(
+                    self.mock_reporter, self.tree, "alert", "value1",
+                    "my-recipient"
+                )
+            ).decode()
+        )
+        assert_xml_equal(
+            """
+            <cib>
+                <configuration>
+                    <alerts>
+                        <alert id="alert" path="/path">
+                            <recipient id="alert-recipient" value="test_val"/>
+                            <recipient id="my-recipient" value="value1"/>
+                        </alert>
+                    </alerts>
+                </configuration>
+            </cib>
+            """,
+            etree.tostring(self.tree).decode()
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_without_id(self):
         assert_xml_equal(
             '<recipient id="alert-recipient-1" value="value1"/>',
             etree.tostring(
-                alert.add_recipient(self.tree, "alert", "value1")
+                alert.add_recipient(
+                    self.mock_reporter, self.tree, "alert", "value1"
+                )
             ).decode()
         )
         assert_xml_equal(
@@ -498,23 +622,85 @@ class AddRecipientTest(TestCase):
             """,
             etree.tostring(self.tree).decode()
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
-    def test_recipient_exist(self):
+    def test_id_exists(self):
         assert_raise_library_error(
-            lambda: alert.add_recipient(self.tree, "alert", "test_val"),
+            lambda: alert.add_recipient(
+                self.mock_reporter, self.tree, "alert", "value1",
+                "alert-recipient"
+            ),
             (
                 severities.ERROR,
+                report_codes.ID_ALREADY_EXISTS,
+                {"id": "alert-recipient"}
+            )
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_duplicity_of_value_not_allowed(self):
+        report_item = (
+            severities.ERROR,
+            report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
+            {
+                "alert": "alert",
+                "recipient": "test_val"
+            },
+            report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE
+        )
+        assert_raise_library_error(
+            lambda: alert.add_recipient(
+                self.mock_reporter, self.tree, "alert", "test_val"
+            ),
+            report_item
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [report_item]
+        )
+
+    def test_duplicity_of_value_allowed(self):
+        assert_xml_equal(
+            '<recipient id="alert-recipient-1" value="test_val"/>',
+            etree.tostring(
+                alert.add_recipient(
+                    self.mock_reporter, self.tree, "alert", "test_val",
+                    allow_same_value=True
+                )
+            ).decode()
+        )
+        assert_xml_equal(
+            """
+            <cib>
+                <configuration>
+                    <alerts>
+                        <alert id="alert" path="/path">
+                            <recipient id="alert-recipient" value="test_val"/>
+                            <recipient id="alert-recipient-1" value="test_val"/>
+                        </alert>
+                    </alerts>
+                </configuration>
+            </cib>
+            """,
+            etree.tostring(self.tree).decode()
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [(
+                severities.WARNING,
                 report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
                 {
-                    "recipient": "test_val",
-                    "alert": "alert"
+                    "alert": "alert",
+                    "recipient": "test_val"
                 }
-            )
+            )]
         )
 
     def test_alert_not_exist(self):
         assert_raise_library_error(
-            lambda: alert.add_recipient(self.tree, "alert1", "test_val"),
+            lambda: alert.add_recipient(
+                self.mock_reporter, self.tree, "alert1", "test_val"
+            ),
             (
                 severities.ERROR,
                 report_codes.CIB_ALERT_NOT_FOUND,
@@ -532,7 +718,8 @@ class AddRecipientTest(TestCase):
             />
             """,
             etree.tostring(alert.add_recipient(
-                self.tree, "alert", "value1", "desc"
+                self.mock_reporter, self.tree, "alert", "value1",
+                description="desc"
             )).decode()
         )
         assert_xml_equal(
@@ -554,10 +741,12 @@ class AddRecipientTest(TestCase):
             """,
             etree.tostring(self.tree).decode()
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
 
 class UpdateRecipientTest(TestCase):
     def setUp(self):
+        self.mock_reporter = MockLibraryReportProcessor()
         self.tree = etree.XML(
             """
             <cib>
@@ -577,6 +766,157 @@ class UpdateRecipientTest(TestCase):
             """
         )
 
+    def test_update_value(self):
+        assert_xml_equal(
+            """
+            <recipient id="alert-recipient" value="new_val"/>
+            """,
+            etree.tostring(alert.update_recipient(
+                self.mock_reporter, self.tree, "alert-recipient",
+                recipient_value="new_val"
+            )).decode()
+        )
+        assert_xml_equal(
+            """
+            <cib>
+                <configuration>
+                    <alerts>
+                        <alert id="alert" path="/path">
+                            <recipient id="alert-recipient" value="new_val"/>
+                            <recipient
+                                id="alert-recipient-1"
+                                value="value1"
+                                description="desc"
+                            />
+                        </alert>
+                    </alerts>
+                </configuration>
+            </cib>
+            """,
+            etree.tostring(self.tree).decode()
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_update_same_value_no_duplicity_allowed(self):
+        assert_xml_equal(
+            '<recipient id="alert-recipient" value="test_val"/>',
+            etree.tostring(alert.update_recipient(
+                self.mock_reporter, self.tree, "alert-recipient",
+                recipient_value="test_val"
+            )).decode()
+        )
+        assert_xml_equal(
+            """
+            <cib>
+                <configuration>
+                    <alerts>
+                        <alert id="alert" path="/path">
+                            <recipient id="alert-recipient" value="test_val"/>
+                            <recipient
+                                id="alert-recipient-1"
+                                value="value1"
+                                description="desc"
+                            />
+                        </alert>
+                    </alerts>
+                </configuration>
+            </cib>
+            """,
+            etree.tostring(self.tree).decode()
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_update_same_value_duplicity_allowed(self):
+        assert_xml_equal(
+            '<recipient id="alert-recipient" value="test_val"/>',
+            etree.tostring(alert.update_recipient(
+                self.mock_reporter, self.tree, "alert-recipient",
+                recipient_value="test_val", allow_same_value=True
+            )).decode()
+        )
+        assert_xml_equal(
+            """
+            <cib>
+                <configuration>
+                    <alerts>
+                        <alert id="alert" path="/path">
+                            <recipient id="alert-recipient" value="test_val"/>
+                            <recipient
+                                id="alert-recipient-1"
+                                value="value1"
+                                description="desc"
+                            />
+                        </alert>
+                    </alerts>
+                </configuration>
+            </cib>
+            """,
+            etree.tostring(self.tree).decode()
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_duplicity_of_value_not_allowed(self):
+        report_item = (
+            severities.ERROR,
+            report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
+            {
+                "alert": "alert",
+                "recipient": "value1"
+            },
+            report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE
+        )
+        assert_raise_library_error(
+            lambda: alert.update_recipient(
+                self.mock_reporter, self.tree, "alert-recipient", "value1"
+            ),
+            report_item
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [report_item]
+        )
+
+    def test_duplicity_of_value_allowed(self):
+        assert_xml_equal(
+            """
+            <recipient id="alert-recipient" value="value1"/>
+            """,
+            etree.tostring(alert.update_recipient(
+                self.mock_reporter, self.tree, "alert-recipient",
+                recipient_value="value1", allow_same_value=True
+            )).decode()
+        )
+        assert_xml_equal(
+            """
+            <cib>
+                <configuration>
+                    <alerts>
+                        <alert id="alert" path="/path">
+                            <recipient id="alert-recipient" value="value1"/>
+                            <recipient
+                                id="alert-recipient-1"
+                                value="value1"
+                                description="desc"
+                            />
+                        </alert>
+                    </alerts>
+                </configuration>
+            </cib>
+            """,
+            etree.tostring(self.tree).decode()
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [(
+                severities.WARNING,
+                report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
+                {
+                    "alert": "alert",
+                    "recipient": "value1"
+                }
+            )]
+        )
+
     def test_add_description(self):
         assert_xml_equal(
             """
@@ -585,7 +925,8 @@ class UpdateRecipientTest(TestCase):
             />
             """,
             etree.tostring(alert.update_recipient(
-                self.tree, "alert", "test_val", "description"
+                self.mock_reporter, self.tree, "alert-recipient",
+                description="description"
             )).decode()
         )
         assert_xml_equal(
@@ -611,6 +952,7 @@ class UpdateRecipientTest(TestCase):
             """,
             etree.tostring(self.tree).decode()
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
     def test_update_description(self):
         assert_xml_equal(
@@ -620,7 +962,8 @@ class UpdateRecipientTest(TestCase):
             />
             """,
             etree.tostring(alert.update_recipient(
-                self.tree, "alert", "value1", "description"
+                self.mock_reporter, self.tree, "alert-recipient-1",
+                description="description"
             )).decode()
         )
         assert_xml_equal(
@@ -642,6 +985,7 @@ class UpdateRecipientTest(TestCase):
             """,
             etree.tostring(self.tree).decode()
         )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
     def test_remove_description(self):
         assert_xml_equal(
@@ -649,7 +993,10 @@ class UpdateRecipientTest(TestCase):
                 <recipient id="alert-recipient-1" value="value1"/>
             """,
             etree.tostring(
-               alert.update_recipient(self.tree, "alert", "value1", "")
+               alert.update_recipient(
+                   self.mock_reporter, self.tree, "alert-recipient-1",
+                   description=""
+               )
             ).decode()
         )
         assert_xml_equal(
@@ -667,26 +1014,18 @@ class UpdateRecipientTest(TestCase):
             """,
             etree.tostring(self.tree).decode()
         )
-
-    def test_alert_not_exists(self):
-        assert_raise_library_error(
-            lambda: alert.update_recipient(self.tree, "alert1", "test_val", ""),
-            (
-                severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "alert1"}
-            )
-        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
 
     def test_recipient_not_exists(self):
         assert_raise_library_error(
-            lambda: alert.update_recipient(self.tree, "alert", "unknown", ""),
+            lambda: alert.update_recipient(
+                self.mock_reporter, self.tree, "recipient"),
             (
                 severities.ERROR,
-                report_codes.CIB_ALERT_RECIPIENT_NOT_FOUND,
+                report_codes.ID_NOT_FOUND,
                 {
-                    "alert": "alert",
-                    "recipient": "unknown"
+                    "id": "recipient",
+                    "id_description": "Recipient"
                 }
             )
         )
@@ -710,7 +1049,7 @@ class RemoveRecipientTest(TestCase):
         )
 
     def test_success(self):
-        alert.remove_recipient(self.tree, "alert", "val")
+        alert.remove_recipient(self.tree, "alert-recipient-2")
         assert_xml_equal(
             """
             <cib>
@@ -726,25 +1065,15 @@ class RemoveRecipientTest(TestCase):
             etree.tostring(self.tree).decode()
         )
 
-    def test_alert_not_exists(self):
-        assert_raise_library_error(
-            lambda: alert.remove_recipient(self.tree, "alert1", "test_val"),
-            (
-                severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "alert1"}
-            )
-        )
-
     def test_recipient_not_exists(self):
         assert_raise_library_error(
-            lambda: alert.remove_recipient(self.tree, "alert", "unknown"),
+            lambda: alert.remove_recipient(self.tree, "recipient"),
             (
                 severities.ERROR,
-                report_codes.CIB_ALERT_RECIPIENT_NOT_FOUND,
+                report_codes.ID_NOT_FOUND,
                 {
-                    "alert": "alert",
-                    "recipient": "unknown"
+                    "id": "recipient",
+                    "id_description": "Recipient"
                 }
             )
         )

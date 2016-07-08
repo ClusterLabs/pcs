@@ -90,7 +90,9 @@ def add_recipient(
     recipient_value,
     instance_attribute_dict,
     meta_attribute_dict,
-    description=None
+    recipient_id=None,
+    description=None,
+    allow_same_value=False
 ):
     """
     Add new recipient to alert witch id alert_id.
@@ -100,7 +102,9 @@ def add_recipient(
     recipient_value -- value of new recipient
     instance_attribute_dict -- dictionary of instance attributes to update
     meta_attribute_dict -- dictionary of meta attributes to update
+    recipient_id -- id of new recipient, if None it will be generated
     description -- recipient description
+    allow_same_value -- if True unique recipient value is not required
     """
     if not recipient_value:
         raise LibraryError(
@@ -109,7 +113,13 @@ def add_recipient(
 
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
     recipient = alert.add_recipient(
-        cib, alert_id, recipient_value, description
+        lib_env.report_processor,
+        cib,
+        alert_id,
+        recipient_value,
+        recipient_id=recipient_id,
+        description=description,
+        allow_same_value=allow_same_value
     )
     alert.update_instance_attributes(cib, recipient, instance_attribute_dict)
     alert.update_meta_attributes(cib, recipient, meta_attribute_dict)
@@ -119,26 +129,38 @@ def add_recipient(
 
 def update_recipient(
     lib_env,
-    alert_id,
-    recipient_value,
+    recipient_id,
     instance_attribute_dict,
     meta_attribute_dict,
-    description=None
+    recipient_value=None,
+    description=None,
+    allow_same_value=False
 ):
     """
     Update existing recipient.
 
     lib_env -- LibraryEnvironment
-    alert_id -- id of alert to which recipient belong
-    recipient_value -- recipient to be updated
+    recipient_id -- id of recipient to be updated
     instance_attribute_dict -- dictionary of instance attributes to update
     meta_attribute_dict -- dictionary of meta attributes to update
+    recipient_value -- new recipient value, if None old value will stay
+        unchanged
     description -- new description, if empty string, old description will be
         deleted, if None old value will stay unchanged
+    allow_same_value -- if True unique recipient value is not required
     """
+    if not recipient_value and recipient_value is not None:
+        raise LibraryError(
+            reports.cib_alert_recipient_invalid_value(recipient_value)
+        )
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
     recipient = alert.update_recipient(
-        cib, alert_id, recipient_value, description
+        lib_env.report_processor,
+        cib,
+        recipient_id,
+        recipient_value=recipient_value,
+        description=description,
+        allow_same_value=allow_same_value
     )
     alert.update_instance_attributes(cib, recipient, instance_attribute_dict)
     alert.update_meta_attributes(cib, recipient, meta_attribute_dict)
@@ -146,16 +168,15 @@ def update_recipient(
     lib_env.push_cib(cib)
 
 
-def remove_recipient(lib_env, alert_id, recipient_value):
+def remove_recipient(lib_env, recipient_id):
     """
     Remove existing recipient.
 
     lib_env -- LibraryEnvironment
-    alert_id -- id of alert to which recipient belong
-    recipient_value -- recipient to be removed
+    recipient_id -- if of recipient to be removed
     """
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    alert.remove_recipient(cib, alert_id, recipient_value)
+    alert.remove_recipient(cib, recipient_id)
     lib_env.push_cib(cib)
 
 

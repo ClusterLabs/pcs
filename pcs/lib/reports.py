@@ -1654,39 +1654,38 @@ def cluster_restart_required_to_apply_changes():
     )
 
 
-def cib_alert_recipient_already_exists(alert_id, recipient_value):
+def cib_alert_recipient_already_exists(
+    alert_id, recipient_value, severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
-    Error that recipient already exists.
+    Recipient with specified value already exists in alert with id 'alert_id'
 
     alert_id -- id of alert to which recipient belongs
     recipient_value -- value of recipient
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
-        "Recipient '{recipient}' in alert '{alert}' already exists.",
+        severity,
+        "Recipient '{recipient}' in alert '{alert}' already exists",
         info={
             "recipient": recipient_value,
             "alert": alert_id
-        }
+        },
+        forceable=forceable
     )
 
 
-def cib_alert_recipient_not_found(alert_id, recipient_value):
+def cib_alert_recipient_invalid_value(recipient_value):
     """
-    Specified recipient not found.
+    Invalid recipient value.
 
-    alert_id -- id of alert to which recipient should belong
     recipient_value -- recipient value
     """
     return ReportItem.error(
-        report_codes.CIB_ALERT_RECIPIENT_NOT_FOUND,
-        "Recipient '{recipient}' not found in alert '{alert}'.",
-        info={
-            "recipient": recipient_value,
-            "alert": alert_id
-        }
+        report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
+        "Recipient value '{recipient}' is not valid.",
+        info={"recipient": recipient_value}
     )
-
 
 def cib_alert_not_found(alert_id):
     """
