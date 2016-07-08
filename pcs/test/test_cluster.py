@@ -106,7 +106,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         self.assertTrue(output.startswith("\nUsage: pcs cluster setup..."))
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_cib, "cluster setup cname rh7-1 rh7-2")
+        output, returnVal = pcs(temp_cib, "cluster setup cname rh7-1.localhost rh7-2.localhost")
         self.assertEqual(
             "Error: A cluster name (--name <name>) is required to setup a cluster\n",
             output
@@ -116,22 +116,22 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
     def test_cluster_setup_hostnames_resolving(self):
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --cluster_conf={1} --name cname nonexistant-address"
+            "cluster setup --local --corosync_conf={0} --cluster_conf={1} --name cname nonexistant-address.invalid"
             .format(corosync_conf_tmp, cluster_conf_tmp)
         )
         ac(output, """\
 Error: Unable to resolve all hostnames, use --force to override
-Warning: Unable to resolve hostname: nonexistant-address
+Warning: Unable to resolve hostname: nonexistant-address.invalid
 """)
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --cluster_conf={1} --name cname nonexistant-address --force"
+            "cluster setup --local --corosync_conf={0} --cluster_conf={1} --name cname nonexistant-address.invalid --force"
             .format(corosync_conf_tmp, cluster_conf_tmp)
         )
         ac(output, """\
-Warning: Unable to resolve hostname: nonexistant-address
+Warning: Unable to resolve hostname: nonexistant-address.invalid
 """)
         self.assertEqual(0, returnVal)
 
@@ -141,7 +141,7 @@ Warning: Unable to resolve hostname: nonexistant-address
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -156,12 +156,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -183,7 +183,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-2 rh7-3"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("""\
@@ -198,7 +198,7 @@ Error: {0} already exists, use --force to overwrite
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --corosync_conf={0} --name cname rh7-2 rh7-3"
+            "cluster setup --force --local --corosync_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -215,12 +215,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-3
+        ring0_addr: rh7-3.localhost
         nodeid: 2
     }
 }
@@ -243,7 +243,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
             .format(cluster_conf_tmp)
         )
         self.assertEqual("", output)
@@ -252,17 +252,17 @@ logging {
 <cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -283,7 +283,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-2 rh7-3"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
             .format(cluster_conf_tmp)
         )
         self.assertEqual("""\
@@ -298,7 +298,7 @@ Error: {0} already exists, use --force to overwrite
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf={0} --name cname rh7-2 rh7-3"
+            "cluster setup --force --local --cluster_conf={0} --name cname rh7-2.localhost rh7-3.localhost"
             .format(cluster_conf_tmp)
         )
         self.assertEqual("", output)
@@ -309,17 +309,17 @@ Error: {0} already exists, use --force to overwrite
 <cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-2" nodeid="1">
+    <clusternode name="rh7-2.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-3" nodeid="2">
+    <clusternode name="rh7-3.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-3"/>
+          <device name="pcmk-redirect" port="rh7-3.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -344,7 +344,7 @@ Error: {0} already exists, use --force to overwrite
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -361,12 +361,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -385,10 +385,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode add --corosync_conf={0} rh7-3"
+            "cluster localnode add --corosync_conf={0} rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
-        self.assertEqual("rh7-3: successfully added!\n", output)
+        self.assertEqual("rh7-3.localhost: successfully added!\n", output)
         self.assertEqual(0, returnVal)
         with open(corosync_conf_tmp) as f:
             data = f.read()
@@ -402,17 +402,17 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 
     node {
-        ring0_addr: rh7-3
+        ring0_addr: rh7-3.localhost
         nodeid: 3
     }
 }
@@ -430,11 +430,11 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode remove --corosync_conf={0} rh7-3"
+            "cluster localnode remove --corosync_conf={0} rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual(0, returnVal)
-        self.assertEqual("rh7-3: successfully removed!\n", output)
+        self.assertEqual("rh7-3.localhost: successfully removed!\n", output)
         with open(corosync_conf_tmp) as f:
             data = f.read()
             ac(data, """\
@@ -447,12 +447,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -471,10 +471,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode add --corosync_conf={0} rh7-3,192.168.1.3"
+            "cluster localnode add --corosync_conf={0} rh7-3.localhost,192.168.1.3"
             .format(corosync_conf_tmp)
         )
-        self.assertEqual("rh7-3,192.168.1.3: successfully added!\n", output)
+        self.assertEqual("rh7-3.localhost,192.168.1.3: successfully added!\n", output)
         self.assertEqual(0, returnVal)
         with open(corosync_conf_tmp) as f:
             data = f.read()
@@ -488,17 +488,17 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 
     node {
-        ring0_addr: rh7-3
+        ring0_addr: rh7-3.localhost
         ring1_addr: 192.168.1.3
         nodeid: 3
     }
@@ -517,11 +517,11 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode remove --corosync_conf={0} rh7-2"
+            "cluster localnode remove --corosync_conf={0} rh7-2.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual(0, returnVal)
-        self.assertEqual("rh7-2: successfully removed!\n", output)
+        self.assertEqual("rh7-2.localhost: successfully removed!\n", output)
         with open(corosync_conf_tmp) as f:
             data = f.read()
             ac(data, """\
@@ -534,12 +534,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-3
+        ring0_addr: rh7-3.localhost
         ring1_addr: 192.168.1.3
         nodeid: 3
     }
@@ -559,11 +559,11 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode remove --corosync_conf={0} rh7-3,192.168.1.3"
+            "cluster localnode remove --corosync_conf={0} rh7-3.localhost,192.168.1.3"
             .format(corosync_conf_tmp)
         )
         self.assertEqual(0, returnVal)
-        self.assertEqual("rh7-3,192.168.1.3: successfully removed!\n", output)
+        self.assertEqual("rh7-3.localhost,192.168.1.3: successfully removed!\n", output)
         with open(corosync_conf_tmp) as f:
             data = f.read()
             ac(data, """\
@@ -576,7 +576,7 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 }
@@ -601,7 +601,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 --auto_tie_breaker=1"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --auto_tie_breaker=1"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -618,12 +618,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -642,10 +642,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode add --corosync_conf={0} rh7-3"
+            "cluster localnode add --corosync_conf={0} rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
-        self.assertEqual(output, "rh7-3: successfully added!\n")
+        self.assertEqual(output, "rh7-3.localhost: successfully added!\n")
         self.assertEqual(0, returnVal)
         with open(corosync_conf_tmp) as f:
             data = f.read()
@@ -659,17 +659,17 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 
     node {
-        ring0_addr: rh7-3
+        ring0_addr: rh7-3.localhost
         nodeid: 3
     }
 }
@@ -688,10 +688,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode remove --corosync_conf={0} rh7-3"
+            "cluster localnode remove --corosync_conf={0} rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
-        self.assertEqual("rh7-3: successfully removed!\n", output)
+        self.assertEqual("rh7-3.localhost: successfully removed!\n", output)
         self.assertEqual(0, returnVal)
         with open(corosync_conf_tmp) as f:
             data = f.read()
@@ -705,12 +705,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -734,7 +734,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 rh7-3"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost rh7-3.localhost"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -751,17 +751,17 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 
     node {
-        ring0_addr: rh7-3
+        ring0_addr: rh7-3.localhost
         nodeid: 3
     }
 }
@@ -784,7 +784,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 --transport udp"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --transport udp"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -801,12 +801,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -834,7 +834,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -845,17 +845,17 @@ logging {
 <cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -873,10 +873,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode add --cluster_conf={0} rh7-3"
+            "cluster localnode add --cluster_conf={0} rh7-3.localhost"
             .format(cluster_conf_tmp)
         )
-        ac(output, "rh7-3: successfully added!\n")
+        ac(output, "rh7-3.localhost: successfully added!\n")
         self.assertEqual(returnVal, 0)
         with open(cluster_conf_tmp) as f:
             data = f.read()
@@ -884,24 +884,24 @@ logging {
 <cluster config_version="13" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-3" nodeid="3">
+    <clusternode name="rh7-3.localhost" nodeid="3">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-3"/>
+          <device name="pcmk-redirect" port="rh7-3.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -919,10 +919,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode remove --cluster_conf={0} rh7-3"
+            "cluster localnode remove --cluster_conf={0} rh7-3.localhost"
             .format(cluster_conf_tmp)
         )
-        ac(output, "rh7-3: successfully removed!\n")
+        ac(output, "rh7-3.localhost: successfully removed!\n")
         self.assertEqual(returnVal, 0)
 
         with open(cluster_conf_tmp) as f:
@@ -931,17 +931,17 @@ logging {
 <cluster config_version="15" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -959,10 +959,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode add --cluster_conf={0} rh7-3,192.168.1.3"
+            "cluster localnode add --cluster_conf={0} rh7-3.localhost,192.168.1.3"
             .format(cluster_conf_tmp)
         )
-        ac(output, "rh7-3,192.168.1.3: successfully added!\n")
+        ac(output, "rh7-3.localhost,192.168.1.3: successfully added!\n")
         self.assertEqual(returnVal, 0)
 
         with open(cluster_conf_tmp) as f:
@@ -971,25 +971,25 @@ logging {
 <cluster config_version="20" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-3" nodeid="3">
+    <clusternode name="rh7-3.localhost" nodeid="3">
       <altname name="192.168.1.3"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-3"/>
+          <device name="pcmk-redirect" port="rh7-3.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1007,10 +1007,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode remove --cluster_conf={0} rh7-2"
+            "cluster localnode remove --cluster_conf={0} rh7-2.localhost"
             .format(cluster_conf_tmp)
         )
-        ac(output, "rh7-2: successfully removed!\n")
+        ac(output, "rh7-2.localhost: successfully removed!\n")
         self.assertEqual(returnVal, 0)
 
         with open(cluster_conf_tmp) as f:
@@ -1019,18 +1019,18 @@ logging {
 <cluster config_version="22" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-3" nodeid="3">
+    <clusternode name="rh7-3.localhost" nodeid="3">
       <altname name="192.168.1.3"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-3"/>
+          <device name="pcmk-redirect" port="rh7-3.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1048,10 +1048,10 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster localnode remove --cluster_conf={0} rh7-3,192.168.1.3"
+            "cluster localnode remove --cluster_conf={0} rh7-3.localhost,192.168.1.3"
             .format(cluster_conf_tmp)
         )
-        ac(output, "rh7-3,192.168.1.3: successfully removed!\n")
+        ac(output, "rh7-3.localhost,192.168.1.3: successfully removed!\n")
         self.assertEqual(returnVal, 0)
 
         with open(cluster_conf_tmp) as f:
@@ -1060,10 +1060,10 @@ logging {
 <cluster config_version="23" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1086,7 +1086,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 rh7-3"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost rh7-3.localhost"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -1097,24 +1097,24 @@ logging {
 <cluster config_version="12" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-3" nodeid="3">
+    <clusternode name="rh7-3.localhost" nodeid="3">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-3"/>
+          <device name="pcmk-redirect" port="rh7-3.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1137,7 +1137,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 --transport udpu"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --transport udpu"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -1150,17 +1150,17 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 <cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1182,7 +1182,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 --ipv6"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --ipv6"
             .format(corosync_conf_tmp)
         )
         self.assertEqual("", output)
@@ -1200,12 +1200,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -1228,7 +1228,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 --ipv6"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --ipv6"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -1241,17 +1241,17 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
 <cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1272,14 +1272,14 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
             return
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr0 1.1.2.0"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr0 1.1.2.0"
             .format(corosync_conf_tmp)
         )
         assert r == 1
         ac(o, "Error: --addr0 can only be used once\n")
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
         assert r == 1
@@ -1289,7 +1289,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
         )
 
         o,r = pcs(
-            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0"
+            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1321,12 +1321,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -1348,7 +1348,7 @@ logging {
             return
 
         o,r = pcs(
-            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
+            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1380,12 +1380,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -1407,7 +1407,7 @@ logging {
             return
 
         o,r = pcs(
-            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
+            "cluster setup --transport udp --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1439,12 +1439,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -1466,7 +1466,7 @@ logging {
             return
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1500,12 +1500,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -1527,14 +1527,14 @@ logging {
             return
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --force --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+            "cluster setup --force --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o, "Warning: using a RRP mode of 'active' is not supported or tested\n")
@@ -1566,12 +1566,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -1593,14 +1593,14 @@ logging {
             return
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: using a RRP mode of 'active' is not supported or tested, use --force to override\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --force --local --corosync_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+            "cluster setup --force --local --corosync_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(corosync_conf_tmp)
         )
         ac(o, "Warning: using a RRP mode of 'active' is not supported or tested\n")
@@ -1631,12 +1631,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -1658,25 +1658,25 @@ logging {
             return
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2,192.168.99.3"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2,192.168.99.3"
             .format(corosync_conf_tmp)
         )
-        ac(o,"Error: You cannot specify more than two addresses for a node: rh7-2,192.168.99.2,192.168.99.3\n")
+        ac(o,"Error: You cannot specify more than two addresses for a node: rh7-2.localhost,192.168.99.2,192.168.99.3\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1,192.168.99.1 rh7-2"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost"
             .format(corosync_conf_tmp)
         )
         ac(o,"Error: if one node is configured for RRP, all nodes must be configured for RRP\n")
         assert r == 1
 
-        o,r = pcs("cluster setup --force --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1")
+        o,r = pcs("cluster setup --force --local --name test99 rh7-1.localhost rh7-2.localhost --addr0 1.1.1.1")
         ac(o,"Error: --addr0 and --addr1 can only be used with --transport=udp\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2"
+            "cluster setup --local --corosync_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1694,13 +1694,13 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         ring1_addr: 192.168.99.1
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         ring1_addr: 192.168.99.2
         nodeid: 2
     }
@@ -1723,49 +1723,49 @@ logging {
             return
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --wait_for_all=2"
+            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --wait_for_all value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --wait_for_all=2"
+            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --wait_for_all value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --auto_tie_breaker=2"
+            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --auto_tie_breaker=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --auto_tie_breaker value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --auto_tie_breaker=2"
+            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --auto_tie_breaker=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --auto_tie_breaker value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --last_man_standing=2"
+            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --last_man_standing=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --last_man_standing value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --last_man_standing=2"
+            "cluster setup --force --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --last_man_standing=2"
             .format(corosync_conf_tmp)
         )
         ac(o, "Error: '2' is not a valid --last_man_standing value, use 0, 1\n")
         assert r == 1
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000"
+            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=1 --auto_tie_breaker=1 --last_man_standing=1 --last_man_standing_window=12000"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -1782,12 +1782,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -1813,14 +1813,14 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr0 1.1.2.0"
+            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr0 1.1.2.0"
         )
         ac(output, "Error: --addr0 can only be used once\n")
         self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode blah --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -1831,7 +1831,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0"
+            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -1843,19 +1843,19 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1881,7 +1881,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
+            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcast0 8.8.8.8 --addr1 1.1.2.0 --mcast1 9.9.9.9"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -1893,19 +1893,19 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1931,7 +1931,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
+            "cluster setup --transport udp --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --mcastport0 9999 --mcastport1 9998 --addr1 1.1.2.0"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -1943,19 +1943,19 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -1981,7 +1981,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --ttl0 4 --ttl1 5 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -1993,19 +1993,19 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -2031,7 +2031,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(
@@ -2042,7 +2042,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
+            "cluster setup --force --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(
@@ -2056,19 +2056,19 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 <cluster config_version="14" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -2094,7 +2094,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2105,7 +2105,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --force --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
+            "cluster setup --force --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode active --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2119,19 +2119,19 @@ Warning: using a RRP mode of 'active' is not supported or tested
 <cluster config_version="12" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -2154,17 +2154,17 @@ Warning: using a RRP mode of 'active' is not supported or tested
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2,192.168.99.3"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2,192.168.99.3"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
-Error: You cannot specify more than two addresses for a node: rh7-2,192.168.99.2,192.168.99.3
+Error: You cannot specify more than two addresses for a node: rh7-2.localhost,192.168.99.2,192.168.99.3
 """)
         self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --name cname rh7-1,192.168.99.1 rh7-2"
+            "cluster setup --local --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost"
         )
         ac(output, """\
 Error: if one node is configured for RRP, all nodes must be configured for RRP
@@ -2173,7 +2173,7 @@ Error: if one node is configured for RRP, all nodes must be configured for RRP
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --name test99 rh7-1 rh7-2 --addr0 1.1.1.1 --transport=udpu"
+            "cluster setup --local --name test99 rh7-1.localhost rh7-2.localhost --addr0 1.1.1.1 --transport=udpu"
         )
         ac(output, """\
 Error: --addr0 and --addr1 can only be used with --transport=udp
@@ -2183,7 +2183,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1,192.168.99.1 rh7-2,192.168.99.2"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost,192.168.99.1 rh7-2.localhost,192.168.99.2"
             .format(cluster_conf_tmp)
         )
         ac(output, "")
@@ -2194,19 +2194,19 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 <cluster config_version="12" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <altname name="192.168.99.1"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <altname name="192.168.99.2"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -2231,19 +2231,19 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 <cluster config_version="12" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <altname name="1.1.2.0"/>
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -2262,7 +2262,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --rrpmode passive --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2277,7 +2277,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name cname rh7-1 rh7-2 --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp"
+            "cluster setup --local --cluster_conf={0} --name cname rh7-1.localhost rh7-2.localhost --addr0 1.1.1.0 --addr1 1.1.2.0 --broadcast0 --transport udp"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2294,7 +2294,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name test99 rh7-1 rh7-2 --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5"
+            "cluster setup --local --cluster_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --wait_for_all=2 --auto_tie_breaker=3 --last_man_standing=4 --last_man_standing_window=5"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2310,17 +2310,17 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
 <cluster config_version="9" name="test99">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -2341,7 +2341,7 @@ Warning: --last_man_standing_window ignored as it is not supported on CMAN clust
             return
 
         o,r = pcs(
-            "cluster setup --local --corosync_conf={0} --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
+            "cluster setup --local --corosync_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
             .format(corosync_conf_tmp)
         )
         ac(o,"")
@@ -2364,12 +2364,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -2392,7 +2392,7 @@ logging {
 
         output, returnVal = pcs(
             temp_cib,
-            "cluster setup --local --cluster_conf={0} --name test99 rh7-1 rh7-2 --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
+            "cluster setup --local --cluster_conf={0} --name test99 rh7-1.localhost rh7-2.localhost --token 20000 --join 20001 --consensus 20002 --miss_count_const 20003 --fail_recv_const 20004 --token_coefficient 20005"
             .format(cluster_conf_tmp)
         )
         ac(output, """\
@@ -2405,17 +2405,17 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
 <cluster config_version="10" name="test99">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
@@ -2583,12 +2583,12 @@ Warning: --token_coefficient ignored as it is not supported on CMAN clusters
             return
 
         self.assert_pcs_fail(
-            "cluster setup --local --name cname rh7-1 rh7-2 --transport=unknown",
+            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=unknown",
             "Error: 'unknown' is not a valid transport value, use udp, udpu, use --force to override\n"
         )
 
         self.assert_pcs_success(
-            "cluster setup --local --name cname rh7-1 rh7-2 --transport=unknown --force",
+            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=unknown --force",
             "Warning: 'unknown' is not a valid transport value, use udp, udpu\n"
         )
         with open(corosync_conf_tmp) as f:
@@ -2603,12 +2603,12 @@ totem {
 
 nodelist {
     node {
-        ring0_addr: rh7-1
+        ring0_addr: rh7-1.localhost
         nodeid: 1
     }
 
     node {
-        ring0_addr: rh7-2
+        ring0_addr: rh7-2.localhost
         nodeid: 2
     }
 }
@@ -2630,12 +2630,12 @@ logging {
             return
 
         self.assert_pcs_fail(
-            "cluster setup --local --name cname rh7-1 rh7-2 --transport=rdma",
+            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=rdma",
             "Error: 'rdma' is not a valid transport value, use udp, udpu, use --force to override\n"
         )
 
         self.assert_pcs_success(
-            "cluster setup --local --name cname rh7-1 rh7-2 --transport=rdma --force",
+            "cluster setup --local --name cname rh7-1.localhost rh7-2.localhost --transport=rdma --force",
             "Warning: 'rdma' is not a valid transport value, use udp, udpu\n"
         )
         with open(cluster_conf_tmp) as f:
@@ -2644,17 +2644,17 @@ logging {
 <cluster config_version="9" name="cname">
   <fence_daemon/>
   <clusternodes>
-    <clusternode name="rh7-1" nodeid="1">
+    <clusternode name="rh7-1.localhost" nodeid="1">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-1"/>
+          <device name="pcmk-redirect" port="rh7-1.localhost"/>
         </method>
       </fence>
     </clusternode>
-    <clusternode name="rh7-2" nodeid="2">
+    <clusternode name="rh7-2.localhost" nodeid="2">
       <fence>
         <method name="pcmk-method">
-          <device name="pcmk-redirect" port="rh7-2"/>
+          <device name="pcmk-redirect" port="rh7-2.localhost"/>
         </method>
       </fence>
     </clusternode>
