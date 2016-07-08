@@ -94,7 +94,14 @@ def config_show(argv):
     status.nodes_status(["config"])
     print()
     config_show_cib()
-    cluster.cluster_uidgid([], True)
+    if (
+        utils.is_rhel6()
+        or
+        (not utils.usefile and "--corosync_conf" not in utils.pcs_options)
+    ):
+        # with corosync 1 and cman, uid gid is part of cluster.conf file
+        # with corosync 2, uid gid is in a separate directory
+        cluster.cluster_uidgid([], True)
     if "--corosync_conf" in utils.pcs_options or not utils.is_rhel6():
         print()
         print("Quorum:")
@@ -113,8 +120,8 @@ def config_show_cib():
     print("Stonith Devices:")
     resource.resource_show([], True)
     print("Fencing Levels:")
-    print()
     stonith.stonith_level_show()
+    print()
 
     lib = utils.get_library_wrapper()
     constraint.location_show([])

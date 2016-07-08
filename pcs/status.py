@@ -66,7 +66,13 @@ def full_status():
     if utils.stonithCheck():
         print("WARNING: no stonith devices and stonith-enabled is not false")
 
-    if not utils.is_rhel6() and utils.corosyncPacemakerNodeCheck():
+    if (
+        not utils.usefile
+        and
+        not utils.is_rhel6()
+        and
+        utils.corosyncPacemakerNodeCheck()
+    ):
         print("WARNING: corosync and pacemaker node names do not match (IPs used in setup?)")
 
     print(output)

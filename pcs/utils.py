@@ -1808,12 +1808,13 @@ def stonithCheck():
         if p.attrib["class"] == "stonith":
             return False
 
-    # check if SBD daemon is running
-    try:
-        if is_service_running(cmd_runner(), "sbd"):
-            return False
-    except LibraryError:
-        pass
+    if not usefile:
+        # check if SBD daemon is running
+        try:
+            if is_service_running(cmd_runner(), "sbd"):
+                return False
+        except LibraryError:
+            pass
 
     return True
 
