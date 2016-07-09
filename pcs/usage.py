@@ -1402,15 +1402,17 @@ Commands:
     remove <alert-id>
         Remove alert with specified id.
 
-    recipient add <alert-id> <recipient-value> [description=<description>]
-            [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
+    recipient add <alert-id> <recipient-value> [id=<recipient-id>]
+            [description=<description>] [options [<option>=<value>]...]
+            [meta [<meta-option>=<value>]...]
         Add new recipient to specified alert.
 
-    recipient update <alert-id> <recipient-value> [description=<description>]
-            [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
-        Update existing recipient identified by alert and it's value.
+    recipient update <recipient-id> [value=<recipient-value>]
+            [description=<description>] [options [<option>=<value>]...]
+            [meta [<meta-option>=<value>]...]
+        Update existing recipient identified by it's id.
 
-    recipient remove <alert-id> <recipient-value>
+    recipient remove <recipient-id>
         Remove specified recipient.
 """
     if pout:

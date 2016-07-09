@@ -666,13 +666,13 @@ Update existing alert with specified id.
 remove <alert\-id>
 Remove alert with specified id.
 .TP
-recipient add <alert\-id> <recipient\-value> [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
+recipient add <alert\-id> <recipient\-value> [id=<recipient\-id>] [description=<description>] [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
 Add new recipient to specified alert.
 .TP
-recipient update <alert\-id> <recipient\-value> [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
-Update existing recipient identified by alert and it's value.
+recipient update <recipient\-id> [value=<recipient\-value>] [description=<description>] [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
+Update existing recipient identified by it's id.
 .TP
-recipient remove <alert\-id> <recipient\-value>
+recipient remove <recipient\-id>
 Remove specified recipient.
 .SH EXAMPLES
 .TP

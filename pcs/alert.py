@@ -139,42 +139,44 @@ def recipient_add(lib, argv, modifiers):
 
     sections = parse_cmd_sections(argv[2:], ["options", "meta"])
     main_args = prepare_options(sections["main"])
-    ensure_only_allowed_options(main_args, ["description"])
+    ensure_only_allowed_options(main_args, ["description", "id"])
 
     lib.alert.add_recipient(
         alert_id,
         recipient_value,
         prepare_options(sections["options"]),
         prepare_options(sections["meta"]),
-        main_args.get("description", None)
+        recipient_id=main_args.get("id", None),
+        description=main_args.get("description", None),
+        allow_same_value=modifiers["force"]
     )
 
 
 def recipient_update(lib, argv, modifiers):
-    if len(argv) < 2:
+    if len(argv) < 1:
         raise CmdLineInputError()
 
-    alert_id = argv[0]
-    recipient_value = argv[1]
+    recipient_id = argv[0]
 
-    sections = parse_cmd_sections(argv[2:], ["options", "meta"])
+    sections = parse_cmd_sections(argv[1:], ["options", "meta"])
     main_args = prepare_options(sections["main"])
-    ensure_only_allowed_options(main_args, ["description"])
+    ensure_only_allowed_options(main_args, ["description", "value"])
 
     lib.alert.update_recipient(
-        alert_id,
-        recipient_value,
+        recipient_id,
         prepare_options(sections["options"]),
         prepare_options(sections["meta"]),
-        main_args.get("description", None)
+        recipient_value=main_args.get("value", None),
+        description=main_args.get("description", None),
+        allow_same_value=modifiers["force"]
     )
 
 
 def recipient_remove(lib, argv, modifiers):
-    if len(argv) != 2:
+    if len(argv) != 1:
         raise CmdLineInputError()
 
-    lib.alert.remove_recipient(argv[0], argv[1])
+    lib.alert.remove_recipient(argv[0])
 
 
 def _nvset_to_str(nvset_obj):
@@ -219,9 +221,9 @@ def _alert_to_str(alert):
 
 
 def _recipient_to_str(recipient):
-    return ["Recipient: {value}".format(value=recipient["value"])] + indent(
-        __description_attributes_to_str(recipient), 1
-    )
+    return ["Recipient: {id} (value={value})".format(
+        value=recipient["value"], id=recipient["id"]
+    )] + indent(__description_attributes_to_str(recipient), 1)
 
 
 def print_alert_config(lib, argv, modifiers):
