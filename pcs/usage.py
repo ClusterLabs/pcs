@@ -1118,6 +1118,14 @@ Commands:
     corosync
         View current membership information as seen by corosync.
 
+    quorum
+        View current quorum status.
+
+    qdevice <device model> [--full] [<cluster name>]
+        Show runtime status of specified model of quorum device provider.  Using
+        --full will give more detailed output.  If <cluster name> is specified,
+        only information about the specified cluster will be displayed.
+
     nodes [corosync|both|config]
         View current status of nodes from pacemaker. If 'corosync' is
         specified, print nodes currently configured in corosync, if 'both'
@@ -1322,7 +1330,7 @@ Usage: pcs quorum <command>
 Manage cluster quorum settings.
 
 Commands:
-    config
+    [config]
         Show quorum configuration.
 
     status

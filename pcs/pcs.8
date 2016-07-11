@@ -543,7 +543,7 @@ disable <device model>
 Configure specified model of quorum device provider to not start on boot.
 .SS "quorum"
 .TP
-config
+[config]
 Show quorum configuration.
 .TP
 status
@@ -589,6 +589,12 @@ View current cluster status.
 .TP
 corosync
 View current membership information as seen by corosync.
+.TP
+quorum
+View current quorum status.
+.TP
+qdevice <device model> [\fB\-\-full\fR] [<cluster name>]
+Show runtime status of specified model of quorum device provider.  Using \fB\-\-full\fR will give more detailed output.  If <cluster name> is specified, only information about the specified cluster will be displayed.
 .TP
 nodes [corosync|both|config]
 View current status of nodes from pacemaker. If 'corosync' is specified, print nodes currently configured in corosync, if 'both' is specified, print nodes from both corosync & pacemaker.  If 'config' is specified, print nodes from corosync & pacemaker configuration.

@@ -13,6 +13,9 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.qdevice import qdevice_status_cmd
+from pcs.quorum import quorum_status_cmd
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_state import ClusterState
 
@@ -38,6 +41,28 @@ def status_cmd(argv):
         xml_status()
     elif (sub_cmd == "corosync"):
         corosync_status()
+    elif sub_cmd == "qdevice":
+        try:
+            qdevice_status_cmd(
+                utils.get_library_wrapper(),
+                argv,
+                utils.get_modificators()
+            )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "status", sub_cmd)
+    elif sub_cmd == "quorum":
+        try:
+            quorum_status_cmd(
+                utils.get_library_wrapper(),
+                argv,
+                utils.get_modificators()
+            )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "status", sub_cmd)
     else:
         usage.status()
         sys.exit(1)

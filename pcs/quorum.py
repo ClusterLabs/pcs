@@ -8,10 +8,11 @@ from __future__ import (
 import sys
 
 from pcs import (
+    prop,
+    stonith,
     usage,
     utils,
 )
-from pcs.cluster import cluster_quorum_unblock
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
@@ -19,10 +20,10 @@ from pcs.lib.errors import LibraryError
 
 def quorum_cmd(lib, argv, modificators):
     if len(argv) < 1:
-        usage.quorum()
-        sys.exit(1)
+        sub_cmd, argv_next = "config", []
+    else:
+        sub_cmd, argv_next = argv[0], argv[1:]
 
-    sub_cmd, argv_next = argv[0], argv[1:]
     try:
         if sub_cmd == "help":
             usage.quorum(argv)
@@ -35,7 +36,8 @@ def quorum_cmd(lib, argv, modificators):
         elif sub_cmd == "device":
             quorum_device_cmd(lib, argv_next, modificators)
         elif sub_cmd == "unblock":
-            cluster_quorum_unblock(argv_next)
+            # TODO switch to new architecture
+            quorum_unblock_cmd(argv_next)
         elif sub_cmd == "update":
             quorum_update_cmd(lib, argv_next, modificators)
         else:
@@ -185,3 +187,58 @@ def quorum_device_update_cmd(lib, argv, modificators):
         force_options=modificators["force"],
         skip_offline_nodes=modificators["skip_offline_nodes"]
     )
+
+# TODO switch to new architecture, move to lib
+def quorum_unblock_cmd(argv):
+    if len(argv) > 0:
+        usage.quorum(["unblock"])
+        sys.exit(1)
+
+    if utils.is_rhel6():
+        utils.err("operation is not supported on CMAN clusters")
+
+    output, retval = utils.run(
+        ["corosync-cmapctl", "-g", "runtime.votequorum.wait_for_all_status"]
+    )
+    if retval != 0:
+        utils.err("unable to check quorum status")
+    if output.split("=")[-1].strip() != "1":
+        utils.err("cluster is not waiting for nodes to establish quorum")
+
+    unjoined_nodes = (
+        set(utils.getNodesFromCorosyncConf())
+        -
+        set(utils.getCorosyncActiveNodes())
+    )
+    if not unjoined_nodes:
+        utils.err("no unjoined nodes found")
+    if "--force" not in utils.pcs_options:
+        answer = utils.get_terminal_input(
+            (
+                "WARNING: If node(s) {nodes} are not powered off or they do"
+                + " have access to shared resources, data corruption and/or"
+                + " cluster failure may occur. Are you sure you want to"
+                + " continue? [y/N] "
+            ).format(nodes=", ".join(unjoined_nodes))
+        )
+        if answer.lower() not in ["y", "yes"]:
+            print("Canceled")
+            return
+    for node in unjoined_nodes:
+        stonith.stonith_confirm([node], skip_question=True)
+
+    output, retval = utils.run(
+        ["corosync-cmapctl", "-s", "quorum.cancel_wait_for_all", "u8", "1"]
+    )
+    if retval != 0:
+        utils.err("unable to cancel waiting for nodes")
+    print("Quorum unblocked")
+
+    startup_fencing = prop.get_set_properties().get("startup-fencing", "")
+    utils.set_cib_property(
+        "startup-fencing",
+        "false" if startup_fencing.lower() != "false" else "true"
+    )
+    utils.set_cib_property("startup-fencing", startup_fencing)
+    print("Waiting for nodes canceled")
+
