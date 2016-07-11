@@ -1852,13 +1852,15 @@ def getCorosyncNodesID(allow_failure=False):
     cs_nodes = {}
     node_list_node_mapping = {}
     for line in output.rstrip().split("\n"):
-        m = re.match("nodelist.node.(\d+).nodeid.*= (.*)",line)
+        m = re.match("nodelist\.node\.(\d+)\.nodeid.*= (.*)", line)
         if m:
             node_list_node_mapping[m.group(1)] = m.group(2)
 
     for line in output.rstrip().split("\n"):
-        m = re.match("nodelist.node.(\d+).ring0_addr.*= (.*)",line)
-        if m:
+        m = re.match("nodelist\.node\.(\d+)\.ring0_addr.*= (.*)", line)
+        # check if node id is in node_list_node_mapping - do not crash when
+        # node ids are not specified
+        if m and m.group(1) in node_list_node_mapping:
             cs_nodes[node_list_node_mapping[m.group(1)]] = m.group(2)
     return cs_nodes
 
