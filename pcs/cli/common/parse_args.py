@@ -26,23 +26,29 @@ def prepare_options(cmdline_args):
         options[name] = value
     return options
 
-def split_by_keywords(arg_list, keyword_set, implicit_first_keyword=None):
-    grouped_args = dict([(keyword, []) for keyword in keyword_set])
+def group_by_keywords(
+    arg_list, keyword_set,
+    implicit_first_keyword=None, keyword_repeat_allowed=True,
+):
+    groups = dict([(keyword, []) for keyword in keyword_set])
     if implicit_first_keyword:
-        grouped_args[implicit_first_keyword] = []
+        groups[implicit_first_keyword] = []
 
     if not arg_list:
-        return grouped_args
+        return groups
 
+    used_keywords = []
     if implicit_first_keyword:
-        current_keyword = implicit_first_keyword
+        used_keywords.append(implicit_first_keyword)
     elif arg_list[0] not in keyword_set:
         raise CmdLineInputError()
 
     for arg in arg_list:
-        if arg in list(grouped_args.keys()):
-            current_keyword = arg
+        if arg in list(groups.keys()):
+            if arg in used_keywords and not keyword_repeat_allowed:
+                raise CmdLineInputError()
+            used_keywords.append(arg)
         else:
-            grouped_args[current_keyword].append(arg)
+            groups[used_keywords[-1]].append(arg)
 
-    return grouped_args
+    return groups

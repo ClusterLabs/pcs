@@ -9,7 +9,7 @@ from unittest import TestCase
 from pcs.cli.common.parse_args import(
     split_list,
     prepare_options,
-    split_by_keywords,
+    group_by_keywords,
 )
 from pcs.cli.common.errors import CmdLineInputError
 
@@ -50,7 +50,7 @@ class SplitListTest(TestCase):
 class SplitByKeywords(TestCase):
     def test_split_with_implicit_first_keyword(self):
         self.assertEqual(
-            split_by_keywords(
+            group_by_keywords(
                 [0, "first", 1, 2, "second", 3],
                 set(["first", "second"]),
                 implicit_first_keyword="zero"
@@ -64,7 +64,7 @@ class SplitByKeywords(TestCase):
 
     def test_splict_without_implict_keyword(self):
         self.assertEqual(
-            split_by_keywords(
+            group_by_keywords(
                 ["first", 1, 2, "second", 3],
                 set(["first", "second"]),
             ),
@@ -75,14 +75,14 @@ class SplitByKeywords(TestCase):
         )
 
     def test_raises_when_args_do_not_start_with_keyword_nor_implicit(self):
-        self.assertRaises(CmdLineInputError, lambda: split_by_keywords(
+        self.assertRaises(CmdLineInputError, lambda: group_by_keywords(
             [0, "first", 1, 2, "second", 3],
             set(["first", "second"]),
         ))
 
     def test_returns_dict_with_empty_lists_for_no_args(self):
         self.assertEqual(
-            split_by_keywords(
+            group_by_keywords(
                 [],
                 set(["first", "second"])
             ),
@@ -94,7 +94,7 @@ class SplitByKeywords(TestCase):
 
     def test_returns_dict_with_empty_lists_for_no_args_implicit_case(self):
         self.assertEqual(
-            split_by_keywords(
+            group_by_keywords(
                 [],
                 set(["first", "second"]),
                 implicit_first_keyword="zero",
@@ -105,3 +105,22 @@ class SplitByKeywords(TestCase):
                 "second": [],
             }
         )
+
+    def test_allow_keywords_repeating(self):
+        self.assertEqual(
+            group_by_keywords(
+                ["first", 1, 2, "second", 3, "first", 4],
+                set(["first", "second"]),
+            ),
+            {
+                "first": [1, 2, 4],
+                "second": [3],
+            }
+        )
+
+    def test_can_disallow_keywords_repeating(self):
+        self.assertRaises(CmdLineInputError, lambda: group_by_keywords(
+            ["first", 1, 2, "second", 3, "first"],
+            set(["first", "second"]),
+            keyword_repeat_allowed=False,
+        ))

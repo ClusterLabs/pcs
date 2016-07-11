@@ -13,11 +13,11 @@ from pcs import (
     utils,
 )
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import prepare_options, split_by_keywords
+from pcs.cli.common.parse_args import prepare_options, group_by_keywords
 from pcs.cli.common.console_report import indent
 from pcs.lib.errors import LibraryError
 
-parse_cmd_sections = partial(split_by_keywords, implicit_first_keyword="main")
+parse_cmd_sections = partial(group_by_keywords, implicit_first_keyword="main")
 
 def alert_cmd(*args):
     argv = args[1]
