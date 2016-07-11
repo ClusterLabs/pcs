@@ -5,27 +5,27 @@ from __future__ import (
     unicode_literals,
 )
 
+import logging
 from collections import namedtuple
 from functools import partial
-import logging
 
 from pcs.cli.common import middleware
-
-#from pcs.lib import commands does not work: "commands" is package
-from pcs.lib.commands.constraint import colocation as constraint_colocation
-from pcs.lib.commands.constraint import order as constraint_order
-from pcs.lib.commands.constraint import ticket as constraint_ticket
+from pcs.cli.common.reports import (
+    LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
+)
 from pcs.lib.commands import (
     quorum,
     qdevice,
     sbd,
     alert,
 )
-from pcs.cli.common.reports import (
-    LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
+from pcs.lib.commands.constraint import (
+    colocation as constraint_colocation,
+    order as constraint_order,
+    ticket as constraint_ticket
 )
-
 from pcs.lib.env import LibraryEnvironment
+
 
 _CACHE = {}
 

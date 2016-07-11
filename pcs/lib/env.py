@@ -8,16 +8,17 @@ from __future__ import (
 from lxml import etree
 
 from pcs.lib import reports
+from pcs.lib.cib.tools import ensure_cib_version
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
+from pcs.lib.corosync.live import (
+    get_local_corosync_conf,
+    reload_config as reload_corosync_config,
+)
 from pcs.lib.external import (
     is_cman_cluster,
     is_service_running,
     CommandRunner,
     NodeCommunicator,
-)
-from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.corosync.live import (
-    get_local_corosync_conf,
-    reload_config as reload_corosync_config,
 )
 from pcs.lib.nodes_task import (
     distribute_corosync_conf,
@@ -29,7 +30,6 @@ from pcs.lib.pacemaker import (
     get_cib_xml,
     replace_cib_configuration_xml,
 )
-from pcs.lib.cib.tools import ensure_cib_version
 
 
 class LibraryEnvironment(object):
