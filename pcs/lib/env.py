@@ -8,6 +8,7 @@ from __future__ import (
 from lxml import etree
 
 from pcs.lib import reports
+from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import ensure_cib_version
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
@@ -43,6 +44,7 @@ class LibraryEnvironment(object):
         user_groups=None,
         cib_data=None,
         corosync_conf_data=None,
+        booth=None,
         auth_tokens_getter=None,
     ):
         self._logger = logger
@@ -51,6 +53,9 @@ class LibraryEnvironment(object):
         self._user_groups = [] if user_groups is None else user_groups
         self._cib_data = cib_data
         self._corosync_conf_data = corosync_conf_data
+        self._booth = (
+            BoothEnv(report_processor, booth) if booth is not None else None
+        )
         self._is_cman_cluster = None
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move
@@ -195,3 +200,7 @@ class LibraryEnvironment(object):
             else:
                 self._auth_tokens = {}
         return self._auth_tokens
+
+    @property
+    def booth(self):
+        return self._booth

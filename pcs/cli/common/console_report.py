@@ -8,8 +8,17 @@ from __future__ import (
 import sys
 
 
+def write_error(message):
+    write_message(message, "Error: ")
+
+def write_warn(message):
+    write_message(message, "Warning: ")
+
+def write_message(message, prefix):
+    sys.stdout.write("{0}{1}\n".format(prefix, message))
+
 def error(message, exit=True):
-    sys.stderr.write("Error: {0}\n".format(message))
+    write_error(message)
     if exit:
         sys.exit(1)
 

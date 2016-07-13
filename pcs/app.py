@@ -13,6 +13,7 @@ logging.basicConfig()
 
 from pcs import (
     acl,
+    booth,
     cluster,
     config,
     constraint,
@@ -97,6 +98,7 @@ def main(argv=None):
             "token=", "token_coefficient=", "consensus=", "join=",
             "miss_count_const=", "fail_recv_const=",
             "corosync_conf=", "cluster_conf=",
+            "booth-conf=",
             "remote", "watchdog=",
             #in pcs status - do not display resorce status on inactive node
             "hide-inactive",
@@ -197,6 +199,11 @@ def main(argv=None):
         "alert": lambda args: alert.alert_cmd(
             utils.get_library_wrapper(),
             args,
+            utils.get_modificators()
+        ),
+        "booth": lambda argv: booth.booth_cmd(
+            utils.get_library_wrapper(),
+            argv,
             utils.get_modificators()
         ),
     }

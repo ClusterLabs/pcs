@@ -21,6 +21,7 @@ def full_usage():
     out += strip_extras(acl([],False))
     out += strip_extras(qdevice([],False))
     out += strip_extras(quorum([],False))
+    out += strip_extras(booth([],False))
     out += strip_extras(status([],False))
     out += strip_extras(config([],False))
     out += strip_extras(pcsd([],False))
@@ -167,6 +168,7 @@ Commands:
     acl         Set pacemaker access control lists.
     qdevice     Manage quorum device provider.
     quorum      Manage cluster quorum settings.
+    booth       Manage booth (cluster ticket manager).
     status      View cluster status.
     config      View and manage cluster configuration.
     pcsd        Manage pcs daemon.
@@ -1407,6 +1409,26 @@ Commands:
     else:
         return output
 
+def booth(args=[], pout=True):
+    output = """
+Usage: pcs booth <command>
+Manage booth (cluster ticket manager)
+
+Commands:
+    setup sites <address> <address> [<address>...] [arbitrators <address> ...]
+            [--force]
+        Write new booth configuration with specified sites and arbitrators.
+        Total number of participants (sites and arbitrators) must be odd.
+        When configuration file exists, command fail unless --force applied.
+
+    config
+        Show currently written booth configuration.
+"""
+    if pout:
+        print(sub_usage(args, output))
+    else:
+        return output
+
 
 def alert(args=[], pout=True):
     output = """
@@ -1460,6 +1482,7 @@ def show(main_usage_name, rest_usage_names):
         "property": property,
         "qdevice": qdevice,
         "quorum": quorum,
+        "booth": booth,
         "resource": resource,
         "status": status,
         "stonith": stonith,

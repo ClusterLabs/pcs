@@ -60,6 +60,8 @@ from pcs.lib.pacemaker_values import(
 from pcs.cli.common import middleware
 from pcs.cli.common.env import Env
 from pcs.cli.common.lib_wrapper import Library
+from pcs.cli.booth.command import DEFAULT_BOOTH_NAME
+import pcs.cli.booth.env
 
 
 try:
@@ -2696,6 +2698,10 @@ def get_middleware_factory():
         cib=middleware.cib(usefile, get_cib, replace_cib_configuration),
         corosync_conf_existing=middleware.corosync_conf_existing(
             pcs_options.get("--corosync_conf", None)
+        ),
+        booth_conf=pcs.cli.booth.env.middleware_config(
+            pcs_options.get("--name", DEFAULT_BOOTH_NAME),
+            pcs_options.get("--booth-conf", None)
         )
     )
 

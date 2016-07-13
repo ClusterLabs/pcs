@@ -45,6 +45,9 @@ Manage quorum device provider on the local host.
 quorum
 Manage cluster quorum settings.
 .TP
+booth
+Manage booth (cluster ticket manager).
+.TP
 status
 View cluster status.
 .TP
@@ -573,6 +576,13 @@ Cancel waiting for all nodes when establishing quorum.  Useful in situations whe
 .TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
 Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.  Requires the cluster to be stopped.
+.SS "booth"
+.TP
+setup sites <address> <address> [<address>...] [arbitrators <address> ...] [\fB\-\-force\fR]
+Write new booth configuration with specified sites and arbitrators. Total number of participants (sites and arbitrators) must be odd. When configuration file exists, command fail unless --force applied.
+.TP
+config
+Show currently written booth configuration.
 .SS "status"
 .TP
 [status] [\fB\-\-full\fR | \fB\-\-hide-inactive\fR]

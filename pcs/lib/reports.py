@@ -1742,3 +1742,38 @@ def unable_to_upgrade_cib_to_required_version(
             "current_version": "{0}.{1}.{2}".format(*current_version)
         }
     )
+
+def file_already_exists(
+        file_role, file_path, severity=ReportItemSeverity.ERROR, forceable=None
+    ):
+    return ReportItem(
+        report_codes.FILE_ALREADY_EXISTS,
+        severity,
+        "{file_role} file {file_path} already exists",
+        info={
+            "file_role": file_role,
+            "file_path": file_path,
+        },
+        forceable=forceable,
+    )
+
+def file_does_not_exists(file_role, file_path=""):
+    return ReportItem.error(
+        report_codes.FILE_DOES_NOT_EXIST,
+        "{file_role} file {file_path} already exists",
+        info={
+            "file_role": file_role,
+            "file_path": file_path,
+        },
+    )
+
+def file_io_error(file_role, file_path="", reason=""):
+    return ReportItem.error(
+        report_codes.FILE_IO_ERROR,
+        "can not work with {file_role}: {reason}",
+        info={
+            "file_role": file_role,
+            "file_path": file_path,
+            "reason": reason,
+        },
+    )
