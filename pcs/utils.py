@@ -301,6 +301,8 @@ def canAddNodeToCluster(node):
                 return (False, "unable to authenticate to node")
             if "node_available" in myout and myout["node_available"] == True:
                 return (True, "")
+            elif myout.get("pacemaker_remote", False):
+                return (False, "node is running pacemaker_remote")
             else:
                 return (False, "node is already in a cluster")
         except ValueError:
@@ -464,6 +466,14 @@ def getNodesFromPacemaker():
         ]
     except LibraryError as e:
         process_library_reports(e.args)
+
+def hasCorosyncConf(conf=None):
+    if not conf:
+        if is_rhel6():
+            conf = settings.cluster_conf_file
+        else:
+            conf = settings.corosync_conf_file
+    return os.path.isfile(conf)
 
 def getCorosyncConf(conf=None):
     if not conf:
@@ -1070,18 +1080,6 @@ def does_exist(xpath_query):
     if (retval != 0):
         return False
     return True
-
-def is_pacemaker_node(node):
-    p_nodes = getNodesFromPacemaker()
-    if node in p_nodes:
-        return True
-    return False
-
-def is_corosync_node(node):
-    c_nodes = getNodesFromCorosyncConf()
-    if node in c_nodes:
-        return True
-    return False
 
 def get_group_children(group_id):
     child_resources = []
@@ -1838,7 +1836,7 @@ def getCorosyncNodesID(allow_failure=False):
         err_msgs, retval, output, dummy_std_err = call_local_pcsd(
             ['status', 'nodes', 'corosync-id'], True
         )
-        if err_msgs:
+        if err_msgs and not allow_failure:
             for msg in err_msgs:
                 err(msg, False)
             sys.exit(1)
@@ -1866,6 +1864,7 @@ def getCorosyncNodesID(allow_failure=False):
 
 # Warning, if a node has never started the hostname may be '(null)'
 #TODO This doesn't work on CMAN clusters at all and should be removed completely
+# Doesn't work on pacemaker-remote nodes either
 def getPacemakerNodesID(allow_failure=False):
     if os.getuid() == 0:
         (output, retval) = run(['crm_node', '-l'])
@@ -1873,7 +1872,7 @@ def getPacemakerNodesID(allow_failure=False):
         err_msgs, retval, output, dummy_std_err = call_local_pcsd(
             ['status', 'nodes', 'pacemaker-id'], True
         )
-        if err_msgs:
+        if err_msgs and not allow_failure:
             for msg in err_msgs:
                 err(msg, False)
             sys.exit(1)
@@ -1893,9 +1892,11 @@ def getPacemakerNodesID(allow_failure=False):
     return pm_nodes
 
 def corosyncPacemakerNodeCheck():
-    # does not work on CMAN clusters
-    pm_nodes = getPacemakerNodesID()
-    cs_nodes = getCorosyncNodesID()
+    # does not work on CMAN clusters and pacemaker-remote nodes
+    # we do not want a failure to exit pcs as this is only a minor information
+    # function
+    pm_nodes = getPacemakerNodesID(allow_failure=True)
+    cs_nodes = getCorosyncNodesID(allow_failure=True)
 
     for node_id in pm_nodes:
         if pm_nodes[node_id] == "(null)":
@@ -1920,10 +1921,9 @@ def getClusterName():
     if is_rhel6():
         try:
             dom = parse(settings.cluster_conf_file)
+            return dom.documentElement.getAttribute("name")
         except (IOError,xml.parsers.expat.ExpatError):
-            return ""
-
-        return dom.documentElement.getAttribute("name")
+            pass
     else:
         try:
             f = open(settings.corosync_conf_file,'r')
@@ -1937,7 +1937,15 @@ def getClusterName():
             if cluster_name:
                 return cluster_name
         except (IOError, corosync_conf_parser.CorosyncConfParserException):
-            return ""
+            pass
+
+    # there is no corosync.conf or cluster.conf on remote nodes, we can try to
+    # get cluster name from pacemaker
+    try:
+        return get_set_properties("cluster-name")["cluster-name"]
+    except:
+        # we need to catch SystemExit (from utils.err), parse errors and so on
+        pass
 
     return ""
 
@@ -2024,23 +2032,30 @@ def serviceStatus(prefix):
     if not is_systemctl():
         return
     print("Daemon Status:")
-    for service in ["corosync", "pacemaker", "pcsd"]:
-        print('{0}{1}: {2}/{3}'.format(
-            prefix, service,
-            run(["systemctl", 'is-active', service])[0].strip(),
-            run(["systemctl", 'is-enabled', service])[0].strip()
-        ))
-    try:
-        sbd_running = is_service_running(cmd_runner(), "sbd")
-        sbd_enabled = is_service_enabled(cmd_runner(), "sbd")
-        if sbd_enabled or sbd_running:
-            print("{prefix}sbd: {active}/{enabled}".format(
-                prefix=prefix,
-                active=("active" if sbd_running else "inactive"),
-                enabled=("enabled" if sbd_enabled else "disabled")
-            ))
-    except LibraryError:
-        pass
+    service_def = [
+        # (
+        #     service name,
+        #     display even if not enabled nor running
+        # )
+        ("corosync", True),
+        ("pacemaker", True),
+        ("pacemaker_remote", False),
+        ("pcsd", True),
+        ("sbd", False),
+    ]
+    for service, display_always in service_def:
+        try:
+            running = is_service_running(cmd_runner(), service)
+            enabled = is_service_enabled(cmd_runner(), service)
+            if display_always or enabled or running:
+                print("{prefix}{service}: {active}/{enabled}".format(
+                    prefix=prefix,
+                    service=service,
+                    active=("active" if running else "inactive"),
+                    enabled=("enabled" if enabled else "disabled")
+                ))
+        except LibraryError:
+            pass
 
 def enableServices():
     # do NOT handle SBD in here, it is started by pacemaker not systemd or init
@@ -2677,3 +2692,16 @@ def exit_on_cmdline_input_errror(error, main_name, usage_name):
 
 def get_report_processor():
     return LibraryReportProcessorToConsole(debug=("--debug" in pcs_options))
+
+def get_set_properties(prop_name=None, defaults=None):
+    properties = {} if defaults is None else dict(defaults)
+    (output, retVal) = run(["cibadmin","-Q","--scope", "crm_config"])
+    if retVal != 0:
+        err("unable to get crm_config\n"+output)
+    dom = parseString(output)
+    de = dom.documentElement
+    crm_config_properties = de.getElementsByTagName("nvpair")
+    for prop in crm_config_properties:
+        if prop_name is None or (prop_name == prop.getAttribute("name")):
+            properties[prop.getAttribute("name")] = prop.getAttribute("value")
+    return properties

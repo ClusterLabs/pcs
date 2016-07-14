@@ -8,7 +8,6 @@ from __future__ import (
 import sys
 
 from pcs import (
-    prop,
     stonith,
     usage,
     utils,
@@ -234,7 +233,7 @@ def quorum_unblock_cmd(argv):
         utils.err("unable to cancel waiting for nodes")
     print("Quorum unblocked")
 
-    startup_fencing = prop.get_set_properties().get("startup-fencing", "")
+    startup_fencing = utils.get_set_properties().get("startup-fencing", "")
     utils.set_cib_property(
         "startup-fencing",
         "false" if startup_fencing.lower() != "false" else "true"

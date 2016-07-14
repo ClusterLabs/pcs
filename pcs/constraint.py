@@ -593,7 +593,7 @@ def location_show(argv):
             print("  Node: " + node)
 
             nodehash_label = (
-                (nodehashon, "    Allowed to run:")
+                (nodehashon, "    Allowed to run:"),
                 (nodehashoff, "    Not allowed to run:")
             )
             for nodehash, label in nodehash_label:

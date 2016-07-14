@@ -95,14 +95,22 @@ def config_show(argv):
     print()
     config_show_cib()
     if (
-        utils.is_rhel6()
-        or
-        (not utils.usefile and "--corosync_conf" not in utils.pcs_options)
+        utils.hasCorosyncConf()
+        and
+        (
+            utils.is_rhel6()
+            or
+            (not utils.usefile and "--corosync_conf" not in utils.pcs_options)
+        )
     ):
         # with corosync 1 and cman, uid gid is part of cluster.conf file
         # with corosync 2, uid gid is in a separate directory
         cluster.cluster_uidgid([], True)
-    if "--corosync_conf" in utils.pcs_options or not utils.is_rhel6():
+    if (
+        "--corosync_conf" in utils.pcs_options
+        or
+        (not utils.is_rhel6() and utils.hasCorosyncConf())
+    ):
         print()
         print("Quorum:")
         try:
@@ -267,7 +275,16 @@ def config_restore_remote(infile_name, infile_obj):
                 err_msgs.append(output)
                 continue
             status = json.loads(output)
-            if status["corosync"] or status["pacemaker"] or status["cman"]:
+            if (
+                status["corosync"]
+                or
+                status["pacemaker"]
+                or
+                status["cman"]
+                or
+                # not supported by older pcsd, do not fail if not present
+                status.get("pacemaker_remote", False)
+            ):
                 err_msgs.append(
                     "Cluster is currently running on node %s. You need to stop "
                         "the cluster in order to restore the configuration."
@@ -286,7 +303,7 @@ def config_restore_remote(infile_name, infile_obj):
     # If node returns HTTP 404 it does not support config syncing at all.
     for node in node_list:
         retval, output = utils.pauseConfigSyncing(node, 10 * 60)
-        if not (retval == 0 or output.endswith("(HTTP error: 404)")):
+        if not (retval == 0 or "(HTTP error: 404)" in output):
             utils.err(output)
 
     if infile_obj:
@@ -306,11 +323,13 @@ def config_restore_remote(infile_name, infile_obj):
 
 def config_restore_local(infile_name, infile_obj):
     if (
-        status.is_cman_running()
+        status.is_service_running("cman")
         or
-        status.is_corosyc_running()
+        status.is_service_running("corosync")
         or
-        status.is_pacemaker_running()
+        status.is_service_running("pacemaker")
+        or
+        status.is_service_running("pacemaker_remote")
     ):
         utils.err(
             "Cluster is currently running on this node. You need to stop "

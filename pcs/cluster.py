@@ -1157,7 +1157,18 @@ def stop_cluster_corosync():
                 utils.err("unable to stop {0}".format(service))
 
 def kill_cluster(argv):
-    daemons = ["crmd", "pengine", "attrd", "lrmd", "stonithd", "cib", "pacemakerd", "corosync-qdevice", "corosync"]
+    daemons = [
+        "crmd",
+        "pengine",
+        "attrd",
+        "lrmd",
+        "stonithd",
+        "cib",
+        "pacemakerd",
+        "pacemaker_remoted",
+        "corosync-qdevice",
+        "corosync",
+    ]
     dummy_output, dummy_retval = utils.run(["killall", "-9"] + daemons)
 #    if dummy_retval != 0:
 #        print "Error: unable to execute killall -9"

@@ -1011,7 +1011,9 @@ module ClusterEntity
       @uptime = 'unknown'
       @name = nil
       @services = {}
-      [:pacemaker, :corosync, :pcsd, :cman, :sbd].each do |service|
+      [
+        :pacemaker, :pacemaker_remote, :corosync, :pcsd, :cman, :sbd
+      ].each do |service|
         @services[service] = {
           :installed => nil,
           :running => nil,

@@ -225,7 +225,11 @@ def stonith_level_add(level, node, devices):
         for dev in devices.split(","):
             if not utils.is_stonith_resource(dev):
                 utils.err("%s is not a stonith id (use --force to override)" % dev)
-        if not utils.is_pacemaker_node(node) and not utils.is_corosync_node(node):
+        corosync_nodes = []
+        if utils.hasCorosyncConf():
+            corosync_nodes = utils.getNodesFromCorosyncConf()
+        pacemaker_nodes = utils.getNodesFromPacemaker()
+        if node not in corosync_nodes and node not in pacemaker_nodes:
             utils.err("%s is not currently a node (use --force to override)" % node)
 
     ft = dom.getElementsByTagName("fencing-topology")
@@ -321,6 +325,10 @@ def stonith_level_clear(node = None):
 
 def stonith_level_verify():
     dom = utils.get_cib_dom()
+    corosync_nodes = []
+    if utils.hasCorosyncConf():
+        corosync_nodes = utils.getNodesFromCorosyncConf()
+    pacemaker_nodes = utils.getNodesFromPacemaker()
 
     fls = dom.getElementsByTagName("fencing-level")
     for fl in fls:
@@ -329,7 +337,7 @@ def stonith_level_verify():
         for dev in devices.split(","):
             if not utils.is_stonith_resource(dev):
                 utils.err("%s is not a stonith id" % dev)
-        if not utils.is_corosync_node(node) and not utils.is_pacemaker_node(node):
+        if node not in corosync_nodes and node not in pacemaker_nodes:
             utils.err("%s is not currently a node" % node)
 
 def stonith_level_show():

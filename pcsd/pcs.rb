@@ -892,6 +892,10 @@ def pacemaker_running?()
   is_service_running?('pacemaker')
 end
 
+def pacemaker_remote_running?()
+  is_service_running?('pacemaker_remote')
+end
+
 def get_pacemaker_version()
   begin
     stdout, stderror, retval = run_cmd(

@@ -55,7 +55,7 @@ def acl_cmd(argv):
 def acl_show(argv):
     dom = utils.get_cib_dom()
 
-    properties = prop.get_set_properties(defaults=prop.get_default_properties())
+    properties = utils.get_set_properties(defaults=prop.get_default_properties())
     acl_enabled = properties.get("enable-acl", "").lower()
     if is_true(acl_enabled):
         print("ACLs are enabled")

@@ -769,8 +769,18 @@ def get_sw_versions(params, request, auth_user)
 end
 
 def remote_node_available(params, request, auth_user)
-  if (not ISRHEL6 and File.exist?(Cfgsync::CorosyncConf.file_path)) or (ISRHEL6 and File.exist?(Cfgsync::ClusterConf.file_path)) or File.exist?("/var/lib/pacemaker/cib/cib.xml")
+  if (
+    (not ISRHEL6 and File.exist?(Cfgsync::CorosyncConf.file_path)) or
+    (ISRHEL6 and File.exist?(Cfgsync::ClusterConf.file_path)) or
+    File.exist?("/var/lib/pacemaker/cib/cib.xml")
+  )
     return JSON.generate({:node_available => false})
+  end
+  if pacemaker_remote_running?()
+    return JSON.generate({
+      :node_available => false,
+      :pacemaker_remote => true,
+    })
   end
   return JSON.generate({:node_available => true})
 end
@@ -1038,6 +1048,8 @@ def node_status(params, request, auth_user)
     :cman => node.cman,
     :corosync_enabled => node.corosync_enabled,
     :pacemaker_enabled => node.pacemaker_enabled,
+    :pacemaker_remote => node.services[:pacemaker_remote][:running],
+    :pacemaker_remote_enabled => node.services[:pacemaker_remote][:enabled],
     :pcsd_enabled => node.pcsd_enabled,
     :corosync_online => status[:corosync_online],
     :corosync_offline => status[:corosync_offline],

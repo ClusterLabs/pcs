@@ -7,7 +7,6 @@ from __future__ import (
 
 import sys
 import json
-from xml.dom.minidom import parseString
 
 from pcs import usage
 from pcs import utils
@@ -116,7 +115,7 @@ def list_property(argv):
         properties = {}
 
     if "--defaults" not in utils.pcs_options:
-        properties = get_set_properties(
+        properties = utils.get_set_properties(
             None if print_all else argv[0],
             properties
         )
@@ -140,17 +139,4 @@ def get_default_properties():
     for name, prop in prop_def_dict.items():
         parameters[name] = prop["default"]
     return parameters
-
-def get_set_properties(prop_name=None, defaults=None):
-    properties = {} if defaults is None else dict(defaults)
-    (output, retVal) = utils.run(["cibadmin","-Q","--scope", "crm_config"])
-    if retVal != 0:
-        utils.err("unable to get crm_config\n"+output)
-    dom = parseString(output)
-    de = dom.documentElement
-    crm_config_properties = de.getElementsByTagName("nvpair")
-    for prop in crm_config_properties:
-        if prop_name is None or (prop_name == prop.getAttribute("name")):
-            properties[prop.getAttribute("name")] = prop.getAttribute("value")
-    return properties
 

@@ -103,7 +103,7 @@ def full_status():
     print(output)
 
     if not utils.usefile:
-        if  "--full" in utils.pcs_options:
+        if  "--full" in utils.pcs_options and utils.hasCorosyncConf():
             print_pcsd_daemon_status()
             print()
         utils.serviceStatus("  ")
@@ -121,7 +121,10 @@ def nodes_status(argv):
         return
 
     if len(argv) == 1 and (argv[0] == "config"):
-        corosync_nodes = utils.getNodesFromCorosyncConf()
+        if utils.hasCorosyncConf():
+            corosync_nodes = utils.getNodesFromCorosyncConf()
+        else:
+            corosync_nodes = []
         try:
             pacemaker_nodes = sorted([
                 node.attrs.name for node
@@ -244,7 +247,7 @@ def cluster_status(argv):
         else:
             print("",line)
 
-    if not utils.usefile:
+    if not utils.usefile and utils.hasCorosyncConf():
         print()
         print_pcsd_daemon_status()
 
@@ -262,25 +265,11 @@ def xml_status():
         utils.err("running crm_mon, is pacemaker running?")
     print(output, end="")
 
-def is_cman_running():
+def is_service_running(service):
     if utils.is_systemctl():
-        dummy_output, retval = utils.run(["systemctl", "status", "cman.service"])
+        dummy_output, retval = utils.run(["systemctl", "status", service])
     else:
-        dummy_output, retval = utils.run(["service", "cman", "status"])
-    return retval == 0
-
-def is_corosyc_running():
-    if utils.is_systemctl():
-        dummy_output, retval = utils.run(["systemctl", "status", "corosync.service"])
-    else:
-        dummy_output, retval = utils.run(["service", "corosync", "status"])
-    return retval == 0
-
-def is_pacemaker_running():
-    if utils.is_systemctl():
-        dummy_output, retval = utils.run(["systemctl", "status", "pacemaker.service"])
-    else:
-        dummy_output, retval = utils.run(["service", "pacemaker", "status"])
+        dummy_output, retval = utils.run(["service", service, "status"])
     return retval == 0
 
 def print_pcsd_daemon_status():
