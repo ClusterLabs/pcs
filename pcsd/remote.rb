@@ -1558,7 +1558,7 @@ def remove_resource(params, request, auth_user)
       end
       cmd = [PCS, '-f', tmp_file.path, 'resource', 'disable']
       resource_list.each { |resource|
-        _, err, retval = run_cmd(user, *cmd, resource)
+        _, err, retval = run_cmd(user, *(cmd + [resource]))
         if retval != 0
           unless (
             err.join('').index('unable to find a resource') != -1 and
