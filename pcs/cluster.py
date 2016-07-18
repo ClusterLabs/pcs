@@ -54,6 +54,8 @@ from pcs.lib.errors import (
 )
 from pcs.lib.external import (
     disable_service,
+    is_cman_cluster,
+    is_systemctl,
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
 )
@@ -1132,7 +1134,17 @@ def stop_cluster(argv):
 
 def stop_cluster_pacemaker():
     print("Stopping Cluster (pacemaker)...")
-    output, retval = utils.run(["service", "pacemaker","stop"])
+    command = ["service", "pacemaker", "stop"]
+    if not is_systemctl() and is_cman_cluster(utils.cmd_runner()):
+        # If --skip-cman is not specified, pacemaker init script will stop cman
+        # and corosync as well. That way some of the nodes may stop cman before
+        # others stop pacemaker, which leads to quorum loss. We need to keep
+        # quorum until all pacemaker resources are stopped as some of them may
+        # need quorum to be able to stop.
+        # Additional parameters are not supported if "service" command is
+        # redirected to systemd.
+        command.append("--skip-cman")
+    output, retval = utils.run(command)
     if retval != 0:
         print(output)
         utils.err("unable to stop pacemaker")
