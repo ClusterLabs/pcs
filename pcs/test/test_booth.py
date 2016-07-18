@@ -31,22 +31,32 @@ def ensure_booth_config_not_exists():
     if os.path.exists(BOOTH_CONFIG_FILE):
         os.remove(BOOTH_CONFIG_FILE)
 
-class SetupTest(TestCase, AssertPcsMixin):
+class BoothTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(TEMP_CIB)
 
+    def assert_pcs_success(self, command, *args, **kwargs):
+        return super(BoothTest, self).assert_pcs_success(
+            fake_file(command), *args, **kwargs
+        )
+    def assert_pcs_fail(self, command, *args, **kwargs):
+        return super(BoothTest, self).assert_pcs_fail(
+            fake_file(command), *args, **kwargs
+        )
+
+class SetupTest(BoothTest):
     def test_sucess_setup_booth_config(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_success(
-            fake_file("booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3")
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
         )
         self.assert_pcs_success(
-            fake_file("booth config"),
+            "booth config",
             stdout_full=console_report(
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
-                "arbitrator = 3.3.3.3"
+                "arbitrator = 3.3.3.3",
             )
         )
 
@@ -54,9 +64,7 @@ class SetupTest(TestCase, AssertPcsMixin):
         ensure_booth_config_exists()
         try:
             self.assert_pcs_fail(
-                fake_file(
-                    "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
-                ),
+                "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3",
                 (
                     "Error: booth config file {0} already exists, use --force"
                     " to override\n"
@@ -69,9 +77,7 @@ class SetupTest(TestCase, AssertPcsMixin):
     def test_warn_when_config_file_exists_already_but_is_forced(self):
         ensure_booth_config_exists()
         self.assert_pcs_success(
-            fake_file(
-                "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3 --force"
-            ),
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3 --force",
             stdout_full="Warning: booth config file {0} already exists\n"
             .format(BOOTH_CONFIG_FILE)
         )
@@ -80,9 +86,7 @@ class SetupTest(TestCase, AssertPcsMixin):
 
     def test_fail_on_multiple_reasons(self):
         self.assert_pcs_fail(
-            fake_file(
-                "booth setup sites 1.1.1.1 arbitrators 1.1.1.1 2.2.2.2 3.3.3.3"
-            ),
+            "booth setup sites 1.1.1.1 arbitrators 1.1.1.1 2.2.2.2 3.3.3.3",
             console_report(
                 "Error: lack of sites for booth configuration (need 2 at least)"
                     ": sites 1.1.1.1"
@@ -92,15 +96,11 @@ class SetupTest(TestCase, AssertPcsMixin):
             )
         )
 
-class ConfigTest(TestCase, AssertPcsMixin):
-    def setUp(self):
-        shutil.copy(EMPTY_CIB, TEMP_CIB)
-        self.pcs_runner = PcsRunner(TEMP_CIB)
-
+class ConfigTest(BoothTest):
     def test_fail_when_config_file_do_not_exists(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_fail(
-            fake_file("booth config"),
+            "booth config",
             "Error: Booth config file '{0}' does no exist\n".format(
                 BOOTH_CONFIG_FILE
             )
