@@ -20,11 +20,11 @@ class BuildTest(TestCase):
                 "sites": ["1.1.1.1", "2.2.2.2"],
                 "arbitrators": ["3.3.3.3"]
             }),
-            [
+            "\n".join([
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
-            ]
+            ])
         )
 
     def test_sort_sites_and_arbitrators(self):
@@ -33,21 +33,21 @@ class BuildTest(TestCase):
                 "sites": ["2.2.2.2", "1.1.1.1"],
                 "arbitrators": ["3.3.3.3"]
             }),
-            [
+            "\n".join([
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
-            ]
+            ])
         )
 
 class ParseTest(TestCase):
     def test_returns_sites_and_arbitrators_when_correct_config(self):
         self.assertEqual(
-            configuration.parse([
+            configuration.parse("\n".join([
                 "site = 1.1.1.1",
                 " site  =  2.2.2.2 ",
                 "arbitrator=3.3.3.3",
-            ]),
+            ])),
             {
                 "sites": ["1.1.1.1", "2.2.2.2"],
                 "arbitrators": ["3.3.3.3"],
@@ -56,7 +56,7 @@ class ParseTest(TestCase):
 
     def test_refuse_unexpected_line(self):
         assert_raise_library_error(
-            lambda: configuration.parse(["nonsense"]),
+            lambda: configuration.parse("nonsense"),
             (
                 severities.ERROR,
                 report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
@@ -68,9 +68,7 @@ class ParseTest(TestCase):
 
     def test_refuse_unexpected_line_similar_to_pattern(self):
         assert_raise_library_error(
-            lambda: configuration.parse([
-                "nonsense = 1.1.1.1",
-            ]),
+            lambda: configuration.parse("nonsense = 1.1.1.1"),
             (
                 severities.ERROR,
                 report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,

@@ -20,7 +20,7 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
         booth_configuration["arbitrators"]
     )
     env.booth.create_config(
-        "\n".join(configuration.build(booth_configuration)),
+        configuration.build(booth_configuration),
         overwrite_existing
     )
 
@@ -28,4 +28,4 @@ def config_show(env):
     """
     return configuration as tuple of sites list and arbitrators list
     """
-    return configuration.parse(env.booth.get_config_content().splitlines())
+    return configuration.parse(env.booth.get_config_content())

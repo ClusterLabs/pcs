@@ -38,7 +38,7 @@ def validate_participants(site_list, arbitrator_list):
         raise LibraryError(*report)
 
 def build(booth_configuration):
-    return (
+    return "\n".join(
         [
             "site = {0}".format(site)
             for site in sorted(booth_configuration["sites"])
@@ -50,7 +50,7 @@ def build(booth_configuration):
         ]
     )
 
-def parse(line_list):
+def parse(content):
     keywords = {
         "site": [],
         "arbitrator": [],
@@ -59,7 +59,7 @@ def parse(line_list):
         r"^\s*({0})\s*=(.*)".format("|".join(keywords.keys()))
     )
     unexpected_lines = []
-    for line in line_list:
+    for line in content.splitlines():
         match = line_pattern.search(line)
         if match:
             if match.group(1) in list(keywords.keys()):

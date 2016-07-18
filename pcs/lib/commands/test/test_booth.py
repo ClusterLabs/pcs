@@ -15,7 +15,7 @@ class ConfigSetupTest(TestCase):
     def test_successfuly_build_and_write_to_std_path(
         self, mock_validate_participants, mock_build
     ):
-        mock_build.return_value = ["config content"]
+        mock_build.return_value = "config content"
         env = mock.MagicMock()
         commands.config_setup(
             env,
