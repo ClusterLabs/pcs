@@ -10,7 +10,6 @@ import re
 from pcs.lib.booth import reports
 from pcs.lib.errors import LibraryError
 
-
 def validate_participants(site_list, arbitrator_list):
     report = []
 
@@ -48,22 +47,31 @@ def build(booth_configuration):
             "arbitrator = {0}".format(arbitrator)
             for arbitrator in sorted(booth_configuration["arbitrators"])
         ]
+        +
+        [
+            'ticket = "{0}"'.format(ticket)
+            for ticket in sorted(booth_configuration.get("tickets", []))
+        ]
     )
 
 def parse(content):
     keywords = {
         "site": [],
         "arbitrator": [],
+        "ticket": [],
     }
-    line_pattern = re.compile(
+    pattern = re.compile(
         r"^\s*({0})\s*=(.*)".format("|".join(keywords.keys()))
     )
     unexpected_lines = []
     for line in content.splitlines():
-        match = line_pattern.search(line)
+        match = pattern.search(line)
         if match:
             if match.group(1) in list(keywords.keys()):
-                keywords[match.group(1)].append(match.group(2).strip())
+                value = match.group(2).strip()
+                if match.group(1) == "ticket":
+                    value = value.strip('"')
+                keywords[match.group(1)].append(value)
                 continue
         unexpected_lines.append(line)
     if unexpected_lines:
@@ -73,4 +81,39 @@ def parse(content):
     return {
         "sites": keywords["site"],
         "arbitrators": keywords["arbitrator"],
+        "tickets": keywords["ticket"],
     }
+
+def add_ticket(booth_configuration, ticket_name):
+    validate_ticket_name(ticket_name)
+    validate_ticket_unique(booth_configuration["tickets"], ticket_name)
+    return set_tickets(
+        booth_configuration,
+        sorted(booth_configuration["tickets"] + [ticket_name])
+    )
+
+def remove_ticket(booth_configuration, ticket_name):
+    validate_ticket_exists(booth_configuration["tickets"], ticket_name)
+    return set_tickets(
+        booth_configuration,
+        [t for t in booth_configuration["tickets"] if t != ticket_name]
+    )
+
+def validate_ticket_name(ticket_name):
+    if not re.compile(r"^[\w-]+$").search(ticket_name):
+        raise LibraryError(reports.booth_ticket_name_invalid(ticket_name))
+
+def validate_ticket_unique(booth_configuration_tickets, ticket_name):
+    if ticket_name in booth_configuration_tickets:
+        raise LibraryError(reports.booth_ticket_duplicate(ticket_name))
+
+def validate_ticket_exists(booth_configuration_tickets, ticket_name):
+    if ticket_name not in booth_configuration_tickets:
+        raise LibraryError(reports.booth_ticket_does_not_exist(ticket_name))
+
+def set_tickets(booth_configuration, ticket_list):
+    return dict(
+        list(booth_configuration.items())
+        +
+        list({"tickets": ticket_list}.items())
+    )

@@ -52,6 +52,9 @@ class BoothEnv(object):
         )
         self.__config.write(content)
 
+    def push_config(self, content):
+        self.__config.write(content)
+
     def export(self):
         return {} if self.__config.is_live else {
             "config_file": self.__config.export(),

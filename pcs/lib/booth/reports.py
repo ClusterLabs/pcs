@@ -68,3 +68,32 @@ def booth_invalid_name(name):
             "name": name,
         }
     )
+
+def booth_ticket_name_invalid(ticket_name):
+    return ReportItem.error(
+        report_codes.BOOTH_TICKET_NAME_INVALID,
+        "booth ticket name '{ticket_name}' is not valid,"
+            " use alphanumeric chars or dash"
+        ,
+        info={
+            "ticket_name": ticket_name,
+        }
+    )
+
+def booth_ticket_duplicate(ticket_name):
+    return ReportItem.error(
+        report_codes.BOOTH_TICKET_DUPLICATE,
+        "booth ticket name '{ticket_name}' already exists in configuration",
+        info={
+            "ticket_name": ticket_name,
+        }
+    )
+
+def booth_ticket_does_not_exist(ticket_name):
+    return ReportItem.error(
+        report_codes.BOOTH_TICKET_DOES_NOT_EXIST,
+        "booth ticket name '{ticket_name}' does not exist",
+        info={
+            "ticket_name": ticket_name,
+        }
+    )

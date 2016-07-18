@@ -28,6 +28,16 @@ def booth_cmd(lib, argv, modifiers):
             command.config_show(lib, argv_next, modifiers)
         elif sub_cmd == "setup":
             command.config_setup(lib, argv_next, modifiers)
+        elif sub_cmd == "ticket":
+            if len(argv_next) < 1:
+                raise CmdLineInputError()
+            if argv_next[0] == "add":
+                command.config_ticket_add(lib, argv_next[1:], modifiers)
+            elif argv_next[0] == "remove":
+                command.config_ticket_remove(lib, argv_next[1:], modifiers)
+            else:
+                raise CmdLineInputError()
+
         else:
             raise CmdLineInputError()
     except LibraryError as e:

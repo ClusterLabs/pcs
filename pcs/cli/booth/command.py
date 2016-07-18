@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import group_by_keywords
 
 
@@ -33,6 +34,27 @@ def config_show(lib, arg_list, modifiers):
             "arbitrator = {0}".format(arbitrator)
             for arbitrator in booth_configuration["arbitrators"]
         ]
+        +
+        [
+            'ticket = "{0}"'.format(ticket)
+            for ticket in booth_configuration["tickets"]
+        ]
     )
     for line in line_list:
         print(line)
+
+def config_ticket_add(lib, arg_list, modifiers):
+    """
+    add ticket to current configuration
+    """
+    if len(arg_list) != 1:
+        raise CmdLineInputError
+    lib.booth.config_ticket_add(arg_list[0])
+
+def config_ticket_remove(lib, arg_list, modifiers):
+    """
+    add ticket to current configuration
+    """
+    if len(arg_list) != 1:
+        raise CmdLineInputError
+    lib.booth.config_ticket_remove(arg_list[0])

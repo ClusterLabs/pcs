@@ -206,6 +206,8 @@ def load_module(env, middleware_factory, name):
             {
                 "config_setup": booth.config_setup,
                 "config_show": booth.config_show,
+                "config_ticket_add": booth.config_ticket_add,
+                "config_ticket_remove": booth.config_ticket_remove,
             }
         )
 

@@ -96,6 +96,67 @@ class SetupTest(BoothTest):
             )
         )
 
+class AddTicketTest(BoothTest):
+    def setUp(self):
+        super(AddTicketTest, self).setUp()
+        ensure_booth_config_not_exists()
+        self.assert_pcs_success(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+        )
+
+    def test_success_add_ticket(self):
+        self.assert_pcs_success("booth ticket add TicketA")
+        self.assert_pcs_success("booth config", stdout_full=console_report(
+            "site = 1.1.1.1",
+            "site = 2.2.2.2",
+            "arbitrator = 3.3.3.3",
+            'ticket = "TicketA"',
+        ))
+
+    def test_fail_on_bad_ticket_name(self):
+        self.assert_pcs_fail(
+            "booth ticket add @TicketA",
+            "Error: booth ticket name '@TicketA' is not valid, use alphanumeric"
+            " chars or dash\n"
+        )
+
+    def test_fail_on_duplicit_ticket_name(self):
+        self.assert_pcs_success("booth ticket add TicketA")
+        self.assert_pcs_fail(
+            "booth ticket add TicketA",
+            "Error: booth ticket name 'TicketA' already exists in configuration"
+            "\n"
+        )
+
+class RemoveTicketTest(BoothTest):
+    def setUp(self):
+        super(RemoveTicketTest, self).setUp()
+        ensure_booth_config_not_exists()
+        self.assert_pcs_success(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+        )
+
+    def test_success_remove_ticket(self):
+        self.assert_pcs_success("booth ticket add TicketA")
+        self.assert_pcs_success("booth config", stdout_full=console_report(
+            "site = 1.1.1.1",
+            "site = 2.2.2.2",
+            "arbitrator = 3.3.3.3",
+            'ticket = "TicketA"',
+        ))
+        self.assert_pcs_success("booth ticket remove TicketA")
+        self.assert_pcs_success("booth config", stdout_full=console_report(
+            "site = 1.1.1.1",
+            "site = 2.2.2.2",
+            "arbitrator = 3.3.3.3",
+        ))
+
+    def test_fail_when_ticket_does_not_exist(self):
+        self.assert_pcs_fail(
+            "booth ticket remove TicketA",
+            "Error: booth ticket name 'TicketA' does not exist\n"
+        )
+
 class ConfigTest(BoothTest):
     def test_fail_when_config_file_do_not_exists(self):
         ensure_booth_config_not_exists()

@@ -74,6 +74,21 @@ class BoothEnvTest(TestCase):
             True
         )
 
+    @mock.patch("pcs.lib.booth.env.RealFile")
+    def test_push_config(self, mock_real_file):
+        mock_file = mock.MagicMock(
+            assert_no_conflict_with_existing=mock.MagicMock(),
+            write=mock.MagicMock(),
+        )
+        mock_real_file.return_value = mock_file
+        env.BoothEnv(
+            "report processor",
+            env_data={"name": "booth"}
+        ).push_config("a")
+        mock_file.write.assert_called_once_with("a")
+
+
+
     def test_export_config_file_when_was_present_in_env_data(self):
         self.assertEqual(
             env.BoothEnv(

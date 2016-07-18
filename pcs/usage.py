@@ -1421,6 +1421,12 @@ Commands:
         Total number of participants (sites and arbitrators) must be odd.
         When configuration file exists, command fail unless --force applied.
 
+    ticket add <ticket-name>
+        Add new ticket to current configuration.
+
+    ticket remove <ticket-name>
+        Remove ticket from current configuration.
+
     config
         Show currently written booth configuration.
 """
