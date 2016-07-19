@@ -2,12 +2,23 @@
 # this file is a pcsd runner callable from a systemd unit
 # it also serves as a holder of a selinux context
 
-# add pcsd to the load path (ruby -I)
-libdir = File.dirname(__FILE__)
-$LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
+begin
+  # add pcsd to the load path (ruby -I)
+  libdir = File.dirname(__FILE__)
+  $LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
 
-# change current directory (ruby -C)
-Dir.chdir('/var/lib/pcsd')
+  # change current directory (ruby -C)
+  Dir.chdir('/var/lib/pcsd')
 
-# import and run pcsd
-require 'ssl'
+  # import and run pcsd
+  require 'ssl'
+rescue SignalException => e
+  if [Signal.list['INT'], Signal.list['TERM']].include?(e.signo)
+    # gracefully exit on SIGINT and SIGTERM
+    # pcsd sets up signal handlers later, this catches exceptions which occur
+    # by recieving signals before the handlers have been set up.
+    exit
+  else
+    raise
+  end
+end

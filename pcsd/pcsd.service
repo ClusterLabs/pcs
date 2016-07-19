@@ -5,6 +5,7 @@ Description=PCS GUI and remote configuration interface
 EnvironmentFile=/etc/sysconfig/pcsd
 Environment=GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
 ExecStart=/usr/lib/pcsd/pcsd > /dev/null &
+Type=notify
 
 [Install]
 WantedBy=multi-user.target

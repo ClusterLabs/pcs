@@ -3,6 +3,7 @@ require 'webrick'
 require 'webrick/https'
 require 'openssl'
 require 'rack'
+require 'socket'
 
 require 'bootstrap.rb'
 require 'pcs.rb'
@@ -66,11 +67,28 @@ def run_server(server, webrick_options, secondary_addrs)
 
   $logger.info("Listening on #{primary_addr} port #{port}")
   server.run(Sinatra::Application, webrick_options) { |server_instance|
+    # configure ssl options
     server_instance.ssl_context.ciphers = ciphers
+    # set listening addresses
     secondary_addrs.each { |addr|
       $logger.info("Adding listener on #{addr} port #{port}")
       server_instance.listen(addr, port)
     }
+    # notify systemd we are running
+    if ISSYSTEMCTL
+      socket_name = ENV['NOTIFY_SOCKET']
+      if socket_name
+        if socket_name.start_with?('@')
+          # abstract namespace socket
+          socket_name[0] = "\0"
+        end
+        $logger.info("Notifying systemd we are running (socket #{socket_name})")
+        sd_socket = Socket.new(Socket::AF_UNIX, Socket::SOCK_DGRAM)
+        sd_socket.connect(Socket.pack_sockaddr_un(socket_name))
+        sd_socket.send('READY=1', 0)
+        sd_socket.close()
+      end
+    end
   }
 end
 
