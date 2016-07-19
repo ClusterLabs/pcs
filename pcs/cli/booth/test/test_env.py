@@ -108,7 +108,7 @@ class BoothConfTest(TestCase):
         self.assertEqual(1, len(raised_exception[0].unprocessed))
         self.assertEqual("OTHER ERROR", raised_exception[0].unprocessed[0].code)
 
-        self.assertEqual(mock_console_report.write_error.mock_calls, [
+        self.assertEqual(mock_console_report.error.mock_calls, [
             mock.call(
                 "Booth config file '/local/file/path.conf' does no exist"
             ),

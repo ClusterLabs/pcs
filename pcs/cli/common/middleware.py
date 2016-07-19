@@ -45,7 +45,7 @@ def corosync_conf_existing(local_file_path):
             try:
                 env.corosync_conf_data = open(local_file_path).read()
             except EnvironmentError as e:
-                console_report.error("Unable to read {0}: {1}".format(
+                raise console_report.error("Unable to read {0}: {1}".format(
                     local_file_path,
                     e.strerror
                 ))
@@ -58,7 +58,7 @@ def corosync_conf_existing(local_file_path):
                 f.write(env.corosync_conf_data)
                 f.close()
             except EnvironmentError as e:
-                console_report.error("Unable to write {0}: {1}".format(
+                raise console_report.error("Unable to write {0}: {1}".format(
                     local_file_path,
                     e.strerror
                 ))
