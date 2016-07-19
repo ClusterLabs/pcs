@@ -17,6 +17,10 @@ def write_warn(message):
 def write_message(message, prefix):
     sys.stdout.write("{0}{1}\n".format(prefix, message))
 
+def make_error(message):
+    write_error(message)
+    return SystemExit(1)
+
 def error(message, exit=True):
     write_error(message)
     if exit:

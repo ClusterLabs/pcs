@@ -8,55 +8,101 @@ from __future__ import (
 import os.path
 
 from pcs.cli.common import console_report
-from pcs.common import report_codes, env_file_role_codes
+from pcs.common import report_codes, env_file_role_codes as file_role_codes
 from pcs.lib.errors import LibraryEnvError
 
 
-def middleware_config(name, local_file_path):
-    def create_booth_env():
-        if not local_file_path:
-            return {"name": name}
-        try:
-            return {
-                "name": name,
-                "config_file": {
-                    "content": open(local_file_path).read()
-                        if os.path.isfile(local_file_path) else None
-                    ,
-                }
-            }
-        except EnvironmentError as e:
-            console_report.error(
-                "Unable to read {0}: {1}".format(local_file_path, e.strerror)
+def get_env_file(path):
+    try:
+        return {
+            "content": open(path).read() if os.path.isfile(path) else None
+        }
+    except EnvironmentError as e:
+        raise console_report.make_error(
+            "Unable to read {0}: {1}".format(path, e.strerror)
+        )
+
+def write_env_file(env_file, file_path):
+    try:
+        f = open(file_path, "w")
+        f.write(env_file["content"])
+        f.close()
+    except EnvironmentError as e:
+        raise console_report.make_error(
+            "Unable to write {0}: {1}".format(file_path, e.strerror)
+        )
+
+def process_no_existing_file_expectation(file_role, env_file, file_path):
+    if(
+        env_file["no_existing_file_expected"]
+        and
+        os.path.exists(file_path)
+    ):
+        msg = "{0} {1} already exists".format(file_role, file_path)
+        if not env_file["can_overwrite_existing_file"]:
+            raise console_report.make_error(
+                "{0}, use --force to override".format(msg)
             )
+        console_report.write_warn(msg)
+
+def is_missing_file_report(report, file_role_code):
+    return (
+        report.code == report_codes.FILE_DOES_NOT_EXIST
+        and
+        report.info["file_role"] == file_role_code
+    )
+
+def report_missing_file(file_role, file_path):
+    console_report.write_error(
+        "{0} '{1}' does no exist".format(file_role, file_path)
+    )
+
+def middleware_config(name, config_path, key_path):
+    if config_path and not key_path:
+        raise console_report.make_error(
+            "With --booth-conf must be specified --booth-key as well"
+        )
+
+    if key_path and not config_path:
+        raise console_report.make_error(
+            "With --booth-key must be specified --booth-conf as well"
+        )
+
+    is_mocked_environment = config_path and key_path
+
+    def create_booth_env():
+        if not is_mocked_environment:
+            return {"name": name}
+        return {
+            "name": name,
+            "config_file": get_env_file(config_path),
+            "key_file": get_env_file(key_path),
+            "key_path": key_path,
+        }
 
     def flush(modified_env):
-        if not local_file_path:
+        if not is_mocked_environment:
             return
         if not modified_env:
             #TODO now this would not happen
             #for more information see comment in
             #pcs.cli.common.lib_wrapper.lib_env_to_cli_env
-            console_report.error("Error during library communication")
-
-        if(
-            modified_env["config_file"]["no_existing_file_expected"]
-            and
-            os.path.exists(local_file_path)
-        ):
-            msg = "booth config file {0} already exists".format(local_file_path)
-            if not modified_env["config_file"]["can_overwrite_existing_file"]:
-                console_report.error("{0}, use --force to override".format(msg))
-            console_report.write_warn(msg)
-
-        try:
-            f = open(local_file_path, "w")
-            f.write(modified_env["config_file"]["content"])
-            f.close()
-        except EnvironmentError as e:
-            console_report.error(
-                "Unable to write {0}: {1}".format(local_file_path, e.strerror)
+            raise console_report.make_error(
+                "Error during library communication"
             )
+
+        process_no_existing_file_expectation(
+            "booth config file",
+            modified_env["config_file"],
+            config_path
+        )
+        process_no_existing_file_expectation(
+            "booth key file",
+            modified_env["key_file"],
+            key_path
+        )
+        write_env_file(modified_env["key_file"], key_path)
+        write_env_file(modified_env["config_file"], config_path)
 
     def apply(next_in_line, env, *args, **kwargs):
         env.booth = create_booth_env()
@@ -64,16 +110,11 @@ def middleware_config(name, local_file_path):
             result_of_next = next_in_line(env, *args, **kwargs)
         except LibraryEnvError as e:
             for report in e.args:
-                if(
-                    report.code == report_codes.FILE_DOES_NOT_EXIST
-                    and
-                    report.info["file_role"] == env_file_role_codes.BOOTH_CONFIG
-                ):
-                    console_report.write_error(
-                        "Booth config file '{0}' does no exist".format(
-                            local_file_path
-                        )
-                    )
+                if is_missing_file_report(report, file_role_codes.BOOTH_CONFIG):
+                    report_missing_file("Booth config file", config_path)
+                    e.sign_processed(report)
+                if is_missing_file_report(report, file_role_codes.BOOTH_KEY):
+                    report_missing_file("Booth key file", key_path)
                     e.sign_processed(report)
             raise e
         flush(env.booth["modified_env"])

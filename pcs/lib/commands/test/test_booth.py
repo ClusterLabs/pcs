@@ -10,12 +10,14 @@ from pcs.test.tools.pcs_mock import mock
 from pcs.lib.commands import booth as commands
 
 class ConfigSetupTest(TestCase):
+    @mock.patch("pcs.lib.booth.configuration.generate_key")
     @mock.patch("pcs.lib.booth.configuration.build")
     @mock.patch("pcs.lib.booth.configuration.validate_participants")
     def test_successfuly_build_and_write_to_std_path(
-        self, mock_validate_participants, mock_build
+        self, mock_validate_participants, mock_build, mock_generate_key
     ):
         mock_build.return_value = "config content"
+        mock_generate_key.return_value = "key value"
         env = mock.MagicMock()
         commands.config_setup(
             env,
@@ -26,6 +28,7 @@ class ConfigSetupTest(TestCase):
         )
         env.booth.create_config.assert_called_once_with(
             "config content",
+            "key value",
             False
         )
         mock_validate_participants.assert_called_once_with(

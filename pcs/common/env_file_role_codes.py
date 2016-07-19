@@ -6,3 +6,4 @@ from __future__ import (
 )
 
 BOOTH_CONFIG = "BOOTH_CONFIG"
+BOOTH_KEY = "BOOTH_KEY"

@@ -29,7 +29,11 @@ class GhostFile(object):
 
         return self.__content
 
-    def write(self, content):
+    def write(self, content, file_operation=None):
+        """
+        callable file_operation is there only for RealFile compatible interface
+            it has no efect
+        """
         self.__content = content
 
     def assert_no_conflict_with_existing(
@@ -69,10 +73,15 @@ class RealFile(object):
                     else self.__overwrite_code,
             ))
 
-    def write(self, content):
+    def write(self, content, file_operation=None):
+        """
+        callable file_operation takes path and proces operation on it e.g. chmod
+        """
         try:
             with open(self.__file_path, "w") as config_file:
                 config_file.write(content)
+            if file_operation:
+                file_operation(self.__file_path)
         except EnvironmentError as e:
             raise self.__report_io_error(e)
 

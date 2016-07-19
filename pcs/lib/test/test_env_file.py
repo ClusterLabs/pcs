@@ -73,12 +73,17 @@ class RealFileAssertNoConflictWithExistingTest(TestCase):
 class RealFileWriteTest(TestCase):
     def test_success_write_content_to_path(self):
         mock_open = mock.mock_open()
+        mock_file_operation = mock.Mock()
         with mock.patch("pcs.lib.env_file.open", mock_open, create=True):
             RealFile("some role", "/etc/booth/some-name.conf").write(
-                "config content"
+                "config content",
+                file_operation=mock_file_operation
             )
             mock_open.assert_called_once_with("/etc/booth/some-name.conf", "w")
             mock_open().write.assert_called_once_with("config content")
+            mock_file_operation.assert_called_once_with(
+                "/etc/booth/some-name.conf"
+            )
 
     def test_raises_when_could_not_write(self):
         assert_raise_library_error(
@@ -99,9 +104,9 @@ class RealFileReadTest(TestCase):
     def test_success_read_content_from_file(self):
         mock_open = mock.mock_open()
         with mock.patch("pcs.lib.env_file.open", mock_open, create=True):
-            mock_open().read.return_value = ["test booth", "config"]
+            mock_open().read.return_value = "test booth\nconfig"
             self.assertEqual(
-                ["test booth", "config"],
+                "test booth\nconfig",
                 RealFile("some role", "/path/to.file").read()
             )
 

@@ -6,6 +6,8 @@ from __future__ import (
 )
 
 import re
+import os
+import binascii
 
 from pcs.lib.booth import reports
 from pcs.lib.errors import LibraryError
@@ -37,6 +39,9 @@ def validate_participants(site_list, arbitrator_list):
     if report:
         raise LibraryError(*report)
 
+def generate_key():
+    return binascii.hexlify(os.urandom(32))
+
 def build(booth_configuration):
     return "\n".join(
         [
@@ -50,6 +55,10 @@ def build(booth_configuration):
         ]
         +
         [
+            "authfile = {0}".format(booth_configuration["authfile"])
+        ]
+        +
+        [
             'ticket = "{0}"'.format(ticket)
             for ticket in sorted(booth_configuration.get("tickets", []))
         ]
@@ -60,6 +69,7 @@ def parse(content):
         "site": [],
         "arbitrator": [],
         "ticket": [],
+        "authfile": [],
     }
     pattern = re.compile(
         r"^\s*({0})\s*=(.*)".format("|".join(keywords.keys()))
@@ -79,11 +89,22 @@ def parse(content):
         raise LibraryError(
             reports.booth_config_unexpected_lines(unexpected_lines)
         )
-    return {
+
+    parsed_config = {
         "sites": keywords["site"],
         "arbitrators": keywords["arbitrator"],
         "tickets": keywords["ticket"],
     }
+
+    if len(keywords["authfile"]) > 1:
+        raise LibraryError(
+            reports.booth_config_invalid_content("multiple authfile")
+        )
+
+    if keywords["authfile"]:
+        parsed_config["authfile"] = keywords["authfile"][0]
+
+    return parsed_config
 
 def add_ticket(booth_configuration, ticket_name):
     validate_ticket_name(ticket_name)

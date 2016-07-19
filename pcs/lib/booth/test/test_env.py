@@ -5,13 +5,18 @@ from __future__ import (
     unicode_literals,
 )
 
+import grp
+import os
+import pwd
 from unittest import TestCase
 
+from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.booth import env
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
 from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 
 
@@ -54,8 +59,9 @@ class BoothEnvTest(TestCase):
                 .get_config_content()
         )
 
+    @mock.patch("pcs.lib.booth.env.set_keyfile_access")
     @mock.patch("pcs.lib.booth.env.RealFile")
-    def test_create_config(self, mock_real_file):
+    def test_create_config(self, mock_real_file, mock_set_keyfile_access):
         mock_file = mock.MagicMock(
             assert_no_conflict_with_existing=mock.MagicMock(),
             write=mock.MagicMock(),
@@ -66,13 +72,16 @@ class BoothEnvTest(TestCase):
         env.BoothEnv(
             "report processor",
             env_data={"name": "booth"}
-        ).create_config(["a"], can_overwrite_existing=True)
+        ).create_config("a", "b", can_overwrite_existing=True)
 
-        mock_file.write.assert_called_once_with(["a"])
-        mock_file.assert_no_conflict_with_existing.assert_called_once_with(
-            "report processor",
-            True
-        )
+        self.assertEqual(mock_file.assert_no_conflict_with_existing.mock_calls,[
+            mock.call('report processor', True),
+            mock.call('report processor', True),
+        ])
+        self.assertEqual(mock_file.write.mock_calls, [
+            mock.call('b', mock_set_keyfile_access),
+            mock.call('a'),
+        ])
 
     @mock.patch("pcs.lib.booth.env.RealFile")
     def test_push_config(self, mock_real_file):
@@ -95,16 +104,25 @@ class BoothEnvTest(TestCase):
                 "report processor",
                 {
                     "config_file": {
-                        "content": ["a", "b"]
-                    }
+                        "content": "a\nb",
+                    },
+                    "key_file": {
+                        "content": "secure",
+                    },
+                    "key_path": "/path/to/file.key",
                 }
             ).export(),
             {
                 "config_file": {
-                    "content": ["a", "b"],
+                    "content": "a\nb",
                     "can_overwrite_existing_file": False,
                     "no_existing_file_expected": False,
-                }
+                },
+                "key_file": {
+                    "content": "secure",
+                    "can_overwrite_existing_file": False,
+                    "no_existing_file_expected": False,
+                },
             }
         )
 
@@ -113,3 +131,37 @@ class BoothEnvTest(TestCase):
             env.BoothEnv("report processor", {"name": "booth"}).export(),
             {}
         )
+
+class SetKeyfileAccessTest(TestCase):
+    def test_set_neede_file_access(self):
+        #setup
+        file_path = rc("tmp_keyfile")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        with open(file_path, "w") as file:
+            file.write("content")
+
+        #check assumptions
+        stat = os.stat(file_path)
+        self.assertNotEqual('400', oct(stat.st_mode)[-3:])
+        current_user = pwd.getpwuid(os.getuid())[0]
+        if current_user != settings.pacemaker_uname:
+            file_user = pwd.getpwuid(stat.st_uid)[0]
+            self.assertNotEqual(file_user, settings.pacemaker_uname)
+        current_group = grp.getgrgid(os.getgid())[0]
+        if current_group != settings.pacemaker_gname:
+            file_group = grp.getgrgid(stat.st_gid)[0]
+            self.assertNotEqual(file_group, settings.pacemaker_gname)
+
+        #run tested method
+        env.set_keyfile_access(file_path)
+
+        #check
+        stat = os.stat(file_path)
+        self.assertEqual('400', oct(stat.st_mode)[-3:])
+
+        file_user = pwd.getpwuid(stat.st_uid)[0]
+        self.assertEqual(file_user, settings.pacemaker_uname)
+
+        file_group = grp.getgrgid(stat.st_gid)[0]
+        self.assertEqual(file_group, settings.pacemaker_gname)

@@ -27,6 +27,12 @@ def config_show(lib, arg_list, modifiers):
     print booth config
     """
     booth_configuration = lib.booth.config_show()
+    authfile_lines = []
+    if booth_configuration["authfile"]:
+        authfile_lines.append(
+            "authfile = {0}".format(booth_configuration["authfile"])
+        )
+
     line_list = (
         ["site = {0}".format(site) for site in booth_configuration["sites"]]
         +
@@ -34,7 +40,7 @@ def config_show(lib, arg_list, modifiers):
             "arbitrator = {0}".format(arbitrator)
             for arbitrator in booth_configuration["arbitrators"]
         ]
-        +
+        + authfile_lines +
         [
             'ticket = "{0}"'.format(ticket)
             for ticket in booth_configuration["tickets"]

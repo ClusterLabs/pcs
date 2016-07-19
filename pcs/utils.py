@@ -2701,7 +2701,8 @@ def get_middleware_factory():
         ),
         booth_conf=pcs.cli.booth.env.middleware_config(
             pcs_options.get("--name", DEFAULT_BOOTH_NAME),
-            pcs_options.get("--booth-conf", None)
+            pcs_options.get("--booth-conf", None),
+            pcs_options.get("--booth-key", None),
         )
     )
 

@@ -22,6 +22,10 @@ class BoothConfTest(TestCase):
                 "config_file": {
                     "content": "file content",
                     "no_existing_file_expected": False,
+                },
+                "key_file": {
+                    "content": "key file content",
+                    "no_existing_file_expected": False,
                 }
             }
             return "call result"
@@ -37,7 +41,8 @@ class BoothConfTest(TestCase):
             #run tested code
             booth_conf_middleware = middleware_config(
                 "booth-name",
-                "/local/file/path"
+                "/local/file/path.conf",
+                "/local/file/path.key",
             )
 
             self.assertEqual(
@@ -46,15 +51,27 @@ class BoothConfTest(TestCase):
             )
 
         #assertions
-        mock_is_file.assert_called_once_with("/local/file/path")
+        self.assertEqual(mock_is_file.mock_calls,[
+            mock.call("/local/file/path.conf"),
+            mock.call("/local/file/path.key"),
+        ])
 
         self.assertEqual(mock_env.booth["name"], "booth-name")
         self.assertEqual(mock_env.booth["config_file"], {"content": ""})
+        self.assertEqual(mock_env.booth["key_file"], {"content": ""})
 
-        mock_open.assert_any_call("/local/file/path")
-        mock_open().read.assert_called_once_with()
-        mock_open.assert_any_call("/local/file/path", "w")
-        mock_open().write.assert_called_once_with("file content")
+        self.assertEqual(mock_open.mock_calls, [
+            mock.call(u'/local/file/path.conf'),
+            mock.call().read(),
+            mock.call(u'/local/file/path.key'),
+            mock.call().read(),
+            mock.call(u'/local/file/path.key', u'w'),
+            mock.call().write(u'key file content'),
+            mock.call().close(),
+            mock.call(u'/local/file/path.conf', u'w'),
+            mock.call().write(u'file content'),
+            mock.call().close(),
+        ])
 
     @mock.patch("pcs.cli.booth.env.console_report")
     @mock.patch("pcs.cli.booth.env.os.path.isfile")
@@ -65,6 +82,9 @@ class BoothConfTest(TestCase):
             ReportItem.error(report_codes.FILE_DOES_NOT_EXIST, "", info={
                 "file_role": env_file_role_codes.BOOTH_CONFIG,
             }),
+            ReportItem.error(report_codes.FILE_DOES_NOT_EXIST, "", info={
+                "file_role": env_file_role_codes.BOOTH_KEY,
+            }),
             ReportItem.error("OTHER ERROR", "", info={}),
         ))
         mock_is_file.return_value = False
@@ -73,7 +93,8 @@ class BoothConfTest(TestCase):
         #run tested code
         booth_conf_middleware = middleware_config(
             "booth-name",
-            "/local/file/path"
+            "/local/file/path.conf",
+            "/local/file/path.key",
         )
         raised_exception = []
         def run_middleware():
@@ -87,6 +108,11 @@ class BoothConfTest(TestCase):
         self.assertEqual(1, len(raised_exception[0].unprocessed))
         self.assertEqual("OTHER ERROR", raised_exception[0].unprocessed[0].code)
 
-        mock_console_report.write_error.assert_called_once_with(
-            "Booth config file '/local/file/path' does no exist"
-        )
+        self.assertEqual(mock_console_report.write_error.mock_calls, [
+            mock.call(
+                "Booth config file '/local/file/path.conf' does no exist"
+            ),
+            mock.call(
+                "Booth key file '/local/file/path.key' does no exist"
+            ),
+        ])

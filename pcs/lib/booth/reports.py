@@ -60,6 +60,15 @@ def booth_config_unexpected_lines(line_list):
         }
     )
 
+def booth_config_invalid_content(reason):
+    return ReportItem.error(
+        report_codes.BOOTH_CONFIG_INVALID_CONTENT,
+        "booth config has invalid content: '{reason}'",
+        info={
+            "reason": reason,
+        }
+    )
+
 def booth_invalid_name(name):
     return ReportItem.error(
         report_codes.BOOTH_INVALID_NAME,

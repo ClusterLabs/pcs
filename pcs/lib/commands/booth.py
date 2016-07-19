@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 from pcs.lib.booth import configuration
+from pcs.common.tools import merge_dicts
 
 
 def config_setup(env, booth_configuration, overwrite_existing=False):
@@ -20,7 +21,11 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
         booth_configuration["arbitrators"]
     )
     env.booth.create_config(
-        configuration.build(booth_configuration),
+        configuration.build(merge_dicts(
+            booth_configuration,
+            {"authfile": env.booth.key_path}
+        )),
+        configuration.generate_key(),
         overwrite_existing
     )
 

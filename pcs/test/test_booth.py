@@ -18,9 +18,14 @@ EMPTY_CIB = rc("cib-empty.xml")
 TEMP_CIB = rc("temp-cib.xml")
 
 BOOTH_CONFIG_FILE = rc("temp-booth.cfg")
+BOOTH_KEY_FILE = rc("temp-booth.key")
 
 def fake_file(command):
-    return "{0} --booth-conf={1}".format(command, BOOTH_CONFIG_FILE)
+    return "{0} --booth-conf={1} --booth-key={2}".format(
+        command,
+        BOOTH_CONFIG_FILE,
+        BOOTH_KEY_FILE,
+    )
 
 def ensure_booth_config_exists():
     if not os.path.exists(BOOTH_CONFIG_FILE):
@@ -30,6 +35,8 @@ def ensure_booth_config_exists():
 def ensure_booth_config_not_exists():
     if os.path.exists(BOOTH_CONFIG_FILE):
         os.remove(BOOTH_CONFIG_FILE)
+    if os.path.exists(BOOTH_KEY_FILE):
+        os.remove(BOOTH_KEY_FILE)
 
 class BoothTest(TestCase, AssertPcsMixin):
     def setUp(self):
@@ -40,10 +47,15 @@ class BoothTest(TestCase, AssertPcsMixin):
         return super(BoothTest, self).assert_pcs_success(
             fake_file(command), *args, **kwargs
         )
+
     def assert_pcs_fail(self, command, *args, **kwargs):
         return super(BoothTest, self).assert_pcs_fail(
             fake_file(command), *args, **kwargs
         )
+
+    def assert_pcs_fail_original(self, *args, **kwargs):
+        return super(BoothTest, self).assert_pcs_fail(*args, **kwargs)
+
 
 class SetupTest(BoothTest):
     def test_sucess_setup_booth_config(self):
@@ -57,8 +69,12 @@ class SetupTest(BoothTest):
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
+                "authfile = {0}".format(BOOTH_KEY_FILE),
             )
         )
+        with open(BOOTH_KEY_FILE) as key_file:
+            self.assertEqual(64, len(key_file.read()))
+
 
     def test_fail_when_config_exists_already(self):
         ensure_booth_config_exists()
@@ -78,8 +94,14 @@ class SetupTest(BoothTest):
         ensure_booth_config_exists()
         self.assert_pcs_success(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3 --force",
-            stdout_full="Warning: booth config file {0} already exists\n"
-            .format(BOOTH_CONFIG_FILE)
+            stdout_full=[
+                "Warning: booth config file"
+                    " {0} already exists".format(BOOTH_CONFIG_FILE)
+                ,
+                "Warning: booth key file"
+                    " {0} already exists".format(BOOTH_KEY_FILE)
+                ,
+            ]
         )
         ensure_booth_config_not_exists()
 
@@ -96,6 +118,21 @@ class SetupTest(BoothTest):
             )
         )
 
+    def test_refuse_partialy_mocked_environment(self):
+        self.assert_pcs_fail_original(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+                " --booth-conf=/some/file" #no --booth-key!
+            ,
+            "Error: With --booth-conf must be specified --booth-key as well\n"
+        )
+        self.assert_pcs_fail_original(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+                " --booth-key=/some/file" #no --booth-key!
+            ,
+            "Error: With --booth-key must be specified --booth-conf as well\n"
+        )
+
+
 class AddTicketTest(BoothTest):
     def setUp(self):
         super(AddTicketTest, self).setUp()
@@ -110,6 +147,7 @@ class AddTicketTest(BoothTest):
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
+            "authfile = /root/pcs/pcs/test/resources/temp-booth.key",
             'ticket = "TicketA"',
         ))
 
@@ -142,6 +180,7 @@ class RemoveTicketTest(BoothTest):
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
+            "authfile = /root/pcs/pcs/test/resources/temp-booth.key",
             'ticket = "TicketA"',
         ))
         self.assert_pcs_success("booth ticket remove TicketA")
@@ -149,6 +188,7 @@ class RemoveTicketTest(BoothTest):
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
+            "authfile = /root/pcs/pcs/test/resources/temp-booth.key",
         ))
 
     def test_fail_when_ticket_does_not_exist(self):

@@ -98,7 +98,7 @@ def main(argv=None):
             "token=", "token_coefficient=", "consensus=", "join=",
             "miss_count_const=", "fail_recv_const=",
             "corosync_conf=", "cluster_conf=",
-            "booth-conf=",
+            "booth-conf=", "booth-key=",
             "remote", "watchdog=",
             #in pcs status - do not display resorce status on inactive node
             "hide-inactive",

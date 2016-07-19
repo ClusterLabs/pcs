@@ -70,12 +70,14 @@ class BuildTest(TestCase):
         self.assertEqual(
             configuration.build({
                 "sites": ["1.1.1.1", "2.2.2.2"],
-                "arbitrators": ["3.3.3.3"]
+                "arbitrators": ["3.3.3.3"],
+                "authfile": "/path/to/authfile.key",
             }),
             "\n".join([
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
+                "authfile = /path/to/authfile.key",
             ])
         )
 
@@ -84,12 +86,14 @@ class BuildTest(TestCase):
             configuration.build({
                 "sites": ["1.1.1.1", "2.2.2.2"],
                 "arbitrators": ["3.3.3.3"],
+                "authfile": "/path/to/authfile.key",
                 "tickets": ["ticketB", "ticketA"],
             }),
             "\n".join([
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
+                "authfile = /path/to/authfile.key",
                 'ticket = "ticketA"',
                 'ticket = "ticketB"',
             ])
@@ -99,17 +103,19 @@ class BuildTest(TestCase):
         self.assertEqual(
             configuration.build({
                 "sites": ["2.2.2.2", "1.1.1.1"],
-                "arbitrators": ["3.3.3.3"]
+                "arbitrators": ["3.3.3.3"],
+                "authfile": "/path/to/authfile.key",
             }),
             "\n".join([
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
+                "authfile = /path/to/authfile.key",
             ])
         )
 
 class ParseTest(TestCase):
-    def test_returns_sites_and_arbitrators_when_correct_config(self):
+    def test_returns_parsed_config_when_correct_config(self):
         self.assertEqual(
             configuration.parse("\n".join([
                 "site = 1.1.1.1",
@@ -117,13 +123,31 @@ class ParseTest(TestCase):
                 "arbitrator=3.3.3.3",
                 'ticket = "TicketA"',
                 'ticket = "TicketB"',
+                "authfile = /path/to/authfile.key",
             ])),
             {
                 "sites": ["1.1.1.1", "2.2.2.2"],
                 "arbitrators": ["3.3.3.3"],
                 "tickets": ["TicketA", "TicketB"],
+                "authfile": "/path/to/authfile.key",
             }
         )
+
+    def test_refuse_multiple_authfiles(self):
+        assert_raise_library_error(
+            lambda: configuration.parse("\n".join([
+                "authfile = /path/to/authfile.key",
+                "authfile = /path/to/authfile2.key",
+            ])),
+            (
+                severities.ERROR,
+                report_codes.BOOTH_CONFIG_INVALID_CONTENT,
+                {
+                    "reason": "multiple authfile",
+                }
+            ),
+        )
+
 
     def test_refuse_unexpected_line(self):
         assert_raise_library_error(
