@@ -1076,7 +1076,7 @@ def disable_cluster_nodes(nodes):
     if len(error_list) > 0:
         utils.err("unable to disable all nodes\n" + "\n".join(error_list))
 
-def destroy_cluster(argv):
+def destroy_cluster(argv, keep_going=False):
     if len(argv) > 0:
         # stop pacemaker and resources while cluster is still quorate
         nodes = argv
@@ -1085,7 +1085,14 @@ def destroy_cluster(argv):
         # destroy will stop any remaining cluster daemons
         error_list = parallel_for_nodes(utils.destroyCluster, nodes, quiet=True)
         if error_list:
-            utils.err("unable to destroy cluster\n" + "\n".join(error_list))
+            if keep_going:
+                print(
+                    "Warning: unable to destroy cluster\n"
+                    +
+                    "\n".join(error_list)
+                )
+            else:
+                utils.err("unable to destroy cluster\n" + "\n".join(error_list))
 
 def stop_cluster(argv):
     if len(argv) > 0:
@@ -1347,19 +1354,25 @@ def cluster_node(argv):
 
     node = argv[1]
     node0, node1 = utils.parse_multiring_node(node)
-
     if not node0:
         utils.err("missing ring 0 address of the node")
-    status,output = utils.checkAuthorization(node0)
-    if status == 2:
-        utils.err("pcsd is not running on %s" % node0)
-    elif status == 3:
-        utils.err(
-            "%s is not yet authenticated (try pcs cluster auth %s)"
-            % (node0, node0)
-        )
-    elif status != 0:
-        utils.err(output)
+
+    # allow to continue if removing a node with --force
+    if add_node or "--force" not in utils.pcs_options:
+        status, output = utils.checkAuthorization(node0)
+        if status != 0:
+            if status == 2:
+                msg = "pcsd is not running on {0}".format(node0)
+            elif status == 3:
+                msg = (
+                    "{node} is not yet authenticated "
+                    + " (try pcs cluster auth {node})"
+                ).format(node=node0)
+            else:
+                msg = output
+            if not add_node:
+                msg += ", use --force to override"
+            utils.err(msg)
 
     if add_node == True:
         wait = False
@@ -1540,7 +1553,7 @@ def cluster_node(argv):
 
         nodesRemoved = False
         c_nodes = utils.getNodesFromCorosyncConf()
-        destroy_cluster([node0])
+        destroy_cluster([node0], keep_going=("--force" in utils.pcs_options))
         for my_node in c_nodes:
             if my_node == node0:
                 continue
