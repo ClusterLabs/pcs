@@ -9,6 +9,7 @@ import re
 
 from pcs.lib.booth import reports
 from pcs.lib.errors import LibraryError
+from pcs.common.tools import merge_dicts
 
 def validate_participants(site_list, arbitrator_list):
     report = []
@@ -87,16 +88,20 @@ def parse(content):
 def add_ticket(booth_configuration, ticket_name):
     validate_ticket_name(ticket_name)
     validate_ticket_unique(booth_configuration["tickets"], ticket_name)
-    return set_tickets(
+    return merge_dicts(
         booth_configuration,
-        sorted(booth_configuration["tickets"] + [ticket_name])
+        {"tickets": sorted(booth_configuration["tickets"] + [ticket_name])}
     )
 
 def remove_ticket(booth_configuration, ticket_name):
     validate_ticket_exists(booth_configuration["tickets"], ticket_name)
-    return set_tickets(
+    return merge_dicts(
         booth_configuration,
-        [t for t in booth_configuration["tickets"] if t != ticket_name]
+        {
+            "tickets": [
+                t for t in booth_configuration["tickets"] if t != ticket_name
+            ]
+        }
     )
 
 def validate_ticket_name(ticket_name):
@@ -110,10 +115,3 @@ def validate_ticket_unique(booth_configuration_tickets, ticket_name):
 def validate_ticket_exists(booth_configuration_tickets, ticket_name):
     if ticket_name not in booth_configuration_tickets:
         raise LibraryError(reports.booth_ticket_does_not_exist(ticket_name))
-
-def set_tickets(booth_configuration, ticket_list):
-    return dict(
-        list(booth_configuration.items())
-        +
-        list({"tickets": ticket_list}.items())
-    )

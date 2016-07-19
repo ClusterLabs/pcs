@@ -38,3 +38,9 @@ def format_environment_error(e):
     if e.filename:
         return "{0}: '{1}'".format(e.strerror, e.filename)
     return e.strerror
+
+def merge_dicts(*dictionaries):
+    merged_dict = {}
+    for dictionary in dictionaries:
+        merged_dict.update(dictionary)
+    return merged_dict
