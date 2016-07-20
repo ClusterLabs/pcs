@@ -837,8 +837,15 @@ def remote_remove_nodes(params, request, auth_user)
   stdout, stderr, retval = run_cmd(
     auth_user, PCS, "cluster", "stop", *stop_params
   )
-  if retval != 0
-    return [400, stderr.join]
+  if retval != 0 and not params['force']
+    # If forced, keep going even if unable to stop all nodes (they may be dead).
+    # Add info this error is forceable if pcs did not do it (e.g. when unable
+    # to connect to some nodes).
+    message = stderr.join
+    if not message.include?(', use --force to override')
+      message += ', use --force to override'
+    end
+    return [400, message]
   end
 
   node_list.each {|node|
