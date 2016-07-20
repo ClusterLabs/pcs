@@ -40,7 +40,9 @@ def validate_participants(site_list, arbitrator_list):
         raise LibraryError(*report)
 
 def generate_key():
-    return binascii.hexlify(os.urandom(32))
+    #typecheck is for returning consistently str in pytho2 and python3
+    key = binascii.hexlify(os.urandom(32))
+    return key if isinstance(key, str) else key.decode()
 
 def build(booth_configuration):
     return "\n".join(
