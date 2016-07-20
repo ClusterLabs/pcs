@@ -21,10 +21,6 @@ def get_booth_env_file_name(name, extension):
     report_list = []
     if "/" in name:
         report_list.append(reports.booth_invalid_name(name))
-    if not os.path.exists(BOOTH_CONFIG_DIR):
-        report_list.append(reports.booth_config_dir_does_not_exists(
-            BOOTH_CONFIG_DIR
-        ))
     if report_list:
         raise LibraryError(*report_list)
     return "{0}.{1}".format(os.path.join(BOOTH_CONFIG_DIR, name), extension)

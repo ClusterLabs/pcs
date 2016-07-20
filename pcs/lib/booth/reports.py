@@ -41,15 +41,6 @@ def booth_address_duplication(duplicate_addresses):
         }
     )
 
-def booth_config_dir_does_not_exists(path):
-    return ReportItem.error(
-        report_codes.BOOTH_CONFIG_DIR_DOES_NOT_EXISTS,
-        "booth configuration dir not exists (is booth installed?)",
-        info={
-            "dir": path,
-        }
-    )
-
 def booth_config_unexpected_lines(line_list):
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
