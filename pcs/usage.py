@@ -1173,7 +1173,7 @@ Commands:
         Restore cluster configuration to specified checkpoint.
 
     import-cman output=<filename> [input=<filename>] [--interactive]
-            [output-format=corosync.conf|cluster.conf]
+            [output-format=corosync.conf|cluster.conf] [dist=<dist>]
         Converts CMAN cluster configuration to Pacemaker cluster configuration.
         Converted configuration will be saved to 'output' file.  To send
         the configuration to the cluster nodes the 'pcs config restore'
@@ -1181,20 +1181,27 @@ Commands:
         prompted to solve incompatibilities manually.  If no input is specified
         /etc/cluster/cluster.conf will be used.  You can force to create output
         containing either cluster.conf or corosync.conf using the output-format
-        option.
+        option.  Optionally you can specify output version by setting 'dist'
+        option e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.
+        If 'dist' is not specified, it defaults to this nodei's version if that
+        matches output-format, otherwise redhat,6.7 is used for cluster.conf
+        and redhat,7.1 is used for corosync.conf.
 
     import-cman output=<filename> [input=<filename>] [--interactive]
-            output-format=pcs-commands|pcs-commands-verbose
+            output-format=pcs-commands|pcs-commands-verbose [dist=<dist>]
         Converts CMAN cluster configuration to a list of pcs commands which
         recreates the same cluster as Pacemaker cluster when executed.  Commands
         will be saved to 'output' file.  For other options see above.
 
-    export pcs-commands|pcs-commands-verbose output=<filename>
+    export pcs-commands|pcs-commands-verbose [output=<filename>] [dist=<dist>]
         Creates a list of pcs commands which upon execution recreates
         the current cluster running on this node.  Commands will be saved
-        to 'output' file.  Use pcs-commands to get a simple list of commands,
-        whereas pcs-commands-verbose creates a list including comments and debug
-        messages.
+        to 'output' file or written to stdout if 'output' is not specified.  Use
+        pcs-commands to get a simple list of commands, whereas
+        pcs-commands-verbose creates a list including comments and debug
+        messages.  Optionally specify output version by setting 'dist' option
+        e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.  If 'dist'
+        is not specified, it defaults to this node's version.
 """
     if pout:
         print(sub_usage(args, output))

@@ -18,8 +18,10 @@ import logging
 import pwd
 import grp
 import time
+import platform
 
 try:
+    import clufter.facts
     import clufter.format_manager
     import clufter.filter_manager
     import clufter.command_manager
@@ -555,6 +557,7 @@ def config_import_cman(argv):
     cluster_conf = settings.cluster_conf_file
     dry_run_output = None
     output_format = "cluster.conf" if utils.is_rhel6() else "corosync.conf"
+    dist = None
     invalid_args = False
     for arg in argv:
         if "=" in arg:
@@ -571,6 +574,8 @@ def config_import_cman(argv):
                     output_format = value
                 else:
                     invalid_args = True
+            elif name == "dist":
+                dist = value
             else:
                 invalid_args = True
         else:
@@ -588,12 +593,34 @@ def config_import_cman(argv):
     force = "--force" in utils.pcs_options
     interactive = "--interactive" in utils.pcs_options
 
+    if dist is not None:
+        if output_format == "cluster.conf":
+            if not clufter.facts.cluster_pcs_flatiron("linux", dist.split(",")):
+                utils.err("dist does not match output-format")
+        elif output_format == "corosync.conf":
+            if not clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
+                utils.err("dist does not match output-format")
+    elif (
+        (output_format == "cluster.conf" and utils.is_rhel6())
+        or
+        (output_format == "corosync.conf" and not utils.is_rhel6())
+    ):
+        dist = ",".join(platform.linux_distribution(full_distribution_name=0))
+    elif output_format == "cluster.conf":
+        dist = "redhat,6.7,Santiago"
+    elif output_format == "corosync.conf":
+        dist = "redhat,7.1,Maipo"
+    else:
+        # for output-format=pcs-command[-verbose]
+        dist = ",".join(platform.linux_distribution(full_distribution_name=0))
+
     clufter_args = {
         "input": str(cluster_conf),
         "cib": {"passin": "bytestring"},
         "nocheck": force,
         "batch": True,
         "sys": "linux",
+        "dist": dist,
         # Make it work on RHEL6 as well for sure
         "color": "always" if sys.stdout.isatty() else "never"
     }
@@ -606,11 +633,9 @@ def config_import_cman(argv):
         logging.getLogger("clufter").setLevel(logging.DEBUG)
     if output_format == "cluster.conf":
         clufter_args["ccs_pcmk"] = {"passin": "bytestring"}
-        clufter_args["dist"] = "redhat,6.7,Santiago"
         cmd_name = "ccs2pcs-flatiron"
     elif output_format == "corosync.conf":
         clufter_args["coro"] = {"passin": "struct"}
-        clufter_args["dist"] = "redhat,7.1,Maipo"
         cmd_name = "ccs2pcs-needle"
     elif output_format in ("pcs-commands", "pcs-commands-verbose"):
         clufter_args["output"] = {"passin": "bytestring"}
@@ -624,7 +649,15 @@ def config_import_cman(argv):
             clufter_args["text_width"] = "-1"
             clufter_args["silent"] = False
             clufter_args["noguidance"] = False
-        cmd_name = "ccs2pcscmd-flatiron"
+        if clufter.facts.cluster_pcs_flatiron("linux", dist.split(",")):
+            cmd_name = "ccs2pcscmd-flatiron"
+        elif clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
+            cmd_name = "ccs2pcscmd-needle"
+        else:
+            utils.err(
+                "unrecognized dist, try something recognized"
+                + " (e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty)"
+            )
     clufter_args_obj = type(str("ClufterOptions"), (object, ), clufter_args)
 
     # run convertor
@@ -737,29 +770,36 @@ def config_export_pcs_commands(argv, verbose=False):
     interactive = "--interactive" in utils.pcs_options
     invalid_args = False
     output_file = None
+    dist = None
     for arg in argv:
         if "=" in arg:
             name, value = arg.split("=", 1)
             if name == "output":
                 output_file = value
+            elif name == "dist":
+                dist = value
             else:
                 invalid_args = True
         else:
             invalid_args = True
-    if invalid_args or not output_file:
+    # check options
+    if invalid_args:
         usage.config(["export", "pcs-commands"])
         sys.exit(1)
+    # complete optional options
+    if dist is None:
+        dist = ",".join(platform.linux_distribution(full_distribution_name=0))
 
     # prepare convertor options
     clufter_args = {
         "nocheck": force,
         "batch": True,
         "sys": "linux",
+        "dist": dist,
         # Make it work on RHEL6 as well for sure
         "color": "always" if sys.stdout.isatty() else "never",
         "coro": settings.corosync_conf_file,
         "ccs": settings.cluster_conf_file,
-        "output": {"passin": "bytestring"},
         "start_wait": "60",
         "tmp_cib": "tmp-cib.xml",
         "force": force,
@@ -767,6 +807,10 @@ def config_export_pcs_commands(argv, verbose=False):
         "silent": True,
         "noguidance": True,
     }
+    if output_file:
+        clufter_args["output"] = {"passin": "bytestring"}
+    else:
+        clufter_args["output"] = "-"
     if interactive:
         if "EDITOR" not in os.environ:
             utils.err("$EDITOR environment variable is not set")
@@ -791,13 +835,14 @@ def config_export_pcs_commands(argv, verbose=False):
         "Error: unable to export cluster configuration"
     )
 
-    # save commands
-    ok, message = utils.write_file(
-        output_file,
-        clufter_args_obj.output["passout"]
-    )
-    if not ok:
-        utils.err(message)
+    # save commands if not printed to stdout by clufter
+    if output_file:
+        ok, message = utils.write_file(
+            output_file,
+            clufter_args_obj.output["passout"]
+        )
+        if not ok:
+            utils.err(message)
 
 def run_clufter(cmd_name, cmd_args, debug, force, err_prefix):
     try:
