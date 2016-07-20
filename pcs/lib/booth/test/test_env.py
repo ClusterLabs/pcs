@@ -21,7 +21,9 @@ from pcs.test.tools.pcs_mock import mock
 
 
 class GetConfigFileNameTest(TestCase):
-    def test_refuse_when_name_starts_with_slash(self):
+    @mock.patch("pcs.lib.booth.env.os.path.exists")
+    def test_refuse_when_name_starts_with_slash(self, mock_path_exists):
+        mock_path_exists.return_value = True
         assert_raise_library_error(
             lambda: env.get_config_file_name("/booth"),
             (
@@ -49,7 +51,10 @@ class GetConfigFileNameTest(TestCase):
 
 class BoothEnvTest(TestCase):
     @mock.patch("pcs.lib.booth.env.RealFile")
-    def test_get_content_from_file(self, mock_real_file):
+    @mock.patch("pcs.lib.booth.env.get_booth_env_file_name")
+    def test_get_content_from_file(
+        self, mock_get_booth_env_file_name, mock_real_file
+    ):
         mock_real_file.return_value = mock.MagicMock(
             read=mock.MagicMock(return_value=["content"])
         )
@@ -61,7 +66,11 @@ class BoothEnvTest(TestCase):
 
     @mock.patch("pcs.lib.booth.env.set_keyfile_access")
     @mock.patch("pcs.lib.booth.env.RealFile")
-    def test_create_config(self, mock_real_file, mock_set_keyfile_access):
+    @mock.patch("pcs.lib.booth.env.get_booth_env_file_name")
+    def test_create_config(
+        self, mock_get_booth_env_file_name, mock_real_file,
+        mock_set_keyfile_access
+    ):
         mock_file = mock.MagicMock(
             assert_no_conflict_with_existing=mock.MagicMock(),
             write=mock.MagicMock(),
@@ -84,7 +93,8 @@ class BoothEnvTest(TestCase):
         ])
 
     @mock.patch("pcs.lib.booth.env.RealFile")
-    def test_push_config(self, mock_real_file):
+    @mock.patch("pcs.lib.booth.env.get_booth_env_file_name")
+    def test_push_config(self, mock_get_booth_env_file_name, mock_real_file):
         mock_file = mock.MagicMock(
             assert_no_conflict_with_existing=mock.MagicMock(),
             write=mock.MagicMock(),
@@ -126,7 +136,10 @@ class BoothEnvTest(TestCase):
             }
         )
 
-    def test_do_not_export_config_file_when_no_provided(self):
+    @mock.patch("pcs.lib.booth.env.get_booth_env_file_name")
+    def test_do_not_export_config_file_when_no_provided(
+        self, mock_get_booth_env_file_name
+    ):
         self.assertEqual(
             env.BoothEnv("report processor", {"name": "booth"}).export(),
             {}
