@@ -81,16 +81,12 @@ class BoothEnvTest(TestCase):
         env.BoothEnv(
             "report processor",
             env_data={"name": "booth"}
-        ).create_config("a", "b", can_overwrite_existing=True)
+        ).create_config("a", can_overwrite_existing=True)
 
         self.assertEqual(mock_file.assert_no_conflict_with_existing.mock_calls,[
             mock.call('report processor', True),
-            mock.call('report processor', True),
         ])
-        self.assertEqual(mock_file.write.mock_calls, [
-            mock.call('b', mock_set_keyfile_access),
-            mock.call('a'),
-        ])
+        self.assertEqual(mock_file.write.mock_calls, [mock.call('a')])
 
     @mock.patch("pcs.lib.booth.env.RealFile")
     @mock.patch("pcs.lib.booth.env.get_booth_env_file_name")

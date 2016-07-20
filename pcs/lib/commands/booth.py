@@ -20,12 +20,11 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
         booth_configuration["sites"],
         booth_configuration["arbitrators"]
     )
+    env.booth.create_key(configuration.generate_key(), overwrite_existing)
     env.booth.create_config(
-        configuration.build(merge_dicts(
-            booth_configuration,
-            {"authfile": env.booth.key_path}
-        )),
-        configuration.generate_key(),
+        configuration.build(
+            merge_dicts(booth_configuration, {"authfile": env.booth.key_path})
+        ),
         overwrite_existing
     )
 

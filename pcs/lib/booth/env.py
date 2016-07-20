@@ -73,19 +73,19 @@ class BoothEnv(object):
     def get_config_content(self):
         return self.__config.read()
 
-    def create_config(
-        self, content, key_content, can_overwrite_existing=False
-    ):
+    def create_config(self, content, can_overwrite_existing=False):
         self.__config.assert_no_conflict_with_existing(
             self.__report_processor,
             can_overwrite_existing
         )
+        self.__config.write(content)
+
+    def create_key(self, key_content, can_overwrite_existing=False):
         self.__key.assert_no_conflict_with_existing(
             self.__report_processor,
             can_overwrite_existing
         )
         self.__key.write(key_content, set_keyfile_access)
-        self.__config.write(content)
 
     def push_config(self, content):
         self.__config.write(content)

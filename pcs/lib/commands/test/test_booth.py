@@ -28,6 +28,9 @@ class ConfigSetupTest(TestCase):
         )
         env.booth.create_config.assert_called_once_with(
             "config content",
+            False
+        )
+        env.booth.create_key.assert_called_once_with(
             "key value",
             False
         )
