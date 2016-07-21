@@ -1659,19 +1659,24 @@ def set_unmanaged(resource):
             "is-managed", "--meta", "--parameter-value", "false"]
     return run(args)
 
-def get_node_attributes():
+def get_node_attributes(filter_node=None, filter_attr=None):
     node_config = get_cib_xpath("//nodes")
-    nas = {}
     if (node_config == ""):
         err("unable to get crm_config, is pacemaker running?")
     dom = parseString(node_config).documentElement
+    nas = dict()
     for node in dom.getElementsByTagName("node"):
         nodename = node.getAttribute("uname")
+        if filter_node is not None and nodename != filter_node:
+            continue
         for attributes in node.getElementsByTagName("instance_attributes"):
             for nvp in attributes.getElementsByTagName("nvpair"):
+                attr_name = nvp.getAttribute("name")
+                if filter_attr is not None and attr_name != filter_attr:
+                    continue
                 if nodename not in nas:
-                    nas[nodename] = []
-                nas[nodename].append(nvp.getAttribute("name") + "=" + nvp.getAttribute("value"))
+                    nas[nodename] = dict()
+                nas[nodename][attr_name] = nvp.getAttribute("value")
             break
     return nas
 

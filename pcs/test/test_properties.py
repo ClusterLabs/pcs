@@ -8,11 +8,15 @@ from __future__ import (
 import shutil
 import unittest
 
+from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
 )
-from pcs.test.tools.pcs_runner import pcs
+from pcs.test.tools.pcs_runner import (
+    pcs,
+    PcsRunner,
+)
 
 from pcs import utils
 
@@ -65,61 +69,6 @@ class PropertyTest(unittest.TestCase):
         assert "blahblah: blah" in output
         assert "stonith-enabled: false" in output
         assert output.startswith('Cluster Properties:\n batch-limit')
-
-    def testNodeProperties(self):
-        utils.usefile = True
-        utils.filename = temp_cib
-        o,r = utils.run(["cibadmin","-M", '--xml-text', '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>'])
-        ac(o,"")
-        assert r == 0
-
-        o,r = pcs("property set --node=rh7-1 IP=192.168.1.1")
-        ac(o,"")
-        assert r==0
-
-        o,r = pcs("property set --node=rh7-2 IP=192.168.2.2")
-        ac(o,"")
-        assert r==0
-
-        o,r = pcs("property")
-        ac(o,"Cluster Properties:\nNode Attributes:\n rh7-1: IP=192.168.1.1\n rh7-2: IP=192.168.2.2\n")
-        assert r==0
-
-        o,r = pcs("property set --node=rh7-2 IP=")
-        ac(o,"")
-        assert r==0
-
-        o,r = pcs("property")
-        ac(o,"Cluster Properties:\nNode Attributes:\n rh7-1: IP=192.168.1.1\n")
-        assert r==0
-
-        o,r = pcs("property set --node=rh7-1 IP=192.168.1.1")
-        ac(o,"")
-        assert r==0
-
-        o,r = pcs("property set --node=rh7-2 IP=192.168.2.2")
-        ac(o,"")
-        assert r==0
-
-        o,r = pcs("property")
-        ac(o,"Cluster Properties:\nNode Attributes:\n rh7-1: IP=192.168.1.1\n rh7-2: IP=192.168.2.2\n")
-        assert r==0
-
-        o,r = pcs("property unset --node=rh7-1 IP")
-        ac(o,"")
-        assert r==0
-
-        o,r = pcs("property")
-        ac(o,"Cluster Properties:\nNode Attributes:\n rh7-2: IP=192.168.2.2\n")
-        assert r==0
-
-        o,r = pcs("property unset --node=rh7-1 IP")
-        ac(o,"Error: attribute: 'IP' doesn't exist for node: 'rh7-1'\n")
-        assert r==2
-
-        o,r = pcs("property unset --node=rh7-1 IP --force")
-        ac(o,"")
-        assert r==0
 
     def testBadProperties(self):
         o,r = pcs(temp_cib, "property set xxxx=zzzz")
@@ -328,4 +277,206 @@ class PropertyTest(unittest.TestCase):
         ac(o, """Cluster Properties:
  default-resource-stickiness: 0.1
 """
+        )
+
+
+class NodePropertyTestBase(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(empty_cib, temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def fixture_nodes(self, nodes, attrs=None):
+        attrs = dict() if attrs is None else attrs
+        xml_lines = ['<nodes>']
+        for node_id, node_name in enumerate(nodes, 1):
+            xml_lines.extend([
+                '<node id="{0}" uname="{1}">'.format(node_id, node_name),
+                '<instance_attributes id="nodes-{0}">'.format(node_id),
+            ])
+            nv = '<nvpair id="nodes-{id}-{name}" name="{name}" value="{val}"/>'
+            for name, value in attrs.get(node_name, dict()).items():
+                xml_lines.append(nv.format(id=node_id, name=name, val=value))
+            xml_lines.extend([
+                '</instance_attributes>',
+                '</node>'
+            ])
+        xml_lines.append('</nodes>')
+
+        utils.usefile = True
+        utils.filename = temp_cib
+        output, retval = utils.run([
+            "cibadmin", "--modify", '--xml-text', "\n".join(xml_lines)
+        ])
+        assert output == ""
+        assert retval == 0
+
+class NodePropertyShowTest(NodePropertyTestBase):
+    def test_empty(self):
+        self.fixture_nodes(["rh7-1", "rh7-2"])
+        self.assert_pcs_success(
+            "property",
+            "Cluster Properties:\n"
+        )
+
+    def test_nonempty(self):
+        self.fixture_nodes(
+            ["rh7-1", "rh7-2"],
+            {
+                "rh7-1": {"IP": "192.168.1.1", },
+                "rh7-2": {"IP": "192.168.1.2", },
+            }
+        )
+        self.assert_pcs_success(
+            "property",
+            """\
+Cluster Properties:
+Node Attributes:
+ rh7-1: IP=192.168.1.1
+ rh7-2: IP=192.168.1.2
+"""
+        )
+
+    def test_multiple_per_node(self):
+        self.fixture_nodes(
+            ["rh7-1", "rh7-2"],
+            {
+                "rh7-1": {"IP": "192.168.1.1", "alias": "node1", },
+                "rh7-2": {"IP": "192.168.1.2", "alias": "node2", },
+            }
+        )
+        self.assert_pcs_success(
+            "property",
+            """\
+Cluster Properties:
+Node Attributes:
+ rh7-1: IP=192.168.1.1 alias=node1
+ rh7-2: IP=192.168.1.2 alias=node2
+"""
+        )
+
+    def test_name_filter_not_exists(self):
+        self.fixture_nodes(
+            ["rh7-1", "rh7-2"],
+            {
+                "rh7-1": {"IP": "192.168.1.1", },
+                "rh7-2": {"IP": "192.168.1.2", },
+            }
+        )
+        self.assert_pcs_success(
+            "property show alias",
+            """\
+Cluster Properties:
+"""
+        )
+
+    def test_name_filter_exists(self):
+        self.fixture_nodes(
+            ["rh7-1", "rh7-2"],
+            {
+                "rh7-1": {"IP": "192.168.1.1", "alias": "node1", },
+                "rh7-2": {"IP": "192.168.1.2", },
+            }
+        )
+        self.assert_pcs_success(
+            "property show alias",
+            """\
+Cluster Properties:
+Node Attributes:
+ rh7-1: alias=node1
+"""
+        )
+
+class NodePropertySetTest(NodePropertyTestBase):
+    def test_set_new(self):
+        self.fixture_nodes(["rh7-1", "rh7-2"])
+        self.assert_pcs_success(
+            "property set --node=rh7-1 IP=192.168.1.1"
+        )
+        self.assert_pcs_success(
+            "property",
+            """\
+Cluster Properties:
+Node Attributes:
+ rh7-1: IP=192.168.1.1
+"""
+        )
+        self.assert_pcs_success(
+            "property set --node=rh7-2 IP=192.168.1.2"
+        )
+        self.assert_pcs_success(
+            "property",
+            """\
+Cluster Properties:
+Node Attributes:
+ rh7-1: IP=192.168.1.1
+ rh7-2: IP=192.168.1.2
+"""
+        )
+
+    def test_set_existing(self):
+        self.fixture_nodes(
+            ["rh7-1", "rh7-2"],
+            {
+                "rh7-1": {"IP": "192.168.1.1", },
+                "rh7-2": {"IP": "192.168.1.2", },
+            }
+        )
+        self.assert_pcs_success(
+            "property set --node=rh7-2 IP=192.168.2.2"
+        )
+        self.assert_pcs_success(
+            "property",
+            """\
+Cluster Properties:
+Node Attributes:
+ rh7-1: IP=192.168.1.1
+ rh7-2: IP=192.168.2.2
+"""
+        )
+
+    def test_unset(self):
+        self.fixture_nodes(
+            ["rh7-1", "rh7-2"],
+            {
+                "rh7-1": {"IP": "192.168.1.1", },
+                "rh7-2": {"IP": "192.168.1.2", },
+            }
+        )
+        self.assert_pcs_success(
+            "property set --node=rh7-2 IP="
+        )
+        self.assert_pcs_success(
+            "property",
+            """\
+Cluster Properties:
+Node Attributes:
+ rh7-1: IP=192.168.1.1
+"""
+        )
+
+    def test_unset_nonexisting(self):
+        self.fixture_nodes(
+            ["rh7-1", "rh7-2"],
+            {
+                "rh7-1": {"IP": "192.168.1.1", },
+                "rh7-2": {"IP": "192.168.1.2", },
+            }
+        )
+        self.assert_pcs_result(
+            "property unset --node=rh7-1 missing",
+            "Error: attribute: 'missing' doesn't exist for node: 'rh7-1'\n",
+            returncode=2
+        )
+
+    def test_unset_nonexisting_forced(self):
+        self.fixture_nodes(
+            ["rh7-1", "rh7-2"],
+            {
+                "rh7-1": {"IP": "192.168.1.1", },
+                "rh7-2": {"IP": "192.168.1.2", },
+            }
+        )
+        self.assert_pcs_success(
+            "property unset --node=rh7-1 missing --force",
+            ""
         )

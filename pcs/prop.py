@@ -100,9 +100,7 @@ def unset_property(argv):
         utils.replace_cib_configuration(cib_dom)
 
 def list_property(argv):
-    print_all = False
-    if len(argv) == 0:
-        print_all = True
+    print_all = len(argv) == 0
 
     if "--all" in utils.pcs_options and "--defaults" in utils.pcs_options:
         utils.err("you cannot specify both --all and --defaults")
@@ -124,13 +122,15 @@ def list_property(argv):
     for prop,val in sorted(properties.items()):
         print(" " + prop + ": " + val)
 
-    node_attributes = utils.get_node_attributes()
+    node_attributes = utils.get_node_attributes(
+        filter_attr=(None if print_all else argv[0])
+    )
     if node_attributes:
         print("Node Attributes:")
-        for node in sorted(node_attributes):
+        for node in sorted(node_attributes.keys()):
             line_parts = [" " + node + ":"]
-            for attr in node_attributes[node]:
-                line_parts.append(attr)
+            for name, value in sorted(node_attributes[node].items()):
+                line_parts.append("{0}={1}".format(name, value))
             print(" ".join(line_parts))
 
 def get_default_properties():
