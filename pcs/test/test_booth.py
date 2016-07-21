@@ -147,7 +147,7 @@ class AddTicketTest(BoothTest):
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = /root/pcs/pcs/test/resources/temp-booth.key",
+            "authfile = {0}".format(BOOTH_KEY_FILE),
             'ticket = "TicketA"',
         ))
 
@@ -180,7 +180,7 @@ class RemoveTicketTest(BoothTest):
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = /root/pcs/pcs/test/resources/temp-booth.key",
+            "authfile = {0}".format(BOOTH_KEY_FILE),
             'ticket = "TicketA"',
         ))
         self.assert_pcs_success("booth ticket remove TicketA")
@@ -188,7 +188,7 @@ class RemoveTicketTest(BoothTest):
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = /root/pcs/pcs/test/resources/temp-booth.key",
+            "authfile = {0}".format(BOOTH_KEY_FILE),
         ))
 
     def test_fail_when_ticket_does_not_exist(self):
