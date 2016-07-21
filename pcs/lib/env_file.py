@@ -20,6 +20,7 @@ class GhostFile(object):
         self.__content = content
         self.__no_existing_file_expected = False
         self.__can_overwrite_existing_file = False
+        self.__is_binary = False
 
     def read(self):
         if self.__content is None:
@@ -29,11 +30,12 @@ class GhostFile(object):
 
         return self.__content
 
-    def write(self, content, file_operation=None):
+    def write(self, content, file_operation=None, is_binary=False):
         """
         callable file_operation is there only for RealFile compatible interface
             it has no efect
         """
+        self.__is_binary = is_binary
         self.__content = content
 
     def assert_no_conflict_with_existing(
@@ -47,6 +49,7 @@ class GhostFile(object):
             "content": self.__content,
             "no_existing_file_expected": self.__no_existing_file_expected,
             "can_overwrite_existing_file": self.__can_overwrite_existing_file,
+            "is_binary": self.__is_binary,
         }
 
 
@@ -73,12 +76,13 @@ class RealFile(object):
                     else self.__overwrite_code,
             ))
 
-    def write(self, content, file_operation=None):
+    def write(self, content, file_operation=None, is_binary=False):
         """
         callable file_operation takes path and proces operation on it e.g. chmod
         """
+        mode = "wb" if is_binary else "w"
         try:
-            with open(self.__file_path, "w") as config_file:
+            with open(self.__file_path, mode) as config_file:
                 config_file.write(content)
             if file_operation:
                 file_operation(self.__file_path)

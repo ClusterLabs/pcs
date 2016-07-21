@@ -81,7 +81,7 @@ class BoothEnv(object):
             self.__report_processor,
             can_overwrite_existing
         )
-        self.__key.write(key_content, set_keyfile_access)
+        self.__key.write(key_content, set_keyfile_access, is_binary=True)
 
     def push_config(self, content):
         self.__config.write(content)

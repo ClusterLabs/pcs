@@ -24,7 +24,7 @@ def get_env_file(path):
 
 def write_env_file(env_file, file_path):
     try:
-        f = open(file_path, "w")
+        f = open(file_path, "wb" if env_file.get("is_binary", False) else "w")
         f.write(env_file["content"])
         f.close()
     except EnvironmentError as e:

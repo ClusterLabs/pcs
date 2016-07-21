@@ -85,6 +85,23 @@ class RealFileWriteTest(TestCase):
                 "/etc/booth/some-name.conf"
             )
 
+    def test_success_binary(self):
+        mock_open = mock.mock_open()
+        mock_file_operation = mock.Mock()
+        with mock.patch("pcs.lib.env_file.open", mock_open, create=True):
+            RealFile("some role", "/etc/booth/some-name.conf").write(
+                "config content".encode("utf-8"),
+                file_operation=mock_file_operation,
+                is_binary=True
+            )
+            mock_open.assert_called_once_with("/etc/booth/some-name.conf", "wb")
+            mock_open().write.assert_called_once_with(
+                "config content".encode("utf-8")
+            )
+            mock_file_operation.assert_called_once_with(
+                "/etc/booth/some-name.conf"
+            )
+
     def test_raises_when_could_not_write(self):
         assert_raise_library_error(
             lambda:

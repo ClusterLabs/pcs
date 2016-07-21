@@ -100,11 +100,13 @@ class BoothEnvTest(TestCase):
                     "content": "a\nb",
                     "can_overwrite_existing_file": False,
                     "no_existing_file_expected": False,
+                    "is_binary": False,
                 },
                 "key_file": {
                     "content": "secure",
                     "can_overwrite_existing_file": False,
                     "no_existing_file_expected": False,
+                    "is_binary": False,
                 },
             }
         )
