@@ -1429,6 +1429,10 @@ Commands:
 
     config
         Show currently written booth configuration.
+
+    create ip <address>
+        Create booth resource grouped with ip resource. Parameter address
+        specify virtual ip address.
 """
     if pout:
         print(sub_usage(args, output))

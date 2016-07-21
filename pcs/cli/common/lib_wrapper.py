@@ -202,12 +202,16 @@ def load_module(env, middleware_factory, name):
     if name == "booth":
         return bind_all(
             env,
-            middleware.build(middleware_factory.booth_conf),
+            middleware.build(
+                middleware_factory.booth_conf,
+                middleware_factory.cib
+            ),
             {
                 "config_setup": booth.config_setup,
                 "config_show": booth.config_show,
                 "config_ticket_add": booth.config_ticket_add,
                 "config_ticket_remove": booth.config_ticket_remove,
+                "create_in_cluster": booth.create_in_cluster,
             }
         )
 

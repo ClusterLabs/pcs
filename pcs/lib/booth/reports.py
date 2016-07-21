@@ -97,3 +97,12 @@ def booth_ticket_does_not_exist(ticket_name):
             "ticket_name": ticket_name,
         }
     )
+
+def booth_already_created(config_file_path):
+    return ReportItem.error(
+        report_codes.BOOTH_ALREADY_CREATED,
+        "booth for config '{config_file_path}' is already created",
+        info={
+            "config_file_path": config_file_path,
+        }
+    )

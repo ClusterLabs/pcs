@@ -5,8 +5,9 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib.booth import configuration
 from pcs.common.tools import merge_dicts
+from pcs.lib.booth import configuration, resource
+from pcs.lib.booth.env import get_config_file_name
 
 
 def config_setup(env, booth_configuration, overwrite_existing=False):
@@ -53,3 +54,21 @@ def config_ticket_remove(env, ticket_name):
         ticket_name
     )
     env.booth.push_config(configuration.build(booth_configuration))
+
+def create_in_cluster(env, name, ip, resource_create, resource_group):
+    #TODO resource_create and resource_group is provisional hack until resources
+    #are not moved to lib
+    cib = env.get_cib()
+
+    booth_config_file_path = get_config_file_name(name)
+    resource.validate_no_booth_resource_using_config(
+        cib,
+        booth_config_file_path
+    )
+
+    resource.get_creator(resource_create, resource_group)(
+        cib,
+        name,
+        ip,
+        booth_config_file_path,
+    )

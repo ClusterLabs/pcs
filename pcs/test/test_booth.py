@@ -197,6 +197,38 @@ class RemoveTicketTest(BoothTest):
             "Error: booth ticket name 'TicketA' does not exist\n"
         )
 
+class CreateTest(BoothTest):
+    def setUp(self):
+        super(CreateTest, self).setUp()
+        ensure_booth_config_not_exists()
+        self.assert_pcs_success(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+        )
+
+    def test_sucessfully_create_booth_resource_group(self):
+        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("booth create ip 192.168.122.120")
+        self.assert_pcs_success("resource show", [
+             " Resource Group: booth-booth-group",
+             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
+             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
+        ])
+        self.assert_pcs_success("resource show booth-booth-ip", [
+             " Resource: booth-booth-ip (class=ocf provider=heartbeat type=IPaddr2)",
+             "  Attributes: ip=192.168.122.120",
+             "  Operations: start interval=0s timeout=20s (booth-booth-ip-start-interval-0s)",
+             "              stop interval=0s timeout=20s (booth-booth-ip-stop-interval-0s)",
+             "              monitor interval=10s timeout=20s (booth-booth-ip-monitor-interval-10s)",
+        ])
+
+    def test_refuse_create_booth_when_config_is_already_in_use(self):
+        self.assert_pcs_success("booth create ip 192.168.122.120")
+        self.assert_pcs_fail("booth create ip 192.168.122.121", [
+            "Error: booth for config '/etc/booth/booth.conf' is already created"
+        ])
+
+
+
 class ConfigTest(BoothTest):
     def test_fail_when_config_file_do_not_exists(self):
         ensure_booth_config_not_exists()

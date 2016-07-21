@@ -12,6 +12,7 @@ from pcs import utils
 from pcs.cli.booth import command
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
+from pcs.resource import resource_create, resource_group
 
 
 def booth_cmd(lib, argv, modifiers):
@@ -37,6 +38,10 @@ def booth_cmd(lib, argv, modifiers):
                 command.config_ticket_remove(lib, argv_next[1:], modifiers)
             else:
                 raise CmdLineInputError()
+        elif sub_cmd == "create":
+            command.get_create_in_cluster(resource_create, resource_group)(
+                lib, argv_next, modifiers
+            )
 
         else:
             raise CmdLineInputError()

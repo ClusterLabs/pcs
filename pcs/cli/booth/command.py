@@ -64,3 +64,15 @@ def config_ticket_remove(lib, arg_list, modifiers):
     if len(arg_list) != 1:
         raise CmdLineInputError
     lib.booth.config_ticket_remove(arg_list[0])
+
+def get_create_in_cluster(resource_create, resource_group):
+    def create_in_cluster(lib, arg_list, modifiers):
+        if len(arg_list) != 2 or arg_list[0] != "ip":
+            raise CmdLineInputError()
+        ip = arg_list[1]
+        name = (
+            modifiers["name"] if modifiers["name"]
+            else DEFAULT_BOOTH_NAME
+        )
+        lib.booth.create_in_cluster(name, ip, resource_create, resource_group)
+    return create_in_cluster
