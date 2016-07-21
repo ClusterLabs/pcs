@@ -29,11 +29,12 @@ def cib(use_local_cib, load_cib_content, write_cib):
     """
     def apply(next_in_line, env, *args, **kwargs):
         if use_local_cib:
-            env.cib_data = load_cib_content()
+            original_content = load_cib_content()
+            env.cib_data = original_content
 
         result_of_next = next_in_line(env, *args, **kwargs)
 
-        if use_local_cib:
+        if use_local_cib and env.cib_data != original_content:
             write_cib(env.cib_data, env.cib_upgraded)
 
         return result_of_next
