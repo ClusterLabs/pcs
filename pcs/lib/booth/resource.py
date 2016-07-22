@@ -13,16 +13,18 @@ from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
 
 
-def create_resource_id(cib, name, suffix):
+def create_resource_id(resources_section, name, suffix):
     return find_unique_id(
-        cib, "booth-{0}-{1}".format(name, suffix)
+        resources_section.getroottree(), "booth-{0}-{1}".format(name, suffix)
     )
 
 def get_creator(resource_create, resource_group):
     #TODO resource_create and resource_group is provisional hack until resources
     #are not moved to lib
-    def create_booth_in_cluster(cib, name, ip, booth_config_file_path):
-        create_id = partial(create_resource_id, cib, name)
+    def create_booth_in_cluster(
+        resources_section, name, ip, booth_config_file_path
+    ):
+        create_id = partial(create_resource_id, resources_section, name)
 
         ip_id = create_id("ip")
         booth_id = create_id("service")
@@ -47,7 +49,9 @@ def get_creator(resource_create, resource_group):
         resource_group(["add", group_id, ip_id, booth_id])
     return create_booth_in_cluster
 
-def validate_no_booth_resource_using_config(cib, booth_config_file_path):
+def validate_no_booth_resource_using_config(
+    resources_section, booth_config_file_path
+):
     #self::primitive or self::clone or ... selects elements with specified tags
     xpath = (
         './/*['
@@ -59,7 +63,7 @@ def validate_no_booth_resource_using_config(cib, booth_config_file_path):
         ']'
     ).format(booth_config_file_path)
 
-    if cib.xpath(xpath):
+    if resources_section.xpath(xpath):
         raise LibraryError(
             reports.booth_already_created(booth_config_file_path)
         )

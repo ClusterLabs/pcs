@@ -8,6 +8,7 @@ from __future__ import (
 from pcs.common.tools import merge_dicts
 from pcs.lib.booth import configuration, resource
 from pcs.lib.booth.env import get_config_file_name
+from pcs.lib.cib.tools import get_resources
 
 
 def config_setup(env, booth_configuration, overwrite_existing=False):
@@ -62,12 +63,12 @@ def create_in_cluster(env, name, ip, resource_create, resource_group):
 
     booth_config_file_path = get_config_file_name(name)
     resource.validate_no_booth_resource_using_config(
-        cib,
+        get_resources(cib),
         booth_config_file_path
     )
 
     resource.get_creator(resource_create, resource_group)(
-        cib,
+        get_resources(cib),
         name,
         ip,
         booth_config_file_path,

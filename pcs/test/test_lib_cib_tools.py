@@ -136,6 +136,27 @@ class GetConstraintsTest(CibToolsTest):
             ),
         )
 
+class GetResourcesTest(CibToolsTest):
+    def test_success_if_exists(self):
+        self.assertEqual(
+            "resources",
+            lib.get_resources(self.cib.tree).tag
+        )
+
+    def test_raise_if_missing(self):
+        for section in self.cib.tree.findall(".//configuration/resources"):
+            section.getparent().remove(section)
+        assert_raise_library_error(
+            lambda: lib.get_resources(self.cib.tree),
+            (
+                severities.ERROR,
+                report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
+                {
+                    "section": "configuration/resources",
+                }
+            ),
+        )
+
 
 class GetAclsTest(CibToolsTest):
     def setUp(self):
