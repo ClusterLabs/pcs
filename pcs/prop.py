@@ -8,8 +8,11 @@ from __future__ import (
 import sys
 import json
 
-from pcs import usage
-from pcs import utils
+from pcs import (
+    node,
+    usage,
+    utils,
+)
 
 def property_cmd(argv):
     if len(argv) == 0:
@@ -127,11 +130,7 @@ def list_property(argv):
     )
     if node_attributes:
         print("Node Attributes:")
-        for node in sorted(node_attributes.keys()):
-            line_parts = [" " + node + ":"]
-            for name, value in sorted(node_attributes[node].items()):
-                line_parts.append("{0}={1}".format(name, value))
-            print(" ".join(line_parts))
+        node.attribute_print(node_attributes)
 
 def get_default_properties():
     parameters = {}

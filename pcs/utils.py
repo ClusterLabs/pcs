@@ -1677,6 +1677,8 @@ def get_node_attributes(filter_node=None, filter_attr=None):
                 if nodename not in nas:
                     nas[nodename] = dict()
                 nas[nodename][attr_name] = nvp.getAttribute("value")
+            # Use just first element of attributes. We don't support
+            # attributes with rules just yet.
             break
     return nas
 
@@ -2449,21 +2451,22 @@ def dom_update_meta_attr(dom_element, attributes):
             meta_attributes.getAttribute("id") + "-"
         )
 
-def get_utilization(element):
+def get_utilization(element, filter_name=None):
     utilization = {}
     for e in element.getElementsByTagName("utilization"):
         for u in e.getElementsByTagName("nvpair"):
             name = u.getAttribute("name")
-            value = u.getAttribute("value") if u.hasAttribute("value") else ""
-            utilization[name] = value
+            if filter_name is not None and name != filter_name:
+                continue
+            utilization[name] = u.getAttribute("value")
         # Use just first element of utilization attributes. We don't support
         # utilization with rules just yet.
         break
     return utilization
 
-def get_utilization_str(element):
+def get_utilization_str(element, filter_name=None):
     output = []
-    for name, value in sorted(get_utilization(element).items()):
+    for name, value in sorted(get_utilization(element, filter_name).items()):
         output.append(name + "=" + value)
     return " ".join(output)
 

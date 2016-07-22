@@ -12,6 +12,8 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker as lib_pacemaker
 from pcs.lib.pacemaker_values import get_valid_timeout_seconds
@@ -33,11 +35,26 @@ def node_cmd(argv):
         node_standby(argv)
     elif sub_cmd == "unstandby":
         node_standby(argv, False)
-    elif sub_cmd == "utilization":
+    elif sub_cmd == "attribute":
+        if "--name" in utils.pcs_options and len(argv) > 1:
+            usage.node("attribute")
+            sys.exit(1)
+        filter_attr=utils.pcs_options.get("--name", None)
         if len(argv) == 0:
-            print_nodes_utilization()
+            attribute_show_cmd(filter_attr=filter_attr)
         elif len(argv) == 1:
-            print_node_utilization(argv.pop(0))
+            attribute_show_cmd(argv.pop(0), filter_attr=filter_attr)
+        else:
+            attribute_set_cmd(argv.pop(0), argv)
+    elif sub_cmd == "utilization":
+        if "--name" in utils.pcs_options and len(argv) > 1:
+            usage.node("utilization")
+            sys.exit(1)
+        filter_name=utils.pcs_options.get("--name", None)
+        if len(argv) == 0:
+            print_node_utilization(filter_name=filter_name)
+        elif len(argv) == 1:
+            print_node_utilization(argv.pop(0), filter_name=filter_name)
         else:
             set_node_utilization(argv.pop(0), argv)
     # pcs-to-pcsd use only
@@ -135,23 +152,16 @@ def set_node_utilization(node, argv):
     )
     utils.replace_cib_configuration(cib)
 
-def print_node_utilization(node):
-    cib = utils.get_cib_dom()
-    node_el = utils.dom_get_node(cib, node)
-    if node_el is None:
-        utils.err("Unable to find a node: {0}".format(node))
-    utilization = utils.get_utilization_str(node_el)
-
-    print("Node Utilization:")
-    print(" {0}: {1}".format(node, utilization))
-
-def print_nodes_utilization():
+def print_node_utilization(filter_node=None, filter_name=None):
     cib = utils.get_cib_dom()
     utilization = {}
     for node_el in cib.getElementsByTagName("node"):
-        u = utils.get_utilization_str(node_el)
+        node = node_el.getAttribute("uname")
+        if filter_node is not None and node != filter_node:
+            continue
+        u = utils.get_utilization_str(node_el, filter_name)
         if u:
-            utilization[node_el.getAttribute("uname")] = u
+            utilization[node] = u
     print("Node Utilization:")
     for node in sorted(utilization):
         print(" {0}: {1}".format(node, utilization[node]))
@@ -163,3 +173,27 @@ def node_pacemaker_status():
         ))
     except LibraryError as e:
         utils.process_library_reports(e.args)
+
+def attribute_show_cmd(filter_node=None, filter_attr=None):
+    node_attributes = utils.get_node_attributes(
+        filter_node=filter_node,
+        filter_attr=filter_attr
+    )
+    print("Node Attributes:")
+    attribute_print(node_attributes)
+
+def attribute_set_cmd(node, argv):
+    try:
+        attrs = prepare_options(argv)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "node", "attribute")
+    for name, value in attrs.items():
+        utils.set_node_attribute(name, value, node)
+
+def attribute_print(node_attributes):
+    for node in sorted(node_attributes.keys()):
+        line_parts = [" " + node + ":"]
+        for name, value in sorted(node_attributes[node].items()):
+            line_parts.append("{0}={1}".format(name, value))
+        print(" ".join(line_parts))
+

@@ -1242,6 +1242,14 @@ Usage: pcs node <command>
 Manage cluster nodes
 
 Commands:
+    attribute [[<node>] [--name <name>] | <node> <name>=<value> ...]
+        Manage node attributes.  If no parameters are specified, show attributes
+        of all nodes.  If one parameter is specified, show attributes
+        of specified node.  If --name is specified, show specified attribute's
+        value from all nodes.  If more parameters are specified, set attributes
+        of specified node.  Attributes can be removed by setting an attribute
+        without a value.
+
     maintenance [--all] | [<node>]...
         Put specified node(s) into maintenance mode, if no node or options are
         specified the current node will be put into maintenance mode, if --all
@@ -1272,12 +1280,13 @@ Commands:
         the operation not succeeded yet.  If 'n' is not specified it defaults
         to 60 minutes.
 
-    utilization [<node> [<name>=<value> ...]]
-        Add specified utilization options to specified node. If node is not
-        specified, shows utilization of all nodes. If utilization options are
-        not specified, shows utilization of specified node. Utilization option
-        should be in format name=value, value has to be integer. Options may be
-        removed by setting an option without a value.
+    utilization [[<node>] [--name <name>] | <node> <name>=<value> ...]
+        Add specified utilization options to specified node.  If node is not
+        specified, shows utilization of all nodes.  If --name is specified,
+        shows specified utilization value from all nodes. If utilization options
+        are not specified, shows utilization of specified node.  Utilization
+        option should be in format name=value, value has to be integer.  Options
+        may be removed by setting an option without a value.
         Example: pcs node utilization node1 cpu=4 ram=
 """
     if pout:

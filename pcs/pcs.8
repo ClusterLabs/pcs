@@ -644,6 +644,9 @@ clear-auth [\fB\-\-local\fR] [\fB\-\-remote\fR]
 Removes all system tokens which allow pcs/pcsd on the current system to authenticate with remote pcs/pcsd instances and vice\-versa.  After this command is run this node will need to be re\-authenticated with other nodes (using 'pcs cluster auth').  Using \fB\-\-local\fR only removes tokens used by local pcs (and pcsd if root) to connect to other pcsd instances, using \fB\-\-remote\fR clears authentication tokens used by remote systems to connect to the local pcsd instance.
 .SS "node"
 .TP
+attribute [[<node>] [\fB\-\-name\fR <attr>] | <node> <name>=<value> ...]
+Manage node attributes.  If no parameters are specified, show attributes of all nodes.  If one parameter is specified, show attributes of specified node.  If \fB\-\-name\fR is specified, show specified attribute's value from all nodes.  If more parameters are specified, set attributes of specified node.  Attributes can be removed by setting an attribute without a value.
+.TP
 maintenance [\fB\-\-all\fR] | [<node>]...
 Put specified node(s) into maintenance mode, if no node or options are specified the current node will be put into maintenance mode, if \fB\-\-all\fR is specified all nodes will be put into maintenace mode.
 .TP
@@ -656,8 +659,8 @@ Put specified node into standby mode (the node specified will no longer be able 
 unstandby [\fB\-\-all\fR | <node>] [\fB\-\-wait\fR[=n]]
 Remove node from standby mode (the node specified will now be able to host resources), if no node or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the node(s) to be removed from standby mode and then return 0 on success or 1 if the operation not succeeded yet.  If 'n' is not specified it defaults to 60 minutes.
 .TP
-utilization [<node> [<name>=<value> ...]]
-Add specified utilization options to specified node. If node is not specified, shows utilization of all nodes. If utilization options are not specified, shows utilization of specified node. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs node utilization node1 cpu=4 ram=
+utilization [[<node>] [\fB\-\-name\fR <name>] | <node> <name>=<value> ...]
+Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value.  Example: pcs node utilization node1 cpu=4 ram=
 .SS "alert"
 .TP
 [config|show]
