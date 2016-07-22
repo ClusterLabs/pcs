@@ -2108,29 +2108,26 @@ function update_instance_attributes(resource_id) {
   }, res_obj.get("stonith"));
 }
 
-function tree_view_onclick(resource_id, auto) {
-  auto = typeof auto !== 'undefined' ? auto : false;
+function tree_view_onclick(resource_id, first_run) {
+  first_run = typeof first_run !== 'undefined' ? first_run : false;
   var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
   if (!resource_obj) {
     console.log("Resource " + resource_id + "not found.");
     return;
   }
   if (resource_obj.get('stonith')) {
-    Pcs.resourcesContainer.set('cur_fence', resource_obj);
-    if (!auto) {
+    if (!first_run) {
       window.location.hash = "/fencedevices/" + resource_id;
-      update_instance_attributes(resource_id);
     }
+    Pcs.resourcesContainer.set('cur_fence', resource_obj);
   } else {
-    Pcs.resourcesContainer.set('cur_resource', resource_obj);
-
-    if (!auto) {
+    if (!first_run) {
       window.location.hash = "/resources/" + resource_id;
-      update_instance_attributes(resource_id);
     }
+    Pcs.resourcesContainer.set('cur_resource', resource_obj);
     auto_show_hide_constraints();
   }
-
+  update_instance_attributes(resource_id);
   tree_view_select(resource_id);
 }
 

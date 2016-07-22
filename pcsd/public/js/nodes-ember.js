@@ -210,20 +210,16 @@ Pcs = Ember.Application.createWithMixins({
           Ember.run.scheduleOnce('afterRender', Pcs, function () {
             if (self.get('cur_fence')) {
               if (fence_change) {
-                if (first_run) {
-                  update_instance_attributes(self.get('cur_fence').get('id'));
-                }
-                tree_view_onclick(self.get('cur_fence').get('id'), true);
+                tree_view_onclick(self.get('cur_fence').get('id'), first_run);
               } else {
                 tree_view_select(self.get('cur_fence').get('id'));
               }
             }
             if (self.get('cur_resource')) {
               if (resource_change) {
-                if (first_run) {
-                  update_instance_attributes(self.get('cur_resource').get('id'));
-                }
-                tree_view_onclick(self.get('cur_resource').get('id'), true);
+                tree_view_onclick(
+                  self.get('cur_resource').get('id'), first_run
+                );
               } else {
                 tree_view_select(self.get('cur_resource').get('id'));
               }
