@@ -1262,7 +1262,9 @@ function remove_nodes(ids, force) {
 }
 
 function remove_resource(ids, force) {
-  var data = {};
+  var data = {
+    no_error_if_not_exists: true
+  };
   if (force) {
     data["force"] = force;
   }
@@ -1287,12 +1289,20 @@ function remove_resource(ids, force) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      error = $.trim(error)
-      var message = "Unable to remove resources (" + error + ")";
-      if (
-        (xhr.responseText.substring(0,6) == "Error:") || ("Forbidden" == error)
-      ) {
-        message += "\n\n" + xhr.responseText.replace("--force", "'Enforce removal'");
+      error = $.trim(error);
+      var message = "";
+      if (status == "timeout" || error == "timeout") {
+        message = "Operation takes longer to complete than expected.";
+      } else {
+        message = "Unable to remove resources (" + error + ")";
+        if (
+          (xhr.responseText.substring(0, 6) == "Error:") ||
+          ("Forbidden" == error)
+        ) {
+          message += "\n\n" + xhr.responseText.replace(
+            "--force", "'Enforce removal'"
+          );
+        }
       }
       alert(message);
       $("#dialog_verify_remove_resources.ui-dialog-content").each(
