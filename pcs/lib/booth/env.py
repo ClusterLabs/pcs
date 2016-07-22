@@ -36,7 +36,7 @@ def set_keyfile_access(file_path):
     uid = pwd.getpwnam(settings.pacemaker_uname).pw_uid
     gid = grp.getgrnam(settings.pacemaker_gname).gr_gid
     os.chown(file_path, uid, gid)
-    os.chmod(file_path, 0o400)
+    os.chmod(file_path, 0o600)
 
 class BoothEnv(object):
     def __init__(self, report_processor, env_data):

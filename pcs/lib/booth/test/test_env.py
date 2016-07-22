@@ -126,7 +126,7 @@ class SetKeyfileAccessTest(TestCase):
 
         #check assumptions
         stat = os.stat(file_path)
-        self.assertNotEqual('400', oct(stat.st_mode)[-3:])
+        self.assertNotEqual('600', oct(stat.st_mode)[-3:])
         current_user = pwd.getpwuid(os.getuid())[0]
         if current_user != settings.pacemaker_uname:
             file_user = pwd.getpwuid(stat.st_uid)[0]
@@ -141,7 +141,7 @@ class SetKeyfileAccessTest(TestCase):
 
         #check
         stat = os.stat(file_path)
-        self.assertEqual('400', oct(stat.st_mode)[-3:])
+        self.assertEqual('600', oct(stat.st_mode)[-3:])
 
         file_user = pwd.getpwuid(stat.st_uid)[0]
         self.assertEqual(file_user, settings.pacemaker_uname)
