@@ -21,7 +21,16 @@ def does_id_exist(tree, check_id):
     tree cib etree node
     check_id id to check
     """
-    return tree.find('.//*[@id="{0}"]'.format(check_id)) is not None
+    # ElementTree has getroot, Elemet has getroottree
+    root = tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
+    # do not search in /cib/status, it may contain references to previously
+    # existing and deleted resources and thus preventing creating them again
+    existing = root.xpath(
+        '(/cib/*[name()!="status"]|/*[name()!="cib"])//*[@id="{0}"]'.format(
+            check_id
+        )
+    )
+    return len(existing) > 0
 
 def validate_id_does_not_exist(tree, id):
     """

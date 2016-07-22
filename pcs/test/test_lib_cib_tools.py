@@ -48,6 +48,30 @@ class DoesIdExistTest(CibToolsTest):
         self.assertFalse(lib.does_id_exist(self.cib.tree, "myId "))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "my Id"))
 
+    def test_ignore_status_section(self):
+        self.cib.append_to_first_tag_name(
+            "status",
+            """\
+<elem1 id="status-1">
+    <elem1a id="status-1a">
+        <elem1aa id="status-1aa"/>
+        <elem1ab id="status-1ab"/>
+    </elem1a>
+    <elem1b id="status-1b">
+        <elem1ba id="status-1ba"/>
+        <elem1bb id="status-1bb"/>
+    </elem1b>
+</elem1>
+"""
+        )
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1"))
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1a"))
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1aa"))
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1ab"))
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1b"))
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1ba"))
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1bb"))
+
 class FindUniqueIdTest(CibToolsTest):
     def test_already_unique(self):
         self.fixture_add_primitive_with_id("myId")

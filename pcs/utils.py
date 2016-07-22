@@ -1589,15 +1589,35 @@ def is_valid_cib_scope(scope):
 # Checks to see if id exists in the xml dom passed
 # DEPRECATED use lxml version available in pcs.lib.cib.tools
 def does_id_exist(dom, check_id):
+    # do not search in /cib/status, it may contain references to previously
+    # existing and deleted resources and thus preventing creating them again
     if is_etree(dom):
-        for elem in dom.findall(str(".//*")):
+        for elem in dom.findall(str(
+            '(/cib/*[name()!="status"]|/*[name()!="cib"])/*'
+        )):
             if elem.get("id") == check_id:
                 return True
     else:
-        all_elem = dom.getElementsByTagName("*")
-        for elem in all_elem:
-            if elem.getAttribute("id") == check_id:
-                return True
+        document = (
+            dom
+            if isinstance(dom, xml.dom.minidom.Document)
+            else dom.ownerDocument
+        )
+        cib_found = False
+        for cib in dom_get_children_by_tag_name(document, "cib"):
+            cib_found = True
+            for section in cib.childNodes:
+                if section.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+                    continue
+                if section.tagName == "status":
+                    continue
+                for elem in section.getElementsByTagName("*"):
+                    if elem.getAttribute("id") == check_id:
+                        return True
+        if not cib_found:
+            for elem in document.getElementsByTagName("*"):
+                if elem.getAttribute("id") == check_id:
+                    return True
     return False
 
 # Returns check_id if it doesn't exist in the dom, otherwise it adds an integer
