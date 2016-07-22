@@ -38,26 +38,25 @@ def ensure_booth_config_not_exists():
     if os.path.exists(BOOTH_KEY_FILE):
         os.remove(BOOTH_KEY_FILE)
 
-class BoothTest(TestCase, AssertPcsMixin):
-    def setUp(self):
-        shutil.copy(EMPTY_CIB, TEMP_CIB)
-        self.pcs_runner = PcsRunner(TEMP_CIB)
-
+class BoothMixin(AssertPcsMixin):
     def assert_pcs_success(self, command, *args, **kwargs):
-        return super(BoothTest, self).assert_pcs_success(
+        return super(BoothMixin, self).assert_pcs_success(
             fake_file(command), *args, **kwargs
         )
 
     def assert_pcs_fail(self, command, *args, **kwargs):
-        return super(BoothTest, self).assert_pcs_fail(
+        return super(BoothMixin, self).assert_pcs_fail(
             fake_file(command), *args, **kwargs
         )
 
     def assert_pcs_fail_original(self, *args, **kwargs):
-        return super(BoothTest, self).assert_pcs_fail(*args, **kwargs)
+        return super(BoothMixin, self).assert_pcs_fail(*args, **kwargs)
 
+class SetupTest(TestCase, BoothMixin):
+    def setUp(self):
+        shutil.copy(EMPTY_CIB, TEMP_CIB)
+        self.pcs_runner = PcsRunner(TEMP_CIB)
 
-class SetupTest(BoothTest):
     def test_sucess_setup_booth_config(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_success(
@@ -132,15 +131,16 @@ class SetupTest(BoothTest):
             "Error: With --booth-key must be specified --booth-conf as well\n"
         )
 
-
-class AddTicketTest(BoothTest):
+class BoothTest(TestCase, BoothMixin):
     def setUp(self):
-        super(AddTicketTest, self).setUp()
+        shutil.copy(EMPTY_CIB, TEMP_CIB)
+        self.pcs_runner = PcsRunner(TEMP_CIB)
         ensure_booth_config_not_exists()
         self.assert_pcs_success(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
         )
 
+class AddTicketTest(BoothTest):
     def test_success_add_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
@@ -167,13 +167,6 @@ class AddTicketTest(BoothTest):
         )
 
 class RemoveTicketTest(BoothTest):
-    def setUp(self):
-        super(RemoveTicketTest, self).setUp()
-        ensure_booth_config_not_exists()
-        self.assert_pcs_success(
-            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
-        )
-
     def test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
@@ -198,13 +191,6 @@ class RemoveTicketTest(BoothTest):
         )
 
 class CreateTest(BoothTest):
-    def setUp(self):
-        super(CreateTest, self).setUp()
-        ensure_booth_config_not_exists()
-        self.assert_pcs_success(
-            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
-        )
-
     def test_sucessfully_create_booth_resource_group(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
@@ -227,9 +213,10 @@ class CreateTest(BoothTest):
             "Error: booth for config '/etc/booth/booth.conf' is already created"
         ])
 
-
-
-class ConfigTest(BoothTest):
+class ConfigTest(TestCase, BoothMixin):
+    def setUp(self):
+        shutil.copy(EMPTY_CIB, TEMP_CIB)
+        self.pcs_runner = PcsRunner(TEMP_CIB)
     def test_fail_when_config_file_do_not_exists(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_fail(
