@@ -10,6 +10,7 @@ from pcs.lib.booth import configuration, resource
 from pcs.lib.booth.env import get_config_file_name
 from pcs.lib.cib.tools import get_resources
 
+from functools import partial
 
 def config_setup(env, booth_configuration, overwrite_existing=False):
     """
@@ -68,10 +69,13 @@ def create_in_cluster(env, name, ip, resource_create, resource_group):
     )
 
     resource.get_creator(resource_create, resource_group)(
-        resources_section,
-        name,
         ip,
         booth_config_file_path,
+        create_id = partial(
+            resource.create_resource_id,
+            resources_section,
+            name
+        )
     )
 
 def remove_from_cluster(env, name, resource_remove):

@@ -5,8 +5,6 @@ from __future__ import (
     unicode_literals,
 )
 
-from functools import partial
-
 from pcs.lib.booth import reports
 from pcs.lib.cib.resource import TAGS_ALL
 from pcs.lib.cib.tools import find_unique_id
@@ -21,11 +19,7 @@ def create_resource_id(resources_section, name, suffix):
 def get_creator(resource_create, resource_group):
     #TODO resource_create and resource_group is provisional hack until resources
     #are not moved to lib
-    def create_booth_in_cluster(
-        resources_section, name, ip, booth_config_file_path
-    ):
-        create_id = partial(create_resource_id, resources_section, name)
-
+    def create_booth_in_cluster(ip, booth_config_file_path, create_id):
         ip_id = create_id("ip")
         booth_id = create_id("service")
         group_id = create_id("group")
@@ -46,6 +40,9 @@ def get_creator(resource_create, resource_group):
             meta_values=[],
             clone_opts=[],
         )
+        #group can not be created automaticaly with resource create
+        #because is driven by global --group modifier (requires import utils,
+        #not option here)
         resource_group(["add", group_id, ip_id, booth_id])
     return create_booth_in_cluster
 
