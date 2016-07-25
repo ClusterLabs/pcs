@@ -10,7 +10,7 @@ from functools import partial
 from pcs.lib.booth import reports
 from pcs.lib.cib.resource import TAGS_ALL
 from pcs.lib.cib.tools import find_unique_id
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
 def create_resource_id(resources_section, name, suffix):
@@ -49,11 +49,70 @@ def get_creator(resource_create, resource_group):
         resource_group(["add", group_id, ip_id, booth_id])
     return create_booth_in_cluster
 
+def is_ip_resource(resource_element):
+    return resource_element.attrib["type"] == "IPaddr2"
+
+def find_grouped_ip_element_to_remove(booth_element):
+    if booth_element.getparent().tag != "group":
+        return None
+
+    group = booth_element.getparent()
+    if len(group) != 2:
+        #when something else in group, ip is not for remove
+        return None
+    for element in group:
+        if is_ip_resource(element):
+            return element
+    return None
+
+def get_remover(resource_remove):
+    def remove_from_cluster(
+        report_processor, resources_section, booth_config_file_path,
+        remove_multiple=False
+    ):
+        element_list = find_booth_resoruces_with_config(
+            resources_section,
+            booth_config_file_path
+        )
+        if not element_list:
+            raise LibraryError(
+               reports.booth_not_exists_in_cib(booth_config_file_path)
+            )
+
+        if len(element_list) > 1:
+            if not remove_multiple:
+                raise LibraryError(
+                    reports.booth_multiple_times_in_cib(booth_config_file_path)
+                )
+            report_processor.process(
+                reports.booth_multiple_times_in_cib(
+                    booth_config_file_path,
+                    severity=ReportItemSeverity.WARNING,
+                )
+            )
+
+        for element in element_list:
+            ip_resource_to_remove = find_grouped_ip_element_to_remove(element)
+            if ip_resource_to_remove is not None:
+                resource_remove(ip_resource_to_remove.attrib["id"])
+            resource_remove(element.attrib["id"])
+
+    return remove_from_cluster
+
+
 def validate_no_booth_resource_using_config(
     resources_section, booth_config_file_path
 ):
+    if find_booth_resoruces_with_config(
+        resources_section, booth_config_file_path
+    ):
+        raise LibraryError(
+            reports.booth_already_created(booth_config_file_path)
+        )
+
+def find_booth_resoruces_with_config(resources_section, booth_config_file_path):
     #self::primitive or self::clone or ... selects elements with specified tags
-    xpath = (
+    return resources_section.xpath((
         './/*['
         '    ('+' or '.join(["self::{0}".format(tag) for tag in TAGS_ALL])+')'
         '    and '
@@ -61,9 +120,4 @@ def validate_no_booth_resource_using_config(
         '    and '
         '    instance_attributes[nvpair[@name="config" and @value="{0}"]]'
         ']'
-    ).format(booth_config_file_path)
-
-    if resources_section.xpath(xpath):
-        raise LibraryError(
-            reports.booth_already_created(booth_config_file_path)
-        )
+    ).format(booth_config_file_path))

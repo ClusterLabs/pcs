@@ -66,6 +66,8 @@ def config_ticket_remove(lib, arg_list, modifiers):
     lib.booth.config_ticket_remove(arg_list[0])
 
 def get_create_in_cluster(resource_create, resource_group):
+    #TODO resource_create and resource_group is provisional hack until resources
+    #are not moved to lib
     def create_in_cluster(lib, arg_list, modifiers):
         if len(arg_list) != 2 or arg_list[0] != "ip":
             raise CmdLineInputError()
@@ -76,3 +78,18 @@ def get_create_in_cluster(resource_create, resource_group):
         )
         lib.booth.create_in_cluster(name, ip, resource_create, resource_group)
     return create_in_cluster
+
+def get_remove_from_cluster(resource_remove):
+    #TODO resource_remove is provisional hack until resources are not moved to
+    #lib
+    def remove_from_cluster(lib, arg_list, modifiers):
+        if arg_list:
+            raise CmdLineInputError()
+
+        name = (
+            modifiers["name"] if modifiers["name"]
+            else DEFAULT_BOOTH_NAME
+        )
+        lib.booth.remove_from_cluster(name, resource_remove)
+
+    return remove_from_cluster

@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItem
+from pcs.lib.errors import ReportItem, ReportItemSeverity
 
 
 def booth_lack_of_sites(site_list):
@@ -105,4 +105,27 @@ def booth_already_created(config_file_path):
         info={
             "config_file_path": config_file_path,
         }
+    )
+
+def booth_not_exists_in_cib(config_file_path):
+    return ReportItem.error(
+        report_codes.BOOTH_NOT_EXISTS_IN_CIB,
+        "booth for config '{config_file_path}' not found in cib",
+        info={
+            "config_file_path": config_file_path,
+        }
+    )
+
+def booth_multiple_times_in_cib(
+    config_file_path, severity=ReportItemSeverity.ERROR
+):
+    return ReportItem(
+        report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+        severity,
+        "found more than one booth for config '{config_file_path}' in cib",
+        info={
+            "config_file_path": config_file_path,
+        },
+        forceable=report_codes.FORCE_BOOTH_REMOVE_FROM_CIB
+            if severity == ReportItemSeverity.ERROR else None
     )
