@@ -11,6 +11,9 @@ from pcs.cli.common.parse_args import group_by_keywords
 
 DEFAULT_BOOTH_NAME = "booth"
 
+def __get_name(modifiers):
+    return  modifiers["name"] if modifiers["name"] else DEFAULT_BOOTH_NAME
+
 def config_setup(lib, arg_list, modifiers):
     """
     create booth config
@@ -72,11 +75,13 @@ def get_create_in_cluster(resource_create, resource_group):
         if len(arg_list) != 2 or arg_list[0] != "ip":
             raise CmdLineInputError()
         ip = arg_list[1]
-        name = (
-            modifiers["name"] if modifiers["name"]
-            else DEFAULT_BOOTH_NAME
+
+        lib.booth.create_in_cluster(
+            __get_name(modifiers),
+            ip,
+            resource_create,
+            resource_group
         )
-        lib.booth.create_in_cluster(name, ip, resource_create, resource_group)
     return create_in_cluster
 
 def get_remove_from_cluster(resource_remove):
@@ -86,11 +91,7 @@ def get_remove_from_cluster(resource_remove):
         if arg_list:
             raise CmdLineInputError()
 
-        name = (
-            modifiers["name"] if modifiers["name"]
-            else DEFAULT_BOOTH_NAME
-        )
-        lib.booth.remove_from_cluster(name, resource_remove)
+        lib.booth.remove_from_cluster(__get_name(modifiers), resource_remove)
 
     return remove_from_cluster
 
