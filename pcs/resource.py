@@ -1618,45 +1618,9 @@ def resource_master_create(dom, argv, update=False, master_id=None):
 
     return dom, master_element.getAttribute("id")
 
-def resource_master_remove(argv):
-    if len(argv) < 1:
-        usage.resource()
-        sys.exit(1)
-
-    dom = utils.get_cib_dom()
-    master_id = argv.pop(0)
-
-    master_found = False
-# Check to see if there's a resource/group with the master_id if so, we remove the parent
-    for rg in (dom.getElementsByTagName("primitive") + dom.getElementsByTagName("group")):
-        if rg.getAttribute("id") == master_id and rg.parentNode.tagName == "master":
-            master_id = rg.parentNode.getAttribute("id")
-
-    resources_to_cleanup = []
-    for master in dom.getElementsByTagName("master"):
-        if master.getAttribute("id") == master_id:
-            childNodes = master.getElementsByTagName("primitive")
-            for child in childNodes:
-                resources_to_cleanup.append(child.getAttribute("id"))
-            master_found = True
-            break
-
-    if not master_found:
-        utils.err("Unable to find multi-state resource with id %s" % master_id)
-
-    constraints_element = dom.getElementsByTagName("constraints")
-    if len(constraints_element) > 0:
-        constraints_element = constraints_element[0]
-        for resource_id in resources_to_cleanup:
-            remove_resource_references(
-                dom, resource_id, constraints_element=constraints_element
-            )
-    master.parentNode.removeChild(master)
-    print("Removing Master - " + master_id)
-    utils.replace_cib_configuration(dom)
-
 def resource_remove(resource_id, output = True):
     dom = utils.get_cib_dom()
+    # if resource is a clone or a master, work with its child instead
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
     if cloned_resource:
         resource_id = cloned_resource.getAttribute("id")
@@ -1704,15 +1668,14 @@ def resource_remove(resource_id, output = True):
             resource_remove(res.getAttribute("id"))
         sys.exit(0)
 
+    # now we know resource is not a group, a clone nor a master
+    # because of the conditions above
+    if not utils.does_exist('//resources/descendant::primitive[@id="'+resource_id+'"]'):
+        utils.err("Resource '{0}' does not exist.".format(resource_id))
+
     group_xpath = '//group/primitive[@id="'+resource_id+'"]/..'
     group = utils.get_cib_xpath(group_xpath)
     num_resources_in_group = 0
-
-    if not utils.does_exist('//resources/descendant::primitive[@id="'+resource_id+'"]'):
-        if utils.does_exist('//resources/master[@id="'+resource_id+'"]'):
-            return resource_master_remove([resource_id])
-
-        utils.err("Resource '{0}' does not exist.".format(resource_id))
 
     if (group != ""):
         num_resources_in_group = len(parseString(group).documentElement.getElementsByTagName("primitive"))
