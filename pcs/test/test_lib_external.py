@@ -1068,6 +1068,25 @@ class DisableServiceTest(TestCase):
         lib.disable_service(self.mock_runner, self.service)
         self.assertEqual(self.mock_runner.run.call_count, 0)
 
+    def test_instance_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        lib.disable_service(self.mock_runner, self.service, instance="test")
+        self.mock_runner.run.assert_called_once_with([
+            "systemctl",
+            "disable",
+            "{0}@{1}.service".format(self.service, "test")
+        ])
+
+    @mock.patch("pcs.lib.external.is_service_installed")
+    def test_instance_not_systemctl(self, mock_is_installed, mock_systemctl):
+        mock_is_installed.return_value = True
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        lib.disable_service(self.mock_runner, self.service, instance="test")
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig", self.service, "off"]
+        )
 
 @mock.patch("pcs.lib.external.is_systemctl")
 class EnableServiceTest(TestCase):
@@ -1109,6 +1128,24 @@ class EnableServiceTest(TestCase):
             lib.EnableServiceError,
             lambda: lib.enable_service(self.mock_runner, self.service)
         )
+        self.mock_runner.run.assert_called_once_with(
+            ["chkconfig", self.service, "on"]
+        )
+
+    def test_instance_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        lib.enable_service(self.mock_runner, self.service, instance="test")
+        self.mock_runner.run.assert_called_once_with([
+            "systemctl",
+            "enable",
+            "{0}@{1}.service".format(self.service, "test")
+        ])
+
+    def test_instance_not_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        lib.enable_service(self.mock_runner, self.service, instance="test")
         self.mock_runner.run.assert_called_once_with(
             ["chkconfig", self.service, "on"]
         )
@@ -1158,6 +1195,22 @@ class StartServiceTest(TestCase):
             ["service", self.service, "start"]
         )
 
+    def test_instance_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        lib.start_service(self.mock_runner, self.service, instance="test")
+        self.mock_runner.run.assert_called_once_with([
+            "systemctl", "start", "{0}@{1}.service".format(self.service, "test")
+        ])
+
+    def test_instance_not_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        lib.start_service(self.mock_runner, self.service, instance="test")
+        self.mock_runner.run.assert_called_once_with(
+            ["service", self.service, "start"]
+        )
+
 
 @mock.patch("pcs.lib.external.is_systemctl")
 class StopServiceTest(TestCase):
@@ -1199,6 +1252,22 @@ class StopServiceTest(TestCase):
             lib.StopServiceError,
             lambda: lib.stop_service(self.mock_runner, self.service)
         )
+        self.mock_runner.run.assert_called_once_with(
+            ["service", self.service, "stop"]
+        )
+
+    def test_instance_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = True
+        self.mock_runner.run.return_value = ("", 0)
+        lib.stop_service(self.mock_runner, self.service, instance="test")
+        self.mock_runner.run.assert_called_once_with([
+            "systemctl", "stop", "{0}@{1}.service".format(self.service, "test")
+        ])
+
+    def test_instance_not_systemctl(self, mock_systemctl):
+        mock_systemctl.return_value = False
+        self.mock_runner.run.return_value = ("", 0)
+        lib.stop_service(self.mock_runner, self.service, instance="test")
         self.mock_runner.run.assert_called_once_with(
             ["service", self.service, "stop"]
         )

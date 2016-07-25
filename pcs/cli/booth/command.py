@@ -93,3 +93,57 @@ def get_remove_from_cluster(resource_remove):
         lib.booth.remove_from_cluster(name, resource_remove)
 
     return remove_from_cluster
+
+
+def sync(lib, arg_list, modifiers):
+    if arg_list:
+        raise CmdLineInputError()
+    lib.booth.config_sync(
+        DEFAULT_BOOTH_NAME,
+        skip_offline_nodes=modifiers["skip_offline_nodes"]
+    )
+
+
+def enable(lib, arg_list, modifiers):
+    if arg_list:
+        raise CmdLineInputError()
+    lib.booth.enable(DEFAULT_BOOTH_NAME)
+
+
+def disable(lib, arg_list, modifiers):
+    if arg_list:
+        raise CmdLineInputError()
+    lib.booth.disable(DEFAULT_BOOTH_NAME)
+
+
+def start(lib, arg_list, modifiers):
+    if arg_list:
+        raise CmdLineInputError()
+    lib.booth.start(DEFAULT_BOOTH_NAME)
+
+
+def stop(lib, arg_list, modifiers):
+    if arg_list:
+        raise CmdLineInputError()
+    lib.booth.stop(DEFAULT_BOOTH_NAME)
+
+
+def pull(lib, arg_list, modifiers):
+    if len(arg_list) != 1:
+        raise CmdLineInputError()
+    lib.booth.pull(arg_list[0], DEFAULT_BOOTH_NAME)
+
+
+def status(lib, arg_list, modifiers):
+    if arg_list:
+        raise CmdLineInputError()
+    booth_status = lib.booth.status(DEFAULT_BOOTH_NAME)
+    if booth_status.get("ticket"):
+        print("TICKETS:")
+        print(booth_status["ticket"])
+    if booth_status.get("peers"):
+        print("PEERS:")
+        print(booth_status["peers"])
+    if booth_status.get("status"):
+        print("DAEMON STATUS:")
+        print(booth_status["status"])

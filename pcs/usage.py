@@ -1433,6 +1433,28 @@ Commands:
     create ip <address>
         Create booth resource grouped with ip resource. Parameter address
         specify virtual ip address.
+
+    status
+        Print current status of booth on local node.
+
+    pull <node>
+        Pull booth config from specified node.
+
+    sync [--skip-offline]
+        Sync booth config in cluster. Send config on local node to all nodes
+        in cluster.
+
+    enable
+        Enable booth arbitrator service.
+
+    disable
+        Disable booth arbitrator service.
+
+    start
+        Start booth arbitrator service.
+
+    stop
+        Stop booth arbitrator service.
 """
     if pout:
         print(sub_usage(args, output))

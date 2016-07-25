@@ -46,7 +46,20 @@ def booth_cmd(lib, argv, modifiers):
             command.get_remove_from_cluster(resource_remove)(
                 lib, argv_next, modifiers
             )
-
+        elif sub_cmd == "sync":
+            command.sync(lib, argv_next, modifiers)
+        elif sub_cmd == "pull":
+            command.pull(lib, argv_next, modifiers)
+        elif sub_cmd == "enable":
+            command.enable(lib, argv_next, modifiers)
+        elif sub_cmd == "disable":
+            command.disable(lib, argv_next, modifiers)
+        elif sub_cmd == "start":
+            command.start(lib, argv_next, modifiers)
+        elif sub_cmd == "stop":
+            command.stop(lib, argv_next, modifiers)
+        elif sub_cmd == "status":
+            command.status(lib, argv_next, modifiers)
         else:
             raise CmdLineInputError()
     except LibraryError as e:

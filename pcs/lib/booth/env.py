@@ -56,11 +56,19 @@ class BoothEnv(object):
                 file_role=env_file_role_codes.BOOTH_CONFIG,
                 file_path=get_config_file_name(env_data["name"]),
             )
-            self.__key_path = get_key_path(env_data["name"])
-            self.__key = RealFile(
-                file_role=env_file_role_codes.BOOTH_KEY,
-                file_path=self.__key_path,
-            )
+            self.__set_key_path(get_key_path(env_data["name"]))
+
+    def __set_key_path(self, path):
+        self.__key_path = path
+        self.__key = RealFile(
+            file_role=env_file_role_codes.BOOTH_KEY,
+            file_path=path,
+        )
+
+    def set_key_path(self, path):
+        if not self.__config.is_live:
+            raise NotImplementedError()
+        self.__set_key_path(path)
 
     @property
     def key_path(self):

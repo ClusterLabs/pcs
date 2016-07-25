@@ -42,6 +42,7 @@ from pcs.lib import (
     sbd as lib_sbd,
     reports as lib_reports,
 )
+from pcs.lib.booth import sync as booth_sync
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
@@ -1400,6 +1401,7 @@ def cluster_node(argv):
         report_processor = lib_env.report_processor
         node_communicator = lib_env.node_communicator()
         node_addr = NodeAddresses(node0, node1)
+        modifiers = utils.get_modificators()
         try:
             if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
                 if "--watchdog" not in utils.pcs_options:
@@ -1433,6 +1435,14 @@ def cluster_node(argv):
                 lib_sbd.disable_sbd_service_on_node(
                     report_processor, node_communicator, node_addr
                 )
+
+            booth_sync.send_all_config_to_node(
+                node_communicator,
+                report_processor,
+                node_addr,
+                rewrite_existing=modifiers["force"],
+                skip_wrong_config=modifiers["force"]
+            )
         except LibraryError as e:
             process_library_reports(e.args)
         except NodeCommunicationException as e:

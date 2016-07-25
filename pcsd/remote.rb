@@ -83,6 +83,10 @@ def remote(params, request, auth_user)
       :qdevice_client_disable => method(:qdevice_client_disable),
       :qdevice_client_start => method(:qdevice_client_start),
       :qdevice_client_stop => method(:qdevice_client_stop),
+      :booth_set_config => method(:booth_set_config),
+      :booth_save_files => method(:booth_save_files),
+      :booth_get_config => method(:booth_get_config),
+
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -2675,5 +2679,145 @@ def unmanage_resource(param, request, auth_user)
     return [200, '']
   rescue JSON::ParserError
     return [400, 'Invalid input data format']
+  end
+end
+
+def booth_set_config(params, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  begin
+    unless params[:data_json]
+      return [400, "Missing required parameter 'data'"]
+    end
+    data = JSON.parse(params[:data_json], {:symbolize_names => true})
+  rescue JSON::ParserError
+    return [400, 'Invalid input data format']
+  end
+  config = data[:config]
+  authfile = data[:authfile]
+  return [400, 'Invalid input data format'] unless (
+    config and config[:name] and config[:data]
+  )
+  return [400, 'Invalid input data format'] if (
+    authfile and (not authfile[:name] or not authfile[:data])
+  )
+  begin
+    write_booth_config(config[:name], config[:data])
+    if authfile
+      write_booth_keyfile(authfile[:name], authfile[:data])
+    end
+  rescue InvalidFileNameException => e
+    return [400, "Invalid format of config/key file name '#{e.message}'"]
+  rescue => e
+    msg = "Unable to save booth configuration: #{e.message}"
+    $logger.error(msg)
+    return [400, msg]
+  end
+  msg = 'Booth configuration saved.'
+  $logger.info(msg)
+  return [200, msg]
+end
+
+def booth_save_files(params, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  begin
+    data = JSON.parse(params[:data_json], {:symbolize_names => true})
+    data.each { |file|
+      unless file[:name] and file[:data]
+        return [400, 'Invalid input data format']
+      end
+      if file[:name].include?('/')
+        return [400, "Invalid file name format '#{file[:name]}'"]
+      end
+    }
+  rescue JSON::ParserError, NoMethodError
+    return [400, 'Invalid input data format']
+  end
+  rewrite_existing = (
+  params.include?('rewrite_existing') || params.include?(:rewrite_existing)
+  )
+
+  conflict_files = []
+  data.each { |file|
+    next unless File.file?(File.join(BOOTH_CONFIG_DIR, file[:name]))
+    if file[:base64]
+      cur_data = read_booth_authfile(file[:name])
+    else
+      cur_data = read_booth_config(file[:name])
+    end
+    if cur_data != file[:data]
+      conflict_files << file[:name]
+    end
+  }
+
+  write_failed = {}
+  saved_files = []
+  data.each { |file|
+    next if conflict_files.include?(file[:name]) and not rewrite_existing
+    begin
+      if file[:base64]
+        write_booth_keyfile(file[:name], file[:data])
+      else
+        write_booth_config(file[:name], file[:data])
+      end
+      saved_files << file[:name]
+    rescue => e
+      msg = "Unable to save file (#{file[:name]}): #{e.message}"
+      $logger.error(msg)
+      write_failed[file[:name]] = e
+    end
+  }
+  return [200, JSON.generate({
+    :existing => conflict_files,
+    :saved => saved_files,
+    :failed => write_failed
+  })]
+end
+
+def booth_get_config(params, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  name = params[:name]
+  if name
+    config_file_name = "#{name}.conf"
+  else
+    config_file_name = 'booth.conf'
+  end
+  if config_file_name.include?('/')
+    return [400, 'Invalid name of booth configuration']
+  end
+  begin
+    config_data = read_booth_config(config_file_name)
+    unless config_data
+      return [400, "Config doesn't exist"]
+    end
+    authfile_name = nil
+    authfile_data = nil
+    authfile_path = get_authfile_from_booth_config(config_data)
+    if authfile_path
+      if File.dirname(authfile_path) != BOOTH_CONFIG_DIR
+        return [
+          400, "Authfile of specified config is not in '#{BOOTH_CONFIG_DIR}'"
+        ]
+      end
+      authfile_name = File.basename(authfile_path)
+      authfile_data = read_booth_authfile(authfile_name)
+    end
+    return [200, JSON.generate({
+      :config => {
+        :name => config_file_name,
+        :data => config_data
+      },
+      :authfile => {
+        :name => authfile_name,
+        :data => authfile_data
+      }
+    })]
+  rescue => e
+    return [400, "Unable to read booth config/key file: #{e.message}"]
   end
 end

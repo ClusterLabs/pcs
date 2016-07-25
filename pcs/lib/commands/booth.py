@@ -5,12 +5,27 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.common.tools import merge_dicts
-from pcs.lib.booth import configuration, resource
-from pcs.lib.booth.env import get_config_file_name
+import base64
+from os.path import join
+
+from pcs import settings
+from pcs.lib import external, reports
+from pcs.lib.node import NodeAddresses
+from pcs.lib.errors import LibraryError
+from pcs.lib.booth import (
+    configuration,
+    sync,
+    status,
+    resource,
+    reports as booth_reports,
+)
+from pcs.lib.external import is_systemctl
 from pcs.lib.cib.tools import get_resources
+from pcs.lib.booth.env import get_config_file_name
+from pcs.common.tools import merge_dicts
 
 from functools import partial
+
 
 def config_setup(env, booth_configuration, overwrite_existing=False):
     """
@@ -86,3 +101,164 @@ def remove_from_cluster(env, name, resource_remove):
         get_resources(env.get_cib()),
         get_config_file_name(name),
     )
+
+
+def config_sync(env, name, skip_offline_nodes=False):
+    """
+    Send specified local booth configuration to all nodes in cluster.
+
+    env -- LibraryEnvironment
+    name -- booth instance name
+    skip_offline_nodes -- if True offline nodes will be skipped
+    """
+    config = env.booth.get_config_content()
+    authfile_path = configuration.parse(config).get("authfile", None)
+    authfile_content = configuration.read_authfile(
+        env.report_processor, authfile_path
+    )
+
+    sync.send_config_to_all_nodes(
+        env.node_communicator(),
+        env.report_processor,
+        env.get_corosync_conf().get_nodes(),
+        name,
+        config,
+        authfile=authfile_path,
+        authfile_data=authfile_content,
+        skip_offline=skip_offline_nodes
+    )
+
+
+def _get_booth_instance_name(name=None):
+    """
+    Returns name of booth service instance.
+
+    name -- string name of booth instance
+    """
+    return "booth{0}".format(
+        "" if name is None else "@{0}".format(name)
+    )
+
+
+def _ensure_is_systemd():
+    """
+    Ensure if current system is systemd system. Raises Library error if not.
+    """
+    if not is_systemctl():
+        raise LibraryError(
+            reports.unsupported_operation_on_non_systemd_systems()
+        )
+
+
+def enable_booth(env, name=None):
+    """
+    Enable specified instance of booth service. Currently it is supported only
+    systemd systems.
+
+    env -- LibraryEnvironment
+    name -- string, name of booth instance
+    """
+    _ensure_is_systemd()
+    booth_name = _get_booth_instance_name(name)
+    try:
+        external.enable_service(env.cmd_runner(), "booth", name)
+    except external.EnableServiceError as e:
+        raise LibraryError(reports.service_enable_error(booth_name, e.message))
+    env.report_processor.process(reports.service_enable_success(booth_name))
+
+
+def disable_booth(env, name=None):
+    """
+    Disable specified instance of booth service. Currently it is supported only
+    systemd systems.
+
+    env -- LibraryEnvironment
+    name -- string, name of booth instance
+    """
+    _ensure_is_systemd()
+    booth_name = _get_booth_instance_name(name)
+    try:
+        external.disable_service(env.cmd_runner(), "booth", name)
+    except external.DisableServiceError as e:
+        raise LibraryError(reports.service_disable_error(booth_name, e.message))
+    env.report_processor.process(reports.service_disable_success(booth_name))
+
+
+def start_booth(env, name=None):
+    """
+    Start specified instance of booth service. Currently it is supported only
+    systemd systems. On non systems it can be run like this:
+        BOOTH_CONF_FILE=<booth-file-path> /etc/initd/booth-arbitrator
+
+    env -- LibraryEnvironment
+    name -- string, name of booth instance
+    """
+    _ensure_is_systemd()
+    booth_name = _get_booth_instance_name(name)
+    try:
+        external.start_service(env.cmd_runner(), "booth", name)
+    except external.StartServiceError as e:
+        raise LibraryError(reports.service_start_error(booth_name, e.message))
+    env.report_processor.process(reports.service_start_success(booth_name))
+
+
+def stop_booth(env, name=None):
+    """
+    Stop specified instance of booth service. Currently it is supported only
+    systemd systems.
+
+    env -- LibraryEnvironment
+    name -- string, name of booth instance
+    """
+    _ensure_is_systemd()
+    booth_name = _get_booth_instance_name(name)
+    try:
+        external.stop_service(env.cmd_runner(), "booth", name)
+    except external.StopServiceError as e:
+        raise LibraryError(reports.service_stop_error(booth_name, e.message))
+    env.report_processor.process(reports.service_stop_success(booth_name))
+
+
+def pull_config(env, node_name, name):
+    """
+    Get config from specified node and save it on local system. It will
+    rewrite existing files.
+
+    env -- LibraryEnvironment
+    node_name -- string, name of node from which config should be fetched
+    name -- string, name of booth instance of which config should be fetched
+    """
+    env.report_processor.process(
+        booth_reports.booth_fetching_config_from_node(node_name, name)
+    )
+    output = sync.pull_config_from_node(
+        env.node_communicator(), NodeAddresses(node_name), name
+    )
+    try:
+        env.booth.create_config(output["config"]["data"], True)
+        if (
+            output["authfile"]["name"] is not None and
+            output["authfile"]["data"]
+        ):
+            env.booth.set_key_path(
+                join(settings.booth_config_dir, output["authfile"]["name"])
+            )
+            env.booth.create_key(
+                base64.b64decode(
+                    output["authfile"]["data"].encode("utf-8")
+                ),
+                True
+            )
+        env.report_processor.process(booth_reports.booth_config_saved(
+            node_name, [name]
+        ))
+    except KeyError:
+        raise LibraryError(reports.invalid_response_format(node_name))
+
+
+def get_status(env, name=None):
+    return {
+        "status": status.get_daemon_status(env.cmd_runner(), name),
+        "ticket": status.get_tickets_status(env.cmd_runner(), name),
+        "peers": status.get_peers_status(env.cmd_runner(), name),
+    }

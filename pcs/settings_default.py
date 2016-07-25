@@ -42,3 +42,4 @@ sbd_watchdog_default = "/dev/watchdog"
 sbd_config = "/etc/sysconfig/sbd"
 pacemaker_wait_timeout_status = 62
 booth_config_dir = "/etc/booth"
+booth_binary = "/usr/sbin/booth"

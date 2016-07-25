@@ -1744,15 +1744,22 @@ def unable_to_upgrade_cib_to_required_version(
     )
 
 def file_already_exists(
-        file_role, file_path, severity=ReportItemSeverity.ERROR, forceable=None
+        file_role, file_path, severity=ReportItemSeverity.ERROR,
+        forceable=None, node=None
     ):
+    msg = "file {file_path} already exists"
+    if file_role:
+        msg = "{file_role} " + msg
+    if node:
+        msg = "{node}: " + msg
     return ReportItem(
         report_codes.FILE_ALREADY_EXISTS,
         severity,
-        "{file_role} file {file_path} already exists",
+        msg,
         info={
             "file_role": file_role,
             "file_path": file_path,
+            "node": node,
         },
         forceable=forceable,
     )
@@ -1767,13 +1774,27 @@ def file_does_not_exists(file_role, file_path=""):
         },
     )
 
-def file_io_error(file_role, file_path="", reason=""):
-    return ReportItem.error(
+def file_io_error(
+    file_role, file_path="", reason="", severity=ReportItemSeverity.ERROR
+):
+    if file_path:
+        msg = "can not work with {file_role} '{file_path}': {reason}"
+    else:
+        msg = "can not work with {file_role}: {reason}"
+    return ReportItem(
         report_codes.FILE_IO_ERROR,
-        "can not work with {file_role}: {reason}",
+        severity,
+        msg,
         info={
             "file_role": file_role,
             "file_path": file_path,
             "reason": reason,
         },
+    )
+
+
+def unsupported_operation_on_non_systemd_systems():
+    return ReportItem.error(
+        report_codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
+        "unsupported operation on non systemd systems"
     )

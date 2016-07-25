@@ -592,6 +592,27 @@ Show currently written booth configuration.
 .TP
 create ip <address>
 Create booth resource grouped with ip resource. Parameter address specify virtual ip address.
+.TP
+status
+Print current status of booth on local node.
+.TP
+pull <node>
+Pull booth config from specified node.
+.TP
+sync [\fB\-\-skip\-offline\fR]
+Sync booth config in cluster. Send config on local node to all nodes in cluster.
+.TP
+enable
+Enable booth arbitrator service.
+.TP
+disable
+Disable booth arbitrator service.
+.TP
+start
+Start booth arbitrator service.
+.TP
+stop
+Stop booth arbitrator service.
 .SS "status"
 .TP
 [status] [\fB\-\-full\fR | \fB\-\-hide-inactive\fR]
