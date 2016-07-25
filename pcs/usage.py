@@ -1416,20 +1416,20 @@ Commands:
 
     create path=<path> [id=<alert-id>] [description=<description>]
             [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
-        Create new alert with specified path. Id will be automatically
+        Define an alert handler with specified path. Id will be automatically
         generated if it is not specified.
 
     update <alert-id> [path=<path>] [description=<description>]
             [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
-        Update existing alert with specified id.
+        Update existing alert handler with specified id.
 
     remove <alert-id>
-        Remove alert with specified id.
+        Remove alert handler with specified id.
 
     recipient add <alert-id> <recipient-value> [id=<recipient-id>]
             [description=<description>] [options [<option>=<value>]...]
             [meta [<meta-option>=<value>]...]
-        Add new recipient to specified alert.
+        Add new recipient to specified alert handler.
 
     recipient update <recipient-id> [value=<recipient-value>]
             [description=<description>] [options [<option>=<value>]...]
