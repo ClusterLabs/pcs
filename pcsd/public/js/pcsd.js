@@ -1291,7 +1291,11 @@ function remove_resource(ids, force) {
     error: function (xhr, status, error) {
       error = $.trim(error);
       var message = "";
-      if (status == "timeout" || error == "timeout") {
+      if (
+        status == "timeout" ||
+        error == "timeout" ||
+        xhr.responseText == '{"noresponse":true}'
+      ) {
         message = "Operation takes longer to complete than expected.";
       } else {
         message = "Unable to remove resources (" + error + ")";
