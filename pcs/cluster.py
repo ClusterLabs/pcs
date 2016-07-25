@@ -1922,6 +1922,12 @@ def cluster_remote_node(argv):
             nvpair.parentNode.removeChild(nvpair)
         dom = constraint.remove_constraints_containing_node(dom, hostname)
         utils.replace_cib_configuration(dom)
+        if not utils.usefile:
+            output, retval = utils.run([
+                "crm_node", "--force", "--remove", hostname
+            ])
+            if retval != 0:
+                utils.err("unable to remove: {0}".fomat(output))
     else:
         usage.cluster(["remote-node"])
         sys.exit(1)

@@ -1252,6 +1252,14 @@ def validate_constraint_resource(dom, resource_id):
 def dom_get_resource_remote_node_name(dom_resource):
     if dom_resource.tagName != "primitive":
         return None
+    if (
+        dom_resource.getAttribute("class").lower() == "ocf"
+        and
+        dom_resource.getAttribute("provider").lower() == "pacemaker"
+        and
+        dom_resource.getAttribute("type").lower() == "remote"
+    ):
+        return dom_resource.getAttribute("id")
     return dom_get_meta_attr_value(dom_resource, "remote-node")
 
 def dom_get_meta_attr_value(dom_resource, meta_name):

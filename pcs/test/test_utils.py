@@ -273,6 +273,9 @@ class UtilsTest(unittest.TestCase):
                             name="remote-node" value="guest2"/>
                     </instance_attributes>
                 </primitive>
+                <primitive id="dummy3"
+                        class="ocf" provider="pacemaker" type="remote">
+                </primitive>
             </resources>
         """).documentElement
         resources = dom.getElementsByTagName("resources")[0]
@@ -294,6 +297,12 @@ class UtilsTest(unittest.TestCase):
             "guest1",
             utils.dom_get_resource_remote_node_name(
                 utils.dom_get_resource(dom, "vm-guest1")
+            )
+        )
+        self.assertEqual(
+            "dummy3",
+            utils.dom_get_resource_remote_node_name(
+                utils.dom_get_resource(dom, "dummy3")
             )
         )
 

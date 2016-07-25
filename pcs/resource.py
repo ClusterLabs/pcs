@@ -929,31 +929,11 @@ def resource_update(res_id,args):
             ia.setAttribute("value", val)
             instance_attributes.appendChild(ia)
 
-    meta_attributes = resource.getElementsByTagName("meta_attributes")
-    if len(meta_attributes) == 0:
-        meta_attributes = dom.createElement("meta_attributes")
-        meta_attributes.setAttribute("id", res_id + "-meta_attributes")
-        resource.appendChild(meta_attributes)
-    else:
-        meta_attributes = meta_attributes[0]
-
-    meta_attrs = utils.convert_args_to_tuples(meta_values)
-    for (key,val) in meta_attrs:
-        meta_found = False
-        for ma in meta_attributes.getElementsByTagName("nvpair"):
-            if ma.getAttribute("name") == key:
-                meta_found = True
-                if val == "":
-                    meta_attributes.removeChild(ma)
-                else:
-                    ma.setAttribute("value", val)
-                break
-        if not meta_found:
-            ma = dom.createElement("nvpair")
-            ma.setAttribute("id", res_id + "-meta_attributes-" + key)
-            ma.setAttribute("name", key)
-            ma.setAttribute("value", val)
-            meta_attributes.appendChild(ma)
+    remote_node_name = utils.dom_get_resource_remote_node_name(resource)
+    utils.dom_update_meta_attr(
+        resource,
+        utils.convert_args_to_tuples(meta_values)
+    )
 
     operations = resource.getElementsByTagName("operations")
     if len(operations) == 0:
@@ -1004,6 +984,17 @@ def resource_update(res_id,args):
         instance_attributes.parentNode.removeChild(instance_attributes)
 
     utils.replace_cib_configuration(dom)
+
+    if (
+        remote_node_name
+        and
+        remote_node_name != utils.dom_get_resource_remote_node_name(resource)
+    ):
+        # if the resource was a remote node and it is not anymore, (or its name
+        # changed) we need to tell pacemaker about it
+        output, retval = utils.run([
+            "crm_node", "--force", "--remove", remote_node_name
+        ])
 
     if "--wait" in utils.pcs_options:
         args = ["crm_resource", "--wait"]
@@ -1231,9 +1222,21 @@ def resource_meta(res_id, argv):
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
 
+    remote_node_name = utils.dom_get_resource_remote_node_name(resource_el)
     utils.dom_update_meta_attr(resource_el, utils.convert_args_to_tuples(argv))
 
     utils.replace_cib_configuration(dom)
+
+    if (
+        remote_node_name
+        and
+        remote_node_name != utils.dom_get_resource_remote_node_name(resource_el)
+    ):
+        # if the resource was a remote node and it is not anymore, (or its name
+        # changed) we need to tell pacemaker about it
+        output, retval = utils.run([
+            "crm_node", "--force", "--remove", remote_node_name
+        ])
 
     if "--wait" in utils.pcs_options:
         args = ["crm_resource", "--wait"]
@@ -1714,11 +1717,12 @@ def resource_remove(resource_id, output = True):
     )
     dom = utils.get_cib_dom()
     resource_el = utils.dom_get_resource(dom, resource_id)
+    remote_node_name = None
     if resource_el:
-        remote_node = utils.dom_get_resource_remote_node_name(resource_el)
-        if remote_node:
+        remote_node_name = utils.dom_get_resource_remote_node_name(resource_el)
+        if remote_node_name:
             dom = constraint.remove_constraints_containing_node(
-                dom, remote_node, output
+                dom, remote_node_name, output
             )
             utils.replace_cib_configuration(dom)
             dom = utils.get_cib_dom()
@@ -1784,6 +1788,10 @@ def resource_remove(resource_id, output = True):
             if output == True:
                 utils.err("Unable to remove resource '%s' (do constraints exist?)" % (resource_id))
             return False
+    if remote_node_name and not utils.usefile:
+        output, retval = utils.run([
+            "crm_node", "--force", "--remove", remote_node_name
+        ])
     return True
 
 def stonith_level_rm_device(cib_dom, stn_id):
