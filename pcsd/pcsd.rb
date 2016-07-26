@@ -75,6 +75,7 @@ if development?
 end
 
 before do
+  # nobody is logged in yet
   @auth_user = nil
 
   # get session storage instance from env
@@ -83,8 +84,21 @@ before do
     $session_storage_env = env
   end
 
-  if request.path != '/login' and not request.path == "/logout" and not request.path == '/remote/auth' and not request.path == '/login-status'
-    protected! 
+  # urls which are accesible for everybody including not logged in users
+  always_accessible = [
+    '/login',
+    '/logout',
+    '/login-status',
+    '/remote/auth',
+  ]
+  if not always_accessible.include?(request.path)
+    # Sets @auth_user to a hash containing info about logged in user or halts
+    # the request processing if login credentials are incorrect.
+    protected!
+  else
+    # Set a sane default: nobody is logged in, but we do not need to check both
+    # for nil and empty username (if auth_user and auth_user[:username])
+    @auth_user = {} if not @auth_user
   end
   $cluster_name = get_cluster_name()
 end

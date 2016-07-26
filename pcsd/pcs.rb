@@ -395,47 +395,47 @@ end
 
 def send_request(auth_user, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data=nil)
   cookies_data = {} if not cookies_data
+  request = "/#{request}" if not request.start_with?("/")
+
+  # fix ipv6 address for URI.parse
+  node6 = node
+  if (node.include?(":") and ! node.start_with?("["))
+    node6 = "[#{node}]"
+  end
+
+  if remote
+    uri = URI.parse("https://#{node6}:2224/remote" + request)
+  else
+    uri = URI.parse("https://#{node6}:2224" + request)
+  end
+
+  if post
+    req = Net::HTTP::Post.new(uri.path)
+    raw_data ? req.body = raw_data : req.set_form_data(data)
+  else
+    req = Net::HTTP::Get.new(uri.path)
+    req.set_form_data(data)
+  end
+
+  cookies_to_send = []
+  cookies_data_default = {}
+  # Let's be safe about characters in cookie variables and do base64.
+  # We cannot do it for CIB_user however to be backward compatible
+  # so we at least remove disallowed characters.
+  cookies_data_default['CIB_user'] = PCSAuth.cookieUserSafe(
+    auth_user[:username].to_s
+  )
+  cookies_data_default['CIB_user_groups'] = PCSAuth.cookieUserEncode(
+    (auth_user[:usergroups] || []).join(' ')
+  )
+
+  cookies_data_default.update(cookies_data)
+  cookies_data_default.each { |name, value|
+    cookies_to_send << CGI::Cookie.new('name' => name, 'value' => value).to_s
+  }
+  req.add_field('Cookie', cookies_to_send.join(';'))
+
   begin
-    request = "/#{request}" if not request.start_with?("/")
-
-    # fix ipv6 address for URI.parse
-    node6 = node
-    if (node.include?(":") and ! node.start_with?("["))
-      node6 = "[#{node}]"
-    end
-
-    if remote
-      uri = URI.parse("https://#{node6}:2224/remote" + request)
-    else
-      uri = URI.parse("https://#{node6}:2224" + request)
-    end
-
-    if post
-      req = Net::HTTP::Post.new(uri.path)
-      raw_data ? req.body = raw_data : req.set_form_data(data)
-    else
-      req = Net::HTTP::Get.new(uri.path)
-      req.set_form_data(data)
-    end
-
-    cookies_to_send = []
-    cookies_data_default = {}
-    # Let's be safe about characters in cookie variables and do base64.
-    # We cannot do it for CIB_user however to be backward compatible
-    # so we at least remove disallowed characters.
-    cookies_data_default['CIB_user'] = PCSAuth.cookieUserSafe(
-      auth_user[:username].to_s
-    )
-    cookies_data_default['CIB_user_groups'] = PCSAuth.cookieUserEncode(
-      (auth_user[:usergroups] || []).join(' ')
-    )
-
-    cookies_data_default.update(cookies_data)
-    cookies_data_default.each { |name, value|
-      cookies_to_send << CGI::Cookie.new('name' => name, 'value' => value).to_s
-    }
-    req.add_field('Cookie', cookies_to_send.join(';'))
-
     # uri.host returns "[addr]" for ipv6 addresses, which is wrong
     # uri.hostname returns "addr" for ipv6 addresses, which is correct, but it
     #   is not available in older ruby versions
