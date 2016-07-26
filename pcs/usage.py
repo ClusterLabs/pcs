@@ -1434,6 +1434,10 @@ Commands:
         Create booth resource grouped with ip resource. Parameter address
         specify virtual ip address.
 
+    remove
+        Remove booth resource. Remove grouped ip resource as well unless extra
+        resource appear in group.
+
     ticket grant <ticket> [<site address>]
         Grant ticket for site specified by address. If site not specified, is
         used the one created by 'pcs booth create' command.
