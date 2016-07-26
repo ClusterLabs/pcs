@@ -1806,7 +1806,10 @@ class RunParallelTest(unittest.TestCase):
             wait_seconds=.1
         )
 
-        self.assertEqual(log, ['first', 'second'])
+        self.assertEqual(
+            sorted(log),
+            sorted(['first', 'second'])
+        )
 
     def test_wait_for_slower_workers(self):
         log = []
