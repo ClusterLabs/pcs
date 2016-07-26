@@ -38,6 +38,8 @@ def booth_cmd(lib, argv, modifiers):
                 command.config_ticket_remove(lib, argv_next[1:], modifiers)
             elif argv_next[0] == "grant":
                 command.ticket_grant(lib, argv_next[1:], modifiers)
+            elif argv_next[0] == "revoke":
+                command.ticket_revoke(lib, argv_next[1:], modifiers)
             else:
                 raise CmdLineInputError()
         elif sub_cmd == "create":

@@ -68,7 +68,7 @@ def config_ticket_remove(lib, arg_list, modifiers):
         raise CmdLineInputError
     lib.booth.config_ticket_remove(arg_list[0])
 
-def ticket_grant(lib, arg_list, modifiers):
+def ticket_operation(lib_call, arg_list, modifiers):
     site_ip = None
     if len(arg_list) == 2:
         site_ip = arg_list[1]
@@ -76,8 +76,13 @@ def ticket_grant(lib, arg_list, modifiers):
         raise CmdLineInputError()
 
     ticket = arg_list[0]
-    lib.booth.ticket_grant(__get_name(modifiers), ticket, site_ip)
+    lib_call(__get_name(modifiers), ticket, site_ip)
 
+def ticket_revoke(lib, arg_list, modifiers):
+    ticket_operation(lib.booth.ticket_revoke, arg_list, modifiers)
+
+def ticket_grant(lib, arg_list, modifiers):
+    ticket_operation(lib.booth.ticket_grant, arg_list, modifiers)
 
 def get_create_in_cluster(resource_create, resource_group):
     #TODO resource_create and resource_group is provisional hack until resources

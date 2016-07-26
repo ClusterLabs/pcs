@@ -7,6 +7,7 @@ from __future__ import (
 
 import base64
 from os.path import join
+from functools import partial
 
 from pcs import settings
 from pcs.lib import external, reports
@@ -23,8 +24,6 @@ from pcs.lib.external import is_systemctl
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.booth.env import get_config_file_name
 from pcs.common.tools import merge_dicts
-
-from functools import partial
 
 
 def config_setup(env, booth_configuration, overwrite_existing=False):
@@ -102,7 +101,7 @@ def remove_from_cluster(env, name, resource_remove):
         get_config_file_name(name),
     )
 
-def ticket_grant(env, name, ticket, site_ip):
+def ticket_operation(operation, env, name, ticket, site_ip):
     if not site_ip:
         site_ip = resource.find_binded_single_ip(
             get_resources(env.get_cib()),
@@ -110,11 +109,11 @@ def ticket_grant(env, name, ticket, site_ip):
         )
         if not site_ip:
             raise LibraryError(
-                booth_reports.booth_correct_config_not_found_in_cib("grant")
+                booth_reports.booth_correct_config_not_found_in_cib(operation)
             )
 
     command_output, return_code = env.cmd_runner().run([
-        settings.booth_binary, "grant",
+        settings.booth_binary, operation,
         "-s", site_ip,
         ticket
     ])
@@ -122,12 +121,15 @@ def ticket_grant(env, name, ticket, site_ip):
     if return_code != 0:
         raise LibraryError(
             booth_reports.booth_ticket_operation_failed(
-                "grant",
+                operation,
                 command_output,
                 site_ip,
                 ticket
             )
         )
+
+ticket_grant = partial(ticket_operation, "grant")
+ticket_revoke = partial(ticket_operation, "revoke")
 
 def config_sync(env, name, skip_offline_nodes=False):
     """

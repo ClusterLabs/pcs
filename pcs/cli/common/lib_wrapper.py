@@ -221,6 +221,7 @@ def load_module(env, middleware_factory, name):
                 "pull": booth.pull_config,
                 "status": booth.get_status,
                 "ticket_grant": booth.ticket_grant,
+                "ticket_revoke": booth.ticket_revoke,
             }
         )
 
