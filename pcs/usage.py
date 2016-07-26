@@ -1434,6 +1434,10 @@ Commands:
         Create booth resource grouped with ip resource. Parameter address
         specify virtual ip address.
 
+    ticket grant <ticket> [<site address>]
+        Grant ticket for site specified by address. If site not specified, is
+        used the one created by 'pcs booth create' command.
+
     status
         Print current status of booth on local node.
 

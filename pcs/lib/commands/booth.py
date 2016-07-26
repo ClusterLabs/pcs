@@ -102,6 +102,32 @@ def remove_from_cluster(env, name, resource_remove):
         get_config_file_name(name),
     )
 
+def ticket_grant(env, name, ticket, site_ip):
+    if not site_ip:
+        site_ip = resource.find_binded_single_ip(
+            get_resources(env.get_cib()),
+            get_config_file_name(name)
+        )
+        if not site_ip:
+            raise LibraryError(
+                booth_reports.booth_correct_config_not_found_in_cib("grant")
+            )
+
+    command_output, return_code = env.cmd_runner().run([
+        settings.booth_binary, "grant",
+        "-s", site_ip,
+        ticket
+    ])
+
+    if return_code != 0:
+        raise LibraryError(
+            booth_reports.booth_ticket_operation_failed(
+                "grant",
+                command_output,
+                site_ip,
+                ticket
+            )
+        )
 
 def config_sync(env, name, skip_offline_nodes=False):
     """

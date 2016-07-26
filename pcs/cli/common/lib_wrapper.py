@@ -220,6 +220,7 @@ def load_module(env, middleware_factory, name):
                 "stop": booth.stop_booth,
                 "pull": booth.pull_config,
                 "status": booth.get_status,
+                "ticket_grant": booth.ticket_grant,
             }
         )
 

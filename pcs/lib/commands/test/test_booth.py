@@ -441,3 +441,39 @@ class PullConfigTest(TestCase):
                 }
             )]
         )
+
+class TicketGrantTest(TestCase):
+    @mock.patch("pcs.lib.booth.resource.find_binded_single_ip")
+    def test_raises_when_implicit_site_not_found_in_cib(
+        self, mock_find_binded_ip
+    ):
+        mock_find_binded_ip.return_value = None
+        assert_raise_library_error(
+            lambda:
+            commands.ticket_grant(mock.Mock(), "booth", "ABC", site_ip=None),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_CORRECT_CONFIG_NOT_FOUND_IN_CIB,
+                {}
+            ),
+        )
+
+    def test_raises_when_command_fail(self):
+        mock_run = mock.Mock(return_value=("some message", 1))
+        mock_env = mock.MagicMock(
+            cmd_runner=mock.Mock(return_value=mock.MagicMock(run=mock_run))
+        )
+        assert_raise_library_error(
+            lambda:
+            commands.ticket_grant(mock_env, "booth", "ABC", site_ip="1.2.3.4"),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_TICKET_OPERATION_FAILED,
+                {
+                    "operation": "grant",
+                    "reason": "some message",
+                    "site_ip": "1.2.3.4",
+                    "ticket": "ABC",
+                }
+            ),
+        )

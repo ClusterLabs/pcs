@@ -256,6 +256,16 @@ class RemoveTest(BoothTest):
     def test_fail_when_booth_is_not_currently_configured(self):
         pass
 
+class TicketGrantTest(BoothTest):
+    def test_failed_when_implicit_site_but_not_correct_confgiuration_there(self):
+        self.assert_pcs_success("booth ticket add T1")
+        #no resource in cib
+        self.assert_pcs_fail("booth ticket grant T1", [
+            "Error: correct booth configuration not found,"
+            " can not grant ticket to implicit site,"
+            " please specify site parameter"
+        ])
+
 class ConfigTest(TestCase, BoothMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)

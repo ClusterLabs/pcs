@@ -36,6 +36,8 @@ def booth_cmd(lib, argv, modifiers):
                 command.config_ticket_add(lib, argv_next[1:], modifiers)
             elif argv_next[0] == "remove":
                 command.config_ticket_remove(lib, argv_next[1:], modifiers)
+            elif argv_next[0] == "grant":
+                command.ticket_grant(lib, argv_next[1:], modifiers)
             else:
                 raise CmdLineInputError()
         elif sub_cmd == "create":

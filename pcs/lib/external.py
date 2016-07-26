@@ -329,6 +329,9 @@ class CommandRunner(object):
         self, args, ignore_stderr=False, stdin_string=None, env_extend=None,
         binary_output=False
     ):
+        #Reset environment variables by empty dict is desired here.  We need to
+        #get rid of defaults - we do not know the context and environment of the
+        #library.  So executable must be specified with full path.
         env_vars = dict(env_extend) if env_extend else dict()
         env_vars.update(self._env_vars)
 

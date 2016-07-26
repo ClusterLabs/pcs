@@ -39,6 +39,19 @@ def fixture_booth_element(id, booth_config_file_path):
         </primitive>
     '''.format(id, booth_config_file_path))
 
+def fixture_ip_element(id, ip=""):
+    return etree.fromstring('''
+        <primitive id="{0}" type="IPaddr2">
+            <instance_attributes id="{0}-ia">
+            <nvpair
+                id="booth-booth-{0}-ia-ip"
+                name="ip"
+                value="192.168.122.31"
+            />
+          </instance_attributes>
+        </primitive>
+    '''.format(id, ip))
+
 class CreateResourceIdTest(TestCase):
     @mock.patch("pcs.lib.booth.resource.find_unique_id")
     def test_return_new_uinq_id(self, mock_find_unique_id):
@@ -188,4 +201,47 @@ class RemoveFromClusterTest(TestCase):
                 mock.call('ip'),
                 mock.call('booth'),
             ]
+        )
+
+
+class FindBindedIpTest(TestCase):
+    def fixture_resource_section(self, ip_element_list):
+        resources_section = etree.fromstring('<resources/>')
+        group = etree.SubElement(resources_section, "group")
+        group.append(fixture_booth_element("booth1", "/PATH/TO/CONF"))
+        for ip_element in ip_element_list:
+            group.append(ip_element)
+        return resources_section
+
+
+    def test_returns_None_when_no_ip(self):
+        self.assertEqual(
+            None,
+            booth_resource.find_binded_single_ip(
+                self.fixture_resource_section([]),
+                "/PATH/TO/CONF",
+            )
+        )
+
+    def test_returns_ip_when_correctly_found(self):
+        self.assertEqual(
+            "192.168.122.31",
+            booth_resource.find_binded_single_ip(
+                self.fixture_resource_section([
+                    fixture_ip_element("ip1", "192.168.122.31"),
+                ]),
+                "/PATH/TO/CONF",
+            )
+        )
+
+    def test_returns_None_when_more_ip(self):
+        self.assertEqual(
+            None,
+            booth_resource.find_binded_single_ip(
+                self.fixture_resource_section([
+                    fixture_ip_element("ip1", "192.168.122.31"),
+                    fixture_ip_element("ip2", "192.168.122.32"),
+                ]),
+                "/PATH/TO/CONF",
+            )
         )

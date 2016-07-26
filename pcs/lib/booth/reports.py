@@ -275,3 +275,28 @@ def booth_peers_status_error():
         report_codes.BOOTH_PEERS_STATUS_ERROR,
         "unable to get status of booth peers"
     )
+
+def booth_correct_config_not_found_in_cib(operation):
+    return ReportItem.error(
+        report_codes.BOOTH_CORRECT_CONFIG_NOT_FOUND_IN_CIB,
+        "correct booth configuration not found,"
+        " can not {operation} ticket to implicit site,"
+        " please specify site parameter",
+        info={
+            "operation": operation,
+        }
+    )
+
+def booth_ticket_operation_failed(operation, reason, site_ip, ticket):
+    return ReportItem.error(
+        report_codes.BOOTH_TICKET_OPERATION_FAILED,
+        "unable to {operation} booth ticket '{ticket}' for site '{site_ip}', "
+            "reason: {reason}"
+        ,
+        info={
+            "operation": operation,
+            "reason": reason,
+            "site_ip": site_ip,
+            "ticket": ticket,
+        }
+    )
