@@ -6,13 +6,12 @@ from __future__ import (
 )
 
 import base64
-from os.path import join
+import os.path
 from functools import partial
 
 from pcs import settings
+from pcs.common.tools import merge_dicts
 from pcs.lib import external, reports
-from pcs.lib.node import NodeAddresses
-from pcs.lib.errors import LibraryError
 from pcs.lib.booth import (
     configuration,
     sync,
@@ -20,10 +19,10 @@ from pcs.lib.booth import (
     resource,
     reports as booth_reports,
 )
-from pcs.lib.external import is_systemctl
-from pcs.lib.cib.tools import get_resources
 from pcs.lib.booth.env import get_config_file_name
-from pcs.common.tools import merge_dicts
+from pcs.lib.cib.tools import get_resources
+from pcs.lib.errors import LibraryError
+from pcs.lib.node import NodeAddresses
 
 
 def config_setup(env, booth_configuration, overwrite_existing=False):
@@ -172,7 +171,7 @@ def _ensure_is_systemd():
     """
     Ensure if current system is systemd system. Raises Library error if not.
     """
-    if not is_systemctl():
+    if not external.is_systemctl():
         raise LibraryError(
             reports.unsupported_operation_on_non_systemd_systems()
         )
@@ -268,9 +267,9 @@ def pull_config(env, node_name, name):
             output["authfile"]["name"] is not None and
             output["authfile"]["data"]
         ):
-            env.booth.set_key_path(
-                join(settings.booth_config_dir, output["authfile"]["name"])
-            )
+            env.booth.set_key_path(os.path.join(
+                settings.booth_config_dir, output["authfile"]["name"]
+            ))
             env.booth.create_key(
                 base64.b64decode(
                     output["authfile"]["data"].encode("utf-8")

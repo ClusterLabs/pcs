@@ -125,7 +125,7 @@ class GetBoothInstanceNameTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.commands.booth.is_systemctl")
+@mock.patch("pcs.lib.commands.booth.external.is_systemctl")
 class EnsureIsSystemctlTest(TestCase):
     def test_systemd(self, mock_is_systemctl):
         mock_is_systemctl.return_value = True
