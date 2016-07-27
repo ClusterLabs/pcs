@@ -1134,8 +1134,8 @@ function hover_out(o) {
 }
 
 function reload_current_resource() {
-  tree_view_onclick(curResource(), true);
-  tree_view_onclick(curStonith(), true);
+  tree_view_onclick(curResource());
+  tree_view_onclick(curStonith());
 }
 
 function load_row(node_row, ac, cur_elem, containing_elem, also_set, initial_load){
@@ -2112,20 +2112,19 @@ function update_instance_attributes(resource_id) {
   }, res_obj.get("stonith"));
 }
 
-function tree_view_onclick(resource_id, first_run) {
-  first_run = typeof first_run !== 'undefined' ? first_run : false;
+function tree_view_onclick(resource_id) {
   var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
   if (!resource_obj) {
     console.log("Resource " + resource_id + "not found.");
     return;
   }
   if (resource_obj.get('stonith')) {
-    if (!first_run) {
+    if (window.location.hash.startsWith("#/fencedevices")) {
       window.location.hash = "/fencedevices/" + resource_id;
     }
     Pcs.resourcesContainer.set('cur_fence', resource_obj);
   } else {
-    if (!first_run) {
+    if (window.location.hash.startsWith("#/resources")) {
       window.location.hash = "/resources/" + resource_id;
     }
     Pcs.resourcesContainer.set('cur_resource', resource_obj);
