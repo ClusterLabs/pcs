@@ -7,11 +7,18 @@ from __future__ import (
 
 import os
 import shutil
-from unittest import TestCase
+import sys
+
+major, minor = sys.version_info[:2]
+if major == 2 and minor == 6:
+    import unittest2 as unittest
+else:
+    import unittest
 
 from pcs.test.tools.assertions import AssertPcsMixin, console_report
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_runner import PcsRunner
+from pcs import settings
 
 
 EMPTY_CIB = rc("cib-empty.xml")
@@ -19,6 +26,16 @@ TEMP_CIB = rc("temp-cib.xml")
 
 BOOTH_CONFIG_FILE = rc("temp-booth.cfg")
 BOOTH_KEY_FILE = rc("temp-booth.key")
+
+BOOTH_RESOURCE_AGENT_INSTALLED = "booth-site" in os.listdir(
+    os.path.join(settings.ocf_resources, "pacemaker")
+)
+need_booth_resource_agent = unittest.skipUnless(
+    BOOTH_RESOURCE_AGENT_INSTALLED,
+    "test requires resource agent ocf:pacemaker:booth-site"
+    " which is not istalled"
+)
+
 
 def fake_file(command):
     return "{0} --booth-conf={1} --booth-key={2}".format(
@@ -56,7 +73,7 @@ class BoothMixin(AssertPcsMixin):
     def assert_pcs_fail_original(self, *args, **kwargs):
         return super(BoothMixin, self).assert_pcs_fail(*args, **kwargs)
 
-class SetupTest(BoothMixin, TestCase):
+class SetupTest(BoothMixin, unittest.TestCase):
     def test_sucess_setup_booth_config(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_success(
@@ -131,7 +148,7 @@ class SetupTest(BoothMixin, TestCase):
             "Error: With --booth-key must be specified --booth-conf as well\n"
         )
 
-class DestroyTest(BoothMixin, TestCase):
+class DestroyTest(BoothMixin, unittest.TestCase):
     def test_failed_when_using_mocked_booth_env(self):
         self.assert_pcs_fail(
             "booth destroy",
@@ -139,7 +156,7 @@ class DestroyTest(BoothMixin, TestCase):
             " (without --booth-conf and --booth-key)\n",
         )
 
-    #TODO check systemd for name and skip if exists
+    @need_booth_resource_agent
     def test_failed_when_booth_in_cib(self):
         ensure_booth_config_not_exists()
         name = " --name=some-weird-booth-name"
@@ -149,14 +166,17 @@ class DestroyTest(BoothMixin, TestCase):
         self.assert_pcs_success("booth create ip 1.1.1.1" + name)
         self.assert_pcs_fail_original(
             "booth destroy" + name,
-            "Error: booth for config '/etc/booth/some-weird-booth-name.conf' is"
-                " used in cib\n"
-            ,
+            #If there is booth@some-weird-booth-name in systemd (enabled or
+            #started) the message continue with it because destroy command works
+            #always on live environment. "Cleaner" solution takes more effort
+            #than what it's worth
+            stdout_start=(
+                "Error: booth for config"
+                " '/etc/booth/some-weird-booth-name.conf' is used in cib\n"
+            ),
         )
 
-
-
-class BoothTest(TestCase, BoothMixin):
+class BoothTest(unittest.TestCase, BoothMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(TEMP_CIB)
@@ -215,6 +235,7 @@ class RemoveTicketTest(BoothTest):
             "Error: booth ticket name 'TicketA' does not exist\n"
         )
 
+@need_booth_resource_agent
 class CreateTest(BoothTest):
     def test_sucessfully_create_booth_resource_group(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
@@ -238,6 +259,7 @@ class CreateTest(BoothTest):
             "Error: booth for config '/etc/booth/booth.conf' is already created"
         ])
 
+@need_booth_resource_agent
 class RemoveTest(BoothTest):
     def test_failed_when_no_booth_configuration_created(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
@@ -305,7 +327,7 @@ class TicketRevokeTest(BoothTest):
             " please specify site parameter"
         ])
 
-class ConfigTest(TestCase, BoothMixin):
+class ConfigTest(unittest.TestCase, BoothMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(TEMP_CIB)
