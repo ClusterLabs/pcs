@@ -97,6 +97,16 @@ def _get_service_name(service, instance=None):
         service, "" if instance is None else "@{0}".format(instance)
     )
 
+def ensure_is_systemd():
+    """
+    Ensure if current system is systemd system. Raises Library error if not.
+    """
+    if not is_systemctl():
+        raise LibraryError(
+            reports.unsupported_operation_on_non_systemd_systems()
+        )
+
+
 
 @simple_cache
 def is_systemctl():

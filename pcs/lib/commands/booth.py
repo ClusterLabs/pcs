@@ -207,16 +207,6 @@ def _get_booth_instance_name(name=None):
     )
 
 
-def _ensure_is_systemd():
-    """
-    Ensure if current system is systemd system. Raises Library error if not.
-    """
-    if not external.is_systemctl():
-        raise LibraryError(
-            reports.unsupported_operation_on_non_systemd_systems()
-        )
-
-
 def enable_booth(env, name=None):
     """
     Enable specified instance of booth service. Currently it is supported only
@@ -225,7 +215,7 @@ def enable_booth(env, name=None):
     env -- LibraryEnvironment
     name -- string, name of booth instance
     """
-    _ensure_is_systemd()
+    external.ensure_is_systemd()
     booth_name = _get_booth_instance_name(name)
     try:
         external.enable_service(env.cmd_runner(), "booth", name)
@@ -242,7 +232,7 @@ def disable_booth(env, name=None):
     env -- LibraryEnvironment
     name -- string, name of booth instance
     """
-    _ensure_is_systemd()
+    external.ensure_is_systemd()
     booth_name = _get_booth_instance_name(name)
     try:
         external.disable_service(env.cmd_runner(), "booth", name)
@@ -260,7 +250,7 @@ def start_booth(env, name=None):
     env -- LibraryEnvironment
     name -- string, name of booth instance
     """
-    _ensure_is_systemd()
+    external.ensure_is_systemd()
     booth_name = _get_booth_instance_name(name)
     try:
         external.start_service(env.cmd_runner(), "booth", name)
@@ -277,7 +267,7 @@ def stop_booth(env, name=None):
     env -- LibraryEnvironment
     name -- string, name of booth instance
     """
-    _ensure_is_systemd()
+    external.ensure_is_systemd()
     booth_name = _get_booth_instance_name(name)
     try:
         external.stop_service(env.cmd_runner(), "booth", name)

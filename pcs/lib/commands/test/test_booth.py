@@ -168,25 +168,7 @@ class GetBoothInstanceNameTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.commands.booth.external.is_systemctl")
-class EnsureIsSystemctlTest(TestCase):
-    def test_systemd(self, mock_is_systemctl):
-        mock_is_systemctl.return_value = True
-        commands._ensure_is_systemd()
-
-    def test_not_systemd(self, mock_is_systemctl):
-        mock_is_systemctl.return_value = False
-        assert_raise_library_error(
-            commands._ensure_is_systemd,
-            (
-                Severities.ERROR,
-                report_codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
-                {}
-            )
-        )
-
-
-@mock.patch("pcs.lib.commands.booth._ensure_is_systemd")
+@mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
 @mock.patch("pcs.lib.external.enable_service")
 class EnableBoothTest(TestCase):
     def setUp(self):
@@ -230,7 +212,7 @@ class EnableBoothTest(TestCase):
         mock_is_systemctl.assert_called_once_with()
 
 
-@mock.patch("pcs.lib.commands.booth._ensure_is_systemd")
+@mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
 @mock.patch("pcs.lib.external.disable_service")
 class DisableBoothTest(TestCase):
     def setUp(self):
@@ -274,7 +256,7 @@ class DisableBoothTest(TestCase):
         mock_is_systemctl.assert_called_once_with()
 
 
-@mock.patch("pcs.lib.commands.booth._ensure_is_systemd")
+@mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
 @mock.patch("pcs.lib.external.start_service")
 class StartBoothTest(TestCase):
     def setUp(self):
@@ -318,7 +300,7 @@ class StartBoothTest(TestCase):
         mock_is_systemctl.assert_called_once_with()
 
 
-@mock.patch("pcs.lib.commands.booth._ensure_is_systemd")
+@mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
 @mock.patch("pcs.lib.external.stop_service")
 class StopBoothTest(TestCase):
     def setUp(self):

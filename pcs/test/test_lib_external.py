@@ -1539,3 +1539,20 @@ pacemaker      	0:off	1:off	2:off	3:off	4:off	5:off	6:off
         self.assertEqual(lib.get_non_systemd_services(self.mock_runner), [])
         self.assertEqual(mock_is_systemctl.call_count, 1)
         self.assertEqual(self.mock_runner.call_count, 0)
+
+@mock.patch("pcs.lib.external.is_systemctl")
+class EnsureIsSystemctlTest(TestCase):
+    def test_systemd(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        lib.ensure_is_systemd()
+
+    def test_not_systemd(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = False
+        assert_raise_library_error(
+            lib.ensure_is_systemd,
+            (
+                severity.ERROR,
+                report_codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
+                {}
+            )
+        )
