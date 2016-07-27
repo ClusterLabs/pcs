@@ -16,9 +16,9 @@ def create_resource_id(resources_section, name, suffix):
         resources_section.getroottree(), "booth-{0}-{1}".format(name, suffix)
     )
 
-def get_creator(resource_create, resource_group):
-    #TODO resource_create and resource_group is provisional hack until resources
-    #are not moved to lib
+def get_creator(resource_create):
+    #TODO resource_create  is provisional hack until resources are not moved to
+    #lib
     def create_booth_in_cluster(ip, booth_config_file_path, create_id):
         ip_id = create_id("ip")
         booth_id = create_id("service")
@@ -31,6 +31,7 @@ def get_creator(resource_create, resource_group):
             op_values=[],
             meta_values=[],
             clone_opts=[],
+            group=group_id,
         )
         resource_create(
             ra_id=booth_id,
@@ -39,11 +40,8 @@ def get_creator(resource_create, resource_group):
             op_values=[],
             meta_values=[],
             clone_opts=[],
+            group=group_id,
         )
-        #group can not be created automaticaly with resource create
-        #because is driven by global --group modifier (requires import utils,
-        #not option here)
-        resource_group(["add", group_id, ip_id, booth_id])
     return create_booth_in_cluster
 
 def is_ip_resource(resource_element):

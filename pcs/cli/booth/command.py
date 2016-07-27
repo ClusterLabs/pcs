@@ -93,9 +93,9 @@ def ticket_revoke(lib, arg_list, modifiers):
 def ticket_grant(lib, arg_list, modifiers):
     ticket_operation(lib.booth.ticket_grant, arg_list, modifiers)
 
-def get_create_in_cluster(resource_create, resource_group):
-    #TODO resource_create and resource_group is provisional hack until resources
-    #are not moved to lib
+def get_create_in_cluster(resource_create):
+    #TODO resource_remove is provisional hack until resources are not moved to
+    #lib
     def create_in_cluster(lib, arg_list, modifiers):
         if len(arg_list) != 2 or arg_list[0] != "ip":
             raise CmdLineInputError()
@@ -105,7 +105,6 @@ def get_create_in_cluster(resource_create, resource_group):
             __get_name(modifiers),
             ip,
             resource_create,
-            resource_group
         )
     return create_in_cluster
 

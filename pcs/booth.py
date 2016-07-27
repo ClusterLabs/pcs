@@ -12,7 +12,7 @@ from pcs import utils
 from pcs.cli.booth import command
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
-from pcs.resource import resource_create, resource_group, resource_remove
+from pcs.resource import resource_create, resource_remove
 
 
 def booth_cmd(lib, argv, modifiers):
@@ -47,7 +47,7 @@ def booth_cmd(lib, argv, modifiers):
             else:
                 raise CmdLineInputError()
         elif sub_cmd == "create":
-            command.get_create_in_cluster(resource_create, resource_group)(
+            command.get_create_in_cluster(resource_create)(
                 lib, argv_next, modifiers
             )
         elif sub_cmd == "remove":

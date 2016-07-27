@@ -110,9 +110,9 @@ def config_ticket_remove(env, ticket_name):
     )
     env.booth.push_config(configuration.build(booth_configuration))
 
-def create_in_cluster(env, name, ip, resource_create, resource_group):
-    #TODO resource_create and resource_group is provisional hack until resources
-    #are not moved to lib
+def create_in_cluster(env, name, ip, resource_create):
+    #TODO resource_create is provisional hack until resources are not moved to
+    #lib
     resources_section = get_resources(env.get_cib())
 
     booth_config_file_path = get_config_file_name(name)
@@ -121,7 +121,7 @@ def create_in_cluster(env, name, ip, resource_create, resource_group):
         booth_config_file_path
     )
 
-    resource.get_creator(resource_create, resource_group)(
+    resource.get_creator(resource_create)(
         ip,
         booth_config_file_path,
         create_id = partial(
