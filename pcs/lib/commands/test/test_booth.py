@@ -32,6 +32,11 @@ from pcs.lib.external import (
     StopServiceError
 )
 
+def patch_commands(target, *args, **kwargs):
+    return mock.patch(
+        "pcs.lib.commands.booth.{0}".format(target), *args, **kwargs
+    )
+
 class ConfigSetupTest(TestCase):
     @mock.patch("pcs.lib.booth.configuration.generate_key")
     @mock.patch("pcs.lib.booth.configuration.build")
@@ -59,6 +64,44 @@ class ConfigSetupTest(TestCase):
         )
         mock_validate_participants.assert_called_once_with(
             ["1.1.1.1"], ["2.2.2.2"]
+        )
+
+class ConfigDestroyTest(TestCase):
+    @patch_commands("get_config_file_name", return_value="/path/to/config")
+    @patch_commands("external.is_systemctl", return_value=True)
+    @patch_commands("external.is_service_enabled", return_value=True)
+    @patch_commands("external.is_service_running", return_value=True)
+    @patch_commands("resource.find_for_config", return_value=[True])
+    def test_raises_when_booth_config_in_use(
+        self, mock_find, mock_running, mock_enabled, mock_is_systemctl,
+        mock_config_file_name
+    ):
+        assert_raise_library_error(
+            lambda: commands.config_destroy(mock.MagicMock()),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_CONFIG_IS_USED,
+                {
+                    "config_file_path": "/path/to/config",
+                    "detail": "in cib",
+                }
+            ),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_CONFIG_IS_USED,
+                {
+                    "config_file_path": "/path/to/config",
+                    "detail": "(enabled in systemd)",
+                }
+            ),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_CONFIG_IS_USED,
+                {
+                    "config_file_path": "/path/to/config",
+                    "detail": "(running in systemd)",
+                }
+            )
         )
 
 
