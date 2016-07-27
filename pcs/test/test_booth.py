@@ -39,6 +39,10 @@ def ensure_booth_config_not_exists():
         os.remove(BOOTH_KEY_FILE)
 
 class BoothMixin(AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(EMPTY_CIB, TEMP_CIB)
+        self.pcs_runner = PcsRunner(TEMP_CIB)
+
     def assert_pcs_success(self, command, *args, **kwargs):
         return super(BoothMixin, self).assert_pcs_success(
             fake_file(command), *args, **kwargs
@@ -52,11 +56,7 @@ class BoothMixin(AssertPcsMixin):
     def assert_pcs_fail_original(self, *args, **kwargs):
         return super(BoothMixin, self).assert_pcs_fail(*args, **kwargs)
 
-class SetupTest(TestCase, BoothMixin):
-    def setUp(self):
-        shutil.copy(EMPTY_CIB, TEMP_CIB)
-        self.pcs_runner = PcsRunner(TEMP_CIB)
-
+class SetupTest(BoothMixin, TestCase):
     def test_sucess_setup_booth_config(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_success(
@@ -126,10 +126,35 @@ class SetupTest(TestCase, BoothMixin):
         )
         self.assert_pcs_fail_original(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
-                " --booth-key=/some/file" #no --booth-key!
+                " --booth-key=/some/file" #no --booth-conf!
             ,
             "Error: With --booth-key must be specified --booth-conf as well\n"
         )
+
+class DestroyTest(BoothMixin, TestCase):
+    def test_failed_when_using_mocked_booth_env(self):
+        self.assert_pcs_fail(
+            "booth destroy",
+            "Error: command 'destroy' expect live environment"
+            " (without --booth-conf and --booth-key)\n",
+        )
+
+    #TODO check systemd for name and skip if exists
+    def test_failed_when_booth_in_cib(self):
+        ensure_booth_config_not_exists()
+        name = " --name=some-weird-booth-name"
+        self.assert_pcs_success(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3" + name
+        )
+        self.assert_pcs_success("booth create ip 1.1.1.1" + name)
+        self.assert_pcs_fail_original(
+            "booth destroy" + name,
+            "Error: booth for config '/etc/booth/some-weird-booth-name.conf' is"
+                " used in cib\n"
+            ,
+        )
+
+
 
 class BoothTest(TestCase, BoothMixin):
     def setUp(self):

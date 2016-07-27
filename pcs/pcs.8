@@ -581,6 +581,9 @@ Add/Change quorum options.  At least one option must be specified.  Options are 
 setup sites <address> <address> [<address>...] [arbitrators <address> ...] [\fB\-\-force\fR]
 Write new booth configuration with specified sites and arbitrators. Total number of participants (sites and arbitrators) must be odd. When configuration file exists, command fail unless --force applied.
 .TP
+destroy
+Remove setted up booth configuration if its usage is not detected.
+.TP
 ticket add <ticket-name>
 Add new ticket to current configuration.
 .TP

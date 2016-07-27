@@ -227,6 +227,6 @@ def read_authfile(reporter, path):
             return file.read()
     except EnvironmentError as e:
         reporter.process(lib_reports.file_io_error(
-            "authfile", path, str(e), ReportItemSeverity.WARNING
+            "authfile", path, str(e), severity=ReportItemSeverity.WARNING
         ))
         return None

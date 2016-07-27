@@ -5,13 +5,17 @@ from __future__ import (
     unicode_literals,
 )
 
+import os.path
+
 from lxml import etree
 
+from pcs import settings
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import ensure_cib_version
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
+    exists_local_corosync_conf,
     get_local_corosync_conf,
     reload_config as reload_corosync_config,
 )
@@ -21,6 +25,7 @@ from pcs.lib.external import (
     CommandRunner,
     NodeCommunicator,
 )
+from pcs.lib.errors import LibraryError
 from pcs.lib.nodes_task import (
     distribute_corosync_conf,
     check_corosync_offline_on_nodes,
@@ -173,6 +178,23 @@ class LibraryEnvironment(object):
                 )
         else:
             self._corosync_conf_data = corosync_conf_data
+
+    def is_node_in_cluster(self):
+        if self.is_cman_cluster:
+            #TODO --cluster_conf is not propagated here. So no live check not
+            #needed here. But this should not be permanently
+            return os.path.exists(settings.corosync_conf_file)
+
+        if not self.is_corosync_conf_live:
+            raise NotImplementedError()
+        return exists_local_corosync_conf()
+
+    def command_expect_live_corosync_env(self, command_name):
+        if not self.is_corosync_conf_live:
+            raise LibraryError(reports.command_expects_live_env(
+                command_name,
+                detail="(without --corosync_conf)"
+            ))
 
     @property
     def is_corosync_conf_live(self):

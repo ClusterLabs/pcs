@@ -25,6 +25,15 @@ def config_setup(lib, arg_list, modifiers):
     )
     lib.booth.config_setup(booth_configuration, modifiers["force"])
 
+def config_destroy(lib, arg_list, modifiers):
+    """
+    destroy booth config
+    """
+    if arg_list:
+        raise CmdLineInputError()
+    lib.booth.config_destroy()
+
+
 def config_show(lib, arg_list, modifiers):
     """
     print booth config

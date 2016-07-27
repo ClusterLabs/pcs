@@ -90,7 +90,7 @@ class ValidateNoBoothResourceUsingConfigTest(TestCase):
 
 class FindBoothResourceElementsTest(TestCase):
     def test_returns_empty_list_when_no_matching_booth_element(self):
-        self.assertEqual([], booth_resource.find_booth_resoruces_with_config(
+        self.assertEqual([], booth_resource.find_for_config(
             fixture_resources_with_booth("/ANOTHER/PATH/TO/CONF"),
             "/PATH/TO/CONF"
         ))
@@ -106,7 +106,7 @@ class FindBoothResourceElementsTest(TestCase):
 
         self.assertEqual(
             [first, third],
-            booth_resource.find_booth_resoruces_with_config(
+            booth_resource.find_for_config(
                 resources,
                 "/PATH/TO/CONF"
             )

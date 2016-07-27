@@ -11,6 +11,7 @@ import grp
 
 from pcs import settings
 from pcs.common import env_file_role_codes
+from pcs.lib import reports as common_reports
 from pcs.lib.booth import reports
 from pcs.lib.env_file import GhostFile, RealFile
 from pcs.lib.errors import LibraryError
@@ -41,6 +42,7 @@ def set_keyfile_access(file_path):
 class BoothEnv(object):
     def __init__(self, report_processor, env_data):
         self.__report_processor = report_processor
+        self.__name = env_data["name"]
         if "config_file" in env_data:
             self.__config = GhostFile(
                 file_role=env_file_role_codes.BOOTH_CONFIG,
@@ -65,10 +67,21 @@ class BoothEnv(object):
             file_path=path,
         )
 
+    def command_expect_live_env(self, command_name):
+        if not self.__config.is_live:
+            raise LibraryError(common_reports.command_expects_live_env(
+                command_name,
+                detail="(without --booth-conf and --booth-key)"
+            ))
+
     def set_key_path(self, path):
         if not self.__config.is_live:
             raise NotImplementedError()
         self.__set_key_path(path)
+
+    @property
+    def name(self):
+        return self.__name
 
     @property
     def key_path(self):
@@ -93,6 +106,12 @@ class BoothEnv(object):
 
     def push_config(self, content):
         self.__config.write(content)
+
+    def remove_key(self):
+        self.__key.remove(silence_no_existence=True)
+
+    def remove_config(self):
+        self.__config.remove()
 
     def export(self):
         return {} if self.__config.is_live else {

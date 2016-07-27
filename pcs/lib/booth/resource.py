@@ -67,7 +67,7 @@ def get_remover(resource_remove):
         report_processor, resources_section, booth_config_file_path,
         remove_multiple=False
     ):
-        element_list = find_booth_resoruces_with_config(
+        element_list = find_for_config(
             resources_section,
             booth_config_file_path
         )
@@ -100,14 +100,12 @@ def get_remover(resource_remove):
 def validate_no_booth_resource_using_config(
     resources_section, booth_config_file_path
 ):
-    if find_booth_resoruces_with_config(
-        resources_section, booth_config_file_path
-    ):
+    if find_for_config(resources_section, booth_config_file_path):
         raise LibraryError(
             reports.booth_already_created(booth_config_file_path)
         )
 
-def find_booth_resoruces_with_config(resources_section, booth_config_file_path):
+def find_for_config(resources_section, booth_config_file_path):
     #self::primitive or self::clone or ... selects elements with specified tags
     return resources_section.xpath((
         './/*['

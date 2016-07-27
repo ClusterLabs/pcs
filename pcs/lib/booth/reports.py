@@ -116,6 +116,17 @@ def booth_not_exists_in_cib(config_file_path):
         }
     )
 
+def booth_config_is_used(config_file_path, detail=""):
+    return ReportItem.error(
+        report_codes.BOOTH_CONFIG_IS_USED,
+        "booth for config '{config_file_path}' is used{detail_string}",
+        info={
+            "config_file_path": config_file_path,
+            "detail": detail,
+            "detail_string": " {0}".format(detail) if detail else "",
+        }
+    )
+
 def booth_multiple_times_in_cib(
     config_file_path, severity=ReportItemSeverity.ERROR
 ):

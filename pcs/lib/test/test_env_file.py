@@ -140,3 +140,48 @@ class RealFileReadTest(TestCase):
                 }
             )
         )
+
+class RealFileRemoveTest(TestCase):
+    @mock.patch("pcs.lib.env_file.os.remove")
+    @mock.patch("pcs.lib.env_file.os.path.exists", return_value=True)
+    def test_success_remove_file(self, _, mock_remove):
+        RealFile("some role", "/path/to.file").remove()
+        mock_remove.assert_called_once_with("/path/to.file")
+
+    @mock.patch(
+        "pcs.lib.env_file.os.remove",
+        side_effect=EnvironmentError(1, "mock remove failed", "/path/to.file")
+    )
+    @mock.patch("pcs.lib.env_file.os.path.exists", return_value=True)
+    def test_raise_library_error_when_remove_failed(self, _, dummy):
+        assert_raise_library_error(
+            lambda: RealFile("some role", "/path/to.file").remove(),
+            (
+                severities.ERROR,
+                report_codes.FILE_IO_ERROR,
+                {
+                    'reason': "mock remove failed: '/path/to.file'",
+                    'file_role': 'some role',
+                    'file_path': '/path/to.file'
+                }
+            )
+        )
+
+    @mock.patch("pcs.lib.env_file.os.path.exists", return_value=False)
+    def test_existence_is_required(self, _):
+        assert_raise_library_error(
+            lambda: RealFile("some role", "/path/to.file").remove(),
+            (
+                severities.ERROR,
+                report_codes.FILE_IO_ERROR,
+                {
+                    'reason': "File does not exist",
+                    'file_role': 'some role',
+                    'file_path': '/path/to.file'
+                }
+            )
+        )
+
+    @mock.patch("pcs.lib.env_file.os.path.exists", return_value=False)
+    def test_noexistent_can_be_silenced(self, _):
+        RealFile("some role", "/path/to.file").remove(silence_no_existence=True)

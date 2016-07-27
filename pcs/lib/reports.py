@@ -1775,12 +1775,13 @@ def file_does_not_exists(file_role, file_path=""):
     )
 
 def file_io_error(
-    file_role, file_path="", reason="", severity=ReportItemSeverity.ERROR
+    file_role, file_path="", reason="", intention_of_action="work with",
+    severity=ReportItemSeverity.ERROR
 ):
     if file_path:
-        msg = "can not work with {file_role} '{file_path}': {reason}"
+        msg = "can not {intention_of_action} {file_role} '{file_path}': {reason}"
     else:
-        msg = "can not work with {file_role}: {reason}"
+        msg = "can not {intention_of_action} {file_role}: {reason}"
     return ReportItem(
         report_codes.FILE_IO_ERROR,
         severity,
@@ -1789,6 +1790,7 @@ def file_io_error(
             "file_role": file_role,
             "file_path": file_path,
             "reason": reason,
+            "intention_of_action": intention_of_action
         },
     )
 
@@ -1797,4 +1799,15 @@ def unsupported_operation_on_non_systemd_systems():
     return ReportItem.error(
         report_codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
         "unsupported operation on non systemd systems"
+    )
+
+def command_expects_live_env(command_name, detail):
+    return ReportItem.error(
+        report_codes.COMMAND_EXPECTS_LIVE_ENV,
+        "command '{command_name}' expect live environment{detail_string}",
+        info={
+            "command_name": command_name,
+            "detail": detail,
+            "detail_string": " {0}".format(detail) if detail else "",
+        }
     )

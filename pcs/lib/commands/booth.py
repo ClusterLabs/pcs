@@ -44,6 +44,46 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
         overwrite_existing
     )
 
+def config_destroy(env):
+    env.booth.command_expect_live_env("destroy")
+    env.command_expect_live_corosync_env("destroy")
+
+    name = env.booth.name
+    config_file_path = get_config_file_name(name)
+    config_is_used = partial(
+        booth_reports.booth_config_is_used,
+        config_file_path,
+    )
+
+    report_list = []
+
+    if(
+        env.is_node_in_cluster()
+        and
+        resource.find_for_config(get_resources(env.get_cib()), config_file_path)
+    ):
+        report_list.append(config_is_used("in cib"))
+
+    if external.is_systemctl():
+        if external.is_service_running(env.cmd_runner(), "booth", name):
+            report_list.append(config_is_used("(running in systemd)"))
+
+        if external.is_service_enabled(env.cmd_runner(), "booth", name):
+            report_list.append(config_is_used("(enabled in systemd)"))
+
+    if report_list:
+        raise LibraryError(*report_list)
+
+    config = configuration.parse(env.booth.get_config_content())
+    if(
+        "authfile" in config
+        and
+        os.path.dirname(config["authfile"]) == settings.booth_config_dir
+    ):
+        env.booth.set_key_path(config["authfile"])
+        env.booth.remove_key()
+    env.booth.remove_config()
+
 def config_show(env):
     """
     return configuration as tuple of sites list and arbitrators list

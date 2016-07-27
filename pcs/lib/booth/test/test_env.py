@@ -86,6 +86,7 @@ class BoothEnvTest(TestCase):
             env.BoothEnv(
                 "report processor",
                 {
+                    "name": "booth-name",
                     "config_file": {
                         "content": "a\nb",
                     },

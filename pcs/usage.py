@@ -1421,6 +1421,9 @@ Commands:
         Total number of participants (sites and arbitrators) must be odd.
         When configuration file exists, command fail unless --force applied.
 
+    destroy
+        Remove setted up booth configuration if its usage is not detected.
+
     ticket add <ticket-name>
         Add new ticket to current configuration.
 

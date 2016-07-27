@@ -29,6 +29,8 @@ def booth_cmd(lib, argv, modifiers):
             command.config_show(lib, argv_next, modifiers)
         elif sub_cmd == "setup":
             command.config_setup(lib, argv_next, modifiers)
+        elif sub_cmd == "destroy":
+            command.config_destroy(lib, argv_next, modifiers)
         elif sub_cmd == "ticket":
             if len(argv_next) < 1:
                 raise CmdLineInputError()

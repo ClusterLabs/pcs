@@ -211,7 +211,7 @@ def kill_services(runner, services):
             raise KillServicesError(list(services), output.rstrip())
 
 
-def is_service_enabled(runner, service):
+def is_service_enabled(runner, service, instance=None):
     """
     Check if specified service is enabled in local system.
 
@@ -220,7 +220,7 @@ def is_service_enabled(runner, service):
     """
     if is_systemctl():
         _, retval = runner.run(
-            ["systemctl", "is-enabled", service + ".service"]
+            ["systemctl", "is-enabled", _get_service_name(service, instance)]
         )
     else:
         _, retval = runner.run(["chkconfig", service])
@@ -228,7 +228,7 @@ def is_service_enabled(runner, service):
     return retval == 0
 
 
-def is_service_running(runner, service):
+def is_service_running(runner, service, instance=None):
     """
     Check if specified service is currently running on local system.
 
@@ -236,7 +236,11 @@ def is_service_running(runner, service):
     service -- name of service
     """
     if is_systemctl():
-        _, retval = runner.run(["systemctl", "is-active", service + ".service"])
+        _, retval = runner.run([
+            "systemctl",
+            "is-active",
+            _get_service_name(service, instance)
+        ])
     else:
         _, retval = runner.run(["service", service, "status"])
 
