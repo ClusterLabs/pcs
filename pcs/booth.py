@@ -25,7 +25,9 @@ def booth_cmd(lib, argv, modifiers):
 
     sub_cmd, argv_next = argv[0], argv[1:]
     try:
-        if sub_cmd == "config":
+        if sub_cmd == "help":
+            usage.booth(argv)
+        elif sub_cmd == "config":
             command.config_show(lib, argv_next, modifiers)
         elif sub_cmd == "setup":
             command.config_setup(lib, argv_next, modifiers)
