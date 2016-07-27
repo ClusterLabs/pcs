@@ -174,7 +174,8 @@ def stonith_create(argv):
         utils.process_library_reports(e.args)
 
     resource.resource_create(
-        stonith_id, "stonith:" + stonith_type, st_values, op_values, meta_values
+        stonith_id, "stonith:" + stonith_type, st_values, op_values, meta_values,
+        group=utils.pcs_options.get("--group", None)
     )
 
 def stonith_level(argv):

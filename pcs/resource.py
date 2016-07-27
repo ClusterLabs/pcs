@@ -60,7 +60,10 @@ def resource_cmd(argv):
             argv, with_clone=True
         )
         try:
-            resource_create(res_id, res_type, ra_values, op_values, meta_values, clone_opts)
+            resource_create(
+                res_id, res_type, ra_values, op_values, meta_values, clone_opts,
+                group=utils.pcs_options.get("--group", None)
+            )
         except CmdLineInputError as e:
             utils.exit_on_cmdline_input_errror(e, "resource", 'create')
     elif (sub_cmd == "move"):
@@ -437,7 +440,10 @@ def format_desc(indent, desc):
 
 # Create a resource using cibadmin
 # ra_class, ra_type & ra_provider must all contain valid info
-def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[]):
+def resource_create(
+    ra_id, ra_type, ra_values, op_values, meta_values=[], clone_opts=[],
+    group=None
+):
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
         if "--disabled" in utils.pcs_options:
@@ -588,7 +594,7 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
 
     if "--clone" in utils.pcs_options or len(clone_opts) > 0:
         dom, dummy_clone_id = resource_clone_create(dom, [ra_id] + clone_opts)
-        if "--group" in utils.pcs_options:
+        if group:
             print("Warning: --group ignored when creating a clone")
         if "--master" in utils.pcs_options:
             print("Warning: --master ignored when creating a clone")
@@ -596,11 +602,10 @@ def resource_create(ra_id, ra_type, ra_values, op_values, meta_values=[], clone_
         dom, dummy_master_id = resource_master_create(
             dom, [ra_id] + master_meta_values
         )
-        if "--group" in utils.pcs_options:
+        if group:
             print("Warning: --group ignored when creating a master")
-    elif "--group" in utils.pcs_options:
-        groupname = utils.pcs_options["--group"]
-        dom = resource_group_add(dom, groupname, [ra_id])
+    elif group:
+        dom = resource_group_add(dom, group, [ra_id])
 
     utils.replace_cib_configuration(dom)
 
