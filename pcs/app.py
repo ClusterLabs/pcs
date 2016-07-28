@@ -100,6 +100,8 @@ def main(argv=None):
             "remote", "watchdog=",
             #in pcs status - do not display resorce status on inactive node
             "hide-inactive",
+            # Add coloring to pcs status output
+            "color",
         ]
         # pull out negative number arguments and add them back after getopt
         prev_arg = ""
