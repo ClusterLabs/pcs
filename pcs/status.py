@@ -7,6 +7,7 @@ from __future__ import (
 
 import sys
 import os
+import re
 
 from pcs import (
     resource,
@@ -99,6 +100,17 @@ def full_status():
         utils.corosyncPacemakerNodeCheck()
     ):
         print("WARNING: corosync and pacemaker node names do not match (IPs used in setup?)")
+
+    if "--color" in utils.pcs_options:
+        output = re.sub("Stopped", "\033[1;31mStopped\033[0m", output)
+        output = re.sub("Offline", "\033[1;31mOffline\033[0m", output)
+        output = re.sub("Started", "\033[1;32mStarted\033[0m", output)
+        output = re.sub("Online",  "\033[1;32mOnline\033[0m",  output)
+        output = re.sub("Masters", "\033[1;32mMasters\033[0m", output)
+        output = re.sub("Slaves",  "\033[1;36mSlaves\033[0m",  output)
+        output = re.sub("standby", "\033[1;34mstandby\033[0m", output)
+        output = re.sub("OFFLINE", "\033[1;31;5mOFFLINE\033[0m", output)
+        output = re.sub("Failed Actions",  "\033[1;31;5mFailed Actions\033[0m", output)
 
     print(output)
 
