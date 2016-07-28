@@ -848,3 +848,13 @@ table.args-table td.reg {
 .constraint-ticket-add-attribute {
   vertical-align: top;
 }
+
+.cursor-move {
+  cursor: move;
+}
+
+.sortable-table td {
+  height: 1.5em;
+  line-height: 1.2em;
+  background: black;
+}

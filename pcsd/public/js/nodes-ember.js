@@ -52,6 +52,11 @@ Pcs = Ember.Application.createWithMixins({
       this.get("available_features").indexOf("constraint_colocation_set") != -1
     );
   }.property("available_features"),
+  is_supported_moving_resource_in_group: function() {
+    return (
+      this.get("available_features").indexOf("moving_resource_in_group") != -1
+    );
+  }.property("available_features"),
   is_sbd_running: false,
   is_sbd_enabled: false,
   is_sbd_enabled_or_running: function() {
@@ -242,6 +247,154 @@ Pcs = Ember.Application.createWithMixins({
         Pcs.get('updater').update_finished();
       }
     });
+  }
+});
+
+Pcs.GroupSelectorComponent = Ember.Component.extend({
+  resource_id: null,
+  resource: function() {
+    var id = this.get("resource_id");
+    if (id) {
+      var resource = Pcs.resourcesContainer.get_resource_by_id(id);
+      if (resource) {
+        return resource;
+      }
+    }
+    return null;
+  }.property("resource_id"),
+  resource_change: function() {
+    this._refresh_fn();
+    this._update_resource_select_content();
+    this._update_resource_select_value();
+  }.observes("resource", "resource_id"),
+  group_list: [],
+  group_select_content: function() {
+    var list = [];
+    $.each(this.get("group_list"), function(_, group) {
+      list.push({
+        name: group,
+        value: group
+      });
+    });
+    return list;
+  }.property("group_list"),
+  group_select_value: null,
+  group: function() {
+    var id = this.get("group_select_value");
+    if (id) {
+      var group = Pcs.resourcesContainer.get_resource_by_id(id);
+      if (group) {
+        return group;
+      }
+    }
+    return null;
+  }.property("group_select_value"),
+  position_select_content: [
+    {
+      name: "before",
+      value: "before"
+    },
+    {
+      name: "after",
+      value: "after"
+    }
+  ],
+  position_select_value: null,
+  position_select_value_changed: function() {
+  }.observes("position_select_value"),
+  resource_select_content: [],
+  resource_select_value: null,
+  group_select_value_changed: function () {
+    this._update_resource_select_content();
+    this._update_resource_select_value();
+  }.observes("group_select_value"),
+  actions: {
+    refresh: function() {
+      this.set("group_list", Pcs.resourcesContainer.get("group_list"));
+      this._refresh_fn();
+      this._update_resource_select_content();
+      this._update_resource_select_value();
+    }
+  },
+  _refresh_fn: function() {
+    var id = this.get("resource_id");
+    if (id) {
+      var resource = Pcs.resourcesContainer.get_resource_by_id(id);
+      if (resource) {
+        var parent = resource.get("parent");
+        if (parent && parent.get("is_group")) {
+          this.set("group_select_value", parent.get("id"));
+          return;
+        }
+      }
+    }
+    this.set("group_select_value", null);
+  },
+  _update_resource_select_content: function() {
+    var self = this;
+    var group = self.get("group");
+    if (!group) {
+      self.set("resource_select_content", []);
+      return;
+    }
+    var list = [];
+    var resource_id;
+    $.each(group.get("members"), function(_, resource) {
+      resource_id = resource.get("id");
+      if (resource_id != self.get("resource_id")) {
+        list.push({
+          name: resource_id,
+          value: resource_id
+        });
+      }
+    });
+    self.set("resource_select_content", list);
+  },
+  _update_resource_select_value: function() {
+    var self = this;
+    var group = self.get("group");
+    var resource = self.get("resource");
+    if (!group) {
+      self.set("resource_select_value", null);
+      return;
+    }
+    var resource_list = group.get("members");
+    if (
+      !resource ||
+      !resource.get("parent") ||
+      resource.get("parent").get("id") != group.get("id")
+    ) {
+      self.set("position_select_value", "after");
+      self.set("resource_select_value", resource_list.slice(-1)[0].get("id"));
+    } else {
+      var index = resource_list.findIndex(function(item) {
+        return item.get("id") == resource.get("id");
+      });
+      if (index == 0) {
+        self.set("position_select_value", "before");
+        self.set(
+          "resource_select_value",
+          (resource_list[1]) ? resource_list[1].get("id") : null // second
+        );
+      } else if (index == -1) {
+        self.set("position_select_value", "after");
+        self.set("resource_select_value", resource_list.slice(-1)[0].get("id"));
+      } else {
+        self.set("position_select_value", "after");
+        self.set("resource_select_value", resource_list[index-1].get("id"));
+      }
+    }
+  },
+  group_input_name: "group_id",
+  classNames: "group-selector",
+  init: function() {
+    this._super();
+    if (this.get("resource_id")) {
+      this.set("group_list", Pcs.resourcesContainer.get("group_list"));
+    }
+    this._refresh_fn();
+    this._update_resource_select_content();
+    this._update_resource_select_value();
   }
 });
 
@@ -682,20 +835,6 @@ Pcs.ResourceObj = Ember.Object.extend({
     }
     return null;
   }.property('parent'),
-  group_selector: function() {
-    var self = this;
-    var cur_group = self.get('get_group_id');
-    var html = '<select>\n<option value="">None</option>\n';
-    $.each(self.get('group_list'), function(_, group) {
-      html += '<option value="' + group + '"';
-      if (cur_group === group) {
-        html += 'selected';
-      }
-      html += '>' + group + '</option>\n';
-    });
-    html += '</select><input type="button" value="Change group" onclick="resource_change_group(curResource(), $(this).prev().prop(\'value\'));">';
-    return html;
-  }.property('group_list', 'get_group_id'),
   status: "unknown",
   class_type: null, // property to determine type of the resource
   resource_type: function() { // this property is just for displaying resource type in GUI

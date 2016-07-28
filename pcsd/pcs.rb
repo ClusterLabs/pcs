@@ -1702,6 +1702,7 @@ def get_node_status(auth_user, cib_dom)
         'constraint_colocation_set',
         'sbd',
         'ticket_constraints',
+        'moving_resource_in_group',
       ]
   }
 

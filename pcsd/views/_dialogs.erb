@@ -215,3 +215,24 @@
   </table>
   {{/if}}
 </div>
+
+<div id="add_group" style="display: none;">
+  <form method=POST onkeypress="if (event.keyCode == 13) {$(this).parent().parent().find('.ui-dialog-buttonpane button:eq(1)').trigger('click');return false;} " action="/resource_group_add">
+    <table>
+      <tr>
+        <td>Group Name:</td>
+        <td>
+          <input name="resource_group" type="text" />
+        </td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top;">Change order of resources:</td>
+        <td>
+          <table id="new_group_resource_list" class="sortable-table">
+            <tbody></tbody>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>

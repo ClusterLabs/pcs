@@ -1415,20 +1415,22 @@ def update_resource (params, request, auth_user)
 
   param_line = getParamList(params)
   if not params[:resource_id]
-    out, stderr, retval = run_cmd(
-      auth_user,
-      PCS, "resource", "create", params[:name], params[:resource_type],
-      *param_line
-    )
+    cmd = [PCS, "resource", "create", params[:name], params[:resource_type]]
+    cmd += param_line
+    if params[:resource_group] and params[:resource_group] != ""
+      cmd += ['--group', params[:resource_group]]
+      if (
+        ['before', 'after'].include?(params[:in_group_position]) and
+        params[:in_group_reference_resource_id]
+      )
+        cmd << "--#{params[:in_group_position]}"
+        cmd << params[:in_group_reference_resource_id]
+      end
+      resource_group = params[:resource_group]
+    end
+    out, stderr, retval = run_cmd(auth_user, *cmd)
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
-    end
-    if params[:resource_group] and params[:resource_group] != ""
-      run_cmd(
-        auth_user,
-        PCS, "resource","group", "add", params[:resource_group], params[:name]
-      )
-      resource_group = params[:resource_group]
     end
 
     if params[:resource_clone] and params[:resource_clone] != ""
@@ -1461,10 +1463,18 @@ def update_resource (params, request, auth_user)
         )
       end
     else
-      run_cmd(
-        auth_user, PCS, "resource", "group", "add", params[:resource_group],
+      cmd = [
+        PCS, "resource", "group", "add", params[:resource_group],
         params[:resource_id]
+      ]
+      if (
+        ['before', 'after'].include?(params[:in_group_position]) and
+        params[:in_group_reference_resource_id]
       )
+        cmd << "--#{params[:in_group_position]}"
+        cmd << params[:in_group_reference_resource_id]
+      end
+      run_cmd(auth_user, *cmd)
     end
   end
 
@@ -2098,10 +2108,17 @@ def resource_change_group(params, request, auth_user)
     end
     return 200
   end
-  _, stderr, retval = run_cmd(
-    auth_user,
+  cmd = [
     PCS, 'resource', 'group', 'add', params[:group_id], params[:resource_id]
+  ]
+  if (
+  ['before', 'after'].include?(params[:in_group_position]) and
+    params[:in_group_reference_resource_id]
   )
+    cmd << "--#{params[:in_group_position]}"
+    cmd << params[:in_group_reference_resource_id]
+  end
+  _, stderr, retval = run_cmd(auth_user, *cmd)
   if retval != 0
     return [400, "Unable to add resource '#{params[:resource_id]}' to " +
       "group '#{params[:group_id]}': #{stderr.join('')}"

@@ -96,50 +96,77 @@ function select_menu(menu, item, initial) {
 }
 
 function create_group() {
-  var num_nodes = 0;
-  var node_names = "";
-  $("#resource_list :checked").parent().parent().each(function (index,element) {
-    if (element.getAttribute("nodeID")) {
-      num_nodes++;
-      node_names += element.getAttribute("nodeID") + " "
-    }
-  });
-
-  if (num_nodes == 0) {
+  var resource_list = get_checked_ids_from_nodelist("resource_list");
+  if (resource_list.length == 0) {
     alert("You must select at least one resource to add to a group");
     return;
   }
-
-  $("#resources_to_add_to_group").val(node_names);
+  var not_primitives = resource_list.filter(function(resource_id) {
+    return !Pcs.resourcesContainer.get_resource_by_id(resource_id).get(
+      "is_primitive"
+    );
+  });
+  if (not_primitives.length != 0) {
+    alert("Members of group have to be primitive resources. These resources" +
+      " are not primitives: " + not_primitives.join(", "));
+    return;
+  }
+  var order_el = $("#new_group_resource_list tbody");
+  order_el.empty();
+  order_el.append(resource_list.map(function (item) {
+    return `<tr value="${item}" class="cursor-move"><td>${item}</td></tr>`;
+  }));
+  var order_obj = order_el.sortable();
+  order_el.disableSelection();
   $("#add_group").dialog({
     title: 'Create Group',
+    width: 'auto',
     modal: true,
     resizable: false,
-    buttons: {
-      Cancel: function() {
-        $(this).dialog("close");
+    buttons: [
+      {
+        text: "Cancel",
+        click: function() {
+          $(this).dialog("close");
+        }
       },
-      "Create Group": function() {
-        var data = $('#add_group > form').serialize();
-        var url = get_cluster_remote_url() + "add_group";
-        ajax_wrapper({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function() {
-            Pcs.update();
-            $("#add_group").dialog("close");
-          },
-          error: function (xhr, status, error) {
-            alert(
-              "Error creating group "
-              + ajax_simple_error(xhr, status, error)
-            );
-            $("#add_group").dialog("close");
-          }
-        });
+      {
+        text: "Create Group",
+        id: "add_group_submit_btn",
+        click: function() {
+          var dialog_obj = $(this);
+          var submit_btn_obj = dialog_obj.parent().find(
+            "#add_group_submit_btn"
+          );
+          submit_btn_obj.button("option", "disabled", true);
+
+          ajax_wrapper({
+            type: "POST",
+            url: get_cluster_remote_url() + "add_group",
+            data: {
+              resource_group: $(
+                '#add_group:visible input[name=resource_group]'
+              ).val(),
+              resources: order_obj.sortable(
+                "toArray", {attribute: "value"}
+              ).join(" ")
+            },
+            success: function() {
+              submit_btn_obj.button("option", "disabled", false);
+              Pcs.update();
+              dialog_obj.dialog("close");
+            },
+            error: function (xhr, status, error) {
+              alert(
+                "Error creating group "
+                + ajax_simple_error(xhr, status, error)
+              );
+              submit_btn_obj.button("option", "disabled", false);
+            }
+          });
+        }
       }
-    }
+    ]
   });
 }
 
@@ -2257,24 +2284,24 @@ function resource_ungroup(group_id) {
   });
 }
 
-function resource_change_group(resource_id, group_id) {
+function resource_change_group(resource_id, form) {
   if (resource_id == null) {
     return;
   }
   show_loading_screen();
   var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
   var data = {
-    resource_id: resource_id,
-    group_id: group_id
+    resource_id: resource_id
   };
+  $.each($(form).serializeArray(), function(_, item) {
+    data[item.name] = item.value;
+  });
 
-  if (resource_obj.get('parent')) {
-    if (resource_obj.get('parent').get('id') == group_id) {
-      return;
-    }
-    if (resource_obj.get('parent').get('class_type') == 'group') {
-      data['old_group_id'] = resource_obj.get('parent').get('id');
-    }
+  if (
+    resource_obj.get('parent') &&
+    resource_obj.get('parent').get('class_type') == 'group'
+  ) {
+    data['old_group_id'] = resource_obj.get('parent').get('id');
   }
 
   ajax_wrapper({

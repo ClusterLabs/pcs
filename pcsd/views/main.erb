@@ -237,7 +237,7 @@
             <tr>
               <td class="bold" nowrap>Group:</td>
               <td id="cur_res_loc" class="reg">
-                {{{resource.group_selector}}}
+                {{group-selector resource_id=resource._id}}
               </td>
             </tr>
           {{else}}
@@ -245,7 +245,7 @@
             <tr>
               <td class="bold" nowrap>Group:</td>
               <td id="cur_res_loc" class="reg">
-                {{{resource.group_selector}}}
+                {{group-selector resource_id=resource._id}}
               </td>
             </tr>
             {{/if}}
@@ -909,10 +909,9 @@ Use the 'Add' button to submit the form.">
                     </div>
                   </td>
                   <td>
-                    {{value-selector
-                        prompt="None"
-                        content=groups
-                        name="resource_group"
+                    {{group-selector
+                        group_list=Pcs.resourcesContainer.group_list
+                        group_input_name="resource_group"
                     }}
                   </td>
                 </tr>
@@ -1093,6 +1092,46 @@ Use the 'Add' button to submit the form.">
       }}
       {{/if}}{{/if}}
     </td>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="components/group-selector">
+    {{value-selector
+        name=group_input_name
+        content=group_select_content
+        value=group_select_value
+        prompt="None"
+    }}
+    {{#if Pcs.is_supported_moving_resource_in_group}}
+    {{#if group_select_value}}
+    {{#if resource_select_content}}
+      {{value-selector
+          name="in_group_position"
+          content=position_select_content
+          value=position_select_value
+          prompt=""
+      }}
+      {{value-selector
+          name="in_group_reference_resource_id"
+          content=resource_select_content
+          value=resource_select_value
+          prompt=""
+      }}
+    {{/if}}
+    {{/if}}
+    {{/if}}
+    {{#if resource_id}}
+      <br/>
+      <button
+        onclick="
+          resource_change_group(curResource(), $(this).parent().find('select'));
+          return false;
+        "
+      >
+        Update group
+      </button>
+      <button {{action refresh}}>Refresh</button>
+    {{/if}}
+
   </script>
 
   <script type="text/x-handlebars">
