@@ -35,6 +35,15 @@ from pcs.lib.external import (
 import pcs.lib.commands.sbd as cmd_sbd
 
 
+def _assert_equal_list_of_dictionaries_without_order(expected, actual):
+    for item in actual:
+        if item not in expected:
+            raise AssertionError("Given but not expected: {0}".format(item))
+    for item in expected:
+        if item not in actual:
+            raise AssertionError("Expected but not given: {0}".format(item))
+
+
 class CommandSbdTest(TestCase):
     def setUp(self):
         self.mock_env = mock.MagicMock(spec_set=LibraryEnvironment)
@@ -393,8 +402,7 @@ class GetClusterSbdStatusTest(CommandSbdTest):
                 }
             }
         ]
-
-        self.assertEqual(
+        _assert_equal_list_of_dictionaries_without_order(
             expected, cmd_sbd.get_cluster_sbd_status(self.mock_env)
         )
         mock_get_nodes.assert_called_once_with(self.mock_env)
@@ -447,7 +455,7 @@ class GetClusterSbdStatusTest(CommandSbdTest):
             }
         ]
 
-        self.assertEqual(
+        _assert_equal_list_of_dictionaries_without_order(
             expected, cmd_sbd.get_cluster_sbd_status(self.mock_env)
         )
         mock_get_nodes.assert_called_once_with(self.mock_env)
@@ -538,7 +546,7 @@ OPTION=   value
             }
         ]
 
-        self.assertEqual(
+        _assert_equal_list_of_dictionaries_without_order(
             expected, cmd_sbd.get_cluster_sbd_config(self.mock_env)
         )
         mock_get_nodes.assert_called_once_with(self.mock_env)
@@ -589,7 +597,7 @@ invalid value
             }
         ]
 
-        self.assertEqual(
+        _assert_equal_list_of_dictionaries_without_order(
             expected, cmd_sbd.get_cluster_sbd_config(self.mock_env)
         )
         mock_get_nodes.assert_called_once_with(self.mock_env)
