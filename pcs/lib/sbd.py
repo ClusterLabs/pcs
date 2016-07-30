@@ -123,18 +123,23 @@ def set_sbd_config(communicator, node, config):
     )
 
 
-def set_sbd_config_on_node(report_processor, node_communicator, node, config):
+def set_sbd_config_on_node(
+    report_processor, node_communicator, node, config, watchdog
+):
     """
-    Send SBD configuration to 'node'. Also puts correct node name into
-        SBD_OPTS option (SBD_OPTS="-n <node_name>").
+    Send SBD configuration to 'node' with specified watchdog set. Also puts
+    correct node name into SBD_OPTS option (SBD_OPTS="-n <node_name>").
 
     report_processor --
     node_communicator -- NodeCommunicator
     node -- NodeAddresses
     config -- dictionary in format: <SBD config option>: <value>
+    watchdog -- path to watchdog device
     """
     config = dict(config)
     config["SBD_OPTS"] = '"-n {node_name}"'.format(node_name=node.label)
+    if watchdog:
+        config["SBD_WATCHDOG_DEV"] = watchdog
     set_sbd_config(node_communicator, node, dict_to_environment_file(config))
     report_processor.process(
         reports.sbd_config_accepted_by_node(node.label)
@@ -142,7 +147,7 @@ def set_sbd_config_on_node(report_processor, node_communicator, node, config):
 
 
 def set_sbd_config_on_all_nodes(
-        report_processor, node_communicator, node_list, config
+    report_processor, node_communicator, node_list, config, watchdog_dict
 ):
     """
     Send SBD configuration 'config' to all nodes in 'node_list'. Option
@@ -153,12 +158,20 @@ def set_sbd_config_on_all_nodes(
     node_communicator -- NodeCommunicator
     node_list -- NodeAddressesList
     config -- dictionary in format: <SBD config option>: <value>
+    watchdog_dict -- dictionary of watchdogs where key is NodeAdresses object
+        and value is path to watchdog
     """
     report_processor.process(reports.sbd_config_distribution_started())
     _run_parallel_and_raise_lib_error_on_failure(
         set_sbd_config_on_node,
         [
-            ([report_processor, node_communicator, node, config], {})
+            (
+                [
+                    report_processor, node_communicator, node, config,
+                    watchdog_dict.get(node)
+                ],
+                {}
+            )
             for node in node_list
         ]
     )

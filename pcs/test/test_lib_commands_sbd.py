@@ -334,6 +334,35 @@ class GetFullWatchdogListTest(TestCase):
             )
         )
 
+    def test_invalid_watchdogs(self):
+        watchdog_dict = {
+            self.node_list[1].label: "",
+            self.node_list[2].label: None,
+            self.node_list[3].label: "not/abs/path",
+            self.node_list[4].label: "/dev/watchdog"
+
+        }
+        assert_raise_library_error(
+            lambda: cmd_sbd._get_full_watchdog_list(
+                self.node_list, "/dev/dog", watchdog_dict
+            ),
+            (
+                Severities.ERROR,
+                report_codes.WATCHDOG_INVALID,
+                {"watchdog": ""}
+            ),
+            (
+                Severities.ERROR,
+                report_codes.WATCHDOG_INVALID,
+                {"watchdog": None}
+            ),
+            (
+                Severities.ERROR,
+                report_codes.WATCHDOG_INVALID,
+                {"watchdog": "not/abs/path"}
+            )
+        )
+
 
 @mock.patch("pcs.lib.commands.sbd._get_cluster_nodes")
 @mock.patch("pcs.lib.sbd.check_sbd")

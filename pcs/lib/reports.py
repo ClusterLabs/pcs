@@ -1701,6 +1701,19 @@ def watchdog_not_found(node, watchdog):
     )
 
 
+def invalid_watchdog_path(watchdog):
+    """
+    watchdog path is not absolut path
+
+    watchdog -- watchdog device path
+    """
+    return ReportItem.error(
+        report_codes.WATCHDOG_INVALID,
+        "Watchdog path '{watchdog}' is invalid.",
+        info={"watchdog": watchdog}
+    )
+
+
 def unable_to_get_sbd_status(node, reason):
     """
     there was (communication or parsing) failure during obtaining status of SBD

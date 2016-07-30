@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+import os
 import json
 
 from pcs import settings
@@ -81,6 +82,9 @@ def _get_full_watchdog_list(node_list, default_watchdog, watchdog_dict):
     report_item_list = []
 
     for node_name, watchdog in watchdog_dict.items():
+        if not watchdog or not os.path.isabs(watchdog):
+            report_item_list.append(reports.invalid_watchdog_path(watchdog))
+            continue
         try:
             full_dict[node_list.find_by_label(node_name)] = watchdog
         except NodeNotFound:
@@ -147,7 +151,8 @@ def enable_sbd(
         lib_env.report_processor,
         lib_env.node_communicator(),
         online_nodes,
-        config
+        config,
+        full_watchdog_dict
     )
 
     # remove cluster prop 'stonith_watchdog_timeout'

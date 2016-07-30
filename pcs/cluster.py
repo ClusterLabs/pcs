@@ -1419,12 +1419,15 @@ def cluster_node(argv):
                 sbd_cfg = environment_file_to_dict(
                     lib_sbd.get_local_sbd_config()
                 )
-                sbd_cfg["SBD_WATCHDOG_DEV"] = watchdog
                 report_processor.process(
                     lib_reports.sbd_config_distribution_started()
                 )
                 lib_sbd.set_sbd_config_on_node(
-                    report_processor, node_communicator, node_addr, sbd_cfg
+                    report_processor,
+                    node_communicator,
+                    node_addr,
+                    sbd_cfg,
+                    watchdog
                 )
                 report_processor.process(lib_reports.sbd_enabling_started())
                 lib_sbd.enable_sbd_service_on_node(
