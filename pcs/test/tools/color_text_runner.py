@@ -5,12 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-import sys
-major, minor = sys.version_info[:2]
-if major == 2 and minor == 6:
-    import unittest2 as unittest
-else:
-    import unittest
+from pcs.test.tools import pcs_unittest as unittest
 
 
 palete = {
@@ -37,7 +32,7 @@ palete = {
 def apply(key_list, text):
     return("".join([palete[key] for key in key_list]) + text + palete["end"])
 
-TextTestResult = unittest.runner.TextTestResult
+TextTestResult = unittest.TextTestResult
 #pylint: disable=bad-super-call
 class ColorTextTestResult(TextTestResult):
     def addSuccess(self, test):

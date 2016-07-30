@@ -7,7 +7,6 @@ from __future__ import (
 )
 
 import shutil
-import sys
 
 from pcs.test.tools.misc import (
     get_test_resource as rc,
@@ -15,12 +14,7 @@ from pcs.test.tools.misc import (
 )
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.pcs_runner import PcsRunner
-
-major, minor = sys.version_info[:2]
-if major == 2 and minor == 6:
-    import unittest2 as unittest
-else:
-    import unittest
+from pcs.test.tools import pcs_unittest as unittest
 
 
 old_cib = rc("cib-empty.xml")
