@@ -497,7 +497,7 @@ def _sbd_parse_watchdogs(watchdog_list):
     for watchdog_node in watchdog_list:
         if "@" not in watchdog_node:
             if default_watchdog:
-                raise CmdLineInputError("Multiple default watchdogs.")
+                raise CmdLineInputError("Multiple watchdog definitions.")
             default_watchdog = watchdog_node
         else:
             watchdog, node_name = watchdog_node.rsplit("@", 1)
