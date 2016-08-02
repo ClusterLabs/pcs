@@ -10,10 +10,10 @@ import os.path
 from functools import partial
 
 from pcs import settings
-from pcs.common.tools import merge_dicts
 from pcs.lib import external, reports
 from pcs.lib.booth import (
-    configuration,
+    config_files,
+    config_structure,
     sync,
     status,
     resource,
@@ -32,14 +32,15 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
     list arbitrator_list contains arbitrator adresses of multisite
     """
 
-    configuration.validate_participants(
+    config_structure.validate_participants(
         booth_configuration["sites"],
         booth_configuration["arbitrators"]
     )
-    env.booth.create_key(configuration.generate_key(), overwrite_existing)
+    env.booth.create_key(config_files.generate_key(), overwrite_existing)
+    config_content = config_structure.from_supported_parts(booth_configuration)
     env.booth.create_config(
-        configuration.build(
-            merge_dicts(booth_configuration, {"authfile": env.booth.key_path})
+        config_structure.build(
+            config_structure.set_authfile(config_content, env.booth.key_path)
         ),
         overwrite_existing
     )
@@ -74,13 +75,15 @@ def config_destroy(env):
     if report_list:
         raise LibraryError(*report_list)
 
-    config = configuration.parse(env.booth.get_config_content())
+    authfile_path = config_structure.get_authfile(
+        config_structure.parse(env.booth.get_config_content())
+    )
     if(
-        "authfile" in config
+        authfile_path
         and
-        os.path.dirname(config["authfile"]) == settings.booth_config_dir
+        os.path.dirname(authfile_path) == settings.booth_config_dir
     ):
-        env.booth.set_key_path(config["authfile"])
+        env.booth.set_key_path(authfile_path)
         env.booth.remove_key()
     env.booth.remove_config()
 
@@ -88,27 +91,29 @@ def config_show(env):
     """
     return configuration as tuple of sites list and arbitrators list
     """
-    return configuration.parse(env.booth.get_config_content())
+    return config_structure.get_supported_part(
+        config_structure.parse(env.booth.get_config_content())
+    )
 
 def config_ticket_add(env, ticket_name):
     """
     add ticket to booth configuration
     """
-    booth_configuration = configuration.add_ticket(
-        config_show(env),
+    booth_configuration = config_structure.add_ticket(
+        config_structure.parse(env.booth.get_config_content()),
         ticket_name
     )
-    env.booth.push_config(configuration.build(booth_configuration))
+    env.booth.push_config(config_structure.build(booth_configuration))
 
 def config_ticket_remove(env, ticket_name):
     """
     remove ticket from booth configuration
     """
-    booth_configuration = configuration.remove_ticket(
-        config_show(env),
+    booth_configuration = config_structure.remove_ticket(
+        config_structure.parse(env.booth.get_config_content()),
         ticket_name
     )
-    env.booth.push_config(configuration.build(booth_configuration))
+    env.booth.push_config(config_structure.build(booth_configuration))
 
 def create_in_cluster(env, name, ip, resource_create):
     #TODO resource_create is provisional hack until resources are not moved to
@@ -179,8 +184,10 @@ def config_sync(env, name, skip_offline_nodes=False):
     skip_offline_nodes -- if True offline nodes will be skipped
     """
     config = env.booth.get_config_content()
-    authfile_path = configuration.parse(config).get("authfile", None)
-    authfile_content = configuration.read_authfile(
+    authfile_path = config_structure.get_authfile(
+        config_structure.parse(config)
+    )
+    authfile_content = config_files.read_authfile(
         env.report_processor, authfile_path
     )
 

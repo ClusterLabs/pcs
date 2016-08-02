@@ -38,9 +38,9 @@ def patch_commands(target, *args, **kwargs):
     )
 
 class ConfigSetupTest(TestCase):
-    @mock.patch("pcs.lib.booth.configuration.generate_key")
-    @mock.patch("pcs.lib.booth.configuration.build")
-    @mock.patch("pcs.lib.booth.configuration.validate_participants")
+    @mock.patch("pcs.lib.booth.config_files.generate_key")
+    @mock.patch("pcs.lib.booth.config_structure.build")
+    @mock.patch("pcs.lib.booth.config_structure.validate_participants")
     def test_successfuly_build_and_write_to_std_path(
         self, mock_validate_participants, mock_build, mock_generate_key
     ):
@@ -105,8 +105,8 @@ class ConfigDestroyTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.booth.configuration.parse")
-@mock.patch("pcs.lib.booth.configuration.read_authfile")
+@mock.patch("pcs.lib.booth.config_structure.parse")
+@mock.patch("pcs.lib.booth.config_files.read_authfile")
 @mock.patch("pcs.lib.booth.sync.send_config_to_all_nodes")
 class ConfigSyncTest(TestCase):
     def setUp(self):

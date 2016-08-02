@@ -309,8 +309,8 @@ class SyncConfigInCluster(TestCase):
         )
 
 
-@mock.patch("pcs.lib.booth.configuration.read_configs")
-@mock.patch("pcs.lib.booth.configuration.read_authfiles_from_configs")
+@mock.patch("pcs.lib.booth.config_files.read_configs")
+@mock.patch("pcs.lib.booth.config_files.read_authfiles_from_configs")
 class SendAllConfigToNodeTest(TestCase):
     def setUp(self):
         self.mock_communicator = mock.MagicMock(spec_set=NodeCommunicator)

@@ -19,7 +19,7 @@ from pcs.lib.external import (
     parallel_nodes_communication_helper,
 )
 from pcs.lib.booth import (
-    configuration as booth_conf,
+    config_files as booth_conf,
     reports,
 )
 
