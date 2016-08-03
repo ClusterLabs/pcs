@@ -54,10 +54,10 @@ def validate_peers(site_list, arbitrator_list):
         report.append(reports.booth_even_peers_num(len(peer_list)))
 
     address_set = set()
-    duplicate_addresses = []
+    duplicate_addresses = set()
     for address in peer_list:
         if address in address_set:
-            duplicate_addresses.append(address)
+            duplicate_addresses.add(address)
         else:
             address_set.add(address)
     if duplicate_addresses:

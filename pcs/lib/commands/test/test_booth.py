@@ -37,15 +37,13 @@ def patch_commands(target, *args, **kwargs):
         "pcs.lib.commands.booth.{0}".format(target), *args, **kwargs
     )
 
+@mock.patch("pcs.lib.booth.config_files.generate_key", return_value="key value")
+@mock.patch("pcs.lib.commands.booth.build", return_value="config content")
+@mock.patch("pcs.lib.booth.config_structure.validate_peers")
 class ConfigSetupTest(TestCase):
-    @mock.patch("pcs.lib.booth.config_files.generate_key")
-    @mock.patch("pcs.lib.commands.booth.build")
-    @mock.patch("pcs.lib.booth.config_structure.validate_peers")
     def test_successfuly_build_and_write_to_std_path(
         self, mock_validate_peers, mock_build, mock_generate_key
     ):
-        mock_build.return_value = "config content"
-        mock_generate_key.return_value = "key value"
         env = mock.MagicMock()
         commands.config_setup(
             env,
@@ -65,6 +63,13 @@ class ConfigSetupTest(TestCase):
         mock_validate_peers.assert_called_once_with(
             ["1.1.1.1"], ["2.2.2.2"]
         )
+
+    def test_sanitize_peers_before_validation(
+        self, mock_validate_peers, mock_build, mock_generate_key
+    ):
+        commands.config_setup(env=mock.MagicMock(), booth_configuration={})
+        mock_validate_peers.assert_called_once_with([], [])
+
 
 class ConfigDestroyTest(TestCase):
     @patch_commands("get_config_file_name", return_value="/path/to/config")

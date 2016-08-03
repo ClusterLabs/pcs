@@ -35,8 +35,8 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
     """
 
     config_structure.validate_peers(
-        booth_configuration["sites"],
-        booth_configuration["arbitrators"]
+        booth_configuration.get("sites", []),
+        booth_configuration.get("arbitrators", [])
     )
     config_content = config_exchange.from_exchange_format(booth_configuration)
 

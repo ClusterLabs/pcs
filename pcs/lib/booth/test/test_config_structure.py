@@ -114,14 +114,14 @@ class ValidatePeersTest(TestCase):
     def test_refuse_address_duplication(self):
         assert_raise_library_error(
             lambda: config_structure.validate_peers(
-                site_list=["1.1.1.1", "1.1.1.1"],
-                arbitrator_list=["3.3.3.3"]
+                site_list=["1.1.1.1", "1.1.1.1", "1.1.1.1"],
+                arbitrator_list=["3.3.3.3", "4.4.4.4"]
             ),
             (
                 severities.ERROR,
                 report_codes.BOOTH_ADDRESS_DUPLICATION,
                 {
-                    "addresses": ["1.1.1.1"],
+                    "addresses": set(["1.1.1.1"]),
                 }
             ),
         )
@@ -150,7 +150,7 @@ class ValidatePeersTest(TestCase):
                 severities.ERROR,
                 report_codes.BOOTH_ADDRESS_DUPLICATION,
                 {
-                    "addresses": ["1.1.1.1"],
+                    "addresses": set(["1.1.1.1"]),
                 }
             ),
         )
