@@ -168,16 +168,6 @@ class ConfigSyncTest(TestCase):
         )
 
 
-class GetBoothInstanceNameTest(TestCase):
-    def test_no_name(self):
-        self.assertEqual("booth", commands._get_booth_instance_name())
-
-    def test_name(self):
-        self.assertEqual(
-            "booth@name", commands._get_booth_instance_name("name")
-        )
-
-
 @mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
 @mock.patch("pcs.lib.external.enable_service")
 class EnableBoothTest(TestCase):
@@ -198,23 +188,25 @@ class EnableBoothTest(TestCase):
                 Severities.INFO,
                 report_codes.SERVICE_ENABLE_SUCCESS,
                 {
-                    "service": "booth@name",
+                    "service": "booth",
                     "node": None,
+                    "instance": "name",
                 }
             )]
         )
 
     def test_failed(self, mock_enable, mock_is_systemctl):
-        mock_enable.side_effect = EnableServiceError("booth@name", "msg")
+        mock_enable.side_effect = EnableServiceError("booth", "msg", "name")
         assert_raise_library_error(
             lambda: commands.enable_booth(self.mock_env, "name"),
             (
                 Severities.ERROR,
                 report_codes.SERVICE_ENABLE_ERROR,
                 {
-                    "service": "booth@name",
+                    "service": "booth",
                     "reason": "msg",
-                    "node": None
+                    "node": None,
+                    "instance": "name",
                 }
             )
         )
@@ -242,23 +234,25 @@ class DisableBoothTest(TestCase):
                 Severities.INFO,
                 report_codes.SERVICE_DISABLE_SUCCESS,
                 {
-                    "service": "booth@name",
+                    "service": "booth",
                     "node": None,
+                    "instance": "name",
                 }
             )]
         )
 
     def test_failed(self, mock_disable, mock_is_systemctl):
-        mock_disable.side_effect = DisableServiceError("booth@name", "msg")
+        mock_disable.side_effect = DisableServiceError("booth", "msg", "name")
         assert_raise_library_error(
             lambda: commands.disable_booth(self.mock_env, "name"),
             (
                 Severities.ERROR,
                 report_codes.SERVICE_DISABLE_ERROR,
                 {
-                    "service": "booth@name",
+                    "service": "booth",
                     "reason": "msg",
-                    "node": None
+                    "node": None,
+                    "instance": "name",
                 }
             )
         )
@@ -286,23 +280,25 @@ class StartBoothTest(TestCase):
                 Severities.INFO,
                 report_codes.SERVICE_START_SUCCESS,
                 {
-                    "service": "booth@name",
+                    "service": "booth",
                     "node": None,
+                    "instance": "name",
                 }
             )]
         )
 
     def test_failed(self, mock_start, mock_is_systemctl):
-        mock_start.side_effect = StartServiceError("booth@name", "msg")
+        mock_start.side_effect = StartServiceError("booth", "msg", "name")
         assert_raise_library_error(
             lambda: commands.start_booth(self.mock_env, "name"),
             (
                 Severities.ERROR,
                 report_codes.SERVICE_START_ERROR,
                 {
-                    "service": "booth@name",
+                    "service": "booth",
                     "reason": "msg",
-                    "node": None
+                    "node": None,
+                    "instance": "name",
                 }
             )
         )
@@ -330,23 +326,25 @@ class StopBoothTest(TestCase):
                 Severities.INFO,
                 report_codes.SERVICE_STOP_SUCCESS,
                 {
-                    "service": "booth@name",
+                    "service": "booth",
                     "node": None,
+                    "instance": "name",
                 }
             )]
         )
 
     def test_failed(self, mock_stop, mock_is_systemctl):
-        mock_stop.side_effect = StopServiceError("booth@name", "msg")
+        mock_stop.side_effect = StopServiceError("booth", "msg", "name")
         assert_raise_library_error(
             lambda: commands.stop_booth(self.mock_env, "name"),
             (
                 Severities.ERROR,
                 report_codes.SERVICE_STOP_ERROR,
                 {
-                    "service": "booth@name",
+                    "service": "booth",
                     "reason": "msg",
-                    "node": None
+                    "node": None,
+                    "instance": "name",
                 }
             )
         )

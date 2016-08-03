@@ -205,17 +205,6 @@ def config_sync(env, name, skip_offline_nodes=False):
     )
 
 
-def _get_booth_instance_name(name=None):
-    """
-    Returns name of booth service instance.
-
-    name -- string name of booth instance
-    """
-    return "booth{0}".format(
-        "" if name is None else "@{0}".format(name)
-    )
-
-
 def enable_booth(env, name=None):
     """
     Enable specified instance of booth service. Currently it is supported only
@@ -225,12 +214,15 @@ def enable_booth(env, name=None):
     name -- string, name of booth instance
     """
     external.ensure_is_systemd()
-    booth_name = _get_booth_instance_name(name)
     try:
         external.enable_service(env.cmd_runner(), "booth", name)
     except external.EnableServiceError as e:
-        raise LibraryError(reports.service_enable_error(booth_name, e.message))
-    env.report_processor.process(reports.service_enable_success(booth_name))
+        raise LibraryError(reports.service_enable_error(
+            "booth", e.message, instance=name
+        ))
+    env.report_processor.process(reports.service_enable_success(
+        "booth", instance=name
+    ))
 
 
 def disable_booth(env, name=None):
@@ -242,12 +234,15 @@ def disable_booth(env, name=None):
     name -- string, name of booth instance
     """
     external.ensure_is_systemd()
-    booth_name = _get_booth_instance_name(name)
     try:
         external.disable_service(env.cmd_runner(), "booth", name)
     except external.DisableServiceError as e:
-        raise LibraryError(reports.service_disable_error(booth_name, e.message))
-    env.report_processor.process(reports.service_disable_success(booth_name))
+        raise LibraryError(reports.service_disable_error(
+            "booth", e.message, instance=name
+        ))
+    env.report_processor.process(reports.service_disable_success(
+        "booth", instance=name
+    ))
 
 
 def start_booth(env, name=None):
@@ -260,12 +255,15 @@ def start_booth(env, name=None):
     name -- string, name of booth instance
     """
     external.ensure_is_systemd()
-    booth_name = _get_booth_instance_name(name)
     try:
         external.start_service(env.cmd_runner(), "booth", name)
     except external.StartServiceError as e:
-        raise LibraryError(reports.service_start_error(booth_name, e.message))
-    env.report_processor.process(reports.service_start_success(booth_name))
+        raise LibraryError(reports.service_start_error(
+            "booth", e.message, instance=name
+        ))
+    env.report_processor.process(reports.service_start_success(
+        "booth", instance=name
+    ))
 
 
 def stop_booth(env, name=None):
@@ -277,12 +275,15 @@ def stop_booth(env, name=None):
     name -- string, name of booth instance
     """
     external.ensure_is_systemd()
-    booth_name = _get_booth_instance_name(name)
     try:
         external.stop_service(env.cmd_runner(), "booth", name)
     except external.StopServiceError as e:
-        raise LibraryError(reports.service_stop_error(booth_name, e.message))
-    env.report_processor.process(reports.service_stop_success(booth_name))
+        raise LibraryError(reports.service_stop_error(
+            "booth", e.message, instance=name
+        ))
+    env.report_processor.process(reports.service_stop_success(
+        "booth", instance=name
+    ))
 
 
 def pull_config(env, node_name, name):

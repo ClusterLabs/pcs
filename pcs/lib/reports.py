@@ -1153,27 +1153,37 @@ def cman_broadcast_all_rings():
             + "broadcast in only one ring"
     )
 
-def service_start_started(service):
+def service_start_started(service, instance=None):
     """
     system service is being started
     string service service name or description
+    string instance instance of service
     """
+    if instance:
+        msg = "Starting {service}@{instance}..."
+    else:
+        msg = "Starting {service}..."
     return ReportItem.info(
         report_codes.SERVICE_START_STARTED,
-        "Starting {service}...",
+        msg,
         info={
             "service": service,
+            "instance": instance,
         }
     )
 
-def service_start_error(service, reason, node=None):
+def service_start_error(service, reason, node=None, instance=None):
     """
     system service start failed
     string service service name or description
     string reason error message
     string node node on which service has been requested to start
+    string instance instance of service
     """
-    msg = "Unable to start {service}: {reason}"
+    if instance:
+        msg = "Unable to start {service}@{instance}: {reason}"
+    else:
+        msg = "Unable to start {service}: {reason}"
     return ReportItem.error(
         report_codes.SERVICE_START_ERROR,
         msg if node is None else "{node}: " + msg,
@@ -1181,33 +1191,43 @@ def service_start_error(service, reason, node=None):
             "service": service,
             "reason": reason,
             "node": node,
+            "instance": instance,
         }
     )
 
-def service_start_success(service, node=None):
+def service_start_success(service, node=None, instance=None):
     """
     system service was started successfully
     string service service name or description
     string node node on which service has been requested to start
+    string instance instance of service
     """
-    msg = "{service} started"
+    if instance:
+        msg = "{service}@{instance} started"
+    else:
+        msg = "{service} started"
     return ReportItem.info(
         report_codes.SERVICE_START_SUCCESS,
         msg if node is None else "{node}: " + msg,
         info={
             "service": service,
             "node": node,
+            "instance": instance,
         }
     )
 
-def service_start_skipped(service, reason, node=None):
+def service_start_skipped(service, reason, node=None, instance=None):
     """
     starting system service was skipped, no error occured
     string service service name or description
     string reason why the start has been skipped
     string node node on which service has been requested to start
+    string instance instance of service
     """
-    msg = "not starting {service} - {reason}"
+    if instance:
+        msg = "not starting {service}@{instance} - {reason}"
+    else:
+        msg = "not starting {service} - {reason}"
     return ReportItem.info(
         report_codes.SERVICE_START_SKIPPED,
         msg if node is None else "{node}: " + msg,
@@ -1215,30 +1235,41 @@ def service_start_skipped(service, reason, node=None):
             "service": service,
             "reason": reason,
             "node": node,
+            "instance": instance,
         }
     )
 
-def service_stop_started(service):
+def service_stop_started(service, instance=None):
     """
     system service is being stopped
     string service service name or description
+    string instance instance of service
     """
+    if instance:
+        msg = "Stopping {service}@{instance}..."
+    else:
+        msg = "Stopping {service}..."
     return ReportItem.info(
         report_codes.SERVICE_STOP_STARTED,
-        "Stopping {service}...",
+        msg,
         info={
             "service": service,
+            "instance": instance,
         }
     )
 
-def service_stop_error(service, reason, node=None):
+def service_stop_error(service, reason, node=None, instance=None):
     """
     system service stop failed
     string service service name or description
     string reason error message
     string node node on which service has been requested to stop
+    string instance instance of service
     """
-    msg = "Unable to stop {service}: {reason}"
+    if instance:
+        msg = "Unable to stop {service}@{instance}: {reason}"
+    else:
+        msg = "Unable to stop {service}: {reason}"
     return ReportItem.error(
         report_codes.SERVICE_STOP_ERROR,
         msg if node is None else "{node}: " + msg,
@@ -1246,22 +1277,28 @@ def service_stop_error(service, reason, node=None):
             "service": service,
             "reason": reason,
             "node": node,
+            "instance": instance,
         }
     )
 
-def service_stop_success(service, node=None):
+def service_stop_success(service, node=None, instance=None):
     """
     system service was stopped successfully
     string service service name or description
     string node node on which service has been requested to stop
+    string instance instance of service
     """
-    msg = "{service} stopped"
+    if instance:
+        msg = "{service}@{instance} stopped"
+    else:
+        msg = "{service} stopped"
     return ReportItem.info(
         report_codes.SERVICE_STOP_SUCCESS,
         msg if node is None else "{node}: " + msg,
         info={
             "service": service,
             "node": node,
+            "instance": instance,
         }
     )
 
@@ -1295,27 +1332,37 @@ def service_kill_success(services):
         }
     )
 
-def service_enable_started(service):
+def service_enable_started(service, instance=None):
     """
     system service is being enabled
     string service service name or description
+    string instance instance of service
     """
+    if instance:
+        msg = "Enabling {service}@{instance}..."
+    else:
+        msg = "Enabling {service}..."
     return ReportItem.info(
         report_codes.SERVICE_ENABLE_STARTED,
-        "Enabling {service}...",
+        msg,
         info={
             "service": service,
+            "instance": instance,
         }
     )
 
-def service_enable_error(service, reason, node=None):
+def service_enable_error(service, reason, node=None, instance=None):
     """
     system service enable failed
     string service service name or description
     string reason error message
     string node node on which service was enabled
+    string instance instance of service
     """
-    msg = "Unable to enable {service}: {reason}"
+    if instance:
+        msg = "Unable to enable {service}@{instance}: {reason}"
+    else:
+        msg = "Unable to enable {service}: {reason}"
     return ReportItem.error(
         report_codes.SERVICE_ENABLE_ERROR,
         msg if node is None else "{node}: " + msg,
@@ -1323,33 +1370,43 @@ def service_enable_error(service, reason, node=None):
             "service": service,
             "reason": reason,
             "node": node,
+            "instance": instance,
         }
     )
 
-def service_enable_success(service, node=None):
+def service_enable_success(service, node=None, instance=None):
     """
     system service was enabled successfully
     string service service name or description
     string node node on which service has been enabled
+    string instance instance of service
     """
-    msg = "{service} enabled"
+    if instance:
+        msg = "{service}@{instance} enabled"
+    else:
+        msg = "{service} enabled"
     return ReportItem.info(
         report_codes.SERVICE_ENABLE_SUCCESS,
         msg if node is None else "{node}: " + msg,
         info={
             "service": service,
             "node": node,
+            "instance": instance,
         }
     )
 
-def service_enable_skipped(service, reason, node=None):
+def service_enable_skipped(service, reason, node=None, instance=None):
     """
     enabling system service was skipped, no error occured
     string service service name or description
     string reason why the enabling has been skipped
     string node node on which service has been requested to enable
+    string instance instance of service
     """
-    msg = "not enabling {service} - {reason}"
+    if instance:
+        msg = "not enabling {service}@{instance} - {reason}"
+    else:
+        msg = "not enabling {service} - {reason}"
     return ReportItem.info(
         report_codes.SERVICE_ENABLE_SKIPPED,
         msg if node is None else "{node}: " + msg,
@@ -1357,30 +1414,41 @@ def service_enable_skipped(service, reason, node=None):
             "service": service,
             "reason": reason,
             "node": node,
+            "instance": instance
         }
     )
 
-def service_disable_started(service):
+def service_disable_started(service, instance=None):
     """
     system service is being disabled
     string service service name or description
+    string instance instance of service
     """
+    if instance:
+        msg = "Disabling {service}@{instance}..."
+    else:
+        msg = "Disabling {service}..."
     return ReportItem.info(
         report_codes.SERVICE_DISABLE_STARTED,
-        "Disabling {service}...",
+        msg,
         info={
             "service": service,
+            "instance": instance,
         }
     )
 
-def service_disable_error(service, reason, node=None):
+def service_disable_error(service, reason, node=None, instance=None):
     """
     system service disable failed
     string service service name or description
     string reason error message
     string node node on which service was disabled
+    string instance instance of service
     """
-    msg = "Unable to disable {service}: {reason}"
+    if instance:
+        msg = "Unable to disable {service}@{instance}: {reason}"
+    else:
+        msg = "Unable to disable {service}: {reason}"
     return ReportItem.error(
         report_codes.SERVICE_DISABLE_ERROR,
         msg if node is None else "{node}: " + msg,
@@ -1388,22 +1456,28 @@ def service_disable_error(service, reason, node=None):
             "service": service,
             "reason": reason,
             "node": node,
+            "instance": instance,
         }
     )
 
-def service_disable_success(service, node=None):
+def service_disable_success(service, node=None, instance=None):
     """
     system service was disabled successfully
     string service service name or description
     string node node on which service was disabled
+    string instance instance of service
     """
-    msg = "{service} disabled"
+    if instance:
+        msg = "{service}@{instance} disabled"
+    else:
+        msg = "{service} disabled"
     return ReportItem.info(
         report_codes.SERVICE_DISABLE_SUCCESS,
         msg if node is None else "{node}: " + msg,
         info={
             "service": service,
             "node": node,
+            "instance": instance,
         }
     )
 
