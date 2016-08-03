@@ -40,9 +40,9 @@ def patch_commands(target, *args, **kwargs):
 class ConfigSetupTest(TestCase):
     @mock.patch("pcs.lib.booth.config_files.generate_key")
     @mock.patch("pcs.lib.commands.booth.build")
-    @mock.patch("pcs.lib.booth.config_structure.validate_participants")
+    @mock.patch("pcs.lib.booth.config_structure.validate_peers")
     def test_successfuly_build_and_write_to_std_path(
-        self, mock_validate_participants, mock_build, mock_generate_key
+        self, mock_validate_peers, mock_build, mock_generate_key
     ):
         mock_build.return_value = "config content"
         mock_generate_key.return_value = "key value"
@@ -62,7 +62,7 @@ class ConfigSetupTest(TestCase):
             "key value",
             False
         )
-        mock_validate_participants.assert_called_once_with(
+        mock_validate_peers.assert_called_once_with(
             ["1.1.1.1"], ["2.2.2.2"]
         )
 

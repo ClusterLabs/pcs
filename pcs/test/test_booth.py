@@ -123,7 +123,7 @@ class SetupTest(BoothMixin, unittest.TestCase):
                 "Error: lack of sites for booth configuration (need 2 at least)"
                     ": sites 1.1.1.1"
                 ,
-                "Error: odd number of participants (4)",
+                "Error: odd number of peers (4)",
                 "Error: duplicate address for booth configuration: 1.1.1.1",
             )
         )

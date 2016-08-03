@@ -34,7 +34,7 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
     list arbitrator_list contains arbitrator adresses of multisite
     """
 
-    config_structure.validate_participants(
+    config_structure.validate_peers(
         booth_configuration["sites"],
         booth_configuration["arbitrators"]
     )

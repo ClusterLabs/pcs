@@ -42,22 +42,20 @@ class ConfigItem(namedtuple("ConfigItem", "key value details")):
         details = details if details else []
         return super(ConfigItem, cls).__new__(cls, key, value, details)
 
-def validate_participants(site_list, arbitrator_list):
+def validate_peers(site_list, arbitrator_list):
     report = []
 
     if len(site_list) < 2:
         report.append(reports.booth_lack_of_sites(site_list))
 
-    participants_list = site_list + arbitrator_list
+    peer_list = site_list + arbitrator_list
 
-    if len(participants_list) % 2 == 0:
-        report.append(reports.booth_even_paticipants_num(
-            len(participants_list)
-        ))
+    if len(peer_list) % 2 == 0:
+        report.append(reports.booth_even_peers_num(len(peer_list)))
 
     address_set = set()
     duplicate_addresses = []
-    for address in participants_list:
+    for address in peer_list:
         if address in address_set:
             duplicate_addresses.append(address)
         else:

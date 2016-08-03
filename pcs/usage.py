@@ -1418,7 +1418,7 @@ Commands:
     setup sites <address> <address> [<address>...] [arbitrators <address> ...]
             [--force]
         Write new booth configuration with specified sites and arbitrators.
-        Total number of participants (sites and arbitrators) must be odd.
+        Total number of peers (sites and arbitrators) must be odd.
         When configuration file exists, command fail unless --force applied.
 
     destroy

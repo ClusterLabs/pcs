@@ -21,10 +21,10 @@ def booth_lack_of_sites(site_list):
         }
     )
 
-def booth_even_paticipants_num(number):
+def booth_even_peers_num(number):
     return ReportItem.error(
-        report_codes.BOOTH_EVEN_PARTICIPANTS_NUM,
-        "odd number of participants ({number})",
+        report_codes.BOOTH_EVEN_PEERS_NUM,
+        "odd number of peers ({number})",
         info={
             "number": number,
         }

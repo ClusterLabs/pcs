@@ -74,16 +74,16 @@ class ValidateTicketNameTest(TestCase):
             ),
         )
 
-class ValidateParticipantsTest(TestCase):
+class ValidatePeersTest(TestCase):
     def test_do_no_raises_on_correct_args(self):
-        config_structure.validate_participants(
+        config_structure.validate_peers(
             site_list=["1.1.1.1", "2.2.2.2"],
             arbitrator_list=["3.3.3.3"]
         )
 
     def test_refuse_less_than_2_sites(self):
         assert_raise_library_error(
-            lambda: config_structure.validate_participants(
+            lambda: config_structure.validate_peers(
                 site_list=["1.1.1.1"],
                 arbitrator_list=["3.3.3.3", "4.4.4.4"]
             ),
@@ -96,15 +96,15 @@ class ValidateParticipantsTest(TestCase):
             ),
         )
 
-    def test_refuse_even_number_participants(self):
+    def test_refuse_even_number_peers(self):
         assert_raise_library_error(
-            lambda: config_structure.validate_participants(
+            lambda: config_structure.validate_peers(
                 site_list=["1.1.1.1", "2.2.2.2"],
                 arbitrator_list=[]
             ),
             (
                 severities.ERROR,
-                report_codes.BOOTH_EVEN_PARTICIPANTS_NUM,
+                report_codes.BOOTH_EVEN_PEERS_NUM,
                 {
                     "number": 2,
                 }
@@ -113,7 +113,7 @@ class ValidateParticipantsTest(TestCase):
 
     def test_refuse_address_duplication(self):
         assert_raise_library_error(
-            lambda: config_structure.validate_participants(
+            lambda: config_structure.validate_peers(
                 site_list=["1.1.1.1", "1.1.1.1"],
                 arbitrator_list=["3.3.3.3"]
             ),
@@ -128,7 +128,7 @@ class ValidateParticipantsTest(TestCase):
 
     def test_refuse_problem_combination(self):
         assert_raise_library_error(
-            lambda: config_structure.validate_participants(
+            lambda: config_structure.validate_peers(
                 site_list=["1.1.1.1"],
                 arbitrator_list=["1.1.1.1"]
             ),
@@ -141,7 +141,7 @@ class ValidateParticipantsTest(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.BOOTH_EVEN_PARTICIPANTS_NUM,
+                report_codes.BOOTH_EVEN_PEERS_NUM,
                 {
                     "number": 2,
                 }
