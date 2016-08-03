@@ -103,28 +103,28 @@ def validate_no_booth_resource_using_config(
         )
 
 def find_for_config(resources_section, booth_config_file_path):
-    return resources_section.xpath((
-        './/primitive['
-        '    @type="booth-site"'
-        '    and '
-        '    instance_attributes[nvpair[@name="config" and @value="{0}"]]'
-        ']'
-    ).format(booth_config_file_path))
+    return resources_section.xpath(("""
+        .//primitive[
+            @type="booth-site"
+            and
+            instance_attributes[nvpair[@name="config" and @value="{0}"]]
+        ]
+    """).format(booth_config_file_path))
 
 def find_binded_single_ip(resources_section, booth_config_file_path):
-    ip_list = resources_section.xpath((
-        './/group['
-        '  primitive['
-        '    @type="booth-site"'
-        '    and '
-        '    instance_attributes['
-        '      nvpair[@name="config" and @value="{0}"]'
-        '    ]'
-        '  ]'
-        ']'
-        '/primitive[@type="IPaddr2"]'
-        '/instance_attributes'
-        '/nvpair[@name="ip"]'
-        '/@value'
-    ).format(booth_config_file_path))
+    ip_list = resources_section.xpath(("""
+        .//group[
+            primitive[
+                @type="booth-site"
+                and
+                instance_attributes[
+                    nvpair[@name="config" and @value="{0}"]
+                ]
+            ]
+        ]
+        /primitive[@type="IPaddr2"]
+        /instance_attributes
+        /nvpair[@name="ip"]
+        /@value
+    """).format(booth_config_file_path))
     return ip_list[0] if len(ip_list) == 1 else None
