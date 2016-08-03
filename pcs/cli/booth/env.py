@@ -12,7 +12,7 @@ from pcs.common import report_codes, env_file_role_codes as file_role_codes
 from pcs.lib.errors import LibraryEnvError
 
 
-def get_env_file(path):
+def read_env_file(path):
     try:
         return {
             "content": open(path).read() if os.path.isfile(path) else None
@@ -53,7 +53,9 @@ def is_missing_file_report(report, file_role_code):
     )
 
 def report_missing_file(file_role, file_path):
-    console_report.error("{0} '{1}' does no exist".format(file_role, file_path))
+    console_report.error(
+        "{0} '{1}' does not exist".format(file_role, file_path)
+    )
 
 def middleware_config(name, config_path, key_path):
     if config_path and not key_path:
@@ -73,8 +75,8 @@ def middleware_config(name, config_path, key_path):
             return {"name": name}
         return {
             "name": name,
-            "config_file": get_env_file(config_path),
-            "key_file": get_env_file(key_path),
+            "config_file": read_env_file(config_path),
+            "key_file": read_env_file(key_path),
             "key_path": key_path,
         }
 

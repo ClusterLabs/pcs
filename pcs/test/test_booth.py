@@ -337,7 +337,7 @@ class ConfigTest(unittest.TestCase, BoothMixin):
         ensure_booth_config_not_exists()
         self.assert_pcs_fail(
             "booth config",
-            "Error: Booth config file '{0}' does no exist\n".format(
+            "Error: Booth config file '{0}' does not exist\n".format(
                 BOOTH_CONFIG_FILE
             )
         )

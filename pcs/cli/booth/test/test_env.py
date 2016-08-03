@@ -110,9 +110,9 @@ class BoothConfTest(TestCase):
 
         self.assertEqual(mock_console_report.error.mock_calls, [
             mock.call(
-                "Booth config file '/local/file/path.conf' does no exist"
+                "Booth config file '/local/file/path.conf' does not exist"
             ),
             mock.call(
-                "Booth key file '/local/file/path.key' does no exist"
+                "Booth key file '/local/file/path.key' does not exist"
             ),
         ])
