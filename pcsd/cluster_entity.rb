@@ -332,7 +332,11 @@ module ClusterEntity
       :unknown => {
         :val => 6,
         :str => 'unknown'
-      }
+      },
+      :unmanaged => {
+        :val => 7,
+        :str => 'unmanaged'
+      },
     }
 
     def initialize(status=:unknown)
@@ -532,8 +536,11 @@ module ClusterEntity
     def get_status
       running = 0
       failed = 0
+      unmanaged = 0
       @crm_status.each do |s|
-        if s.active
+        if !s.managed
+          unmanaged += 1
+        elsif s.active
           running += 1
         elsif s.failed
           failed += 1
@@ -542,6 +549,8 @@ module ClusterEntity
 
       if disabled?
         status = ClusterEntity::ResourceStatus.new(:disabled)
+      elsif unmanaged >0
+        status = ClusterEntity::ResourceStatus.new(:unmanaged)
       elsif running > 0
         status = ClusterEntity::ResourceStatus.new(:running)
       elsif failed > 0 or @error_list.length > 0

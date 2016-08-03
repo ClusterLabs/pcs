@@ -160,6 +160,7 @@
       </table>
     </div>
     <div id="node_options_buttons">
+    <div>
     {{#if resource.stonith}}
       <div class="xdark sprites" style="float: left"></div>
       <div id="stonith_delete_link" class="link" onclick="verify_remove_fence_devices(curStonith());">Remove</div>
@@ -174,7 +175,32 @@
       <div id="resource_cleanup_link" class="link" onclick="cleanup_resource();">Cleanup</div>
       <div class="xdark sprites" style="float: left"></div>
       <div id="resource_delete_link" class="link" onclick="verify_remove_resources(curResource());">Remove</div>
+      </div>
+      <div>
+      {{#if Pcs.is_supported_unmanaged_resource}}
+        <div>
+        <div class="checkdark sprites" style="float: left"></div>
+        <div
+          id="resource_manage_link"
+          class="link"
+          onclick="manage_resource(curResource());"
+        >
+          Manage
+        </div>
+        </div>
+        <div>
+        <div class="cancel sprites" style="float: left"></div>
+        <div
+          id="resource_unmanage_link"
+          class="link"
+          onclick="unmanage_resource(curResource());"
+        >
+          Unmanage
+        </div>
+        </div>
+      {{/if}}
     {{/if}}
+    </div>
       <!--
       <div class="move sprites" style="float: left"></div>
       <div id="resource_move_link" class="link">Move</div>

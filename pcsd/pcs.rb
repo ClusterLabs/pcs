@@ -1703,6 +1703,7 @@ def get_node_status(auth_user, cib_dom)
         'sbd',
         'ticket_constraints',
         'moving_resource_in_group',
+        'unmanaged_resource',
       ]
   }
 

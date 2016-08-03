@@ -1333,6 +1333,9 @@ function remove_resource(ids, force) {
           message += "\n\n" + xhr.responseText.replace(
             "--force", "'Enforce removal'"
           );
+          alert(message);
+          $("#verify_remove_submit_btn").button("option", "disabled", false);
+          return;
         }
       }
       alert(message);
@@ -1957,6 +1960,7 @@ function get_status_value(status) {
     maintenance: 2,
     "partially running": 2,
     disabled: 3,
+    unmanaged: 3,
     unknown: 4,
     ok: 5,
     running: 5,
@@ -2985,5 +2989,53 @@ function sbd_status_dialog() {
     modal: true, resizable: false,
     width: 'auto',
     buttons: buttonsOpts
+  });
+}
+
+function unmanage_resource(resource_id) {
+  if (!resource_id) {
+    return;
+  }
+  fade_in_out("#resource_unmanage_link");
+  ajax_wrapper({
+    type: 'POST',
+    url: get_cluster_remote_url() + "unmanage_resource",
+    data: {
+      resource_list_json: JSON.stringify([resource_id]),
+    },
+    timeout: pcs_timeout,
+    complete: function() {
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert(
+        `Unable to unmanage '${resource_id}': ` +
+        ajax_simple_error(xhr, status, error)
+      );
+    },
+  });
+}
+
+function manage_resource(resource_id) {
+  if (!resource_id) {
+    return;
+  }
+  fade_in_out("#resource_manage_link");
+  ajax_wrapper({
+    type: 'POST',
+    url: get_cluster_remote_url() + "manage_resource",
+    data: {
+      resource_list_json: JSON.stringify([resource_id]),
+    },
+    timeout: pcs_timeout,
+    complete: function() {
+      Pcs.update();
+    },
+    error: function (xhr, status, error) {
+      alert(
+        `Unable to manage '${resource_id}': ` +
+        ajax_simple_error(xhr, status, error)
+      );
+    }
   });
 }

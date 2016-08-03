@@ -57,6 +57,9 @@ Pcs = Ember.Application.createWithMixins({
       this.get("available_features").indexOf("moving_resource_in_group") != -1
     );
   }.property("available_features"),
+  is_supported_unmanaged_resource: function() {
+    return (this.get("available_features").indexOf("unmanaged_resource") != -1);
+  }.property("available_features"),
   is_sbd_running: false,
   is_sbd_enabled: false,
   is_sbd_enabled_or_running: function() {
@@ -869,9 +872,17 @@ Pcs.ResourceObj = Ember.Object.extend({
     return '<span style="' + this.get('status_style') + '">' + this.get('status') + '</span>';
   }.property("status_style", "disabled"),
   status_class: function() {
-    var show = ((Pcs.clusterController.get("show_all_resources"))? "" : "hidden ");
-    return ((this.get("status_val") == get_status_value("ok") || this.status == "disabled") ? show + "default-hidden" : "");
-  }.property("status_val"),
+    if (
+      this.get("status_val") == get_status_value("ok") ||
+      ["disabled", "unmanaged"].indexOf(this.get("status")) != -1
+    ) {
+      return (
+        Pcs.clusterController.get("show_all_resources") ? "" : "hidden "
+        ) + "default-hidden";
+    } else {
+      return "";
+    }
+  }.property("status_val", "status"),
   status_class_fence: function() {
     var show = ((Pcs.clusterController.get("show_all_fence"))? "" : "hidden ");
     return ((this.get("status_val") == get_status_value("ok")) ? show + "default-hidden" : "");
@@ -1681,8 +1692,9 @@ Pcs.Cluster = Ember.Object.extend({
     var num = 0;
     $.each(this.get(type), function(key, value) {
       if (value.get("status_val") < get_status_value("ok") &&
-        value.status != "disabled" && value.status != "standby" &&
-        value.status != "maintenance"
+        [
+          "unmanaged", "disabled", "standby", "maintenance"
+        ].indexOf(value.status) == -1
       ) {
         num++;
       }

@@ -116,7 +116,9 @@ def remote(params, request, auth_user)
       :set_resource_utilization => method(:set_resource_utilization),
       :set_node_utilization => method(:set_node_utilization),
       :get_resource_agent_metadata => method(:get_resource_agent_metadata),
-      :get_fence_agent_metadata => method(:get_fence_agent_metadata)
+      :get_fence_agent_metadata => method(:get_fence_agent_metadata),
+      :manage_resource => method(:manage_resource),
+      :unmanage_resource => method(:unmanage_resource),
   }
 
   command = params[:command].to_sym
@@ -1575,10 +1577,10 @@ def remove_resource(params, request, auth_user)
       end
       cmd = [PCS, '-f', tmp_file.path, 'resource', 'disable']
       resource_list.each { |resource|
-        _, err, retval = run_cmd(user, *(cmd + [resource]))
+        out, err, retval = run_cmd(user, *(cmd + [resource]))
         if retval != 0
           unless (
-            err.join('').index('unable to find a resource') != -1 and
+            (out + err).join('').include?(' does not exist.') and
             no_error_if_not_exists
           )
             errors += "Unable to stop resource '#{resource}': #{err.join('')}"
@@ -1613,7 +1615,10 @@ def remove_resource(params, request, auth_user)
     end
     out, err, retval = run_cmd(auth_user, *cmd)
     if retval != 0
-      unless out.index(' does not exist.') != -1 and no_error_if_not_exists
+      unless (
+        (out + err).join('').include?(' does not exist.') and
+        no_error_if_not_exists
+      )
         errors += err.join(' ').strip + "\n"
       end
     end
@@ -2628,5 +2633,47 @@ def qdevice_client_start(param, request, auth_user)
     msg = 'Starting corosync-qdevice failed'
     $logger.error(msg)
     return [400, msg]
+  end
+end
+
+def manage_resource(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  unless param[:resource_list_json]
+    return [400, "Required parameter 'resource_list_json' is missing."]
+  end
+  begin
+    resource_list = JSON.parse(param[:resource_list_json])
+    _, err, retval = run_cmd(
+      auth_user, PCS, 'resource', 'manage', *resource_list
+    )
+    if retval != 0
+      return [400, err.join('')]
+    end
+    return [200, '']
+  rescue JSON::ParserError
+    return [400, 'Invalid input data format']
+  end
+end
+
+def unmanage_resource(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  unless param[:resource_list_json]
+    return [400, "Required parameter 'resource_list_json' is missing."]
+  end
+  begin
+    resource_list = JSON.parse(param[:resource_list_json])
+    _, err, retval = run_cmd(
+      auth_user, PCS, 'resource', 'unmanage', *resource_list
+    )
+    if retval != 0
+      return [400, err.join('')]
+    end
+    return [200, '']
+  rescue JSON::ParserError
+    return [400, 'Invalid input data format']
   end
 end
