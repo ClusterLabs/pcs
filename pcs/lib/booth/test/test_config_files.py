@@ -22,14 +22,27 @@ def patch_config_files(target, *args, **kwargs):
     )
 
 @mock.patch("os.listdir")
-class GetAllConfigsTest(TestCase):
-    def test_success(self, mock_listdir):
+@mock.patch("os.path.isfile")
+class GetAllConfigsFileNamesTest(TestCase):
+    def test_success(self, mock_is_file, mock_listdir):
+        def mock_is_file_fn(file_name):
+            if file_name in ["dir.cong", "dir"]:
+                return False
+            elif file_name in [
+                "name1", "name2.conf", "name.conf.conf", ".conf", "name3.conf"
+            ]:
+                return True
+            else:
+                raise AssertionError("unexpected input")
+
+        mock_is_file.side_effect = mock_is_file_fn
         mock_listdir.return_value = [
-            "name1", "name2.conf", "name.conf.conf", ".conf", "name3.conf"
+            "name1", "name2.conf", "name.conf.conf", ".conf", "name3.conf",
+            "dir.cong", "dir"
         ]
         self.assertEqual(
-            ["name2.conf", "name.conf.conf", ".conf", "name3.conf"],
-            config_files.get_all_configs()
+            ["name2.conf", "name.conf.conf", "name3.conf"],
+            config_files.get_all_configs_file_names()
         )
         mock_listdir.assert_called_once_with(BOOTH_CONFIG_DIR)
 
@@ -56,7 +69,7 @@ class ReadConfigTest(TestCase):
 
 
 @patch_config_files("_read_config")
-@patch_config_files("get_all_configs")
+@patch_config_files("get_all_configs_file_names")
 class ReadConfigsTest(TestCase):
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()

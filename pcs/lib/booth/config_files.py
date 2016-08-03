@@ -19,13 +19,15 @@ from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
 def generate_key():
     return binascii.hexlify(os.urandom(32))
 
-def get_all_configs():
+def get_all_configs_file_names():
     """
-    Returns list of all file names (without suffix) ending with '.conf' in
-    booth configuration directory.
+    Returns list of all file names ending with '.conf' in booth configuration
+    directory.
     """
     return [
-        file for file in os.listdir(BOOTH_CONFIG_DIR) if file.endswith(".conf")
+        file_name for file_name in os.listdir(BOOTH_CONFIG_DIR)
+        if os.path.isfile(file_name) and file_name.endswith(".conf") and
+        len(file_name) > len(".conf")
     ]
 
 
@@ -49,7 +51,7 @@ def read_configs(reporter, skip_wrong_config=False):
     """
     report_list = []
     output = {}
-    for file_name in get_all_configs():
+    for file_name in get_all_configs_file_names():
         try:
             output[file_name] = _read_config(file_name)
         except EnvironmentError:
