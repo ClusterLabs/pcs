@@ -173,7 +173,8 @@ class DestroyTest(BoothMixin, unittest.TestCase):
             #than what it's worth
             stdout_start=(
                 "Error: booth for config"
-                " '/etc/booth/some-weird-booth-name.conf' is used in cib\n"
+                " '/etc/booth/some-weird-booth-name.conf' is used in cluster"
+                " resource\n"
             ),
         )
 

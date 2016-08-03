@@ -88,7 +88,7 @@ class ConfigDestroyTest(TestCase):
                 report_codes.BOOTH_CONFIG_IS_USED,
                 {
                     "config_file_path": "/path/to/config",
-                    "detail": "in cib",
+                    "detail": "in cluster resource",
                 }
             ),
             (

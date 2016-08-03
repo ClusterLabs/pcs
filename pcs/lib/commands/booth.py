@@ -65,8 +65,10 @@ def config_destroy(env):
         and
         resource.find_for_config(get_resources(env.get_cib()), config_file_path)
     ):
-        report_list.append(config_is_used("in cib"))
+        report_list.append(config_is_used("in cluster resource"))
 
+    #Only systemd is currently supported. Initd does not supports multiple
+    #instances (here specified by name)
     if external.is_systemctl():
         if external.is_service_running(env.cmd_runner(), "booth", name):
             report_list.append(config_is_used("(running in systemd)"))
