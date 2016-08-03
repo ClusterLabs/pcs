@@ -142,6 +142,13 @@ class SetupTest(BoothMixin, unittest.TestCase):
             "Error: With --booth-key must be specified --booth-conf as well\n"
         )
 
+    def test_show_usage_when_no_site_specified(self):
+        self.assert_pcs_fail("booth setup arbitrators 3.3.3.3", stdout_start=[
+            "",
+            "Usage: pcs booth <command>"
+        ])
+
+
 class DestroyTest(BoothMixin, unittest.TestCase):
     def test_failed_when_using_mocked_booth_env(self):
         self.assert_pcs_fail(

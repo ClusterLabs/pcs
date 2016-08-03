@@ -23,6 +23,9 @@ def config_setup(lib, arg_list, modifiers):
         set(["sites", "arbitrators"]),
         keyword_repeat_allowed=False
     )
+    if "sites" not in booth_configuration or not booth_configuration["sites"]:
+        raise CmdLineInputError()
+
     lib.booth.config_setup(booth_configuration, modifiers["force"])
 
 def config_destroy(lib, arg_list, modifiers):
