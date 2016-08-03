@@ -1182,10 +1182,11 @@ Commands:
         /etc/cluster/cluster.conf will be used.  You can force to create output
         containing either cluster.conf or corosync.conf using the output-format
         option.  Optionally you can specify output version by setting 'dist'
-        option e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.
-        If 'dist' is not specified, it defaults to this nodei's version if that
-        matches output-format, otherwise redhat,6.7 is used for cluster.conf
-        and redhat,7.1 is used for corosync.conf.
+        option e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.  You
+        can get the list of supported dist values by running the "clufter
+        --list-dists" command.  If 'dist' is not specified, it defaults to this
+        node's version if that matches output-format, otherwise redhat,6.7 is
+        used for cluster.conf and redhat,7.1 is used for corosync.conf.
 
     import-cman output=<filename> [input=<filename>] [--interactive]
             output-format=pcs-commands|pcs-commands-verbose [dist=<dist>]
@@ -1200,8 +1201,10 @@ Commands:
         pcs-commands to get a simple list of commands, whereas
         pcs-commands-verbose creates a list including comments and debug
         messages.  Optionally specify output version by setting 'dist' option
-        e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.  If 'dist'
-        is not specified, it defaults to this node's version.
+        e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.  You can get
+        the list of supported dist values by running the "clufter --list-dists"
+        command.  If 'dist' is not specified, it defaults to this node's
+        version.
 """
     if pout:
         print(sub_usage(args, output))
