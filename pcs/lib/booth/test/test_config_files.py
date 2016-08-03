@@ -172,13 +172,14 @@ class ReadConfigsTest(TestCase):
         self.assertEqual(2, len(self.mock_reporter.report_item_list))
 
 
-@mock.patch("pcs.lib.booth.config_structure.parse")
+@mock.patch("pcs.lib.booth.config_structure.get_authfile")
+@mock.patch("pcs.lib.booth.config_parser.parse")
 @mock.patch("pcs.lib.booth.config_files.read_authfile")
 class ReadAuthFileFromConfigsTest(TestCase):
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()
 
-    def test_success(self, mock_read, mock_parse):
+    def test_success(self, mock_read, mock_parse, mock_get_authfile):
         def _mock_read(_, path):
             if path == "/etc/booth/k1.key":
                 return "key1"
@@ -193,18 +194,19 @@ class ReadAuthFileFromConfigsTest(TestCase):
             "config3.conf": "config3"
         }
 
-        def _mock_parse(config):
-            if config == "config1":
-                return {"authfile": "/etc/booth/k1.key"}
-            elif config == "config2":
-                return {"authfile": "/etc/booth/k2.key"}
-            elif config == "config3":
-                return {}
-            else:
-                raise AssertionError("unexpected input: {0}".format(config))
+        config_authfile_map = {
+            "config1": "/etc/booth/k1.key",
+            "config2": "/etc/booth/k2.key",
+            "config3": None,
+        }
+        def _mock_get_authfile(config):
+            if config in config_authfile_map:
+                return config_authfile_map[config]
+            raise AssertionError("unexpected input: {0}".format(config))
 
         mock_read.side_effect = _mock_read
-        mock_parse.side_effect = _mock_parse
+        mock_parse.side_effect = lambda config: config
+        mock_get_authfile.side_effect = _mock_get_authfile
 
         self.assertEqual(
             {

@@ -39,7 +39,7 @@ def patch_commands(target, *args, **kwargs):
 
 class ConfigSetupTest(TestCase):
     @mock.patch("pcs.lib.booth.config_files.generate_key")
-    @mock.patch("pcs.lib.booth.config_structure.build")
+    @mock.patch("pcs.lib.commands.booth.build")
     @mock.patch("pcs.lib.booth.config_structure.validate_participants")
     def test_successfuly_build_and_write_to_std_path(
         self, mock_validate_participants, mock_build, mock_generate_key
@@ -105,7 +105,8 @@ class ConfigDestroyTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.booth.config_structure.parse")
+@mock.patch("pcs.lib.commands.booth.config_structure.get_authfile")
+@mock.patch("pcs.lib.commands.booth.parse")
 @mock.patch("pcs.lib.booth.config_files.read_authfile")
 @mock.patch("pcs.lib.booth.sync.send_config_to_all_nodes")
 class ConfigSyncTest(TestCase):
@@ -121,8 +122,10 @@ class ConfigSyncTest(TestCase):
         self.mock_env.get_corosync_conf.return_value = corosync_conf
         self.mock_env.booth.get_config_content.return_value = "config"
 
-    def test_skip_offline(self, mock_sync, mock_read_key, mock_parse):
-        mock_parse.return_value = {"authfile": "/key/path.key"}
+    def test_skip_offline(
+        self, mock_sync, mock_read_key, mock_parse, mock_get_authfile
+    ):
+        mock_get_authfile.return_value = "/key/path.key"
         mock_read_key.return_value = "key"
         commands.config_sync(self.mock_env, "name", True)
         self.mock_env.booth.get_config_content.assert_called_once_with()
@@ -139,8 +142,10 @@ class ConfigSyncTest(TestCase):
             skip_offline=True
         )
 
-    def test_do_not_skip_offline(self, mock_sync, mock_read_key, mock_parse):
-        mock_parse.return_value = {"authfile": "/key/path.key"}
+    def test_do_not_skip_offline(
+        self, mock_sync, mock_read_key, mock_parse, mock_get_authfile
+    ):
+        mock_get_authfile.return_value = "/key/path.key"
         mock_read_key.return_value = "key"
         commands.config_sync(self.mock_env, "name")
         self.mock_env.booth.get_config_content.assert_called_once_with()

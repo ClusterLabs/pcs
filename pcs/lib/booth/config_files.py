@@ -10,7 +10,7 @@ import binascii
 
 from pcs.common import report_codes
 from pcs.lib import reports as lib_reports
-from pcs.lib.booth import reports, config_structure
+from pcs.lib.booth import reports, config_structure, config_parser
 from pcs.lib.errors import ReportItemSeverity
 from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
 
@@ -78,7 +78,7 @@ def read_authfiles_from_configs(reporter, config_content_list):
     output = {}
     for config in config_content_list:
         authfile_path = config_structure.get_authfile(
-            config_structure.parse(config)
+            config_parser.parse(config)
         )
         if authfile_path:
             output[os.path.basename(authfile_path)] = read_authfile(

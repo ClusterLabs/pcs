@@ -17,7 +17,9 @@ from pcs.test.tools.pcs_mock import mock
 class ValidateTicketExistsTest(TestCase):
     def test_raises_on_duplicate_ticket(self):
         assert_raise_library_error(
-            lambda: config_structure.validate_ticket_exists(["B"], "A"),
+            lambda: config_structure.validate_ticket_exists(
+                [config_structure.ConfigItem("ticket", "B")], "A"
+            ),
             (
                 severities.ERROR,
                 report_codes.BOOTH_TICKET_DOES_NOT_EXIST,
@@ -27,11 +29,12 @@ class ValidateTicketExistsTest(TestCase):
             ),
         )
 
-
 class ValidateTicketUniqueTest(TestCase):
     def test_raises_on_duplicate_ticket(self):
         assert_raise_library_error(
-            lambda: config_structure.validate_ticket_unique(["A"], "A"),
+            lambda: config_structure.validate_ticket_unique(
+                [config_structure.ConfigItem("ticket", "A")], "A"
+            ),
             (
                 severities.ERROR,
                 report_codes.BOOTH_TICKET_DUPLICATE,
@@ -41,6 +44,19 @@ class ValidateTicketUniqueTest(TestCase):
             ),
         )
 
+    def test_do_not_raises_when_no_duplicated_ticket(self):
+        config_structure.validate_ticket_unique([], "A")
+
+class TicketExistsTest(TestCase):
+    def test_returns_true_if_ticket_in_structure(self):
+        self.assertTrue(config_structure.ticket_exists(
+            [config_structure.ConfigItem("ticket", "A")], "A"
+        ))
+
+    def test_returns_false_if_ticket_in_structure(self):
+        self.assertFalse(config_structure.ticket_exists(
+            [config_structure.ConfigItem("ticket", "A")], "B"
+        ))
 
 class ValidateTicketNameTest(TestCase):
     def test_accept_valid_ticket_name(self):
@@ -57,7 +73,6 @@ class ValidateTicketNameTest(TestCase):
                 },
             ),
         )
-
 
 class ValidateParticipantsTest(TestCase):
     def test_do_no_raises_on_correct_args(self):
@@ -140,165 +155,70 @@ class ValidateParticipantsTest(TestCase):
             ),
         )
 
-
-class ParseTest(TestCase):
-    def test_returns_parsed_config_when_correct_config(self):
-        self.assertEqual(
-            config_structure.parse("\n".join([
-                "site = 1.1.1.1",
-                " site  =  2.2.2.2 ",
-                "arbitrator=3.3.3.3",
-                'ticket = "TicketA"',
-                'ticket = "TicketB"',
-                "authfile = /path/to/authfile.key",
-            ])),
-            {
-                "sites": ["1.1.1.1", "2.2.2.2"],
-                "arbitrators": ["3.3.3.3"],
-                "tickets": ["TicketA", "TicketB"],
-                "authfile": "/path/to/authfile.key",
-            }
-        )
-
-    def test_refuse_multiple_authfiles(self):
-        assert_raise_library_error(
-            lambda: config_structure.parse("\n".join([
-                "authfile = /path/to/authfile.key",
-                "authfile = /path/to/authfile2.key",
-            ])),
-            (
-                severities.ERROR,
-                report_codes.BOOTH_CONFIG_INVALID_CONTENT,
-                {
-                    "reason": "multiple authfile",
-                }
-            ),
-        )
-
-
-    def test_refuse_unexpected_line(self):
-        assert_raise_library_error(
-            lambda: config_structure.parse("nonsense"),
-            (
-                severities.ERROR,
-                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-                {
-                    "line_list": ["nonsense"],
-                }
-            ),
-        )
-
-    def test_refuse_unexpected_line_similar_to_pattern(self):
-        assert_raise_library_error(
-            lambda: config_structure.parse("nonsense = 1.1.1.1"),
-            (
-                severities.ERROR,
-                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-                {
-                    "line_list": ["nonsense = 1.1.1.1"],
-                }
-            ),
-        )
-
-
-class BuildTest(TestCase):
-    def test_succesfully_create_content_without_tickets(self):
-        self.assertEqual(
-            config_structure.build({
-                "sites": ["1.1.1.1", "2.2.2.2"],
-                "arbitrators": ["3.3.3.3"],
-                "authfile": "/path/to/authfile.key",
-            }),
-            "\n".join([
-                "site = 1.1.1.1",
-                "site = 2.2.2.2",
-                "arbitrator = 3.3.3.3",
-                "authfile = /path/to/authfile.key",
-            ])
-        )
-
-    def test_succesfully_create_content_with_tickets(self):
-        self.assertEqual(
-            config_structure.build({
-                "sites": ["1.1.1.1", "2.2.2.2"],
-                "arbitrators": ["3.3.3.3"],
-                "authfile": "/path/to/authfile.key",
-                "tickets": ["ticketB", "ticketA"],
-            }),
-            "\n".join([
-                "site = 1.1.1.1",
-                "site = 2.2.2.2",
-                "arbitrator = 3.3.3.3",
-                "authfile = /path/to/authfile.key",
-                'ticket = "ticketA"',
-                'ticket = "ticketB"',
-            ])
-        )
-
-    def test_sort_sites_and_arbitrators(self):
-        self.assertEqual(
-            config_structure.build({
-                "sites": ["2.2.2.2", "1.1.1.1"],
-                "arbitrators": ["3.3.3.3"],
-                "authfile": "/path/to/authfile.key",
-            }),
-            "\n".join([
-                "site = 1.1.1.1",
-                "site = 2.2.2.2",
-                "arbitrator = 3.3.3.3",
-                "authfile = /path/to/authfile.key",
-            ])
-        )
-
-
 class RemoveTicketTest(TestCase):
     @mock.patch("pcs.lib.booth.config_structure.validate_ticket_exists")
     def test_successfully_remove_ticket(self, mock_validate_ticket_exists):
+        configuration = [
+            config_structure.ConfigItem("ticket", "some-ticket"),
+            config_structure.ConfigItem("ticket", "deprecated-ticket"),
+        ]
         self.assertEqual(
-            config_structure.remove_ticket(
-                {
-                    "sites": ["1.1.1.1", "2.2.2.2"],
-                    "arbitrators": ["3.3.3.3"],
-                    "tickets": ["deprecated-ticket", "some-ticket"]
-                },
-                "deprecated-ticket"
-            ),
-            {
-                "sites": ["1.1.1.1", "2.2.2.2"],
-                "arbitrators": ["3.3.3.3"],
-                "tickets": ["some-ticket"]
-            },
+            config_structure.remove_ticket(configuration, "deprecated-ticket"),
+            [
+                config_structure.ConfigItem("ticket", "some-ticket"),
+            ]
         )
         mock_validate_ticket_exists.assert_called_once_with(
-            ["deprecated-ticket", "some-ticket"],
+            configuration,
             "deprecated-ticket"
         )
-
 
 class AddTicketTest(TestCase):
     @mock.patch("pcs.lib.booth.config_structure.validate_ticket_unique")
     @mock.patch("pcs.lib.booth.config_structure.validate_ticket_name")
     def test_successfully_add_ticket(
-        self, mock_validate_ticket_name, mock_validate_ticket_unique
+        self, mock_validate_name, mock_validate_uniq
     ):
+        configuration = [
+            config_structure.ConfigItem("ticket", "some-ticket"),
+        ]
         self.assertEqual(
-            config_structure.add_ticket(
-                {
-                    "sites": ["1.1.1.1", "2.2.2.2"],
-                    "arbitrators": ["3.3.3.3"],
-                    "tickets": ["some-ticket"]
-                },
-                "new-ticket"
-            ),
-            {
-                "sites": ["1.1.1.1", "2.2.2.2"],
-                "arbitrators": ["3.3.3.3"],
-                "tickets": ["new-ticket", "some-ticket"]
-            },
+            config_structure.add_ticket(configuration, "new-ticket"),
+            [
+                config_structure.ConfigItem("ticket", "some-ticket"),
+                config_structure.ConfigItem("ticket", "new-ticket"),
+            ],
         )
 
-        mock_validate_ticket_name.assert_called_once_with("new-ticket")
-        mock_validate_ticket_unique.assert_called_once_with(
-            ["some-ticket"],
-            "new-ticket"
+        mock_validate_name.assert_called_once_with("new-ticket")
+        mock_validate_uniq.assert_called_once_with(configuration, "new-ticket")
+
+class SetAuthfileTest(TestCase):
+    def test_add_authfile(self):
+        self.assertEqual(
+            [
+                config_structure.ConfigItem("authfile", "/path/to/auth.file"),
+                config_structure.ConfigItem("site", "1.1.1.1"),
+            ],
+            config_structure.set_authfile(
+                [
+                    config_structure.ConfigItem("site", "1.1.1.1"),
+                ],
+                "/path/to/auth.file"
+            )
+        )
+    def test_reset_authfile(self):
+        self.assertEqual(
+            [
+                config_structure.ConfigItem("authfile", "/path/to/auth.file"),
+                config_structure.ConfigItem("site", "1.1.1.1"),
+            ],
+            config_structure.set_authfile(
+                [
+                    config_structure.ConfigItem("site", "1.1.1.1"),
+                    config_structure.ConfigItem("authfile", "/old/path/to/auth1.file"),
+                    config_structure.ConfigItem("authfile", "/old/path/to/auth2.file"),
+                ],
+                "/path/to/auth.file"
+            )
         )
