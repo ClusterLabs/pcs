@@ -6,7 +6,6 @@ from __future__ import (
 )
 
 from pcs.lib.booth import reports
-from pcs.lib.cib.resource import TAGS_ALL
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
@@ -104,11 +103,8 @@ def validate_no_booth_resource_using_config(
         )
 
 def find_for_config(resources_section, booth_config_file_path):
-    #self::primitive or self::clone or ... selects elements with specified tags
     return resources_section.xpath((
-        './/*['
-        '    ('+' or '.join(["self::{0}".format(tag) for tag in TAGS_ALL])+')'
-        '    and '
+        './/primitive['
         '    @type="booth-site"'
         '    and '
         '    instance_attributes[nvpair[@name="config" and @value="{0}"]]'
