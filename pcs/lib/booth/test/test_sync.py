@@ -83,11 +83,7 @@ class SetConfigOnNodeTest(TestCase):
             )]
         )
 
-    def test_authfile_data_None(self):
-        lib._set_config_on_node(
-            self.mock_com, self.mock_rep, self.node, "cfg_name", "cfg",
-            authfile="key.key"
-        )
+    def _assert(self):
         self.assertEqual(1, self.mock_com.call_node.call_count)
         self.assertEqual(self.node, self.mock_com.call_node.call_args[0][0])
         self.assertEqual(
@@ -116,73 +112,26 @@ class SetConfigOnNodeTest(TestCase):
                 }
             )]
         )
+
+    def test_authfile_data_None(self):
+        lib._set_config_on_node(
+            self.mock_com, self.mock_rep, self.node, "cfg_name", "cfg",
+            authfile="key.key"
+        )
+        self._assert()
 
     def test_authfile_only_data(self):
         lib._set_config_on_node(
             self.mock_com, self.mock_rep, self.node, "cfg_name", "cfg",
             authfile_data="key".encode("utf-8")
         )
-        self.assertEqual(1, self.mock_com.call_node.call_count)
-        self.assertEqual(self.node, self.mock_com.call_node.call_args[0][0])
-        self.assertEqual(
-            "remote/booth_set_config", self.mock_com.call_node.call_args[0][1]
-        )
-        data = url_decode(self.mock_com.call_node.call_args[0][2])
-        self.assertTrue("data_json" in data)
-        self.assertEqual(
-            {
-                "config": {
-                    "name": "cfg_name.conf",
-                    "data": "cfg"
-                }
-            },
-            json.loads(data["data_json"][0])
-        )
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [(
-                Severities.INFO,
-                report_codes.BOOTH_CONFIGS_SAVED_ON_NODE,
-                {
-                    "node": self.node.label,
-                    "name": "cfg_name",
-                    "name_list": ["cfg_name"]
-                }
-            )]
-        )
+        self._assert()
 
     def test_without_authfile(self):
         lib._set_config_on_node(
             self.mock_com, self.mock_rep, self.node, "cfg_name", "cfg"
         )
-        self.assertEqual(1, self.mock_com.call_node.call_count)
-        self.assertEqual(self.node, self.mock_com.call_node.call_args[0][0])
-        self.assertEqual(
-            "remote/booth_set_config", self.mock_com.call_node.call_args[0][1]
-        )
-        data = url_decode(self.mock_com.call_node.call_args[0][2])
-        self.assertTrue("data_json" in data)
-        self.assertEqual(
-            {
-                "config": {
-                    "name": "cfg_name.conf",
-                    "data": "cfg"
-                }
-            },
-            json.loads(data["data_json"][0])
-        )
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [(
-                Severities.INFO,
-                report_codes.BOOTH_CONFIGS_SAVED_ON_NODE,
-                {
-                    "node": self.node.label,
-                    "name": "cfg_name",
-                    "name_list": ["cfg_name"]
-                }
-            )]
-        )
+        self._assert()
 
 
 @mock.patch("pcs.lib.booth.sync.parallel_nodes_communication_helper")
