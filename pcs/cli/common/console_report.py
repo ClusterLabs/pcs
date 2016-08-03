@@ -9,13 +9,13 @@ import sys
 
 
 def warn(message):
-    write_message(message, "Warning: ")
+    sys.stdout.write(format_message(message, "Warning: "))
 
-def write_message(message, prefix):
-    sys.stdout.write("{0}{1}\n".format(prefix, message))
+def format_message(message, prefix):
+    return "{0}{1}\n".format(prefix, message)
 
 def error(message):
-    write_message(message, "Error: ")
+    sys.stderr.write(format_message(message, "Error: "))
     return SystemExit(1)
 
 def indent(line_list, indent_step=2):
