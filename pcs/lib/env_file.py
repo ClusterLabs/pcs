@@ -25,7 +25,7 @@ class GhostFile(object):
     def read(self):
         if self.__content is None:
             raise LibraryEnvError(
-                reports.file_does_not_exists(self.__file_role)
+                reports.file_does_not_exist(self.__file_role)
             )
 
         return self.__content

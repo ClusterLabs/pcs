@@ -48,8 +48,8 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
     env.booth.create_config(build(config_content), overwrite_existing)
 
 def config_destroy(env):
-    env.booth.command_expect_live_env("destroy")
-    env.command_expect_live_corosync_env("destroy")
+    env.booth.command_expect_live_env()
+    env.command_expect_live_corosync_env()
 
     name = env.booth.name
     config_file_path = get_config_file_name(name)

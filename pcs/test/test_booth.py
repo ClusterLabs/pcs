@@ -153,8 +153,7 @@ class DestroyTest(BoothMixin, unittest.TestCase):
     def test_failed_when_using_mocked_booth_env(self):
         self.assert_pcs_fail(
             "booth destroy",
-            "Error: command 'destroy' expect live environment"
-            " (without --booth-conf and --booth-key)\n",
+            "Error: This command does not support --booth-conf, --booth-key\n"
         )
 
     @need_booth_resource_agent

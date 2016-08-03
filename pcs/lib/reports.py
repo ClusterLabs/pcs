@@ -1764,10 +1764,10 @@ def file_already_exists(
         forceable=forceable,
     )
 
-def file_does_not_exists(file_role, file_path=""):
+def file_does_not_exist(file_role, file_path=""):
     return ReportItem.error(
         report_codes.FILE_DOES_NOT_EXIST,
-        "{file_role} file {file_path} already exists",
+        "{file_role} file {file_path} does not exist",
         info={
             "file_role": file_role,
             "file_path": file_path,
@@ -1801,13 +1801,12 @@ def unsupported_operation_on_non_systemd_systems():
         "unsupported operation on non systemd systems"
     )
 
-def command_expects_live_env(command_name, detail):
+def live_environment_required(forbidden_options):
     return ReportItem.error(
-        report_codes.COMMAND_EXPECTS_LIVE_ENV,
-        "command '{command_name}' expect live environment{detail_string}",
+        report_codes.LIVE_ENVIRONMENT_REQUIRED,
+        "This command does not support {options_string}",
         info={
-            "command_name": command_name,
-            "detail": detail,
-            "detail_string": " {0}".format(detail) if detail else "",
+            "forbidden_options": forbidden_options,
+            "options_string": ", ".join(forbidden_options),
         }
     )

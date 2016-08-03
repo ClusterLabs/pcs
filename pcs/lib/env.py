@@ -189,12 +189,11 @@ class LibraryEnvironment(object):
             raise NotImplementedError()
         return exists_local_corosync_conf()
 
-    def command_expect_live_corosync_env(self, command_name):
+    def command_expect_live_corosync_env(self):
         if not self.is_corosync_conf_live:
-            raise LibraryError(reports.command_expects_live_env(
-                command_name,
-                detail="(without --corosync_conf)"
-            ))
+            raise LibraryError(reports.live_environment_required([
+                "--corosync_conf"
+            ]))
 
     @property
     def is_corosync_conf_live(self):
