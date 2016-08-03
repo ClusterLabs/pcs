@@ -8,7 +8,7 @@ from __future__ import (
 from os.path import join
 from unittest import TestCase
 
-from pcs.common import report_codes
+from pcs.common import report_codes, env_file_role_codes as file_roles
 from pcs.lib.booth import config_files
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
@@ -16,6 +16,10 @@ from pcs.test.tools.assertions import assert_raise_library_error, assert_report_
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_mock import mock
 
+def patch_config_files(target, *args, **kwargs):
+    return mock.patch(
+        "pcs.lib.booth.config_files.{0}".format(target), *args, **kwargs
+    )
 
 @mock.patch("os.listdir")
 class GetAllConfigsTest(TestCase):
@@ -34,9 +38,7 @@ class ReadConfigTest(TestCase):
     def test_success(self):
         self.maxDiff = None
         mock_open = mock.mock_open(read_data="config content")
-        with mock.patch(
-            "pcs.lib.booth.config_files.open", mock_open, create=True
-        ):
+        with patch_config_files("open", mock_open, create=True):
             self.assertEqual(
                 "config content",
                 config_files._read_config("my-file.conf")
@@ -53,8 +55,8 @@ class ReadConfigTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.booth.config_files._read_config")
-@mock.patch("pcs.lib.booth.config_files.get_all_configs")
+@patch_config_files("_read_config")
+@patch_config_files("get_all_configs")
 class ReadConfigsTest(TestCase):
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()
@@ -172,9 +174,9 @@ class ReadConfigsTest(TestCase):
         self.assertEqual(2, len(self.mock_reporter.report_item_list))
 
 
-@mock.patch("pcs.lib.booth.config_structure.get_authfile")
-@mock.patch("pcs.lib.booth.config_parser.parse")
-@mock.patch("pcs.lib.booth.config_files.read_authfile")
+@patch_config_files("config_structure.get_authfile")
+@patch_config_files("config_parser.parse")
+@patch_config_files("read_authfile")
 class ReadAuthFileFromConfigsTest(TestCase):
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()
@@ -239,9 +241,7 @@ class ReadAuthfileTest(TestCase):
         path = join(BOOTH_CONFIG_DIR, "file.key")
         mock_open = mock.mock_open(read_data="key")
 
-        with mock.patch(
-            "pcs.lib.booth.config_files.open", mock_open, create=True
-        ):
+        with patch_config_files("open", mock_open, create=True):
             self.assertEqual(
                 "key", config_files.read_authfile(self.mock_reporter, path)
             )
@@ -291,14 +291,13 @@ class ReadAuthfileTest(TestCase):
             )]
         )
 
-    def test_read_failure(self):
+    @patch_config_files("format_environment_error", return_value="reason")
+    def test_read_failure(self, _):
         path = join(BOOTH_CONFIG_DIR, "file.key")
         mock_open = mock.mock_open()
-        mock_open().read.side_effect = EnvironmentError("reason")
+        mock_open().read.side_effect = EnvironmentError()
 
-        with mock.patch(
-            "pcs.lib.booth.config_files.open", mock_open, create=True
-        ):
+        with patch_config_files("open", mock_open, create=True):
             return_value = config_files.read_authfile(self.mock_reporter, path)
 
         self.assertTrue(return_value is None)
@@ -309,9 +308,10 @@ class ReadAuthfileTest(TestCase):
                 severities.WARNING,
                 report_codes.FILE_IO_ERROR,
                 {
-                    "file_role": "authfile",
+                    "file_role": file_roles.BOOTH_KEY,
                     "file_path": path,
                     "reason": "reason",
+                    "operation": "read",
                 }
             )]
         )

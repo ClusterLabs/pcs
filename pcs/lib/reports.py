@@ -1775,13 +1775,13 @@ def file_does_not_exist(file_role, file_path=""):
     )
 
 def file_io_error(
-    file_role, file_path="", reason="", intention_of_action="work with",
+    file_role, file_path="", reason="", operation="work with",
     severity=ReportItemSeverity.ERROR
 ):
     if file_path:
-        msg = "can not {intention_of_action} {file_role} '{file_path}': {reason}"
+        msg = "unable to {operation} {file_role} '{file_path}': {reason}"
     else:
-        msg = "can not {intention_of_action} {file_role}: {reason}"
+        msg = "unable to {operation} {file_role}: {reason}"
     return ReportItem(
         report_codes.FILE_IO_ERROR,
         severity,
@@ -1790,10 +1790,27 @@ def file_io_error(
             "file_role": file_role,
             "file_path": file_path,
             "reason": reason,
-            "intention_of_action": intention_of_action
+            "operation": operation
         },
     )
 
+def unable_to_determine_user_uid(user):
+    return ReportItem.error(
+        report_codes.UNABLE_TO_DETERMINE_USER_UID,
+        "Unable to determine uid of user '{user}'",
+        info={
+            "user": user
+        }
+    )
+
+def unable_to_determine_group_gid(group):
+    return ReportItem.error(
+        report_codes.UNABLE_TO_DETERMINE_GROUP_GID,
+        "Unable to determine gid of group '{group}'",
+        info={
+            "group": group
+        }
+    )
 
 def unsupported_operation_on_non_systemd_systems():
     return ReportItem.error(

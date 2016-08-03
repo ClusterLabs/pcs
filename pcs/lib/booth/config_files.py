@@ -8,7 +8,8 @@ from __future__ import (
 import os
 import binascii
 
-from pcs.common import report_codes
+from pcs.common import report_codes, env_file_role_codes as file_roles
+from pcs.common.tools import format_environment_error
 from pcs.lib import reports as lib_reports
 from pcs.lib.booth import reports, config_structure, config_parser
 from pcs.lib.errors import ReportItemSeverity
@@ -105,6 +106,10 @@ def read_authfile(reporter, path):
             return file.read()
     except EnvironmentError as e:
         reporter.process(lib_reports.file_io_error(
-            "authfile", path, str(e), severity=ReportItemSeverity.WARNING
+            file_roles.BOOTH_KEY,
+            path,
+            reason=format_environment_error(e),
+            operation="read",
+            severity=ReportItemSeverity.WARNING
         ))
         return None

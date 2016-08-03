@@ -18,9 +18,13 @@ from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 
+def patch_env(target, *args, **kwargs):
+    return mock.patch(
+        "pcs.lib.booth.env.{0}".format(target), *args, **kwargs
+    )
 
 class GetConfigFileNameTest(TestCase):
-    @mock.patch("pcs.lib.booth.env.os.path.exists")
+    @patch_env("os.path.exists")
     def test_refuse_when_name_starts_with_slash(self, mock_path_exists):
         mock_path_exists.return_value = True
         assert_raise_library_error(
@@ -35,7 +39,7 @@ class GetConfigFileNameTest(TestCase):
         )
 
 class BoothEnvTest(TestCase):
-    @mock.patch("pcs.lib.booth.env.RealFile")
+    @patch_env("RealFile")
     def test_get_content_from_file(self, mock_real_file):
         mock_real_file.return_value = mock.MagicMock(
             read=mock.MagicMock(return_value=["content"])
@@ -46,8 +50,8 @@ class BoothEnvTest(TestCase):
                 .get_config_content()
         )
 
-    @mock.patch("pcs.lib.booth.env.set_keyfile_access")
-    @mock.patch("pcs.lib.booth.env.RealFile")
+    @patch_env("set_keyfile_access")
+    @patch_env("RealFile")
     def test_create_config(self, mock_real_file, mock_set_keyfile_access):
         mock_file = mock.MagicMock(
             assert_no_conflict_with_existing=mock.MagicMock(),
@@ -66,7 +70,7 @@ class BoothEnvTest(TestCase):
         ])
         self.assertEqual(mock_file.write.mock_calls, [mock.call('a')])
 
-    @mock.patch("pcs.lib.booth.env.RealFile")
+    @patch_env("RealFile")
     def test_push_config(self, mock_real_file):
         mock_file = mock.MagicMock(
             assert_no_conflict_with_existing=mock.MagicMock(),
@@ -151,3 +155,73 @@ class SetKeyfileAccessTest(TestCase):
 
         file_group = grp.getgrgid(stat.st_gid)[0]
         self.assertEqual(file_group, settings.pacemaker_gname)
+
+    @patch_env("pwd.getpwnam", mock.MagicMock(side_effect=KeyError))
+    @patch_env("settings.pacemaker_uname", "some-user")
+    def test_raises_when_cannot_get_uid(self):
+        assert_raise_library_error(
+            lambda: env.set_keyfile_access("/booth"),
+            (
+                severities.ERROR,
+                report_codes.UNABLE_TO_DETERMINE_USER_UID,
+                {
+                    "user": "some-user",
+                }
+            ),
+        )
+
+    @patch_env("grp.getgrnam", mock.MagicMock(side_effect=KeyError))
+    @patch_env("pwd.getpwnam", mock.MagicMock())
+    @patch_env("settings.pacemaker_gname", "some-group")
+    def test_raises_when_cannot_get_gid(self):
+        assert_raise_library_error(
+            lambda: env.set_keyfile_access("/booth"),
+            (
+                severities.ERROR,
+                report_codes.UNABLE_TO_DETERMINE_GROUP_GID,
+                {
+                    "group": "some-group",
+                }
+            ),
+        )
+
+    @patch_env("format_environment_error", mock.Mock(return_value="err"))
+    @patch_env("os.chown", mock.MagicMock(side_effect=EnvironmentError()))
+    @patch_env("grp.getgrnam", mock.MagicMock())
+    @patch_env("pwd.getpwnam", mock.MagicMock())
+    @patch_env("settings.pacemaker_gname", "some-group")
+    def test_raises_when_cannot_chown(self):
+        assert_raise_library_error(
+            lambda: env.set_keyfile_access("/booth"),
+            (
+                severities.ERROR,
+                report_codes.FILE_IO_ERROR,
+                {
+                    'reason': 'err',
+                    'file_role': u'BOOTH_KEY',
+                    'file_path': '/booth',
+                    'operation': u'chown',
+                }
+            ),
+        )
+
+    @patch_env("format_environment_error", mock.Mock(return_value="err"))
+    @patch_env("os.chmod", mock.MagicMock(side_effect=EnvironmentError()))
+    @patch_env("os.chown", mock.MagicMock())
+    @patch_env("grp.getgrnam", mock.MagicMock())
+    @patch_env("pwd.getpwnam", mock.MagicMock())
+    @patch_env("settings.pacemaker_gname", "some-group")
+    def test_raises_when_cannot_chmod(self):
+        assert_raise_library_error(
+            lambda: env.set_keyfile_access("/booth"),
+            (
+                severities.ERROR,
+                report_codes.FILE_IO_ERROR,
+                {
+                    'reason': 'err',
+                    'file_role': u'BOOTH_KEY',
+                    'file_path': '/booth',
+                    'operation': u'chmod',
+                }
+            ),
+        )

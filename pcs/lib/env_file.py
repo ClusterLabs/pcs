@@ -90,32 +90,33 @@ class RealFile(object):
             if file_operation:
                 file_operation(self.__file_path)
         except EnvironmentError as e:
-            raise self.__report_io_error(e)
+            raise self.__report_io_error(e, "write")
 
     def read(self):
         try:
             with open(self.__file_path, "r") as file:
                 return file.read()
         except EnvironmentError as e:
-            raise self.__report_io_error(e)
+            raise self.__report_io_error(e, "read")
 
     def remove(self, silence_no_existence=False):
         if os.path.exists(self.__file_path):
             try:
                 os.remove(self.__file_path)
             except EnvironmentError as e:
-                raise self.__report_io_error(e)
+                raise self.__report_io_error(e, "remove")
         elif not silence_no_existence:
             raise LibraryError(reports.file_io_error(
                 self.__file_role,
                 file_path=self.__file_path,
-                intention_of_action="remove",
+                operation="remove",
                 reason="File does not exist"
             ))
 
-    def __report_io_error(self, e):
+    def __report_io_error(self, e, operation):
         return LibraryError(reports.file_io_error(
             self.__file_role,
             file_path=self.__file_path,
+            operation=operation,
             reason=format_environment_error(e)
         ))

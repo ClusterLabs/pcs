@@ -11,6 +11,7 @@ import grp
 
 from pcs import settings
 from pcs.common import env_file_role_codes
+from pcs.common.tools import format_environment_error
 from pcs.lib import reports as common_reports
 from pcs.lib.booth import reports
 from pcs.lib.env_file import GhostFile, RealFile
@@ -32,12 +33,36 @@ def get_config_file_name(name):
 def get_key_path(name):
     return get_booth_env_file_name(name, "key")
 
+def report_keyfile_io_error(file_path, operation, e):
+    return LibraryError(common_reports.file_io_error(
+        file_role=env_file_role_codes.BOOTH_KEY,
+        file_path=file_path,
+        operation=operation,
+        reason=format_environment_error(e)
+    ))
+
 def set_keyfile_access(file_path):
     #shutil.chown is not in python2
-    uid = pwd.getpwnam(settings.pacemaker_uname).pw_uid
-    gid = grp.getgrnam(settings.pacemaker_gname).gr_gid
-    os.chown(file_path, uid, gid)
-    os.chmod(file_path, 0o600)
+    try:
+        uid = pwd.getpwnam(settings.pacemaker_uname).pw_uid
+    except KeyError:
+        raise LibraryError(common_reports.unable_to_determine_user_uid(
+            settings.pacemaker_uname
+        ))
+    try:
+        gid = grp.getgrnam(settings.pacemaker_gname).gr_gid
+    except KeyError:
+        raise LibraryError(common_reports.unable_to_determine_group_gid(
+            settings.pacemaker_gname
+        ))
+    try:
+        os.chown(file_path, uid, gid)
+    except EnvironmentError as e:
+        raise report_keyfile_io_error(file_path, "chown", e)
+    try:
+        os.chmod(file_path, 0o600)
+    except EnvironmentError as e:
+        raise report_keyfile_io_error(file_path, "chmod", e)
 
 class BoothEnv(object):
     def __init__(self, report_processor, env_data):
