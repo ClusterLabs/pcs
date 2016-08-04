@@ -157,7 +157,7 @@ def booth_distributing_config(name=None):
     )
 
 
-def booth_config_saved(node, name_list=None):
+def booth_config_saved(node=None, name_list=None):
     """
     Booth config has been saved on specified node.
 
@@ -167,15 +167,15 @@ def booth_config_saved(node, name_list=None):
     if name_list:
         name = ", ".join(name_list)
         if name == "booth":
-            msg = "{node}: Booth config saved."
+            msg = "Booth config saved."
         else:
-            msg = "{node}: Booth config(s) ({name}) saved."
+            msg = "Booth config(s) ({name}) saved."
     else:
-        msg = "{node}: Booth config saved."
+        msg = "Booth config saved."
         name = None
     return ReportItem.info(
         report_codes.BOOTH_CONFIGS_SAVED_ON_NODE,
-        msg,
+        msg if node is None else "{node}: " + msg,
         info={
             "node": node,
             "name": name,

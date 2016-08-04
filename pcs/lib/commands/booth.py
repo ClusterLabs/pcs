@@ -316,9 +316,9 @@ def pull_config(env, node_name, name):
                 ),
                 True
             )
-        env.report_processor.process(booth_reports.booth_config_saved(
-            node_name, [name]
-        ))
+        env.report_processor.process(
+            booth_reports.booth_config_saved(name_list=[name])
+        )
     except KeyError:
         raise LibraryError(reports.invalid_response_format(node_name))
 

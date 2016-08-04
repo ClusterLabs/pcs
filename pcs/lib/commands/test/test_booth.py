@@ -398,7 +398,7 @@ class PullConfigTest(TestCase):
                     Severities.INFO,
                     report_codes.BOOTH_CONFIGS_SAVED_ON_NODE,
                     {
-                        "node": "node",
+                        "node": None,
                         "name": "name",
                         "name_list": ["name"]
                     }
@@ -439,7 +439,7 @@ class PullConfigTest(TestCase):
                     Severities.INFO,
                     report_codes.BOOTH_CONFIGS_SAVED_ON_NODE,
                     {
-                        "node": "node",
+                        "node": None,
                         "name": "name",
                         "name_list": ["name"]
                     }
