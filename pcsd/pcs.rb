@@ -2068,7 +2068,7 @@ def read_booth_config(config)
   return read_file_lock(config_path)
 end
 
-def write_booth_keyfile(filename, data)
+def write_booth_authfile(filename, data)
   if filename.include?('/')
     raise InvalidFileNameException.new(filename)
   end

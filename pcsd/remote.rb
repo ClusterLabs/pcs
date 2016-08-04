@@ -2705,7 +2705,7 @@ def booth_set_config(params, request, auth_user)
   begin
     write_booth_config(config[:name], config[:data])
     if authfile
-      write_booth_keyfile(authfile[:name], authfile[:data])
+      write_booth_authfile(authfile[:name], authfile[:data])
     end
   rescue InvalidFileNameException => e
     return [400, "Invalid format of config/key file name '#{e.message}'"]
@@ -2759,7 +2759,7 @@ def booth_save_files(params, request, auth_user)
     next if conflict_files.include?(file[:name]) and not rewrite_existing
     begin
       if file[:is_authfile]
-        write_booth_keyfile(file[:name], file[:data])
+        write_booth_authfile(file[:name], file[:data])
       else
         write_booth_config(file[:name], file[:data])
       end
