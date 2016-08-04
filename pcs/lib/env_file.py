@@ -31,7 +31,7 @@ class GhostFile(object):
         return self.__content
 
     def remove(self, silence_no_existence):
-        raise NotImplementedError()
+        raise AssertionError("Remove GhostFile is not supported.")
 
     def write(self, content, file_operation=None, is_binary=False):
         """

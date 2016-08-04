@@ -186,7 +186,9 @@ class LibraryEnvironment(object):
             return os.path.exists(settings.corosync_conf_file)
 
         if not self.is_corosync_conf_live:
-            raise NotImplementedError()
+            raise AssertionError(
+                "Cannot check if node is in cluster with mocked corosync_conf."
+            )
         return exists_local_corosync_conf()
 
     def command_expect_live_corosync_env(self):

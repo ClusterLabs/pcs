@@ -103,7 +103,9 @@ class BoothEnv(object):
 
     def set_key_path(self, path):
         if not self.__config.is_live:
-            raise NotImplementedError()
+            raise AssertionError(
+                "Set path of keyfile is supported only in live environment"
+            )
         self.__set_key_path(path)
 
     @property
