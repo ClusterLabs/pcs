@@ -305,22 +305,22 @@ class SendAllConfigToNodeTest(TestCase):
                 {
                     "name": "name1.conf",
                     "data": "config1",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "name2.conf",
                     "data": "config2",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "file1.key",
                     "data": to_b64("some key"),
-                    "base64": True
+                    "is_authfile": True
                 },
                 {
                     "name": "file2.key",
                     "data": to_b64("another key"),
-                    "base64": True
+                    "is_authfile": True
                 }
             ],
             json.loads(data["data_json"][0])
@@ -410,22 +410,22 @@ class SendAllConfigToNodeTest(TestCase):
                 {
                     "name": "name1.conf",
                     "data": "config1",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "name2.conf",
                     "data": "config2",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "file1.key",
                     "data": to_b64("some key"),
-                    "base64": True
+                    "is_authfile": True
                 },
                 {
                     "name": "file2.key",
                     "data": to_b64("another key"),
-                    "base64": True
+                    "is_authfile": True
                 }
             ],
             json.loads(data["data_json"][0])
@@ -503,22 +503,22 @@ class SendAllConfigToNodeTest(TestCase):
                 {
                     "name": "name1.conf",
                     "data": "config1",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "name2.conf",
                     "data": "config2",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "file1.key",
                     "data": to_b64("some key"),
-                    "base64": True
+                    "is_authfile": True
                 },
                 {
                     "name": "file2.key",
                     "data": to_b64("another key"),
-                    "base64": True
+                    "is_authfile": True
                 }
             ],
             json.loads(data["data_json"][0])
@@ -623,22 +623,22 @@ class SendAllConfigToNodeTest(TestCase):
                 {
                     "name": "name1.conf",
                     "data": "config1",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "name2.conf",
                     "data": "config2",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "file1.key",
                     "data": to_b64("some key"),
-                    "base64": True
+                    "is_authfile": True
                 },
                 {
                     "name": "file2.key",
                     "data": to_b64("another key"),
-                    "base64": True
+                    "is_authfile": True
                 }
             ],
             json.loads(data["data_json"][0])
@@ -720,22 +720,22 @@ class SendAllConfigToNodeTest(TestCase):
                 {
                     "name": "name1.conf",
                     "data": "config1",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "name2.conf",
                     "data": "config2",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "file1.key",
                     "data": to_b64("some key"),
-                    "base64": True
+                    "is_authfile": True
                 },
                 {
                     "name": "file2.key",
                     "data": to_b64("another key"),
-                    "base64": True
+                    "is_authfile": True
                 }
             ],
             json.loads(data["data_json"][0])
@@ -792,22 +792,22 @@ class SendAllConfigToNodeTest(TestCase):
                 {
                     "name": "name1.conf",
                     "data": "config1",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "name2.conf",
                     "data": "config2",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "file1.key",
                     "data": to_b64("some key"),
-                    "base64": True
+                    "is_authfile": True
                 },
                 {
                     "name": "file2.key",
                     "data": to_b64("another key"),
-                    "base64": True
+                    "is_authfile": True
                 }
             ],
             json.loads(data["data_json"][0])
@@ -853,22 +853,22 @@ class SendAllConfigToNodeTest(TestCase):
                 {
                     "name": "name1.conf",
                     "data": "config1",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "name2.conf",
                     "data": "config2",
-                    "base64": False
+                    "is_authfile": False
                 },
                 {
                     "name": "file1.key",
                     "data": to_b64("some key"),
-                    "base64": True
+                    "is_authfile": True
                 },
                 {
                     "name": "file2.key",
                     "data": to_b64("another key"),
-                    "base64": True
+                    "is_authfile": True
                 }
             ],
             json.loads(data["data_json"][0])

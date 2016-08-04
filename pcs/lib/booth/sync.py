@@ -118,7 +118,7 @@ def send_all_config_to_node(
         file_list.append({
             "name": config,
             "data": config_data,
-            "base64": False
+            "is_authfile": False
         })
     authfile_dict = booth_conf.read_authfiles_from_configs(
         reporter, sorted(list(config_dict.values()))
@@ -127,7 +127,7 @@ def send_all_config_to_node(
         file_list.append({
             "name": authfile,
             "data": base64.b64encode(authfile_data).decode("utf-8"),
-            "base64": True
+            "is_authfile": True
         })
 
     data = [("data_json", json.dumps(file_list))]

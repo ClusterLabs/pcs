@@ -2743,7 +2743,7 @@ def booth_save_files(params, request, auth_user)
   conflict_files = []
   data.each { |file|
     next unless File.file?(File.join(BOOTH_CONFIG_DIR, file[:name]))
-    if file[:base64]
+    if file[:is_authfile]
       cur_data = read_booth_authfile(file[:name])
     else
       cur_data = read_booth_config(file[:name])
@@ -2758,7 +2758,7 @@ def booth_save_files(params, request, auth_user)
   data.each { |file|
     next if conflict_files.include?(file[:name]) and not rewrite_existing
     begin
-      if file[:base64]
+      if file[:is_authfile]
         write_booth_keyfile(file[:name], file[:data])
       else
         write_booth_config(file[:name], file[:data])
