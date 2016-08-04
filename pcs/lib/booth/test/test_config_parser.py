@@ -129,7 +129,8 @@ class ParseRawLinesTest(TestCase):
     def test_raises_when_unexpected_lines_appear(self):
         invalid_line_list = [
             "first invalid line",
-            "second = 'invalid line' something else #comment"
+            "second = 'invalid line' something else #comment",
+            "third = 'invalid line 'something#'#",
         ]
         line_list = ["site = 1.1.1.1"] + invalid_line_list
         with self.assertRaises(config_parser.InvalidLines) as context_manager:

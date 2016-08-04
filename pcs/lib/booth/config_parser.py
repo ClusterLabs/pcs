@@ -70,7 +70,8 @@ def parse_to_raw_lines(config_content):
     keyword_part = r"^(?P<key>[a-zA-Z0-9_-]+)\s*=\s*"
     expression_list = [re.compile(pattern.format(keyword_part)) for pattern in [
         r"""{0}(?P<value>[^'"]+)$""",
-        r"""{0}(?P<q>["'])(?P<value>.*)(?P=q)\s*(#.*)?$""",
+        r"""{0}'(?P<value>[^']*)'\s*(#.*)?$""",
+        r"""{0}"(?P<value>[^"]*)"\s*(#.*)?$""",
     ]]
 
     line_list = []
