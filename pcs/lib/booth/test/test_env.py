@@ -43,10 +43,10 @@ class BoothEnvTest(TestCase):
     @patch_env("RealFile")
     def test_get_content_from_file(self, mock_real_file):
         mock_real_file.return_value = mock.MagicMock(
-            read=mock.MagicMock(return_value=["content"])
+            read=mock.MagicMock(return_value="content")
         )
         self.assertEqual(
-            ["content"],
+            "content",
             env.BoothEnv("report processor", env_data={"name": "booth"})
                 .get_config_content()
         )
@@ -124,9 +124,9 @@ class BoothEnvTest(TestCase):
         )
 
 class SetKeyfileAccessTest(TestCase):
-    def test_set_neede_file_access(self):
+    def test_set_desired_file_access(self):
         #setup
-        file_path = rc("tmp_keyfile")
+        file_path = rc("temp-keyfile")
         if os.path.exists(file_path):
             os.remove(file_path)
         with open(file_path, "w") as file:
