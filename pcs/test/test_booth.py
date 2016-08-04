@@ -266,7 +266,7 @@ class RemoveTest(BoothTest):
     def test_failed_when_no_booth_configuration_created(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
         self.assert_pcs_fail("booth remove", [
-            "Error: booth for config '/etc/booth/booth.conf' not found in cib"
+            "Error: booth instance 'booth' not found in cib"
         ])
 
     def test_failed_when_multiple_booth_configuration_created(self):
@@ -283,8 +283,8 @@ class RemoveTest(BoothTest):
              " some-id	(ocf::pacemaker:booth-site):	Stopped",
         ])
         self.assert_pcs_fail("booth remove", [
-            "Error: found more than one booth for config"
-            " '/etc/booth/booth.conf' in cib, use --force to override"
+            "Error: found more than one booth instance 'booth' in cib, use"
+            " --force to override"
         ])
 
 

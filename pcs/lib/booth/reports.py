@@ -142,16 +142,16 @@ def booth_already_in_cib(name):
         }
     )
 
-def booth_not_exists_in_cib(config_file_path):
+def booth_not_exists_in_cib(name):
     """
     Remove booth instance from cib required. But no such instance found in cib.
-    string config_file_path
+    string name is booth instance name
     """
     return ReportItem.error(
         report_codes.BOOTH_NOT_EXISTS_IN_CIB,
-        "booth for config '{config_file_path}' not found in cib",
+        "booth instance '{name}' not found in cib",
         info={
-            "config_file_path": config_file_path,
+            "name": name,
         }
     )
 
@@ -173,14 +173,14 @@ def booth_config_is_used(config_file_path, detail=""):
     )
 
 def booth_multiple_times_in_cib(
-    config_file_path, severity=ReportItemSeverity.ERROR
+    name, severity=ReportItemSeverity.ERROR
 ):
     """
     Each booth instance should be in a cib once maximally. But multiple
         occurences detected. For example during remove booth instance from cib.
         Notify user about this fact is required. When operation is forced
         user should be notified about multiple occurences.
-    string config_file_path
+    string name is booth instance name
     ReportItemSeverity severit should be ERROR or WARNING (depends on context)
         is flag for next report processing
         Because of severity coupling with ReportItem is it specified here.
@@ -188,9 +188,9 @@ def booth_multiple_times_in_cib(
     return ReportItem(
         report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
         severity,
-        "found more than one booth for config '{config_file_path}' in cib",
+        "found more than one booth instance '{name}' in cib",
         info={
-            "config_file_path": config_file_path,
+            "name": name,
         },
         forceable=report_codes.FORCE_BOOTH_REMOVE_FROM_CIB
             if severity == ReportItemSeverity.ERROR else None

@@ -23,7 +23,7 @@ from pcs.lib.booth import (
 from pcs.lib.booth.config_parser import parse, build
 from pcs.lib.booth.env import get_config_file_name
 from pcs.lib.cib.tools import get_resources
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.node import NodeAddresses
 
 
@@ -141,11 +141,22 @@ def create_in_cluster(env, name, ip, resource_create):
 def remove_from_cluster(env, name, resource_remove):
     #TODO resource_remove is provisional hack until resources are not moved to
     #lib
-    resource.get_remover(resource_remove)(
-        env.report_processor,
-        get_resources(env.get_cib()),
-        get_config_file_name(name),
-    )
+    try:
+        num_of_removed_booth_resources = resource.get_remover(resource_remove)(
+            get_resources(env.get_cib()),
+            get_config_file_name(name),
+        )
+        if num_of_removed_booth_resources > 1:
+            env.report_processor.process(
+                booth_reports.booth_multiple_times_in_cib(
+                    name,
+                    severity=ReportItemSeverity.WARNING,
+                )
+            )
+    except resource.BoothNotFoundInCib:
+        raise LibraryError(booth_reports.booth_not_exists_in_cib(name))
+    except resource.BoothMultipleOccurenceFoundInCib:
+        raise LibraryError(booth_reports.booth_multiple_times_in_cib(name))
 
 def ticket_operation(operation, env, name, ticket, site_ip):
     if not site_ip:

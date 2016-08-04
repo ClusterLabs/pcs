@@ -19,6 +19,7 @@ from pcs.test.tools.assertions import (
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.lib.booth import resource as booth_resource
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.node import NodeAddresses
 from pcs.lib.errors import ReportItemSeverity as Severities
@@ -528,3 +529,57 @@ class CreateInClusterTest(TestCase):
                 }
             ),
         )
+
+class RemoveFromClusterTest(TestCase):
+    @patch_commands("resource.get_remover", mock.Mock(return_value = mock.Mock(
+        side_effect=booth_resource.BoothNotFoundInCib()
+    )))
+    def test_raises_when_no_booth_resource_found(self):
+        assert_raise_library_error(
+            lambda: commands.remove_from_cluster(
+                mock.MagicMock(), "somename", resource_remove=None
+            ),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_NOT_EXISTS_IN_CIB,
+                {
+                    'name': 'somename',
+                }
+            ),
+        )
+
+    @patch_commands("resource.get_remover", mock.Mock(return_value = mock.Mock(
+        side_effect=booth_resource.BoothMultipleOccurenceFoundInCib()
+    )))
+    def test_raises_when_multiple_booth_resource_found(self):
+        assert_raise_library_error(
+            lambda: commands.remove_from_cluster(
+                mock.MagicMock(), "somename", resource_remove=None
+            ),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+                {
+                    'name': 'somename',
+                },
+                report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+            ),
+        )
+
+    @patch_commands("resource.get_remover", mock.Mock(return_value = mock.Mock(
+        return_value=2
+    )))
+    def test_warn_when_multiple_booth_resources_removed(self):
+        report_processor=MockLibraryReportProcessor()
+        commands.remove_from_cluster(
+            mock.MagicMock(report_processor=report_processor),
+            "somename",
+            resource_remove=None
+        )
+        assert_report_item_list_equal(report_processor.report_item_list, [(
+            Severities.WARNING,
+            report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+            {
+                'name': 'somename',
+            },
+        )])

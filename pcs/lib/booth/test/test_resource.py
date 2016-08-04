@@ -10,14 +10,8 @@ from unittest import TestCase
 from lxml import etree
 
 import pcs.lib.booth.resource as booth_resource
-from pcs.common import report_codes
-from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.assertions import(
-    assert_raise_library_error,
-    assert_report_item_list_equal
-)
 from pcs.test.tools.pcs_mock import mock
-from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+
 
 def fixture_resources_with_booth(booth_config_file_path):
     return etree.fromstring('''
@@ -93,14 +87,17 @@ class FindBoothResourceElementsTest(TestCase):
 class RemoveFromClusterTest(TestCase):
     def call(self, resources_section, remove_multiple=False):
         mock_resource_remove = mock.Mock()
-        report_processor=MockLibraryReportProcessor()
-        booth_resource.get_remover(mock_resource_remove)(
-            report_processor,
+        num_of_removed_booth_resources = booth_resource.get_remover(
+            mock_resource_remove
+        )(
             resources_section,
             "/PATH/TO/CONF",
             remove_multiple,
         )
-        return mock_resource_remove, report_processor
+        return (
+            mock_resource_remove,
+            num_of_removed_booth_resources
+        )
 
     def fixture_resources_including_two_booths(self):
         resources_section = etree.fromstring('<resources/>')
@@ -111,44 +108,25 @@ class RemoveFromClusterTest(TestCase):
         return resources_section
 
     def test_raises_when_booth_resource_not_found(self):
-        assert_raise_library_error(
+        self.assertRaises(
+            booth_resource.BoothNotFoundInCib,
             lambda: self.call(etree.fromstring('<resources/>')),
-            (
-                severities.ERROR,
-                report_codes.BOOTH_NOT_EXISTS_IN_CIB,
-                {
-                    'config_file_path': '/PATH/TO/CONF',
-                }
-            ),
         )
 
     def test_raises_when_more_booth_resources_found(self):
         resources_section = self.fixture_resources_including_two_booths()
-        assert_raise_library_error(
+        self.assertRaises(
+            booth_resource.BoothMultipleOccurenceFoundInCib,
             lambda: self.call(resources_section),
-            (
-                severities.ERROR,
-                report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
-                {
-                    'config_file_path': '/PATH/TO/CONF',
-                },
-                report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
-            ),
         )
 
-    def test_warn_during_forced_removing_more_booth_resources(self):
+    def test_returns_number_of_removed_elements(self):
         resources_section = self.fixture_resources_including_two_booths()
-        mock_resource_remove, report_processor = self.call(
+        mock_resource_remove, num_of_removed_booth_resources = self.call(
             resources_section,
             remove_multiple=True
         )
-        assert_report_item_list_equal(report_processor.report_item_list, [(
-            severities.WARNING,
-            report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
-            {
-                'config_file_path': '/PATH/TO/CONF',
-            },
-        )])
+        self.assertEqual(num_of_removed_booth_resources, 2)
         self.assertEqual(
             mock_resource_remove.mock_calls, [
                 mock.call('first'),

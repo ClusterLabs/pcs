@@ -5,10 +5,14 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib.booth import reports
 from pcs.lib.cib.tools import find_unique_id
-from pcs.lib.errors import LibraryError, ReportItemSeverity
 
+
+class BoothNotFoundInCib(Exception):
+    pass
+
+class BoothMultipleOccurenceFoundInCib(Exception):
+    pass
 
 def create_resource_id(resources_section, name, suffix):
     return find_unique_id(
@@ -61,35 +65,27 @@ def find_grouped_ip_element_to_remove(booth_element):
 
 def get_remover(resource_remove):
     def remove_from_cluster(
-        report_processor, resources_section, booth_config_file_path,
-        remove_multiple=False
+        resources_section, booth_config_file_path, remove_multiple=False
     ):
         element_list = find_for_config(
             resources_section,
             booth_config_file_path
         )
         if not element_list:
-            raise LibraryError(
-               reports.booth_not_exists_in_cib(booth_config_file_path)
-            )
+            raise BoothNotFoundInCib()
 
-        if len(element_list) > 1:
-            if not remove_multiple:
-                raise LibraryError(
-                    reports.booth_multiple_times_in_cib(booth_config_file_path)
-                )
-            report_processor.process(
-                reports.booth_multiple_times_in_cib(
-                    booth_config_file_path,
-                    severity=ReportItemSeverity.WARNING,
-                )
-            )
+        if len(element_list) > 1 and not remove_multiple:
+            raise BoothMultipleOccurenceFoundInCib()
 
+        number_of_removed_booth_elements = 0
         for element in element_list:
             ip_resource_to_remove = find_grouped_ip_element_to_remove(element)
             if ip_resource_to_remove is not None:
                 resource_remove(ip_resource_to_remove.attrib["id"])
             resource_remove(element.attrib["id"])
+            number_of_removed_booth_elements += 1
+
+        return number_of_removed_booth_elements
 
     return remove_from_cluster
 
