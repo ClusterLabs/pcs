@@ -10,6 +10,10 @@ from pcs.lib.errors import ReportItem, ReportItemSeverity
 
 
 def booth_lack_of_sites(site_list):
+    """
+    Less than 2 booth sites entered. But it does not make sense.
+    list site_list contains currently entered sites
+    """
     return ReportItem.error(
         report_codes.BOOTH_LACK_OF_SITES,
         "lack of sites for booth configuration (need 2 at least):"
@@ -22,15 +26,23 @@ def booth_lack_of_sites(site_list):
     )
 
 def booth_even_peers_num(number):
+    """
+    Booth requires odd number of peers. But even number of peers was entered.
+    integer number determines how many peers was entered
+    """
     return ReportItem.error(
         report_codes.BOOTH_EVEN_PEERS_NUM,
-        "odd number of peers ({number})",
+        "odd number of peers is required (entered {number} peers)",
         info={
             "number": number,
         }
     )
 
 def booth_address_duplication(duplicate_addresses):
+    """
+    Address of each peer must unique. But address duplication appeared.
+    set duplicate_addresses contains addreses entered multiple times
+    """
     return ReportItem.error(
         report_codes.BOOTH_ADDRESS_DUPLICATION,
         "duplicate address for booth configuration: {addresses_string}"
@@ -42,6 +54,11 @@ def booth_address_duplication(duplicate_addresses):
     )
 
 def booth_config_unexpected_lines(line_list):
+    """
+    Booth config have defined structure. But line out of structure definition
+        appeared.
+    list line_list contains lines out of defined structure
+    """
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
         "unexpected line appeard in config: \n{lines_string}",
@@ -51,25 +68,28 @@ def booth_config_unexpected_lines(line_list):
         }
     )
 
-def booth_config_invalid_content(reason):
+def booth_invalid_name(name, reason):
+    """
+    Booth instance name have rules. For example it cannot contain illegal
+        characters like '/'. But some of rules was violated.
+    string name is entered booth instance name
+    """
     return ReportItem.error(
-        report_codes.BOOTH_CONFIG_INVALID_CONTENT,
-        "booth config has invalid content: '{reason}'",
+        report_codes.BOOTH_INVALID_NAME,
+            "booth name '{name}' is not valid ({reason})"
+        ,
         info={
+            "name": name,
             "reason": reason,
         }
     )
 
-def booth_invalid_name(name):
-    return ReportItem.error(
-        report_codes.BOOTH_INVALID_NAME,
-        "booth name '{name}' is not valid",
-        info={
-            "name": name,
-        }
-    )
-
 def booth_ticket_name_invalid(ticket_name):
+    """
+    Name of booth ticket may consists of alphanumeric characters or dash.
+        Entered ticket name violating this rule.
+    string ticket_name is entered booth ticket name
+    """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_NAME_INVALID,
         "booth ticket name '{ticket_name}' is not valid,"
@@ -81,6 +101,11 @@ def booth_ticket_name_invalid(ticket_name):
     )
 
 def booth_ticket_duplicate(ticket_name):
+    """
+    Each booth ticket name must be uniqe. But duplicate booth ticket name
+        was entered.
+    string ticket_name is entered booth ticket name
+    """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_DUPLICATE,
         "booth ticket name '{ticket_name}' already exists in configuration",
@@ -90,6 +115,11 @@ def booth_ticket_duplicate(ticket_name):
     )
 
 def booth_ticket_does_not_exist(ticket_name):
+    """
+    Some operations (like ticket remove) expect the ticket name in booth
+        configuration. But the ticket name not found in booth configuration.
+    string ticket_name is entered booth ticket name
+    """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_DOES_NOT_EXIST,
         "booth ticket name '{ticket_name}' does not exist",
@@ -98,16 +128,27 @@ def booth_ticket_does_not_exist(ticket_name):
         }
     )
 
-def booth_already_created(config_file_path):
+def booth_already_in_cib(config_file_path):
+    """
+    Each booth instance should be in a cib once maximally. Existence of booth
+        instance in cib detected during creating new one.
+    string config_file_path
+    """
     return ReportItem.error(
-        report_codes.BOOTH_ALREADY_CREATED,
-        "booth for config '{config_file_path}' is already created",
+        report_codes.BOOTH_ALREADY_IN_CIB,
+        "booth for config '{config_file_path}' is already created as cluster"
+            " resource"
+        ,
         info={
             "config_file_path": config_file_path,
         }
     )
 
 def booth_not_exists_in_cib(config_file_path):
+    """
+    Remove booth instance from cib required. But no such instance found in cib.
+    string config_file_path
+    """
     return ReportItem.error(
         report_codes.BOOTH_NOT_EXISTS_IN_CIB,
         "booth for config '{config_file_path}' not found in cib",
@@ -117,6 +158,12 @@ def booth_not_exists_in_cib(config_file_path):
     )
 
 def booth_config_is_used(config_file_path, detail=""):
+    """
+    Booth config use detected during destroy request.
+    string config_file_path
+    string detail provide more details (for example booth instance is used as
+        cluster resource or is started/enabled under systemd)
+    """
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_IS_USED,
         "booth for config '{config_file_path}' is used{detail_string}",
@@ -130,6 +177,16 @@ def booth_config_is_used(config_file_path, detail=""):
 def booth_multiple_times_in_cib(
     config_file_path, severity=ReportItemSeverity.ERROR
 ):
+    """
+    Each booth instance should be in a cib once maximally. But multiple
+        occurences detected. For example during remove booth instance from cib.
+        Notify user about this fact is required. When operation is forced
+        user should be notified about multiple occurences.
+    string config_file_path
+    ReportItemSeverity severit should be ERROR or WARNING (depends on context)
+        is flag for next report processing
+        Because of severity coupling with ReportItem is it specified here.
+    """
     return ReportItem(
         report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
         severity,
@@ -293,27 +350,36 @@ def booth_peers_status_error(reason=None):
         }
     )
 
-def booth_correct_config_not_found_in_cib(operation):
+def booth_cannot_determine_local_site_ip():
+    """
+    Some booth operations are performed on specific site and requires to specify
+        site ip. When site specification omitted pcs can try determine local ip.
+        But determine local site ip failed.
+    """
     return ReportItem.error(
-        report_codes.BOOTH_CORRECT_CONFIG_NOT_FOUND_IN_CIB,
-        "correct booth configuration not found,"
-        " can not {operation} ticket to implicit site,"
-        " please specify site parameter",
-        info={
-            "operation": operation,
-        }
+        report_codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
+        "cannot determine local site ip, please specify site parameter",
+        info={}
     )
 
-def booth_ticket_operation_failed(operation, reason, site_ip, ticket):
+def booth_ticket_operation_failed(operation, reason, site_ip, ticket_name):
+    """
+    Pcs uses external booth tools for some ticket_name operations. For example grand
+        and revoke. But the external command failed.
+    string operatin determine what was intended perform with ticket_name
+    string reason is taken from external booth command
+    string site_ip specifiy what site had to run the command
+    string ticket_name specify with which ticket had to run the command
+    """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_OPERATION_FAILED,
-        "unable to {operation} booth ticket '{ticket}' for site '{site_ip}', "
+        "unable to {operation} booth ticket_name '{ticket_name}' for site '{site_ip}', "
             "reason: {reason}"
         ,
         info={
             "operation": operation,
             "reason": reason,
             "site_ip": site_ip,
-            "ticket": ticket,
+            "ticket_name": ticket_name,
         }
     )

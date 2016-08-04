@@ -99,7 +99,7 @@ def validate_no_booth_resource_using_config(
 ):
     if find_for_config(resources_section, booth_config_file_path):
         raise LibraryError(
-            reports.booth_already_created(booth_config_file_path)
+            reports.booth_already_in_cib(booth_config_file_path)
         )
 
 def find_for_config(resources_section, booth_config_file_path):

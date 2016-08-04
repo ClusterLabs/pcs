@@ -34,6 +34,7 @@ class GetConfigFileNameTest(TestCase):
                 report_codes.BOOTH_INVALID_NAME,
                 {
                     "name": "/booth",
+                    "reason": "contains illegal character '/'",
                 }
             ),
         )

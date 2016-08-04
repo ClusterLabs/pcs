@@ -75,7 +75,7 @@ class ValidateNoBoothResourceUsingConfigTest(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.BOOTH_ALREADY_CREATED,
+                report_codes.BOOTH_ALREADY_IN_CIB,
                 {
                     'config_file_path': '/PATH/TO/CONF',
                 }

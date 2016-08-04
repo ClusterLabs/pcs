@@ -157,7 +157,7 @@ def ticket_operation(operation, env, name, ticket, site_ip):
         )
         if not site_ip:
             raise LibraryError(
-                booth_reports.booth_correct_config_not_found_in_cib(operation)
+                booth_reports.booth_cannot_determine_local_site_ip()
             )
 
     command_output, return_code = env.cmd_runner().run([

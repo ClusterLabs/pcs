@@ -487,10 +487,8 @@ class TicketOperationTest(TestCase):
             ),
             (
                 Severities.ERROR,
-                report_codes.BOOTH_CORRECT_CONFIG_NOT_FOUND_IN_CIB,
-                {
-                    "operation": "grant",
-                }
+                report_codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
+                {}
             ),
         )
 
@@ -510,7 +508,7 @@ class TicketOperationTest(TestCase):
                     "operation": "grant",
                     "reason": "some message",
                     "site_ip": "1.2.3.4",
-                    "ticket": "ABC",
+                    "ticket_name": "ABC",
                 }
             ),
         )

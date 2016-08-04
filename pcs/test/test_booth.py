@@ -123,7 +123,7 @@ class SetupTest(BoothMixin, unittest.TestCase):
                 "Error: lack of sites for booth configuration (need 2 at least)"
                     ": sites 1.1.1.1"
                 ,
-                "Error: odd number of peers (4)",
+                "Error: odd number of peers is required (entered 4 peers)",
                 "Error: duplicate address for booth configuration: 1.1.1.1",
             )
         )
@@ -258,6 +258,7 @@ class CreateTest(BoothTest):
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_fail("booth create ip 192.168.122.121", [
             "Error: booth for config '/etc/booth/booth.conf' is already created"
+            " as cluster resource"
         ])
 
 @need_booth_resource_agent
@@ -311,9 +312,9 @@ class TicketGrantTest(BoothTest):
         self.assert_pcs_success("booth ticket add T1")
         #no resource in cib
         self.assert_pcs_fail("booth ticket grant T1", [
-            "Error: correct booth configuration not found,"
-            " can not grant ticket to implicit site,"
-            " please specify site parameter"
+            "Error: cannot determine local site ip, please specify site"
+                " parameter"
+            ,
         ])
 
 class TicketRevokeTest(BoothTest):
@@ -323,9 +324,9 @@ class TicketRevokeTest(BoothTest):
         self.assert_pcs_success("booth ticket add T1")
         #no resource in cib
         self.assert_pcs_fail("booth ticket revoke T1", [
-            "Error: correct booth configuration not found,"
-            " can not revoke ticket to implicit site,"
-            " please specify site parameter"
+            "Error: cannot determine local site ip, please specify site"
+                " parameter"
+            ,
         ])
 
 class ConfigTest(unittest.TestCase, BoothMixin):
