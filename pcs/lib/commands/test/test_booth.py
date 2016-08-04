@@ -477,11 +477,11 @@ class PullConfigTest(TestCase):
         )
 
 class TicketOperationTest(TestCase):
-    @mock.patch("pcs.lib.booth.resource.find_binded_single_ip")
+    @mock.patch("pcs.lib.booth.resource.find_bound_ip")
     def test_raises_when_implicit_site_not_found_in_cib(
-        self, mock_find_binded_ip
+        self, mock_find_bound_ip
     ):
-        mock_find_binded_ip.return_value = None
+        mock_find_bound_ip.return_value = []
         assert_raise_library_error(
             lambda: commands.ticket_operation(
                 "grant", mock.Mock(), "booth", "ABC", site_ip=None

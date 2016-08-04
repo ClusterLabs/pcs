@@ -40,7 +40,7 @@ def fixture_ip_element(id, ip=""):
             <nvpair
                 id="booth-booth-{0}-ia-ip"
                 name="ip"
-                value="192.168.122.31"
+                value="{1}"
             />
           </instance_attributes>
         </primitive>
@@ -172,8 +172,8 @@ class FindBindedIpTest(TestCase):
 
     def test_returns_None_when_no_ip(self):
         self.assertEqual(
-            None,
-            booth_resource.find_binded_single_ip(
+            [],
+            booth_resource.find_bound_ip(
                 self.fixture_resource_section([]),
                 "/PATH/TO/CONF",
             )
@@ -181,8 +181,8 @@ class FindBindedIpTest(TestCase):
 
     def test_returns_ip_when_correctly_found(self):
         self.assertEqual(
-            "192.168.122.31",
-            booth_resource.find_binded_single_ip(
+            ["192.168.122.31"],
+            booth_resource.find_bound_ip(
                 self.fixture_resource_section([
                     fixture_ip_element("ip1", "192.168.122.31"),
                 ]),
@@ -192,8 +192,8 @@ class FindBindedIpTest(TestCase):
 
     def test_returns_None_when_more_ip(self):
         self.assertEqual(
-            None,
-            booth_resource.find_binded_single_ip(
+            ["192.168.122.31", "192.168.122.32"],
+            booth_resource.find_bound_ip(
                 self.fixture_resource_section([
                     fixture_ip_element("ip1", "192.168.122.31"),
                     fixture_ip_element("ip2", "192.168.122.32"),

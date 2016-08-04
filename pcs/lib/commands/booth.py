@@ -157,14 +157,15 @@ def remove_from_cluster(env, name, resource_remove):
 
 def ticket_operation(operation, env, name, ticket, site_ip):
     if not site_ip:
-        site_ip = resource.find_binded_single_ip(
+        site_ip_list = resource.find_bound_ip(
             get_resources(env.get_cib()),
             get_config_file_name(name)
         )
-        if not site_ip:
+        if len(site_ip_list) != 1:
             raise LibraryError(
                 booth_reports.booth_cannot_determine_local_site_ip()
             )
+        site_ip = site_ip_list[0]
 
     command_output, return_code = env.cmd_runner().run([
         settings.booth_binary, operation,

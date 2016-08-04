@@ -98,8 +98,8 @@ def find_for_config(resources_section, booth_config_file_path):
         ]
     """).format(booth_config_file_path))
 
-def find_binded_single_ip(resources_section, booth_config_file_path):
-    ip_list = resources_section.xpath(("""
+def find_bound_ip(resources_section, booth_config_file_path):
+    return resources_section.xpath(("""
         .//group[
             primitive[
                 @type="booth-site"
@@ -114,4 +114,3 @@ def find_binded_single_ip(resources_section, booth_config_file_path):
         /nvpair[@name="ip"]
         /@value
     """).format(booth_config_file_path))
-    return ip_list[0] if len(ip_list) == 1 else None
