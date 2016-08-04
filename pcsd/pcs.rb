@@ -2087,13 +2087,14 @@ def read_booth_authfile(filename)
 end
 
 def get_authfile_from_booth_config(config_data)
+  authfile_path = nil
   config_data.split("\n").each {|line|
     if line.include?('=')
       parts = line.split('=', 2)
       if parts[0].strip == 'authfile'
-        return parts[1].strip
+        authfile_path = parts[1].strip
       end
     end
   }
-  return nil
+  return authfile_path
 end
