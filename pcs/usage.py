@@ -1419,10 +1419,10 @@ Commands:
             [--force]
         Write new booth configuration with specified sites and arbitrators.
         Total number of peers (sites and arbitrators) must be odd.
-        When configuration file exists, command fail unless --force applied.
+        When configuration file exists, command fails unless --force applied.
 
     destroy
-        Remove setted up booth configuration if its usage is not detected.
+        Remove set up booth configuration.
 
     ticket add <ticket-name>
         Add new ticket to current configuration.
@@ -1431,19 +1431,23 @@ Commands:
         Remove ticket from current configuration.
 
     config
-        Show currently written booth configuration.
+        Show booth configuration.
 
     create ip <address>
-        Create booth resource grouped with ip resource. Parameter address
-        specify virtual ip address.
+        Make cluster run booth service on specified ip address as a cluster
+        resource. Typically this is used to run booth site.
 
     remove
-        Remove booth resource. Remove grouped ip resource as well unless extra
-        resource appear in group.
+        Remove booth resources created by "pcs booth create" command.
 
     ticket grant <ticket> [<site address>]
-        Grant ticket for site specified by address. If site not specified, is
-        used the one created by 'pcs booth create' command.
+        Grant ticket for site specified by address. Site address which has been
+        specified with 'pcs booth create' command is used if 'site address' is
+        omitted.
+
+    ticket revoke <ticket> [<site address>]
+        Revoke ticket for site specified by address. If site is not specified
+        is used site which has been created by 'pcs booth create' command.
 
     status
         Print current status of booth on local node.
