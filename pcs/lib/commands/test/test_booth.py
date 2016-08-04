@@ -512,3 +512,19 @@ class TicketOperationTest(TestCase):
                 }
             ),
         )
+
+class CreateInClusterTest(TestCase):
+    @patch_commands("get_resources", mock.MagicMock())
+    def test_raises_when_is_created_already(self):
+        assert_raise_library_error(
+            lambda: commands.create_in_cluster(
+                mock.MagicMock(), "somename", ip="1.2.3.4", resource_create=None
+            ),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_ALREADY_IN_CIB,
+                {
+                    "name": "somename",
+                }
+            ),
+        )

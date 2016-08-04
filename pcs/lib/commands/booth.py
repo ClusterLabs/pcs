@@ -125,10 +125,8 @@ def create_in_cluster(env, name, ip, resource_create):
     resources_section = get_resources(env.get_cib())
 
     booth_config_file_path = get_config_file_name(name)
-    resource.validate_no_booth_resource_using_config(
-        resources_section,
-        booth_config_file_path
-    )
+    if resource.find_for_config(resources_section, booth_config_file_path):
+        raise LibraryError(booth_reports.booth_already_in_cib(name))
 
     resource.get_creator(resource_create)(
         ip,

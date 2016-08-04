@@ -93,15 +93,6 @@ def get_remover(resource_remove):
 
     return remove_from_cluster
 
-
-def validate_no_booth_resource_using_config(
-    resources_section, booth_config_file_path
-):
-    if find_for_config(resources_section, booth_config_file_path):
-        raise LibraryError(
-            reports.booth_already_in_cib(booth_config_file_path)
-        )
-
 def find_for_config(resources_section, booth_config_file_path):
     return resources_section.xpath(("""
         .//primitive[

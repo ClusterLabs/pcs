@@ -128,19 +128,17 @@ def booth_ticket_does_not_exist(ticket_name):
         }
     )
 
-def booth_already_in_cib(config_file_path):
+def booth_already_in_cib(name):
     """
     Each booth instance should be in a cib once maximally. Existence of booth
         instance in cib detected during creating new one.
-    string config_file_path
+    string name is booth instance name
     """
     return ReportItem.error(
         report_codes.BOOTH_ALREADY_IN_CIB,
-        "booth for config '{config_file_path}' is already created as cluster"
-            " resource"
-        ,
+        "booth instance '{name}' is already created as cluster resource",
         info={
-            "config_file_path": config_file_path,
+            "name": name,
         }
     )
 

@@ -257,8 +257,8 @@ class CreateTest(BoothTest):
     def test_refuse_create_booth_when_config_is_already_in_use(self):
         self.assert_pcs_success("booth create ip 192.168.122.120")
         self.assert_pcs_fail("booth create ip 192.168.122.121", [
-            "Error: booth for config '/etc/booth/booth.conf' is already created"
-            " as cluster resource"
+            "Error: booth instance 'booth' is already created as cluster"
+                " resource"
         ])
 
 @need_booth_resource_agent

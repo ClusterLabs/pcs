@@ -66,28 +66,6 @@ class CreateResourceIdTest(TestCase):
             )
         )
 
-class ValidateNoBoothResourceUsingConfigTest(TestCase):
-    def test_raises_when_config_already_used(self):
-        assert_raise_library_error(
-            lambda: booth_resource.validate_no_booth_resource_using_config(
-                fixture_resources_with_booth("/PATH/TO/CONF"),
-                "/PATH/TO/CONF"
-            ),
-            (
-                severities.ERROR,
-                report_codes.BOOTH_ALREADY_IN_CIB,
-                {
-                    'config_file_path': '/PATH/TO/CONF',
-                }
-            ),
-        )
-
-    def test_not_raises_when_not_used(self):
-        booth_resource.validate_no_booth_resource_using_config(
-            fixture_resources_with_booth("/ANOTHER/PATH/TO/CONF"),
-            "/PATH/TO/CONF"
-        )
-
 class FindBoothResourceElementsTest(TestCase):
     def test_returns_empty_list_when_no_matching_booth_element(self):
         self.assertEqual([], booth_resource.find_for_config(
