@@ -2688,7 +2688,7 @@ def booth_set_config(params, request, auth_user)
   end
   begin
     unless params[:data_json]
-      return [400, "Missing required parameter 'data'"]
+      return [400, "Missing required parameter 'data_json'"]
     end
     data = JSON.parse(params[:data_json], {:symbolize_names => true})
   rescue JSON::ParserError
