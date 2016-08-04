@@ -74,21 +74,21 @@ class ConfigSetupTest(TestCase):
 
 class ConfigDestroyTest(TestCase):
     @patch_commands("get_config_file_name", return_value="/path/to/config")
-    @patch_commands("external.is_systemctl", return_value=True)
-    @patch_commands("external.is_service_enabled", return_value=True)
-    @patch_commands("external.is_service_running", return_value=True)
-    @patch_commands("resource.find_for_config", return_value=[True])
-    def test_raises_when_booth_config_in_use(
-        self, mock_find, mock_running, mock_enabled, mock_is_systemctl,
-        mock_config_file_name
-    ):
+    @patch_commands("external.is_systemctl", mock.Mock(return_value=True))
+    @patch_commands("external.is_service_enabled", mock.Mock(return_value=True))
+    @patch_commands("external.is_service_running", mock.Mock(return_value=True))
+    @patch_commands("resource.find_for_config", mock.Mock(return_value=[True]))
+    def test_raises_when_booth_config_in_use(self, mock_config_file_name):
+        env = mock.MagicMock()
+        env.booth.name = "somename"
+
         assert_raise_library_error(
-            lambda: commands.config_destroy(mock.MagicMock()),
+            lambda: commands.config_destroy(env),
             (
                 Severities.ERROR,
                 report_codes.BOOTH_CONFIG_IS_USED,
                 {
-                    "config_file_path": "/path/to/config",
+                    "name": "somename",
                     "detail": "in cluster resource",
                 }
             ),
@@ -96,7 +96,7 @@ class ConfigDestroyTest(TestCase):
                 Severities.ERROR,
                 report_codes.BOOTH_CONFIG_IS_USED,
                 {
-                    "config_file_path": "/path/to/config",
+                    "name": "somename",
                     "detail": "(enabled in systemd)",
                 }
             ),
@@ -104,7 +104,7 @@ class ConfigDestroyTest(TestCase):
                 Severities.ERROR,
                 report_codes.BOOTH_CONFIG_IS_USED,
                 {
-                    "config_file_path": "/path/to/config",
+                    "name": "somename",
                     "detail": "(running in systemd)",
                 }
             )

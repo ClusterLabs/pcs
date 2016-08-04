@@ -155,18 +155,18 @@ def booth_not_exists_in_cib(name):
         }
     )
 
-def booth_config_is_used(config_file_path, detail=""):
+def booth_config_is_used(name, detail=""):
     """
     Booth config use detected during destroy request.
-    string config_file_path
+    string name is booth instance name
     string detail provide more details (for example booth instance is used as
         cluster resource or is started/enabled under systemd)
     """
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_IS_USED,
-        "booth for config '{config_file_path}' is used{detail_string}",
+        "booth instance '{name}' is used{detail_string}",
         info={
-            "config_file_path": config_file_path,
+            "name": name,
             "detail": detail,
             "detail_string": " {0}".format(detail) if detail else "",
         }

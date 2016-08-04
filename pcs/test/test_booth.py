@@ -171,9 +171,8 @@ class DestroyTest(BoothMixin, unittest.TestCase):
             #always on live environment. "Cleaner" solution takes more effort
             #than what it's worth
             stdout_start=(
-                "Error: booth for config"
-                " '/etc/booth/some-weird-booth-name.conf' is used in cluster"
-                " resource\n"
+                "Error: booth instance 'some-weird-booth-name' is used in"
+                " cluster resource\n"
             ),
         )
 

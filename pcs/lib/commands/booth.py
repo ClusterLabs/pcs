@@ -52,14 +52,11 @@ def config_destroy(env):
     env.command_expect_live_corosync_env()
 
     name = env.booth.name
-    config_file_path = get_config_file_name(name)
-    config_is_used = partial(
-        booth_reports.booth_config_is_used,
-        config_file_path,
-    )
+    config_is_used = partial(booth_reports.booth_config_is_used, name)
 
     report_list = []
 
+    config_file_path = get_config_file_name(name)
     if(
         env.is_node_in_cluster()
         and
