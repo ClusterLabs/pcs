@@ -579,40 +579,40 @@ Add/Change quorum options.  At least one option must be specified.  Options are 
 .SS "booth"
 .TP
 setup sites <address> <address> [<address>...] [arbitrators <address> ...] [\fB\-\-force\fR]
-Write new booth configuration with specified sites and arbitrators. Total number of peers (sites and arbitrators) must be odd. When configuration file exists, command fails unless --force applied.
+Write new booth configuration with specified sites and arbitrators.  Total number of peers (sites and arbitrators) must be odd.  When the configuration file already exists, command fails unless \fB\-\-force\fR is specified.
 .TP
 destroy
-Remove set up booth configuration.
+Remove booth configuration files.
 .TP
-ticket add <ticket-name>
-Add new ticket to current configuration.
+ticket add <ticket>
+Add new ticket to the current configuration.
 .TP
-ticket remove <ticket-name>
-Remove ticket from current configuration.
+ticket remove <ticket>
+Remove the specified ticket from the current configuration.
 .TP
 config
-Show currently written booth configuration.
+Show booth configuration.
 .TP
 create ip <address>
-Make cluster run booth service on specified ip address as a cluster resource. Typically this is used to run booth site.
+Make the cluster run booth service on the specified ip address as a cluster resource.  Typically this is used to run booth site.
 .TP
 remove
-Remove booth resources created by "pcs booth create" command.
+Remove booth resources created by the "pcs booth create" command.
 .TP
 ticket grant <ticket> [<site address>]
-Grant ticket for site specified by address. Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
+Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
 .TP
 ticket revoke <ticket> [<site address>]
-Revoke ticket for site specified by address. If site not specified, is used site which has been created by 'pcs booth create' command.
+Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
 .TP
 status
-Print current status of booth on local node.
+Print current status of booth on the local node.
 .TP
 pull <node>
-Pull booth config from specified node.
+Pull booth configuration from the specified node.
 .TP
 sync [\fB\-\-skip\-offline\fR]
-Sync booth config in cluster. Send config on local node to all nodes in cluster.
+Send booth configuration from the local node to all nodes in the cluster.
 .TP
 enable
 Enable booth arbitrator service.

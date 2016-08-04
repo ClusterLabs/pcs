@@ -1418,46 +1418,48 @@ Commands:
     setup sites <address> <address> [<address>...] [arbitrators <address> ...]
             [--force]
         Write new booth configuration with specified sites and arbitrators.
-        Total number of peers (sites and arbitrators) must be odd.
-        When configuration file exists, command fails unless --force applied.
+        Total number of peers (sites and arbitrators) must be odd.  When
+        the configuration file already exists, command fails unless --force
+        is specified.
 
     destroy
-        Remove set up booth configuration.
+        Remove booth configuration files.
 
-    ticket add <ticket-name>
-        Add new ticket to current configuration.
+    ticket add <ticket>
+        Add new ticket to the current configuration.
 
-    ticket remove <ticket-name>
-        Remove ticket from current configuration.
+    ticket remove <ticket>
+        Remove the specified ticket from the current configuration.
 
     config
         Show booth configuration.
 
     create ip <address>
-        Make cluster run booth service on specified ip address as a cluster
-        resource. Typically this is used to run booth site.
+        Make the cluster run booth service on the specified ip address as
+        a cluster resource.  Typically this is used to run booth site.
 
     remove
-        Remove booth resources created by "pcs booth create" command.
+        Remove booth resources created by the "pcs booth create" command.
 
     ticket grant <ticket> [<site address>]
-        Grant ticket for site specified by address. Site address which has been
-        specified with 'pcs booth create' command is used if 'site address' is
-        omitted.
+        Grant the ticket for the site specified by address.  Site address which
+        has been specified with 'pcs booth create' command is used if
+        'site address' is omitted.
 
     ticket revoke <ticket> [<site address>]
-        Revoke ticket for site specified by address. If site is not specified
-        is used site which has been created by 'pcs booth create' command.
+        Revoke the ticket for the site specified by address.  Site address which
+        has been specified with 'pcs booth create' command is used if
+        'site address' is omitted.
 
     status
-        Print current status of booth on local node.
+        Print current status of booth on the local node.
 
     pull <node>
-        Pull booth config from specified node.
+        Pull booth configuration from the specified node.
 
     sync [--skip-offline]
-        Sync booth config in cluster. Send config on local node to all nodes
-        in cluster.
+        Send booth configuration from the local node to all nodes
+        in the cluster.
 
     enable
         Enable booth arbitrator service.
