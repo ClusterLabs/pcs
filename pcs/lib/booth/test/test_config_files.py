@@ -187,64 +187,6 @@ class ReadConfigsTest(TestCase):
         self.assertEqual(2, len(self.mock_reporter.report_item_list))
 
 
-@patch_config_files("config_structure.get_authfile")
-@patch_config_files("config_parser.parse")
-@patch_config_files("read_authfile")
-class ReadAuthFileFromConfigsTest(TestCase):
-    def setUp(self):
-        self.mock_reporter = MockLibraryReportProcessor()
-
-    def test_success(self, mock_read, mock_parse, mock_get_authfile):
-        def _mock_read(_, path):
-            if path == "/etc/booth/k1.key":
-                return "key1"
-            elif path == "/etc/booth/k2.key":
-                return "key2"
-            else:
-                raise AssertionError("unexpected input: {0}".format(path))
-
-        configs = {
-            "config1.conf": "config1",
-            "config2.conf": "config2",
-            "config3.conf": "config3"
-        }
-
-        config_authfile_map = {
-            "config1": "/etc/booth/k1.key",
-            "config2": "/etc/booth/k2.key",
-            "config3": None,
-        }
-        def _mock_get_authfile(config):
-            if config in config_authfile_map:
-                return config_authfile_map[config]
-            raise AssertionError("unexpected input: {0}".format(config))
-
-        mock_read.side_effect = _mock_read
-        mock_parse.side_effect = lambda config: config
-        mock_get_authfile.side_effect = _mock_get_authfile
-
-        self.assertEqual(
-            {
-                "k1.key": "key1",
-                "k2.key": "key2"
-            },
-            config_files.read_authfiles_from_configs(
-                self.mock_reporter, configs.values()
-            )
-        )
-        self.assertEqual(3, mock_parse.call_count)
-        mock_parse.has_calls([
-            mock.call(configs["config1.conf"]),
-            mock.call(configs["config2.conf"]),
-            mock.call(configs["config3.conf"]),
-        ])
-        self.assertEqual(2, mock_read.call_count)
-        mock_read.has_calls([
-            mock.call(self.mock_reporter, "/etc/booth/k1.key"),
-            mock.call(self.mock_reporter, "/etc/booth/k2.key")
-        ])
-
-
 class ReadAuthfileTest(TestCase):
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()

@@ -11,7 +11,7 @@ import binascii
 from pcs.common import report_codes, env_file_role_codes as file_roles
 from pcs.common.tools import format_environment_error
 from pcs.lib import reports as lib_reports
-from pcs.lib.booth import reports, config_structure, config_parser
+from pcs.lib.booth import reports
 from pcs.lib.errors import ReportItemSeverity
 from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
 
@@ -67,26 +67,6 @@ def read_configs(reporter, skip_wrong_config=False):
                 )
             ))
     reporter.process_list(report_list)
-    return output
-
-
-def read_authfiles_from_configs(reporter, config_content_list):
-    """
-    Returns content of authfiles of configs specified in config_content_list in
-    dictionary where key is path to authfile and value is its content as bytes
-
-    reporter -- report processor
-    config_content_list -- list of configs content
-    """
-    output = {}
-    for config in config_content_list:
-        authfile_path = config_structure.get_authfile(
-            config_parser.parse(config)
-        )
-        if authfile_path:
-            output[os.path.basename(authfile_path)] = read_authfile(
-                reporter, authfile_path
-            )
     return output
 
 

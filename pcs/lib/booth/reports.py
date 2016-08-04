@@ -381,3 +381,20 @@ def booth_ticket_operation_failed(operation, reason, site_ip, ticket_name):
             "ticket_name": ticket_name,
         }
     )
+
+
+def booth_skipping_config(config_file, reason):
+    """
+    Warning about skipping booth config file.
+
+    config_file -- file name of config which is skipped
+    reason -- reason
+    """
+    return ReportItem.warning(
+        report_codes.BOOTH_SKIPPING_CONFIG,
+        "Skipping config file '{config_file}': {reason}",
+        info={
+            "config_file": config_file,
+            "reason": reason,
+        }
+    )
