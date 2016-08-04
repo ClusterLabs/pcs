@@ -274,17 +274,23 @@ def booth_daemon_status_error(reason):
     )
 
 
-def booth_tickets_status_error():
+def booth_tickets_status_error(reason=None):
     return ReportItem.error(
         report_codes.BOOTH_TICKET_STATUS_ERROR,
-        "unable to get status of booth tickets"
+        "unable to get status of booth tickets",
+        info={
+            "reason": reason,
+        }
     )
 
 
-def booth_peers_status_error():
+def booth_peers_status_error(reason=None):
     return ReportItem.error(
         report_codes.BOOTH_PEERS_STATUS_ERROR,
-        "unable to get status of booth peers"
+        "unable to get status of booth peers",
+        info={
+            "reason": reason,
+        }
     )
 
 def booth_correct_config_not_found_in_cib(operation):

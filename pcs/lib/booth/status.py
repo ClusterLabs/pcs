@@ -6,7 +6,6 @@ from __future__ import (
 )
 
 from pcs import settings
-from pcs.lib import reports as lib_reports
 from pcs.lib.booth import reports
 from pcs.lib.errors import LibraryError
 
@@ -28,11 +27,7 @@ def get_tickets_status(runner, name=None):
         cmd += ["-c", name]
     output, return_value = runner.run(cmd)
     if return_value != 0:
-        if "cannot read config" in output:
-            raise LibraryError(lib_reports.file_does_not_exist(
-                "Booth config", name if name else "booth"
-            ))
-        raise LibraryError(reports.booth_tickets_status_error())
+        raise LibraryError(reports.booth_tickets_status_error(output))
     return output
 
 
@@ -42,9 +37,5 @@ def get_peers_status(runner, name=None):
         cmd += ["-c", name]
     output, return_value = runner.run(cmd)
     if return_value != 0:
-        if "cannot read config" in output:
-            raise LibraryError(lib_reports.file_does_not_exist(
-                "Booth config", name if name else "booth"
-            ))
-        raise LibraryError(reports.booth_peers_status_error())
+        raise LibraryError(reports.booth_peers_status_error(output))
     return output

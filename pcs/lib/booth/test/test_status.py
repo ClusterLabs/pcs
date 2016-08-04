@@ -85,28 +85,17 @@ class GetTicketsStatusTest(TestCase):
             [settings.booth_binary, "list", "-c", "name"]
         )
 
-    def test_config_does_not_exist(self):
-        self.mock_run.run.return_value = ("error: cannot read config", 1)
-        assert_raise_library_error(
-            lambda: lib.get_tickets_status(self.mock_run),
-            (
-                Severities.ERROR,
-                report_codes.FILE_DOES_NOT_EXIST,
-                {
-                    "file_role": "Booth config",
-                    "file_path": "booth"
-                }
-            )
-        )
-        self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "list"]
-        )
-
     def test_failure(self):
         self.mock_run.run.return_value = ("out", 1)
         assert_raise_library_error(
             lambda: lib.get_tickets_status(self.mock_run),
-            (Severities.ERROR, report_codes.BOOTH_TICKET_STATUS_ERROR, {})
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_TICKET_STATUS_ERROR,
+                {
+                    "reason": "out"
+                }
+            )
         )
         self.mock_run.run.assert_called_once_with(
             [settings.booth_binary, "list"]
@@ -131,28 +120,17 @@ class GetPeersStatusTest(TestCase):
             [settings.booth_binary, "peers", "-c", "name"]
         )
 
-    def test_config_does_not_exist(self):
-        self.mock_run.run.return_value = ("error: cannot read config", 1)
-        assert_raise_library_error(
-            lambda: lib.get_peers_status(self.mock_run),
-            (
-                Severities.ERROR,
-                report_codes.FILE_DOES_NOT_EXIST,
-                {
-                    "file_role": "Booth config",
-                    "file_path": "booth"
-                }
-            )
-        )
-        self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "peers"]
-        )
-
     def test_failure(self):
         self.mock_run.run.return_value = ("out", 1)
         assert_raise_library_error(
             lambda: lib.get_peers_status(self.mock_run),
-            (Severities.ERROR, report_codes.BOOTH_PEERS_STATUS_ERROR, {})
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_PEERS_STATUS_ERROR,
+                {
+                    "reason": "out"
+                }
+            )
         )
         self.mock_run.run.assert_called_once_with(
             [settings.booth_binary, "peers"]
