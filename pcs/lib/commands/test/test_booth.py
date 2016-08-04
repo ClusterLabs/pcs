@@ -22,7 +22,7 @@ from pcs.common import report_codes
 from pcs.lib.booth import resource as booth_resource
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.node import NodeAddresses
-from pcs.lib.errors import ReportItemSeverity as Severities
+from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
 from pcs.lib.commands import booth as commands
 from pcs.lib.external import (
     NodeCommunicator,
@@ -110,6 +110,17 @@ class ConfigDestroyTest(TestCase):
             )
         )
 
+    @patch_commands(
+        "get_config_file_name",
+        mock.Mock(return_value="/path/to/config")
+    )
+    @patch_commands("external.is_systemctl", mock.Mock(return_value=False))
+    @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
+    @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
+    def test_remove_config_even_if_cannot_get_its_content(self):
+        env = mock.MagicMock()
+        commands.config_destroy(env)
+        env.booth.remove_config.assert_called_once_with()
 
 @mock.patch("pcs.lib.commands.booth.config_structure.get_authfile")
 @mock.patch("pcs.lib.commands.booth.parse")

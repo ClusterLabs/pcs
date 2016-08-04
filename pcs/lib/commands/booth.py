@@ -76,9 +76,13 @@ def config_destroy(env):
     if report_list:
         raise LibraryError(*report_list)
 
-    authfile_path = config_structure.get_authfile(
-        parse(env.booth.get_config_content())
-    )
+    authfile_path = None
+    try:
+        authfile_path = config_structure.get_authfile(
+            parse(env.booth.get_config_content())
+        )
+    except LibraryError:
+        pass #if content not received, not valid,... still remove config needed
     if(
         authfile_path
         and
