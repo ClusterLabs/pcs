@@ -243,7 +243,8 @@ class ValidateSbdOptionsTest(TestCase):
             "SBD_STARTMODE": "clean",
             "SBD_WATCHDOG_DEV": "/dev/watchdog",
             "SBD_UNKNOWN": "",
-            "SBD_OPTS": "  "
+            "SBD_OPTS": "  ",
+            "SBD_PACEMAKER": "false",
         }
 
         assert_report_item_list_equal(
@@ -276,6 +277,17 @@ class ValidateSbdOptionsTest(TestCase):
                     report_codes.INVALID_OPTION,
                     {
                         "option_name": "SBD_UNKNOWN",
+                        "option_type": None,
+                        "allowed": self.allowed_sbd_options,
+                        "allowed_str": self.allowed_sbd_options_str
+                    },
+                    None
+                ),
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_name": "SBD_PACEMAKER",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                         "allowed_str": self.allowed_sbd_options_str

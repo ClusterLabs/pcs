@@ -555,7 +555,7 @@ def sbd_config(lib, argv, modifiers):
 
     config = config_list[0]["config"]
 
-    filtered_options = ["SBD_WATCHDOG_DEV", "SBD_OPTS"]
+    filtered_options = ["SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER"]
     for key, val in config.items():
         if key in filtered_options:
             continue

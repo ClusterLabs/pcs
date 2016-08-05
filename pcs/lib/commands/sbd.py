@@ -45,7 +45,9 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
     """
 
     report_item_list = []
-    unsupported_sbd_option_list = ["SBD_WATCHDOG_DEV", "SBD_OPTS"]
+    unsupported_sbd_option_list = [
+        "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER"
+    ]
     allowed_sbd_options = [
         "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT"
     ]
