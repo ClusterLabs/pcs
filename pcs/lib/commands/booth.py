@@ -47,7 +47,7 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
     )
     env.booth.create_config(build(config_content), overwrite_existing)
 
-def config_destroy(env):
+def config_destroy(env, ignore_config_load_problems=False):
     env.booth.command_expect_live_env()
     env.command_expect_live_corosync_env()
 
@@ -56,12 +56,10 @@ def config_destroy(env):
 
     report_list = []
 
-    config_file_path = get_config_file_name(name)
-    if(
-        env.is_node_in_cluster()
-        and
-        resource.find_for_config(get_resources(env.get_cib()), config_file_path)
-    ):
+    if(env.is_node_in_cluster() and resource.find_for_config(
+        get_resources(env.get_cib()),
+        get_config_file_name(name),
+    )):
         report_list.append(config_is_used("in cluster resource"))
 
     #Only systemd is currently supported. Initd does not supports multiple
@@ -82,7 +80,16 @@ def config_destroy(env):
             parse(env.booth.get_config_content())
         )
     except LibraryError:
-        pass #if content not received, not valid,... still remove config needed
+        if not ignore_config_load_problems:
+            raise LibraryError(booth_reports.booth_cannot_identify_keyfile())
+
+        #if content not received, not valid,... still remove config needed
+        env.report_processor.process(
+            booth_reports.booth_cannot_identify_keyfile(
+                severity=ReportItemSeverity.WARNING
+            )
+        )
+
     if(
         authfile_path
         and

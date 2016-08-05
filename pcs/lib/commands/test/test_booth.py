@@ -73,12 +73,11 @@ class ConfigSetupTest(TestCase):
 
 
 class ConfigDestroyTest(TestCase):
-    @patch_commands("get_config_file_name", return_value="/path/to/config")
     @patch_commands("external.is_systemctl", mock.Mock(return_value=True))
     @patch_commands("external.is_service_enabled", mock.Mock(return_value=True))
     @patch_commands("external.is_service_running", mock.Mock(return_value=True))
     @patch_commands("resource.find_for_config", mock.Mock(return_value=[True]))
-    def test_raises_when_booth_config_in_use(self, mock_config_file_name):
+    def test_raises_when_booth_config_in_use(self):
         env = mock.MagicMock()
         env.booth.name = "somename"
 
@@ -110,17 +109,36 @@ class ConfigDestroyTest(TestCase):
             )
         )
 
-    @patch_commands(
-        "get_config_file_name",
-        mock.Mock(return_value="/path/to/config")
-    )
     @patch_commands("external.is_systemctl", mock.Mock(return_value=False))
     @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
     @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
-    def test_remove_config_even_if_cannot_get_its_content(self):
+    def test_raises_when_cannot_get_content_of_config(self):
         env = mock.MagicMock()
-        commands.config_destroy(env)
+        assert_raise_library_error(
+            lambda: commands.config_destroy(env),
+            (
+                Severities.ERROR,
+                report_codes.BOOTH_CANNOT_IDENTIFY_KEYFILE,
+                {},
+                report_codes.FORCE_BOOTH_DESTROY
+            )
+        )
+
+    @patch_commands("external.is_systemctl", mock.Mock(return_value=False))
+    @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
+    @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
+    def test_remove_config_even_if_cannot_get_its_content_when_forced(self):
+        env = mock.MagicMock()
+        env.report_processor = MockLibraryReportProcessor()
+        commands.config_destroy(env, ignore_config_load_problems=True)
         env.booth.remove_config.assert_called_once_with()
+        assert_report_item_list_equal(env.report_processor.report_item_list, [
+            (
+                Severities.WARNING,
+                report_codes.BOOTH_CANNOT_IDENTIFY_KEYFILE,
+                {}
+            )
+        ])
 
 @mock.patch("pcs.lib.commands.booth.config_structure.get_authfile")
 @mock.patch("pcs.lib.commands.booth.parse")

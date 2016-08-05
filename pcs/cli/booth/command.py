@@ -34,7 +34,7 @@ def config_destroy(lib, arg_list, modifiers):
     """
     if arg_list:
         raise CmdLineInputError()
-    lib.booth.config_destroy()
+    lib.booth.config_destroy(ignore_config_load_problems=modifiers["force"])
 
 
 def config_show(lib, arg_list, modifiers):

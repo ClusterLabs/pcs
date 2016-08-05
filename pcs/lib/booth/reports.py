@@ -382,7 +382,6 @@ def booth_ticket_operation_failed(operation, reason, site_ip, ticket_name):
         }
     )
 
-
 def booth_skipping_config(config_file, reason):
     """
     Warning about skipping booth config file.
@@ -397,4 +396,14 @@ def booth_skipping_config(config_file, reason):
             "config_file": config_file,
             "reason": reason,
         }
+    )
+
+def booth_cannot_identify_keyfile(severity=ReportItemSeverity.ERROR):
+    return ReportItem(
+        report_codes.BOOTH_CANNOT_IDENTIFY_KEYFILE,
+        severity,
+        "cannot identify authfile in booth configuration",
+        info={},
+        forceable=report_codes.FORCE_BOOTH_DESTROY
+            if severity == ReportItemSeverity.ERROR else None
     )
