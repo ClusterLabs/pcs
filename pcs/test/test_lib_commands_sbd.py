@@ -297,6 +297,79 @@ class ValidateSbdOptionsTest(TestCase):
             ]
         )
 
+    def test_watchdog_timeout_is_not_present(self):
+        config = {
+            "SBD_DELAY_START": "yes",
+            "SBD_STARTMODE": "clean"
+        }
+        self.assertEqual([], cmd_sbd._validate_sbd_options(config))
+
+    def test_watchdog_timeout_is_nonnegative_int(self):
+        config = {
+            "SBD_WATCHDOG_TIMEOUT": "-1",
+        }
+
+        assert_report_item_list_equal(
+            cmd_sbd._validate_sbd_options(config),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "SBD_WATCHDOG_TIMEOUT",
+                        "option_value": "-1",
+                        "allowed_values": "nonnegative integer",
+                        "allowed_values_str": "nonnegative integer",
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_watchdog_timeout_is_not_int(self):
+        config = {
+            "SBD_WATCHDOG_TIMEOUT": "not int",
+        }
+
+        assert_report_item_list_equal(
+            cmd_sbd._validate_sbd_options(config),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "SBD_WATCHDOG_TIMEOUT",
+                        "option_value": "not int",
+                        "allowed_values": "nonnegative integer",
+                        "allowed_values_str": "nonnegative integer",
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_watchdog_timeout_is_none(self):
+        config = {
+            "SBD_WATCHDOG_TIMEOUT": None,
+        }
+
+        assert_report_item_list_equal(
+            cmd_sbd._validate_sbd_options(config),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "SBD_WATCHDOG_TIMEOUT",
+                        "option_value": None,
+                        "allowed_values": "nonnegative integer",
+                        "allowed_values_str": "nonnegative integer",
+                    },
+                    None
+                )
+            ]
+        )
+
 
 class GetFullWatchdogListTest(TestCase):
     def setUp(self):

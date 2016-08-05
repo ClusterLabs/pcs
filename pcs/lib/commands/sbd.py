@@ -65,6 +65,17 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
                 Severities.WARNING if allow_unknown_opts else Severities.ERROR,
                 None if allow_unknown_opts else report_codes.FORCE_OPTIONS
             ))
+    if "SBD_WATCHDOG_TIMEOUT" in sbd_config:
+        report_item = reports.invalid_option_value(
+            "SBD_WATCHDOG_TIMEOUT",
+            sbd_config["SBD_WATCHDOG_TIMEOUT"],
+            "nonnegative integer"
+        )
+        try:
+            if int(sbd_config["SBD_WATCHDOG_TIMEOUT"]) < 0:
+                report_item_list.append(report_item)
+        except (ValueError, TypeError):
+            report_item_list.append(report_item)
 
     return report_item_list
 
