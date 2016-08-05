@@ -5,20 +5,27 @@ from __future__ import (
     unicode_literals,
 )
 
+import os.path
+
 from lxml import etree
 
+from pcs import settings
 from pcs.lib import reports
+from pcs.lib.booth.env import BoothEnv
+from pcs.lib.cib.tools import ensure_cib_version
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
+from pcs.lib.corosync.live import (
+    exists_local_corosync_conf,
+    get_local_corosync_conf,
+    reload_config as reload_corosync_config,
+)
 from pcs.lib.external import (
     is_cman_cluster,
     is_service_running,
     CommandRunner,
     NodeCommunicator,
 )
-from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.corosync.live import (
-    get_local_corosync_conf,
-    reload_config as reload_corosync_config,
-)
+from pcs.lib.errors import LibraryError
 from pcs.lib.nodes_task import (
     distribute_corosync_conf,
     check_corosync_offline_on_nodes,
@@ -29,7 +36,6 @@ from pcs.lib.pacemaker import (
     get_cib_xml,
     replace_cib_configuration_xml,
 )
-from pcs.lib.cib.tools import ensure_cib_version
 
 
 class LibraryEnvironment(object):
@@ -43,6 +49,7 @@ class LibraryEnvironment(object):
         user_groups=None,
         cib_data=None,
         corosync_conf_data=None,
+        booth=None,
         auth_tokens_getter=None,
     ):
         self._logger = logger
@@ -51,6 +58,9 @@ class LibraryEnvironment(object):
         self._user_groups = [] if user_groups is None else user_groups
         self._cib_data = cib_data
         self._corosync_conf_data = corosync_conf_data
+        self._booth = (
+            BoothEnv(report_processor, booth) if booth is not None else None
+        )
         self._is_cman_cluster = None
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move
@@ -169,6 +179,24 @@ class LibraryEnvironment(object):
         else:
             self._corosync_conf_data = corosync_conf_data
 
+    def is_node_in_cluster(self):
+        if self.is_cman_cluster:
+            #TODO --cluster_conf is not propagated here. So no live check not
+            #needed here. But this should not be permanently
+            return os.path.exists(settings.corosync_conf_file)
+
+        if not self.is_corosync_conf_live:
+            raise AssertionError(
+                "Cannot check if node is in cluster with mocked corosync_conf."
+            )
+        return exists_local_corosync_conf()
+
+    def command_expect_live_corosync_env(self):
+        if not self.is_corosync_conf_live:
+            raise LibraryError(reports.live_environment_required([
+                "--corosync_conf"
+            ]))
+
     @property
     def is_corosync_conf_live(self):
         return self._corosync_conf_data is None
@@ -195,3 +223,7 @@ class LibraryEnvironment(object):
             else:
                 self._auth_tokens = {}
         return self._auth_tokens
+
+    @property
+    def booth(self):
+        return self._booth

@@ -21,6 +21,7 @@ def full_usage():
     out += strip_extras(acl([],False))
     out += strip_extras(qdevice([],False))
     out += strip_extras(quorum([],False))
+    out += strip_extras(booth([],False))
     out += strip_extras(status([],False))
     out += strip_extras(config([],False))
     out += strip_extras(pcsd([],False))
@@ -167,6 +168,7 @@ Commands:
     acl         Set pacemaker access control lists.
     qdevice     Manage quorum device provider.
     quorum      Manage cluster quorum settings.
+    booth       Manage booth (cluster ticket manager).
     status      View cluster status.
     config      View and manage cluster configuration.
     pcsd        Manage pcs daemon.
@@ -1407,6 +1409,75 @@ Commands:
     else:
         return output
 
+def booth(args=[], pout=True):
+    output = """
+Usage: pcs booth <command>
+Manage booth (cluster ticket manager)
+
+Commands:
+    setup sites <address> <address> [<address>...] [arbitrators <address> ...]
+            [--force]
+        Write new booth configuration with specified sites and arbitrators.
+        Total number of peers (sites and arbitrators) must be odd.  When
+        the configuration file already exists, command fails unless --force
+        is specified.
+
+    destroy
+        Remove booth configuration files.
+
+    ticket add <ticket>
+        Add new ticket to the current configuration.
+
+    ticket remove <ticket>
+        Remove the specified ticket from the current configuration.
+
+    config
+        Show booth configuration.
+
+    create ip <address>
+        Make the cluster run booth service on the specified ip address as
+        a cluster resource.  Typically this is used to run booth site.
+
+    remove
+        Remove booth resources created by the "pcs booth create" command.
+
+    ticket grant <ticket> [<site address>]
+        Grant the ticket for the site specified by address.  Site address which
+        has been specified with 'pcs booth create' command is used if
+        'site address' is omitted.
+
+    ticket revoke <ticket> [<site address>]
+        Revoke the ticket for the site specified by address.  Site address which
+        has been specified with 'pcs booth create' command is used if
+        'site address' is omitted.
+
+    status
+        Print current status of booth on the local node.
+
+    pull <node>
+        Pull booth configuration from the specified node.
+
+    sync [--skip-offline]
+        Send booth configuration from the local node to all nodes
+        in the cluster.
+
+    enable
+        Enable booth arbitrator service.
+
+    disable
+        Disable booth arbitrator service.
+
+    start
+        Start booth arbitrator service.
+
+    stop
+        Stop booth arbitrator service.
+"""
+    if pout:
+        print(sub_usage(args, output))
+    else:
+        return output
+
 
 def alert(args=[], pout=True):
     output = """
@@ -1460,6 +1531,7 @@ def show(main_usage_name, rest_usage_names):
         "property": property,
         "qdevice": qdevice,
         "quorum": quorum,
+        "booth": booth,
         "resource": resource,
         "status": status,
         "stonith": stonith,

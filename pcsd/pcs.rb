@@ -8,6 +8,7 @@ require 'net/https'
 require 'json'
 require 'fileutils'
 require 'backports'
+require 'base64'
 
 require 'config.rb'
 require 'cfgsync.rb'
@@ -17,6 +18,9 @@ require 'cluster_entity.rb'
 require 'auth.rb'
 
 class NotImplementedException < NotImplementedError
+end
+
+class InvalidFileNameException < NameError
 end
 
 def getAllSettings(auth_user, cib_dom=nil)
@@ -1357,14 +1361,31 @@ def pcsd_restart_nodes(auth_user, nodes)
   }
 end
 
-def write_file_lock(path, perm, data)
+def write_file_lock(path, perm, data, binary=false)
+  file = nil
   begin
-    file = nil
-    file = File.open(path, 'w', perm)
+    file = File.open(path, binary ? 'wb' : 'w', perm)
     file.flock(File::LOCK_EX)
     file.write(data)
   rescue => e
     $logger.error("Cannot save file '#{path}': #{e.message}")
+    raise
+  ensure
+    unless file.nil?
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+end
+
+def read_file_lock(path, binary=false)
+  file = nil
+  begin
+    file = File.open(path, binary ? 'rb' : 'r')
+    file.flock(File::LOCK_SH)
+    return file.read()
+  rescue => e
+    $logger.error("Cannot read file '#{path}': #{e.message}")
     raise
   ensure
     unless file.nil?
@@ -2027,4 +2048,53 @@ def get_parsed_local_sbd_config()
   rescue JSON::ParserError
     return nil
   end
+end
+
+def write_booth_config(config, data)
+  if config.include?('/')
+    raise InvalidFileNameException.new(config)
+  end
+  write_file_lock(File.join(BOOTH_CONFIG_DIR, config), nil, data)
+end
+
+def read_booth_config(config)
+  if config.include?('/')
+    raise InvalidFileNameException.new(config)
+  end
+  config_path = File.join(BOOTH_CONFIG_DIR, config)
+  unless File.file?(config_path)
+    return nil
+  end
+  return read_file_lock(config_path)
+end
+
+def write_booth_authfile(filename, data)
+  if filename.include?('/')
+    raise InvalidFileNameException.new(filename)
+  end
+  write_file_lock(
+    File.join(BOOTH_CONFIG_DIR, filename), 0600, Base64.decode64(data), true
+  )
+end
+
+def read_booth_authfile(filename)
+  if filename.include?('/')
+    raise InvalidFileNameException.new(filename)
+  end
+  return Base64.strict_encode64(
+    read_file_lock(File.join(BOOTH_CONFIG_DIR, filename), true)
+  )
+end
+
+def get_authfile_from_booth_config(config_data)
+  authfile_path = nil
+  config_data.split("\n").each {|line|
+    if line.include?('=')
+      parts = line.split('=', 2)
+      if parts[0].strip == 'authfile'
+        authfile_path = parts[1].strip
+      end
+    end
+  }
+  return authfile_path
 end

@@ -100,6 +100,13 @@ def get_constraints(tree):
     """
     return _get_mandatory_section(tree, "configuration/constraints")
 
+def get_resources(tree):
+    """
+    Return 'resources' element from tree
+    tree cib etree node
+    """
+    return _get_mandatory_section(tree, "configuration/resources")
+
 def find_parent(element, tag_names):
     candidate = element
     while True:

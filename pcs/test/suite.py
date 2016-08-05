@@ -9,19 +9,12 @@ from __future__ import (
 import sys
 import os.path
 
-major, minor = sys.version_info[:2]
-if major == 2 and minor == 6:
-    import unittest2 as unittest
-else:
-    import unittest
-
-
 PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
 )))
+sys.path.insert(0, PACKAGE_DIR)
 
-def put_package_to_path():
-    sys.path.insert(0, PACKAGE_DIR)
+from pcs.test.tools import pcs_unittest as unittest
 
 def prepare_test_name(test_name):
     """
@@ -65,18 +58,17 @@ def discover_tests(explicitly_enumerated_tests, exclude_enumerated_tests=False):
     return unittest.TestLoader().loadTestsFromNames(explicitly_enumerated_tests)
 
 def run_tests(tests, verbose=False, color=False):
-    resultclass = unittest.runner.TextTestResult
+    resultclass = unittest.TextTestResult
     if color:
         from pcs.test.tools.color_text_runner import ColorTextTestResult
         resultclass = ColorTextTestResult
 
-    testRunner = unittest.runner.TextTestRunner(
+    testRunner = unittest.TextTestRunner(
         verbosity=2 if verbose else 1,
         resultclass=resultclass
     )
     return testRunner.run(tests)
 
-put_package_to_path()
 explicitly_enumerated_tests = [
     prepare_test_name(arg) for arg in sys.argv[1:] if arg not in (
         "-v",

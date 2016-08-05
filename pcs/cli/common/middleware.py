@@ -29,11 +29,12 @@ def cib(use_local_cib, load_cib_content, write_cib):
     """
     def apply(next_in_line, env, *args, **kwargs):
         if use_local_cib:
-            env.cib_data = load_cib_content()
+            original_content = load_cib_content()
+            env.cib_data = original_content
 
         result_of_next = next_in_line(env, *args, **kwargs)
 
-        if use_local_cib:
+        if use_local_cib and env.cib_data != original_content:
             write_cib(env.cib_data, env.cib_upgraded)
 
         return result_of_next
@@ -45,7 +46,7 @@ def corosync_conf_existing(local_file_path):
             try:
                 env.corosync_conf_data = open(local_file_path).read()
             except EnvironmentError as e:
-                console_report.error("Unable to read {0}: {1}".format(
+                raise console_report.error("Unable to read {0}: {1}".format(
                     local_file_path,
                     e.strerror
                 ))
@@ -58,7 +59,7 @@ def corosync_conf_existing(local_file_path):
                 f.write(env.corosync_conf_data)
                 f.close()
             except EnvironmentError as e:
-                console_report.error("Unable to write {0}: {1}".format(
+                raise console_report.error("Unable to write {0}: {1}".format(
                     local_file_path,
                     e.strerror
                 ))

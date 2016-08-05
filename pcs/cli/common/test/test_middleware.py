@@ -6,7 +6,8 @@ from __future__ import (
 )
 
 from unittest import TestCase
-import pcs.cli.common.middleware
+
+from pcs.cli.common import middleware
 
 
 class MiddlewareBuildTest(TestCase):
@@ -29,7 +30,7 @@ class MiddlewareBuildTest(TestCase):
             next(lib, argv, modificators)
             log.append('m2 done')
 
-        run_with_middleware = pcs.cli.common.middleware.build(m1, m2)
+        run_with_middleware = middleware.build(m1, m2)
         run_with_middleware(command, "1", "2", "3")
         self.assertEqual(log, [
             'm1 start: 1, 2, 3',
@@ -38,3 +39,4 @@ class MiddlewareBuildTest(TestCase):
             'm2 done',
             'm1 done',
         ])
+

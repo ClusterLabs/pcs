@@ -22,6 +22,9 @@ def get_local_corosync_conf():
     except IOError as e:
         raise LibraryError(reports.corosync_config_read_error(path, e.strerror))
 
+def exists_local_corosync_conf():
+    return os.path.exists(settings.corosync_conf_file)
+
 def set_remote_corosync_conf(node_communicator, node_addr, config_text):
     """
     Send corosync.conf to a node

@@ -8,10 +8,15 @@ from __future__ import (
 import sys
 
 
-def error(message, exit=True):
-    sys.stderr.write("Error: {0}\n".format(message))
-    if exit:
-        sys.exit(1)
+def warn(message):
+    sys.stdout.write(format_message(message, "Warning: "))
+
+def format_message(message, prefix):
+    return "{0}{1}\n".format(prefix, message)
+
+def error(message):
+    sys.stderr.write(format_message(message, "Error: "))
+    return SystemExit(1)
 
 def indent(line_list, indent_step=2):
     """

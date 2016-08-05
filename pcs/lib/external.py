@@ -59,9 +59,10 @@ from pcs import settings
 
 class ManageServiceError(Exception):
     #pylint: disable=super-init-not-called
-    def __init__(self, service, message=None):
+    def __init__(self, service, message=None, instance=None):
         self.service = service
         self.message = message
+        self.instance = instance
 
 class DisableServiceError(ManageServiceError):
     pass
@@ -91,6 +92,22 @@ def is_dir_nonempty(path):
     return len(os.listdir(path)) > 0
 
 
+def _get_service_name(service, instance=None):
+    return "{0}{1}.service".format(
+        service, "" if instance is None else "@{0}".format(instance)
+    )
+
+def ensure_is_systemd():
+    """
+    Ensure if current system is systemd system. Raises Library error if not.
+    """
+    if not is_systemctl():
+        raise LibraryError(
+            reports.unsupported_operation_on_non_systemd_systems()
+        )
+
+
+
 @simple_cache
 def is_systemctl():
     """
@@ -108,74 +125,82 @@ def is_systemctl():
     return False
 
 
-def disable_service(runner, service):
+def disable_service(runner, service, instance=None):
     """
     Disable specified service in local system.
     Raise DisableServiceError or LibraryError on failure.
 
     runner -- CommandRunner
     service -- name of service
+    instance -- instance name, it ha no effect on not systemd systems.
+        If None no instance name will be used.
     """
     if is_systemctl():
         output, retval = runner.run([
-            "systemctl", "disable", service + ".service"
+            "systemctl", "disable", _get_service_name(service, instance)
         ])
     else:
         if not is_service_installed(runner, service):
             return
         output, retval = runner.run(["chkconfig", service, "off"])
     if retval != 0:
-        raise DisableServiceError(service, output.rstrip())
+        raise DisableServiceError(service, output.rstrip(), instance)
 
 
-def enable_service(runner, service):
+def enable_service(runner, service, instance=None):
     """
     Enable specified service in local system.
     Raise EnableServiceError or LibraryError on failure.
 
     runner -- CommandRunner
     service -- name of service
+    instance -- instance name, it ha no effect on not systemd systems.
+        If None no instance name will be used.
     """
     if is_systemctl():
         output, retval = runner.run([
-            "systemctl", "enable", service + ".service"
+            "systemctl", "enable", _get_service_name(service, instance)
         ])
     else:
         output, retval = runner.run(["chkconfig", service, "on"])
     if retval != 0:
-        raise EnableServiceError(service, output.rstrip())
+        raise EnableServiceError(service, output.rstrip(), instance)
 
 
-def start_service(runner, service):
+def start_service(runner, service, instance=None):
     """
     Start specified service in local system
     CommandRunner runner
     string service service name
+    string instance instance name, it ha no effect on not systemd systems.
+        If None no instance name will be used.
     """
     if is_systemctl():
         output, retval = runner.run([
-            "systemctl", "start", "{0}.service".format(service)
+            "systemctl", "start", _get_service_name(service, instance)
         ])
     else:
         output, retval = runner.run(["service", service, "start"])
     if retval != 0:
-        raise StartServiceError(service, output.rstrip())
+        raise StartServiceError(service, output.rstrip(), instance)
 
 
-def stop_service(runner, service):
+def stop_service(runner, service, instance=None):
     """
     Stop specified service in local system
     CommandRunner runner
     string service service name
+    string instance instance name, it ha no effect on not systemd systems.
+        If None no instance name will be used.
     """
     if is_systemctl():
         output, retval = runner.run([
-            "systemctl", "stop", "{0}.service".format(service)
+            "systemctl", "stop", _get_service_name(service, instance)
         ])
     else:
         output, retval = runner.run(["service", service, "stop"])
     if retval != 0:
-        raise StopServiceError(service, output.rstrip())
+        raise StopServiceError(service, output.rstrip(), instance)
 
 
 def kill_services(runner, services):
@@ -196,7 +221,7 @@ def kill_services(runner, services):
             raise KillServicesError(list(services), output.rstrip())
 
 
-def is_service_enabled(runner, service):
+def is_service_enabled(runner, service, instance=None):
     """
     Check if specified service is enabled in local system.
 
@@ -205,7 +230,7 @@ def is_service_enabled(runner, service):
     """
     if is_systemctl():
         _, retval = runner.run(
-            ["systemctl", "is-enabled", service + ".service"]
+            ["systemctl", "is-enabled", _get_service_name(service, instance)]
         )
     else:
         _, retval = runner.run(["chkconfig", service])
@@ -213,7 +238,7 @@ def is_service_enabled(runner, service):
     return retval == 0
 
 
-def is_service_running(runner, service):
+def is_service_running(runner, service, instance=None):
     """
     Check if specified service is currently running on local system.
 
@@ -221,7 +246,11 @@ def is_service_running(runner, service):
     service -- name of service
     """
     if is_systemctl():
-        _, retval = runner.run(["systemctl", "is-active", service + ".service"])
+        _, retval = runner.run([
+            "systemctl",
+            "is-active",
+            _get_service_name(service, instance)
+        ])
     else:
         _, retval = runner.run(["service", service, "status"])
 
@@ -314,6 +343,9 @@ class CommandRunner(object):
         self, args, ignore_stderr=False, stdin_string=None, env_extend=None,
         binary_output=False
     ):
+        #Reset environment variables by empty dict is desired here.  We need to
+        #get rid of defaults - we do not know the context and environment of the
+        #library.  So executable must be specified with full path.
         env_vars = dict(env_extend) if env_extend else dict()
         env_vars.update(self._env_vars)
 

@@ -45,6 +45,9 @@ Manage quorum device provider on the local host.
 quorum
 Manage cluster quorum settings.
 .TP
+booth
+Manage booth (cluster ticket manager).
+.TP
 status
 View cluster status.
 .TP
@@ -573,6 +576,55 @@ Cancel waiting for all nodes when establishing quorum.  Useful in situations whe
 .TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
 Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.  Requires the cluster to be stopped.
+.SS "booth"
+.TP
+setup sites <address> <address> [<address>...] [arbitrators <address> ...] [\fB\-\-force\fR]
+Write new booth configuration with specified sites and arbitrators.  Total number of peers (sites and arbitrators) must be odd.  When the configuration file already exists, command fails unless \fB\-\-force\fR is specified.
+.TP
+destroy
+Remove booth configuration files.
+.TP
+ticket add <ticket>
+Add new ticket to the current configuration.
+.TP
+ticket remove <ticket>
+Remove the specified ticket from the current configuration.
+.TP
+config
+Show booth configuration.
+.TP
+create ip <address>
+Make the cluster run booth service on the specified ip address as a cluster resource.  Typically this is used to run booth site.
+.TP
+remove
+Remove booth resources created by the "pcs booth create" command.
+.TP
+ticket grant <ticket> [<site address>]
+Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
+.TP
+ticket revoke <ticket> [<site address>]
+Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
+.TP
+status
+Print current status of booth on the local node.
+.TP
+pull <node>
+Pull booth configuration from the specified node.
+.TP
+sync [\fB\-\-skip\-offline\fR]
+Send booth configuration from the local node to all nodes in the cluster.
+.TP
+enable
+Enable booth arbitrator service.
+.TP
+disable
+Disable booth arbitrator service.
+.TP
+start
+Start booth arbitrator service.
+.TP
+stop
+Stop booth arbitrator service.
 .SS "status"
 .TP
 [status] [\fB\-\-full\fR | \fB\-\-hide-inactive\fR]

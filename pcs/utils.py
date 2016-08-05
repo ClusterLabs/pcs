@@ -25,35 +25,6 @@ import base64
 import threading
 import logging
 
-try:
-    # python2
-    from urllib import urlencode as urllib_urlencode
-except ImportError:
-    # python3
-    from urllib.parse import urlencode as urllib_urlencode
-try:
-    # python2
-    from urllib2 import (
-        build_opener as urllib_build_opener,
-        install_opener as urllib_install_opener,
-        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
-        HTTPSHandler as urllib_HTTPSHandler,
-        HTTPError as urllib_HTTPError,
-        URLError as urllib_URLError
-    )
-except ImportError:
-    # python3
-    from urllib.request import (
-        build_opener as urllib_build_opener,
-        install_opener as urllib_install_opener,
-        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
-        HTTPSHandler as urllib_HTTPSHandler
-    )
-    from urllib.error import (
-        HTTPError as urllib_HTTPError,
-        URLError as urllib_URLError
-    )
-
 
 from pcs import settings, usage
 from pcs.cli.common.reports import (
@@ -89,6 +60,40 @@ from pcs.lib.pacemaker_values import(
 from pcs.cli.common import middleware
 from pcs.cli.common.env import Env
 from pcs.cli.common.lib_wrapper import Library
+from pcs.cli.booth.command import DEFAULT_BOOTH_NAME
+import pcs.cli.booth.env
+
+
+try:
+    # python2
+    from urllib import urlencode as urllib_urlencode
+except ImportError:
+    # python3
+    from urllib.parse import urlencode as urllib_urlencode
+try:
+    # python2
+    from urllib2 import (
+        build_opener as urllib_build_opener,
+        install_opener as urllib_install_opener,
+        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
+        HTTPSHandler as urllib_HTTPSHandler,
+        HTTPError as urllib_HTTPError,
+        URLError as urllib_URLError
+    )
+except ImportError:
+    # python3
+    from urllib.request import (
+        build_opener as urllib_build_opener,
+        install_opener as urllib_install_opener,
+        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
+        HTTPSHandler as urllib_HTTPSHandler
+    )
+    from urllib.error import (
+        HTTPError as urllib_HTTPError,
+        URLError as urllib_URLError
+    )
+
+
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -2693,6 +2698,11 @@ def get_middleware_factory():
         cib=middleware.cib(usefile, get_cib, replace_cib_configuration),
         corosync_conf_existing=middleware.corosync_conf_existing(
             pcs_options.get("--corosync_conf", None)
+        ),
+        booth_conf=pcs.cli.booth.env.middleware_config(
+            pcs_options.get("--name", DEFAULT_BOOTH_NAME),
+            pcs_options.get("--booth-conf", None),
+            pcs_options.get("--booth-key", None),
         )
     )
 
