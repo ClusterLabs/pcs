@@ -683,6 +683,7 @@ Commands:
         the whole CIB or be warned in the case of outdated CIB.
 
     node add <node[,node-altaddr]> [--start [--wait[=<n>]]] [--enable]
+            [--watchdog=<watchdog-path>]
         Add the node to corosync.conf and corosync on all nodes in the cluster
         and sync the new corosync.conf to the new node.  If --start is
         specified also start corosync/pacemaker on the new node, if --wait is
@@ -690,6 +691,8 @@ Commands:
         is specified enable corosync/pacemaker on new node.
         When using Redundant Ring Protocol (RRP) with udpu transport, specify
         the ring 0 address first followed by a ',' and then the ring 1 address.
+        Use --watchdog to specify path to watchdog on newly added node, when SBD
+        is enabled in cluster.
 
     node remove <node>
         Shutdown specified node and remove it from pacemaker and corosync on
