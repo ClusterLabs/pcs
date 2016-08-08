@@ -64,8 +64,8 @@ alert
 Manage pacemaker alerts.
 .SS "resource"
 .TP
-[show [resource id]] [\fB\-\-full\fR] [\fB\-\-groups\fR]
-Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).
+[show [<resource id>] | \fB\-\-full\fR | \fB\-\-groups\fR | \fB\-\-hide\-inactive\fR]
+Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified, all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).  If \fB\-\-hide\-inactive\fR is specified, only show active resources.
 .TP
 list [<standard|provider|type>] [\fB\-\-nodesc\fR]
 Show list of all available resources, optionally filtered by specified type, standard or provider. If \fB\-\-nodesc\fR is used then descriptions of resources are not printed.
@@ -627,11 +627,11 @@ stop
 Stop booth arbitrator service.
 .SS "status"
 .TP
-[status] [\fB\-\-full\fR | \fB\-\-hide-inactive\fR]
-View all information about the cluster and resources (\fB\-\-full\fR provides more details, \fB\-\-hide-inactive\fR hides inactive resources).
+[status] [\fB\-\-full\fR | \fB\-\-hide\-inactive\fR]
+View all information about the cluster and resources (\fB\-\-full\fR provides more details, \fB\-\-hide\-inactive\fR hides inactive resources).
 .TP
-resources
-View current status of cluster resources.
+resources [<resource id> | \fB\-\-full\fR | \fB\-\-groups\fR | \fB\-\-hide\-inactive\fR]
+Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified, all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).  If \fB\-\-hide\-inactive\fR is specified, only show active resources.
 .TP
 groups
 View currently configured groups and their resources.

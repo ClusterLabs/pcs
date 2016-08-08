@@ -1993,6 +1993,17 @@ def resource_group_list(argv):
         print(" ".join(line_parts))
 
 def resource_show(argv, stonith=False):
+    mutually_exclusive_opts = ("--full", "--groups", "--hide-inactive")
+    modifiers = [
+        key for key in utils.pcs_options if key in mutually_exclusive_opts
+    ]
+    if (len(modifiers) > 1) or (argv and modifiers):
+        utils.err(
+            "you can specify only one of resource id, {0}".format(
+                ", ".join(mutually_exclusive_opts)
+            )
+        )
+
     if "--groups" in utils.pcs_options:
         resource_group_list(argv)
         return
@@ -2009,15 +2020,28 @@ def resource_show(argv, stonith=False):
         return
 
     if len(argv) == 0:
-        output, retval = utils.run(["crm_mon", "-1", "-r"])
+        monitor_command = ["crm_mon", "--one-shot"]
+        if "--hide-inactive" not in utils.pcs_options:
+            monitor_command.append('--inactive')
+        output, retval = utils.run(monitor_command)
         if retval != 0:
             utils.err("unable to get cluster status from crm_mon\n"+output.rstrip())
         preg = re.compile(r'.*(stonith:.*)')
         resources_header = False
         in_resources = False
         has_resources = False
+        no_resources_line = (
+            "NO stonith devices configured" if stonith
+            else "NO resources configured"
+        )
         for line in output.split('\n'):
-            if line == "Full list of resources:":
+            if line == "No active resources":
+                print(line)
+                return
+            if line == "No resources":
+                print(no_resources_line)
+                return
+            if line in ("Full list of resources:", "Active resources:"):
                 resources_header = True
                 continue
             if line == "":
@@ -2026,10 +2050,7 @@ def resource_show(argv, stonith=False):
                     in_resources = True
                 elif in_resources:
                     if not has_resources:
-                        if not stonith:
-                            print("NO resources configured")
-                        else:
-                            print("NO stonith devices configured")
+                        print(no_resources_line)
                     return
                 continue
             if in_resources:

@@ -189,12 +189,12 @@ Usage: pcs resource [commands]...
 Manage pacemaker resources
 
 Commands:
-    [show [resource id]] [--full] [--groups]
+    [show [<resource id>] | --full | --groups | --hide-inactive]
         Show all currently configured resources or if a resource is specified
-        show the options for the configured resource.  If --full is specified
+        show the options for the configured resource.  If --full is specified,
         all configured resource options will be displayed.  If --groups is
-        specified, only show groups (and their resources).
-
+        specified, only show groups (and their resources).  If --hide-inactive
+        is specified, only show active resources.
 
     list [<standard|provider|type>] [--nodesc]
         Show list of all available resources, optionally filtered by specified
@@ -1108,8 +1108,12 @@ Commands:
         View all information about the cluster and resources (--full provides
         more details, --hide-inactive hides inactive resources).
 
-    resources
-        View current status of cluster resources.
+    resources [<resource id> | --full | --groups | --hide-inactive]
+        Show all currently configured resources or if a resource is specified
+        show the options for the configured resource.  If --full is specified,
+        all configured resource options will be displayed.  If --groups is
+        specified, only show groups (and their resources).  If --hide-inactive
+        is specified, only show active resources.
 
     groups
         View currently configured groups and their resources.

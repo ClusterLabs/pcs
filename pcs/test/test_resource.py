@@ -213,8 +213,7 @@ the health of a system via IPMI.
  ClusterIP7\t(ocf::heartbeat:IPaddr2):\tStopped (disabled)
 """)
 
-        output, returnVal = pcs(temp_cib, "resource show ClusterIP6 --full")
-        assert returnVal == 0
+        output, returnVal = pcs(temp_cib, "resource show --full")
         ac(output, """\
  Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
   Attributes: ip=192.168.0.99 cidr_netmask=32
@@ -241,6 +240,7 @@ the health of a system via IPMI.
   Meta Attrs: target-role=Stopped 
   Operations: monitor interval=30s (ClusterIP7-monitor-interval-30s)
 """)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
@@ -785,7 +785,7 @@ monitor interval=60s (state-monitor-interval-60s)
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource show ClusterIP --full'
+        line = 'resource show ClusterIP'
         output, returnVal = pcs(temp_cib, line)
         ac(output, """\
  Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
@@ -3463,16 +3463,23 @@ Error: Cannot remove more than one resource from cloned group
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource show D1 --full")
-        ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Meta Attrs: target-role=Stopped \n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n")
+        o,r = pcs(temp_cib, "resource show D1")
+        ac(o, """\
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Meta Attrs: target-role=Stopped 
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+""")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource enable D1")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource show D1 --full")
-        ac(o," Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D1-monitor-interval-60s)\n")
+        o,r = pcs(temp_cib, "resource show D1")
+        ac(o, """\
+ Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+  Operations: monitor interval=60s (D1-monitor-interval-60s)
+""")
         assert r == 0
 
         # bad resource name
