@@ -1801,14 +1801,24 @@ def get_terminal_input(message=None):
     if message:
         sys.stdout.write(message)
         sys.stdout.flush()
-    if PYTHON2:
-        return raw_input("")
-    else:
-        return input("")
+    try:
+        if PYTHON2:
+            return raw_input("")
+        else:
+            return input("")
+    except EOFError:
+        return ""
+    except KeyboardInterrupt:
+        print("Interrupted")
+        sys.exit(1)
 
 def get_terminal_password(message="Password: "):
-    if sys.stdout.isatty():
-        return getpass.getpass(message)
+    if sys.stdin.isatty():
+        try:
+            return getpass.getpass(message)
+        except KeyboardInterrupt:
+            print("Interrupted")
+            sys.exit(1)
     else:
         return get_terminal_input(message)
 
