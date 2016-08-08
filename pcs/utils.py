@@ -1836,15 +1836,18 @@ def stonithCheck():
                         prop.attrib["value"] == "false":
                     return False
 
-    primitives = et.findall(str("configuration/resources/primitive"))
-    for p in primitives:
-        if p.attrib["class"] == "stonith":
-            return False
-
-    primitives = et.findall(str("configuration/resources/clone/primitive"))
-    for p in primitives:
-        if p.attrib["class"] == "stonith":
-            return False
+    xpath_list = (
+        "configuration/resources/primitive",
+        "configuration/resources/group/primitive",
+        "configuration/resources/clone/primitive",
+        "configuration/resources/clone/group/primitive",
+        "configuration/resources/master/primitive",
+        "configuration/resources/master/group/primitive",
+    )
+    for xpath in xpath_list:
+        for p in et.findall(str(xpath)):
+            if ("class" in p.attrib) and (p.attrib["class"] == "stonith"):
+                return False
 
     if not usefile:
         # check if SBD daemon is running
