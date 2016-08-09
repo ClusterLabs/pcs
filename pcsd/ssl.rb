@@ -117,7 +117,8 @@ else
 end
 
 default_bind = true
-primary_addr = '::'
+# see https://github.com/ClusterLabs/pcs/issues/51
+primary_addr = if RUBY_VERSION >= '2.1' then '*' else '::' end
 secondary_addrs = []
 if ENV['PCSD_BIND_ADDR']
   user_addrs = ENV['PCSD_BIND_ADDR'].split(',').collect { |x| x.strip() }
