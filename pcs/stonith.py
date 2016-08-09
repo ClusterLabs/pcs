@@ -130,7 +130,9 @@ def stonith_list_options(stonith_agent):
         metadata = lib_ra.get_fence_agent_metadata(runner, stonith_agent)
         desc = lib_ra.get_agent_desc(metadata)
         params = lib_ra.get_fence_agent_parameters(runner, metadata)
-        resource.resource_print_options(stonith_agent, desc, params)
+        # Fence agents just list the actions, usually without any attributes.
+        # We could print them but it wouldn't add any usefull information.
+        resource.resource_print_options(stonith_agent, desc, params, actions=[])
     except lib_ra.ResourceAgentLibError as e:
         utils.process_library_reports(
             [lib_ra.resource_agent_lib_error_to_report_item(e)]

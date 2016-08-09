@@ -338,18 +338,18 @@ def resource_list_available(argv):
         print("\n".join(ret))
 
 
-def resource_print_options(agent_name, desc, params):
+def resource_print_options(agent_name, desc, params, actions):
     if desc["shortdesc"]:
         agent_name += " - " + format_desc(
             len(agent_name + " - "), desc["shortdesc"]
         )
     print(agent_name)
-    print()
     if desc["longdesc"]:
-        print(desc["longdesc"])
         print()
+        print(desc["longdesc"])
 
     if len(params) > 0:
+        print()
         print("Resource options:")
     for param in params:
         if param.get("advanced", False):
@@ -366,6 +366,19 @@ def resource_print_options(agent_name, desc, params):
         desc = format_desc(indent, desc)
         print("  " + name + ": " + desc)
 
+    if actions:
+        print()
+        print("Default operations:")
+        action_lines = []
+        for action in utils.filter_default_op_from_actions(actions):
+            parts = ["  {0}:".format(action.get("name", ""))]
+            parts.extend([
+                "{0}={1}".format(name, value)
+                for name, value in sorted(action.items())
+                if name != "name"
+            ])
+            action_lines.append(" ".join(parts))
+        print("\n".join(action_lines))
 
 def resource_list_options(resource):
     runner = utils.cmd_runner()
@@ -376,13 +389,14 @@ def resource_list_options(resource):
         )
         desc = lib_ra.get_agent_desc(metadata_dom)
         params = lib_ra.get_resource_agent_parameters(metadata_dom)
-        return desc, params
+        actions = lib_ra.get_agent_actions(metadata_dom)
+        return desc, params, actions
 
     found_resource = False
 
     try:
-        descriptions, parameters = get_desc_params(resource)
-        resource_print_options(resource, descriptions, parameters)
+        descriptions, parameters, actions = get_desc_params(resource)
+        resource_print_options(resource, descriptions, parameters, actions)
         return
     except lib_ra.UnsupportedResourceAgent:
         pass
@@ -393,7 +407,7 @@ def resource_list_options(resource):
     except LibraryError as e:
         utils.process_library_reports(e.args)
 
-    # no standard was give, lets search all ocf providers first
+    # no standard was given, let's search all ocf providers first
     providers = sorted(os.listdir(settings.ocf_resources))
     for provider in providers:
         if not os.path.exists(
@@ -402,18 +416,18 @@ def resource_list_options(resource):
             continue
         try:
             agent = "ocf:{0}:{1}".format(provider, resource)
-            descriptions, parameters = get_desc_params(agent)
-            resource_print_options(agent, descriptions, parameters)
+            descriptions, parameters, actions = get_desc_params(agent)
+            resource_print_options(agent, descriptions, parameters, actions)
             return
         except (LibraryError, lib_ra.ResourceAgentLibError):
             pass
 
-    # still not found, now lets look at nagios plugins
+    # still not found, now let's take a look at nagios plugins
     if not found_resource:
         try:
             agent = "nagios:" + resource
-            descriptions, parameters = get_desc_params(agent)
-            resource_print_options(agent, descriptions, parameters)
+            descriptions, parameters, actions = get_desc_params(agent)
+            resource_print_options(agent, descriptions, parameters, actions)
         except (LibraryError, lib_ra.ResourceAgentLibError):
             utils.err("Unable to find resource: {0}".format(resource))
 

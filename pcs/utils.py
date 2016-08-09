@@ -98,6 +98,8 @@ except ImportError:
 
 PYTHON2 = sys.version[0] == "2"
 
+DEFAULT_RESOURCE_ACTIONS = ["monitor", "start", "stop", "promote", "demote"]
+
 # usefile & filename variables are set in pcs module
 usefile = False
 filename = ""
@@ -1411,21 +1413,33 @@ def does_resource_have_options(ra_type):
         return True
     return False
 
+def filter_default_op_from_actions(resource_actions):
+    filtered = []
+    for action in resource_actions:
+        if action.get("name", "") not in DEFAULT_RESOURCE_ACTIONS:
+            continue
+        new_action = dict([
+            (name, value)
+            for name, value in sorted(action.items())
+            if name != "depth"
+        ])
+        filtered.append(new_action)
+    return filtered
+
 # Given a resource agent (ocf:heartbeat:XXX) return an list of default
 # operations or an empty list if unable to find any default operations
 def get_default_op_values(ra_type):
-    allowable_operations = ["monitor", "start", "stop", "promote", "demote"]
     default_ops = []
     try:
         metadata = lib_ra.get_resource_agent_metadata(cmd_runner(), ra_type)
-        actions = lib_ra.get_agent_actions(metadata)
+        actions = filter_default_op_from_actions(
+            lib_ra.get_agent_actions(metadata)
+        )
 
         for action in actions:
-            if action["name"] not in allowable_operations:
-                continue
             op = [action["name"]]
             for key in action.keys():
-                if key != "name" and (key != "depth" or action[key] != "0"):
+                if key != "name" and action[key] != "0":
                     op.append("{0}={1}".format(key, action[key]))
             default_ops.append(op)
     except (

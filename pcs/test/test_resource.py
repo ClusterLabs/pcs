@@ -109,7 +109,6 @@ class ResourceTest(unittest.TestCase):
         assert output == "Error: Unable to find resource: bad_resource\n"
 
         output, returnVal = pcs(temp_cib, "resource describe ocf:heartbeat:Dummy")
-        assert returnVal == 0
         ac(output, """\
 ocf:heartbeat:Dummy - Example stateless resource agent
 
@@ -127,10 +126,15 @@ but moderate. The minimum timeouts should never be below 10 seconds.
 Resource options:
   state: Location to store the resource state in.
   fake: Fake attribute that can be changed to cause a reload
+
+Default operations:
+  start: timeout=20
+  stop: timeout=20
+  monitor: interval=10 timeout=20
 """)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource describe Dummy")
-        assert returnVal == 0
         ac(output, """\
 ocf:heartbeat:Dummy - Example stateless resource agent
 
@@ -148,7 +152,13 @@ but moderate. The minimum timeouts should never be below 10 seconds.
 Resource options:
   state: Location to store the resource state in.
   fake: Fake attribute that can be changed to cause a reload
+
+Default operations:
+  start: timeout=20
+  stop: timeout=20
+  monitor: interval=10 timeout=20
 """)
+        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource describe SystemHealth")
         assert returnVal == 0
@@ -158,6 +168,10 @@ ocf:pacemaker:SystemHealth - SystemHealth resource agent
 This is a SystemHealth Resource Agent.  It is used to monitor
 the health of a system via IPMI.
 
+Default operations:
+  start: timeout=20
+  stop: timeout=20
+  monitor: timeout=20
 """)
 
     def testAddResources(self):
