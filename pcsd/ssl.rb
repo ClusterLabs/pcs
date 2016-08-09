@@ -8,6 +8,10 @@ require 'socket'
 require 'bootstrap.rb'
 require 'pcs.rb'
 
+unless defined? OpenSSL::SSL::OP_NO_TLSv1_1
+  OpenSSL::SSL::OP_NO_TLSv1_1 = 268435456
+end
+
 server_name = WEBrick::Utils::getservername
 $logger = configure_logger('/var/log/pcsd/pcsd.log')
 
