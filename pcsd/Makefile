@@ -7,7 +7,6 @@ build_gems_rhel6:
 	mkdir -p vendor/bundle/ruby
 	gem install --verbose --no-rdoc --no-ri -l -i vendor/bundle/ruby \
 	vendor/cache/backports-3.6.8.gem \
-	vendor/cache/eventmachine-1.2.0.1.gem \
 	vendor/cache/json-1.8.3.gem \
 	vendor/cache/multi_json-1.12.1.gem \
 	vendor/cache/open4-1.3.4.gem \

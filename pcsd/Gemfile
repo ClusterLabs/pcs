@@ -9,7 +9,6 @@ gem 'sinatra-contrib'
 gem 'rack'
 gem 'rack-protection'
 gem 'tilt'
-gem 'eventmachine'
 gem 'rack-test'
 gem 'backports'
 gem 'rpam-ruby19', :platform => [:ruby_19, :ruby_20, :ruby_21, :ruby_22]
