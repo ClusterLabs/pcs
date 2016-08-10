@@ -1584,7 +1584,7 @@ def remove_resource(params, request, auth_user)
         out, err, retval = run_cmd(user, *(cmd + [resource]))
         if retval != 0
           unless (
-            (out + err).join('').include?(' does not exist.') and
+            (out + err).join('').include?('unable to find a resource') and
             no_error_if_not_exists
           )
             errors += "Unable to stop resource '#{resource}': #{err.join('')}"
