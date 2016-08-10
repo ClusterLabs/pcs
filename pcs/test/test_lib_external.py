@@ -862,7 +862,7 @@ class ParallelCommunicationHelperTest(TestCase):
             mock.call(2, a=4),
         ]
         self.assertEqual(len(expected_calls), len(func.mock_calls))
-        func.assert_has_calls(expected_calls)
+        func.assert_has_calls(expected_calls, any_order=True)
         self.assertEqual(self.mock_reporter.report_item_list, [])
 
     def test_errors(self):
