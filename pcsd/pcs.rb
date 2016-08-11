@@ -1995,14 +1995,14 @@ def enable_service(service)
 end
 
 def disable_service(service)
-  if ISSYSTEMCTL
-    # returns success even if the service is not installed
-    cmd = ['systemctl', 'disable', "#{service}.service"]
-  else
-    if not is_service_installed?(service)
+  # fails when the service is not installed, so we need to check it beforehand
+  if not is_service_installed?(service)
       return true
     end
-    # fails when the service is not installed, so we need to check it beforehand
+    
+  if ISSYSTEMCTL
+    cmd = ['systemctl', 'disable', "#{service}.service"]
+  else
     cmd = ['chkconfig', service, 'off']
   end
   _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
