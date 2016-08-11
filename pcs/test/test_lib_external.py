@@ -1012,12 +1012,14 @@ Copyright (c) 2006-2009 Red Hat, Inc.
 
 
 @mock.patch("pcs.lib.external.is_systemctl")
+@mock.patch("pcs.lib.external.is_service_installed")
 class DisableServiceTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
         self.service = "service_name"
 
-    def test_systemctl(self, mock_systemctl):
+    def test_systemctl(self, mock_is_installed, mock_systemctl):
+        mock_is_installed.return_value = True
         mock_systemctl.return_value = True
         self.mock_runner.run.return_value = ("", 0)
         lib.disable_service(self.mock_runner, self.service)
@@ -1025,7 +1027,8 @@ class DisableServiceTest(TestCase):
             ["systemctl", "disable", self.service + ".service"]
         )
 
-    def test_systemctl_failed(self, mock_systemctl):
+    def test_systemctl_failed(self, mock_is_installed, mock_systemctl):
+        mock_is_installed.return_value = True
         mock_systemctl.return_value = True
         self.mock_runner.run.return_value = ("", 1)
         self.assertRaises(
@@ -1036,7 +1039,6 @@ class DisableServiceTest(TestCase):
             ["systemctl", "disable", self.service + ".service"]
         )
 
-    @mock.patch("pcs.lib.external.is_service_installed")
     def test_not_systemctl(self, mock_is_installed, mock_systemctl):
         mock_is_installed.return_value = True
         mock_systemctl.return_value = False
@@ -1046,7 +1048,6 @@ class DisableServiceTest(TestCase):
             ["chkconfig", self.service, "off"]
         )
 
-    @mock.patch("pcs.lib.external.is_service_installed")
     def test_not_systemctl_failed(self, mock_is_installed, mock_systemctl):
         mock_is_installed.return_value = True
         mock_systemctl.return_value = False
@@ -1059,7 +1060,14 @@ class DisableServiceTest(TestCase):
             ["chkconfig", self.service, "off"]
         )
 
-    @mock.patch("pcs.lib.external.is_service_installed")
+    def test_systemctl_not_installed(
+            self, mock_is_installed, mock_systemctl
+    ):
+        mock_is_installed.return_value = False
+        mock_systemctl.return_value = True
+        lib.disable_service(self.mock_runner, self.service)
+        self.assertEqual(self.mock_runner.run.call_count, 0)
+
     def test_not_systemctl_not_installed(
             self, mock_is_installed, mock_systemctl
     ):
@@ -1068,7 +1076,8 @@ class DisableServiceTest(TestCase):
         lib.disable_service(self.mock_runner, self.service)
         self.assertEqual(self.mock_runner.run.call_count, 0)
 
-    def test_instance_systemctl(self, mock_systemctl):
+    def test_instance_systemctl(self, mock_is_installed, mock_systemctl):
+        mock_is_installed.return_value = True
         mock_systemctl.return_value = True
         self.mock_runner.run.return_value = ("", 0)
         lib.disable_service(self.mock_runner, self.service, instance="test")
@@ -1078,7 +1087,6 @@ class DisableServiceTest(TestCase):
             "{0}@{1}.service".format(self.service, "test")
         ])
 
-    @mock.patch("pcs.lib.external.is_service_installed")
     def test_instance_not_systemctl(self, mock_is_installed, mock_systemctl):
         mock_is_installed.return_value = True
         mock_systemctl.return_value = False

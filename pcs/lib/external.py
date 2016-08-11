@@ -135,13 +135,13 @@ def disable_service(runner, service, instance=None):
     instance -- instance name, it ha no effect on not systemd systems.
         If None no instance name will be used.
     """
+    if not is_service_installed(runner, service):
+        return
     if is_systemctl():
         output, retval = runner.run([
             "systemctl", "disable", _get_service_name(service, instance)
         ])
     else:
-        if not is_service_installed(runner, service):
-            return
         output, retval = runner.run(["chkconfig", service, "off"])
     if retval != 0:
         raise DisableServiceError(service, output.rstrip(), instance)
