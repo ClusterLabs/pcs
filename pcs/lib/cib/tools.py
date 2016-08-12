@@ -176,29 +176,31 @@ def upgrade_cib(cib, runner):
     cib -- cib etree
     runner -- CommandRunner
     """
-    temp_file = tempfile.NamedTemporaryFile("w+", suffix=".pcs")
-    temp_file.write(etree.tostring(cib).decode())
-    temp_file.flush()
-    output, retval = runner.run(
-        [
-            os.path.join(settings.pacemaker_binaries, "cibadmin"),
-            "--upgrade",
-            "--force"
-        ],
-        env_extend={"CIB_file": temp_file.name}
-    )
-
-    if retval != 0:
-        temp_file.close()
-        LibraryError(reports.cib_upgrade_failed(output))
-
+    temp_file = None
     try:
+        temp_file = tempfile.NamedTemporaryFile("w+", suffix=".pcs")
+        temp_file.write(etree.tostring(cib).decode())
+        temp_file.flush()
+        output, retval = runner.run(
+            [
+                os.path.join(settings.pacemaker_binaries, "cibadmin"),
+                "--upgrade",
+                "--force"
+            ],
+            env_extend={"CIB_file": temp_file.name}
+        )
+
+        if retval != 0:
+            temp_file.close()
+            raise LibraryError(reports.cib_upgrade_failed(output))
+
         temp_file.seek(0)
         return etree.fromstring(temp_file.read())
     except (EnvironmentError, etree.XMLSyntaxError, etree.DocumentInvalid) as e:
-        LibraryError(reports.cib_upgrade_failed(str(e)))
+        raise LibraryError(reports.cib_upgrade_failed(str(e)))
     finally:
-        temp_file.close()
+        if temp_file:
+            temp_file.close()
 
 
 def ensure_cib_version(runner, cib, version):
