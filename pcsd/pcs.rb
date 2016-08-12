@@ -1997,9 +1997,9 @@ end
 def disable_service(service)
   # fails when the service is not installed, so we need to check it beforehand
   if not is_service_installed?(service)
-      return true
-    end
-    
+    return true
+  end
+
   if ISSYSTEMCTL
     cmd = ['systemctl', 'disable', "#{service}.service"]
   else
