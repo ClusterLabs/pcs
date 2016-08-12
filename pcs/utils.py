@@ -32,7 +32,7 @@ from pcs.cli.common.reports import (
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
 from pcs.common.tools import simple_cache
-from pcs.lib import reports
+from pcs.lib import reports, sbd
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
@@ -576,6 +576,23 @@ def getCorosyncActiveNodes():
 
     return nodes_active
 
+
+def _enable_auto_tie_breaker_for_sbd(corosync_conf):
+    """
+    Enable auto tie breaker in specified corosync conf if it is needed by SBD.
+
+    corosync_conf -- parsed corosync conf
+    """
+    try:
+        corosync_facade = corosync_conf_facade(corosync_conf)
+        if sbd.atb_has_to_be_enabled(cmd_runner(), corosync_facade):
+            corosync_facade.set_quorum_options(
+                get_report_processor(), {"auto_tie_breaker": "1"}
+            )
+    except LibraryError as e:
+        process_library_reports(e.args)
+
+
 # Add node specified to corosync.conf and reload corosync.conf (if running)
 def addNodeToCorosync(node):
 # Before adding, make sure node isn't already in corosync.conf
@@ -601,6 +618,9 @@ def addNodeToCorosync(node):
     if node1:
         new_node.add_attribute("ring1_addr", node1)
     new_node.add_attribute("nodeid", new_nodeid)
+
+    # enable ATB if it's needed
+    _enable_auto_tie_breaker_for_sbd(corosync_conf)
 
     corosync_conf = autoset_2node_corosync(corosync_conf)
     setCorosyncConf(str(corosync_conf))
@@ -669,6 +689,9 @@ def removeNodeFromCorosync(node):
                     removed_node = True
 
     if removed_node:
+        # enable ATB if it's needed
+        _enable_auto_tie_breaker_for_sbd(corosync_conf)
+
         corosync_conf = autoset_2node_corosync(corosync_conf)
         setCorosyncConf(str(corosync_conf))
 

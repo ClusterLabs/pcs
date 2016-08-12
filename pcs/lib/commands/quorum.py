@@ -5,8 +5,9 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.lib import reports
-from pcs.lib.errors import LibraryError
+from pcs.common import report_codes
+from pcs.lib import reports, sbd
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
@@ -39,16 +40,50 @@ def get_config(lib_env):
         "device": device,
     }
 
-def set_options(lib_env, options, skip_offline_nodes=False):
+
+def _check_if_atb_can_be_disabled(
+    runner, report_processor, corosync_conf, was_enabled, force=False
+):
+    """
+    Check whenever auto_tie_breaker can be changed without affecting SBD.
+    Raises LibraryError if change of ATB will affect SBD functionality.
+
+    runner -- CommandRunner
+    report_processor -- report processor
+    corosync_conf -- corosync conf facade
+    was_enabled -- True if ATB was enabled, False otherwise
+    force -- force change
+    """
+    if (
+        was_enabled
+        and
+        not corosync_conf.is_enabled_auto_tie_breaker()
+        and
+        sbd.is_auto_tie_breaker_needed(runner, corosync_conf)
+    ):
+        report_processor.process(reports.quorum_cannot_disable_atb_due_to_sbd(
+            ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR,
+            None if force else report_codes.FORCE_OPTIONS
+        ))
+
+
+def set_options(lib_env, options, skip_offline_nodes=False, force=False):
     """
     Set corosync quorum options, distribute and reload corosync.conf if live
     lib_env LibraryEnvironment
     options quorum options (dict)
     skip_offline_nodes continue even if not all nodes are accessible
+    bool force force changes
     """
     __ensure_not_cman(lib_env)
     cfg = lib_env.get_corosync_conf()
+    atb_enabled = cfg.is_enabled_auto_tie_breaker()
     cfg.set_quorum_options(lib_env.report_processor, options)
+    if lib_env.is_corosync_conf_live:
+        _check_if_atb_can_be_disabled(
+            lib_env.cmd_runner(), lib_env.report_processor,
+            cfg, atb_enabled, force
+        )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
 def status_text(lib_env):

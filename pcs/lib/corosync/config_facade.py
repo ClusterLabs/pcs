@@ -129,6 +129,12 @@ class ConfigFacade(object):
                     options[name] = value
         return options
 
+    def is_enabled_auto_tie_breaker(self):
+        """
+        Returns True if auto tie braker option is enabled, False otherwise.
+        """
+        return self.get_quorum_options().get("auto_tie_breaker", "0") == "1"
+
     def __validate_quorum_options(self, options):
         report_items = []
         has_qdevice = self.has_quorum_device()

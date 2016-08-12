@@ -46,6 +46,50 @@ def _run_parallel_and_raise_lib_error_on_failure(func, param_list):
         raise LibraryError(*report_list)
 
 
+def is_auto_tie_breaker_needed(
+    runner, corosync_conf_facade, node_number_modifier=0
+):
+    """
+    Returns True whenever quorum option auto tie breaker is needed to be enabled
+    for proper working of SBD fencing. False if it is not needed.
+
+    runner -- command runner
+    corosync_conf_facade --
+    node_number_modifier -- this value vill be added to current number of nodes.
+        This can be useful to test whenever is ATB needed when adding/removeing
+        node.
+    """
+    return (
+        not corosync_conf_facade.has_quorum_device()
+        and
+        (len(corosync_conf_facade.get_nodes()) + node_number_modifier) % 2 == 0
+        and
+        is_sbd_installed(runner)
+        and
+        is_sbd_enabled(runner)
+    )
+
+def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
+    """
+    Return True whenever quorum option auto tie breaker has to be enabled for
+    proper working of SBD fencing. False if it's not needed or it is already
+    enabled.
+
+    runner -- command runner
+    corosync_conf_facade --
+    node_number_modifier -- this value vill be added to current number of nodes.
+        This can be useful to test whenever is ATB needed when adding/removeing
+        node.
+    """
+    return (
+        is_auto_tie_breaker_needed(
+            runner, corosync_conf_facade, node_number_modifier
+        )
+        and
+        not corosync_conf_facade.is_enabled_auto_tie_breaker()
+    )
+
+
 def check_sbd(communicator, node, watchdog):
     """
     Check SBD on specified 'node' and existence of specified watchdog.
@@ -375,3 +419,14 @@ def is_sbd_enabled(runner):
     runner -- CommandRunner
     """
     return external.is_service_enabled(runner, "sbd")
+
+
+def is_sbd_installed(runner):
+    """
+    Check if SBD service is installed in local system.
+    Reurns True id SBD service is installed. False otherwise.
+
+    runner -- CommandRunner
+    """
+    return external.is_service_installed(runner, "sbd")
+

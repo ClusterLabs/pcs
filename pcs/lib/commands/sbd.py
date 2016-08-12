@@ -157,6 +157,14 @@ def enable_sbd(
         full_watchdog_dict
     )
 
+    # enable ATB if needed
+    corosync_conf = lib_env.get_corosync_conf()
+    if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), corosync_conf):
+        corosync_conf.set_quorum_options(
+            lib_env.report_processor, {"auto_tie_breaker": "1"}
+        )
+        lib_env.push_corosync_conf(corosync_conf, ignore_offline_nodes)
+
     # distribute SBD configuration
     config = sbd.get_default_sbd_config()
     config.update(sbd_options)

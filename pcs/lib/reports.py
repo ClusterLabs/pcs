@@ -1914,3 +1914,17 @@ def live_environment_required(forbidden_options):
             "options_string": ", ".join(forbidden_options),
         }
     )
+
+
+def quorum_cannot_disable_atb_due_to_sbd(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Quorum option auto_tie_breaker cannot be disbled due to SBD.
+    """
+    return ReportItem(
+        report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+        severity,
+        "unable to disable auto_tie_breaker: SBD fencing will have no effect",
+        forceable=forceable
+    )
