@@ -233,7 +233,7 @@ Alerts:
  Alert: alert (path=test)
 """
         )
-        self.assert_pcs_success("alert recipient add alert rec_value")
+        self.assert_pcs_success("alert recipient add alert value=rec_value")
         self.assert_pcs_success(
             "alert config",
             """\
@@ -244,7 +244,7 @@ Alerts:
 """
         )
         self.assert_pcs_success(
-            "alert recipient add alert rec_value2 id=my-recipient "
+            "alert recipient add alert value=rec_value2 id=my-recipient "
             "description=description options o1=1 o2=2 meta m1=v1 m2=v2"
         )
         self.assert_pcs_success(
@@ -263,21 +263,25 @@ Alerts:
 
     def test_already_exists(self):
         self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert recipient add alert rec_value id=rec")
+        self.assert_pcs_success(
+            "alert recipient add alert value=rec_value id=rec"
+        )
         self.assert_pcs_fail(
-            "alert recipient add alert value id=rec",
+            "alert recipient add alert value=value id=rec",
             "Error: 'rec' already exists\n"
         )
         self.assert_pcs_fail(
-            "alert recipient add alert value id=alert",
+            "alert recipient add alert value=value id=alert",
             "Error: 'alert' already exists\n"
         )
 
     def test_same_value(self):
         self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert recipient add alert rec_value id=rec")
+        self.assert_pcs_success(
+            "alert recipient add alert value=rec_value id=rec"
+        )
         self.assert_pcs_fail(
-            "alert recipient add alert rec_value",
+            "alert recipient add alert value=rec_value",
             "Error: Recipient 'rec_value' in alert 'alert' already exists, "
             "use --force to override\n"
         )
@@ -291,7 +295,7 @@ Alerts:
 """
         )
         self.assert_pcs_success(
-            "alert recipient add alert rec_value --force",
+            "alert recipient add alert value=rec_value --force",
             "Warning: Recipient 'rec_value' in alert 'alert' already exists\n"
         )
         self.assert_pcs_success(
@@ -305,13 +309,21 @@ Alerts:
 """
         )
 
+    def test_no_value(self):
+        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_fail(
+            "alert recipient add alert id=rec",
+            "Error: required option 'value' is missing\n"
+        )
+
+
 
 @unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
 class UpdateRecipientAlert(PcsAlertTest):
     def test_success(self):
         self.assert_pcs_success("alert create path=test")
         self.assert_pcs_success(
-            "alert recipient add alert rec_value description=description "
+            "alert recipient add alert value=rec_value description=description "
             "options o1=1 o2=2 meta m1=v1 m2=v2"
         )
         self.assert_pcs_success(
@@ -360,8 +372,8 @@ Alerts:
 
     def test_value_exists(self):
         self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert recipient add alert rec_value")
-        self.assert_pcs_success("alert recipient add alert value")
+        self.assert_pcs_success("alert recipient add alert value=rec_value")
+        self.assert_pcs_success("alert recipient add alert value=value")
         self.assert_pcs_success(
             "alert config",
             """\
@@ -394,7 +406,7 @@ Alerts:
 
     def test_value_same_as_previous(self):
         self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert recipient add alert rec_value")
+        self.assert_pcs_success("alert recipient add alert value=rec_value")
         self.assert_pcs_success(
             "alert config",
             """\
@@ -425,7 +437,9 @@ Alerts:
 
     def test_empty_value(self):
         self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert recipient add alert rec_value id=rec")
+        self.assert_pcs_success(
+            "alert recipient add alert value=rec_value id=rec"
+        )
         self.assert_pcs_fail(
             "alert recipient update rec value=",
             "Error: Recipient value '' is not valid.\n"
@@ -436,7 +450,9 @@ Alerts:
 class RemoveRecipientTest(PcsAlertTest):
     def test_success(self):
         self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert recipient add alert rec_value id=rec")
+        self.assert_pcs_success(
+            "alert recipient add alert value=rec_value id=rec"
+        )
         self.assert_pcs_success(
             "alert config",
             """\

@@ -1507,7 +1507,7 @@ Commands:
     remove <alert-id>
         Remove alert handler with specified id.
 
-    recipient add <alert-id> <recipient-value> [id=<recipient-id>]
+    recipient add <alert-id> value=<recipient-value> [id=<recipient-id>]
             [description=<description>] [options [<option>=<value>]...]
             [meta [<meta-option>=<value>]...]
         Add new recipient to specified alert handler.

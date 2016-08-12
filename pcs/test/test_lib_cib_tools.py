@@ -7,6 +7,7 @@ from __future__ import (
 
 from unittest import TestCase
 
+from os.path import join
 from lxml import etree
 
 from pcs.test.tools.assertions import (
@@ -17,6 +18,7 @@ from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
+from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.external import CommandRunner
 from pcs.lib.errors import ReportItemSeverity as severities
@@ -369,3 +371,92 @@ class EnsureCibVersionTest(TestCase):
             )
         )
         mock_upgrade_cib.assert_called_once_with(self.cib, self.mock_runner)
+
+
+@mock.patch("tempfile.NamedTemporaryFile")
+class UpgradeCibTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
+
+    def test_success(self, mock_named_file):
+        mock_file = mock.MagicMock()
+        mock_file.name = "mock_file_name"
+        mock_file.read.return_value = "<cib/>"
+        mock_named_file.return_value = mock_file
+        self.mock_runner.run.return_value = ("", 0)
+        assert_xml_equal(
+            "<cib/>",
+            etree.tostring(
+                lib.upgrade_cib(etree.XML("<old_cib/>"), self.mock_runner)
+            ).decode()
+        )
+        mock_named_file.assert_called_once_with("w+", suffix=".pcs")
+        mock_file.write.assert_called_once_with("<old_cib/>")
+        mock_file.flush.assert_called_once_with()
+        self.mock_runner.run.assert_called_once_with(
+            [
+                join(settings.pacemaker_binaries, "cibadmin"),
+                "--upgrade",
+                "--force"
+            ],
+            env_extend={"CIB_file": "mock_file_name"}
+        )
+        mock_file.seek.assert_called_once_with(0)
+        mock_file.read.assert_called_once_with()
+
+    def test_upgrade_failed(self, mock_named_file):
+        mock_file = mock.MagicMock()
+        mock_file.name = "mock_file_name"
+        mock_named_file.return_value = mock_file
+        self.mock_runner.run.return_value = ("reason", 1)
+        assert_raise_library_error(
+            lambda: lib.upgrade_cib(etree.XML("<old_cib/>"), self.mock_runner),
+            (
+                severities.ERROR,
+                report_codes.CIB_UPGRADE_FAILED,
+                {"reason": "reason"}
+            )
+        )
+        mock_named_file.assert_called_once_with("w+", suffix=".pcs")
+        mock_file.write.assert_called_once_with("<old_cib/>")
+        mock_file.flush.assert_called_once_with()
+        self.mock_runner.run.assert_called_once_with(
+            [
+                join(settings.pacemaker_binaries, "cibadmin"),
+                "--upgrade",
+                "--force"
+            ],
+            env_extend={"CIB_file": "mock_file_name"}
+        )
+
+    def test_unable_to_parse_upgraded_cib(self, mock_named_file):
+        mock_file = mock.MagicMock()
+        mock_file.name = "mock_file_name"
+        mock_file.read.return_value = "not xml"
+        mock_named_file.return_value = mock_file
+        self.mock_runner.run.return_value = ("", 0)
+        assert_raise_library_error(
+            lambda: lib.upgrade_cib(etree.XML("<old_cib/>"), self.mock_runner),
+            (
+                severities.ERROR,
+                report_codes.CIB_UPGRADE_FAILED,
+                {
+                    "reason":
+                        "Start tag expected, '<' not found, line 1, column 1",
+                }
+            )
+        )
+        mock_named_file.assert_called_once_with("w+", suffix=".pcs")
+        mock_file.write.assert_called_once_with("<old_cib/>")
+        mock_file.flush.assert_called_once_with()
+        self.mock_runner.run.assert_called_once_with(
+            [
+                join(settings.pacemaker_binaries, "cibadmin"),
+                "--upgrade",
+                "--force"
+            ],
+            env_extend={"CIB_file": "mock_file_name"}
+        )
+        mock_file.seek.assert_called_once_with(0)
+        mock_file.read.assert_called_once_with()
+
