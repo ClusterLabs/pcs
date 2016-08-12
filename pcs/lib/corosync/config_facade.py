@@ -133,7 +133,11 @@ class ConfigFacade(object):
         """
         Returns True if auto tie braker option is enabled, False otherwise.
         """
-        return self.get_quorum_options().get("auto_tie_breaker", "0") == "1"
+        auto_tie_breaker = "0"
+        for quorum in self.config.get_sections("quorum"):
+            for attr in quorum.get_attributes("auto_tie_breaker"):
+                auto_tie_breaker = attr[1]
+        return auto_tie_breaker == "1"
 
     def __validate_quorum_options(self, options):
         report_items = []
@@ -494,10 +498,7 @@ class ConfigFacade(object):
         # get relevant status
         has_quorum_device = self.has_quorum_device()
         has_two_nodes = len(self.get_nodes()) == 2
-        auto_tie_breaker = False
-        for quorum in self.config.get_sections("quorum"):
-            for attr in quorum.get_attributes("auto_tie_breaker"):
-                auto_tie_breaker = attr[1] != "0"
+        auto_tie_breaker = self.is_enabled_auto_tie_breaker()
         # update two_node
         if has_two_nodes and not auto_tie_breaker and not has_quorum_device:
             quorum_section_list = self.__ensure_section(self.config, "quorum")
