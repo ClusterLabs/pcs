@@ -129,15 +129,14 @@ def recipient_add(lib, argv, modifiers):
         raise CmdLineInputError()
 
     alert_id = argv[0]
-    recipient_value = argv[1]
 
-    sections = parse_cmd_sections(argv[2:], set(["options", "meta"]))
+    sections = parse_cmd_sections(argv[1:], set(["options", "meta"]))
     main_args = prepare_options(sections["main"])
-    ensure_only_allowed_options(main_args, ["description", "id"])
+    ensure_only_allowed_options(main_args, ["description", "id", "value"])
 
     lib.alert.add_recipient(
         alert_id,
-        recipient_value,
+        main_args.get("value", None),
         prepare_options(sections["options"]),
         prepare_options(sections["meta"]),
         recipient_id=main_args.get("id", None),
