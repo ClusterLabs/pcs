@@ -63,6 +63,8 @@ def recipient_cmd(*args):
             recipient_update(*args)
         elif sub_cmd == "remove":
             recipient_remove(*args)
+        else:
+            raise CmdLineInputError()
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(
             e, "alert", "recipient {0}".format(sub_cmd)
