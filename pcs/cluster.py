@@ -43,6 +43,7 @@ from pcs.lib import (
     reports as lib_reports,
 )
 from pcs.lib.booth import sync as booth_sync
+from pcs.lib.nodes_task import check_corosync_offline_on_nodes
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
@@ -1340,6 +1341,36 @@ def get_cib(argv):
         except IOError as e:
             utils.err("Unable to write to file '%s', %s" % (filename, e.strerror))
 
+
+def _ensure_cluster_is_offline_if_atb_should_be_enabled(
+    lib_env, node_num_modifier, skip_offline_nodes=False
+):
+    """
+    Check if cluster is offline if auto tie breaker should be enabled.
+    Raises LibraryError if ATB needs to be enabled cluster is not offline.
+
+    lib_env -- LibraryEnvironment
+    node_num_modifier -- number which wil be added to the number of nodes in
+        cluster when determining whenever ATB is needed.
+    skip_offline_nodes -- if True offline nodes will be skipped
+    """
+    corosync_conf = lib_env.get_corosync_conf()
+    if lib_sbd.atb_has_to_be_enabled(
+        lib_env.cmd_runner(), corosync_conf, node_num_modifier
+    ):
+        print(
+            "Warning: auto_tie_breaker quorum option will be enabled to make "
+            "SBD fencing effecive after this change. Cluster has to be offline "
+            "to be able to make this change."
+        )
+        check_corosync_offline_on_nodes(
+            lib_env.node_communicator(),
+            lib_env.report_processor,
+            corosync_conf.get_nodes(),
+            skip_offline_nodes
+        )
+
+
 def cluster_node(argv):
     if len(argv) != 2:
         usage.cluster()
@@ -1375,6 +1406,9 @@ def cluster_node(argv):
                 msg += ", use --force to override"
             utils.err(msg)
 
+    lib_env = utils.get_lib_env()
+    modifiers = utils.get_modificators()
+
     if add_node == True:
         wait = False
         wait_timeout = None
@@ -1397,11 +1431,9 @@ def cluster_node(argv):
         if not canAdd:
             utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
 
-        lib_env = utils.get_lib_env()
         report_processor = lib_env.report_processor
         node_communicator = lib_env.node_communicator()
         node_addr = NodeAddresses(node0, node1)
-        modifiers = utils.get_modificators()
         try:
             if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
                 if "--watchdog" not in utils.pcs_options:
@@ -1412,6 +1444,10 @@ def cluster_node(argv):
                 else:
                     watchdog = utils.pcs_options["--watchdog"][0]
 
+                _ensure_cluster_is_offline_if_atb_should_be_enabled(
+                    lib_env, 1, modifiers["skip_offline_nodes"]
+                )
+
                 report_processor.process(lib_reports.sbd_check_started())
                 lib_sbd.check_sbd_on_node(
                     report_processor, node_communicator, node_addr, watchdog
@@ -1419,12 +1455,15 @@ def cluster_node(argv):
                 sbd_cfg = environment_file_to_dict(
                     lib_sbd.get_local_sbd_config()
                 )
-                sbd_cfg["SBD_WATCHDOG_DEV"] = watchdog
                 report_processor.process(
                     lib_reports.sbd_config_distribution_started()
                 )
                 lib_sbd.set_sbd_config_on_node(
-                    report_processor, node_communicator, node_addr, sbd_cfg
+                    report_processor,
+                    node_communicator,
+                    node_addr,
+                    sbd_cfg,
+                    watchdog
                 )
                 report_processor.process(lib_reports.sbd_enabling_started())
                 lib_sbd.enable_sbd_service_on_node(
@@ -1560,6 +1599,13 @@ def cluster_node(argv):
                     + data
                 )
             # else the node seems to be stopped already, we're ok to proceed
+
+        try:
+            _ensure_cluster_is_offline_if_atb_should_be_enabled(
+                lib_env, -1, modifiers["skip_offline_nodes"]
+            )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
 
         nodesRemoved = False
         c_nodes = utils.getNodesFromCorosyncConf()

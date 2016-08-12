@@ -1701,6 +1701,19 @@ def watchdog_not_found(node, watchdog):
     )
 
 
+def invalid_watchdog_path(watchdog):
+    """
+    watchdog path is not absolut path
+
+    watchdog -- watchdog device path
+    """
+    return ReportItem.error(
+        report_codes.WATCHDOG_INVALID,
+        "Watchdog path '{watchdog}' is invalid.",
+        info={"watchdog": watchdog}
+    )
+
+
 def unable_to_get_sbd_status(node, reason):
     """
     there was (communication or parsing) failure during obtaining status of SBD
@@ -1900,4 +1913,18 @@ def live_environment_required(forbidden_options):
             "forbidden_options": forbidden_options,
             "options_string": ", ".join(forbidden_options),
         }
+    )
+
+
+def quorum_cannot_disable_atb_due_to_sbd(
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Quorum option auto_tie_breaker cannot be disbled due to SBD.
+    """
+    return ReportItem(
+        report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+        severity,
+        "unable to disable auto_tie_breaker: SBD fencing will have no effect",
+        forceable=forceable
     )

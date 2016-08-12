@@ -497,7 +497,7 @@ def _sbd_parse_watchdogs(watchdog_list):
     for watchdog_node in watchdog_list:
         if "@" not in watchdog_node:
             if default_watchdog:
-                raise CmdLineInputError("Multiple default watchdogs.")
+                raise CmdLineInputError("Multiple watchdog definitions.")
             default_watchdog = watchdog_node
         else:
             watchdog, node_name = watchdog_node.rsplit("@", 1)
@@ -555,7 +555,7 @@ def sbd_config(lib, argv, modifiers):
 
     config = config_list[0]["config"]
 
-    filtered_options = ["SBD_WATCHDOG_DEV", "SBD_OPTS"]
+    filtered_options = ["SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER"]
     for key, val in config.items():
         if key in filtered_options:
             continue

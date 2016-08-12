@@ -281,6 +281,34 @@ quorum {
         self.assertFalse(facade.need_qdevice_reload)
 
 
+class IsEnabledAutoTieBreaker(TestCase):
+    def test_enabled(self):
+        config = """\
+quorum {
+    auto_tie_breaker: 1
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertTrue(facade.is_enabled_auto_tie_breaker())
+
+    def test_disabled(self):
+        config = """\
+quorum {
+    auto_tie_breaker: 0
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertFalse(facade.is_enabled_auto_tie_breaker())
+
+    def test_no_value(self):
+        config = """\
+quorum {
+}
+"""
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertFalse(facade.is_enabled_auto_tie_breaker())
+
+
 class SetQuorumOptionsTest(TestCase):
     def get_two_node(self, facade):
         two_node = None

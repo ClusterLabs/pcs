@@ -25,6 +25,7 @@ from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity as severity,
 )
+from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.external import NodeCommunicationException
 from pcs.lib.node import NodeAddresses, NodeAddressesList
 
@@ -146,23 +147,201 @@ class GetQuorumConfigTest(TestCase, CmanMixin):
         self.assertEqual([], self.mock_reporter.report_item_list)
 
 
+@mock.patch("pcs.lib.sbd.is_auto_tie_breaker_needed")
+class CheckIfAtbCanBeDisabledTest(TestCase):
+    def setUp(self):
+        self.mock_reporter = MockLibraryReportProcessor()
+        self.mock_runner = "cmd_runner"
+        self.mock_corosync_conf = mock.MagicMock(spec_set=ConfigFacade)
+
+    def test_atb_no_need_was_disabled_atb_disabled(self, mock_atb_needed):
+        mock_atb_needed.return_value = False
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, False
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_no_need_was_disabled_atb_enabled(self, mock_atb_needed):
+        mock_atb_needed.return_value = False
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = True
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, False
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_no_need_was_enable_atb_disabled(self, mock_atb_needed):
+        mock_atb_needed.return_value = False
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_no_need_was_enabled_atb_enabled(self, mock_atb_needed):
+        mock_atb_needed.return_value = False
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = True
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_needed_was_disabled_atb_disabled(self, mock_atb_needed):
+        mock_atb_needed.return_value = True
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, False
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_needed_was_disabled_atb_enabled(self, mock_atb_needed):
+        mock_atb_needed.return_value = True
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = True
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, False
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_needed_was_enable_atb_disabled(self, mock_atb_needed):
+        mock_atb_needed.return_value = True
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
+        report_item = (
+            severity.ERROR,
+            report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+            {},
+            report_codes.FORCE_OPTIONS
+        )
+        assert_raise_library_error(
+            lambda: lib._check_if_atb_can_be_disabled(
+                self.mock_runner,
+                self.mock_reporter,
+                self.mock_corosync_conf,
+                True
+            ),
+            report_item
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list, [report_item]
+        )
+
+    def test_atb_needed_was_enabled_atb_enabled(self, mock_atb_needed):
+        mock_atb_needed.return_value = True
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = True
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+
+    def test_atb_no_need_was_disabled_atb_disabled_force(
+        self, mock_atb_needed
+    ):
+        mock_atb_needed.return_value = False
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf,
+            False, force=True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_no_need_was_disabled_atb_enabled_force(
+        self, mock_atb_needed
+    ):
+        mock_atb_needed.return_value = False
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = True
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf,
+            False, force=True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_no_need_was_enable_atb_disabled_force(self, mock_atb_needed):
+        mock_atb_needed.return_value = False
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, True,
+            force=True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_no_need_was_enabled_atb_enabled_force(self, mock_atb_needed):
+        mock_atb_needed.return_value = False
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = True
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, True,
+            force=True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_needed_was_disabled_atb_disabled_force(
+        self, mock_atb_needed
+    ):
+        mock_atb_needed.return_value = True
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf,
+            False, force=True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_needed_was_disabled_atb_enabled_force(self, mock_atb_needed):
+        mock_atb_needed.return_value = True
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = True
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf,
+            False, force=True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+    def test_atb_needed_was_enable_atb_disabled_force(self, mock_atb_needed):
+        mock_atb_needed.return_value = True
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, True,
+            force=True
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [(
+                severity.WARNING,
+                report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
+                {},
+                None
+            )]
+        )
+
+    def test_atb_needed_was_enabled_atb_enabled_force(self, mock_atb_needed):
+        mock_atb_needed.return_value = True
+        self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = True
+        lib._check_if_atb_can_be_disabled(
+            self.mock_runner, self.mock_reporter, self.mock_corosync_conf, True,
+            force=True
+        )
+        self.assertEqual([], self.mock_reporter.report_item_list)
+
+
+@mock.patch("pcs.lib.commands.quorum._check_if_atb_can_be_disabled")
 @mock.patch.object(LibraryEnvironment, "push_corosync_conf")
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
+@mock.patch.object(LibraryEnvironment, "cmd_runner")
 class SetQuorumOptionsTest(TestCase, CmanMixin):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
-    def test_disabled_on_cman(self, mock_get_corosync, mock_push_corosync):
+    def test_disabled_on_cman(
+        self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
+    ):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assert_disabled_on_cman(lambda: lib.set_options(lib_env, {}))
         mock_get_corosync.assert_not_called()
         mock_push_corosync.assert_not_called()
+        mock_check.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: True)
     def test_enabled_on_cman_if_not_live(
-        self, mock_get_corosync, mock_push_corosync
+        self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
     ):
         original_conf = "invalid {\nconfig: stop after cman test"
         mock_get_corosync.return_value = original_conf
@@ -182,11 +361,16 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
         )
 
         mock_push_corosync.assert_not_called()
+        mock_check.assert_not_called()
+        mock_runner.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_success(self, mock_get_corosync, mock_push_corosync):
+    def test_success(
+        self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
+    ):
         original_conf = open(rc("corosync-3nodes.conf")).read()
         mock_get_corosync.return_value = original_conf
+        mock_runner.return_value = "cmd_runner"
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         new_options = {"wait_for_all": "1"}
@@ -201,9 +385,16 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
             )
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
+        self.assertEqual(1, mock_check.call_count)
+        self.assertEqual("cmd_runner", mock_check.call_args[0][0])
+        self.assertEqual(self.mock_reporter, mock_check.call_args[0][1])
+        self.assertFalse(mock_check.call_args[0][3])
+        self.assertFalse(mock_check.call_args[0][4])
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_bad_options(self, mock_get_corosync, mock_push_corosync):
+    def test_bad_options(
+        self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
+    ):
         original_conf = open(rc("corosync.conf")).read()
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -228,9 +419,12 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
         )
 
         mock_push_corosync.assert_not_called()
+        mock_check.assert_not_called()
 
     @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
-    def test_bad_config(self, mock_get_corosync, mock_push_corosync):
+    def test_bad_config(
+        self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
+    ):
         original_conf = "invalid {\nconfig: this is"
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -246,6 +440,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
         )
 
         mock_push_corosync.assert_not_called()
+        mock_check.assert_not_called()
 
 
 @mock.patch("pcs.lib.commands.quorum.corosync_live.get_quorum_status_text")

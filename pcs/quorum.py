@@ -121,7 +121,8 @@ def quorum_update_cmd(lib, argv, modificators):
 
     lib.quorum.set_options(
         options,
-        skip_offline_nodes=modificators["skip_offline_nodes"]
+        skip_offline_nodes=modificators["skip_offline_nodes"],
+        force=modificators["force"]
     )
 
 def quorum_device_add_cmd(lib, argv, modificators):

@@ -35,6 +35,15 @@ from pcs.lib.external import (
 import pcs.lib.commands.sbd as cmd_sbd
 
 
+def _assert_equal_list_of_dictionaries_without_order(expected, actual):
+    for item in actual:
+        if item not in expected:
+            raise AssertionError("Given but not expected: {0}".format(item))
+    for item in expected:
+        if item not in actual:
+            raise AssertionError("Expected but not given: {0}".format(item))
+
+
 class CommandSbdTest(TestCase):
     def setUp(self):
         self.mock_env = mock.MagicMock(spec_set=LibraryEnvironment)
@@ -234,7 +243,8 @@ class ValidateSbdOptionsTest(TestCase):
             "SBD_STARTMODE": "clean",
             "SBD_WATCHDOG_DEV": "/dev/watchdog",
             "SBD_UNKNOWN": "",
-            "SBD_OPTS": "  "
+            "SBD_OPTS": "  ",
+            "SBD_PACEMAKER": "false",
         }
 
         assert_report_item_list_equal(
@@ -270,6 +280,90 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                         "allowed_str": self.allowed_sbd_options_str
+                    },
+                    None
+                ),
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_name": "SBD_PACEMAKER",
+                        "option_type": None,
+                        "allowed": self.allowed_sbd_options,
+                        "allowed_str": self.allowed_sbd_options_str
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_watchdog_timeout_is_not_present(self):
+        config = {
+            "SBD_DELAY_START": "yes",
+            "SBD_STARTMODE": "clean"
+        }
+        self.assertEqual([], cmd_sbd._validate_sbd_options(config))
+
+    def test_watchdog_timeout_is_nonnegative_int(self):
+        config = {
+            "SBD_WATCHDOG_TIMEOUT": "-1",
+        }
+
+        assert_report_item_list_equal(
+            cmd_sbd._validate_sbd_options(config),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "SBD_WATCHDOG_TIMEOUT",
+                        "option_value": "-1",
+                        "allowed_values": "nonnegative integer",
+                        "allowed_values_str": "nonnegative integer",
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_watchdog_timeout_is_not_int(self):
+        config = {
+            "SBD_WATCHDOG_TIMEOUT": "not int",
+        }
+
+        assert_report_item_list_equal(
+            cmd_sbd._validate_sbd_options(config),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "SBD_WATCHDOG_TIMEOUT",
+                        "option_value": "not int",
+                        "allowed_values": "nonnegative integer",
+                        "allowed_values_str": "nonnegative integer",
+                    },
+                    None
+                )
+            ]
+        )
+
+    def test_watchdog_timeout_is_none(self):
+        config = {
+            "SBD_WATCHDOG_TIMEOUT": None,
+        }
+
+        assert_report_item_list_equal(
+            cmd_sbd._validate_sbd_options(config),
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "SBD_WATCHDOG_TIMEOUT",
+                        "option_value": None,
+                        "allowed_values": "nonnegative integer",
+                        "allowed_values_str": "nonnegative integer",
                     },
                     None
                 )
@@ -322,6 +416,35 @@ class GetFullWatchdogListTest(TestCase):
                 Severities.ERROR,
                 report_codes.NODE_NOT_FOUND,
                 {"node": "another_unknown_node"}
+            )
+        )
+
+    def test_invalid_watchdogs(self):
+        watchdog_dict = {
+            self.node_list[1].label: "",
+            self.node_list[2].label: None,
+            self.node_list[3].label: "not/abs/path",
+            self.node_list[4].label: "/dev/watchdog"
+
+        }
+        assert_raise_library_error(
+            lambda: cmd_sbd._get_full_watchdog_list(
+                self.node_list, "/dev/dog", watchdog_dict
+            ),
+            (
+                Severities.ERROR,
+                report_codes.WATCHDOG_INVALID,
+                {"watchdog": ""}
+            ),
+            (
+                Severities.ERROR,
+                report_codes.WATCHDOG_INVALID,
+                {"watchdog": None}
+            ),
+            (
+                Severities.ERROR,
+                report_codes.WATCHDOG_INVALID,
+                {"watchdog": "not/abs/path"}
             )
         )
 
@@ -393,8 +516,7 @@ class GetClusterSbdStatusTest(CommandSbdTest):
                 }
             }
         ]
-
-        self.assertEqual(
+        _assert_equal_list_of_dictionaries_without_order(
             expected, cmd_sbd.get_cluster_sbd_status(self.mock_env)
         )
         mock_get_nodes.assert_called_once_with(self.mock_env)
@@ -447,7 +569,7 @@ class GetClusterSbdStatusTest(CommandSbdTest):
             }
         ]
 
-        self.assertEqual(
+        _assert_equal_list_of_dictionaries_without_order(
             expected, cmd_sbd.get_cluster_sbd_status(self.mock_env)
         )
         mock_get_nodes.assert_called_once_with(self.mock_env)
@@ -538,7 +660,7 @@ OPTION=   value
             }
         ]
 
-        self.assertEqual(
+        _assert_equal_list_of_dictionaries_without_order(
             expected, cmd_sbd.get_cluster_sbd_config(self.mock_env)
         )
         mock_get_nodes.assert_called_once_with(self.mock_env)
@@ -589,7 +711,7 @@ invalid value
             }
         ]
 
-        self.assertEqual(
+        _assert_equal_list_of_dictionaries_without_order(
             expected, cmd_sbd.get_cluster_sbd_config(self.mock_env)
         )
         mock_get_nodes.assert_called_once_with(self.mock_env)

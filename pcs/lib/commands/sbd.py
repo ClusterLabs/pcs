@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+import os
 import json
 
 from pcs import settings
@@ -44,7 +45,9 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
     """
 
     report_item_list = []
-    unsupported_sbd_option_list = ["SBD_WATCHDOG_DEV", "SBD_OPTS"]
+    unsupported_sbd_option_list = [
+        "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER"
+    ]
     allowed_sbd_options = [
         "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT"
     ]
@@ -62,6 +65,17 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
                 Severities.WARNING if allow_unknown_opts else Severities.ERROR,
                 None if allow_unknown_opts else report_codes.FORCE_OPTIONS
             ))
+    if "SBD_WATCHDOG_TIMEOUT" in sbd_config:
+        report_item = reports.invalid_option_value(
+            "SBD_WATCHDOG_TIMEOUT",
+            sbd_config["SBD_WATCHDOG_TIMEOUT"],
+            "nonnegative integer"
+        )
+        try:
+            if int(sbd_config["SBD_WATCHDOG_TIMEOUT"]) < 0:
+                report_item_list.append(report_item)
+        except (ValueError, TypeError):
+            report_item_list.append(report_item)
 
     return report_item_list
 
@@ -81,6 +95,9 @@ def _get_full_watchdog_list(node_list, default_watchdog, watchdog_dict):
     report_item_list = []
 
     for node_name, watchdog in watchdog_dict.items():
+        if not watchdog or not os.path.isabs(watchdog):
+            report_item_list.append(reports.invalid_watchdog_path(watchdog))
+            continue
         try:
             full_dict[node_list.find_by_label(node_name)] = watchdog
         except NodeNotFound:
@@ -140,6 +157,14 @@ def enable_sbd(
         full_watchdog_dict
     )
 
+    # enable ATB if needed
+    corosync_conf = lib_env.get_corosync_conf()
+    if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), corosync_conf):
+        corosync_conf.set_quorum_options(
+            lib_env.report_processor, {"auto_tie_breaker": "1"}
+        )
+        lib_env.push_corosync_conf(corosync_conf, ignore_offline_nodes)
+
     # distribute SBD configuration
     config = sbd.get_default_sbd_config()
     config.update(sbd_options)
@@ -147,7 +172,8 @@ def enable_sbd(
         lib_env.report_processor,
         lib_env.node_communicator(),
         online_nodes,
-        config
+        config,
+        full_watchdog_dict
     )
 
     # remove cluster prop 'stonith_watchdog_timeout'

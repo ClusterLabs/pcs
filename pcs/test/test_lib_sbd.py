@@ -28,6 +28,7 @@ from pcs.lib.external import (
     NodeConnectionException,
 )
 import pcs.lib.sbd as lib_sbd
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 
 
 class TestException(Exception):
@@ -83,6 +84,246 @@ class RunParallelAndRaiseLibErrorOnFailureTest(TestCase):
                 {}
             )
         )
+
+
+@mock.patch("pcs.lib.sbd.is_sbd_installed")
+@mock.patch("pcs.lib.sbd.is_sbd_enabled")
+class IsAutoTieBreakerNeededTest(TestCase):
+    def setUp(self):
+        self.runner = "runner"
+        self.mock_corosync_conf = mock.MagicMock(spec_set=CorosyncConfigFacade)
+
+    def _set_ret_vals(self, nodes, qdevice):
+        self.mock_corosync_conf.get_nodes.return_value = nodes
+        self.mock_corosync_conf.has_quorum_device.return_value = qdevice
+
+    def test_sbd_enabled_even_nodes_has_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2], True)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_enabled_even_nodes_no_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2], False)
+        self.assertTrue(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_not_installed_even_nodes_no_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = False
+        mock_installed.return_value = False
+        self._set_ret_vals([1, 2], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_enabled_odd_nodes_has_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3], True)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_enabled_odd_nodes_no_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_disabled_even_nodes_has_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = False
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2], True)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_disabled_even_nodes_no_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = False
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_disabled_odd_nodes_has_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = False
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3], True)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_disabled_odd_nodes_no_qdevice(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = False
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf
+        ))
+
+    def test_sbd_enabled_odd_nodes_no_qdevice_plus_node(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3], False)
+        self.assertTrue(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, 1
+        ))
+
+    def test_sbd_not_installed_odd_nodes_no_qdevice_plus_node(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = False
+        mock_installed.return_value = False
+        self._set_ret_vals([1, 2, 3], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, 1
+        ))
+
+    def test_sbd_enabled_odd_nodes_no_qdevice_minus_node(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3], False)
+        self.assertTrue(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, -1
+        ))
+
+    def test_sbd_enabled_odd_nodes_no_qdevice_plus_2_nodes(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, 2
+        ))
+
+    def test_sbd_enabled_odd_nodes_no_qdevice_minus_2_nodes(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, -2
+        ))
+
+    def test_sbd_enabled_even_nodes_no_qdevice_plus_node(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, 1
+        ))
+
+    def test_sbd_enabled_even_nodes_no_qdevice_minus_node(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2], False)
+        self.assertFalse(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, -1
+        ))
+
+    def test_sbd_enabled_even_nodes_no_qdevice_plus_2_nodes(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2], False)
+        self.assertTrue(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, 2
+        ))
+
+    def test_sbd_enabled_even_nodes_no_qdevice_minus_2_nodes(
+        self, mock_enabled, mock_installed
+    ):
+        mock_enabled.return_value = True
+        mock_installed.return_value = True
+        self._set_ret_vals([1, 2, 3, 4], False)
+        self.assertTrue(lib_sbd.is_auto_tie_breaker_needed(
+            self.runner, self.mock_corosync_conf, -2
+        ))
+
+
+@mock.patch("pcs.lib.sbd.is_auto_tie_breaker_needed")
+class AtbHasToBeEnabledTest(TestCase):
+    def setUp(self):
+        self.mock_runner = "runner"
+        self.mock_conf = mock.MagicMock(spec_set=CorosyncConfigFacade)
+
+    def test_atb_needed_is_enabled(self, mock_is_needed):
+        mock_is_needed.return_value = True
+        self.mock_conf.is_enabled_auto_tie_breaker.return_value = True
+        self.assertFalse(lib_sbd.atb_has_to_be_enabled(
+            self.mock_runner, self.mock_conf, 1
+        ))
+        mock_is_needed.assert_called_once_with(
+            self.mock_runner, self.mock_conf, 1
+        )
+
+    def test_atb_needed_is_disabled(self, mock_is_needed):
+        mock_is_needed.return_value = True
+        self.mock_conf.is_enabled_auto_tie_breaker.return_value = False
+        self.assertTrue(lib_sbd.atb_has_to_be_enabled(
+            self.mock_runner, self.mock_conf, -1
+        ))
+        mock_is_needed.assert_called_once_with(
+            self.mock_runner, self.mock_conf, -1
+        )
+
+    def test_atb_not_needed_is_enabled(self, mock_is_needed):
+        mock_is_needed.return_value = False
+        self.mock_conf.is_enabled_auto_tie_breaker.return_value = True
+        self.assertFalse(lib_sbd.atb_has_to_be_enabled(
+            self.mock_runner, self.mock_conf, 2
+        ))
+        mock_is_needed.assert_called_once_with(
+            self.mock_runner, self.mock_conf, 2
+        )
+
+    def test_atb_not_needed_is_disabled(self, mock_is_needed):
+        mock_is_needed.return_value = False
+        self.mock_conf.is_enabled_auto_tie_breaker.return_value = False
+        self.assertFalse(lib_sbd.atb_has_to_be_enabled(
+            self.mock_runner, self.mock_conf, -2
+        ))
+        mock_is_needed.assert_called_once_with(
+            self.mock_runner, self.mock_conf, -2
+        )
+
 
 
 class CheckSbdTest(TestCase):
@@ -316,11 +557,11 @@ class SetSbdConfigOnNodeTest(TestCase):
         }
         cfg_out = """# This file has been generated by pcs.
 SBD_OPTS="-n node1"
-SBD_WATCHDOG_DEV=/dev/watchdog
+SBD_WATCHDOG_DEV=/my/watchdog
 SBD_WATCHDOG_TIMEOUT=0
 """
         lib_sbd.set_sbd_config_on_node(
-            self.mock_rep, self.mock_com, self.node, cfg_in
+            self.mock_rep, self.mock_com, self.node, cfg_in, "/my/watchdog"
         )
         mock_set_sbd_cfg.assert_called_once_with(
             self.mock_com, self.node, cfg_out
@@ -340,17 +581,24 @@ class SetSbdConfigOnAllNodesTest(TestCase):
     def test_success(self, mock_func):
         mock_com = mock.MagicMock(spec_set=NodeCommunicator)
         mock_rep = MockLibraryReportProcessor()
-        node_list = [NodeAddresses("node" + str(i)) for i in range(5)]
+        watchdog_dict = dict([
+            (NodeAddresses("node" + str(i)), "/dev/watchdog" + str(i))
+            for i in range(5)
+        ])
+        node_list = list(watchdog_dict.keys())
         config = {
             "opt1": "val1",
             "opt2": "val2"
         }
         lib_sbd.set_sbd_config_on_all_nodes(
-            mock_rep, mock_com, node_list, config
+            mock_rep, mock_com, node_list, config, watchdog_dict
         )
         mock_func.assert_called_once_with(
             lib_sbd.set_sbd_config_on_node,
-            [([mock_rep, mock_com, node, config], {}) for node in node_list]
+            [
+                ([mock_rep, mock_com, node, config, watchdog_dict[node]], {})
+                for node in node_list
+            ]
         )
 
 
@@ -594,3 +842,17 @@ class IsSbdEnabledTest(TestCase):
         mock_obj = mock.MagicMock()
         mock_is_service_enabled.return_value = True
         self.assertTrue(lib_sbd.is_sbd_enabled(mock_obj))
+
+
+@mock.patch("pcs.lib.external.is_service_installed")
+class IsSbdInstalledTest(TestCase):
+    def test_installed(self, mock_is_service_installed):
+        mock_obj = mock.MagicMock()
+        mock_is_service_installed.return_value = True
+        self.assertTrue(lib_sbd.is_sbd_installed(mock_obj))
+
+    def test_not_installed(self, mock_is_service_installed):
+        mock_obj = mock.MagicMock()
+        mock_is_service_installed.return_value = False
+        self.assertFalse(lib_sbd.is_sbd_installed(mock_obj))
+
