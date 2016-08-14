@@ -99,8 +99,8 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="components/resource-tree-element">
-    <table class="tree-element"  cellpadding="0" cellspacing="0" style="width: 100%; border: none;" {{bind-attr id=node._id}}>
-    <tr class="tree-element-name" onclick="tree_view_onclick(get_tree_view_element_id(this));" onmouseover="$(this).addClass('mouse_on_row');" onmouseout="$(this).removeClass('mouse_on_row');" {{bind-attr nodeID=node.id}}>
+    <table class="tree-element"  cellpadding="0" cellspacing="0" style="width: 100%; border: none;" {{bind-attr id=node.treeview_element_id}}>
+    <tr class="tree-element-name" onclick="tree_view_onclick(get_tree_view_resource_id(this));" onmouseover="$(this).addClass('mouse_on_row');" onmouseout="$(this).removeClass('mouse_on_row');" {{bind-attr nodeID=node.id}}>
         <td style="width:20px;" class="node_list_check">
           <input type="checkbox" onchange="tree_view_checkbox_onchange(this)">
         </td>

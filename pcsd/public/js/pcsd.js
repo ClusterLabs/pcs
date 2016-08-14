@@ -2077,8 +2077,13 @@ function fix_auth_of_cluster() {
   });
 }
 
-function get_tree_view_element_id(element) {
-  return $(element).parents('table.tree-element')[0].id;
+function get_tree_view_resource_id(element) {
+  var suffix = '-treeview-element';
+  var element_id = $(element).parents('table.tree-element')[0].id;
+  if (element_id && element_id.endsWith(suffix)) {
+    return element_id.substr(0, element_id.lastIndexOf(suffix));
+  }
+  return null;
 }
 
 function get_list_view_element_id(element) {
@@ -2166,7 +2171,7 @@ function tree_view_onclick(resource_id) {
 }
 
 function tree_view_select(element_id) {
-  var e = $('#' + element_id);
+  var e = $(`#${element_id}-treeview-element`);
   var view = e.parents('table.tree-view');
   view.find('div.arrow').hide();
   view.find('tr.children').hide();

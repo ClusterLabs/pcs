@@ -823,6 +823,11 @@ Pcs.ResourceObj = Ember.Object.extend({
   id: null,
   _id: Ember.computed.alias('id'),
   name: Ember.computed.alias('id'),
+  treeview_element_id: function() {
+    if (this.get("id")) {
+      return this.get("id") + "-treeview-element";
+    }
+  }.property("id"),
   parent: null,
   meta_attr: [],
   meta_attributes: Ember.computed.alias('meta_attr'),
