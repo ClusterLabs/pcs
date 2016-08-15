@@ -63,26 +63,6 @@
 </head>
 <html>
   <body>
-  <script type="text/x-handlebars" data-template-name="components/list-view">
-  <div style="width: 300px;" id="node_list" {{bind-attr class=element-class}}>
-    <table cellpadding="0" cellspacing="0" class="list-view" style="width: 100%; border: none;">
-      <tr>
-        <th style="width:27px;"><input type="checkbox" onchange="checkBoxToggle(this,false)"></th><th style="width:47px;"></th><th>{{table-title}}</th><th style="width:18px;"></th>
-      </tr>
-      {{#each element in elements}}
-      <tr class="list-view-element" onmouseover="$(this).addClass('mouse_on_row');" onmouseout="$(this).removeClass('mouse_on_row');" onclick="list_view_select(get_list_view_element_id(this));" {{bind-attr id=element.name}}>
-        <td class="node_list_check">{{view Ember.Checkbox checkedBinding="checked" class="node_list_check"}}</td>
-        <td class="node_list_sprite">{{#if default-icon}}{{{default-icon}}}{{else}}{{#if element.status_icon}}{{{element.status_icon}}}{{else}}<div class="check sprites"></div>{{/if}}{{/if}}</td>
-        <td class="node_name" nowrap {{bind-attr style=element.style}}>{{element.name}}</td>
-        <td>
-          <div style="display: none;" class="arrow sprites"></div>
-        </td>
-      </tr>
-      {{/each}}
-      </table>
-    </div>
-  </script>
-
   <script type="text/x-handlebars" data-template-name="components/resource-tree-view">
   <div style="width: 450px;">
     <table cellpadding="0" cellspacing="0" class="tree-view" style="width: 100%; border: none;">

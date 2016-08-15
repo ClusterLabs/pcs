@@ -2183,15 +2183,6 @@ function tree_view_select(element_id) {
   e.find('tr.children').show();
 }
 
-function list_view_select(element_id) {
-  var e = $('#' + element_id);
-  var view = e.parents('table.list-view');
-  view.find('div.arrow').hide();
-  view.find('tr.list-view-element').removeClass("node_selected");
-  e.addClass('node_selected');
-  e.find('div.arrow').show();
-}
-
 function tree_view_checkbox_onchange(element) {
   var e = $(element);
   var children = $(element).closest(".tree-element").find(".children" +
