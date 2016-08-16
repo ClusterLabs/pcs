@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 import json
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.assertions import (

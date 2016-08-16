@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.cli.booth.env import middleware_config
 from pcs.common import report_codes, env_file_role_codes

@@ -7,7 +7,7 @@ from __future__ import (
 
 import os
 import shutil
-import unittest
+from pcs.test.tools import pcs_unittest as unittest
 
 from pcs.test.tools.assertions import AssertPcsMixin, console_report
 from pcs.test.tools.misc import (

@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 import sys
-import unittest
+from pcs.test.tools import pcs_unittest as unittest
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
 from time import sleep

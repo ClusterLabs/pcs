@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 import os.path
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.common import report_codes, env_file_role_codes as file_roles
 from pcs.lib.booth import config_files

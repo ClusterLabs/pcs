@@ -8,7 +8,7 @@ from __future__ import (
 import grp
 import os
 import pwd
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs import settings
 from pcs.common import report_codes

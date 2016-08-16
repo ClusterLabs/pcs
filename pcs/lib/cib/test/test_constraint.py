@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 from functools import partial
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from lxml import etree
 

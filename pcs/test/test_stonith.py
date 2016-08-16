@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 import shutil
-import unittest
+from pcs.test.tools import pcs_unittest as unittest
 
 from pcs.test.tools.misc import (
     ac,

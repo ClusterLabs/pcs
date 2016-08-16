@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 from pcs.cli.constraint_ticket import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 

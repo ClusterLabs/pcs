@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.pcs_mock import mock
 from pcs.cli.constraint_all import console_report
 

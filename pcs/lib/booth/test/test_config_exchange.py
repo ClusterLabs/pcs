@@ -4,7 +4,7 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 from pcs.lib.booth import config_structure, config_exchange
 
 

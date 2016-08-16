@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 import shutil
-import unittest
+from pcs.test.tools import pcs_unittest as unittest
 import xml.dom.minidom
 
 from pcs import rule

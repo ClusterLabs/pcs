@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-import unittest
+from pcs.test.tools import pcs_unittest as unittest
 
 from pcs.test.tools.misc import ac
 

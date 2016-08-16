@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 import logging
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,

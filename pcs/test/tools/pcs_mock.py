@@ -1,5 +1,6 @@
 try:
     import unittest.mock as mock
+    # import pcs.test.tools.pcs_unittest.mock as mock
 except ImportError:
     import mock
 

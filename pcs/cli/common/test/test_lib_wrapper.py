@@ -4,7 +4,7 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.cli.common.lib_wrapper import Library, bind
 from pcs.test.tools.pcs_mock import mock

@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 import shutil
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
