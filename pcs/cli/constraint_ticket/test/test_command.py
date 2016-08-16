@@ -7,7 +7,7 @@ from __future__ import (
 
 from pcs.test.tools.pcs_unittest import TestCase
 
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint_ticket import command
 

@@ -10,7 +10,7 @@ from pcs.test.tools.pcs_unittest import TestCase
 from lxml import etree
 
 import pcs.lib.booth.resource as booth_resource
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.misc import get_test_resource as rc
 
 

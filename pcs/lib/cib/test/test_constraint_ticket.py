@@ -12,7 +12,7 @@ from pcs.common import report_codes
 from pcs.lib.cib.constraint import ticket
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 
 
 @mock.patch("pcs.lib.cib.constraint.ticket.tools.check_new_id_applicable")

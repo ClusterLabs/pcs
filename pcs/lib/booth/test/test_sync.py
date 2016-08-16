@@ -16,7 +16,7 @@ except ImportError:
     # python 3
     from urllib.parse import parse_qs as url_decode
 
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
     assert_raise_library_error,

@@ -8,7 +8,7 @@ from __future__ import (
 from pcs.test.tools.pcs_unittest import TestCase
 from pcs.cli.constraint import command
 
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 
 def fixture_constraint():
     return {

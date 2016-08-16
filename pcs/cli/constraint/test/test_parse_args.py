@@ -9,7 +9,7 @@ from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint.parse_args import prepare_set_args, prepare_resource_sets
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 
 
 @mock.patch("pcs.cli.common.parse_args.prepare_options")

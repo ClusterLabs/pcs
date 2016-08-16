@@ -10,7 +10,7 @@ from pcs.test.tools.pcs_unittest import TestCase
 import base64
 import os.path
 
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource
 

@@ -16,7 +16,7 @@ from pcs.test.tools.assertions import (
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 
 from pcs.lib.env import LibraryEnvironment
 from pcs.common import report_codes

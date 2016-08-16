@@ -17,7 +17,7 @@ from pcs.test.tools.assertions import(
     assert_xml_equal,
     assert_report_item_list_equal,
 )
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 
 

@@ -14,7 +14,7 @@ from pcs.test.tools.assertions import (
     ExtendedAssertionsMixin,
     assert_xml_equal,
 )
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.xml import XmlManipulation as XmlMan
 
 

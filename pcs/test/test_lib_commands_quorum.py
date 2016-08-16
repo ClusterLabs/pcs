@@ -17,7 +17,7 @@ from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
 )
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 
 from pcs.common import report_codes
 from pcs.lib.env import LibraryEnvironment

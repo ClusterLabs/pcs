@@ -10,7 +10,7 @@ from pcs.test.tools.pcs_unittest import TestCase
 from pcs.cli.booth.env import middleware_config
 from pcs.common import report_codes, env_file_role_codes
 from pcs.lib.errors import LibraryEnvError, ReportItem
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 
 
 class BoothConfTest(TestCase):

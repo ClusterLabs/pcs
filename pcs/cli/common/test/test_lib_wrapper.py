@@ -7,7 +7,7 @@ from __future__ import (
 from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.cli.common.lib_wrapper import Library, bind
-from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.pcs_unittest import mock
 from pcs.lib.errors import ReportItem
 from pcs.lib.errors import LibraryEnvError
 
