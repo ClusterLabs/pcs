@@ -15,13 +15,10 @@ from pcs.common import report_codes
 from pcs.lib.booth import env
 from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_raise_library_error
-from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.misc import get_test_resource as rc, create_patcher
 from pcs.test.tools.pcs_unittest import mock
 
-def patch_env(target, *args, **kwargs):
-    return mock.patch(
-        "pcs.lib.booth.env.{0}".format(target), *args, **kwargs
-    )
+patch_env = create_patcher("pcs.lib.booth.env")
 
 class GetConfigFileNameTest(TestCase):
     @patch_env("os.path.exists")

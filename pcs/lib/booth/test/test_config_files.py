@@ -14,12 +14,10 @@ from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
 from pcs.test.tools.assertions import assert_raise_library_error, assert_report_item_list_equal
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.pcs_unittest import mock
 
-def patch_config_files(target, *args, **kwargs):
-    return mock.patch(
-        "pcs.lib.booth.config_files.{0}".format(target), *args, **kwargs
-    )
+patch_config_files = create_patcher("pcs.lib.booth.config_files")
 
 @mock.patch("os.path.isdir")
 @mock.patch("os.listdir")

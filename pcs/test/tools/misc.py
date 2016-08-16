@@ -10,6 +10,7 @@ import os.path
 import re
 
 from pcs import utils
+from pcs.test.tools.pcs_unittest import mock
 
 
 testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,3 +51,16 @@ def is_minimum_pacemaker_version(cmajor, cminor, crev):
         or
         (major == cmajor and minor == cminor and rev >= crev)
     )
+
+def create_patcher(target_prefix):
+    """
+    Return function for patching tests with preconfigured target prefix
+    string target_prefix is prefix for patched names. Typicaly tested module
+    like for example "pcs.lib.commands.booth". Between target_prefix and target
+    is "." (dot)
+    """
+    def patch(target, *args, **kwargs):
+        return mock.patch(
+            "{0}.{1}".format(target_prefix, target), *args, **kwargs
+        )
+    return patch

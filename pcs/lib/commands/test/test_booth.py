@@ -16,6 +16,7 @@ from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
+from pcs.test.tools.misc import create_patcher
 
 from pcs import settings
 from pcs.common import report_codes
@@ -32,10 +33,7 @@ from pcs.lib.external import (
     StopServiceError
 )
 
-def patch_commands(target, *args, **kwargs):
-    return mock.patch(
-        "pcs.lib.commands.booth.{0}".format(target), *args, **kwargs
-    )
+patch_commands = create_patcher("pcs.lib.commands.booth")
 
 @mock.patch("pcs.lib.booth.config_files.generate_key", return_value="key value")
 @mock.patch("pcs.lib.commands.booth.build", return_value="config content")
