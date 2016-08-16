@@ -309,7 +309,7 @@ def pull_config(env, node_name, name):
     name -- string, name of booth instance of which config should be fetched
     """
     env.report_processor.process(
-        booth_reports.booth_fetching_config_from_node(node_name, name)
+        booth_reports.booth_fetching_config_from_node_started(node_name, name)
     )
     output = sync.pull_config_from_node(
         env.node_communicator(), NodeAddresses(node_name), name
@@ -330,7 +330,7 @@ def pull_config(env, node_name, name):
                 True
             )
         env.report_processor.process(
-            booth_reports.booth_config_saved(name_list=[name])
+            booth_reports.booth_configs_accepted_by_node(name_list=[name])
         )
     except KeyError:
         raise LibraryError(reports.invalid_response_format(node_name))

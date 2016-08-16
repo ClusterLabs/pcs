@@ -55,7 +55,7 @@ def read_configs(reporter, skip_wrong_config=False):
         try:
             output[file_name] = _read_config(file_name)
         except EnvironmentError:
-            report_list.append(reports.booth_config_unable_to_read(
+            report_list.append(reports.booth_config_read_error(
                 file_name,
                 (
                     ReportItemSeverity.WARNING if skip_wrong_config

@@ -175,7 +175,7 @@ class SyncConfigInCluster(TestCase):
             self.mock_reporter.report_item_list,
             [(
                 Severities.INFO,
-                report_codes.BOOTH_DISTRIBUTING_CONFIG,
+                report_codes.BOOTH_CONFIG_DISTRIBUTION_IN_CLUSTER_STARTED,
                 {"name": "cfg_name"}
             )]
         )
@@ -213,7 +213,7 @@ class SyncConfigInCluster(TestCase):
             self.mock_reporter.report_item_list,
             [(
                 Severities.INFO,
-                report_codes.BOOTH_DISTRIBUTING_CONFIG,
+                report_codes.BOOTH_CONFIG_DISTRIBUTION_IN_CLUSTER_STARTED,
                 {"name": "cfg_name"}
             )]
         )
@@ -252,7 +252,7 @@ class SyncConfigInCluster(TestCase):
             self.mock_reporter.report_item_list,
             [(
                 Severities.INFO,
-                report_codes.BOOTH_DISTRIBUTING_CONFIG,
+                report_codes.BOOTH_CONFIG_DISTRIBUTION_IN_CLUSTER_STARTED,
                 {"name": "cfg_name"}
             )]
         )
@@ -375,7 +375,7 @@ class SendAllConfigToNodeTest(TestCase):
             [
                 (
                     Severities.INFO,
-                    report_codes.BOOTH_CONFIGS_SAVING_ON_NODE,
+                    report_codes.BOOTH_CONFIGS_DISTRIBUTION_STARTED,
                     {"node": self.node.label}
                 ),
                 (
@@ -489,7 +489,7 @@ class SendAllConfigToNodeTest(TestCase):
             [
                 (
                     Severities.INFO,
-                    report_codes.BOOTH_CONFIGS_SAVING_ON_NODE,
+                    report_codes.BOOTH_CONFIGS_DISTRIBUTION_STARTED,
                     {"node": self.node.label}
                 ),
                 (
@@ -593,7 +593,7 @@ class SendAllConfigToNodeTest(TestCase):
             [
                 (
                     Severities.INFO,
-                    report_codes.BOOTH_CONFIGS_SAVING_ON_NODE,
+                    report_codes.BOOTH_CONFIGS_DISTRIBUTION_STARTED,
                     {"node": self.node.label}
                 ),
                 (
@@ -652,7 +652,7 @@ class SendAllConfigToNodeTest(TestCase):
             ),
             (
                 Severities.ERROR,
-                report_codes.BOOTH_CONFIG_WRITE_ERROR,
+                report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
                 {
                     "node": self.node.label,
                     "name": "name1.conf",
@@ -661,7 +661,7 @@ class SendAllConfigToNodeTest(TestCase):
             ),
             (
                 Severities.ERROR,
-                report_codes.BOOTH_CONFIG_WRITE_ERROR,
+                report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
                 {
                     "node": self.node.label,
                     "name": "file1.key",
@@ -724,12 +724,12 @@ class SendAllConfigToNodeTest(TestCase):
             [
                 (
                     Severities.INFO,
-                    report_codes.BOOTH_CONFIGS_SAVING_ON_NODE,
+                    report_codes.BOOTH_CONFIGS_DISTRIBUTION_STARTED,
                     {"node": self.node.label}
                 ),
                 (
                     Severities.ERROR,
-                    report_codes.BOOTH_CONFIG_WRITE_ERROR,
+                    report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
                     {
                         "node": self.node.label,
                         "name": "name1.conf",
@@ -738,7 +738,7 @@ class SendAllConfigToNodeTest(TestCase):
                 ),
                 (
                     Severities.ERROR,
-                    report_codes.BOOTH_CONFIG_WRITE_ERROR,
+                    report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
                     {
                         "node": self.node.label,
                         "name": "file1.key",
@@ -1058,7 +1058,7 @@ class SendAllConfigToNodeTest(TestCase):
             [
                 (
                     Severities.INFO,
-                    report_codes.BOOTH_CONFIGS_SAVING_ON_NODE,
+                    report_codes.BOOTH_CONFIGS_DISTRIBUTION_STARTED,
                     {"node": self.node.label}
                 ),
                 (
@@ -1143,7 +1143,7 @@ class SendAllConfigToNodeTest(TestCase):
             [
                 (
                     Severities.INFO,
-                    report_codes.BOOTH_CONFIGS_SAVING_ON_NODE,
+                    report_codes.BOOTH_CONFIGS_DISTRIBUTION_STARTED,
                     {"node": self.node.label}
                 ),
                 (

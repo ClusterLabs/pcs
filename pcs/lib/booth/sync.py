@@ -57,7 +57,7 @@ def _set_config_on_node(
         "remote/booth_set_config",
         NodeCommunicator.format_data_dict([("data_json", json.dumps(data))])
     )
-    reporter.process(reports.booth_config_saved(node.label, [name]))
+    reporter.process(reports.booth_configs_accepted_by_node(node.label, [name]))
 
 
 def send_config_to_all_nodes(
@@ -77,7 +77,7 @@ def send_config_to_all_nodes(
     authfile_data -- content of authfile as bytes
     skip_offline -- if True offline nodes will be skipped
     """
-    reporter.process(reports.booth_distributing_config(name))
+    reporter.process(reports.booth_config_distribution_in_cluster_started(name))
     parallel_nodes_communication_helper(
         _set_config_on_node,
         [
@@ -145,7 +145,7 @@ def send_all_config_to_node(
     if rewrite_existing:
         data.append(("rewrite_existing", "1"))
 
-    reporter.process(reports.booth_sending_local_configs_to_node(node.label))
+    reporter.process(reports.booth_distribution_config_started(node.label))
     try:
         response = json.loads(communicator.call_node(
             node,
@@ -165,12 +165,12 @@ def send_all_config_to_node(
                 node.label
             ))
         for file, reason in response["failed"].items():
-            report_list.append(reports.booth_config_not_saved(
+            report_list.append(reports.booth_config_distribution_node_error(
                 node.label, reason, file
             ))
         reporter.process_list(report_list)
         reporter.process(
-            reports.booth_config_saved(node.label, response["saved"])
+            reports.booth_configs_accepted_by_node(node.label, response["saved"])
         )
     except NodeCommunicationException as e:
         raise LibraryError(node_communicator_exception_to_report_item(e))
