@@ -24,6 +24,8 @@ def get_all_configs_file_names():
     Returns list of all file names ending with '.conf' in booth configuration
     directory.
     """
+    if not os.path.isdir(BOOTH_CONFIG_DIR):
+        return []
     return [
         file_name for file_name in os.listdir(BOOTH_CONFIG_DIR)
         if os.path.isfile(file_name) and file_name.endswith(".conf") and

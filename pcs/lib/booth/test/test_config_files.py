@@ -21,10 +21,20 @@ def patch_config_files(target, *args, **kwargs):
         "pcs.lib.booth.config_files.{0}".format(target), *args, **kwargs
     )
 
+@mock.patch("os.path.isdir")
 @mock.patch("os.listdir")
 @mock.patch("os.path.isfile")
 class GetAllConfigsFileNamesTest(TestCase):
-    def test_success(self, mock_is_file, mock_listdir):
+    def test_booth_config_dir_is_no_dir(
+        self, mock_is_file, mock_listdir, mock_isdir
+    ):
+        mock_isdir.return_value = False
+        self.assertEqual([], config_files.get_all_configs_file_names())
+        mock_isdir.assert_called_once_with(BOOTH_CONFIG_DIR)
+        self.assertEqual(0, mock_is_file.call_count)
+        self.assertEqual(0, mock_listdir.call_count)
+
+    def test_success(self, mock_is_file, mock_listdir, mock_isdir):
         def mock_is_file_fn(file_name):
             if file_name in ["dir.cong", "dir"]:
                 return False
@@ -35,6 +45,7 @@ class GetAllConfigsFileNamesTest(TestCase):
             else:
                 raise AssertionError("unexpected input")
 
+        mock_isdir.return_value = True
         mock_is_file.side_effect = mock_is_file_fn
         mock_listdir.return_value = [
             "name1", "name2.conf", "name.conf.conf", ".conf", "name3.conf",
