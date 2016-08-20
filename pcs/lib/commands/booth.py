@@ -127,7 +127,7 @@ def config_ticket_remove(env, ticket_name):
     )
     env.booth.push_config(build(booth_configuration))
 
-def create_in_cluster(env, name, ip, resource_create):
+def create_in_cluster(env, name, ip, resource_create, resource_remove):
     #TODO resource_create is provisional hack until resources are not moved to
     #lib
     resources_section = get_resources(env.get_cib())
@@ -136,7 +136,7 @@ def create_in_cluster(env, name, ip, resource_create):
     if resource.find_for_config(resources_section, booth_config_file_path):
         raise LibraryError(booth_reports.booth_already_in_cib(name))
 
-    resource.get_creator(resource_create)(
+    resource.get_creator(resource_create, resource_remove)(
         ip,
         booth_config_file_path,
         create_id = partial(

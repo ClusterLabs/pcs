@@ -548,7 +548,8 @@ class CreateInClusterTest(TestCase):
     def test_raises_when_is_created_already(self):
         assert_raise_library_error(
             lambda: commands.create_in_cluster(
-                mock.MagicMock(), "somename", ip="1.2.3.4", resource_create=None
+                mock.MagicMock(), "somename", ip="1.2.3.4",
+                resource_create=None, resource_remove=None,
             ),
             (
                 Severities.ERROR,
