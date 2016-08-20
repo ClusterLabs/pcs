@@ -1455,12 +1455,12 @@ Commands:
     ticket grant <ticket> [<site address>]
         Grant the ticket for the site specified by address.  Site address which
         has been specified with 'pcs booth create' command is used if
-        'site address' is omitted.
+        'site address' is omitted. Cannot be run on an arbitrator.
 
     ticket revoke <ticket> [<site address>]
         Revoke the ticket for the site specified by address.  Site address which
         has been specified with 'pcs booth create' command is used if
-        'site address' is omitted.
+        'site address' is omitted. Cannot be run on an arbitrator.
 
     status
         Print current status of booth on the local node.
