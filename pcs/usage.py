@@ -118,6 +118,7 @@ def generate_completion_tree_from_usage():
     tree["pcsd"] = generate_tree(pcsd([],False))
     tree["node"] = generate_tree(node([], False))
     tree["alert"] = generate_tree(alert([], False))
+    tree["booth"] = generate_tree(booth([], False))
     return tree
 
 def generate_tree(usage_txt):
