@@ -315,10 +315,10 @@ class RemoveTest(BoothTest):
              " some-id	(ocf::pacemaker:booth-site):	Stopped",
         ])
         self.assert_pcs_success("booth remove --force", [
+            "Warning: found more than one booth instance 'booth' in cib",
             "Deleting Resource - booth-booth-ip",
             "Deleting Resource (and group) - booth-booth-service",
             "Deleting Resource - some-id",
-            "Warning: found more than one booth instance 'booth' in cib",
         ])
 
 

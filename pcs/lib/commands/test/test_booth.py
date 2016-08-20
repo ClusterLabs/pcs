@@ -19,7 +19,6 @@ from pcs.test.tools.assertions import (
 
 from pcs import settings
 from pcs.common import report_codes
-from pcs.lib.booth import resource as booth_resource
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.node import NodeAddresses
 from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
@@ -560,15 +559,14 @@ class CreateInClusterTest(TestCase):
             ),
         )
 
-class RemoveFromClusterTest(TestCase):
-    @patch_commands("resource.get_remover", mock.Mock(return_value = mock.Mock(
-        side_effect=booth_resource.BoothNotFoundInCib()
-    )))
+class FindResourceElementsForOperationTest(TestCase):
+    @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
     def test_raises_when_no_booth_resource_found(self):
         assert_raise_library_error(
-            lambda: commands.remove_from_cluster(
-                mock.MagicMock(), "somename", resource_remove=None,
-                allow_remove_multiple=False
+            lambda: commands._find_resource_elements_for_operation(
+                mock.MagicMock(),
+                "somename",
+                allow_multiple=False
             ),
             (
                 Severities.ERROR,
@@ -579,14 +577,15 @@ class RemoveFromClusterTest(TestCase):
             ),
         )
 
-    @patch_commands("resource.get_remover", mock.Mock(return_value = mock.Mock(
-        side_effect=booth_resource.BoothMultipleOccurenceFoundInCib()
-    )))
+    @patch_commands(
+        "resource.find_for_config", mock.Mock(return_value=["b_el1", "b_el2"])
+    )
     def test_raises_when_multiple_booth_resource_found(self):
         assert_raise_library_error(
-            lambda: commands.remove_from_cluster(
-                mock.MagicMock(), "somename", resource_remove=None,
-                allow_remove_multiple=False
+            lambda: commands._find_resource_elements_for_operation(
+                mock.MagicMock(),
+                "somename",
+                allow_multiple=False
             ),
             (
                 Severities.ERROR,
@@ -598,20 +597,15 @@ class RemoveFromClusterTest(TestCase):
             ),
         )
 
-    @patch_commands("get_resources")
-    @patch_commands("resource.get_remover")
-    def test_warn_when_multiple_booth_resources_removed(
-        self, mock_get_remover, mock_get_resources
-    ):
-        mock_remover = mock.Mock(return_value=2)
-        mock_get_remover.return_value = mock_remover
-        mock_get_resources.return_value = "resources"
+    @patch_commands("get_resources", mock.Mock(return_value="resources"))
+    @patch_commands("resource.get_remover", mock.MagicMock())
+    @patch_commands("resource.find_for_config", mock.Mock(return_value=[1, 2]))
+    def test_warn_when_multiple_booth_resources_removed(self):
         report_processor=MockLibraryReportProcessor()
-        commands.remove_from_cluster(
+        commands._find_resource_elements_for_operation(
             mock.MagicMock(report_processor=report_processor),
             "somename",
-            resource_remove=None,
-            allow_remove_multiple=False,
+            allow_multiple=True,
         )
         assert_report_item_list_equal(report_processor.report_item_list, [(
             Severities.WARNING,
@@ -620,8 +614,3 @@ class RemoveFromClusterTest(TestCase):
                 'name': 'somename',
             },
         )])
-        mock_remover.assert_called_once_with(
-            'resources',
-            '/etc/booth/somename.conf',
-            remove_multiple=False
-        )

@@ -149,23 +149,10 @@ def create_in_cluster(env, name, ip, resource_create, resource_remove):
 def remove_from_cluster(env, name, resource_remove, allow_remove_multiple):
     #TODO resource_remove is provisional hack until resources are not moved to
     #lib
-    try:
-        num_of_removed_booth_resources = resource.get_remover(resource_remove)(
-            get_resources(env.get_cib()),
-            get_config_file_name(name),
-            remove_multiple=allow_remove_multiple,
-        )
-        if num_of_removed_booth_resources > 1:
-            env.report_processor.process(
-                booth_reports.booth_multiple_times_in_cib(
-                    name,
-                    severity=ReportItemSeverity.WARNING,
-                )
-            )
-    except resource.BoothNotFoundInCib:
-        raise LibraryError(booth_reports.booth_not_exists_in_cib(name))
-    except resource.BoothMultipleOccurenceFoundInCib:
-        raise LibraryError(booth_reports.booth_multiple_times_in_cib(name))
+    resource.get_remover(resource_remove)(
+        _find_resource_elements_for_operation(env, name, allow_remove_multiple)
+    )
+
 
 def ticket_operation(operation, env, name, ticket, site_ip):
     if not site_ip:
@@ -348,3 +335,24 @@ def get_status(env, name=None):
         "ticket": status.get_tickets_status(env.cmd_runner(), name),
         "peers": status.get_peers_status(env.cmd_runner(), name),
     }
+
+def _find_resource_elements_for_operation(env, name, allow_multiple):
+    booth_element_list = resource.find_for_config(
+        get_resources(env.get_cib()),
+        get_config_file_name(name),
+    )
+
+    if not booth_element_list:
+        raise LibraryError(booth_reports.booth_not_exists_in_cib(name))
+
+    if len(booth_element_list) > 1:
+        if not allow_multiple:
+            raise LibraryError(booth_reports.booth_multiple_times_in_cib(name))
+        env.report_processor.process(
+            booth_reports.booth_multiple_times_in_cib(
+                name,
+                severity=ReportItemSeverity.WARNING,
+            )
+        )
+
+    return booth_element_list
