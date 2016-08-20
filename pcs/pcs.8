@@ -599,11 +599,14 @@ Make the cluster run booth service on the specified ip address as a cluster reso
 remove
 Remove booth resources created by the "pcs booth create" command.
 .TP
+restart
+Restart booth resources created by the "pcs booth create" command.
+.TP
 ticket grant <ticket> [<site address>]
-Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
+Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted. Cannot be run on an arbitrator.
 .TP
 ticket revoke <ticket> [<site address>]
-Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
+Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted. Cannot be run on an arbitrator.
 .TP
 status
 Print current status of booth on the local node.
