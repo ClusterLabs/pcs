@@ -76,10 +76,10 @@ class SetupTest(BoothMixin, unittest.TestCase):
         self.assert_pcs_success(
             "booth config",
             stdout_full=console_report(
+                "authfile = {0}".format(BOOTH_KEY_FILE),
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
-                "authfile = {0}".format(BOOTH_KEY_FILE),
             )
         )
         with open(BOOTH_KEY_FILE) as key_file:
@@ -189,10 +189,10 @@ class AddTicketTest(BoothTest):
     def test_success_add_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
+            "authfile = {0}".format(BOOTH_KEY_FILE),
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = {0}".format(BOOTH_KEY_FILE),
             'ticket = "TicketA"',
         ))
 
@@ -215,18 +215,18 @@ class RemoveTicketTest(BoothTest):
     def test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
+            "authfile = {0}".format(BOOTH_KEY_FILE),
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = {0}".format(BOOTH_KEY_FILE),
             'ticket = "TicketA"',
         ))
         self.assert_pcs_success("booth ticket remove TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
+            "authfile = {0}".format(BOOTH_KEY_FILE),
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = {0}".format(BOOTH_KEY_FILE),
         ))
 
     def test_fail_when_ticket_does_not_exist(self):
@@ -356,5 +356,29 @@ class ConfigTest(unittest.TestCase, BoothMixin):
             "booth config",
             "Error: Booth config file '{0}' does not exist\n".format(
                 BOOTH_CONFIG_FILE
+            )
+        )
+
+    def test_show_unsupported_values(self):
+        ensure_booth_config_not_exists()
+        self.assert_pcs_success(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+        )
+        with open(BOOTH_CONFIG_FILE, "a") as config_file:
+            config_file.write("some = nonsense")
+        self.assert_pcs_success("booth ticket add TicketA")
+        with open(BOOTH_CONFIG_FILE, "a") as config_file:
+            config_file.write("another = nonsense")
+
+        self.assert_pcs_success(
+            "booth config",
+            stdout_full=console_report(
+                "authfile = {0}".format(BOOTH_KEY_FILE),
+                "site = 1.1.1.1",
+                "site = 2.2.2.2",
+                "arbitrator = 3.3.3.3",
+                "some = nonsense",
+                'ticket = "TicketA"',
+                "  another = nonsense",
             )
         )
