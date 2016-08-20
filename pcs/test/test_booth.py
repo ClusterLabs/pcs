@@ -286,7 +286,6 @@ class RemoveTest(BoothTest):
             " --force to override"
         ])
 
-
     def test_remove_added_booth_configuration(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
@@ -301,8 +300,27 @@ class RemoveTest(BoothTest):
         ])
         self.assert_pcs_success("resource show", "NO resources configured\n")
 
-    def test_fail_when_booth_is_not_currently_configured(self):
-        pass
+
+    def test_remove_multiple_booth_configuration(self):
+        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("booth create ip 192.168.122.120")
+        self.assert_pcs_success(
+            "resource create some-id ocf:pacemaker:booth-site"
+            " config=/etc/booth/booth.conf"
+        )
+        self.assert_pcs_success("resource show", [
+             " Resource Group: booth-booth-group",
+             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
+             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
+             " some-id	(ocf::pacemaker:booth-site):	Stopped",
+        ])
+        self.assert_pcs_success("booth remove --force", [
+            "Deleting Resource - booth-booth-ip",
+            "Deleting Resource (and group) - booth-booth-service",
+            "Deleting Resource - some-id",
+            "Warning: found more than one booth instance 'booth' in cib",
+        ])
+
 
 class TicketGrantTest(BoothTest):
     def test_failed_when_implicit_site_but_not_correct_confgiuration_in_cib(

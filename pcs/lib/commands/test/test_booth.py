@@ -567,7 +567,8 @@ class RemoveFromClusterTest(TestCase):
     def test_raises_when_no_booth_resource_found(self):
         assert_raise_library_error(
             lambda: commands.remove_from_cluster(
-                mock.MagicMock(), "somename", resource_remove=None
+                mock.MagicMock(), "somename", resource_remove=None,
+                allow_remove_multiple=False
             ),
             (
                 Severities.ERROR,
@@ -584,7 +585,8 @@ class RemoveFromClusterTest(TestCase):
     def test_raises_when_multiple_booth_resource_found(self):
         assert_raise_library_error(
             lambda: commands.remove_from_cluster(
-                mock.MagicMock(), "somename", resource_remove=None
+                mock.MagicMock(), "somename", resource_remove=None,
+                allow_remove_multiple=False
             ),
             (
                 Severities.ERROR,
@@ -596,15 +598,20 @@ class RemoveFromClusterTest(TestCase):
             ),
         )
 
-    @patch_commands("resource.get_remover", mock.Mock(return_value = mock.Mock(
-        return_value=2
-    )))
-    def test_warn_when_multiple_booth_resources_removed(self):
+    @patch_commands("get_resources")
+    @patch_commands("resource.get_remover")
+    def test_warn_when_multiple_booth_resources_removed(
+        self, mock_get_remover, mock_get_resources
+    ):
+        mock_remover = mock.Mock(return_value=2)
+        mock_get_remover.return_value = mock_remover
+        mock_get_resources.return_value = "resources"
         report_processor=MockLibraryReportProcessor()
         commands.remove_from_cluster(
             mock.MagicMock(report_processor=report_processor),
             "somename",
-            resource_remove=None
+            resource_remove=None,
+            allow_remove_multiple=False,
         )
         assert_report_item_list_equal(report_processor.report_item_list, [(
             Severities.WARNING,
@@ -613,3 +620,8 @@ class RemoveFromClusterTest(TestCase):
                 'name': 'somename',
             },
         )])
+        mock_remover.assert_called_once_with(
+            'resources',
+            '/etc/booth/somename.conf',
+            remove_multiple=False
+        )

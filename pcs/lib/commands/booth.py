@@ -146,13 +146,14 @@ def create_in_cluster(env, name, ip, resource_create, resource_remove):
         )
     )
 
-def remove_from_cluster(env, name, resource_remove):
+def remove_from_cluster(env, name, resource_remove, allow_remove_multiple):
     #TODO resource_remove is provisional hack until resources are not moved to
     #lib
     try:
         num_of_removed_booth_resources = resource.get_remover(resource_remove)(
             get_resources(env.get_cib()),
             get_config_file_name(name),
+            remove_multiple=allow_remove_multiple,
         )
         if num_of_removed_booth_resources > 1:
             env.report_processor.process(

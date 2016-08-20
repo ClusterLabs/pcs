@@ -119,7 +119,11 @@ def get_remove_from_cluster(resource_remove):
         if arg_list:
             raise CmdLineInputError()
 
-        lib.booth.remove_from_cluster(__get_name(modifiers), resource_remove)
+        lib.booth.remove_from_cluster(
+            __get_name(modifiers),
+            resource_remove,
+            modifiers["force"],
+        )
 
     return remove_from_cluster
 
