@@ -1449,6 +1449,9 @@ Commands:
     remove
         Remove booth resources created by the "pcs booth create" command.
 
+    restart
+        Restart booth resources created by the "pcs booth create" command.
+
     ticket grant <ticket> [<site address>]
         Grant the ticket for the site specified by address.  Site address which
         has been specified with 'pcs booth create' command is used if

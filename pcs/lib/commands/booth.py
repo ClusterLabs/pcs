@@ -153,6 +153,13 @@ def remove_from_cluster(env, name, resource_remove, allow_remove_multiple):
         _find_resource_elements_for_operation(env, name, allow_remove_multiple)
     )
 
+def restart(env, name, resource_restart, allow_multiple):
+    #TODO resource_restart is provisional hack until resources are not moved to
+    #lib
+    for booth_element in _find_resource_elements_for_operation(
+        env, name, allow_multiple
+    ):
+        resource_restart([booth_element.attrib["id"]])
 
 def ticket_operation(operation, env, name, ticket, site_ip):
     if not site_ip:

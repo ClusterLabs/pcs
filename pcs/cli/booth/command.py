@@ -127,6 +127,20 @@ def get_remove_from_cluster(resource_remove):
 
     return remove_from_cluster
 
+def get_restart(resource_restart):
+    #TODO resource_restart is provisional hack until resources are not moved to
+    #lib
+    def restart(lib, arg_list, modifiers):
+        if arg_list:
+            raise CmdLineInputError()
+
+        lib.booth.restart(
+            __get_name(modifiers),
+            resource_restart,
+            modifiers["force"],
+        )
+
+    return restart
 
 def sync(lib, arg_list, modifiers):
     if arg_list:
