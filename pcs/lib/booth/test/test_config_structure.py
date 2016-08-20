@@ -222,3 +222,21 @@ class SetAuthfileTest(TestCase):
                 "/path/to/auth.file"
             )
         )
+
+class TakePeersTest(TestCase):
+    def test_returns_site_list_and_arbitrators_list(self):
+        self.assertEqual(
+            (
+                ["1.1.1.1", "2.2.2.2", "3.3.3.3"],
+                ["4.4.4.4", "5.5.5.5"]
+            ),
+            config_structure.take_peers(
+                [
+                    config_structure.ConfigItem("site", "1.1.1.1"),
+                    config_structure.ConfigItem("site", "2.2.2.2"),
+                    config_structure.ConfigItem("site", "3.3.3.3"),
+                    config_structure.ConfigItem("arbitrator", "4.4.4.4"),
+                    config_structure.ConfigItem("arbitrator", "5.5.5.5"),
+                ],
+            )
+        )

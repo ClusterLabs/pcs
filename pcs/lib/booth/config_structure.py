@@ -66,6 +66,15 @@ def validate_peers(site_list, arbitrator_list):
     if report:
         raise LibraryError(*report)
 
+def take_peers(booth_configuration):
+    return (
+        pick_list_by_key(booth_configuration, "site"),
+        pick_list_by_key(booth_configuration, "arbitrator"),
+    )
+
+def pick_list_by_key(booth_configuration, key):
+    return [item.value for item in booth_configuration if item.key == key]
+
 def remove_ticket(booth_configuration, ticket_name):
     validate_ticket_exists(booth_configuration, ticket_name)
     return [

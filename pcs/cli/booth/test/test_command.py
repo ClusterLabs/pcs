@@ -28,10 +28,12 @@ class ConfigSetupTest(TestCase):
             }
         )
         lib.booth.config_setup.assert_called_once_with(
-            {
-                "sites": ["1.1.1.1", "2.2.2.2", "4.4.4.4"],
-                "arbitrators": ["3.3.3.3"],
-            },
+            [
+                {"key": "site", "value": "1.1.1.1", "details": []},
+                {"key": "site", "value": "2.2.2.2", "details": []},
+                {"key": "site", "value": "4.4.4.4", "details": []},
+                {"key": "arbitrator", "value": "3.3.3.3", "details": []},
+            ],
             False
         )
 

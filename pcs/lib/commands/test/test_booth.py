@@ -47,10 +47,10 @@ class ConfigSetupTest(TestCase):
         env = mock.MagicMock()
         commands.config_setup(
             env,
-            booth_configuration={
-                "sites": ["1.1.1.1"],
-                "arbitrators": ["2.2.2.2"],
-            },
+            booth_configuration=[
+                {"key": "site", "value": "1.1.1.1", "details": []},
+                {"key": "arbitrator", "value": "2.2.2.2", "details": []},
+            ],
         )
         env.booth.create_config.assert_called_once_with(
             "config content",

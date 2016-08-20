@@ -18,15 +18,25 @@ def config_setup(lib, arg_list, modifiers):
     """
     create booth config
     """
-    booth_configuration = group_by_keywords(
+    peers = group_by_keywords(
         arg_list,
         set(["sites", "arbitrators"]),
         keyword_repeat_allowed=False
     )
-    if "sites" not in booth_configuration or not booth_configuration["sites"]:
+    if "sites" not in peers or not peers["sites"]:
         raise CmdLineInputError()
 
-    lib.booth.config_setup(booth_configuration, modifiers["force"])
+    booth_config = []
+    for site in peers["sites"]:
+        booth_config.append({"key": "site", "value": site, "details": []})
+    for arbitrator in peers["arbitrators"]:
+        booth_config.append({
+            "key": "arbitrator",
+            "value": arbitrator,
+            "details": [],
+        })
+
+    lib.booth.config_setup(booth_config, modifiers["force"])
 
 def config_destroy(lib, arg_list, modifiers):
     """
@@ -42,23 +52,26 @@ def config_show(lib, arg_list, modifiers):
     print booth config
     """
     booth_configuration = lib.booth.config_show()
-    authfile_lines = []
-    if booth_configuration["authfile"]:
-        authfile_lines.append(
-            "authfile = {0}".format(booth_configuration["authfile"])
-        )
 
     line_list = (
-        ["site = {0}".format(site) for site in booth_configuration["sites"]]
+        [
+            "site = {0}".format(item["value"]) for item in booth_configuration
+            if item["key"] == "site"
+        ]
         +
         [
-            "arbitrator = {0}".format(arbitrator)
-            for arbitrator in booth_configuration["arbitrators"]
+            "arbitrator = {0}".format(item["value"])
+            for item in booth_configuration if item["key"] == "arbitrator"
         ]
-        + authfile_lines +
+        +
         [
-            'ticket = "{0}"'.format(ticket)
-            for ticket in booth_configuration["tickets"]
+            "authfile = {0}".format(item["value"])
+            for item in booth_configuration if item["key"] == "authfile"
+        ]
+        +
+        [
+            'ticket = "{0}"'.format(item["value"])
+            for item in booth_configuration if item["key"] == "ticket"
         ]
     )
     for line in line_list:

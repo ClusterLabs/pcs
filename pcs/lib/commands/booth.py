@@ -34,11 +34,10 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
     list arbitrator_list contains arbitrator adresses of multisite
     """
 
-    config_structure.validate_peers(
-        booth_configuration.get("sites", []),
-        booth_configuration.get("arbitrators", [])
-    )
     config_content = config_exchange.from_exchange_format(booth_configuration)
+    config_structure.validate_peers(
+        *config_structure.take_peers(config_content)
+    )
 
     env.booth.create_key(config_files.generate_key(), overwrite_existing)
     config_content = config_structure.set_authfile(
