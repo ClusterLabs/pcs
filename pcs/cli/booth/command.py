@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import group_by_keywords
+from pcs.cli.common.parse_args import group_by_keywords, prepare_options
 
 
 DEFAULT_BOOTH_NAME = "booth"
@@ -59,9 +59,9 @@ def config_ticket_add(lib, arg_list, modifiers):
     """
     add ticket to current configuration
     """
-    if len(arg_list) != 1:
+    if not arg_list:
         raise CmdLineInputError
-    lib.booth.config_ticket_add(arg_list[0])
+    lib.booth.config_ticket_add(arg_list[0], prepare_options(arg_list[1:]))
 
 def config_ticket_remove(lib, arg_list, modifiers):
     """

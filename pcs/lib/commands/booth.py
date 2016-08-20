@@ -106,13 +106,14 @@ def config_show(env):
         parse(env.booth.get_config_content())
     )
 
-def config_ticket_add(env, ticket_name):
+def config_ticket_add(env, ticket_name, options):
     """
     add ticket to booth configuration
     """
     booth_configuration = config_structure.add_ticket(
         parse(env.booth.get_config_content()),
-        ticket_name
+        ticket_name,
+        options,
     )
     env.booth.push_config(build(booth_configuration))
 

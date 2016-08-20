@@ -187,13 +187,14 @@ class BoothTest(unittest.TestCase, BoothMixin):
 
 class AddTicketTest(BoothTest):
     def test_success_add_ticket(self):
-        self.assert_pcs_success("booth ticket add TicketA")
+        self.assert_pcs_success("booth ticket add TicketA expire=10")
         self.assert_pcs_success("booth config", stdout_full=console_report(
             "authfile = {0}".format(BOOTH_KEY_FILE),
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
             'ticket = "TicketA"',
+            "  expire = 10",
         ))
 
     def test_fail_on_bad_ticket_name(self):
@@ -209,6 +210,17 @@ class AddTicketTest(BoothTest):
             "booth ticket add TicketA",
             "Error: booth ticket name 'TicketA' already exists in configuration"
             "\n"
+        )
+
+    def test_fail_on_invalid_options(self):
+        self.assert_pcs_fail(
+            "booth ticket add TicketA site=a timeout=", console_report(
+                "Error: invalid booth ticket option 'site', allowed options"
+                    " are: acquire-after, attr-prereq, before-acquire-handler,"
+                    " expire, renewal-freq, retries, timeout, weights"
+                ,
+                "Error: '' is not a valid timeout value, use no-empty",
+            )
         )
 
 class RemoveTicketTest(BoothTest):
