@@ -88,11 +88,14 @@ Node Attributes:
 """
         ac(expected_out, output)
 
-        output, returnVal = pcs(temp_cib, "node maintenance nonexistant-node")
+        output, returnVal = pcs(
+            temp_cib, "node maintenance nonexistant-node and-another"
+        )
         self.assertEqual(returnVal, 1)
         self.assertEqual(
             output,
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "Error: Node 'and-another' does not appear to exist in configuration\n"
         )
         output, _ = pcs(temp_cib, "property")
         expected_out = """\
@@ -134,11 +137,14 @@ Cluster Properties:
 """
         ac(expected_out, output)
 
-        output, returnVal = pcs(temp_cib, "node unmaintenance nonexistant-node")
+        output, returnVal = pcs(
+            temp_cib, "node unmaintenance nonexistant-node and-another"
+        )
         self.assertEqual(returnVal, 1)
         self.assertEqual(
             output,
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "Error: Node 'and-another' does not appear to exist in configuration\n"
         )
         output, _ = pcs(temp_cib, "property")
         expected_out = """\

@@ -77,8 +77,8 @@ def node_maintenance(argv, on=True):
         for node in argv:
             if node not in cluster_nodes:
                 utils.err(
-                    "Node '%s' does not appear to exist in configuration" %
-                    argv[0],
+                    "Node '{0}' does not appear to exist in "
+                    "configuration".format(node),
                     False
                 )
                 failed_count += 1
@@ -87,25 +87,30 @@ def node_maintenance(argv, on=True):
     else:
         nodes.append("")
 
+    if failed_count > 0:
+        sys.exit(1)
+
     for node in nodes:
-        node = ["-N", node] if node else []
+        node_attr = ["-N", node] if node else []
         output, retval = utils.run(
             ["crm_attribute", "-t", "nodes", "-n", "maintenance"] + action +
-            node
+            node_attr
         )
         if retval != 0:
-            node_name = ("node '%s'" % node) if argv else "current node"
+            node_name = ("node '{0}'".format(node)) if argv else "current node"
             failed_count += 1
             if on:
                 utils.err(
-                    "Unable to put %s to maintenance mode.\n%s" %
-                    (node_name, output),
+                    "Unable to put {0} to maintenance mode: {1}".format(
+                        node_name, output
+                    ),
                     False
                 )
             else:
                 utils.err(
-                    "Unable to remove %s from maintenance mode.\n%s" %
-                    (node_name, output),
+                    "Unable to remove {0} from maintenance mode: {1}".format(
+                        node_name, output
+                    ),
                     False
                 )
     if failed_count > 0:
