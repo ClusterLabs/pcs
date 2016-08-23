@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from os.path import join
+import os.path
 from unittest import TestCase
 
 from pcs.common import report_codes, env_file_role_codes as file_roles
@@ -36,10 +36,17 @@ class GetAllConfigsFileNamesTest(TestCase):
 
     def test_success(self, mock_is_file, mock_listdir, mock_isdir):
         def mock_is_file_fn(file_name):
-            if file_name in ["dir.cong", "dir"]:
+            if file_name in [
+                os.path.join(BOOTH_CONFIG_DIR, name)
+                for name in ("dir.cong", "dir")
+            ]:
                 return False
             elif file_name in [
-                "name1", "name2.conf", "name.conf.conf", ".conf", "name3.conf"
+                os.path.join(BOOTH_CONFIG_DIR, name)
+                for name in (
+                    "name1", "name2.conf", "name.conf.conf", ".conf",
+                    "name3.conf"
+                )
             ]:
                 return True
             else:
@@ -70,7 +77,7 @@ class ReadConfigTest(TestCase):
 
         self.assertEqual(
             [
-                mock.call(join(BOOTH_CONFIG_DIR, "my-file.conf"), "r"),
+                mock.call(os.path.join(BOOTH_CONFIG_DIR, "my-file.conf"), "r"),
                 mock.call().__enter__(),
                 mock.call().read(),
                 mock.call().__exit__(None, None, None)
@@ -204,7 +211,7 @@ class ReadAuthfileTest(TestCase):
         self.maxDiff = None
 
     def test_success(self):
-        path = join(BOOTH_CONFIG_DIR, "file.key")
+        path = os.path.join(BOOTH_CONFIG_DIR, "file.key")
         mock_open = mock.mock_open(read_data="key")
 
         with patch_config_files("open", mock_open, create=True):
@@ -259,7 +266,7 @@ class ReadAuthfileTest(TestCase):
 
     @patch_config_files("format_environment_error", return_value="reason")
     def test_read_failure(self, _):
-        path = join(BOOTH_CONFIG_DIR, "file.key")
+        path = os.path.join(BOOTH_CONFIG_DIR, "file.key")
         mock_open = mock.mock_open()
         mock_open().read.side_effect = EnvironmentError()
 

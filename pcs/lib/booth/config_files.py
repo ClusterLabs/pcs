@@ -27,9 +27,14 @@ def get_all_configs_file_names():
     if not os.path.isdir(BOOTH_CONFIG_DIR):
         return []
     return [
-        file_name for file_name in os.listdir(BOOTH_CONFIG_DIR)
-        if os.path.isfile(file_name) and file_name.endswith(".conf") and
-        len(file_name) > len(".conf")
+        file_name
+        for file_name in os.listdir(BOOTH_CONFIG_DIR)
+        if
+            file_name.endswith(".conf")
+            and
+            len(file_name) > len(".conf")
+            and
+            os.path.isfile(os.path.join(BOOTH_CONFIG_DIR, file_name))
     ]
 
 
