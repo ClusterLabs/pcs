@@ -18,7 +18,7 @@ COROSYNC_BINARIES = "/usr/sbin/"
 CMAN_TOOL = "/usr/sbin/cman_tool"
 PACEMAKERD = "/usr/sbin/pacemakerd"
 CIBADMIN = "/usr/sbin/cibadmin"
-SBD_CONFIG = "/etc/sysconfig/sbd"
+SBD_CONFIG = "/etc/default/sbd"
 CIB_PATH = "/var/lib/pacemaker/cib/cib.xml"
 
 COROSYNC_QDEVICE_NET_SERVER_CERTS_DIR = "/etc/corosync/qnetd/nssdb"
