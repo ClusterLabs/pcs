@@ -949,9 +949,9 @@ def pcsd_restart()
   fork {
     sleep(10)
     if ISSYSTEMCTL
-      `systemctl restart pcsd`
+      exec("systemctl", "restart", "pcsd")
     else
-      `service pcsd restart`
+      exec("service", "pcsd", "restart")
     end
   }
 end
