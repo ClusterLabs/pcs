@@ -374,8 +374,8 @@ class ConfigTest(unittest.TestCase, BoothMixin):
 
     def test_too_much_args(self):
         self.assert_pcs_fail(
-            "booth config argument",
-            stdout_start="\nUsage: pcs booth <command>\n    config\n"
+            "booth config nodename surplus",
+            stdout_start="\nUsage: pcs booth <command>\n    config ["
         )
 
     def test_show_unsupported_values(self):

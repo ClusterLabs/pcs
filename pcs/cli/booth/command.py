@@ -51,9 +51,12 @@ def config_show(lib, arg_list, modifiers):
     """
     print booth config
     """
-    if arg_list:
+    if len(arg_list) > 1:
         raise CmdLineInputError()
-    print(lib.booth.config_text(), end="")
+    node = None if not arg_list else arg_list[0]
+
+    print(lib.booth.config_text(DEFAULT_BOOTH_NAME, node), end="")
+
 
 def config_ticket_add(lib, arg_list, modifiers):
     """

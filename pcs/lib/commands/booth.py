@@ -98,11 +98,25 @@ def config_destroy(env, ignore_config_load_problems=False):
         env.booth.remove_key()
     env.booth.remove_config()
 
-def config_text(env):
+
+def config_text(env, name, node_name=None):
     """
     get configuration in raw format
+    string name -- name of booth instance whose config should be returned
+    string node_name -- get the config from specified node or local host if None
     """
-    return env.booth.get_config_content()
+    if node_name is None:
+        # TODO add name support
+        return env.booth.get_config_content()
+
+    remote_data = sync.pull_config_from_node(
+        env.node_communicator(), NodeAddresses(node_name), name
+    )
+    try:
+        return remote_data["config"]["data"]
+    except KeyError:
+        raise LibraryError(reports.invalid_response_format(node_name))
+
 
 def config_ticket_add(env, ticket_name, options):
     """

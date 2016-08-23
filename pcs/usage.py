@@ -1439,8 +1439,9 @@ Commands:
     ticket remove <ticket>
         Remove the specified ticket from the current configuration.
 
-    config
-        Show booth configuration.
+    config [<node>]
+        Show booth configuration from the specified node or from the current
+        node if node not specified.
 
     create ip <address>
         Make the cluster run booth service on the specified ip address as
