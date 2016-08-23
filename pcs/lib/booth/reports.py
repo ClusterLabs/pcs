@@ -197,22 +197,17 @@ def booth_multiple_times_in_cib(
     )
 
 
-def booth_config_distribution_in_cluster_started(name=None):
+def booth_config_distribution_started():
     """
-    Sending booth config to all nodes in cluster.
-
-    name -- name of booth instance
+    booth configuration is about to be sent to nodes
     """
     return ReportItem.info(
-        report_codes.BOOTH_CONFIG_DISTRIBUTION_IN_CLUSTER_STARTED,
-        "Sending booth config{0} to all cluster nodes.".format(
-            " ({name})" if name and name != "booth" else ""
-        ),
-        info={"name": name}
+        report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED,
+        "Sending booth configuration to cluster nodes..."
     )
 
 
-def booth_configs_accepted_by_node(node=None, name_list=None):
+def booth_config_accepted_by_node(node=None, name_list=None):
     """
     Booth config has been saved on specified node.
 
@@ -229,36 +224,13 @@ def booth_configs_accepted_by_node(node=None, name_list=None):
         msg = "Booth config saved."
         name = None
     return ReportItem.info(
-        report_codes.BOOTH_CONFIGS_SAVED_ON_NODE,
+        report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
         msg if node is None else "{node}: " + msg,
         info={
             "node": node,
             "name": name,
             "name_list": name_list
         }
-    )
-
-
-def booth_config_read_error(
-    name, severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    Unable to read from specified booth instance config.
-
-    name -- name of booth instance
-    severity -- severity of report item
-    forceable -- is this report item forceable? by what category?
-    """
-    if name and name != "booth":
-        msg = "Unable to read booth config ({name})."
-    else:
-        msg = "Unable to read booth config."
-    return ReportItem(
-        report_codes.BOOTH_CONFIG_READ_ERROR,
-        severity,
-        msg,
-        info={"name": name},
-        forceable=forceable
     )
 
 
@@ -285,16 +257,26 @@ def booth_config_distribution_node_error(node, reason, name=None):
     )
 
 
-def booth_distribution_config_started(node):
+def booth_config_read_error(
+    name, severity=ReportItemSeverity.ERROR, forceable=None
+):
     """
-    Sending all local booth configs to node
+    Unable to read from specified booth instance config.
 
-    node -- node name
+    name -- name of booth instance
+    severity -- severity of report item
+    forceable -- is this report item forceable? by what category?
     """
-    return ReportItem.info(
-        report_codes.BOOTH_CONFIGS_DISTRIBUTION_STARTED,
-        "{node}: Saving booth config(s)...",
-        info={"node": node}
+    if name and name != "booth":
+        msg = "Unable to read booth config ({name})."
+    else:
+        msg = "Unable to read booth config."
+    return ReportItem(
+        report_codes.BOOTH_CONFIG_READ_ERROR,
+        severity,
+        msg,
+        info={"name": name},
+        forceable=forceable
     )
 
 
