@@ -98,13 +98,11 @@ def config_destroy(env, ignore_config_load_problems=False):
         env.booth.remove_key()
     env.booth.remove_config()
 
-def config_show(env):
+def config_text(env):
     """
-    return configuration as tuple of sites list and arbitrators list
+    get configuration in raw format
     """
-    return config_exchange.to_exchange_format(
-        parse(env.booth.get_config_content())
-    )
+    return env.booth.get_config_content()
 
 def config_ticket_add(env, ticket_name, options):
     """

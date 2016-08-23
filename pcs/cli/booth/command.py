@@ -51,9 +51,9 @@ def config_show(lib, arg_list, modifiers):
     """
     print booth config
     """
-    booth_configuration = lib.booth.config_show()
-    for line in _export_config_to_lines(booth_configuration):
-        print(line)
+    if arg_list:
+        raise CmdLineInputError()
+    print(lib.booth.config_text(), end="")
 
 def config_ticket_add(lib, arg_list, modifiers):
     """
@@ -185,18 +185,4 @@ def status(lib, arg_list, modifiers):
     if booth_status.get("status"):
         print("DAEMON STATUS:")
         print(booth_status["status"])
-
-def _export_config_to_lines(config, deep=0):
-    line_list = []
-    for item in config:
-        if item["key"] != "ticket":
-            line_value = item["value"]
-        else:
-            line_value = '"{0}"'.format(item["value"])
-        line_list.append(
-            "{0}{1} = {2}".format("  "*deep, item["key"], line_value)
-        )
-        if item["details"]:
-            line_list.extend(_export_config_to_lines(item["details"], deep+1))
-    return line_list
 

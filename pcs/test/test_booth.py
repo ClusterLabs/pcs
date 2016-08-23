@@ -362,6 +362,7 @@ class ConfigTest(unittest.TestCase, BoothMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(TEMP_CIB)
+
     def test_fail_when_config_file_do_not_exists(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_fail(
@@ -369,6 +370,12 @@ class ConfigTest(unittest.TestCase, BoothMixin):
             "Error: Booth config file '{0}' does not exist\n".format(
                 BOOTH_CONFIG_FILE
             )
+        )
+
+    def test_too_much_args(self):
+        self.assert_pcs_fail(
+            "booth config argument",
+            stdout_start="\nUsage: pcs booth <command>\n    config\n"
         )
 
     def test_show_unsupported_values(self):
@@ -384,13 +391,13 @@ class ConfigTest(unittest.TestCase, BoothMixin):
 
         self.assert_pcs_success(
             "booth config",
-            stdout_full=console_report(
+            stdout_full="\n".join((
                 "authfile = {0}".format(BOOTH_KEY_FILE),
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
                 "some = nonsense",
                 'ticket = "TicketA"',
-                "  another = nonsense",
-            )
+                "another = nonsense",
+            ))
         )
