@@ -36,7 +36,9 @@ SLEEP_DURATION=2
 [ -x $(which $SUB_EXEC) ] || echo "$SUB_EXEC not found. Is pcs installed?"
 
 # Read configuration variable file if it is present
+set -a
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
+set +a
 
 # Source lsb init functions
 . /lib/lsb/init-functions
