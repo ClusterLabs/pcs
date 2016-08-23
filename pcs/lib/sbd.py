@@ -46,6 +46,25 @@ def _run_parallel_and_raise_lib_error_on_failure(func, param_list):
         raise LibraryError(*report_list)
 
 
+def _even_number_of_nodes_and_no_qdevice(
+    corosync_conf_facade, node_number_modifier=0
+):
+    """
+    Returns True whenever cluster has no quorum device configured and number of
+    nodes + node_number_modifier is even number, False otherwise.
+
+    corosync_conf_facade --
+    node_number_modifier -- this value will be added to current number of nodes.
+        This can be useful to test whenever is ATB needed when adding/removing
+        node.
+    """
+    return (
+        not corosync_conf_facade.has_quorum_device()
+        and
+        (len(corosync_conf_facade.get_nodes()) + node_number_modifier) % 2 == 0
+    )
+
+
 def is_auto_tie_breaker_needed(
     runner, corosync_conf_facade, node_number_modifier=0
 ):
@@ -60,14 +79,28 @@ def is_auto_tie_breaker_needed(
         node.
     """
     return (
-        not corosync_conf_facade.has_quorum_device()
-        and
-        (len(corosync_conf_facade.get_nodes()) + node_number_modifier) % 2 == 0
+        _even_number_of_nodes_and_no_qdevice(
+            corosync_conf_facade, node_number_modifier
+        )
         and
         is_sbd_installed(runner)
         and
         is_sbd_enabled(runner)
     )
+
+
+def atb_has_to_be_enabled_pre_enable_check(corosync_conf_facade):
+    """
+    Returns True whenever quorum option auto_tie_breaker is needed to be enabled
+    for proper working of SBD fencing. False if it is not needed. This function
+    doesn't check if sbd is installed nor enabled.
+     """
+    return (
+        not corosync_conf_facade.is_enabled_auto_tie_breaker()
+        and
+        _even_number_of_nodes_and_no_qdevice(corosync_conf_facade)
+    )
+
 
 def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
     """

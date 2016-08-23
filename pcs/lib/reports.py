@@ -1928,3 +1928,15 @@ def quorum_cannot_disable_atb_due_to_sbd(
         "unable to disable auto_tie_breaker: SBD fencing will have no effect",
         forceable=forceable
     )
+
+
+def sbd_requires_atb():
+    """
+    Warning that ATB will be enabled in order to make SBD fencing effective.
+    """
+    return ReportItem.warning(
+        report_codes.SBD_REQUIRES_ATB,
+        "auto_tie_breaker quorum option will be enabled to make SBD fencing "
+        "effective. Cluster has to be offline to be able to make this change."
+    )
+
