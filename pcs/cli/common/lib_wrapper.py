@@ -209,11 +209,12 @@ def load_module(env, middleware_factory, name):
             {
                 "config_setup": booth.config_setup,
                 "config_destroy": booth.config_destroy,
-                "config_show": booth.config_show,
+                "config_text": booth.config_text,
                 "config_ticket_add": booth.config_ticket_add,
                 "config_ticket_remove": booth.config_ticket_remove,
                 "create_in_cluster": booth.create_in_cluster,
                 "remove_from_cluster": booth.remove_from_cluster,
+                "restart": booth.restart,
                 "config_sync": booth.config_sync,
                 "enable": booth.enable_booth,
                 "disable": booth.disable_booth,

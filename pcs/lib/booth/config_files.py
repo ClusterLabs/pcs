@@ -24,10 +24,17 @@ def get_all_configs_file_names():
     Returns list of all file names ending with '.conf' in booth configuration
     directory.
     """
+    if not os.path.isdir(BOOTH_CONFIG_DIR):
+        return []
     return [
-        file_name for file_name in os.listdir(BOOTH_CONFIG_DIR)
-        if os.path.isfile(file_name) and file_name.endswith(".conf") and
-        len(file_name) > len(".conf")
+        file_name
+        for file_name in os.listdir(BOOTH_CONFIG_DIR)
+        if
+            file_name.endswith(".conf")
+            and
+            len(file_name) > len(".conf")
+            and
+            os.path.isfile(os.path.join(BOOTH_CONFIG_DIR, file_name))
     ]
 
 
@@ -55,7 +62,7 @@ def read_configs(reporter, skip_wrong_config=False):
         try:
             output[file_name] = _read_config(file_name)
         except EnvironmentError:
-            report_list.append(reports.booth_config_unable_to_read(
+            report_list.append(reports.booth_config_read_error(
                 file_name,
                 (
                     ReportItemSeverity.WARNING if skip_wrong_config

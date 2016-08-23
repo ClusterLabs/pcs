@@ -11,6 +11,7 @@ from lxml import etree
 
 import pcs.lib.booth.resource as booth_resource
 from pcs.test.tools.pcs_mock import mock
+from pcs.test.tools.misc import get_test_resource as rc
 
 
 def fixture_resources_with_booth(booth_config_file_path):
@@ -85,79 +86,65 @@ class FindBoothResourceElementsTest(TestCase):
         )
 
 class RemoveFromClusterTest(TestCase):
-    def call(self, resources_section, remove_multiple=False):
+    def call(self, element_list):
         mock_resource_remove = mock.Mock()
-        num_of_removed_booth_resources = booth_resource.get_remover(
-            mock_resource_remove
-        )(
-            resources_section,
-            "/PATH/TO/CONF",
-            remove_multiple,
-        )
-        return (
-            mock_resource_remove,
-            num_of_removed_booth_resources
-        )
-
-    def fixture_resources_including_two_booths(self):
-        resources_section = etree.fromstring('<resources/>')
-        first = fixture_booth_element("first", "/PATH/TO/CONF")
-        second = fixture_booth_element("second", "/PATH/TO/CONF")
-        resources_section.append(first)
-        resources_section.append(second)
-        return resources_section
-
-    def test_raises_when_booth_resource_not_found(self):
-        self.assertRaises(
-            booth_resource.BoothNotFoundInCib,
-            lambda: self.call(etree.fromstring('<resources/>')),
-        )
-
-    def test_raises_when_more_booth_resources_found(self):
-        resources_section = self.fixture_resources_including_two_booths()
-        self.assertRaises(
-            booth_resource.BoothMultipleOccurenceFoundInCib,
-            lambda: self.call(resources_section),
-        )
-
-    def test_returns_number_of_removed_elements(self):
-        resources_section = self.fixture_resources_including_two_booths()
-        mock_resource_remove, num_of_removed_booth_resources = self.call(
-            resources_section,
-            remove_multiple=True
-        )
-        self.assertEqual(num_of_removed_booth_resources, 2)
-        self.assertEqual(
-            mock_resource_remove.mock_calls, [
-                mock.call('first'),
-                mock.call('second'),
-            ]
-        )
+        booth_resource.get_remover(mock_resource_remove)(element_list)
+        return mock_resource_remove
 
     def test_remove_ip_when_is_only_booth_sibling_in_group(self):
-        resources_section = etree.fromstring('''
-            <resources>
-                <group>
-                    <primitive id="ip" type="IPaddr2"/>
-                    <primitive id="booth" type="booth-site">
-                        <instance_attributes>
-                            <nvpair name="config" value="/PATH/TO/CONF"/>
-                        </instance_attributes>
-                    </primitive>
-                </group>
-            </resources>
+        group = etree.fromstring('''
+            <group>
+                <primitive id="ip" type="IPaddr2"/>
+                <primitive id="booth" type="booth-site">
+                    <instance_attributes>
+                        <nvpair name="config" value="/PATH/TO/CONF"/>
+                    </instance_attributes>
+                </primitive>
+            </group>
         ''')
 
-        mock_resource_remove, _ = self.call(
-            resources_section,
-            remove_multiple=True
-        )
+        mock_resource_remove = self.call(group.getchildren()[1:])
         self.assertEqual(
             mock_resource_remove.mock_calls, [
                 mock.call('ip'),
                 mock.call('booth'),
             ]
         )
+
+class CreateInClusterTest(TestCase):
+    def test_remove_ip_when_booth_resource_add_failed(self):
+        mock_resource_create = mock.Mock(side_effect=[None, SystemExit(1)])
+        mock_resource_remove = mock.Mock()
+        mock_create_id = mock.Mock(side_effect=["ip_id","booth_id","group_id"])
+        ip = "1.2.3.4"
+        booth_config_file_path = rc("/path/to/booth.conf")
+
+        booth_resource.get_creator(mock_resource_create, mock_resource_remove)(
+            ip,
+            booth_config_file_path,
+            mock_create_id
+        )
+        self.assertEqual(mock_resource_create.mock_calls, [
+            mock.call(
+                clone_opts=[],
+                group=u'group_id',
+                meta_values=[],
+                op_values=[],
+                ra_id=u'ip_id',
+                ra_type=u'ocf:heartbeat:IPaddr2',
+                ra_values=[u'ip=1.2.3.4'],
+            ),
+            mock.call(
+                clone_opts=[],
+                group='group_id',
+                meta_values=[],
+                op_values=[],
+                ra_id='booth_id',
+                ra_type='ocf:pacemaker:booth-site',
+                ra_values=['config=/path/to/booth.conf'],
+            )
+        ])
+        mock_resource_remove.assert_called_once_with("ip_id")
 
 
 class FindBindedIpTest(TestCase):

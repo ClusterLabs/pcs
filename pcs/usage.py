@@ -118,6 +118,7 @@ def generate_completion_tree_from_usage():
     tree["pcsd"] = generate_tree(pcsd([],False))
     tree["node"] = generate_tree(node([], False))
     tree["alert"] = generate_tree(alert([], False))
+    tree["booth"] = generate_tree(booth([], False))
     return tree
 
 def generate_tree(usage_txt):
@@ -1438,8 +1439,9 @@ Commands:
     ticket remove <ticket>
         Remove the specified ticket from the current configuration.
 
-    config
-        Show booth configuration.
+    config [<node>]
+        Show booth configuration from the specified node or from the current
+        node if node not specified.
 
     create ip <address>
         Make the cluster run booth service on the specified ip address as
@@ -1448,15 +1450,18 @@ Commands:
     remove
         Remove booth resources created by the "pcs booth create" command.
 
+    restart
+        Restart booth resources created by the "pcs booth create" command.
+
     ticket grant <ticket> [<site address>]
         Grant the ticket for the site specified by address.  Site address which
         has been specified with 'pcs booth create' command is used if
-        'site address' is omitted.
+        'site address' is omitted. Cannot be run on an arbitrator.
 
     ticket revoke <ticket> [<site address>]
         Revoke the ticket for the site specified by address.  Site address which
         has been specified with 'pcs booth create' command is used if
-        'site address' is omitted.
+        'site address' is omitted. Cannot be run on an arbitrator.
 
     status
         Print current status of booth on the local node.

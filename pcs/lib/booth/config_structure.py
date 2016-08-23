@@ -7,6 +7,7 @@ from __future__ import (
 
 import re
 
+import pcs.lib.reports as common_reports
 from pcs.lib.booth import reports
 from pcs.lib.errors import LibraryError
 from collections import namedtuple
@@ -66,6 +67,15 @@ def validate_peers(site_list, arbitrator_list):
     if report:
         raise LibraryError(*report)
 
+def take_peers(booth_configuration):
+    return (
+        pick_list_by_key(booth_configuration, "site"),
+        pick_list_by_key(booth_configuration, "arbitrator"),
+    )
+
+def pick_list_by_key(booth_configuration, key):
+    return [item.value for item in booth_configuration if item.key == key]
+
 def remove_ticket(booth_configuration, ticket_name):
     validate_ticket_exists(booth_configuration, ticket_name)
     return [
@@ -73,11 +83,14 @@ def remove_ticket(booth_configuration, ticket_name):
         if config_item.key != "ticket" or config_item.value != ticket_name
     ]
 
-def add_ticket(booth_configuration, ticket_name):
+def add_ticket(booth_configuration, ticket_name, options):
     validate_ticket_name(ticket_name)
     validate_ticket_unique(booth_configuration, ticket_name)
+    validate_ticket_options(options)
     return booth_configuration + [
-        ConfigItem("ticket", ticket_name)
+        ConfigItem("ticket", ticket_name, [
+            ConfigItem(key, value) for key, value in options.items()
+        ])
     ]
 
 def validate_ticket_exists(booth_configuration, ticket_name):
@@ -87,6 +100,24 @@ def validate_ticket_exists(booth_configuration, ticket_name):
 def validate_ticket_unique(booth_configuration, ticket_name):
     if ticket_exists(booth_configuration, ticket_name):
         raise LibraryError(reports.booth_ticket_duplicate(ticket_name))
+
+def validate_ticket_options(options):
+    reports = []
+    for key in sorted(options):
+        if key in GLOBAL_KEYS:
+            reports.append(
+                common_reports.invalid_option(key, TICKET_KEYS, "booth ticket")
+            )
+
+        if not options[key].strip():
+            reports.append(common_reports.invalid_option_value(
+                key,
+                options[key],
+                "no-empty",
+            ))
+
+    if reports:
+        raise LibraryError(*reports)
 
 def ticket_exists(booth_configuration, ticket_name):
     return any(

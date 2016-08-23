@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from os.path import join
+import os.path
 from unittest import TestCase
 
 from pcs.common import report_codes, env_file_role_codes as file_roles
@@ -21,20 +21,38 @@ def patch_config_files(target, *args, **kwargs):
         "pcs.lib.booth.config_files.{0}".format(target), *args, **kwargs
     )
 
+@mock.patch("os.path.isdir")
 @mock.patch("os.listdir")
 @mock.patch("os.path.isfile")
 class GetAllConfigsFileNamesTest(TestCase):
-    def test_success(self, mock_is_file, mock_listdir):
+    def test_booth_config_dir_is_no_dir(
+        self, mock_is_file, mock_listdir, mock_isdir
+    ):
+        mock_isdir.return_value = False
+        self.assertEqual([], config_files.get_all_configs_file_names())
+        mock_isdir.assert_called_once_with(BOOTH_CONFIG_DIR)
+        self.assertEqual(0, mock_is_file.call_count)
+        self.assertEqual(0, mock_listdir.call_count)
+
+    def test_success(self, mock_is_file, mock_listdir, mock_isdir):
         def mock_is_file_fn(file_name):
-            if file_name in ["dir.cong", "dir"]:
+            if file_name in [
+                os.path.join(BOOTH_CONFIG_DIR, name)
+                for name in ("dir.cong", "dir")
+            ]:
                 return False
             elif file_name in [
-                "name1", "name2.conf", "name.conf.conf", ".conf", "name3.conf"
+                os.path.join(BOOTH_CONFIG_DIR, name)
+                for name in (
+                    "name1", "name2.conf", "name.conf.conf", ".conf",
+                    "name3.conf"
+                )
             ]:
                 return True
             else:
                 raise AssertionError("unexpected input")
 
+        mock_isdir.return_value = True
         mock_is_file.side_effect = mock_is_file_fn
         mock_listdir.return_value = [
             "name1", "name2.conf", "name.conf.conf", ".conf", "name3.conf",
@@ -59,7 +77,7 @@ class ReadConfigTest(TestCase):
 
         self.assertEqual(
             [
-                mock.call(join(BOOTH_CONFIG_DIR, "my-file.conf"), "r"),
+                mock.call(os.path.join(BOOTH_CONFIG_DIR, "my-file.conf"), "r"),
                 mock.call().__enter__(),
                 mock.call().read(),
                 mock.call().__exit__(None, None, None)
@@ -193,7 +211,7 @@ class ReadAuthfileTest(TestCase):
         self.maxDiff = None
 
     def test_success(self):
-        path = join(BOOTH_CONFIG_DIR, "file.key")
+        path = os.path.join(BOOTH_CONFIG_DIR, "file.key")
         mock_open = mock.mock_open(read_data="key")
 
         with patch_config_files("open", mock_open, create=True):
@@ -248,7 +266,7 @@ class ReadAuthfileTest(TestCase):
 
     @patch_config_files("format_environment_error", return_value="reason")
     def test_read_failure(self, _):
-        path = join(BOOTH_CONFIG_DIR, "file.key")
+        path = os.path.join(BOOTH_CONFIG_DIR, "file.key")
         mock_open = mock.mock_open()
         mock_open().read.side_effect = EnvironmentError()
 

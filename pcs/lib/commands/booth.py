@@ -34,11 +34,10 @@ def config_setup(env, booth_configuration, overwrite_existing=False):
     list arbitrator_list contains arbitrator adresses of multisite
     """
 
-    config_structure.validate_peers(
-        booth_configuration.get("sites", []),
-        booth_configuration.get("arbitrators", [])
-    )
     config_content = config_exchange.from_exchange_format(booth_configuration)
+    config_structure.validate_peers(
+        *config_structure.take_peers(config_content)
+    )
 
     env.booth.create_key(config_files.generate_key(), overwrite_existing)
     config_content = config_structure.set_authfile(
@@ -99,21 +98,34 @@ def config_destroy(env, ignore_config_load_problems=False):
         env.booth.remove_key()
     env.booth.remove_config()
 
-def config_show(env):
-    """
-    return configuration as tuple of sites list and arbitrators list
-    """
-    return config_exchange.to_exchange_format(
-        parse(env.booth.get_config_content())
-    )
 
-def config_ticket_add(env, ticket_name):
+def config_text(env, name, node_name=None):
+    """
+    get configuration in raw format
+    string name -- name of booth instance whose config should be returned
+    string node_name -- get the config from specified node or local host if None
+    """
+    if node_name is None:
+        # TODO add name support
+        return env.booth.get_config_content()
+
+    remote_data = sync.pull_config_from_node(
+        env.node_communicator(), NodeAddresses(node_name), name
+    )
+    try:
+        return remote_data["config"]["data"]
+    except KeyError:
+        raise LibraryError(reports.invalid_response_format(node_name))
+
+
+def config_ticket_add(env, ticket_name, options):
     """
     add ticket to booth configuration
     """
     booth_configuration = config_structure.add_ticket(
         parse(env.booth.get_config_content()),
-        ticket_name
+        ticket_name,
+        options,
     )
     env.booth.push_config(build(booth_configuration))
 
@@ -127,7 +139,7 @@ def config_ticket_remove(env, ticket_name):
     )
     env.booth.push_config(build(booth_configuration))
 
-def create_in_cluster(env, name, ip, resource_create):
+def create_in_cluster(env, name, ip, resource_create, resource_remove):
     #TODO resource_create is provisional hack until resources are not moved to
     #lib
     resources_section = get_resources(env.get_cib())
@@ -136,7 +148,7 @@ def create_in_cluster(env, name, ip, resource_create):
     if resource.find_for_config(resources_section, booth_config_file_path):
         raise LibraryError(booth_reports.booth_already_in_cib(name))
 
-    resource.get_creator(resource_create)(
+    resource.get_creator(resource_create, resource_remove)(
         ip,
         booth_config_file_path,
         create_id = partial(
@@ -146,25 +158,20 @@ def create_in_cluster(env, name, ip, resource_create):
         )
     )
 
-def remove_from_cluster(env, name, resource_remove):
+def remove_from_cluster(env, name, resource_remove, allow_remove_multiple):
     #TODO resource_remove is provisional hack until resources are not moved to
     #lib
-    try:
-        num_of_removed_booth_resources = resource.get_remover(resource_remove)(
-            get_resources(env.get_cib()),
-            get_config_file_name(name),
-        )
-        if num_of_removed_booth_resources > 1:
-            env.report_processor.process(
-                booth_reports.booth_multiple_times_in_cib(
-                    name,
-                    severity=ReportItemSeverity.WARNING,
-                )
-            )
-    except resource.BoothNotFoundInCib:
-        raise LibraryError(booth_reports.booth_not_exists_in_cib(name))
-    except resource.BoothMultipleOccurenceFoundInCib:
-        raise LibraryError(booth_reports.booth_multiple_times_in_cib(name))
+    resource.get_remover(resource_remove)(
+        _find_resource_elements_for_operation(env, name, allow_remove_multiple)
+    )
+
+def restart(env, name, resource_restart, allow_multiple):
+    #TODO resource_restart is provisional hack until resources are not moved to
+    #lib
+    for booth_element in _find_resource_elements_for_operation(
+        env, name, allow_multiple
+    ):
+        resource_restart([booth_element.attrib["id"]])
 
 def ticket_operation(operation, env, name, ticket, site_ip):
     if not site_ip:
@@ -314,7 +321,7 @@ def pull_config(env, node_name, name):
     name -- string, name of booth instance of which config should be fetched
     """
     env.report_processor.process(
-        booth_reports.booth_fetching_config_from_node(node_name, name)
+        booth_reports.booth_fetching_config_from_node_started(node_name, name)
     )
     output = sync.pull_config_from_node(
         env.node_communicator(), NodeAddresses(node_name), name
@@ -335,7 +342,7 @@ def pull_config(env, node_name, name):
                 True
             )
         env.report_processor.process(
-            booth_reports.booth_config_saved(name_list=[name])
+            booth_reports.booth_config_accepted_by_node(name_list=[name])
         )
     except KeyError:
         raise LibraryError(reports.invalid_response_format(node_name))
@@ -347,3 +354,24 @@ def get_status(env, name=None):
         "ticket": status.get_tickets_status(env.cmd_runner(), name),
         "peers": status.get_peers_status(env.cmd_runner(), name),
     }
+
+def _find_resource_elements_for_operation(env, name, allow_multiple):
+    booth_element_list = resource.find_for_config(
+        get_resources(env.get_cib()),
+        get_config_file_name(name),
+    )
+
+    if not booth_element_list:
+        raise LibraryError(booth_reports.booth_not_exists_in_cib(name))
+
+    if len(booth_element_list) > 1:
+        if not allow_multiple:
+            raise LibraryError(booth_reports.booth_multiple_times_in_cib(name))
+        env.report_processor.process(
+            booth_reports.booth_multiple_times_in_cib(
+                name,
+                severity=ReportItemSeverity.WARNING,
+            )
+        )
+
+    return booth_element_list

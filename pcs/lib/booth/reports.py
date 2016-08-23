@@ -197,22 +197,17 @@ def booth_multiple_times_in_cib(
     )
 
 
-def booth_distributing_config(name=None):
+def booth_config_distribution_started():
     """
-    Sending booth config to all nodes in cluster.
-
-    name -- name of booth instance
+    booth configuration is about to be sent to nodes
     """
     return ReportItem.info(
-        report_codes.BOOTH_DISTRIBUTING_CONFIG,
-        "Sending booth config{0} to all cluster nodes.".format(
-            " ({name})" if name and name != "booth" else ""
-        ),
-        info={"name": name}
+        report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED,
+        "Sending booth configuration to cluster nodes..."
     )
 
 
-def booth_config_saved(node=None, name_list=None):
+def booth_config_accepted_by_node(node=None, name_list=None):
     """
     Booth config has been saved on specified node.
 
@@ -229,7 +224,7 @@ def booth_config_saved(node=None, name_list=None):
         msg = "Booth config saved."
         name = None
     return ReportItem.info(
-        report_codes.BOOTH_CONFIGS_SAVED_ON_NODE,
+        report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
         msg if node is None else "{node}: " + msg,
         info={
             "node": node,
@@ -239,7 +234,30 @@ def booth_config_saved(node=None, name_list=None):
     )
 
 
-def booth_config_unable_to_read(
+def booth_config_distribution_node_error(node, reason, name=None):
+    """
+    Saving booth config failed on specified node.
+
+    node -- node name
+    reason -- reason of failure
+    name -- name of booth instance
+    """
+    if name and name != "booth":
+        msg = "Unable to save booth config ({name}) on node '{node}': {reason}"
+    else:
+        msg = "Unable to save booth config on node '{node}': {reason}"
+    return ReportItem.error(
+        report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
+        msg,
+        info={
+            "node": node,
+            "name": name,
+            "reason": reason
+        }
+    )
+
+
+def booth_config_read_error(
     name, severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
@@ -262,43 +280,13 @@ def booth_config_unable_to_read(
     )
 
 
-def booth_config_not_saved(node, reason, name=None):
+def booth_fetching_config_from_node_started(node, config=None):
     """
-    Saving booth config failed on specified node.
+    fetching of booth config from specified node started
 
-    node -- node name
-    reason -- reason of failure
-    name -- name of booth instance
+    node -- node from which config is fetching
+    config -- config name
     """
-    if name and name != "booth":
-        msg = "Unable to save booth config ({name}) on node '{node}': {reason}"
-    else:
-        msg = "Unable to save booth config on node '{node}': {reason}"
-    return ReportItem.error(
-        report_codes.BOOTH_CONFIG_WRITE_ERROR,
-        msg,
-        info={
-            "node": node,
-            "name": name,
-            "reason": reason
-        }
-    )
-
-
-def booth_sending_local_configs_to_node(node):
-    """
-    Sending all local booth configs to node
-
-    node -- node name
-    """
-    return ReportItem.info(
-        report_codes.BOOTH_CONFIGS_SAVING_ON_NODE,
-        "{node}: Saving booth config(s)...",
-        info={"node": node}
-    )
-
-
-def booth_fetching_config_from_node(node, config=None):
     if config or config == 'booth':
         msg = "Fetching booth config from node '{node}'..."
     else:
@@ -314,6 +302,12 @@ def booth_fetching_config_from_node(node, config=None):
 
 
 def booth_unsupported_file_location(file):
+    """
+    location of booth configuration file (config, authfile) file is not
+    supported (not in /etc/booth/)
+
+    file -- file path
+    """
     return ReportItem.warning(
         report_codes.BOOTH_UNSUPORTED_FILE_LOCATION,
         "skipping file {file}: unsupported file location",
@@ -322,6 +316,11 @@ def booth_unsupported_file_location(file):
 
 
 def booth_daemon_status_error(reason):
+    """
+    Unable to get status of booth daemon because of error.
+
+    reason -- reason
+    """
     return ReportItem.error(
         report_codes.BOOTH_DAEMON_STATUS_ERROR,
         "unable to get status of booth daemon: {reason}",
@@ -330,6 +329,11 @@ def booth_daemon_status_error(reason):
 
 
 def booth_tickets_status_error(reason=None):
+    """
+    Unable to get status of booth tickets because of error.
+
+    reason -- reason
+    """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_STATUS_ERROR,
         "unable to get status of booth tickets",
@@ -340,6 +344,11 @@ def booth_tickets_status_error(reason=None):
 
 
 def booth_peers_status_error(reason=None):
+    """
+    Unable to get status of booth peers because of error.
+
+    reason -- reason
+    """
     return ReportItem.error(
         report_codes.BOOTH_PEERS_STATUS_ERROR,
         "unable to get status of booth peers",

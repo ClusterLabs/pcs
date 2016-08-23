@@ -17,47 +17,35 @@ class FromExchangeFormatTest(TestCase):
                 config_structure.ConfigItem("site", "2.2.2.2"),
                 config_structure.ConfigItem("arbitrator", "3.3.3.3"),
                 config_structure.ConfigItem("ticket", "TA"),
-                config_structure.ConfigItem("ticket", "TB"),
+                config_structure.ConfigItem("ticket", "TB", [
+                    config_structure.ConfigItem("expire", "10")
+                ]),
             ],
-            config_exchange.from_exchange_format(
-                {
-                    "sites": ["1.1.1.1", "2.2.2.2"],
-                    "arbitrators": ["3.3.3.3"],
-                    "tickets": ["TA", "TB"],
-                    "authfile": "/path/to/auth.file",
-                },
-            )
+            config_exchange.from_exchange_format([
+                {"key": "authfile","value": "/path/to/auth.file","details": []},
+                {"key": "site", "value": "1.1.1.1", "details": []},
+                {"key": "site", "value": "2.2.2.2", "details": []},
+                {"key": "arbitrator", "value": "3.3.3.3", "details": []},
+                {"key": "ticket", "value": "TA", "details": []},
+                {"key": "ticket", "value": "TB", "details": [
+                    {"key": "expire", "value": "10", "details": []}
+                ]},
+            ])
         )
 
 
 class GetExchenageFormatTest(TestCase):
     def test_convert_parsed_config_to_exchange_format(self):
         self.assertEqual(
-            {
-                "sites": ["1.1.1.1", "2.2.2.2"],
-                "arbitrators": ["3.3.3.3"],
-                "tickets": ["TA", "TB"],
-                "authfile": "/path/to/auth.file",
-            },
-            config_exchange.to_exchange_format([
-                config_structure.ConfigItem("site", "1.1.1.1"),
-                config_structure.ConfigItem("site", "2.2.2.2"),
-                config_structure.ConfigItem("arbitrator", "3.3.3.3"),
-                config_structure.ConfigItem("authfile", "/path/to/auth.file"),
-                config_structure.ConfigItem("ticket", "TA"),
-                config_structure.ConfigItem("ticket", "TB", [
-                    config_structure.ConfigItem("timeout", "10")
-                ]),
-            ])
-        )
-
-    def test_convert_parsed_config_to_exchange_format_without_authfile(self):
-        self.assertEqual(
-            {
-                "sites": ["1.1.1.1", "2.2.2.2"],
-                "arbitrators": ["3.3.3.3"],
-                "tickets": ["TA", "TB"],
-            },
+            [
+                {"key": "site", "value": "1.1.1.1", "details": []},
+                {"key": "site", "value": "2.2.2.2", "details": []},
+                {"key": "arbitrator", "value": "3.3.3.3", "details": []},
+                {"key": "ticket", "value": "TA", "details": []},
+                {"key": "ticket", "value": "TB", "details": [
+                    {"key": "timeout", "value": "10", "details": []}
+                ]},
+            ],
             config_exchange.to_exchange_format([
                 config_structure.ConfigItem("site", "1.1.1.1"),
                 config_structure.ConfigItem("site", "2.2.2.2"),

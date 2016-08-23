@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import group_by_keywords
+from pcs.cli.common.parse_args import group_by_keywords, prepare_options
 
 
 DEFAULT_BOOTH_NAME = "booth"
@@ -18,15 +18,25 @@ def config_setup(lib, arg_list, modifiers):
     """
     create booth config
     """
-    booth_configuration = group_by_keywords(
+    peers = group_by_keywords(
         arg_list,
         set(["sites", "arbitrators"]),
         keyword_repeat_allowed=False
     )
-    if "sites" not in booth_configuration or not booth_configuration["sites"]:
+    if "sites" not in peers or not peers["sites"]:
         raise CmdLineInputError()
 
-    lib.booth.config_setup(booth_configuration, modifiers["force"])
+    booth_config = []
+    for site in peers["sites"]:
+        booth_config.append({"key": "site", "value": site, "details": []})
+    for arbitrator in peers["arbitrators"]:
+        booth_config.append({
+            "key": "arbitrator",
+            "value": arbitrator,
+            "details": [],
+        })
+
+    lib.booth.config_setup(booth_config, modifiers["force"])
 
 def config_destroy(lib, arg_list, modifiers):
     """
@@ -41,36 +51,20 @@ def config_show(lib, arg_list, modifiers):
     """
     print booth config
     """
-    booth_configuration = lib.booth.config_show()
-    authfile_lines = []
-    if booth_configuration["authfile"]:
-        authfile_lines.append(
-            "authfile = {0}".format(booth_configuration["authfile"])
-        )
+    if len(arg_list) > 1:
+        raise CmdLineInputError()
+    node = None if not arg_list else arg_list[0]
 
-    line_list = (
-        ["site = {0}".format(site) for site in booth_configuration["sites"]]
-        +
-        [
-            "arbitrator = {0}".format(arbitrator)
-            for arbitrator in booth_configuration["arbitrators"]
-        ]
-        + authfile_lines +
-        [
-            'ticket = "{0}"'.format(ticket)
-            for ticket in booth_configuration["tickets"]
-        ]
-    )
-    for line in line_list:
-        print(line)
+    print(lib.booth.config_text(DEFAULT_BOOTH_NAME, node), end="")
+
 
 def config_ticket_add(lib, arg_list, modifiers):
     """
     add ticket to current configuration
     """
-    if len(arg_list) != 1:
+    if not arg_list:
         raise CmdLineInputError
-    lib.booth.config_ticket_add(arg_list[0])
+    lib.booth.config_ticket_add(arg_list[0], prepare_options(arg_list[1:]))
 
 def config_ticket_remove(lib, arg_list, modifiers):
     """
@@ -96,7 +90,7 @@ def ticket_revoke(lib, arg_list, modifiers):
 def ticket_grant(lib, arg_list, modifiers):
     ticket_operation(lib.booth.ticket_grant, arg_list, modifiers)
 
-def get_create_in_cluster(resource_create):
+def get_create_in_cluster(resource_create, resource_remove):
     #TODO resource_remove is provisional hack until resources are not moved to
     #lib
     def create_in_cluster(lib, arg_list, modifiers):
@@ -108,6 +102,7 @@ def get_create_in_cluster(resource_create):
             __get_name(modifiers),
             ip,
             resource_create,
+            resource_remove,
         )
     return create_in_cluster
 
@@ -118,10 +113,28 @@ def get_remove_from_cluster(resource_remove):
         if arg_list:
             raise CmdLineInputError()
 
-        lib.booth.remove_from_cluster(__get_name(modifiers), resource_remove)
+        lib.booth.remove_from_cluster(
+            __get_name(modifiers),
+            resource_remove,
+            modifiers["force"],
+        )
 
     return remove_from_cluster
 
+def get_restart(resource_restart):
+    #TODO resource_restart is provisional hack until resources are not moved to
+    #lib
+    def restart(lib, arg_list, modifiers):
+        if arg_list:
+            raise CmdLineInputError()
+
+        lib.booth.restart(
+            __get_name(modifiers),
+            resource_restart,
+            modifiers["force"],
+        )
+
+    return restart
 
 def sync(lib, arg_list, modifiers):
     if arg_list:
@@ -175,3 +188,4 @@ def status(lib, arg_list, modifiers):
     if booth_status.get("status"):
         print("DAEMON STATUS:")
         print(booth_status["status"])
+

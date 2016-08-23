@@ -47,6 +47,46 @@ class ValidateTicketUniqueTest(TestCase):
     def test_do_not_raises_when_no_duplicated_ticket(self):
         config_structure.validate_ticket_unique([], "A")
 
+class ValidateTicketOptionsTest(TestCase):
+    def test_raises_on_invalid_options(self):
+        assert_raise_library_error(
+            lambda: config_structure.validate_ticket_options({
+                "site": "a",
+                "port": "b",
+                "timeout": " ",
+            }),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_name": "site",
+                    "option_type": "booth ticket",
+                    "allowed": list(config_structure.TICKET_KEYS),
+                },
+            ),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_name": "port",
+                    "option_type": "booth ticket",
+                    "allowed": list(config_structure.TICKET_KEYS),
+                },
+            ),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "timeout",
+                    "option_value": " ",
+                    "allowed_values": "no-empty",
+                },
+            ),
+        )
+
+    def test_success_on_valid_options(self):
+        config_structure.validate_ticket_options({"timeout": "10"})
+
 class TicketExistsTest(TestCase):
     def test_returns_true_if_ticket_in_structure(self):
         self.assertTrue(config_structure.ticket_exists(
@@ -183,10 +223,14 @@ class AddTicketTest(TestCase):
             config_structure.ConfigItem("ticket", "some-ticket"),
         ]
         self.assertEqual(
-            config_structure.add_ticket(configuration, "new-ticket"),
+            config_structure.add_ticket(configuration, "new-ticket", {
+                "timeout": "10",
+            }),
             [
                 config_structure.ConfigItem("ticket", "some-ticket"),
-                config_structure.ConfigItem("ticket", "new-ticket"),
+                config_structure.ConfigItem("ticket", "new-ticket", [
+                    config_structure.ConfigItem("timeout", "10"),
+                ]),
             ],
         )
 
@@ -220,5 +264,23 @@ class SetAuthfileTest(TestCase):
                     config_structure.ConfigItem("authfile", "/old/path/to/auth2.file"),
                 ],
                 "/path/to/auth.file"
+            )
+        )
+
+class TakePeersTest(TestCase):
+    def test_returns_site_list_and_arbitrators_list(self):
+        self.assertEqual(
+            (
+                ["1.1.1.1", "2.2.2.2", "3.3.3.3"],
+                ["4.4.4.4", "5.5.5.5"]
+            ),
+            config_structure.take_peers(
+                [
+                    config_structure.ConfigItem("site", "1.1.1.1"),
+                    config_structure.ConfigItem("site", "2.2.2.2"),
+                    config_structure.ConfigItem("site", "3.3.3.3"),
+                    config_structure.ConfigItem("arbitrator", "4.4.4.4"),
+                    config_structure.ConfigItem("arbitrator", "5.5.5.5"),
+                ],
             )
         )

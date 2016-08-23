@@ -24,6 +24,7 @@ class BuildTest(TestCase):
                 'ticket = "TA"',
                 'ticket = "TB"',
                 "  timeout = 10",
+                "", #newline at the end
             ]),
             config_parser.build([
                 ConfigItem("authfile", "/path/to/auth.file"),
@@ -105,6 +106,7 @@ class ParseRawLinesTest(TestCase):
                 "arbitrator=3.3.3.3",
                 "syntactically_correct = nonsense",
                 "line-with = hash#literal",
+                "",
             ]))
         )
 

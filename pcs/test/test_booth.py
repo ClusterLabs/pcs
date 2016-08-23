@@ -76,10 +76,10 @@ class SetupTest(BoothMixin, unittest.TestCase):
         self.assert_pcs_success(
             "booth config",
             stdout_full=console_report(
+                "authfile = {0}".format(BOOTH_KEY_FILE),
                 "site = 1.1.1.1",
                 "site = 2.2.2.2",
                 "arbitrator = 3.3.3.3",
-                "authfile = {0}".format(BOOTH_KEY_FILE),
             )
         )
         with open(BOOTH_KEY_FILE) as key_file:
@@ -187,13 +187,14 @@ class BoothTest(unittest.TestCase, BoothMixin):
 
 class AddTicketTest(BoothTest):
     def test_success_add_ticket(self):
-        self.assert_pcs_success("booth ticket add TicketA")
+        self.assert_pcs_success("booth ticket add TicketA expire=10")
         self.assert_pcs_success("booth config", stdout_full=console_report(
+            "authfile = {0}".format(BOOTH_KEY_FILE),
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = {0}".format(BOOTH_KEY_FILE),
             'ticket = "TicketA"',
+            "  expire = 10",
         ))
 
     def test_fail_on_bad_ticket_name(self):
@@ -211,22 +212,33 @@ class AddTicketTest(BoothTest):
             "\n"
         )
 
+    def test_fail_on_invalid_options(self):
+        self.assert_pcs_fail(
+            "booth ticket add TicketA site=a timeout=", console_report(
+                "Error: invalid booth ticket option 'site', allowed options"
+                    " are: acquire-after, attr-prereq, before-acquire-handler,"
+                    " expire, renewal-freq, retries, timeout, weights"
+                ,
+                "Error: '' is not a valid timeout value, use no-empty",
+            )
+        )
+
 class RemoveTicketTest(BoothTest):
     def test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
+            "authfile = {0}".format(BOOTH_KEY_FILE),
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = {0}".format(BOOTH_KEY_FILE),
             'ticket = "TicketA"',
         ))
         self.assert_pcs_success("booth ticket remove TicketA")
         self.assert_pcs_success("booth config", stdout_full=console_report(
+            "authfile = {0}".format(BOOTH_KEY_FILE),
             "site = 1.1.1.1",
             "site = 2.2.2.2",
             "arbitrator = 3.3.3.3",
-            "authfile = {0}".format(BOOTH_KEY_FILE),
         ))
 
     def test_fail_when_ticket_does_not_exist(self):
@@ -286,7 +298,6 @@ class RemoveTest(BoothTest):
             " --force to override"
         ])
 
-
     def test_remove_added_booth_configuration(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
         self.assert_pcs_success("booth create ip 192.168.122.120")
@@ -301,8 +312,27 @@ class RemoveTest(BoothTest):
         ])
         self.assert_pcs_success("resource show", "NO resources configured\n")
 
-    def test_fail_when_booth_is_not_currently_configured(self):
-        pass
+
+    def test_remove_multiple_booth_configuration(self):
+        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("booth create ip 192.168.122.120")
+        self.assert_pcs_success(
+            "resource create some-id ocf:pacemaker:booth-site"
+            " config=/etc/booth/booth.conf"
+        )
+        self.assert_pcs_success("resource show", [
+             " Resource Group: booth-booth-group",
+             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
+             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
+             " some-id	(ocf::pacemaker:booth-site):	Stopped",
+        ])
+        self.assert_pcs_success("booth remove --force", [
+            "Warning: found more than one booth instance 'booth' in cib",
+            "Deleting Resource - booth-booth-ip",
+            "Deleting Resource (and group) - booth-booth-service",
+            "Deleting Resource - some-id",
+        ])
+
 
 class TicketGrantTest(BoothTest):
     def test_failed_when_implicit_site_but_not_correct_confgiuration_in_cib(
@@ -332,6 +362,7 @@ class ConfigTest(unittest.TestCase, BoothMixin):
     def setUp(self):
         shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(TEMP_CIB)
+
     def test_fail_when_config_file_do_not_exists(self):
         ensure_booth_config_not_exists()
         self.assert_pcs_fail(
@@ -339,4 +370,34 @@ class ConfigTest(unittest.TestCase, BoothMixin):
             "Error: Booth config file '{0}' does not exist\n".format(
                 BOOTH_CONFIG_FILE
             )
+        )
+
+    def test_too_much_args(self):
+        self.assert_pcs_fail(
+            "booth config nodename surplus",
+            stdout_start="\nUsage: pcs booth <command>\n    config ["
+        )
+
+    def test_show_unsupported_values(self):
+        ensure_booth_config_not_exists()
+        self.assert_pcs_success(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+        )
+        with open(BOOTH_CONFIG_FILE, "a") as config_file:
+            config_file.write("some = nonsense")
+        self.assert_pcs_success("booth ticket add TicketA")
+        with open(BOOTH_CONFIG_FILE, "a") as config_file:
+            config_file.write("another = nonsense")
+
+        self.assert_pcs_success(
+            "booth config",
+            stdout_full="\n".join((
+                "authfile = {0}".format(BOOTH_KEY_FILE),
+                "site = 1.1.1.1",
+                "site = 2.2.2.2",
+                "arbitrator = 3.3.3.3",
+                "some = nonsense",
+                'ticket = "TicketA"',
+                "another = nonsense",
+            ))
         )

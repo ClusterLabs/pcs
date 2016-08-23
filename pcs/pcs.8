@@ -590,8 +590,8 @@ Add new ticket to the current configuration.
 ticket remove <ticket>
 Remove the specified ticket from the current configuration.
 .TP
-config
-Show booth configuration.
+config [<node>]
+Show booth configuration from the specified node or from the current node if node not specified.
 .TP
 create ip <address>
 Make the cluster run booth service on the specified ip address as a cluster resource.  Typically this is used to run booth site.
@@ -599,11 +599,14 @@ Make the cluster run booth service on the specified ip address as a cluster reso
 remove
 Remove booth resources created by the "pcs booth create" command.
 .TP
+restart
+Restart booth resources created by the "pcs booth create" command.
+.TP
 ticket grant <ticket> [<site address>]
-Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
+Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted. Cannot be run on an arbitrator.
 .TP
 ticket revoke <ticket> [<site address>]
-Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.
+Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted. Cannot be run on an arbitrator.
 .TP
 status
 Print current status of booth on the local node.

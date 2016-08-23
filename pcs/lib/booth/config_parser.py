@@ -23,7 +23,8 @@ def parse(content):
         )
 
 def build(config_line_list):
-    return "\n".join(build_to_lines(config_line_list))
+    newline = [""]
+    return "\n".join(build_to_lines(config_line_list) + newline)
 
 def build_to_lines(config_line_list, deep=0):
     line_list = []
