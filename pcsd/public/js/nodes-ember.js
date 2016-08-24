@@ -851,7 +851,9 @@ Pcs.ResourceObj = Ember.Object.extend({
   }.property("class_type"),
   res_type: Ember.computed.alias('resource_type'),
   status_icon: function() {
-    var icon_class = get_status_icon_class(this.get("status_val"));
+    var icon_class = get_status_icon_class(
+      this.get("status_val"), this.get("is_unmanaged")
+    );
     return "<div style=\"float:left;margin-right:6px;height:16px;\" class=\"" + icon_class + " sprites\"></div>";
   }.property("status_val"),
   status_val: function() {
@@ -867,19 +869,23 @@ Pcs.ResourceObj = Ember.Object.extend({
     }
   }.property('status', 'error_list.@each.message', 'warning_list.@each.message'),
   status_color: function() {
-    return get_status_color(this.get("status_val"));
+    return get_status_color(this.get("status_val"), this.get("is_unmanaged"));
   }.property("status_val"),
   status_style: function() {
-    var color = get_status_color(this.get("status_val"));
+    var color = get_status_color(
+      this.get("status_val"), this.get("is_unmanaged")
+    );
     return "color: " + color + ((color != "green")? "; font-weight: bold;" : "");
   }.property("status_val"),
   show_status: function() {
-    return '<span style="' + this.get('status_style') + '">' + this.get('status') + '</span>';
+    return '<span style="' + this.get('status_style') + '">'
+      + this.get('status') + (this.get("is_unmanaged") ? " (unmanaged)" : "")
+      + '</span>';
   }.property("status_style", "disabled"),
   status_class: function() {
     if (
       this.get("status_val") == get_status_value("ok") ||
-      ["disabled", "unmanaged"].indexOf(this.get("status")) != -1
+      this.get("status") == "disabled"
     ) {
       return (
         Pcs.clusterController.get("show_all_resources") ? "" : "hidden "
@@ -1003,6 +1009,17 @@ Pcs.PrimitiveObj = Pcs.ResourceObj.extend({
   instance_status: [],
   operations: [],
   utilization: [],
+  is_unmanaged: function() {
+    var instance_status_list = this.get("instance_status");
+    if (!instance_status_list) {
+      return false;
+    }
+    var is_managed = true;
+    $.each(instance_status_list, function(_, instance_status) {
+      is_managed = is_managed && instance_status.get("managed");
+    });
+    return !is_managed;
+  }.property("instance_status.@each.managed"),
   resource_type: function() {
     var agent = this.get("agentname");
     if (agent) {

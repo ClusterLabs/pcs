@@ -113,13 +113,18 @@
               <td>
                 <table class="datatable">
                   <tr>
-                    <th style="width: 150px;">RESOURCE</th>
-                    <th style="width: 100px;">STATUS</th>
+                    <th style="width: 170px;">RESOURCE</th>
+                    <th style="width: 150px;">STATUS</th>
                   </tr>
                   {{#each r in Pcs.clusterController.cur_cluster.resource_list}}
                   <tr {{bind-attr title=r.tooltip}} {{bind-attr class=r.status_class}}>
                     <td><a {{bind-attr href=r.url_link}}>{{r.id}}</a></td>
-                    <td {{bind-attr style=r.status_style}}>{{{r.status_icon}}}{{r.status}}</td>
+                    <td {{bind-attr style=r.status_style}}>
+                      {{{r.status_icon}}}{{r.status}}
+                      {{#if r.is_unmanaged}}
+                        (unmanaged)
+                      {{/if}}
+                    </td>
                   </tr>
                   {{else}}
                   <tr>
@@ -144,8 +149,8 @@
               <td>
                 <table class="datatable">
                   <tr>
-                    <th style="width: 150px;">FENCE-DEVICE</th>
-                    <th style="width: 100px;">STATUS</th>
+                    <th style="width: 170px;">FENCE-DEVICE</th>
+                    <th style="width: 150px;">STATUS</th>
                   </tr>
                   {{#each f in Pcs.clusterController.cur_cluster.fence_list}}
                   <tr {{bind-attr title=f.tooltip}} {{bind-attr class=f.status_class_fence}}>

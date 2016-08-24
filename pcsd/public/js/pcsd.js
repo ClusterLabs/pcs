@@ -1977,7 +1977,8 @@ function status_comparator(a,b) {
   return valA - valB;
 }
 
-function get_status_icon_class(status_val) {
+function get_status_icon_class(status_val, is_unmanaged) {
+  var is_unmanaged = typeof is_unmanaged !== 'undefined' ? is_unmanaged : false;
   switch (status_val) {
     case get_status_value("error"):
       return "error";
@@ -1985,15 +1986,16 @@ function get_status_icon_class(status_val) {
     case get_status_value("warning"):
       return "warning";
     case get_status_value("ok"):
-      return "check";
+      return is_unmanaged ? "warning" : "check";
     default:
       return "x";
   }
 }
 
-function get_status_color(status_val) {
+function get_status_color(status_val, is_unmanaged) {
+  var is_unmanaged = typeof is_unmanaged !== 'undefined' ? is_unmanaged : false;
   if (status_val == get_status_value("ok")) {
-    return "green";
+    return is_unmanaged? "orange" : "green";
   }
   else if (status_val == get_status_value("warning") || status_val == get_status_value("unknown") || status_val == get_status_value('disabled')) {
     return "orange";
