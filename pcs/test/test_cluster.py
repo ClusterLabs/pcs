@@ -2669,3 +2669,121 @@ logging {
   </rm>
 </cluster>
 """)
+
+    def test_node_add_rhel6_unexpected_fence_pcmk_name(self):
+        if not utils.is_rhel6():
+            return
+
+        # chnage the fence device name to a value different that set by pcs
+        with open(cluster_conf_file, "r") as f:
+            data = f.read()
+        data = data.replace('name="pcmk-redirect"', 'name="pcmk_redirect"')
+        with open(cluster_conf_tmp, "w") as f:
+            f.write(data)
+
+        # test a node is added correctly and uses the fence device
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode add --cluster_conf={0} rh7-3.localhost"
+            .format(cluster_conf_tmp)
+        )
+        ac(output, "rh7-3.localhost: successfully added!\n")
+        self.assertEqual(returnVal, 0)
+        with open(cluster_conf_tmp) as f:
+            data = f.read()
+            ac(data, """\
+<cluster config_version="13" name="test99">
+  <fence_daemon/>
+  <clusternodes>
+    <clusternode name="rh7-1" nodeid="1">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk_redirect" port="rh7-1"/>
+        </method>
+      </fence>
+    </clusternode>
+    <clusternode name="rh7-2" nodeid="2">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk_redirect" port="rh7-2"/>
+        </method>
+      </fence>
+    </clusternode>
+    <clusternode name="rh7-3.localhost" nodeid="3">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk_redirect" port="rh7-3.localhost"/>
+        </method>
+      </fence>
+    </clusternode>
+  </clusternodes>
+  <cman broadcast="no" transport="udpu"/>
+  <fencedevices>
+    <fencedevice agent="fence_pcmk" name="pcmk_redirect"/>
+  </fencedevices>
+  <rm>
+    <failoverdomains/>
+    <resources/>
+  </rm>
+</cluster>
+""")
+
+    def test_node_add_rhel6_missing_fence_pcmk(self):
+        if not utils.is_rhel6():
+            return
+
+        # chnage the fence device name to a value different that set by pcs
+        with open(cluster_conf_file, "r") as f:
+            data = f.read()
+        data = data.replace('agent="fence_pcmk"', 'agent="fence_whatever"')
+        with open(cluster_conf_tmp, "w") as f:
+            f.write(data)
+
+        # test a node is added correctly and uses the fence device
+        output, returnVal = pcs(
+            temp_cib,
+            "cluster localnode add --cluster_conf={0} rh7-3.localhost"
+            .format(cluster_conf_tmp)
+        )
+        ac(output, "rh7-3.localhost: successfully added!\n")
+        self.assertEqual(returnVal, 0)
+        with open(cluster_conf_tmp) as f:
+            data = f.read()
+            ac(data, """\
+<cluster config_version="14" name="test99">
+  <fence_daemon/>
+  <clusternodes>
+    <clusternode name="rh7-1" nodeid="1">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-1"/>
+        </method>
+      </fence>
+    </clusternode>
+    <clusternode name="rh7-2" nodeid="2">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect" port="rh7-2"/>
+        </method>
+      </fence>
+    </clusternode>
+    <clusternode name="rh7-3.localhost" nodeid="3">
+      <fence>
+        <method name="pcmk-method">
+          <device name="pcmk-redirect-1" port="rh7-3.localhost"/>
+        </method>
+      </fence>
+    </clusternode>
+  </clusternodes>
+  <cman broadcast="no" transport="udpu"/>
+  <fencedevices>
+    <fencedevice agent="fence_whatever" name="pcmk-redirect"/>
+    <fencedevice agent="fence_pcmk" name="pcmk-redirect-1"/>
+  </fencedevices>
+  <rm>
+    <failoverdomains/>
+    <resources/>
+  </rm>
+</cluster>
+""")
+

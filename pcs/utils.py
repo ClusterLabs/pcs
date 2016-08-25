@@ -649,12 +649,40 @@ def addNodeToClusterConf(node):
                 "error adding alternative address for node: %s" % node0
             )
 
+    # ensure the pacemaker fence device exists
+    pcmk_fence_name = None
+    all_fence_names = set()
+    output, retval = run([
+        "ccs", "-i", "-f", settings.cluster_conf_file, "--lsfencedev"
+    ])
+    if retval == 0:
+        for line in output.splitlines():
+            fence_name, fence_args = line.split(":", 1)
+            all_fence_names.add(fence_name)
+            match = re.match("(^|(.* ))agent=fence_pcmk((,.+)|$)", line)
+            if match:
+                pcmk_fence_name = fence_name
+    if not pcmk_fence_name:
+        fence_index = 1
+        pcmk_fence_name = "pcmk-redirect"
+        while pcmk_fence_name in all_fence_names:
+            pcmk_fence_name = "pcmk-redirect-{0}".format(fence_index)
+            fence_index += 1
+
+        output, retval = run([
+            "ccs", "-i", "-f", settings.cluster_conf_file,
+            "--addfencedev", pcmk_fence_name, "agent=fence_pcmk",
+        ])
+        if retval != 0:
+            print(output)
+            err("error fence device for node: %s" % node)
+
     output, retval = run(["ccs", "-i", "-f", settings.cluster_conf_file, "--addmethod", "pcmk-method", node0])
     if retval != 0:
         print(output)
         err("error adding fence method: %s" % node)
 
-    output, retval = run(["ccs", "-i", "-f", settings.cluster_conf_file, "--addfenceinst", "pcmk-redirect", node0, "pcmk-method", "port="+node0])
+    output, retval = run(["ccs", "-i", "-f", settings.cluster_conf_file, "--addfenceinst", pcmk_fence_name, node0, "pcmk-method", "port="+node0])
     if retval != 0:
         print(output)
         err("error adding fence instance: %s" % node)
