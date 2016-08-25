@@ -199,7 +199,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
     def test_execution_failed(self, mock_is_runnable):
         mock_is_runnable.return_value = True
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("error", 1)
+        mock_runner.run.return_value = ("", "error", 1)
         agent_name = "fence_ipmi"
 
         self.assert_raises(
@@ -210,13 +210,13 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
 
         script_path = os.path.join(settings.fence_agent_binaries, agent_name)
         mock_runner.run.assert_called_once_with(
-            [script_path, "-o", "metadata"], ignore_stderr=True
+            [script_path, "-o", "metadata"]
         )
 
     @mock.patch("pcs.lib.resource_agent.is_path_runnable")
     def test_invalid_xml(self, mock_is_runnable):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("not xml", 0)
+        mock_runner.run.return_value = ("not xml", "", 0)
         mock_is_runnable.return_value = True
         agent_name = "fence_ipmi"
         self.assert_raises(
@@ -227,7 +227,7 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
 
         script_path = os.path.join(settings.fence_agent_binaries, agent_name)
         mock_runner.run.assert_called_once_with(
-            [script_path, "-o", "metadata"], ignore_stderr=True
+            [script_path, "-o", "metadata"]
         )
 
     @mock.patch("pcs.lib.resource_agent.is_path_runnable")
@@ -235,14 +235,14 @@ class GetFenceAgentMetadataTest(LibraryResourceTest):
         agent_name = "fence_ipmi"
         xml = "<xml />"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (xml, 0)
+        mock_runner.run.return_value = (xml, "", 0)
         mock_is_runnable.return_value = True
 
         out_dom = lib_ra.get_fence_agent_metadata(mock_runner, agent_name)
 
         script_path = os.path.join(settings.fence_agent_binaries, agent_name)
         mock_runner.run.assert_called_once_with(
-            [script_path, "-o", "metadata"], ignore_stderr=True
+            [script_path, "-o", "metadata"]
         )
         assert_xml_equal(xml, str(XmlMan(out_dom)))
 
@@ -304,7 +304,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider"
         agent = "agent"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("error", 1)
+        mock_runner.run.return_value = ("", "error", 1)
         mock_is_runnable.return_value = True
 
         self.assert_raises(
@@ -318,8 +318,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         script_path = os.path.join(settings.ocf_resources, provider, agent)
         mock_runner.run.assert_called_once_with(
             [script_path, "meta-data"],
-            env_extend={"OCF_ROOT": settings.ocf_root},
-            ignore_stderr=True
+            env_extend={"OCF_ROOT": settings.ocf_root}
         )
 
     @mock.patch("pcs.lib.resource_agent.is_path_runnable")
@@ -327,7 +326,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         provider = "provider"
         agent = "agent"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("not xml", 0)
+        mock_runner.run.return_value = ("not xml", "", 0)
         mock_is_runnable.return_value = True
 
         self.assert_raises(
@@ -341,8 +340,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         script_path = os.path.join(settings.ocf_resources, provider, agent)
         mock_runner.run.assert_called_once_with(
             [script_path, "meta-data"],
-            env_extend={"OCF_ROOT": settings.ocf_root},
-            ignore_stderr=True
+            env_extend={"OCF_ROOT": settings.ocf_root}
         )
 
     @mock.patch("pcs.lib.resource_agent.is_path_runnable")
@@ -351,7 +349,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         agent = "agent"
         xml = "<xml />"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (xml, 0)
+        mock_runner.run.return_value = (xml, "", 0)
         mock_is_runnable.return_value = True
 
         out_dom = lib_ra._get_ocf_resource_agent_metadata(
@@ -361,8 +359,7 @@ class GetOcfResourceAgentMetadataTest(LibraryResourceTest):
         script_path = os.path.join(settings.ocf_resources, provider, agent)
         mock_runner.run.assert_called_once_with(
             [script_path, "meta-data"],
-            env_extend={"OCF_ROOT": settings.ocf_root},
-            ignore_stderr=True
+            env_extend={"OCF_ROOT": settings.ocf_root}
         )
         assert_xml_equal(xml, str(XmlMan(out_dom)))
 
@@ -596,7 +593,7 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
             </resource-agent>
         """
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (xml, 0)
+        mock_runner.run.return_value = (xml, "", 0)
         self.assertEqual(
             [
                 {
@@ -623,12 +620,12 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
             lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner)
         )
         mock_runner.run.assert_called_once_with(
-            [settings.stonithd_binary, "metadata"], ignore_stderr=True
+            [settings.stonithd_binary, "metadata"]
         )
 
     def test_failed_to_get_xml(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("", 1)
+        mock_runner.run.return_value = ("", "some error", 1)
         self.assert_raises(
             lib_ra.UnableToGetAgentMetadata,
             lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner),
@@ -636,19 +633,19 @@ class GetPcmkAdvancedStonithParametersTest(LibraryResourceTest):
         )
 
         mock_runner.run.assert_called_once_with(
-            [settings.stonithd_binary, "metadata"], ignore_stderr=True
+            [settings.stonithd_binary, "metadata"]
         )
 
     def test_invalid_xml(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("invalid XML", 0)
+        mock_runner.run.return_value = ("invalid XML", "", 0)
         self.assertRaises(
             lib_ra.InvalidMetadataFormat,
             lambda: lib_ra._get_pcmk_advanced_stonith_parameters(mock_runner)
         )
 
         mock_runner.run.assert_called_once_with(
-            [settings.stonithd_binary, "metadata"], ignore_stderr=True
+            [settings.stonithd_binary, "metadata"]
         )
 
 

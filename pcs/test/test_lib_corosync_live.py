@@ -69,9 +69,10 @@ class ReloadConfigTest(TestCase):
 
     def test_success(self):
         cmd_retval = 0
-        cmd_output = "cmd output"
+        cmd_stdout = "cmd output"
+        cmd_stderr = ""
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (cmd_output, cmd_retval)
+        mock_runner.run.return_value = (cmd_stdout, cmd_stderr, cmd_retval)
 
         lib.reload_config(mock_runner)
 
@@ -81,9 +82,10 @@ class ReloadConfigTest(TestCase):
 
     def test_error(self):
         cmd_retval = 1
-        cmd_output = "cmd output"
+        cmd_stdout = "cmd output"
+        cmd_stderr = "cmd error"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (cmd_output, cmd_retval)
+        mock_runner.run.return_value = (cmd_stdout, cmd_stderr, cmd_retval)
 
         assert_raise_library_error(
             lambda: lib.reload_config(mock_runner),
@@ -91,7 +93,7 @@ class ReloadConfigTest(TestCase):
                 severity.ERROR,
                 report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
                 {
-                    "reason": cmd_output,
+                    "reason": "\n".join([cmd_stderr, cmd_stdout]),
                 }
             )
         )
@@ -107,7 +109,7 @@ class GetQuorumStatusTextTest(TestCase):
         self.quorum_tool = "/usr/sbin/corosync-quorumtool"
 
     def test_success(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.get_quorum_status_text(self.mock_runner)
@@ -117,7 +119,7 @@ class GetQuorumStatusTextTest(TestCase):
         ])
 
     def test_success_with_retval_1(self):
-        self.mock_runner.run.return_value = ("status info", 1)
+        self.mock_runner.run.return_value = ("status info", "", 1)
         self.assertEqual(
             "status info",
             lib.get_quorum_status_text(self.mock_runner)
@@ -127,7 +129,7 @@ class GetQuorumStatusTextTest(TestCase):
         ])
 
     def test_error(self):
-        self.mock_runner.run.return_value = ("status error", 2)
+        self.mock_runner.run.return_value = ("some info", "status error", 2)
         assert_raise_library_error(
             lambda: lib.get_quorum_status_text(self.mock_runner),
             (
@@ -152,9 +154,10 @@ class SetExpectedVotesTest(TestCase):
 
     def test_success(self):
         cmd_retval = 0
-        cmd_output = "cmd output"
+        cmd_stdout = "cmd output"
+        cmd_stderr = ""
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (cmd_output, cmd_retval)
+        mock_runner.run.return_value = (cmd_stdout, cmd_stderr, cmd_retval)
 
         lib.set_expected_votes(mock_runner, 3)
 
@@ -164,9 +167,10 @@ class SetExpectedVotesTest(TestCase):
 
     def test_error(self):
         cmd_retval = 1
-        cmd_output = "cmd output"
+        cmd_stdout = "cmd output"
+        cmd_stderr = "cmd stderr"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (cmd_output, cmd_retval)
+        mock_runner.run.return_value = (cmd_stdout, cmd_stderr, cmd_retval)
 
         assert_raise_library_error(
             lambda: lib.set_expected_votes(mock_runner, 3),
@@ -174,7 +178,7 @@ class SetExpectedVotesTest(TestCase):
                 severity.ERROR,
                 report_codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR,
                 {
-                    "reason": cmd_output,
+                    "reason": cmd_stderr,
                 }
             )
         )

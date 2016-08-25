@@ -125,14 +125,14 @@ def _get_pcmk_advanced_stonith_parameters(runner):
     """
     @simple_cache
     def __get_stonithd_parameters():
-        output, retval = runner.run(
-            [settings.stonithd_binary, "metadata"], ignore_stderr=True
+        stdout, stderr, dummy_retval = runner.run(
+            [settings.stonithd_binary, "metadata"]
         )
-        if output.strip() == "":
-            raise UnableToGetAgentMetadata("stonithd", output)
+        if stdout.strip() == "":
+            raise UnableToGetAgentMetadata("stonithd", stderr)
 
         try:
-            params = _get_agent_parameters(etree.fromstring(output))
+            params = _get_agent_parameters(etree.fromstring(stdout))
             for param in params:
                 param["longdesc"] = "{0}\n{1}".format(
                     param["shortdesc"], param["longdesc"]
@@ -166,15 +166,15 @@ def get_fence_agent_metadata(runner, fence_agent):
     ):
         raise AgentNotFound(fence_agent)
 
-    output, retval = runner.run(
-        [script_path, "-o", "metadata"], ignore_stderr=True
+    stdout, stderr, dummy_retval = runner.run(
+        [script_path, "-o", "metadata"]
     )
 
-    if output.strip() == "":
-        raise UnableToGetAgentMetadata(fence_agent, output)
+    if stdout.strip() == "":
+        raise UnableToGetAgentMetadata(fence_agent, stderr)
 
     try:
-        return etree.fromstring(output)
+        return etree.fromstring(stdout)
     except etree.XMLSyntaxError as e:
         raise UnableToGetAgentMetadata(fence_agent, str(e))
 
@@ -219,17 +219,16 @@ def _get_ocf_resource_agent_metadata(runner, provider, agent):
     if not __is_path_abs(script_path) or not is_path_runnable(script_path):
         raise AgentNotFound(agent_name)
 
-    output, retval = runner.run(
+    stdout, stderr, dummy_retval = runner.run(
         [script_path, "meta-data"],
-        env_extend={"OCF_ROOT": settings.ocf_root},
-        ignore_stderr=True
+        env_extend={"OCF_ROOT": settings.ocf_root}
     )
 
-    if output.strip() == "":
-        raise UnableToGetAgentMetadata(agent_name, output)
+    if stdout.strip() == "":
+        raise UnableToGetAgentMetadata(agent_name, stderr)
 
     try:
-        return etree.fromstring(output)
+        return etree.fromstring(stdout)
     except etree.XMLSyntaxError as e:
         raise UnableToGetAgentMetadata(agent_name, str(e))
 

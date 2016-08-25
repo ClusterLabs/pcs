@@ -38,3 +38,6 @@ def format_environment_error(e):
     if e.filename:
         return "{0}: '{1}'".format(e.strerror, e.filename)
     return e.strerror
+
+def join_multilines(strings):
+    return "\n".join([a.strip() for a in strings if a.strip()])

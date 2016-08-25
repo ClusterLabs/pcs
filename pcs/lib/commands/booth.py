@@ -10,6 +10,7 @@ import os.path
 from functools import partial
 
 from pcs import settings
+from pcs.common.tools import join_multilines
 from pcs.lib import external, reports
 from pcs.lib.booth import (
     config_exchange,
@@ -185,7 +186,7 @@ def ticket_operation(operation, env, name, ticket, site_ip):
             )
         site_ip = site_ip_list[0]
 
-    command_output, return_code = env.cmd_runner().run([
+    stdout, stderr, return_code = env.cmd_runner().run([
         settings.booth_binary, operation,
         "-s", site_ip,
         ticket
@@ -195,7 +196,7 @@ def ticket_operation(operation, env, name, ticket, site_ip):
         raise LibraryError(
             booth_reports.booth_ticket_operation_failed(
                 operation,
-                command_output,
+                join_multilines([stderr, stdout]),
                 site_ip,
                 ticket
             )

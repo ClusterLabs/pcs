@@ -23,7 +23,7 @@ class GetStatusTextTest(TestCase):
         self.qdevice_tool = "/usr/sbin/corosync-qdevice-tool"
 
     def test_success(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.get_status_text(self.mock_runner)
@@ -33,7 +33,7 @@ class GetStatusTextTest(TestCase):
         ])
 
     def test_success_verbose(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.get_status_text(self.mock_runner, True)
@@ -43,14 +43,14 @@ class GetStatusTextTest(TestCase):
         ])
 
     def test_error(self):
-        self.mock_runner.run.return_value = ("status error", 1)
+        self.mock_runner.run.return_value = ("some info", "status error", 1)
         assert_raise_library_error(
             lambda: lib.get_status_text(self.mock_runner),
             (
                 severity.ERROR,
                 report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
                 {
-                    "reason": "status error",
+                    "reason": "status error\nsome info",
                 }
             )
         )

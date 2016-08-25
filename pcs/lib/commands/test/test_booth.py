@@ -520,7 +520,7 @@ class TicketOperationTest(TestCase):
         )
 
     def test_raises_when_command_fail(self):
-        mock_run = mock.Mock(return_value=("some message", 1))
+        mock_run = mock.Mock(return_value=("some message", "error", 1))
         mock_env = mock.MagicMock(
             cmd_runner=mock.Mock(return_value=mock.MagicMock(run=mock_run))
         )
@@ -533,7 +533,7 @@ class TicketOperationTest(TestCase):
                 report_codes.BOOTH_TICKET_OPERATION_FAILED,
                 {
                     "operation": "grant",
-                    "reason": "some message",
+                    "reason": "error\nsome message",
                     "site_ip": "1.2.3.4",
                     "ticket_name": "ABC",
                 }

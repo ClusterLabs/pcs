@@ -15,6 +15,7 @@ import shutil
 import tempfile
 
 from pcs import settings
+from pcs.common.tools import join_multilines
 from pcs.lib import external, reports
 from pcs.lib.errors import LibraryError
 
@@ -41,12 +42,15 @@ def qdevice_setup(runner):
     if external.is_dir_nonempty(settings.corosync_qdevice_net_server_certs_dir):
         raise LibraryError(reports.qdevice_already_initialized(__model))
 
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         __qnetd_certutil, "-i"
     ])
     if retval != 0:
         raise LibraryError(
-            reports.qdevice_initialization_error(__model, output.rstrip())
+            reports.qdevice_initialization_error(
+                __model,
+                join_multilines([stderr, stdout])
+            )
         )
 
 def qdevice_initialized():
@@ -78,10 +82,15 @@ def qdevice_status_generic_text(runner, verbose=False):
     cmd = [__qnetd_tool, "-s"]
     if verbose:
         cmd.append("-v")
-    output, retval = runner.run(cmd)
+    stdout, stderr, retval = runner.run(cmd)
     if retval != 0:
-        raise LibraryError(reports.qdevice_get_status_error(__model, output))
-    return output
+        raise LibraryError(
+            reports.qdevice_get_status_error(
+                __model,
+                join_multilines([stderr, stdout])
+            )
+        )
+    return stdout
 
 def qdevice_status_cluster_text(runner, cluster=None, verbose=False):
     """
@@ -94,10 +103,15 @@ def qdevice_status_cluster_text(runner, cluster=None, verbose=False):
         cmd.append("-v")
     if cluster:
         cmd.extend(["-c", cluster])
-    output, retval = runner.run(cmd)
+    stdout, stderr, retval = runner.run(cmd)
     if retval != 0:
-        raise LibraryError(reports.qdevice_get_status_error(__model, output))
-    return output
+        raise LibraryError(
+            reports.qdevice_get_status_error(
+                __model,
+                join_multilines([stderr, stdout])
+            )
+        )
+    return stdout
 
 def qdevice_enable(runner):
     """
@@ -143,17 +157,19 @@ def qdevice_sign_certificate_request(runner, cert_request, cluster_name):
         reports.qdevice_certificate_sign_error
     )
     # sign the request
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         __qnetd_certutil, "-s", "-c", tmpfile.name, "-n", cluster_name
     ])
     tmpfile.close() # temp file is deleted on close
     if retval != 0:
         raise LibraryError(
-            reports.qdevice_certificate_sign_error(output.strip())
+            reports.qdevice_certificate_sign_error(
+                join_multilines([stderr, stdout])
+            )
         )
     # get signed certificate, corosync tool only works with files
     return _get_output_certificate(
-        output,
+        stdout,
         reports.qdevice_certificate_sign_error
     )
 
@@ -181,12 +197,15 @@ def client_setup(runner, ca_certificate):
             reports.qdevice_initialization_error(__model, e.strerror)
         )
     # initialize client's certificate storage
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         __qdevice_certutil, "-i", "-c", ca_file_path
     ])
     if retval != 0:
         raise LibraryError(
-            reports.qdevice_initialization_error(__model, output.rstrip())
+            reports.qdevice_initialization_error(
+                __model,
+                join_multilines([stderr, stdout])
+            )
         )
 
 def client_initialized():
@@ -217,15 +236,18 @@ def client_generate_certificate_request(runner, cluster_name):
     """
     if not client_initialized():
         raise LibraryError(reports.qdevice_not_initialized(__model))
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         __qdevice_certutil, "-r", "-n", cluster_name
     ])
     if retval != 0:
         raise LibraryError(
-            reports.qdevice_initialization_error(__model, output.rstrip())
+            reports.qdevice_initialization_error(
+                __model,
+                join_multilines([stderr, stdout])
+            )
         )
     return _get_output_certificate(
-        output,
+        stdout,
         functools.partial(reports.qdevice_initialization_error, __model)
     )
 
@@ -243,17 +265,19 @@ def client_cert_request_to_pk12(runner, cert_request):
         reports.qdevice_certificate_import_error
     )
     # transform it
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         __qdevice_certutil, "-M", "-c", tmpfile.name
     ])
     tmpfile.close() # temp file is deleted on close
     if retval != 0:
         raise LibraryError(
-            reports.qdevice_certificate_import_error(output)
+            reports.qdevice_certificate_import_error(
+                join_multilines([stderr, stdout])
+            )
         )
     # get resulting pk12, corosync tool only works with files
     return _get_output_certificate(
-        output,
+        stdout,
         reports.qdevice_certificate_import_error
     )
 
@@ -268,13 +292,15 @@ def client_import_certificate_and_key(runner, pk12_certificate):
         pk12_certificate,
         reports.qdevice_certificate_import_error
     )
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         __qdevice_certutil, "-m", "-c", tmpfile.name
     ])
     tmpfile.close() # temp file is deleted on close
     if retval != 0:
         raise LibraryError(
-            reports.qdevice_certificate_import_error(output)
+            reports.qdevice_certificate_import_error(
+                join_multilines([stderr, stdout])
+            )
         )
 
 def remote_qdevice_get_ca_certificate(node_communicator, host):

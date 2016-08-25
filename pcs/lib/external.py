@@ -47,14 +47,15 @@ except ImportError:
         URLError as urllib_URLError
     )
 
-from pcs.lib import reports
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs import settings
 from pcs.common import report_codes
 from pcs.common.tools import (
+    join_multilines,
     simple_cache,
     run_parallel as tools_run_parallel,
 )
-from pcs import settings
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
 class ManageServiceError(Exception):
@@ -138,13 +139,17 @@ def disable_service(runner, service, instance=None):
     if not is_service_installed(runner, service):
         return
     if is_systemctl():
-        output, retval = runner.run([
+        stdout, stderr, retval = runner.run([
             "systemctl", "disable", _get_service_name(service, instance)
         ])
     else:
-        output, retval = runner.run(["chkconfig", service, "off"])
+        stdout, stderr, retval = runner.run(["chkconfig", service, "off"])
     if retval != 0:
-        raise DisableServiceError(service, output.rstrip(), instance)
+        raise DisableServiceError(
+            service,
+            join_multilines([stderr, stdout]),
+            instance
+        )
 
 
 def enable_service(runner, service, instance=None):
@@ -158,13 +163,17 @@ def enable_service(runner, service, instance=None):
         If None no instance name will be used.
     """
     if is_systemctl():
-        output, retval = runner.run([
+        stdout, stderr, retval = runner.run([
             "systemctl", "enable", _get_service_name(service, instance)
         ])
     else:
-        output, retval = runner.run(["chkconfig", service, "on"])
+        stdout, stderr, retval = runner.run(["chkconfig", service, "on"])
     if retval != 0:
-        raise EnableServiceError(service, output.rstrip(), instance)
+        raise EnableServiceError(
+            service,
+            join_multilines([stderr, stdout]),
+            instance
+        )
 
 
 def start_service(runner, service, instance=None):
@@ -176,13 +185,17 @@ def start_service(runner, service, instance=None):
         If None no instance name will be used.
     """
     if is_systemctl():
-        output, retval = runner.run([
+        stdout, stderr, retval = runner.run([
             "systemctl", "start", _get_service_name(service, instance)
         ])
     else:
-        output, retval = runner.run(["service", service, "start"])
+        stdout, stderr, retval = runner.run(["service", service, "start"])
     if retval != 0:
-        raise StartServiceError(service, output.rstrip(), instance)
+        raise StartServiceError(
+            service,
+            join_multilines([stderr, stdout]),
+            instance
+        )
 
 
 def stop_service(runner, service, instance=None):
@@ -194,13 +207,17 @@ def stop_service(runner, service, instance=None):
         If None no instance name will be used.
     """
     if is_systemctl():
-        output, retval = runner.run([
+        stdout, stderr, retval = runner.run([
             "systemctl", "stop", _get_service_name(service, instance)
         ])
     else:
-        output, retval = runner.run(["service", service, "stop"])
+        stdout, stderr, retval = runner.run(["service", service, "stop"])
     if retval != 0:
-        raise StopServiceError(service, output.rstrip(), instance)
+        raise StopServiceError(
+            service,
+            join_multilines([stderr, stdout]),
+            instance
+        )
 
 
 def kill_services(runner, services):
@@ -210,15 +227,16 @@ def kill_services(runner, services):
     iterable services service names
     """
     # make killall not report that a process is not running
-    output, retval = runner.run(
+    stdout, stderr, retval = runner.run(
         ["killall", "--quiet", "--signal", "9", "--"] + list(services)
     )
     # If a process isn't running, killall will still return 1 even with --quiet.
     # We don't consider that an error, so we check for output string as well.
     # If it's empty, no actuall error happened.
     if retval != 0:
-        if output.strip():
-            raise KillServicesError(list(services), output.rstrip())
+        message = join_multilines([stderr, stdout])
+        if message:
+            raise KillServicesError(list(services), message)
 
 
 def is_service_enabled(runner, service, instance=None):
@@ -229,11 +247,11 @@ def is_service_enabled(runner, service, instance=None):
     service -- name of service
     """
     if is_systemctl():
-        _, retval = runner.run(
+        dummy_stdout, dummy_stderr, retval = runner.run(
             ["systemctl", "is-enabled", _get_service_name(service, instance)]
         )
     else:
-        _, retval = runner.run(["chkconfig", service])
+        dummy_stdout, dummy_stderr, retval = runner.run(["chkconfig", service])
 
     return retval == 0
 
@@ -246,13 +264,15 @@ def is_service_running(runner, service, instance=None):
     service -- name of service
     """
     if is_systemctl():
-        _, retval = runner.run([
+        dummy_stdout, dummy_stderr, retval = runner.run([
             "systemctl",
             "is-active",
             _get_service_name(service, instance)
         ])
     else:
-        _, retval = runner.run(["service", service, "status"])
+        dummy_stdout, dummy_stderr, retval = runner.run(
+            ["service", service, "status"]
+        )
 
     return retval == 0
 
@@ -279,12 +299,12 @@ def get_non_systemd_services(runner):
     if is_systemctl():
         return []
 
-    output, return_code = runner.run(["chkconfig"], ignore_stderr=True)
+    stdout, dummy_stderr, return_code = runner.run(["chkconfig"])
     if return_code != 0:
         return []
 
     service_list = []
-    for service in output.splitlines():
+    for service in stdout.splitlines():
         service = service.split(" ", 1)[0]
         if service:
             service_list.append(service)
@@ -300,12 +320,14 @@ def get_systemd_services(runner):
     if not is_systemctl():
         return []
 
-    output, return_code = runner.run(["systemctl", "list-unit-files", "--full"])
+    stdout, dummy_stderr, return_code = runner.run([
+        "systemctl", "list-unit-files", "--full"
+    ])
     if return_code != 0:
         return []
 
     service_list = []
-    for service in output.splitlines():
+    for service in stdout.splitlines():
         match = re.search(r'^([\S]*)\.service', service)
         if match:
             service_list.append(match.group(1))
@@ -322,13 +344,13 @@ def is_cman_cluster(runner):
     # - corosync1 runs with cman on rhel6
     # - corosync1 can be used without cman, but we don't support it anyways
     # - corosync2 is the default result if errors occur
-    output, retval = runner.run([
+    stdout, dummy_stderr, retval = runner.run([
         os.path.join(settings.corosync_binaries, "corosync"),
         "-v"
     ])
     if retval != 0:
         return False
-    match = re.search(r"version\D+(\d+)", output)
+    match = re.search(r"version\D+(\d+)", stdout)
     return match is not None and match.group(1) == "1"
 
 
@@ -340,8 +362,7 @@ class CommandRunner(object):
         self._python2 = sys.version[0] == "2"
 
     def run(
-        self, args, ignore_stderr=False, stdin_string=None, env_extend=None,
-        binary_output=False
+        self, args, stdin_string=None, env_extend=None, binary_output=False
     ):
         #Reset environment variables by empty dict is desired here.  We need to
         #get rid of defaults - we do not know the context and environment of the
@@ -364,9 +385,7 @@ class CommandRunner(object):
                 # Some commands react differently if they get anything via stdin
                 stdin=(subprocess.PIPE if stdin_string is not None else None),
                 stdout=subprocess.PIPE,
-                stderr=(
-                    subprocess.PIPE if ignore_stderr else subprocess.STDOUT
-                ),
+                stderr=subprocess.PIPE,
                 preexec_fn=(
                     lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL)
                 ),
@@ -376,7 +395,7 @@ class CommandRunner(object):
                 # decodes newlines and in python3 also converts bytes to str
                 universal_newlines=(not self._python2 and not binary_output)
             )
-            output, dummy_stderror = process.communicate(stdin_string)
+            out_std, out_err = process.communicate(stdin_string)
             retval = process.returncode
         except OSError as e:
             raise LibraryError(
@@ -386,13 +405,19 @@ class CommandRunner(object):
         self._logger.debug(
             (
                 "Finished running: {args}\nReturn value: {retval}"
-                + "\n--Debug Output Start--\n{output}\n--Debug Output End--"
-            ).format(args=log_args, retval=retval, output=output)
+                + "\n--Debug Stdout Start--\n{out_std}\n--Debug Stdout End--"
+                + "\n--Debug Stderr Start--\n{out_err}\n--Debug Stderr End--"
+            ).format(
+                args=log_args,
+                retval=retval,
+                out_std=out_std,
+                out_err=out_err
+            )
         )
-        self._reporter.process(
-            reports.run_external_process_finished(log_args, retval, output)
-        )
-        return output, retval
+        self._reporter.process(reports.run_external_process_finished(
+            log_args, retval, out_std, out_err
+        ))
+        return out_std, out_err, retval
 
 
 class NodeCommunicationException(Exception):

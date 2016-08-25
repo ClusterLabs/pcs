@@ -11,6 +11,7 @@ import tempfile
 from lxml import etree
 
 from pcs import settings
+from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_values import validate_id
@@ -181,7 +182,7 @@ def upgrade_cib(cib, runner):
         temp_file = tempfile.NamedTemporaryFile("w+", suffix=".pcs")
         temp_file.write(etree.tostring(cib).decode())
         temp_file.flush()
-        output, retval = runner.run(
+        stdout, stderr, retval = runner.run(
             [
                 os.path.join(settings.pacemaker_binaries, "cibadmin"),
                 "--upgrade",
@@ -192,7 +193,9 @@ def upgrade_cib(cib, runner):
 
         if retval != 0:
             temp_file.close()
-            raise LibraryError(reports.cib_upgrade_failed(output))
+            raise LibraryError(
+                reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
+            )
 
         temp_file.seek(0)
         return etree.fromstring(temp_file.read())

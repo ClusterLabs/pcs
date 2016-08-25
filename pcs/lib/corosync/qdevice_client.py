@@ -8,6 +8,7 @@ from __future__ import (
 import os.path
 
 from pcs import settings
+from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
@@ -23,12 +24,14 @@ def get_status_text(runner, verbose=False):
     ]
     if verbose:
         cmd.append("-v")
-    output, retval = runner.run(cmd)
+    stdout, stderr, retval = runner.run(cmd)
     if retval != 0:
         raise LibraryError(
-            reports.corosync_quorum_get_status_error(output)
+            reports.corosync_quorum_get_status_error(
+                join_multilines([stderr, stdout])
+            )
         )
-    return output
+    return stdout
 
 def remote_client_enable(reporter, node_communicator, node):
     """

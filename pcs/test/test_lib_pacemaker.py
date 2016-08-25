@@ -64,21 +64,31 @@ class LibraryPacemakerNodeStatusTest(LibraryPacemakerTest):
 
 class GetClusterStatusXmlTest(LibraryPacemakerTest):
     def test_success(self):
-        expected_xml = "<xml />"
+        expected_stdout = "<xml />"
+        expected_stderr = ""
         expected_retval = 0
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_xml, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         real_xml = lib.get_cluster_status_xml(mock_runner)
 
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
-        self.assertEqual(expected_xml, real_xml)
+        self.assertEqual(expected_stdout, real_xml)
 
     def test_error(self):
-        expected_error = "some error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.get_cluster_status_xml(mock_runner),
@@ -86,8 +96,7 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
                 {
-                    "return_value": expected_retval,
-                    "stdout": expected_error,
+                    "reason": expected_stderr + "\n" + expected_stdout,
                 }
             )
         )
@@ -96,23 +105,33 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
 
 class GetCibXmlTest(LibraryPacemakerTest):
     def test_success(self):
-        expected_xml = "<xml />"
+        expected_stdout = "<xml />"
+        expected_stderr = ""
         expected_retval = 0
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_xml, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         real_xml = lib.get_cib_xml(mock_runner)
 
         mock_runner.run.assert_called_once_with(
             [self.path("cibadmin"), "--local", "--query"]
         )
-        self.assertEqual(expected_xml, real_xml)
+        self.assertEqual(expected_stdout, real_xml)
 
     def test_error(self):
-        expected_error = "some error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.get_cib_xml(mock_runner),
@@ -120,8 +139,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.CIB_LOAD_ERROR,
                 {
-                    "return_value": expected_retval,
-                    "stdout": expected_error,
+                    "reason": expected_stderr + "\n" + expected_stdout,
                 }
             )
         )
@@ -131,11 +149,16 @@ class GetCibXmlTest(LibraryPacemakerTest):
         )
 
     def test_success_scope(self):
-        expected_xml = "<xml />"
+        expected_stdout = "<xml />"
+        expected_stderr = ""
         expected_retval = 0
         scope = "test_scope"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_xml, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         real_xml = lib.get_cib_xml(mock_runner, scope)
 
@@ -145,14 +168,19 @@ class GetCibXmlTest(LibraryPacemakerTest):
                 "--local", "--query", "--scope={0}".format(scope)
             ]
         )
-        self.assertEqual(expected_xml, real_xml)
+        self.assertEqual(expected_stdout, real_xml)
 
     def test_scope_error(self):
-        expected_error = "some error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 6
         scope = "test_scope"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.get_cib_xml(mock_runner, scope=scope),
@@ -161,8 +189,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
                 report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
                 {
                     "scope": scope,
-                    "return_value": expected_retval,
-                    "stdout": expected_error,
+                    "reason": expected_stderr + "\n" + expected_stdout,
                 }
             )
         )
@@ -194,10 +221,15 @@ class GetCibTest(LibraryPacemakerTest):
 class ReplaceCibConfigurationTest(LibraryPacemakerTest):
     def test_success(self):
         xml = "<xml/>"
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = ""
         expected_retval = 0
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         lib.replace_cib_configuration(
             mock_runner,
@@ -214,10 +246,15 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
 
     def test_cib_upgraded(self):
         xml = "<xml/>"
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = ""
         expected_retval = 0
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         lib.replace_cib_configuration(
             mock_runner, XmlManipulation.from_str(xml).tree, True
@@ -230,10 +267,15 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
 
     def test_error(self):
         xml = "<xml/>"
-        expected_error = "expected error"
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.replace_cib_configuration(
@@ -245,8 +287,8 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.CIB_PUSH_ERROR,
                 {
-                    "return_value": expected_retval,
-                    "stdout": expected_error,
+                    "reason": expected_stderr,
+                    "pushed_cib": expected_stdout,
                 }
             )
         )
@@ -261,10 +303,15 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
 
 class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
     def test_offline(self):
-        expected_error = "some error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         self.assertEqual(
             {"offline": True},
@@ -273,10 +320,15 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
     def test_invalid_status(self):
-        expected_xml = "some error"
+        expected_stdout = "invalid xml"
+        expected_stderr = ""
         expected_retval = 0
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_xml, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.get_local_node_status(mock_runner),
@@ -310,9 +362,9 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             ),
         ]
         return_value_list = [
-            (str(self.status), 0),
-            (node_id, 0),
-            (node_name, 0)
+            (str(self.status), "", 0),
+            (node_id, "", 0),
+            (node_name, "", 0)
         ]
         mock_runner.run.side_effect = return_value_list
 
@@ -339,9 +391,9 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             ),
         ]
         return_value_list = [
-            (str(self.status), 0),
-            (node_id, 0),
-            (node_name_bad, 0)
+            (str(self.status), "", 0),
+            (node_id, "", 0),
+            (node_name_bad, "", 0)
         ]
         mock_runner.run.side_effect = return_value_list
 
@@ -370,8 +422,8 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             mock.call([self.path("crm_node"), "--cluster-id"]),
         ]
         return_value_list = [
-            (str(self.status), 0),
-            ("some error", 1),
+            (str(self.status), "", 0),
+            ("", "some error", 1),
         ]
         mock_runner.run.side_effect = return_value_list
 
@@ -403,9 +455,9 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             ),
         ]
         return_value_list = [
-            (str(self.status), 0),
-            (node_id, 0),
-            ("some error", 1),
+            (str(self.status), "", 0),
+            (node_id, "", 0),
+            ("", "some error", 1),
         ]
         mock_runner.run.side_effect = return_value_list
 
@@ -437,9 +489,9 @@ class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
             ),
         ]
         return_value_list = [
-            (str(self.status), 0),
-            (node_id, 0),
-            ("(null)", 0),
+            (str(self.status), "", 0),
+            (node_id, "", 0),
+            ("(null)", "", 0),
         ]
         mock_runner.run.side_effect = return_value_list
 
@@ -465,15 +517,16 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         return str(XmlManipulation(doc))
 
     def test_basic(self):
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         call_list = [
             mock.call(self.crm_mon_cmd()),
             mock.call([self.path("crm_resource"), "--cleanup"]),
         ]
         return_value_list = [
-            (self.fixture_status_xml(1, 1), 0),
-            (expected_output, 0),
+            (self.fixture_status_xml(1, 1), "", 0),
+            (expected_stdout, expected_stderr, 0),
         ]
         mock_runner.run.side_effect = return_value_list
 
@@ -482,11 +535,18 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         self.assertEqual(len(return_value_list), len(call_list))
         self.assertEqual(len(return_value_list), mock_runner.run.call_count)
         mock_runner.run.assert_has_calls(call_list)
-        self.assertEqual(expected_output, real_output)
+        self.assertEqual(
+            expected_stdout + "\n" + expected_stderr,
+            real_output
+        )
 
     def test_threshold_exceeded(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (self.fixture_status_xml(1000, 1000), 0)
+        mock_runner.run.return_value = (
+            self.fixture_status_xml(1000, 1000),
+            "",
+            0
+        )
 
         assert_raise_library_error(
             lambda: lib.resource_cleanup(mock_runner),
@@ -501,49 +561,62 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
     def test_forced(self):
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, 0)
+        mock_runner.run.return_value = (expected_stdout, expected_stderr, 0)
 
         real_output = lib.resource_cleanup(mock_runner, force=True)
 
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--cleanup"]
         )
-        self.assertEqual(expected_output, real_output)
+        self.assertEqual(
+            expected_stdout + "\n" + expected_stderr,
+            real_output
+        )
 
     def test_resource(self):
         resource = "test_resource"
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, 0)
+        mock_runner.run.return_value = (expected_stdout, expected_stderr, 0)
 
         real_output = lib.resource_cleanup(mock_runner, resource=resource)
 
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--cleanup", "--resource", resource]
         )
-        self.assertEqual(expected_output, real_output)
+        self.assertEqual(
+            expected_stdout + "\n" + expected_stderr,
+            real_output
+        )
 
     def test_node(self):
         node = "test_node"
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, 0)
+        mock_runner.run.return_value = (expected_stdout, expected_stderr, 0)
 
         real_output = lib.resource_cleanup(mock_runner, node=node)
 
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--cleanup", "--node", node]
         )
-        self.assertEqual(expected_output, real_output)
+        self.assertEqual(
+            expected_stdout + "\n" + expected_stderr,
+            real_output
+        )
 
     def test_node_and_resource(self):
         node = "test_node"
         resource = "test_resource"
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, 0)
+        mock_runner.run.return_value = (expected_stdout, expected_stderr, 0)
 
         real_output = lib.resource_cleanup(
             mock_runner, resource=resource, node=node
@@ -555,13 +628,21 @@ class ResourceCleanupTest(LibraryPacemakerTest):
                 "--cleanup", "--resource", resource, "--node", node
             ]
         )
-        self.assertEqual(expected_output, real_output)
+        self.assertEqual(
+            expected_stdout + "\n" + expected_stderr,
+            real_output
+        )
 
     def test_error_state(self):
-        expected_error = "some error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.resource_cleanup(mock_runner),
@@ -569,8 +650,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
                 {
-                    "return_value": expected_retval,
-                    "stdout": expected_error,
+                    "reason": expected_stderr + "\n" + expected_stdout,
                 }
             )
         )
@@ -578,7 +658,8 @@ class ResourceCleanupTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
     def test_error_cleanup(self):
-        expected_error = "expected error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         call_list = [
@@ -586,8 +667,8 @@ class ResourceCleanupTest(LibraryPacemakerTest):
             mock.call([self.path("crm_resource"), "--cleanup"]),
         ]
         return_value_list = [
-            (self.fixture_status_xml(1, 1), 0),
-            (expected_error, expected_retval),
+            (self.fixture_status_xml(1, 1), "", 0),
+            (expected_stdout, expected_stderr, expected_retval),
         ]
         mock_runner.run.side_effect = return_value_list
 
@@ -597,8 +678,7 @@ class ResourceCleanupTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.RESOURCE_CLEANUP_ERROR,
                 {
-                    "return_value": expected_retval,
-                    "stdout": expected_error,
+                    "reason": expected_stderr + "\n" + expected_stdout,
                 }
             )
         )
@@ -609,10 +689,33 @@ class ResourceCleanupTest(LibraryPacemakerTest):
 
 class ResourcesWaitingTest(LibraryPacemakerTest):
     def test_has_support(self):
-        expected_output = "something --wait something else"
+        expected_stdout = ""
+        expected_stderr = "something --wait something else"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
+
+        self.assertTrue(
+            lib.has_resource_wait_support(mock_runner)
+        )
+        mock_runner.run.assert_called_once_with(
+            [self.path("crm_resource"), "-?"]
+        )
+
+    def test_has_support_stdout(self):
+        expected_stdout = "something --wait something else"
+        expected_stderr = ""
+        expected_retval = 1
+        mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         self.assertTrue(
             lib.has_resource_wait_support(mock_runner)
@@ -622,10 +725,15 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
     def test_doesnt_have_support(self):
-        expected_output = "something something else"
+        expected_stdout = "something something else"
+        expected_stderr = "something something else"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         self.assertFalse(
             lib.has_resource_wait_support(mock_runner)
@@ -652,10 +760,15 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
     def test_wait_success(self):
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
         expected_retval = 0
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         self.assertEqual(None, lib.wait_for_resources(mock_runner))
 
@@ -664,11 +777,16 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
     def test_wait_timeout_success(self):
-        expected_output = "expected output"
+        expected_stdout = "expected output"
+        expected_stderr = "expected stderr"
         expected_retval = 0
         timeout = 10
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_output, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         self.assertEqual(None, lib.wait_for_resources(mock_runner, timeout))
 
@@ -680,10 +798,15 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
     def test_wait_error(self):
-        expected_error = "some error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.wait_for_resources(mock_runner),
@@ -691,8 +814,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.RESOURCE_WAIT_ERROR,
                 {
-                    "return_value": expected_retval,
-                    "stdout": expected_error,
+                    "reason": expected_stderr + "\n" + expected_stdout,
                 }
             )
         )
@@ -702,10 +824,15 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
     def test_wait_error_timeout(self):
-        expected_error = "some error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 62
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.wait_for_resources(mock_runner),
@@ -713,8 +840,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.RESOURCE_WAIT_TIMED_OUT,
                 {
-                    "return_value": expected_retval,
-                    "stdout": expected_error,
+                    "reason": expected_stderr + "\n" + expected_stdout,
                 }
             )
         )
@@ -727,7 +853,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
     def test_standby_local(self):
         expected_retval = 0
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("dummy", expected_retval)
+        mock_runner.run.return_value = ("dummy", "", expected_retval)
 
         output = lib.nodes_standby(mock_runner)
 
@@ -739,7 +865,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
     def test_unstandby_local(self):
         expected_retval = 0
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("dummy", expected_retval)
+        mock_runner.run.return_value = ("dummy", "", expected_retval)
 
         output = lib.nodes_unstandby(mock_runner)
 
@@ -760,8 +886,8 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             mock.call([self.path("crm_standby"), "-v", "on", "-N", n])
             for n in nodes
         ]
-        return_value_list = [(str(self.status), 0)]
-        return_value_list += [("dummy", 0) for n in nodes]
+        return_value_list = [(str(self.status), "", 0)]
+        return_value_list += [("dummy", "", 0) for n in nodes]
         mock_runner.run.side_effect = return_value_list
 
         output = lib.nodes_standby(mock_runner, all_nodes=True)
@@ -783,8 +909,8 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             mock.call([self.path("crm_standby"), "-D", "-N", n])
             for n in nodes
         ]
-        return_value_list = [(str(self.status), 0)]
-        return_value_list += [("dummy", 0) for n in nodes]
+        return_value_list = [(str(self.status), "", 0)]
+        return_value_list += [("dummy", "", 0) for n in nodes]
         mock_runner.run.side_effect = return_value_list
 
         output = lib.nodes_unstandby(mock_runner, all_nodes=True)
@@ -806,8 +932,8 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             mock.call([self.path("crm_standby"), "-v", "on", "-N", n])
             for n in nodes[1:]
         ]
-        return_value_list = [(str(self.status), 0)]
-        return_value_list += [("dummy", 0) for n in nodes[1:]]
+        return_value_list = [(str(self.status), "", 0)]
+        return_value_list += [("dummy", "", 0) for n in nodes[1:]]
         mock_runner.run.side_effect = return_value_list
 
         output = lib.nodes_standby(mock_runner, node_list=nodes[1:])
@@ -829,8 +955,8 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             mock.call([self.path("crm_standby"), "-D", "-N", n])
             for n in nodes[:2]
         ]
-        return_value_list = [(str(self.status), 0)]
-        return_value_list += [("dummy", 0) for n in nodes[:2]]
+        return_value_list = [(str(self.status), "", 0)]
+        return_value_list += [("dummy", "", 0) for n in nodes[:2]]
         mock_runner.run.side_effect = return_value_list
 
         output = lib.nodes_unstandby(mock_runner, node_list=nodes[:2])
@@ -845,7 +971,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             self.fixture_get_node_status("node_1", "id_1")
         )
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (str(self.status), 0)
+        mock_runner.run.return_value = (str(self.status), "", 0)
 
         assert_raise_library_error(
             lambda: lib.nodes_standby(mock_runner, ["node_2"]),
@@ -863,7 +989,7 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             self.fixture_get_node_status("node_1", "id_1")
         )
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (str(self.status), 0)
+        mock_runner.run.return_value = (str(self.status), "", 0)
 
         assert_raise_library_error(
             lambda: lib.nodes_unstandby(mock_runner, ["node_2", "node_3"]),
@@ -882,17 +1008,24 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
     def test_error_one_node(self):
-        expected_error = "some error"
+        expected_stdout = "some info"
+        expected_stderr = "some error"
         expected_retval = 1
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (expected_error, expected_retval)
+        mock_runner.run.return_value = (
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
 
         assert_raise_library_error(
             lambda: lib.nodes_unstandby(mock_runner),
             (
                 Severity.ERROR,
                 report_codes.COMMON_ERROR,
-                {}
+                {
+                    "text": expected_stderr + "\n" + expected_stdout,
+                }
             )
         )
 
@@ -913,11 +1046,11 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             for n in nodes
         ]
         return_value_list = [
-            (str(self.status), 0),
-            ("dummy1", 0),
-            ("dummy2", 1),
-            ("dummy3", 0),
-            ("dummy4", 1),
+            (str(self.status), "", 0),
+            ("dummy1", "", 0),
+            ("dummy2", "error2", 1),
+            ("dummy3", "", 0),
+            ("dummy4", "error4", 1),
         ]
         mock_runner.run.side_effect = return_value_list
 
@@ -926,12 +1059,16 @@ class NodeStandbyTest(LibraryPacemakerNodeStatusTest):
             (
                 Severity.ERROR,
                 report_codes.COMMON_ERROR,
-                {}
+                {
+                    "text": "error2\ndummy2",
+                }
             ),
             (
                 Severity.ERROR,
                 report_codes.COMMON_ERROR,
-                {}
+                {
+                    "text": "error4\ndummy4",
+                }
             )
         )
 

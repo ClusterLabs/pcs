@@ -383,7 +383,7 @@ class UpgradeCibTest(TestCase):
         mock_file.name = "mock_file_name"
         mock_file.read.return_value = "<cib/>"
         mock_named_file.return_value = mock_file
-        self.mock_runner.run.return_value = ("", 0)
+        self.mock_runner.run.return_value = ("", "", 0)
         assert_xml_equal(
             "<cib/>",
             etree.tostring(
@@ -408,13 +408,15 @@ class UpgradeCibTest(TestCase):
         mock_file = mock.MagicMock()
         mock_file.name = "mock_file_name"
         mock_named_file.return_value = mock_file
-        self.mock_runner.run.return_value = ("reason", 1)
+        self.mock_runner.run.return_value = ("some info", "some error", 1)
         assert_raise_library_error(
             lambda: lib.upgrade_cib(etree.XML("<old_cib/>"), self.mock_runner),
             (
                 severities.ERROR,
                 report_codes.CIB_UPGRADE_FAILED,
-                {"reason": "reason"}
+                {
+                    "reason": "some error\nsome info",
+                }
             )
         )
         mock_named_file.assert_called_once_with("w+", suffix=".pcs")
@@ -434,7 +436,7 @@ class UpgradeCibTest(TestCase):
         mock_file.name = "mock_file_name"
         mock_file.read.return_value = "not xml"
         mock_named_file.return_value = mock_file
-        self.mock_runner.run.return_value = ("", 0)
+        self.mock_runner.run.return_value = ("", "", 0)
         assert_raise_library_error(
             lambda: lib.upgrade_cib(etree.XML("<old_cib/>"), self.mock_runner),
             (

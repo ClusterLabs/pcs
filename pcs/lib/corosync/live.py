@@ -8,6 +8,7 @@ from __future__ import (
 import os.path
 
 from pcs import settings
+from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import NodeCommunicator
@@ -41,42 +42,39 @@ def reload_config(runner):
     """
     Ask corosync to reload its configuration
     """
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         os.path.join(settings.corosync_binaries, "corosync-cfgtool"),
         "-R"
     ])
-    if retval != 0 or "invalid option" in output:
-        raise LibraryError(
-            reports.corosync_config_reload_error(output.rstrip())
-        )
+    message = join_multilines([stderr, stdout])
+    if retval != 0 or "invalid option" in message:
+        raise LibraryError(reports.corosync_config_reload_error(message))
 
 def get_quorum_status_text(runner):
     """
     Get runtime quorum status from the local node
     """
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
         "-p"
     ])
     # retval is 0 on success if node is not in partition with quorum
     # retval is 1 on error OR on success if node has quorum
-    if retval not in [0, 1]:
-        raise LibraryError(
-            reports.corosync_quorum_get_status_error(output)
-        )
-    return output
+    if retval not in [0, 1] or stderr.strip():
+        raise LibraryError(reports.corosync_quorum_get_status_error(stderr))
+    return stdout
 
 def set_expected_votes(runner, votes):
     """
     set expected votes in live cluster to specified value
     """
-    output, retval = runner.run([
+    stdout, stderr, retval = runner.run([
         os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
         # format votes to handle the case where they are int
         "-e", "{0}".format(votes)
     ])
     if retval != 0:
         raise LibraryError(
-            reports.corosync_quorum_set_expected_votes_error(output)
+            reports.corosync_quorum_set_expected_votes_error(stderr)
         )
-    return output
+    return stdout

@@ -9,6 +9,7 @@ import os.path
 from lxml import etree
 
 from pcs import settings
+from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker_state import ClusterState
@@ -26,28 +27,33 @@ def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)
 
 def get_cluster_status_xml(runner):
-    output, retval = runner.run(
+    stdout, stderr, retval = runner.run(
         [__exec("crm_mon"), "--one-shot", "--as-xml", "--inactive"]
     )
     if retval != 0:
         raise CrmMonErrorException(
-            reports.cluster_state_cannot_load(retval, output)
+            reports.cluster_state_cannot_load(join_multilines([stderr, stdout]))
         )
-    return output
+    return stdout
 
 def get_cib_xml(runner, scope=None):
     command = [__exec("cibadmin"), "--local", "--query"]
     if scope:
         command.append("--scope={0}".format(scope))
-    output, retval = runner.run(command)
+    stdout, stderr, retval = runner.run(command)
     if retval != 0:
         if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
             raise LibraryError(
-                reports.cib_load_error_scope_missing(scope, retval, output)
+                reports.cib_load_error_scope_missing(
+                    scope,
+                    join_multilines([stderr, stdout])
+                )
             )
         else:
-            raise LibraryError(reports.cib_load_error(retval, output))
-    return output
+            raise LibraryError(
+                reports.cib_load_error(join_multilines([stderr, stdout]))
+            )
+    return stdout
 
 def get_cib(xml):
     try:
@@ -59,9 +65,9 @@ def replace_cib_configuration_xml(runner, xml, cib_upgraded=False):
     cmd = [__exec("cibadmin"), "--replace",  "--verbose", "--xml-pipe"]
     if not cib_upgraded:
         cmd += ["--scope", "configuration"]
-    output, retval = runner.run(cmd, stdin_string=xml)
+    stdout, stderr, retval = runner.run(cmd, stdin_string=xml)
     if retval != 0:
-        raise LibraryError(reports.cib_push_error(retval, output))
+        raise LibraryError(reports.cib_push_error(stderr, stdout))
 
 def replace_cib_configuration(runner, tree, cib_upgraded=False):
     #etree returns bytes: b'xml'
@@ -108,13 +114,18 @@ def resource_cleanup(runner, resource=None, node=None, force=False):
     if node:
         cmd.extend(["--node", node])
 
-    output, retval = runner.run(cmd)
+    stdout, stderr, retval = runner.run(cmd)
 
     if retval != 0:
         raise LibraryError(
-            reports.resource_cleanup_error(retval, output, resource, node)
+            reports.resource_cleanup_error(
+                join_multilines([stderr, stdout]),
+                resource,
+                node
+            )
         )
-    return output
+    # usefull output (what has been done) goes to stderr
+    return join_multilines([stdout, stderr])
 
 def nodes_standby(runner, node_list=None, all_nodes=False):
     return __nodes_standby_unstandby(runner, True, node_list, all_nodes)
@@ -124,8 +135,11 @@ def nodes_unstandby(runner, node_list=None, all_nodes=False):
 
 def has_resource_wait_support(runner):
     # returns 1 on success so we don't care about retval
-    output, dummy_retval = runner.run([__exec("crm_resource"), "-?"])
-    return "--wait" in output
+    stdout, stderr, dummy_retval = runner.run(
+        [__exec("crm_resource"), "-?"]
+    )
+    # help goes to stderr but we check stdout as well if that gets changed
+    return "--wait" in stderr or "--wait" in stdout
 
 def ensure_resource_wait_support(runner):
     if not has_resource_wait_support(runner):
@@ -135,15 +149,22 @@ def wait_for_resources(runner, timeout=None):
     args = [__exec("crm_resource"), "--wait"]
     if timeout is not None:
         args.append("--timeout={0}".format(timeout))
-    output, retval = runner.run(args)
+    stdout, stderr, retval = runner.run(args)
     if retval != 0:
+        # Usefull info goes to stderr - not only error messages, a list of
+        # pending actions in case of timeout goes there as well.
+        # We use stdout just to be sure if that's get changed.
         if retval == __EXITCODE_WAIT_TIMEOUT:
             raise LibraryError(
-                reports.resource_wait_timed_out(retval, output.strip())
+                reports.resource_wait_timed_out(
+                    join_multilines([stderr, stdout])
+                )
             )
         else:
             raise LibraryError(
-                reports.resource_wait_error(retval, output.strip())
+                reports.resource_wait_error(
+                    join_multilines([stderr, stdout])
+                )
             )
 
 def __nodes_standby_unstandby(
@@ -178,9 +199,11 @@ def __nodes_standby_unstandby(
         cmd_list.append(cmd_template)
     report = []
     for cmd in cmd_list:
-        output, retval = runner.run(cmd)
+        stdout, stderr, retval = runner.run(cmd)
         if retval != 0:
-            report.append(reports.common_error(output))
+            report.append(
+                reports.common_error(join_multilines([stderr, stdout]))
+            )
     if report:
         raise LibraryError(*report)
 
@@ -189,21 +212,23 @@ def __get_local_node_name(runner):
     # but it returns false names when cluster is not running (or we are on
     # a remote node). Getting node id first is reliable since it fails in those
     # cases.
-    output, retval = runner.run([__exec("crm_node"), "--cluster-id"])
+    stdout, dummy_stderr, retval = runner.run(
+        [__exec("crm_node"), "--cluster-id"]
+    )
     if retval != 0:
         raise LibraryError(
             reports.pacemaker_local_node_name_not_found("node id not found")
         )
-    node_id = output.strip()
+    node_id = stdout.strip()
 
-    output, retval = runner.run(
+    stdout, dummy_stderr, retval = runner.run(
         [__exec("crm_node"), "--name-for-id={0}".format(node_id)]
     )
     if retval != 0:
         raise LibraryError(
             reports.pacemaker_local_node_name_not_found("node name not found")
         )
-    node_name = output.strip()
+    node_name = stdout.strip()
 
     if node_name == "(null)":
         raise LibraryError(

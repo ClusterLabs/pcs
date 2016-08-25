@@ -49,7 +49,7 @@ class QdeviceSetupTest(TestCase):
 
     def test_success(self, mock_is_dir_nonempty):
         mock_is_dir_nonempty.return_value = False
-        self.mock_runner.run.return_value = ("initialized", 0)
+        self.mock_runner.run.return_value = ("initialized", "", 0)
 
         lib.qdevice_setup(self.mock_runner)
 
@@ -73,7 +73,7 @@ class QdeviceSetupTest(TestCase):
 
     def test_init_tool_fail(self, mock_is_dir_nonempty):
         mock_is_dir_nonempty.return_value = False
-        self.mock_runner.run.return_value = ("test error", 1)
+        self.mock_runner.run.return_value = ("stdout", "test error", 1)
 
         assert_raise_library_error(
             lambda: lib.qdevice_setup(self.mock_runner),
@@ -82,7 +82,7 @@ class QdeviceSetupTest(TestCase):
                 report_codes.QDEVICE_INITIALIZATION_ERROR,
                 {
                     "model": "net",
-                    "reason": "test error",
+                    "reason": "test error\nstdout",
                 }
             )
         )
@@ -126,7 +126,7 @@ class QdeviceStatusGenericTest(TestCase):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
 
     def test_success(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.qdevice_status_generic_text(self.mock_runner)
@@ -134,7 +134,7 @@ class QdeviceStatusGenericTest(TestCase):
         self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-s"])
 
     def test_success_verbose(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.qdevice_status_generic_text(self.mock_runner, True)
@@ -142,7 +142,7 @@ class QdeviceStatusGenericTest(TestCase):
         self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-s", "-v"])
 
     def test_error(self):
-        self.mock_runner.run.return_value = ("status error", 1)
+        self.mock_runner.run.return_value = ("some info", "status error", 1)
         assert_raise_library_error(
             lambda: lib.qdevice_status_generic_text(self.mock_runner),
             (
@@ -150,7 +150,7 @@ class QdeviceStatusGenericTest(TestCase):
                 report_codes.QDEVICE_GET_STATUS_ERROR,
                 {
                     "model": "net",
-                    "reason": "status error",
+                    "reason": "status error\nsome info",
                 }
             )
         )
@@ -162,7 +162,7 @@ class QdeviceStatusClusterTest(TestCase):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
 
     def test_success(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.qdevice_status_cluster_text(self.mock_runner)
@@ -170,7 +170,7 @@ class QdeviceStatusClusterTest(TestCase):
         self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-l"])
 
     def test_success_verbose(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.qdevice_status_cluster_text(self.mock_runner, verbose=True)
@@ -178,7 +178,7 @@ class QdeviceStatusClusterTest(TestCase):
         self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-l", "-v"])
 
     def test_success_cluster(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.qdevice_status_cluster_text(self.mock_runner, "cluster")
@@ -188,7 +188,7 @@ class QdeviceStatusClusterTest(TestCase):
         ])
 
     def test_success_cluster_verbose(self):
-        self.mock_runner.run.return_value = ("status info", 0)
+        self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info",
             lib.qdevice_status_cluster_text(self.mock_runner, "cluster", True)
@@ -198,7 +198,7 @@ class QdeviceStatusClusterTest(TestCase):
         ])
 
     def test_error(self):
-        self.mock_runner.run.return_value = ("status error", 1)
+        self.mock_runner.run.return_value = ("some info", "status error", 1)
         assert_raise_library_error(
             lambda: lib.qdevice_status_cluster_text(self.mock_runner),
             (
@@ -206,7 +206,7 @@ class QdeviceStatusClusterTest(TestCase):
                 report_codes.QDEVICE_GET_STATUS_ERROR,
                 {
                     "model": "net",
-                    "reason": "status error",
+                    "reason": "status error\nsome info",
                 }
             )
         )
@@ -222,7 +222,7 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
     )
     def test_success(self, mock_tmp_store, mock_get_cert):
         mock_tmp_store.return_value = self.mock_tmpfile
-        self.mock_runner.run.return_value = ("tool output", 0)
+        self.mock_runner.run.return_value = ("tool output", "", 0)
         mock_get_cert.return_value = "new certificate".encode("utf-8")
 
         result = lib.qdevice_sign_certificate_request(
@@ -293,7 +293,7 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
     )
     def test_sign_error(self, mock_tmp_store, mock_get_cert):
         mock_tmp_store.return_value = self.mock_tmpfile
-        self.mock_runner.run.return_value = ("tool output error", 1)
+        self.mock_runner.run.return_value = ("stdout", "tool output error", 1)
 
         assert_raise_library_error(
             lambda: lib.qdevice_sign_certificate_request(
@@ -305,7 +305,7 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
                 severity.ERROR,
                 report_codes.QDEVICE_CERTIFICATE_SIGN_ERROR,
                 {
-                    "reason": "tool output error",
+                    "reason": "tool output error\nstdout",
                 }
             )
         )
@@ -326,7 +326,7 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
     )
     def test_output_read_error(self, mock_tmp_store, mock_get_cert):
         mock_tmp_store.return_value = self.mock_tmpfile
-        self.mock_runner.run.return_value = ("tool output", 0)
+        self.mock_runner.run.return_value = ("tool output", "", 0)
         mock_get_cert.side_effect = LibraryError
 
         self.assertRaises(
@@ -399,7 +399,7 @@ class ClientSetupTest(TestCase):
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_destroy")
     def test_success(self, mock_destroy):
-        self.mock_runner.run.return_value = ("tool output", 0)
+        self.mock_runner.run.return_value = ("tool output", "", 0)
 
         lib.client_setup(self.mock_runner, "certificate data".encode("utf-8"))
 
@@ -414,7 +414,7 @@ class ClientSetupTest(TestCase):
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_destroy")
     def test_init_error(self, mock_destroy):
-        self.mock_runner.run.return_value = ("tool output error", 1)
+        self.mock_runner.run.return_value = ("stdout", "tool output error", 1)
 
         assert_raise_library_error(
             lambda: lib.client_setup(
@@ -426,7 +426,7 @@ class ClientSetupTest(TestCase):
                 report_codes.QDEVICE_INITIALIZATION_ERROR,
                 {
                     "model": "net",
-                    "reason": "tool output error",
+                    "reason": "tool output error\nstdout",
                 }
             )
         )
@@ -448,7 +448,7 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
         lambda: True
     )
     def test_success(self, mock_get_cert):
-        self.mock_runner.run.return_value = ("tool output", 0)
+        self.mock_runner.run.return_value = ("tool output", "", 0)
         mock_get_cert.return_value = "new certificate".encode("utf-8")
 
         result = lib.client_generate_certificate_request(
@@ -492,7 +492,7 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
         lambda: True
     )
     def test_tool_error(self, mock_get_cert):
-        self.mock_runner.run.return_value = ("tool output error", 1)
+        self.mock_runner.run.return_value = ("stdout", "tool output error", 1)
 
         assert_raise_library_error(
             lambda: lib.client_generate_certificate_request(
@@ -504,7 +504,7 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
                 report_codes.QDEVICE_INITIALIZATION_ERROR,
                 {
                     "model": "net",
-                    "reason": "tool output error",
+                    "reason": "tool output error\nstdout",
                 }
             )
         )
@@ -523,7 +523,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
     )
     def test_success(self, mock_tmp_store, mock_get_cert):
         mock_tmp_store.return_value = self.mock_tmpfile
-        self.mock_runner.run.return_value = ("tool output", 0)
+        self.mock_runner.run.return_value = ("tool output", "", 0)
         mock_get_cert.return_value = "new certificate".encode("utf-8")
 
         result = lib.client_cert_request_to_pk12(
@@ -594,7 +594,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
     )
     def test_transform_error(self, mock_tmp_store, mock_get_cert):
         mock_tmp_store.return_value = self.mock_tmpfile
-        self.mock_runner.run.return_value = ("tool output error", 1)
+        self.mock_runner.run.return_value = ("stdout", "tool output error", 1)
 
         assert_raise_library_error(
             lambda: lib.client_cert_request_to_pk12(
@@ -605,7 +605,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
                 severity.ERROR,
                 report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                 {
-                    "reason": "tool output error",
+                    "reason": "tool output error\nstdout",
                 }
             )
         )
@@ -625,7 +625,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
     )
     def test_output_read_error(self, mock_tmp_store, mock_get_cert):
         mock_tmp_store.return_value = self.mock_tmpfile
-        self.mock_runner.run.return_value = ("tool output", 0)
+        self.mock_runner.run.return_value = ("tool output", "", 0)
         mock_get_cert.side_effect = LibraryError
 
         self.assertRaises(
@@ -657,7 +657,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
     )
     def test_success(self, mock_tmp_store):
         mock_tmp_store.return_value = self.mock_tmpfile
-        self.mock_runner.run.return_value = ("tool output", 0)
+        self.mock_runner.run.return_value = ("tool output", "", 0)
 
         lib.client_import_certificate_and_key(
             self.mock_runner,
@@ -721,7 +721,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
     )
     def test_import_error(self, mock_tmp_store):
         mock_tmp_store.return_value = self.mock_tmpfile
-        self.mock_runner.run.return_value = ("tool output error", 1)
+        self.mock_runner.run.return_value = ("stdout", "tool output error", 1)
 
         assert_raise_library_error(
             lambda: lib.client_import_certificate_and_key(
@@ -732,7 +732,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
                 severity.ERROR,
                 report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                 {
-                    "reason": "tool output error",
+                    "reason": "tool output error\nstdout",
                 }
             )
         )

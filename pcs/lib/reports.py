@@ -262,21 +262,24 @@ def run_external_process_started(command, stdin):
         }
     )
 
-def run_external_process_finished(command, retval, stdout):
+def run_external_process_finished(command, retval, stdout, stderr):
     """
     information about result of running an external process
     command string the external process command
     retval external process's return (exit) code
     stdout string external process's stdout
+    stderr string external process's stderr
     """
     return ReportItem.debug(
         report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
         "Finished running: {command}\nReturn value: {return_value}"
-        + "\n--Debug Output Start--\n{stdout}\n--Debug Output End--\n",
+        + "\n--Debug Stdout Start--\n{stdout}\n--Debug Stdout End--"
+        + "\n--Debug Stderr Start--\n{stderr}\n--Debug Stderr End--\n",
         info={
             "command": command,
             "return_value": retval,
             "stdout": stdout,
+            "stderr": stderr,
         }
     )
 
@@ -903,35 +906,31 @@ def resource_does_not_exist(resource_id):
         }
     )
 
-def cib_load_error(retval, stdout):
+def cib_load_error(reason):
     """
     cannot load cib from cibadmin, cibadmin exited with non-zero code
-    retval external process's return (exit) code
-    stdout string external process's stdout
+    string reason error description
     """
     return ReportItem.error(
         report_codes.CIB_LOAD_ERROR,
         "unable to get cib",
         info={
-            "return_value": retval,
-            "stdout": stdout,
+            "reason": reason,
         }
     )
 
-def cib_load_error_scope_missing(scope, retval, stdout):
+def cib_load_error_scope_missing(scope, reason):
     """
     cannot load cib from cibadmin, specified scope is missing in the cib
     scope string requested cib scope
-    retval external process's return (exit) code
-    stdout string external process's stdout
+    string reason error description
     """
     return ReportItem.error(
         report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
         "unable to get cib, scope '{scope}' not present in cib",
         info={
             "scope": scope,
-            "return_value": retval,
-            "stdout": stdout,
+            "reason": reason,
         }
     )
 
@@ -957,33 +956,31 @@ def cib_missing_mandatory_section(section_name):
         }
     )
 
-def cib_push_error(retval, stdout):
+def cib_push_error(reason, pushed_cib):
     """
     cannot push cib to cibadmin, cibadmin exited with non-zero code
-    retval external process's return (exit) code
-    stdout string external process's stdout
+    string reason error description
+    string pushed_cib cib which failed to be pushed
     """
     return ReportItem.error(
         report_codes.CIB_PUSH_ERROR,
-        "Unable to update cib\n{stdout}",
+        "Unable to update cib\n{reason}\n{pushed_cib}",
         info={
-            "return_value": retval,
-            "stdout": stdout,
+            "reason": reason,
+            "pushed_cib": pushed_cib,
         }
     )
 
-def cluster_state_cannot_load(retval, stdout):
+def cluster_state_cannot_load(reason):
     """
     cannot load cluster status from crm_mon, crm_mon exited with non-zero code
-    retval external process's return (exit) code
-    stdout string external process's stdout
+    string reason error description
     """
     return ReportItem.error(
         report_codes.CRM_MON_ERROR,
         "error running crm_mon, is pacemaker running?",
         info={
-            "return_value": retval,
-            "stdout": stdout,
+            "reason": reason,
         }
     )
 
@@ -1005,57 +1002,50 @@ def resource_wait_not_supported():
         "crm_resource does not support --wait, please upgrade pacemaker"
     )
 
-def resource_wait_timed_out(retval, stdout):
+def resource_wait_timed_out(reason):
     """
     waiting for resources (crm_resource --wait) failed, timeout expired
-    retval external process's return (exit) code
-    stdout string external process's stdout
+    string reason error description
     """
     return ReportItem.error(
         report_codes.RESOURCE_WAIT_TIMED_OUT,
-        "waiting timeout\n\n{stdout}",
+        "waiting timeout\n\n{reason}",
         info={
-            "return_value": retval,
-            "stdout": stdout,
+            "reason": reason,
         }
     )
 
-def resource_wait_error(retval, stdout):
+def resource_wait_error(reason):
     """
     waiting for resources (crm_resource --wait) failed
-    retval external process's return (exit) code
-    stdout string external process's stdout
+    string reason error description
     """
     return ReportItem.error(
         report_codes.RESOURCE_WAIT_ERROR,
-        "{stdout}",
+        "{reason}",
         info={
-            "return_value": retval,
-            "stdout": stdout,
+            "reason": reason,
         }
     )
 
-def resource_cleanup_error(retval, stdout, resource=None, node=None):
+def resource_cleanup_error(reason, resource=None, node=None):
     """
     an error occured when deleting resource history in pacemaker
-    retval external process's return (exit) code
-    stdout string external process's stdout
-    resource string resource which has been cleaned up
-    node string node which has been cleaned up
+    string reason error description
+    string resource resource which has been cleaned up
+    string node node which has been cleaned up
     """
     if resource:
-        text = "Unable to cleanup resource: {resource}\n{stdout}"
+        text = "Unable to cleanup resource: {resource}\n{reason}"
     else:
         text = (
-            "Unexpected error occured. 'crm_resource -C' err_code: "
-            + "{return_value}\n{stdout}"
+            "Unexpected error occured. 'crm_resource -C' error:\n{reason}"
         )
     return ReportItem.error(
         report_codes.RESOURCE_CLEANUP_ERROR,
         text,
         info={
-            "return_value": retval,
-            "stdout": stdout,
+            "reason": reason,
             "resource": resource,
             "node": node,
         }
