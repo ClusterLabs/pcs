@@ -62,11 +62,6 @@ class ConstraintPlainTest(TestCase):
 class DuplicateConstraintsReportTest(TestCase):
     @mock.patch("pcs.cli.constraint_all.console_report.constraint")
     def test_translate_from_report_item(self, mock_constraint):
-        report_item = mock.MagicMock()
-        report_item.info = {
-            "constraint_info_list": [{"options": {"a": "b"}}],
-            "constraint_type": "rsc_some"
-        }
         mock_constraint.return_value = "constraint info"
 
         self.assertEqual(
@@ -74,6 +69,8 @@ class DuplicateConstraintsReportTest(TestCase):
                 "duplicate constraint already exists{force}",
                 "  constraint info"
             ]),
-            console_report.duplicate_constraints_report(report_item)
-
+            console_report.duplicate_constraints_report({
+                "constraint_info_list": [{"options": {"a": "b"}}],
+                "constraint_type": "rsc_some"
+            })
         )

@@ -42,11 +42,11 @@ def constraint_plain(constraint_type, options_dict, with_id=False):
 
     return type_report_map[constraint_type](options_dict, with_id)
 
-def duplicate_constraints_report(report_item):
+def duplicate_constraints_report(info):
     line_list = []
-    for constraint_info in report_item.info["constraint_info_list"]:
+    for constraint_info in info["constraint_info_list"]:
         line_list.append(
-            constraint(report_item.info["constraint_type"], constraint_info)
+            constraint(info["constraint_type"], constraint_info)
         )
 
     return (

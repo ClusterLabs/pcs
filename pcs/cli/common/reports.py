@@ -32,7 +32,7 @@ class LibraryReportProcessorToConsole(object):
             elif report_item.severity == ReportItemSeverity.WARNING:
                 print("Warning: " + _build_report_message(report_item))
             elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
-                print(report_item.message)
+                print(_build_report_message(report_item))
         if errors:
             raise LibraryError(*errors)
 
@@ -44,10 +44,10 @@ def _prepare_force_text(report_item):
 def _build_report_message(report_item, force_text=""):
     get_template = __CODE_BUILDER_MAP.get(
         report_item.code,
-        lambda report_item: report_item.message + "{force}"
+        lambda info: report_item.message + "{force}"
     )
 
-    return get_template(report_item).format(force=force_text)
+    return get_template(report_item.info).format(force=force_text)
 
 def process_library_reports(report_item_list):
     """
@@ -56,11 +56,11 @@ def process_library_reports(report_item_list):
     critical_error = False
     for report_item in report_item_list:
         if report_item.severity == ReportItemSeverity.WARNING:
-            print("Warning: " + report_item.message)
+            print("Warning: " + _build_report_message(report_item))
             continue
 
         if report_item.severity != ReportItemSeverity.ERROR:
-            print(report_item.message)
+            print(_build_report_message(report_item))
             continue
 
         sys.stderr.write('Error: {0}\n'.format(_build_report_message(
