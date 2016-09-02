@@ -77,7 +77,6 @@ class SetConfigOnNodeTest(TestCase):
                 report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 {
                     "node": self.node.label,
-                    "name": "cfg_name",
                     "name_list": ["cfg_name"]
                 }
             )]
@@ -107,7 +106,6 @@ class SetConfigOnNodeTest(TestCase):
                 report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 {
                     "node": self.node.label,
-                    "name": "cfg_name",
                     "name_list": ["cfg_name"]
                 }
             )]
@@ -383,7 +381,6 @@ class SendAllConfigToNodeTest(TestCase):
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     {
                         "node": self.node.label,
-                        "name": "name1.conf, file1.key, name2.conf, file2.key",
                         "name_list": [
                             "name1.conf", "file1.key", "name2.conf", "file2.key"
                         ]
@@ -619,7 +616,6 @@ class SendAllConfigToNodeTest(TestCase):
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     {
                         "node": self.node.label,
-                        "name": "name2.conf, file2.key",
                         "name_list": ["name2.conf", "file2.key"]
                     }
                 )
@@ -1066,7 +1062,6 @@ class SendAllConfigToNodeTest(TestCase):
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     {
                         "node": self.node.label,
-                        "name": "name1.conf, name2.conf, file2.key",
                         "name_list": ["name1.conf", "name2.conf", "file2.key"]
                     }
                 )
@@ -1158,7 +1153,6 @@ class SendAllConfigToNodeTest(TestCase):
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     {
                         "node": self.node.label,
-                        "name": "name2.conf, file2.key",
                         "name_list": ["name2.conf", "file2.key"]
                     }
                 )

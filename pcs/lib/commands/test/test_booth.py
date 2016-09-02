@@ -426,7 +426,6 @@ class PullConfigTest(TestCase):
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     {
                         "node": None,
-                        "name": "name",
                         "name_list": ["name"]
                     }
                 )
@@ -467,7 +466,6 @@ class PullConfigTest(TestCase):
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     {
                         "node": None,
-                        "name": "name",
                         "name_list": ["name"]
                     }
                 )

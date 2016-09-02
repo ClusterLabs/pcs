@@ -7,6 +7,9 @@ from __future__ import (
 
 import sys
 
+from pcs.cli.booth.console_report import (
+    CODE_TO_MESSAGE_BUILDER_MAP as BOOTH_CODE_TO_MESSAGE_BUILDER_MAP
+)
 from pcs.cli.constraint_all.console_report import duplicate_constraints_report
 from pcs.common import report_codes as codes
 from pcs.lib.errors import LibraryError, ReportItemSeverity
@@ -15,7 +18,7 @@ from pcs.lib.errors import LibraryError, ReportItemSeverity
 __CODE_BUILDER_MAP = {
     codes.DUPLICATE_CONSTRAINTS_EXIST: duplicate_constraints_report,
 }
-
+__CODE_BUILDER_MAP.update(BOOTH_CODE_TO_MESSAGE_BUILDER_MAP)
 
 class LibraryReportProcessorToConsole(object):
     def __init__(self, debug=False):
@@ -42,12 +45,22 @@ def _prepare_force_text(report_item):
     return ", use --force to override" if report_item.forceable else ""
 
 def _build_report_message(report_item, force_text=""):
-    get_template = __CODE_BUILDER_MAP.get(
+    template = __CODE_BUILDER_MAP.get(
         report_item.code,
-        lambda info: report_item.message + "{force}"
+        report_item.message + "{force}"
     )
+    #Sometimes report item info is not needed for message building.
+    #In this case template is string. Otherwise, template is callable.
+    if callable(template):
+        template = template(report_item.info)
 
-    return get_template(report_item.info).format(force=force_text)
+    #Message can contain {force} placeholder if there is need to have it on
+    #specific position. Otherwise is appended to the end (if necessary). This
+    #removes the need to explicitly specify placeholder for each message.
+    if force_text and "{force}" not in template:
+        template += "{force}"
+
+    return template.format(force=force_text)
 
 def process_library_reports(report_item_list):
     """

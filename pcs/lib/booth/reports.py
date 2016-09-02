@@ -16,12 +16,9 @@ def booth_lack_of_sites(site_list):
     """
     return ReportItem.error(
         report_codes.BOOTH_LACK_OF_SITES,
-        "lack of sites for booth configuration (need 2 at least):"
-            " sites {sites_string}"
-        ,
+        "",
         info={
             "sites": site_list,
-            "sites_string": ", ".join(site_list) if site_list else "missing",
         }
     )
 
@@ -32,7 +29,7 @@ def booth_even_peers_num(number):
     """
     return ReportItem.error(
         report_codes.BOOTH_EVEN_PEERS_NUM,
-        "odd number of peers is required (entered {number} peers)",
+        "",
         info={
             "number": number,
         }
@@ -45,11 +42,9 @@ def booth_address_duplication(duplicate_addresses):
     """
     return ReportItem.error(
         report_codes.BOOTH_ADDRESS_DUPLICATION,
-        "duplicate address for booth configuration: {addresses_string}"
-        ,
+        "",
         info={
             "addresses": duplicate_addresses,
-            "addresses_string": ", ".join(duplicate_addresses),
         }
     )
 
@@ -61,10 +56,9 @@ def booth_config_unexpected_lines(line_list):
     """
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-        "unexpected line appeard in config: \n{lines_string}",
+        "",
         info={
             "line_list": line_list,
-            "lines_string": "\n".join(line_list)
         }
     )
 
@@ -76,8 +70,7 @@ def booth_invalid_name(name, reason):
     """
     return ReportItem.error(
         report_codes.BOOTH_INVALID_NAME,
-            "booth name '{name}' is not valid ({reason})"
-        ,
+        "",
         info={
             "name": name,
             "reason": reason,
@@ -92,9 +85,7 @@ def booth_ticket_name_invalid(ticket_name):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_NAME_INVALID,
-        "booth ticket name '{ticket_name}' is not valid,"
-            " use alphanumeric chars or dash"
-        ,
+        "",
         info={
             "ticket_name": ticket_name,
         }
@@ -108,7 +99,7 @@ def booth_ticket_duplicate(ticket_name):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_DUPLICATE,
-        "booth ticket name '{ticket_name}' already exists in configuration",
+        "",
         info={
             "ticket_name": ticket_name,
         }
@@ -122,7 +113,7 @@ def booth_ticket_does_not_exist(ticket_name):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_DOES_NOT_EXIST,
-        "booth ticket name '{ticket_name}' does not exist",
+        "",
         info={
             "ticket_name": ticket_name,
         }
@@ -136,7 +127,7 @@ def booth_already_in_cib(name):
     """
     return ReportItem.error(
         report_codes.BOOTH_ALREADY_IN_CIB,
-        "booth instance '{name}' is already created as cluster resource",
+        "",
         info={
             "name": name,
         }
@@ -149,7 +140,7 @@ def booth_not_exists_in_cib(name):
     """
     return ReportItem.error(
         report_codes.BOOTH_NOT_EXISTS_IN_CIB,
-        "booth instance '{name}' not found in cib",
+        "",
         info={
             "name": name,
         }
@@ -164,7 +155,7 @@ def booth_config_is_used(name, detail=""):
     """
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_IS_USED,
-        "booth instance '{name}' is used{detail_string}",
+        "",
         info={
             "name": name,
             "detail": detail,
@@ -188,7 +179,7 @@ def booth_multiple_times_in_cib(
     return ReportItem(
         report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
         severity,
-        "found more than one booth instance '{name}' in cib",
+        "",
         info={
             "name": name,
         },
@@ -203,7 +194,7 @@ def booth_config_distribution_started():
     """
     return ReportItem.info(
         report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED,
-        "Sending booth configuration to cluster nodes..."
+        ""
     )
 
 
@@ -214,21 +205,11 @@ def booth_config_accepted_by_node(node=None, name_list=None):
     node -- name of node
     name_list -- list of names of booth instance
     """
-    if name_list:
-        name = ", ".join(name_list)
-        if name == "booth":
-            msg = "Booth config saved."
-        else:
-            msg = "Booth config(s) ({name}) saved."
-    else:
-        msg = "Booth config saved."
-        name = None
     return ReportItem.info(
         report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-        msg if node is None else "{node}: " + msg,
+        "",
         info={
             "node": node,
-            "name": name,
             "name_list": name_list
         }
     )
@@ -242,13 +223,9 @@ def booth_config_distribution_node_error(node, reason, name=None):
     reason -- reason of failure
     name -- name of booth instance
     """
-    if name and name != "booth":
-        msg = "Unable to save booth config ({name}) on node '{node}': {reason}"
-    else:
-        msg = "Unable to save booth config on node '{node}': {reason}"
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
-        msg,
+        "",
         info={
             "node": node,
             "name": name,
@@ -267,14 +244,10 @@ def booth_config_read_error(
     severity -- severity of report item
     forceable -- is this report item forceable? by what category?
     """
-    if name and name != "booth":
-        msg = "Unable to read booth config ({name})."
-    else:
-        msg = "Unable to read booth config."
     return ReportItem(
         report_codes.BOOTH_CONFIG_READ_ERROR,
         severity,
-        msg,
+        "",
         info={"name": name},
         forceable=forceable
     )
@@ -287,13 +260,9 @@ def booth_fetching_config_from_node_started(node, config=None):
     node -- node from which config is fetching
     config -- config name
     """
-    if config or config == 'booth':
-        msg = "Fetching booth config from node '{node}'..."
-    else:
-        msg = "Fetching booth config '{config}' from node '{node}'..."
     return ReportItem.info(
         report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
-        msg,
+        "",
         info={
             "node": node,
             "config": config,
@@ -310,7 +279,7 @@ def booth_unsupported_file_location(file):
     """
     return ReportItem.warning(
         report_codes.BOOTH_UNSUPORTED_FILE_LOCATION,
-        "skipping file {file}: unsupported file location",
+        "",
         info={"file": file}
     )
 
@@ -323,7 +292,7 @@ def booth_daemon_status_error(reason):
     """
     return ReportItem.error(
         report_codes.BOOTH_DAEMON_STATUS_ERROR,
-        "unable to get status of booth daemon: {reason}",
+        "",
         info={"reason": reason}
     )
 
@@ -336,7 +305,7 @@ def booth_tickets_status_error(reason=None):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_STATUS_ERROR,
-        "unable to get status of booth tickets",
+        "",
         info={
             "reason": reason,
         }
@@ -351,7 +320,7 @@ def booth_peers_status_error(reason=None):
     """
     return ReportItem.error(
         report_codes.BOOTH_PEERS_STATUS_ERROR,
-        "unable to get status of booth peers",
+        "",
         info={
             "reason": reason,
         }
@@ -365,7 +334,7 @@ def booth_cannot_determine_local_site_ip():
     """
     return ReportItem.error(
         report_codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
-        "cannot determine local site ip, please specify site parameter",
+        "",
         info={}
     )
 
@@ -380,9 +349,7 @@ def booth_ticket_operation_failed(operation, reason, site_ip, ticket_name):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_OPERATION_FAILED,
-        "unable to {operation} booth ticket '{ticket_name}' for site '{site_ip}', "
-            "reason: {reason}"
-        ,
+        "",
         info={
             "operation": operation,
             "reason": reason,
@@ -400,7 +367,7 @@ def booth_skipping_config(config_file, reason):
     """
     return ReportItem.warning(
         report_codes.BOOTH_SKIPPING_CONFIG,
-        "Skipping config file '{config_file}': {reason}",
+        "",
         info={
             "config_file": config_file,
             "reason": reason,
@@ -411,7 +378,7 @@ def booth_cannot_identify_keyfile(severity=ReportItemSeverity.ERROR):
     return ReportItem(
         report_codes.BOOTH_CANNOT_IDENTIFY_KEYFILE,
         severity,
-        "cannot identify authfile in booth configuration",
+        "",
         info={},
         forceable=report_codes.FORCE_BOOTH_DESTROY
             if severity == ReportItemSeverity.ERROR else None
