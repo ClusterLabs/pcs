@@ -176,12 +176,11 @@ def invalid_id_is_empty(id, id_description):
     id_description string decribe id's role
     """
     return ReportItem.error(
-        report_codes.INVALID_ID,
+        report_codes.EMPTY_ID,
         "{id_description} cannot be empty",
         info={
             "id": id,
             "id_description": id_description,
-            "reason": "empty",
         }
     )
 

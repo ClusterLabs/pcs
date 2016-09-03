@@ -112,11 +112,10 @@ class ValidateIdTest(TestCase):
             lambda: lib.validate_id("", "test id"),
             (
                 severity.ERROR,
-                report_codes.INVALID_ID,
+                report_codes.EMPTY_ID,
                 {
                     "id": "",
                     "id_description": "test id",
-                    "reason": "empty",
                 }
             )
         )
