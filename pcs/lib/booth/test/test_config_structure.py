@@ -10,7 +10,11 @@ from pcs.test.tools.pcs_unittest import TestCase
 from pcs.common import report_codes
 from pcs.lib.booth import config_structure
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
+from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock
 
 
@@ -49,12 +53,8 @@ class ValidateTicketUniqueTest(TestCase):
 
 class ValidateTicketOptionsTest(TestCase):
     def test_raises_on_invalid_options(self):
-        assert_raise_library_error(
-            lambda: config_structure.validate_ticket_options({
-                "site": "a",
-                "port": "b",
-                "timeout": " ",
-            }),
+        report_processor = MockLibraryReportProcessor()
+        expected_errors = [
             (
                 severities.ERROR,
                 report_codes.INVALID_OPTION,
@@ -82,10 +82,81 @@ class ValidateTicketOptionsTest(TestCase):
                     "allowed_values": "no-empty",
                 },
             ),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_name": "unknown",
+                    "option_type": "booth ticket",
+                    "allowed": list(config_structure.TICKET_KEYS),
+                },
+                report_codes.FORCE_OPTIONS
+            ),
+        ]
+        assert_raise_library_error(
+            lambda: config_structure.validate_ticket_options(
+                report_processor,
+                {
+                    "site": "a",
+                    "port": "b",
+                    "timeout": " ",
+                    "unknown": "c",
+                },
+                allow_unknown_options=False,
+            ),
+            *expected_errors
+        )
+        assert_report_item_list_equal(
+            report_processor.report_item_list,
+            expected_errors
+        )
+
+    def test_unknown_options_are_forceable(self):
+        report_processor = MockLibraryReportProcessor()
+        expected_errors = [
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION,
+                {
+                    "option_name": "site",
+                    "option_type": "booth ticket",
+                    "allowed": list(config_structure.TICKET_KEYS),
+                },
+            ),
+        ]
+        assert_raise_library_error(
+            lambda: config_structure.validate_ticket_options(
+                report_processor, {
+                    "site": "a",
+                    "unknown": "c",
+                },
+                allow_unknown_options=True,
+            ),
+            *expected_errors
+        )
+        assert_report_item_list_equal(
+            report_processor.report_item_list,
+            expected_errors + [
+                (
+                    severities.WARNING,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_name": "unknown",
+                        "option_type": "booth ticket",
+                        "allowed": list(config_structure.TICKET_KEYS),
+                    },
+                ),
+            ]
         )
 
     def test_success_on_valid_options(self):
-        config_structure.validate_ticket_options({"timeout": "10"})
+        report_processor = MockLibraryReportProcessor()
+        config_structure.validate_ticket_options(
+            report_processor,
+            {"timeout": "10"},
+            allow_unknown_options=False,
+        )
+        assert_report_item_list_equal(report_processor.report_item_list, [])
 
 class TicketExistsTest(TestCase):
     def test_returns_true_if_ticket_in_structure(self):
@@ -214,18 +285,25 @@ class RemoveTicketTest(TestCase):
         )
 
 class AddTicketTest(TestCase):
+    @mock.patch("pcs.lib.booth.config_structure.validate_ticket_options")
     @mock.patch("pcs.lib.booth.config_structure.validate_ticket_unique")
     @mock.patch("pcs.lib.booth.config_structure.validate_ticket_name")
     def test_successfully_add_ticket(
-        self, mock_validate_name, mock_validate_uniq
+        self, mock_validate_name, mock_validate_uniq, mock_validate_options
     ):
         configuration = [
             config_structure.ConfigItem("ticket", "some-ticket"),
         ]
+
         self.assertEqual(
-            config_structure.add_ticket(configuration, "new-ticket", {
-                "timeout": "10",
-            }),
+            config_structure.add_ticket(
+                None, configuration,
+                "new-ticket",
+                {
+                    "timeout": "10",
+                },
+                allow_unknown_options=False,
+            ),
             [
                 config_structure.ConfigItem("ticket", "some-ticket"),
                 config_structure.ConfigItem("ticket", "new-ticket", [
@@ -236,6 +314,11 @@ class AddTicketTest(TestCase):
 
         mock_validate_name.assert_called_once_with("new-ticket")
         mock_validate_uniq.assert_called_once_with(configuration, "new-ticket")
+        mock_validate_options.assert_called_once_with(
+            None,
+            {"timeout": "10"},
+            False
+        )
 
 class SetAuthfileTest(TestCase):
     def test_add_authfile(self):

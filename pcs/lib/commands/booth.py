@@ -119,14 +119,19 @@ def config_text(env, name, node_name=None):
         raise LibraryError(reports.invalid_response_format(node_name))
 
 
-def config_ticket_add(env, ticket_name, options):
+def config_ticket_add(env, ticket_name, options, allow_unknown_options):
     """
     add ticket to booth configuration
+    dict options contains options for ticket
+    bool allow_unknown_options decide if can be used options not listed in
+        ticket options nor global options
     """
     booth_configuration = config_structure.add_ticket(
+        env.report_processor,
         parse(env.booth.get_config_content()),
         ticket_name,
         options,
+        allow_unknown_options,
     )
     env.booth.push_config(build(booth_configuration))
 

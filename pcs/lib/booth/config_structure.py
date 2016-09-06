@@ -9,7 +9,8 @@ import re
 
 import pcs.lib.reports as common_reports
 from pcs.lib.booth import reports
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemSeverity as severities
+from pcs.common import report_codes
 from collections import namedtuple
 
 GLOBAL_KEYS = (
@@ -83,10 +84,13 @@ def remove_ticket(booth_configuration, ticket_name):
         if config_item.key != "ticket" or config_item.value != ticket_name
     ]
 
-def add_ticket(booth_configuration, ticket_name, options):
+def add_ticket(
+    report_processor, booth_configuration, ticket_name, options,
+    allow_unknown_options
+):
     validate_ticket_name(ticket_name)
     validate_ticket_unique(booth_configuration, ticket_name)
-    validate_ticket_options(options)
+    validate_ticket_options(report_processor, options, allow_unknown_options)
     return booth_configuration + [
         ConfigItem("ticket", ticket_name, [
             ConfigItem(key, value) for key, value in options.items()
@@ -101,12 +105,28 @@ def validate_ticket_unique(booth_configuration, ticket_name):
     if ticket_exists(booth_configuration, ticket_name):
         raise LibraryError(reports.booth_ticket_duplicate(ticket_name))
 
-def validate_ticket_options(options):
+def validate_ticket_options(report_processor, options, allow_unknown_options):
     reports = []
     for key in sorted(options):
         if key in GLOBAL_KEYS:
             reports.append(
                 common_reports.invalid_option(key, TICKET_KEYS, "booth ticket")
+            )
+
+        elif key not in TICKET_KEYS:
+            reports.append(
+                common_reports.invalid_option(
+                    key, TICKET_KEYS,
+                    "booth ticket",
+                    severity=(
+                        severities.WARNING if allow_unknown_options
+                        else severities.ERROR
+                    ),
+                    forceable=(
+                        None if allow_unknown_options
+                        else report_codes.FORCE_OPTIONS
+                    ),
+                )
             )
 
         if not options[key].strip():
@@ -116,8 +136,7 @@ def validate_ticket_options(options):
                 "no-empty",
             ))
 
-    if reports:
-        raise LibraryError(*reports)
+    report_processor.process_list(reports)
 
 def ticket_exists(booth_configuration, ticket_name):
     return any(

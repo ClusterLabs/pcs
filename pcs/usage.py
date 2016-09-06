@@ -1433,8 +1433,9 @@ Commands:
     destroy
         Remove booth configuration files.
 
-    ticket add <ticket>
-        Add new ticket to the current configuration.
+    ticket add <ticket> [<name>=<value> ...]
+        Add new ticket to the current configuration. Ticket options are
+        specified in booth manpage.
 
     ticket remove <ticket>
         Remove the specified ticket from the current configuration.
