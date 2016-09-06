@@ -39,7 +39,8 @@ def _validate_options_common(options):
 def _create_id(cib, ticket, resource_id, resource_role):
     return tools.find_unique_id(
         cib,
-        "-".join(('ticket', ticket, resource_id, resource_role))
+        "-".join(('ticket', ticket, resource_id))
+        +("-{0}".format(resource_role) if resource_role else "")
     )
 
 def prepare_options_with_set(cib, options, resource_set_list):
@@ -93,7 +94,7 @@ def prepare_options_plain(cib, options, ticket, resource_id):
             cib,
             options["ticket"],
             resource_id,
-            options["rsc-role"] if "rsc-role" in options else "no-role"
+            options.get("rsc-role", "")
         ),
         partial(tools.check_new_id_applicable, cib, DESCRIPTION)
     )
