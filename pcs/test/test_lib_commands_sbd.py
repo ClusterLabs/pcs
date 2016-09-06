@@ -568,6 +568,15 @@ class GetClusterSbdStatusTest(CommandSbdTest):
                 ),
                 (
                     Severities.WARNING,
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    {
+                        "node": "node1",
+                        "reason": "reason",
+                        "command": "command",
+                    }
+                ),
+                (
+                    Severities.WARNING,
                     report_codes.UNABLE_TO_GET_SBD_STATUS,
                     {"node": "node1"}
                 ),
@@ -702,11 +711,22 @@ invalid value
         self.assertEqual(3, mock_sbd_cfg.call_count)
         assert_report_item_list_equal(
             self.mock_rep.report_item_list,
-            [(
-                Severities.WARNING,
-                report_codes.UNABLE_TO_GET_SBD_CONFIG,
-                {"node": "node2"}
-            )]
+            [
+                (
+                    Severities.WARNING,
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    {
+                        "node": "node2",
+                        "reason": "reason",
+                        "command": "command",
+                    }
+                ),
+                (
+                    Severities.WARNING,
+                    report_codes.UNABLE_TO_GET_SBD_CONFIG,
+                    {"node": "node2"}
+                ),
+            ]
         )
 
 

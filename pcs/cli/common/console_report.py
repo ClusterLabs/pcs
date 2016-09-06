@@ -594,8 +594,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.UNABLE_TO_GET_SBD_CONFIG: lambda info:
-        "Unable to get SBD configuration from node '{node}': {reason}"
-        .format(**info)
+        "Unable to get SBD configuration from node '{node}'{reason_suffix}"
+        .format(
+            reason_suffix=format_optional(info["reason"], ": {0}"),
+            **info
+        )
     ,
 
     codes.SBD_ENABLING_STARTED: lambda info:
@@ -626,8 +629,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.UNABLE_TO_GET_SBD_STATUS: lambda info:
-        "Unable to get status of SBD from node '{node}': {reason}"
-        .format(**info)
+        "Unable to get status of SBD from node '{node}'{reason_suffix}"
+        .format(
+            reason_suffix=format_optional(info["reason"], ": {0}"),
+            **info
+        )
     ,
 
     codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES:
