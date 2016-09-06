@@ -18,6 +18,7 @@ from pcs import (
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.reports import build_report_message
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.resource_agent as lib_ra
 
@@ -118,9 +119,7 @@ def stonith_list_available(argv):
                     )
                 ])
             except LibraryError as e:
-                utils.err(
-                    e.args[-1].message, False
-                )
+                utils.err(build_report_message(e.args[-1]), False)
                 continue
         print(agent_name + sd)
 

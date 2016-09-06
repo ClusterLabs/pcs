@@ -42,9 +42,9 @@ class LibraryWrapperTest(TestCase):
 class BindTest(TestCase):
     @mock.patch("pcs.cli.common.lib_wrapper.process_library_reports")
     def test_report_unprocessed_library_env_errors(self, mock_process_report):
-        report1 = ReportItem.error("OTHER ERROR", "", info={})
-        report2 = ReportItem.error("OTHER ERROR", "", info={})
-        report3 = ReportItem.error("OTHER ERROR", "", info={})
+        report1 = ReportItem.error("OTHER ERROR", info={})
+        report2 = ReportItem.error("OTHER ERROR", info={})
+        report3 = ReportItem.error("OTHER ERROR", info={})
         e = LibraryEnvError(report1, report2, report3)
         e.sign_processed(report2)
         mock_middleware = mock.Mock(side_effect=e)

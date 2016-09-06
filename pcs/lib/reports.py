@@ -16,7 +16,6 @@ def common_error(text):
     """
     return ReportItem.error(
         report_codes.COMMON_ERROR,
-        "",
         info={"text": text}
     )
 
@@ -27,7 +26,6 @@ def common_info(text):
     """
     return ReportItem.info(
         report_codes.COMMON_INFO,
-        "",
         info={"text": text}
     )
 
@@ -46,7 +44,6 @@ def resource_for_constraint_is_multiinstance(
     return ReportItem(
         report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
         severity,
-        "",
         info={
             "resource_id": resource_id,
             "parent_type": parent_type,
@@ -69,7 +66,6 @@ def duplicate_constraints_exist(
     return ReportItem(
         report_codes.DUPLICATE_CONSTRAINTS_EXIST,
         severity,
-        "",
         info={
             "constraint_type": constraint_type,
             "constraint_info_list": constraint_info_list,
@@ -83,7 +79,6 @@ def empty_resource_set_list():
     """
     return ReportItem.error(
         report_codes.EMPTY_RESOURCE_SET_LIST,
-        "",
     )
 
 def required_option_is_missing(name):
@@ -92,7 +87,6 @@ def required_option_is_missing(name):
     """
     return ReportItem.error(
         report_codes.REQUIRED_OPTION_IS_MISSING,
-        "",
         info={
             "option_name": name
         }
@@ -113,7 +107,6 @@ def invalid_option(
     return ReportItem(
         report_codes.INVALID_OPTION,
         severity,
-        "",
         forceable,
         info={
             "option_name": option_name,
@@ -137,7 +130,6 @@ def invalid_option_value(
     return ReportItem(
         report_codes.INVALID_OPTION_VALUE,
         severity,
-        "",
         info={
             "option_value": option_value,
             "option_name": option_name,
@@ -154,7 +146,6 @@ def invalid_id_is_empty(id, id_description):
     """
     return ReportItem.error(
         report_codes.EMPTY_ID,
-        "",
         info={
             "id": id,
             "id_description": id_description,
@@ -171,7 +162,6 @@ def invalid_id_bad_char(id, id_description, bad_char, is_first_char):
     """
     return ReportItem.error(
         report_codes.INVALID_ID,
-        "",
         info={
             "id": id,
             "id_description": id_description,
@@ -187,7 +177,6 @@ def invalid_timeout(timeout):
     """
     return ReportItem.error(
         report_codes.INVALID_TIMEOUT_VALUE,
-        "",
         info={"timeout": timeout}
     )
 
@@ -198,7 +187,6 @@ def invalid_score(score):
     """
     return ReportItem.error(
         report_codes.INVALID_SCORE,
-        "",
         info={
             "score": score,
         }
@@ -211,7 +199,6 @@ def multiple_score_options():
     """
     return ReportItem.error(
         report_codes.MULTIPLE_SCORE_OPTIONS,
-        "",
     )
 
 def run_external_process_started(command, stdin):
@@ -222,7 +209,6 @@ def run_external_process_started(command, stdin):
     """
     return ReportItem.debug(
         report_codes.RUN_EXTERNAL_PROCESS_STARTED,
-        "",
         info={
             "command": command,
             "stdin": stdin,
@@ -239,7 +225,6 @@ def run_external_process_finished(command, retval, stdout, stderr):
     """
     return ReportItem.debug(
         report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
-        "",
         info={
             "command": command,
             "return_value": retval,
@@ -256,7 +241,6 @@ def run_external_process_error(command, reason):
     """
     return ReportItem.error(
         report_codes.RUN_EXTERNAL_PROCESS_ERROR,
-        "",
         info={
             "command": command,
             "reason": reason
@@ -271,7 +255,6 @@ def node_communication_started(target, data):
     """
     return ReportItem.debug(
         report_codes.NODE_COMMUNICATION_STARTED,
-        "",
         info={
             "target": target,
             "data": data,
@@ -287,7 +270,6 @@ def node_communication_finished(target, retval, data):
     """
     return ReportItem.debug(
         report_codes.NODE_COMMUNICATION_FINISHED,
-        "",
         info={
             "target": target,
             "response_code": retval,
@@ -303,7 +285,6 @@ def node_communication_not_connected(node, reason):
     """
     return ReportItem.debug(
         report_codes.NODE_COMMUNICATION_NOT_CONNECTED,
-        "",
         info={
             "node": node,
             "reason": reason,
@@ -322,7 +303,6 @@ def node_communication_error_not_authorized(
     return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
         severity,
-        "",
         info={
             "node": node,
             "command": command,
@@ -343,7 +323,6 @@ def node_communication_error_permission_denied(
     return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED,
         severity,
-        "",
         info={
             "node": node,
             "command": command,
@@ -364,7 +343,6 @@ def node_communication_error_unsupported_command(
     return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND,
         severity,
-        "",
         info={
             "node": node,
             "command": command,
@@ -381,7 +359,6 @@ def node_communication_command_unsuccessful(node, command, reason):
     """
     return ReportItem.error(
         report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-        "",
         info={
             "node": node,
             "command": command,
@@ -401,7 +378,6 @@ def node_communication_error_other_error(
     return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR,
         severity,
-        "",
         info={
             "node": node,
             "command": command,
@@ -422,7 +398,6 @@ def node_communication_error_unable_to_connect(
     return ReportItem(
         report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
         severity,
-        "",
         info={
             "node": node,
             "command": command,
@@ -437,7 +412,6 @@ def corosync_config_distribution_started():
     """
     return ReportItem.info(
         report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED,
-        ""
     )
 
 def corosync_config_accepted_by_node(node):
@@ -447,7 +421,6 @@ def corosync_config_accepted_by_node(node):
     """
     return ReportItem.info(
         report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-        "",
         info={"node": node}
     )
 
@@ -462,7 +435,6 @@ def corosync_config_distribution_node_error(
     return ReportItem(
         report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
         severity,
-        "",
         info={"node": node},
         forceable=forceable
     )
@@ -473,7 +445,6 @@ def corosync_not_running_check_started():
     """
     return ReportItem.info(
         report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED,
-        ""
     )
 
 def corosync_not_running_check_node_error(
@@ -487,7 +458,6 @@ def corosync_not_running_check_node_error(
     return ReportItem(
         report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
         severity,
-        "",
         info={"node": node},
         forceable=forceable
     )
@@ -499,7 +469,6 @@ def corosync_not_running_on_node_ok(node):
     """
     return ReportItem.info(
         report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-        "",
         info={"node": node}
     )
 
@@ -510,7 +479,6 @@ def corosync_running_on_node_fail(node):
     """
     return ReportItem.error(
         report_codes.COROSYNC_RUNNING_ON_NODE,
-        "",
         info={"node": node}
     )
 
@@ -521,7 +489,6 @@ def corosync_quorum_get_status_error(reason):
     """
     return ReportItem.error(
         report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
-        "",
         info={
             "reason": reason,
         }
@@ -534,7 +501,6 @@ def corosync_quorum_set_expected_votes_error(reason):
     """
     return ReportItem.error(
         report_codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR,
-        "",
         info={
             "reason": reason,
         }
@@ -546,7 +512,6 @@ def corosync_config_reloaded():
     """
     return ReportItem.info(
         report_codes.COROSYNC_CONFIG_RELOADED,
-        ""
     )
 
 def corosync_config_reload_error(reason):
@@ -556,7 +521,6 @@ def corosync_config_reload_error(reason):
     """
     return ReportItem.error(
         report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
-        "",
         info={"reason": reason}
     )
 
@@ -567,7 +531,6 @@ def corosync_config_read_error(path, reason):
     """
     return ReportItem.error(
         report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
-        "",
         info={
             "path": path,
             "reason": reason,
@@ -580,7 +543,6 @@ def corosync_config_parser_missing_closing_brace():
     """
     return ReportItem.error(
         report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
-        ""
     )
 
 def corosync_config_parser_unexpected_closing_brace():
@@ -589,7 +551,6 @@ def corosync_config_parser_unexpected_closing_brace():
     """
     return ReportItem.error(
         report_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
-        ""
     )
 
 def corosync_config_parser_other_error():
@@ -599,7 +560,6 @@ def corosync_config_parser_other_error():
     """
     return ReportItem.error(
         report_codes.PARSE_ERROR_COROSYNC_CONF,
-        ""
     )
 
 def corosync_options_incompatible_with_qdevice(options):
@@ -609,7 +569,6 @@ def corosync_options_incompatible_with_qdevice(options):
     """
     return ReportItem.error(
         report_codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE,
-        "",
         info={
             "options_names": options,
         }
@@ -621,7 +580,6 @@ def qdevice_already_defined():
     """
     return ReportItem.error(
         report_codes.QDEVICE_ALREADY_DEFINED,
-        ""
     )
 
 def qdevice_not_defined():
@@ -630,7 +588,6 @@ def qdevice_not_defined():
     """
     return ReportItem.error(
         report_codes.QDEVICE_NOT_DEFINED,
-        ""
     )
 
 def qdevice_remove_or_cluster_stop_needed():
@@ -639,7 +596,6 @@ def qdevice_remove_or_cluster_stop_needed():
     """
     return ReportItem.error(
         report_codes.QDEVICE_REMOVE_OR_CLUSTER_STOP_NEEDED,
-        ""
     )
 
 def qdevice_client_reload_started():
@@ -648,7 +604,6 @@ def qdevice_client_reload_started():
     """
     return ReportItem.info(
         report_codes.QDEVICE_CLIENT_RELOAD_STARTED,
-        ""
     )
 
 def qdevice_already_initialized(model):
@@ -658,7 +613,6 @@ def qdevice_already_initialized(model):
     """
     return ReportItem.error(
         report_codes.QDEVICE_ALREADY_INITIALIZED,
-        "",
         info={
             "model": model,
         }
@@ -671,7 +625,6 @@ def qdevice_not_initialized(model):
     """
     return ReportItem.error(
         report_codes.QDEVICE_NOT_INITIALIZED,
-        "",
         info={
             "model": model,
         }
@@ -684,7 +637,6 @@ def qdevice_initialization_success(model):
     """
     return ReportItem.info(
         report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-        "",
         info={
             "model": model,
         }
@@ -698,7 +650,6 @@ def qdevice_initialization_error(model, reason):
     """
     return ReportItem.error(
         report_codes.QDEVICE_INITIALIZATION_ERROR,
-        "",
         info={
             "model": model,
             "reason": reason,
@@ -711,7 +662,6 @@ def qdevice_certificate_distribution_started():
     """
     return ReportItem.info(
         report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
-        ""
     )
 
 def qdevice_certificate_accepted_by_node(node):
@@ -721,7 +671,6 @@ def qdevice_certificate_accepted_by_node(node):
     """
     return ReportItem.info(
         report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
-        "",
         info={"node": node}
     )
 
@@ -731,7 +680,6 @@ def qdevice_certificate_removal_started():
     """
     return ReportItem.info(
         report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED,
-        ""
     )
 
 def qdevice_certificate_removed_from_node(node):
@@ -741,7 +689,6 @@ def qdevice_certificate_removed_from_node(node):
     """
     return ReportItem.info(
         report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
-        "",
         info={"node": node}
     )
 
@@ -752,7 +699,6 @@ def qdevice_certificate_import_error(reason):
     """
     return ReportItem.error(
         report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
-        "",
         info={
             "reason": reason,
         }
@@ -765,7 +711,6 @@ def qdevice_certificate_sign_error(reason):
     """
     return ReportItem.error(
         report_codes.QDEVICE_CERTIFICATE_SIGN_ERROR,
-        "",
         info={
             "reason": reason,
         }
@@ -778,7 +723,6 @@ def qdevice_destroy_success(model):
     """
     return ReportItem.info(
         report_codes.QDEVICE_DESTROY_SUCCESS,
-        "",
         info={
             "model": model,
         }
@@ -792,7 +736,6 @@ def qdevice_destroy_error(model, reason):
     """
     return ReportItem.error(
         report_codes.QDEVICE_DESTROY_ERROR,
-        "",
         info={
             "model": model,
             "reason": reason,
@@ -806,7 +749,6 @@ def qdevice_not_running(model):
     """
     return ReportItem.error(
         report_codes.QDEVICE_NOT_RUNNING,
-        "",
         info={
             "model": model,
         }
@@ -820,7 +762,6 @@ def qdevice_get_status_error(model, reason):
     """
     return ReportItem.error(
         report_codes.QDEVICE_GET_STATUS_ERROR,
-        "",
         info={
             "model": model,
             "reason": reason,
@@ -836,7 +777,6 @@ def qdevice_used_by_clusters(
     return ReportItem(
         report_codes.QDEVICE_USED_BY_CLUSTERS,
         severity,
-        "",
         info={
             "clusters": clusters,
         },
@@ -849,7 +789,6 @@ def cman_unsupported_command():
     """
     return ReportItem.error(
         report_codes.CMAN_UNSUPPORTED_COMMAND,
-        ""
     )
 
 def id_already_exists(id):
@@ -859,7 +798,6 @@ def id_already_exists(id):
     """
     return ReportItem.error(
         report_codes.ID_ALREADY_EXISTS,
-        "",
         info={"id": id}
     )
 
@@ -872,7 +810,6 @@ def id_not_found(id, id_description):
     """
     return ReportItem.error(
         report_codes.ID_NOT_FOUND,
-        "",
         info={
             "id": id,
             "id_description": id_description,
@@ -886,7 +823,6 @@ def resource_does_not_exist(resource_id):
     """
     return ReportItem.error(
         report_codes.RESOURCE_DOES_NOT_EXIST,
-        "",
         info={
             "resource_id": resource_id,
         }
@@ -899,7 +835,6 @@ def cib_load_error(reason):
     """
     return ReportItem.error(
         report_codes.CIB_LOAD_ERROR,
-        "",
         info={
             "reason": reason,
         }
@@ -913,7 +848,6 @@ def cib_load_error_scope_missing(scope, reason):
     """
     return ReportItem.error(
         report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
-        "",
         info={
             "scope": scope,
             "reason": reason,
@@ -926,7 +860,6 @@ def cib_load_error_invalid_format():
     """
     return ReportItem.error(
         report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
-        ""
     )
 
 def cib_missing_mandatory_section(section_name):
@@ -936,7 +869,6 @@ def cib_missing_mandatory_section(section_name):
     """
     return ReportItem.error(
         report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-        "",
         info={
             "section": section_name,
         }
@@ -950,7 +882,6 @@ def cib_push_error(reason, pushed_cib):
     """
     return ReportItem.error(
         report_codes.CIB_PUSH_ERROR,
-        "",
         info={
             "reason": reason,
             "pushed_cib": pushed_cib,
@@ -964,7 +895,6 @@ def cluster_state_cannot_load(reason):
     """
     return ReportItem.error(
         report_codes.CRM_MON_ERROR,
-        "",
         info={
             "reason": reason,
         }
@@ -976,7 +906,6 @@ def cluster_state_invalid_format():
     """
     return ReportItem.error(
         report_codes.BAD_CLUSTER_STATE_FORMAT,
-        ""
     )
 
 def resource_wait_not_supported():
@@ -985,7 +914,6 @@ def resource_wait_not_supported():
     """
     return ReportItem.error(
         report_codes.RESOURCE_WAIT_NOT_SUPPORTED,
-        ""
     )
 
 def resource_wait_timed_out(reason):
@@ -995,7 +923,6 @@ def resource_wait_timed_out(reason):
     """
     return ReportItem.error(
         report_codes.RESOURCE_WAIT_TIMED_OUT,
-        "",
         info={
             "reason": reason,
         }
@@ -1008,7 +935,6 @@ def resource_wait_error(reason):
     """
     return ReportItem.error(
         report_codes.RESOURCE_WAIT_ERROR,
-        "{reason}",
         info={
             "reason": reason,
         }
@@ -1023,7 +949,6 @@ def resource_cleanup_error(reason, resource=None, node=None):
     """
     return ReportItem.error(
         report_codes.RESOURCE_CLEANUP_ERROR,
-        "",
         info={
             "reason": reason,
             "resource": resource,
@@ -1038,7 +963,6 @@ def resource_cleanup_too_time_consuming(threshold):
     """
     return ReportItem.error(
         report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
-        "",
         info={"threshold": threshold},
         forceable=report_codes.FORCE_LOAD_THRESHOLD
     )
@@ -1050,7 +974,6 @@ def node_not_found(node):
     """
     return ReportItem.error(
         report_codes.NODE_NOT_FOUND,
-        "",
         info={"node": node}
     )
 
@@ -1061,7 +984,6 @@ def pacemaker_local_node_name_not_found(reason):
     """
     return ReportItem.error(
         report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
-        "",
         info={"reason": reason}
     )
 
@@ -1073,7 +995,6 @@ def rrp_active_not_supported(warning=False):
     return ReportItem(
         report_codes.RRP_ACTIVE_NOT_SUPPORTED,
         ReportItemSeverity.WARNING if warning else ReportItemSeverity.ERROR,
-        "",
         forceable=(None if warning else report_codes.FORCE_ACTIVE_RRP)
     )
 
@@ -1084,7 +1005,6 @@ def cman_ignored_option(option):
     """
     return ReportItem.warning(
         report_codes.IGNORED_CMAN_UNSUPPORTED_OPTION,
-        "",
         info={'option_name': option}
     )
 
@@ -1096,7 +1016,6 @@ def rrp_addresses_transport_mismatch():
     """
     return ReportItem.error(
         report_codes.NON_UDP_TRANSPORT_ADDR_MISMATCH,
-        ""
     )
 
 def cman_udpu_restart_required():
@@ -1105,7 +1024,6 @@ def cman_udpu_restart_required():
     """
     return ReportItem.warning(
         report_codes.CMAN_UDPU_RESTART_REQUIRED,
-        ""
     )
 
 def cman_broadcast_all_rings():
@@ -1114,7 +1032,6 @@ def cman_broadcast_all_rings():
     """
     return ReportItem.warning(
         report_codes.CMAN_BROADCAST_ALL_RINGS,
-        ""
     )
 
 def service_start_started(service, instance=None):
@@ -1125,7 +1042,6 @@ def service_start_started(service, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_START_STARTED,
-        "",
         info={
             "service": service,
             "instance": instance,
@@ -1142,7 +1058,6 @@ def service_start_error(service, reason, node=None, instance=None):
     """
     return ReportItem.error(
         report_codes.SERVICE_START_ERROR,
-        "",
         info={
             "service": service,
             "reason": reason,
@@ -1160,7 +1075,6 @@ def service_start_success(service, node=None, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_START_SUCCESS,
-        "",
         info={
             "service": service,
             "node": node,
@@ -1178,7 +1092,6 @@ def service_start_skipped(service, reason, node=None, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_START_SKIPPED,
-        "",
         info={
             "service": service,
             "reason": reason,
@@ -1195,7 +1108,6 @@ def service_stop_started(service, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_STOP_STARTED,
-        "",
         info={
             "service": service,
             "instance": instance,
@@ -1212,7 +1124,6 @@ def service_stop_error(service, reason, node=None, instance=None):
     """
     return ReportItem.error(
         report_codes.SERVICE_STOP_ERROR,
-        "",
         info={
             "service": service,
             "reason": reason,
@@ -1230,7 +1141,6 @@ def service_stop_success(service, node=None, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_STOP_SUCCESS,
-        "",
         info={
             "service": service,
             "node": node,
@@ -1246,7 +1156,6 @@ def service_kill_error(services, reason):
     """
     return ReportItem.error(
         report_codes.SERVICE_KILL_ERROR,
-        "",
         info={
             "services": services,
             "reason": reason,
@@ -1260,7 +1169,6 @@ def service_kill_success(services):
     """
     return ReportItem.info(
         report_codes.SERVICE_KILL_SUCCESS,
-        "",
         info={
             "services": services,
         }
@@ -1274,7 +1182,6 @@ def service_enable_started(service, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_ENABLE_STARTED,
-        "",
         info={
             "service": service,
             "instance": instance,
@@ -1291,7 +1198,6 @@ def service_enable_error(service, reason, node=None, instance=None):
     """
     return ReportItem.error(
         report_codes.SERVICE_ENABLE_ERROR,
-        "",
         info={
             "service": service,
             "reason": reason,
@@ -1309,7 +1215,6 @@ def service_enable_success(service, node=None, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_ENABLE_SUCCESS,
-        "",
         info={
             "service": service,
             "node": node,
@@ -1327,7 +1232,6 @@ def service_enable_skipped(service, reason, node=None, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_ENABLE_SKIPPED,
-        "",
         info={
             "service": service,
             "reason": reason,
@@ -1344,7 +1248,6 @@ def service_disable_started(service, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_DISABLE_STARTED,
-        "",
         info={
             "service": service,
             "instance": instance,
@@ -1361,7 +1264,6 @@ def service_disable_error(service, reason, node=None, instance=None):
     """
     return ReportItem.error(
         report_codes.SERVICE_DISABLE_ERROR,
-        "",
         info={
             "service": service,
             "reason": reason,
@@ -1379,7 +1281,6 @@ def service_disable_success(service, node=None, instance=None):
     """
     return ReportItem.info(
         report_codes.SERVICE_DISABLE_SUCCESS,
-        "",
         info={
             "service": service,
             "node": node,
@@ -1394,7 +1295,6 @@ def invalid_metadata_format(severity=ReportItemSeverity.ERROR, forceable=None):
     return ReportItem(
         report_codes.INVALID_METADATA_FORMAT,
         severity,
-        "",
         forceable=forceable
     )
 
@@ -1410,7 +1310,6 @@ def unable_to_get_agent_metadata(
     return ReportItem(
         report_codes.UNABLE_TO_GET_AGENT_METADATA,
         severity,
-        "",
         info={
             "agent": agent,
             "reason": reason
@@ -1428,7 +1327,6 @@ def agent_not_found(agent, severity=ReportItemSeverity.ERROR, forceable=None):
     return ReportItem(
         report_codes.AGENT_NOT_FOUND,
         severity,
-        "",
         info={"agent": agent},
         forceable=forceable
     )
@@ -1445,7 +1343,6 @@ def agent_not_supported(
     return ReportItem(
         report_codes.UNSUPPORTED_AGENT,
         severity,
-        "",
         info={"agent": agent},
         forceable=forceable
     )
@@ -1459,7 +1356,6 @@ def resource_agent_general_error(agent=None):
     """
     return ReportItem.error(
         report_codes.AGENT_GENERAL_ERROR,
-        "",
         info={"agent": agent}
     )
 
@@ -1472,7 +1368,6 @@ def omitting_node(node):
     """
     return ReportItem.warning(
         report_codes.OMITTING_NODE,
-        "",
         info={"node": node}
     )
 
@@ -1483,7 +1378,6 @@ def sbd_check_started():
     """
     return ReportItem.info(
         report_codes.SBD_CHECK_STARTED,
-        ""
     )
 
 
@@ -1495,7 +1389,6 @@ def sbd_check_success(node):
     """
     return ReportItem.info(
         report_codes.SBD_CHECK_SUCCESS,
-        "",
         info={"node": node}
     )
 
@@ -1506,7 +1399,6 @@ def sbd_config_distribution_started():
     """
     return ReportItem.info(
         report_codes.SBD_CONFIG_DISTRIBUTION_STARTED,
-        ""
     )
 
 
@@ -1518,7 +1410,6 @@ def sbd_config_accepted_by_node(node):
     """
     return ReportItem.info(
         report_codes.SBD_CONFIG_ACCEPTED_BY_NODE,
-        "",
         info={"node": node}
     )
 
@@ -1534,7 +1425,6 @@ def unable_to_get_sbd_config(node, reason, severity=ReportItemSeverity.ERROR):
     return ReportItem(
         report_codes.UNABLE_TO_GET_SBD_CONFIG,
         severity,
-        "",
         info={
             "node": node,
             "reason": reason
@@ -1548,7 +1438,6 @@ def sbd_enabling_started():
     """
     return ReportItem.info(
         report_codes.SBD_ENABLING_STARTED,
-        ""
     )
 
 
@@ -1558,7 +1447,6 @@ def sbd_disabling_started():
     """
     return ReportItem.info(
         report_codes.SBD_DISABLING_STARTED,
-        ""
     )
 
 
@@ -1571,7 +1459,6 @@ def invalid_response_format(node):
     """
     return ReportItem.error(
         report_codes.INVALID_RESPONSE_FORMAT,
-        "",
         info={"node": node}
     )
 
@@ -1584,7 +1471,6 @@ def sbd_not_installed(node):
     """
     return ReportItem.error(
         report_codes.SBD_NOT_INSTALLED,
-        "",
         info={"node": node}
     )
 
@@ -1598,7 +1484,6 @@ def watchdog_not_found(node, watchdog):
     """
     return ReportItem.error(
         report_codes.WATCHDOG_NOT_FOUND,
-        "",
         info={
             "node": node,
             "watchdog": watchdog
@@ -1614,7 +1499,6 @@ def invalid_watchdog_path(watchdog):
     """
     return ReportItem.error(
         report_codes.WATCHDOG_INVALID,
-        "",
         info={"watchdog": watchdog}
     )
 
@@ -1629,7 +1513,6 @@ def unable_to_get_sbd_status(node, reason):
     """
     return ReportItem.warning(
         report_codes.UNABLE_TO_GET_SBD_STATUS,
-        "",
         info={
             "node": node,
             "reason": reason
@@ -1642,7 +1525,6 @@ def cluster_restart_required_to_apply_changes():
     """
     return ReportItem.warning(
         report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES,
-        ""
     )
 
 
@@ -1658,7 +1540,6 @@ def cib_alert_recipient_already_exists(
     return ReportItem(
         report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
         severity,
-        "",
         info={
             "recipient": recipient_value,
             "alert": alert_id
@@ -1675,7 +1556,6 @@ def cib_alert_recipient_invalid_value(recipient_value):
     """
     return ReportItem.error(
         report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
-        "",
         info={"recipient": recipient_value}
     )
 
@@ -1687,7 +1567,6 @@ def cib_alert_not_found(alert_id):
     """
     return ReportItem.error(
         report_codes.CIB_ALERT_NOT_FOUND,
-        "",
         info={"alert": alert_id}
     )
 
@@ -1698,7 +1577,6 @@ def cib_upgrade_successful():
     """
     return ReportItem.info(
         report_codes.CIB_UPGRADE_SUCCESSFUL,
-        ""
     )
 
 
@@ -1710,7 +1588,6 @@ def cib_upgrade_failed(reason):
     """
     return ReportItem.error(
         report_codes.CIB_UPGRADE_FAILED,
-        "",
         info={"reason": reason}
     )
 
@@ -1726,9 +1603,6 @@ def unable_to_upgrade_cib_to_required_version(
     """
     return ReportItem.error(
         report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
-        "Unable to upgrade CIB to required schema version {required_version} "
-        "or higher. Current version is {current_version}. Newer version of "
-        "pacemaker is needed.",
         info={
             "required_version": "{0}.{1}.{2}".format(*required_version),
             "current_version": "{0}.{1}.{2}".format(*current_version)
@@ -1742,7 +1616,6 @@ def file_already_exists(
     return ReportItem(
         report_codes.FILE_ALREADY_EXISTS,
         severity,
-        "",
         info={
             "file_role": file_role,
             "file_path": file_path,
@@ -1754,7 +1627,6 @@ def file_already_exists(
 def file_does_not_exist(file_role, file_path=""):
     return ReportItem.error(
         report_codes.FILE_DOES_NOT_EXIST,
-        "",
         info={
             "file_role": file_role,
             "file_path": file_path,
@@ -1768,7 +1640,6 @@ def file_io_error(
     return ReportItem(
         report_codes.FILE_IO_ERROR,
         severity,
-        "",
         info={
             "file_role": file_role,
             "file_path": file_path,
@@ -1780,7 +1651,6 @@ def file_io_error(
 def unable_to_determine_user_uid(user):
     return ReportItem.error(
         report_codes.UNABLE_TO_DETERMINE_USER_UID,
-        "",
         info={
             "user": user
         }
@@ -1789,7 +1659,6 @@ def unable_to_determine_user_uid(user):
 def unable_to_determine_group_gid(group):
     return ReportItem.error(
         report_codes.UNABLE_TO_DETERMINE_GROUP_GID,
-        "",
         info={
             "group": group
         }
@@ -1798,13 +1667,11 @@ def unable_to_determine_group_gid(group):
 def unsupported_operation_on_non_systemd_systems():
     return ReportItem.error(
         report_codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
-        ""
     )
 
 def live_environment_required(forbidden_options):
     return ReportItem.error(
         report_codes.LIVE_ENVIRONMENT_REQUIRED,
-        "",
         info={
             "forbidden_options": forbidden_options,
             "options_string": ", ".join(forbidden_options),
@@ -1821,7 +1688,6 @@ def quorum_cannot_disable_atb_due_to_sbd(
     return ReportItem(
         report_codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD,
         severity,
-        "",
         forceable=forceable
     )
 
@@ -1832,5 +1698,4 @@ def sbd_requires_atb():
     """
     return ReportItem.warning(
         report_codes.SBD_REQUIRES_ATB,
-        ""
     )

@@ -79,13 +79,13 @@ class BoothConfTest(TestCase):
         self, mock_is_file, mock_console_report
     ):
         next_in_line = mock.Mock(side_effect=LibraryEnvError(
-            ReportItem.error(report_codes.FILE_DOES_NOT_EXIST, "", info={
+            ReportItem.error(report_codes.FILE_DOES_NOT_EXIST, info={
                 "file_role": env_file_role_codes.BOOTH_CONFIG,
             }),
-            ReportItem.error(report_codes.FILE_DOES_NOT_EXIST, "", info={
+            ReportItem.error(report_codes.FILE_DOES_NOT_EXIST, info={
                 "file_role": env_file_role_codes.BOOTH_KEY,
             }),
-            ReportItem.error("OTHER ERROR", "", info={}),
+            ReportItem.error("OTHER ERROR", info={}),
         ))
         mock_is_file.return_value = False
         mock_env = mock.MagicMock()

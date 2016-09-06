@@ -36,7 +36,7 @@ from pcs import (
 )
 from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
-from pcs.cli.common.reports import process_library_reports
+from pcs.cli.common.reports import process_library_reports, build_report_message
 from pcs.lib import (
     pacemaker as lib_pacemaker,
     sbd as lib_sbd,
@@ -943,7 +943,7 @@ def wait_for_local_node_started(stop_at, interval):
             time.sleep(interval)
     except LibraryError as e:
         return 1, "Unable to get node status: {0}".format(
-            "\n".join([item.message for item in e.args])
+            "\n".join([build_report_message(item) for item in e.args])
         )
 
 def wait_for_remote_node_started(node, stop_at, interval):

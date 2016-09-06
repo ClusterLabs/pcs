@@ -782,7 +782,6 @@ SBD_WATCHDOG_TIMEOUT=0
         self.mock_env.is_cman_cluster = False
         mock_config.side_effect = LibraryError(ReportItem.error(
             report_codes.UNABLE_TO_GET_SBD_CONFIG,
-            "message"
         ))
         assert_raise_library_error(
             lambda: cmd_sbd.get_local_sbd_config(self.mock_env),

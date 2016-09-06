@@ -16,7 +16,6 @@ def booth_lack_of_sites(site_list):
     """
     return ReportItem.error(
         report_codes.BOOTH_LACK_OF_SITES,
-        "",
         info={
             "sites": site_list,
         }
@@ -29,7 +28,6 @@ def booth_even_peers_num(number):
     """
     return ReportItem.error(
         report_codes.BOOTH_EVEN_PEERS_NUM,
-        "",
         info={
             "number": number,
         }
@@ -42,7 +40,6 @@ def booth_address_duplication(duplicate_addresses):
     """
     return ReportItem.error(
         report_codes.BOOTH_ADDRESS_DUPLICATION,
-        "",
         info={
             "addresses": duplicate_addresses,
         }
@@ -56,7 +53,6 @@ def booth_config_unexpected_lines(line_list):
     """
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-        "",
         info={
             "line_list": line_list,
         }
@@ -70,7 +66,6 @@ def booth_invalid_name(name, reason):
     """
     return ReportItem.error(
         report_codes.BOOTH_INVALID_NAME,
-        "",
         info={
             "name": name,
             "reason": reason,
@@ -85,7 +80,6 @@ def booth_ticket_name_invalid(ticket_name):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_NAME_INVALID,
-        "",
         info={
             "ticket_name": ticket_name,
         }
@@ -99,7 +93,6 @@ def booth_ticket_duplicate(ticket_name):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_DUPLICATE,
-        "",
         info={
             "ticket_name": ticket_name,
         }
@@ -113,7 +106,6 @@ def booth_ticket_does_not_exist(ticket_name):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_DOES_NOT_EXIST,
-        "",
         info={
             "ticket_name": ticket_name,
         }
@@ -127,7 +119,6 @@ def booth_already_in_cib(name):
     """
     return ReportItem.error(
         report_codes.BOOTH_ALREADY_IN_CIB,
-        "",
         info={
             "name": name,
         }
@@ -140,7 +131,6 @@ def booth_not_exists_in_cib(name):
     """
     return ReportItem.error(
         report_codes.BOOTH_NOT_EXISTS_IN_CIB,
-        "",
         info={
             "name": name,
         }
@@ -155,7 +145,6 @@ def booth_config_is_used(name, detail=""):
     """
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_IS_USED,
-        "",
         info={
             "name": name,
             "detail": detail,
@@ -179,7 +168,6 @@ def booth_multiple_times_in_cib(
     return ReportItem(
         report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
         severity,
-        "",
         info={
             "name": name,
         },
@@ -194,7 +182,6 @@ def booth_config_distribution_started():
     """
     return ReportItem.info(
         report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED,
-        ""
     )
 
 
@@ -207,7 +194,6 @@ def booth_config_accepted_by_node(node=None, name_list=None):
     """
     return ReportItem.info(
         report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-        "",
         info={
             "node": node,
             "name_list": name_list
@@ -225,7 +211,6 @@ def booth_config_distribution_node_error(node, reason, name=None):
     """
     return ReportItem.error(
         report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
-        "",
         info={
             "node": node,
             "name": name,
@@ -247,7 +232,6 @@ def booth_config_read_error(
     return ReportItem(
         report_codes.BOOTH_CONFIG_READ_ERROR,
         severity,
-        "",
         info={"name": name},
         forceable=forceable
     )
@@ -262,7 +246,6 @@ def booth_fetching_config_from_node_started(node, config=None):
     """
     return ReportItem.info(
         report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
-        "",
         info={
             "node": node,
             "config": config,
@@ -279,7 +262,6 @@ def booth_unsupported_file_location(file):
     """
     return ReportItem.warning(
         report_codes.BOOTH_UNSUPORTED_FILE_LOCATION,
-        "",
         info={"file": file}
     )
 
@@ -292,7 +274,6 @@ def booth_daemon_status_error(reason):
     """
     return ReportItem.error(
         report_codes.BOOTH_DAEMON_STATUS_ERROR,
-        "",
         info={"reason": reason}
     )
 
@@ -305,7 +286,6 @@ def booth_tickets_status_error(reason=None):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_STATUS_ERROR,
-        "",
         info={
             "reason": reason,
         }
@@ -320,7 +300,6 @@ def booth_peers_status_error(reason=None):
     """
     return ReportItem.error(
         report_codes.BOOTH_PEERS_STATUS_ERROR,
-        "",
         info={
             "reason": reason,
         }
@@ -334,7 +313,6 @@ def booth_cannot_determine_local_site_ip():
     """
     return ReportItem.error(
         report_codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
-        "",
         info={}
     )
 
@@ -349,7 +327,6 @@ def booth_ticket_operation_failed(operation, reason, site_ip, ticket_name):
     """
     return ReportItem.error(
         report_codes.BOOTH_TICKET_OPERATION_FAILED,
-        "",
         info={
             "operation": operation,
             "reason": reason,
@@ -367,7 +344,6 @@ def booth_skipping_config(config_file, reason):
     """
     return ReportItem.warning(
         report_codes.BOOTH_SKIPPING_CONFIG,
-        "",
         info={
             "config_file": config_file,
             "reason": reason,
@@ -378,7 +354,6 @@ def booth_cannot_identify_keyfile(severity=ReportItemSeverity.ERROR):
     return ReportItem(
         report_codes.BOOTH_CANNOT_IDENTIFY_KEYFILE,
         severity,
-        "",
         info={},
         forceable=report_codes.FORCE_BOOTH_DESTROY
             if severity == ReportItemSeverity.ERROR else None
