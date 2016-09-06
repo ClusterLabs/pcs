@@ -10,14 +10,17 @@ import sys
 from pcs.cli.booth.console_report import (
     CODE_TO_MESSAGE_BUILDER_MAP as BOOTH_CODE_TO_MESSAGE_BUILDER_MAP
 )
-from pcs.cli.constraint_all.console_report import duplicate_constraints_report
+from pcs.cli.common.console_report import CODE_TO_MESSAGE_BUILDER_MAP
+from pcs.cli.constraint_all.console_report import (
+    CODE_TO_MESSAGE_BUILDER_MAP as CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP
+)
 from pcs.common import report_codes as codes
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
-__CODE_BUILDER_MAP = {
-    codes.DUPLICATE_CONSTRAINTS_EXIST: duplicate_constraints_report,
-}
+__CODE_BUILDER_MAP = {}
+__CODE_BUILDER_MAP.update(CODE_TO_MESSAGE_BUILDER_MAP)
+__CODE_BUILDER_MAP.update(CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP)
 __CODE_BUILDER_MAP.update(BOOTH_CODE_TO_MESSAGE_BUILDER_MAP)
 
 class LibraryReportProcessorToConsole(object):
@@ -33,9 +36,9 @@ class LibraryReportProcessorToConsole(object):
             if report_item.severity == ReportItemSeverity.ERROR:
                 errors.append(report_item)
             elif report_item.severity == ReportItemSeverity.WARNING:
-                print("Warning: " + _build_report_message(report_item))
+                print("Warning: " + build_report_message(report_item))
             elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
-                print(_build_report_message(report_item))
+                print(build_report_message(report_item))
         if errors:
             raise LibraryError(*errors)
 
@@ -44,7 +47,7 @@ def _prepare_force_text(report_item):
         return ", use --skip-offline to override"
     return ", use --force to override" if report_item.forceable else ""
 
-def _build_report_message(report_item, force_text=""):
+def build_report_message(report_item, force_text=""):
     template = __CODE_BUILDER_MAP.get(
         report_item.code,
         report_item.message + "{force}"
@@ -69,14 +72,14 @@ def process_library_reports(report_item_list):
     critical_error = False
     for report_item in report_item_list:
         if report_item.severity == ReportItemSeverity.WARNING:
-            print("Warning: " + _build_report_message(report_item))
+            print("Warning: " + build_report_message(report_item))
             continue
 
         if report_item.severity != ReportItemSeverity.ERROR:
-            print(_build_report_message(report_item))
+            print(build_report_message(report_item))
             continue
 
-        sys.stderr.write('Error: {0}\n'.format(_build_report_message(
+        sys.stderr.write('Error: {0}\n'.format(build_report_message(
             report_item,
             _prepare_force_text(report_item)
         )))

@@ -60,6 +60,7 @@ from pcs.lib.pacemaker_values import(
 from pcs.cli.common import middleware
 from pcs.cli.common.env import Env
 from pcs.cli.common.lib_wrapper import Library
+from pcs.cli.common.reports import build_report_message
 from pcs.cli.booth.command import DEFAULT_BOOTH_NAME
 import pcs.cli.booth.env
 
@@ -2112,7 +2113,7 @@ def validate_xml_id(var, description="id"):
     try:
         validate_id(var, description)
     except LibraryError as e:
-        return False, e.args[0].message
+        return False, build_report_message(e.args[0])
     return True, ""
 
 def is_iso8601_date(var):

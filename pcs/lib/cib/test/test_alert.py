@@ -333,7 +333,7 @@ class CreateAlertTest(TestCase):
                     "id": "1alert",
                     "id_description": "alert-id",
                     "invalid_character": "1",
-                    "reason": "invalid first character"
+                    "is_first_char": True,
                 }
             )
         )

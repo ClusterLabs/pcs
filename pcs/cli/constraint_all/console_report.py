@@ -18,6 +18,7 @@ from pcs.cli.constraint_order.console_report import (
 from pcs.cli.constraint_ticket.console_report import (
     constraint_plain as ticket_plain
 )
+from pcs.common import report_codes as codes
 
 
 def constraint(constraint_type, constraint_info, with_id=True):
@@ -42,14 +43,24 @@ def constraint_plain(constraint_type, options_dict, with_id=False):
 
     return type_report_map[constraint_type](options_dict, with_id)
 
-def duplicate_constraints_report(info):
-    line_list = []
-    for constraint_info in info["constraint_info_list"]:
-        line_list.append(
-            constraint(info["constraint_type"], constraint_info)
-        )
+#Each value (callable taking report_item.info) returns string template.
+#Optionaly the template can contain placehodler {force} for next processing.
+#Placeholder {force} will be appended if is necessary and if is not presset
+CODE_TO_MESSAGE_BUILDER_MAP = {
+    codes.DUPLICATE_CONSTRAINTS_EXIST: lambda info:
+        "duplicate constraint already exists{force}\n" + "\n".join([
+            "  " + constraint(info["constraint_type"], constraint_info)
+            for constraint_info in info["constraint_info_list"]
+        ])
+    ,
 
-    return (
-        "duplicate constraint already exists{force}\n"
-        + "\n".join(["  " + line for line in line_list])
-    )
+    codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE: lambda info:
+        (
+            "{resource_id} is a {mode} resource, you should use the"
+            " {parent_type} id: {parent_id} when adding constraints"
+        ).format(
+            mode="master/slave" if info["parent_type"] == "master" else "clone",
+            **info
+        )
+    ,
+}

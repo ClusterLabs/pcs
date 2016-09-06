@@ -94,7 +94,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_UNKNOWN",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -105,7 +104,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "another_unknown_option",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     report_codes.FORCE_OPTIONS
                 )
@@ -131,7 +129,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_UNKNOWN",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 ),
@@ -142,7 +139,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "another_unknown_option",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 )
@@ -169,7 +165,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_WATCHDOG_DEV",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 ),
@@ -180,7 +175,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_OPTS",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 )
@@ -207,7 +201,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_WATCHDOG_DEV",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 ),
@@ -218,7 +211,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_OPTS",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 ),
@@ -229,7 +221,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_UNKNOWN",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     report_codes.FORCE_OPTIONS
                 )
@@ -257,7 +248,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_WATCHDOG_DEV",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 ),
@@ -268,7 +258,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_OPTS",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 ),
@@ -279,7 +268,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_UNKNOWN",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 ),
@@ -290,7 +278,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_PACEMAKER",
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
-                        "allowed_str": self.allowed_sbd_options_str
                     },
                     None
                 )
@@ -319,7 +306,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_WATCHDOG_TIMEOUT",
                         "option_value": "-1",
                         "allowed_values": "nonnegative integer",
-                        "allowed_values_str": "nonnegative integer",
                     },
                     None
                 )
@@ -341,7 +327,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_WATCHDOG_TIMEOUT",
                         "option_value": "not int",
                         "allowed_values": "nonnegative integer",
-                        "allowed_values_str": "nonnegative integer",
                     },
                     None
                 )
@@ -363,7 +348,6 @@ class ValidateSbdOptionsTest(TestCase):
                         "option_name": "SBD_WATCHDOG_TIMEOUT",
                         "option_value": None,
                         "allowed_values": "nonnegative integer",
-                        "allowed_values_str": "nonnegative integer",
                     },
                     None
                 )

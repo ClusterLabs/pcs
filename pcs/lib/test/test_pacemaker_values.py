@@ -125,8 +125,8 @@ class ValidateIdTest(TestCase):
         info = {
             "id": "",
             "id_description": desc,
-            "reason": "invalid first character",
             "invalid_character": "",
+            "is_first_char": True,
         }
         report = (severity.ERROR, report_codes.INVALID_ID, info)
 
@@ -191,8 +191,8 @@ class ValidateIdTest(TestCase):
         info = {
             "id": "",
             "id_description": desc,
-            "reason": "invalid character",
             "invalid_character": "",
+            "is_first_char": False,
         }
         report = (severity.ERROR, report_codes.INVALID_ID, info)
 
