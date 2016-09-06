@@ -603,10 +603,10 @@ restart
 Restart booth resources created by the "pcs booth create" command.
 .TP
 ticket grant <ticket> [<site address>]
-Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted. Cannot be run on an arbitrator.
+Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.  Specifying site address is mandatory when running this command on an arbitrator.
 .TP
 ticket revoke <ticket> [<site address>]
-Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted. Cannot be run on an arbitrator.
+Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.  Specifying site address is mandatory when running this command on an arbitrator.
 .TP
 status
 Print current status of booth on the local node.
