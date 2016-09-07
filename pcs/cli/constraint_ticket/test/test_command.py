@@ -65,3 +65,25 @@ class AddTest(TestCase):
             resource_in_clone_alowed=True,
             duplication_alowed=True,
         )
+
+class RemoveTest(TestCase):
+    def test_refuse_args_count(self):
+        self.assertRaises(CmdLineInputError, lambda: command.remove(
+            mock.MagicMock(),
+            ["TICKET"],
+            {},
+        ))
+        self.assertRaises(CmdLineInputError, lambda: command.remove(
+            mock.MagicMock(),
+            ["TICKET", "RESOURCE", "SOMETHING_ELSE"],
+            {},
+        ))
+
+    def test_call_library_remove_with_correct_attrs(self):
+        lib = mock.MagicMock(
+            constraint_ticket=mock.MagicMock(remove=mock.Mock())
+        )
+        command.remove(lib, ["TICKET", "RESOURCE"], {})
+        lib.constraint_ticket.remove.assert_called_once_with(
+            "TICKET", "RESOURCE",
+        )

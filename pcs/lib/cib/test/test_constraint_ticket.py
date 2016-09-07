@@ -8,10 +8,15 @@ from __future__ import (
 from functools import partial
 from pcs.test.tools.pcs_unittest import TestCase
 
+from lxml import etree
+
 from pcs.common import report_codes
 from pcs.lib.cib.constraint import ticket
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import (
+    assert_raise_library_error,
+    assert_xml_equal,
+)
 from pcs.test.tools.pcs_unittest import mock
 
 
@@ -306,3 +311,85 @@ class AreDuplicateWithResourceSet(TestCase):
             Element({"ticket": "ticket_key"}),
             Element({"ticket": "X"}),
         ))
+
+class RemovePlainTest(TestCase):
+    def test_remove_tickets_constraints_for_resource(self):
+        constraint_section = etree.fromstring("""
+            <constraints>
+                <rsc_ticket id="t1" ticket="tA" rsc="rA"/>
+                <rsc_ticket id="t2" ticket="tA" rsc="rB"/>
+                <rsc_ticket id="t3" ticket="tA" rsc="rA"/>
+                <rsc_ticket id="t4" ticket="tB" rsc="rA"/>
+                <rsc_ticket id="t5" ticket="tB" rsc="rB"/>
+            </constraints>
+        """)
+
+        ticket.remove_plain(
+            constraint_section,
+            ticket_key="tA",
+            resource_id="rA",
+        )
+
+        assert_xml_equal(etree.tostring(constraint_section).decode(), """
+            <constraints>
+                <rsc_ticket id="t2" ticket="tA" rsc="rB"/>
+                <rsc_ticket id="t4" ticket="tB" rsc="rA"/>
+                <rsc_ticket id="t5" ticket="tB" rsc="rB"/>
+            </constraints>
+        """)
+
+class RemoveWithSetTest(TestCase):
+    def test_remove_resource_references_and_empty_remaining_parents(self):
+        constraint_section = etree.fromstring("""
+            <constraints>
+                <rsc_ticket id="t1" ticket="tA">
+                    <resource_set id="rs1">
+                        <resource_ref id="rA"/>
+                    </resource_set>
+                    <resource_set id="rs2">
+                        <resource_ref id="rA"/>
+                    </resource_set>
+                </rsc_ticket>
+
+                <rsc_ticket id="t2" ticket="tA">
+                    <resource_set id="rs3">
+                        <resource_ref id="rA"/>
+                        <resource_ref id="rB"/>
+                    </resource_set>
+                    <resource_set id="rs4">
+                        <resource_ref id="rA"/>
+                    </resource_set>
+                </rsc_ticket>
+
+                <rsc_ticket id="t3" ticket="tB">
+                    <resource_set id="rs5">
+                        <resource_ref id="rA"/>
+                    </resource_set>
+                </rsc_ticket>
+            </constraints>
+        """)
+
+        ticket.remove_with_resource_set(
+            constraint_section,
+            ticket_key="tA",
+            resource_id="rA"
+        )
+
+        assert_xml_equal(
+            """
+                <constraints>
+                    <rsc_ticket id="t2" ticket="tA">
+                        <resource_set id="rs3">
+                            <resource_ref id="rB"/>
+                        </resource_set>
+                    </rsc_ticket>
+
+                    <rsc_ticket id="t3" ticket="tB">
+                        <resource_set id="rs5">
+                            <resource_ref id="rA"/>
+                        </resource_set>
+                    </rsc_ticket>
+                </constraints>
+            """,
+            etree.tostring(constraint_section).decode()
+        )

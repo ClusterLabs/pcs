@@ -68,3 +68,15 @@ def create(
     )
 
     env.push_cib(cib)
+
+def remove(env, ticket_key, resource_id):
+    """
+    remove all ticket constraint from resource
+    If resource is in resource set with another resources then only resource ref
+    is removed. If resource is alone in resource set whole constraint is removed.
+    """
+    cib = env.get_cib()
+    constraint_section = get_constraints(cib)
+    ticket.remove_plain(constraint_section, ticket_key, resource_id)
+    ticket.remove_with_resource_set(constraint_section, ticket_key, resource_id)
+    env.push_cib(cib)

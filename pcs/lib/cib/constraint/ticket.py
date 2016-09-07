@@ -104,6 +104,30 @@ def create_plain(constraint_section, options):
     element.attrib.update(options)
     return element
 
+def remove_plain(constraint_section, ticket_key, resource_id):
+    ticket_element_list = constraint_section.xpath(
+        './/rsc_ticket[@ticket="{0}" and @rsc="{1}"]'
+        .format(ticket_key, resource_id)
+    )
+
+    for ticket_element in ticket_element_list:
+        ticket_element.getparent().remove(ticket_element)
+
+def remove_with_resource_set(constraint_section, ticket_key, resource_id):
+    ref_element_list = constraint_section.xpath(
+        './/rsc_ticket[@ticket="{0}"]/resource_set/resource_ref[@id="{1}"]'
+        .format(ticket_key, resource_id)
+    )
+
+    for ref_element in ref_element_list:
+        set_element = ref_element.getparent()
+        set_element.remove(ref_element)
+        if not len(set_element):
+            ticket_element = set_element.getparent()
+            ticket_element.remove(set_element)
+            if not len(ticket_element):
+                ticket_element.getparent().remove(ticket_element)
+
 def are_duplicate_plain(element, other_element):
     return all(
         element.attrib.get(name, "") == other_element.attrib.get(name, "")

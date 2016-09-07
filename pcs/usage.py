@@ -1011,6 +1011,9 @@ Commands:
         Required constraint option is ticket=<ticket>. Optional constraint
         options are id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
 
+    ticket remove <ticket> <resource id>
+        Remove all ticket constraints with <ticket> from <resource id>.
+
     remove [constraint id]...
         Remove constraint(s) or constraint rules with the specified id(s).
 

@@ -2686,6 +2686,42 @@ class TicketAdd(ConstraintBaseTest):
             "  Master A loss-policy=fence ticket=T",
         ])
 
+class TicketRemoveTest(ConstraintBaseTest):
+    def test_remove_multiple_tickets(self):
+        #fixture
+        self.assert_pcs_success('constraint ticket add T A')
+        self.assert_pcs_success(
+            'constraint ticket add T A --force',
+            stdout_full=[
+                "Warning: duplicate constraint already exists",
+                "  A ticket=T (id:ticket-T-A)"
+            ]
+        )
+        self.assert_pcs_success(
+            'constraint ticket set A B setoptions ticket=T'
+        )
+        self.assert_pcs_success(
+            'constraint ticket set A setoptions ticket=T'
+        )
+        self.assert_pcs_success("constraint ticket show", stdout_full=[
+            "Ticket Constraints:",
+            "  A ticket=T",
+            "  A ticket=T",
+            "  Resource Sets:",
+            "    set A B setoptions ticket=T",
+            "    set A setoptions ticket=T",
+        ])
+
+        #test
+        self.assert_pcs_success("constraint ticket remove T A")
+
+        self.assert_pcs_success("constraint ticket show", stdout_full=[
+            "Ticket Constraints:",
+            "  Resource Sets:",
+            "    set B setoptions ticket=T",
+        ])
+
+
 class TicketShow(ConstraintBaseTest):
     def test_show_set(self):
         self.assert_pcs_success('constraint ticket set A B setoptions ticket=T')

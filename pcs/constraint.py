@@ -90,6 +90,7 @@ def constraint_cmd(argv):
             command_map = {
                 "set": ticket_command.create_with_set,
                 "add": ticket_command.add,
+                "remove": ticket_command.remove,
                 "show": ticket_command.show,
             }
             sub_command = argv[0] if argv else "show"

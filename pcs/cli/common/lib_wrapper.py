@@ -132,6 +132,7 @@ def load_module(env, middleware_factory, name):
                 'set': constraint_ticket.create_with_set,
                 'show': constraint_ticket.show,
                 'add': constraint_ticket.create,
+                'remove': constraint_ticket.remove,
             }
         )
 
