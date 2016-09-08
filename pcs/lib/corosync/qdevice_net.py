@@ -113,6 +113,15 @@ def qdevice_status_cluster_text(runner, cluster=None, verbose=False):
         )
     return stdout
 
+def qdevice_connected_clusters(status_cluster_text):
+    connected_clusters = []
+    regexp = re.compile(r'^Cluster "(?P<cluster>[^"]+)":$')
+    for line in status_cluster_text.splitlines():
+        match = regexp.search(line)
+        if match:
+            connected_clusters.append(match.group("cluster"))
+    return connected_clusters
+
 def qdevice_enable(runner):
     """
     make qdevice start automatically on boot on local host
