@@ -155,9 +155,8 @@ class AtbHasToBeEnabledTest(TestCase):
         self.assertFalse(lib_sbd.atb_has_to_be_enabled(
             self.mock_runner, self.mock_conf, 1
         ))
-        mock_is_needed.assert_called_once_with(
-            self.mock_runner, self.mock_conf, 1
-        )
+        self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
+        mock_is_needed.assert_not_called()
 
     def test_atb_needed_is_disabled(self, mock_is_needed):
         mock_is_needed.return_value = True
@@ -165,6 +164,7 @@ class AtbHasToBeEnabledTest(TestCase):
         self.assertTrue(lib_sbd.atb_has_to_be_enabled(
             self.mock_runner, self.mock_conf, -1
         ))
+        self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_called_once_with(
             self.mock_runner, self.mock_conf, -1
         )
@@ -175,9 +175,8 @@ class AtbHasToBeEnabledTest(TestCase):
         self.assertFalse(lib_sbd.atb_has_to_be_enabled(
             self.mock_runner, self.mock_conf, 2
         ))
-        mock_is_needed.assert_called_once_with(
-            self.mock_runner, self.mock_conf, 2
-        )
+        self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
+        mock_is_needed.assert_not_called()
 
     def test_atb_not_needed_is_disabled(self, mock_is_needed):
         mock_is_needed.return_value = False
@@ -185,6 +184,7 @@ class AtbHasToBeEnabledTest(TestCase):
         self.assertFalse(lib_sbd.atb_has_to_be_enabled(
             self.mock_runner, self.mock_conf, -2
         ))
+        self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_called_once_with(
             self.mock_runner, self.mock_conf, -2
         )

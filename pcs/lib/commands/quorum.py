@@ -283,14 +283,23 @@ def remove_device(lib_env, skip_offline_nodes=False):
     cfg = lib_env.get_corosync_conf()
     model, dummy_options, dummy_options = cfg.get_quorum_device_settings()
     cfg.remove_quorum_device()
+
+    if lib_env.is_corosync_conf_live:
+        # fix quorum options for SBD to work properly
+        if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):
+            lib_env.report_processor.process(reports.sbd_requires_atb())
+            cfg.set_quorum_options(
+                lib_env.report_processor, {"auto_tie_breaker": "1"}
+            )
+
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
     if lib_env.is_corosync_conf_live:
+        communicator = lib_env.node_communicator()
         # disable qdevice
         lib_env.report_processor.process(
             reports.service_disable_started("corosync-qdevice")
         )
-        communicator = lib_env.node_communicator()
         parallel_nodes_communication_helper(
             qdevice_client.remote_client_disable,
             [
@@ -304,7 +313,6 @@ def remove_device(lib_env, skip_offline_nodes=False):
         lib_env.report_processor.process(
             reports.service_stop_started("corosync-qdevice")
         )
-        communicator = lib_env.node_communicator()
         parallel_nodes_communication_helper(
             qdevice_client.remote_client_stop,
             [
