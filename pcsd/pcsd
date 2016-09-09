@@ -42,6 +42,8 @@ start() {
         export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
         $exec $params > /dev/null 2>&1 &
         echo $! > $pidfile
+        # give it time to fully start or fail
+        sleep 2
         if status $prog > /dev/null 2>&1; then
             touch $lockfile
             success
