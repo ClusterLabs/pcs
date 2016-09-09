@@ -123,7 +123,7 @@ def list_property(argv):
 
     print("Cluster Properties:")
     for prop,val in sorted(properties.items()):
-        print(" " + prop + ": " + val)
+        print(" {0}: {1}".format(prop, val))
 
     node_attributes = utils.get_node_attributes(
         filter_attr=(None if print_all else argv[0])

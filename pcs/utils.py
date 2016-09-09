@@ -2668,33 +2668,44 @@ def get_cluster_properties_definition():
     ]
     definition = {}
     for source in sources:
-        output, retval = run([source["path"], "metadata"])
+        stdout, stderr, retval = cmd_runner().run([source["path"], "metadata"])
         if retval != 0:
-            err("unable to run {0}\n".format(source["name"]) + output)
-        etree = ET.fromstring(output)
-        for e in etree.findall("./parameters/parameter"):
-            prop = get_cluster_property_from_xml(e)
-            if prop["name"] not in banned_props:
-                prop["source"] = source["name"]
-                prop["advanced"] = prop["name"] not in basic_props
-                if prop["name"] in readable_names:
-                    prop["readable_name"] = readable_names[prop["name"]]
-                else:
-                    prop["readable_name"] = prop["name"]
-                definition[prop["name"]] = prop
+            err("unable to run {0}\n{1}".format(source["name"], stderr))
+        try:
+            etree = ET.fromstring(stdout)
+            for e in etree.findall("./parameters/parameter"):
+                prop = get_cluster_property_from_xml(e)
+                if prop["name"] not in banned_props:
+                    prop["source"] = source["name"]
+                    prop["advanced"] = prop["name"] not in basic_props
+                    if prop["name"] in readable_names:
+                        prop["readable_name"] = readable_names[prop["name"]]
+                    else:
+                        prop["readable_name"] = prop["name"]
+                    definition[prop["name"]] = prop
+        except xml.parsers.expat.ExpatError as e:
+            err("unable to parse {0} metadata definition: {1}".format(
+                source["name"],
+                e
+            ))
+        except ET.ParseError as e:
+            err("unable to parse {0} metadata definition: {1}".format(
+                source["name"],
+                e
+            ))
     return definition
 
 
 def get_cluster_property_from_xml(etree_el):
     property = {
-        "name": etree_el.get("name"),
-        "shortdesc": etree_el.find("shortdesc").text,
-        "longdesc": etree_el.find("longdesc").text
+        "name": etree_el.get("name", ""),
+        "shortdesc": "",
+        "longdesc": "",
     }
-    if property["shortdesc"] is None:
-        property["shortdesc"] = ""
-    if property["longdesc"] is None:
-        property["longdesc"] = ""
+    for item in ["shortdesc", "longdesc"]:
+        item_el = etree_el.find(item)
+        if item_el is not None and item_el.text is not None:
+            property[item] = item_el.text
 
     content = etree_el.find("content")
     if content is None:
