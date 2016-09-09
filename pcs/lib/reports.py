@@ -857,6 +857,23 @@ def qdevice_get_status_error(model, reason):
         }
     )
 
+def qdevice_used_by_clusters(
+    clusters, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Qdevice is currently being used by clusters, cannot stop it unless forced
+    """
+    return ReportItem(
+        report_codes.QDEVICE_USED_BY_CLUSTERS,
+        severity,
+        "Quorum device is currently being used by cluster(s): {clusters_str}",
+        info={
+            "clusters": clusters,
+            "clusters_str": ", ".join(clusters),
+        },
+        forceable=forceable
+    )
+
 def cman_unsupported_command():
     """
     requested library command is not available as local cluster is CMAN based

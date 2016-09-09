@@ -115,11 +115,11 @@ def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
         node.
     """
     return (
+        not corosync_conf_facade.is_enabled_auto_tie_breaker()
+        and
         is_auto_tie_breaker_needed(
             runner, corosync_conf_facade, node_number_modifier
         )
-        and
-        not corosync_conf_facade.is_enabled_auto_tie_breaker()
     )
 
 

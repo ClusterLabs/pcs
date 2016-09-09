@@ -92,7 +92,7 @@ def qdevice_destroy_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     model = argv[0]
-    lib.qdevice.destroy(model)
+    lib.qdevice.destroy(model, modifiers["force"])
 
 def qdevice_start_cmd(lib, argv, modifiers):
     if len(argv) != 1:
@@ -104,7 +104,7 @@ def qdevice_stop_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     model = argv[0]
-    lib.qdevice.stop(model)
+    lib.qdevice.stop(model, modifiers["force"])
 
 def qdevice_kill_cmd(lib, argv, modifiers):
     if len(argv) != 1:

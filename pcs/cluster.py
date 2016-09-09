@@ -1426,7 +1426,6 @@ def cluster_node(argv):
                 "cluster is not configured for RRP, "
                 "you must not specify ring 1 address for the node"
             )
-        corosync_conf = None
         (canAdd, error) =  utils.canAddNodeToCluster(node0)
         if not canAdd:
             utils.err("Unable to add '%s' to cluster: %s" % (node0, error))
@@ -1434,7 +1433,29 @@ def cluster_node(argv):
         report_processor = lib_env.report_processor
         node_communicator = lib_env.node_communicator()
         node_addr = NodeAddresses(node0, node1)
+
+        # First set up everything else than corosync. Once the new node is
+        # present in corosync.conf / cluster.conf, it's considered part of a
+        # cluster and the node add command cannot be run again. So we need to
+        # minimize the amout of actions (and therefore possible failures) after
+        # adding the node to corosync.
         try:
+            # qdevice setup
+            if not utils.is_rhel6():
+                conf_facade = corosync_conf_facade.from_string(
+                    utils.getCorosyncConf()
+                )
+                qdevice_model, qdevice_model_options, _ = conf_facade.get_quorum_device_settings()
+                if qdevice_model == "net":
+                    _add_device_model_net(
+                        lib_env,
+                        qdevice_model_options["host"],
+                        conf_facade.get_cluster_name(),
+                        [node_addr],
+                        skip_offline_nodes=False
+                    )
+
+            # sbd setup
             if lib_sbd.is_sbd_enabled(utils.cmd_runner()):
                 if "--watchdog" not in utils.pcs_options:
                     watchdog = settings.sbd_watchdog_default
@@ -1475,6 +1496,7 @@ def cluster_node(argv):
                     report_processor, node_communicator, node_addr
                 )
 
+            # booth setup
             booth_sync.send_all_config_to_node(
                 node_communicator,
                 report_processor,
@@ -1489,6 +1511,8 @@ def cluster_node(argv):
                 [node_communicator_exception_to_report_item(e)]
             )
 
+        # Now add the new node to corosync.conf / cluster.conf
+        corosync_conf = None
         for my_node in utils.getNodesFromCorosyncConf():
             retval, output = utils.addLocalNode(my_node, node0, node1)
             if retval != 0:
@@ -1523,24 +1547,6 @@ def cluster_node(argv):
                         utils.err("Unable to set pcsd configs")
                 except:
                     utils.err('Unable to communicate with pcsd')
-
-            # set qdevice-net certificates if needed
-            if not utils.is_rhel6():
-                try:
-                    conf_facade = corosync_conf_facade.from_string(
-                        corosync_conf
-                    )
-                    qdevice_model, qdevice_model_options, _ = conf_facade.get_quorum_device_settings()
-                    if qdevice_model == "net":
-                        _add_device_model_net(
-                            lib_env,
-                            qdevice_model_options["host"],
-                            conf_facade.get_cluster_name(),
-                            [node_addr],
-                            skip_offline_nodes=False
-                        )
-                except LibraryError as e:
-                    process_library_reports(e.args)
 
             print("Setting up corosync...")
             utils.setCorosyncConfig(node0, corosync_conf)

@@ -213,6 +213,56 @@ class QdeviceStatusClusterTest(TestCase):
         self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-l"])
 
 
+class QdeviceConnectedClustersTest(TestCase):
+    def test_empty_status(self):
+        status = ""
+        self.assertEqual(
+            [],
+            lib.qdevice_connected_clusters(status)
+        )
+
+    def test_one_cluster(self):
+        status = """\
+Cluster "rhel72":
+    Algorithm:          LMS
+    Tie-breaker:        Node with lowest node ID
+    Node ID 2:
+        Client address:         ::ffff:192.168.122.122:59738
+        Configured node list:   1, 2
+        Membership node list:   1, 2
+        Vote:                   ACK (ACK)
+    Node ID 1:
+        Client address:         ::ffff:192.168.122.121:43420
+        Configured node list:   1, 2
+        Membership node list:   1, 2
+        Vote:                   ACK (ACK)
+"""
+        self.assertEqual(
+            ["rhel72"],
+            lib.qdevice_connected_clusters(status)
+        )
+
+    def test_more_clusters(self):
+        status = """\
+Cluster "rhel72":
+Cluster "rhel73":
+"""
+        self.assertEqual(
+            ["rhel72", "rhel73"],
+            lib.qdevice_connected_clusters(status)
+        )
+
+    def test_invalid_status(self):
+        status = """\
+Cluster:
+    Cluster "rhel72":
+"""
+        self.assertEqual(
+            [],
+            lib.qdevice_connected_clusters(status)
+        )
+
+
 @mock.patch("pcs.lib.corosync.qdevice_net._get_output_certificate")
 @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
 class QdeviceSignCertificateRequestTest(CertificateTestCase):

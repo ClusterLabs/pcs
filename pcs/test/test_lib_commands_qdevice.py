@@ -345,6 +345,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
         )
 
 
+@mock.patch("pcs.lib.corosync.qdevice_net.qdevice_status_cluster_text")
 @mock.patch("pcs.lib.external.stop_service")
 @mock.patch("pcs.lib.external.disable_service")
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_destroy")
@@ -355,7 +356,11 @@ class QdeviceNetSetupTest(QdeviceTestCase):
     lambda self: "mock_runner"
 )
 class QdeviceNetDestroyTest(QdeviceTestCase):
-    def test_success(self, mock_net_destroy, mock_net_disable, mock_net_stop):
+    def test_success_not_used(
+        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
+    ):
+        mock_status.return_value = ""
+
         lib.qdevice_destroy(self.lib_env, "net")
 
         mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
@@ -398,9 +403,85 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             ]
         )
 
-    def test_stop_failed(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop
+    def test_success_used_forced(
+        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
     ):
+        mock_status.return_value = 'Cluster "a_cluster":\n'
+
+        lib.qdevice_destroy(self.lib_env, "net", proceed_if_used=True)
+
+        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
+        mock_net_disable.assert_called_once_with(
+            "mock_runner",
+            "corosync-qnetd"
+        )
+        mock_net_destroy.assert_called_once_with()
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.QDEVICE_USED_BY_CLUSTERS,
+                    {
+                        "clusters": ["a_cluster"],
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_STOP_STARTED,
+                    {
+                        "service": "quorum device",
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_STOP_SUCCESS,
+                    {
+                        "service": "quorum device",
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_DISABLE_SUCCESS,
+                    {
+                        "service": "quorum device",
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.QDEVICE_DESTROY_SUCCESS,
+                    {
+                        "model": "net",
+                    }
+                )
+            ]
+        )
+
+    def test_used_not_forced(
+        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
+    ):
+        mock_status.return_value = 'Cluster "a_cluster":\n'
+
+        assert_raise_library_error(
+            lambda: lib.qdevice_destroy(self.lib_env, "net"),
+            (
+                severity.ERROR,
+                report_codes.QDEVICE_USED_BY_CLUSTERS,
+                {
+                    "clusters": ["a_cluster"],
+                },
+                report_codes.FORCE_QDEVICE_USED
+            ),
+        )
+
+        mock_net_stop.assert_not_called()
+        mock_net_disable.assert_not_called()
+        mock_net_destroy.assert_not_called()
+
+    def test_stop_failed(
+        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
+    ):
+        mock_status.return_value = ""
         mock_net_stop.side_effect = StopServiceError(
             "test service",
             "test error"
@@ -435,8 +516,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
         )
 
     def test_disable_failed(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop
+        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
     ):
+        mock_status.return_value = ""
         mock_net_disable.side_effect = DisableServiceError(
             "test service",
             "test error"
@@ -481,8 +563,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
         )
 
     def test_destroy_failed(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop
+        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
     ):
+        mock_status.return_value = ""
         mock_net_destroy.side_effect = LibraryError("mock_report_item")
 
         self.assertRaises(
@@ -755,6 +838,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
         )
 
 
+@mock.patch("pcs.lib.corosync.qdevice_net.qdevice_status_cluster_text")
 @mock.patch("pcs.lib.external.stop_service")
 @mock.patch("pcs.lib.env.is_cman_cluster", lambda self: False)
 @mock.patch.object(
@@ -763,8 +847,11 @@ class QdeviceNetStartTest(QdeviceTestCase):
     lambda self: "mock_runner"
 )
 class QdeviceNetStopTest(QdeviceTestCase):
-    def test_success(self, mock_net_stop):
-        lib.qdevice_stop(self.lib_env, "net")
+    def test_success_not_used(self, mock_net_stop, mock_status):
+        mock_status.return_value = ""
+
+        lib.qdevice_stop(self.lib_env, "net", proceed_if_used=False)
+
         mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -786,7 +873,61 @@ class QdeviceNetStopTest(QdeviceTestCase):
             ]
         )
 
-    def test_failed(self, mock_net_stop):
+    def test_success_used_forced(self, mock_net_stop, mock_status):
+        mock_status.return_value = 'Cluster "a_cluster":\n'
+
+        lib.qdevice_stop(self.lib_env, "net", proceed_if_used=True)
+
+        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.WARNING,
+                    report_codes.QDEVICE_USED_BY_CLUSTERS,
+                    {
+                        "clusters": ["a_cluster"],
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_STOP_STARTED,
+                    {
+                        "service": "quorum device",
+                    }
+                ),
+                (
+                    severity.INFO,
+                    report_codes.SERVICE_STOP_SUCCESS,
+                    {
+                        "service": "quorum device",
+                    }
+                )
+            ]
+        )
+
+    def test_used_not_forced(self, mock_net_stop, mock_status):
+        mock_status.return_value = 'Cluster "a_cluster":\n'
+
+        assert_raise_library_error(
+            lambda: lib.qdevice_stop(
+                self.lib_env,
+                "net",
+                proceed_if_used=False
+            ),
+            (
+                severity.ERROR,
+                report_codes.QDEVICE_USED_BY_CLUSTERS,
+                {
+                    "clusters": ["a_cluster"],
+                },
+                report_codes.FORCE_QDEVICE_USED
+            ),
+        )
+        mock_net_stop.assert_not_called()
+
+    def test_failed(self, mock_net_stop, mock_status):
+        mock_status.return_value = ""
         mock_net_stop.side_effect = StopServiceError(
             "test service",
             "test error"
