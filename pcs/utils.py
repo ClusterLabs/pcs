@@ -2534,7 +2534,7 @@ def dom_update_utilization(dom_element, attributes, id_prefix=""):
         id_prefix + dom_element.getAttribute("id") + "-utilization"
     )
 
-    for name, value in attributes:
+    for name, value in sorted(attributes.items()):
         if value != "" and not is_int(value):
             err(
                 "Value of utilization attribute must be integer: "

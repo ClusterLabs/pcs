@@ -268,6 +268,20 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
     def test_node_utilization_set_invalid(self):
+        output, returnVal = pcs(temp_cib, "node utilization rh7-1 test")
+        expected_out = """\
+Error: missing value of 'test' option
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(temp_cib, "node utilization rh7-1 =10")
+        expected_out = """\
+Error: missing key in '=10' option
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
         output, returnVal = pcs(temp_cib, "node utilization rh7-0 test=10")
         expected_out = """\
 Error: Unable to find a node: rh7-0

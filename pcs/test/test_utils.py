@@ -1400,12 +1400,12 @@ class UtilsTest(unittest.TestCase):
         """).documentElement
         self.assertRaises(
             SystemExit,
-            utils.dom_update_utilization, el, [("name", "invalid_val")]
+            utils.dom_update_utilization, el, {"name": "invalid_val"}
         )
 
         self.assertRaises(
             SystemExit,
-            utils.dom_update_utilization, el, [("name", "0.01")]
+            utils.dom_update_utilization, el, {"name": "0.01"}
         )
 
         sys.stderr = tmp_stderr
@@ -1415,7 +1415,12 @@ class UtilsTest(unittest.TestCase):
         <resource id="test_id"/>
         """).documentElement
         utils.dom_update_utilization(
-            el, [("name", ""), ("key", "-1"), ("keys", "90")]
+            el,
+            {
+                "name": "",
+                "key": "-1",
+                "keys": "90",
+            }
         )
 
         self.assertEqual(len(dom_get_child_elements(el)), 1)
@@ -1459,7 +1464,11 @@ class UtilsTest(unittest.TestCase):
         </resource>
         """).documentElement
         utils.dom_update_utilization(
-            el, [("key", "100"), ("keys", "")]
+            el,
+            {
+                "key": "100",
+                "keys": "",
+            }
         )
 
         u = dom_get_child_elements(el)[0]

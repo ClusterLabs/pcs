@@ -191,7 +191,10 @@ def resource_cmd(argv):
         elif len(argv) == 1:
             print_resource_utilization(argv.pop(0))
         else:
-            set_resource_utilization(argv.pop(0), argv)
+            try:
+                set_resource_utilization(argv.pop(0), argv)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(e, "resource", "utilization")
     elif (sub_cmd == "get_resource_agent_info"):
         get_resource_agent_info(argv)
     else:
@@ -2809,8 +2812,7 @@ def set_resource_utilization(resource_id, argv):
     resource_el = utils.dom_get_resource(cib, resource_id)
     if resource_el is None:
         utils.err("Unable to find a resource: {0}".format(resource_id))
-
-    utils.dom_update_utilization(resource_el, utils.convert_args_to_tuples(argv))
+    utils.dom_update_utilization(resource_el, prepare_options(argv))
     utils.replace_cib_configuration(cib)
 
 def print_resource_utilization(resource_id):

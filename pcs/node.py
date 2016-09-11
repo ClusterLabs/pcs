@@ -56,7 +56,10 @@ def node_cmd(argv):
         elif len(argv) == 1:
             print_node_utilization(argv.pop(0), filter_name=filter_name)
         else:
-            set_node_utilization(argv.pop(0), argv)
+            try:
+                set_node_utilization(argv.pop(0), argv)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(e, "node", "utilization")
     # pcs-to-pcsd use only
     elif sub_cmd == "pacemaker-status":
         node_pacemaker_status()
@@ -152,9 +155,7 @@ def set_node_utilization(node, argv):
     if node_el is None:
         utils.err("Unable to find a node: {0}".format(node))
 
-    utils.dom_update_utilization(
-        node_el, utils.convert_args_to_tuples(argv), "nodes-"
-    )
+    utils.dom_update_utilization(node_el, prepare_options(argv), "nodes-")
     utils.replace_cib_configuration(cib)
 
 def print_node_utilization(filter_node=None, filter_name=None):
