@@ -500,9 +500,9 @@ Pcs.UtilizationTableComponent = Ember.Component.extend({
     },
     add: function(form_id) {
       var id = "#" + form_id;
-      var name = $(id + " input[name='new_utilization_name']").val();
+      var name = $(id + " input[name='new_utilization_name']").val().trim();
       if (name == "") {
-        return;
+        alert("Name of utilization attribute should be non-empty string.");
       }
       var value = $(id + " input[name='new_utilization_value']").val().trim();
       if (!is_integer(value)) {
