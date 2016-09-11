@@ -120,7 +120,7 @@ module ClusterEntity
       status = ClusterEntity::CRMResourceStatus.new
       status.id = primitive.id
       status.resource_agent = primitive.agentname
-      status.managed = false
+      status.managed = true
       status.failed = resource[:failed]
       status.role = nil
       status.active = resource[:active]

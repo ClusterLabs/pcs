@@ -1012,7 +1012,7 @@ Pcs.PrimitiveObj = Pcs.ResourceObj.extend({
   is_unmanaged: function() {
     var instance_status_list = this.get("instance_status");
     if (!instance_status_list) {
-      return false;
+      return true;
     }
     var is_managed = true;
     $.each(instance_status_list, function(_, instance_status) {
