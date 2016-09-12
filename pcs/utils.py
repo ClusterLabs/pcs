@@ -474,6 +474,16 @@ def getNodesFromPacemaker():
     except LibraryError as e:
         process_library_reports(e.args)
 
+def getNodeAttributesFromPacemaker():
+    try:
+        return [
+            node.attrs
+            for node in ClusterState(getClusterStateXml()).node_section.nodes
+        ]
+    except LibraryError as e:
+        process_library_reports(e.args)
+
+
 def hasCorosyncConf(conf=None):
     if not conf:
         if is_rhel6():
@@ -2534,7 +2544,7 @@ def dom_update_utilization(dom_element, attributes, id_prefix=""):
         id_prefix + dom_element.getAttribute("id") + "-utilization"
     )
 
-    for name, value in attributes:
+    for name, value in sorted(attributes.items()):
         if value != "" and not is_int(value):
             err(
                 "Value of utilization attribute must be integer: "

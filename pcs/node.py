@@ -56,7 +56,10 @@ def node_cmd(argv):
         elif len(argv) == 1:
             print_node_utilization(argv.pop(0), filter_name=filter_name)
         else:
-            set_node_utilization(argv.pop(0), argv)
+            try:
+                set_node_utilization(argv.pop(0), argv)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(e, "node", "utilization")
     # pcs-to-pcsd use only
     elif sub_cmd == "pacemaker-status":
         node_pacemaker_status()
@@ -150,17 +153,56 @@ def set_node_utilization(node, argv):
     cib = utils.get_cib_dom()
     node_el = utils.dom_get_node(cib, node)
     if node_el is None:
-        utils.err("Unable to find a node: {0}".format(node))
+        if utils.usefile:
+            utils.err("Unable to find a node: {0}".format(node))
 
-    utils.dom_update_utilization(
-        node_el, utils.convert_args_to_tuples(argv), "nodes-"
-    )
+        for attrs in utils.getNodeAttributesFromPacemaker():
+            if attrs.name == node and attrs.type == "remote":
+                node_attrs = attrs
+                break
+        else:
+            utils.err("Unable to find a node: {0}".format(node))
+
+        nodes_section_list = cib.getElementsByTagName("nodes")
+        if len(nodes_section_list) == 0:
+            utils.err("Unable to get nodes section of cib")
+
+        dom = nodes_section_list[0].ownerDocument
+        node_el = dom.createElement("node")
+        node_el.setAttribute("id", node_attrs.id)
+        node_el.setAttribute("type", node_attrs.type)
+        node_el.setAttribute("uname", node_attrs.name)
+        nodes_section_list[0].appendChild(node_el)
+
+    utils.dom_update_utilization(node_el, prepare_options(argv), "nodes-")
     utils.replace_cib_configuration(cib)
 
 def print_node_utilization(filter_node=None, filter_name=None):
     cib = utils.get_cib_dom()
+
+    node_element_list = cib.getElementsByTagName("node")
+
+
+    if(
+        filter_node
+        and
+        filter_node not in [
+            node_element.getAttribute("uname")
+            for node_element in node_element_list
+        ]
+        and (
+            utils.usefile
+            or
+            filter_node not in [
+                node_attrs.name for node_attrs
+                in utils.getNodeAttributesFromPacemaker()
+            ]
+        )
+    ):
+        utils.err("Unable to find a node: {0}".format(filter_node))
+
     utilization = {}
-    for node_el in cib.getElementsByTagName("node"):
+    for node_el in node_element_list:
         node = node_el.getAttribute("uname")
         if filter_node is not None and node != filter_node:
             continue

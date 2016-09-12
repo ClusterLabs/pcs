@@ -2240,7 +2240,7 @@ def set_node_utilization(params, reqest, auth_user)
 
   if retval != 0
     return [400, "Unable to set utilization '#{name}=#{value}' for node " +
-      "'#{res_id}': #{stderr.join('')}"
+      "'#{node}': #{stderr.join('')}"
     ]
   end
   return 200

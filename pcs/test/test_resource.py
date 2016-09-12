@@ -4444,6 +4444,24 @@ Resource Utilization:
         self.assertEqual(0, returnVal)
 
     def test_resource_utilization_set_invalid(self):
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy test"
+        )
+        expected_out = """\
+Error: missing value of 'test' option
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(
+            temp_large_cib, "resource utilization dummy =10"
+        )
+        expected_out = """\
+Error: missing key in '=10' option
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
         output, returnVal = pcs(temp_large_cib, "resource utilization dummy0")
         expected_out = """\
 Error: Unable to find a resource: dummy0
