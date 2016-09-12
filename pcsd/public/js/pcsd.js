@@ -491,13 +491,16 @@ function fade_in_out(id) {
   });
 }
 
-function node_link_action(link_selector, url, label) {
+function node_link_action(link_selector, url, label, node_param_name) {
+  node_param_name = typeof node_param_name !== "undefined" ? node_param_name : "name";
   var node = $.trim($("#node_info_header_title_name").text());
+  var data = {};
+  data[node_param_name] = node;
   fade_in_out(link_selector);
   ajax_wrapper({
     type: 'POST',
     url: url,
-    data: {"name": node},
+    data: data,
     success: function() {
     },
     error: function (xhr, status, error) {
@@ -505,6 +508,44 @@ function node_link_action(link_selector, url, label) {
         "Unable to " + label + " node '" + node + "' "
         + ajax_simple_error(xhr, status, error)
       );
+    }
+  });
+}
+
+function node_link_action_standby_wrapper(link_selector, url, label) {
+/*
+There is a bug in pcs-0.9.138 and older in processing the standby and unstandby
+request. JS of that pcsd always sent nodename in "node" parameter, which caused
+pcsd daemon to run the standby command locally with param["node"] as node name.
+This worked fine if the local cluster was managed from JS, as pacemaker simply
+put the requested node into standby. However it didn't work for managing
+non-local clusters, as the command was run on the local cluster everytime. Pcsd
+daemon would send the request to a remote cluster if the param["name"] variable
+was set, and that never happened. That however wouldn't work either, as then
+the required parameter "node" wasn't sent in the request causing an exception
+on the receiving node. This is fixed in
+https://github.com/ClusterLabs/pcs/commit/053f63ca109d9ef9e7f0416e90aab8e140480f5b
+
+In order to be able to put nodes running pcs-0.9.138 into standby, the nodename
+must be sent in "node" param, and the "name" must not be sent.
+
+Luckily a /remote/get_sw_versions call was introduced in pcs-0.9.139 so we can
+determine what param should be used.
+*/
+  ajax_wrapper({
+    type: 'POST',
+    url: get_cluster_remote_url() + "get_sw_versions",
+    data: {},
+    success: function() {
+      node_link_action(link_selector, url, label);
+    },
+    error: function (xhr, status, error) {
+      if((xhr.status == 404) || ($.trim(error) == "Not Found")) {
+        node_link_action(link_selector, url, label, "node");
+      }
+      else {
+        node_link_action(link_selector, url, label);
+      }
     }
   });
 }
@@ -527,12 +568,12 @@ function setup_node_links() {
     );
   });
   $("#node_standby").click(function() {
-    node_link_action(
+    node_link_action_standby_wrapper(
       "#node_standby", get_cluster_remote_url() + "node_standby", "standby"
     );
   });
   $("#node_unstandby").click(function() {
-    node_link_action(
+    node_link_action_standby_wrapper(
       "#node_unstandby",
       get_cluster_remote_url() + "node_unstandby",
       "unstandby"

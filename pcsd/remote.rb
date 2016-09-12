@@ -334,9 +334,8 @@ end
 def node_standby(params, request, auth_user)
   if params[:name]
     code, response = send_request_with_token(
-      auth_user, params[:name], 'node_standby', true, {"node"=>params[:name]}
+      auth_user, params[:name], 'node_standby', true
     )
-    # data={"node"=>params[:name]} for backward compatibility with older versions of pcs/pcsd
   else
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
@@ -350,9 +349,8 @@ end
 def node_unstandby(params, request, auth_user)
   if params[:name]
     code, response = send_request_with_token(
-      auth_user, params[:name], 'node_unstandby', true, {"node"=>params[:name]}
+      auth_user, params[:name], 'node_unstandby', true
     )
-    # data={"node"=>params[:name]} for backward compatibility with older versions of pcs/pcsd
   else
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
