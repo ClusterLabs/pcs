@@ -474,6 +474,16 @@ def getNodesFromPacemaker():
     except LibraryError as e:
         process_library_reports(e.args)
 
+def getNodeAttributesFromPacemaker():
+    try:
+        return [
+            node.attrs
+            for node in ClusterState(getClusterStateXml()).node_section.nodes
+        ]
+    except LibraryError as e:
+        process_library_reports(e.args)
+
+
 def hasCorosyncConf(conf=None):
     if not conf:
         if is_rhel6():

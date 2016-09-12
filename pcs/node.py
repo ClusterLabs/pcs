@@ -153,7 +153,26 @@ def set_node_utilization(node, argv):
     cib = utils.get_cib_dom()
     node_el = utils.dom_get_node(cib, node)
     if node_el is None:
-        utils.err("Unable to find a node: {0}".format(node))
+        if utils.usefile:
+            utils.err("Unable to find a node: {0}".format(node))
+
+        for attrs in utils.getNodeAttributesFromPacemaker():
+            if attrs.name == node and attrs.type == "remote":
+                node_attrs = attrs
+                break
+        else:
+            utils.err("Unable to find a node: {0}".format(node))
+
+        nodes_section_list = cib.getElementsByTagName("nodes")
+        if len(nodes_section_list) == 0:
+            utils.err("Unable to get nodes section of cib")
+
+        dom = nodes_section_list[0].ownerDocument
+        node_el = dom.createElement("node")
+        node_el.setAttribute("id", node_attrs.id)
+        node_el.setAttribute("type", node_attrs.type)
+        node_el.setAttribute("uname", node_attrs.name)
+        nodes_section_list[0].appendChild(node_el)
 
     utils.dom_update_utilization(node_el, prepare_options(argv), "nodes-")
     utils.replace_cib_configuration(cib)
