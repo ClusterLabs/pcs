@@ -1011,6 +1011,9 @@ Commands:
         Required constraint option is ticket=<ticket>. Optional constraint
         options are id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
 
+    ticket remove <ticket> <resource id>
+        Remove all ticket constraints with <ticket> from <resource id>.
+
     remove [constraint id]...
         Remove constraint(s) or constraint rules with the specified id(s).
 
@@ -1433,8 +1436,9 @@ Commands:
     destroy
         Remove booth configuration files.
 
-    ticket add <ticket>
-        Add new ticket to the current configuration.
+    ticket add <ticket> [<name>=<value> ...]
+        Add new ticket to the current configuration. Ticket options are
+        specified in booth manpage.
 
     ticket remove <ticket>
         Remove the specified ticket from the current configuration.
@@ -1456,12 +1460,14 @@ Commands:
     ticket grant <ticket> [<site address>]
         Grant the ticket for the site specified by address.  Site address which
         has been specified with 'pcs booth create' command is used if
-        'site address' is omitted. Cannot be run on an arbitrator.
+        'site address' is omitted.  Specifying site address is mandatory when
+        running this command on an arbitrator.
 
     ticket revoke <ticket> [<site address>]
         Revoke the ticket for the site specified by address.  Site address which
         has been specified with 'pcs booth create' command is used if
-        'site address' is omitted. Cannot be run on an arbitrator.
+        'site address' is omitted.  Specifying site address is mandatory when
+        running this command on an arbitrator.
 
     status
         Print current status of booth on the local node.

@@ -64,7 +64,11 @@ def config_ticket_add(lib, arg_list, modifiers):
     """
     if not arg_list:
         raise CmdLineInputError
-    lib.booth.config_ticket_add(arg_list[0], prepare_options(arg_list[1:]))
+    lib.booth.config_ticket_add(
+        arg_list[0],
+        prepare_options(arg_list[1:]),
+        allow_unknown_options=modifiers["force"]
+    )
 
 def config_ticket_remove(lib, arg_list, modifiers):
     """

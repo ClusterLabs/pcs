@@ -45,9 +45,10 @@ class ConfigTicketAddTest(TestCase):
         command.config_ticket_add(
             lib,
             arg_list=["TICKET_A", "timeout=10"],
-            modifiers={}
+            modifiers={"force": True}
         )
         lib.booth.config_ticket_add.assert_called_once_with(
             "TICKET_A",
             {"timeout": "10"},
+            allow_unknown_options=True
         )

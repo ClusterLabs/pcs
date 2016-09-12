@@ -490,6 +490,9 @@ Create a ticket constraint for <resource id>. Available option is loss-policy=fe
 ticket set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
 Create a ticket constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Required constraint option is ticket=<ticket>. Optional constraint options are id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
 .TP
+ticket remove <ticket> <resource id>
+Remove all ticket constraints with <ticket> from <resource id>.
+.TP
 remove [constraint id]...
 Remove constraint(s) or constraint rules with the specified id(s).
 .TP
@@ -585,7 +588,8 @@ destroy
 Remove booth configuration files.
 .TP
 ticket add <ticket>
-Add new ticket to the current configuration.
+Add new ticket to the current configuration. Ticket options are specified in booth manpage.
+
 .TP
 ticket remove <ticket>
 Remove the specified ticket from the current configuration.
@@ -603,10 +607,10 @@ restart
 Restart booth resources created by the "pcs booth create" command.
 .TP
 ticket grant <ticket> [<site address>]
-Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted. Cannot be run on an arbitrator.
+Grant the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.  Specifying site address is mandatory when running this command on an arbitrator.
 .TP
 ticket revoke <ticket> [<site address>]
-Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted. Cannot be run on an arbitrator.
+Revoke the ticket for the site specified by address.  Site address which has been specified with 'pcs booth create' command is used if 'site address' is omitted.  Specifying site address is mandatory when running this command on an arbitrator.
 .TP
 status
 Print current status of booth on the local node.

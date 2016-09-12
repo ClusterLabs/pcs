@@ -52,6 +52,12 @@ def add(lib, argv, modificators):
         duplication_alowed=modificators["force"],
     )
 
+def remove(lib, argv, modificators):
+    if len(argv) != 2:
+        raise CmdLineInputError()
+    ticket, resource_id = argv
+    lib.constraint_ticket.remove(ticket, resource_id)
+
 def show(lib, argv, modificators):
     """
     show all ticket constraints

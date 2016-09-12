@@ -223,6 +223,23 @@ class AddTicketTest(BoothTest):
             )
         )
 
+    def test_forceable_fail_on_unknown_options(self):
+        msg = (
+            "invalid booth ticket option 'unknown', allowed options"
+            " are: acquire-after, attr-prereq, before-acquire-handler,"
+            " expire, renewal-freq, retries, timeout, weights"
+        )
+        self.assert_pcs_fail(
+            "booth ticket add TicketA unknown=a", console_report(
+                "Error: "+msg+", use --force to override",
+            )
+        )
+        self.assert_pcs_success(
+            "booth ticket add TicketA unknown=a --force",
+            "Warning: {0}\n".format(msg),
+        )
+
+
 class RemoveTicketTest(BoothTest):
     def test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
