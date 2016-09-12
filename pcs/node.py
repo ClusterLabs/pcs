@@ -179,8 +179,30 @@ def set_node_utilization(node, argv):
 
 def print_node_utilization(filter_node=None, filter_name=None):
     cib = utils.get_cib_dom()
+
+    node_element_list = cib.getElementsByTagName("node")
+
+
+    if(
+        filter_node
+        and
+        filter_node not in [
+            node_element.getAttribute("uname")
+            for node_element in node_element_list
+        ]
+        and (
+            utils.usefile
+            or
+            filter_node not in [
+                node_attrs.name for node_attrs
+                in utils.getNodeAttributesFromPacemaker()
+            ]
+        )
+    ):
+        utils.err("Unable to find a node: {0}".format(filter_node))
+
     utilization = {}
-    for node_el in cib.getElementsByTagName("node"):
+    for node_el in node_element_list:
         node = node_el.getAttribute("uname")
         if filter_node is not None and node != filter_node:
             continue

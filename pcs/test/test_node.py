@@ -7,7 +7,9 @@ from __future__ import (
 
 import shutil
 from pcs.test.tools import pcs_unittest as unittest
+from pcs.test.tools.pcs_unittest import mock
 
+from pcs import node
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     ac,
@@ -538,3 +540,43 @@ Node Attributes:
             "node attribute rh7-1 missing= --force",
             ""
         )
+
+class SetNodeUtilizationTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(empty_cib, temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def test_refuse_non_option_attribute_parameter_among_options(self):
+        self.assert_pcs_fail("node utilization rh7-1 net", [
+            "Error: missing value of 'net' option",
+        ])
+
+    def test_refuse_option_without_key(self):
+        self.assert_pcs_fail("node utilization rh7-1 =1", [
+            "Error: missing key in '=1' option",
+        ])
+
+class PrintNodeUtilizationTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(empty_cib, temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    @mock.patch("pcs.node.utils")
+    def test_refuse_when_node_not_in_cib_and_is_not_remote(self, mock_utils):
+        mock_cib = mock.MagicMock()
+        mock_cib.getElementsByTagName = mock.Mock(return_value=[])
+
+        mock_utils.get_cib_dom = mock.Mock(return_value=mock_cib)
+        mock_utils.usefile = False
+        mock_utils.getNodeAttributesFromPacemaker = mock.Mock(return_value=[])
+        mock_utils.err = mock.Mock(side_effect=SystemExit)
+
+        self.assertRaises(
+            SystemExit,
+            lambda: node.print_node_utilization("some")
+        )
+
+    def test_refuse_when_node_not_in_mocked_cib(self):
+        self.assert_pcs_fail("node utilization some_nonexistent_node", [
+            "Error: Unable to find a node: some_nonexistent_node",
+        ])
