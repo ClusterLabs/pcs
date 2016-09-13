@@ -908,7 +908,7 @@ already been added to pcsd.  You may not add two clusters with the same name int
             'type' => 'boolean',
             'shortdesc' => 'Should deleted actions be cancelled',
             'longdesc' => 'Should deleted actions be cancelled',
-            'readable_name' => 'top Orphan Actions',
+            'readable_name' => 'Stop Orphan Actions',
             'advanced' => false
           },
           'start-failure-is-fatal' => {
@@ -1214,6 +1214,104 @@ already been added to pcsd.  You may not add two clusters with the same name int
 
     return [200, "Node added successfully."]
   end
+
+  post '/managec/:cluster/resource_change_group' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    raw_data = request.env["rack.input"].read
+    if params[:cluster]
+      code, out = send_cluster_request_with_token(
+        auth_user, params[:cluster], 'resource_change_group', true, params,
+        true, raw_data
+      )
+      if code == 404
+        parameters = {
+          :resource_id => params[:resource_id],
+          :resource_group => '',
+          :_orig_resource_group => '',
+        }
+        parameters[:resource_group] = params[:group_id] if params[:group_id]
+        if params[:old_group_id]
+          parameters[:_orig_resource_group] = params[:old_group_id]
+        end
+        code, out = send_cluster_request_with_token(
+          auth_user, params[:cluster], 'update_resource', true, parameters
+        )
+      end
+      return code, out
+    end
+  end
+
+  # BACKWARD COMPATIBILITY LAYER (start)
+  # to make these requests work with older versions of pcsd we have to transform
+  # them to diferent requests
+
+  post '/managec/:cluster/resource_clone' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    raw_data = request.env["rack.input"].read
+    if params[:cluster]
+      code, out = send_cluster_request_with_token(
+        auth_user, params[:cluster], 'resource_clone', true, params,
+        true, raw_data
+      )
+      if code == 404
+        parameters = {
+          :resource_id => params[:resource_id],
+          :resource_clone => true,
+          :_orig_resource_clone => 'false',
+        }
+       code, out = send_cluster_request_with_token(
+          auth_user, params[:cluster], 'update_resource', true, parameters
+       )
+      end
+      return code, out
+    end
+  end
+
+  post '/managec/:cluster/resource_unclone' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    raw_data = request.env["rack.input"].read
+    if params[:cluster]
+      code, out = send_cluster_request_with_token(
+        auth_user, params[:cluster], 'resource_unclone', true, params,
+        true, raw_data
+      )
+      if code == 404
+        parameters = {
+          :resource_id => params[:resource_id],
+          :resource_clone => nil,
+          :_orig_resource_clone => 'true',
+        }
+       code, out = send_cluster_request_with_token(
+          auth_user, params[:cluster], 'update_resource', true, parameters
+       )
+      end
+      return code, out
+    end
+  end
+
+  post '/managec/:cluster/resource_master' do
+    auth_user = PCSAuth.sessionToAuthUser(session)
+    raw_data = request.env["rack.input"].read
+    if params[:cluster]
+      code, out = send_cluster_request_with_token(
+        auth_user, params[:cluster], 'resource_master', true, params,
+        true, raw_data
+      )
+      if code == 404
+        parameters = {
+          :resource_id => params[:resource_id],
+          :resource_ms => true,
+          :_orig_resource_ms => 'false',
+        }
+       code, out = send_cluster_request_with_token(
+          auth_user, params[:cluster], 'update_resource', true, parameters
+       )
+      end
+      return code, out
+    end
+  end
+
+  # BCL (end)
 
   post '/managec/:cluster/?*' do
     auth_user = PCSAuth.sessionToAuthUser(session)

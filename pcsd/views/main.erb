@@ -226,7 +226,6 @@
             <td class="bold" nowrap>Current Location:</td>
             <td id="cur_res_loc" class="reg">{{resource.nodes_running_on_string}}</td>
           </tr>
-          {{#unless old_pcsd}}
           {{#unless resource.parent}}
             <tr>
               <td class="bold" nowrap>Clone:</td>
@@ -256,10 +255,8 @@
             </tr>
             {{/if}}
           {{/unless}}
-          {{/unless}}
         {{/if}}
         {{/unless}}
-        {{#unless old_pcsd}}
         {{#if resource.is_group}}
         {{#unless resource.parent}}
           <tr>
@@ -274,12 +271,14 @@
               <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
             </td>
           </tr>
-          <tr>
-            <td class="bold" nowrap>Group:</td>
-            <td id="cur_res_loc" class="reg">
-              <input type="button" onclick="resource_ungroup(curResource());" value="Ungroup">
-            </td>
-          </tr>
+          {{#unless old_pcsd}}
+            <tr>
+              <td class="bold" nowrap>Group:</td>
+              <td id="cur_res_loc" class="reg">
+                <input type="button" onclick="resource_ungroup(curResource());" value="Ungroup">
+              </td>
+            </tr>
+          {{/unless}}
         {{/unless}}
         {{/if}}
         {{#if resource.is_multi_instance}}
@@ -290,7 +289,6 @@
             </td>
           </tr>
         {{/if}}
-        {{/unless}}
       </table>
       {{#unless resource.stonith}}
         {{location_constraints-table constraints=resource.location_constraints}}
