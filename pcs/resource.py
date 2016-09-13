@@ -2458,7 +2458,7 @@ def set_default(def_type, argv):
         if (len(args) != 2):
             print("Invalid Property: " + arg)
             continue
-        utils.setAttribute(def_type, args[0], args[1])
+        utils.setAttribute(def_type, args[0], args[1], exit_on_error=True)
 
 def print_node(node, tab = 0):
     spaces = " " * tab
