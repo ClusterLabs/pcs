@@ -1864,7 +1864,7 @@ end
 def status_v1_to_v2(status)
   new_status = status.select { |k,_|
     [:cluster_name, :username, :is_cman_with_udpu_transport,
-     :need_ring1_address, :cluster_settings, :constraints, :groups,
+     :need_ring1_address, :cluster_settings, :constraints,
      :corosync_online, :corosync_offline, :pacemaker_online, :pacemaker_standby,
      :pacemaker_offline, :acls, :fence_levels
     ].include?(k)
@@ -1885,6 +1885,8 @@ def status_v1_to_v2(status)
     ].include?(k)
   }
 
+  new_status[:groups] = get_group_list_from_tree_of_resources(resources)
+
   new_status[:node].update(
     {
       :id => status[:node_id],
@@ -1899,6 +1901,22 @@ def status_v1_to_v2(status)
   new_status[:status_version] = '1'
 
   return new_status
+end
+
+def get_group_list_from_tree_of_resources(tree)
+  group_list = []
+  tree.each { |resource|
+    if resource.instance_of?(ClusterEntity::Group)
+      group_list << resource.id
+    end
+    if (
+      resource.kind_of?(ClusterEntity::MultiInstance) and
+      resource.member.instance_of?(ClusterEntity::Group)
+    )
+      group_list << resource.member.id
+    end
+  }
+  return group_list
 end
 
 def allowed_for_local_cluster(auth_user, action)
