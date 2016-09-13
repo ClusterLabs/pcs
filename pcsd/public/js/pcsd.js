@@ -3078,3 +3078,16 @@ function manage_resource(resource_id) {
     }
   });
 }
+
+function show_add_resource_dialog() {
+  var new_resource_group_selector_id = $(
+    "#new_resource_agent .group-selector"
+  ).attr("id");
+  Ember.View.views[new_resource_group_selector_id].set(
+    "group_select_value", null
+  );
+  $('#new_resource_agent').dialog({
+    title: 'Add Resource',
+    modal:true, width: 'auto'
+  });
+}

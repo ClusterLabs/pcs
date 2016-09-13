@@ -14,7 +14,7 @@
       Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
   <div class="plus sprites"></div><div class="link">&nbsp;
     <% if @myView == "resource" %>
-      <a href="#" onclick="$('#new_resource_agent').dialog({title: 'Add Resource', modal:true, width: 'auto'});return false;">
+      <a href="#" onclick="show_add_resource_dialog();return false;">
     <% else %>
       <a href="#" onclick="$('#new_stonith_agent').dialog({title: 'Add Fence Device', modal:true, width: 'auto'});return false;">
     <% end %>
