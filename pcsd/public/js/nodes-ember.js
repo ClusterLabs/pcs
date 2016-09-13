@@ -922,6 +922,15 @@ Pcs.ResourceObj = Ember.Object.extend({
         return "";
     }
   }.property("status_val"),
+  show_group_selector: function() {
+    var parent = this.get("parent");
+    return !(
+      parent &&
+      parent.is_group &&
+      parent.get("parent") &&
+      Pcs.resourcesContainer.get("is_version_1")
+    );
+  }.property(),
 
   location_constraints: [],
   ordering_constraints: [],

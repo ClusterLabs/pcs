@@ -247,12 +247,14 @@
             </tr>
           {{else}}
             {{#if resource.parent.is_group}}
+            {{#if resource.show_group_selector}}
             <tr>
               <td class="bold" nowrap>Group:</td>
               <td id="cur_res_loc" class="reg">
                 {{group-selector resource_id=resource._id}}
               </td>
             </tr>
+            {{/if}}
             {{/if}}
           {{/unless}}
         {{/if}}
