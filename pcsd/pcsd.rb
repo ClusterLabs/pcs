@@ -1215,131 +1215,168 @@ already been added to pcsd.  You may not add two clusters with the same name int
     return [200, "Node added successfully."]
   end
 
-  post '/managec/:cluster/resource_change_group' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
-    raw_data = request.env["rack.input"].read
-    if params[:cluster]
-      code, out = send_cluster_request_with_token(
-        auth_user, params[:cluster], 'resource_change_group', true, params,
-        true, raw_data
-      )
-      if code == 404
-        parameters = {
-          :resource_id => params[:resource_id],
-          :resource_group => '',
-          :_orig_resource_group => '',
-        }
-        parameters[:resource_group] = params[:group_id] if params[:group_id]
-        if params[:old_group_id]
-          parameters[:_orig_resource_group] = params[:old_group_id]
-        end
-        code, out = send_cluster_request_with_token(
-          auth_user, params[:cluster], 'update_resource', true, parameters
-        )
-      end
-      return code, out
+  def pcs_0_9_142_resource_change_group(auth_user, params)
+    parameters = {
+      :resource_id => params[:resource_id],
+      :resource_group => '',
+      :_orig_resource_group => '',
+    }
+    parameters[:resource_group] = params[:group_id] if params[:group_id]
+    if params[:old_group_id]
+      parameters[:_orig_resource_group] = params[:old_group_id]
     end
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], 'update_resource', true, parameters
+    )
   end
 
-  # BACKWARD COMPATIBILITY LAYER (start)
-  # to make these requests work with older versions of pcsd we have to transform
-  # them to diferent requests
-
-  post '/managec/:cluster/resource_clone' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
-    raw_data = request.env["rack.input"].read
-    if params[:cluster]
-      code, out = send_cluster_request_with_token(
-        auth_user, params[:cluster], 'resource_clone', true, params,
-        true, raw_data
-      )
-      if code == 404
-        parameters = {
-          :resource_id => params[:resource_id],
-          :resource_clone => true,
-          :_orig_resource_clone => 'false',
-        }
-       code, out = send_cluster_request_with_token(
-          auth_user, params[:cluster], 'update_resource', true, parameters
-       )
-      end
-      return code, out
-    end
+  def pcs_0_9_142_resource_clone(auth_user, params)
+    parameters = {
+      :resource_id => params[:resource_id],
+      :resource_clone => true,
+      :_orig_resource_clone => 'false',
+    }
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], 'update_resource', true, parameters
+    )
   end
 
-  post '/managec/:cluster/resource_unclone' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
-    raw_data = request.env["rack.input"].read
-    if params[:cluster]
-      code, out = send_cluster_request_with_token(
-        auth_user, params[:cluster], 'resource_unclone', true, params,
-        true, raw_data
-      )
-      if code == 404
-        parameters = {
-          :resource_id => params[:resource_id],
-          :resource_clone => nil,
-          :_orig_resource_clone => 'true',
-        }
-       code, out = send_cluster_request_with_token(
-          auth_user, params[:cluster], 'update_resource', true, parameters
-       )
-      end
-      return code, out
-    end
+  def pcs_0_9_142_resource_unclone(auth_user, params)
+    parameters = {
+      :resource_id => params[:resource_id],
+      :resource_clone => nil,
+      :_orig_resource_clone => 'true',
+    }
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], 'update_resource', true, parameters
+    )
   end
 
-  post '/managec/:cluster/resource_master' do
-    auth_user = PCSAuth.sessionToAuthUser(session)
-    raw_data = request.env["rack.input"].read
-    if params[:cluster]
-      code, out = send_cluster_request_with_token(
-        auth_user, params[:cluster], 'resource_master', true, params,
-        true, raw_data
-      )
-      if code == 404
-        parameters = {
-          :resource_id => params[:resource_id],
-          :resource_ms => true,
-          :_orig_resource_ms => 'false',
-        }
-       code, out = send_cluster_request_with_token(
-          auth_user, params[:cluster], 'update_resource', true, parameters
-       )
-      end
-      return code, out
-    end
+  def pcs_0_9_142_resource_master(auth_user, params)
+    parameters = {
+      :resource_id => params[:resource_id],
+      :resource_ms => true,
+      :_orig_resource_ms => 'false',
+    }
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], 'update_resource', true, parameters
+    )
   end
 
-  # BCL (end)
+  # There is a bug in pcs-0.9.138 and older in processing the standby and
+  # unstandby request. JS of that pcsd always sent nodename in "node"
+  # parameter, which caused pcsd daemon to run the standby command locally with
+  # param["node"] as node name. This worked fine if the local cluster was
+  # managed from JS, as pacemaker simply put the requested node into standby.
+  # However it didn't work for managing non-local clusters, as the command was
+  # run on the local cluster everytime. Pcsd daemon would send the request to a
+  # remote cluster if the param["name"] variable was set, and that never
+  # happened. That however wouldn't work either, as then the required parameter
+  # "node" wasn't sent in the request causing an exception on the receiving
+  # node. This is fixed in commit 053f63ca109d9ef9e7f0416e90aab8e140480f5b
+  #
+  # In order to be able to put nodes running pcs-0.9.138 into standby, the
+  # nodename must be sent in "node" param, and the "name" must not be sent.
+  def pcs_0_9_138_node_standby(auth_user, params)
+    translated_params = {
+      'node' => params[:name],
+    }
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], 'node_standby', true, translated_params
+    )
+  end
+
+  def pcs_0_9_138_node_unstandby(auth_user, params)
+    translated_params = {
+      'node' => params[:name],
+    }
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], 'node_unstandby', true, translated_params
+    )
+  end
 
   post '/managec/:cluster/?*' do
     auth_user = PCSAuth.sessionToAuthUser(session)
     raw_data = request.env["rack.input"].read
     if params[:cluster]
       request = "/" + params[:splat].join("/")
-      code, out = send_cluster_request_with_token(
-        auth_user, params[:cluster], request, true, params, true, raw_data
-      )
 
       # backward compatibility layer BEGIN
-      # This code correctly remove constraints on pcs/pcsd version 0.9.137 and older
-      redirection = {
-          "/remove_constraint_remote" => "/resource_cmd/rm_constraint",
-          "/remove_constraint_rule_remote" => "/resource_cmd/rm_constraint_rule"
+      translate_for_version = {
+        '/node_standby' => [
+          [[0, 9, 138], method(:pcs_0_9_138_node_standby)],
+        ],
+        '/node_unstandby' => [
+          [[0, 9, 138], method(:pcs_0_9_138_node_unstandby)],
+        ],
       }
-      if code == 404 and redirection.key?(request)
+      if translate_for_version.key?(request)
+        target_pcsd_version = [0, 0, 0]
+        version_code, version_out = send_cluster_request_with_token(
+          auth_user, params[:cluster], 'get_sw_versions'
+        )
+        if version_code == 200
+          begin
+            versions = JSON.parse(version_out)
+            target_pcsd_version = versions['pcs'] if versions['pcs']
+          rescue JSON::ParserError
+          end
+        end
+        translate_function = nil
+        translate_for_version[request].each { |pair|
+          if (target_pcsd_version <=> pair[0]) != 1 # target <= pair
+            translate_function = pair[1]
+            break
+          end
+        }
+      end
+      # backward compatibility layer END
+
+      if translate_function
+        code, out = translate_function.call(auth_user, params)
+      else
         code, out = send_cluster_request_with_token(
-          auth_user,
-          params[:cluster],
-          redirection[request],
-          true,
-          params,
-          false,
-          raw_data
+          auth_user, params[:cluster], request, true, params, true, raw_data
         )
       end
-      # bcl END
+
+      # backward compatibility layer BEGIN
+      if code == 404
+        case request
+          # supported since pcs-0.9.143 (tree view of resources)
+          when '/resource_change_group'
+            code, out =  pcs_0_9_142_resource_change_group(auth_user, params)
+          # supported since pcs-0.9.143 (tree view of resources)
+          when '/resource_clone'
+            code, out = pcs_0_9_142_resource_clone(auth_user, params)
+          # supported since pcs-0.9.143 (tree view of resources)
+          when '/resource_unclone'
+            code, out = pcs_0_9_142_resource_unclone(auth_user, params)
+          # supported since pcs-0.9.143 (tree view of resources)
+          when '/resource_master'
+            code, out = pcs_0_9_142_resource_master(auth_user, params)
+          else
+            redirection = {
+              # constraints removal for pcs-0.9.137 and older
+              "/remove_constraint_remote" => "/resource_cmd/rm_constraint",
+              # constraints removal for pcs-0.9.137 and older
+              "/remove_constraint_rule_remote" => "/resource_cmd/rm_constraint_rule"
+            }
+            if redirection.key?(request)
+              code, out = send_cluster_request_with_token(
+                auth_user,
+                params[:cluster],
+                redirection[request],
+                true,
+                params,
+                false,
+                raw_data
+              )
+            end
+        end
+      end
+      # backward compatibility layer END
+
       return code, out
     end
   end
