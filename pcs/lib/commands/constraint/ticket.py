@@ -77,6 +77,17 @@ def remove(env, ticket_key, resource_id):
     """
     cib = env.get_cib()
     constraint_section = get_constraints(cib)
-    ticket.remove_plain(constraint_section, ticket_key, resource_id)
-    ticket.remove_with_resource_set(constraint_section, ticket_key, resource_id)
+    any_plain_removed = ticket.remove_plain(
+        constraint_section,
+        ticket_key,
+        resource_id
+    )
+    any_with_resource_set_removed = ticket.remove_with_resource_set(
+        constraint_section,
+        ticket_key,
+        resource_id
+    )
+
     env.push_cib(cib)
+
+    return any_plain_removed or any_with_resource_set_removed

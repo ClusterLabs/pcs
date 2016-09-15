@@ -113,6 +113,8 @@ def remove_plain(constraint_section, ticket_key, resource_id):
     for ticket_element in ticket_element_list:
         ticket_element.getparent().remove(ticket_element)
 
+    return len(ticket_element_list) > 0
+
 def remove_with_resource_set(constraint_section, ticket_key, resource_id):
     ref_element_list = constraint_section.xpath(
         './/rsc_ticket[@ticket="{0}"]/resource_set/resource_ref[@id="{1}"]'
@@ -127,6 +129,8 @@ def remove_with_resource_set(constraint_section, ticket_key, resource_id):
             ticket_element.remove(set_element)
             if not len(ticket_element):
                 ticket_element.getparent().remove(ticket_element)
+
+    return len(ref_element_list) > 0
 
 def are_duplicate_plain(element, other_element):
     return all(

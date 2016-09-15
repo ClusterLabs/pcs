@@ -6,6 +6,8 @@ from __future__ import (
 )
 
 from pcs.test.tools.pcs_unittest import TestCase
+from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools.misc import create_patcher
 
 from pcs.common import report_codes
 from pcs.lib.commands.constraint import ticket as ticket_command
@@ -18,6 +20,7 @@ from pcs.test.tools.assertions import (
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
+patch_commands = create_patcher("pcs.lib.commands.constraint.ticket")
 
 class CreateTest(TestCase):
     def setUp(self):
@@ -65,3 +68,20 @@ class CreateTest(TestCase):
                 {"resource_id": "resourceA"},
             ),
         )
+
+@patch_commands("get_constraints", mock.Mock)
+class RemoveTest(TestCase):
+    @patch_commands("ticket.remove_plain", mock.Mock(return_value=1))
+    @patch_commands("ticket.remove_with_resource_set",mock.Mock(return_value=0))
+    def test_successfully_remove_plain(self):
+        self.assertTrue(ticket_command.remove(mock.MagicMock(), "T", "R"))
+
+    @patch_commands("ticket.remove_plain", mock.Mock(return_value=0))
+    @patch_commands("ticket.remove_with_resource_set",mock.Mock(return_value=1))
+    def test_successfully_remove_with_resource_set(self):
+        self.assertTrue(ticket_command.remove(mock.MagicMock(), "T", "R"))
+
+    @patch_commands("ticket.remove_plain", mock.Mock(return_value=0))
+    @patch_commands("ticket.remove_with_resource_set",mock.Mock(return_value=0))
+    def test_raises_library_error_when_no_matching_constraint_found(self):
+        self.assertFalse(ticket_command.remove(mock.MagicMock(), "T", "R"))

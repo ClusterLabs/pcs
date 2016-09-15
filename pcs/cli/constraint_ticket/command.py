@@ -8,6 +8,7 @@ from __future__ import (
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
 from pcs.cli.constraint_ticket import parse_args, console_report
+from pcs.cli.common.console_report import error
 
 def create_with_set(lib, argv, modificators):
     """
@@ -56,7 +57,8 @@ def remove(lib, argv, modificators):
     if len(argv) != 2:
         raise CmdLineInputError()
     ticket, resource_id = argv
-    lib.constraint_ticket.remove(ticket, resource_id)
+    if not lib.constraint_ticket.remove(ticket, resource_id):
+        raise error("no matching ticket constraint found")
 
 def show(lib, argv, modificators):
     """

@@ -324,11 +324,34 @@ class RemovePlainTest(TestCase):
             </constraints>
         """)
 
-        ticket.remove_plain(
+        self.assertTrue(ticket.remove_plain(
             constraint_section,
             ticket_key="tA",
             resource_id="rA",
-        )
+        ))
+
+        assert_xml_equal(etree.tostring(constraint_section).decode(), """
+            <constraints>
+                <rsc_ticket id="t2" ticket="tA" rsc="rB"/>
+                <rsc_ticket id="t4" ticket="tB" rsc="rA"/>
+                <rsc_ticket id="t5" ticket="tB" rsc="rB"/>
+            </constraints>
+        """)
+
+    def test_remove_nothing_when_no_matching_found(self):
+        constraint_section = etree.fromstring("""
+            <constraints>
+                <rsc_ticket id="t2" ticket="tA" rsc="rB"/>
+                <rsc_ticket id="t4" ticket="tB" rsc="rA"/>
+                <rsc_ticket id="t5" ticket="tB" rsc="rB"/>
+            </constraints>
+        """)
+
+        self.assertFalse(ticket.remove_plain(
+            constraint_section,
+            ticket_key="tA",
+            resource_id="rA",
+        ))
 
         assert_xml_equal(etree.tostring(constraint_section).decode(), """
             <constraints>
@@ -369,11 +392,11 @@ class RemoveWithSetTest(TestCase):
             </constraints>
         """)
 
-        ticket.remove_with_resource_set(
+        self.assertTrue(ticket.remove_with_resource_set(
             constraint_section,
             ticket_key="tA",
             resource_id="rA"
-        )
+        ))
 
         assert_xml_equal(
             """
@@ -393,3 +416,25 @@ class RemoveWithSetTest(TestCase):
             """,
             etree.tostring(constraint_section).decode()
         )
+
+    def test_remove_nothing_when_no_matching_found(self):
+        constraint_section = etree.fromstring("""
+                <constraints>
+                    <rsc_ticket id="t2" ticket="tA">
+                        <resource_set id="rs3">
+                            <resource_ref id="rB"/>
+                        </resource_set>
+                    </rsc_ticket>
+
+                    <rsc_ticket id="t3" ticket="tB">
+                        <resource_set id="rs5">
+                            <resource_ref id="rA"/>
+                        </resource_set>
+                    </rsc_ticket>
+                </constraints>
+        """)
+        self.assertFalse(ticket.remove_with_resource_set(
+            constraint_section,
+            ticket_key="tA",
+            resource_id="rA"
+        ))

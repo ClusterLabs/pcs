@@ -2721,6 +2721,14 @@ class TicketRemoveTest(ConstraintBaseTest):
             "    set B setoptions ticket=T",
         ])
 
+    def test_fail_when_no_matching_ticket_constraint_here(self):
+        self.assert_pcs_success("constraint ticket show", stdout_full=[
+            "Ticket Constraints:",
+        ])
+        self.assert_pcs_fail("constraint ticket remove T A", [
+            "Error: no matching ticket constraint found"
+        ])
+
 
 class TicketShow(ConstraintBaseTest):
     def test_show_set(self):
