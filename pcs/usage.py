@@ -996,15 +996,15 @@ Commands:
         List all current ticket constraints (if --full is specified show
         the internal constraint id's as well).
 
-    ticket add <ticket> [<role>] <resource id> [options]
-               [id=constraint-id]
+    ticket add <ticket> [<role>] <resource id> [<options>]
+               [id=<constraint-id>]
         Create a ticket constraint for <resource id>.
         Available option is loss-policy=fence/stop/freeze/demote.
         A role can be master, slave, started or stopped.
 
-    ticket set <resource1> [resourceN]... [options]
-               [set <resourceX> ... [options]]
-               [setoptions [constraint_options]]
+    ticket set <resource1> [<resourceN>]... [<options>]
+               [set <resourceX> ... [<options>]]
+               setoptions <constraint_options>
         Create a ticket constraint with a resource set.
         Available options are sequential=true/false, require-all=true/false,
         action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
