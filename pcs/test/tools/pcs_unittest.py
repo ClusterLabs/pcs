@@ -138,4 +138,44 @@ if not hasattr(mock, "mock_open"):
     )
     del create_mock_open
 
+def ensure_raise_from_iterable_side_effect():
+    """
+    Adjust mock.Mock to raise when side_effect is iterable and efect item
+    applied in the current call is exception (class or instance) and this
+    exception is simply returned (in older version of mock).
+    """
+    def create_new_call(old_call, inPy3k):
+        class OldStyleClass:
+            pass
+        ClassTypes = (type,) if inPy3k else (type, type(OldStyleClass))
+
+        def is_exception(obj):
+            return isinstance(obj, BaseException) or (
+                isinstance(obj, ClassTypes)
+                and
+                issubclass(obj, BaseException)
+            )
+
+        def new_call(_mock_self, *args, **kwargs):
+            """
+            Wrap original call.
+            If side_effect is itterable and result is an exception then we
+            raise this exception. Newer versions of mock it makes itself (so
+            in this case exception is raised from old_call) but we need it
+            for the old versions as well.
+            """
+            call_result = old_call(_mock_self, *args, **kwargs)
+            try:
+                iter(_mock_self.side_effect)
+            except TypeError:
+                return call_result
+
+            if is_exception(call_result):
+                raise call_result
+            return call_result
+
+        return new_call
+    mock.Mock.__call__ = create_new_call(mock.Mock.__call__, inPy3k=(major==3))
+ensure_raise_from_iterable_side_effect()
+
 del major, minor, sys
