@@ -35,6 +35,9 @@ __qdevice_certutil = os.path.join(
     "corosync-qdevice-net-certutil"
 )
 
+class QnetdNotRunningException(Exception):
+    pass
+
 def qdevice_setup(runner):
     """
     initialize qdevice on local host
@@ -79,10 +82,10 @@ def qdevice_status_generic_text(runner, verbose=False):
     get qdevice runtime status in plain text
     bool verbose get more detailed output
     """
-    cmd = [__qnetd_tool, "-s"]
+    args = ["-s"]
     if verbose:
-        cmd.append("-v")
-    stdout, stderr, retval = runner.run(cmd)
+        args.append("-v")
+    stdout, stderr, retval = _qdevice_run_tool(runner, args)
     if retval != 0:
         raise LibraryError(
             reports.qdevice_get_status_error(
@@ -98,12 +101,12 @@ def qdevice_status_cluster_text(runner, cluster=None, verbose=False):
     bool verbose get more detailed output
     string cluster show information only about specified cluster
     """
-    cmd = [__qnetd_tool, "-l"]
+    args = ["-l"]
     if verbose:
-        cmd.append("-v")
+        args.append("-v")
     if cluster:
-        cmd.extend(["-c", cluster])
-    stdout, stderr, retval = runner.run(cmd)
+        args.extend(["-c", cluster])
+    stdout, stderr, retval = _qdevice_run_tool(runner, args)
     if retval != 0:
         raise LibraryError(
             reports.qdevice_get_status_error(
@@ -114,6 +117,10 @@ def qdevice_status_cluster_text(runner, cluster=None, verbose=False):
     return stdout
 
 def qdevice_connected_clusters(status_cluster_text):
+    """
+    parse qnetd cluster status listing and return connected clusters' names
+    string status_cluster_text output of corosync-qnetd-tool -l
+    """
     connected_clusters = []
     regexp = re.compile(r'^Cluster "(?P<cluster>[^"]+)":$')
     for line in status_cluster_text.splitlines():
@@ -121,6 +128,17 @@ def qdevice_connected_clusters(status_cluster_text):
         if match:
             connected_clusters.append(match.group("cluster"))
     return connected_clusters
+
+def _qdevice_run_tool(runner, args):
+    """
+    run corosync-qnetd-tool, raise QnetdNotRunningException if qnetd not running
+    CommandRunner runner
+    iterable args corosync-qnetd-tool arguments
+    """
+    stdout, stderr, retval = runner.run([__qnetd_tool] + args)
+    if retval == 3 and "is qnetd running?" in stderr.lower():
+        raise QnetdNotRunningException()
+    return stdout, stderr, retval
 
 def qdevice_enable(runner):
     """

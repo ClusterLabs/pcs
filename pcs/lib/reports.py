@@ -842,6 +842,19 @@ def qdevice_destroy_error(model, reason):
         }
     )
 
+def qdevice_not_running(model):
+    """
+    qdevice is expected to be running but is not running
+    string model qdevice model
+    """
+    return ReportItem.error(
+        report_codes.QDEVICE_NOT_RUNNING,
+        "Quorum device '{model}' is not running",
+        info={
+            "model": model,
+        }
+    )
+
 def qdevice_get_status_error(model, reason):
     """
     unable to get runtime status of qdevice

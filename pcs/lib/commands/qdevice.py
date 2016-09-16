@@ -61,11 +61,16 @@ def qdevice_status_text(lib_env, model, verbose=False, cluster=None):
     _ensure_not_cman(lib_env)
     _check_model(model)
     runner = lib_env.cmd_runner()
-    return (
-        qdevice_net.qdevice_status_generic_text(runner, verbose)
-        +
-        qdevice_net.qdevice_status_cluster_text(runner, cluster, verbose)
-    )
+    try:
+        return (
+            qdevice_net.qdevice_status_generic_text(runner, verbose)
+            +
+            qdevice_net.qdevice_status_cluster_text(runner, cluster, verbose)
+        )
+    except qdevice_net.QnetdNotRunningException:
+        raise LibraryError(
+            reports.qdevice_not_running(model)
+        )
 
 def qdevice_enable(lib_env, model):
     """
@@ -196,8 +201,11 @@ def _check_qdevice_not_used(reporter, runner, model, force=False):
     _check_model(model)
     connected_clusters = []
     if model == "net":
-        status = qdevice_net.qdevice_status_cluster_text(runner)
-        connected_clusters = qdevice_net.qdevice_connected_clusters(status)
+        try:
+            status = qdevice_net.qdevice_status_cluster_text(runner)
+            connected_clusters = qdevice_net.qdevice_connected_clusters(status)
+        except qdevice_net.QnetdNotRunningException:
+            pass
     if connected_clusters:
         reporter.process(reports.qdevice_used_by_clusters(
             connected_clusters,
