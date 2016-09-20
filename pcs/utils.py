@@ -393,7 +393,8 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
                 if "CIB_user" == name:
                     value = re.sub(r"[^!-~]", "", value).replace(";", "")
                 else:
-                    value = base64.b64encode(value)
+                    # python3 requires the value to be bytes not str
+                    value = base64.b64encode(value.encode("utf8"))
                 cookies.append("{0}={1}".format(name, value))
     if cookies:
         opener.addheaders.append(('Cookie', ";".join(cookies)))
