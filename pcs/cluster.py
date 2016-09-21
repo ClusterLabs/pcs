@@ -1989,7 +1989,7 @@ def cluster_remote_node(argv):
                 "crm_node", "--force", "--remove", hostname
             ])
             if retval != 0:
-                utils.err("unable to remove: {0}".fomat(output))
+                utils.err("unable to remove: {0}".format(output))
     else:
         usage.cluster(["remote-node"])
         sys.exit(1)
