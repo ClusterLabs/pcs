@@ -9,60 +9,68 @@ from lxml import etree
 
 from pcs.lib.cib.tools import (
     get_sub_element,
-    find_unique_id,
+    create_subelement_id,
 )
 
 
-def update_nvpair(element, name, value):
+def set_nvpair_in_nvset(nvset_element, name, value):
     """
     Update nvpair, create new if it doesn't yet exist or remove existing
-    nvpair if value is empty. Returns created/updated/removed nvpair element.
+    nvpair if value is empty.
 
-    element -- element in which nvpair should be added/updated/removed
+    nvset_element -- element in which nvpair should be added/updated/removed
     name -- name of nvpair
     value -- value of nvpair
     """
-    nvpair = element.find("./nvpair[@name='{0}']".format(name))
+    nvpair = nvset_element.find("./nvpair[@name='{0}']".format(name))
     if nvpair is None:
-        if not value:
-            return None
-        nvpair_id = find_unique_id(
-            element, "{0}-{1}".format(element.get("id"), name)
-        )
-        nvpair = etree.SubElement(
-            element, "nvpair", id=nvpair_id, name=name, value=value
-        )
+        if value:
+            etree.SubElement(
+                nvset_element,
+                "nvpair",
+                id=create_subelement_id(nvset_element, name),
+                name=name,
+                value=value
+            )
     else:
         if value:
             nvpair.set("value", value)
         else:
-            # remove nvpair if value is empty
-            element.remove(nvpair)
-    return nvpair
+            nvset_element.remove(nvpair)
 
-
-def update_nvset(tag_name, element, attribute_dict):
+def arrange_first_nvset(tag_name, context_element, attribute_dict):
     """
+    Arrange to context_element contains some nvset (with tag_name) with nvpairs
+    corresponing to attribute_dict.
+
+    WARNING: does not solve multiple nvset (with tag_name) under
+    context_element! Consider carefully if this is your case. Probably not.
+    There could be more than one nvset.
+    This function is DEPRECATED. Try to use update_nvset etc.
+
     This method updates nvset specified by tag_name. If specified nvset
     doesn't exist it will be created. Returns updated nvset element or None if
     attribute_dict is empty.
 
     tag_name -- tag name of nvset element
-    element -- parent element of nvset
+    context_element -- parent element of nvset
     attribute_dict -- dictionary of nvpairs
     """
     if not attribute_dict:
-        return None
+        return
 
-    attributes = get_sub_element(element, tag_name, find_unique_id(
-        element, "{0}-{1}".format(element.get("id"), tag_name)
-    ), 0)
+    nvset_element = get_sub_element(
+        context_element,
+        tag_name,
+        create_subelement_id(context_element, tag_name),
+        new_index=0
+    )
 
+    update_nvset(nvset_element, attribute_dict)
+
+def update_nvset(nvset_element, attribute_dict):
     for name, value in sorted(attribute_dict.items()):
-        update_nvpair(attributes, name, value)
-
-    return attributes
-
+        set_nvpair_in_nvset(nvset_element, name, value)
 
 def get_nvset(nvset):
     """

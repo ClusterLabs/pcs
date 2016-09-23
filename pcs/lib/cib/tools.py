@@ -54,6 +54,12 @@ def find_unique_id(tree, check_id):
         counter += 1
     return temp_id
 
+def create_subelement_id(context_element, suffix):
+    return find_unique_id(
+        context_element,
+        "{0}-{1}".format(context_element.get("id"), suffix)
+    )
+
 def check_new_id_applicable(tree, description, id):
     validate_id(id, description)
     validate_id_does_not_exist(tree, id)
@@ -121,7 +127,7 @@ def export_attributes(element):
 
 def get_sub_element(element, sub_element_tag, new_id=None, new_index=None):
     """
-    Returns sub-element sub_element_tag of element. It will create new
+    Returns the FIRST sub-element sub_element_tag of element. It will create new
     element if such doesn't exist yet. Id of new element will be new_if if
     it's not None. new_index specify where will be new element added, if None
     it will be appended.

@@ -6,11 +6,12 @@ from __future__ import (
 )
 
 from lxml import etree
+from functools import partial
 
 from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
-from pcs.lib.cib.nvpair import update_nvset, get_nvset
+from pcs.lib.cib.nvpair import arrange_first_nvset, get_nvset
 from pcs.lib.cib.tools import (
     check_new_id_applicable,
     get_sub_element,
@@ -20,26 +21,11 @@ from pcs.lib.cib.tools import (
 )
 
 
-def update_instance_attributes(element, attribute_dict):
-    """
-    Updates instance attributes of element. Returns updated instance
-    attributes element.
-
-    element -- parent element of instance attributes
-    attribute_dict -- dictionary of nvpairs
-    """
-    return update_nvset("instance_attributes", element, attribute_dict)
-
-
-def update_meta_attributes(element, attribute_dict):
-    """
-    Updates meta attributes of element. Returns updated meta attributes element.
-
-    element -- parent element of meta attributes
-    attribute_dict -- dictionary of nvpairs
-    """
-    return update_nvset("meta_attributes", element, attribute_dict)
-
+update_instance_attributes = partial(
+    arrange_first_nvset,
+    "instance_attributes"
+)
+update_meta_attributes = partial(arrange_first_nvset, "meta_attributes")
 
 def _update_optional_attribute(element, attribute, value):
     """

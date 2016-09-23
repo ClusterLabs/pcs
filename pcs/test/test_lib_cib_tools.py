@@ -96,6 +96,23 @@ class FindUniqueIdTest(CibToolsTest):
         self.fixture_add_primitive_with_id("myId-3")
         self.assertEqual("myId-2", lib.find_unique_id(self.cib.tree, "myId"))
 
+class CreateNvsetIdTest(TestCase):
+    def test_create_plain_id_when_no_confilicting_id_there(self):
+        context = etree.fromstring('<cib><a id="b"/></cib>')
+        self.assertEqual(
+            "b-name",
+            lib.create_subelement_id(context.find(".//a"), "name")
+        )
+
+    def test_create_decorated_id_when_conflicting_id_there(self):
+        context = etree.fromstring(
+            '<cib><a id="b"><c id="b-name"/></a></cib>'
+        )
+        self.assertEqual(
+            "b-name-1",
+            lib.create_subelement_id(context.find(".//a"), "name")
+        )
+
 class GetConfigurationTest(CibToolsTest):
     def test_success_if_exists(self):
         self.assertEqual(

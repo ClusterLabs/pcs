@@ -17,40 +17,7 @@ from pcs.test.tools.assertions import(
     assert_xml_equal,
     assert_report_item_list_equal,
 )
-from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-
-
-@mock.patch("pcs.lib.cib.alert.update_nvset")
-class UpdateInstanceAttributesTest(TestCase):
-    def test_success(self, mock_update_nvset):
-        ret_val = etree.Element("nvset")
-        element = etree.Element("element")
-        attributes = {"a": 1}
-        mock_update_nvset.return_value = ret_val
-        self.assertEqual(
-            alert.update_instance_attributes(element, attributes),
-            ret_val
-        )
-        mock_update_nvset.assert_called_once_with(
-            "instance_attributes", element, attributes
-        )
-
-
-@mock.patch("pcs.lib.cib.alert.update_nvset")
-class UpdateMetaAttributesTest(TestCase):
-    def test_success(self, mock_update_nvset):
-        ret_val = etree.Element("nvset")
-        element = etree.Element("element")
-        attributes = {"a": 1}
-        mock_update_nvset.return_value = ret_val
-        self.assertEqual(
-            alert.update_meta_attributes(element, attributes),
-            ret_val
-        )
-        mock_update_nvset.assert_called_once_with(
-            "meta_attributes", element, attributes
-        )
 
 
 class UpdateOptionalAttributeTest(TestCase):
