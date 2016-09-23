@@ -30,7 +30,7 @@ class UpdateNvpairTest(TestCase):
         assert_xml_equal(
             "<nvpair id='nvset-attr' name='attr' value='10'/>",
             etree.tostring(
-                nvpair.update_nvpair(self.nvset, self.nvset, "attr", "10")
+                nvpair.update_nvpair(self.nvset, "attr", "10")
             ).decode()
         )
         assert_xml_equal(
@@ -48,7 +48,7 @@ class UpdateNvpairTest(TestCase):
         assert_xml_equal(
             "<nvpair id='nvset-test-1' name='test' value='0'/>",
             etree.tostring(
-                nvpair.update_nvpair(self.nvset, self.nvset, "test", "0")
+                nvpair.update_nvpair(self.nvset, "test", "0")
             ).decode()
         )
         assert_xml_equal(
@@ -67,7 +67,7 @@ class UpdateNvpairTest(TestCase):
         assert_xml_equal(
             "<nvpair id='nvset-attr2' name='attr2' value='2'/>",
             etree.tostring(
-                nvpair.update_nvpair(self.nvset, self.nvset, "attr2", "")
+                nvpair.update_nvpair(self.nvset, "attr2", "")
             ).decode()
         )
         assert_xml_equal(
@@ -82,7 +82,7 @@ class UpdateNvpairTest(TestCase):
 
     def test_remove_not_existing(self):
         self.assertTrue(
-            nvpair.update_nvpair(self.nvset, self.nvset, "attr3", "") is None
+            nvpair.update_nvpair(self.nvset, "attr3", "") is None
         )
         assert_xml_equal(
             """
@@ -112,18 +112,18 @@ class UpdateNvsetTest(TestCase):
 
     def test_None(self):
         self.assertTrue(
-            nvpair.update_nvset("nvset", self.root, self.root, None) is None
+            nvpair.update_nvset("nvset", self.root, None) is None
         )
 
     def test_empty(self):
         self.assertTrue(
-            nvpair.update_nvset("nvset", self.root, self.root, {}) is None
+            nvpair.update_nvset("nvset", self.root, {}) is None
         )
 
     def test_existing(self):
         self.assertEqual(
             self.nvset,
-            nvpair.update_nvset("nvset", self.root, self.root, {
+            nvpair.update_nvset("nvset", self.root, {
                 "attr": "10",
                 "new_one": "20",
                 "test": "0",
@@ -152,7 +152,7 @@ class UpdateNvsetTest(TestCase):
                 <nvpair id="root-nvset-test" name="test" value="0"/>
             </nvset>
             """,
-            etree.tostring(nvpair.update_nvset("nvset", root, root, {
+            etree.tostring(nvpair.update_nvset("nvset", root, {
                 "attr": "10",
                 "new_one": "20",
                 "test": "0",

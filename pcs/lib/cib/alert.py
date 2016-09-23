@@ -20,27 +20,25 @@ from pcs.lib.cib.tools import (
 )
 
 
-def update_instance_attributes(tree, element, attribute_dict):
+def update_instance_attributes(element, attribute_dict):
     """
     Updates instance attributes of element. Returns updated instance
     attributes element.
 
-    tree -- cib etree node
     element -- parent element of instance attributes
     attribute_dict -- dictionary of nvpairs
     """
-    return update_nvset("instance_attributes", tree, element, attribute_dict)
+    return update_nvset("instance_attributes", element, attribute_dict)
 
 
-def update_meta_attributes(tree, element, attribute_dict):
+def update_meta_attributes(element, attribute_dict):
     """
     Updates meta attributes of element. Returns updated meta attributes element.
 
-    tree -- cib etree node
     element -- parent element of meta attributes
     attribute_dict -- dictionary of nvpairs
     """
-    return update_nvset("meta_attributes", tree, element, attribute_dict)
+    return update_nvset("meta_attributes", element, attribute_dict)
 
 
 def _update_optional_attribute(element, attribute, value):

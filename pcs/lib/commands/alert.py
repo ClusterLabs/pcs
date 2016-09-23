@@ -38,8 +38,8 @@ def create_alert(
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
 
     alert_el = alert.create_alert(cib, alert_id, path, description)
-    alert.update_instance_attributes(cib, alert_el, instance_attribute_dict)
-    alert.update_meta_attributes(cib, alert_el, meta_attribute_dict)
+    alert.update_instance_attributes(alert_el, instance_attribute_dict)
+    alert.update_meta_attributes(alert_el, meta_attribute_dict)
 
     lib_env.push_cib(cib)
 
@@ -66,8 +66,8 @@ def update_alert(
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
 
     alert_el = alert.update_alert(cib, alert_id, path, description)
-    alert.update_instance_attributes(cib, alert_el, instance_attribute_dict)
-    alert.update_meta_attributes(cib, alert_el, meta_attribute_dict)
+    alert.update_instance_attributes(alert_el, instance_attribute_dict)
+    alert.update_meta_attributes(alert_el, meta_attribute_dict)
 
     lib_env.push_cib(cib)
 
@@ -121,8 +121,8 @@ def add_recipient(
         description=description,
         allow_same_value=allow_same_value
     )
-    alert.update_instance_attributes(cib, recipient, instance_attribute_dict)
-    alert.update_meta_attributes(cib, recipient, meta_attribute_dict)
+    alert.update_instance_attributes(recipient, instance_attribute_dict)
+    alert.update_meta_attributes(recipient, meta_attribute_dict)
 
     lib_env.push_cib(cib)
 
@@ -162,8 +162,8 @@ def update_recipient(
         description=description,
         allow_same_value=allow_same_value
     )
-    alert.update_instance_attributes(cib, recipient, instance_attribute_dict)
-    alert.update_meta_attributes(cib, recipient, meta_attribute_dict)
+    alert.update_instance_attributes(recipient, instance_attribute_dict)
+    alert.update_meta_attributes(recipient, meta_attribute_dict)
 
     lib_env.push_cib(cib)
 

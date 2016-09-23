@@ -13,12 +13,11 @@ from pcs.lib.cib.tools import (
 )
 
 
-def update_nvpair(tree, element, name, value):
+def update_nvpair(element, name, value):
     """
     Update nvpair, create new if it doesn't yet exist or remove existing
     nvpair if value is empty. Returns created/updated/removed nvpair element.
 
-    tree -- cib etree node
     element -- element in which nvpair should be added/updated/removed
     name -- name of nvpair
     value -- value of nvpair
@@ -28,7 +27,7 @@ def update_nvpair(tree, element, name, value):
         if not value:
             return None
         nvpair_id = find_unique_id(
-            tree, "{0}-{1}".format(element.get("id"), name)
+            element, "{0}-{1}".format(element.get("id"), name)
         )
         nvpair = etree.SubElement(
             element, "nvpair", id=nvpair_id, name=name, value=value
@@ -42,14 +41,13 @@ def update_nvpair(tree, element, name, value):
     return nvpair
 
 
-def update_nvset(tag_name, tree, element, attribute_dict):
+def update_nvset(tag_name, element, attribute_dict):
     """
     This method updates nvset specified by tag_name. If specified nvset
     doesn't exist it will be created. Returns updated nvset element or None if
     attribute_dict is empty.
 
     tag_name -- tag name of nvset element
-    tree -- cib etree node
     element -- parent element of nvset
     attribute_dict -- dictionary of nvpairs
     """
@@ -57,11 +55,11 @@ def update_nvset(tag_name, tree, element, attribute_dict):
         return None
 
     attributes = get_sub_element(element, tag_name, find_unique_id(
-        tree, "{0}-{1}".format(element.get("id"), tag_name)
+        element, "{0}-{1}".format(element.get("id"), tag_name)
     ), 0)
 
     for name, value in sorted(attribute_dict.items()):
-        update_nvpair(tree, attributes, name, value)
+        update_nvpair(attributes, name, value)
 
     return attributes
 

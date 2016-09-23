@@ -25,16 +25,15 @@ from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 class UpdateInstanceAttributesTest(TestCase):
     def test_success(self, mock_update_nvset):
         ret_val = etree.Element("nvset")
-        tree = etree.Element("tree")
         element = etree.Element("element")
         attributes = {"a": 1}
         mock_update_nvset.return_value = ret_val
         self.assertEqual(
-            alert.update_instance_attributes(tree, element, attributes),
+            alert.update_instance_attributes(element, attributes),
             ret_val
         )
         mock_update_nvset.assert_called_once_with(
-            "instance_attributes", tree, element, attributes
+            "instance_attributes", element, attributes
         )
 
 
@@ -42,16 +41,15 @@ class UpdateInstanceAttributesTest(TestCase):
 class UpdateMetaAttributesTest(TestCase):
     def test_success(self, mock_update_nvset):
         ret_val = etree.Element("nvset")
-        tree = etree.Element("tree")
         element = etree.Element("element")
         attributes = {"a": 1}
         mock_update_nvset.return_value = ret_val
         self.assertEqual(
-            alert.update_meta_attributes(tree, element, attributes),
+            alert.update_meta_attributes(element, attributes),
             ret_val
         )
         mock_update_nvset.assert_called_once_with(
-            "meta_attributes", tree, element, attributes
+            "meta_attributes", element, attributes
         )
 
 
