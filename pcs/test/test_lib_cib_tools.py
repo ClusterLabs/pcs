@@ -74,6 +74,33 @@ class DoesIdExistTest(CibToolsTest):
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1ba"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1bb"))
 
+    def test_ignore_acl_target(self):
+        self.cib.append_to_first_tag_name(
+            "configuration",
+            """
+            <acls>
+                <acl_target id="target1"/>
+            </acls>
+            """
+        )
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "target1"))
+
+    def test_ignore_acl_role_references(self):
+        self.cib.append_to_first_tag_name(
+            "configuration",
+            """
+            <acls>
+                <acl_target id="target1">
+                    <role id="role1"/>
+                    <role id="role2"/>
+                </acl_target>
+            </acls>
+            """
+        )
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "role1"))
+        self.assertFalse(lib.does_id_exist(self.cib.tree, "role2"))
+
+
 class FindUniqueIdTest(CibToolsTest):
     def test_already_unique(self):
         self.fixture_add_primitive_with_id("myId")

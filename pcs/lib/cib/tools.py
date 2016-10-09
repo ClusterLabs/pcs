@@ -27,9 +27,10 @@ def does_id_exist(tree, check_id):
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
     existing = root.xpath(
-        '(/cib/*[name()!="status"]|/*[name()!="cib"])//*[@id="{0}"]'.format(
-            check_id
-        )
+        (
+            '(/cib/*[name()!="status"]|/*[name()!="cib"])' +
+            '//*[name()!="acl_target" and name()!="role" and @id="{0}"]'
+        ).format(check_id)
     )
     return len(existing) > 0
 
