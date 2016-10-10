@@ -66,7 +66,6 @@ class ValidateSbdOptionsTest(TestCase):
         self.allowed_sbd_options = sorted([
             "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT"
         ])
-        self.allowed_sbd_options_str = ", ".join(self.allowed_sbd_options)
 
     def test_all_ok(self):
         config = {

@@ -7,6 +7,9 @@ from __future__ import (
 
 from pcs.common import report_codes as codes
 
+def format_booth_default(value, template):
+    return "" if value in ("booth", "", None) else template.format(value)
+
 #Each value (callable taking report_item.info) returns string template.
 #Optionaly the template can contain placehodler {force} for next processing.
 #Placeholder {force} will be appended if is necessary and if is not presset
@@ -89,27 +92,20 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR: lambda info:
         "Unable to save booth config{desc} on node '{node}': {reason}".format(
-            desc=(
-                "" if info["name"] in ("booth", "", None)
-                else " ({0})".format(info["name"])
-            ),
+            desc=format_booth_default(info["name"], " ({0})"),
             **info
         )
     ,
 
     codes.BOOTH_CONFIG_READ_ERROR: lambda info:
-        "Unable to read booth config{0}.".format(
-            "" if info["name"] in ("booth", "", None)
-            else " ({0})".format(info["name"])
+        "Unable to read booth config{desc}.".format(
+            desc=format_booth_default(info["name"], " ({0})")
         )
     ,
 
     codes.BOOTH_FETCHING_CONFIG_FROM_NODE: lambda info:
         "Fetching booth config{desc} from node '{node}'...".format(
-            desc=(
-                "" if info["config"] in ("booth", "", None)
-                else " '{0}'".format(info["config"])
-            ),
+            desc=format_booth_default(info["config"], " '{0}'"),
             **info
         )
     ,

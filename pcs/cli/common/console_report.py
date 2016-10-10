@@ -35,8 +35,8 @@ def indent(line_list, indent_step=2):
         for line in line_list
     ]
 
-def format_optional(value, template, empty_case=""):
-    return  empty_case if not value else template.format(value)
+def format_optional(value, template):
+    return  "" if not value else template.format(value)
 
 def service_operation_started(operation, info):
     return "{operation}{service}{instance_suffix}...".format(
@@ -313,7 +313,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.QDEVICE_REMOVE_OR_CLUSTER_STOP_NEEDED: (
-        "You need to stop the cluster or remove qdevice from cluster to"
+        "You need to stop the cluster or remove qdevice from the cluster to"
         " continue"
     ),
 
@@ -711,8 +711,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
-        "This command does not support {options_string}"
-        .format(**info)
+        "This command does not support {forbidden_options}"
+        .format(forbidden_options=", ".join(info["forbidden_options"]))
     ,
 
     codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD: lambda info:

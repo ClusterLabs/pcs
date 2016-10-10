@@ -1009,8 +1009,6 @@ def cman_ignored_option(option):
     )
 
 def rrp_addresses_transport_mismatch():
-    # TODO this knows too much about cmdline and needs to be fixed once
-    # client code is moved to library, probably by CmdLineInputError in cli
     """
     RRP defined by network addresses is not allowed when udp transport is used
     """
@@ -1674,7 +1672,6 @@ def live_environment_required(forbidden_options):
         report_codes.LIVE_ENVIRONMENT_REQUIRED,
         info={
             "forbidden_options": forbidden_options,
-            "options_string": ", ".join(forbidden_options),
         }
     )
 
