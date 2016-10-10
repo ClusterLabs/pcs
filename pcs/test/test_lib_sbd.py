@@ -51,11 +51,9 @@ class RunParallelAndRaiseLibErrorOnFailureTest(TestCase):
                 raise LibraryError(
                     ReportItem.error(
                         report_codes.COMMON_ERROR,
-                        "another report"
                     ),
                     ReportItem.info(
                         report_codes.COMMON_INFO,
-                        "just info"
                     )
                 )
 

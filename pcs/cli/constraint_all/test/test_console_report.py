@@ -8,6 +8,7 @@ from __future__ import (
 from pcs.test.tools.pcs_unittest import TestCase
 from pcs.test.tools.pcs_unittest import mock
 from pcs.cli.constraint_all import console_report
+from pcs.common import report_codes as codes
 
 class ConstraintTest(TestCase):
     @mock.patch("pcs.cli.constraint_all.console_report.constraint_plain")
@@ -60,13 +61,13 @@ class ConstraintPlainTest(TestCase):
         )
 
 class DuplicateConstraintsReportTest(TestCase):
+    def setUp(self):
+        self.build = console_report.CODE_TO_MESSAGE_BUILDER_MAP[
+            codes.DUPLICATE_CONSTRAINTS_EXIST
+        ]
+
     @mock.patch("pcs.cli.constraint_all.console_report.constraint")
-    def test_translate_from_report_item(self, mock_constraint):
-        report_item = mock.MagicMock()
-        report_item.info = {
-            "constraint_info_list": [{"options": {"a": "b"}}],
-            "constraint_type": "rsc_some"
-        }
+    def test_translate_from_report_info(self, mock_constraint):
         mock_constraint.return_value = "constraint info"
 
         self.assertEqual(
@@ -74,6 +75,38 @@ class DuplicateConstraintsReportTest(TestCase):
                 "duplicate constraint already exists{force}",
                 "  constraint info"
             ]),
-            console_report.duplicate_constraints_report(report_item)
+            self.build({
+                "constraint_info_list": [{"options": {"a": "b"}}],
+                "constraint_type": "rsc_some"
+            })
+        )
 
+class ResourceForConstraintIsMultiinstanceTest(TestCase):
+    def setUp(self):
+        self.build = console_report.CODE_TO_MESSAGE_BUILDER_MAP[
+            codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE
+        ]
+
+    def test_build_message_for_master(self):
+        self.assertEqual(
+            "RESOURCE_PRIMITIVE is a master/slave resource, you should use the"
+                " master id: RESOURCE_MASTER when adding constraints"
+            ,
+            self.build({
+                "resource_id": "RESOURCE_PRIMITIVE",
+                "parent_type": "master",
+                "parent_id": "RESOURCE_MASTER"
+            })
+        )
+
+    def test_build_message_for_clone(self):
+        self.assertEqual(
+            "RESOURCE_PRIMITIVE is a clone resource, you should use the"
+                " clone id: RESOURCE_CLONE when adding constraints"
+            ,
+            self.build({
+                "resource_id": "RESOURCE_PRIMITIVE",
+                "parent_type": "clone",
+                "parent_id": "RESOURCE_CLONE"
+            })
         )

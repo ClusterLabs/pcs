@@ -30,30 +30,28 @@ class ReportItemSeverity(object):
 
 class ReportItem(object):
     @classmethod
-    def error(cls, code, message_pattern, **kwargs):
-        return cls(code, ReportItemSeverity.ERROR, message_pattern, **kwargs)
+    def error(cls, code, **kwargs):
+        return cls(code, ReportItemSeverity.ERROR, **kwargs)
 
     @classmethod
-    def warning(cls, code, message_pattern, **kwargs):
-        return cls(code, ReportItemSeverity.WARNING, message_pattern, **kwargs)
+    def warning(cls, code, **kwargs):
+        return cls(code, ReportItemSeverity.WARNING, **kwargs)
 
     @classmethod
-    def info(cls, code, message_pattern, **kwargs):
-        return cls(code, ReportItemSeverity.INFO, message_pattern, **kwargs)
+    def info(cls, code, **kwargs):
+        return cls(code, ReportItemSeverity.INFO, **kwargs)
 
     @classmethod
-    def debug(cls, code, message_pattern, **kwargs):
-        return cls(code, ReportItemSeverity.DEBUG, message_pattern, **kwargs)
+    def debug(cls, code, **kwargs):
+        return cls(code, ReportItemSeverity.DEBUG, **kwargs)
 
     def __init__(
-        self, code, severity, message_pattern, forceable=None, info=None
+        self, code, severity, forceable=None, info=None
     ):
         self.code = code
         self.severity = severity
         self.forceable = forceable
-        self.message_pattern=message_pattern
         self.info = info if info else dict()
-        self.message = self.message_pattern.format(**self.info)
 
     def __repr__(self):
         return "{severity} {code}: {info}".format(

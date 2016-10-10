@@ -283,9 +283,14 @@ def get_cluster_sbd_status(lib_env):
             })
             successful_node_list.append(node)
         except NodeCommunicationException as e:
+            report_item_list.append(node_communicator_exception_to_report_item(
+                e,
+                severity=Severities.WARNING
+            ))
             report_item_list.append(reports.unable_to_get_sbd_status(
                 node.label,
-                node_communicator_exception_to_report_item(e).message
+                "", #reason is in previous report item
+                #warning is there implicit
             ))
         except (ValueError, KeyError) as e:
             report_item_list.append(reports.unable_to_get_sbd_status(
@@ -347,9 +352,13 @@ def get_cluster_sbd_config(lib_env):
                 Severities.WARNING
             ))
         except NodeCommunicationException as e:
+            report_item_list.append(node_communicator_exception_to_report_item(
+                e,
+                severity=Severities.WARNING
+            ))
             report_item_list.append(reports.unable_to_get_sbd_config(
                 node.label,
-                node_communicator_exception_to_report_item(e).message,
+                "", #reason is in previous report item
                 Severities.WARNING
             ))
 

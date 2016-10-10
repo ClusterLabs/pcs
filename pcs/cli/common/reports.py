@@ -6,16 +6,55 @@ from __future__ import (
 )
 
 import sys
+from functools import partial
 
-from pcs.cli.constraint_all.console_report import duplicate_constraints_report
+from pcs.cli.booth.console_report import (
+    CODE_TO_MESSAGE_BUILDER_MAP as BOOTH_CODE_TO_MESSAGE_BUILDER_MAP
+)
+from pcs.cli.common.console_report import CODE_TO_MESSAGE_BUILDER_MAP
+from pcs.cli.constraint_all.console_report import (
+    CODE_TO_MESSAGE_BUILDER_MAP as CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP
+)
 from pcs.common import report_codes as codes
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
-__CODE_BUILDER_MAP = {
-    codes.DUPLICATE_CONSTRAINTS_EXIST: duplicate_constraints_report,
-}
+__CODE_BUILDER_MAP = {}
+__CODE_BUILDER_MAP.update(CODE_TO_MESSAGE_BUILDER_MAP)
+__CODE_BUILDER_MAP.update(CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP)
+__CODE_BUILDER_MAP.update(BOOTH_CODE_TO_MESSAGE_BUILDER_MAP)
 
+def build_default_message_from_report(report_item, force_text):
+    return "Unknown report: {0} info: {1}{2}".format(
+        report_item.code,
+        str(report_item.info),
+        force_text,
+    )
+
+
+def build_message_from_report(code_builder_map, report_item, force_text=""):
+    if report_item.code not in code_builder_map:
+        return build_default_message_from_report(report_item, force_text)
+
+    template = code_builder_map[report_item.code]
+    #Sometimes report item info is not needed for message building.
+    #In this case template is string. Otherwise, template is callable.
+    if callable(template):
+        try:
+            template = template(report_item.info)
+        except(TypeError, KeyError):
+            return build_default_message_from_report(report_item, force_text)
+
+
+    #Message can contain {force} placeholder if there is need to have it on
+    #specific position. Otherwise is appended to the end (if necessary). This
+    #removes the need to explicitly specify placeholder for each message.
+    if force_text and "{force}" not in template:
+        template += "{force}"
+
+    return template.format(force=force_text)
+
+build_report_message = partial(build_message_from_report, __CODE_BUILDER_MAP)
 
 class LibraryReportProcessorToConsole(object):
     def __init__(self, debug=False):
@@ -30,9 +69,9 @@ class LibraryReportProcessorToConsole(object):
             if report_item.severity == ReportItemSeverity.ERROR:
                 errors.append(report_item)
             elif report_item.severity == ReportItemSeverity.WARNING:
-                print("Warning: " + _build_report_message(report_item))
+                print("Warning: " + build_report_message(report_item))
             elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
-                print(report_item.message)
+                print(build_report_message(report_item))
         if errors:
             raise LibraryError(*errors)
 
@@ -41,14 +80,6 @@ def _prepare_force_text(report_item):
         return ", use --skip-offline to override"
     return ", use --force to override" if report_item.forceable else ""
 
-def _build_report_message(report_item, force_text=""):
-    get_template = __CODE_BUILDER_MAP.get(
-        report_item.code,
-        lambda report_item: report_item.message + "{force}"
-    )
-
-    return get_template(report_item).format(force=force_text)
-
 def process_library_reports(report_item_list):
     """
     report_item_list list of ReportItem
@@ -56,14 +87,14 @@ def process_library_reports(report_item_list):
     critical_error = False
     for report_item in report_item_list:
         if report_item.severity == ReportItemSeverity.WARNING:
-            print("Warning: " + report_item.message)
+            print("Warning: " + build_report_message(report_item))
             continue
 
         if report_item.severity != ReportItemSeverity.ERROR:
-            print(report_item.message)
+            print(build_report_message(report_item))
             continue
 
-        sys.stderr.write('Error: {0}\n'.format(_build_report_message(
+        sys.stderr.write('Error: {0}\n'.format(build_report_message(
             report_item,
             _prepare_force_text(report_item)
         )))
