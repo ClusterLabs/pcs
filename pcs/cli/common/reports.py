@@ -24,20 +24,27 @@ __CODE_BUILDER_MAP.update(CODE_TO_MESSAGE_BUILDER_MAP)
 __CODE_BUILDER_MAP.update(CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP)
 __CODE_BUILDER_MAP.update(BOOTH_CODE_TO_MESSAGE_BUILDER_MAP)
 
+def build_default_message_from_report(report_item, force_text):
+    return "Unknown report: {0} info: {1}{2}".format(
+        report_item.code,
+        str(report_item.info),
+        force_text,
+    )
+
 
 def build_message_from_report(code_builder_map, report_item, force_text=""):
     if report_item.code not in code_builder_map:
-        return "Unknown report: {0} info: {1}{2}".format(
-            report_item.code,
-            str(report_item.info),
-            force_text,
-        )
+        return build_default_message_from_report(report_item, force_text)
 
     template = code_builder_map[report_item.code]
     #Sometimes report item info is not needed for message building.
     #In this case template is string. Otherwise, template is callable.
     if callable(template):
-        template = template(report_item.info)
+        try:
+            template = template(report_item.info)
+        except(TypeError, KeyError):
+            return build_default_message_from_report(report_item, force_text)
+
 
     #Message can contain {force} placeholder if there is need to have it on
     #specific position. Otherwise is appended to the end (if necessary). This

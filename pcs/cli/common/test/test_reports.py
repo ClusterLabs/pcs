@@ -57,3 +57,28 @@ class BuildMessageFromReportTest(TestCase):
             )
         )
 
+    def test_returns_default_message_when_conflict_key_appear(self):
+        info = {"message": "MESSAGE"}
+        self.assertEqual(
+            "Unknown report: SOME info: {0}".format(str(info)),
+            build_message_from_report(
+                {
+                    "SOME": lambda info: "Info: {message} {extra}".format(
+                        message="ANY", **info
+                    ),
+                },
+                ReportItem("SOME", info),
+            )
+        )
+
+    def test_returns_default_message_when_key_disappear(self):
+        self.assertEqual(
+            "Unknown report: SOME info: {}"
+            ,
+            build_message_from_report(
+                {
+                    "SOME": lambda info: "Info: {message}".format(**info),
+                },
+                ReportItem("SOME", {}),
+            )
+        )
