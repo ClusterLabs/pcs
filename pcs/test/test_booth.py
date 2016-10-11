@@ -12,7 +12,6 @@ from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.tools.assertions import AssertPcsMixin, console_report
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_runner import PcsRunner
-from pcs import settings
 
 
 EMPTY_CIB = rc("cib-empty.xml")
@@ -21,8 +20,8 @@ TEMP_CIB = rc("temp-cib.xml")
 BOOTH_CONFIG_FILE = rc("temp-booth.cfg")
 BOOTH_KEY_FILE = rc("temp-booth.key")
 
-BOOTH_RESOURCE_AGENT_INSTALLED = "booth-site" in os.listdir(
-    os.path.join(settings.ocf_resources, "pacemaker")
+BOOTH_RESOURCE_AGENT_INSTALLED = os.path.exists(
+    "/usr/lib/ocf/resource.d/pacemaker/booth-site"
 )
 need_booth_resource_agent = unittest.skipUnless(
     BOOTH_RESOURCE_AGENT_INSTALLED,

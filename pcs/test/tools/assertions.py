@@ -115,7 +115,7 @@ class ExtendedAssertionsMixin(object):
                         "Property {property} doesn't exist in exception"
                         " {exception}".format(
                             property=prop,
-                            exception=expected_exception.__class__.__name__
+                            exception=e.__class__.__name__
                         )
                     )
 

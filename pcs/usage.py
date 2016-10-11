@@ -197,15 +197,15 @@ Commands:
         specified, only show groups (and their resources).  If --hide-inactive
         is specified, only show active resources.
 
-    list [<standard|provider|type>] [--nodesc]
-        Show list of all available resources, optionally filtered by specified
-        type, standard or provider.  If --nodesc is used then descriptions
-        of resources are not printed.
+    list [filter] [--nodesc]
+        Show list of all available resource agents (if filter is provided then
+        only resource agents matching the filter will be shown). If --nodesc is
+        used then descriptions of resource agents are not printed.
 
-    describe <standard:provider:type|type>
+    describe [<standard>:[<provider>:]]<type>
         Show options for the specified resource.
 
-    create <resource id> <standard:provider:type|type> [resource options]
+    create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
            [--clone <clone options> | --master <master options> |

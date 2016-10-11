@@ -30,27 +30,27 @@ class ConstraintTest(unittest.TestCase):
 
     # Setups up a cluster with Resources, groups, master/slave resource and clones
     def setupClusterA(self,temp_cib):
-        line = "resource create D1 Dummy"
+        line = "resource create D1 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D2 Dummy"
+        line = "resource create D2 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D3 Dummy"
+        line = "resource create D3 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D4 Dummy"
+        line = "resource create D4 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D5 Dummy"
+        line = "resource create D5 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D6 Dummy"
+        line = "resource create D6 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
@@ -71,7 +71,10 @@ class ConstraintTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "", [output]
 
-        o, r = pcs(temp_cib, "resource create C1 Dummy --group C1-group")
+        o, r = pcs(
+            temp_cib,
+            "resource create C1 ocf:heartbeat:Dummy --group C1-group"
+        )
         assert r == 0 and o == "", o
 
         output, returnVal = pcs(temp_cib, "constraint location C1-group rule score=pingd defined pingd")
@@ -315,43 +318,43 @@ Ticket Constraints:
         assert returnVal == 0
 
     def testColocationConstraints(self):
-        line = "resource create M1 Dummy --master"
+        line = "resource create M1 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create M2 Dummy --master"
+        line = "resource create M2 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create M3 Dummy --master"
+        line = "resource create M3 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == "",[returnVal, output]
 
-        line = "resource create M4 Dummy --master"
+        line = "resource create M4 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == "",[returnVal, output]
 
-        line = "resource create M5 Dummy --master"
+        line = "resource create M5 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == "",[returnVal, output]
 
-        line = "resource create M6 Dummy --master"
+        line = "resource create M6 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == "",[returnVal, output]
 
-        line = "resource create M7 Dummy --master"
+        line = "resource create M7 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == "",[returnVal, output]
 
-        line = "resource create M8 Dummy --master"
+        line = "resource create M8 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == "",[returnVal, output]
 
-        line = "resource create M9 Dummy --master"
+        line = "resource create M9 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == "",[returnVal, output]
 
-        line = "resource create M10 Dummy --master"
+        line = "resource create M10 ocf:heartbeat:Dummy --master"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
@@ -387,15 +390,15 @@ Ticket Constraints:
         ac(o,'Location Constraints:\nOrdering Constraints:\nColocation Constraints:\n  D1 with D3-clone (score:INFINITY)\n  D1 with D2 (score:100)\n  D1 with D2 (score:-100)\n  Master with D5 (score:100)\n  M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)\n  M3-master with M4-master (score:INFINITY)\n  M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)\n  M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)\n  M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)\nTicket Constraints:\n')
 
     def testColocationSets(self):
-        line = "resource create D7 Dummy"
+        line = "resource create D7 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D8 Dummy"
+        line = "resource create D8 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D9 Dummy"
+        line = "resource create D9 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
@@ -507,11 +510,11 @@ Colocation Constraints:
             print("WARNING: Pacemaker version is too old (must be >= 1.1.12) to test resource-discovery")
             return
 
-        o,r = pcs("resource create crd Dummy")
+        o,r = pcs("resource create crd ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create crd1 Dummy")
+        o,r = pcs("resource create crd1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
@@ -570,31 +573,31 @@ Colocation Constraints:
         assert r == 1
 
     def testOrderSetsRemoval(self):
-        o,r = pcs("resource create T0 Dummy")
+        o,r = pcs("resource create T0 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T1 Dummy")
+        o,r = pcs("resource create T1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T2 Dummy")
+        o,r = pcs("resource create T2 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T3 Dummy")
+        o,r = pcs("resource create T3 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T4 Dummy")
+        o,r = pcs("resource create T4 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T5 Dummy")
+        o,r = pcs("resource create T5 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T6 Dummy")
+        o,r = pcs("resource create T6 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T7 Dummy")
+        o,r = pcs("resource create T7 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
-        o,r = pcs("resource create T8 Dummy")
+        o,r = pcs("resource create T8 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
         o,r = pcs("constraint order set T0 T1 T2")
@@ -641,15 +644,15 @@ Colocation Constraints:
         assert r == 0
 
     def testOrderSets(self):
-        line = "resource create D7 Dummy"
+        line = "resource create D7 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D8 Dummy"
+        line = "resource create D8 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D9 Dummy"
+        line = "resource create D9 ocf:heartbeat:Dummy"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0 and output == ""
 
@@ -875,7 +878,7 @@ Ticket Constraints:
         assert returnVal == 1
 
     def testLocationBadRules(self):
-        o,r = pcs("resource create stateful0 Dummy --master")
+        o,r = pcs("resource create stateful0 ocf:heartbeat:Dummy --master")
         ac(o,"")
         assert r == 0
 
@@ -896,7 +899,7 @@ Ticket Constraints:
 """)
         assert r == 0
 
-        o,r = pcs("resource create stateful1 Dummy --master")
+        o,r = pcs("resource create stateful1 ocf:heartbeat:Dummy --master")
         ac(o,"")
         assert r == 0
 
@@ -931,7 +934,7 @@ Ticket Constraints:
     def testMasterSlaveConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
 
-        o,r = pcs("resource create dummy1 dummy")
+        o,r = pcs("resource create dummy1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
@@ -1051,7 +1054,7 @@ Ticket Constraints:
         assert r == 0
 
     def testMasterSlaveConstraintAutocorrect(self):
-        output, returnVal = pcs("resource create dummy1 dummy")
+        output, returnVal = pcs("resource create dummy1 ocf:heartbeat:Dummy")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1304,15 +1307,15 @@ Ticket Constraints:
     def testCloneConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
 
-        o,r = pcs("resource create dummy1 dummy")
+        o,r = pcs("resource create dummy1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create dummy Dummy --clone")
+        o,r = pcs("resource create dummy ocf:heartbeat:Dummy --clone")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create dummy2 Dummy --group dummyG")
+        o,r = pcs("resource create dummy2 ocf:heartbeat:Dummy --group dummyG")
         ac(o,"")
         assert r == 0
 
@@ -1418,15 +1421,19 @@ Ticket Constraints:
         assert r == 0
 
     def testCloneConstraintAutocorrect(self):
-        output, returnVal = pcs("resource create dummy1 dummy")
+        output, returnVal = pcs("resource create dummy1 ocf:heartbeat:Dummy")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("resource create dummy Dummy --clone")
+        output, returnVal = pcs(
+            "resource create dummy ocf:heartbeat:Dummy --clone"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs("resource create dummy2 Dummy --group dummyG")
+        output, returnVal = pcs(
+            "resource create dummy2 ocf:heartbeat:Dummy --group dummyG"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1885,7 +1892,7 @@ Ticket Constraints:
         # deleting the remote node resource
         output, returnVal = pcs(
             temp_cib,
-            'resource create vm-guest1 VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+            'resource create vm-guest1 ocf:heartbeat:VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -1954,7 +1961,7 @@ Ticket Constraints:
         # removing the remote node
         output, returnVal = pcs(
             temp_cib,
-            'resource create vm-guest1 VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+            'resource create vm-guest1 ocf:heartbeat:VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2015,7 +2022,7 @@ Deleting Resource - vm-guest1
         # deleting the remote node resource
         output, returnVal = pcs(
             temp_cib,
-            'resource create vm-guest1 VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
+            'resource create vm-guest1 ocf:heartbeat:VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1'
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2593,8 +2600,8 @@ class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
-        self.assert_pcs_success('resource create A Dummy')
-        self.assert_pcs_success('resource create B Dummy')
+        self.assert_pcs_success('resource create A ocf:heartbeat:Dummy')
+        self.assert_pcs_success('resource create B ocf:heartbeat:Dummy')
 
 
 class CommonCreateWithSet(ConstraintBaseTest):

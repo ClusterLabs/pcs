@@ -549,29 +549,23 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.INVALID_METADATA_FORMAT: "Invalid metadata format",
-
     codes.UNABLE_TO_GET_AGENT_METADATA: lambda info:
-        "Unable to get metadata of '{agent}': {reason}"
-        .format(**info)
+        (
+            "Agent '{agent}' is not installed or does not provide valid"
+            " metadata: {reason}"
+        ).format(**info)
     ,
 
-    codes.AGENT_NOT_FOUND: lambda info:
-        "Agent '{agent}' not found"
-        .format(**info)
+    codes.AGENT_NAME_GUESS_FOUND_MORE_THAN_ONE: lambda info:
+        (
+            "Multiple agents match '{agent}'"
+            ", please specify full name: {possible_agents_str}"
+        ).format(**info)
     ,
 
-    codes.UNSUPPORTED_AGENT: lambda info:
-        "Agent '{agent}' is not supported"
+    codes.AGENT_NAME_GUESS_FOUND_NONE: lambda info:
+        "Unable to find agent '{agent}', try specifying its full name"
         .format(**info)
-    ,
-
-    codes.AGENT_GENERAL_ERROR: lambda info:
-        "Unspecified problem of resource/fence agent{agent_desc}"
-        .format(
-            agent_desc=format_optional(info["agent"], " '{0}'")
-            **info
-         )
     ,
 
     codes.OMITTING_NODE: lambda info:

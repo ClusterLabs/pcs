@@ -1,13 +1,21 @@
-def getFenceAgents()
+def getFenceAgents(auth_user)
   fence_agent_list = {}
-  agents = Dir.glob('/usr/sbin/fence_' + '*')
+  stdout, stderr, retval = run_cmd(
+    auth_user, PCS, "stonith", "list", "--nodesc"
+  )
+  if retval != 0
+    $logger.error("Error running 'pcs stonith list --nodesc")
+    $logger.error(stdout + stderr)
+    return {}
+  end
+
+  agents = stdout
   agents.each { |a|
     fa = FenceAgent.new
-    fa.name =  a.sub(/.*\//,"")
-    next if fa.name == "fence_ack_manual"
+    fa.name = a.chomp
     fence_agent_list[fa.name] = fa
   }
-  fence_agent_list
+  return fence_agent_list
 end
 
 class FenceAgent

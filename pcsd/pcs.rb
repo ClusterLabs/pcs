@@ -1986,14 +1986,15 @@ def is_service_installed?(service)
       return false
     }
   end
+
   stdout, _, retcode = run_cmd(
-    PCSAuth.getSuperuserAuth(), PCS, 'resource', 'list', 'systemd'
+    PCSAuth.getSuperuserAuth(), 'systemctl', 'list-unit-files', '--full'
   )
   if retcode != 0
     return nil
   end
   stdout.each { |line|
-    if line.strip() == "systemd:#{service}"
+    if line.strip().start_with?("#{service}.service")
       return true
     end
   }

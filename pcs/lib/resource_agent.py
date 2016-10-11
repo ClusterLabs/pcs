@@ -10,425 +10,581 @@ from lxml import etree
 
 from pcs import settings
 from pcs.lib import reports
-from pcs.lib.errors import ReportItemSeverity
+from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.pacemaker_values import is_true
-from pcs.lib.external import is_path_runnable
 from pcs.common import report_codes
-from pcs.common.tools import simple_cache
 
 
-class ResourceAgentLibError(Exception):
-    pass
+_crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
 
-class ResourceAgentCommonError(ResourceAgentLibError):
-    # pylint: disable=super-init-not-called
-    def __init__(self, agent):
-        self.agent = agent
-
-
-class UnsupportedResourceAgent(ResourceAgentCommonError):
-    pass
-
-
-class AgentNotFound(ResourceAgentCommonError):
-    pass
-
-
-class UnableToGetAgentMetadata(ResourceAgentCommonError):
+class ResourceAgentError(Exception):
     # pylint: disable=super-init-not-called
     def __init__(self, agent, message):
         self.agent = agent
         self.message = message
 
 
-class InvalidMetadataFormat(ResourceAgentLibError):
+class UnableToGetAgentMetadata(ResourceAgentError):
     pass
 
 
-def __is_path_abs(path):
-    return path == os.path.abspath(path)
+def list_resource_agents_standards(runner):
+    """
+    Return list of resource agents standards (ocf, lsb, ... ) on the local host
+    CommandRunner runner
+    """
+    # retval is number of standards found
+    stdout, dummy_stderr, dummy_retval = runner.run([
+        _crm_resource, "--list-standards"
+    ])
+    ignored_standards = frozenset([
+        # we are only interested in RESOURCE agents
+        "stonith",
+    ])
+    return _prepare_agent_list(stdout, ignored_standards)
 
 
-def __get_text_from_dom_element(element):
-    if element is None or element.text is None:
-        return ""
-    else:
+def list_resource_agents_ocf_providers(runner):
+    """
+    Return list of resource agents ocf providers on the local host
+    CommandRunner runner
+    """
+    # retval is number of providers found
+    stdout, dummy_stderr, dummy_retval = runner.run([
+        _crm_resource, "--list-ocf-providers"
+    ])
+    return _prepare_agent_list(stdout)
+
+
+def list_resource_agents_standards_and_providers(runner):
+    """
+    Return list of all standard[:provider] on the local host
+    CommandRunner runner
+    """
+    standards = (
+        list_resource_agents_standards(runner)
+        +
+        [
+            "ocf:{0}".format(provider)
+            for provider in list_resource_agents_ocf_providers(runner)
+        ]
+    )
+    # do not list ocf resources twice
+    try:
+        standards.remove("ocf")
+    except ValueError:
+        pass
+    return sorted(
+        standards,
+        # works with both str and unicode in both python 2 and 3
+        key=lambda x: x.lower()
+    )
+
+
+def list_resource_agents(runner, standard_provider):
+    """
+    Return list of resource agents for specified standard on the local host
+    CommandRunner runner
+    string standard_provider standard[:provider], e.g. lsb, ocf, ocf:pacemaker
+    """
+    # retval is 0 on success, anything else when no agents found
+    stdout, dummy_stderr, retval = runner.run([
+        _crm_resource, "--list-agents", standard_provider
+    ])
+    if retval != 0:
+        return []
+    return _prepare_agent_list(stdout)
+
+
+def list_stonith_agents(runner):
+    """
+    Return list of fence agents on the local host
+    CommandRunner runner
+    """
+    # retval is 0 on success, anything else when no agents found
+    stdout, dummy_stderr, retval = runner.run([
+        _crm_resource, "--list-agents", "stonith"
+    ])
+    if retval != 0:
+        return []
+    ignored_agents = frozenset([
+        "fence_ack_manual",
+        "fence_check",
+        "fence_kdump_send",
+        "fence_legacy",
+        "fence_na",
+        "fence_node",
+        "fence_nss_wrapper",
+        "fence_pcmk",
+        "fence_sanlockd",
+        "fence_tool",
+        "fence_virtd",
+        "fence_vmware_helper",
+    ])
+    return _prepare_agent_list(stdout, ignored_agents)
+
+
+def _prepare_agent_list(agents_string, filter_list=None):
+    ignored = frozenset(filter_list) if filter_list else frozenset([])
+    result = [
+        name
+        for name in [line.strip() for line in agents_string.splitlines()]
+        if name and name not in ignored
+    ]
+    return sorted(
+        result,
+        # works with both str and unicode in both python 2 and 3
+        key=lambda x: x.lower()
+    )
+
+
+def guess_resource_agent_full_name(runner, search_agent_name):
+    """
+    List resource agents matching specified search term
+    string search_agent_name part of full agent name
+    """
+    search_lower = search_agent_name.lower()
+    # list all possible names
+    possible_names = []
+    for std in list_resource_agents_standards_and_providers(runner):
+        for agent in list_resource_agents(runner, std):
+            if search_lower == agent.lower():
+                possible_names.append("{0}:{1}".format(std, agent))
+    # construct agent wrappers
+    agent_candidates = [
+        ResourceAgentMetadata(runner, agent) for agent in possible_names
+    ]
+    # check if the agent is valid
+    return [
+        agent for agent in agent_candidates if agent.is_valid_agent()
+    ]
+
+
+def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
+    """
+    Get one resource agent matching specified search term
+    string search_agent_name last part of full agent name
+    Raise LibraryError if zero or more than one agents found
+    """
+    agents = guess_resource_agent_full_name(runner, search_agent_name)
+    if not agents:
+        raise LibraryError(
+            reports.agent_name_guess_found_none(search_agent_name)
+        )
+    if len(agents) > 1:
+        raise LibraryError(
+            reports.agent_name_guess_found_more_than_one(
+                search_agent_name,
+                [agent.get_name() for agent in agents]
+            )
+        )
+    return agents[0]
+
+
+class AgentMetadata(object):
+    """
+    Base class for providing convinient access to an agent's metadata
+    """
+    def __init__(self, runner):
+        """
+        create an instance which reads metadata by itself on demand
+        CommandRunner runner
+        """
+        self._runner = runner
+        self._metadata = None
+
+
+    def get_name(self):
+        raise NotImplementedError()
+
+
+    def get_name_info(self):
+        """
+        Get structured agent's info, only name is populated
+        """
+        return {
+            "name": self.get_name(),
+            "shortdesc":"",
+            "longdesc": "",
+            "parameters": [],
+            "actions": [],
+        }
+
+
+    def get_description_info(self):
+        """
+        Get structured agent's info, only name and description is populated
+        """
+        agent_info = self.get_name_info()
+        agent_info["shortdesc"] = self.get_shortdesc()
+        agent_info["longdesc"] = self.get_longdesc()
+        return agent_info
+
+
+    def get_full_info(self):
+        """
+        Get structured agent's info, all items are populated
+        """
+        agent_info = self.get_description_info()
+        agent_info["parameters"] = self.get_parameters()
+        agent_info["actions"] = self.get_actions()
+        return agent_info
+
+
+    def get_shortdesc(self):
+        """
+        Get a short description of agent's purpose
+        """
+        return (
+            self._get_text_from_dom_element(
+                self._get_metadata().find("shortdesc")
+            )
+            or
+            self._get_metadata().get("shortdesc", "")
+        )
+
+
+    def get_longdesc(self):
+        """
+        Get a long description of agent's purpose
+        """
+        return self._get_text_from_dom_element(
+            self._get_metadata().find("longdesc")
+        )
+
+
+    def get_parameters(self):
+        """
+        Get list of agent's parameters, each parameter is described by dict:
+        {
+            name: name of parameter
+            longdesc: long description,
+            shortdesc: short description,
+            type: data type od parameter,
+            default: default value,
+            required: True if is required parameter, False otherwise
+        }
+        """
+        params_element = self._get_metadata().find("parameters")
+        if params_element is None:
+            return []
+        return [
+            self._get_parameter(parameter)
+            for parameter in params_element.iter("parameter")
+        ]
+
+
+    def _get_parameter(self, parameter_element):
+        value_type = "string"
+        default_value = None
+        content_element = parameter_element.find("content")
+        if content_element is not None:
+            value_type = content_element.get("type", value_type)
+            default_value = content_element.get("default", default_value)
+
+        return {
+            "name": parameter_element.get("name", ""),
+            "longdesc": self._get_text_from_dom_element(
+                parameter_element.find("longdesc")
+            ),
+            "shortdesc": self._get_text_from_dom_element(
+                parameter_element.find("shortdesc")
+            ),
+            "type": value_type,
+            "default": default_value,
+            "required": is_true(parameter_element.get("required", "0")),
+            "advanced": False,
+        }
+
+
+    def validate_parameters_values(self, parameters_values):
+        """
+        Return tuple of lists (<invalid attributes>, <missing required attributes>)
+        dict parameters_values key is attribute name and value is attribute value
+        """
+        # TODO Add value and type checking (e.g. if parameter["type"] is
+        # integer, its value cannot be "abc"). This most probably will require
+        # redefining the format of the return value and rewriting the whole
+        # function, which will only be good. For now we just stick to the
+        # original legacy code.
+        agent_params = self.get_parameters()
+
+        required_missing = []
+        for attr in agent_params:
+            if attr["required"] and attr["name"] not in parameters_values:
+                required_missing.append(attr["name"])
+
+        valid_attrs = [attr["name"] for attr in agent_params]
+        return (
+            [attr for attr in parameters_values if attr not in valid_attrs],
+            required_missing
+        )
+
+
+    def get_actions(self):
+        """
+        Get list of agent's actions (operations)
+        """
+        actions_element = self._get_metadata().find("actions")
+        if actions_element is None:
+            return []
+        # TODO Resulting dict should contain all keys defined for an action.
+        # But we do not know what are those, because the metadata xml schema is
+        # outdated and doesn't describe current agents' metadata xml.
+        return [
+            dict(action.items())
+            for action in actions_element.iter("action")
+        ]
+
+
+    def _get_metadata(self):
+        """
+        Return metadata DOM
+        Raise UnableToGetAgentMetadata if agent doesn't exist or unable to get
+            or parse its metadata
+        """
+        if self._metadata is None:
+            self._metadata = self._parse_metadata(self._load_metadata())
+        return self._metadata
+
+
+    def _load_metadata(self):
+        raise NotImplementedError()
+
+
+    def _parse_metadata(self, metadata):
+        try:
+            dom = etree.fromstring(metadata)
+            # TODO Majority of agents don't provide valid metadata, so we skip
+            # the validation for now. We want to enable it once the schema
+            # and/or agents are fixed.
+            # When enabling this check for overrides in child classes.
+            #if os.path.isfile(settings.agent_metadata_schema):
+            #    etree.DTD(file=settings.agent_metadata_schema).assertValid(dom)
+            return dom
+        except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+            raise UnableToGetAgentMetadata(self.get_name(), str(e))
+
+
+    def _get_text_from_dom_element(self, element):
+        if element is None or element.text is None:
+            return ""
         return element.text.strip()
 
 
-def _get_parameter(parameter_dom):
-    """
-    Returns dictionary that describes parameter.
-    dictionary format:
-    {
-        name: name of parameter
-        longdesc: long description,
-        shortdesc: short description,
-        type: data type od parameter,
-        default: default value,
-        required: True if is required parameter, False otherwise
-    }
-    Raises InvalidMetadataFormat if parameter_dom is not in valid format
-
-    parameter_dom -- parameter dom element
-    """
-    if parameter_dom.tag != "parameter" or parameter_dom.get("name") is None:
-        raise InvalidMetadataFormat()
-
-    longdesc = __get_text_from_dom_element(parameter_dom.find("longdesc"))
-    shortdesc = __get_text_from_dom_element(parameter_dom.find("shortdesc"))
-
-    content = parameter_dom.find("content")
-    if content is None:
-        val_type = "string"
-    else:
-        val_type = content.get("type", "string")
-
-    return {
-        "name": parameter_dom.get("name"),
-        "longdesc": longdesc,
-        "shortdesc": shortdesc,
-        "type": val_type,
-        "default": None if content is None else content.get("default"),
-        "required": is_true(parameter_dom.get("required", "0"))
-    }
+class FakeAgentMetadata(AgentMetadata):
+    def get_name(self):
+        raise NotImplementedError()
 
 
-def _get_agent_parameters(metadata_dom):
-    """
-    Returns list of parameters from agents metadata.
-    Raises InvalidMetadataFormat if metadata_dom is not in valid format.
-
-    metadata_dom -- agent's metadata dom
-    """
-    if metadata_dom.tag != "resource-agent":
-        raise InvalidMetadataFormat()
-
-    params_el = metadata_dom.find("parameters")
-    if params_el is None:
-        return []
-
-    return [
-        _get_parameter(parameter) for parameter in params_el.iter("parameter")
-    ]
+    def _load_metadata(self):
+        raise NotImplementedError()
 
 
-def _get_pcmk_advanced_stonith_parameters(runner):
-    """
-    Returns advanced instance attributes for stonith devices
-    Raises UnableToGetAgentMetadata if there is problem with obtaining
-        metadata of stonithd.
-    Raises InvalidMetadataFormat if obtained metadata are not in valid format.
+class StonithdMetadata(FakeAgentMetadata):
+    def get_name(self):
+        return "stonithd"
 
-    runner -- CommandRunner
-    """
-    @simple_cache
-    def __get_stonithd_parameters():
-        stdout, stderr, dummy_retval = runner.run(
+
+    def _get_parameter(self, parameter_element):
+        parameter = super(StonithdMetadata, self)._get_parameter(
+            parameter_element
+        )
+        # Metadata are written in such a way that a longdesc text is a
+        # continuation of a shortdesc text.
+        parameter["longdesc"] = "{0}\n{1}".format(
+            parameter["shortdesc"],
+            parameter["longdesc"]
+        ).strip()
+        parameter["advanced"] = parameter["shortdesc"].startswith(
+            "Advanced use only"
+        )
+        return parameter
+
+
+    def _load_metadata(self):
+        stdout, stderr, dummy_retval = self._runner.run(
             [settings.stonithd_binary, "metadata"]
         )
-        if stdout.strip() == "":
-            raise UnableToGetAgentMetadata("stonithd", stderr)
+        metadata = stdout.strip()
+        if not metadata:
+            raise UnableToGetAgentMetadata(self.get_name(), stderr.strip())
+        return metadata
 
+
+class CrmAgentMetadata(AgentMetadata):
+    def __init__(self, runner, full_agent_name):
+        """
+        init
+        CommandRunner runner
+        string full_agent_name standard:provider:type or standard:type
+        """
+        super(CrmAgentMetadata, self).__init__(runner)
+        self._full_agent_name = full_agent_name
+
+
+    def get_name(self):
+        return self._full_agent_name
+
+
+    def is_valid_agent(self):
+        """
+        If we are able to get metadata, we consider the agent existing and valid
+        """
+        # if the agent is valid, we do not need to load its metadata again
         try:
-            params = _get_agent_parameters(etree.fromstring(stdout))
-            for param in params:
-                param["longdesc"] = "{0}\n{1}".format(
-                    param["shortdesc"], param["longdesc"]
-                ).strip()
-                is_advanced = param["shortdesc"].startswith("Advanced use only")
-                param["advanced"] = is_advanced
-            return params
-        except etree.XMLSyntaxError:
-            raise InvalidMetadataFormat()
-
-    return __get_stonithd_parameters()
+            self._get_metadata()
+        except UnableToGetAgentMetadata:
+            return False
+        return True
 
 
-def get_fence_agent_metadata(runner, fence_agent):
+    def _load_metadata(self):
+        env_path = ":".join([
+            # otherwise pacemaker cannot run RHEL fence agents to get their
+            # metadata
+            settings.fence_agent_binaries,
+            # otherwise heartbeat and cluster-glue agents don't work
+            "/bin/",
+            # otherwise heartbeat and cluster-glue agents don't work
+            "/usr/bin/",
+        ])
+        stdout, stderr, retval = self._runner.run(
+            [_crm_resource, "--show-metadata", self._full_agent_name],
+            env_extend={
+                "PATH": env_path,
+            }
+        )
+        if retval != 0:
+            raise UnableToGetAgentMetadata(self.get_name(), stderr.strip())
+        return stdout.strip()
+
+
+class ResourceAgentMetadata(CrmAgentMetadata):
     """
-    Returns dom of metadata for specified fence agent
-    Raises AgentNotFound if fence_agent doesn't starts with fence_ or it is
-        relative path or file is not runnable.
-    Raises UnableToGetAgentMetadata if there was problem getting or
-        parsing metadata.
-
-    runner -- CommandRunner
-    fence_agent -- fence agent name, should start with 'fence_'
+    Provides convinient access to a resource agent's metadata
     """
-    script_path = os.path.join(settings.fence_agent_binaries, fence_agent)
-
-    if not (
-        fence_agent.startswith("fence_") and
-        __is_path_abs(script_path) and
-        is_path_runnable(script_path)
-    ):
-        raise AgentNotFound(fence_agent)
-
-    stdout, stderr, dummy_retval = runner.run(
-        [script_path, "-o", "metadata"]
-    )
-
-    if stdout.strip() == "":
-        raise UnableToGetAgentMetadata(fence_agent, stderr)
-
-    try:
-        return etree.fromstring(stdout)
-    except etree.XMLSyntaxError as e:
-        raise UnableToGetAgentMetadata(fence_agent, str(e))
 
 
-def _get_nagios_resource_agent_metadata(agent):
+class StonithAgentMetadata(CrmAgentMetadata):
     """
-    Returns metadata dom for specified nagios resource agent.
-    Raises AgentNotFound if agent is relative path.
-    Raises UnableToGetAgentMetadata if there was problem getting or
-        parsing metadata.
-
-    agent -- name of nagios resource agent
+    Provides convinient access to a stonith agent's metadata
     """
-    agent_name = "nagios:" + agent
-    metadata_path = os.path.join(settings.nagios_metadata_path, agent + ".xml")
 
-    if not __is_path_abs(metadata_path):
-        raise AgentNotFound(agent_name)
-
-    try:
-        return etree.parse(metadata_path).getroot()
-    except Exception as e:
-        raise UnableToGetAgentMetadata(agent_name, str(e))
+    _stonithd_metadata = None
 
 
-def _get_ocf_resource_agent_metadata(runner, provider, agent):
-    """
-    Returns metadata dom for specified ocf resource agent
-    Raises AgentNotFound if specified agent is relative path or file is not
-        runnable.
-    Raises UnableToGetAgentMetadata if there was problem getting or
-    parsing metadata.
-
-    runner -- CommandRunner
-    provider -- resource agent provider
-    agent -- resource agent name
-    """
-    agent_name = "ocf:" + provider + ":" + agent
-
-    script_path = os.path.join(settings.ocf_resources, provider, agent)
-
-    if not __is_path_abs(script_path) or not is_path_runnable(script_path):
-        raise AgentNotFound(agent_name)
-
-    stdout, stderr, dummy_retval = runner.run(
-        [script_path, "meta-data"],
-        env_extend={"OCF_ROOT": settings.ocf_root}
-    )
-
-    if stdout.strip() == "":
-        raise UnableToGetAgentMetadata(agent_name, stderr)
-
-    try:
-        return etree.fromstring(stdout)
-    except etree.XMLSyntaxError as e:
-        raise UnableToGetAgentMetadata(agent_name, str(e))
+    def __init__(self, runner, agent_name):
+        super(StonithAgentMetadata, self).__init__(
+            runner,
+            "stonith:{0}".format(agent_name)
+        )
+        self._agent_name = agent_name
 
 
-def get_agent_desc(metadata_dom):
-    """
-    Returns dictionary which contains description of agent from it's metadata.
-    dictionary format:
-    {
-        longdesc: long description
-        shortdesc: short description
-    }
-    Raises InvalidMetadataFormat if metadata_dom is not in valid format.
-
-    metadata_dom -- metadata dom of agent
-    """
-    if metadata_dom.tag != "resource-agent":
-        raise InvalidMetadataFormat()
-
-    shortdesc_el = metadata_dom.find("shortdesc")
-    if shortdesc_el is None:
-        shortdesc = metadata_dom.get("shortdesc", "")
-    else:
-        shortdesc = shortdesc_el.text
-
-    return {
-        "longdesc": __get_text_from_dom_element(metadata_dom.find("longdesc")),
-        "shortdesc": "" if shortdesc is None else shortdesc.strip()
-    }
+    def get_name(self):
+        return self._agent_name
 
 
-def _filter_fence_agent_parameters(parameters):
-    """
-    Returns filtered list of fence agent parameters. It removes parameters
-    that user should not be setting.
-
-    parameters -- list of fence agent parameters
-    """
-    # we don't allow user to change these options, they are intended
-    # to be used interactively (command line), there is no point setting them
-    banned_parameters = ["debug", "verbose", "version", "help"]
-    # but still, we have to let user change 'action' because of backward
-    # compatibility, just marking it as not required
-    for param in parameters:
-        if param["name"] == "action":
-            param["shortdesc"] = param.get("shortdesc", "") + "\nWARNING: " +\
-                "specifying 'action' is deprecated and not necessary with " +\
-                "current Pacemaker versions"
-            param["required"] = False
-    return [
-        param for param in parameters if param["name"] not in banned_parameters
-    ]
+    def get_parameters(self):
+        return (
+            self._filter_parameters(
+                super(StonithAgentMetadata, self).get_parameters()
+            )
+            +
+            self._get_stonithd_metadata().get_parameters()
+        )
 
 
-def get_fence_agent_parameters(runner, metadata_dom):
-    """
-    Returns complete list of parameters for fence agent from it's metadata.
-
-    runner -- CommandRunner
-    metadata_dom -- metadata dom of fence agent
-    """
-    return (
-        _filter_fence_agent_parameters(_get_agent_parameters(metadata_dom)) +
-        _get_pcmk_advanced_stonith_parameters(runner)
-    )
-
-
-def get_resource_agent_parameters(metadata_dom):
-    """
-    Returns complete list of parameters for resource agent from it's
-    metadata.
-
-    metadata_dom -- metadata dom of resource agent
-    """
-    return _get_agent_parameters(metadata_dom)
-
-
-def get_resource_agent_metadata(runner, agent):
-    """
-    Returns metadata of specified agent as dom
-    Raises UnsupportedResourceAgent if specified agent is not ocf or nagios
-        agent.
-
-    runner -- CommandRunner
-    agent -- agent name
-    """
-    error = UnsupportedResourceAgent(agent)
-    if agent.startswith("ocf:"):
-        agent_info = agent.split(":", 2)
-        if len(agent_info) != 3:
-            raise error
-        return _get_ocf_resource_agent_metadata(runner, *agent_info[1:])
-    elif agent.startswith("nagios:"):
-        return _get_nagios_resource_agent_metadata(agent.split("nagios:", 1)[1])
-    else:
-        raise error
+    def _filter_parameters(self, parameters):
+        """
+        Remove parameters that should not be available to the user.
+        """
+        # We don't allow the user to change these options which are only
+        # intended to be used interactively on command line.
+        remove_parameters = frozenset([
+            "debug",
+            "help",
+            "verbose",
+            "version",
+        ])
+        filtered = []
+        for param in parameters:
+            if param["name"] in remove_parameters:
+                continue
+            elif param["name"] == "action":
+                # However we still need the user to be able to set 'action' due
+                # to backward compatibility reasons. So we just mark it as not
+                # required.
+                new_param = dict(param)
+                new_param["shortdesc"] = "\n".join(filter(None, [
+                    param.get("shortdesc", ""),
+                    "WARNING: specifying 'action' is deprecated and not "
+                        "necessary with current Pacemaker versions."
+                    ,
+                ]))
+                new_param["required"] = False
+                filtered.append(new_param)
+            else:
+                filtered.append(param)
+            # 'port' parameter is required by a fence agent, but it is filled
+            # automatically by pacemaker based on 'pcmk_host_map' or
+            # 'pcmk_host_list' parameter (defined in stonithd metadata).
+            # Pacemaker marks the 'port' parameter as not required for us.
+        return filtered
 
 
-def _get_action(action_el):
-    """
-    Returns XML action element as dictionary, where all elements attributes
-    are key of dict
-    Raises InvalidMetadataFormat if action_el is not in valid format.
-
-    action_el -- action lxml.etree element
-    """
-    if action_el.tag != "action" or action_el.get("name") is None:
-        raise InvalidMetadataFormat()
-
-    return dict(action_el.items())
+    def _get_stonithd_metadata(self):
+        if not self.__class__._stonithd_metadata:
+            self.__class__._stonithd_metadata = StonithdMetadata(self._runner)
+        return self.__class__._stonithd_metadata
 
 
-def get_agent_actions(metadata_dom):
-    """
-    Returns list of actions from agents metadata
-    Raises InvalidMetadataFormat if metadata_dom is not in valid format.
-
-    metadata_dom -- agent's metadata dom
-    """
-    if metadata_dom.tag != "resource-agent":
-        raise InvalidMetadataFormat()
-
-    actions_el = metadata_dom.find("actions")
-    if actions_el is None:
+    def get_actions(self):
+        # In previous versions of pcs there was no way to read actions from
+        # stonith agents, the functions always returned an empty list. It
+        # wasn't clear if that is a mistake or an intention. We keep it that
+        # way for two reasons:
+        # 1) Fence agents themselfs specify the actions without any attributes
+        # (interval, timeout)
+        # 2) Pacemaker explained shows an example stonith agent configuration
+        # in CIB with only monitor operation specified (and that pcs creates
+        # automatically in "pcs stonith create" regardless of provided actions
+        # from here).
+        # It may be better to return real actions from this class and deal ommit
+        # them in higher layers, which can decide if the actions are desired or
+        # not. For now there is not enough information to do that. Code which
+        # uses this is not clean enough. Once everything is cleaned we should
+        # decide if it is better to move this to higher level.
         return []
 
-    return [
-        _get_action(action) for action in actions_el.iter("action")
-    ]
+
+    def get_provides_unfencing(self):
+        # self.get_actions returns an empty list
+        for action in super(StonithAgentMetadata, self).get_actions():
+            if (
+                action.get("name", "") == "on"
+                and
+                action.get("on_target", "0") == "1"
+                and
+                action.get("automatic", "0") == "1"
+            ):
+                return True
+        return False
 
 
-def _validate_instance_attributes(agent_params, attrs):
-    valid_attrs = [attr["name"] for attr in agent_params]
-    required_missing = []
-
-    for attr in agent_params:
-        if attr["required"] and attr["name"] not in attrs:
-            required_missing.append(attr["name"])
-
-    return [attr for attr in attrs if attr not in valid_attrs], required_missing
-
-
-def validate_instance_attributes(runner, instance_attrs, agent):
-    """
-    Validates instance attributes according to specified agent.
-    Returns tuple of lists (<invalid attributes>, <missing required attributes>)
-
-    runner -- CommandRunner
-    instance_attrs -- dictionary of instance attributes, where key is
-        attribute name and value is attribute value
-    agent -- full name (<class>:<agent> or <class>:<provider>:<agent>)
-        of resource/fence agent
-    """
-    if agent.startswith("stonith:"):
-        agent_params = get_fence_agent_parameters(
-            runner,
-            get_fence_agent_metadata(runner, agent.split("stonith:", 1)[1])
-        )
-        bad_attrs, missing_required = _validate_instance_attributes(
-            agent_params, instance_attrs
-        )
-        if "port" in missing_required:
-            # Temporarily make "port" an optional parameter. Once we are
-            # getting metadata from pacemaker, this will be reviewed and fixed.
-            missing_required.remove("port")
-        return bad_attrs, missing_required
-    else:
-        agent_params = get_resource_agent_parameters(
-            get_resource_agent_metadata(runner, agent)
-        )
-        return _validate_instance_attributes(agent_params, instance_attrs)
-
-
-def resource_agent_lib_error_to_report_item(
+def resource_agent_error_to_report_item(
     e, severity=ReportItemSeverity.ERROR, forceable=False
 ):
     """
-    Transform ResourceAgentLibError to ReportItem
+    Transform ResourceAgentError to ReportItem
     """
     force = None
-    if e.__class__ == AgentNotFound:
-        if severity == ReportItemSeverity.ERROR and forceable:
-            force = report_codes.FORCE_UNKNOWN_AGENT
-        return reports.agent_not_found(e.agent, severity, force)
-    if e.__class__ == UnsupportedResourceAgent:
-        if severity == ReportItemSeverity.ERROR and forceable:
-            force = report_codes.FORCE_UNSUPPORTED_AGENT
-        return reports.agent_not_supported(e.agent, severity, force)
     if e.__class__ == UnableToGetAgentMetadata:
         if severity == ReportItemSeverity.ERROR and forceable:
             force = report_codes.FORCE_METADATA_ISSUE
         return reports.unable_to_get_agent_metadata(
             e.agent, e.message, severity, force
         )
-    if e.__class__ == InvalidMetadataFormat:
-        if severity == ReportItemSeverity.ERROR and forceable:
-            force = report_codes.FORCE_METADATA_ISSUE
-        return reports.invalid_metadata_format(severity, force)
-    if e.__class__ == ResourceAgentCommonError:
-        return reports.resource_agent_general_error(e.agent)
-    if e.__class__ == ResourceAgentLibError:
-        return reports.resource_agent_general_error()
     raise e

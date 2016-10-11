@@ -6,7 +6,6 @@ from __future__ import (
 )
 
 import sys
-import os
 import xml.dom.minidom
 from xml.dom.minidom import getDOMImplementation
 from xml.dom.minidom import parseString
@@ -19,13 +18,11 @@ from pcs import (
     usage,
     utils,
     constraint,
-    settings,
 )
 from pcs.settings import pacemaker_wait_timeout_status as \
     PACEMAKER_WAIT_TIMEOUT_STATUS
 import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker as lib_pacemaker
-from pcs.lib.external import get_systemd_services
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
@@ -36,170 +33,157 @@ import pcs.lib.resource_agent as lib_ra
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
 def resource_cmd(argv):
-    if len(argv) == 0:
-        argv = ["show"]
+    if len(argv) < 1:
+        sub_cmd, argv_next = "show", []
+    else:
+        sub_cmd, argv_next = argv[0], argv[1:]
 
-    sub_cmd = argv.pop(0)
-    if (sub_cmd == "help"):
-        usage.resource(argv)
-    elif (sub_cmd == "list"):
-        resource_list_available(argv)
-    elif (sub_cmd == "describe"):
-        if len(argv) == 1:
-            resource_list_options(argv[0])
-        else:
-            usage.resource()
-            sys.exit(1)
-    elif (sub_cmd == "create"):
-        if len(argv) < 2:
-            usage.resource()
-            sys.exit(1)
-        res_id = argv.pop(0)
-        res_type = argv.pop(0)
-        ra_values, op_values, meta_values, clone_opts = parse_resource_options(
-            argv, with_clone=True
-        )
-        try:
+    lib = utils.get_library_wrapper()
+    modifiers = utils.get_modificators()
+
+    try:
+        if sub_cmd == "help":
+            usage.resource(argv)
+        elif sub_cmd == "list":
+            resource_list_available(lib, argv_next, modifiers)
+        elif sub_cmd == "describe":
+            resource_list_options(lib, argv_next, modifiers)
+        elif sub_cmd == "create":
+            if len(argv_next) < 2:
+                usage.resource(["create"])
+                sys.exit(1)
+            res_id = argv_next.pop(0)
+            res_type = argv_next.pop(0)
+            ra_values, op_values, meta_values, clone_opts = parse_resource_options(
+                argv_next, with_clone=True
+            )
             resource_create(
                 res_id, res_type, ra_values, op_values, meta_values, clone_opts,
                 group=utils.pcs_options.get("--group", None)
             )
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "resource", 'create')
-    elif (sub_cmd == "move"):
-        resource_move(argv)
-    elif (sub_cmd == "ban"):
-        resource_move(argv,False,True)
-    elif (sub_cmd == "clear"):
-        resource_move(argv,True)
-    elif (sub_cmd == "standards"):
-        resource_standards()
-    elif (sub_cmd == "providers"):
-        resource_providers()
-    elif (sub_cmd == "agents"):
-        resource_agents(argv)
-    elif (sub_cmd == "update"):
-        if len(argv) == 0:
-            usage.resource()
-            sys.exit(1)
-        res_id = argv.pop(0)
-        try:
-            resource_update(res_id,argv)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "resource", 'update')
-    elif (sub_cmd == "add_operation"):
-        utils.err("add_operation has been deprecated, please use 'op add'")
-    elif (sub_cmd == "remove_operation"):
-        utils.err("remove_operation has been deprecated, please use 'op remove'")
-    elif (sub_cmd == "meta"):
-        if len(argv) < 2:
-            usage.resource()
-            sys.exit(1)
-        res_id = argv.pop(0)
-        resource_meta(res_id,argv)
-    elif (sub_cmd == "delete"):
-        if len(argv) == 0:
-            usage.resource()
-            sys.exit(1)
-        res_id = argv.pop(0)
-        resource_remove(res_id)
-    elif (sub_cmd == "show"):
-        resource_show(argv)
-    elif (sub_cmd == "group"):
-        resource_group(argv)
-    elif (sub_cmd == "ungroup"):
-        resource_group(["remove"] + argv)
-    elif (sub_cmd == "clone"):
-        try:
-            resource_clone(argv)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "resource", 'clone')
-    elif (sub_cmd == "unclone"):
-        resource_clone_master_remove(argv)
-    elif (sub_cmd == "master"):
-        try:
-            resource_master(argv)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "resource", 'master')
-    elif (sub_cmd == "enable"):
-        resource_enable(argv)
-    elif (sub_cmd == "disable"):
-        resource_disable(argv)
-    elif (sub_cmd == "restart"):
-        resource_restart(argv)
-    elif (sub_cmd == "debug-start"):
-        resource_force_action(sub_cmd, argv)
-    elif (sub_cmd == "debug-stop"):
-        resource_force_action(sub_cmd, argv)
-    elif (sub_cmd == "debug-promote"):
-        resource_force_action(sub_cmd, argv)
-    elif (sub_cmd == "debug-demote"):
-        resource_force_action(sub_cmd, argv)
-    elif (sub_cmd == "debug-monitor"):
-        resource_force_action(sub_cmd, argv)
-    elif (sub_cmd == "manage"):
-        resource_manage(argv, True)
-    elif (sub_cmd == "unmanage"):
-        resource_manage(argv, False)
-    elif (sub_cmd == "failcount"):
-        resource_failcount(argv)
-    elif (sub_cmd == "op"):
-        if len(argv) < 1:
-            usage.resource(["op"])
-            sys.exit(1)
-        op_subcmd = argv.pop(0)
-        if op_subcmd == "defaults":
-            if len(argv) == 0:
-                show_defaults("op_defaults")
-            else:
-                set_default("op_defaults", argv)
-        elif op_subcmd == "add":
-            if len(argv) == 0:
+        elif sub_cmd == "move":
+            resource_move(argv_next)
+        elif sub_cmd == "ban":
+            resource_move(argv_next, False, True)
+        elif sub_cmd == "clear":
+            resource_move(argv_next, True)
+        elif sub_cmd == "standards":
+            resource_standards(lib, argv_next, modifiers)
+        elif sub_cmd == "providers":
+            resource_providers(lib, argv_next, modifiers)
+        elif sub_cmd == "agents":
+            resource_agents(lib, argv_next, modifiers)
+        elif sub_cmd == "update":
+            if len(argv_next) == 0:
+                usage.resource(["update"])
+                sys.exit(1)
+            res_id = argv_next.pop(0)
+            resource_update(res_id, argv_next)
+        elif sub_cmd == "add_operation":
+            utils.err("add_operation has been deprecated, please use 'op add'")
+        elif sub_cmd == "remove_operation":
+            utils.err("remove_operation has been deprecated, please use 'op remove'")
+        elif sub_cmd == "meta":
+            if len(argv_next) < 2:
+                usage.resource(["meta"])
+                sys.exit(1)
+            res_id = argv_next.pop(0)
+            resource_meta(res_id, argv_next)
+        elif sub_cmd == "delete":
+            if len(argv_next) == 0:
+                usage.resource(["delete"])
+                sys.exit(1)
+            res_id = argv_next.pop(0)
+            resource_remove(res_id)
+        elif sub_cmd == "show":
+            resource_show(argv_next)
+        elif sub_cmd == "group":
+            resource_group(argv_next)
+        elif sub_cmd == "ungroup":
+            resource_group(["remove"] + argv_next)
+        elif sub_cmd == "clone":
+            resource_clone(argv_next)
+        elif sub_cmd == "unclone":
+            resource_clone_master_remove(argv_next)
+        elif sub_cmd == "master":
+            resource_master(argv_next)
+        elif sub_cmd == "enable":
+            resource_enable(argv_next)
+        elif sub_cmd == "disable":
+            resource_disable(argv_next)
+        elif sub_cmd == "restart":
+            resource_restart(argv_next)
+        elif sub_cmd == "debug-start":
+            resource_force_action(sub_cmd, argv_next)
+        elif sub_cmd == "debug-stop":
+            resource_force_action(sub_cmd, argv_next)
+        elif sub_cmd == "debug-promote":
+            resource_force_action(sub_cmd, argv_next)
+        elif sub_cmd == "debug-demote":
+            resource_force_action(sub_cmd, argv_next)
+        elif sub_cmd == "debug-monitor":
+            resource_force_action(sub_cmd, argv_next)
+        elif sub_cmd == "manage":
+            resource_manage(argv_next, True)
+        elif sub_cmd == "unmanage":
+            resource_manage(argv_next, False)
+        elif sub_cmd == "failcount":
+            resource_failcount(argv_next)
+        elif sub_cmd == "op":
+            if len(argv_next) < 1:
                 usage.resource(["op"])
                 sys.exit(1)
+            op_subcmd = argv_next.pop(0)
+            if op_subcmd == "defaults":
+                if len(argv_next) == 0:
+                    show_defaults("op_defaults")
+                else:
+                    set_default("op_defaults", argv_next)
+            elif op_subcmd == "add":
+                if len(argv_next) == 0:
+                    usage.resource(["op"])
+                    sys.exit(1)
+                else:
+                    res_id = argv_next.pop(0)
+                    utils.replace_cib_configuration(
+                        resource_operation_add(
+                            utils.get_cib_dom(), res_id, argv_next
+                        )
+                    )
+            elif op_subcmd in ["remove", "delete"]:
+                if len(argv_next) == 0:
+                    usage.resource(["op"])
+                    sys.exit(1)
+                else:
+                    res_id = argv_next.pop(0)
+                    resource_operation_remove(res_id, argv_next)
+        elif sub_cmd == "defaults":
+            if len(argv_next) == 0:
+                show_defaults("rsc_defaults")
             else:
-                res_id = argv.pop(0)
-                utils.replace_cib_configuration(
-                    resource_operation_add(utils.get_cib_dom(), res_id, argv)
-                )
-        elif op_subcmd in ["remove","delete"]:
-            if len(argv) == 0:
-                usage.resource(["op"])
-                sys.exit(1)
+                set_default("rsc_defaults", argv_next)
+        elif sub_cmd == "cleanup":
+            resource_cleanup(argv_next)
+        elif sub_cmd == "history":
+            resource_history(argv_next)
+        elif sub_cmd == "relocate":
+            resource_relocate(argv_next)
+        elif sub_cmd == "utilization":
+            if len(argv_next) == 0:
+                print_resources_utilization()
+            elif len(argv_next) == 1:
+                print_resource_utilization(argv_next.pop(0))
             else:
-                res_id = argv.pop(0)
-                resource_operation_remove(res_id, argv)
-    elif (sub_cmd == "defaults"):
-        if len(argv) == 0:
-            show_defaults("rsc_defaults")
+                set_resource_utilization(argv_next.pop(0), argv_next)
+        elif sub_cmd == "get_resource_agent_info":
+            get_resource_agent_info(argv_next)
         else:
-            set_default("rsc_defaults", argv)
-    elif (sub_cmd == "cleanup"):
-        try:
-            resource_cleanup(argv)
-        except CmdLineInputError as e:
-            utils.exit_on_cmdline_input_errror(e, "resource", 'cleanup')
-        except LibraryError as e:
-            utils.process_library_reports(e.args)
-    elif (sub_cmd == "history"):
-        resource_history(argv)
-    elif (sub_cmd == "relocate"):
-        resource_relocate(argv)
-    elif (sub_cmd == "utilization"):
-        if len(argv) == 0:
-            print_resources_utilization()
-        elif len(argv) == 1:
-            print_resource_utilization(argv.pop(0))
-        else:
-            try:
-                set_resource_utilization(argv.pop(0), argv)
-            except CmdLineInputError as e:
-                utils.exit_on_cmdline_input_errror(e, "resource", "utilization")
-    elif (sub_cmd == "get_resource_agent_info"):
-        get_resource_agent_info(argv)
-    else:
-        usage.resource()
-        sys.exit(1)
+            usage.resource()
+            sys.exit(1)
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "resource", sub_cmd)
 
 def parse_resource_options(argv, with_clone=False):
     ra_values = []
@@ -243,212 +227,126 @@ def parse_resource_options(argv, with_clone=False):
         return ra_values, op_values, meta_values, clone_opts
     return ra_values, op_values, meta_values
 
-# List available resources
-# TODO make location more easily configurable
-def resource_list_available(argv):
-    def get_name_and_desc(agent_name, shortdesc):
-        sd = ""
-        if len(shortdesc) > 0:
-            sd = " - " + format_desc(
-                len(agent_name + " - "),
-                shortdesc.replace("\n", " ")
-            )
-        return agent_name + sd
 
-    ret = []
-    if len(argv) != 0:
-        filter_string = argv[0]
-    else:
-        filter_string = ""
+def resource_list_available(lib, argv, modifiers):
+    if len(argv) > 1:
+        raise CmdLineInputError()
 
-    # ocf agents
-    providers = sorted(os.listdir(settings.ocf_resources))
-    for provider in providers:
-        resources = sorted(os.listdir(os.path.join(
-            settings.ocf_resources, provider
-        )))
-        for resource in resources:
-            if resource.startswith(".") or resource == "ocf-shellfuncs":
-                continue
-            full_res_name = "ocf:" + provider + ":" + resource
-            if full_res_name.lower().count(filter_string.lower()) == 0:
-                continue
+    search = argv[0] if argv else None
+    agent_list = lib.resource_agent.list_agents(modifiers["describe"], search)
 
-            if "--nodesc" in utils.pcs_options:
-                ret.append(full_res_name)
-                continue
-
-            try:
-                metadata = lib_ra.get_resource_agent_metadata(
-                    utils.cmd_runner(), full_res_name
-                )
-                ret.append(get_name_and_desc(
-                    full_res_name,
-                    lib_ra.get_agent_desc(metadata)["shortdesc"]
-                ))
-            except (LibraryError, lib_ra.ResourceAgentLibError):
-                pass
-
-    # lsb agents
-    lsb_dir = "/etc/init.d/"
-    agents = sorted(os.listdir(lsb_dir))
-    for agent in agents:
-        if os.access(lsb_dir + agent, os.X_OK):
-            ret.append("lsb:" + agent)
-
-    # systemd agents
-    for service in get_systemd_services(utils.cmd_runner()):
-        ret.append("systemd:{0}".format(service))
-
-    # nagios metadata
-    if os.path.isdir(settings.nagios_metadata_path):
-        for metadata_file in sorted(os.listdir(settings.nagios_metadata_path)):
-            if metadata_file.startswith("."):
-                continue
-            full_res_name = "nagios:" + metadata_file
-            if full_res_name.lower().endswith(".xml"):
-                full_res_name = full_res_name[:-len(".xml")]
-            if "--nodesc" in utils.pcs_options:
-                ret.append(full_res_name)
-                continue
-            try:
-                metadata = lib_ra.get_resource_agent_metadata(
-                    utils.cmd_runner(),
-                    full_res_name
-                )
-                ret.append(get_name_and_desc(
-                    full_res_name,
-                    lib_ra.get_agent_desc(metadata)["shortdesc"]
-                ))
-            except (LibraryError, lib_ra.ResourceAgentLibError):
-                pass
-
-    # output
-    if not ret:
+    if not agent_list:
+        if search:
+            utils.err("No resource agents matching the filter.")
         utils.err(
             "No resource agents available. "
             "Do you have resource agents installed?"
         )
-    if filter_string != "":
-        found = False
-        for rline in ret:
-            if rline.lower().find(filter_string.lower()) != -1:
-                print(rline)
-                found = True
-        if not found:
-            utils.err("No resource agents matching the filter.")
-    else:
-        print("\n".join(ret))
+
+    for agent_info in agent_list:
+        name = agent_info["name"]
+        shortdesc = agent_info["shortdesc"]
+        if shortdesc:
+            print("{0} - {1}".format(
+                name,
+                _format_desc(len(name + " - "), shortdesc.replace("\n", " "))
+            ))
+        else:
+            print(name)
 
 
-def resource_print_options(agent_name, desc, params, actions):
-    if desc["shortdesc"]:
-        agent_name += " - " + format_desc(
-            len(agent_name + " - "), desc["shortdesc"]
-        )
-    print(agent_name)
-    if desc["longdesc"]:
-        print()
-        print(desc["longdesc"])
+def resource_list_options(lib, argv, modifiers):
+    if len(argv) != 1:
+        raise CmdLineInputError()
+    agent_name = argv[0]
 
-    if len(params) > 0:
-        print()
-        print("Resource options:")
-    for param in params:
-        if param.get("advanced", False):
-            continue
-        name = param["name"]
-        if param["required"]:
-            name += " (required)"
-        desc = param["longdesc"].replace("\n", " ")
-        if not desc:
-            desc = param["shortdesc"].replace("\n", " ")
-            if not desc:
-                desc = "No description available"
-        indent = len(name) + 4
-        desc = format_desc(indent, desc)
-        print("  " + name + ": " + desc)
+    print(_format_agent_description(
+        lib.resource_agent.describe_agent(agent_name)
+    ))
 
-    if actions:
-        print()
-        print("Default operations:")
-        action_lines = []
-        for action in utils.filter_default_op_from_actions(actions):
+
+def _format_agent_description(description, stonith=False):
+    output = []
+
+    if description.get("name") and description.get("shortdesc"):
+        output.append("{0} - {1}".format(
+            description["name"],
+            _format_desc(
+                len(description["name"] + " - "),
+                description["shortdesc"]
+            )
+        ))
+    elif description.get("name"):
+        output.append(description["name"])
+    elif description.get("shortdesc"):
+        output.append(description["shortdesc"])
+
+    if description.get("longdesc"):
+        output.append("")
+        output.append(description["longdesc"])
+
+    if description.get("parameters"):
+        output_params = []
+        for param in description["parameters"]:
+            if param.get("advanced", False):
+                continue
+            param_title = " ".join(filter(None, [
+                param.get("name"),
+                "(required)" if param.get("required", False) else None
+            ]))
+            param_desc = param.get("longdesc", "").replace("\n", " ")
+            if not param_desc:
+                param_desc = param.get("shortdesc", "").replace("\n", " ")
+                if not param_desc:
+                    param_desc = "No description available"
+            output_params.append("  {0}: {1}".format(
+                param_title,
+                _format_desc(len(param_title) + 4, param_desc)
+            ))
+        if output_params:
+            output.append("")
+            if stonith:
+                output.append("Stonith options:")
+            else:
+                output.append("Resource options:")
+            output.extend(output_params)
+
+    if description.get("actions"):
+        output_actions = []
+        for action in utils.filter_default_op_from_actions(
+            description["actions"]
+        ):
             parts = ["  {0}:".format(action.get("name", ""))]
             parts.extend([
                 "{0}={1}".format(name, value)
                 for name, value in sorted(action.items())
                 if name != "name"
             ])
-            action_lines.append(" ".join(parts))
-        print("\n".join(action_lines))
+            output_actions.append(" ".join(parts))
+        if output_actions:
+            output.append("")
+            output.append("Default operations:")
+            output.extend(output_actions)
 
-def resource_list_options(resource):
-    runner = utils.cmd_runner()
+    return "\n".join(output)
 
-    def get_desc_params(agent_name):
-        metadata_dom = lib_ra.get_resource_agent_metadata(
-            runner, agent_name
-        )
-        desc = lib_ra.get_agent_desc(metadata_dom)
-        params = lib_ra.get_resource_agent_parameters(metadata_dom)
-        actions = lib_ra.get_agent_actions(metadata_dom)
-        return desc, params, actions
 
-    found_resource = False
-
-    try:
-        descriptions, parameters, actions = get_desc_params(resource)
-        resource_print_options(resource, descriptions, parameters, actions)
-        return
-    except lib_ra.UnsupportedResourceAgent:
-        pass
-    except lib_ra.ResourceAgentLibError as e:
-        utils.process_library_reports(
-            [lib_ra.resource_agent_lib_error_to_report_item(e)]
-        )
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
-
-    # no standard was given, let's search all ocf providers first
-    providers = sorted(os.listdir(settings.ocf_resources))
-    for provider in providers:
-        if not os.path.exists(
-            os.path.join(settings.ocf_resources, provider, resource)
-        ):
-            continue
-        try:
-            agent = "ocf:{0}:{1}".format(provider, resource)
-            descriptions, parameters, actions = get_desc_params(agent)
-            resource_print_options(agent, descriptions, parameters, actions)
-            return
-        except (LibraryError, lib_ra.ResourceAgentLibError):
-            pass
-
-    # still not found, now let's take a look at nagios plugins
-    if not found_resource:
-        try:
-            agent = "nagios:" + resource
-            descriptions, parameters, actions = get_desc_params(agent)
-            resource_print_options(agent, descriptions, parameters, actions)
-        except (LibraryError, lib_ra.ResourceAgentLibError):
-            utils.err("Unable to find resource: {0}".format(resource))
-
-# Return the string formatted with a line length of 79 and indented
-def format_desc(indent, desc):
+# Return the string formatted with a line length of terminal width  and indented
+def _format_desc(indent, desc):
     desc = " ".join(desc.split())
     dummy_rows, columns = utils.getTerminalSize()
     columns = int(columns)
     if columns < 40:
         columns = 40
     afterindent = columns - indent
+    if afterindent < 1:
+        afterindent = columns
+
     output = ""
     first = True
-
     for line in textwrap.wrap(desc, afterindent):
         if not first:
-            for _ in range(0,indent):
-                output += " "
+            output += " " * indent
         output += line
         output += "\n"
         first = False
@@ -480,17 +378,55 @@ def resource_create(
     if not ra_id_valid:
         utils.err(ra_id_error)
 
+
+    try:
+        if ":" in ra_type:
+            full_agent_name = ra_type
+            if full_agent_name.startswith("stonith:"):
+                # Maybe we can just try to get a metadata object and if it fails
+                # then we know the agent is not valid. Then the is_valid_agent
+                # method can be completely removed.
+                is_valid_agent = lib_ra.StonithAgentMetadata(
+                    utils.cmd_runner(),
+                    full_agent_name[len("stonith:"):]
+                ).is_valid_agent()
+            else:
+                is_valid_agent = lib_ra.ResourceAgentMetadata(
+                    utils.cmd_runner(),
+                    full_agent_name
+                ).is_valid_agent()
+            if not is_valid_agent:
+                if "--force" not in utils.pcs_options:
+                    utils.err("Unable to create resource '{0}', it is not installed on this system (use --force to override)".format(full_agent_name))
+                elif not full_agent_name.startswith("stonith:"):
+                    # stonith is covered in stonith.stonith_create
+                    if not re.match("^[^:]+(:[^:]+){1,2}$", full_agent_name):
+                        utils.err(
+                            "Invalid resource agent name '{0}'".format(
+                                full_agent_name
+                            )
+                        )
+                    print(
+                        "Warning: '{0}' is not installed or does not provide valid metadata".format(
+                            full_agent_name
+                        )
+                    )
+        else:
+            full_agent_name = lib_ra.guess_exactly_one_resource_agent_full_name(
+                utils.cmd_runner(),
+                ra_type
+            ).get_name()
+            print("Creating resource '{0}'".format(full_agent_name))
+    except lib_ra.ResourceAgentError as e:
+        utils.process_library_reports(
+            [lib_ra.resource_agent_error_to_report_item(e)]
+        )
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    agent_name_parts = split_resource_agent_name(full_agent_name)
+
+
     dom = utils.get_cib_dom()
-
-    # If we're not using --force, try to change the case of ra_type to match any
-    # installed resources
-    if "--force" not in utils.pcs_options:
-        new_ra_type = utils.is_valid_resource(ra_type, True)
-        if new_ra_type != True and new_ra_type != False:
-            ra_type = new_ra_type
-
-    if not utils.is_valid_resource(ra_type) and "--force" not in utils.pcs_options:
-        utils.err ("Unable to create resource '%s', it is not installed on this system (use --force to override)" % ra_type)
 
     if utils.does_id_exist(dom, ra_id):
         utils.err("unable to create resource/fence device '%s', '%s' already exists on this system" % (ra_id,ra_id))
@@ -511,7 +447,7 @@ def resource_create(
     # the default operations we remove if from the default operations
     op_values_agent = []
     if "--no-default-ops" not in utils.pcs_options:
-        default_op_values = utils.get_default_op_values(ra_type)
+        default_op_values = utils.get_default_op_values(full_agent_name)
         for def_op in default_op_values:
             match = False
             for op in op_values:
@@ -570,32 +506,40 @@ def resource_create(
         meta_values = []
 
     instance_attributes = convert_args_to_instance_variables(ra_values,ra_id)
-    primitive_values = get_full_ra_type(ra_type)
+    primitive_values = agent_name_parts[:]
     primitive_values.insert(0,("id",ra_id))
     meta_attributes = convert_args_to_meta_attrs(meta_values, ra_id)
-    if "--force" not in utils.pcs_options and utils.does_resource_have_options(ra_type):
+    if "--force" not in utils.pcs_options:
         params = utils.convert_args_to_tuples(ra_values)
         bad_opts, missing_req_opts = [], []
         try:
-            bad_opts, missing_req_opts = lib_ra.validate_instance_attributes(
-                utils.cmd_runner(),
-                dict(params),
-                get_full_ra_type(ra_type, True)
+            if full_agent_name.startswith("stonith:"):
+                metadata = lib_ra.StonithAgentMetadata(
+                    utils.cmd_runner(),
+                    full_agent_name[len("stonith:"):]
+                )
+            else:
+                metadata = lib_ra.ResourceAgentMetadata(
+                    utils.cmd_runner(),
+                    full_agent_name
+                )
+            bad_opts, missing_req_opts = metadata.validate_parameters_values(
+                dict(params)
             )
-        except lib_ra.ResourceAgentLibError as e:
+        except lib_ra.ResourceAgentError as e:
             utils.process_library_reports(
-                [lib_ra.resource_agent_lib_error_to_report_item(e)]
+                [lib_ra.resource_agent_error_to_report_item(e)]
             )
         except LibraryError as e:
             utils.process_library_reports(e.args)
         if len(bad_opts) != 0:
             utils.err ("resource option(s): '%s', are not recognized for resource type: '%s' (use --force to override)" \
-                    % (", ".join(sorted(bad_opts)), get_full_ra_type(ra_type, True)))
+                    % (", ".join(sorted(bad_opts)), full_agent_name))
         if len(missing_req_opts) != 0:
             utils.err(
                 "missing required option(s): '%s' for resource type: %s"
                     " (use --force to override)"
-                % (", ".join(missing_req_opts), get_full_ra_type(ra_type, True))
+                % (", ".join(missing_req_opts), full_agent_name)
             )
 
     resource_elem = create_xml_element("primitive", primitive_values, instance_attributes + meta_attributes)
@@ -838,37 +782,46 @@ def resource_move(argv,clear=False,ban=False):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
-def resource_standards(return_output=False):
-    output, dummy_retval = utils.run(["crm_resource","--list-standards"], True)
-    # Return value is ignored because it contains the number of standards
-    # returned, not an error code
-    output = output.strip()
-    if return_output == True:
-        return output
-    print(output)
 
-def resource_providers():
-    output, dummy_retval = utils.run(["crm_resource","--list-ocf-providers"],True)
-    # Return value is ignored because it contains the number of providers
-    # returned, not an error code
-    print(output.strip())
+def resource_standards(lib, argv, modifiers):
+    if argv:
+        raise CmdLineInputError()
 
-def resource_agents(argv):
-    if len(argv) > 1:
-        usage.resource()
-        sys.exit(1)
-    elif len(argv) == 1:
-        standards = [argv[0]]
+    standards = lib.resource_agent.list_standards()
+
+    if standards:
+        print("\n".join(standards))
     else:
-        output = resource_standards(True)
-        standards = output.split('\n')
+        utils.err("No standards found")
 
-    for s in standards:
-        output, dummy_retval = utils.run(["crm_resource", "--list-agents", s])
-        preg = re.compile(r'\d+ agents found for standard.*$', re.MULTILINE)
-        output = preg.sub("", output)
-        output = output.strip()
-        print(output)
+
+def resource_providers(lib, argv, modifiers):
+    if argv:
+        raise CmdLineInputError()
+
+    providers = lib.resource_agent.list_ocf_providers()
+
+    if providers:
+        print("\n".join(providers))
+    else:
+        utils.err("No OCF providers found")
+
+
+def resource_agents(lib, argv, modifiers):
+    if len(argv) > 1:
+        raise CmdLineInputError()
+
+    standard = argv[0] if argv else None
+
+    agents = lib.resource_agent.list_agents_for_standard_and_provider(standard)
+
+    if agents:
+        print("\n".join(agents))
+    else:
+        utils.err("No agents found{0}".format(
+            " for {0}".format(argv[0]) if argv else ""
+        ))
+
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
@@ -920,12 +873,20 @@ def resource_update(res_id,args):
             resource_type = resClass + ":" + resProvider + ":" + resType
         bad_opts = []
         try:
-            bad_opts, _ = lib_ra.validate_instance_attributes(
-                utils.cmd_runner(), dict(params), resource_type
-            )
-        except lib_ra.ResourceAgentLibError as e:
+            if resource_type.startswith("stonith:"):
+                metadata = lib_ra.StonithAgentMetadata(
+                    utils.cmd_runner(),
+                    resource_type[len("stonith:"):]
+                )
+            else:
+                metadata = lib_ra.ResourceAgentMetadata(
+                    utils.cmd_runner(),
+                    resource_type
+                )
+            bad_opts, _ = metadata.validate_parameters_values(dict(params))
+        except lib_ra.ResourceAgentError as e:
             utils.process_library_reports(
-                [lib_ra.resource_agent_lib_error_to_report_item(e)]
+                [lib_ra.resource_agent_error_to_report_item(e)]
             )
         except LibraryError as e:
             utils.process_library_reports(e.args)
@@ -1298,30 +1259,26 @@ def convert_args_to_instance_variables(ra_values, ra_id):
     ret = ("instance_attributes", [[("id"),(attribute_id)]], ivs)
     return [ret]
 
-
-# Passed a resource type (ex. ocf:heartbeat:IPaddr2 or IPaddr2) and returns
-# a list of tuples mapping the types to xml attributes
-def get_full_ra_type(ra_type, return_string = False):
-    if (ra_type.count(":") == 0):
-        if os.path.isfile("/usr/lib/ocf/resource.d/heartbeat/%s" % ra_type):
-            ra_type = "ocf:heartbeat:" + ra_type
-        elif os.path.isfile("/usr/lib/ocf/resource.d/pacemaker/%s" % ra_type):
-            ra_type = "ocf:pacemaker:" + ra_type
-        elif os.path.isfile("/usr/share/pacemaker/nagios/plugins-metadata/%s.xml" % ra_type):
-            ra_type = "nagios:" + ra_type
-        else:
-            ra_type = "ocf:heartbeat:" + ra_type
-
-
-    if return_string:
-        return ra_type
-
-    ra_def = ra_type.split(":")
-    # If len = 2 then we're creating a fence device
-    if len(ra_def) == 2:
-        return([("class",ra_def[0]),("type",ra_def[1])])
-    else:
-        return([("class",ra_def[0]),("type",ra_def[2]),("provider",ra_def[1])])
+def split_resource_agent_name(full_agent_name):
+    match = re.match(
+        "^(?P<standard>[^:]+)(:(?P<provider>[^:]+))?:(?P<type>[^:]+)$",
+        full_agent_name
+    )
+    if not match:
+        utils.err(
+            "Invalid resource agent name '{0}'".format(
+                full_agent_name
+            )
+        )
+    parts = [
+        ("class", match.group("standard")),
+        ("type", match.group("type")),
+    ]
+    if match.group("provider"):
+        parts.append(
+            ("provider", match.group("provider"))
+        )
+    return parts
 
 
 def create_xml_element(tag, options, children = []):
@@ -2839,25 +2796,20 @@ def print_resources_utilization():
 
 
 def get_resource_agent_info(argv):
+# This is used only by pcsd, will be removed in new architecture
     if len(argv) != 1:
         utils.err("One parameter expected")
 
     agent = argv[0]
-    try:
-        metadata_dom = lib_ra.get_resource_agent_metadata(
-            utils.cmd_runner(),
-            agent
-        )
-        metadata = lib_ra.get_agent_desc(metadata_dom)
-        metadata["name"] = agent
-        metadata["parameters"] = lib_ra.get_resource_agent_parameters(
-            metadata_dom
-        )
 
-        print(json.dumps(metadata))
-    except lib_ra.ResourceAgentLibError as e:
+    runner = utils.cmd_runner()
+
+    try:
+        metadata = lib_ra.ResourceAgentMetadata(runner, agent)
+        print(json.dumps(metadata.get_full_info()))
+    except lib_ra.ResourceAgentError as e:
         utils.process_library_reports(
-            [lib_ra.resource_agent_lib_error_to_report_item(e)]
+            [lib_ra.resource_agent_error_to_report_item(e)]
         )
     except LibraryError as e:
         utils.process_library_reports(e.args)

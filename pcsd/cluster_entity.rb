@@ -1034,11 +1034,7 @@ module ClusterEntity
       node.services.each do |service, info|
         info[:running] = is_service_running?(service.to_s)
         info[:enabled] = is_service_enabled?(service.to_s)
-        if ISSYSTEMCTL
-          # temporary solution
-          # is_service_installed is implemented only for systemd systems
-          info[:installed] = is_service_installed?(service.to_s)
-        end
+        info[:installed] = is_service_installed?(service.to_s)
       end
       node.corosync = node.services[:corosync][:running]
       node.corosync_enabled = node.services[:corosync][:enabled]

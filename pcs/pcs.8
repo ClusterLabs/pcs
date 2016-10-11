@@ -67,13 +67,13 @@ Manage pacemaker alerts.
 [show [<resource id>] | \fB\-\-full\fR | \fB\-\-groups\fR | \fB\-\-hide\-inactive\fR]
 Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified, all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).  If \fB\-\-hide\-inactive\fR is specified, only show active resources.
 .TP
-list [<standard|provider|type>] [\fB\-\-nodesc\fR]
-Show list of all available resources, optionally filtered by specified type, standard or provider. If \fB\-\-nodesc\fR is used then descriptions of resources are not printed.
+list [filter] [\fB\-\-nodesc\fR]
+Show list of all available resource agents (if filter is provided then only resource agents matching the filter will be shown). If --nodesc is used then descriptions of resource agents are not printed.
 .TP
-describe <standard:provider:type|type>
+describe [<standard>:[<provider>:]]<type>
 Show options for the specified resource.
 .TP
-create <resource id> <standard:provider:type|type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group id> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
+create <resource id> [<standard>:[<provider>:]]<type> [resource options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-clone\fR <clone options> | \fB\-\-master\fR <master options> | \fB\-\-group\fR <group id> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>]] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
 Create specified resource.  If \fB\-\-clone\fR is used a clone resource is created.  If \fB\-\-master\fR is specified a master/slave resource is created.  If \fB\-\-group\fR is specified the resource is added to the group named.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group.  If \fB\-\-disabled\fR is specified the resource is not started automatically.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started.  If 'n' is not specified it defaults to 60 minutes.
 
 Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s

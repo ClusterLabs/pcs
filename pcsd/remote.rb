@@ -1548,7 +1548,7 @@ def get_avail_fence_agents(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
-  agents = getFenceAgents()
+  agents = getFenceAgents(auth_user)
   return JSON.generate(agents)
 end
 

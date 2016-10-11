@@ -1286,15 +1286,6 @@ def service_disable_success(service, node=None, instance=None):
         }
     )
 
-def invalid_metadata_format(severity=ReportItemSeverity.ERROR, forceable=None):
-    """
-    Invalid format of metadata
-    """
-    return ReportItem(
-        report_codes.INVALID_METADATA_FORMAT,
-        severity,
-        forceable=forceable
-    )
 
 def unable_to_get_agent_metadata(
     agent, reason, severity=ReportItemSeverity.ERROR, forceable=None
@@ -1302,8 +1293,8 @@ def unable_to_get_agent_metadata(
     """
     There were some issues trying to get metadata of agent
 
-    agent -- agent which metadata were unable to obtain
-    reason -- reason of failure
+    string agent agent which metadata were unable to obtain
+    string reason reason of failure
     """
     return ReportItem(
         report_codes.UNABLE_TO_GET_AGENT_METADATA,
@@ -1316,44 +1307,29 @@ def unable_to_get_agent_metadata(
     )
 
 
-def agent_not_found(agent, severity=ReportItemSeverity.ERROR, forceable=None):
+def agent_name_guess_found_more_than_one(agent, possible_agents):
     """
-    Specified agent doesn't exist
-
-    agent -- name of agent which doesn't exist
-    """
-    return ReportItem(
-        report_codes.AGENT_NOT_FOUND,
-        severity,
-        info={"agent": agent},
-        forceable=forceable
-    )
-
-
-def agent_not_supported(
-    agent, severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    Specified agent is not supported
-
-    agent -- name of agent which is not supported
-    """
-    return ReportItem(
-        report_codes.UNSUPPORTED_AGENT,
-        severity,
-        info={"agent": agent},
-        forceable=forceable
-    )
-
-
-def resource_agent_general_error(agent=None):
-    """
-    General not specific error of resource or fence agent.
-
-    agent -- agent name
+    More than one agents found based on the search string, specify one of them
+    string agent searched name of an agent
+    iterable possible_agents full names of agents matching the search
     """
     return ReportItem.error(
-        report_codes.AGENT_GENERAL_ERROR,
+        report_codes.AGENT_NAME_GUESS_FOUND_MORE_THAN_ONE,
+        info={
+            "agent": agent,
+            "possible_agents": possible_agents,
+            "possible_agents_str": ", ".join(sorted(possible_agents)),
+        }
+    )
+
+
+def agent_name_guess_found_none(agent):
+    """
+    Specified agent doesn't exist
+    string agent name of the agent which doesn't exist
+    """
+    return ReportItem.error(
+        report_codes.AGENT_NAME_GUESS_FOUND_NONE,
         info={"agent": agent}
     )
 

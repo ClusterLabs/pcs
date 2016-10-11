@@ -50,10 +50,16 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         assert returnVal == 0
 
     def testRemoteNode(self):
-        o,r = pcs(temp_cib, "resource create D1 Dummy --no-default-ops")
+        o,r = pcs(
+            temp_cib,
+            "resource create D1 ocf:heartbeat:Dummy --no-default-ops"
+        )
         assert r==0 and o==""
 
-        o,r = pcs(temp_cib, "resource create D2 Dummy --no-default-ops")
+        o,r = pcs(
+            temp_cib,
+            "resource create D2 ocf:heartbeat:Dummy --no-default-ops"
+        )
         assert r==0 and o==""
 
         o,r = pcs(temp_cib, "cluster remote-node rh7-2 D1")

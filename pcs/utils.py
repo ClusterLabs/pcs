@@ -105,7 +105,6 @@ DEFAULT_RESOURCE_ACTIONS = ["monitor", "start", "stop", "promote", "demote"]
 usefile = False
 filename = ""
 pcs_options = {}
-fence_bin = settings.fence_agent_binaries
 
 
 class UnknownPropertyException(Exception):
@@ -1471,11 +1470,6 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         "nodes_slave": nodes_slave,
     }
 
-def does_resource_have_options(ra_type):
-    if ra_type.startswith("ocf:") or ra_type.startswith("stonith:") or ra_type.find(':') == -1:
-        return True
-    return False
-
 def filter_default_op_from_actions(resource_actions):
     filtered = []
     for action in resource_actions:
@@ -1483,7 +1477,7 @@ def filter_default_op_from_actions(resource_actions):
             continue
         new_action = dict([
             (name, value)
-            for name, value in sorted(action.items())
+            for name, value in action.items()
             if name != "depth"
         ])
         filtered.append(new_action)
@@ -1491,13 +1485,20 @@ def filter_default_op_from_actions(resource_actions):
 
 # Given a resource agent (ocf:heartbeat:XXX) return an list of default
 # operations or an empty list if unable to find any default operations
-def get_default_op_values(ra_type):
+def get_default_op_values(full_agent_name):
     default_ops = []
     try:
-        metadata = lib_ra.get_resource_agent_metadata(cmd_runner(), ra_type)
-        actions = filter_default_op_from_actions(
-            lib_ra.get_agent_actions(metadata)
-        )
+        if full_agent_name.startswith("stonith:"):
+            metadata = lib_ra.StonithAgentMetadata(
+                cmd_runner(),
+                full_agent_name[len("stonith:"):]
+            )
+        else:
+            metadata = lib_ra.ResourceAgentMetadata(
+                cmd_runner(),
+                full_agent_name
+            )
+        actions = filter_default_op_from_actions(metadata.get_actions())
 
         for action in actions:
             op = [action["name"]]
@@ -1505,15 +1506,11 @@ def get_default_op_values(ra_type):
                 if key != "name" and action[key] != "0":
                     op.append("{0}={1}".format(key, action[key]))
             default_ops.append(op)
-    except (
-        lib_ra.UnsupportedResourceAgent,
-        lib_ra.AgentNotFound,
-        lib_ra.UnableToGetAgentMetadata
-    ):
+    except lib_ra.UnableToGetAgentMetadata:
         return []
-    except lib_ra.ResourceAgentLibError as e:
+    except lib_ra.ResourceAgentError as e:
         process_library_reports(
-            [lib_ra.resource_agent_lib_error_to_report_item(e)]
+            [lib_ra.resource_agent_error_to_report_item(e)]
         )
     except LibraryError as e:
         process_library_reports(e.args)
@@ -1540,67 +1537,6 @@ def validate_wait_get_timeout(need_cib_support=True):
             % pcs_options["--wait"]
         )
     return wait_timeout
-
-
-def is_file_abs_path(path):
-    return path == os.path.abspath(path) and os.path.isfile(path)
-
-# Check and see if the specified resource (or stonith) type is present on the
-# file system and properly responds to a meta-data request
-def is_valid_resource(resource, caseInsensitiveCheck=False):
-    try:
-        if resource.startswith("stonith:"):
-            lib_ra.get_fence_agent_metadata(
-                cmd_runner(), resource.split("stonith:", 1)[1]
-            )
-        else:
-            lib_ra.get_resource_agent_metadata(cmd_runner(), resource)
-        # return True if no exception was raised
-        return True
-    except lib_ra.UnsupportedResourceAgent:
-        pass
-    except (lib_ra.ResourceAgentLibError, LibraryError):
-        # agent not exists or obtaining metadata failed
-        return False
-
-    if resource.startswith("lsb:"):
-        agent = os.path.join("/etc/init.d/", resource.split(":", 1)[1])
-        return is_file_abs_path(agent)
-    elif resource.startswith("systemd:"):
-        _, agent_name = resource.split(":", 1)
-        agent1 = os.path.join(
-            "/etc/systemd/system/", agent_name + ".service"
-        )
-        agent2 = os.path.join(
-            "/usr/lib/systemd/system/", agent_name + ".service"
-        )
-        return is_file_abs_path(agent1) or is_file_abs_path(agent2)
-
-    # resource name is not full, maybe it's ocf resource
-    for provider in sorted(os.listdir(settings.ocf_resources)):
-        provider_path = os.path.join(settings.ocf_resources, provider)
-        if caseInsensitiveCheck:
-            if os.path.isdir(provider_path):
-                for f in os.listdir(provider_path):
-                    if (
-                        f.lower() == resource.lower() and
-                        os.path.isfile(os.path.join(provider_path, f))
-                    ):
-                        return "ocf:{0}:{1}".format(provider, f)
-                continue
-
-        if os.path.exists(
-            os.path.join(settings.ocf_resources, provider, resource)
-        ):
-            try:
-                lib_ra.get_resource_agent_metadata(
-                    cmd_runner(),
-                    "ocf:{0}:{1}".format(provider, resource)
-                )
-                return True
-            except (LibraryError, lib_ra.ResourceAgentLibError):
-                continue
-    return False
 
 
 # Return matches from the CIB with the xpath_query
@@ -2831,6 +2767,7 @@ def get_modificators():
         "skip_offline_nodes": "--skip-offline" in pcs_options,
         "start": "--start" in pcs_options,
         "watchdog": pcs_options.get("--watchdog", []),
+        "describe": "--nodesc" not in pcs_options,
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):

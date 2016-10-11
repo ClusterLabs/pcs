@@ -6,18 +6,63 @@ from __future__ import (
 )
 
 import shutil
-from pcs.test.tools import pcs_unittest as unittest
 
+from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
 )
-from pcs.test.tools.pcs_runner import pcs
+from pcs.test.tools.pcs_runner import pcs, PcsRunner
+from pcs.test.tools import pcs_unittest as unittest
 
 from pcs import utils
 
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
+
+
+class StonithDescribeTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.pcs_runner = PcsRunner(temp_cib)
+
+
+    def test_success(self):
+        self.assert_pcs_success(
+            "stonith describe fence_apc",
+            stdout_start="""\
+fence_apc - Fence agent for APC over telnet/ssh
+
+fence_apc is an I/O Fencing agent which can be used with the APC network power switch. It logs into device via telnet/ssh  and reboots a specified outlet. Lengthy telnet/ssh connections should be avoided while a GFS cluster  is  running  because  the  connection will block any necessary fencing actions.
+
+Stonith options:
+"""
+        )
+
+
+    def test_nonextisting_agent(self):
+        self.assert_pcs_fail(
+            "stonith describe fence_noexist",
+            (
+                "Error: Agent 'fence_noexist' is not installed or does not"
+                " provide valid metadata: Metadata query for"
+                " stonith:fence_noexist failed: -5\n"
+            )
+        )
+
+
+    def test_not_enough_params(self):
+        self.assert_pcs_fail(
+            "stonith describe",
+            stdout_start="\nUsage: pcs stonith describe...\n"
+        )
+
+
+    def test_too_many_params(self):
+        self.assert_pcs_fail(
+            "stonith describe agent1 agent2",
+            stdout_start="\nUsage: pcs stonith describe...\n"
+        )
+
 
 class StonithTest(unittest.TestCase):
     def setUp(self):
@@ -25,11 +70,11 @@ class StonithTest(unittest.TestCase):
 
     def testStonithCreation(self):
         output, returnVal = pcs(temp_cib, "stonith create test1 fence_noxist")
+        ac(output, "Error: Agent 'fence_noxist' is not installed or does not provide valid metadata: Metadata query for stonith:fence_noxist failed: -5, use --force to override\n")
         assert returnVal == 1
-        assert output == "Error: Agent 'fence_noxist' not found, use --force to override\n"
 
         output, returnVal = pcs(temp_cib, "stonith create test1 fence_noxist --force")
-        ac(output, "Warning: Agent 'fence_noxist' not found\n")
+        ac(output, "Warning: Agent 'fence_noxist' is not installed or does not provide valid metadata: Metadata query for stonith:fence_noxist failed: -5\n")
         self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(temp_cib, "stonith create test2 fence_apc")

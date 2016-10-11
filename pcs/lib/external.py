@@ -81,10 +81,6 @@ class KillServicesError(ManageServiceError):
     pass
 
 
-def is_path_runnable(path):
-    return os.path.isfile(path) and os.access(path, os.X_OK)
-
-
 def is_dir_nonempty(path):
     if not os.path.exists(path):
         return False

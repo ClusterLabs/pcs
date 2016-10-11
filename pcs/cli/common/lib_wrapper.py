@@ -20,6 +20,8 @@ from pcs.lib.commands import (
     qdevice,
     sbd,
     alert,
+    resource_agent,
+    stonith_agent,
 )
 from pcs.lib.commands.constraint import (
     colocation as constraint_colocation,
@@ -225,6 +227,30 @@ def load_module(env, middleware_factory, name):
                 "status": booth.get_status,
                 "ticket_grant": booth.ticket_grant,
                 "ticket_revoke": booth.ticket_revoke,
+            }
+        )
+
+    if name == "resource_agent":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "describe_agent": resource_agent.describe_agent,
+                "list_agents": resource_agent.list_agents,
+                "list_agents_for_standard_and_provider":
+                    resource_agent.list_agents_for_standard_and_provider,
+                "list_ocf_providers": resource_agent.list_ocf_providers,
+                "list_standards": resource_agent.list_standards,
+            }
+        )
+
+    if name == "stonith_agent":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "describe_agent": stonith_agent.describe_agent,
+                "list_agents": stonith_agent.list_agents,
             }
         )
 

@@ -7,9 +7,7 @@ from __future__ import (
 
 import sys
 import re
-import glob
 import json
-import os
 
 from pcs import (
     resource,
@@ -23,51 +21,50 @@ from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.resource_agent as lib_ra
 
 def stonith_cmd(argv):
+    if len(argv) < 1:
+        sub_cmd, argv_next = "show", []
+    else:
+        sub_cmd, argv_next = argv[0], argv[1:]
+
     lib = utils.get_library_wrapper()
     modifiers = utils.get_modificators()
-    if len(argv) == 0:
-        argv = ["show"]
 
-    sub_cmd = argv.pop(0)
     try:
-        if (sub_cmd == "help"):
+        if sub_cmd == "help":
             usage.stonith(argv)
-        elif (sub_cmd == "list"):
-            stonith_list_available(argv)
-        elif (sub_cmd == "describe"):
-            if len(argv) == 1:
-                stonith_list_options(argv[0])
+        elif sub_cmd == "list":
+            stonith_list_available(lib, argv_next, modifiers)
+        elif sub_cmd == "describe":
+            stonith_list_options(lib, argv_next, modifiers)
+        elif sub_cmd == "create":
+            stonith_create(argv_next)
+        elif sub_cmd == "update":
+            if len(argv_next) > 1:
+                stn_id = argv_next.pop(0)
+                resource.resource_update(stn_id, argv_next)
             else:
                 raise CmdLineInputError()
-        elif (sub_cmd == "create"):
-            stonith_create(argv)
-        elif (sub_cmd == "update"):
-            if len(argv) > 1:
-                stn_id = argv.pop(0)
-                resource.resource_update(stn_id,argv)
-            else:
-                raise CmdLineInputError()
-        elif (sub_cmd == "delete"):
-            if len(argv) == 1:
-                stn_id = argv.pop(0)
+        elif sub_cmd == "delete":
+            if len(argv_next) == 1:
+                stn_id = argv_next.pop(0)
                 resource.resource_remove(stn_id)
             else:
                 raise CmdLineInputError()
-        elif (sub_cmd == "show"):
-            resource.resource_show(argv, True)
+        elif sub_cmd == "show":
+            resource.resource_show(argv_next, True)
             stonith_level([])
-        elif (sub_cmd == "level"):
-            stonith_level(argv)
-        elif (sub_cmd == "fence"):
-            stonith_fence(argv)
-        elif (sub_cmd == "cleanup"):
-            resource.resource_cleanup(argv)
-        elif (sub_cmd == "confirm"):
-            stonith_confirm(argv)
-        elif (sub_cmd == "get_fence_agent_info"):
-            get_fence_agent_info(argv)
-        elif (sub_cmd == "sbd"):
-            sbd_cmd(lib, argv, modifiers)
+        elif sub_cmd == "level":
+            stonith_level(argv_next)
+        elif sub_cmd == "fence":
+            stonith_fence(argv_next)
+        elif sub_cmd == "cleanup":
+            resource.resource_cleanup(argv_next)
+        elif sub_cmd == "confirm":
+            stonith_confirm(argv_next)
+        elif sub_cmd == "get_fence_agent_info":
+            get_fence_agent_info(argv_next)
+        elif sub_cmd == "sbd":
+            sbd_cmd(lib, argv_next, modifiers)
         else:
             raise CmdLineInputError()
     except LibraryError as e:
@@ -75,69 +72,45 @@ def stonith_cmd(argv):
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "stonith", sub_cmd)
 
-def stonith_list_available(argv):
-    if len(argv) != 0:
-        filter_string = argv[0]
-    else:
-        filter_string = ""
 
-    bad_fence_devices = ["kdump_send", "legacy", "na", "nss_wrapper",
-            "pcmk", "vmware_helper", "ack_manual", "virtd", "sanlockd",
-            "check", "tool", "node"]
-    fence_devices = sorted(glob.glob(utils.fence_bin + "fence_*"))
-    for bfd in bad_fence_devices:
-        try:
-            fence_devices.remove(utils.fence_bin + "fence_"+bfd)
-        except ValueError:
-            continue
+def stonith_list_available(lib, argv, modifiers):
+    if len(argv) > 1:
+        raise CmdLineInputError()
 
-    if not fence_devices:
+    search = argv[0] if argv else None
+    agent_list = lib.stonith_agent.list_agents(modifiers["describe"], search)
+
+    if not agent_list:
+        if search:
+            utils.err("No stonith agents matching the filter.")
         utils.err(
-            "No stonith agents available. Do you have fence agents installed?"
+            "No stonith agents available. "
+            "Do you have fence agents installed?"
         )
-    fence_devices_filtered = [fd for fd in fence_devices if filter_string in fd]
-    if not fence_devices_filtered:
-        utils.err("No stonith agents matching the filter.")
 
-    for fd in fence_devices_filtered:
-        sd = ""
-        agent_name = os.path.basename(fd)
-        if "--nodesc" not in utils.pcs_options:
-            try:
-                metadata = lib_ra.get_fence_agent_metadata(
-                    utils.cmd_runner(), agent_name
+    for agent_info in agent_list:
+        name = agent_info["name"]
+        shortdesc = agent_info["shortdesc"]
+        if shortdesc:
+            print("{0} - {1}".format(
+                name,
+                resource._format_desc(
+                    len(name + " - "), shortdesc.replace("\n", " ")
                 )
-                shortdesc = lib_ra.get_agent_desc(metadata)["shortdesc"]
-                if shortdesc:
-                    sd = " - " + resource.format_desc(
-                        len(agent_name) + 3, shortdesc
-                    )
-            except lib_ra.ResourceAgentLibError as e:
-                utils.process_library_reports([
-                    lib_ra.resource_agent_lib_error_to_report_item(
-                        e, ReportItemSeverity.WARNING
-                    )
-                ])
-            except LibraryError as e:
-                utils.err(build_report_message(e.args[-1]), False)
-                continue
-        print(agent_name + sd)
+            ))
+        else:
+            print(name)
 
-def stonith_list_options(stonith_agent):
-    runner = utils.cmd_runner()
-    try:
-        metadata = lib_ra.get_fence_agent_metadata(runner, stonith_agent)
-        desc = lib_ra.get_agent_desc(metadata)
-        params = lib_ra.get_fence_agent_parameters(runner, metadata)
-        # Fence agents just list the actions, usually without any attributes.
-        # We could print them but it wouldn't add any usefull information.
-        resource.resource_print_options(stonith_agent, desc, params, actions=[])
-    except lib_ra.ResourceAgentLibError as e:
-        utils.process_library_reports(
-            [lib_ra.resource_agent_lib_error_to_report_item(e)]
-        )
-    except LibraryError as e:
-        utils.process_library_reports(e.args)
+
+def stonith_list_options(lib, argv, modifiers):
+    if len(argv) != 1:
+        raise CmdLineInputError()
+    agent_name = argv[0]
+
+    print(resource._format_agent_description(
+        lib.stonith_agent.describe_agent(agent_name),
+        True
+    ))
 
 
 def stonith_create(argv):
@@ -152,22 +125,23 @@ def stonith_create(argv):
     )
 
     try:
-        metadata = lib_ra.get_fence_agent_metadata(
-            utils.cmd_runner(), stonith_type
+        metadata = lib_ra.StonithAgentMetadata(
+            utils.cmd_runner(),
+            stonith_type
         )
-        if stonith_does_agent_provide_unfencing(metadata):
+        if metadata.get_provides_unfencing():
             meta_values = [
                 meta for meta in meta_values if not meta.startswith("provides=")
             ]
             meta_values.append("provides=unfencing")
-    except lib_ra.ResourceAgentLibError as e:
+    except lib_ra.ResourceAgentError as e:
         forced = utils.get_modificators().get("force", False)
         if forced:
             severity = ReportItemSeverity.WARNING
         else:
             severity = ReportItemSeverity.ERROR
         utils.process_library_reports([
-            lib_ra.resource_agent_lib_error_to_report_item(
+            lib_ra.resource_agent_error_to_report_item(
                 e, severity, not forced
             )
         ])
@@ -409,20 +383,9 @@ def stonith_confirm(argv, skip_question=False):
     else:
         print("Node: %s confirmed fenced" % node)
 
-def stonith_does_agent_provide_unfencing(metadata_dom):
-    for action in lib_ra.get_agent_actions(metadata_dom):
-        if (
-            action["name"] == "on" and
-            "on_target" in action and
-            action["on_target"] == "1" and
-            "automatic" in action and
-            action["automatic"] == "1"
-        ):
-            return True
-    return False
-
 
 def get_fence_agent_info(argv):
+# This is used only by pcsd, will be removed in new architecture
     if len(argv) != 1:
         utils.err("One parameter expected")
 
@@ -433,20 +396,13 @@ def get_fence_agent_info(argv):
     runner = utils.cmd_runner()
 
     try:
-        metadata_dom = lib_ra.get_fence_agent_metadata(
-            runner,
-            agent.split("stonith:", 1)[1]
-        )
-        metadata = lib_ra.get_agent_desc(metadata_dom)
-        metadata["name"] = agent
-        metadata["parameters"] = lib_ra.get_fence_agent_parameters(
-            runner, metadata_dom
-        )
-
-        print(json.dumps(metadata))
-    except lib_ra.ResourceAgentLibError as e:
+        metadata = lib_ra.StonithAgentMetadata(runner, agent[len("stonith:"):])
+        info = metadata.get_full_info()
+        info["name"] = "stonith:{0}".format(info["name"])
+        print(json.dumps(info))
+    except lib_ra.ResourceAgentError as e:
         utils.process_library_reports(
-            [lib_ra.resource_agent_lib_error_to_report_item(e)]
+            [lib_ra.resource_agent_error_to_report_item(e)]
         )
     except LibraryError as e:
         utils.process_library_reports(e.args)

@@ -1665,7 +1665,10 @@ class DomRuleAddTest(unittest.TestCase):
 
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
-        output, returnVal = pcs(temp_cib, "resource create dummy1 Dummy")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create dummy1 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0 and output == ""
 
     def test_success_xml(self):

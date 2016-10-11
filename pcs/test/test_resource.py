@@ -6,9 +6,8 @@ from __future__ import (
 )
 
 import os
-import shutil
 import re
-from pcs.test.tools import pcs_unittest as unittest
+import shutil
 
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
@@ -19,6 +18,7 @@ from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
+from pcs.test.tools import pcs_unittest as unittest
 
 from pcs import utils
 from pcs import resource
@@ -27,6 +27,94 @@ empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 temp_large_cib  = rc("temp-cib-large.xml")
+
+
+class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.pcs_runner = PcsRunner(temp_cib)
+        self.description = """\
+ocf:pacemaker:controld - DLM Agent for cluster file systems
+
+This Resource Agent can control the dlm_controld services needed by cluster-aware file systems.
+It assumes that dlm_controld is in your default PATH.
+In most cases, it should be run as an anonymous clone.
+
+Resource options:
+  args: Any additional options to start the dlm_controld service with
+  configdir: The location where configfs is or should be mounted
+  daemon: The daemon to start - supports gfs_controld(.pcmk) and
+          dlm_controld(.pcmk)
+  allow_stonith_disabled: Allow DLM start-up even if STONITH/fencing is disabled
+                          in the cluster. Setting this option to true will cause
+                          cluster malfunction and hangs on fail-over for DLM
+                          clients that require fencing (such as GFS2, OCFS2, and
+                          cLVM2). This option is advanced use only.
+
+Default operations:
+  start: timeout=90
+  stop: timeout=100
+  monitor: interval=10 start-delay=0 timeout=20
+"""
+
+
+    def test_success(self):
+        self.assert_pcs_success(
+            "resource describe ocf:pacemaker:controld",
+            self.description
+        )
+
+
+    def test_success_guess_name(self):
+        self.assert_pcs_success(
+            "resource describe controld",
+            self.description
+        )
+
+
+    def test_nonextisting_agent(self):
+        self.assert_pcs_fail(
+            "resource describe ocf:pacemaker:nonexistent",
+            (
+                "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or"
+                " does not provide valid metadata: Metadata query for"
+                " ocf:pacemaker:nonexistent failed: -5\n"
+            )
+        )
+
+
+    def test_nonextisting_agent_guess_name(self):
+        self.assert_pcs_fail(
+            "resource describe nonexistent",
+            (
+                "Error: Unable to find agent 'nonexistent', try specifying"
+                " its full name\n"
+            )
+        )
+
+
+    def test_more_agents_guess_name(self):
+        self.assert_pcs_fail(
+            "resource describe dummy",
+            (
+                "Error: Multiple agents match 'dummy', please specify full"
+                " name: ocf:heartbeat:Dummy, ocf:pacemaker:Dummy\n"
+            )
+        )
+
+
+    def test_not_enough_params(self):
+        self.assert_pcs_fail(
+            "resource describe",
+            stdout_start="\nUsage: pcs resource describe...\n"
+        )
+
+
+    def test_too_many_params(self):
+        self.assert_pcs_fail(
+            "resource describe agent1 agent2",
+            stdout_start="\nUsage: pcs resource describe...\n"
+        )
+
 
 class ResourceTest(unittest.TestCase):
     def setUp(self):
@@ -81,21 +169,25 @@ class ResourceTest(unittest.TestCase):
         assert output == ""
 
     def testCaseInsensitive(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 dummy")
-        assert r == 0
-        ac(o,'')
+        o,r = pcs(temp_cib, "resource create --no-default-ops D0 dummy")
+        ac(o, "Error: Multiple agents match 'dummy', please specify full name: ocf:heartbeat:Dummy, ocf:pacemaker:Dummy\n")
+        assert r == 1
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D2 DUMMY")
+        o,r = pcs(temp_cib, "resource create --no-default-ops D1 systemhealth")
+        ac(o, "Creating resource 'ocf:pacemaker:SystemHealth'\n")
         assert r == 0
-        ac(o,'')
+
+        o,r = pcs(temp_cib, "resource create --no-default-ops D2 SYSTEMHEALTH")
+        ac(o, "Creating resource 'ocf:pacemaker:SystemHealth'\n")
+        assert r == 0
 
         o,r = pcs(temp_cib, "resource create --no-default-ops D3 ipaddr2 ip=1.1.1.1")
+        ac(o, "Creating resource 'ocf:heartbeat:IPaddr2'\n")
         assert r == 0
-        ac(o,'')
 
         o,r = pcs(temp_cib, "resource create --no-default-ops D4 ipaddr3")
+        ac(o,"Error: Unable to find agent 'ipaddr3', try specifying its full name\n")
         assert r == 1
-        ac(o,"Error: Unable to create resource 'ipaddr3', it is not installed on this system (use --force to override)\n")
 
     def testEmpty(self):
         output, returnVal = pcs(temp_cib, "resource")
@@ -103,75 +195,21 @@ class ResourceTest(unittest.TestCase):
         assert output == "NO resources configured\n", "Bad output"
 
 
-    def testDescribe(self):
-        output, returnVal = pcs(temp_cib, "resource describe bad_resource")
-        assert returnVal == 1
-        assert output == "Error: Unable to find resource: bad_resource\n"
+    def testAddResourcesLargeCib(self):
+        output, returnVal = pcs(
+            temp_large_cib,
+            "resource create dummy0 ocf:heartbeat:Dummy"
+        )
+        assert returnVal == 0
+        ac(output, '')
 
-        output, returnVal = pcs(temp_cib, "resource describe ocf:heartbeat:Dummy")
-        ac(output, """\
-ocf:heartbeat:Dummy - Example stateless resource agent
-
-This is a Dummy Resource Agent. It does absolutely nothing except 
-keep track of whether its running or not.
-Its purpose in life is for testing and to serve as a template for RA writers.
-
-NB: Please pay attention to the timeouts specified in the actions
-section below. They should be meaningful for the kind of resource
-the agent manages. They should be the minimum advised timeouts,
-but they shouldn't/cannot cover _all_ possible resource
-instances. So, try to be neither overly generous nor too stingy,
-but moderate. The minimum timeouts should never be below 10 seconds.
-
-Resource options:
-  state: Location to store the resource state in.
-  fake: Fake attribute that can be changed to cause a reload
-
-Default operations:
-  start: timeout=20
-  stop: timeout=20
-  monitor: interval=10 timeout=20
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource describe Dummy")
-        ac(output, """\
-ocf:heartbeat:Dummy - Example stateless resource agent
-
-This is a Dummy Resource Agent. It does absolutely nothing except 
-keep track of whether its running or not.
-Its purpose in life is for testing and to serve as a template for RA writers.
-
-NB: Please pay attention to the timeouts specified in the actions
-section below. They should be meaningful for the kind of resource
-the agent manages. They should be the minimum advised timeouts,
-but they shouldn't/cannot cover _all_ possible resource
-instances. So, try to be neither overly generous nor too stingy,
-but moderate. The minimum timeouts should never be below 10 seconds.
-
-Resource options:
-  state: Location to store the resource state in.
-  fake: Fake attribute that can be changed to cause a reload
-
-Default operations:
-  start: timeout=20
-  stop: timeout=20
-  monitor: interval=10 timeout=20
-""")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(temp_cib, "resource describe SystemHealth")
+        output, returnVal = pcs(temp_large_cib, "resource show dummy0")
         assert returnVal == 0
         ac(output, """\
-ocf:pacemaker:SystemHealth - SystemHealth resource agent
-
-This is a SystemHealth Resource Agent.  It is used to monitor
-the health of a system via IPMI.
-
-Default operations:
-  start: timeout=20
-  stop: timeout=20
-  monitor: timeout=20
+ Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
+  Operations: start interval=0s timeout=20 (dummy0-start-interval-0s)
+              stop interval=0s timeout=20 (dummy0-stop-interval-0s)
+              monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
 """)
 
     def testAddResources(self):
@@ -209,10 +247,6 @@ Default operations:
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         assert output == ""
-
-        output, returnVal = pcs(temp_large_cib, "resource create dummy0 Dummy")
-        assert returnVal == 0
-        ac(output, '')
 
 # Verify all resource have been added
         output, returnVal = pcs(temp_cib, "resource show")
@@ -258,7 +292,7 @@ Default operations:
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create A dummy op interval=10"
+            "resource create A ocf:heartbeat:Dummy op interval=10"
         )
         ac(output, """\
 Error: When using 'op' you must specify an operation name and at least one option
@@ -267,7 +301,7 @@ Error: When using 'op' you must specify an operation name and at least one optio
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create A dummy op interval=10 timeout=5"
+            "resource create A ocf:heartbeat:Dummy op interval=10 timeout=5"
         )
         ac(output, """\
 Error: When using 'op' you must specify an operation name after 'op'
@@ -276,7 +310,7 @@ Error: When using 'op' you must specify an operation name after 'op'
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create A dummy op monitor interval=10 op interval=10 op start timeout=10"
+            "resource create A ocf:heartbeat:Dummy op monitor interval=10 op interval=10 op start timeout=10"
         )
         ac(output, """\
 Error: When using 'op' you must specify an operation name and at least one option
@@ -285,7 +319,7 @@ Error: When using 'op' you must specify an operation name and at least one optio
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create A dummy op monitor"
+            "resource create A ocf:heartbeat:Dummy op monitor"
         )
         ac(output, """\
 Error: When using 'op' you must specify an operation name and at least one option
@@ -294,7 +328,7 @@ Error: When using 'op' you must specify an operation name and at least one optio
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create A dummy op monitor interval=10 op stop op start timeout=10"
+            "resource create A ocf:heartbeat:Dummy op monitor interval=10 op stop op start timeout=10"
         )
         ac(output, """\
 Error: When using 'op' you must specify an operation name and at least one option
@@ -303,7 +337,7 @@ Error: When using 'op' you must specify an operation name and at least one optio
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create A dummy op monitor interval=10 timeout=10 op monitor interval=10 timeout=20"
+            "resource create A ocf:heartbeat:Dummy op monitor interval=10 timeout=10 op monitor interval=10 timeout=20"
         )
         ac(output, """\
 Error: operation monitor with interval 10s already specified for A:
@@ -313,7 +347,7 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create A dummy op monitor interval=10 timeout=10 op stop interval=10 timeout=20"
+            "resource create A ocf:heartbeat:Dummy op monitor interval=10 timeout=10 op stop interval=10 timeout=20"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -330,24 +364,37 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
     def testAddBadResources(self):
         line = "resource create --no-default-ops bad_resource idontexist test=bad"
         output, returnVal = pcs(temp_cib, line)
+        assert output == "Error: Unable to find agent 'idontexist', try specifying its full name\n",[output]
         assert returnVal == 1
-        assert output == "Error: Unable to create resource 'idontexist', it is not installed on this system (use --force to override)\n",[output]
 
         line = "resource create --no-default-ops bad_resource2 idontexist2 test4=bad3 --force"
         output, returnVal = pcs(temp_cib, line)
+        ac(output, "Error: Unable to find agent 'idontexist2', try specifying its full name\n")
+        assert returnVal == 1
+
+        line = "resource create --no-default-ops bad_resource3 ocf:pacemaker:idontexist3 test=bad"
+        output, returnVal = pcs(temp_cib, line)
+        assert output == "Error: Unable to create resource 'ocf:pacemaker:idontexist3', it is not installed on this system (use --force to override)\n",[output]
+        assert returnVal == 1
+
+        line = "resource create --no-default-ops bad_resource4 ocf:pacemaker:idontexist4 test4=bad3 --force"
+        output, returnVal = pcs(temp_cib, line)
+        ac(output, "Warning: 'ocf:pacemaker:idontexist4' is not installed or does not provide valid metadata\n")
         assert returnVal == 0
-        assert output == ""
 
         line = "resource show --full"
         output, returnVal = pcs(temp_cib, line)
         assert returnVal == 0
         ac(output, """\
- Resource: bad_resource2 (class=ocf provider=heartbeat type=idontexist2)
+ Resource: bad_resource4 (class=ocf provider=pacemaker type=idontexist4)
   Attributes: test4=bad3
-  Operations: monitor interval=60s (bad_resource2-monitor-interval-60s)
+  Operations: monitor interval=60s (bad_resource4-monitor-interval-60s)
 """)
 
-        output, returnVal = pcs(temp_cib, "resource create dum:my Dummy")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create dum:my ocf:heartbeat:Dummy"
+        )
         assert returnVal == 1
         ac(output, "Error: invalid resource name 'dum:my', ':' is not a valid character for a resource name\n")
 
@@ -481,7 +528,7 @@ Error: moni=tor does not appear to be a valid operation action
               monitor interval=31s (ClusterIP-monitor-interval-31s)
 """)
 
-        o, r = pcs(temp_cib, "resource create --no-default-ops OPTest Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1")
+        o, r = pcs(temp_cib, "resource create --no-default-ops OPTest ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1")
         ac(o,"")
         assert r == 0
 
@@ -489,7 +536,7 @@ Error: moni=tor does not appear to be a valid operation action
         ac(o," Resource: OPTest (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-25s)\n")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource create --no-default-ops OPTest2 Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=2 op start timeout=30s")
+        o, r = pcs(temp_cib, "resource create --no-default-ops OPTest2 ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=2 op start timeout=30s")
         ac(o,"")
         assert r == 0
 
@@ -517,7 +564,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o," Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=2 (OPTest2-monitor-interval-25s)\n              start interval=0s timeout=30s (OPTest2-start-interval-0s)\n              monitor interval=60s timeout=1800s (OPTest2-monitor-interval-60s)\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest3 Dummy op monitor OCF_CHECK_LEVEL=1")
+        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest3 ocf:heartbeat:Dummy op monitor OCF_CHECK_LEVEL=1")
         ac(o,"")
         assert r == 0
 
@@ -525,7 +572,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o," Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest3-monitor-interval-60s)\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest4 Dummy op monitor interval=30s")
+        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest4 ocf:heartbeat:Dummy op monitor interval=30s")
         ac(o,"")
         assert r == 0
 
@@ -537,7 +584,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o," Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest4-monitor-interval-60s)\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest5 Dummy")
+        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest5 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
@@ -549,7 +596,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o," Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest5-monitor-interval-60s)\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest6 Dummy")
+        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest6 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
@@ -561,7 +608,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         ac(o," Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (OPTest6-monitor-interval-60s)\n              monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest6-monitor-interval-30s)\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest7 Dummy")
+        o,r = pcs(temp_cib, "resource create --no-default-ops OPTest7 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
@@ -591,7 +638,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
 """)
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops OCFTest1 Dummy")
+        o,r = pcs(temp_cib, "resource create --no-default-ops OCFTest1 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
@@ -811,7 +858,7 @@ monitor interval=60s (state-monitor-interval-60s)
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create A dummy op monitor interval=10 op monitor interval=20"
+            "resource create A ocf:heartbeat:Dummy op monitor interval=10 op monitor interval=20"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -855,7 +902,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         output, returnVal = pcs(
             temp_cib,
-            "resource create B dummy --no-default-ops"
+            "resource create B ocf:heartbeat:Dummy --no-default-ops"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -979,11 +1026,11 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, returnVal)
 
     def testGroupDeleteTest(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops A1 Dummy --group AGroup")
+        o,r = pcs(temp_cib, "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AGroup")
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A2 Dummy --group AGroup")
+        o,r = pcs(temp_cib, "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AGroup")
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A3 Dummy --group AGroup")
+        o,r = pcs(temp_cib, "resource create --no-default-ops A3 ocf:heartbeat:Dummy --group AGroup")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource show")
@@ -1017,15 +1064,30 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output =="Removing Constraint - location-ClusterIP3-rh7-1-INFINITY\nDeleting Resource (and group) - ClusterIP3\n"
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops A1 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A1 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A2 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A2 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A3 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A3 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A4 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A4 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A5 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A5 ocf:heartbeat:Dummy"
+        )
         assert r == 0
 
         o,r = pcs(temp_cib, "resource group add AGroup A1 A2 A3 A4 A5")
@@ -1092,21 +1154,45 @@ Ticket Constraints:
         ac(o,' Resource: A1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A1-monitor-interval-60s)\n Resource: A2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A2-monitor-interval-60s)\n Resource: A3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A3-monitor-interval-60s)\n Resource: A4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A4-monitor-interval-60s)\n Resource: A5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A5-monitor-interval-60s)\n')
 
     def testGroupAdd(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops A1 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A1 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A2 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A2 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A3 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A3 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A4 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A4 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A5 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A5 ocf:heartbeat:Dummy"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A6 Dummy --group")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A6 ocf:heartbeat:Dummy --group"
+        )
         assert r == 1
-        o,r = pcs(temp_cib, "resource create --no-default-ops A6 Dummy --group Dgroup")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A6 ocf:heartbeat:Dummy --group Dgroup"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A7 Dummy --group Dgroup")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A7 ocf:heartbeat:Dummy --group Dgroup"
+        )
         assert r == 0
 
         o,r = pcs(temp_cib, "resource group add MyGroup A1 B1")
@@ -1156,10 +1242,16 @@ Ticket Constraints:
      A5\t(ocf::heartbeat:Dummy):\tStopped
 """)
 
-        o, r = pcs(temp_cib, "resource create --no-default-ops A6 Dummy")
+        o, r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A6 ocf:heartbeat:Dummy"
+        )
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "resource create --no-default-ops A7 Dummy")
+        o, r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A7 ocf:heartbeat:Dummy"
+        )
         self.assertEqual(0, r)
 
         o, r = pcs(temp_cib, "resource group add MyGroup A6 --after A1")
@@ -1259,14 +1351,14 @@ Ticket Constraints:
 
         o,r = pcs(
             temp_cib,
-            "resource create --no-default-ops A8 Dummy --group MyGroup --before A1"
+            "resource create --no-default-ops A8 ocf:heartbeat:Dummy --group MyGroup --before A1"
         )
         ac(o, "")
         self.assertEqual(0, r)
 
         o,r = pcs(
             temp_cib,
-            "resource create --no-default-ops A9 Dummy --group MyGroup --after A1"
+            "resource create --no-default-ops A9 ocf:heartbeat:Dummy --group MyGroup --after A1"
         )
         ac(o, "")
         self.assertEqual(0, r)
@@ -1323,7 +1415,10 @@ Ticket Constraints:
         ac(o, "Error: 'A7' is already a resource\n")
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "resource create --no-default-ops A0 Dummy --clone")
+        o, r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A0 ocf:heartbeat:Dummy --clone"
+        )
         self.assertEqual(0, r)
         ac(o, "")
 
@@ -1367,19 +1462,55 @@ Deleting Resource (and group) - dummylarge
         assert returnVal == 0
 
     def testGroupOrder(self):
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops A Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops B Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops C Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops D Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops E Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops F Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops G Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops H Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops I Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops J Dummy")
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops K Dummy")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops A ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops B ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops C ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops D ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops E ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops F ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops G ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops H ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops I ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops J ocf:heartbeat:Dummy"
+        )
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops K ocf:heartbeat:Dummy"
+        )
 
-        output, returnVal = pcs(temp_cib, "resource group add RGA A B C E D K J I")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource group add RGA A B C E D K J I"
+        )
         assert returnVal == 0
         assert output == "",output
 
@@ -1406,13 +1537,15 @@ Deleting Resource (and group) - dummylarge
 
     def testRemoveLastResourceFromGroup(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops d1 Dummy --group gr1"
+            temp_cib,
+            "resource create --no-default-ops d1 ocf:heartbeat:Dummy --group gr1"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops d2 Dummy --group gr2"
+            temp_cib,
+            "resource create --no-default-ops d2 ocf:heartbeat:Dummy --group gr2"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -1440,13 +1573,15 @@ Deleting Resource (and group) - dummylarge
 
     def testRemoveLastResourceFromClonedGroup(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops d1 Dummy --group gr1"
+            temp_cib,
+            "resource create --no-default-ops d1 ocf:heartbeat:Dummy --group gr1"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops d2 Dummy --group gr2"
+            temp_cib,
+            "resource create --no-default-ops d2 ocf:heartbeat:Dummy --group gr2"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -1477,13 +1612,15 @@ Deleting Resource (and group) - dummylarge
 
     def testRemoveLastResourceFromMasteredGroup(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops d1 Dummy --group gr1"
+            temp_cib,
+            "resource create --no-default-ops d1 ocf:heartbeat:Dummy --group gr1"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops d2 Dummy --group gr2"
+            temp_cib,
+            "resource create --no-default-ops d2 ocf:heartbeat:Dummy --group gr2"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -1570,7 +1707,9 @@ Quorum:
 """)
 
     def testCloneRemove(self):
-        o,r = pcs("resource create --no-default-ops D1 Dummy --clone")
+        o,r = pcs(
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+        )
         ac(o,"")
         assert r == 0
 
@@ -1598,7 +1737,9 @@ Deleting Resource - D1
         assert r == 0
         ac(o,"")
 
-        o, r = pcs("resource create d99 Dummy clone globally-unique=true")
+        o, r = pcs(
+            "resource create d99 ocf:heartbeat:Dummy clone globally-unique=true"
+        )
         ac(o, "")
         assert r == 0
 
@@ -1651,7 +1792,10 @@ Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
 Deleting Resource - ClusterIP5
 """)
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops ClusterIP5 Dummy")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops ClusterIP5 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
         assert output == ""
 
@@ -1763,11 +1907,20 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
 
     def testResourceManage(self):
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops D1 Dummy")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops D2 Dummy")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
         output, returnVal = pcs(temp_cib, "resource group add DGroup D0")
         assert returnVal == 0
@@ -1787,19 +1940,31 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops C1Master Dummy --master")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops C1Master ocf:heartbeat:Dummy --master"
+        )
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops C2Master Dummy --master")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops C2Master ocf:heartbeat:Dummy --master"
+        )
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops C3Master Dummy --clone")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops C3Master ocf:heartbeat:Dummy --clone"
+        )
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops C4Master Dummy clone")
+        output, returnVal = pcs(
+            temp_cib,
+            "resource create --no-default-ops C4Master ocf:heartbeat:Dummy clone"
+        )
         assert returnVal == 0
         assert output == ""
 
@@ -1866,7 +2031,7 @@ Deleting Resource (and group and M/S) - dummylarge
 
     def testCloneMasterManage(self):
 # is-managed on the primitive, attempting manage on primitive
-        output, returnVal = pcs(temp_cib, "resource create clone-unmanage Dummy --clone")
+        output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
         assert returnVal == 0
         ac (output,'')
 
@@ -1888,7 +2053,7 @@ Deleting Resource (and group and M/S) - dummylarge
         output, returnVal = pcs(temp_cib, "resource delete clone-unmanage")
 
 # is-managed on the clone, attempting manage on primitive
-        output, returnVal = pcs(temp_cib, "resource create clone-unmanage Dummy --clone")
+        output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
         ac (output,'')
         assert returnVal == 0
 
@@ -1910,7 +2075,7 @@ Deleting Resource (and group and M/S) - dummylarge
         pcs(temp_cib, "resource delete clone-unmanage")
 
 # is-managed on the primitive, attempting manage on clone
-        output, returnVal = pcs(temp_cib, "resource create clone-unmanage Dummy --clone")
+        output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
         assert returnVal == 0
         ac (output,'')
 
@@ -1932,7 +2097,7 @@ Deleting Resource (and group and M/S) - dummylarge
         pcs(temp_cib, "resource delete clone-unmanage")
 
 # is-managed on the clone, attempting manage on clone
-        output, returnVal = pcs(temp_cib, "resource create clone-unmanage Dummy --clone")
+        output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
         assert returnVal == 0
         ac (output,'')
 
@@ -1973,11 +2138,11 @@ Deleting Resource (and group and M/S) - dummylarge
         ac (output, ' Master: master-unmanage-master\n  Resource: master-unmanage (class=ocf provider=pacemaker type=Stateful)\n   Operations: monitor interval=60s (master-unmanage-monitor-interval-60s)\n')
 
     def testGroupManage(self):
-        o, r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group AG")
+        o, r = pcs(temp_cib, "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG")
         self.assertEqual(r, 0)
         ac(o,"")
 
-        o, r = pcs(temp_cib, "resource create --no-default-ops D2 Dummy --group AG")
+        o, r = pcs(temp_cib, "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group AG")
         self.assertEqual(r, 0)
         ac(o,"")
 
@@ -2050,7 +2215,7 @@ Deleting Resource (and group and M/S) - dummylarge
         ac(o," Group: AG\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n  Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D2-monitor-interval-60s)\n")
 
     def testMasterMetaCreate(self):
-        o,r = pcs('resource create --no-default-ops F0 Dummy op monitor interval=10s role=Master op monitor interval=20s role=Slave --master meta notify=true')
+        o,r = pcs('resource create --no-default-ops F0 ocf:heartbeat:Dummy op monitor interval=10s role=Master op monitor interval=20s role=Slave --master meta notify=true')
         ac (o,"")
         assert r==0
 
@@ -2059,11 +2224,11 @@ Deleting Resource (and group and M/S) - dummylarge
         assert r==0
 
     def testBadInstanceVariables(self):
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops D0 Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
+        output, returnVal = pcs(temp_cib, "resource create --no-default-ops D0 ocf:heartbeat:Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
         assert returnVal == 1
         assert output == "Error: resource option(s): 'test, test2', are not recognized for resource type: 'ocf:heartbeat:Dummy' (use --force to override)\n", [output]
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D0 Dummy test=testC test2=test2a test4=test4A op monitor interval=35 meta test7=test7a test6=")
+        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy test=testC test2=test2a test4=test4A op monitor interval=35 meta test7=test7a test6=")
         assert returnVal == 0
         assert output == "", [output]
 
@@ -2085,11 +2250,11 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
 
     def testMetaAttrs(self):
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D0 Dummy test=testA test2=test2a op monitor interval=30 meta test5=test5a test6=test6a")
+        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy test=testA test2=test2a op monitor interval=30 meta test5=test5a test6=test6a")
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D1 Dummy test=testA test2=test2a op monitor interval=30")
+        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D1 ocf:heartbeat:Dummy test=testA test2=test2a op monitor interval=30")
         assert returnVal == 0
         assert output == "", [output]
 
@@ -2125,11 +2290,17 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
 
     def testMSGroup(self):
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D1 Dummy")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
@@ -2154,7 +2325,10 @@ Deleting Resource (and group and M/S) - dummylarge
         assert output == 'Deleting Resource (and group and M/S) - D1\n', [output]
 
     def testUncloneWithConstraints(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D0 ocf:pacemaker:Dummy"
+        )
         ac(o,"")
         assert r == 0
 
@@ -2176,13 +2350,15 @@ Deleting Resource (and group and M/S) - dummylarge
 
     def testUnclone(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy1 Dummy"
+            temp_cib,
+            "resource create --no-default-ops dummy1 ocf:heartbeat:Dummy"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy2 Dummy"
+            temp_cib,
+            "resource create --no-default-ops dummy2 ocf:heartbeat:Dummy"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2528,11 +2704,17 @@ Deleting Resource (and group and M/S) - dummylarge
         self.assertEqual(0, returnVal)
 
     def testCloneGroupMember(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D0 Dummy --group AG")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG"
+        )
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group AG")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG"
+        )
         ac(o,"")
         assert r == 0
 
@@ -2556,11 +2738,17 @@ Deleting Resource (and group and M/S) - dummylarge
         ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D2 Dummy --group AG2")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group AG2"
+        )
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D3 Dummy --group AG2")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D3 ocf:heartbeat:Dummy --group AG2"
+        )
         ac(o,"")
         assert r == 0
 
@@ -2587,15 +2775,15 @@ Deleting Resource (and group and M/S) - dummylarge
         assert r == 0
 
     def testResourceCreationWithGroupOperations(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group AG2 op monitor interval=32s")
+        o,r = pcs(temp_cib, "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG2 op monitor interval=32s")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D3 Dummy op monitor interval=34s --group AG2 ")
+        o,r = pcs(temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy op monitor interval=34s --group AG2 ")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D4 Dummy op monitor interval=35s --group=AG2 ")
+        o,r = pcs(temp_cib, "resource create --no-default-ops D4 ocf:heartbeat:Dummy op monitor interval=35s --group=AG2 ")
         ac(o,"")
         assert r == 0
 
@@ -2604,13 +2792,22 @@ Deleting Resource (and group and M/S) - dummylarge
         assert r == 0
 
     def testCloneMaster(self):
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
         assert output == "", [output]
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D1 Dummy")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
         assert output == "", [output]
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D2 Dummy")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
@@ -2646,15 +2843,24 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
         assert output == "Deleting Resource - D2\n", [output]
 
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D2 Dummy")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+        )
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
+        )
 
         output, returnVal = pcs(temp_cib, "resource show --full")
         assert returnVal == 0
         assert output == " Master: D1-master-custom\n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D0-monitor-interval-60s)\n Resource: D2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (D2-monitor-interval-60s)\n", [output]
 
     def testLSBResource(self):
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D2 lsb:network")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 lsb:network"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
@@ -2676,7 +2882,8 @@ Deleting Resource (and group and M/S) - dummylarge
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy Dummy"
+            temp_cib,
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2825,13 +3032,15 @@ Error: when specifying --master you must use the master id
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D1 Dummy --clone"
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D2 Dummy --group DG"
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2892,15 +3101,24 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
     def testNoMoveMSClone(self):
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D0 Dummy")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --clone")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D2 Dummy --master")
+        output, returnVal  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --master"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
@@ -2946,19 +3164,19 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 1
 
     def testDebugStartCloneGroup(self):
-        o,r = pcs("resource create D0 Dummy --group DGroup")
+        o,r = pcs("resource create D0 ocf:heartbeat:Dummy --group DGroup")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create D1 Dummy --group DGroup")
+        o,r = pcs("resource create D1 ocf:heartbeat:Dummy --group DGroup")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create D2 Dummy --clone")
+        o,r = pcs("resource create D2 ocf:heartbeat:Dummy --clone")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create D3 Dummy --master")
+        o,r = pcs("resource create D3 ocf:heartbeat:Dummy --master")
         ac(o,"")
         assert r == 0
 
@@ -2975,7 +3193,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert r == 1
 
     def testGroupCloneCreation(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group DGroup")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup"
+        )
         assert r == 0
         assert o == ""
 
@@ -3004,11 +3225,17 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --group DGroup")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup"
+        )
         assert r == 0
         ac(o,"")
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D2 Dummy --group DGroup")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DGroup"
+        )
         assert r == 0
         ac(o,"")
 
@@ -3041,15 +3268,15 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o,"NO resources configured\n")
 
     def testResourceCloneCreation(self):
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --clone")
+        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone")
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D2 Dummy --clone")
+        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D2 ocf:heartbeat:Dummy --clone")
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D3 Dummy --clone globaly-unique=true")
+        output, returnVal  = pcs(temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy --clone globaly-unique=true")
         assert returnVal == 0
         assert output == "", [output]
 
@@ -3134,13 +3361,15 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
     def testResourceCloneId(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy-clone Dummy"
+            temp_cib,
+            "resource create --no-default-ops dummy-clone ocf:heartbeat:Dummy"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy Dummy"
+            temp_cib,
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -3164,7 +3393,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy Dummy --clone"
+            temp_cib,
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy --clone"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -3181,13 +3411,15 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
 
     def testResourceMasterId(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy-master Dummy"
+            temp_cib,
+            "resource create --no-default-ops dummy-master ocf:heartbeat:Dummy"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy Dummy"
+            temp_cib,
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -3233,7 +3465,8 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy Dummy --master"
+            temp_cib,
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy --master"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -3249,7 +3482,10 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         self.assertEqual(0, returnVal)
 
     def testResourceCloneUpdate(self):
-        o, r  = pcs(temp_cib, "resource create --no-default-ops D1 Dummy --clone")
+        o, r  = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+        )
         assert r == 0
         ac(o, "")
 
@@ -3282,10 +3518,16 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o, ' Clone: D1-clone\n  Meta Attrs: bar=baz \n  Resource: D1 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D1-monitor-interval-60s)\n')
 
     def testGroupRemoveWithConstraints2(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy --group AG")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG"
+        )
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops B Dummy --group AG")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops B ocf:heartbeat:Dummy --group AG"
+        )
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location AG prefers rh7-1")
@@ -3300,9 +3542,15 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(o, " Resource: A (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (A-monitor-interval-60s)\n Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (B-monitor-interval-60s)\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops A1 Dummy --group AA")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AA"
+        )
         assert r == 0
-        o,r = pcs(temp_cib, "resource create --no-default-ops A2 Dummy --group AA")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AA"
+        )
         assert r == 0
         o,r = pcs(temp_cib, "resource master AA")
         assert r == 0
@@ -3321,20 +3569,30 @@ Deleting Resource (and group and M/S) - A2
         assert r == 0
 
     def testMasteredGroup(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy --group AG")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG"
+        )
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops B Dummy --group AG")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops B ocf:heartbeat:Dummy --group AG"
+        )
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops C Dummy --group AG")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops C ocf:heartbeat:Dummy --group AG"
+        )
         assert r == 0
 
         o,r = pcs(temp_cib, "resource master AGMaster AG")
         assert r == 0
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops A Dummy"
+            temp_cib,
+            "resource create --no-default-ops A ocf:heartbeat:Dummy"
         )
         ac(output, """\
 Error: unable to create resource/fence device 'A', 'A' already exists on this system
@@ -3342,7 +3600,8 @@ Error: unable to create resource/fence device 'A', 'A' already exists on this sy
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops AG Dummy"
+            temp_cib,
+            "resource create --no-default-ops AG ocf:heartbeat:Dummy"
         )
         ac(output, """\
 Error: unable to create resource/fence device 'AG', 'AG' already exists on this system
@@ -3350,7 +3609,8 @@ Error: unable to create resource/fence device 'AG', 'AG' already exists on this 
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops AGMaster Dummy"
+            temp_cib,
+            "resource create --no-default-ops AGMaster ocf:heartbeat:Dummy"
         )
         ac(output, """\
 Error: unable to create resource/fence device 'AGMaster', 'AGMaster' already exists on this system
@@ -3376,13 +3636,15 @@ Error: unable to create resource/fence device 'AGMaster', 'AGMaster' already exi
 
     def testClonedGroup(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D1 Dummy --group DG"
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DG"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D2 Dummy --group DG"
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -3403,7 +3665,8 @@ Error: unable to create resource/fence device 'AGMaster', 'AGMaster' already exi
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D1 Dummy"
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
         )
         ac(output, """\
 Error: unable to create resource/fence device 'D1', 'D1' already exists on this system
@@ -3411,7 +3674,8 @@ Error: unable to create resource/fence device 'D1', 'D1' already exists on this 
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops DG Dummy"
+            temp_cib,
+            "resource create --no-default-ops DG ocf:heartbeat:Dummy"
         )
         ac(output, """\
 Error: unable to create resource/fence device 'DG', 'DG' already exists on this system
@@ -3419,7 +3683,8 @@ Error: unable to create resource/fence device 'DG', 'DG' already exists on this 
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops DG-clone Dummy"
+            temp_cib,
+            "resource create --no-default-ops DG-clone ocf:heartbeat:Dummy"
         )
         ac(output, """\
 Error: unable to create resource/fence device 'DG-clone', 'DG-clone' already exists on this system
@@ -3468,7 +3733,10 @@ Error: Cannot remove more than one resource from cloned group
         self.assertEqual(0, returnVal)
 
     def testResourceEnable(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+        )
         ac(o,"")
         assert r == 0
 
@@ -3506,7 +3774,10 @@ Error: Cannot remove more than one resource from cloned group
         assert r == 1
 
         # cloned group
-        output, retVal = pcs(temp_cib, "resource create dummy0 Dummy --group group0")
+        output, retVal = pcs(
+            temp_cib,
+            "resource create dummy0 ocf:heartbeat:Dummy --group group0"
+        )
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource clone group0")
@@ -3520,11 +3791,17 @@ Error: Cannot remove more than one resource from cloned group
         assert retVal == 0
 
     def testResourceEnableUnmanaged(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+        )
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D2 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
+        )
         ac(o,"")
         assert r == 0
 
@@ -3554,7 +3831,10 @@ Error: Cannot remove more than one resource from cloned group
         assert r == 0
 
         # resource in an unmanaged group
-        o,r = pcs(temp_cib, "resource create --no-default-ops D3 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D3 ocf:heartbeat:Dummy"
+        )
         ac(o,"")
         assert r == 0
         o,r = pcs("resource group add DG D3")
@@ -3580,7 +3860,10 @@ Error: Cannot remove more than one resource from cloned group
         assert r == 0
 
         # unmanaged resource in a group
-        o,r = pcs(temp_cib, "resource create --no-default-ops D4 Dummy")
+        o,r = pcs(
+            temp_cib,
+            "resource create --no-default-ops D4 ocf:heartbeat:Dummy"
+        )
         ac(o,"")
         assert r == 0
         o,r = pcs("resource group add DG D4")
@@ -3601,7 +3884,8 @@ Error: Cannot remove more than one resource from cloned group
 
     def testResourceEnableClone(self):
         output, retVal = pcs(
-            temp_cib, "resource create --no-default-ops dummy Dummy --clone"
+            temp_cib,
+            "resource create --no-default-ops dummy ocf:heartbeat:Dummy --clone"
         )
         ac(output, "")
         self.assertEqual(retVal, 0)
@@ -3867,23 +4151,23 @@ Error: Cannot remove more than one resource from cloned group
 """)
 
     def testOPOption(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy op monitor interval=30s blah=blah")
+        o,r = pcs(temp_cib, "resource create --no-default-ops A ocf:heartbeat:Dummy op monitor interval=30s blah=blah")
         ac(o,"Error: blah is not a valid op option (use --force to override)\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops A Dummy op monitor interval=30s op monitor interval=40s blah=blah")
+        o,r = pcs(temp_cib, "resource create --no-default-ops A ocf:heartbeat:Dummy op monitor interval=30s op monitor interval=40s blah=blah")
         ac(o,"Error: blah is not a valid op option (use --force to override)\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops B Dummy")
+        o,r = pcs(temp_cib, "resource create --no-default-ops B ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource update B Dummy op monitor interval=30s blah=blah")
+        o,r = pcs(temp_cib, "resource update B ocf:heartbeat:Dummy op monitor interval=30s blah=blah")
         ac(o,"Error: blah is not a valid op option (use --force to override)\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops C Dummy")
+        o,r = pcs(temp_cib, "resource create --no-default-ops C ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
@@ -3904,11 +4188,11 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (B-monitor-interval-60s)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource update B Dummy op monitor interval=30s monitor interval=31s role=master")
+        o,r = pcs(temp_cib, "resource update B op monitor interval=30s monitor interval=31s role=master")
         ac(o,"Error: role must be: Stopped, Started, Slave or Master (use --force to override)\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource update B Dummy op monitor interval=30s monitor interval=31s role=Master")
+        o,r = pcs(temp_cib, "resource update B op monitor interval=30s monitor interval=31s role=Master")
         ac(o,"")
         assert r == 0
 
@@ -3916,7 +4200,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o," Resource: B (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s (B-monitor-interval-30s)\n              monitor interval=31s role=Master (B-monitor-interval-31s)\n Resource: C (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s (C-monitor-interval-60s)\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "resource update B dummy op interval=5s")
+        o,r = pcs(temp_cib, "resource update B op interval=5s")
         ac(o,"Error: interval=5s does not appear to be a valid operation action\n")
         assert r == 1
 
@@ -3939,11 +4223,15 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 1
 
     def groupMSAndClone(self):
-        o,r = pcs("resource create --no-default-ops D1 Dummy --clone")
+        o,r = pcs(
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --clone"
+        )
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create --no-default-ops D2 Dummy --master")
+        o,r = pcs(
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --master"
+        )
         ac(o,"")
         assert r == 0
 
@@ -3955,16 +4243,18 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"Error: cannot group master/slave resources\n")
         assert r == 1
 
-        o,r = pcs("resource create --no-default-ops D3 Dummy --master --group xxx --clone")
+        o,r = pcs("resource create --no-default-ops D3 ocf:heartbeat:Dummy --master --group xxx --clone")
         ac(o,"Warning: --group ignored when creating a clone\nWarning: --master ignored when creating a clone\n")
         assert r == 0
 
-        o,r = pcs("resource create --no-default-ops D4 Dummy --master --group xxx")
+        o,r = pcs("resource create --no-default-ops D4 ocf:heartbeat:Dummy --master --group xxx")
         ac(o,"Warning: --group ignored when creating a master\n")
         assert r == 0
 
     def testResourceCloneGroup(self):
-        o,r = pcs("resource create --no-default-ops dummy0 Dummy --group group")
+        o,r = pcs(
+            "resource create --no-default-ops dummy0 ocf:heartbeat:Dummy --group group"
+        )
         ac(o,"")
         assert r == 0
 
@@ -3976,37 +4266,33 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"Deleting Resource (and group and clone) - dummy0\n")
         assert r == 0
 
-    def testVirtualDomainResource(self):
-        dummy_o,r = pcs("resource describe VirtualDomain")
-        assert r == 0
-
     def testResourceMissingValues(self):
         o,r = pcs("resource create --no-default-ops myip IPaddr2")
-        ac(o,"Error: missing required option(s): 'ip' for resource type: ocf:heartbeat:IPaddr2 (use --force to override)\n")
+        ac(o,"Error: missing required option(s): 'ip' for resource type: ocf:heartbeat:IPaddr2 (use --force to override)\nCreating resource 'ocf:heartbeat:IPaddr2'\n")
         assert r == 1
 
         o,r = pcs("resource create --no-default-ops myip IPaddr2 --force")
-        ac(o,"")
+        ac(o,"Creating resource 'ocf:heartbeat:IPaddr2'\n")
         assert r == 0
 
         o,r = pcs("resource create --no-default-ops myip2 IPaddr2 ip=3.3.3.3")
-        ac(o,"")
+        ac(o,"Creating resource 'ocf:heartbeat:IPaddr2'\n")
         assert r == 0
 
         o,r = pcs("resource create --no-default-ops myfs Filesystem")
-        ac(o,"Error: missing required option(s): 'device, directory, fstype' for resource type: ocf:heartbeat:Filesystem (use --force to override)\n")
+        ac(o,"Error: missing required option(s): 'device, directory, fstype' for resource type: ocf:heartbeat:Filesystem (use --force to override)\nCreating resource 'ocf:heartbeat:Filesystem'\n")
         assert r == 1
 
         o,r = pcs("resource create --no-default-ops myfs Filesystem --force")
-        ac(o,"")
+        ac(o,"Creating resource 'ocf:heartbeat:Filesystem'\n")
         assert r == 0
 
         o,r = pcs("resource create --no-default-ops myfs2 Filesystem device=x directory=y --force")
-        ac(o,"")
+        ac(o,"Creating resource 'ocf:heartbeat:Filesystem'\n")
         assert r == 0
 
         o,r = pcs("resource create --no-default-ops myfs3 Filesystem device=x directory=y fstype=z")
-        ac(o,"")
+        ac(o,"Creating resource 'ocf:heartbeat:Filesystem'\n")
         assert r == 0
 
         o,r = pcs("resource --full")
@@ -4028,20 +4314,20 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 0
 
     def testDefaultOps(self):
-        o,r = pcs("resource create X0 Dummy")
+        o,r = pcs("resource create X0 ocf:heartbeat:Dummy")
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create X1 Dummy op monitor interval=90s")
+        o,r = pcs("resource create X1 ocf:heartbeat:Dummy op monitor interval=90s")
         ac(o,"")
         assert r == 0
 
         o,r = pcs("resource create X2 IPaddr2 ip=1.1.1.1")
-        ac(o,"")
+        ac(o,"Creating resource 'ocf:heartbeat:IPaddr2'\n")
         assert r == 0
 
         o,r = pcs("resource create X3 IPaddr2 ip=1.1.1.1 op monitor interval=1s start timeout=1s stop timeout=1s")
-        ac(o,"")
+        ac(o,"Creating resource 'ocf:heartbeat:IPaddr2'\n")
         assert r == 0
 
         o,r = pcs("resource --full")
@@ -4068,13 +4354,22 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 0
 
     def testClonedMasteredGroup(self):
-        output, retVal = pcs(temp_cib, "resource create dummy1 Dummy --no-default-ops --group dummies")
+        output, retVal = pcs(
+            temp_cib,
+            "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies"
+        )
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource create dummy2 Dummy --no-default-ops --group dummies")
+        output, retVal = pcs(
+            temp_cib,
+            "resource create dummy2 ocf:heartbeat:Dummy --no-default-ops --group dummies"
+        )
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource create dummy3 Dummy --no-default-ops --group dummies")
+        output, retVal = pcs(
+            temp_cib,
+            "resource create dummy3 ocf:heartbeat:Dummy --no-default-ops --group dummies"
+        )
         ac(output, "")
         assert retVal == 0
 
@@ -4111,13 +4406,22 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "NO resources configured\n")
         assert retVal == 0
 
-        output, retVal = pcs(temp_cib, "resource create dummy1 Dummy --no-default-ops --group dummies")
+        output, retVal = pcs(
+            temp_cib,
+            "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies"
+        )
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource create dummy2 Dummy --no-default-ops --group dummies")
+        output, retVal = pcs(
+            temp_cib,
+            "resource create dummy2 ocf:heartbeat:Dummy --no-default-ops --group dummies"
+        )
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource create dummy3 Dummy --no-default-ops --group dummies")
+        output, retVal = pcs(
+            temp_cib,
+            "resource create dummy3 ocf:heartbeat:Dummy --no-default-ops --group dummies"
+        )
         ac(output, "")
         assert retVal == 0
 
@@ -4156,32 +4460,37 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
     def test_relocate_stickiness(self):
         output, retVal = pcs(
-            temp_cib, "resource create D1 dummy --no-default-ops"
+            temp_cib, "resource create D1 ocf:pacemaker:Dummy --no-default-ops"
         )
         self.assertEqual(0, retVal)
         ac(output, "")
         output, retVal = pcs(
-            temp_cib, "resource create DG1 dummy --no-default-ops --group GR"
+            temp_cib,
+            "resource create DG1 ocf:pacemaker:Dummy --no-default-ops --group GR"
         )
         self.assertEqual(0, retVal)
         ac(output, "")
         output, retVal = pcs(
-            temp_cib, "resource create DG2 dummy --no-default-ops --group GR"
+            temp_cib,
+            "resource create DG2 ocf:pacemaker:Dummy --no-default-ops --group GR"
         )
         self.assertEqual(0, retVal)
         ac(output, "")
         output, retVal = pcs(
-            temp_cib, "resource create DC dummy --no-default-ops --clone"
+            temp_cib,
+            "resource create DC ocf:pacemaker:Dummy --no-default-ops --clone"
         )
         self.assertEqual(0, retVal)
         ac(output, "")
         output, retVal = pcs(
-            temp_cib, "resource create DGC1 dummy --no-default-ops --group GRC"
+            temp_cib,
+            "resource create DGC1 ocf:pacemaker:Dummy --no-default-ops --group GRC"
         )
         self.assertEqual(0, retVal)
         ac(output, "")
         output, retVal = pcs(
-            temp_cib, "resource create DGC2 dummy --no-default-ops --group GRC"
+            temp_cib,
+            "resource create DGC2 ocf:pacemaker:Dummy --no-default-ops --group GRC"
         )
         self.assertEqual(0, retVal)
         ac(output, "")
@@ -4190,21 +4499,21 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
 
         status = """\
- Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+ Resource: D1 (class=ocf provider=pacemaker type=Dummy)
   Operations: monitor interval=60s (D1-monitor-interval-60s)
  Group: GR
-  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=60s (DG1-monitor-interval-60s)
-  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=60s (DG2-monitor-interval-60s)
  Clone: DC-clone
-  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+  Resource: DC (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=60s (DC-monitor-interval-60s)
  Clone: GRC-clone
   Group: GRC
-   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
     Operations: monitor interval=60s (DGC1-monitor-interval-60s)
-   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
     Operations: monitor interval=60s (DGC2-monitor-interval-60s)
 """
         cib_original, retVal = pcs(temp_cib, "cluster cib")
@@ -4230,30 +4539,30 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             f.write(cib_out.toxml())
         output, retVal = pcs(temp_cib, "resource --full")
         ac(output, """\
- Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+ Resource: D1 (class=ocf provider=pacemaker type=Dummy)
   Meta Attrs: resource-stickiness=0 
   Operations: monitor interval=60s (D1-monitor-interval-60s)
  Group: GR
   Meta Attrs: resource-stickiness=0 
-  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
    Meta Attrs: resource-stickiness=0 
    Operations: monitor interval=60s (DG1-monitor-interval-60s)
-  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
    Meta Attrs: resource-stickiness=0 
    Operations: monitor interval=60s (DG2-monitor-interval-60s)
  Clone: DC-clone
   Meta Attrs: resource-stickiness=0 
-  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+  Resource: DC (class=ocf provider=pacemaker type=Dummy)
    Meta Attrs: resource-stickiness=0 
    Operations: monitor interval=60s (DC-monitor-interval-60s)
  Clone: GRC-clone
   Meta Attrs: resource-stickiness=0 
   Group: GRC
    Meta Attrs: resource-stickiness=0 
-   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
     Meta Attrs: resource-stickiness=0 
     Operations: monitor interval=60s (DGC1-monitor-interval-60s)
-   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
     Meta Attrs: resource-stickiness=0 
     Operations: monitor interval=60s (DGC2-monitor-interval-60s)
 """)
@@ -4278,25 +4587,25 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             f.write(cib_out.toxml())
         output, retVal = pcs(temp_cib, "resource --full")
         ac(output, """\
- Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+ Resource: D1 (class=ocf provider=pacemaker type=Dummy)
   Meta Attrs: resource-stickiness=0 
   Operations: monitor interval=60s (D1-monitor-interval-60s)
  Group: GR
-  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
    Meta Attrs: resource-stickiness=0 
    Operations: monitor interval=60s (DG1-monitor-interval-60s)
-  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=60s (DG2-monitor-interval-60s)
  Clone: DC-clone
-  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+  Resource: DC (class=ocf provider=pacemaker type=Dummy)
    Meta Attrs: resource-stickiness=0 
    Operations: monitor interval=60s (DC-monitor-interval-60s)
  Clone: GRC-clone
   Group: GRC
-   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
     Meta Attrs: resource-stickiness=0 
     Operations: monitor interval=60s (DGC1-monitor-interval-60s)
-   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
     Operations: monitor interval=60s (DGC2-monitor-interval-60s)
 """)
         self.assertEqual(0, retVal)
@@ -4320,24 +4629,24 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             f.write(cib_out.toxml())
         output, retVal = pcs(temp_cib, "resource --full")
         ac(output, """\
- Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+ Resource: D1 (class=ocf provider=pacemaker type=Dummy)
   Operations: monitor interval=60s (D1-monitor-interval-60s)
  Group: GR
-  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=60s (DG1-monitor-interval-60s)
-  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=60s (DG2-monitor-interval-60s)
  Clone: DC-clone
-  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+  Resource: DC (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=60s (DC-monitor-interval-60s)
  Clone: GRC-clone
   Meta Attrs: resource-stickiness=0 
   Group: GRC
    Meta Attrs: resource-stickiness=0 
-   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
     Meta Attrs: resource-stickiness=0 
     Operations: monitor interval=60s (DGC1-monitor-interval-60s)
-   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
     Meta Attrs: resource-stickiness=0 
     Operations: monitor interval=60s (DGC2-monitor-interval-60s)
 """)
@@ -4362,26 +4671,26 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             f.write(cib_out.toxml())
         output, retVal = pcs(temp_cib, "resource --full")
         ac(output, """\
- Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+ Resource: D1 (class=ocf provider=pacemaker type=Dummy)
   Operations: monitor interval=60s (D1-monitor-interval-60s)
  Group: GR
   Meta Attrs: resource-stickiness=0 
-  Resource: DG1 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
    Meta Attrs: resource-stickiness=0 
    Operations: monitor interval=60s (DG1-monitor-interval-60s)
-  Resource: DG2 (class=ocf provider=heartbeat type=Dummy)
+  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
    Meta Attrs: resource-stickiness=0 
    Operations: monitor interval=60s (DG2-monitor-interval-60s)
  Clone: DC-clone
   Meta Attrs: resource-stickiness=0 
-  Resource: DC (class=ocf provider=heartbeat type=Dummy)
+  Resource: DC (class=ocf provider=pacemaker type=Dummy)
    Meta Attrs: resource-stickiness=0 
    Operations: monitor interval=60s (DC-monitor-interval-60s)
  Clone: GRC-clone
   Group: GRC
-   Resource: DGC1 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
     Operations: monitor interval=60s (DGC1-monitor-interval-60s)
-   Resource: DGC2 (class=ocf provider=heartbeat type=Dummy)
+   Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
     Operations: monitor interval=60s (DGC2-monitor-interval-60s)
 """)
         self.assertEqual(0, retVal)
@@ -4493,15 +4802,15 @@ class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_remove_referenced_primitive_resource(self):
-        self.assert_pcs_success('resource create dummy Dummy')
+        self.assert_pcs_success('resource create dummy ocf:heartbeat:Dummy')
         self.assert_pcs_success('acl role create read-dummy read id dummy')
         self.assert_pcs_success('resource delete dummy', [
             'Deleting Resource - dummy'
         ])
 
     def test_remove_group_with_referenced_primitive_resource(self):
-        self.assert_pcs_success('resource create dummy1 Dummy')
-        self.assert_pcs_success('resource create dummy2 Dummy')
+        self.assert_pcs_success('resource create dummy1 ocf:heartbeat:Dummy')
+        self.assert_pcs_success('resource create dummy2 ocf:heartbeat:Dummy')
         self.assert_pcs_success('resource group add dummy-group dummy1 dummy2')
         self.assert_pcs_success('acl role create read-dummy read id dummy2')
         self.assert_pcs_success('resource delete dummy-group', [
@@ -4512,8 +4821,8 @@ class ResourcesReferencedFromAclTest(unittest.TestCase, AssertPcsMixin):
         ])
 
     def test_remove_referenced_group(self):
-        self.assert_pcs_success('resource create dummy1 Dummy')
-        self.assert_pcs_success('resource create dummy2 Dummy')
+        self.assert_pcs_success('resource create dummy1 ocf:heartbeat:Dummy')
+        self.assert_pcs_success('resource create dummy2 ocf:heartbeat:Dummy')
         self.assert_pcs_success('resource group add dummy-group dummy1 dummy2')
         self.assert_pcs_success('acl role create acl-role-a read id dummy-group')
         self.assert_pcs_success('resource delete dummy-group', [
@@ -4529,7 +4838,9 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_no_op_allowed_in_clone_update(self):
-        self.assert_pcs_success("resource create dummy Dummy --clone")
+        self.assert_pcs_success(
+            "resource create dummy ocf:heartbeat:Dummy --clone"
+        )
         self.assert_pcs_success(
             "resource show dummy-clone",
             """\
@@ -4560,7 +4871,9 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
         )
 
     def test_no_op_allowed_in_master_update(self):
-        self.assert_pcs_success("resource create dummy Dummy --master")
+        self.assert_pcs_success(
+            "resource create dummy ocf:heartbeat:Dummy --master"
+        )
         self.assert_pcs_success(
             "resource show dummy-master",
             """\
@@ -4596,7 +4909,7 @@ class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(temp_cib)
 
     def test_remove_ticket(self):
-        self.assert_pcs_success('resource create A Dummy')
+        self.assert_pcs_success('resource create A ocf:heartbeat:Dummy')
         self.assert_pcs_success(
             'constraint ticket add T master A loss-policy=fence'
         )
