@@ -8,7 +8,7 @@ build_gems_rhel6:
 	gem install --verbose --no-rdoc --no-ri -l -i vendor/bundle/ruby \
 	vendor/cache/backports-3.6.8.gem \
 	vendor/cache/json-1.8.3.gem \
-	vendor/cache/multi_json-1.12.1.gem \
+	vendor/cache/multi_json-1.12.0.gem \
 	vendor/cache/open4-1.3.4.gem \
 	vendor/cache/orderedhash-0.0.6.gem \
 	vendor/cache/rack-1.6.4.gem \
