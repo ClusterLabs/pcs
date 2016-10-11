@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 
 from pcs.cli.booth.console_report import CODE_TO_MESSAGE_BUILDER_MAP
 from pcs.common import report_codes as codes

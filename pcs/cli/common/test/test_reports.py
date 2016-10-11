@@ -5,7 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
-from unittest import TestCase
+from pcs.test.tools.pcs_unittest import TestCase
 from collections import namedtuple
 
 from pcs.cli.common.reports import build_message_from_report
