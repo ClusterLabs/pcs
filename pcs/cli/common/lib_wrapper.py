@@ -22,6 +22,7 @@ from pcs.lib.commands import (
     alert,
     resource_agent,
     stonith_agent,
+    acl,
 )
 from pcs.lib.commands.constraint import (
     colocation as constraint_colocation,
@@ -251,6 +252,29 @@ def load_module(env, middleware_factory, name):
             {
                 "describe_agent": stonith_agent.describe_agent,
                 "list_agents": stonith_agent.list_agents,
+            }
+        )
+
+    if name == "acl":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "create_role": acl.create_role,
+                "remove_role": acl.remove_role,
+                "assign_role_not_specific": acl.assign_role_not_specific,
+                "assign_role_to_target": acl.assign_role_to_target,
+                "assign_role_to_group": acl.assign_role_to_group,
+                "unassign_role_not_specific": acl.unassign_role_not_specific,
+                "unassign_role_from_target": acl.unassign_role_from_target,
+                "unassign_role_from_group": acl.unassign_role_from_group,
+                "create_target": acl.create_target,
+                "create_group": acl.create_group,
+                "remove_target": acl.remove_target,
+                "remove_group": acl.remove_group,
+                "add_permission": acl.add_permission,
+                "remove_permission": acl.remove_permission,
+                "get_config": acl.get_config,
             }
         )
 

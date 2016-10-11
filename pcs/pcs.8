@@ -384,10 +384,10 @@ role delete <role id>
 Delete the role specified and remove it from any users/groups it was assigned to.
 .TP
 role assign <role id> [to] <username/group>
-Assign a role to a user or group already created with 'pcs acl user/group create'.
+Assign a role to a user or group already created with 'pcs acl user/group create'. If there is user and group with the same id and it is not specified which should be used, user will be prioritized. In cases like this specify whenever user or group should be used.
 .TP
 role unassign <role id> [from] <username/group>
-Remove a role from the specified user.
+Remove a role from the specified user. If there is user and group with the same id and it is not specified which should be used, user will be prioritized. In cases like this specify whenever user or group should be used.
 .TP
 user create <username> <role id> [<role id>]...
 Create an ACL for the user specified and assign roles to the user.

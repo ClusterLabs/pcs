@@ -43,7 +43,7 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             'acl role create test_role read xpath my_xpath',
-            "Cluster CIB has been upgraded to latest version\n"
+            "CIB has been upgraded to the latest schema version.\n"
         )
 
         with open(temp_cib) as myfile:
@@ -90,19 +90,19 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         ac(o,"")
 
         o, r = pcs("acl user create user1 roleX")
-        ac(o, "Error: cannot find acl role: roleX\n")
+        ac(o, "Error: role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
         o, r = pcs("acl user create user1 role1 roleX")
-        ac(o, "Error: cannot find acl role: roleX\n")
+        ac(o, "Error: role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
         o, r = pcs("acl group create group1 roleX")
-        ac(o, "Error: cannot find acl role: roleX\n")
+        ac(o, "Error: role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
         o, r = pcs("acl group create group1 role1 roleX")
-        ac(o, "Error: cannot find acl role: roleX\n")
+        ac(o, "Error: role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
         o, r = pcs("acl")
@@ -131,11 +131,26 @@ Role: role3
 
         o,r = pcs("acl")
         assert r == 0
-        ac(o,"ACLs are disabled, run 'pcs acl enable' to enable\n\nUser: user1\n  Roles: role1 role2\nGroup: group1\n  Roles: role1 role3\nRole: role1\n  Permission: read xpath /xpath1/ (role1-read)\n  Permission: write xpath /xpath2/ (role1-write)\nRole: role2\n  Permission: deny xpath /xpath3/ (role2-deny)\n  Permission: deny xpath /xpath4/ (role2-deny-1)\nRole: role3\n  Permission: read xpath /xpath5/ (role3-read)\n  Permission: read xpath /xpath6/ (role3-read-1)\n")
+        ac(
+            o,
+            """\
+ACLs are disabled, run 'pcs acl enable' to enable
 
-        o,r = pcs("acl role create user1")
-        assert r == 1
-        ac(o,"Error: 'user1' already exists\n")
+User: user1
+  Roles: role1 role2
+Group: group1
+  Roles: role1 role3
+Role: role1
+  Permission: read xpath /xpath1/ (role1-read)
+  Permission: write xpath /xpath2/ (role1-write)
+Role: role2
+  Permission: deny xpath /xpath3/ (role2-deny)
+  Permission: deny xpath /xpath4/ (role2-deny-1)
+Role: role3
+  Permission: read xpath /xpath5/ (role3-read)
+  Permission: read xpath /xpath6/ (role3-read-1)
+"""
+        )
 
         o,r = pcs("acl role create group1")
         assert r == 1
@@ -147,35 +162,23 @@ Role: role3
 
         o,r = pcs("acl user create user1")
         assert r == 1
-        ac(o,"Error: user user1 already exists\n")
-
-        o,r = pcs("acl user create group1")
-        assert r == 1
-        ac(o,"Error: group1 already exists\n")
-
-        o,r = pcs("acl user create role1")
-        assert r == 1
-        ac(o,"Error: role1 already exists\n")
-
-        o,r = pcs("acl group create user1")
-        assert r == 1
-        ac(o,"Error: user1 already exists\n")
+        ac(o,"Error: 'user1' already exists\n")
 
         o,r = pcs("acl group create group1")
         assert r == 1
-        ac(o,"Error: group group1 already exists\n")
+        ac(o,"Error: 'group1' already exists\n")
 
         o,r = pcs("acl group create role1")
         assert r == 1
-        ac(o,"Error: role1 already exists\n")
+        ac(o,"Error: 'role1' already exists\n")
 
         o,r = pcs("acl role assign role1 to noexist")
         assert r == 1
-        ac(o,"Error: cannot find user or group: noexist\n")
+        ac(o,"Error: user/group 'noexist' does not exist\n")
 
         o,r = pcs("acl role assign noexist to user1")
         assert r == 1
-        ac(o,"Error: cannot find role: noexist\n")
+        ac(o,"Error: role 'noexist' does not exist\n")
 
         o,r = pcs("acl role assign role3 to user1")
         assert r == 0
@@ -187,11 +190,11 @@ Role: role3
 
         o,r = pcs("acl role unassign noexist from user1")
         assert r == 1
-        ac(o,"Error: cannot find role: noexist, assigned to user/group: user1\n")
+        ac(o,"Error: noexist is not assigned to user1.\n")
 
         o,r = pcs("acl role unassign role3 from noexist")
         assert r == 1
-        ac(o,"Error: cannot find user or group: noexist\n")
+        ac(o,"Error: user/group 'noexist' does not exist\n")
 
         o,r = pcs("acl role unassign role3 from user1")
         assert r == 0
@@ -371,7 +374,7 @@ Role: role2
 
         o,r = pcs("acl user create user1")
         assert r == 1
-        ac(o,"Error: user user1 already exists\n")
+        ac(o,"Error: 'user1' already exists\n")
 
         o,r = pcs("acl group create group1")
         ac(o,"")
@@ -383,7 +386,7 @@ Role: role2
 
         o,r = pcs("acl group create group1")
         assert r == 1
-        ac(o,"Error: group group1 already exists\n")
+        ac(o,"Error: 'group1' already exists\n")
 
         o,r = pcs("acl")
         ac(o,"""\
@@ -402,7 +405,7 @@ Group: group2
 
         o,r = pcs("acl group delete user1")
         assert r == 1
-        ac(o,"Error: unable to find acl group: user1\n")
+        ac(o,"Error: group 'user1' does not exist\n")
 
         o,r = pcs("acl")
         ac(o, """\
@@ -591,7 +594,7 @@ User: user2
 
         o,r = pcs("acl role delete role2")
         assert r == 1
-        ac(o,"Error: unable to find acl role: role2\n")
+        ac(o,"Error: role 'role2' does not exist\n")
 
         o,r = pcs("acl role delete role1")
         assert r == 0
@@ -647,7 +650,7 @@ User: user2
         assert r == 0
 
         o,r = pcs("acl permission delete role4-deny")
-        ac(o,"Error: Unable to find permission with id: role4-deny\n")
+        ac(o,"Error: permission 'role4-deny' does not exist\n")
         assert r == 1
 
         o,r = pcs("acl show")
@@ -812,3 +815,76 @@ Role: role4
             'acl role unknown whatever',
             stdout_start="\nUsage: pcs acl role..."
         )
+
+    def test_assign_unassign_role_to_user(self):
+        self.assert_pcs_success("acl role create role1")
+        self.assert_pcs_success("acl user create user1")
+        self.assert_pcs_success("acl role assign role1 user user1")
+        self.assert_pcs_fail(
+            "acl role assign role1 user user1",
+            "Error: role1 is already asigned to user1\n"
+        )
+        self.assert_pcs_success("acl role unassign role1 user user1")
+        self.assert_pcs_fail(
+            "acl role unassign role1 user user1",
+            "Error: role1 is not assigned to user1.\n"
+        )
+
+    def test_assign_unassign_role_to_user_not_existing_user(self):
+        self.assert_pcs_success("acl role create role1")
+        self.assert_pcs_success("acl group create group1")
+        self.assert_pcs_fail(
+            "acl role assign role1 to user group1",
+            "Error: user 'group1' does not exist\n"
+        )
+
+    def test_assign_unassign_role_to_user_with_to(self):
+        self.assert_pcs_success("acl role create role1")
+        self.assert_pcs_success("acl user create user1")
+        self.assert_pcs_success("acl role assign role1 to user user1")
+        self.assert_pcs_fail(
+            "acl role assign role1 to user user1",
+            "Error: role1 is already asigned to user1\n"
+        )
+        self.assert_pcs_success("acl role unassign role1 from user user1")
+        self.assert_pcs_fail(
+            "acl role unassign role1 from user user1",
+            "Error: role1 is not assigned to user1.\n"
+        )
+
+    def test_assign_unassign_role_to_group(self):
+        self.assert_pcs_success("acl role create role1")
+        self.assert_pcs_success("acl group create group1")
+        self.assert_pcs_success("acl role assign role1 group group1")
+        self.assert_pcs_fail(
+            "acl role assign role1 group group1",
+            "Error: role1 is already asigned to group1\n"
+        )
+        self.assert_pcs_success("acl role unassign role1 group group1")
+        self.assert_pcs_fail(
+            "acl role unassign role1 group group1",
+            "Error: role1 is not assigned to group1.\n"
+        )
+
+    def test_assign_unassign_role_to_group_not_existing_group(self):
+        self.assert_pcs_success("acl role create role1")
+        self.assert_pcs_success("acl user create user1")
+        self.assert_pcs_fail(
+            "acl role assign role1 to group user1",
+            "Error: group 'user1' does not exist\n"
+        )
+
+    def test_assign_unassign_role_to_group_with_to(self):
+        self.assert_pcs_success("acl role create role1")
+        self.assert_pcs_success("acl group create group1")
+        self.assert_pcs_success("acl role assign role1 to group group1")
+        self.assert_pcs_fail(
+            "acl role assign role1 to group group1",
+            "Error: role1 is already asigned to group1\n"
+        )
+        self.assert_pcs_success("acl role unassign role1 from group group1")
+        self.assert_pcs_fail(
+            "acl role unassign role1 from group group1",
+            "Error: role1 is not assigned to group1.\n"
+        )
+

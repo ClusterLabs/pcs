@@ -111,7 +111,7 @@
               <tr {{bind-attr usergroup_id="user"}} {{bind-attr role_id="Pcs.aclsController.cur_role.name"}}>
                   <td>{{user}}</td>
                   <td style="text-align:center;">
-                    <a onclick="remove_acl_item($(this).closest('tr'),'usergroup');return false;" href="#" class="remove">X</a>
+                    <a onclick="remove_acl_item($(this).closest('tr'),'user');return false;" href="#" class="remove">X</a>
                   </td>
                 </tr>
               {{/each}}
@@ -137,7 +137,7 @@
               <tr {{bind-attr usergroup_id="group"}} {{bind-attr role_id="Pcs.aclsController.cur_role.name"}}>
                 <td>{{group}}</td>
                 <td style="text-align:center;">
-                  <a onclick="remove_acl_item($(this).closest('tr'),'usergroup');return false;" href="#" class="remove">X</a>
+                  <a onclick="remove_acl_item($(this).closest('tr'),'group');return false;" href="#" class="remove">X</a>
                 </td>
               </tr>
               {{/each}}
