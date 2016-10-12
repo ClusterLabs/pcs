@@ -221,7 +221,7 @@ def create_target(tree, target_id):
     """
     acl_el = get_acls(tree)
     # id of element acl_target is not type ID in CIB ACL schema so we don't need
-    # to checsk if it is unique ID in whole CIB
+    # to check if it is unique ID in whole CIB
     if acl_el.find("./acl_target[@id='{0}']".format(target_id)) is not None:
         raise LibraryError(reports.acl_target_already_exists(target_id))
     return etree.SubElement(get_acls(tree), "acl_target", id=target_id)
@@ -285,7 +285,10 @@ def add_permissions_to_role(role_el, permission_info_list):
         perm = etree.SubElement(role_el, "acl_permission")
         perm.set(
             "id",
-            find_unique_id(role_el, "{0}-{1}".format(role_el.get("id", "role"), permission))
+            find_unique_id(
+                role_el,
+                "{0}-{1}".format(role_el.get("id", "role"), permission)
+            )
         )
         perm.set("kind", permission)
         perm.set(area_type_attribute_map[scope_type], scope)
@@ -419,3 +422,12 @@ def dom_remove_permissions_referencing(dom, reference):
         if permission.getAttribute("reference") == reference:
             permission.parentNode.removeChild(permission)
 
+
+def acl_error_to_report_item(e):
+    if e.__class__ == AclTargetNotFound:
+        return reports.id_not_found(e.target_id, "user")
+    elif e.__class__ == AclGroupNotFound:
+        return reports.id_not_found(e.group_id, "group")
+    elif e.__class__ == AclRoleNotFound:
+        return reports.id_not_found(e.role_id, "role")
+    raise e

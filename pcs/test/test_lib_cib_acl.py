@@ -5,26 +5,30 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.test.tools.pcs_unittest import TestCase
-
 from lxml import etree
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
+    assert_report_item_equal,
     assert_xml_equal,
     ExtendedAssertionsMixin,
 )
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
-from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools.pcs_unittest import mock, TestCase
 
-from pcs.lib.cib import acl as lib
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.lib.cib import acl as lib
+from pcs.lib.errors import (
+    LibraryError,
+    ReportItemSeverity as severities,
+)
 
 class LibraryAclTest(TestCase):
     def setUp(self):
-        self.create_cib = get_xml_manipulation_creator_from_file(rc("cib-empty.xml"))
+        self.create_cib = get_xml_manipulation_creator_from_file(
+            rc("cib-empty.xml")
+        )
         self.cib = self.create_cib()
 
     def fixture_add_role(self, role_id):
@@ -80,7 +84,6 @@ class ValidatePermissionsTest(LibraryAclTest):
                     "option_value": "unknown",
                     "option_name": "permission",
                     "allowed_values": self.allowed_permissions,
-                    # "allowed_values_str": ", ".join(self.allowed_permissions),
                 },
                 None
             ),
@@ -91,7 +94,6 @@ class ValidatePermissionsTest(LibraryAclTest):
                     "option_value": "allow",
                     "option_name": "permission",
                     "allowed_values": self.allowed_permissions,
-                    # "allowed_values_str": ", ".join(self.allowed_permissions),
                 },
                 None
             )
@@ -334,7 +336,9 @@ class AssignRoleTest(LibraryAclTest):
         )
 
     def test_success_target(self):
-        target = self.cib.tree.find(".//acl_target[@id='{0}']".format("target1"))
+        target = self.cib.tree.find(
+            ".//acl_target[@id='{0}']".format("target1")
+        )
         role = self.cib.tree.find(".//acl_role[@id='{0}']".format("role1"))
         lib.assign_role(target, role)
         self.assert_cib_equal(self.create_cib().append_to_first_tag_name(
@@ -373,7 +377,9 @@ class AssignRoleTest(LibraryAclTest):
         ))
 
     def test_role_already_assigned(self):
-        target = self.cib.tree.find(".//acl_target[@id='{0}']".format("target1"))
+        target = self.cib.tree.find(
+            ".//acl_target[@id='{0}']".format("target1")
+        )
         role = self.cib.tree.find(".//acl_role[@id='{0}']".format("role2"))
         assert_raise_library_error(
             lambda: lib.assign_role(target, role),
@@ -409,7 +415,9 @@ class UnassignRoleTest(LibraryAclTest):
         )
 
     def test_success_target(self):
-        target = self.cib.tree.find(".//acl_target[@id='{0}']".format("target1"))
+        target = self.cib.tree.find(
+            ".//acl_target[@id='{0}']".format("target1")
+        )
         lib.unassign_role(target, "role2")
         self.assert_cib_equal(self.create_cib().append_to_first_tag_name(
             "configuration",
@@ -446,7 +454,9 @@ class UnassignRoleTest(LibraryAclTest):
         ))
 
     def test_not_existing_role(self):
-        target = self.cib.tree.find(".//acl_target[@id='{0}']".format("target1"))
+        target = self.cib.tree.find(
+            ".//acl_target[@id='{0}']".format("target1")
+        )
         lib.unassign_role(target, "role3")
         self.assert_cib_equal(self.create_cib().append_to_first_tag_name(
             "configuration",
@@ -465,7 +475,9 @@ class UnassignRoleTest(LibraryAclTest):
         ))
 
     def test_role_not_assigned(self):
-        target = self.cib.tree.find(".//acl_target[@id='{0}']".format("target1"))
+        target = self.cib.tree.find(
+            ".//acl_target[@id='{0}']".format("target1")
+        )
         assert_raise_library_error(
             lambda: lib.unassign_role(target, "role1"),
             (
@@ -1021,5 +1033,52 @@ class GetRoleListOfTargetTest(LibraryAclTest):
         etree.SubElement(target_el, "role", {"id": "role3"})
         self.assertEqual(
             ["role1", "role2", "role3"], lib._get_role_list_of_target(target_el)
+        )
+
+
+class AclErrorToReportItemTest(TestCase, ExtendedAssertionsMixin):
+    def test_acl_target_not_found(self):
+        assert_report_item_equal(
+            lib.acl_error_to_report_item(lib.AclTargetNotFound("id")),
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "id",
+                    "id_description": "user",
+                }
+            )
+        )
+
+    def test_acl_group_not_found(self):
+        assert_report_item_equal(
+            lib.acl_error_to_report_item(lib.AclGroupNotFound("id")),
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "id",
+                    "id_description": "group",
+                }
+            )
+        )
+
+    def test_acl_role_not_found(self):
+        assert_report_item_equal(
+            lib.acl_error_to_report_item(lib.AclRoleNotFound("id")),
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "id",
+                    "id_description": "role",
+                }
+            )
+        )
+
+    def test_unknown_exception(self):
+        self.assert_raises(
+            LibraryError,
+            lambda: lib.acl_error_to_report_item(LibraryError())
         )
 

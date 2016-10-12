@@ -417,12 +417,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.CIB_ACL_ROLE_IS_ALREADY_ASSIGNED_TO_TARGET: lambda info:
-        "{role_id} is already asigned to {target_id}"
+        "Role '{role_id}' is already asigned to '{target_id}'"
         .format(**info)
     ,
 
     codes.CIB_ACL_ROLE_IS_NOT_ASSIGNED_TO_TARGET: lambda info:
-        "{role_id} is not assigned to {target_id}."
+        "Role '{role_id}' is not assigned to '{target_id}'"
         .format(**info)
     ,
 

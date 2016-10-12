@@ -190,7 +190,7 @@ Role: role3
 
         o,r = pcs("acl role unassign noexist from user1")
         assert r == 1
-        ac(o,"Error: noexist is not assigned to user1.\n")
+        ac(o,"Error: Role 'noexist' is not assigned to 'user1'\n")
 
         o,r = pcs("acl role unassign role3 from noexist")
         assert r == 1
@@ -822,12 +822,12 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 user user1")
         self.assert_pcs_fail(
             "acl role assign role1 user user1",
-            "Error: role1 is already asigned to user1\n"
+            "Error: Role 'role1' is already asigned to 'user1'\n"
         )
         self.assert_pcs_success("acl role unassign role1 user user1")
         self.assert_pcs_fail(
             "acl role unassign role1 user user1",
-            "Error: role1 is not assigned to user1.\n"
+            "Error: Role 'role1' is not assigned to 'user1'\n"
         )
 
     def test_assign_unassign_role_to_user_not_existing_user(self):
@@ -844,12 +844,12 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 to user user1")
         self.assert_pcs_fail(
             "acl role assign role1 to user user1",
-            "Error: role1 is already asigned to user1\n"
+            "Error: Role 'role1' is already asigned to 'user1'\n"
         )
         self.assert_pcs_success("acl role unassign role1 from user user1")
         self.assert_pcs_fail(
             "acl role unassign role1 from user user1",
-            "Error: role1 is not assigned to user1.\n"
+            "Error: Role 'role1' is not assigned to 'user1'\n"
         )
 
     def test_assign_unassign_role_to_group(self):
@@ -858,12 +858,12 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 group group1")
         self.assert_pcs_fail(
             "acl role assign role1 group group1",
-            "Error: role1 is already asigned to group1\n"
+            "Error: Role 'role1' is already asigned to 'group1'\n"
         )
         self.assert_pcs_success("acl role unassign role1 group group1")
         self.assert_pcs_fail(
             "acl role unassign role1 group group1",
-            "Error: role1 is not assigned to group1.\n"
+            "Error: Role 'role1' is not assigned to 'group1'\n"
         )
 
     def test_assign_unassign_role_to_group_not_existing_group(self):
@@ -880,11 +880,11 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 to group group1")
         self.assert_pcs_fail(
             "acl role assign role1 to group group1",
-            "Error: role1 is already asigned to group1\n"
+            "Error: Role 'role1' is already asigned to 'group1'\n"
         )
         self.assert_pcs_success("acl role unassign role1 from group group1")
         self.assert_pcs_fail(
             "acl role unassign role1 from group group1",
-            "Error: role1 is not assigned to group1.\n"
+            "Error: Role 'role1' is not assigned to 'group1'\n"
         )
 

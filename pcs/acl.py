@@ -57,6 +57,9 @@ def _print_list_of_objects(obj_list, transformation_fn):
 
 
 def show_acl_config(lib, argv, modifiers):
+    # TODO move to lib once lib supports cluster properties
+    # enabled/disabled should be part of the structure returned
+    # by lib.acl.get_config
     properties = utils.get_set_properties(defaults=prop.get_default_properties())
     acl_enabled = properties.get("enable-acl", "").lower()
     if is_true(acl_enabled):
@@ -72,9 +75,11 @@ def show_acl_config(lib, argv, modifiers):
 
 
 def acl_enable(argv):
+    # TODO move to lib once lib supports cluster properties
     prop.set_property(["enable-acl=true"])
 
 def acl_disable(argv):
+    # TODO move to lib once lib supports cluster properties
     prop.set_property(["enable-acl=false"])
 
 

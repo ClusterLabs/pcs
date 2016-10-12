@@ -49,18 +49,8 @@ def remove_role(lib_env, role_id, autodelete_users_groups=False):
     try:
         acl.remove_role(cib, role_id, autodelete_users_groups)
     except acl.AclRoleNotFound as e:
-        raise LibraryError(acl_error_to_report_item(e))
+        raise LibraryError(acl.acl_error_to_report_item(e))
     lib_env.push_cib(cib)
-
-
-def acl_error_to_report_item(e):
-    if e.__class__ == acl.AclTargetNotFound:
-        return reports.id_not_found(e.target_id, "user")
-    elif e.__class__ == acl.AclGroupNotFound:
-        return reports.id_not_found(e.group_id, "group")
-    elif e.__class__ == acl.AclRoleNotFound:
-        return reports.id_not_found(e.role_id, "role")
-    raise e
 
 
 def assign_role_not_specific(lib_env, role_id, target_or_group_id):
@@ -81,7 +71,7 @@ def assign_role_not_specific(lib_env, role_id, target_or_group_id):
             acl.find_role(cib, role_id)
         )
     except acl.AclError as e:
-        raise LibraryError(acl_error_to_report_item(e))
+        raise LibraryError(acl.acl_error_to_report_item(e))
     lib_env.push_cib(cib)
 
 
@@ -121,7 +111,7 @@ def assign_role_to_target(lib_env, role_id, target_id):
             acl.find_target(cib, target_id), acl.find_role(cib, role_id)
         )
     except acl.AclError as e:
-        raise LibraryError(acl_error_to_report_item(e))
+        raise LibraryError(acl.acl_error_to_report_item(e))
     lib_env.push_cib(cib)
 
 
@@ -140,7 +130,7 @@ def assign_role_to_group(lib_env, role_id, group_id):
             acl.find_group(cib, group_id), acl.find_role(cib, role_id)
         )
     except acl.AclError as e:
-        raise LibraryError(acl_error_to_report_item(e))
+        raise LibraryError(acl.acl_error_to_report_item(e))
     lib_env.push_cib(cib)
 
 
@@ -189,7 +179,7 @@ def unassign_role_from_target(
             autodelete_target
         )
     except acl.AclError as e:
-        raise LibraryError(acl_error_to_report_item(e))
+        raise LibraryError(acl.acl_error_to_report_item(e))
     lib_env.push_cib(cib)
 
 
@@ -214,7 +204,7 @@ def unassign_role_from_group(
             autodelete_group
         )
     except acl.AclError as e:
-        raise LibraryError(acl_error_to_report_item(e))
+        raise LibraryError(acl.acl_error_to_report_item(e))
     lib_env.push_cib(cib)
 
 
@@ -232,7 +222,7 @@ def _assign_roles_to_element(cib, element, role_id_list):
         try:
             acl.assign_role(element, acl.find_role(cib, role_id))
         except acl.AclError as e:
-            report_list.append(acl_error_to_report_item(e))
+            report_list.append(acl.acl_error_to_report_item(e))
     if report_list:
         raise LibraryError(*report_list)
 

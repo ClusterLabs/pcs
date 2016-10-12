@@ -1084,14 +1084,14 @@ Commands:
         prioritized. In cases like this specify whenever user or group should
         be used.
 
-    user create <username> <role id> [<role id>]...
+    user create <username> [<role id>]...
         Create an ACL for the user specified and assign roles to the user.
 
     user delete <username>
         Remove the user specified (and roles assigned will be unassigned for
         the specified user).
 
-    group create <group> <role id> [<role id>]...
+    group create <group> [<role id>]...
         Create an ACL for the group specified and assign roles to the group.
 
     group delete <group>

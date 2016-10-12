@@ -5,20 +5,18 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.test.tools.pcs_unittest import TestCase
 
-from pcs.test.tools.pcs_mock import mock
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
-    assert_report_item_equal,
     ExtendedAssertionsMixin,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.pcs_unittest import mock, TestCase
 
 from pcs.common import report_codes
 from pcs.lib.errors import (
-    ReportItemSeverity as Severities,
     LibraryError,
+    ReportItemSeverity as Severities,
 )
 from pcs.lib.env import LibraryEnvironment
 
@@ -106,57 +104,10 @@ class RemoveRoleTest(AclCommandsTest):
         self.assert_cib_not_pushed()
 
 
-class AclErrorToReportItemTest(TestCase, ExtendedAssertionsMixin):
-    def test_acl_target_not_found(self):
-        assert_report_item_equal(
-            cmd_acl.acl_error_to_report_item(acl_lib.AclTargetNotFound("id")),
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "id": "id",
-                    "id_description": "user",
-                }
-            )
-        )
-
-    def test_acl_group_not_found(self):
-        assert_report_item_equal(
-            cmd_acl.acl_error_to_report_item(acl_lib.AclGroupNotFound("id")),
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "id": "id",
-                    "id_description": "group",
-                }
-            )
-        )
-
-    def test_acl_role_not_found(self):
-        assert_report_item_equal(
-            cmd_acl.acl_error_to_report_item(acl_lib.AclRoleNotFound("id")),
-            (
-                Severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "id": "id",
-                    "id_description": "role",
-                }
-            )
-        )
-
-    def test_unknown_exception(self):
-        self.assert_raises(
-            LibraryError,
-            lambda: cmd_acl.acl_error_to_report_item(LibraryError())
-        )
-
-
 @mock.patch("pcs.lib.commands.acl._get_target_or_group")
 @mock.patch("pcs.lib.cib.acl.assign_role")
 @mock.patch("pcs.lib.cib.acl.find_role")
-@mock.patch("pcs.lib.commands.acl.acl_error_to_report_item")
+@mock.patch("pcs.lib.cib.acl.acl_error_to_report_item")
 class AssignRoleNotSpecific(AclCommandsTest, ExtendedAssertionsMixin):
     def test_success(
         self, mock_error_convert, mock_find_role, mock_assign, mock_get_tg
@@ -230,7 +181,7 @@ class GetTargetOrGroupTest(AclCommandsTest):
 @mock.patch("pcs.lib.cib.acl.assign_role")
 @mock.patch("pcs.lib.cib.acl.find_role")
 @mock.patch("pcs.lib.cib.acl.find_target")
-@mock.patch("pcs.lib.commands.acl.acl_error_to_report_item")
+@mock.patch("pcs.lib.cib.acl.acl_error_to_report_item")
 class AssignRoleToTargetTest(AclCommandsTest):
     def test_success(
         self, mock_error_convert, mock_target, mock_role, mock_assign
@@ -267,7 +218,7 @@ class AssignRoleToTargetTest(AclCommandsTest):
 @mock.patch("pcs.lib.cib.acl.assign_role")
 @mock.patch("pcs.lib.cib.acl.find_role")
 @mock.patch("pcs.lib.cib.acl.find_group")
-@mock.patch("pcs.lib.commands.acl.acl_error_to_report_item")
+@mock.patch("pcs.lib.cib.acl.acl_error_to_report_item")
 class AssignRoleToGroupTest(AclCommandsTest):
     def test_success(
         self, mock_error_convert, mock_group, mock_role, mock_assign
@@ -327,7 +278,7 @@ class UnassignRoleNotSpecificTest(AclCommandsTest):
 
 @mock.patch("pcs.lib.cib.acl.unassign_role")
 @mock.patch("pcs.lib.cib.acl.find_target")
-@mock.patch("pcs.lib.commands.acl.acl_error_to_report_item")
+@mock.patch("pcs.lib.cib.acl.acl_error_to_report_item")
 class UnassignRoleFromTargetTest(AclCommandsTest):
     def test_success(self, mock_error_convert, mock_find_el, mock_unassign):
         mock_find_el.return_value = "el"
@@ -371,7 +322,7 @@ class UnassignRoleFromTargetTest(AclCommandsTest):
 
 @mock.patch("pcs.lib.cib.acl.unassign_role")
 @mock.patch("pcs.lib.cib.acl.find_group")
-@mock.patch("pcs.lib.commands.acl.acl_error_to_report_item")
+@mock.patch("pcs.lib.cib.acl.acl_error_to_report_item")
 class UnassignRoleFromGroupTest(AclCommandsTest):
     def test_success(self, mock_error_convert, mock_find_el, mock_unassign):
         mock_find_el.return_value = "el"
