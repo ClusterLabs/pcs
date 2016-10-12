@@ -28,7 +28,7 @@ class PcsRunner(object):
             else corosync_conf_file
         )
         self.cluster_conf_file = (
-            rc("corosync.conf") if cluster_conf_file is None
+            rc("cluster.conf") if cluster_conf_file is None
             else cluster_conf_file
         )
 

@@ -116,10 +116,11 @@ Default operations:
         )
 
 
-class ResourceTest(unittest.TestCase):
+class ResourceTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         shutil.copy(large_cib, temp_large_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self,temp_cib):
@@ -1652,9 +1653,7 @@ Deleting Resource (and group) - dummylarge
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 
-        output, returnVal = pcs(temp_cib, "config")
-        assert returnVal == 0
-        ac(output, """\
+        self.assert_pcs_success("config","""\
 Cluster Name: test99
 Corosync Nodes:
  rh7-1 rh7-2
@@ -1823,9 +1822,7 @@ Deleting Resource - ClusterIP5
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "config")
-        assert returnVal == 0
-        ac(output, """\
+        self.assert_pcs_success("config","""\
 Cluster Name: test99
 Corosync Nodes:
  rh7-1 rh7-2
