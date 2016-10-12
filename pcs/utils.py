@@ -2768,6 +2768,7 @@ def get_modificators():
         "start": "--start" in pcs_options,
         "watchdog": pcs_options.get("--watchdog", []),
         "describe": "--nodesc" not in pcs_options,
+        "autodelete": "--autodelete" in pcs_options,
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):

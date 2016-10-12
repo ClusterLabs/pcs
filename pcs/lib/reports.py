@@ -1672,3 +1672,42 @@ def sbd_requires_atb():
     return ReportItem.warning(
         report_codes.SBD_REQUIRES_ATB,
     )
+
+
+def acl_role_is_already_assigned_to_target(role_id, target_id):
+    """
+    Error that ACL target or group has already assigned role.
+    """
+    return ReportItem.error(
+        report_codes.CIB_ACL_ROLE_IS_ALREADY_ASSIGNED_TO_TARGET,
+        info={
+            "role_id": role_id,
+            "target_id": target_id,
+        }
+    )
+
+
+def acl_role_is_not_assigned_to_target(role_id, target_id):
+    """
+    Error that acl role is not assigned to target or group
+    """
+    return ReportItem.error(
+        report_codes.CIB_ACL_ROLE_IS_NOT_ASSIGNED_TO_TARGET,
+        info={
+            "role_id": role_id,
+            "target_id": target_id,
+        }
+    )
+
+
+def acl_target_already_exists(target_id):
+    """
+    Error that target with specified id aleready axists in configuration.
+    """
+    return ReportItem.error(
+        report_codes.CIB_ACL_TARGET_ALREADY_EXISTS,
+        info={
+            "target_id": target_id,
+        }
+    )
+

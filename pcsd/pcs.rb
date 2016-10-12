@@ -248,12 +248,14 @@ def add_acl_usergroup(auth_user, acl_role_id, user_group, name)
     if retval == 0
       return ""
     end
-    if not /^error: (user|group) #{name.to_s} already exists$/i.match(stderr.join("\n").strip)
+    $logger.info(stdout)
+    if not /^Error: '#{name.to_s}' already exists$/i.match(stderr.join("\n").strip)
       return stderr.join("\n").strip
     end
   end
   stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "acl", "role", "assign", acl_role_id.to_s, name.to_s
+    auth_user, PCS, "acl", "role", "assign",
+    acl_role_id.to_s, user_group, name.to_s
   )
   if retval != 0
     if stderror.empty?
@@ -279,11 +281,18 @@ def remove_acl_permission(auth_user, acl_perm_id)
   return ""
 end
 
-def remove_acl_usergroup(auth_user, role_id, usergroup_id)
-  stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "acl", "role", "unassign", role_id.to_s, usergroup_id.to_s,
-    "--autodelete"
-  )
+def remove_acl_usergroup(auth_user, role_id, usergroup_id, user_or_group)
+  if ['user', 'group'].include?(user_or_group)
+    stdout, stderror, retval = run_cmd(
+      auth_user, PCS, "acl", "role", "unassign", role_id.to_s, user_or_group,
+      usergroup_id.to_s, "--autodelete"
+    )
+  else
+    stdout, stderror, retval = run_cmd(
+      auth_user, PCS, "acl", "role", "unassign", role_id.to_s,
+      usergroup_id.to_s, "--autodelete"
+    )
+  end
   if retval != 0
     if stderror.empty?
       return "Error removing user / group"

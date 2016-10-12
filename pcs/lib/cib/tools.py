@@ -27,9 +27,10 @@ def does_id_exist(tree, check_id):
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
     existing = root.xpath(
-        '(/cib/*[name()!="status"]|/*[name()!="cib"])//*[@id="{0}"]'.format(
-            check_id
-        )
+        (
+            '(/cib/*[name()!="status"]|/*[name()!="cib"])' +
+            '//*[name()!="acl_target" and name()!="role" and @id="{0}"]'
+        ).format(check_id)
     )
     return len(existing) > 0
 
@@ -241,3 +242,17 @@ def ensure_cib_version(runner, cib, version):
     raise LibraryError(reports.unable_to_upgrade_cib_to_required_version(
         current_version, version
     ))
+
+
+def etree_element_attibutes_to_dict(etree_el, required_key_list):
+    """
+    Returns all attributes of etree_el from required_key_list in dictionary,
+    where keys are attributes and values are values of attributes or None if
+    it's not present.
+
+    etree_el -- etree element from which attributes should be extracted
+    required_key_list -- list of strings, attributes names which should be
+        extracted
+    """
+    return dict([(key, etree_el.get(key)) for key in required_key_list])
+

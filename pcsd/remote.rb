@@ -1740,7 +1740,7 @@ def remove_acl_remote(params, request, auth_user)
     retval = remove_acl_permission(auth_user, params["acl_perm_id"])
   elsif params["item"] == "usergroup"
     retval = remove_acl_usergroup(
-      auth_user, params["role_id"],params["usergroup_id"]
+      auth_user, params["role_id"],params["usergroup_id"], params["item_type"]
     )
   else
     retval = "Error: Unknown removal request"

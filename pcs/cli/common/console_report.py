@@ -416,6 +416,21 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.CIB_ACL_ROLE_IS_ALREADY_ASSIGNED_TO_TARGET: lambda info:
+        "Role '{role_id}' is already asigned to '{target_id}'"
+        .format(**info)
+    ,
+
+    codes.CIB_ACL_ROLE_IS_NOT_ASSIGNED_TO_TARGET: lambda info:
+        "Role '{role_id}' is not assigned to '{target_id}'"
+        .format(**info)
+    ,
+
+    codes.CIB_ACL_TARGET_ALREADY_EXISTS: lambda info:
+        "'{target_id}' already exists"
+        .format(**info)
+    ,
+
     codes.CIB_LOAD_ERROR: "unable to get cib",
 
     codes.CIB_LOAD_ERROR_SCOPE_MISSING: lambda info:

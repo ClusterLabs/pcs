@@ -1808,8 +1808,10 @@ function remove_acl_item(id,item) {
       data["acl_perm_id"] = id.attr("acl_perm_id");
       item_label = "permission"
       break;
-    case "usergroup":
+    case "group":
+    case "user":
       data["item"] = "usergroup";
+      data["item_type"] = item;
       data["usergroup_id"] = id.attr("usergroup_id")
       data["role_id"] = id.attr("role_id")
       item_label = "user / group"

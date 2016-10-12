@@ -181,7 +181,11 @@ def main(argv=None):
         "stonith": stonith.stonith_cmd,
         "property": prop.property_cmd,
         "constraint": constraint.constraint_cmd,
-        "acl": acl.acl_cmd,
+        "acl": lambda argv: acl.acl_cmd(
+            utils.get_library_wrapper(),
+            argv,
+            utils.get_modificators()
+        ),
         "status": status.status_cmd,
         "config": config.config_cmd,
         "pcsd": pcsd.pcsd_cmd,
