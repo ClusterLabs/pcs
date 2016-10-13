@@ -15,14 +15,14 @@ from pcs.cli.common.reports import (
     process_library_reports
 )
 from pcs.lib.commands import (
-    booth,
-    quorum,
-    qdevice,
-    sbd,
-    alert,
-    resource_agent,
-    stonith_agent,
     acl,
+    alert,
+    booth,
+    qdevice,
+    quorum,
+    resource_agent,
+    sbd,
+    stonith_agent,
 )
 from pcs.lib.commands.constraint import (
     colocation as constraint_colocation,
@@ -107,87 +107,29 @@ def get_module(env, middleware_factory, name):
 
 
 def load_module(env, middleware_factory, name):
-    if name == 'constraint_order':
+    if name == "acl":
         return bind_all(
             env,
             middleware.build(middleware_factory.cib),
             {
-                'set': constraint_order.create_with_set,
-                'show': constraint_order.show,
+                "create_role": acl.create_role,
+                "remove_role": acl.remove_role,
+                "assign_role_not_specific": acl.assign_role_not_specific,
+                "assign_role_to_target": acl.assign_role_to_target,
+                "assign_role_to_group": acl.assign_role_to_group,
+                "unassign_role_not_specific": acl.unassign_role_not_specific,
+                "unassign_role_from_target": acl.unassign_role_from_target,
+                "unassign_role_from_group": acl.unassign_role_from_group,
+                "create_target": acl.create_target,
+                "create_group": acl.create_group,
+                "remove_target": acl.remove_target,
+                "remove_group": acl.remove_group,
+                "add_permission": acl.add_permission,
+                "remove_permission": acl.remove_permission,
+                "get_config": acl.get_config,
             }
         )
 
-    if name == 'constraint_colocation':
-        return bind_all(
-            env,
-            middleware.build(middleware_factory.cib),
-            {
-                'set': constraint_colocation.create_with_set,
-                'show': constraint_colocation.show,
-            }
-        )
-
-    if name == 'constraint_ticket':
-        return bind_all(
-            env,
-            middleware.build(middleware_factory.cib),
-            {
-                'set': constraint_ticket.create_with_set,
-                'show': constraint_ticket.show,
-                'add': constraint_ticket.create,
-                'remove': constraint_ticket.remove,
-            }
-        )
-
-    if name == "quorum":
-        return bind_all(
-            env,
-            middleware.build(middleware_factory.corosync_conf_existing),
-            {
-                "add_device": quorum.add_device,
-                "get_config": quorum.get_config,
-                "remove_device": quorum.remove_device,
-                "set_expected_votes_live": quorum.set_expected_votes_live,
-                "set_options": quorum.set_options,
-                "status": quorum.status_text,
-                "status_device": quorum.status_device_text,
-                "update_device": quorum.update_device,
-            }
-        )
-    if name == "qdevice":
-        return bind_all(
-            env,
-            middleware.build(),
-            {
-                "status": qdevice.qdevice_status_text,
-                "setup": qdevice.qdevice_setup,
-                "destroy": qdevice.qdevice_destroy,
-                "start": qdevice.qdevice_start,
-                "stop": qdevice.qdevice_stop,
-                "kill": qdevice.qdevice_kill,
-                "enable": qdevice.qdevice_enable,
-                "disable": qdevice.qdevice_disable,
-                # following commands are internal use only, called from pcsd
-                "client_net_setup": qdevice.client_net_setup,
-                "client_net_import_certificate":
-                    qdevice.client_net_import_certificate,
-                "client_net_destroy": qdevice.client_net_destroy,
-                "sign_net_cert_request":
-                    qdevice.qdevice_net_sign_certificate_request,
-            }
-        )
-    if name == "sbd":
-        return bind_all(
-            env,
-            middleware.build(),
-            {
-                "enable_sbd": sbd.enable_sbd,
-                "disable_sbd": sbd.disable_sbd,
-                "get_cluster_sbd_status": sbd.get_cluster_sbd_status,
-                "get_cluster_sbd_config": sbd.get_cluster_sbd_config,
-                "get_local_sbd_config": sbd.get_local_sbd_config,
-            }
-        )
     if name == "alert":
         return bind_all(
             env,
@@ -231,6 +173,77 @@ def load_module(env, middleware_factory, name):
             }
         )
 
+    if name == 'constraint_colocation':
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                'set': constraint_colocation.create_with_set,
+                'show': constraint_colocation.show,
+            }
+        )
+
+    if name == 'constraint_order':
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                'set': constraint_order.create_with_set,
+                'show': constraint_order.show,
+            }
+        )
+
+    if name == 'constraint_ticket':
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                'set': constraint_ticket.create_with_set,
+                'show': constraint_ticket.show,
+                'add': constraint_ticket.create,
+                'remove': constraint_ticket.remove,
+            }
+        )
+
+    if name == "qdevice":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "status": qdevice.qdevice_status_text,
+                "setup": qdevice.qdevice_setup,
+                "destroy": qdevice.qdevice_destroy,
+                "start": qdevice.qdevice_start,
+                "stop": qdevice.qdevice_stop,
+                "kill": qdevice.qdevice_kill,
+                "enable": qdevice.qdevice_enable,
+                "disable": qdevice.qdevice_disable,
+                # following commands are internal use only, called from pcsd
+                "client_net_setup": qdevice.client_net_setup,
+                "client_net_import_certificate":
+                    qdevice.client_net_import_certificate,
+                "client_net_destroy": qdevice.client_net_destroy,
+                "sign_net_cert_request":
+                    qdevice.qdevice_net_sign_certificate_request,
+            }
+        )
+
+    if name == "quorum":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.corosync_conf_existing),
+            {
+                "add_device": quorum.add_device,
+                "get_config": quorum.get_config,
+                "remove_device": quorum.remove_device,
+                "set_expected_votes_live": quorum.set_expected_votes_live,
+                "set_options": quorum.set_options,
+                "status": quorum.status_text,
+                "status_device": quorum.status_device_text,
+                "update_device": quorum.update_device,
+            }
+        )
+
     if name == "resource_agent":
         return bind_all(
             env,
@@ -245,6 +258,19 @@ def load_module(env, middleware_factory, name):
             }
         )
 
+    if name == "sbd":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "enable_sbd": sbd.enable_sbd,
+                "disable_sbd": sbd.disable_sbd,
+                "get_cluster_sbd_status": sbd.get_cluster_sbd_status,
+                "get_cluster_sbd_config": sbd.get_cluster_sbd_config,
+                "get_local_sbd_config": sbd.get_local_sbd_config,
+            }
+        )
+
     if name == "stonith_agent":
         return bind_all(
             env,
@@ -252,29 +278,6 @@ def load_module(env, middleware_factory, name):
             {
                 "describe_agent": stonith_agent.describe_agent,
                 "list_agents": stonith_agent.list_agents,
-            }
-        )
-
-    if name == "acl":
-        return bind_all(
-            env,
-            middleware.build(middleware_factory.cib),
-            {
-                "create_role": acl.create_role,
-                "remove_role": acl.remove_role,
-                "assign_role_not_specific": acl.assign_role_not_specific,
-                "assign_role_to_target": acl.assign_role_to_target,
-                "assign_role_to_group": acl.assign_role_to_group,
-                "unassign_role_not_specific": acl.unassign_role_not_specific,
-                "unassign_role_from_target": acl.unassign_role_from_target,
-                "unassign_role_from_group": acl.unassign_role_from_group,
-                "create_target": acl.create_target,
-                "create_group": acl.create_group,
-                "remove_target": acl.remove_target,
-                "remove_group": acl.remove_group,
-                "add_permission": acl.add_permission,
-                "remove_permission": acl.remove_permission,
-                "get_config": acl.get_config,
             }
         )
 

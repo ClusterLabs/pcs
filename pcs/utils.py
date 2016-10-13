@@ -668,7 +668,7 @@ def addNodeToClusterConf(node):
     ])
     if retval == 0:
         for line in output.splitlines():
-            fence_name, fence_args = line.split(":", 1)
+            fence_name, dummy_fence_args = line.split(":", 1)
             all_fence_names.add(fence_name)
             match = re.match("(^|(.* ))agent=fence_pcmk((,.+)|$)", line)
             if match:
@@ -2759,7 +2759,9 @@ def get_modificators():
     #commands is not an issue
     return {
         "autocorrect": "--autocorrect" in pcs_options,
+        "autodelete": "--autodelete" in pcs_options,
         "corosync_conf": pcs_options.get("--corosync_conf", None),
+        "describe": "--nodesc" not in pcs_options,
         "enable": "--enable" in pcs_options,
         "force": "--force" in pcs_options,
         "full": "--full" in pcs_options,
@@ -2767,8 +2769,6 @@ def get_modificators():
         "skip_offline_nodes": "--skip-offline" in pcs_options,
         "start": "--start" in pcs_options,
         "watchdog": pcs_options.get("--watchdog", []),
-        "describe": "--nodesc" not in pcs_options,
-        "autodelete": "--autodelete" in pcs_options,
     }
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):
