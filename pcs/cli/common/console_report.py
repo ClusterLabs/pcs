@@ -165,7 +165,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "--Debug Stdout End--\n"
             "--Debug Stderr Start--\n"
             "{stderr}\n"
-            "--Debug Stderr End--\n",
+            "--Debug Stderr End--\n"
         ).format(**info)
     ,
 
