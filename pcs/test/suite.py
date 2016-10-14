@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from __future__ import (
     absolute_import,
     division,
@@ -64,6 +63,8 @@ explicitly_enumerated_tests = [
         "--vanilla",
         "--no-color", #deprecated, use --vanilla instead
         "--all-but",
+        "--last-slash",
+        "--traditional-verbose",
     )
 ]
 
@@ -83,8 +84,11 @@ use_improved_result_class = (
 
 resultclass = unittest.TextTestResult
 if use_improved_result_class:
-    from pcs.test.tools.color_text_runner import ColorTextTestResult
-    resultclass = ColorTextTestResult
+    from pcs.test.tools.color_text_runner import get_text_test_result_class
+    resultclass = get_text_test_result_class(
+        slash_last_fail_in_overview=("--last-slash" in sys.argv),
+        traditional_verbose=("--traditional-verbose" in sys.argv)
+    )
 
 testRunner = unittest.TextTestRunner(
     verbosity=2 if "-v" in sys.argv else 1,

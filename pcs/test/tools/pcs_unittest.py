@@ -145,6 +145,7 @@ def ensure_raise_from_iterable_side_effect():
     exception is simply returned (in older version of mock).
     """
     def create_new_call(old_call, inPy3k):
+        # pylint: disable=old-style-class
         class OldStyleClass:
             pass
         ClassTypes = (type,) if inPy3k else (type, type(OldStyleClass))
