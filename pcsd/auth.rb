@@ -1,5 +1,6 @@
 require 'json'
 require 'securerandom'
+gem 'rpam-ruby19'
 require 'rpam'
 require 'base64'
 
