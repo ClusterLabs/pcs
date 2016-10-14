@@ -1112,16 +1112,16 @@ def create_task_list(report, action, node_list, *args, **kwargs):
     ]
 
 def parallel_for_nodes(action, node_list, *args, **kwargs):
-    error_list = []
+    node_errors = dict()
     def report(node, returncode, output):
         message = '{0}: {1}'.format(node, output.strip())
         print(message)
         if returncode != 0:
-            error_list.append(message)
+            node_errors[node] = message
     run_parallel(
         create_task_list(report, action, node_list, *args, **kwargs)
     )
-    return error_list
+    return node_errors
 
 def prepare_node_name(node, pm_nodes, cs_nodes):
     '''

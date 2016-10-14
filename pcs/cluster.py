@@ -919,9 +919,11 @@ def start_cluster_all():
         wait_for_nodes_started(all_nodes, wait_timeout)
 
 def start_cluster_nodes(nodes):
-    error_list = parallel_for_nodes(utils.startCluster, nodes, quiet=True)
-    if error_list:
-        utils.err("unable to start all nodes\n" + "\n".join(error_list))
+    node_errors = parallel_for_nodes(utils.startCluster, nodes, quiet=True)
+    if node_errors:
+        utils.err(
+            "unable to start all nodes\n" + "\n".join(node_errors.values())
+        )
 
 def is_node_fully_started(node_status):
     return (
@@ -977,10 +979,10 @@ def wait_for_nodes_started(node_list, timeout=None):
         else:
             print(output)
     else:
-        error_list = parallel_for_nodes(
+        node_errors = parallel_for_nodes(
             wait_for_remote_node_started, node_list, stop_at, interval
         )
-        if error_list:
+        if node_errors:
             utils.err("unable to verify all nodes have started")
 
 def stop_cluster_all():
@@ -1034,13 +1036,32 @@ def stop_cluster_nodes(nodes):
                 + "\n".join(error_list)
             )
 
-    error_list = parallel_for_nodes(utils.stopPacemaker, nodes, quiet=True)
-    if error_list:
-        utils.err("unable to stop all nodes\n" + "\n".join(error_list))
+    was_error = False
+    node_errors = parallel_for_nodes(utils.stopPacemaker, nodes, quiet=True)
+    accessible_nodes = [
+        node for node in nodes if node not in node_errors.keys()
+    ]
+    if node_errors:
+        utils.err(
+            "unable to stop all nodes\n" + "\n".join(node_errors.values()),
+            exit_after_error=not accessible_nodes
+        )
+        was_error = True
 
-    error_list = parallel_for_nodes(utils.stopCorosync, nodes, quiet=True)
-    if error_list:
-        utils.err("unable to stop all nodes\n" + "\n".join(error_list))
+    for node in node_errors.keys():
+        print("{0}: Not stopping cluster - node is unreachable".format(node))
+
+    node_errors = parallel_for_nodes(
+        utils.stopCorosync,
+        accessible_nodes,
+        quiet=True
+    )
+    if node_errors:
+        utils.err(
+            "unable to stop all nodes\n" + "\n".join(node_errors.values())
+        )
+    if was_error:
+        utils.err("unable to stop all nodes")
 
 def enable_cluster(argv):
     if len(argv) > 0:
@@ -1082,19 +1103,22 @@ def destroy_cluster(argv, keep_going=False):
     if len(argv) > 0:
         # stop pacemaker and resources while cluster is still quorate
         nodes = argv
-        error_list = parallel_for_nodes(utils.stopPacemaker, nodes, quiet=True)
+        node_errors = parallel_for_nodes(utils.stopPacemaker, nodes, quiet=True)
         # proceed with destroy regardless of errors
         # destroy will stop any remaining cluster daemons
-        error_list = parallel_for_nodes(utils.destroyCluster, nodes, quiet=True)
-        if error_list:
+        node_errors = parallel_for_nodes(utils.destroyCluster, nodes, quiet=True)
+        if node_errors:
             if keep_going:
                 print(
                     "Warning: unable to destroy cluster\n"
                     +
-                    "\n".join(error_list)
+                    "\n".join(node_errors.values())
                 )
             else:
-                utils.err("unable to destroy cluster\n" + "\n".join(error_list))
+                utils.err(
+                    "unable to destroy cluster\n"
+                    + "\n".join(node_errors.values())
+                )
 
 def stop_cluster(argv):
     if len(argv) > 0:
