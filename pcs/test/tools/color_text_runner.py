@@ -29,6 +29,7 @@ palete = {
     "underline" : '\033[4m',
 }
 
+#apply is builtin but is deprecated since 2.3 => no problem to redefine it here
 def apply(key_list, text):
     return("".join([palete[key] for key in key_list]) + text + palete["end"])
 

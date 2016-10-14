@@ -57,39 +57,41 @@ def discover_tests(explicitly_enumerated_tests, exclude_enumerated_tests=False):
         ])
     return unittest.TestLoader().loadTestsFromNames(explicitly_enumerated_tests)
 
-def run_tests(tests, verbose=False, color=False):
-    resultclass = unittest.TextTestResult
-    if color:
-        from pcs.test.tools.color_text_runner import ColorTextTestResult
-        resultclass = ColorTextTestResult
-
-    testRunner = unittest.TextTestRunner(
-        verbosity=2 if verbose else 1,
-        resultclass=resultclass
-    )
-    return testRunner.run(tests)
 
 explicitly_enumerated_tests = [
     prepare_test_name(arg) for arg in sys.argv[1:] if arg not in (
         "-v",
-        "--color",
-        "--no-color",
+        "--vanilla",
+        "--no-color", #deprecated, use --vanilla instead
         "--all-but",
     )
 ]
-test_result = run_tests(
-    discover_tests(explicitly_enumerated_tests, "--all-but" in sys.argv),
-    verbose="-v" in sys.argv,
-    color=(
-        "--color" in sys.argv
-        or
-        (
-            sys.stdout.isatty()
-            and
-            sys.stderr.isatty()
-            and "--no-color" not in sys.argv
-        )
-    ),
+
+if "--no-color" in sys.argv:
+    print("DEPRECATED: --no-color is deprecated, use --vanilla instead")
+
+use_improved_result_class = (
+    sys.stdout.isatty()
+    and
+    sys.stderr.isatty()
+    and (
+        "--vanilla" not in sys.argv
+        and
+        "--no-color" not in sys.argv #deprecated, use --vanilla instead
+    )
+)
+
+resultclass = unittest.TextTestResult
+if use_improved_result_class:
+    from pcs.test.tools.color_text_runner import ColorTextTestResult
+    resultclass = ColorTextTestResult
+
+testRunner = unittest.TextTestRunner(
+    verbosity=2 if "-v" in sys.argv else 1,
+    resultclass=resultclass
+)
+test_result =  testRunner.run(
+    discover_tests(explicitly_enumerated_tests, "--all-but" in sys.argv)
 )
 if not test_result.wasSuccessful():
     sys.exit(1)
@@ -110,5 +112,5 @@ if not test_result.wasSuccessful():
 # run all test except some:
 # pcs/test/suite.py pcs.test_acl.ACLTest --all-but
 #
-# for colored test report
-# pcs/test/suite.py --color
+# for remove extra features even if sys.stdout is attached to terminal
+# pcs/test/suite.py --vanilla
