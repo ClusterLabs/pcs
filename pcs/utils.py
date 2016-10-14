@@ -2667,19 +2667,6 @@ def get_cluster_property_from_xml(etree_el):
         property["longdesc"] = ""
     return property
 
-# DEPRECATED use lxml version available in pcs.lib.cib.tools
-def get_acls(dom):
-    acls = dom.getElementsByTagName("acls")
-    if len(acls) == 0:
-        acls = dom.createElement("acls")
-        conf = dom.getElementsByTagName("configuration")
-        if len(conf) == 0:
-            err("Unable to get configuration section of cib")
-        conf[0].appendChild(acls)
-    else:
-        acls = acls[0]
-    return acls
-
 def get_lib_env():
     user = None
     groups = None
