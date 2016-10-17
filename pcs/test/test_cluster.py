@@ -7,6 +7,7 @@ from __future__ import (
 
 import os
 import shutil
+import socket
 from pcs.test.tools import pcs_unittest as unittest
 
 from pcs.test.tools.assertions import AssertPcsMixin
@@ -27,6 +28,18 @@ temp_cib = rc("temp-cib.xml")
 cluster_conf_file = rc("cluster.conf")
 cluster_conf_tmp = rc("cluster.conf.tmp")
 corosync_conf_tmp = rc("corosync.conf.tmp")
+
+try:
+    s1 = socket.gethostbyname("rh7-1.localhost")
+    s2 = socket.gethostbyname("rh7-2.localhost")
+    TEST_NODES_RESOLVED = True
+except socket.gaierror:
+    TEST_NODES_RESOLVED = False
+
+need_to_resolve_test_nodes = unittest.skipUnless(
+    TEST_NODES_RESOLVED,
+    "unable to resolve all hostnames: rh7-1.localhost, rh7-2.localhost"
+)
 
 class ClusterTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -119,6 +132,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assertEqual(1, returnVal)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_hostnames_resolving(self):
         output, returnVal = pcs(
             temp_cib,
@@ -243,6 +257,7 @@ logging {
 }
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_file_exists_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -829,6 +844,7 @@ logging {
 }
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_2_nodes_rhel6(self):
         # Setup a 2 node cluster and make sure the two node config is set, then
         # add a node and make sure that it's unset, then remove a node and make
@@ -1085,6 +1101,7 @@ logging {
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_3_nodes_rhel6(self):
         # Setup a 3 node cluster
         if not utils.is_rhel6():
@@ -1136,6 +1153,7 @@ logging {
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_transport_rhel6(self):
         # Test to make transport is set
         if not utils.is_rhel6():
@@ -1228,6 +1246,7 @@ logging {
 }
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_ipv6_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -1813,6 +1832,7 @@ logging {
 }
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_rrp_passive_udp_addr01_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -1881,6 +1901,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_rrp_passive_udp_addr01_mcast01_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -1931,6 +1952,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_rrp_passive_udp_addr01_mcastport01_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -1981,6 +2003,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_rrp_passive_udp_addr01_ttl01_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -2031,6 +2054,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_rrp_active_udp_addr01_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -2094,6 +2118,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_rrp_active_udp_broadcast_addr01_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -2154,6 +2179,7 @@ Warning: using a RRP mode of 'active' is not supported or tested
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_rrp_udpu_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -2229,6 +2255,7 @@ Warning: Using udpu transport on a CMAN cluster, cluster restart is required aft
 </cluster>
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_broadcast_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -2294,6 +2321,7 @@ Warning: Enabling broadcast for all rings as CMAN does not support broadcast in 
             data = f.read()
             ac(data, cluster_conf)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_quorum_options_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -2392,6 +2420,7 @@ logging {
 }
 """)
 
+    @need_to_resolve_test_nodes
     def test_cluster_setup_totem_options_rhel6(self):
         if not utils.is_rhel6():
             return
@@ -2631,6 +2660,7 @@ logging {
 }
 """)
 
+    @need_to_resolve_test_nodes
     def test_can_not_setup_cluster_for_unknown_transport_type_rhel6(self):
         if not utils.is_rhel6():
             return
