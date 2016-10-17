@@ -13,6 +13,7 @@ from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
+    outdent,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
@@ -1631,11 +1632,12 @@ Deleting Resource (and group) - dummylarge
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource show")
-        ac(output, """\
- Resource Group: gr1
-     d1\t(ocf::heartbeat:Dummy):\tStopped
- Master/Slave Set: gr2-master [gr2]
-""")
+        ac(output, outdent("""\
+             Resource Group: gr1
+                 d1\t(ocf::heartbeat:Dummy):\tStopped
+             Master/Slave Set: gr2-master [gr2]
+            """
+        ))
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource group add gr1 d2")
@@ -1643,67 +1645,69 @@ Deleting Resource (and group) - dummylarge
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource show")
-        ac(output, """\
- Resource Group: gr1
-     d1\t(ocf::heartbeat:Dummy):\tStopped
-     d2\t(ocf::heartbeat:Dummy):\tStopped
-""")
+        ac(output, outdent("""\
+             Resource Group: gr1
+                 d1\t(ocf::heartbeat:Dummy):\tStopped
+                 d2\t(ocf::heartbeat:Dummy):\tStopped
+            """
+        ))
         self.assertEqual(0, returnVal)
 
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 
-        self.assert_pcs_success("config","""\
-Cluster Name: test99
-Corosync Nodes:
- rh7-1 rh7-2
-Pacemaker Nodes:
+        self.assert_pcs_success("config",outdent("""\
+            Cluster Name: test99
+            Corosync Nodes:
+             rh7-1 rh7-2
+            Pacemaker Nodes:
 
-Resources:
- Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
- Group: TestGroup1
-  Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
- Group: TestGroup2
-  Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
-  Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
- Clone: ClusterIP4-clone
-  Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
- Master: Master
-  Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
+            Resources:
+             Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ip=192.168.0.99 cidr_netmask=32
+              Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
+             Group: TestGroup1
+              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+             Group: TestGroup2
+              Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
+              Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
+             Clone: ClusterIP4-clone
+              Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
+             Master: Master
+              Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
 
-Stonith Devices:
-Fencing Levels:
+            Stonith Devices:
+            Fencing Levels:
 
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
+            Location Constraints:
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
 
-Alerts:
- No alerts defined
+            Alerts:
+             No alerts defined
 
-Resources Defaults:
- No defaults set
-Operations Defaults:
- No defaults set
+            Resources Defaults:
+             No defaults set
+            Operations Defaults:
+             No defaults set
 
-Cluster Properties:
+            Cluster Properties:
 
-Quorum:
-  Options:
-""")
+            Quorum:
+              Options:
+            """
+        ))
 
     def testCloneRemove(self):
         o,r = pcs(

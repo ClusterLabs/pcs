@@ -64,3 +64,11 @@ def create_patcher(target_prefix):
             "{0}.{1}".format(target_prefix, target), *args, **kwargs
         )
     return patch
+
+def outdent(text):
+    line_list = text.splitlines()
+    smallest_indentation = min([
+        len(line) - len(line.lstrip(" "))
+        for line in line_list if line
+    ])
+    return "\n".join([line[smallest_indentation:] for line in line_list])
