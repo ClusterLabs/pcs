@@ -871,6 +871,7 @@ def run(
         env_extend = dict()
     env_var = env_extend
     env_var.update(dict(os.environ))
+    env_var["LC_ALL"] = "C"
     if usefile:
         env_var["CIB_file"] = filename
 
@@ -931,6 +932,7 @@ def cmd_runner():
     if usefile:
         env_vars["CIB_file"] = filename
     env_vars.update(os.environ)
+    env_vars["LC_ALL"] = "C"
     return CommandRunner(
         logging.getLogger("old_cli"),
         get_report_processor(),

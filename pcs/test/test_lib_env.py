@@ -551,7 +551,9 @@ class LibraryEnvironmentTest(TestCase):
         mock_runner.assert_called_once_with(
             self.mock_logger,
             self.mock_reporter,
-            {}
+            {
+                "LC_ALL": "C",
+            }
         )
 
     @mock.patch("pcs.lib.env.CommandRunner")
@@ -569,7 +571,10 @@ class LibraryEnvironmentTest(TestCase):
         mock_runner.assert_called_once_with(
             self.mock_logger,
             self.mock_reporter,
-            {"CIB_user": user}
+            {
+                "CIB_user": user,
+                "LC_ALL": "C",
+            }
         )
 
     @mock.patch("pcs.lib.env.NodeCommunicator")

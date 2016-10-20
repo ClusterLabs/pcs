@@ -202,7 +202,10 @@ class LibraryEnvironment(object):
         return self._corosync_conf_data is None
 
     def cmd_runner(self):
-        runner_env = dict()
+        runner_env = {
+            # make sure to get output of external processes in English and ASCII
+            "LC_ALL": "C",
+        }
         if self.user_login:
             runner_env["CIB_user"] = self.user_login
         return CommandRunner(self.logger, self.report_processor, runner_env)

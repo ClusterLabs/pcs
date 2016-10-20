@@ -1003,6 +1003,7 @@ def run_cmd_options(auth_user, options, *args)
     ps_write.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
     ENV['CIB_user'] = cib_user
     ENV['CIB_user_groups'] = cib_groups
+    ENV['LC_ALL'] = 'C'
     exec(*args)
   }
 
