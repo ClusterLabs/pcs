@@ -58,6 +58,11 @@ from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
+
+_chkconfig = settings.chkconfig_binary
+_service = settings.service_binary
+_systemctl = settings.systemctl_binary
+
 class ManageServiceError(Exception):
     #pylint: disable=super-init-not-called
     def __init__(self, service, message=None, instance=None):
@@ -136,10 +141,10 @@ def disable_service(runner, service, instance=None):
         return
     if is_systemctl():
         stdout, stderr, retval = runner.run([
-            "systemctl", "disable", _get_service_name(service, instance)
+            _systemctl, "disable", _get_service_name(service, instance)
         ])
     else:
-        stdout, stderr, retval = runner.run(["chkconfig", service, "off"])
+        stdout, stderr, retval = runner.run([_chkconfig, service, "off"])
     if retval != 0:
         raise DisableServiceError(
             service,
@@ -160,10 +165,10 @@ def enable_service(runner, service, instance=None):
     """
     if is_systemctl():
         stdout, stderr, retval = runner.run([
-            "systemctl", "enable", _get_service_name(service, instance)
+            _systemctl, "enable", _get_service_name(service, instance)
         ])
     else:
-        stdout, stderr, retval = runner.run(["chkconfig", service, "on"])
+        stdout, stderr, retval = runner.run([_chkconfig, service, "on"])
     if retval != 0:
         raise EnableServiceError(
             service,
@@ -182,10 +187,10 @@ def start_service(runner, service, instance=None):
     """
     if is_systemctl():
         stdout, stderr, retval = runner.run([
-            "systemctl", "start", _get_service_name(service, instance)
+            _systemctl, "start", _get_service_name(service, instance)
         ])
     else:
-        stdout, stderr, retval = runner.run(["service", service, "start"])
+        stdout, stderr, retval = runner.run([_service, service, "start"])
     if retval != 0:
         raise StartServiceError(
             service,
@@ -204,10 +209,10 @@ def stop_service(runner, service, instance=None):
     """
     if is_systemctl():
         stdout, stderr, retval = runner.run([
-            "systemctl", "stop", _get_service_name(service, instance)
+            _systemctl, "stop", _get_service_name(service, instance)
         ])
     else:
-        stdout, stderr, retval = runner.run(["service", service, "stop"])
+        stdout, stderr, retval = runner.run([_service, service, "stop"])
     if retval != 0:
         raise StopServiceError(
             service,
@@ -244,10 +249,10 @@ def is_service_enabled(runner, service, instance=None):
     """
     if is_systemctl():
         dummy_stdout, dummy_stderr, retval = runner.run(
-            ["systemctl", "is-enabled", _get_service_name(service, instance)]
+            [_systemctl, "is-enabled", _get_service_name(service, instance)]
         )
     else:
-        dummy_stdout, dummy_stderr, retval = runner.run(["chkconfig", service])
+        dummy_stdout, dummy_stderr, retval = runner.run([_chkconfig, service])
 
     return retval == 0
 
@@ -261,13 +266,13 @@ def is_service_running(runner, service, instance=None):
     """
     if is_systemctl():
         dummy_stdout, dummy_stderr, retval = runner.run([
-            "systemctl",
+            _systemctl,
             "is-active",
             _get_service_name(service, instance)
         ])
     else:
         dummy_stdout, dummy_stderr, retval = runner.run(
-            ["service", service, "status"]
+            [_service, service, "status"]
         )
 
     return retval == 0
@@ -295,7 +300,7 @@ def get_non_systemd_services(runner):
     if is_systemctl():
         return []
 
-    stdout, dummy_stderr, return_code = runner.run(["chkconfig"])
+    stdout, dummy_stderr, return_code = runner.run([_chkconfig])
     if return_code != 0:
         return []
 
@@ -317,7 +322,7 @@ def get_systemd_services(runner):
         return []
 
     stdout, dummy_stderr, return_code = runner.run([
-        "systemctl", "list-unit-files", "--full"
+        _systemctl, "list-unit-files", "--full"
     ])
     if return_code != 0:
         return []

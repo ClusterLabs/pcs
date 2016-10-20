@@ -1,5 +1,8 @@
 import os.path
 
+systemctl_binary = "/usr/bin/systemctl"
+chkconfig_binary = "/sbin/chkconfig"
+service_binary = "/sbin/service"
 pacemaker_binaries = "/usr/sbin/"
 corosync_binaries = "/usr/sbin/"
 corosync_qnet_binaries = "/usr/bin/"
