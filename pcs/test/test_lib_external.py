@@ -151,7 +151,7 @@ Return value: {1}
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {"a": "a", "b": "b", "c": "C"}, "stdin": None,}
+            {"env": {"a": "a", "b": "B", "c": "C"}, "stdin": None,}
         )
         logger_calls = [
             mock.call("Running: {0}".format(command_str)),

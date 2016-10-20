@@ -354,17 +354,25 @@ class CommandRunner(object):
     def __init__(self, logger, reporter, env_vars=None):
         self._logger = logger
         self._reporter = reporter
+        # Reset environment variables by empty dict is desired here.  We need
+        # to get rid of defaults - we do not know the context and environment
+        # where the library runs.  We also get rid of PATH settings, so all
+        # executables must be specified with full path unless the PATH variable
+        # is set from outside.
         self._env_vars = env_vars if env_vars else dict()
         self._python2 = sys.version[0] == "2"
 
     def run(
         self, args, stdin_string=None, env_extend=None, binary_output=False
     ):
-        #Reset environment variables by empty dict is desired here.  We need to
-        #get rid of defaults - we do not know the context and environment of the
-        #library.  So executable must be specified with full path.
-        env_vars = dict(env_extend) if env_extend else dict()
-        env_vars.update(self._env_vars)
+        # Allow overriding default settings. If a piece of code really wants to
+        # set own PATH or CIB_file, we must allow it. I.e. it wants to run
+        # a pacemaker tool on a CIB in a file but cannot afford the risk of
+        # changing the CIB in the file specified by the user.
+        env_vars = self._env_vars
+        env_vars.update(
+            dict(env_extend) if env_extend else dict()
+        )
 
         log_args = " ".join([shell_quote(x) for x in args])
         msg = "Running: {args}"
