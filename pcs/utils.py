@@ -38,7 +38,6 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
     CommandRunner,
     is_cman_cluster,
-    is_systemctl,
     is_service_enabled,
     is_service_running,
     disable_service,
@@ -2100,14 +2099,13 @@ def err(errorText, exit_after_error=True):
 
 
 def serviceStatus(prefix):
-    if not is_systemctl():
-        return
     print("Daemon Status:")
     service_def = [
         # (
         #     service name,
         #     display even if not enabled nor running
         # )
+        ("cman", False),
         ("corosync", True),
         ("pacemaker", True),
         ("pacemaker_remote", False),
