@@ -56,7 +56,6 @@ from pcs.lib.errors import (
 )
 from pcs.lib.external import (
     disable_service,
-    is_cman_cluster,
     is_systemctl,
     NodeCommunicationException,
     node_communicator_exception_to_report_item,
@@ -881,14 +880,14 @@ def start_cluster(argv):
 
     print("Starting Cluster...")
     service_list = []
-    if utils.is_rhel6():
+    if utils.is_cman_cluster():
 #   Verify that CMAN_QUORUM_TIMEOUT is set, if not, then we set it to 0
         retval, output = getstatusoutput('source /etc/sysconfig/cman ; [ -z "$CMAN_QUORUM_TIMEOUT" ]')
         if retval == 0:
             with open("/etc/sysconfig/cman", "a") as cman_conf_file:
                 cman_conf_file.write("\nCMAN_QUORUM_TIMEOUT=0\n")
 
-        output, retval = utils.run(["service", "cman","start"])
+        output, retval = utils.start_service("cman")
         if retval != 0:
             print(output)
             utils.err("unable to start cman")
@@ -898,7 +897,7 @@ def start_cluster(argv):
             service_list.append("corosync-qdevice")
     service_list.append("pacemaker")
     for service in service_list:
-        output, retval = utils.run(["service", service, "start"])
+        output, retval = utils.start_service(service)
         if retval != 0:
             print(output)
             utils.err("unable to start {0}".format(service))
@@ -1167,16 +1166,17 @@ def stop_cluster(argv):
 
 def stop_cluster_pacemaker():
     print("Stopping Cluster (pacemaker)...")
-    command = ["service", "pacemaker", "stop"]
-    if not is_systemctl() and is_cman_cluster(utils.cmd_runner()):
+    if not is_systemctl():
+        command = ["service", "pacemaker", "stop"]
         # If --skip-cman is not specified, pacemaker init script will stop cman
         # and corosync as well. That way some of the nodes may stop cman before
         # others stop pacemaker, which leads to quorum loss. We need to keep
         # quorum until all pacemaker resources are stopped as some of them may
         # need quorum to be able to stop.
-        # Additional parameters are not supported if "service" command is
-        # redirected to systemd.
-        command.append("--skip-cman")
+        if utils.is_cman_cluster():
+            command.append("--skip-cman")
+    else:
+        command = ["systemctl", "stop", "pacemaker"]
     output, retval = utils.run(command)
     if retval != 0:
         print(output)
@@ -1185,7 +1185,7 @@ def stop_cluster_pacemaker():
 def stop_cluster_corosync():
     if utils.is_rhel6():
         print("Stopping Cluster (cman)...")
-        output, retval = utils.run(["service", "cman","stop"])
+        output, retval = utils.stop_service("cman")
         if retval != 0:
             print(output)
             utils.err("unable to stop cman")
@@ -1196,7 +1196,7 @@ def stop_cluster_corosync():
             service_list.append("corosync-qdevice")
         service_list.append("corosync")
         for service in service_list:
-            output, retval = utils.run(["service", service, "stop"])
+            output, retval = utils.stop_service(service)
             if retval != 0:
                 print(output)
                 utils.err("unable to stop {0}".format(service))
@@ -1866,11 +1866,10 @@ def cluster_destroy(argv):
         destroy_cluster(utils.getNodesFromCorosyncConf())
     else:
         print("Shutting down pacemaker/corosync services...")
-        os.system("service pacemaker stop")
-        # returns error if qdevice is not running, it is safe to ignore it
-        # since we want it not to be running
-        os.system("service corosync-qdevice stop")
-        os.system("service corosync stop")
+        for service in ["pacemaker", "corosync-qdevice", "corosync"]:
+            # Returns an error if a service is not running. It is safe to
+            # ignore it since we want it not to be running anyways.
+            utils.stop_service(service)
         print("Killing any remaining services...")
         os.system("killall -q -9 corosync corosync-qdevice aisexec heartbeat pacemakerd ccm stonithd ha_logd lrmd crmd pengine attrd pingd mgmtd cib fenced dlm_controld gfs_controld")
         try:

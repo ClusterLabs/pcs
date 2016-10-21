@@ -27,6 +27,7 @@ def is_systemctl()
       '/usr/bin/systemctl',
       '/bin/systemctl',
       '/var/run/systemd/system',
+      '/run/systemd/system',
   ]
   systemctl_paths.each { |path|
     return true if File.exist?(path)

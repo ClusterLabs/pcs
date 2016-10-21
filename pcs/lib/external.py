@@ -120,6 +120,7 @@ def is_systemctl():
         '/usr/bin/systemctl',
         '/bin/systemctl',
         '/var/run/systemd/system',
+        '/run/systemd/system',
     ]
     for path in systemctl_paths:
         if os.path.exists(path):

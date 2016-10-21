@@ -1,6 +1,6 @@
 import os.path
 
-systemctl_binary = "/usr/bin/systemctl"
+systemctl_binary = "/bin/systemctl"
 chkconfig_binary = "/sbin/chkconfig"
 service_binary = "/sbin/service"
 pacemaker_binaries = "/usr/sbin/"

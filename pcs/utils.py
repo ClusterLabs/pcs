@@ -31,19 +31,25 @@ from pcs.cli.common.reports import (
     process_library_reports,
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
-from pcs.common.tools import simple_cache
+from pcs.common.tools import (
+    join_multilines,
+    simple_cache,
+)
 from pcs.lib import reports, sbd
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
     CommandRunner,
-    is_cman_cluster,
-    is_service_enabled,
-    is_service_running,
     disable_service,
     DisableServiceError,
     enable_service,
     EnableServiceError,
+    is_cman_cluster as lib_is_cman_cluster,
+    is_service_enabled,
+    is_service_running,
+    is_systemctl,
+    _service,
+    _systemctl,
 )
 import pcs.lib.resource_agent as lib_ra
 import pcs.lib.corosync.config_parser as corosync_conf_parser
@@ -2088,9 +2094,12 @@ def verify_cert_key_pair(cert, key):
     return errors
 
 
-@simple_cache
 def is_rhel6():
-    return is_cman_cluster(cmd_runner())
+    return is_cman_cluster()
+
+@simple_cache
+def is_cman_cluster():
+    return lib_is_cman_cluster(cmd_runner())
 
 def err(errorText, exit_after_error=True):
     sys.stderr.write("Error: %s\n" % errorText)
@@ -2164,6 +2173,22 @@ def disableServices():
             )
     if report_item_list:
         raise LibraryError(*report_item_list)
+
+def start_service(service):
+    if is_systemctl():
+        stdout, stderr, retval = cmd_runner().run([
+            _systemctl, "start", service
+        ])
+    else:
+        stdout, stderr, retval = cmd_runner().run([_service, service, "start"])
+    return join_multilines([stderr, stdout]), retval
+
+def stop_service(service):
+    if is_systemctl():
+        stdout, stderr, retval = cmd_runner().run([_systemctl, "stop", service])
+    else:
+        stdout, stderr, retval = cmd_runner().run([_service, service, "stop"])
+    return join_multilines([stderr, stdout]), retval
 
 def write_file(path, data, permissions=0o644, binary=False):
     if os.path.exists(path):

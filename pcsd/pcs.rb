@@ -2039,9 +2039,12 @@ def disable_service(service)
 end
 
 def start_service(service)
-  _, _, retcode = run_cmd(
-    PCSAuth.getSuperuserAuth(), "service", service, "start"
-  )
+  if ISSYSTEMCTL
+    cmd = ['systemctl', 'start', "#{service}.service"]
+  else
+    cmd = ['service', service, 'start']
+  end
+  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
   return (retcode == 0)
 end
 
@@ -2049,9 +2052,12 @@ def stop_service(service)
   if not is_service_installed?(service)
     return true
   end
-  _, _, retcode = run_cmd(
-    PCSAuth.getSuperuserAuth(), "service", service, "stop"
-  )
+  if ISSYSTEMCTL
+    cmd = ['systemctl', 'stop', "#{service}.service"]
+  else
+    cmd = ['service', service, 'stop']
+  end
+  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
   return (retcode == 0)
 end
 
