@@ -699,23 +699,47 @@ class GetSbdConfigTest(TestCase):
         )
 
 
+@mock.patch("pcs.lib.external.is_systemctl")
+class GetSbdServiceNameTest(TestCase):
+    def test_systemctl(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = True
+        self.assertEqual("sbd", lib_sbd.get_sbd_service_name())
+        mock_is_systemctl.assert_called_once_with()
+
+    def test_not_systemctl(self, mock_is_systemctl):
+        mock_is_systemctl.return_value = False
+        self.assertEqual("sbd_helper", lib_sbd.get_sbd_service_name())
+        mock_is_systemctl.assert_called_once_with()
+
+
+@mock.patch("pcs.lib.sbd.get_sbd_service_name")
 @mock.patch("pcs.lib.external.is_service_enabled")
 class IsSbdEnabledTest(TestCase):
-    def test_success(self, mock_is_service_enabled):
+    def test_success(self, mock_is_service_enabled, mock_sbd_name):
         mock_obj = mock.MagicMock()
         mock_is_service_enabled.return_value = True
+        mock_sbd_name.return_value = "sbd"
         self.assertTrue(lib_sbd.is_sbd_enabled(mock_obj))
+        mock_is_service_enabled.assert_called_once_with(mock_obj, "sbd")
+        mock_sbd_name.assert_called_once_with()
 
 
+@mock.patch("pcs.lib.sbd.get_sbd_service_name")
 @mock.patch("pcs.lib.external.is_service_installed")
 class IsSbdInstalledTest(TestCase):
-    def test_installed(self, mock_is_service_installed):
+    def test_installed(self, mock_is_service_installed, mock_sbd_name):
         mock_obj = mock.MagicMock()
         mock_is_service_installed.return_value = True
+        mock_sbd_name.return_value = "sbd"
         self.assertTrue(lib_sbd.is_sbd_installed(mock_obj))
+        mock_is_service_installed.assert_called_once_with(mock_obj, "sbd")
+        mock_sbd_name.assert_called_once_with()
 
-    def test_not_installed(self, mock_is_service_installed):
+    def test_not_installed(self, mock_is_service_installed, mock_sbd_name):
         mock_obj = mock.MagicMock()
         mock_is_service_installed.return_value = False
+        mock_sbd_name.return_value = "sbd"
         self.assertFalse(lib_sbd.is_sbd_installed(mock_obj))
+        mock_is_service_installed.assert_called_once_with(mock_obj, "sbd")
+        mock_sbd_name.assert_called_once_with()
 

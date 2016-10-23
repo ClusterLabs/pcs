@@ -125,8 +125,6 @@ def enable_sbd(
     allow_unknown_opts -- if True, accept also unknown options.
     ignore_offline_nodes -- if True, omit offline nodes
     """
-    __ensure_not_cman(lib_env)
-
     node_list = _get_cluster_nodes(lib_env)
 
     if not default_watchdog:
@@ -158,13 +156,14 @@ def enable_sbd(
     )
 
     # enable ATB if needed
-    corosync_conf = lib_env.get_corosync_conf()
-    if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
-        lib_env.report_processor.process(reports.sbd_requires_atb())
-        corosync_conf.set_quorum_options(
-            lib_env.report_processor, {"auto_tie_breaker": "1"}
-        )
-        lib_env.push_corosync_conf(corosync_conf, ignore_offline_nodes)
+    if not lib_env.is_cman_cluster:
+        corosync_conf = lib_env.get_corosync_conf()
+        if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
+            lib_env.report_processor.process(reports.sbd_requires_atb())
+            corosync_conf.set_quorum_options(
+                lib_env.report_processor, {"auto_tie_breaker": "1"}
+            )
+            lib_env.push_corosync_conf(corosync_conf, ignore_offline_nodes)
 
     # distribute SBD configuration
     config = sbd.get_default_sbd_config()
@@ -199,11 +198,17 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     lib_env -- LibraryEnvironment
     ignore_offline_nodes -- if True, omit offline nodes
     """
-    __ensure_not_cman(lib_env)
-
     node_list = _get_online_nodes(
         lib_env, _get_cluster_nodes(lib_env), ignore_offline_nodes
     )
+
+    if lib_env.is_cman_cluster:
+        nodes_task.check_corosync_offline_on_nodes(
+            lib_env.node_communicator(),
+            lib_env.report_processor,
+            node_list,
+            ignore_offline_nodes
+        )
 
     sbd.set_stonith_watchdog_timeout_to_zero_on_all_nodes(
         lib_env.node_communicator(), node_list
@@ -214,9 +219,10 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
         node_list
     )
 
-    lib_env.report_processor.process(
-        reports.cluster_restart_required_to_apply_changes()
-    )
+    if not lib_env.is_cman_cluster:
+        lib_env.report_processor.process(
+            reports.cluster_restart_required_to_apply_changes()
+        )
 
 
 def _get_online_nodes(lib_env, node_list, ignore_offline_nodes=False):
@@ -266,8 +272,6 @@ def get_cluster_sbd_status(lib_env):
 
     lib_env -- LibraryEnvironment
     """
-    __ensure_not_cman(lib_env)
-
     node_list = _get_cluster_nodes(lib_env)
     report_item_list = []
     successful_node_list = []
@@ -329,8 +333,6 @@ def get_cluster_sbd_config(lib_env):
 
     lib_env -- LibraryEnvironment
     """
-    __ensure_not_cman(lib_env)
-
     node_list = _get_cluster_nodes(lib_env)
     config_list = []
     successful_node_list = []
@@ -378,14 +380,12 @@ def get_cluster_sbd_config(lib_env):
 
 
 def get_local_sbd_config(lib_env):
-    __ensure_not_cman(lib_env)
     return environment_file_to_dict(sbd.get_local_sbd_config())
 
 
 def _get_cluster_nodes(lib_env):
-    return lib_env.get_corosync_conf().get_nodes()
-
-
-def __ensure_not_cman(lib_env):
     if lib_env.is_cman_cluster:
-        raise LibraryError(reports.cman_unsupported_command())
+        return lib_env.get_cluster_conf().get_nodes()
+    else:
+        return lib_env.get_corosync_conf().get_nodes()
+

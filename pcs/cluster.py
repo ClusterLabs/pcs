@@ -1378,21 +1378,22 @@ def _ensure_cluster_is_offline_if_atb_should_be_enabled(
         cluster when determining whenever ATB is needed.
     skip_offline_nodes -- if True offline nodes will be skipped
     """
-    corosync_conf = lib_env.get_corosync_conf()
-    if lib_sbd.atb_has_to_be_enabled(
-        lib_env.cmd_runner(), corosync_conf, node_num_modifier
-    ):
-        print(
-            "Warning: auto_tie_breaker quorum option will be enabled to make "
-            "SBD fencing effecive after this change. Cluster has to be offline "
-            "to be able to make this change."
-        )
-        check_corosync_offline_on_nodes(
-            lib_env.node_communicator(),
-            lib_env.report_processor,
-            corosync_conf.get_nodes(),
-            skip_offline_nodes
-        )
+    if not lib_env.is_cman_cluster:
+        corosync_conf = lib_env.get_corosync_conf()
+        if lib_sbd.atb_has_to_be_enabled(
+            lib_env.cmd_runner(), corosync_conf, node_num_modifier
+        ):
+            print(
+                "Warning: auto_tie_breaker quorum option will be enabled to "
+                "make SBD fencing effecive after this change. Cluster has to "
+                "be offline to be able to make this change."
+            )
+            check_corosync_offline_on_nodes(
+                lib_env.node_communicator(),
+                lib_env.report_processor,
+                corosync_conf.get_nodes(),
+                skip_offline_nodes
+            )
 
 
 def cluster_node(argv):
@@ -1879,7 +1880,7 @@ def cluster_destroy(argv):
             # for now
             pass
         try:
-            disable_service(utils.cmd_runner(), "sbd")
+            disable_service(utils.cmd_runner(), lib_sbd.get_sbd_service_name())
         except:
             # it's not a big deal if sbd disable fails
             pass

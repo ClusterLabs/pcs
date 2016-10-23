@@ -16,3 +16,4 @@ class Env(object):
         self.booth = None
         self.auth_tokens_getter = None
         self.debug = False
+        self.cluster_conf_data = None

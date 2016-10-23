@@ -47,6 +47,31 @@ class GetLocalCorosyncConfTest(TestCase):
         )
 
 
+class GetLocalClusterConfTest(TestCase):
+    def test_success(self):
+        path = rc("cluster.conf")
+        settings.cluster_conf_file = path
+        self.assertEqual(
+            lib.get_local_cluster_conf(),
+            open(path).read()
+        )
+
+    def test_error(self):
+        path = rc("cluster.conf.nonexistent")
+        settings.cluster_conf_file = path
+        assert_raise_library_error(
+            lib.get_local_cluster_conf,
+            (
+                severity.ERROR,
+                report_codes.CLUSTER_CONF_READ_ERROR,
+                {
+                    "path": path,
+                    "reason": "No such file or directory",
+                }
+            )
+        )
+
+
 class SetRemoteCorosyncConfTest(TestCase):
     def test_success(self):
         config = "test {\nconfig: data\n}\n"

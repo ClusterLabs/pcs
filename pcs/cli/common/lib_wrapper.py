@@ -48,6 +48,7 @@ def cli_env_to_lib_env(cli_env):
         cli_env.corosync_conf_data,
         booth=cli_env.booth,
         auth_tokens_getter=cli_env.auth_tokens_getter,
+        cluster_conf_data=cli_env.cluster_conf_data,
     )
 
 def lib_env_to_cli_env(lib_env, cli_env):
@@ -56,6 +57,8 @@ def lib_env_to_cli_env(lib_env, cli_env):
         cli_env.cib_upgraded = lib_env.cib_upgraded
     if not lib_env.is_corosync_conf_live:
         cli_env.corosync_conf_data = lib_env.get_corosync_conf_data()
+    if not lib_env.is_cluster_conf_live:
+        cli_env.cluster_conf_data = lib_env.get_cluster_conf_data()
 
     #TODO
     #now we know: if is in cli_env booth is in lib_env as well

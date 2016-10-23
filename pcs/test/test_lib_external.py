@@ -1596,3 +1596,4 @@ class EnsureIsSystemctlTest(TestCase):
                 {}
             )
         )
+

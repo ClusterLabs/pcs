@@ -1993,8 +1993,8 @@ def is_service_installed?(service)
       if line.split(' ')[0] == service
         return true
       end
-      return false
     }
+    return false
   end
 
   stdout, _, retcode = run_cmd(
@@ -2082,6 +2082,14 @@ def get_parsed_local_sbd_config()
     return JSON.parse(out.join(' '))
   rescue JSON::ParserError
     return nil
+  end
+end
+
+def get_sbd_service_name()
+  if ISSYSTEMCTL
+    return 'sbd'
+  else
+    return 'sbd_helper'
   end
 end
 

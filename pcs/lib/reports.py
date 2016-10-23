@@ -1711,3 +1711,27 @@ def acl_target_already_exists(target_id):
         }
     )
 
+
+def cluster_conf_invalid_format(reason):
+    """
+    cluster.conf parsing error
+    """
+    return ReportItem.error(
+        report_codes.CLUSTER_CONF_LOAD_ERROR_INVALID_FORMAT,
+        info={
+            "reason": reason,
+        }
+    )
+
+
+def cluster_conf_read_error(path, reason):
+    """
+    Unable to read cluster.conf
+    """
+    return ReportItem.error(
+        report_codes.CLUSTER_CONF_READ_ERROR,
+        info={
+            "path": path,
+            "reason": reason,
+        }
+    )

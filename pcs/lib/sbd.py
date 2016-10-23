@@ -444,6 +444,10 @@ def get_sbd_config(communicator, node):
     return communicator.call_node(node, "remote/get_sbd_config", None)
 
 
+def get_sbd_service_name():
+    return "sbd" if external.is_systemctl() else "sbd_helper"
+
+
 def is_sbd_enabled(runner):
     """
     Check if SBD service is enabled in local system.
@@ -451,7 +455,8 @@ def is_sbd_enabled(runner):
 
     runner -- CommandRunner
     """
-    return external.is_service_enabled(runner, "sbd")
+    return external.is_service_enabled(runner, get_sbd_service_name())
+
 
 
 def is_sbd_installed(runner):
@@ -461,5 +466,5 @@ def is_sbd_installed(runner):
 
     runner -- CommandRunner
     """
-    return external.is_service_installed(runner, "sbd")
+    return external.is_service_installed(runner, get_sbd_service_name())
 

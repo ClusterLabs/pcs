@@ -13,10 +13,12 @@ from pcs import settings
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import ensure_cib_version
+from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
     exists_local_corosync_conf,
     get_local_corosync_conf,
+    get_local_cluster_conf,
     reload_config as reload_corosync_config,
 )
 from pcs.lib.external import (
@@ -51,6 +53,7 @@ class LibraryEnvironment(object):
         corosync_conf_data=None,
         booth=None,
         auth_tokens_getter=None,
+        cluster_conf_data=None,
     ):
         self._logger = logger
         self._report_processor = report_processor
@@ -58,6 +61,7 @@ class LibraryEnvironment(object):
         self._user_groups = [] if user_groups is None else user_groups
         self._cib_data = cib_data
         self._corosync_conf_data = corosync_conf_data
+        self._cluster_conf_data = cluster_conf_data
         self._booth = (
             BoothEnv(report_processor, booth) if booth is not None else None
         )
@@ -178,6 +182,23 @@ class LibraryEnvironment(object):
                 )
         else:
             self._corosync_conf_data = corosync_conf_data
+
+
+    def get_cluster_conf_data(self):
+        if self.is_cluster_conf_live:
+            return get_local_cluster_conf()
+        else:
+            return self._cluster_conf_data
+
+
+    def get_cluster_conf(self):
+        return ClusterConfFacade.from_string(self.get_cluster_conf_data())
+
+
+    @property
+    def is_cluster_conf_live(self):
+        return self._cluster_conf_data is None
+
 
     def is_node_in_cluster(self):
         if self.is_cman_cluster:

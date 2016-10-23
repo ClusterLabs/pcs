@@ -21,6 +21,7 @@ from pcs.test.tools.pcs_unittest import mock
 from pcs.lib.env import LibraryEnvironment
 from pcs.common import report_codes
 from pcs.lib import reports
+from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.errors import (
     LibraryError,
@@ -615,3 +616,44 @@ class LibraryEnvironmentTest(TestCase):
             user,
             groups
         )
+
+    @mock.patch("pcs.lib.env.get_local_cluster_conf")
+    def test_get_cluster_conf_live(self, mock_get_local_cluster_conf):
+        env = LibraryEnvironment(
+            self.mock_logger, self.mock_reporter, cluster_conf_data=None
+        )
+        mock_get_local_cluster_conf.return_value = "cluster.conf data"
+        self.assertEqual("cluster.conf data", env.get_cluster_conf_data())
+        mock_get_local_cluster_conf.assert_called_once_with()
+
+    @mock.patch("pcs.lib.env.get_local_cluster_conf")
+    def test_get_cluster_conf_not_live(self, mock_get_local_cluster_conf):
+        env = LibraryEnvironment(
+            self.mock_logger, self.mock_reporter, cluster_conf_data="data"
+        )
+        self.assertEqual("data", env.get_cluster_conf_data())
+        self.assertEqual(0, mock_get_local_cluster_conf.call_count)
+
+    @mock.patch.object(
+        LibraryEnvironment,
+        "get_cluster_conf_data",
+        lambda self: "<cluster/>"
+    )
+    def test_get_cluster_conf(self):
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        facade_obj = env.get_cluster_conf()
+        self.assertTrue(isinstance(facade_obj, ClusterConfFacade))
+        assert_xml_equal(
+            '<cluster/>', etree.tostring(facade_obj._config).decode()
+        )
+
+    def test_is_cluster_conf_live_live(self):
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        self.assertTrue(env.is_cluster_conf_live)
+
+    def test_is_cluster_conf_live_not_live(self):
+        env = LibraryEnvironment(
+            self.mock_logger, self.mock_reporter, cluster_conf_data="data"
+        )
+        self.assertFalse(env.is_cluster_conf_live)
+

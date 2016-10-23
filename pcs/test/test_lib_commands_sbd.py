@@ -587,18 +587,6 @@ class GetClusterSbdStatusTest(CommandSbdTest):
             ]
         )
 
-    def test_cman_cluster(self, mock_check_sbd, mock_get_nodes):
-        self.mock_env.is_cman_cluster = True
-        assert_raise_library_error(
-            lambda: cmd_sbd.get_cluster_sbd_status(self.mock_env),
-            (
-                Severities.ERROR,
-                report_codes.CMAN_UNSUPPORTED_COMMAND,
-                {}
-            )
-        )
-
-
 @mock.patch("pcs.lib.commands.sbd._get_cluster_nodes")
 @mock.patch("pcs.lib.sbd.get_sbd_config")
 class GetClusterSbdConfigTest(CommandSbdTest):
@@ -729,18 +717,6 @@ invalid value
         )
 
 
-    def test_cman_cluster(self, mock_sbd_cfg, mock_get_nodes):
-        self.mock_env.is_cman_cluster = True
-        assert_raise_library_error(
-            lambda: cmd_sbd.get_cluster_sbd_config(self.mock_env),
-            (
-                Severities.ERROR,
-                report_codes.CMAN_UNSUPPORTED_COMMAND,
-                {}
-            )
-        )
-
-
 @mock.patch("pcs.lib.sbd.get_local_sbd_config")
 class GetLocalSbdConfigTest(TestCase):
     def setUp(self):
@@ -764,18 +740,6 @@ SBD_WATCHDOG_TIMEOUT=0
             cmd_sbd.get_local_sbd_config(self.mock_env)
         )
         self.assertEqual(1, mock_config.call_count)
-
-    def test_cman_cluster(self, mock_config):
-        self.mock_env.is_cman_cluster = True
-        assert_raise_library_error(
-            lambda: cmd_sbd.get_local_sbd_config(self.mock_env),
-            (
-                Severities.ERROR,
-                report_codes.CMAN_UNSUPPORTED_COMMAND,
-                {}
-            )
-        )
-        self.assertEqual(0, mock_config.call_count)
 
     def test_file_error(self, mock_config):
         self.mock_env.is_cman_cluster = False

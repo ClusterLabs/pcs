@@ -1885,7 +1885,7 @@ def stonithCheck():
     if not usefile:
         # check if SBD daemon is running
         try:
-            if is_service_running(cmd_runner(), "sbd"):
+            if is_service_running(cmd_runner(), sbd.get_sbd_service_name()):
                 return False
         except LibraryError:
             pass
@@ -2119,7 +2119,7 @@ def serviceStatus(prefix):
         ("pacemaker", True),
         ("pacemaker_remote", False),
         ("pcsd", True),
-        ("sbd", False),
+        (sbd.get_sbd_service_name(), False),
     ]
     for service, display_always in service_def:
         try:
@@ -2755,7 +2755,10 @@ def get_middleware_factory():
             pcs_options.get("--name", DEFAULT_BOOTH_NAME),
             pcs_options.get("--booth-conf", None),
             pcs_options.get("--booth-key", None),
-        )
+        ),
+        cluster_conf_read_only=middleware.cluster_conf_read_only(
+            pcs_options.get("--cluster_conf", None)
+        ),
     )
 
 def get_library_wrapper():

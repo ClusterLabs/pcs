@@ -2306,9 +2306,9 @@ def check_sbd(param, request, auth_user)
   end
   out = {
     :sbd => {
-      :installed => is_service_installed?('sbd'),
-      :enabled => is_service_enabled?('sbd'),
-      :running => is_service_running?('sbd')
+      :installed => is_service_installed?(get_sbd_service_name()),
+      :enabled => is_service_enabled?(get_sbd_service_name()),
+      :running => is_service_running?(get_sbd_service_name())
     }
   }
   watchdog = param[:watchdog]
@@ -2377,7 +2377,7 @@ def sbd_disable(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if disable_service('sbd')
+  if disable_service(get_sbd_service_name())
     msg = 'SBD disabled'
     $logger.info(msg)
     return [200, msg]
@@ -2392,7 +2392,7 @@ def sbd_enable(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if enable_service('sbd')
+  if enable_service(get_sbd_service_name())
     msg = 'SBD enabled'
     $logger.info(msg)
     return [200, msg]

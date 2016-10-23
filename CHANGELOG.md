@@ -4,6 +4,7 @@
 
 ### Added
 - Show daemon status in `pcs status` on non-systemd machines
+- SBD support for cman clusters ([rhbz#1380352])
 
 ### Changed
 - Get all information about resource and stonith agents from pacemaker. Pcs now
@@ -27,6 +28,7 @@
 [ghissue#109]: https://github.com/ClusterLabs/pcs/issues/109
 [ghissue#115]: https://github.com/ClusterLabs/pcs/issues/115
 [rhbz#1262001]: https://bugzilla.redhat.com/show_bug.cgi?id=1262001
+[rhbz#1380352]: https://bugzilla.redhat.com/show_bug.cgi?id=1380352
 [rhbz#1380372]: https://bugzilla.redhat.com/show_bug.cgi?id=1380372
 [rhbz#1387106]: https://bugzilla.redhat.com/show_bug.cgi?id=1387106
 

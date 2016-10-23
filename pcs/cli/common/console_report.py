@@ -733,4 +733,14 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "auto_tie_breaker quorum option will be enabled to make SBD fencing "
         "effective. Cluster has to be offline to be able to make this change."
     ,
+
+    codes.CLUSTER_CONF_LOAD_ERROR_INVALID_FORMAT: lambda info:
+        "unable to get cluster.conf: {reason}"
+        .format(**info)
+    ,
+
+    codes.CLUSTER_CONF_READ_ERROR: lambda info:
+        "Unable to read {path}: {reason}"
+        .format(**info)
+    ,
 }

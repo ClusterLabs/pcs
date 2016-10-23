@@ -20,8 +20,20 @@ def get_local_corosync_conf():
     path = settings.corosync_conf_file
     try:
         return open(path).read()
-    except IOError as e:
+    except EnvironmentError as e:
         raise LibraryError(reports.corosync_config_read_error(path, e.strerror))
+
+
+def get_local_cluster_conf():
+    """
+    Read cluster.conf file from local machine
+    """
+    path = settings.cluster_conf_file
+    try:
+        return open(path).read()
+    except EnvironmentError as e:
+        raise LibraryError(reports.cluster_conf_read_error(path, e.strerror))
+
 
 def exists_local_corosync_conf():
     return os.path.exists(settings.corosync_conf_file)
