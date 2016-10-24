@@ -24,18 +24,19 @@ from pcs.lib.external import CommandRunner
 class ListResourceAgentsStandardsTest(TestCase):
     def test_success_and_filter_stonith_out(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        agents = [
+            "ocf",
+            "lsb",
+            "service",
+            "systemd",
+            "nagios",
+            "stonith",
+        ]
+        # retval is number of providers found
         mock_runner.run.return_value = (
-            "\n".join([
-                "ocf",
-                "lsb",
-                "service",
-                "systemd",
-                "nagios",
-                "stonith",
-                "",
-            ]),
+            "\n".join(agents) + "\n",
             "",
-            0
+            len(agents)
         )
 
         self.assertEqual(
@@ -56,20 +57,22 @@ class ListResourceAgentsStandardsTest(TestCase):
 
     def test_success_filter_whitespace(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (
-            "\n".join([
-                "",
-                "ocf",
-                "  lsb",
-                "service  ",
-                "systemd",
-                "  nagios  ",
-                "",
-                "stonith",
-                "",
-            ]),
+        agents = [
             "",
-            0
+            "ocf",
+            "  lsb",
+            "service  ",
+            "systemd",
+            "  nagios  ",
+            "",
+            "stonith",
+            "",
+        ]
+        # retval is number of providers found
+        mock_runner.run.return_value = (
+            "\n".join(agents) + "\n",
+            "",
+            len(agents)
         )
 
         self.assertEqual(
@@ -119,16 +122,17 @@ class ListResourceAgentsStandardsTest(TestCase):
 class ListResourceAgentsOcfProvidersTest(TestCase):
     def test_success(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        providers = [
+            "heartbeat",
+            "openstack",
+            "pacemaker",
+            "booth",
+        ]
+        # retval is number of providers found
         mock_runner.run.return_value = (
-            "\n".join([
-                "heartbeat",
-                "openstack",
-                "pacemaker",
-                "booth",
-                "",
-            ]),
+            "\n".join(providers) + "\n",
             "",
-            0
+            len(providers)
         )
 
         self.assertEqual(
@@ -148,17 +152,18 @@ class ListResourceAgentsOcfProvidersTest(TestCase):
 
     def test_success_filter_whitespace(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (
-            "\n".join([
-                "",
-                "heartbeat",
-                " openstack",
-                "pacemaker ",
-                " booth ",
-                "",
-            ]),
+        providers = [
             "",
-            0
+            "heartbeat",
+            " openstack",
+            "pacemaker ",
+            " booth ",
+        ]
+        # retval is number of providers found
+        mock_runner.run.return_value = (
+            "\n".join(providers) + "\n",
+            "",
+            len(providers)
         )
 
         self.assertEqual(
