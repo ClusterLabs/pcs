@@ -26,186 +26,185 @@ class IndentTest(TestCase):
             ]
         )
 
-class BuildInvalidOptionMessageTest(TestCase):
-    def setUp(self):
-        self.build = CODE_TO_MESSAGE_BUILDER_MAP[codes.INVALID_OPTION]
+class NameBuildTest(TestCase):
+    """
+    Mixin for the testing of message building.
+    """
+    code = None
+
+    def assert_message_from_info(self, message, info):
+        build = CODE_TO_MESSAGE_BUILDER_MAP[self.code]
+        self.assertEqual(message, build(info))
+
+
+class BuildInvalidOptionMessageTest(NameBuildTest):
+    code = codes.INVALID_OPTION
     def test_build_message_with_type(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",
-            self.build({
+            {
                 "option_name": "NAME",
                 "option_type": "TYPE",
                 "allowed": sorted(["FIRST", "SECOND"]),
-            })
+            }
         )
 
     def test_build_message_without_type(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "invalid option 'NAME', allowed options are: FIRST, SECOND",
-            self.build({
+            {
                 "option_name": "NAME",
                 "option_type": "",
                 "allowed": sorted(["FIRST", "SECOND"]),
-            })
+            }
         )
 
-class BuildInvalidOptionValueMessageTest(TestCase):
-    def setUp(self):
-        self.build = CODE_TO_MESSAGE_BUILDER_MAP[codes.INVALID_OPTION_VALUE]
+class BuildInvalidOptionValueMessageTest(NameBuildTest):
+    code = codes.INVALID_OPTION_VALUE
     def test_build_message_with_multiple_allowed_values(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "'VALUE' is not a valid NAME value, use FIRST, SECOND",
-            self.build({
+            {
                 "option_name": "NAME",
                 "option_value": "VALUE",
                 "allowed_values": sorted(["FIRST", "SECOND"]),
-            })
+            }
         )
 
     def test_build_message_with_hint(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "'VALUE' is not a valid NAME value, use some hint",
-            self.build({
+            {
                 "option_name": "NAME",
                 "option_value": "VALUE",
                 "allowed_values": "some hint",
-            })
+            }
         )
 
-class BuildServiceStartErrorTest(TestCase):
-    def setUp(self):
-        self.build = CODE_TO_MESSAGE_BUILDER_MAP[codes.SERVICE_START_ERROR]
-
+class BuildServiceStartErrorTest(NameBuildTest):
+    code = codes.SERVICE_START_ERROR
     def test_build_message_with_instance_and_node(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "NODE: Unable to start SERVICE@INSTANCE: REASON",
-            self.build({
+            {
                 "service": "SERVICE",
                 "reason": "REASON",
                 "node": "NODE",
                 "instance": "INSTANCE",
-            })
+            }
         )
     def test_build_message_with_instance_only(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "Unable to start SERVICE@INSTANCE: REASON",
-            self.build({
+            {
                 "service": "SERVICE",
                 "reason": "REASON",
                 "node": "",
                 "instance": "INSTANCE",
-            })
+            }
         )
 
     def test_build_message_with_node_only(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "NODE: Unable to start SERVICE: REASON",
-            self.build({
+            {
                 "service": "SERVICE",
                 "reason": "REASON",
                 "node": "NODE",
                 "instance": "",
-            })
+            }
         )
 
     def test_build_message_without_node_and_instance(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "Unable to start SERVICE: REASON",
-            self.build({
+            {
                 "service": "SERVICE",
                 "reason": "REASON",
                 "node": "",
                 "instance": "",
-            })
+            }
         )
 
-class BuildInvalidIdTest(TestCase):
-    def setUp(self):
-        self.build = CODE_TO_MESSAGE_BUILDER_MAP[codes.INVALID_ID]
-
+class BuildInvalidIdTest(NameBuildTest):
+    code = codes.INVALID_ID
     def test_build_message_with_first_char_invalid(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             (
                 "invalid ID_DESCRIPTION 'ID', 'INVALID_CHARACTER' is not a"
                 " valid first character for a ID_DESCRIPTION"
             ),
-            self.build({
+            {
                 "id_description": "ID_DESCRIPTION",
                 "id": "ID",
                 "invalid_character": "INVALID_CHARACTER",
                 "is_first_char": True,
-            })
+            }
         )
     def test_build_message_with_non_first_char_invalid(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             (
                 "invalid ID_DESCRIPTION 'ID', 'INVALID_CHARACTER' is not a"
                 " valid character for a ID_DESCRIPTION"
             ),
-            self.build({
+            {
                 "id_description": "ID_DESCRIPTION",
                 "id": "ID",
                 "invalid_character": "INVALID_CHARACTER",
                 "is_first_char": False,
-            })
+            }
         )
 
-class BuildRunExternalaStartedTest(TestCase):
-    def setUp(self):
-        self.build = CODE_TO_MESSAGE_BUILDER_MAP[
-            codes.RUN_EXTERNAL_PROCESS_STARTED
-        ]
+class BuildRunExternalaStartedTest(NameBuildTest):
+    code = codes.RUN_EXTERNAL_PROCESS_STARTED
 
     def test_build_message_with_stdin(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             (
                 "Running: COMMAND\n"
                 "--Debug Input Start--\n"
                 "STDIN\n"
                 "--Debug Input End--\n"
             ),
-            self.build({
+            {
                 "command": "COMMAND",
                 "stdin": "STDIN",
-            })
+            }
         )
 
     def test_build_message_without_stdin(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "Running: COMMAND\n",
-            self.build({
+            {
                 "command": "COMMAND",
                 "stdin": "",
-            })
+            }
         )
 
-class BuildNodeCommunicationStartedTest(TestCase):
-    def setUp(self):
-        self.build = CODE_TO_MESSAGE_BUILDER_MAP[
-            codes.NODE_COMMUNICATION_STARTED
-        ]
+class BuildNodeCommunicationStartedTest(NameBuildTest):
+    code = codes.NODE_COMMUNICATION_STARTED
 
     def test_build_message_with_data(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             (
                 "Sending HTTP Request to: TARGET\n"
                 "--Debug Input Start--\n"
                 "DATA\n"
                 "--Debug Input End--\n"
             ),
-            self.build({
+            {
                 "target": "TARGET",
                 "data": "DATA",
-            })
+            }
         )
 
     def test_build_message_without_data(self):
-        self.assertEqual(
+        self.assert_message_from_info(
             "Sending HTTP Request to: TARGET\n",
-            self.build({
+            {
                 "target": "TARGET",
                 "data": "",
-            })
+            }
         )
 
 class FormatOptionalTest(TestCase):
