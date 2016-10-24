@@ -33,41 +33,38 @@ temp_large_cib  = rc("temp-cib-large.xml")
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
-        self.description = """\
-ocf:pacemaker:controld - DLM Agent for cluster file systems
+        self.description = outdent("""\
+            ocf:pacemaker:HealthCPU - System health CPU usage
 
-This Resource Agent can control the dlm_controld services needed by cluster-aware file systems.
-It assumes that dlm_controld is in your default PATH.
-In most cases, it should be run as an anonymous clone.
+            Systhem health agent that measures the CPU idling and updates the #health-cpu attribute.
 
-Resource options:
-  args: Any additional options to start the dlm_controld service with
-  configdir: The location where configfs is or should be mounted
-  daemon: The daemon to start - supports gfs_controld(.pcmk) and
-          dlm_controld(.pcmk)
-  allow_stonith_disabled: Allow DLM start-up even if STONITH/fencing is disabled
-                          in the cluster. Setting this option to true will cause
-                          cluster malfunction and hangs on fail-over for DLM
-                          clients that require fencing (such as GFS2, OCFS2, and
-                          cLVM2). This option is advanced use only.
+            Resource options:
+              state: Location to store the resource state in.
+              yellow_limit: Lower (!) limit of idle percentage to switch the health
+                            attribute to yellow. I.e. the #health-cpu will go yellow if the
+                            %idle of the CPU falls below 50%.
+              red_limit: Lower (!) limit of idle percentage to switch the health attribute
+                         to red. I.e. the #health-cpu will go red if the %idle of the CPU
+                         falls below 10%.
 
-Default operations:
-  start: timeout=90
-  stop: timeout=100
-  monitor: interval=10 start-delay=0 timeout=20
-"""
+            Default operations:
+              start: timeout=10
+              stop: timeout=10
+              monitor: interval=10 start-delay=0 timeout=10
+            """
+        )
 
 
     def test_success(self):
         self.assert_pcs_success(
-            "resource describe ocf:pacemaker:controld",
+            "resource describe ocf:pacemaker:HealthCPU",
             self.description
         )
 
 
     def test_success_guess_name(self):
         self.assert_pcs_success(
-            "resource describe controld",
+            "resource describe healthcpu",
             self.description
         )
 
@@ -3297,7 +3294,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
         assert output == "Deleting Resource - D3\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:controld op monitor interval=10s --clone meta interleave=true clone-node-max=1 ordered=true")
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s --clone meta interleave=true clone-node-max=1 ordered=true")
         assert output == "", [output]
         assert returnVal == 0
 
@@ -3305,7 +3302,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(output, """\
  Clone: dlm-clone
   Meta Attrs: clone-node-max=1 interleave=true ordered=true 
-  Resource: dlm (class=ocf provider=pacemaker type=controld)
+  Resource: dlm (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=10s (dlm-monitor-interval-10s)
 """)
         self.assertEqual(0, returnVal)
@@ -3314,7 +3311,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
         assert output == "Deleting Resource - dlm\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
         assert output == "", [output]
         assert returnVal == 0
 
@@ -3322,7 +3319,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(output, """\
  Clone: dlm-clone
   Meta Attrs: clone-node-max=1 interleave=true ordered=true 
-  Resource: dlm (class=ocf provider=pacemaker type=controld)
+  Resource: dlm (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=10s (dlm-monitor-interval-10s)
 """)
         self.assertEqual(0, returnVal)
@@ -3331,15 +3328,15 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
         assert output == "Deleting Resource - dlm\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
         assert returnVal == 0
         assert output == "", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
         assert returnVal == 1
         assert output == "Error: unable to create resource/fence device 'dlm', 'dlm' already exists on this system\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm-clone ocf:pacemaker:controld op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm-clone ocf:pacemaker:Dummy op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
         assert returnVal == 1
         assert output == "Error: unable to create resource/fence device 'dlm-clone', 'dlm-clone' already exists on this system\n", [output]
 
@@ -3347,7 +3344,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         ac(output, """\
  Clone: dlm-clone
   Meta Attrs: clone-node-max=1 interleave=true ordered=true 
-  Resource: dlm (class=ocf provider=pacemaker type=controld)
+  Resource: dlm (class=ocf provider=pacemaker type=Dummy)
    Operations: monitor interval=10s (dlm-monitor-interval-10s)
 """)
         self.assertEqual(0, returnVal)
