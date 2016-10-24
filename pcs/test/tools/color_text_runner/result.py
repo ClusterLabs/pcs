@@ -22,6 +22,7 @@ from pcs.test.tools.color_text_runner.writer import (
 def get_text_test_result_class(
     slash_last_fail_in_overview=False,
     traditional_verbose=False,
+    traceback_highlight=False,
 ):
     #TextTestResult is neede here. Direct inheriting from TestResult does not
     #work in python 2.6
@@ -73,9 +74,19 @@ def get_text_test_result_class(
 
         def printErrors(self):
             line_list = (
-                format_error_list('ERROR', self.errors, self.descriptions)
+                format_error_list(
+                    'ERROR',
+                    self.errors,
+                    self.descriptions,
+                    traceback_highlight,
+                )
                 +
-                format_error_list('FAIL', self.failures, self.descriptions)
+                format_error_list(
+                    'FAIL',
+                    self.failures,
+                    self.descriptions,
+                    traceback_highlight,
+                )
             )
 
             if (self.errors + self.failures) or self.skip_map:

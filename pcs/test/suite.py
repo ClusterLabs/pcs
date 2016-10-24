@@ -65,6 +65,7 @@ explicitly_enumerated_tests = [
         "--all-but",
         "--last-slash",
         "--traditional-verbose",
+        "--traceback-highlight",
     )
 ]
 
@@ -87,7 +88,8 @@ if use_improved_result_class:
     from pcs.test.tools.color_text_runner import get_text_test_result_class
     resultclass = get_text_test_result_class(
         slash_last_fail_in_overview=("--last-slash" in sys.argv),
-        traditional_verbose=("--traditional-verbose" in sys.argv)
+        traditional_verbose=("--traditional-verbose" in sys.argv),
+        traceback_highlight=("--traceback-highlight" in sys.argv),
     )
 
 testRunner = unittest.TextTestRunner(

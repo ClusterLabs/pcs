@@ -108,14 +108,14 @@ def get_description(test, descriptions):
             +lightgrey(")")
         )
 
-def format_error_list(flavour, errors, descriptions):
+def format_error_list(flavour, errors, descriptions, traceback_highlight):
     line_list = []
     for test, err in errors:
         line_list.extend([
             lightgrey(separator1),
             "%s: %s" % (red(flavour), get_description(test, descriptions)),
             lightgrey(separator2),
-            "%s" % format_traceback(err),
+            "%s" % format_traceback(err) if traceback_highlight else err,
             "",
         ])
     return line_list
