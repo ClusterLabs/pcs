@@ -23,7 +23,7 @@ def list_agents(lib_env, describe=True, search=None):
         agent_names,
         describe,
         search,
-        resource_agent.StonithAgentMetadata
+        resource_agent.StonithAgent
     )
 
 
@@ -33,7 +33,7 @@ def describe_agent(lib_env, agent_name):
     string agent_name name of the agent (not containing "stonith:" prefix)
     """
     try:
-        metadata = resource_agent.StonithAgentMetadata(
+        metadata = resource_agent.StonithAgent(
             lib_env.cmd_runner(),
             agent_name
         )

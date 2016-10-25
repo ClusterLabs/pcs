@@ -41,7 +41,7 @@ class TestListAgents(TestCase):
 
 
     def tearDown(self):
-        lib_ra.StonithAgentMetadata._stonithd_metadata = None
+        lib_ra.StonithAgent._stonithd_metadata = None
 
 
     def test_list_all(self):
@@ -95,7 +95,7 @@ class TestListAgents(TestCase):
         )
 
 
-    @mock.patch.object(lib_ra.AgentMetadata, "_get_metadata", autospec=True)
+    @mock.patch.object(lib_ra.Agent, "_get_metadata", autospec=True)
     def test_describe(self, mock_metadata):
         def mock_metadata_func(self):
             if self._full_agent_name == "ocf:test:Stateful":
@@ -144,7 +144,7 @@ class TestListAgents(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.StonithAgentMetadata, "_load_metadata", autospec=True)
+@mock.patch.object(lib_ra.StonithAgent, "_load_metadata", autospec=True)
 @mock.patch.object(
     lib_ra.StonithdMetadata,
     "get_parameters",
@@ -180,7 +180,7 @@ class TestDescribeAgent(TestCase):
 
 
     def tearDown(self):
-        lib_ra.StonithAgentMetadata._stonithd_metadata = None
+        lib_ra.StonithAgent._stonithd_metadata = None
 
 
     def test_success(self, mock_metadata):

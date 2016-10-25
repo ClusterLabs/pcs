@@ -125,7 +125,7 @@ def stonith_create(argv):
     )
 
     try:
-        metadata = lib_ra.StonithAgentMetadata(
+        metadata = lib_ra.StonithAgent(
             utils.cmd_runner(),
             stonith_type
         )
@@ -396,7 +396,7 @@ def get_fence_agent_info(argv):
     runner = utils.cmd_runner()
 
     try:
-        metadata = lib_ra.StonithAgentMetadata(runner, agent[len("stonith:"):])
+        metadata = lib_ra.StonithAgent(runner, agent[len("stonith:"):])
         info = metadata.get_full_info()
         info["name"] = "stonith:{0}".format(info["name"])
         print(json.dumps(info))

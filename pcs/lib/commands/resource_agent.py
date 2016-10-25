@@ -73,7 +73,7 @@ def list_agents(lib_env, describe=True, search=None):
         agent_names,
         describe,
         search,
-        resource_agent.ResourceAgentMetadata
+        resource_agent.ResourceAgent
     )
 
 
@@ -111,7 +111,7 @@ def describe_agent(lib_env, agent_name):
     runner = lib_env.cmd_runner()
     try:
         if ":" in agent_name:
-            metadata = resource_agent.ResourceAgentMetadata(runner, agent_name)
+            metadata = resource_agent.ResourceAgent(runner, agent_name)
         else:
             metadata = (
                 resource_agent.guess_exactly_one_resource_agent_full_name(

@@ -386,12 +386,12 @@ def resource_create(
                 # Maybe we can just try to get a metadata object and if it fails
                 # then we know the agent is not valid. Then the is_valid_agent
                 # method can be completely removed.
-                is_valid_agent = lib_ra.StonithAgentMetadata(
+                is_valid_agent = lib_ra.StonithAgent(
                     utils.cmd_runner(),
                     full_agent_name[len("stonith:"):]
                 ).is_valid_agent()
             else:
-                is_valid_agent = lib_ra.ResourceAgentMetadata(
+                is_valid_agent = lib_ra.ResourceAgent(
                     utils.cmd_runner(),
                     full_agent_name
                 ).is_valid_agent()
@@ -514,12 +514,12 @@ def resource_create(
         bad_opts, missing_req_opts = [], []
         try:
             if full_agent_name.startswith("stonith:"):
-                metadata = lib_ra.StonithAgentMetadata(
+                metadata = lib_ra.StonithAgent(
                     utils.cmd_runner(),
                     full_agent_name[len("stonith:"):]
                 )
             else:
-                metadata = lib_ra.ResourceAgentMetadata(
+                metadata = lib_ra.ResourceAgent(
                     utils.cmd_runner(),
                     full_agent_name
                 )
@@ -874,12 +874,12 @@ def resource_update(res_id,args):
         bad_opts = []
         try:
             if resource_type.startswith("stonith:"):
-                metadata = lib_ra.StonithAgentMetadata(
+                metadata = lib_ra.StonithAgent(
                     utils.cmd_runner(),
                     resource_type[len("stonith:"):]
                 )
             else:
-                metadata = lib_ra.ResourceAgentMetadata(
+                metadata = lib_ra.ResourceAgent(
                     utils.cmd_runner(),
                     resource_type
                 )
@@ -2805,7 +2805,7 @@ def get_resource_agent_info(argv):
     runner = utils.cmd_runner()
 
     try:
-        metadata = lib_ra.ResourceAgentMetadata(runner, agent)
+        metadata = lib_ra.ResourceAgent(runner, agent)
         print(json.dumps(metadata.get_full_info()))
     except lib_ra.ResourceAgentError as e:
         utils.process_library_reports(

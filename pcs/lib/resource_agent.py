@@ -153,7 +153,7 @@ def guess_resource_agent_full_name(runner, search_agent_name):
                 possible_names.append("{0}:{1}".format(std, agent))
     # construct agent wrappers
     agent_candidates = [
-        ResourceAgentMetadata(runner, agent) for agent in possible_names
+        ResourceAgent(runner, agent) for agent in possible_names
     ]
     # check if the agent is valid
     return [
@@ -182,7 +182,7 @@ def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
     return agents[0]
 
 
-class AgentMetadata(object):
+class Agent(object):
     """
     Base class for providing convinient access to an agent's metadata
     """
@@ -373,7 +373,7 @@ class AgentMetadata(object):
         return element.text.strip()
 
 
-class FakeAgentMetadata(AgentMetadata):
+class FakeAgentMetadata(Agent):
     def get_name(self):
         raise NotImplementedError()
 
@@ -413,14 +413,14 @@ class StonithdMetadata(FakeAgentMetadata):
         return metadata
 
 
-class CrmAgentMetadata(AgentMetadata):
+class CrmAgent(Agent):
     def __init__(self, runner, full_agent_name):
         """
         init
         CommandRunner runner
         string full_agent_name standard:provider:type or standard:type
         """
-        super(CrmAgentMetadata, self).__init__(runner)
+        super(CrmAgent, self).__init__(runner)
         self._full_agent_name = full_agent_name
 
 
@@ -461,13 +461,13 @@ class CrmAgentMetadata(AgentMetadata):
         return stdout.strip()
 
 
-class ResourceAgentMetadata(CrmAgentMetadata):
+class ResourceAgent(CrmAgent):
     """
     Provides convinient access to a resource agent's metadata
     """
 
 
-class StonithAgentMetadata(CrmAgentMetadata):
+class StonithAgent(CrmAgent):
     """
     Provides convinient access to a stonith agent's metadata
     """
@@ -476,7 +476,7 @@ class StonithAgentMetadata(CrmAgentMetadata):
 
 
     def __init__(self, runner, agent_name):
-        super(StonithAgentMetadata, self).__init__(
+        super(StonithAgent, self).__init__(
             runner,
             "stonith:{0}".format(agent_name)
         )
@@ -490,7 +490,7 @@ class StonithAgentMetadata(CrmAgentMetadata):
     def get_parameters(self):
         return (
             self._filter_parameters(
-                super(StonithAgentMetadata, self).get_parameters()
+                super(StonithAgent, self).get_parameters()
             )
             +
             self._get_stonithd_metadata().get_parameters()
@@ -562,7 +562,7 @@ class StonithAgentMetadata(CrmAgentMetadata):
 
     def get_provides_unfencing(self):
         # self.get_actions returns an empty list
-        for action in super(StonithAgentMetadata, self).get_actions():
+        for action in super(StonithAgent, self).get_actions():
             if (
                 action.get("name", "") == "on"
                 and

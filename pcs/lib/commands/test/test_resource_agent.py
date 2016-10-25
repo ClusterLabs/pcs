@@ -235,7 +235,7 @@ class TestListAgents(TestCase):
         )
 
 
-    @mock.patch.object(lib_ra.AgentMetadata, "_get_metadata", autospec=True)
+    @mock.patch.object(lib_ra.Agent, "_get_metadata", autospec=True)
     def test_describe(self, mock_metadata):
         def mock_metadata_func(self):
             if self._full_agent_name == "ocf:test:Stateful":
@@ -284,7 +284,7 @@ class TestListAgents(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.ResourceAgentMetadata, "_load_metadata", autospec=True)
+@mock.patch.object(lib_ra.ResourceAgent, "_load_metadata", autospec=True)
 @mock.patch("pcs.lib.resource_agent.guess_exactly_one_resource_agent_full_name")
 @mock.patch.object(
     LibraryEnvironment,
@@ -329,7 +329,7 @@ class TestDescribeAgent(TestCase):
 
     def test_guess_success(self, mock_guess, mock_metadata):
         mock_metadata.return_value = self.metadata
-        mock_guess.return_value = lib_ra.ResourceAgentMetadata(
+        mock_guess.return_value = lib_ra.ResourceAgent(
             self.lib_env.cmd_runner(),
             "ocf:test:Dummy"
         )
@@ -364,7 +364,7 @@ class TestDescribeAgent(TestCase):
 
     def test_guess_fail(self, mock_guess, mock_metadata):
         mock_metadata.return_value = "invalid xml"
-        mock_guess.return_value = lib_ra.ResourceAgentMetadata(
+        mock_guess.return_value = lib_ra.ResourceAgent(
             self.lib_env.cmd_runner(),
             "ocf:test:Dummy"
         )

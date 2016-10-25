@@ -600,10 +600,10 @@ class GuessResourceAgentFullNameTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
 class AgentMetadataGetShortdescTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.AgentMetadata(
+        self.agent = lib_ra.Agent(
             mock.MagicMock(spec_set=CommandRunner)
         )
 
@@ -639,10 +639,10 @@ class AgentMetadataGetShortdescTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
 class AgentMetadataGetLongdescTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.AgentMetadata(
+        self.agent = lib_ra.Agent(
             mock.MagicMock(spec_set=CommandRunner)
         )
 
@@ -669,10 +669,10 @@ class AgentMetadataGetLongdescTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
 class AgentMetadataGetParametersTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.AgentMetadata(
+        self.agent = lib_ra.Agent(
             mock.MagicMock(spec_set=CommandRunner)
         )
 
@@ -767,10 +767,10 @@ class AgentMetadataGetParametersTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
 class AgentMetadataGetActionsTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.AgentMetadata(
+        self.agent = lib_ra.Agent(
             mock.MagicMock(spec_set=CommandRunner)
         )
 
@@ -841,11 +841,11 @@ class AgentMetadataGetActionsTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
-@mock.patch.object(lib_ra.AgentMetadata, "get_name", lambda self: "agent-name")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "get_name", lambda self: "agent-name")
 class AgentMetadataGetInfoTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.AgentMetadata(
+        self.agent = lib_ra.Agent(
             mock.MagicMock(spec_set=CommandRunner)
         )
         self.metadata = etree.XML("""
@@ -937,10 +937,10 @@ class AgentMetadataGetInfoTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
 class AgentMetadataValidateParametersValuesTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.AgentMetadata(
+        self.agent = lib_ra.Agent(
             mock.MagicMock(spec_set=CommandRunner)
         )
         self.metadata = etree.XML("""
@@ -1075,7 +1075,7 @@ class StonithdMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
 class StonithdMetadataGetParametersTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.StonithdMetadata(
@@ -1132,7 +1132,7 @@ class CrmAgentMetadataGetNameTest(TestCase, ExtendedAssertionsMixin):
     def test_success(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         agent_name = "ocf:pacemaker:Dummy"
-        agent = lib_ra.CrmAgentMetadata(mock_runner, agent_name)
+        agent = lib_ra.CrmAgent(mock_runner, agent_name)
 
         self.assertEqual(agent.get_name(), agent_name)
 
@@ -1141,7 +1141,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
         self.agent_name = "ocf:pacemaker:Dummy"
-        self.agent = lib_ra.CrmAgentMetadata(self.mock_runner, self.agent_name)
+        self.agent = lib_ra.CrmAgent(self.mock_runner, self.agent_name)
 
 
     def test_success(self):
@@ -1209,7 +1209,7 @@ class CrmAgentMetadataIsValidAgentTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
         self.agent_name = "ocf:pacemaker:Dummy"
-        self.agent = lib_ra.CrmAgentMetadata(self.mock_runner, self.agent_name)
+        self.agent = lib_ra.CrmAgent(self.mock_runner, self.agent_name)
 
 
     def test_success(self):
@@ -1233,7 +1233,7 @@ class StonithAgentMetadataGetNameTest(TestCase, ExtendedAssertionsMixin):
     def test_success(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         agent_name = "fence_dummy"
-        agent = lib_ra.StonithAgentMetadata(mock_runner, agent_name)
+        agent = lib_ra.StonithAgent(mock_runner, agent_name)
 
         self.assertEqual(agent.get_name(), agent_name)
 
@@ -1244,14 +1244,14 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
         self.agent_name = "fence_dummy"
-        self.agent = lib_ra.StonithAgentMetadata(
+        self.agent = lib_ra.StonithAgent(
             self.mock_runner,
             self.agent_name
         )
 
 
     def tearDown(self):
-        lib_ra.StonithAgentMetadata._stonithd_metadata = None
+        lib_ra.StonithAgent._stonithd_metadata = None
 
 
     def test_success(self):
@@ -1279,17 +1279,17 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
 class StonithAgentMetadataGetActionsTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.StonithAgentMetadata(
+        self.agent = lib_ra.StonithAgent(
             mock.MagicMock(spec_set=CommandRunner),
             "fence_dummy"
         )
 
 
     def tearDown(self):
-        lib_ra.StonithAgentMetadata._stonithd_metadata = None
+        lib_ra.StonithAgent._stonithd_metadata = None
 
 
     def test_more_actions(self, mock_metadata):
@@ -1314,14 +1314,14 @@ class StonithAgentMetadataGetParametersTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
         self.agent_name = "fence_dummy"
-        self.agent = lib_ra.StonithAgentMetadata(
+        self.agent = lib_ra.StonithAgent(
             self.mock_runner,
             self.agent_name
         )
 
 
     def tearDown(self):
-        lib_ra.StonithAgentMetadata._stonithd_metadata = None
+        lib_ra.StonithAgent._stonithd_metadata = None
 
 
     def test_success(self):
@@ -1417,17 +1417,17 @@ class StonithAgentMetadataGetParametersTest(TestCase):
         ])
 
 
-@mock.patch.object(lib_ra.AgentMetadata, "_get_metadata")
+@mock.patch.object(lib_ra.Agent, "_get_metadata")
 class StonithAgentMetadataGetProvidesUnfencingTest(TestCase):
     def setUp(self):
-        self.agent = lib_ra.StonithAgentMetadata(
+        self.agent = lib_ra.StonithAgent(
             mock.MagicMock(spec_set=CommandRunner),
             "fence_dummy"
         )
 
 
     def tearDown(self):
-        lib_ra.StonithAgentMetadata._stonithd_metadata = None
+        lib_ra.StonithAgent._stonithd_metadata = None
 
 
     def test_true(self, mock_metadata):

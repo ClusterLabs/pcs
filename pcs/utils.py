@@ -1496,12 +1496,12 @@ def get_default_op_values(full_agent_name):
     default_ops = []
     try:
         if full_agent_name.startswith("stonith:"):
-            metadata = lib_ra.StonithAgentMetadata(
+            metadata = lib_ra.StonithAgent(
                 cmd_runner(),
                 full_agent_name[len("stonith:"):]
             )
         else:
-            metadata = lib_ra.ResourceAgentMetadata(
+            metadata = lib_ra.ResourceAgent(
                 cmd_runner(),
                 full_agent_name
             )
