@@ -72,15 +72,21 @@ def update_alert(
     lib_env.push_cib(cib)
 
 
-def remove_alert(lib_env, alert_id):
+def remove_alert(lib_env, alert_id_list):
     """
-    Remove alert with specified id.
+    Remove alerts with specified ids.
 
     lib_env -- LibraryEnvironment
-    alert_id -- id of alert which should be removed
+    alert_id_list -- list of alerts ids which should be removed
     """
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    alert.remove_alert(cib, alert_id)
+    report_list = []
+    for alert_id in alert_id_list:
+        try:
+            alert.remove_alert(cib, alert_id)
+        except LibraryError as e:
+            report_list += e.args
+    lib_env.report_processor.process_list(report_list)
     lib_env.push_cib(cib)
 
 
@@ -168,15 +174,21 @@ def update_recipient(
     lib_env.push_cib(cib)
 
 
-def remove_recipient(lib_env, recipient_id):
+def remove_recipient(lib_env, recipient_id_list):
     """
-    Remove existing recipient.
+    Remove specified recipients.
 
     lib_env -- LibraryEnvironment
-    recipient_id -- if of recipient to be removed
+    recipient_id_list -- list of recipients ids to be removed
     """
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    alert.remove_recipient(cib, recipient_id)
+    report_list = []
+    for recipient_id in recipient_id_list:
+        try:
+            alert.remove_recipient(cib, recipient_id)
+        except LibraryError as e:
+            report_list += e.args
+    lib_env.report_processor.process_list(report_list)
     lib_env.push_cib(cib)
 
 

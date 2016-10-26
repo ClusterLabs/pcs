@@ -13,6 +13,7 @@
 - `pcs resource create` now exits with an error if more than one resource agent
   matches the specified short agent name instead of randomly selecting one of
   the agents
+- Allow to remove multiple alerts and alert recipients at once
 
 ### Fixed
 - When stopping a cluster with some of the nodes unreachable, stop the cluster

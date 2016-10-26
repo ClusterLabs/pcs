@@ -11,6 +11,7 @@ import shutil
 from pcs.test.tools.misc import (
     get_test_resource as rc,
     is_minimum_pacemaker_version,
+    outdent,
 )
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.pcs_runner import PcsRunner
@@ -202,24 +203,61 @@ class RemoveAlertTest(PcsAlertTest):
             "alert remove alert1", "Error: Alert 'alert1' not found.\n"
         )
 
-    def test_success(self):
+    def test_one(self):
         self.assert_pcs_success(
-            "alert config",
-            """\
-Alerts:
- No alerts defined
-"""
+            "alert config", outdent("""\
+                Alerts:
+                 No alerts defined
+                """
+            )
         )
 
-        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_success("alert create path=test id=alert1")
         self.assert_pcs_success(
-            "alert config",
-            """\
-Alerts:
- Alert: alert (path=test)
-"""
+            "alert config", outdent("""\
+                Alerts:
+                 Alert: alert1 (path=test)
+                """
+            )
         )
-        self.assert_pcs_success("alert remove alert")
+        self.assert_pcs_success("alert remove alert1")
+        self.assert_pcs_success(
+            "alert config", outdent("""\
+                Alerts:
+                 No alerts defined
+                """
+            )
+        )
+
+    def test_multiple(self):
+        self.assert_pcs_success(
+            "alert config", outdent("""\
+                Alerts:
+                 No alerts defined
+                """
+            )
+        )
+
+        self.assert_pcs_success("alert create path=test id=alert1")
+        self.assert_pcs_success("alert create path=test id=alert2")
+        self.assert_pcs_success("alert create path=test id=alert3")
+        self.assert_pcs_success(
+            "alert config", outdent("""\
+                Alerts:
+                 Alert: alert1 (path=test)
+                 Alert: alert2 (path=test)
+                 Alert: alert3 (path=test)
+                """
+            )
+        )
+        self.assert_pcs_success("alert remove alert1 alert3")
+        self.assert_pcs_success(
+            "alert config", outdent("""\
+                Alerts:
+                 Alert: alert2 (path=test)
+                """
+            )
+        )
 
 
 @unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
@@ -448,31 +486,88 @@ Alerts:
 
 @unittest.skipUnless(ALERTS_SUPPORTED, ALERTS_NOT_SUPPORTED_MSG)
 class RemoveRecipientTest(PcsAlertTest):
-    def test_success(self):
+    def test_one(self):
         self.assert_pcs_success("alert create path=test")
         self.assert_pcs_success(
             "alert recipient add alert value=rec_value id=rec"
         )
         self.assert_pcs_success(
-            "alert config",
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: rec (value=rec_value)
-"""
+            "alert config", outdent("""\
+                Alerts:
+                 Alert: alert (path=test)
+                  Recipients:
+                   Recipient: rec (value=rec_value)
+                """
+            )
         )
         self.assert_pcs_success("alert recipient remove rec")
         self.assert_pcs_success(
-            "alert config",
-            """\
-Alerts:
- Alert: alert (path=test)
-"""
+            "alert config", outdent("""\
+                Alerts:
+                 Alert: alert (path=test)
+                """
+            )
+        )
+
+    def test_multiple(self):
+        self.assert_pcs_success("alert create path=test id=alert1")
+        self.assert_pcs_success("alert create path=test id=alert2")
+        self.assert_pcs_success(
+            "alert recipient add alert1 value=rec_value1 id=rec1"
+        )
+        self.assert_pcs_success(
+            "alert recipient add alert1 value=rec_value2 id=rec2"
+        )
+        self.assert_pcs_success(
+            "alert recipient add alert2 value=rec_value3 id=rec3"
+        )
+        self.assert_pcs_success(
+            "alert recipient add alert2 value=rec_value4 id=rec4"
+        )
+        self.assert_pcs_success(
+            "alert config", outdent("""\
+                Alerts:
+                 Alert: alert1 (path=test)
+                  Recipients:
+                   Recipient: rec1 (value=rec_value1)
+                   Recipient: rec2 (value=rec_value2)
+                 Alert: alert2 (path=test)
+                  Recipients:
+                   Recipient: rec3 (value=rec_value3)
+                   Recipient: rec4 (value=rec_value4)
+                """
+            )
+        )
+        self.assert_pcs_success("alert recipient remove rec1 rec2 rec4")
+        self.assert_pcs_success(
+            "alert config", outdent("""\
+                Alerts:
+                 Alert: alert1 (path=test)
+                 Alert: alert2 (path=test)
+                  Recipients:
+                   Recipient: rec3 (value=rec_value3)
+                """
+            )
         )
 
     def test_no_recipient(self):
+        self.assert_pcs_success("alert create path=test id=alert1")
+        self.assert_pcs_success(
+            "alert recipient add alert1 value=rec_value1 id=rec1"
+        )
         self.assert_pcs_fail(
-            "alert recipient remove rec",
-            "Error: Recipient 'rec' does not exist\n"
+            "alert recipient remove rec1 rec2 rec3", outdent("""\
+                Error: Recipient 'rec2' does not exist
+                Error: Recipient 'rec3' does not exist
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "alert config", outdent("""\
+                Alerts:
+                 Alert: alert1 (path=test)
+                  Recipients:
+                   Recipient: rec1 (value=rec_value1)
+                """
+            )
         )

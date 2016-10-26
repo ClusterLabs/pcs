@@ -118,10 +118,10 @@ def alert_update(lib, argv, modifiers):
 
 
 def alert_remove(lib, argv, modifiers):
-    if len(argv) != 1:
+    if len(argv) < 1:
         raise CmdLineInputError()
 
-    lib.alert.remove_alert(argv[0])
+    lib.alert.remove_alert(argv)
 
 
 def recipient_add(lib, argv, modifiers):
@@ -166,10 +166,10 @@ def recipient_update(lib, argv, modifiers):
 
 
 def recipient_remove(lib, argv, modifiers):
-    if len(argv) != 1:
+    if len(argv) < 1:
         raise CmdLineInputError()
 
-    lib.alert.remove_recipient(argv[0])
+    lib.alert.remove_recipient(argv)
 
 
 def _nvset_to_str(nvset_obj):

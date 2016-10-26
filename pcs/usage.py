@@ -1520,8 +1520,8 @@ Commands:
             [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
         Update existing alert handler with specified id.
 
-    remove <alert-id>
-        Remove alert handler with specified id.
+    remove <alert-id> ...
+        Remove alert handlers with specified ids.
 
     recipient add <alert-id> value=<recipient-value> [id=<recipient-id>]
             [description=<description>] [options [<option>=<value>]...]
@@ -1533,8 +1533,8 @@ Commands:
             [meta [<meta-option>=<value>]...]
         Update existing recipient identified by it's id.
 
-    recipient remove <recipient-id>
-        Remove specified recipient.
+    recipient remove <recipient-id> ...
+        Remove specified recipients.
 """
     if pout:
         print(sub_usage(args, output))
