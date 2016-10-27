@@ -1306,6 +1306,37 @@ def unable_to_get_agent_metadata(
         forceable=forceable
     )
 
+def invalid_resource_agent_name(name):
+    """
+    The entered resource agent name is not valid.
+    This name has the internal structure. The code needs to work with parts of
+    this structure and fails if parts can not be obtained.
+
+    string name is entered name
+    """
+    return ReportItem.error(
+        report_codes.INVALID_RESOURCE_AGENT_NAME,
+        info={
+            "name": name,
+        }
+    )
+
+def agent_name_guessed(entered_name, guessed_name):
+    """
+    Resource agent name was deduced from the entered name.
+    Pcs supports the using of abbreviated resource agent name (e.g.
+    ocf:heartbeat:Delay => Delay) when it can be clearly deduced.
+
+    string entered_name is entered name
+    string guessed_name is deduced name
+    """
+    return ReportItem.info(
+        report_codes.AGENT_NAME_GUESSED,
+        info={
+            "entered_name": entered_name,
+            "guessed_name": guessed_name,
+        }
+    )
 
 def agent_name_guess_found_more_than_one(agent, possible_agents):
     """

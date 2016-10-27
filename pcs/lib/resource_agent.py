@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 import os
+import re
 from lxml import etree
 
 from pcs import settings
@@ -20,12 +21,15 @@ _crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
 class ResourceAgentError(Exception):
     # pylint: disable=super-init-not-called
-    def __init__(self, agent, message):
+    def __init__(self, agent, message=""):
         self.agent = agent
         self.message = message
 
 
 class UnableToGetAgentMetadata(ResourceAgentError):
+    pass
+
+class InvalidResourceAgentName(ResourceAgentError):
     pass
 
 
@@ -157,7 +161,7 @@ def guess_resource_agent_full_name(runner, search_agent_name):
     ]
     # check if the agent is valid
     return [
-        agent for agent in agent_candidates if agent.is_valid_agent()
+        agent for agent in agent_candidates if agent.is_valid_metadata()
     ]
 
 
@@ -181,6 +185,31 @@ def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
         )
     return agents[0]
 
+def find_valid_resource_agent_by_name(
+    report_processor, runner, name, allowed_absent=False
+):
+    if ":" not in name:
+        agent = guess_exactly_one_resource_agent_full_name(runner, name)
+        report_processor.process(
+            reports.agent_name_guessed(name, agent.get_name())
+        )
+        return agent
+
+    try:
+        return ResourceAgent(runner, name).validate_metadata()
+    except InvalidResourceAgentName as e:
+        raise LibraryError(resource_agent_error_to_report_item(e))
+    except UnableToGetAgentMetadata as e:
+        if not allowed_absent:
+            raise LibraryError(resource_agent_error_to_report_item(e))
+
+        report_processor.process(resource_agent_error_to_report_item(
+            e,
+            severity=ReportItemSeverity.WARNING,
+            forceable=True
+        ))
+
+        return AbsentResourceAgent(runner, name)
 
 class Agent(object):
     """
@@ -428,7 +457,7 @@ class CrmAgent(Agent):
         return self._full_agent_name
 
 
-    def is_valid_agent(self):
+    def is_valid_metadata(self):
         """
         If we are able to get metadata, we consider the agent existing and valid
         """
@@ -439,6 +468,12 @@ class CrmAgent(Agent):
             return False
         return True
 
+    def validate_metadata(self):
+        """
+        Validate metadata by attepmt to retrieve it.
+        """
+        self._get_metadata()
+        return self
 
     def _load_metadata(self):
         env_path = ":".join([
@@ -465,7 +500,17 @@ class ResourceAgent(CrmAgent):
     """
     Provides convinient access to a resource agent's metadata
     """
+    def __init__(self, runner, full_agent_name):
+        if not re.match("^[^:]+(:[^:]+){1,2}$", full_agent_name):
+            raise InvalidResourceAgentName(full_agent_name)
+        super(ResourceAgent, self).__init__(runner, full_agent_name)
 
+class AbsentResourceAgent(ResourceAgent):
+    def _load_metadata(self):
+        return "<resource-agent/>"
+
+    def validate_parameters_values(self, parameters_values):
+        return ([], [])
 
 class StonithAgent(CrmAgent):
     """
@@ -587,4 +632,6 @@ def resource_agent_error_to_report_item(
         return reports.unable_to_get_agent_metadata(
             e.agent, e.message, severity, force
         )
+    if e.__class__ == InvalidResourceAgentName:
+        return reports.invalid_resource_agent_name(e.agent)
     raise e

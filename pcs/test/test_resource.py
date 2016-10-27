@@ -65,7 +65,9 @@ class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def test_success_guess_name(self):
         self.assert_pcs_success(
             "resource describe healthcpu",
-            self.description
+            "Assumed agent name 'ocf:pacemaker:HealthCPU' (deduced from"
+                + " 'healthcpu')\n"
+                + self.description
         )
 
 

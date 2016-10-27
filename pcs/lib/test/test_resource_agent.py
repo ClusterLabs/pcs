@@ -6,20 +6,23 @@ from __future__ import (
 )
 
 from lxml import etree
+from functools import partial
 
 from pcs.test.tools.assertions import (
     ExtendedAssertionsMixin,
     assert_raise_library_error,
     assert_xml_equal,
 )
+from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import XmlManipulation
 
 from pcs.common import report_codes
 from pcs.lib import resource_agent as lib_ra
-from pcs.lib.errors import ReportItemSeverity as severity
+from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
 from pcs.lib.external import CommandRunner
 
+patch_agent = create_patcher("pcs.lib.resource_agent")
 
 class ListResourceAgentsStandardsTest(TestCase):
     def test_success_and_filter_stonith_out(self):
@@ -1220,13 +1223,13 @@ class CrmAgentMetadataIsValidAgentTest(TestCase):
         """
         self.mock_runner.run.return_value = (metadata, "", 0)
 
-        self.assertTrue(self.agent.is_valid_agent())
+        self.assertTrue(self.agent.is_valid_metadata())
 
 
     def test_fail(self):
         self.mock_runner.run.return_value = ("", "", 1)
 
-        self.assertFalse(self.agent.is_valid_agent())
+        self.assertFalse(self.agent.is_valid_metadata())
 
 
 class StonithAgentMetadataGetNameTest(TestCase, ExtendedAssertionsMixin):
@@ -1487,3 +1490,142 @@ class StonithAgentMetadataGetProvidesUnfencingTest(TestCase):
         """
         mock_metadata.return_value = etree.XML(xml)
         self.assertFalse(self.agent.get_provides_unfencing())
+
+class ResourceAgentTest(TestCase):
+    def test_raises_on_invalid_name(self):
+        self.assertRaises(
+            lib_ra.InvalidResourceAgentName,
+            lambda: lib_ra.ResourceAgent(mock.MagicMock(), "invalid_name")
+        )
+
+    def test_does_not_raise_on_valid_name(self):
+        lib_ra.ResourceAgent(mock.MagicMock(), "formal:valid:name")
+
+class FindResourceAgentByNameTest(TestCase):
+    def setUp(self):
+        self.report_processor = mock.MagicMock()
+        self.runner = mock.MagicMock()
+        self.run = partial(
+            lib_ra.find_valid_resource_agent_by_name,
+            self.report_processor,
+            self.runner,
+        )
+
+    @patch_agent("reports.agent_name_guessed")
+    @patch_agent("guess_exactly_one_resource_agent_full_name")
+    def test_returns_guessed_agent(self, mock_guess, mock_report):
+        #setup
+        name = "Delay"
+        guessed_name =  "ocf:heartbeat:Delay"
+        report = "AGENT_NAME_GUESSED"
+
+        agent = mock.MagicMock(get_name=mock.Mock(return_value=guessed_name))
+        mock_guess.return_value = agent
+        mock_report.return_value = report
+
+        #test
+        self.assertEqual(agent, self.run(name))
+        mock_guess.assert_called_once_with(self.runner, name)
+        self.report_processor.process.assert_called_once_with(report)
+        mock_report.assert_called_once_with(name, guessed_name)
+
+    @patch_agent("ResourceAgent")
+    def test_returns_real_agent_when_is_there(self, ResourceAgent):
+        #setup
+        name = "ocf:heartbeat:Delay"
+
+        agent = mock.MagicMock()
+        agent.validate_metadata = mock.Mock(return_value=agent)
+        ResourceAgent.return_value = agent
+
+        #test
+        self.assertEqual(agent, self.run(name))
+        ResourceAgent.assert_called_once_with(self.runner, name)
+
+    @patch_agent("resource_agent_error_to_report_item")
+    @patch_agent("AbsentResourceAgent")
+    @patch_agent("ResourceAgent")
+    def test_returns_absent_agent_on_metadata_load_fail(
+        self, ResourceAgent, AbsentResourceAgent, error_to_report_item
+    ):
+        #setup
+        name = "ocf:heartbeat:Some"
+        report = "UNABLE_TO_GET_AGENT_METADATA"
+        e = lib_ra.UnableToGetAgentMetadata(name, "metadata missing")
+        agent = 'absent agent'
+
+        ResourceAgent.side_effect = e
+        error_to_report_item.return_value = report
+        AbsentResourceAgent.return_value = agent
+
+        #test
+        self.assertEqual(agent, self.run(name, allowed_absent=True))
+        ResourceAgent.assert_called_once_with(self.runner, name)
+        AbsentResourceAgent.assert_called_once_with(self.runner, name)
+        error_to_report_item.assert_called_once_with(
+            e, severity=severity.WARNING, forceable=True
+        )
+        self.report_processor.process.assert_called_once_with(report)
+
+    @patch_agent("resource_agent_error_to_report_item")
+    @patch_agent("ResourceAgent")
+    def test_raises_on_metatdata_load_fail_disallowed_absent(
+        self, ResourceAgent, error_to_report_item
+    ):
+        name = "ocf:heartbeat:Some"
+        report = "UNABLE_TO_GET_AGENT_METADATA"
+        e = lib_ra.UnableToGetAgentMetadata(name, "metadata missing")
+
+        ResourceAgent.side_effect = e
+        error_to_report_item.return_value = report
+
+        with self.assertRaises(LibraryError) as context_manager:
+            self.run(name)
+
+        self.assertEqual(report, context_manager.exception.args[0])
+        ResourceAgent.assert_called_once_with(self.runner, name)
+        error_to_report_item.assert_called_once_with(e)
+
+    @patch_agent("resource_agent_error_to_report_item")
+    @patch_agent("ResourceAgent")
+    def test_raises_on_invalid_name(self, ResourceAgent, error_to_report_item):
+        name = "ocf:heartbeat:Something:else"
+        report = "INVALID_RESOURCE_AGENT_NAME"
+        e = lib_ra.InvalidResourceAgentName(name, "invalid agent name")
+
+        ResourceAgent.side_effect = e
+        error_to_report_item.return_value = report
+
+        with self.assertRaises(LibraryError) as context_manager:
+            self.run(name)
+
+        self.assertEqual(report, context_manager.exception.args[0])
+        ResourceAgent.assert_called_once_with(self.runner, name)
+        error_to_report_item.assert_called_once_with(e)
+
+class AbsentResourceAgentTest(TestCase):
+    @mock.patch.object(lib_ra.CrmAgent, "_load_metadata")
+    def test_behaves_like_a_proper_agent(self, load_metadata):
+        name =  "ocf:heartbeat:Absent"
+        runner = mock.MagicMock(spec_set=CommandRunner)
+        load_metadata.return_value = "<resource-agent/>"
+
+        agent = lib_ra.ResourceAgent(runner, name)
+        absent = lib_ra.AbsentResourceAgent(runner, name)
+
+        #metadata are valid
+        absent.validate_metadata()
+        self.assertTrue(absent.is_valid_metadata())
+
+        self.assertEqual(agent.get_name(), absent.get_name())
+        self.assertEqual(
+            agent.get_description_info(), absent.get_description_info()
+        )
+        self.assertEqual(agent.get_full_info(), absent.get_full_info())
+        self.assertEqual(agent.get_shortdesc(), absent.get_shortdesc())
+        self.assertEqual(agent.get_longdesc(), absent.get_longdesc())
+        self.assertEqual(agent.get_parameters(), absent.get_parameters())
+        self.assertEqual(agent.get_actions(), absent.get_actions())
+        self.assertEqual(([], []), absent.validate_parameters_values({
+            "whatever": "anything"
+        }))

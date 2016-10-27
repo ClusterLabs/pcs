@@ -6,7 +6,6 @@ from __future__ import (
 )
 
 from pcs.lib import resource_agent
-from pcs.lib.errors import LibraryError
 
 
 def list_standards(lib_env):
@@ -108,20 +107,9 @@ def describe_agent(lib_env, agent_name):
     Get agent's description (metadata) in a structure
     string agent_name name of the agent
     """
-    runner = lib_env.cmd_runner()
-    try:
-        if ":" in agent_name:
-            metadata = resource_agent.ResourceAgent(runner, agent_name)
-        else:
-            metadata = (
-                resource_agent.guess_exactly_one_resource_agent_full_name(
-                    runner,
-                    agent_name
-                )
-            )
-        return metadata.get_full_info()
-    except resource_agent.ResourceAgentError as e:
-        raise LibraryError(
-            resource_agent.resource_agent_error_to_report_item(e)
-        )
-
+    agent = resource_agent.find_valid_resource_agent_by_name(
+        lib_env.report_processor,
+        lib_env.cmd_runner(),
+        agent_name,
+    )
+    return agent.get_full_info()

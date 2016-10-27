@@ -571,6 +571,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         ).format(**info)
     ,
 
+    codes.INVALID_RESOURCE_AGENT_NAME: lambda info:
+        (
+            "Invalid resource agent name '{name}'."
+            " Use standard:provider:type or standard:type."
+            " List of standards and providers can be obtained by using commands"
+            " 'pcs resource standards' and 'pcs resource providers'"
+        )
+        .format(**info)
+    ,
+
     codes.AGENT_NAME_GUESS_FOUND_MORE_THAN_ONE: lambda info:
         (
             "Multiple agents match '{agent}'"
@@ -580,6 +590,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.AGENT_NAME_GUESS_FOUND_NONE: lambda info:
         "Unable to find agent '{agent}', try specifying its full name"
+        .format(**info)
+    ,
+
+    codes.AGENT_NAME_GUESSED: lambda info:
+        "Assumed agent name '{guessed_name}' (deduced from '{entered_name}')"
         .format(**info)
     ,
 

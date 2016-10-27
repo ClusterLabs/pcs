@@ -360,26 +360,3 @@ class TestDescribeAgent(TestCase):
 
         self.assertEqual(len(mock_metadata.mock_calls), 1)
         mock_guess.assert_not_called()
-
-
-    def test_guess_fail(self, mock_guess, mock_metadata):
-        mock_metadata.return_value = "invalid xml"
-        mock_guess.return_value = lib_ra.ResourceAgent(
-            self.lib_env.cmd_runner(),
-            "ocf:test:Dummy"
-        )
-
-        assert_raise_library_error(
-            lambda: lib.describe_agent(self.lib_env, "dummy"),
-            (
-                severity.ERROR,
-                report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {
-                    "agent": "ocf:test:Dummy",
-                    "reason": "Start tag expected, '<' not found, line 1, column 1",
-                }
-            )
-        )
-
-        self.assertEqual(len(mock_metadata.mock_calls), 1)
-        mock_guess.assert_called_once_with("mock_runner", "dummy")

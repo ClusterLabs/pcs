@@ -389,12 +389,12 @@ def resource_create(
                 is_valid_agent = lib_ra.StonithAgent(
                     utils.cmd_runner(),
                     full_agent_name[len("stonith:"):]
-                ).is_valid_agent()
+                ).is_valid_metadata()
             else:
                 is_valid_agent = lib_ra.ResourceAgent(
                     utils.cmd_runner(),
                     full_agent_name
-                ).is_valid_agent()
+                ).is_valid_metadata()
             if not is_valid_agent:
                 if "--force" not in utils.pcs_options:
                     utils.err("Unable to create resource '{0}', it is not installed on this system (use --force to override)".format(full_agent_name))

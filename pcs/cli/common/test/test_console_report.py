@@ -213,3 +213,29 @@ class FormatOptionalTest(TestCase):
 
     def test_info_key_is_not_falsy(self):
         self.assertEqual("A: ", format_optional("A", "{0}: "))
+
+class AgentNameGuessedTest(NameBuildTest):
+    code = codes.AGENT_NAME_GUESSED
+    def test_build_message_with_data(self):
+        self.assert_message_from_info(
+            "Assumed agent name 'ocf:heratbeat:Delay' (deduced from 'Delay')",
+            {
+                "entered_name": "Delay",
+                "guessed_name": "ocf:heratbeat:Delay",
+            }
+        )
+
+class InvalidResourceAgentNameTest(NameBuildTest):
+    code = codes.INVALID_RESOURCE_AGENT_NAME
+    def test_build_message_with_data(self):
+        self.assert_message_from_info(
+            "Invalid resource agent name ':name'."
+                " Use standard:provider:type or standard:type."
+                " List of standards and providers can be obtained by using"
+                " commands 'pcs resource standards' and"
+                " 'pcs resource providers'"
+            ,
+            {
+                "name": ":name",
+            }
+        )
