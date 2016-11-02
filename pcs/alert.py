@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 import sys
+import json
 from functools import partial
 
 from pcs import (
@@ -38,6 +39,8 @@ def alert_cmd(*args):
             print_alert_config(*args)
         elif sub_cmd == "recipient":
             recipient_cmd(*args)
+        elif sub_cmd == "get_all_alerts":
+            print_alerts_in_json(*args)
         else:
             raise CmdLineInputError()
     except LibraryError as e:
@@ -230,3 +233,12 @@ def print_alert_config(lib, argv, modifiers):
             print("\n".join(indent(_alert_to_str(alert), 1)))
     else:
         print(" No alerts defined")
+
+
+def print_alerts_in_json(lib, argv, dummy_modifiers):
+    # This is used only by pcsd, will be removed in new architecture
+    if argv:
+        raise CmdLineInputError()
+
+    print(json.dumps(lib.alert.get_all_alerts()))
+

@@ -1728,6 +1728,7 @@ def get_node_status(auth_user, cib_dom)
       :fence_levels => get_fence_levels(auth_user, cib_dom),
       :node_attr => node_attrs_to_v2(get_node_attributes(auth_user, cib_dom)),
       :nodes_utilization => get_nodes_utilization(cib_dom),
+      :alerts => get_alerts(auth_user),
       :known_nodes => [],
       :available_features => [
         'constraint_colocation_set',
@@ -1735,6 +1736,7 @@ def get_node_status(auth_user, cib_dom)
         'ticket_constraints',
         'moving_resource_in_group',
         'unmanaged_resource',
+        'alerts',
       ]
   }
 
@@ -2140,4 +2142,18 @@ def get_authfile_from_booth_config(config_data)
     end
   }
   return authfile_path
+end
+
+def get_alerts(auth_user)
+  out, _, retcode = run_cmd(auth_user, PCS, 'alert', 'get_all_alerts')
+
+  if retcode !=  0
+    return nil
+  end
+
+  begin
+    return JSON.parse(out.join(""))
+  rescue JSON::ParserError
+    return nil
+  end
 end
