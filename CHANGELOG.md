@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.155] - 2016-11-03
 
 ### Added
 - Show daemon status in `pcs status` on non-systemd machines
