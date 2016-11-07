@@ -14,7 +14,9 @@ from pcs import settings
 from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker import get_cib_xml, parse_cib_xml
 from pcs.lib.pacemaker_values import validate_id
+
 
 def does_id_exist(tree, check_id):
     """
@@ -175,7 +177,7 @@ def get_pacemaker_version_by_which_cib_was_validated(cib):
     )
 
 
-def upgrade_cib(cib, runner):
+def upgrade_cib_file(cib, runner):
     """
     Upgrade CIB to the latest schema of installed pacemaker. Returns upgraded
     CIB as string.
@@ -189,31 +191,40 @@ def upgrade_cib(cib, runner):
         temp_file = tempfile.NamedTemporaryFile("w+", suffix=".pcs")
         temp_file.write(etree.tostring(cib).decode())
         temp_file.flush()
-        stdout, stderr, retval = runner.run(
-            [
-                os.path.join(settings.pacemaker_binaries, "cibadmin"),
-                "--upgrade",
-                "--force"
-            ],
-            env_extend={"CIB_file": temp_file.name}
-        )
-
-        if retval != 0:
-            temp_file.close()
-            raise LibraryError(
-                reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
-            )
-
+        upgrade_cib(runner, temp_file.name)
         temp_file.seek(0)
-        return etree.fromstring(temp_file.read())
-    except (EnvironmentError, etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        return temp_file.read()
+    except EnvironmentError as e:
         raise LibraryError(reports.cib_upgrade_failed(str(e)))
     finally:
         if temp_file:
             temp_file.close()
 
 
-def ensure_cib_version(runner, cib, version):
+def upgrade_cib(runner, cib_file_path=None):
+    """
+    Upgrade CIB to the latest schema available locally or clusterwise.
+    CommandRunner runner
+    string cib_file_path run on specified file or live cluster if None
+    """
+    environment = dict()
+    if cib_file_path:
+        environment["CIB_file"] = cib_file_path
+    stdout, stderr, retval = runner.run(
+        [
+            os.path.join(settings.pacemaker_binaries, "cibadmin"),
+            "--upgrade",
+            "--force",
+        ],
+        env_extend=environment
+    )
+    if retval != 0:
+        raise LibraryError(
+            reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
+        )
+
+
+def ensure_cib_version(runner, cib, version, live):
     """
     This method ensures that specified cib is verified by pacemaker with
     version 'version' or newer. If cib doesn't correspond to this version,
@@ -221,23 +232,29 @@ def ensure_cib_version(runner, cib, version):
     Returns cib which was verified by pacemaker version 'version' or later.
     Raises LibraryError on any failure.
 
-    runner -- CommandRunner
-    cib -- cib tree
-    version -- tuple of integers (<major>, <minor>, <revision>)
+    CommandRunner runner
+    etree cib cib tree
+    tuple version tuple of integers (<major>, <minor>, <revision>)
+    bool live upgrade in a live cluster or not
     """
-    current_version = get_pacemaker_version_by_which_cib_was_validated(
-        cib
-    )
+    current_version = get_pacemaker_version_by_which_cib_was_validated(cib)
     if current_version >= version:
         return None
 
-    upgraded_cib = upgrade_cib(cib, runner)
-    current_version = get_pacemaker_version_by_which_cib_was_validated(
-        upgraded_cib
-    )
+    if live:
+        upgrade_cib(runner)
+        new_cib_xml = get_cib_xml(runner)
+    else:
+        new_cib_xml = upgrade_cib_file(cib, runner)
 
+    try:
+        new_cib = parse_cib_xml(new_cib_xml)
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise LibraryError(reports.cib_upgrade_failed(str(e)))
+
+    current_version = get_pacemaker_version_by_which_cib_was_validated(new_cib)
     if current_version >= version:
-        return upgraded_cib
+        return new_cib
 
     raise LibraryError(reports.unable_to_upgrade_cib_to_required_version(
         current_version, version

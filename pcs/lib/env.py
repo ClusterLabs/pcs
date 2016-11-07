@@ -109,7 +109,10 @@ class LibraryEnvironment(object):
         cib = get_cib(self._get_cib_xml())
         if minimal_version is not None:
             upgraded_cib = ensure_cib_version(
-                self.cmd_runner(), cib, minimal_version
+                self.cmd_runner(),
+                cib,
+                minimal_version,
+                self.is_cib_live
             )
             if upgraded_cib is not None:
                 cib = upgraded_cib
@@ -118,9 +121,7 @@ class LibraryEnvironment(object):
 
     def _push_cib_xml(self, cib_data):
         if self.is_cib_live:
-            replace_cib_configuration_xml(
-                self.cmd_runner(), cib_data, self._cib_upgraded
-            )
+            replace_cib_configuration_xml(self.cmd_runner(), cib_data)
             if self._cib_upgraded:
                 self._cib_upgraded = False
                 self.report_processor.process(reports.cib_upgrade_successful())

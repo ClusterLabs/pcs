@@ -686,9 +686,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.CIB_UPGRADE_SUCCESSFUL: lambda info:
+    codes.CIB_UPGRADE_SUCCESSFUL:
         "CIB has been upgraded to the latest schema version."
-        .format(**info)
     ,
 
     codes.CIB_UPGRADE_FAILED: lambda info:

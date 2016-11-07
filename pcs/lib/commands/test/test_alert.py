@@ -26,7 +26,7 @@ from pcs.lib.external import CommandRunner
 import pcs.lib.commands.alert as cmd_alert
 
 
-@mock.patch("pcs.lib.cib.tools.upgrade_cib")
+@mock.patch("pcs.lib.env.ensure_cib_version")
 class CreateAlertTest(TestCase):
     def setUp(self):
         self.mock_log = mock.MagicMock(spec_set=logging.Logger)
@@ -36,7 +36,7 @@ class CreateAlertTest(TestCase):
             self.mock_log, self.mock_rep, cib_data="<cib/>"
         )
 
-    def test_no_path(self, mock_upgrade_cib):
+    def test_no_path(self, mock_ensure_cib_version):
         assert_raise_library_error(
             lambda: cmd_alert.create_alert(
                 self.mock_env, None, None, None, None
@@ -47,18 +47,17 @@ class CreateAlertTest(TestCase):
                 {"option_name": "path"}
             )
         )
-        self.assertEqual(0, mock_upgrade_cib.call_count)
+        mock_ensure_cib_version.assert_not_called()
 
-    def test_upgrade_needed(self, mock_upgrade_cib):
-        self.mock_env._push_cib_xml(
-            """
+    def test_upgrade_needed(self, mock_ensure_cib_version):
+        original_cib_xml = """
             <cib validate-with="pacemaker-2.4.1">
                 <configuration>
                 </configuration>
             </cib>
-            """
-        )
-        mock_upgrade_cib.return_value = etree.XML(
+        """
+        self.mock_env._push_cib_xml(original_cib_xml)
+        mock_ensure_cib_version.return_value = etree.XML(
             """
             <cib validate-with="pacemaker-2.5.0">
                 <configuration>
@@ -109,7 +108,7 @@ class CreateAlertTest(TestCase):
             """,
             self.mock_env._get_cib_xml()
         )
-        self.assertEqual(1, mock_upgrade_cib.call_count)
+        self.assertEqual(1, mock_ensure_cib_version.call_count)
 
 
 class UpdateAlertTest(TestCase):

@@ -55,27 +55,34 @@ def get_cib_xml(runner, scope=None):
             )
     return stdout
 
+def parse_cib_xml(xml):
+    return etree.fromstring(xml)
+
 def get_cib(xml):
     try:
-        return etree.fromstring(xml)
+        return parse_cib_xml(xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
         raise LibraryError(reports.cib_load_error_invalid_format())
 
-def replace_cib_configuration_xml(runner, xml, cib_upgraded=False):
-    cmd = [__exec("cibadmin"), "--replace",  "--verbose", "--xml-pipe"]
-    if not cib_upgraded:
-        cmd += ["--scope", "configuration"]
+def replace_cib_configuration_xml(runner, xml):
+    cmd = [
+        __exec("cibadmin"),
+        "--replace",
+        "--verbose",
+        "--xml-pipe",
+        "--scope", "configuration",
+    ]
     stdout, stderr, retval = runner.run(cmd, stdin_string=xml)
     if retval != 0:
         raise LibraryError(reports.cib_push_error(stderr, stdout))
 
-def replace_cib_configuration(runner, tree, cib_upgraded=False):
+def replace_cib_configuration(runner, tree):
     #etree returns bytes: b'xml'
     #python 3 removed .encode() from bytes
     #run(...) calls subprocess.Popen.communicate which calls encode...
     #so here is bytes to str conversion
     xml = etree.tostring(tree).decode()
-    return replace_cib_configuration_xml(runner, xml, cib_upgraded)
+    return replace_cib_configuration_xml(runner, xml)
 
 def get_local_node_status(runner):
     try:

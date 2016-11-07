@@ -1,5 +1,15 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- When upgrading CIB to the latest schema version, check for minimal common
+  version across the cluster ([rhbz#1389443])
+
+
+[rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
+
+
 ## [0.9.155] - 2016-11-03
 
 ### Added

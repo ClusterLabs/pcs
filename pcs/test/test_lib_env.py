@@ -210,7 +210,8 @@ class LibraryEnvironmentTest(TestCase):
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         env.push_cib(etree.XML('<cib/>'))
         mock_replace_cib.assert_called_once_with(
-            "mock cmd runner", '<cib/>', False
+            "mock cmd runner",
+            '<cib/>'
         )
         self.assertEqual([], env.report_processor.report_item_list)
 
@@ -225,7 +226,8 @@ class LibraryEnvironmentTest(TestCase):
         env._cib_upgraded = True
         env.push_cib(etree.XML('<cib/>'))
         mock_replace_cib.assert_called_once_with(
-            "mock cmd runner", '<cib/>', True
+            "mock cmd runner",
+            '<cib/>'
         )
         assert_report_item_list_equal(
             env.report_processor.report_item_list,
@@ -235,6 +237,7 @@ class LibraryEnvironmentTest(TestCase):
                 {}
             )]
         )
+        self.assertFalse(env.cib_upgraded)
 
     @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
     @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")

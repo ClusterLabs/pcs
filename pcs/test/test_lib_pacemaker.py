@@ -244,27 +244,6 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
             stdin_string=xml
         )
 
-    def test_cib_upgraded(self):
-        xml = "<xml/>"
-        expected_stdout = "expected output"
-        expected_stderr = ""
-        expected_retval = 0
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (
-            expected_stdout,
-            expected_stderr,
-            expected_retval
-        )
-
-        lib.replace_cib_configuration(
-            mock_runner, XmlManipulation.from_str(xml).tree, True
-        )
-
-        mock_runner.run.assert_called_once_with(
-            [self.path("cibadmin"), "--replace", "--verbose", "--xml-pipe"],
-            stdin_string=xml
-        )
-
     def test_error(self):
         xml = "<xml/>"
         expected_stdout = "expected output"
