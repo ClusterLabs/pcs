@@ -345,6 +345,8 @@ confirm <node> [\fB\-\-force\fR]
 Confirm that the host specified is currently down.  This command should \fBONLY\fR be used when the node specified has already been confirmed to be powered off and to have no access to shared resources.
 
 .B WARNING: If this node is not actually powered off or it does have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
+
+NOTE: It is not checked if the specified node exists in the cluster in order to be able to work with nodes not visible from the local cluster partition.
 .TP
 sbd enable [\fB\-\-watchdog\fR=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ...
 Enable SBD in cluster. Default path for watchdog device is /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5), SBD_DELAY_START (default: no) and SBD_STARTMODE (default: clean).

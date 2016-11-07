@@ -820,6 +820,10 @@ Commands:
         To prevent accidental running of this command, --force or interactive
         user response is required in order to proceed.
 
+        NOTE: It is not checked if the specified node exists in the cluster
+        in order to be able to work with nodes not visible from the local
+        cluster partition.
+
     sbd enable [--watchdog=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ...
         Enable SBD in cluster. Default path for watchdog device is
         /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5),
