@@ -381,12 +381,19 @@ class CommandRunner(object):
         )
 
         log_args = " ".join([shell_quote(x) for x in args])
-        msg = "Running: {args}"
+        msg = "Running: {args}\nEnvironment:"
+        if env_vars:
+            msg += "\n" + "\n".join([
+                "  {0}={1}".format(key, val)
+                for key, val in sorted(env_vars.items())
+            ])
         if stdin_string:
             msg += "\n--Debug Input Start--\n{stdin}\n--Debug Input End--"
         self._logger.debug(msg.format(args=log_args, stdin=stdin_string))
         self._reporter.process(
-            reports.run_external_process_started(log_args, stdin_string)
+            reports.run_external_process_started(
+                log_args, stdin_string, env_vars
+            )
         )
 
         try:

@@ -201,7 +201,7 @@ def multiple_score_options():
         report_codes.MULTIPLE_SCORE_OPTIONS,
     )
 
-def run_external_process_started(command, stdin):
+def run_external_process_started(command, stdin, environment):
     """
     information about running an external process
     command string the external process command
@@ -212,6 +212,7 @@ def run_external_process_started(command, stdin):
         info={
             "command": command,
             "stdin": stdin,
+            "environment": environment,
         }
     )
 

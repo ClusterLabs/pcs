@@ -87,7 +87,7 @@ class CommandRunnerTest(TestCase):
             {"env": {}, "stdin": None,}
         )
         logger_calls = [
-            mock.call("Running: {0}".format(command_str)),
+            mock.call("Running: {0}\nEnvironment:".format(command_str)),
             mock.call("""\
 Finished running: {0}
 Return value: {1}
@@ -111,6 +111,7 @@ Return value: {1}
                     {
                         "command": command_str,
                         "stdin": None,
+                        "environment": dict(),
                     }
                 ),
                 (
@@ -159,7 +160,13 @@ Return value: {1}
             {"env": {"a": "a", "b": "B", "c": "C"}, "stdin": None,}
         )
         logger_calls = [
-            mock.call("Running: {0}".format(command_str)),
+            mock.call("""\
+Running: {0}
+Environment:
+  a=a
+  b=B
+  c=C""".format(command_str)
+            ),
             mock.call("""\
 Finished running: {0}
 Return value: {1}
@@ -183,6 +190,7 @@ Return value: {1}
                     {
                         "command": command_str,
                         "stdin": None,
+                        "environment": {"a": "a", "b": "B", "c": "C"},
                     }
                 ),
                 (
@@ -229,6 +237,7 @@ Return value: {1}
         logger_calls = [
             mock.call("""\
 Running: {0}
+Environment:
 --Debug Input Start--
 {1}
 --Debug Input End--""".format(command_str, stdin)),
@@ -255,6 +264,7 @@ Return value: {1}
                     {
                         "command": command_str,
                         "stdin": stdin,
+                        "environment": dict(),
                     }
                 ),
                 (
@@ -299,7 +309,7 @@ Return value: {1}
             {"env": {}, "stdin": None,}
         )
         logger_calls = [
-            mock.call("Running: {0}".format(command_str)),
+            mock.call("Running: {0}\nEnvironment:".format(command_str)),
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -312,6 +322,7 @@ Return value: {1}
                     {
                         "command": command_str,
                         "stdin": None,
+                        "environment": dict(),
                     }
                 )
             ]
@@ -347,7 +358,7 @@ Return value: {1}
             {"env": {}, "stdin": None,}
         )
         logger_calls = [
-            mock.call("Running: {0}".format(command_str)),
+            mock.call("Running: {0}\nEnvironment:".format(command_str)),
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -360,6 +371,7 @@ Return value: {1}
                     {
                         "command": command_str,
                         "stdin": None,
+                        "environment": dict(),
                     }
                 )
             ]

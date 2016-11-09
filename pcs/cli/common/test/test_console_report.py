@@ -155,13 +155,23 @@ class BuildInvalidIdTest(NameBuildTest):
             }
         )
 
-class BuildRunExternalaStartedTest(NameBuildTest):
+class BuildRunExternalStartedTest(NameBuildTest):
     code = codes.RUN_EXTERNAL_PROCESS_STARTED
+
+    def test_build_message_minimal(self):
+        self.assert_message_from_info(
+            "Running: COMMAND\nEnvironment:\n",
+            {
+                "command": "COMMAND",
+                "stdin": "",
+                "environment": dict(),
+            }
+        )
 
     def test_build_message_with_stdin(self):
         self.assert_message_from_info(
             (
-                "Running: COMMAND\n"
+                "Running: COMMAND\nEnvironment:\n"
                 "--Debug Input Start--\n"
                 "STDIN\n"
                 "--Debug Input End--\n"
@@ -169,17 +179,41 @@ class BuildRunExternalaStartedTest(NameBuildTest):
             {
                 "command": "COMMAND",
                 "stdin": "STDIN",
+                "environment": dict(),
             }
         )
 
-    def test_build_message_without_stdin(self):
+    def test_build_message_with_env(self):
         self.assert_message_from_info(
-            "Running: COMMAND\n",
+            (
+                "Running: COMMAND\nEnvironment:\n"
+                "  env_a=A\n"
+                "  env_b=B\n"
+            ),
             {
                 "command": "COMMAND",
                 "stdin": "",
+                "environment": {"env_a": "A", "env_b": "B",},
             }
         )
+
+    def test_build_message_maximal(self):
+        self.assert_message_from_info(
+            (
+                "Running: COMMAND\nEnvironment:\n"
+                "  env_a=A\n"
+                "  env_b=B\n"
+                "--Debug Input Start--\n"
+                "STDIN\n"
+                "--Debug Input End--\n"
+            ),
+            {
+                "command": "COMMAND",
+                "stdin": "STDIN",
+                "environment": {"env_a": "A", "env_b": "B",},
+            }
+        )
+
 
 class BuildNodeCommunicationStartedTest(NameBuildTest):
     code = codes.NODE_COMMUNICATION_STARTED

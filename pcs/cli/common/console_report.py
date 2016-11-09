@@ -36,7 +36,7 @@ def indent(line_list, indent_step=2):
     ]
 
 def format_optional(value, template):
-    return  "" if not value else template.format(value)
+    return "" if not value else template.format(value)
 
 def service_operation_started(operation, info):
     return "{operation}{service}{instance_suffix}...".format(
@@ -147,10 +147,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
 
     codes.RUN_EXTERNAL_PROCESS_STARTED: lambda info:
-        "Running: {command}\n{stdin_part}".format(
+        "Running: {command}\nEnvironment:{env_part}\n{stdin_part}".format(
             stdin_part=format_optional(
                 info["stdin"],
                 "--Debug Input Start--\n{0}\n--Debug Input End--\n"
+            ),
+            env_part=format_optional(
+                info["environment"],
+                "\n" + "\n".join([
+                    "  {0}={1}".format(key, val)
+                    for key, val in sorted(info["environment"].items())
+                ])
             ),
             **info
         )
