@@ -145,9 +145,10 @@ Return value: {1}
             self.mock_reporter,
             {"a": "a", "b": "b"}
         )
+        #{C} is for check that no python template conflict appear
         real_stdout, real_stderr, real_retval = runner.run(
             command,
-            env_extend={"b": "B", "c": "C"}
+            env_extend={"b": "B", "c": "{C}"}
         )
 
         self.assertEqual(real_stdout, expected_stdout)
@@ -157,7 +158,7 @@ Return value: {1}
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {"a": "a", "b": "B", "c": "C"}, "stdin": None,}
+            {"env": {"a": "a", "b": "B", "c": "{C}"}, "stdin": None,}
         )
         logger_calls = [
             mock.call("""\
@@ -165,7 +166,7 @@ Running: {0}
 Environment:
   a=a
   b=B
-  c=C""".format(command_str)
+  c={1}""".format(command_str, "{C}")
             ),
             mock.call("""\
 Finished running: {0}
@@ -190,7 +191,7 @@ Return value: {1}
                     {
                         "command": command_str,
                         "stdin": None,
-                        "environment": {"a": "a", "b": "B", "c": "C"},
+                        "environment": {"a": "a", "b": "B", "c": "{C}"},
                     }
                 ),
                 (
