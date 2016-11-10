@@ -28,6 +28,7 @@ from pcs.test.tools.assertions import (
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools.misc import outdent
 
 from pcs import settings
 from pcs.common import report_codes
@@ -88,17 +89,24 @@ class CommandRunnerTest(TestCase):
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
-            mock.call("""\
-Finished running: {0}
-Return value: {1}
---Debug Stdout Start--
-{2}
---Debug Stdout End--
---Debug Stderr Start--
-{3}
---Debug Stderr End--""".format(
-                command_str, expected_retval, expected_stdout, expected_stderr
-            ))
+            mock.call(
+                outdent(
+                    """\
+                    Finished running: {0}
+                    Return value: {1}
+                    --Debug Stdout Start--
+                    {2}
+                    --Debug Stdout End--
+                    --Debug Stderr Start--
+                    {3}
+                    --Debug Stderr End--"""
+                ).format(
+                    command_str,
+                    expected_retval,
+                    expected_stdout,
+                    expected_stderr,
+                )
+            )
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -161,24 +169,34 @@ Return value: {1}
             {"env": {"a": "a", "b": "B", "c": "{C}"}, "stdin": None,}
         )
         logger_calls = [
-            mock.call("""\
-Running: {0}
-Environment:
-  a=a
-  b=B
-  c={1}""".format(command_str, "{C}")
+            mock.call(
+                outdent(
+                    """\
+                    Running: {0}
+                    Environment:
+                      a=a
+                      b=B
+                      c={1}"""
+                ).format(command_str, "{C}")
             ),
-            mock.call("""\
-Finished running: {0}
-Return value: {1}
---Debug Stdout Start--
-{2}
---Debug Stdout End--
---Debug Stderr Start--
-{3}
---Debug Stderr End--""".format(
-                command_str, expected_retval, expected_stdout, expected_stderr
-            ))
+            mock.call(
+                outdent(
+                    """\
+                    Finished running: {0}
+                    Return value: {1}
+                    --Debug Stdout Start--
+                    {2}
+                    --Debug Stdout End--
+                    --Debug Stderr Start--
+                    {3}
+                    --Debug Stderr End--"""
+                ).format(
+                    command_str,
+                    expected_retval,
+                    expected_stdout,
+                    expected_stderr,
+                )
+            )
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -236,22 +254,32 @@ Return value: {1}
             {"env": {}, "stdin": -1}
         )
         logger_calls = [
-            mock.call("""\
-Running: {0}
-Environment:
---Debug Input Start--
-{1}
---Debug Input End--""".format(command_str, stdin)),
-            mock.call("""\
-Finished running: {0}
-Return value: {1}
---Debug Stdout Start--
-{2}
---Debug Stdout End--
---Debug Stderr Start--
-{3}
---Debug Stderr End--""".format(
-                command_str, expected_retval, expected_stdout, expected_stderr
+            mock.call(
+                outdent(
+                    """\
+                    Running: {0}
+                    Environment:
+                    --Debug Input Start--
+                    {1}
+                    --Debug Input End--"""
+                ).format(command_str, stdin)
+            ),
+            mock.call(
+                outdent(
+                    """\
+                    Finished running: {0}
+                    Return value: {1}
+                    --Debug Stdout Start--
+                    {2}
+                    --Debug Stdout End--
+                    --Debug Stderr Start--
+                    {3}
+                    --Debug Stderr End--"""
+                ).format(
+                    command_str,
+                    expected_retval,
+                    expected_stdout,
+                    expected_stderr,
             ))
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
@@ -1005,9 +1033,15 @@ class ParallelCommunicationHelperTest(TestCase):
         )
 
 class IsCmanClusterTest(TestCase):
-    def template_test(self, is_cman, corosync_output, corosync_retval=0):
+    def template_test(self, version_description, is_cman, corosync_retval=0):
         mock_runner = mock.MagicMock(spec_set=lib.CommandRunner)
-        mock_runner.run.return_value = (corosync_output, "", corosync_retval)
+        mock_runner.run.return_value = (
+            "Corosync Cluster Engine{0}\nCopyright (c) 2006-2009 Red Hat, Inc."
+                .format(version_description)
+            ,
+            "",
+            corosync_retval
+        )
         self.assertEqual(is_cman, lib.is_cman_cluster(mock_runner))
         mock_runner.run.assert_called_once_with([
             os.path.join(settings.corosync_binaries, "corosync"),
@@ -1015,51 +1049,23 @@ class IsCmanClusterTest(TestCase):
         ])
 
     def test_is_not_cman(self):
-        self.template_test(
-            False,
-            """\
-Corosync Cluster Engine, version '2.3.4'
-Copyright (c) 2006-2009 Red Hat, Inc.
-"""
-        )
+        self.template_test(", version '2.3.4'", is_cman=False)
 
     def test_is_cman(self):
-        self.template_test(
-            True,
-            """\
-Corosync Cluster Engine, version '1.4.7'
-Copyright (c) 2006-2009 Red Hat, Inc.
-"""
-        )
+        self.template_test(", version '1.4.7'", is_cman=True)
 
     def test_bad_version_format(self):
-        self.template_test(
-            False,
-            """\
-Corosync Cluster Engine, nonsense '2.3.4'
-Copyright (c) 2006-2009 Red Hat, Inc.
-"""
-        )
+        self.template_test(", nonsense '2.3.4'", is_cman=False)
 
     def test_no_version(self):
-        self.template_test(
-            False,
-            """\
-Corosync Cluster Engine
-Copyright (c) 2006-2009 Red Hat, Inc.
-"""
-        )
+        self.template_test("", is_cman=False)
 
     def test_corosync_error(self):
         self.template_test(
-            False,
-            """\
-Corosync Cluster Engine, version '1.4.7'
-Copyright (c) 2006-2009 Red Hat, Inc.
-""",
-            1
+            ", version '1.4.7'",
+            is_cman=False,
+            corosync_retval=1
         )
-
 
 @mock.patch("pcs.lib.external.is_systemctl")
 @mock.patch("pcs.lib.external.is_service_installed")
@@ -1528,13 +1534,15 @@ class GetSystemdServicesTest(TestCase):
 
     def test_success(self, mock_is_systemctl):
         mock_is_systemctl.return_value = True
-        self.mock_runner.run.return_value = ("""\
-pcsd.service                                disabled
-sbd.service                                 enabled
-pacemaker.service                           enabled
+        self.mock_runner.run.return_value = (outdent(
+            """\
+            pcsd.service                                disabled
+            sbd.service                                 enabled
+            pacemaker.service                           enabled
 
-3 unit files listed.
-""", "", 0)
+            3 unit files listed.
+            """
+        ), "", 0)
         self.assertEqual(
             lib.get_systemd_services(self.mock_runner),
             ["pcsd", "sbd", "pacemaker"]
@@ -1567,11 +1575,13 @@ class GetNonSystemdServicesTest(TestCase):
 
     def test_success(self, mock_is_systemctl):
         mock_is_systemctl.return_value = False
-        self.mock_runner.run.return_value = ("""\
-pcsd           	0:off	1:off	2:on	3:on	4:on	5:on	6:off
-sbd            	0:off	1:on	2:on	3:on	4:on	5:on	6:off
-pacemaker      	0:off	1:off	2:off	3:off	4:off	5:off	6:off
-""", "", 0)
+        self.mock_runner.run.return_value = (outdent(
+            """\
+            pcsd           	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+            sbd            	0:off	1:on	2:on	3:on	4:on	5:on	6:off
+            pacemaker      	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+            """
+        ), "", 0)
         self.assertEqual(
             lib.get_non_systemd_services(self.mock_runner),
             ["pcsd", "sbd", "pacemaker"]
