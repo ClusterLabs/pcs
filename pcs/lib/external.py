@@ -375,21 +375,27 @@ class CommandRunner(object):
         # set own PATH or CIB_file, we must allow it. I.e. it wants to run
         # a pacemaker tool on a CIB in a file but cannot afford the risk of
         # changing the CIB in the file specified by the user.
-        env_vars = self._env_vars
+        env_vars = self._env_vars.copy()
         env_vars.update(
             dict(env_extend) if env_extend else dict()
         )
 
         log_args = " ".join([shell_quote(x) for x in args])
-        msg = "Running: {args}\nEnvironment:"
-        if env_vars:
-            msg += "\n" + "\n".join([
-                "  {0}={1}".format(key, val)
-                for key, val in sorted(env_vars.items())
-            ])
-        if stdin_string:
-            msg += "\n--Debug Input Start--\n{stdin}\n--Debug Input End--"
-        self._logger.debug(msg.format(args=log_args, stdin=stdin_string))
+        self._logger.debug(
+            "Running: {args}\nEnvironment:{env_vars}{stdin_string}".format(
+                args=log_args,
+                stdin_string=("" if not stdin_string else (
+                    "\n--Debug Input Start--\n{0}\n--Debug Input End--"
+                    .format(stdin_string)
+                )),
+                env_vars=("" if not env_vars else (
+                    "\n" + "\n".join([
+                        "  {0}={1}".format(key, val)
+                        for key, val in sorted(env_vars.items())
+                    ])
+                ))
+            )
+        )
         self._reporter.process(
             reports.run_external_process_started(
                 log_args, stdin_string, env_vars
