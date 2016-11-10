@@ -5,9 +5,12 @@
 ### Fixed
 - When upgrading CIB to the latest schema version, check for minimal common
   version across the cluster ([rhbz#1389443])
+- `pcs booth remove` now works correctly even if the booth resource group is
+  disabled ([rhbz#1389941])
 
 
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
+[rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
 
 
 ## [0.9.155] - 2016-11-03
@@ -30,7 +33,7 @@
 - When stopping a cluster with some of the nodes unreachable, stop the cluster
   completely on all reachable nodes ([rhbz#1380372])
 - Fixed pcsd crash when rpam rubygem is installed ([ghissue#109])
-- Fixed occasional crashes / failures when using locale other than en_US.UTF8
+- Fixed occasional crashes / failures when using locale other than en\_US.UTF8
   ([rhbz#1387106])
 - Fixed starting and stopping cluster services on systemd machines without
   the `service` executable ([ghissue#115])

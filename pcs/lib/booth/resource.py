@@ -48,12 +48,15 @@ def is_ip_resource(resource_element):
     return resource_element.attrib["type"] == "IPaddr2"
 
 def find_grouped_ip_element_to_remove(booth_element):
-    if booth_element.getparent().tag != "group":
+    group = booth_element.getparent()
+
+    if group.tag != "group":
         return None
 
-    group = booth_element.getparent()
-    if len(group) != 2:
-        #when something else in group, ip is not for remove
+    if len(group.findall("./primitive")) != 2:
+        # Don't remove the IP resource if some other resources are in the group.
+        # It is most likely manually configured by the user so we cannot delete
+        # it automatically.
         return None
     for element in group:
         if is_ip_resource(element):

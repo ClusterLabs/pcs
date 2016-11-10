@@ -91,6 +91,9 @@ class RemoveFromClusterTest(TestCase):
         booth_resource.get_remover(mock_resource_remove)(element_list)
         return mock_resource_remove
 
+    def find_booth_resources(self, tree):
+        return tree.xpath('.//primitive[@type="booth-site"]')
+
     def test_remove_ip_when_is_only_booth_sibling_in_group(self):
         group = etree.fromstring('''
             <group>
@@ -103,10 +106,53 @@ class RemoveFromClusterTest(TestCase):
             </group>
         ''')
 
-        mock_resource_remove = self.call(group.getchildren()[1:])
+        mock_resource_remove = self.call(self.find_booth_resources(group))
         self.assertEqual(
             mock_resource_remove.mock_calls, [
                 mock.call('ip'),
+                mock.call('booth'),
+            ]
+        )
+
+    def test_remove_ip_when_group_is_disabled(self):
+        group = etree.fromstring('''
+            <group>
+                <primitive id="ip" type="IPaddr2"/>
+                <primitive id="booth" type="booth-site">
+                    <instance_attributes>
+                        <nvpair name="config" value="/PATH/TO/CONF"/>
+                    </instance_attributes>
+                </primitive>
+                <meta_attributes>
+                    <nvpair name="target-role" value="Stopped"/>
+                </meta_attributes>
+            </group>
+        ''')
+
+        mock_resource_remove = self.call(self.find_booth_resources(group))
+        self.assertEqual(
+            mock_resource_remove.mock_calls, [
+                mock.call('ip'),
+                mock.call('booth'),
+            ]
+        )
+
+    def test_dont_remove_ip_when_group_has_other_resources(self):
+        group = etree.fromstring('''
+            <group>
+                <primitive id="ip" type="IPaddr2"/>
+                <primitive id="booth" type="booth-site">
+                    <instance_attributes>
+                        <nvpair name="config" value="/PATH/TO/CONF"/>
+                    </instance_attributes>
+                </primitive>
+                <primitive id="dummy" type="Dummy"/>
+            </group>
+        ''')
+
+        mock_resource_remove = self.call(self.find_booth_resources(group))
+        self.assertEqual(
+            mock_resource_remove.mock_calls, [
                 mock.call('booth'),
             ]
         )
@@ -147,7 +193,7 @@ class CreateInClusterTest(TestCase):
         mock_resource_remove.assert_called_once_with("ip_id")
 
 
-class FindBindedIpTest(TestCase):
+class FindBoundIpTest(TestCase):
     def fixture_resource_section(self, ip_element_list):
         resources_section = etree.fromstring('<resources/>')
         group = etree.SubElement(resources_section, "group")

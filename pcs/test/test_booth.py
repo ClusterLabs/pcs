@@ -328,6 +328,20 @@ class RemoveTest(BoothTest):
         ])
         self.assert_pcs_success("resource show", "NO resources configured\n")
 
+    def test_remove_when_group_disabled(self):
+        self.assert_pcs_success("resource show", "NO resources configured\n")
+        self.assert_pcs_success("booth create ip 192.168.122.120")
+        self.assert_pcs_success("resource disable booth-booth-group")
+        self.assert_pcs_success("resource show", [
+             " Resource Group: booth-booth-group",
+             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped (disabled)",
+             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped (disabled)",
+        ])
+        self.assert_pcs_success("booth remove", [
+            "Deleting Resource - booth-booth-ip",
+            "Deleting Resource (and group) - booth-booth-service",
+        ])
+        self.assert_pcs_success("resource show", "NO resources configured\n")
 
     def test_remove_multiple_booth_configuration(self):
         self.assert_pcs_success("resource show", "NO resources configured\n")
@@ -348,7 +362,6 @@ class RemoveTest(BoothTest):
             "Deleting Resource (and group) - booth-booth-service",
             "Deleting Resource - some-id",
         ])
-
 
 class TicketGrantTest(BoothTest):
     def test_failed_when_implicit_site_but_not_correct_confgiuration_in_cib(
