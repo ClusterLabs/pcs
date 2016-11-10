@@ -148,16 +148,19 @@ class CommandRunnerTest(TestCase):
         mock_process.returncode = expected_retval
         mock_popen.return_value = mock_process
 
+        global_env = {"a": "a", "b": "b"}
         runner = lib.CommandRunner(
             self.mock_logger,
             self.mock_reporter,
-            {"a": "a", "b": "b"}
+            global_env.copy()
         )
         #{C} is for check that no python template conflict appear
         real_stdout, real_stderr, real_retval = runner.run(
             command,
             env_extend={"b": "B", "c": "{C}"}
         )
+        #check that env_exted did not affect initial env of runner
+        self.assertEqual(runner._env_vars, global_env)
 
         self.assertEqual(real_stdout, expected_stdout)
         self.assertEqual(real_stderr, expected_stderr)
