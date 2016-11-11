@@ -38,12 +38,10 @@ from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
 from pcs.cli.common.reports import process_library_reports, build_report_message
 from pcs.lib import (
-    pacemaker as lib_pacemaker,
     sbd as lib_sbd,
     reports as lib_reports,
 )
 from pcs.lib.booth import sync as booth_sync
-from pcs.lib.nodes_task import check_corosync_offline_on_nodes
 from pcs.lib.commands.quorum import _add_device_model_net
 from pcs.lib.corosync import (
     config_parser as corosync_conf_utils,
@@ -61,6 +59,8 @@ from pcs.lib.external import (
     node_communicator_exception_to_report_item,
 )
 from pcs.lib.node import NodeAddresses
+from pcs.lib.nodes_task import check_corosync_offline_on_nodes
+import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.tools import environment_file_to_dict
 
 def cluster_cmd(argv):

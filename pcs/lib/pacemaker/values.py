@@ -11,18 +11,11 @@ from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
 
-__BOOLEAN_TRUE = ["true", "on", "yes", "y", "1"]
-__BOOLEAN_FALSE = ["false", "off", "no", "n", "0"]
+_BOOLEAN_TRUE = frozenset(["true", "on", "yes", "y", "1"])
+_BOOLEAN_FALSE = frozenset(["false", "off", "no", "n", "0"])
+_BOOLEAN = _BOOLEAN_TRUE | _BOOLEAN_FALSE
 SCORE_INFINITY = "INFINITY"
 
-
-def is_true(val):
-    """
-    Does pacemaker consider a value to be true?
-    See crm_is_true in pacemaker/lib/common/utils.c
-    var checked value
-    """
-    return val.lower() in __BOOLEAN_TRUE
 
 def is_boolean(val):
     """
@@ -30,7 +23,21 @@ def is_boolean(val):
     See crm_is_true in pacemaker/lib/common/utils.c
     val checked value
     """
-    return val.lower() in __BOOLEAN_TRUE + __BOOLEAN_FALSE
+    return val.lower() in _BOOLEAN
+
+def is_true(val):
+    """
+    Does pacemaker consider a value to be true?
+    See crm_is_true in pacemaker/lib/common/utils.c
+    var checked value
+    """
+    return val.lower() in _BOOLEAN_TRUE
+
+def is_score(value):
+    if not value:
+        return False
+    unsigned_value = value[1:] if value[0] in ("+", "-") else value
+    return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()
 
 def timeout_to_seconds(timeout, return_unknown=False):
     """
@@ -93,8 +100,3 @@ def validate_id(id_candidate, description="id"):
                 id_candidate, description, char, False
             ))
 
-def is_score_value(value):
-    if not value:
-        return False
-    unsigned_value = value[1:] if value[0] in ("+", "-") else value
-    return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()

@@ -5,7 +5,6 @@ from __future__ import (
     unicode_literals,
 )
 
-from pcs.test.tools.pcs_unittest import TestCase
 import os.path
 
 from pcs.test.tools.assertions import (
@@ -13,12 +12,12 @@ from pcs.test.tools.assertions import (
     assert_xml_equal,
 )
 from pcs.test.tools.misc import get_test_resource as rc
-from pcs.test.tools.pcs_unittest import mock
+from pcs.test.tools.pcs_unittest import TestCase, mock
 from pcs.test.tools.xml import XmlManipulation
 
 from pcs import settings
 from pcs.common import report_codes
-from pcs.lib import pacemaker as lib
+import pcs.lib.pacemaker.live as lib
 from pcs.lib.errors import ReportItemSeverity as Severity
 from pcs.lib.external import CommandRunner
 
@@ -679,7 +678,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
         self.assertTrue(
-            lib.has_resource_wait_support(mock_runner)
+            lib.has_wait_for_idle_support(mock_runner)
         )
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "-?"]
@@ -697,7 +696,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
         self.assertTrue(
-            lib.has_resource_wait_support(mock_runner)
+            lib.has_wait_for_idle_support(mock_runner)
         )
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "-?"]
@@ -715,22 +714,28 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
         self.assertFalse(
-            lib.has_resource_wait_support(mock_runner)
+            lib.has_wait_for_idle_support(mock_runner)
         )
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "-?"]
         )
 
-    @mock.patch("pcs.lib.pacemaker.has_resource_wait_support", autospec=True)
+    @mock.patch(
+        "pcs.lib.pacemaker.live.has_wait_for_idle_support",
+        autospec=True
+    )
     def test_ensure_support_success(self, mock_obj):
         mock_obj.return_value = True
-        self.assertEqual(None, lib.ensure_resource_wait_support(mock.Mock()))
+        self.assertEqual(None, lib.ensure_wait_for_idle_support(mock.Mock()))
 
-    @mock.patch("pcs.lib.pacemaker.has_resource_wait_support", autospec=True)
+    @mock.patch(
+        "pcs.lib.pacemaker.live.has_wait_for_idle_support",
+        autospec=True
+    )
     def test_ensure_support_error(self, mock_obj):
         mock_obj.return_value = False
         assert_raise_library_error(
-            lambda: lib.ensure_resource_wait_support(mock.Mock()),
+            lambda: lib.ensure_wait_for_idle_support(mock.Mock()),
             (
                 Severity.ERROR,
                 report_codes.RESOURCE_WAIT_NOT_SUPPORTED,
@@ -749,7 +754,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             expected_retval
         )
 
-        self.assertEqual(None, lib.wait_for_resources(mock_runner))
+        self.assertEqual(None, lib.wait_for_idle(mock_runner))
 
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--wait"]
@@ -767,7 +772,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             expected_retval
         )
 
-        self.assertEqual(None, lib.wait_for_resources(mock_runner, timeout))
+        self.assertEqual(None, lib.wait_for_idle(mock_runner, timeout))
 
         mock_runner.run.assert_called_once_with(
             [
@@ -788,7 +793,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
         assert_raise_library_error(
-            lambda: lib.wait_for_resources(mock_runner),
+            lambda: lib.wait_for_idle(mock_runner),
             (
                 Severity.ERROR,
                 report_codes.RESOURCE_WAIT_ERROR,
@@ -814,7 +819,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
         assert_raise_library_error(
-            lambda: lib.wait_for_resources(mock_runner),
+            lambda: lib.wait_for_idle(mock_runner),
             (
                 Severity.ERROR,
                 report_codes.RESOURCE_WAIT_TIMED_OUT,

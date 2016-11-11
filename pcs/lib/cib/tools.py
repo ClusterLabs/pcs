@@ -14,8 +14,8 @@ from pcs import settings
 from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker import get_cib_xml, parse_cib_xml
-from pcs.lib.pacemaker_values import validate_id
+from pcs.lib.pacemaker.live import get_cib_xml, parse_cib_xml
+from pcs.lib.pacemaker.values import validate_id
 
 
 def does_id_exist(tree, check_id):

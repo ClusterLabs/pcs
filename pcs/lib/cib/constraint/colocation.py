@@ -11,7 +11,7 @@ from pcs.lib import reports
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib.tools import check_new_id_applicable
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker_values import is_score_value, SCORE_INFINITY
+from pcs.lib.pacemaker.values import is_score, SCORE_INFINITY
 
 TAG_NAME = 'rsc_colocation'
 DESCRIPTION = "constraint id"
@@ -25,7 +25,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
         partial(check_new_id_applicable, cib, DESCRIPTION),
     )
 
-    if "score" in options and not is_score_value(options["score"]):
+    if "score" in options and not is_score(options["score"]):
         raise LibraryError(reports.invalid_score(options["score"]))
 
     score_attrs_count = len([

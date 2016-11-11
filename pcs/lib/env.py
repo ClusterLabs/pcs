@@ -33,7 +33,7 @@ from pcs.lib.nodes_task import (
     check_corosync_offline_on_nodes,
     qdevice_reload_on_nodes,
 )
-from pcs.lib.pacemaker import (
+from pcs.lib.pacemaker.live import (
     get_cib,
     get_cib_xml,
     replace_cib_configuration_xml,

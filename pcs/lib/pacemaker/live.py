@@ -12,7 +12,7 @@ from pcs import settings
 from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker_state import ClusterState
+from pcs.lib.pacemaker.state import ClusterState
 
 
 __EXITCODE_WAIT_TIMEOUT = 62
@@ -22,9 +22,8 @@ __RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD = 100
 class CrmMonErrorException(LibraryError):
     pass
 
-# syntactic sugar for getting a full path to a pacemaker executable
-def __exec(name):
-    return os.path.join(settings.pacemaker_binaries, name)
+
+### status
 
 def get_cluster_status_xml(runner):
     stdout, stderr, retval = runner.run(
@@ -35,6 +34,28 @@ def get_cluster_status_xml(runner):
             reports.cluster_state_cannot_load(join_multilines([stderr, stdout]))
         )
     return stdout
+
+def get_local_node_status(runner):
+    try:
+        cluster_status = ClusterState(get_cluster_status_xml(runner))
+    except CrmMonErrorException:
+        return {"offline": True}
+    node_name = __get_local_node_name(runner)
+    for node_status in cluster_status.node_section.nodes:
+        if node_status.attrs.name == node_name:
+            result = {
+                "offline": False,
+            }
+            for attr in (
+                'id', 'name', 'type', 'online', 'standby', 'standby_onfail',
+                'maintenance', 'pending', 'unclean', 'shutdown', 'expected_up',
+                'is_dc', 'resources_running',
+            ):
+                result[attr] = getattr(node_status.attrs, attr)
+            return result
+    raise LibraryError(reports.node_not_found(node_name))
+
+### cib
 
 def get_cib_xml(runner, scope=None):
     command = [__exec("cibadmin"), "--local", "--query"]
@@ -84,25 +105,43 @@ def replace_cib_configuration(runner, tree):
     xml = etree.tostring(tree).decode()
     return replace_cib_configuration_xml(runner, xml)
 
-def get_local_node_status(runner):
-    try:
-        cluster_status = ClusterState(get_cluster_status_xml(runner))
-    except CrmMonErrorException:
-        return {"offline": True}
-    node_name = __get_local_node_name(runner)
-    for node_status in cluster_status.node_section.nodes:
-        if node_status.attrs.name == node_name:
-            result = {
-                "offline": False,
-            }
-            for attr in (
-                'id', 'name', 'type', 'online', 'standby', 'standby_onfail',
-                'maintenance', 'pending', 'unclean', 'shutdown', 'expected_up',
-                'is_dc', 'resources_running',
-            ):
-                result[attr] = getattr(node_status.attrs, attr)
-            return result
-    raise LibraryError(reports.node_not_found(node_name))
+### wait for idle
+
+def has_wait_for_idle_support(runner):
+    # returns 1 on success so we don't care about retval
+    stdout, stderr, dummy_retval = runner.run(
+        [__exec("crm_resource"), "-?"]
+    )
+    # help goes to stderr but we check stdout as well if that gets changed
+    return "--wait" in stderr or "--wait" in stdout
+
+def ensure_wait_for_idle_support(runner):
+    if not has_wait_for_idle_support(runner):
+        raise LibraryError(reports.resource_wait_not_supported())
+
+def wait_for_idle(runner, timeout=None):
+    args = [__exec("crm_resource"), "--wait"]
+    if timeout is not None:
+        args.append("--timeout={0}".format(timeout))
+    stdout, stderr, retval = runner.run(args)
+    if retval != 0:
+        # Usefull info goes to stderr - not only error messages, a list of
+        # pending actions in case of timeout goes there as well.
+        # We use stdout just to be sure if that's get changed.
+        if retval == __EXITCODE_WAIT_TIMEOUT:
+            raise LibraryError(
+                reports.resource_wait_timed_out(
+                    join_multilines([stderr, stdout])
+                )
+            )
+        else:
+            raise LibraryError(
+                reports.resource_wait_error(
+                    join_multilines([stderr, stdout])
+                )
+            )
+
+### resources
 
 def resource_cleanup(runner, resource=None, node=None, force=False):
     if not force and not node and not resource:
@@ -139,40 +178,6 @@ def nodes_standby(runner, node_list=None, all_nodes=False):
 
 def nodes_unstandby(runner, node_list=None, all_nodes=False):
     return __nodes_standby_unstandby(runner, False, node_list, all_nodes)
-
-def has_resource_wait_support(runner):
-    # returns 1 on success so we don't care about retval
-    stdout, stderr, dummy_retval = runner.run(
-        [__exec("crm_resource"), "-?"]
-    )
-    # help goes to stderr but we check stdout as well if that gets changed
-    return "--wait" in stderr or "--wait" in stdout
-
-def ensure_resource_wait_support(runner):
-    if not has_resource_wait_support(runner):
-        raise LibraryError(reports.resource_wait_not_supported())
-
-def wait_for_resources(runner, timeout=None):
-    args = [__exec("crm_resource"), "--wait"]
-    if timeout is not None:
-        args.append("--timeout={0}".format(timeout))
-    stdout, stderr, retval = runner.run(args)
-    if retval != 0:
-        # Usefull info goes to stderr - not only error messages, a list of
-        # pending actions in case of timeout goes there as well.
-        # We use stdout just to be sure if that's get changed.
-        if retval == __EXITCODE_WAIT_TIMEOUT:
-            raise LibraryError(
-                reports.resource_wait_timed_out(
-                    join_multilines([stderr, stdout])
-                )
-            )
-        else:
-            raise LibraryError(
-                reports.resource_wait_error(
-                    join_multilines([stderr, stdout])
-                )
-            )
 
 def __nodes_standby_unstandby(
     runner, standby=True, node_list=None, all_nodes=False
@@ -242,3 +247,10 @@ def __get_local_node_name(runner):
             reports.pacemaker_local_node_name_not_found("node name is null")
         )
     return node_name
+
+### tools
+
+# syntactic sugar for getting a full path to a pacemaker executable
+def __exec(name):
+    return os.path.join(settings.pacemaker_binaries, name)
+

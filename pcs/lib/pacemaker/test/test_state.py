@@ -12,7 +12,7 @@ from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import get_xml_manipulation_creator_from_file
 
-from pcs.lib.pacemaker_state import (
+from pcs.lib.pacemaker.state import (
     ClusterState,
     _Attrs,
     _Children,

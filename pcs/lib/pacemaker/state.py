@@ -17,7 +17,7 @@ from lxml import etree
 from pcs import settings
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker_values import is_true
+from pcs.lib.pacemaker.values import is_true
 
 class _Attrs(object):
     def __init__(self, owner_name, attrib, required_attrs):

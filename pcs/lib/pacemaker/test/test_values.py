@@ -12,7 +12,7 @@ from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItemSeverity as severity
 
-import pcs.lib.pacemaker_values as lib
+import pcs.lib.pacemaker.values as lib
 
 
 class BooleanTest(TestCase):
@@ -227,25 +227,25 @@ class ValidateIdTest(TestCase):
 
 class IsScoreValueTest(TestCase):
     def test_returns_true_for_number(self):
-        self.assertTrue(lib.is_score_value("1"))
+        self.assertTrue(lib.is_score("1"))
 
     def test_returns_true_for_minus_number(self):
-        self.assertTrue(lib.is_score_value("-1"))
+        self.assertTrue(lib.is_score("-1"))
 
     def test_returns_true_for_plus_number(self):
-        self.assertTrue(lib.is_score_value("+1"))
+        self.assertTrue(lib.is_score("+1"))
 
     def test_returns_true_for_infinity(self):
-        self.assertTrue(lib.is_score_value("INFINITY"))
+        self.assertTrue(lib.is_score("INFINITY"))
 
     def test_returns_true_for_minus_infinity(self):
-        self.assertTrue(lib.is_score_value("-INFINITY"))
+        self.assertTrue(lib.is_score("-INFINITY"))
 
     def test_returns_true_for_plus_infinity(self):
-        self.assertTrue(lib.is_score_value("+INFINITY"))
+        self.assertTrue(lib.is_score("+INFINITY"))
 
     def test_returns_false_for_nonumber_noinfinity(self):
-        self.assertFalse(lib.is_score_value("something else"))
+        self.assertFalse(lib.is_score("something else"))
 
     def test_returns_false_for_multiple_operators(self):
-        self.assertFalse(lib.is_score_value("++INFINITY"))
+        self.assertFalse(lib.is_score("++INFINITY"))

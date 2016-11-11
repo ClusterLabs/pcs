@@ -15,8 +15,8 @@ from pcs import (
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
-import pcs.lib.pacemaker as lib_pacemaker
-from pcs.lib.pacemaker_values import get_valid_timeout_seconds
+import pcs.lib.pacemaker.live as lib_pacemaker
+from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 
 
 def node_cmd(argv):
@@ -134,7 +134,7 @@ def node_standby(argv, standby=True):
 
     try:
         if wait:
-            lib_pacemaker.ensure_resource_wait_support(utils.cmd_runner())
+            lib_pacemaker.ensure_wait_for_idle_support(utils.cmd_runner())
             valid_timeout = get_valid_timeout_seconds(timeout)
         if standby:
             lib_pacemaker.nodes_standby(
@@ -145,7 +145,7 @@ def node_standby(argv, standby=True):
                 utils.cmd_runner(), node_list, all_nodes
             )
         if wait:
-            lib_pacemaker.wait_for_resources(utils.cmd_runner(), valid_timeout)
+            lib_pacemaker.wait_for_idle(utils.cmd_runner(), valid_timeout)
     except LibraryError as e:
         utils.process_library_reports(e.args)
 

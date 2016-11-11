@@ -17,7 +17,7 @@ from pcs.qdevice import qdevice_status_cmd
 from pcs.quorum import quorum_status_cmd
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker_state import ClusterState
+from pcs.lib.pacemaker.state import ClusterState
 
 def status_cmd(argv):
     if len(argv) == 0:

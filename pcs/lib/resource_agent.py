@@ -12,7 +12,7 @@ from lxml import etree
 from pcs import settings
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError, ReportItemSeverity
-from pcs.lib.pacemaker_values import is_true
+from pcs.lib.pacemaker.values import is_true
 from pcs.common import report_codes
 
 

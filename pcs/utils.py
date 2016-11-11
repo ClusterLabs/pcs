@@ -54,13 +54,13 @@ from pcs.lib.external import (
 import pcs.lib.resource_agent as lib_ra
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
-from pcs.lib.pacemaker import has_resource_wait_support
-from pcs.lib.pacemaker_state import ClusterState
-from pcs.lib.pacemaker_values import(
-    validate_id,
+from pcs.lib.pacemaker.live import has_wait_for_idle_support
+from pcs.lib.pacemaker.state import ClusterState
+from pcs.lib.pacemaker.values import(
     is_boolean,
+    is_score as is_score_value,
     timeout_to_seconds as get_timeout_seconds,
-    is_score_value,
+    validate_id,
 )
 from pcs.cli.common import middleware
 from pcs.cli.common.env import Env
@@ -1526,7 +1526,7 @@ def get_default_op_values(full_agent_name):
 
 
 def check_pacemaker_supports_resource_wait():
-    if not has_resource_wait_support(cmd_runner()):
+    if not has_wait_for_idle_support(cmd_runner()):
         err("crm_resource does not support --wait, please upgrade pacemaker")
 
 def validate_wait_get_timeout(need_cib_support=True):
@@ -1850,7 +1850,7 @@ def get_terminal_password(message="Password: "):
 def getClusterState():
     return parseString(getClusterStateXml())
 
-# DEPRECATED, please use lib.pacemaker.get_cluster_status_xml in new code
+# DEPRECATED, please use lib.pacemaker.live.get_cluster_status_xml in new code
 def getClusterStateXml():
     xml, returncode = run(["crm_mon", "--one-shot", "--as-xml", "--inactive"])
     if returncode != 0:

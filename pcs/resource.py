@@ -22,11 +22,11 @@ from pcs import (
 from pcs.settings import pacemaker_wait_timeout_status as \
     PACEMAKER_WAIT_TIMEOUT_STATUS
 import pcs.lib.cib.acl as lib_acl
-import pcs.lib.pacemaker as lib_pacemaker
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker_values import timeout_to_seconds
+import pcs.lib.pacemaker.live as lib_pacemaker
+from pcs.lib.pacemaker.values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
 
 
