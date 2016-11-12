@@ -43,7 +43,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
         self.assert_message_from_info(
             "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",
             {
-                "option_name": "NAME",
+                "option_name": ["NAME"],
                 "option_type": "TYPE",
                 "allowed": sorted(["FIRST", "SECOND"]),
             }
@@ -53,9 +53,19 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
         self.assert_message_from_info(
             "invalid option 'NAME', allowed options are: FIRST, SECOND",
             {
-                "option_name": "NAME",
+                "option_name": ["NAME"],
                 "option_type": "",
                 "allowed": sorted(["FIRST", "SECOND"]),
+            }
+        )
+
+    def test_build_message_with_multiple_names(self):
+        self.assert_message_from_info(
+            "invalid options: 'ANOTHER', 'NAME', allowed option is FIRST",
+            {
+                "option_name": ["NAME", "ANOTHER"],
+                "option_type": "",
+                "allowed": ["FIRST"],
             }
         )
 

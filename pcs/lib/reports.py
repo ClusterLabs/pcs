@@ -98,12 +98,13 @@ def invalid_option(
 ):
     """
     specified option name is not valid, usualy an error or a warning
-    option_name specified invalid option name
+    string|list option_name specified invalid option names
     allowed_options iterable of possible allowed option names
     option_type decsribes the option
     severity report item severity
     forceable is this report item forceable? by what cathegory?
     """
+
     return ReportItem(
         report_codes.INVALID_OPTION,
         severity,

@@ -72,7 +72,7 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "unknown",
+                    "option_name": ["unknown"],
                     "option_type": None,
                     "allowed": ["id", "loss-policy", "rsc", "rsc-role", "ticket"],
                 }

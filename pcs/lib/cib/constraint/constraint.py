@@ -17,11 +17,14 @@ from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
 def _validate_attrib_names(attrib_names, options):
-    for option_name in options.keys():
-        if option_name not in attrib_names:
-            raise LibraryError(
-                reports.invalid_option(option_name, attrib_names, None)
-            )
+    invalid_names = [
+        name for name in options.keys()
+        if name not in attrib_names
+    ]
+    if invalid_names:
+        raise LibraryError(
+            reports.invalid_option(invalid_names, attrib_names, None)
+        )
 
 def find_valid_resource_id(
     report_processor, cib, can_repair_to_clone, in_clone_allowed, id
