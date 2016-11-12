@@ -81,14 +81,17 @@ def empty_resource_set_list():
         report_codes.EMPTY_RESOURCE_SET_LIST,
     )
 
-def required_option_is_missing(name):
+def required_option_is_missing(name, option_type=""):
     """
     required option has not been specified, command cannot continue
+    string|list name is/are required but was not entered
+    option_type decsribes the option
     """
     return ReportItem.error(
         report_codes.REQUIRED_OPTION_IS_MISSING,
         info={
-            "option_name": name
+            "option_name": name,
+            "option_type": option_type,
         }
     )
 

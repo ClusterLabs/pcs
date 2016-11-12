@@ -69,6 +69,35 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
             }
         )
 
+class RequiredOptionIsMissing(NameBuildTest):
+    code = codes.REQUIRED_OPTION_IS_MISSING
+    def test_build_message_with_type(self):
+        self.assert_message_from_info(
+            "required TYPE option 'NAME' is missing",
+            {
+                "option_name": "NAME",
+                "option_type": "TYPE",
+            }
+        )
+
+    def test_build_message_without_type(self):
+        self.assert_message_from_info(
+            "required option 'NAME' is missing",
+            {
+                "option_name": "NAME",
+                "option_type": "",
+            }
+        )
+
+    def test_build_message_with_multiple_names(self):
+        self.assert_message_from_info(
+            "required options 'ANOTHER', 'NAME' are missing",
+            {
+                "option_name": ["NAME", "ANOTHER"],
+                "option_type": "",
+            }
+        )
+
 class BuildInvalidOptionValueMessageTest(NameBuildTest):
     code = codes.INVALID_OPTION_VALUE
     def test_build_message_with_multiple_allowed_values(self):
