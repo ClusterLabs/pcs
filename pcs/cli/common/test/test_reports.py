@@ -29,7 +29,9 @@ class BuildMessageFromReportTest(TestCase):
             "Message force text is inside",
             build_message_from_report(
                 {
-                    "SOME": "Message {force} is inside",
+                    "SOME": lambda info, force_text:
+                        "Message "+force_text+" is inside"
+                    ,
                 },
                 ReportItem("SOME", {}),
                 "force text"

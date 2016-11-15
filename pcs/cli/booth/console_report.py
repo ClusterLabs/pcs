@@ -10,9 +10,10 @@ from pcs.common import report_codes as codes
 def format_booth_default(value, template):
     return "" if value in ("booth", "", None) else template.format(value)
 
-#Each value (callable taking report_item.info) returns string template.
-#Optionaly the template can contain placehodler {force} for next processing.
-#Placeholder {force} will be appended if is necessary and if is not presset
+#Each value (a callable taking report_item.info) returns a message.
+#Force text will be appended if necessary.
+#If it is necessary to put the force text inside the string then the callable
+#must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.BOOTH_LACK_OF_SITES: lambda info:
         "lack of sites for booth configuration (need 2 at least): sites {0}"

@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 import sys
+import inspect
 from functools import partial
 
 from pcs.cli.booth.console_report import (
@@ -36,23 +37,20 @@ def build_message_from_report(code_builder_map, report_item, force_text=""):
     if report_item.code not in code_builder_map:
         return build_default_message_from_report(report_item, force_text)
 
-    template = code_builder_map[report_item.code]
+    message = code_builder_map[report_item.code]
     #Sometimes report item info is not needed for message building.
-    #In this case template is string. Otherwise, template is callable.
-    if callable(template):
-        try:
-            template = template(report_item.info)
-        except(TypeError, KeyError):
-            return build_default_message_from_report(report_item, force_text)
+    #In that case the message is a string. Otherwise the message is a callable.
+    if not callable(message):
+        return message + force_text
+
+    try:
+        if "force_text" in inspect.getargspec(message).args:
+            return message(report_item.info, force_text)
+        return message(report_item.info) + force_text
+    except(TypeError, KeyError):
+        return build_default_message_from_report(report_item, force_text)
 
 
-    #Message can contain {force} placeholder if there is need to have it on
-    #specific position. Otherwise is appended to the end (if necessary). This
-    #removes the need to explicitly specify placeholder for each message.
-    if force_text and "{force}" not in template:
-        template += "{force}"
-
-    return template.format(force=force_text)
 
 build_report_message = partial(build_message_from_report, __CODE_BUILDER_MAP)
 

@@ -72,13 +72,20 @@ class DuplicateConstraintsReportTest(TestCase):
 
         self.assertEqual(
             "\n".join([
-                "duplicate constraint already exists{force}",
+                "duplicate constraint already exists force text",
                 "  constraint info"
             ]),
-            self.build({
-                "constraint_info_list": [{"options": {"a": "b"}}],
-                "constraint_type": "rsc_some"
-            })
+            self.build(
+                {
+                    "constraint_info_list": [{"options": {"a": "b"}}],
+                    "constraint_type": "rsc_some"
+                },
+                force_text=" force text"
+            )
+        )
+        mock_constraint.assert_called_once_with(
+            "rsc_some",
+            {"options": {"a": "b"}}
         )
 
 class ResourceForConstraintIsMultiinstanceTest(TestCase):
