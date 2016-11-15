@@ -7,10 +7,13 @@
   version across the cluster ([rhbz#1389443])
 - `pcs booth remove` now works correctly even if the booth resource group is
   disabled ([rhbz#1389941])
+- Adding a node in a CMAN cluster does not cause the new node to be fenced
+  immediately ([rhbz#1394846])
 
 
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
+[rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846
 
 
 ## [0.9.155] - 2016-11-03

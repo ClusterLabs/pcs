@@ -1548,8 +1548,20 @@ def cluster_node(argv):
             else:
                 print("%s: Corosync updated" % my_node)
                 corosync_conf = output
-        # corosync.conf must be reloaded before the new node is started
-        output, retval = utils.reloadCorosync()
+        if not utils.is_cman_cluster():
+            # When corosync 2 is in use, the procedure for adding a node is:
+            # 1. add the new node to corosync.conf
+            # 2. reload  corosync.conf before the new node is started
+            # 3. start the new node
+            # If done otherwise, membership gets broken a qdevice hangs. Cluster
+            # will recover after a minute or so but still it's a wrong way.
+            # When corosync 1 is in use, the procedure for adding a node is:
+            # 1. add the new node to cluster.conf
+            # 2. start the new node
+            # Starting the node will automaticall reload cluster.conf on all
+            # nodes. If the config is reloaded before the new node is started,
+            # the new node gets fenced by the cluster,
+            output, retval = utils.reloadCorosync()
         if corosync_conf != None:
             # send local cluster pcsd configs to the new node
             # may be used for sending corosync config as well in future
@@ -1580,8 +1592,8 @@ def cluster_node(argv):
                 if retval != 0:
                     print("Warning: enable cluster - {0}".format(err))
             if "--start" in utils.pcs_options or utils.is_rhel6():
-                # always start new node on cman cluster
-                # otherwise it will get fenced
+                # Always start the new node on cman cluster in order to reload
+                # cluster.conf (see above).
                 retval, err = utils.startCluster(node0)
                 if retval != 0:
                     print("Warning: start cluster - {0}".format(err))
