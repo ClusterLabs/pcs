@@ -7,6 +7,8 @@ from __future__ import (
 
 import os
 import re
+from collections import namedtuple
+
 from lxml import etree
 
 from pcs import settings
@@ -18,6 +20,7 @@ from pcs.common import report_codes
 
 _crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
+DEFAULT_ACTIONS = ["monitor", "start", "stop", "promote", "demote"]
 
 class ResourceAgentError(Exception):
     # pylint: disable=super-init-not-called
@@ -32,6 +35,23 @@ class UnableToGetAgentMetadata(ResourceAgentError):
 class InvalidResourceAgentName(ResourceAgentError):
     pass
 
+ResourceAgentName = namedtuple("ResourceAgentName", "standard provider type")
+
+def get_resource_agent_name_from_string(full_agent_name):
+    match = re.match(
+        "^(?P<standard>[^:]+)(:(?P<provider>[^:]+))?:(?P<type>[^:]+)$",
+        full_agent_name
+    )
+    if not match:
+        raise InvalidResourceAgentName(full_agent_name)
+
+    #TODO validation standard : provider match
+
+    return ResourceAgentName(
+        match.group("standard"),
+        match.group("provider") if match.group("provider") else None,
+        match.group("type"),
+    )
 
 def list_resource_agents_standards(runner):
     """
@@ -326,6 +346,28 @@ class Agent(object):
             "advanced": False,
         }
 
+    def validate_parameters(self, parameters):
+        report_list = []
+        bad_opts, missing_req_opts = self.validate_parameters_values(
+            parameters
+        )
+        if bad_opts:
+            report_list.append(reports.invalid_option(
+                bad_opts,
+                sorted([attr["name"] for attr in self.get_parameters()]),
+                "resource operation",
+                forceable=report_codes.FORCE_OPTIONS,
+            ))
+
+        if missing_req_opts:
+            report_list.append(reports.required_option_is_missing(
+                missing_req_opts,
+                "resource operation",
+                forceable=report_codes.FORCE_OPTIONS,
+            ))
+
+        if report_list:
+            raise LibraryError(*report_list)
 
     def validate_parameters_values(self, parameters_values):
         """
@@ -337,6 +379,9 @@ class Agent(object):
         # redefining the format of the return value and rewriting the whole
         # function, which will only be good. For now we just stick to the
         # original legacy code.
+        #What about raising LibraryError with list of report items? Client may
+        #not know on what categories of errors can occure. On the other side,
+        #client can stil analyze report items if necessary.
         agent_params = self.get_parameters()
 
         required_missing = []
@@ -353,7 +398,8 @@ class Agent(object):
 
     def get_actions(self):
         """
-        Get list of agent's actions (operations)
+        Get list of agent's actions (operations). Each action is represented as
+        dict. Example: [{"name": "monitor", "timeout": 20, "interval": 10}]
         """
         actions_element = self._get_metadata().find("actions")
         if actions_element is None:
@@ -365,6 +411,21 @@ class Agent(object):
             dict(action.items())
             for action in actions_element.iter("action")
         ]
+
+    def get_default_actions(self):
+        """
+        Get list of default agent's actions (operations).
+        Function filter out actions that have not name in DEFAULT_ACTIONS.
+        Note that every action have attribute name at least.
+        """
+        default_action_list = []
+        for action in self.get_actions():
+            if action.get("name", "") in DEFAULT_ACTIONS:
+                default_action_list.append(dict([
+                    (key, value) for key, value in action.items()
+                    if key != "depth"
+                ]))
+        return default_action_list
 
 
     def _get_metadata(self):
@@ -501,9 +562,17 @@ class ResourceAgent(CrmAgent):
     Provides convinient access to a resource agent's metadata
     """
     def __init__(self, runner, full_agent_name):
-        if not re.match("^[^:]+(:[^:]+){1,2}$", full_agent_name):
-            raise InvalidResourceAgentName(full_agent_name)
         super(ResourceAgent, self).__init__(runner, full_agent_name)
+        self._name = get_resource_agent_name_from_string(full_agent_name)
+
+    def get_standard(self):
+        return self._name.standard
+
+    def get_provider(self):
+        return self._name.provider
+
+    def get_type(self):
+        return self._name.type
 
 class AbsentResourceAgent(ResourceAgent):
     def _load_metadata(self):

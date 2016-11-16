@@ -23,6 +23,7 @@ from pcs.lib.commands import (
     qdevice,
     quorum,
     resource_agent,
+    resource,
     sbd,
     stonith_agent,
 )
@@ -293,6 +294,21 @@ def load_module(env, middleware_factory, name):
                 "list_standards": resource_agent.list_standards,
             }
         )
+
+    if name == "resource":
+        return bind_all(
+            env,
+            middleware.build(
+                middleware_factory.cib
+            ),
+            {
+                "create": resource.create,
+                "create_as_master": resource.create_as_master,
+                "create_as_clone": resource.create_as_clone,
+                "create_in_group": resource.create_in_group,
+            }
+        )
+
 
     if name == "sbd":
         return bind_all(

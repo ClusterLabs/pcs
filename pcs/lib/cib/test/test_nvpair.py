@@ -11,6 +11,15 @@ from pcs.lib.cib import nvpair
 from pcs.test.tools.assertions import assert_xml_equal
 from pcs.test.tools.pcs_unittest import TestCase, mock
 
+class AppendNewNvpair(TestCase):
+    def test_append_new_nvpair_to_given_element(self):
+        nvset_element = etree.fromstring('<nvset id="a"/>')
+        nvpair.append_new_nvpair(nvset_element, "b", "c")
+        assert_xml_equal(etree.tostring(nvset_element).decode(), """
+            <nvset id="a">
+                <nvpair id="a-b" name="b" value="c"></nvpair>
+            </nvset>
+        """)
 
 class UpdateNvsetTest(TestCase):
     @mock.patch(
@@ -117,8 +126,23 @@ class SetNvpairInNvsetTest(TestCase):
             etree.tostring(self.nvset).decode()
         )
 
+class AppendNewNvsetTest(TestCase):
+    def test_append_new_nvset_to_given_element(self):
+        context_element = etree.fromstring('<context id="a"/>')
+        nvpair.append_new_nvset("instance_attributes", context_element, {
+            "a": "b",
+            "c": "d",
+        })
+        assert_xml_equal(etree.tostring(context_element).decode(), """
+            <context id="a">
+                <instance_attributes id="a-instance_attributes">
+                    <nvpair id="a-instance_attributes-a" name="a" value="b"/>
+                    <nvpair id="a-instance_attributes-c" name="c" value="d"/>
+                </instance_attributes>
+            </context>
+        """)
 
-class ArrangeSomeNvsetTest(TestCase):
+class ArrangeFirstNvsetTest(TestCase):
     def setUp(self):
         self.root = etree.Element("root", id="root")
         self.nvset = etree.SubElement(self.root, "nvset", id="nvset")

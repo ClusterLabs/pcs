@@ -33,7 +33,8 @@ temp_large_cib  = rc("temp-cib-large.xml")
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
-        self.description = outdent("""\
+        self.description = outdent(
+            """\
             ocf:pacemaker:HealthCPU - System health CPU usage
 
             Systhem health agent that measures the CPU idling and updates the #health-cpu attribute.
@@ -124,67 +125,59 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self,temp_cib):
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP2 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP3 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP4  ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP6  ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = "resource group add TestGroup1 ClusterIP"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = "resource group add TestGroup2 ClusterIP2 ClusterIP3"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = "resource clone ClusterIP4"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = "resource master Master ClusterIP5"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP2 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP3 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP4 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP6 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success("resource group add TestGroup1 ClusterIP")
+        self.assert_pcs_success(
+            "resource group add TestGroup2 ClusterIP2 ClusterIP3"
+        )
+        self.assert_pcs_success("resource clone ClusterIP4")
+        self.assert_pcs_success("resource master Master ClusterIP5")
 
     def testCaseInsensitive(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops D0 dummy")
         ac(o, "Error: Multiple agents match 'dummy', please specify full name: ocf:heartbeat:Dummy, ocf:pacemaker:Dummy\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D1 systemhealth")
-        ac(o, "Creating resource 'ocf:pacemaker:SystemHealth'\n")
-        assert r == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops D1 systemhealth",
+            "Assumed agent name 'ocf:pacemaker:SystemHealth'"
+                " (deduced from 'systemhealth')\n"
+        )
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D2 SYSTEMHEALTH")
-        ac(o, "Creating resource 'ocf:pacemaker:SystemHealth'\n")
-        assert r == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops D2 SYSTEMHEALTH",
+            "Assumed agent name 'ocf:pacemaker:SystemHealth'"
+                " (deduced from 'SYSTEMHEALTH')\n"
+        )
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops D3 ipaddr2 ip=1.1.1.1")
-        ac(o, "Creating resource 'ocf:heartbeat:IPaddr2'\n")
-        assert r == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops D3 ipaddr2 ip=1.1.1.1",
+            "Assumed agent name 'ocf:heartbeat:IPaddr2'"
+                " (deduced from 'ipaddr2')\n"
+        )
 
         o,r = pcs(temp_cib, "resource create --no-default-ops D4 ipaddr3")
         ac(o,"Error: Unable to find agent 'ipaddr3', try specifying its full name\n")
@@ -206,48 +199,52 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
 
         output, returnVal = pcs(temp_large_cib, "resource show dummy0")
         assert returnVal == 0
-        ac(output, """\
- Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
-  Operations: start interval=0s timeout=20 (dummy0-start-interval-0s)
-              stop interval=0s timeout=20 (dummy0-stop-interval-0s)
-              monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
-""")
+        ac(output, outdent(
+            """\
+             Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
+                          start interval=0s timeout=20 (dummy0-start-interval-0s)
+                          stop interval=0s timeout=20 (dummy0-stop-interval-0s)
+            """
+        ))
 
     def testAddResources(self):
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 1
-        assert output == "Error: unable to create resource/fence device 'ClusterIP', 'ClusterIP' already exists on this system\n",[output]
-
-        line = "resource create --no-default-ops ClusterIP2 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP3 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP4  ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP6  ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=31s start interval=32s op stop interval=33s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-        line = "resource create --no-default-ops ClusterIP7 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s --disabled"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_fail(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+            ,
+            "Error: 'ClusterIP' already exists\n"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP2 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP3 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP4 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP6 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=31s start"
+                " interval=32s op stop interval=33s"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP7 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " --disabled"
+        )
 
 # Verify all resource have been added
         output, returnVal = pcs(temp_cib, "resource show")
@@ -262,33 +259,34 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
  ClusterIP7\t(ocf::heartbeat:IPaddr2):\tStopped (disabled)
 """)
 
-        output, returnVal = pcs(temp_cib, "resource show --full")
-        ac(output, """\
- Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
- Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
- Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
- Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
- Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
- Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=31s (ClusterIP6-monitor-interval-31s)
-              start interval=32s (ClusterIP6-start-interval-32s)
-              stop interval=33s (ClusterIP6-stop-interval-33s)
- Resource: ClusterIP7 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Meta Attrs: target-role=Stopped 
-  Operations: monitor interval=30s (ClusterIP7-monitor-interval-30s)
-""")
+        self.assert_pcs_success("resource show --full", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+             Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
+             Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
+             Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
+             Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
+             Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=31s (ClusterIP6-monitor-interval-31s)
+                          start interval=32s (ClusterIP6-start-interval-32s)
+                          stop interval=33s (ClusterIP6-stop-interval-33s)
+             Resource: ClusterIP7 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Meta Attrs: target-role=Stopped 
+              Operations: monitor interval=30s (ClusterIP7-monitor-interval-30s)
+            """
+        ))
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
@@ -340,11 +338,17 @@ Error: When using 'op' you must specify an operation name and at least one optio
             temp_cib,
             "resource create A ocf:heartbeat:Dummy op monitor interval=10 timeout=10 op monitor interval=10 timeout=20"
         )
-        ac(output, """\
-Error: operation monitor with interval 10s already specified for A:
-monitor interval=10 timeout=10 (A-monitor-interval-10)
-""")
-        self.assertEqual(1, returnVal)
+        self.assert_pcs_fail(
+            "resource create A ocf:heartbeat:Dummy op monitor interval=10"
+                " timeout=10 op monitor interval=10 timeout=20"
+            ,
+            outdent(
+                """\
+                Error: multiple specification the same operation with the same interval:
+                monitor with intervals 10, 10
+                """
+            )
+        )
 
         output, returnVal = pcs(
             temp_cib,
@@ -353,14 +357,14 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show A")
-        ac(output, """\
- Resource: A (class=ocf provider=heartbeat type=Dummy)
-  Operations: start interval=0s timeout=20 (A-start-interval-0s)
-              monitor interval=10 timeout=10 (A-monitor-interval-10)
-              stop interval=10 timeout=20 (A-stop-interval-10)
-""")
-        self.assertEqual(0, returnVal)
+        self.assert_pcs_success("resource show A", outdent(
+            """\
+             Resource: A (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10 timeout=10 (A-monitor-interval-10)
+                          start interval=0s timeout=20 (A-start-interval-0s)
+                          stop interval=10 timeout=20 (A-stop-interval-10)
+            """
+        ))
 
     def testAddBadResources(self):
         line = "resource create --no-default-ops bad_resource idontexist test=bad"
@@ -373,15 +377,23 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
         ac(output, "Error: Unable to find agent 'idontexist2', try specifying its full name\n")
         assert returnVal == 1
 
-        line = "resource create --no-default-ops bad_resource3 ocf:pacemaker:idontexist3 test=bad"
-        output, returnVal = pcs(temp_cib, line)
-        assert output == "Error: Unable to create resource 'ocf:pacemaker:idontexist3', it is not installed on this system (use --force to override)\n",[output]
-        assert returnVal == 1
+        self.assert_pcs_fail(
+            "resource create --no-default-ops bad_resource3"
+                " ocf:pacemaker:idontexist3 test=bad"
+            ,
+            "Error: Agent 'ocf:pacemaker:idontexist3' is not installed or does"
+                " not provide valid metadata: Metadata query for"
+                " ocf:pacemaker:idontexist3 failed: -5\n"
+        )
 
-        line = "resource create --no-default-ops bad_resource4 ocf:pacemaker:idontexist4 test4=bad3 --force"
-        output, returnVal = pcs(temp_cib, line)
-        ac(output, "Warning: 'ocf:pacemaker:idontexist4' is not installed or does not provide valid metadata\n")
-        assert returnVal == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops bad_resource4"
+                " ocf:pacemaker:idontexist4 test4=bad3 --force"
+            ,
+            "Warning: Agent 'ocf:pacemaker:idontexist4' is not installed or"
+                " does not provide valid metadata: Metadata query for"
+                " ocf:pacemaker:idontexist4 failed: -5\n"
+        )
 
         line = "resource show --full"
         output, returnVal = pcs(temp_cib, line)
@@ -400,11 +412,11 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
         ac(output, "Error: invalid resource name 'dum:my', ':' is not a valid character for a resource name\n")
 
     def testDeleteResources(self):
-# Verify deleting resources works
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        # Verify deleting resources works
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+            " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
 
         line = 'resource delete'
         output, returnVal = pcs(temp_cib, line)
@@ -429,24 +441,23 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
         ac(output, "Error: Resource 'ClusterIP' does not exist.\n")
 
     def testResourceShow(self):
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
-
-        output, returnVal = pcs(temp_cib, "resource show ClusterIP")
-        assert returnVal == 0
-        ac(output, """\
- Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
-""")
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
+        self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+            """
+        ))
 
     def testResourceUpdate(self):
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
 
         line = 'resource update'
         output, returnVal = pcs(temp_cib, line)
@@ -458,10 +469,10 @@ monitor interval=10 timeout=10 (A-monitor-interval-10)
         assert output == ""
 
     def testAddOperation(self):
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        ac(output,"")
-        assert returnVal == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
 
         o,r = pcs(temp_cib, "resource add_operation")
         assert r == 1
@@ -520,14 +531,14 @@ Error: moni=tor does not appear to be a valid operation action
 """)
         assert returnVal == 1
 
-        output, returnVal = pcs(temp_cib, "resource show ClusterIP")
-        assert returnVal == 0
-        ac(output, """\
- Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
-              monitor interval=31s (ClusterIP-monitor-interval-31s)
-""")
+        self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+                          monitor interval=31s (ClusterIP-monitor-interval-31s)
+            """
+        ))
 
         o, r = pcs(temp_cib, "resource create --no-default-ops OPTest ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1")
         ac(o,"")
@@ -726,10 +737,10 @@ monitor interval=60s (state-monitor-interval-60s)
         self.assertEqual(0, retVal)
 
     def testRemoveOperation(self):
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
 
         line = 'resource op add ClusterIP monitor interval=31s --force'
         output, returnVal = pcs(temp_cib, line)
@@ -761,25 +772,24 @@ monitor interval=60s (state-monitor-interval-60s)
         assert returnVal == 1
         assert output == 'Error: Unable to find operation matching: monitor interval=30s\n'
 
-        output, returnVal = pcs(temp_cib, "resource show ClusterIP")
-        ac(output, """\
- Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=31s (ClusterIP-monitor-interval-31s)
-""")
-        assert returnVal == 0
+        self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=31s (ClusterIP-monitor-interval-31s)
+            """
+        ))
 
-        line = 'resource op remove ClusterIP monitor interval=31s'
-        output, returnVal = pcs(temp_cib, line)
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            'resource op remove ClusterIP monitor interval=31s'
+        )
 
-        output, returnVal = pcs(temp_cib, "resource show ClusterIP")
-        ac(output, """\
- Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-""")
-        assert returnVal == 0
+        self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+            """
+        ))
 
         line = 'resource op add ClusterIP monitor interval=31s'
         output, returnVal = pcs(temp_cib, line)
@@ -807,20 +817,20 @@ monitor interval=60s (state-monitor-interval-60s)
         assert returnVal == 0
         assert output == ""
 
-        output, returnVal = pcs(temp_cib, "resource show ClusterIP")
-        ac(output, """\
- Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: stop interval=0s timeout=34s (ClusterIP-stop-interval-0s)
-              start interval=0s timeout=33s (ClusterIP-start-interval-0s)
-""")
-        assert returnVal == 0
+        self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: stop interval=0s timeout=34s (ClusterIP-stop-interval-0s)
+                          start interval=0s timeout=33s (ClusterIP-start-interval-0s)
+            """
+        ))
 
     def testUpdateOperation(self):
-        line = "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
-        output, returnVal = pcs(temp_cib, line)
-        assert output == ""
-        assert returnVal == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
 
         line = 'resource update ClusterIP op monitor interval=32s'
         output, returnVal = pcs(temp_cib, line)
@@ -847,15 +857,14 @@ monitor interval=60s (state-monitor-interval-60s)
         assert returnVal == 0
         assert output == ""
 
-        line = 'resource show ClusterIP'
-        output, returnVal = pcs(temp_cib, line)
-        ac(output, """\
- Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)
-              start interval=30s timeout=180s (ClusterIP-start-interval-30s)
-""")
-        assert returnVal == 0
+        self.assert_pcs_success("resource show ClusterIP", outdent(
+            """\
+             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)
+                          start interval=30s timeout=180s (ClusterIP-start-interval-30s)
+            """
+        ))
 
         output, returnVal = pcs(
             temp_cib,
@@ -864,15 +873,15 @@ monitor interval=60s (state-monitor-interval-60s)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show A")
-        ac(output, """\
- Resource: A (class=ocf provider=heartbeat type=Dummy)
-  Operations: start interval=0s timeout=20 (A-start-interval-0s)
-              stop interval=0s timeout=20 (A-stop-interval-0s)
-              monitor interval=10 (A-monitor-interval-10)
-              monitor interval=20 (A-monitor-interval-20)
-""")
-        self.assertEqual(0, returnVal)
+        self.assert_pcs_success("resource show A", outdent(
+            """\
+             Resource: A (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10 (A-monitor-interval-10)
+                          monitor interval=20 (A-monitor-interval-20)
+                          start interval=0s timeout=20 (A-start-interval-0s)
+                          stop interval=0s timeout=20 (A-stop-interval-0s)
+            """
+        ))
 
         output, returnVal = pcs(
             temp_cib,
@@ -891,15 +900,15 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show A")
-        ac(output, """\
- Resource: A (class=ocf provider=heartbeat type=Dummy)
-  Operations: start interval=0s timeout=20 (A-start-interval-0s)
-              stop interval=0s timeout=20 (A-stop-interval-0s)
-              monitor interval=11 (A-monitor-interval-11)
-              monitor interval=20 (A-monitor-interval-20)
-""")
-        self.assertEqual(0, returnVal)
+        self.assert_pcs_success("resource show A", outdent(
+            """\
+             Resource: A (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=11 (A-monitor-interval-11)
+                          monitor interval=20 (A-monitor-interval-20)
+                          start interval=0s timeout=20 (A-start-interval-0s)
+                          stop interval=0s timeout=20 (A-stop-interval-0s)
+            """
+        ))
 
         output, returnVal = pcs(
             temp_cib,
@@ -1663,26 +1672,26 @@ Deleting Resource (and group) - dummylarge
 
             Resources:
              Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: ip=192.168.0.99 cidr_netmask=32
+              Attributes: cidr_netmask=32 ip=192.168.0.99
               Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
              Group: TestGroup1
               Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Attributes: cidr_netmask=32 ip=192.168.0.99
                Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
              Group: TestGroup2
               Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Attributes: cidr_netmask=32 ip=192.168.0.99
                Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
               Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Attributes: cidr_netmask=32 ip=192.168.0.99
                Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
              Clone: ClusterIP4-clone
               Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Attributes: cidr_netmask=32 ip=192.168.0.99
                Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
              Master: Master
               Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: ip=192.168.0.99 cidr_netmask=32
+               Attributes: cidr_netmask=32 ip=192.168.0.99
                Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
 
             Stonith Devices:
@@ -1813,9 +1822,10 @@ Deleting Resource - ClusterIP5
         assert returnVal == 0
         assert output == "Removing Constraint - location-ClusterIP5-rh7-1-INFINITY\nRemoving Constraint - location-ClusterIP5-rh7-2-INFINITY\nDeleting Resource - ClusterIP5\n",[output]
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s")
-        assert returnVal == 0
-        assert output == ""
+        self.assert_pcs_success(
+            "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+        )
 
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1")
         assert returnVal == 0
@@ -1825,59 +1835,61 @@ Deleting Resource - ClusterIP5
         assert returnVal == 0
         assert output == ""
 
-        self.assert_pcs_success("config","""\
-Cluster Name: test99
-Corosync Nodes:
- rh7-1 rh7-2
-Pacemaker Nodes:
+        self.assert_pcs_success("config", outdent(
+            """\
+            Cluster Name: test99
+            Corosync Nodes:
+             rh7-1 rh7-2
+            Pacemaker Nodes:
 
-Resources:
- Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
- Group: TestGroup1
-  Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
- Group: TestGroup2
-  Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
-  Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
- Clone: ClusterIP4-clone
-  Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-   Attributes: ip=192.168.0.99 cidr_netmask=32
-   Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
- Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=192.168.0.99 cidr_netmask=32
-  Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
+            Resources:
+             Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
+             Group: TestGroup1
+              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+             Group: TestGroup2
+              Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
+              Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
+             Clone: ClusterIP4-clone
+              Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
+               Attributes: cidr_netmask=32 ip=192.168.0.99
+               Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
+             Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: cidr_netmask=32 ip=192.168.0.99
+              Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
 
-Stonith Devices:
-Fencing Levels:
+            Stonith Devices:
+            Fencing Levels:
 
-Location Constraints:
-  Resource: ClusterIP5
-    Enabled on: rh7-1 (score:INFINITY) (id:location-ClusterIP5-rh7-1-INFINITY)
-    Enabled on: rh7-2 (score:INFINITY) (id:location-ClusterIP5-rh7-2-INFINITY)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
+            Location Constraints:
+              Resource: ClusterIP5
+                Enabled on: rh7-1 (score:INFINITY) (id:location-ClusterIP5-rh7-1-INFINITY)
+                Enabled on: rh7-2 (score:INFINITY) (id:location-ClusterIP5-rh7-2-INFINITY)
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
 
-Alerts:
- No alerts defined
+            Alerts:
+             No alerts defined
 
-Resources Defaults:
- No defaults set
-Operations Defaults:
- No defaults set
+            Resources Defaults:
+             No defaults set
+            Operations Defaults:
+             No defaults set
 
-Cluster Properties:
+            Cluster Properties:
 
-Quorum:
-  Options:
-""")
+            Quorum:
+              Options:
+            """
+        ))
 
         output, returnVal = pcs(temp_large_cib, "resource master dummylarge")
         ac(output, '')
@@ -1899,11 +1911,13 @@ Quorum:
         assert returnVal == 0
 
         output, returnVal = pcs(temp_large_cib, "resource delete dummies")
-        ac(output, """\
-Removing group: dummies (and all resources within group)
-Stopping all resources in group: dummies...
-Deleting Resource (and group and M/S) - dummylarge
-""")
+        ac(output, outdent(
+            """\
+            Removing group: dummies (and all resources within group)
+            Stopping all resources in group: dummies...
+            Deleting Resource (and group and M/S) - dummylarge
+            """
+        ))
         assert returnVal == 0
 
     def testResourceManage(self):
@@ -2030,7 +2044,7 @@ Deleting Resource (and group and M/S) - dummylarge
         assert output == ' Group: DGroup\n  Resource: D0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=60s (D0-monitor-interval-60s)\n',[output]
 
     def testCloneMasterManage(self):
-# is-managed on the primitive, attempting manage on primitive
+        # is-managed on the primitive, attempting manage on primitive
         output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
         assert returnVal == 0
         ac (output,'')
@@ -2039,20 +2053,33 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
         ac (output, '')
 
-        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
+            """\
+             Clone: clone-unmanage-clone
+              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
+               Meta Attrs: is-managed=false 
+               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
+                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
+                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, "resource manage clone-unmanage")
         assert returnVal == 0
         ac (output, '')
 
-        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
+            """\
+             Clone: clone-unmanage-clone
+              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
+                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
+                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
+            """
+        ))
         output, returnVal = pcs(temp_cib, "resource delete clone-unmanage")
 
-# is-managed on the clone, attempting manage on primitive
+        # is-managed on the clone, attempting manage on primitive
         output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
         ac (output,'')
         assert returnVal == 0
@@ -2061,20 +2088,33 @@ Deleting Resource (and group and M/S) - dummylarge
         ac(output, '')
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, ' Clone: clone-unmanage-clone\n  Meta Attrs: is-managed=false \n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
+            """\
+             Clone: clone-unmanage-clone
+              Meta Attrs: is-managed=false 
+              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
+                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
+                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, "resource manage clone-unmanage")
         assert returnVal == 0
         ac (output, '')
 
-        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
+            """\
+             Clone: clone-unmanage-clone
+              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
+                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
+                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
+            """
+        ))
         pcs(temp_cib, "resource delete clone-unmanage")
 
-# is-managed on the primitive, attempting manage on clone
+        # is-managed on the primitive, attempting manage on clone
         output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
         assert returnVal == 0
         ac (output,'')
@@ -2083,20 +2123,33 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
         ac (output, '')
 
-        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Meta Attrs: is-managed=false \n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
+            """\
+             Clone: clone-unmanage-clone
+              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
+               Meta Attrs: is-managed=false 
+               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
+                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
+                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, "resource manage clone-unmanage-clone")
         assert returnVal == 0
         ac (output, '')
 
-        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
+            """\
+             Clone: clone-unmanage-clone
+              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
+                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
+                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
+            """
+        ))
         pcs(temp_cib, "resource delete clone-unmanage")
 
-# is-managed on the clone, attempting manage on clone
+        # is-managed on the clone, attempting manage on clone
         output, returnVal = pcs(temp_cib, "resource create clone-unmanage ocf:heartbeat:Dummy --clone")
         assert returnVal == 0
         ac (output,'')
@@ -2105,17 +2158,30 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
         ac (output, '')
 
-        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, ' Clone: clone-unmanage-clone\n  Meta Attrs: is-managed=false \n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
+            """\
+             Clone: clone-unmanage-clone
+              Meta Attrs: is-managed=false 
+              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
+                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
+                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, "resource manage clone-unmanage-clone")
         assert returnVal == 0
         ac (output, '')
 
-        output, returnVal = pcs(temp_cib, "resource show clone-unmanage-clone")
-        assert returnVal == 0
-        ac (output, ' Clone: clone-unmanage-clone\n  Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)\n   Operations: start interval=0s timeout=20 (clone-unmanage-start-interval-0s)\n               stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)\n               monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)\n')
+        self.assert_pcs_success("resource show clone-unmanage-clone", outdent(
+            """\
+             Clone: clone-unmanage-clone
+              Resource: clone-unmanage (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (clone-unmanage-monitor-interval-10)
+                           start interval=0s timeout=20 (clone-unmanage-start-interval-0s)
+                           stop interval=0s timeout=20 (clone-unmanage-stop-interval-0s)
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, "resource create master-unmanage ocf:pacemaker:Stateful --master --no-default-ops")
         ac (output,'')
@@ -2224,9 +2290,11 @@ Deleting Resource (and group and M/S) - dummylarge
         assert r==0
 
     def testBadInstanceVariables(self):
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops D0 ocf:heartbeat:Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
-        assert returnVal == 1
-        assert output == "Error: resource option(s): 'test, test2', are not recognized for resource type: 'ocf:heartbeat:Dummy' (use --force to override)\n", [output]
+        self.assert_pcs_fail(
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=",
+            "Error: invalid resource operation options: 'test', 'test2',"
+                " allowed options are: fake, state, use --force to override\n"
+        )
 
         output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy test=testC test2=test2a test4=test4A op monitor interval=35 meta test7=test7a test6=")
         assert returnVal == 0
@@ -2240,13 +2308,14 @@ Deleting Resource (and group and M/S) - dummylarge
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource show D0")
-        ac(output, """\
- Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-  Attributes: test=testB test2=testC test4=test4A test3=testD
-  Meta Attrs: test7=test7a test6= 
-  Operations: monitor interval=35 (D0-monitor-interval-35)
-""")
+        self.assert_pcs_success("resource show D0", outdent(
+            """\
+             Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+              Attributes: test=testB test2=testC test4=test4A test3=testD
+              Meta Attrs: test6= test7=test7a 
+              Operations: monitor interval=35 (D0-monitor-interval-35)
+            """
+        ))
         assert returnVal == 0
 
     def testMetaAttrs(self):
@@ -3334,13 +3403,21 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
         assert output == "", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
-        assert returnVal == 1
-        assert output == "Error: unable to create resource/fence device 'dlm', 'dlm' already exists on this system\n", [output]
+        self.assert_pcs_fail(
+            "resource create --no-default-ops dlm ocf:pacemaker:Dummy op"
+                " monitor interval=10s clone meta interleave=true"
+                " clone-node-max=1 ordered=true"
+            ,
+            "Error: 'dlm' already exists\n"
+        )
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm-clone ocf:pacemaker:Dummy op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
-        assert returnVal == 1
-        assert output == "Error: unable to create resource/fence device 'dlm-clone', 'dlm-clone' already exists on this system\n", [output]
+        self.assert_pcs_fail(
+            "resource create --no-default-ops dlm-clone ocf:pacemaker:Dummy op"
+                " monitor interval=10s clone meta interleave=true"
+                " clone-node-max=1 ordered=true"
+            ,
+            "Error: 'dlm-clone' already exists\n"
+        )
 
         output,returnVal = pcs(temp_cib, "resource --full")
         ac(output, """\
@@ -3590,32 +3667,20 @@ Deleting Resource (and group and M/S) - A2
         o,r = pcs(temp_cib, "resource master AGMaster AG")
         assert r == 0
 
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops A ocf:heartbeat:Dummy"
+        self.assert_pcs_fail(
+            "resource create --no-default-ops A ocf:heartbeat:Dummy",
+            "Error: 'A' already exists\n"
         )
-        ac(output, """\
-Error: unable to create resource/fence device 'A', 'A' already exists on this system
-""")
-        self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops AG ocf:heartbeat:Dummy"
+        self.assert_pcs_fail(
+            "resource create --no-default-ops AG ocf:heartbeat:Dummy",
+            "Error: 'AG' already exists\n"
         )
-        ac(output, """\
-Error: unable to create resource/fence device 'AG', 'AG' already exists on this system
-""")
-        self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops AGMaster ocf:heartbeat:Dummy"
+        self.assert_pcs_fail(
+            "resource create --no-default-ops AGMaster ocf:heartbeat:Dummy",
+            "Error: 'AGMaster' already exists\n"
         )
-        ac(output, """\
-Error: unable to create resource/fence device 'AGMaster', 'AGMaster' already exists on this system
-""")
-        self.assertEqual(1, returnVal)
 
         o,r = pcs(temp_cib, "resource ungroup AG")
         ac(o,"Error: Groups that have more than one resource and are master/slave resources cannot be removed.  The group may be deleted with 'pcs resource delete AG'.\n")
@@ -3664,32 +3729,18 @@ Error: unable to create resource/fence device 'AGMaster', 'AGMaster' already exi
 """)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+        self.assert_pcs_fail(
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy",
+            "Error: 'D1' already exists\n"
         )
-        ac(output, """\
-Error: unable to create resource/fence device 'D1', 'D1' already exists on this system
-""")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops DG ocf:heartbeat:Dummy"
+        self.assert_pcs_fail(
+            "resource create --no-default-ops DG ocf:heartbeat:Dummy",
+            "Error: 'DG' already exists\n"
         )
-        ac(output, """\
-Error: unable to create resource/fence device 'DG', 'DG' already exists on this system
-""")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create --no-default-ops DG-clone ocf:heartbeat:Dummy"
+        self.assert_pcs_fail(
+            "resource create --no-default-ops DG-clone ocf:heartbeat:Dummy",
+            "Error: 'DG-clone' already exists\n"
         )
-        ac(output, """\
-Error: unable to create resource/fence device 'DG-clone', 'DG-clone' already exists on this system
-""")
-        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "resource ungroup DG")
         ac(output, """\
@@ -3783,8 +3834,16 @@ Error: Cannot remove more than one resource from cloned group
         output, retVal = pcs(temp_cib, "resource clone group0")
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource show group0-clone")
-        ac(output," Clone: group0-clone\n  Group: group0\n   Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)\n    Operations: start interval=0s timeout=20 (dummy0-start-interval-0s)\n                stop interval=0s timeout=20 (dummy0-stop-interval-0s)\n                monitor interval=10 timeout=20 (dummy0-monitor-interval-10)\n")
+        self.assert_pcs_success("resource show group0-clone", outdent(
+            """\
+             Clone: group0-clone
+              Group: group0
+               Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
+                Operations: monitor interval=10 timeout=20 (dummy0-monitor-interval-10)
+                            start interval=0s timeout=20 (dummy0-start-interval-0s)
+                            stop interval=0s timeout=20 (dummy0-stop-interval-0s)
+            """
+        ))
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource disable group0")
         ac(output, "")
@@ -4151,13 +4210,21 @@ Error: Cannot remove more than one resource from cloned group
 """)
 
     def testOPOption(self):
-        o,r = pcs(temp_cib, "resource create --no-default-ops A ocf:heartbeat:Dummy op monitor interval=30s blah=blah")
-        ac(o,"Error: blah is not a valid op option (use --force to override)\n")
-        assert r == 1
+        self.assert_pcs_fail(
+            "resource create --no-default-ops A ocf:heartbeat:Dummy op monitor interval=30s blah=blah",
+            "Error: invalid resource operation option 'blah', allowed options"
+                " are: OCF_CHECK_LEVEL, description, enabled, id, interval,"
+                " interval-origin, name, on-fail, record-pending, requires,"
+                " role, start-delay, timeout, use --force to override\n"
+        )
 
-        o,r = pcs(temp_cib, "resource create --no-default-ops A ocf:heartbeat:Dummy op monitor interval=30s op monitor interval=40s blah=blah")
-        ac(o,"Error: blah is not a valid op option (use --force to override)\n")
-        assert r == 1
+        self.assert_pcs_fail(
+            "resource create --no-default-ops A ocf:heartbeat:Dummy op monitor interval=30s op monitor interval=40s blah=blah",
+            "Error: invalid resource operation option 'blah', allowed options"
+                " are: OCF_CHECK_LEVEL, description, enabled, id, interval,"
+                " interval-origin, name, on-fail, record-pending, requires,"
+                " role, start-delay, timeout, use --force to override\n"
+        )
 
         o,r = pcs(temp_cib, "resource create --no-default-ops B ocf:heartbeat:Dummy")
         ac(o,"")
@@ -4267,33 +4334,58 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 0
 
     def testResourceMissingValues(self):
-        o,r = pcs("resource create --no-default-ops myip IPaddr2")
-        ac(o,"Error: missing required option(s): 'ip' for resource type: ocf:heartbeat:IPaddr2 (use --force to override)\nCreating resource 'ocf:heartbeat:IPaddr2'\n")
-        assert r == 1
+        self.assert_pcs_fail(
+            "resource create --no-default-ops myip IPaddr2",
+            outdent(
+                """\
+                Error: required resource operation option 'ip' is missing, use --force to override
+                Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from 'IPaddr2')
+                """
+            )
+        )
 
-        o,r = pcs("resource create --no-default-ops myip IPaddr2 --force")
-        ac(o,"Creating resource 'ocf:heartbeat:IPaddr2'\n")
-        assert r == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops myip IPaddr2 --force",
+            "Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from"
+                " 'IPaddr2')\n"
+        )
+        self.assert_pcs_success(
+            "resource create --no-default-ops myip2 IPaddr2 ip=3.3.3.3",
+            "Assumed agent name 'ocf:heartbeat:IPaddr2'"
+                " (deduced from 'IPaddr2')\n"
+        )
 
-        o,r = pcs("resource create --no-default-ops myip2 IPaddr2 ip=3.3.3.3")
-        ac(o,"Creating resource 'ocf:heartbeat:IPaddr2'\n")
-        assert r == 0
+        self.assert_pcs_fail(
+            "resource create --no-default-ops myfs Filesystem",
+            outdent(
+                """\
+                Error: required resource operation options 'device', 'directory', 'fstype' are missing, use --force to override
+                Assumed agent name 'ocf:heartbeat:Filesystem' (deduced from 'Filesystem')
+                """
+            )
+        )
 
-        o,r = pcs("resource create --no-default-ops myfs Filesystem")
-        ac(o,"Error: missing required option(s): 'device, directory, fstype' for resource type: ocf:heartbeat:Filesystem (use --force to override)\nCreating resource 'ocf:heartbeat:Filesystem'\n")
-        assert r == 1
+        self.assert_pcs_success(
+            "resource create --no-default-ops myfs Filesystem --force",
+            "Assumed agent name 'ocf:heartbeat:Filesystem'"
+                " (deduced from 'Filesystem')\n"
+        )
 
-        o,r = pcs("resource create --no-default-ops myfs Filesystem --force")
-        ac(o,"Creating resource 'ocf:heartbeat:Filesystem'\n")
-        assert r == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops myfs2 Filesystem device=x"
+                " directory=y --force"
+            ,
+            "Assumed agent name 'ocf:heartbeat:Filesystem'"
+                " (deduced from 'Filesystem')\n"
+        )
 
-        o,r = pcs("resource create --no-default-ops myfs2 Filesystem device=x directory=y --force")
-        ac(o,"Creating resource 'ocf:heartbeat:Filesystem'\n")
-        assert r == 0
-
-        o,r = pcs("resource create --no-default-ops myfs3 Filesystem device=x directory=y fstype=z")
-        ac(o,"Creating resource 'ocf:heartbeat:Filesystem'\n")
-        assert r == 0
+        self.assert_pcs_success(
+            "resource create --no-default-ops myfs3 Filesystem device=x"
+                " directory=y fstype=z"
+            ,
+            "Assumed agent name 'ocf:heartbeat:Filesystem'"
+                " (deduced from 'Filesystem')\n"
+        )
 
         o,r = pcs("resource --full")
         ac(o, """\
@@ -4322,36 +4414,41 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(o,"")
         assert r == 0
 
-        o,r = pcs("resource create X2 IPaddr2 ip=1.1.1.1")
-        ac(o,"Creating resource 'ocf:heartbeat:IPaddr2'\n")
-        assert r == 0
+        self.assert_pcs_success(
+            "resource create X2 IPaddr2 ip=1.1.1.1",
+            "Assumed agent name 'ocf:heartbeat:IPaddr2'"
+                " (deduced from 'IPaddr2')\n"
+        )
+        self.assert_pcs_success(
+            "resource create X3 IPaddr2 ip=1.1.1.1 op monitor interval=1s start"
+                " timeout=1s stop timeout=1s"
+            ,
+            "Assumed agent name 'ocf:heartbeat:IPaddr2'"
+                " (deduced from 'IPaddr2')\n"
+        )
 
-        o,r = pcs("resource create X3 IPaddr2 ip=1.1.1.1 op monitor interval=1s start timeout=1s stop timeout=1s")
-        ac(o,"Creating resource 'ocf:heartbeat:IPaddr2'\n")
-        assert r == 0
-
-        o,r = pcs("resource --full")
-        ac(o, """\
- Resource: X0 (class=ocf provider=heartbeat type=Dummy)
-  Operations: start interval=0s timeout=20 (X0-start-interval-0s)
-              stop interval=0s timeout=20 (X0-stop-interval-0s)
-              monitor interval=10 timeout=20 (X0-monitor-interval-10)
- Resource: X1 (class=ocf provider=heartbeat type=Dummy)
-  Operations: start interval=0s timeout=20 (X1-start-interval-0s)
-              stop interval=0s timeout=20 (X1-stop-interval-0s)
-              monitor interval=90s (X1-monitor-interval-90s)
- Resource: X2 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=1.1.1.1
-  Operations: start interval=0s timeout=20s (X2-start-interval-0s)
-              stop interval=0s timeout=20s (X2-stop-interval-0s)
-              monitor interval=10s timeout=20s (X2-monitor-interval-10s)
- Resource: X3 (class=ocf provider=heartbeat type=IPaddr2)
-  Attributes: ip=1.1.1.1
-  Operations: monitor interval=1s (X3-monitor-interval-1s)
-              start interval=0s timeout=1s (X3-start-interval-0s)
-              stop interval=0s timeout=1s (X3-stop-interval-0s)
-""")
-        assert r == 0
+        self.assert_pcs_success("resource --full", outdent(
+            """\
+             Resource: X0 (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=10 timeout=20 (X0-monitor-interval-10)
+                          start interval=0s timeout=20 (X0-start-interval-0s)
+                          stop interval=0s timeout=20 (X0-stop-interval-0s)
+             Resource: X1 (class=ocf provider=heartbeat type=Dummy)
+              Operations: monitor interval=90s (X1-monitor-interval-90s)
+                          start interval=0s timeout=20 (X1-start-interval-0s)
+                          stop interval=0s timeout=20 (X1-stop-interval-0s)
+             Resource: X2 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ip=1.1.1.1
+              Operations: monitor interval=10s timeout=20s (X2-monitor-interval-10s)
+                          start interval=0s timeout=20s (X2-start-interval-0s)
+                          stop interval=0s timeout=20s (X2-stop-interval-0s)
+             Resource: X3 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ip=1.1.1.1
+              Operations: monitor interval=1s (X3-monitor-interval-1s)
+                          start interval=0s timeout=1s (X3-start-interval-0s)
+                          stop interval=0s timeout=1s (X3-stop-interval-0s)
+            """
+        ))
 
     def testClonedMasteredGroup(self):
         output, retVal = pcs(
@@ -4841,16 +4938,15 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource create dummy ocf:heartbeat:Dummy --clone"
         )
-        self.assert_pcs_success(
-            "resource show dummy-clone",
+        self.assert_pcs_success("resource show dummy-clone", outdent(
             """\
- Clone: dummy-clone
-  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-   Operations: start interval=0s timeout=20 (dummy-start-interval-0s)
-               stop interval=0s timeout=20 (dummy-stop-interval-0s)
-               monitor interval=10 timeout=20 (dummy-monitor-interval-10)
-"""
-        )
+             Clone: dummy-clone
+              Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+                           start interval=0s timeout=20 (dummy-start-interval-0s)
+                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+            """
+        ))
         self.assert_pcs_fail(
             "resource update dummy-clone op stop timeout=300",
             "Error: op settings must be changed on base resource, not the clone\n"
@@ -4859,31 +4955,29 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
             "resource update dummy-clone foo=bar op stop timeout=300",
             "Error: op settings must be changed on base resource, not the clone\n"
         )
-        self.assert_pcs_success(
-            "resource show dummy-clone",
+        self.assert_pcs_success("resource show dummy-clone", outdent(
             """\
- Clone: dummy-clone
-  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-   Operations: start interval=0s timeout=20 (dummy-start-interval-0s)
-               stop interval=0s timeout=20 (dummy-stop-interval-0s)
-               monitor interval=10 timeout=20 (dummy-monitor-interval-10)
-"""
-        )
+             Clone: dummy-clone
+              Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+                           start interval=0s timeout=20 (dummy-start-interval-0s)
+                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+            """
+        ))
 
     def test_no_op_allowed_in_master_update(self):
         self.assert_pcs_success(
             "resource create dummy ocf:heartbeat:Dummy --master"
         )
-        self.assert_pcs_success(
-            "resource show dummy-master",
+        self.assert_pcs_success("resource show dummy-master", outdent(
             """\
- Master: dummy-master
-  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-   Operations: start interval=0s timeout=20 (dummy-start-interval-0s)
-               stop interval=0s timeout=20 (dummy-stop-interval-0s)
-               monitor interval=10 timeout=20 (dummy-monitor-interval-10)
-"""
-        )
+             Master: dummy-master
+              Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+                           start interval=0s timeout=20 (dummy-start-interval-0s)
+                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+            """
+        ))
         self.assert_pcs_fail(
             "resource update dummy-master op stop timeout=300",
             "Error: op settings must be changed on base resource, not the master\n"
@@ -4892,16 +4986,15 @@ class CloneMasterUpdate(unittest.TestCase, AssertPcsMixin):
             "resource update dummy-master foo=bar op stop timeout=300",
             "Error: op settings must be changed on base resource, not the master\n"
         )
-        self.assert_pcs_success(
-            "resource show dummy-master",
+        self.assert_pcs_success("resource show dummy-master", outdent(
             """\
- Master: dummy-master
-  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-   Operations: start interval=0s timeout=20 (dummy-start-interval-0s)
-               stop interval=0s timeout=20 (dummy-stop-interval-0s)
-               monitor interval=10 timeout=20 (dummy-monitor-interval-10)
-"""
-        )
+             Master: dummy-master
+              Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+               Operations: monitor interval=10 timeout=20 (dummy-monitor-interval-10)
+                           start interval=0s timeout=20 (dummy-start-interval-0s)
+                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+            """
+        ))
 
 class ResourceRemoveWithTicketTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):

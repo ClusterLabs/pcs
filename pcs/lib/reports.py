@@ -81,7 +81,7 @@ def empty_resource_set_list():
         report_codes.EMPTY_RESOURCE_SET_LIST,
     )
 
-def required_option_is_missing(option_names, option_type=None):
+def required_option_is_missing(option_names, option_type=None, forceable=None):
     """
     required option has not been specified, command cannot continue
     list name is/are required but was not entered
@@ -89,6 +89,7 @@ def required_option_is_missing(option_names, option_type=None):
     """
     return ReportItem.error(
         report_codes.REQUIRED_OPTION_IS_MISSING,
+        forceable=forceable,
         info={
             "option_names": option_names,
             "option_type": option_type,
@@ -820,6 +821,22 @@ def id_already_exists(id):
         info={"id": id}
     )
 
+def id_belongs_to_unexpected_type(id, expected_types, current_type):
+    """
+    Specified id exists but for another element than expected.
+    For example user wants to create resource in group that is specifies by id.
+    But id does not belong to group.
+    """
+    return ReportItem.error(
+        report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+        info={
+            "id": id,
+            "expected_types": expected_types,
+            "current_type": current_type,
+        }
+    )
+
+
 def id_not_found(id, id_description):
     """
     specified id does not exist in CIB, user referenced a nonexisting id
@@ -832,6 +849,34 @@ def id_not_found(id, id_description):
         info={
             "id": id,
             "id_description": id_description,
+        }
+    )
+
+def resource_cannot_be_next_to_itself_in_group(resource_id, group_id):
+    """
+    Cannot put resource(id=resource_id) into group(id=group_id) next to itself:
+        resource(id=resource_id).
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_CANNOT_BE_NEXT_TO_ITSELF_IN_GROUP,
+        info={
+            "resource_id": resource_id,
+            "group_id": group_id,
+        }
+    )
+
+
+def resource_not_found_in_group(resource_id, group_id):
+    """
+    Resource (id=resource_id) is not present in group (id=group_id).
+    It can happen for example when user wants to put new resource to group
+    group_id after resource_id.
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_NOT_FOUND_IN_GROUP,
+        info={
+            "resource_id": resource_id,
+            "group_id": group_id,
         }
     )
 
@@ -1020,6 +1065,40 @@ def resource_cleanup_too_time_consuming(threshold):
         report_codes.RESOURCE_CLEANUP_TOO_TIME_CONSUMING,
         info={"threshold": threshold},
         forceable=report_codes.FORCE_LOAD_THRESHOLD
+    )
+
+def resource_operation_interval_duplication(duplications):
+    """
+    More operations with same name and same interval apeared.
+    Each operation with the same name (e.g. monitoring) need to have unique
+    interval.
+    dict duplications see resource operation interval duplication
+        in pcs/lib/exchange_formats.md
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION,
+        info={
+            "duplications": duplications,
+        }
+    )
+
+def resource_operation_interval_adapted(
+    operation_name, original_interval, adapted_interval
+):
+    """
+    Interval of resource operation was adopted to operation (with the same name)
+        intervals were unique.
+    Each operation with the same name (e.g. monitoring) need to have unique
+    interval.
+
+    """
+    return ReportItem.warning(
+        report_codes.RESOURCE_OPERATION_INTERVAL_ADAPTED,
+        info={
+            "operation_name": operation_name,
+            "original_interval": original_interval,
+            "adapted_interval": adapted_interval,
+        }
     )
 
 def node_not_found(node, severity=ReportItemSeverity.ERROR, forceable=None):

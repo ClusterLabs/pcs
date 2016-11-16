@@ -109,7 +109,7 @@ except ImportError:
 
 PYTHON2 = sys.version[0] == "2"
 
-DEFAULT_RESOURCE_ACTIONS = ["monitor", "start", "stop", "promote", "demote"]
+DEFAULT_RESOURCE_ACTIONS = lib_ra.DEFAULT_ACTIONS
 
 # usefile & filename variables are set in pcs module
 usefile = False
@@ -1511,10 +1511,16 @@ def filter_default_op_from_actions(resource_actions):
         filtered.append(new_action)
     return filtered
 
+def agent_action_to_cmdline_format(action):
+    op = [action["name"]]
+    for key in action.keys():
+        if key != "name" and action[key] != "0":
+            op.append("{0}={1}".format(key, action[key]))
+    return op
+
 # Given a resource agent (ocf:heartbeat:XXX) return an list of default
 # operations or an empty list if unable to find any default operations
 def get_default_op_values(full_agent_name):
-    default_ops = []
     try:
         if full_agent_name.startswith("stonith:"):
             metadata = lib_ra.StonithAgent(
@@ -1526,24 +1532,22 @@ def get_default_op_values(full_agent_name):
                 cmd_runner(),
                 full_agent_name
             )
-        actions = filter_default_op_from_actions(metadata.get_actions())
 
-        for action in actions:
-            op = [action["name"]]
-            for key in action.keys():
-                if key != "name" and action[key] != "0":
-                    op.append("{0}={1}".format(key, action[key]))
-            default_ops.append(op)
+        return [
+            agent_action_to_cmdline_format(action)
+            for action in metadata.get_default_actions()
+        ]
     except lib_ra.UnableToGetAgentMetadata:
         return []
     except lib_ra.ResourceAgentError as e:
+        #it raises
         process_library_reports(
             [lib_ra.resource_agent_error_to_report_item(e)]
         )
     except LibraryError as e:
+        #it raises
         process_library_reports(e.args)
 
-    return default_ops
 
 
 def check_pacemaker_supports_resource_wait():

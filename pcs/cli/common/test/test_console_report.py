@@ -444,3 +444,52 @@ class FencingLevelDoesNotExist(NameBuildTest):
             }
         )
 
+
+class ResourceOperationIntevalDuplicationTest(NameBuildTest):
+    code = codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION
+    def test_build_message_with_data(self):
+        self.assert_message_from_info(
+            "multiple specification the same operation with the same interval:"
+                "\nmonitor with intervals 3600s, 60m, 1h"
+                "\nmonitor with intervals 60s, 1m"
+            ,
+            {
+                "duplications":  {
+                    "monitor": [
+                        ["3600s", "60m", "1h"],
+                        ["60s", "1m"],
+                    ],
+                },
+            }
+        )
+
+class ResourceOperationIntevalAdaptedTest(NameBuildTest):
+    code = codes.RESOURCE_OPERATION_INTERVAL_ADAPTED
+    def test_build_message_with_data(self):
+        self.assert_message_from_info(
+            "changing a monitor operation interval from 10 to 11 to make the"
+                " operation unique"
+            ,
+            {
+                "operation_name": "monitor",
+                "original_interval": "10",
+                "adapted_interval": "11",
+            }
+        )
+
+class IdBelongsToUnexpectedType(NameBuildTest):
+    code = codes.ID_BELONGS_TO_UNEXPECTED_TYPE
+    def test_build_message_with_data(self):
+        self.assert_message_from_info("'ID' is not primitive/master/clone", {
+            "id": "ID",
+            "expected_types": ["primitive", "master", "clone"],
+            "current_type": "op",
+        })
+
+    def test_build_message_with_transformation(self):
+        self.assert_message_from_info("'ID' is not a group", {
+            "id": "ID",
+            "expected_types": ["group"],
+            "current_type": "op",
+        })
+

@@ -48,21 +48,18 @@ class DoesIdExistTest(CibToolsTest):
         self.assertFalse(lib.does_id_exist(self.cib.tree, "my Id"))
 
     def test_ignore_status_section(self):
-        self.cib.append_to_first_tag_name(
-            "status",
-            """\
-<elem1 id="status-1">
-    <elem1a id="status-1a">
-        <elem1aa id="status-1aa"/>
-        <elem1ab id="status-1ab"/>
-    </elem1a>
-    <elem1b id="status-1b">
-        <elem1ba id="status-1ba"/>
-        <elem1bb id="status-1bb"/>
-    </elem1b>
-</elem1>
-"""
-        )
+        self.cib.append_to_first_tag_name("status", """
+            <elem1 id="status-1">
+                <elem1a id="status-1a">
+                    <elem1aa id="status-1aa"/>
+                    <elem1ab id="status-1ab"/>
+                </elem1a>
+                <elem1b id="status-1b">
+                    <elem1ba id="status-1ba"/>
+                    <elem1bb id="status-1bb"/>
+                </elem1b>
+            </elem1>
+        """)
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1a"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1aa"))
@@ -97,6 +94,16 @@ class DoesIdExistTest(CibToolsTest):
         self.assertFalse(lib.does_id_exist(self.cib.tree, "role1"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "role2"))
 
+    def test_ignore_sections_directly_under_cib(self):
+        #this is side effect of current implementation but is not problem since
+        #id attribute is not allowed for elements directly under cib
+        tree = etree.fromstring('<cib><direct id="a"/></cib>')
+        self.assertFalse(lib.does_id_exist(tree, "a"))
+
+    def test_find_id_when_cib_is_not_root_element(self):
+        #for example we have only part of xml
+        tree = etree.fromstring('<root><direct id="a"/></root>')
+        self.assertTrue(lib.does_id_exist(tree, "a"))
 
 class FindUniqueIdTest(CibToolsTest):
     def test_already_unique(self):

@@ -12,6 +12,9 @@ from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
 
+def get_root(tree):
+    # ElementTree has getroot, Elemet has getroottree
+    return tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
 
 def does_id_exist(tree, check_id):
     """
@@ -19,13 +22,12 @@ def does_id_exist(tree, check_id):
     tree cib etree node
     check_id id to check
     """
-    # ElementTree has getroot, Elemet has getroottree
-    root = tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
+
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
-    existing = root.xpath(
+    existing = get_root(tree).xpath(
         (
-            '(/cib/*[name()!="status"]|/*[name()!="cib"])' +
+            '(/cib/*[name()!="status"]|/*[name()!="cib"])'
             '//*[name()!="acl_target" and name()!="role" and @id="{0}"]'
         ).format(check_id)
     )
@@ -189,4 +191,3 @@ def etree_element_attibutes_to_dict(etree_el, required_key_list):
         extracted
     """
     return dict([(key, etree_el.get(key)) for key in required_key_list])
-

@@ -28,6 +28,7 @@ from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
+from pcs.cli.common.console_report import error, warn
 
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
@@ -52,13 +53,9 @@ def resource_cmd(argv):
             if len(argv_next) < 2:
                 usage.resource(["create"])
                 sys.exit(1)
-            res_id = argv_next.pop(0)
-            res_type = argv_next.pop(0)
-            ra_values, op_values, meta_values, clone_opts = parse_resource_options(
-                argv_next, with_clone=True
-            )
-            resource_create(
-                res_id, res_type, ra_values, op_values, meta_values, clone_opts,
+            resource_create_refactoring(
+                lib,
+                argv_next,
                 group=utils.pcs_options.get("--group", None)
             )
         elif sub_cmd == "move":
@@ -592,6 +589,173 @@ def resource_create(
             if retval != 0 and output:
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
+
+def resource_create_refactoring(lib, argv, group=None):
+    ra_id = argv[0]
+    ra_type = argv[1]
+    ra_values = []
+    op_values = []
+    meta_values = []
+    clone_opts = []
+    op_args = False
+    meta_args = False
+    clone_args = False
+    for arg in argv[2:]:
+        if arg == "op":
+            op_args = True
+            meta_args = False
+            op_values.append([])
+        elif arg == "meta":
+            meta_args = True
+            op_args = False
+        elif arg == "clone":
+            clone_args = True
+            op_args = False
+            meta_args = False
+        else:
+            if clone_args:
+                if "=" in arg:
+                    clone_opts.append(arg)
+            elif op_args:
+                if arg == "op":
+                    op_values.append([])
+                elif "=" not in arg and len(op_values[-1]) != 0:
+                    op_values.append([])
+                    op_values[-1].append(arg)
+                else:
+                    op_values[-1].append(arg)
+            elif meta_args:
+                if "=" in arg:
+                    meta_values.append(arg)
+            else:
+                ra_values.append(arg)
+
+    if clone_args:
+        utils.pcs_options["--clone"] = ""
+
+    #CMDLINE CHECK
+    if "--wait" in utils.pcs_options:
+        wait_timeout = utils.validate_wait_get_timeout()
+        if "--disabled" in utils.pcs_options:
+            raise error("Cannot use '--wait' together with '--disabled'")
+
+        do_not_run = ["target-role=stopped"]
+        if (
+            "--master" in utils.pcs_options or "--clone" in utils.pcs_options
+            or
+            clone_opts
+        ):
+            do_not_run.extend(["clone-max=0", "clone-node-max=0"])
+        for opt in meta_values + clone_opts:
+            if opt.lower() in do_not_run:
+                raise error("Cannot use '--wait' together with '%s'" % opt)
+
+    if "--clone" in utils.pcs_options:
+        if group:
+            warn("--group ignored when creating a clone")
+        if "--master" in utils.pcs_options:
+            warn("--master ignored when creating a clone")
+    elif "--master" in utils.pcs_options:
+        if group:
+            warn("--group ignored when creating a master")
+
+    #check format operations: name option1=value1 option2=value2...
+    for op_val in op_values:
+        if len(op_val) < 2:
+            raise error(
+                "When using 'op' you must specify an operation name"
+                + " and at least one option"
+            )
+        if '=' in op_val[0]:
+            raise error(
+                "When using 'op' you must specify an operation name after 'op'"
+            )
+
+    if "--after" in utils.pcs_options and "--before" in utils.pcs_options:
+        raise error("you cannot specify both --before and --after")
+
+    operation_list = [
+        prepare_options(["name={0}".format(op[0])] + op[1:]) for op in op_values
+    ]
+
+    force = "--force" in utils.pcs_options
+    is_master = "--master" in utils.pcs_options
+
+    settings = dict(
+        allow_absent_agent=force,
+        allow_invalid_operation=force,
+        allow_invalid_instance_attributes=force,
+        use_default_operations="--no-default-ops" not in utils.pcs_options,
+        ensure_disabled="--disabled" in utils.pcs_options,
+        master=is_master,
+    )
+
+    #LIBRARY RUN
+    if "--clone" in utils.pcs_options:
+        lib.resource.create_as_clone(
+            ra_id, ra_type, operation_list,
+            prepare_options(meta_values),
+            prepare_options(ra_values),
+            prepare_options(clone_opts),
+            **settings
+        )
+    elif is_master:
+        lib.resource.create_as_master(
+            ra_id, ra_type, operation_list,
+            prepare_options(meta_values),
+            prepare_options(ra_values),
+            prepare_options(meta_values), #master_meta
+            **settings
+        )
+    elif not group:
+        lib.resource.create(
+            ra_id, ra_type, operation_list,
+            prepare_options(meta_values),
+            prepare_options(ra_values),
+            **settings
+        )
+    else:
+        adjacent_resource_id = None
+        put_after_adjacent = False
+        if "--after" in utils.pcs_options:
+            adjacent_resource_id = utils.pcs_options["--after"]
+            put_after_adjacent = True
+        if "--before" in utils.pcs_options:
+            adjacent_resource_id = utils.pcs_options["--before"]
+            put_after_adjacent = False
+
+        lib.resource.create_in_group(
+            ra_id, ra_type, group, operation_list,
+            prepare_options(meta_values),
+            prepare_options(ra_values),
+            adjacent_resource_id=adjacent_resource_id,
+            put_after_adjacent=put_after_adjacent,
+            **settings
+        )
+
+        if "--wait" in utils.pcs_options:
+            args = ["crm_resource", "--wait"]
+            if wait_timeout:
+                args.extend(["--timeout=%s" % wait_timeout])
+            output, retval = utils.run(args)
+            running_on = utils.resource_running_on(ra_id)
+            if retval == 0 and running_on["is_running"]:
+                print(running_on["message"])
+            else:
+                msg = []
+                if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
+                    msg.append("waiting timeout")
+                else:
+                    msg.append(
+                        "unable to start: '%s', please check logs for failure "
+                        "information"
+                        % ra_id
+                    )
+                msg.append(running_on["message"])
+                if retval != 0 and output:
+                    msg.append("\n" + output)
+                utils.err("\n".join(msg).strip())
+
 
 def resource_move(argv,clear=False,ban=False):
     other_options = []
@@ -1279,7 +1443,6 @@ def split_resource_agent_name(full_agent_name):
             ("provider", match.group("provider"))
         )
     return parts
-
 
 def create_xml_element(tag, options, children = []):
     impl = getDOMImplementation()

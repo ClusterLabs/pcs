@@ -29,6 +29,18 @@ def console_report(*lines):
 class AssertPcsMixin(object):
     """Run pcs command and assert its result"""
 
+    def assert_pcs_success_all(self, command_list):
+        for command in command_list:
+            stdout, pcs_returncode = self.pcs_runner.run(command)
+            if pcs_returncode != 0:
+                raise AssertionError(
+                    (
+                        "Command '{0}' does not succeed.\n"
+                        "return_code: {1}\n"
+                        "stdout:\n{2}"
+                    ).format(command, pcs_returncode, stdout)
+                )
+
     def assert_pcs_success(self, command, stdout_full=None, stdout_start=None):
         full = stdout_full
         if stdout_start is None and stdout_full is None:

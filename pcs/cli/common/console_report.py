@@ -81,6 +81,18 @@ def service_operation_skipped(operation, info):
         **info
     )
 
+def id_belongs_to_unexpected_type(info):
+    translate_expected = {
+        "group": "a group",
+    }
+    return "'{id}' is not {expected_type}".format(
+        id=info["id"],
+        expected_type="/".join([
+            translate_expected.get(tag, "{0}".format(tag))
+            for tag in info["expected_types"]
+        ]),
+    )
+
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
 #If it is necessary to put the force text inside the string then the callable
@@ -454,6 +466,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.ID_BELONGS_TO_UNEXPECTED_TYPE: id_belongs_to_unexpected_type,
+
     codes.ID_NOT_FOUND: lambda info:
         "{desc}'{id}' does not exist"
         .format(
@@ -464,6 +478,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.RESOURCE_DOES_NOT_EXIST: lambda info:
         "Resource '{resource_id}' does not exist"
+        .format(**info)
+    ,
+
+    codes.RESOURCE_NOT_FOUND_IN_GROUP: lambda info:
+        "there is no resource '{resource_id}' in the group '{group_id}'"
         .format(**info)
     ,
 
@@ -588,6 +607,23 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
              "negatively impact the responsiveness of the cluster. "
              "Consider specifying resource and/or node"
        ).format(**info)
+    ,
+
+    codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION: lambda info: (
+        "multiple specification the same operation with the same interval:\n"
+        +"\n".join([
+            "{0} with intervals {1}".format(name, ", ".join(intervals))
+            for name, intervals_list in info["duplications"].items()
+            for intervals in intervals_list
+        ])
+    ),
+
+    codes.RESOURCE_OPERATION_INTERVAL_ADAPTED: lambda info:
+        (
+            "changing a {operation_name} operation interval"
+                " from {original_interval}"
+                " to {adapted_interval} to make the operation unique"
+        ).format(**info)
     ,
 
     codes.NODE_NOT_FOUND: lambda info:

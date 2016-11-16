@@ -31,13 +31,13 @@ def find_valid_resource_id(
 ):
     resource_element = resource.find_by_id(cib, id)
 
-    if(resource_element is None):
+    if resource_element is None:
         raise LibraryError(reports.resource_does_not_exist(id))
 
-    if resource_element.tag in resource.TAGS_CLONE:
+    if resource_element.tag in resource.clone.ALL_TAGS:
         return resource_element.attrib["id"]
 
-    clone = find_parent(resource_element, resource.TAGS_CLONE)
+    clone = find_parent(resource_element, resource.clone.ALL_TAGS)
     if clone is None:
         return resource_element.attrib["id"]
 
