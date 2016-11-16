@@ -9,10 +9,13 @@
   disabled ([rhbz#1389941])
 - Adding a node in a CMAN cluster does not cause the new node to be fenced
   immediately ([rhbz#1394846])
+- Show proper error message when there is HTTP communication failure
+  ([rhbz#1394273])
 
 
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
+[rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273
 [rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846
 
 

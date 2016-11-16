@@ -22,6 +22,12 @@ import subprocess
 import sys
 try:
     # python2
+    from httplib import HTTPException
+except ImportError:
+    # python3
+    from http.client import HTTPException
+try:
+    # python2
     from urllib import urlencode as urllib_urlencode
 except ImportError:
     # python3
@@ -624,12 +630,17 @@ class NodeCommunicator(object):
                     host, request, "HTTP error: {0}".format(e.code)
                 )
         except urllib_URLError as e:
-            msg = "Unable to connect to {node} ({reason})"
-            self._logger.debug(msg.format(node=host, reason=e.reason))
-            self._reporter.process(
-                reports.node_communication_not_connected(host, e.reason)
-            )
-            raise NodeConnectionException(host, request, e.reason)
+            self.__handle_connection_error(host, request, e.reason)
+        except HTTPException:
+            self.__handle_connection_error(host, request, "Connection error")
+
+    def __handle_connection_error(self, host, request, reason):
+        msg = "Unable to connect to {node} ({reason})"
+        self._logger.debug(msg.format(node=host, reason=reason))
+        self._reporter.process(
+            reports.node_communication_not_connected(host, reason)
+        )
+        raise NodeConnectionException(host, request, reason)
 
     def __get_opener(self):
         # enable self-signed certificates

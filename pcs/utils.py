@@ -69,7 +69,12 @@ from pcs.cli.common.reports import build_report_message
 from pcs.cli.booth.command import DEFAULT_BOOTH_NAME
 import pcs.cli.booth.env
 
-
+try:
+    # python2
+    from httplib import HTTPException
+except ImportError:
+    # python3
+    from http.client import HTTPException
 try:
     # python2
     from urllib import urlencode as urllib_urlencode
@@ -414,6 +419,7 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
             print(host + ": " + html.strip())
         if "--debug" in pcs_options:
             print("Response Code: 0")
+
             print("--Debug Response Start--\n{0}".format(html), end="")
             print("--Debug Response End--")
             print()
@@ -449,11 +455,21 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
             print(output[1])
         return output
     except urllib_URLError as e:
-        if "--debug" in pcs_options:
-            print("Response Reason: " + str(e.reason))
-        if printResult:
-            print("Unable to connect to %s (%s)" % (host, e.reason))
-        return (2,"Unable to connect to %s (%s)" % (host, e.reason))
+        return __handle_HTTP_connection_error(host, str(e.reason), printResult)
+    except HTTPException:
+        return __handle_HTTP_connection_error(
+            host, "Connection error", printResult
+        )
+
+def __handle_HTTP_connection_error(host, reason,  print_result):
+    if "--debug" in pcs_options:
+        print("Response Reason: {0}".format(reason))
+    msg = "Unable to connect to {host} ({reason})".format(
+        host=host, reason=reason
+    )
+    if print_result:
+        print(msg)
+    return (2, msg)
 
 def getNodesFromCorosyncConf(conf_text=None):
     if is_rhel6():
