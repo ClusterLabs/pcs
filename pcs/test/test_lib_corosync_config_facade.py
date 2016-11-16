@@ -582,7 +582,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "nonsense1",
+                    "option_names": ["nonsense1"],
                     "option_type": "quorum",
                     "allowed": [
                         "auto_tie_breaker",
@@ -596,7 +596,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "nonsense2",
+                    "option_names": ["nonsense2"],
                     "option_type": "quorum",
                     "allowed": [
                         "auto_tie_breaker",
@@ -1207,12 +1207,12 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "host"}
+                {"option_names": ["host"]}
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "algorithm"}
+                {"option_names": ["algorithm"]}
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1257,7 +1257,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "bad_model_option",
+                    "option_names": ["bad_model_option"],
                     "option_type": "quorum device model",
                     "allowed": [
                         "algorithm",
@@ -1293,7 +1293,7 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "host"}
+                {"option_names": ["host"]}
             ),
             (
                 severity.ERROR,
@@ -1319,7 +1319,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "bad_generic_option",
+                    "option_names": ["bad_generic_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 },
@@ -1329,7 +1329,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "model",
+                    "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 }
@@ -1371,12 +1371,12 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "host"}
+                {"option_names": ["host"]}
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "algorithm"}
+                {"option_names": ["algorithm"]}
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1395,12 +1395,12 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "host"}
+                {"option_names": ["host"]}
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "algorithm"}
+                {"option_names": ["algorithm"]}
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1473,7 +1473,7 @@ quorum {
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "bad_model_option",
+                        "option_names": ["bad_model_option"],
                         "option_type": "quorum device model",
                         "allowed": [
                             "algorithm",
@@ -1525,7 +1525,7 @@ quorum {
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "bad_generic_option",
+                        "option_names": ["bad_generic_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     }
@@ -1697,12 +1697,12 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "host"},
+                {"option_names": ["host"]},
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "algorithm"}
+                {"option_names": ["algorithm"]}
             ),
             (
                 severity.ERROR,
@@ -1735,12 +1735,12 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "host"},
+                {"option_names": ["host"]},
             ),
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "algorithm"}
+                {"option_names": ["algorithm"]}
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1780,7 +1780,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "bad_model_option",
+                    "option_names": ["bad_model_option"],
                     "option_type": "quorum device model",
                     "allowed": [
                         "algorithm",
@@ -1889,7 +1889,7 @@ quorum {
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "bad_model_option",
+                        "option_names": ["bad_model_option"],
                         "option_type": "quorum device model",
                         "allowed": [
                             "algorithm",
@@ -2005,7 +2005,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "bad_generic_option",
+                    "option_names": ["bad_generic_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 },
@@ -2015,7 +2015,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "model",
+                    "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 }
@@ -2062,7 +2062,7 @@ quorum {
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "model",
+                    "option_names": ["model"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 }
@@ -2108,7 +2108,7 @@ quorum {
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "bad_generic_option",
+                        "option_names": ["bad_generic_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     },

@@ -90,7 +90,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_UNKNOWN",
+                        "option_names": ["SBD_UNKNOWN"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -100,7 +100,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "another_unknown_option",
+                        "option_names": ["another_unknown_option"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -125,7 +125,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_UNKNOWN",
+                        "option_names": ["SBD_UNKNOWN"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -135,7 +135,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "another_unknown_option",
+                        "option_names": ["another_unknown_option"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -161,7 +161,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_WATCHDOG_DEV",
+                        "option_names": ["SBD_WATCHDOG_DEV"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -171,7 +171,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_OPTS",
+                        "option_names": ["SBD_OPTS"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -197,7 +197,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_WATCHDOG_DEV",
+                        "option_names": ["SBD_WATCHDOG_DEV"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -207,7 +207,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_OPTS",
+                        "option_names": ["SBD_OPTS"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -217,7 +217,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_UNKNOWN",
+                        "option_names": ["SBD_UNKNOWN"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -244,7 +244,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_WATCHDOG_DEV",
+                        "option_names": ["SBD_WATCHDOG_DEV"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -254,7 +254,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_OPTS",
+                        "option_names": ["SBD_OPTS"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -264,7 +264,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_UNKNOWN",
+                        "option_names": ["SBD_UNKNOWN"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },
@@ -274,7 +274,7 @@ class ValidateSbdOptionsTest(TestCase):
                     Severities.ERROR,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "SBD_PACEMAKER",
+                        "option_names": ["SBD_PACEMAKER"],
                         "option_type": None,
                         "allowed": self.allowed_sbd_options,
                     },

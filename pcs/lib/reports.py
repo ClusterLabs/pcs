@@ -81,35 +81,39 @@ def empty_resource_set_list():
         report_codes.EMPTY_RESOURCE_SET_LIST,
     )
 
-def required_option_is_missing(name):
+def required_option_is_missing(option_names, option_type=None):
     """
     required option has not been specified, command cannot continue
+    list name is/are required but was not entered
+    option_type decsribes the option
     """
     return ReportItem.error(
         report_codes.REQUIRED_OPTION_IS_MISSING,
         info={
-            "option_name": name
+            "option_names": option_names,
+            "option_type": option_type,
         }
     )
 
 def invalid_option(
-    option_name, allowed_options, option_type,
+    option_names, allowed_options, option_type,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
     specified option name is not valid, usualy an error or a warning
-    option_name specified invalid option name
+    list option_names specified invalid option names
     allowed_options iterable of possible allowed option names
     option_type decsribes the option
     severity report item severity
     forceable is this report item forceable? by what cathegory?
     """
+
     return ReportItem(
         report_codes.INVALID_OPTION,
         severity,
         forceable,
         info={
-            "option_name": option_name,
+            "option_names": option_names,
             "option_type": option_type,
             "allowed": sorted(allowed_options),
         }

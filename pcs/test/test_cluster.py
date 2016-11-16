@@ -1310,7 +1310,7 @@ Warning: --ipv6 ignored as it is not supported on CMAN clusters
         assert r == 1
         ac(
             o,
-            "Error: 'blah' is not a valid RRP mode value, use passive, active, use --force to override\n"
+            "Error: 'blah' is not a valid RRP mode value, use active, passive, use --force to override\n"
         )
 
         o,r = pcs(

@@ -10,6 +10,7 @@ from functools import partial
 
 from pcs.common import report_codes as codes
 from collections import Iterable
+from pcs.common.tools import is_string
 
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
@@ -74,7 +75,6 @@ def service_operation_skipped(operation, info):
         **info
     )
 
-
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
 #If it is necessary to put the force text inside the string then the callable
@@ -88,30 +88,50 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.EMPTY_RESOURCE_SET_LIST: "Resource set list is empty",
 
     codes.REQUIRED_OPTION_IS_MISSING: lambda info:
-        "required option '{option_name}' is missing"
-        .format(**info)
+        "required {desc}option{s} {option_names_list} {are} missing"
+        .format(
+            desc=format_optional(info["option_type"], "{0} "),
+            option_names_list=", ".join(sorted([
+                "'{0}'".format(name)
+                for name in info["option_names"]
+            ])),
+            s=("s" if len(info["option_names"]) > 1 else ""),
+            are=(
+                "are" if len(info["option_names"]) > 1
+                else "is"
+            )
+        )
     ,
 
     codes.INVALID_OPTION: lambda info:
-        "invalid {desc}option '{option_name}', allowed options are: {allowed_values}"
-        .format(
+        (
+            "invalid {desc}option{s} {option_names_list},"
+            " allowed option{are} {allowed_values}"
+        ).format(
             desc=format_optional(info["option_type"], "{0} "),
-            allowed_values=", ".join(info["allowed"]),
+            allowed_values=", ".join(sorted(info["allowed"])),
+            option_names_list=", ".join(sorted([
+                "'{0}'".format(name)
+                for name in info["option_names"]
+            ])),
+            s=("s:" if len(info["option_names"]) > 1 else ""),
+            are=("s are:" if len(info["allowed"]) > 1 else " is"),
             **info
         )
     ,
 
     codes.INVALID_OPTION_VALUE: lambda info:
+        #value on key "allowed_values" is overloaded:
+        # * it can be list - then it express possible option values
+        # * it can be string - then it is verbal description of value
         "'{option_value}' is not a valid {option_name} value, use {hint}"
         .format(
             hint=(
-                ", ".join(info["allowed_values"])
-                if (
+                ", ".join(sorted(info["allowed_values"])) if (
                     isinstance(info["allowed_values"], Iterable)
                     and
-                    not isinstance(info["allowed_values"], "".__class__)
-                )
-                else info["allowed_values"]
+                    not is_string(info["allowed_values"])
+                ) else info["allowed_values"]
             ),
             **info
         )

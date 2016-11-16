@@ -43,7 +43,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
         self.assert_message_from_info(
             "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",
             {
-                "option_name": "NAME",
+                "option_names": ["NAME"],
                 "option_type": "TYPE",
                 "allowed": sorted(["FIRST", "SECOND"]),
             }
@@ -53,9 +53,48 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
         self.assert_message_from_info(
             "invalid option 'NAME', allowed options are: FIRST, SECOND",
             {
-                "option_name": "NAME",
+                "option_names": ["NAME"],
                 "option_type": "",
                 "allowed": sorted(["FIRST", "SECOND"]),
+            }
+        )
+
+    def test_build_message_with_multiple_names(self):
+        self.assert_message_from_info(
+            "invalid options: 'ANOTHER', 'NAME', allowed option is FIRST",
+            {
+                "option_names": ["NAME", "ANOTHER"],
+                "option_type": "",
+                "allowed": ["FIRST"],
+            }
+        )
+
+class RequiredOptionIsMissing(NameBuildTest):
+    code = codes.REQUIRED_OPTION_IS_MISSING
+    def test_build_message_with_type(self):
+        self.assert_message_from_info(
+            "required TYPE option 'NAME' is missing",
+            {
+                "option_names": ["NAME"],
+                "option_type": "TYPE",
+            }
+        )
+
+    def test_build_message_without_type(self):
+        self.assert_message_from_info(
+            "required option 'NAME' is missing",
+            {
+                "option_names": ["NAME"],
+                "option_type": "",
+            }
+        )
+
+    def test_build_message_with_multiple_names(self):
+        self.assert_message_from_info(
+            "required options 'ANOTHER', 'NAME' are missing",
+            {
+                "option_names": ["NAME", "ANOTHER"],
+                "option_type": "",
             }
         )
 

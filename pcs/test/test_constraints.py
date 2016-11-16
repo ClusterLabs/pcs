@@ -470,19 +470,19 @@ Colocation Constraints:
         assert r == 0
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 sequential=foo")
-        ac(output, "Error: 'foo' is not a valid sequential value, use true, false\n")
+        ac(output, "Error: 'foo' is not a valid sequential value, use false, true\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 require-all=foo")
-        ac(output, "Error: 'foo' is not a valid require-all value, use true, false\n")
+        ac(output, "Error: 'foo' is not a valid require-all value, use false, true\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 role=foo")
-        ac(output, "Error: 'foo' is not a valid role value, use Stopped, Started, Master, Slave\n")
+        ac(output, "Error: 'foo' is not a valid role value, use Master, Slave, Started, Stopped\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 action=foo")
-        ac(output, "Error: 'foo' is not a valid action value, use start, promote, demote, stop\n")
+        ac(output, "Error: 'foo' is not a valid action value, use demote, promote, start, stop\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 foo=bar")
@@ -716,19 +716,19 @@ Ordering Constraints:
         assert r == 0
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 sequential=foo")
-        ac(output, "Error: 'foo' is not a valid sequential value, use true, false\n")
+        ac(output, "Error: 'foo' is not a valid sequential value, use false, true\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 require-all=foo")
-        ac(output, "Error: 'foo' is not a valid require-all value, use true, false\n")
+        ac(output, "Error: 'foo' is not a valid require-all value, use false, true\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 role=foo")
-        ac(output, "Error: 'foo' is not a valid role value, use Stopped, Started, Master, Slave\n")
+        ac(output, "Error: 'foo' is not a valid role value, use Master, Slave, Started, Stopped\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 action=foo")
-        ac(output, "Error: 'foo' is not a valid action value, use start, promote, demote, stop\n")
+        ac(output, "Error: 'foo' is not a valid action value, use demote, promote, start, stop\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint order set D1 D2 foo=bar")
@@ -748,14 +748,14 @@ Error: invalid option 'foo', allowed options are: id, kind, symmetrical
             temp_cib,
             "constraint order set D1 D2 setoptions kind=foo"
         )
-        ac(output, "Error: 'foo' is not a valid kind value, use Optional, Mandatory, Serialize\n")
+        ac(output, "Error: 'foo' is not a valid kind value, use Mandatory, Optional, Serialize\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
             temp_cib,
             "constraint order set D1 D2 setoptions symmetrical=foo"
         )
-        ac(output, "Error: 'foo' is not a valid symmetrical value, use true, false\n")
+        ac(output, "Error: 'foo' is not a valid symmetrical value, use false, true\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
@@ -2628,7 +2628,7 @@ class TicketCreateWithSet(ConstraintBaseTest):
     def test_refuse_bad_loss_policy(self):
         self.assert_pcs_fail(
             'constraint ticket set A B setoptions ticket=T loss-policy=none',
-            ["Error: 'none' is not a valid loss-policy value, use fence, stop, freeze, demote"]
+            ["Error: 'none' is not a valid loss-policy value, use demote, fence, freeze, stop"]
         )
 
     def test_refuse_when_ticket_option_is_missing(self):
@@ -2662,7 +2662,7 @@ class TicketAdd(ConstraintBaseTest):
     def test_refuse_invalid_role(self):
         self.assert_pcs_fail(
             'constraint ticket add T bad-role A loss-policy=fence',
-            ["Error: 'bad-role' is not a valid rsc-role value, use Stopped, Started, Master, Slave"]
+            ["Error: 'bad-role' is not a valid rsc-role value, use Master, Slave, Started, Stopped"]
         )
 
     def test_refuse_duplicate_ticket(self):

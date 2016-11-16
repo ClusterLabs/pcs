@@ -147,7 +147,7 @@ class ConfigFacade(object):
             allowed_names = self.__class__.QUORUM_OPTIONS
             if name not in allowed_names:
                 report_items.append(
-                    reports.invalid_option(name, allowed_names, "quorum")
+                    reports.invalid_option([name], allowed_names, "quorum")
                 )
                 continue
 
@@ -394,12 +394,14 @@ class ConfigFacade(object):
 
         if need_required:
             for missing in sorted(required_options - model_options_names):
-                report_items.append(reports.required_option_is_missing(missing))
+                report_items.append(reports.required_option_is_missing(
+                    [missing]
+                ))
 
         for name, value in sorted(model_options.items()):
             if name not in allowed_options:
                 report_items.append(reports.invalid_option(
-                    name,
+                    [name],
                     allowed_options,
                     "quorum device model",
                     severity,
@@ -411,7 +413,7 @@ class ConfigFacade(object):
                 # do not allow to remove required options
                 if name in required_options:
                     report_items.append(
-                        reports.required_option_is_missing(name)
+                        reports.required_option_is_missing([name])
                     )
                 else:
                     continue
@@ -476,7 +478,7 @@ class ConfigFacade(object):
                 # model is never allowed in generic options, it is passed
                 # in its own argument
                 report_items.append(reports.invalid_option(
-                    name,
+                    [name],
                     allowed_options,
                     "quorum device",
                     severity if name != "model" else ReportItemSeverity.ERROR,

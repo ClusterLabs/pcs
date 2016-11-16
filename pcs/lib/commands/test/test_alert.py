@@ -44,7 +44,7 @@ class CreateAlertTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "path"}
+                {"option_names": ["path"]}
             )
         )
         mock_ensure_cib_version.assert_not_called()
@@ -407,7 +407,7 @@ class AddRecipientTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "value"}
+                {"option_names": ["value"]}
             )
         )
 
