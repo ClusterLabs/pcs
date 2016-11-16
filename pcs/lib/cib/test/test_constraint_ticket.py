@@ -72,7 +72,7 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": ["unknown"],
+                    "option_names": ["unknown"],
                     "option_type": None,
                     "allowed": ["id", "loss-policy", "rsc", "rsc-role", "ticket"],
                 }
@@ -100,7 +100,7 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {
-                    "option_name": "ticket"
+                    "option_names": ["ticket"]
                 }
             ),
         )
@@ -114,7 +114,7 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
                 {
-                    "option_name": "rsc",
+                    "option_names": ["rsc"],
                 }
             ),
         )
@@ -223,7 +223,7 @@ class PrepareOptionsWithSetTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "ticket"}
+                {"option_names": ["ticket"]}
             )
         )
 
@@ -237,7 +237,7 @@ class PrepareOptionsWithSetTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_name": "ticket"}
+                {"option_names": ["ticket"]}
             )
         )
 

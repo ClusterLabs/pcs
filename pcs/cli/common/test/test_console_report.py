@@ -43,7 +43,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
         self.assert_message_from_info(
             "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",
             {
-                "option_name": ["NAME"],
+                "option_names": ["NAME"],
                 "option_type": "TYPE",
                 "allowed": sorted(["FIRST", "SECOND"]),
             }
@@ -53,7 +53,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
         self.assert_message_from_info(
             "invalid option 'NAME', allowed options are: FIRST, SECOND",
             {
-                "option_name": ["NAME"],
+                "option_names": ["NAME"],
                 "option_type": "",
                 "allowed": sorted(["FIRST", "SECOND"]),
             }
@@ -63,7 +63,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
         self.assert_message_from_info(
             "invalid options: 'ANOTHER', 'NAME', allowed option is FIRST",
             {
-                "option_name": ["NAME", "ANOTHER"],
+                "option_names": ["NAME", "ANOTHER"],
                 "option_type": "",
                 "allowed": ["FIRST"],
             }
@@ -75,7 +75,7 @@ class RequiredOptionIsMissing(NameBuildTest):
         self.assert_message_from_info(
             "required TYPE option 'NAME' is missing",
             {
-                "option_name": "NAME",
+                "option_names": ["NAME"],
                 "option_type": "TYPE",
             }
         )
@@ -84,7 +84,7 @@ class RequiredOptionIsMissing(NameBuildTest):
         self.assert_message_from_info(
             "required option 'NAME' is missing",
             {
-                "option_name": "NAME",
+                "option_names": ["NAME"],
                 "option_type": "",
             }
         )
@@ -93,7 +93,7 @@ class RequiredOptionIsMissing(NameBuildTest):
         self.assert_message_from_info(
             "required options 'ANOTHER', 'NAME' are missing",
             {
-                "option_name": ["NAME", "ANOTHER"],
+                "option_names": ["NAME", "ANOTHER"],
                 "option_type": "",
             }
         )

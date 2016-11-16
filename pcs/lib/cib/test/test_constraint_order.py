@@ -95,7 +95,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": ["unknown"],
+                    "option_names": ["unknown"],
                     "option_type": None,
                     "allowed": [ "id", "kind", "symmetrical"],
                 }

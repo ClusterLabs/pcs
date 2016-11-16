@@ -406,7 +406,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "invalid",
+                    "option_names": ["invalid"],
                     "option_type": "quorum",
                     "allowed": [
                         "auto_tie_breaker",
@@ -692,7 +692,7 @@ class AddDeviceTest(TestCase, CmanMixin):
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "bad_option",
+                    "option_names": ["bad_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 },
@@ -730,7 +730,7 @@ class AddDeviceTest(TestCase, CmanMixin):
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "bad_option",
+                        "option_names": ["bad_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     }
@@ -2008,7 +2008,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                 severity.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": "bad_option",
+                    "option_names": ["bad_option"],
                     "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 },
@@ -2039,7 +2039,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                     severity.WARNING,
                     report_codes.INVALID_OPTION,
                     {
-                        "option_name": "bad_option",
+                        "option_names": ["bad_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     }

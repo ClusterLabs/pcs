@@ -132,7 +132,7 @@ class PrepareOptionsTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION,
                 {
-                    "option_name": ["b"],
+                    "option_names": ["b"],
                     "option_type": None,
                     "allowed": ["a", "id"],
                 }

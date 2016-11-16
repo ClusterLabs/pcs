@@ -41,3 +41,22 @@ def format_environment_error(e):
 
 def join_multilines(strings):
     return "\n".join([a.strip() for a in strings if a.strip()])
+
+def is_string(candidate):
+    """
+    Return if candidate is string.
+    Simply lookin solution isinstance(candidate, "".__class__) does not work:
+
+    >>> isinstance("", "".__class__), isinstance(u"", "".__class__)
+    (True, False)
+
+    This code also needs to deal with python2 and python3 and unicode type is in
+    python2 but not in python3.
+    """
+    string_list = [str, bytes]
+    try:
+        string_list.append(unicode)
+    except NameError: #unicode is not present in python3
+        pass
+
+    return any([isinstance(candidate, string) for string in string_list])

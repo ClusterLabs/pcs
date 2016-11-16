@@ -54,12 +54,12 @@ def _validate_sbd_options(sbd_config, allow_unknown_opts=False):
     for sbd_opt in sbd_config:
         if sbd_opt in unsupported_sbd_option_list:
             report_item_list.append(reports.invalid_option(
-                sbd_opt, allowed_sbd_options, None
+                [sbd_opt], allowed_sbd_options, None
             ))
 
         elif sbd_opt not in allowed_sbd_options:
             report_item_list.append(reports.invalid_option(
-                sbd_opt,
+                [sbd_opt],
                 allowed_sbd_options,
                 None,
                 Severities.WARNING if allow_unknown_opts else Severities.ERROR,

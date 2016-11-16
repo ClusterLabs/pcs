@@ -10,6 +10,7 @@ from functools import partial
 
 from pcs.common import report_codes as codes
 from collections import Iterable
+from pcs.common.tools import is_string
 
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
@@ -74,21 +75,6 @@ def service_operation_skipped(operation, info):
         **info
     )
 
-def is_list_and_not_string(candidate):
-    if not isinstance(candidate, Iterable):
-        return False
-
-    string_list = [str, bytes]
-    try:
-        string_list.append(unicode)
-    except NameError: #unicode is not present in python3
-        pass
-
-    return not any([isinstance(candidate, string) for string in string_list])
-
-def normalize_to_list(candidate):
-    return candidate if is_list_and_not_string(candidate) else [candidate]
-
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
 #If it is necessary to put the force text inside the string then the callable
@@ -107,11 +93,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             desc=format_optional(info["option_type"], "{0} "),
             option_names_list=", ".join(sorted([
                 "'{0}'".format(name)
-                for name in normalize_to_list(info["option_name"])
+                for name in info["option_names"]
             ])),
-            s=("s" if len(normalize_to_list(info["option_name"])) > 1 else ""),
+            s=("s" if len(info["option_names"]) > 1 else ""),
             are=(
-                "are" if len(normalize_to_list(info["option_name"])) > 1
+                "are" if len(info["option_names"]) > 1
                 else "is"
             )
         )
@@ -126,18 +112,27 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             allowed_values=", ".join(sorted(info["allowed"])),
             option_names_list=", ".join(sorted([
                 "'{0}'".format(name)
-                for name in normalize_to_list(info["option_name"])
+                for name in info["option_names"]
             ])),
-            s=("s:" if len(normalize_to_list(info["option_name"])) > 1 else ""),
+            s=("s:" if len(info["option_names"]) > 1 else ""),
             are=("s are:" if len(info["allowed"]) > 1 else " is"),
             **info
         )
     ,
 
     codes.INVALID_OPTION_VALUE: lambda info:
+        #value on key "allowed_values" is overloaded:
+        # * it can be list - then it express possible option values
+        # * it can be string - then it is verbal description of value
         "'{option_value}' is not a valid {option_name} value, use {hint}"
         .format(
-            hint=", ".join(sorted(normalize_to_list(info["allowed_values"]))),
+            hint=(
+                ", ".join(sorted(info["allowed_values"])) if (
+                    isinstance(info["allowed_values"], Iterable)
+                    and
+                    not is_string(info["allowed_values"])
+                ) else info["allowed_values"]
+            ),
             **info
         )
     ,
