@@ -5,14 +5,13 @@ from __future__ import (
     unicode_literals,
 )
 
-import os.path
-
 from lxml import etree
+import os.path
+import tempfile
 
 from pcs import settings
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
-from pcs.lib.cib.tools import ensure_cib_version
 from pcs.lib.cluster_conf_facade import ClusterConfFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.live import (
@@ -34,6 +33,7 @@ from pcs.lib.nodes_task import (
     qdevice_reload_on_nodes,
 )
 from pcs.lib.pacemaker.live import (
+    ensure_cib_version,
     get_cib,
     get_cib_xml,
     replace_cib_configuration_xml,
@@ -72,6 +72,7 @@ class LibraryEnvironment(object):
         self._auth_tokens_getter = auth_tokens_getter
         self._auth_tokens = None
         self._cib_upgraded = False
+        self._cib_data_tmp_file = None
 
     @property
     def logger(self):
@@ -111,8 +112,7 @@ class LibraryEnvironment(object):
             upgraded_cib = ensure_cib_version(
                 self.cmd_runner(),
                 cib,
-                minimal_version,
-                self.is_cib_live
+                minimal_version
             )
             if upgraded_cib is not None:
                 cib = upgraded_cib
@@ -214,6 +214,7 @@ class LibraryEnvironment(object):
         return exists_local_corosync_conf()
 
     def command_expect_live_corosync_env(self):
+        # TODO get rid of cli knowledge
         if not self.is_corosync_conf_live:
             raise LibraryError(reports.live_environment_required([
                 "--corosync_conf"
@@ -228,8 +229,26 @@ class LibraryEnvironment(object):
             # make sure to get output of external processes in English and ASCII
             "LC_ALL": "C",
         }
+
         if self.user_login:
             runner_env["CIB_user"] = self.user_login
+
+        if not self.is_cib_live:
+            # Dump CIB data to a temporary file and set it up in the runner.
+            # This way every called pacemaker tool can access the CIB and we
+            # don't need to take care of it every time the runner is called.
+            if not self._cib_data_tmp_file:
+                try:
+                    self._cib_data_tmp_file = tempfile.NamedTemporaryFile(
+                        "w+",
+                        suffix=".pcs"
+                    )
+                    self._cib_data_tmp_file.write(self._get_cib_xml())
+                    self._cib_data_tmp_file.flush()
+                except EnvironmentError as e:
+                    raise LibraryError(reports.cib_save_tmp_error(str(e)))
+            runner_env["CIB_file"] = self._cib_data_tmp_file.name
+
         return CommandRunner(self.logger, self.report_processor, runner_env)
 
     def node_communicator(self):

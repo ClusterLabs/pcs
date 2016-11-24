@@ -545,42 +545,6 @@ class LibraryEnvironmentTest(TestCase):
         mock_reload.assert_not_called()
         mock_qdevice_reload.assert_not_called()
 
-    @mock.patch("pcs.lib.env.CommandRunner")
-    def test_cmd_runner_no_options(self, mock_runner):
-        expected_runner = mock.MagicMock()
-        mock_runner.return_value = expected_runner
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        runner = env.cmd_runner()
-        self.assertEqual(expected_runner, runner)
-        mock_runner.assert_called_once_with(
-            self.mock_logger,
-            self.mock_reporter,
-            {
-                "LC_ALL": "C",
-            }
-        )
-
-    @mock.patch("pcs.lib.env.CommandRunner")
-    def test_cmd_runner_all_options(self, mock_runner):
-        expected_runner = mock.MagicMock()
-        mock_runner.return_value = expected_runner
-        user = "testuser"
-        env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            user_login=user
-        )
-        runner = env.cmd_runner()
-        self.assertEqual(expected_runner, runner)
-        mock_runner.assert_called_once_with(
-            self.mock_logger,
-            self.mock_reporter,
-            {
-                "CIB_user": user,
-                "LC_ALL": "C",
-            }
-        )
-
     @mock.patch("pcs.lib.env.NodeCommunicator")
     def test_node_communicator_no_options(self, mock_comm):
         expected_comm = mock.MagicMock()
@@ -660,3 +624,66 @@ class LibraryEnvironmentTest(TestCase):
         )
         self.assertFalse(env.is_cluster_conf_live)
 
+@mock.patch("pcs.lib.env.CommandRunner")
+class CmdRunner(TestCase):
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
+
+    def test_no_options(self, mock_runner):
+        expected_runner = mock.MagicMock()
+        mock_runner.return_value = expected_runner
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        runner = env.cmd_runner()
+        self.assertEqual(expected_runner, runner)
+        mock_runner.assert_called_once_with(
+            self.mock_logger,
+            self.mock_reporter,
+            {
+                "LC_ALL": "C",
+            }
+        )
+
+    def test_user(self, mock_runner):
+        expected_runner = mock.MagicMock()
+        mock_runner.return_value = expected_runner
+        user = "testuser"
+        env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            user_login=user
+        )
+        runner = env.cmd_runner()
+        self.assertEqual(expected_runner, runner)
+        mock_runner.assert_called_once_with(
+            self.mock_logger,
+            self.mock_reporter,
+            {
+                "CIB_user": user,
+                "LC_ALL": "C",
+            }
+        )
+
+    @mock.patch("pcs.lib.env.tempfile.NamedTemporaryFile")
+    def test_dump_cib_file(self, mock_tmpfile, mock_runner):
+        expected_runner = mock.MagicMock()
+        mock_runner.return_value = expected_runner
+        mock_instance = mock.MagicMock()
+        mock_instance.name = rc("file.tmp")
+        mock_tmpfile.return_value = mock_instance
+        env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            cib_data="<cib />"
+        )
+        runner = env.cmd_runner()
+        self.assertEqual(expected_runner, runner)
+        mock_runner.assert_called_once_with(
+            self.mock_logger,
+            self.mock_reporter,
+            {
+                "LC_ALL": "C",
+                "CIB_file": rc("file.tmp"),
+            }
+        )
+        mock_instance.write.assert_called_once_with("<cib />")

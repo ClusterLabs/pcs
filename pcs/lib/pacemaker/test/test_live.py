@@ -5,6 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 
+from lxml import etree
 import os.path
 
 from pcs.test.tools.assertions import (
@@ -278,6 +279,123 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
             ],
             stdin_string=xml
         )
+
+class UpgradeCibTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
+
+    def test_success(self):
+        self.mock_runner.run.return_value = "", "", 0
+        lib._upgrade_cib(self.mock_runner)
+        self.mock_runner.run.assert_called_once_with(
+            ["/usr/sbin/cibadmin", "--upgrade", "--force"]
+        )
+
+    def test_error(self):
+        error = "Call cib_upgrade failed (-62): Timer expired"
+        self.mock_runner.run.return_value = "", error, 62
+        assert_raise_library_error(
+            lambda: lib._upgrade_cib(self.mock_runner),
+            (
+                Severity.ERROR,
+                report_codes.CIB_UPGRADE_FAILED,
+                {
+                    "reason": error,
+                }
+            )
+        )
+        self.mock_runner.run.assert_called_once_with(
+            ["/usr/sbin/cibadmin", "--upgrade", "--force"]
+        )
+
+@mock.patch("pcs.lib.pacemaker.live.get_cib_xml")
+@mock.patch("pcs.lib.pacemaker.live._upgrade_cib")
+class EnsureCibVersionTest(TestCase):
+    def setUp(self):
+        self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
+        self.cib = etree.XML('<cib validate-with="pacemaker-2.3.4"/>')
+
+    def test_same_version(self, mock_upgrade, mock_get_cib):
+        self.assertTrue(
+            lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 4)
+            ) is None
+        )
+        mock_upgrade.assert_not_called()
+        mock_get_cib.assert_not_called()
+
+    def test_higher_version(self, mock_upgrade, mock_get_cib):
+        self.assertTrue(
+            lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 3)
+            ) is None
+        )
+        mock_upgrade.assert_not_called()
+        mock_get_cib.assert_not_called()
+
+    def test_upgraded_same_version(self, mock_upgrade, mock_get_cib):
+        upgraded_cib = '<cib validate-with="pacemaker-2.3.5"/>'
+        mock_get_cib.return_value = upgraded_cib
+        assert_xml_equal(
+            upgraded_cib,
+            etree.tostring(
+                lib.ensure_cib_version(
+                    self.mock_runner, self.cib, (2, 3, 5)
+                )
+            ).decode()
+        )
+        mock_upgrade.assert_called_once_with(self.mock_runner)
+        mock_get_cib.assert_called_once_with(self.mock_runner)
+
+    def test_upgraded_higher_version(self, mock_upgrade, mock_get_cib):
+        upgraded_cib = '<cib validate-with="pacemaker-2.3.6"/>'
+        mock_get_cib.return_value = upgraded_cib
+        assert_xml_equal(
+            upgraded_cib,
+            etree.tostring(
+                lib.ensure_cib_version(
+                    self.mock_runner, self.cib, (2, 3, 5)
+                )
+            ).decode()
+        )
+        mock_upgrade.assert_called_once_with(self.mock_runner)
+        mock_get_cib.assert_called_once_with(self.mock_runner)
+
+    def test_upgraded_lower_version(self, mock_upgrade, mock_get_cib):
+        mock_get_cib.return_value = etree.tostring(self.cib).decode()
+        assert_raise_library_error(
+            lambda: lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 5)
+            ),
+            (
+                Severity.ERROR,
+                report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
+                {
+                    "required_version": "2.3.5",
+                    "current_version": "2.3.4"
+                }
+            )
+        )
+        mock_upgrade.assert_called_once_with(self.mock_runner)
+        mock_get_cib.assert_called_once_with(self.mock_runner)
+
+    def test_cib_parse_error(self, mock_upgrade, mock_get_cib):
+        mock_get_cib.return_value = "not xml"
+        assert_raise_library_error(
+            lambda: lib.ensure_cib_version(
+                self.mock_runner, self.cib, (2, 3, 5)
+            ),
+            (
+                Severity.ERROR,
+                report_codes.CIB_UPGRADE_FAILED,
+                {
+                    "reason":
+                        "Start tag expected, '<' not found, line 1, column 1",
+                }
+            )
+        )
+        mock_upgrade.assert_called_once_with(self.mock_runner)
+        mock_get_cib.assert_called_once_with(self.mock_runner)
 
 class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
     def test_offline(self):

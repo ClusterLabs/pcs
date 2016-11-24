@@ -893,6 +893,18 @@ def cib_push_error(reason, pushed_cib):
         }
     )
 
+def cib_save_tmp_error(reason):
+    """
+    cannot save CIB into a temporary file
+    string reason error description
+    """
+    return ReportItem.error(
+        report_codes.CIB_SAVE_TMP_ERROR,
+        info={
+            "reason": reason,
+        }
+    )
+
 def cluster_state_cannot_load(reason):
     """
     cannot load cluster status from crm_mon, crm_mon exited with non-zero code

@@ -480,6 +480,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.CIB_SAVE_TMP_ERROR: lambda info:
+        "Unable to save CIB to a temporary file: {reason}"
+        .format(**info)
+    ,
+
     codes.CRM_MON_ERROR:
         "error running crm_mon, is pacemaker running?"
     ,

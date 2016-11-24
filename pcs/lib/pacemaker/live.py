@@ -11,6 +11,7 @@ from lxml import etree
 from pcs import settings
 from pcs.common.tools import join_multilines
 from pcs.lib import reports
+from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
 
@@ -104,6 +105,51 @@ def replace_cib_configuration(runner, tree):
     #so here is bytes to str conversion
     xml = etree.tostring(tree).decode()
     return replace_cib_configuration_xml(runner, xml)
+
+def ensure_cib_version(runner, cib, version):
+    """
+    This method ensures that specified cib is verified by pacemaker with
+    version 'version' or newer. If cib doesn't correspond to this version,
+    method will try to upgrade cib.
+    Returns cib which was verified by pacemaker version 'version' or later.
+    Raises LibraryError on any failure.
+
+    CommandRunner runner
+    etree cib cib tree
+    tuple version tuple of integers (<major>, <minor>, <revision>)
+    """
+    current_version = get_pacemaker_version_by_which_cib_was_validated(cib)
+    if current_version >= version:
+        return None
+
+    _upgrade_cib(runner)
+    new_cib_xml = get_cib_xml(runner)
+
+    try:
+        new_cib = parse_cib_xml(new_cib_xml)
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise LibraryError(reports.cib_upgrade_failed(str(e)))
+
+    current_version = get_pacemaker_version_by_which_cib_was_validated(new_cib)
+    if current_version >= version:
+        return new_cib
+
+    raise LibraryError(reports.unable_to_upgrade_cib_to_required_version(
+        current_version, version
+    ))
+
+def _upgrade_cib(runner):
+    """
+    Upgrade CIB to the latest schema available locally or clusterwise.
+    CommandRunner runner
+    """
+    stdout, stderr, retval = runner.run(
+        [__exec("cibadmin"), "--upgrade", "--force"]
+    )
+    if retval != 0:
+        raise LibraryError(
+            reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
+        )
 
 ### wait for idle
 
