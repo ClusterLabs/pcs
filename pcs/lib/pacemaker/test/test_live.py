@@ -738,7 +738,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             lambda: lib.ensure_wait_for_idle_support(mock.Mock()),
             (
                 Severity.ERROR,
-                report_codes.RESOURCE_WAIT_NOT_SUPPORTED,
+                report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED,
                 {}
             )
         )
@@ -796,7 +796,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             lambda: lib.wait_for_idle(mock_runner),
             (
                 Severity.ERROR,
-                report_codes.RESOURCE_WAIT_ERROR,
+                report_codes.WAIT_FOR_IDLE_ERROR,
                 {
                     "reason": expected_stderr + "\n" + expected_stdout,
                 }
@@ -822,7 +822,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             lambda: lib.wait_for_idle(mock_runner),
             (
                 Severity.ERROR,
-                report_codes.RESOURCE_WAIT_TIMED_OUT,
+                report_codes.WAIT_FOR_IDLE_TIMED_OUT,
                 {
                     "reason": expected_stderr + "\n" + expected_stdout,
                 }

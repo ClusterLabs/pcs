@@ -117,7 +117,7 @@ def has_wait_for_idle_support(runner):
 
 def ensure_wait_for_idle_support(runner):
     if not has_wait_for_idle_support(runner):
-        raise LibraryError(reports.resource_wait_not_supported())
+        raise LibraryError(reports.wait_for_idle_not_supported())
 
 def wait_for_idle(runner, timeout=None):
     args = [__exec("crm_resource"), "--wait"]
@@ -130,13 +130,13 @@ def wait_for_idle(runner, timeout=None):
         # We use stdout just to be sure if that's get changed.
         if retval == __EXITCODE_WAIT_TIMEOUT:
             raise LibraryError(
-                reports.resource_wait_timed_out(
+                reports.wait_for_idle_timed_out(
                     join_multilines([stderr, stdout])
                 )
             )
         else:
             raise LibraryError(
-                reports.resource_wait_error(
+                reports.wait_for_idle_error(
                     join_multilines([stderr, stdout])
                 )
             )

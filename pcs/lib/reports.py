@@ -913,33 +913,33 @@ def cluster_state_invalid_format():
         report_codes.BAD_CLUSTER_STATE_FORMAT,
     )
 
-def resource_wait_not_supported():
+def wait_for_idle_not_supported():
     """
     crm_resource does not support --wait
     """
     return ReportItem.error(
-        report_codes.RESOURCE_WAIT_NOT_SUPPORTED,
+        report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED,
     )
 
-def resource_wait_timed_out(reason):
+def wait_for_idle_timed_out(reason):
     """
     waiting for resources (crm_resource --wait) failed, timeout expired
     string reason error description
     """
     return ReportItem.error(
-        report_codes.RESOURCE_WAIT_TIMED_OUT,
+        report_codes.WAIT_FOR_IDLE_TIMED_OUT,
         info={
             "reason": reason,
         }
     )
 
-def resource_wait_error(reason):
+def wait_for_idle_error(reason):
     """
     waiting for resources (crm_resource --wait) failed
     string reason error description
     """
     return ReportItem.error(
-        report_codes.RESOURCE_WAIT_ERROR,
+        report_codes.WAIT_FOR_IDLE_ERROR,
         info={
             "reason": reason,
         }

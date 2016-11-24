@@ -488,16 +488,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "cannot load cluster status, xml does not conform to the schema"
     ,
 
-    codes.RESOURCE_WAIT_NOT_SUPPORTED:
+    codes.WAIT_FOR_IDLE_NOT_SUPPORTED:
         "crm_resource does not support --wait, please upgrade pacemaker"
     ,
 
-    codes.RESOURCE_WAIT_TIMED_OUT: lambda info:
+    codes.WAIT_FOR_IDLE_TIMED_OUT: lambda info:
         "waiting timeout\n\n{reason}"
         .format(**info)
     ,
 
-    codes.RESOURCE_WAIT_ERROR: lambda info:
+    codes.WAIT_FOR_IDLE_ERROR: lambda info:
         "{reason}"
         .format(**info)
     ,
