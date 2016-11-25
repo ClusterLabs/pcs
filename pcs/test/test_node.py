@@ -496,11 +496,15 @@ class NodeAttributeTest(TestCase, AssertPcsMixin):
             ])
         xml_lines.append('</nodes>')
 
+        utils_usefile_original = utils.usefile
+        utils_filename_original = utils.filename
         utils.usefile = True
         utils.filename = temp_cib
         output, retval = utils.run([
             "cibadmin", "--modify", '--xml-text', "\n".join(xml_lines)
         ])
+        utils.usefile = utils_usefile_original
+        utils.filename = utils_filename_original
         assert output == ""
         assert retval == 0
 

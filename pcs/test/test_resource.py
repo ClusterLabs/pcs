@@ -289,32 +289,21 @@ class ResourceTest(unittest.TestCase, AssertPcsMixin):
         ))
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create A ocf:heartbeat:Dummy op interval=10"
+        self.assert_pcs_fail(
+            "resource create A ocf:heartbeat:Dummy op interval=10",
+            "Error: When using 'op' you must specify an operation name after"
+                " 'op'\n"
         )
-        ac(output, """\
-Error: When using 'op' you must specify an operation name and at least one option
-""")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create A ocf:heartbeat:Dummy op interval=10 timeout=5"
+        self.assert_pcs_fail(
+            "resource create A ocf:heartbeat:Dummy op interval=10 timeout=5",
+            "Error: When using 'op' you must specify an operation name after"
+                " 'op'\n"
         )
-        ac(output, """\
-Error: When using 'op' you must specify an operation name after 'op'
-""")
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(
-            temp_cib,
-            "resource create A ocf:heartbeat:Dummy op monitor interval=10 op interval=10 op start timeout=10"
+        self.assert_pcs_fail(
+            "resource create A ocf:heartbeat:Dummy op monitor interval=10 op interval=10 op start timeout=10",
+            "Error: When using 'op' you must specify an operation name after"
+                " 'op'\n"
         )
-        ac(output, """\
-Error: When using 'op' you must specify an operation name and at least one option
-""")
-        self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             temp_cib,
@@ -3365,7 +3354,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
         assert output == "Deleting Resource - D3\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s --clone meta interleave=true clone-node-max=1 ordered=true")
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s --clone interleave=true clone-node-max=1 ordered=true")
         assert output == "", [output]
         assert returnVal == 0
 
@@ -3382,7 +3371,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
         assert output == "Deleting Resource - dlm\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s clone interleave=true clone-node-max=1 ordered=true")
         assert output == "", [output]
         assert returnVal == 0
 
@@ -3399,7 +3388,7 @@ Warning: changing a monitor operation interval from 10 to 11 to make the operati
         assert returnVal == 0
         assert output == "Deleting Resource - dlm\n", [output]
 
-        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s clone meta interleave=true clone-node-max=1 ordered=true")
+        output,returnVal = pcs(temp_cib, "resource create --no-default-ops dlm ocf:pacemaker:Dummy op monitor interval=10s clone interleave=true clone-node-max=1 ordered=true")
         assert returnVal == 0
         assert output == "", [output]
 

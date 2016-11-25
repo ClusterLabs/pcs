@@ -61,7 +61,7 @@ class SplitByKeywords(TestCase):
             group_by_keywords(
                 [0, "first", 1, 2, "second", 3],
                 set(["first", "second"]),
-                implicit_first_keyword="zero"
+                implicit_first_group_key="zero"
             ),
             {
                 "zero": [0],
@@ -105,7 +105,7 @@ class SplitByKeywords(TestCase):
             group_by_keywords(
                 [],
                 set(["first", "second"]),
-                implicit_first_keyword="zero",
+                implicit_first_group_key="zero",
             ),
             {
                 "zero": [],
@@ -133,6 +133,51 @@ class SplitByKeywords(TestCase):
             keyword_repeat_allowed=False,
         ))
 
+    def test_group_repeating_keyword_occurences(self):
+        self.assertEqual(
+            group_by_keywords(
+                ["first", 1, 2, "second", 3, "first", 4],
+                set(["first", "second"]),
+                group_repeated_keywords=["first"]
+            ),
+            {
+                "first": [[1, 2], [4]],
+                "second": [3],
+            }
+        )
+
+    def test_raises_on_group_repeated_keywords_inconsistency(self):
+        self.assertRaises(AssertionError, lambda: group_by_keywords(
+            [],
+            set(["first", "second"]),
+            group_repeated_keywords=["first", "third"],
+            implicit_first_group_key="third"
+        ))
+
+    def test_implicit_first_kw_not_applyed_in_the_middle(self):
+        self.assertEqual(
+            group_by_keywords(
+                [1, 2, "first", 3, "zero", 4],
+                set(["first"]),
+                implicit_first_group_key="zero"
+            ),
+            {
+                "zero": [1, 2],
+                "first": [3, "zero", 4],
+            }
+        )
+    def test_implicit_first_kw_applyed_in_the_middle_when_is_in_kwds(self):
+        self.assertEqual(
+            group_by_keywords(
+                [1, 2, "first", 3, "zero", 4],
+                set(["first", "zero"]),
+                implicit_first_group_key="zero"
+            ),
+            {
+                "zero": [1, 2, 4],
+                "first": [3],
+            }
+        )
 
 class ParseTypedArg(TestCase):
     def assert_parse(self, arg, parsed):

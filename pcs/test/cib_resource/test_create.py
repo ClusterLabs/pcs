@@ -606,6 +606,82 @@ class SuccessMaster(ResourceTest):
             </resources>"""
         )
 
+class SuccessClone(ResourceTest):
+    def test_clone_does_not_overshadow_meta_options(self):
+        self.assert_effect(
+            [
+                "resource create R ocf:heartbeat:Dummy meta a=b --clone c=d",
+                "resource create R ocf:heartbeat:Dummy --clone c=d meta a=b",
+            ],
+            """<resources>
+                <clone id="R-clone">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="R-instance_attributes"/>
+                        <meta_attributes id="R-meta_attributes">
+                            <nvpair id="R-meta_attributes-a" name="a"
+                                value="b"
+                            />
+                        </meta_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="R-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-clone-meta_attributes">
+                        <nvpair id="R-clone-meta_attributes-c" name="c"
+                            value="d"
+                        />
+                    </meta_attributes>
+                </clone>
+            </resources>"""
+        )
+
+    def test_clone_does_not_overshadow_operations(self):
+        self.assert_effect(
+            [
+                "resource create R ocf:heartbeat:Dummy op monitor interval=10"
+                    " --clone c=d"
+                ,
+                "resource create R ocf:heartbeat:Dummy --clone c=d"
+                    " op monitor interval=10"
+                ,
+            ],
+            """<resources>
+                <clone id="R-clone">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="R-instance_attributes"/>
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="R-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-clone-meta_attributes">
+                        <nvpair id="R-clone-meta_attributes-c" name="c"
+                            value="d"
+                        />
+                    </meta_attributes>
+                </clone>
+            </resources>"""
+        )
+
 class FailOrWarn(ResourceTest):
     def test_warn_group_clone_combination(self):
         self.assert_pcs_success(
@@ -698,6 +774,48 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy",
             "Error: 'R' already exists\n"
         )
+
+    def test_fail_on_wait_disabled_conflict(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy --disabled --wait",
+            "Error: Cannot use '--wait' together with '--disabled'\n"
+        )
+
+    def test_fail_on_wait_stopped_conflict(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy meta target-role=stopped"
+                " --wait"
+            ,
+            "Error: Cannot use '--wait' together with 'target-role=stopped'\n"
+        )
+
+    def test_fail_on_wait_clone_max_conflict(self):
+        command_list = [
+            "resource create R ocf:heartbeat:Dummy --clone clone-max=0 --wait",
+            "resource create R ocf:heartbeat:Dummy --master meta clone-max=0"
+                " --wait"
+            ,
+        ]
+        for command in command_list:
+            self.assert_pcs_fail(
+                command,
+                "Error: Cannot use '--wait' together with 'clone-max=0'\n"
+            )
+
+    def test_fail_on_wait_clone_node_max_conflict(self):
+        command_list = [
+            "resource create R ocf:heartbeat:Dummy --clone clone-node-max=0"
+                " --wait"
+            ,
+            "resource create R ocf:heartbeat:Dummy --master meta"
+                " clone-node-max=0 --wait"
+            ,
+        ]
+        for command in command_list:
+            self.assert_pcs_fail(
+                command,
+                "Error: Cannot use '--wait' together with 'clone-node-max=0'\n"
+            )
 
 class FailOrWarnOp(ResourceTest):
     def test_fail_empty(self):

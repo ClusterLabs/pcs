@@ -24,6 +24,7 @@ from pcs.settings import pacemaker_wait_timeout_status as \
 import pcs.lib.cib.acl as lib_acl
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
+from pcs.cli.resource.parse_args import parse_create as parse_create_args
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
@@ -593,64 +594,39 @@ def resource_create(
 def resource_create_refactoring(lib, argv, group=None):
     ra_id = argv[0]
     ra_type = argv[1]
-    ra_values = []
-    op_values = []
-    meta_values = []
-    clone_opts = []
-    op_args = False
-    meta_args = False
-    clone_args = False
-    for arg in argv[2:]:
-        if arg == "op":
-            op_args = True
-            meta_args = False
-            op_values.append([])
-        elif arg == "meta":
-            meta_args = True
-            op_args = False
-        elif arg == "clone":
-            clone_args = True
-            op_args = False
-            meta_args = False
-        else:
-            if clone_args:
-                if "=" in arg:
-                    clone_opts.append(arg)
-            elif op_args:
-                if arg == "op":
-                    op_values.append([])
-                elif "=" not in arg and len(op_values[-1]) != 0:
-                    op_values.append([])
-                    op_values[-1].append(arg)
-                else:
-                    op_values[-1].append(arg)
-            elif meta_args:
-                if "=" in arg:
-                    meta_values.append(arg)
-            else:
-                ra_values.append(arg)
 
-    if clone_args:
-        utils.pcs_options["--clone"] = ""
+    parts = parse_create_args(argv[2:])
 
     #CMDLINE CHECK
     if "--wait" in utils.pcs_options:
-        wait_timeout = utils.validate_wait_get_timeout()
         if "--disabled" in utils.pcs_options:
             raise error("Cannot use '--wait' together with '--disabled'")
 
-        do_not_run = ["target-role=stopped"]
-        if (
-            "--master" in utils.pcs_options or "--clone" in utils.pcs_options
-            or
-            clone_opts
-        ):
-            do_not_run.extend(["clone-max=0", "clone-node-max=0"])
-        for opt in meta_values + clone_opts:
-            if opt.lower() in do_not_run:
-                raise error("Cannot use '--wait' together with '%s'" % opt)
+        incompatibles = {
+            "target-role": "stopped",
+        }
+        if "--master" in utils.pcs_options or "clone" in parts:
+            incompatibles.update({
+                "clone-max": "0",
+                "clone-node-max": "0",
+            })
 
-    if "--clone" in utils.pcs_options:
+        for name, value in parts.get("meta", {}).items():
+            if name in incompatibles and incompatibles[name] == value:
+                raise error(
+                    "Cannot use '--wait' together with '{0}={1}'"
+                    .format(name, value)
+                )
+        for name, value in parts.get("clone", {}).items():
+            if name in incompatibles and incompatibles[name] == value:
+                raise error(
+                    "Cannot use '--wait' together with '{0}={1}'"
+                    .format(name, value)
+                )
+
+        wait_timeout = utils.validate_wait_get_timeout()
+
+    if "clone" in parts:
         if group:
             warn("--group ignored when creating a clone")
         if "--master" in utils.pcs_options:
@@ -659,24 +635,8 @@ def resource_create_refactoring(lib, argv, group=None):
         if group:
             warn("--group ignored when creating a master")
 
-    #check format operations: name option1=value1 option2=value2...
-    for op_val in op_values:
-        if len(op_val) < 2:
-            raise error(
-                "When using 'op' you must specify an operation name"
-                + " and at least one option"
-            )
-        if '=' in op_val[0]:
-            raise error(
-                "When using 'op' you must specify an operation name after 'op'"
-            )
-
     if "--after" in utils.pcs_options and "--before" in utils.pcs_options:
         raise error("you cannot specify both --before and --after")
-
-    operation_list = [
-        prepare_options(["name={0}".format(op[0])] + op[1:]) for op in op_values
-    ]
 
     force = "--force" in utils.pcs_options
     is_master = "--master" in utils.pcs_options
@@ -691,27 +651,27 @@ def resource_create_refactoring(lib, argv, group=None):
     )
 
     #LIBRARY RUN
-    if "--clone" in utils.pcs_options:
+    if "clone" in parts:
         lib.resource.create_as_clone(
-            ra_id, ra_type, operation_list,
-            prepare_options(meta_values),
-            prepare_options(ra_values),
-            prepare_options(clone_opts),
+            ra_id, ra_type, parts["op"],
+            parts["meta"],
+            parts["options"],
+            parts["clone"],
             **settings
         )
     elif is_master:
         lib.resource.create_as_master(
-            ra_id, ra_type, operation_list,
-            prepare_options(meta_values),
-            prepare_options(ra_values),
-            prepare_options(meta_values), #master_meta
+            ra_id, ra_type, parts["op"],
+            parts["meta"],
+            parts["options"],
+            parts["meta"], #master_meta
             **settings
         )
     elif not group:
         lib.resource.create(
-            ra_id, ra_type, operation_list,
-            prepare_options(meta_values),
-            prepare_options(ra_values),
+            ra_id, ra_type, parts["op"],
+            parts["meta"],
+            parts["options"],
             **settings
         )
     else:
@@ -725,9 +685,9 @@ def resource_create_refactoring(lib, argv, group=None):
             put_after_adjacent = False
 
         lib.resource.create_in_group(
-            ra_id, ra_type, group, operation_list,
-            prepare_options(meta_values),
-            prepare_options(ra_values),
+            ra_id, ra_type, group, parts["op"],
+            parts["meta"],
+            parts["options"],
             adjacent_resource_id=adjacent_resource_id,
             put_after_adjacent=put_after_adjacent,
             **settings

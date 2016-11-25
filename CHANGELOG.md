@@ -35,6 +35,8 @@
 - Pcs now exits with an error when both `--all` and a list of nodes is specified
   in the `pcs cluster start | stop | enable | disable` commands ([rhbz#1339355])
 - built-in help and man page fixes and improvements ([rhbz#1347335])
+- In `pcs resource create` the flag `--clone` no longer steals arguments from
+  the keywords `meta` and `op` ([rhbz#1395226])
 
 [ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
 [ghissue#125]: https://github.com/ClusterLabs/pcs/issues/125
@@ -50,6 +52,7 @@
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
 [rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273
 [rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846
+[rhbz#1395226]: https://bugzilla.redhat.com/show_bug.cgi?id=1395226
 [rhbz#1404229]: https://bugzilla.redhat.com/show_bug.cgi?id=1404229
 [rhbz#1404233]: https://bugzilla.redhat.com/show_bug.cgi?id=1404233
 

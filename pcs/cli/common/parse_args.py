@@ -68,30 +68,103 @@ def prepare_options(cmdline_args):
 
 def group_by_keywords(
     arg_list, keyword_set,
-    implicit_first_keyword=None, keyword_repeat_allowed=True,
+    implicit_first_group_key=None, keyword_repeat_allowed=True,
+    group_repeated_keywords=None, only_appeared_keywords=False
 ):
-    groups = dict([(keyword, []) for keyword in keyword_set])
-    if implicit_first_keyword:
-        groups[implicit_first_keyword] = []
+    """
+    Return dictionary with keywords as keys and following argumets as value.
+    For example when keywords are "first" and "seconds" then for arg_list
+    ["first", 1, 2, "second", 3] it returns {"first": [1, 2], "second": [3]}
 
-    if not arg_list:
-        return groups
+    list arg_list is commandline arguments containing keywords
+    set keyword_set contain all expected keywords
+    string implicit_first_group_key is the key for capturing of arguments before
+        the occurrence of the first keyword. implicit_first_group_key is not
+        a keyword => its occurence in args is considered as ordinary argument.
+    bool keyword_repeat_allowed is the flag to turn on/off checking the
+        uniqueness of each keyword in arg_list.
+    list group_repeated_keywords contains keywords for which each occurence is
+        packed separately. For example when keywords are "first" and "seconds"
+        and group_repeated_keywords is ["first"] then for arg_list
+        ["first", 1, 2, "second", 3, "first", 4] it returns
+        {"first": [[1, 2], [4]], "second": [3]}.
+        For these keywords is allowed repeating.
+    bool only_appeared_keywords is flag for deciding to (not)contain keywords
+        that do not appeared in arg_list.
+    """
 
-    used_keywords = []
-    if implicit_first_keyword:
-        used_keywords.append(implicit_first_keyword)
-    elif arg_list[0] not in keyword_set:
-        raise CmdLineInputError()
+    def get_keywords_for_grouping(group_repeated_keywords):
+        if not group_repeated_keywords:
+            return []
+        #implicit_first_group_key is not keyword: when it is in
+        #group_repeated_keywords but not in keyword_set is considered as
+        #unknown.
+        unknown_keywords = set(group_repeated_keywords) - set(keyword_set)
+        if unknown_keywords:
+            #to avoid developer mistake
+            raise AssertionError(
+                "Keywords in grouping not in keyword set: {0}"
+                .format(", ".join(unknown_keywords))
+            )
+        return group_repeated_keywords
 
-    for arg in arg_list:
-        if arg in list(groups.keys()):
-            if arg in used_keywords and not keyword_repeat_allowed:
+    def get_completed_groups():
+        completed_groups = groups.copy()
+        if not only_appeared_keywords:
+            for keyword in keyword_set:
+                if keyword not in completed_groups:
+                    completed_groups[keyword] = []
+            if(
+                implicit_first_group_key
+                and
+                implicit_first_group_key not in completed_groups
+            ):
+                completed_groups[implicit_first_group_key] = []
+        return completed_groups
+
+    def is_acceptable_keyword_occurence(keyword):
+        return (
+            keyword not in groups.keys()
+            or
+            keyword_repeat_allowed
+            or
+            keyword in keywords_for_grouping
+        )
+
+    def process_keyword(keyword):
+        if not is_acceptable_keyword_occurence(keyword):
+            raise CmdLineInputError(
+                "Multiple use of keyword '{0}' is not possible".format(keyword)
+            )
+        groups.setdefault(keyword, [])
+        if keyword in keywords_for_grouping:
+            groups[keyword].append([])
+
+    def process_non_keyword(keyword, arg):
+        place = groups[keyword]
+        if keyword in keywords_for_grouping:
+            place = place[-1]
+        place.append(arg)
+
+    groups = {}
+    keywords_for_grouping = get_keywords_for_grouping(group_repeated_keywords)
+
+    if arg_list:
+        current_keyword = None
+        if arg_list[0] not in keyword_set:
+            if not implicit_first_group_key:
                 raise CmdLineInputError()
-            used_keywords.append(arg)
-        else:
-            groups[used_keywords[-1]].append(arg)
+            process_keyword(implicit_first_group_key)
+            current_keyword = implicit_first_group_key
 
-    return groups
+        for arg in arg_list:
+            if arg in keyword_set:
+                process_keyword(arg)
+                current_keyword = arg
+            else:
+                process_non_keyword(current_keyword, arg)
+
+    return get_completed_groups()
 
 def parse_typed_arg(arg, allowed_types, default_type):
     """
