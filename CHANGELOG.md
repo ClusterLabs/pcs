@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+- `pcs node [un]standby` and `pcs node [un]maintenance` now work atomically
+  when multiple nodes are specified ([rhbz#1315992])
+
 ### Fixed
 - When upgrading CIB to the latest schema version, check for minimal common
   version across the cluster ([rhbz#1389443])
@@ -13,6 +17,7 @@
   ([rhbz#1394273])
 
 
+[rhbz#1315992]: https://bugzilla.redhat.com/show_bug.cgi?id=1315992
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
 [rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273

@@ -53,7 +53,7 @@ class ClusterTest(unittest.TestCase, AssertPcsMixin):
             os.unlink(cluster_conf_tmp)
 
     def testNodeStandby(self):
-        # only basic test, standby subcommands were m oved to 'pcs node'
+        # only basic test, standby subcommands were moved to 'pcs node'
         output, returnVal = pcs(temp_cib, "cluster standby rh7-1")
         ac(output, "")
         assert returnVal == 0

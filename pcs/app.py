@@ -189,7 +189,11 @@ def main(argv=None):
         "status": status.status_cmd,
         "config": config.config_cmd,
         "pcsd": pcsd.pcsd_cmd,
-        "node": node.node_cmd,
+        "node": lambda argv: node.node_cmd(
+            utils.get_library_wrapper(),
+            argv,
+            utils.get_modificators()
+        ),
         "quorum": lambda argv: quorum.quorum_cmd(
             utils.get_library_wrapper(),
             argv,

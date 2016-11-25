@@ -2789,6 +2789,7 @@ def get_modificators():
     #there is possible create class extending dict, so dict like access in
     #commands is not an issue
     return {
+        "all": "--all" in pcs_options,
         "autocorrect": "--autocorrect" in pcs_options,
         "autodelete": "--autodelete" in pcs_options,
         "corosync_conf": pcs_options.get("--corosync_conf", None),
@@ -2799,6 +2800,7 @@ def get_modificators():
         "name": pcs_options.get("--name", None),
         "skip_offline_nodes": "--skip-offline" in pcs_options,
         "start": "--start" in pcs_options,
+        "wait": pcs_options.get("--wait", False),
         "watchdog": pcs_options.get("--watchdog", []),
     }
 

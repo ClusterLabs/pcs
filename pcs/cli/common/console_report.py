@@ -497,6 +497,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "crm_resource does not support --wait, please upgrade pacemaker"
     ,
 
+    codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER:
+        "Cannot use '-f' together with '--wait'"
+    ,
+
     codes.WAIT_FOR_IDLE_TIMED_OUT: lambda info:
         "waiting timeout\n\n{reason}"
         .format(**info)
@@ -525,7 +529,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.NODE_NOT_FOUND: lambda info:
-        "node '{node}' does not appear to exist in configuration"
+        "Node '{node}' does not appear to exist in configuration"
         .format(**info)
     ,
 
@@ -769,6 +773,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
         "This command does not support {forbidden_options}"
         .format(forbidden_options=", ".join(info["forbidden_options"]))
+    ,
+
+    codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE:
+        "Node(s) must be specified if -f is used"
     ,
 
     codes.COROSYNC_QUORUM_CANNOT_DISABLE_ATB_DUE_TO_SBD: lambda info:

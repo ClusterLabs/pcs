@@ -6,187 +6,28 @@ from __future__ import (
 )
 
 import shutil
-from pcs.test.tools import pcs_unittest as unittest
-from pcs.test.tools.pcs_unittest import mock
 
 from pcs import node
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
+    outdent,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
+from pcs.test.tools.pcs_unittest import TestCase, mock
 
 from pcs import utils
 
 empty_cib = rc("cib-empty-withnodes.xml")
 temp_cib = rc("temp-cib.xml")
 
-class NodeTest(unittest.TestCase):
+class NodeTest(TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
-
-    def test_node_maintenance(self):
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-"""
-        ac(expected_out, output)
-        output, returnVal = pcs(temp_cib, "node maintenance rh7-1")
-        ac("", output)
-        self.assertEqual(returnVal, 0)
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-Node Attributes:
- rh7-1: maintenance=on
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(temp_cib, "node maintenance rh7-1")
-        ac("", output)
-        self.assertEqual(returnVal, 0)
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-Node Attributes:
- rh7-1: maintenance=on
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(temp_cib, "node maintenance --all")
-        ac("", output)
-        self.assertEqual(returnVal, 0)
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-Node Attributes:
- rh7-1: maintenance=on
- rh7-2: maintenance=on
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(temp_cib, "node unmaintenance rh7-2 rh7-1")
-        ac("", output)
-        self.assertEqual(returnVal, 0)
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(temp_cib, "node maintenance rh7-1 rh7-2")
-        ac("", output)
-        self.assertEqual(returnVal, 0)
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-Node Attributes:
- rh7-1: maintenance=on
- rh7-2: maintenance=on
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(
-            temp_cib, "node maintenance nonexistant-node and-another"
-        )
-        self.assertEqual(returnVal, 1)
-        self.assertEqual(
-            output,
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
-            "Error: Node 'and-another' does not appear to exist in configuration\n"
-        )
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-Node Attributes:
- rh7-1: maintenance=on
- rh7-2: maintenance=on
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(temp_cib, "node unmaintenance rh7-1")
-        ac("", output)
-        self.assertEqual(returnVal, 0)
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-Node Attributes:
- rh7-2: maintenance=on
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(temp_cib, "node unmaintenance rh7-1")
-        ac("", output)
-        self.assertEqual(returnVal, 0)
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-Node Attributes:
- rh7-2: maintenance=on
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(temp_cib, "node unmaintenance --all")
-        ac("", output)
-        self.assertEqual(returnVal, 0)
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-"""
-        ac(expected_out, output)
-
-        output, returnVal = pcs(
-            temp_cib, "node unmaintenance nonexistant-node and-another"
-        )
-        self.assertEqual(returnVal, 1)
-        self.assertEqual(
-            output,
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
-            "Error: Node 'and-another' does not appear to exist in configuration\n"
-        )
-        output, _ = pcs(temp_cib, "property")
-        expected_out = """\
-Cluster Properties:
-"""
-        ac(expected_out, output)
-
-    def test_node_standby(self):
-        output, returnVal = pcs(temp_cib, "node standby rh7-1")
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
-        # try to standby node which is already in standby mode
-        output, returnVal = pcs(temp_cib, "node standby rh7-1")
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
-        output, returnVal = pcs(temp_cib, "node unstandby rh7-1")
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
-        # try to unstandby node which is no in standby mode
-        output, returnVal = pcs(temp_cib, "node unstandby rh7-1")
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
-        output, returnVal = pcs(temp_cib, "node standby nonexistant-node")
-        self.assertEqual(
-            output,
-            "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
-        )
-        self.assertEqual(returnVal, 1)
-
-        output, returnVal = pcs(temp_cib, "node unstandby nonexistant-node")
-        self.assertEqual(
-            output,
-            "Error: node 'nonexistant-node' does not appear to exist in configuration\n"
-        )
-        self.assertEqual(returnVal, 1)
-
 
     def test_node_utilization_set(self):
         output, returnVal = pcs(temp_cib, "node utilization rh7-1 test1=10")
@@ -301,7 +142,319 @@ Error: Value of utilization attribute must be integer: 'test=int'
         self.assertEqual(1, returnVal)
 
 
-class NodeAttributeTest(unittest.TestCase, AssertPcsMixin):
+class NodeStandby(TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def fixture_standby_all(self):
+        self.assert_pcs_success(
+            "node standby --all"
+        )
+        self.assert_standby_all()
+
+    def assert_standby_none(self):
+        self.assert_pcs_success(
+            "node attribute",
+            "Node Attributes:\n"
+        )
+
+    def assert_standby_all(self):
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-1: standby=on
+                 rh7-2: standby=on
+                 rh7-3: standby=on
+                """
+            )
+        )
+
+    def test_local_node(self):
+        self.assert_standby_none()
+        self.assert_pcs_fail(
+            "node standby",
+            "Error: Node(s) must be specified if -f is used\n"
+        )
+        self.assert_standby_none()
+
+        self.fixture_standby_all()
+        self.assert_pcs_fail(
+            "node unstandby",
+            "Error: Node(s) must be specified if -f is used\n"
+        )
+        self.assert_standby_all()
+
+    def test_one_bad_node(self):
+        self.assert_standby_none()
+        self.assert_pcs_fail(
+            "node standby nonexistant-node",
+            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+        )
+        self.assert_standby_none()
+
+        self.fixture_standby_all()
+        self.assert_pcs_fail(
+            "node unstandby nonexistant-node",
+            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+        )
+        self.assert_standby_all()
+
+    def test_bad_node_cancels_all_changes(self):
+        self.assert_standby_none()
+        self.assert_pcs_fail(
+            "node standby rh7-1 nonexistant-node and-another rh7-2",
+            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "Error: Node 'and-another' does not appear to exist in configuration\n"
+        )
+        self.assert_standby_none()
+
+        self.fixture_standby_all()
+        self.assert_pcs_fail(
+            "node standby rh7-1 nonexistant-node and-another rh7-2",
+            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "Error: Node 'and-another' does not appear to exist in configuration\n"
+        )
+        self.assert_standby_all()
+
+    def test_all_nodes(self):
+        self.assert_standby_none()
+        self.assert_pcs_success(
+            "node standby --all"
+        )
+        self.fixture_standby_all()
+
+        self.assert_pcs_success(
+            "node unstandby --all"
+        )
+        self.assert_standby_none()
+
+    def test_one_node_with_repeat(self):
+        self.assert_standby_none()
+        self.assert_pcs_success(
+            "node standby rh7-1"
+        )
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-1: standby=on
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "node standby rh7-1"
+        )
+
+        self.fixture_standby_all()
+        self.assert_pcs_success(
+            "node unstandby rh7-1"
+        )
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-2: standby=on
+                 rh7-3: standby=on
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "node unstandby rh7-1"
+        )
+
+    def test_more_nodes(self):
+        self.assert_standby_none()
+        self.assert_pcs_success(
+            "node standby rh7-1 rh7-2"
+        )
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-1: standby=on
+                 rh7-2: standby=on
+                """
+            )
+        )
+
+        self.fixture_standby_all()
+        self.assert_pcs_success(
+            "node unstandby rh7-1 rh7-2"
+        )
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-3: standby=on
+                """
+            )
+        )
+
+
+class NodeMaintenance(TestCase, AssertPcsMixin):
+    def setUp(self):
+        shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    def fixture_maintenance_all(self):
+        self.assert_pcs_success(
+            "node maintenance --all"
+        )
+        self.assert_maintenance_all()
+
+    def assert_maintenance_none(self):
+        self.assert_pcs_success(
+            "node attribute",
+            "Node Attributes:\n"
+        )
+
+    def assert_maintenance_all(self):
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-1: maintenance=on
+                 rh7-2: maintenance=on
+                 rh7-3: maintenance=on
+                """
+            )
+        )
+
+    def test_local_node(self):
+        self.assert_maintenance_none()
+        self.assert_pcs_fail(
+            "node maintenance",
+            "Error: Node(s) must be specified if -f is used\n"
+        )
+        self.assert_maintenance_none()
+
+        self.fixture_maintenance_all()
+        self.assert_pcs_fail(
+            "node unmaintenance",
+            "Error: Node(s) must be specified if -f is used\n"
+        )
+        self.assert_maintenance_all()
+
+    def test_one_bad_node(self):
+        self.assert_maintenance_none()
+        self.assert_pcs_fail(
+            "node maintenance nonexistant-node",
+            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+        )
+        self.assert_maintenance_none()
+
+        self.fixture_maintenance_all()
+        self.assert_pcs_fail(
+            "node unmaintenance nonexistant-node",
+            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+        )
+        self.assert_maintenance_all()
+
+    def test_bad_node_cancels_all_changes(self):
+        self.assert_maintenance_none()
+        self.assert_pcs_fail(
+            "node maintenance rh7-1 nonexistant-node and-another rh7-2",
+            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "Error: Node 'and-another' does not appear to exist in configuration\n"
+        )
+        self.assert_maintenance_none()
+
+        self.fixture_maintenance_all()
+        self.assert_pcs_fail(
+            "node maintenance rh7-1 nonexistant-node and-another rh7-2",
+            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "Error: Node 'and-another' does not appear to exist in configuration\n"
+        )
+        self.assert_maintenance_all()
+
+    def test_all_nodes(self):
+        self.assert_maintenance_none()
+        self.assert_pcs_success(
+            "node maintenance --all"
+        )
+        self.fixture_maintenance_all()
+
+        self.assert_pcs_success(
+            "node unmaintenance --all"
+        )
+        self.assert_maintenance_none()
+
+    def test_one_node_with_repeat(self):
+        self.assert_maintenance_none()
+        self.assert_pcs_success(
+            "node maintenance rh7-1"
+        )
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-1: maintenance=on
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "node maintenance rh7-1"
+        )
+
+        self.fixture_maintenance_all()
+        self.assert_pcs_success(
+            "node unmaintenance rh7-1"
+        )
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-2: maintenance=on
+                 rh7-3: maintenance=on
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "node unmaintenance rh7-1"
+        )
+
+    def test_more_nodes(self):
+        self.assert_maintenance_none()
+        self.assert_pcs_success(
+            "node maintenance rh7-1 rh7-2"
+        )
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-1: maintenance=on
+                 rh7-2: maintenance=on
+                """
+            )
+        )
+
+        self.fixture_maintenance_all()
+        self.assert_pcs_success(
+            "node unmaintenance rh7-1 rh7-2"
+        )
+        self.assert_pcs_success(
+            "node attribute",
+            outdent(
+                """\
+                Node Attributes:
+                 rh7-3: maintenance=on
+                """
+            )
+        )
+
+
+class NodeAttributeTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -541,7 +694,7 @@ Node Attributes:
             ""
         )
 
-class SetNodeUtilizationTest(unittest.TestCase, AssertPcsMixin):
+class SetNodeUtilizationTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -556,7 +709,7 @@ class SetNodeUtilizationTest(unittest.TestCase, AssertPcsMixin):
             "Error: missing key in '=1' option",
         ])
 
-class PrintNodeUtilizationTest(unittest.TestCase, AssertPcsMixin):
+class PrintNodeUtilizationTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)

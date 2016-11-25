@@ -70,6 +70,7 @@ class BooleanTest(TestCase):
 
 class TimeoutTest(TestCase):
     def test_valid(self):
+        self.assertEqual(10, lib.timeout_to_seconds(10))
         self.assertEqual(10, lib.timeout_to_seconds("10"))
         self.assertEqual(10, lib.timeout_to_seconds("10s"))
         self.assertEqual(10, lib.timeout_to_seconds("10sec"))
@@ -79,12 +80,14 @@ class TimeoutTest(TestCase):
         self.assertEqual(36000, lib.timeout_to_seconds("10hr"))
 
     def test_invalid(self):
+        self.assertEqual(None, lib.timeout_to_seconds(-10))
         self.assertEqual(None, lib.timeout_to_seconds("1a1s"))
         self.assertEqual(None, lib.timeout_to_seconds("10mm"))
         self.assertEqual(None, lib.timeout_to_seconds("10mim"))
         self.assertEqual(None, lib.timeout_to_seconds("aaa"))
         self.assertEqual(None, lib.timeout_to_seconds(""))
 
+        self.assertEqual(-10, lib.timeout_to_seconds(-10, True))
         self.assertEqual("1a1s", lib.timeout_to_seconds("1a1s", True))
         self.assertEqual("10mm", lib.timeout_to_seconds("10mm", True))
         self.assertEqual("10mim", lib.timeout_to_seconds("10mim", True))

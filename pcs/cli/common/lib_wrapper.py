@@ -18,6 +18,7 @@ from pcs.lib.commands import (
     acl,
     alert,
     booth,
+    node,
     qdevice,
     quorum,
     resource_agent,
@@ -173,6 +174,23 @@ def load_module(env, middleware_factory, name):
                 "status": booth.get_status,
                 "ticket_grant": booth.ticket_grant,
                 "ticket_revoke": booth.ticket_revoke,
+            }
+        )
+
+    if name == "node":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "maintenance_unmaintenance_all":
+                    node.maintenance_unmaintenance_all,
+                "maintenance_unmaintenance_list":
+                    node.maintenance_unmaintenance_list,
+                "maintenance_unmaintenance_local":
+                    node.maintenance_unmaintenance_local,
+                "standby_unstandby_all": node.standby_unstandby_all,
+                "standby_unstandby_list": node.standby_unstandby_list,
+                "standby_unstandby_local": node.standby_unstandby_local,
             }
         )
 

@@ -46,8 +46,14 @@ def timeout_to_seconds(timeout, return_unknown=False):
     return_unknown if timeout is not valid then return None on False or timeout
         on True (default False)
     """
-    if timeout.isdigit():
-        return int(timeout)
+    try:
+        candidate = int(timeout)
+        if candidate >= 0:
+            return candidate
+        return timeout if return_unknown else None
+    except ValueError:
+        pass
+    # now we know the timeout is not an integer nor an integer string
     suffix_multiplier = {
         "s": 1,
         "sec": 1,

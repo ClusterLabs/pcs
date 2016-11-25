@@ -36,26 +36,6 @@ def get_cluster_status_xml(runner):
         )
     return stdout
 
-def get_local_node_status(runner):
-    try:
-        cluster_status = ClusterState(get_cluster_status_xml(runner))
-    except CrmMonErrorException:
-        return {"offline": True}
-    node_name = __get_local_node_name(runner)
-    for node_status in cluster_status.node_section.nodes:
-        if node_status.attrs.name == node_name:
-            result = {
-                "offline": False,
-            }
-            for attr in (
-                'id', 'name', 'type', 'online', 'standby', 'standby_onfail',
-                'maintenance', 'pending', 'unclean', 'shutdown', 'expected_up',
-                'is_dc', 'resources_running',
-            ):
-                result[attr] = getattr(node_status.attrs, attr)
-            return result
-    raise LibraryError(reports.node_not_found(node_name))
-
 ### cib
 
 def get_cib_xml(runner, scope=None):
@@ -187,6 +167,57 @@ def wait_for_idle(runner, timeout=None):
                 )
             )
 
+### nodes
+
+def get_local_node_name(runner):
+    # It would be possible to run "crm_node --name" to get the name in one call,
+    # but it returns false names when cluster is not running (or we are on
+    # a remote node). Getting node id first is reliable since it fails in those
+    # cases.
+    stdout, dummy_stderr, retval = runner.run(
+        [__exec("crm_node"), "--cluster-id"]
+    )
+    if retval != 0:
+        raise LibraryError(
+            reports.pacemaker_local_node_name_not_found("node id not found")
+        )
+    node_id = stdout.strip()
+
+    stdout, dummy_stderr, retval = runner.run(
+        [__exec("crm_node"), "--name-for-id={0}".format(node_id)]
+    )
+    if retval != 0:
+        raise LibraryError(
+            reports.pacemaker_local_node_name_not_found("node name not found")
+        )
+    node_name = stdout.strip()
+
+    if node_name == "(null)":
+        raise LibraryError(
+            reports.pacemaker_local_node_name_not_found("node name is null")
+        )
+    return node_name
+
+def get_local_node_status(runner):
+    try:
+        cluster_status = ClusterState(get_cluster_status_xml(runner))
+    except CrmMonErrorException:
+        return {"offline": True}
+    node_name = get_local_node_name(runner)
+    for node_status in cluster_status.node_section.nodes:
+        if node_status.attrs.name == node_name:
+            result = {
+                "offline": False,
+            }
+            for attr in (
+                'id', 'name', 'type', 'online', 'standby', 'standby_onfail',
+                'maintenance', 'pending', 'unclean', 'shutdown', 'expected_up',
+                'is_dc', 'resources_running',
+            ):
+                result[attr] = getattr(node_status.attrs, attr)
+            return result
+    raise LibraryError(reports.node_not_found(node_name))
+
 ### resources
 
 def resource_cleanup(runner, resource=None, node=None, force=False):
@@ -219,84 +250,9 @@ def resource_cleanup(runner, resource=None, node=None, force=False):
     # usefull output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
 
-def nodes_standby(runner, node_list=None, all_nodes=False):
-    return __nodes_standby_unstandby(runner, True, node_list, all_nodes)
-
-def nodes_unstandby(runner, node_list=None, all_nodes=False):
-    return __nodes_standby_unstandby(runner, False, node_list, all_nodes)
-
-def __nodes_standby_unstandby(
-    runner, standby=True, node_list=None, all_nodes=False
-):
-    if node_list or all_nodes:
-        # TODO once we switch to editing CIB instead of running crm_stanby, we
-        # cannot always relly on getClusterState. If we're not editing a CIB
-        # from a live cluster, there is no status.
-        state = ClusterState(get_cluster_status_xml(runner)).node_section.nodes
-        known_nodes = [node.attrs.name for node in state]
-
-        if all_nodes:
-            node_list = known_nodes
-        elif node_list:
-            report = []
-            for node in node_list:
-                if node not in known_nodes:
-                    report.append(reports.node_not_found(node))
-            if report:
-                raise LibraryError(*report)
-
-    # TODO Edit CIB directly instead of running commands for each node; be aware
-    # remote nodes might not be in the CIB yet so we need to put them there.
-    cmd_template = [__exec("crm_standby")]
-    cmd_template.extend(["-v", "on"] if standby else ["-D"])
-    cmd_list = []
-    if node_list:
-        for node in node_list:
-            cmd_list.append(cmd_template + ["-N", node])
-    else:
-        cmd_list.append(cmd_template)
-    report = []
-    for cmd in cmd_list:
-        stdout, stderr, retval = runner.run(cmd)
-        if retval != 0:
-            report.append(
-                reports.common_error(join_multilines([stderr, stdout]))
-            )
-    if report:
-        raise LibraryError(*report)
-
-def __get_local_node_name(runner):
-    # It would be possible to run "crm_node --name" to get the name in one call,
-    # but it returns false names when cluster is not running (or we are on
-    # a remote node). Getting node id first is reliable since it fails in those
-    # cases.
-    stdout, dummy_stderr, retval = runner.run(
-        [__exec("crm_node"), "--cluster-id"]
-    )
-    if retval != 0:
-        raise LibraryError(
-            reports.pacemaker_local_node_name_not_found("node id not found")
-        )
-    node_id = stdout.strip()
-
-    stdout, dummy_stderr, retval = runner.run(
-        [__exec("crm_node"), "--name-for-id={0}".format(node_id)]
-    )
-    if retval != 0:
-        raise LibraryError(
-            reports.pacemaker_local_node_name_not_found("node name not found")
-        )
-    node_name = stdout.strip()
-
-    if node_name == "(null)":
-        raise LibraryError(
-            reports.pacemaker_local_node_name_not_found("node name is null")
-        )
-    return node_name
-
 ### tools
 
-# syntactic sugar for getting a full path to a pacemaker executable
+# shortcut for getting a full path to a pacemaker executable
 def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)
 

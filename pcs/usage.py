@@ -1275,34 +1275,42 @@ Commands:
         of specified node.  Attributes can be removed by setting an attribute
         without a value.
 
-    maintenance [--all] | [<node>]...
-        Put specified node(s) into maintenance mode, if no node or options are
+    maintenance [--all | <node>...] [--wait[=n]]
+        Put specified node(s) into maintenance mode, if no nodes or options are
         specified the current node will be put into maintenance mode, if --all
         is specified all nodes will be put into maintenace mode.
-
-    unmaintenance [--all] | [<node>]...
-        Remove node(s) from maintenance mode, if no node or options are
-        specified the current node will be removed from maintenance mode,
-        if --all is specified all nodes will be removed from maintenance mode.
-
-    standby [--all | <node>] [--wait[=n]]
-        Put specified node into standby mode (the node specified will no longer
-        be able to host resources), if no node or options are specified the
-        current node will be put into standby mode, if --all is specified all
-        nodes will be put into standby mode.
         If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
-        to be put into standby mode and then return 0 on success or 1 if
-        the operation not succeeded yet.  If 'n' is not specified it defaults
+        to be put into maintenance mode and then return 0 on success or 1 if
+        the operation not succeeded yet. If 'n' is not specified it defaults
         to 60 minutes.
 
-    unstandby [--all | <node>] [--wait[=n]]
-        Remove node from standby mode (the node specified will now be able to
-        host resources), if no node or options are specified the current node
+    unmaintenance [--all | <node>...] [--wait[=n]]
+        Remove node(s) from maintenance mode, if no nodes or options are
+        specified the current node will be removed from maintenance mode,
+        if --all is specified all nodes will be removed from maintenance mode.
+        If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
+        to be removed from maintenance mode and then return 0 on success or 1 if
+        the operation not succeeded yet. If 'n' is not specified it defaults
+        to 60 minutes.
+
+    standby [--all | <node>...] [--wait[=n]]
+        Put specified node(s) into standby mode (the node specified will no
+        longer be able to host resources), if no nodes or options are specified
+        the current node will be put into standby mode, if --all is specified
+        all nodes will be put into standby mode.
+        If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
+        to be put into standby mode and then return 0 on success or 1 if
+        the operation not succeeded yet. If 'n' is not specified it defaults
+        to 60 minutes.
+
+    unstandby [--all | <node>...] [--wait[=n]]
+        Remove node(s) from standby mode (the node specified will now be able to
+        host resources), if no nodes or options are specified the current node
         will be removed from standby mode, if --all is specified all nodes will
         be removed from standby mode.
         If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
         to be removed from standby mode and then return 0 on success or 1 if
-        the operation not succeeded yet.  If 'n' is not specified it defaults
+        the operation not succeeded yet. If 'n' is not specified it defaults
         to 60 minutes.
 
     utilization [[<node>] [--name <name>] | <node> <name>=<value> ...]

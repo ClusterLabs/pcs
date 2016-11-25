@@ -112,6 +112,13 @@ def get_resources(tree):
     """
     return _get_mandatory_section(tree, "configuration/resources")
 
+def get_nodes(tree):
+    """
+    Return 'nodes' element from the tree
+    tree cib etree node
+    """
+    return _get_mandatory_section(tree, "configuration/nodes")
+
 def find_parent(element, tag_names):
     candidate = element
     while True:

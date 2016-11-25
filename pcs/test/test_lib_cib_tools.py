@@ -200,6 +200,27 @@ class GetResourcesTest(CibToolsTest):
             ),
         )
 
+class GetNodes(CibToolsTest):
+    def test_success_if_exists(self):
+        self.assertEqual(
+            "nodes",
+            lib.get_nodes(self.cib.tree).tag
+        )
+
+    def test_raise_if_missing(self):
+        for section in self.cib.tree.findall(".//configuration/nodes"):
+            section.getparent().remove(section)
+        assert_raise_library_error(
+            lambda: lib.get_nodes(self.cib.tree),
+            (
+                severities.ERROR,
+                report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
+                {
+                    "section": "configuration/nodes",
+                },
+                None
+            ),
+        )
 
 class GetAclsTest(CibToolsTest):
     def setUp(self):

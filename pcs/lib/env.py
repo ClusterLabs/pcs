@@ -72,6 +72,7 @@ class LibraryEnvironment(object):
         self._auth_tokens_getter = auth_tokens_getter
         self._auth_tokens = None
         self._cib_upgraded = False
+        self._after_cib_push_callbacks = []
         self._cib_data_tmp_file = None
 
     @property
@@ -128,6 +129,9 @@ class LibraryEnvironment(object):
         else:
             self._cib_data = cib_data
 
+    def add_after_cib_push_callback(self, callback):
+        self._after_cib_push_callbacks.append(callback)
+        return self
 
     def push_cib(self, cib):
         #etree returns bytes: b'xml'
@@ -135,6 +139,10 @@ class LibraryEnvironment(object):
         #run(...) calls subprocess.Popen.communicate which calls encode...
         #so here is bytes to str conversion
         self._push_cib_xml(etree.tostring(cib).decode())
+
+        for callback in self._after_cib_push_callbacks:
+            callback()
+        self._after_cib_push_callbacks = []
 
     @property
     def is_cib_live(self):

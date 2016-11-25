@@ -957,6 +957,14 @@ def wait_for_idle_error(reason):
         }
     )
 
+def wait_for_idle_not_live_cluster():
+    """
+    cannot wait for the cluster if not running with a live cluster
+    """
+    return ReportItem.error(
+        report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
+    )
+
 def resource_cleanup_error(reason, resource=None, node=None):
     """
     an error occured when deleting resource history in pacemaker
@@ -1699,6 +1707,14 @@ def live_environment_required(forbidden_options):
         }
     )
 
+def live_environment_required_for_local_node():
+    """
+    The operation cannot be performed on CIB in file (not live cluster) if no
+        node name is specified i.e. working with the local node
+    """
+    return ReportItem.error(
+        report_codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE,
+    )
 
 def quorum_cannot_disable_atb_due_to_sbd(
     severity=ReportItemSeverity.ERROR, forceable=None

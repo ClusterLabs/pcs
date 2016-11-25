@@ -687,3 +687,44 @@ class CmdRunner(TestCase):
             }
         )
         mock_instance.write.assert_called_once_with("<cib />")
+
+@mock.patch("pcs.lib.env.replace_cib_configuration_xml")
+class CibPushCallbacks(TestCase):
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
+
+    def base_test(self, env):
+        # set up callbacks
+        log = []
+        callback1 = lambda: log.append("callback1")
+        callback2 = lambda: log.append("callback2")
+        env.add_after_cib_push_callback(callback1)
+        env.add_after_cib_push_callback(callback2)
+        # callbacks run when cib pushed
+        env.push_cib(etree.fromstring("<cib />"))
+        self.assertEqual(
+            ["callback1", "callback2"],
+            log
+        )
+        # callbacks not run again if pushed again
+        env.push_cib(etree.fromstring("<cib />"))
+        self.assertEqual(
+            ["callback1", "callback2"],
+            log
+        )
+
+    def test_success_cib_live(self, mock_push):
+        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        self.base_test(env)
+        self.assertEqual(2, mock_push.call_count)
+
+    def test_success_cib_file(self, mock_push):
+        env = LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            cib_data="<cib />"
+        )
+        self.base_test(env)
+        mock_push.assert_not_called()
+

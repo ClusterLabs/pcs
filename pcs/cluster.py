@@ -36,6 +36,7 @@ from pcs import (
 )
 from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.reports import process_library_reports, build_report_message
 from pcs.lib import (
     sbd as lib_sbd,
@@ -105,9 +106,29 @@ def cluster_cmd(argv):
     elif (sub_cmd == "kill"):
         kill_cluster(argv)
     elif (sub_cmd == "standby"):
-        node.node_standby(argv)
+        try:
+            node.node_standby_cmd(
+                utils.get_library_wrapper(),
+                argv,
+                utils.get_modificators(),
+                True
+            )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "node", "standby")
     elif (sub_cmd == "unstandby"):
-        node.node_standby(argv, False)
+        try:
+            node.node_standby_cmd(
+                utils.get_library_wrapper(),
+                argv,
+                utils.get_modificators(),
+                False
+            )
+        except LibraryError as e:
+            utils.process_library_reports(e.args)
+        except CmdLineInputError as e:
+            utils.exit_on_cmdline_input_errror(e, "node", "unstandby")
     elif (sub_cmd == "enable"):
         if "--all" in utils.pcs_options:
             enable_cluster_all()
