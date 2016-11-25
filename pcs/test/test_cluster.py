@@ -1850,7 +1850,7 @@ logging {
             .format(cluster_conf_tmp)
         )
         ac(output, """\
-Error: 'blah' is not a valid RRP mode value, use passive, active, use --force to override
+Error: 'blah' is not a valid RRP mode value, use active, passive, use --force to override
 Warning: Enabling broadcast for all rings as CMAN does not support broadcast in only one ring
 """)
         self.assertEqual(returnVal, 1)
