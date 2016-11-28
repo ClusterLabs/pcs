@@ -37,6 +37,8 @@
 - built-in help and man page fixes and improvements ([rhbz#1347335])
 - In `pcs resource create` the flag `--clone` no longer steals arguments from
   the keywords `meta` and `op` ([rhbz#1395226])
+- `pcs resource create` does not produce invalid cib when group id is already
+  occupied with non-resource element ([rhbz#1382004])
 
 [ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
 [ghissue#125]: https://github.com/ClusterLabs/pcs/issues/125
@@ -47,6 +49,7 @@
 [rhbz#1315992]: https://bugzilla.redhat.com/show_bug.cgi?id=1315992
 [rhbz#1339355]: https://bugzilla.redhat.com/show_bug.cgi?id=1339355
 [rhbz#1347335]: https://bugzilla.redhat.com/show_bug.cgi?id=1347335
+[rhbz#1382004]: https://bugzilla.redhat.com/show_bug.cgi?id=1382004
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389501]: https://bugzilla.redhat.com/show_bug.cgi?id=1389501
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941

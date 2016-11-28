@@ -40,16 +40,11 @@ def find_group_by_id(context_to_scan, group_id):
     """
     element = context_to_scan.find('.//*[@id="{0}"]'.format(group_id))
     if element is not None and element.tag != TAG:
-        #TODO
-        #keep original buggy functionality for now => refuse only some tags
-        #in the future - after correction make common function in
-        #pcs.lib.cib.tools
-        if element.tag in ["primitive", "clone", "master"]:
-            raise LibraryError(reports.id_belongs_to_unexpected_type(
-                group_id,
-                expected_types=[TAG],
-                current_type=element.tag
-            ))
+        raise LibraryError(reports.id_belongs_to_unexpected_type(
+            group_id,
+            expected_types=[TAG],
+            current_type=element.tag
+        ))
     return element
 
 def get_resource(group_element, resource_id):

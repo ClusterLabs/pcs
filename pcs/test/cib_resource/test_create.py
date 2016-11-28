@@ -919,6 +919,31 @@ class FailOrWarnGroup(ResourceTest):
             "Error: 'R1-master' is not a group\n"
         )
 
+    def test_fail_when_try_use_id_of_another_element(self):
+        self.assert_effect(
+            "resource create R1 ocf:heartbeat:Dummy --no-default-ops meta a=b",
+            """<resources>
+                <primitive class="ocf" id="R1" provider="heartbeat"
+                    type="Dummy"
+                >
+                    <instance_attributes id="R1-instance_attributes"/>
+                    <meta_attributes id="R1-meta_attributes">
+                        <nvpair id="R1-meta_attributes-a" name="a" value="b"/>
+                    </meta_attributes>
+                    <operations>
+                        <op id="R1-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>"""
+        )
+        self.assert_pcs_fail(
+            "resource create R2 ocf:heartbeat:Dummy --group R1-meta_attributes",
+            "Error: 'R1-meta_attributes' is not a group\n"
+        )
+
+
     def test_fail_when_specified_both_before_after(self):
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1"
