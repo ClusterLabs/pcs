@@ -12,7 +12,12 @@ from pcs.common import report_codes
 from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
-from pcs.lib.cib.tools import export_attributes, find_unique_id, find_parent
+from pcs.lib.cib.tools import (
+    export_attributes,
+    find_unique_id,
+    find_parent,
+    find_element_by_tag_and_id,
+)
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 
@@ -29,10 +34,12 @@ def _validate_attrib_names(attrib_names, options):
 def find_valid_resource_id(
     report_processor, cib, can_repair_to_clone, in_clone_allowed, id
 ):
-    resource_element = resource.find_by_id(cib, id)
-
-    if resource_element is None:
-        raise LibraryError(reports.resource_does_not_exist(id))
+    resource_element = find_element_by_tag_and_id(
+        resource.clone.ALL_TAGS + [resource.primitive.TAG, resource.group.TAG],
+        cib,
+        id,
+        id_description="resource"
+    )
 
     if resource_element.tag in resource.clone.ALL_TAGS:
         return resource_element.attrib["id"]

@@ -836,11 +836,27 @@ def id_belongs_to_unexpected_type(id, expected_types, current_type):
         }
     )
 
+def object_with_id_in_unexpected_context(
+    object_type, object_id, expected_context_type, expected_context_id
+):
+    """
+    Object specified by object_type (tag) and object_id exists but not inside
+    given context (expected_context_type, expected_context_id).
+    """
+    return ReportItem.error(
+        report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
+        info={
+            "type": object_type,
+            "id": object_id,
+            "expected_context_type": expected_context_type,
+            "expected_context_id": expected_context_id,
+        }
+    )
 
-def id_not_found(id, id_description):
+
+def id_not_found(id, id_description, context_type="", context_id=""):
     """
     specified id does not exist in CIB, user referenced a nonexisting id
-    use "resource_does_not_exist" if id is a resource id
     id string specified id
     id_description string decribe id's role
     """
@@ -849,6 +865,8 @@ def id_not_found(id, id_description):
         info={
             "id": id,
             "id_description": id_description,
+            "context_type": context_type,
+            "context_id": context_id,
         }
     )
 
@@ -865,32 +883,6 @@ def resource_cannot_be_next_to_itself_in_group(resource_id, group_id):
         }
     )
 
-
-def resource_not_found_in_group(resource_id, group_id):
-    """
-    Resource (id=resource_id) is not present in group (id=group_id).
-    It can happen for example when user wants to put new resource to group
-    group_id after resource_id.
-    """
-    return ReportItem.error(
-        report_codes.RESOURCE_NOT_FOUND_IN_GROUP,
-        info={
-            "resource_id": resource_id,
-            "group_id": group_id,
-        }
-    )
-
-def resource_does_not_exist(resource_id):
-    """
-    specified resource does not exist (e.g. when creating in constraints)
-    resource_id string specified resource id
-    """
-    return ReportItem.error(
-        report_codes.RESOURCE_DOES_NOT_EXIST,
-        info={
-            "resource_id": resource_id,
-        }
-    )
 
 def stonith_resources_do_not_exist(
     stonith_ids, severity=ReportItemSeverity.ERROR, forceable=None
@@ -1701,18 +1693,6 @@ def cib_alert_recipient_invalid_value(recipient_value):
         report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
         info={"recipient": recipient_value}
     )
-
-def cib_alert_not_found(alert_id):
-    """
-    Alert with specified id doesn't exist.
-
-    alert_id -- id of alert
-    """
-    return ReportItem.error(
-        report_codes.CIB_ALERT_NOT_FOUND,
-        info={"alert": alert_id}
-    )
-
 
 def cib_upgrade_successful():
     """

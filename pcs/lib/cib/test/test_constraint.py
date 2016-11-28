@@ -31,7 +31,7 @@ def fixture_element(tag, id):
     return element
 
 @mock.patch("pcs.lib.cib.constraint.constraint.find_parent")
-@mock.patch("pcs.lib.cib.constraint.constraint.resource.find_by_id")
+@mock.patch("pcs.lib.cib.constraint.constraint.find_element_by_tag_and_id")
 class FindValidResourceId(TestCase):
     def setUp(self):
         self.cib = "cib"
@@ -42,17 +42,6 @@ class FindValidResourceId(TestCase):
             self.cib,
             can_repair_to_clone=False,
             in_clone_allowed=False,
-        )
-
-    def test_raises_when_element_not_found(self, mock_find_by_id, _):
-        mock_find_by_id.return_value = None
-        assert_raise_library_error(
-            lambda: self.find(id="resourceA"),
-            (
-                severities.ERROR,
-                report_codes.RESOURCE_DOES_NOT_EXIST,
-                {"resource_id": "resourceA"}
-            ),
         )
 
     def test_return_same_id_when_resource_is_clone(self, mock_find_by_id, _):

@@ -5,6 +5,8 @@ from __future__ import (
     unicode_literals,
 )
 
+from functools import partial
+
 from lxml import etree
 
 from pcs.lib import reports
@@ -14,31 +16,22 @@ from pcs.lib.cib.tools import (
     check_new_id_applicable,
     does_id_exist,
     find_unique_id,
-    get_acls,
+    find_element_by_tag_and_id,
 )
 
 
-class AclError(Exception):
-    pass
 
+TAG_GROUP = "acl_group"
+TAG_ROLE = "acl_role"
+TAG_TARGET = "acl_target"
+TAG_PERMISSION = "acl_permission"
 
-class AclRoleNotFound(AclError):
-    # pylint: disable=super-init-not-called
-    def __init__(self, role_id):
-        self.role_id = role_id
-
-
-class AclTargetNotFound(AclError):
-    # pylint: disable=super-init-not-called
-    def __init__(self, target_id):
-        self.target_id = target_id
-
-
-class AclGroupNotFound(AclError):
-    # pylint: disable=super-init-not-called
-    def __init__(self, group_id):
-        self.group_id = group_id
-
+TAG_DESCRIPTION_MAP = {
+    TAG_GROUP: "group",
+    TAG_ROLE: "role",
+    TAG_TARGET: "user",
+    TAG_PERMISSION: "permission"
+}
 
 def validate_permissions(tree, permission_info_list):
     """
@@ -74,35 +67,53 @@ def validate_permissions(tree, permission_info_list):
         raise LibraryError(*report_items)
 
 
-def find_role(tree, role_id):
+def find(
+    tag, acl_section, element_id, none_if_id_unused=False, id_description=None
+):
+    if tag not in TAG_DESCRIPTION_MAP.keys():
+        raise AssertionError("Unknown acl tag '{0}'".format(tag))
+
+    return find_element_by_tag_and_id(
+        tag,
+        acl_section,
+        element_id,
+        id_description=id_description if id_description
+            else TAG_DESCRIPTION_MAP[tag]
+        ,
+        none_if_id_unused=none_if_id_unused,
+    )
+
+find_group = partial(find, TAG_GROUP)
+find_role = partial(find, TAG_ROLE)
+find_target = partial(find, TAG_TARGET)
+
+def find_target_or_group(acl_section, target_or_group_id):
     """
-    Returns acl_role element with specified role_id in given tree.
-    Raise AclRoleNotFound if role doesn't exist.
+    Returns acl_target or acl_group element with id target_or_group_id. Target
+    element has bigger pririty so if there are target and group with same id
+    only target element will be affected by this function.
+    Raises LibraryError if there is no target or group element with
+    specified id.
 
-    tree -- etree node
-    role_id -- id of role
+    acl_section -- cib etree node
+    target_or_group_id -- id of target/group element which should be returned
     """
-    role = tree.find('.//acl_role[@id="{0}"]'.format(role_id))
-    if role is not None:
-        return role
-    raise AclRoleNotFound(role_id)
+    target = find_target(
+        acl_section,
+        target_or_group_id,
+        none_if_id_unused=True
+    )
 
+    if target is not None:
+        return target
 
-def _find_permission(tree, permission_id):
-    """
-    Returns acl_permission element with specified id.
-    Raises LibraryError if that permission doesn't exist.
+    return find_group(
+        acl_section,
+        target_or_group_id,
+        id_description="user/group"
+    )
 
-    tree -- etree node
-    permisson_id -- id of permision element
-    """
-    permission = tree.find(".//acl_permission[@id='{0}']".format(permission_id))
-    if permission is not None:
-        return permission
-    raise LibraryError(reports.id_not_found(permission_id, "permission"))
-
-
-def create_role(tree, role_id, description=None):
+def create_role(acl_section, role_id, description=None):
     """
     Create new role element and add it to cib.
     Returns newly created role element.
@@ -110,31 +121,31 @@ def create_role(tree, role_id, description=None):
     role_id id of desired role
     description role description
     """
-    check_new_id_applicable(tree, "ACL role", role_id)
-    role = etree.SubElement(get_acls(tree), "acl_role", id=role_id)
+    check_new_id_applicable(acl_section, "ACL role", role_id)
+    role = etree.SubElement(acl_section, TAG_ROLE, id=role_id)
     if description:
         role.set("description", description)
     return role
 
 
-def remove_role(tree, role_id, autodelete_users_groups=False):
+def remove_role(acl_section, role_id, autodelete_users_groups=False):
     """
     Remove role with specified id from CIB and all references to it.
 
-    tree -- etree node
+    acl_section -- etree node
     role_id -- id of role to be removed
     autodelete_users_group -- if True remove targets with no role after removing
     """
-    acl_role = find_role(tree, role_id)
+    acl_role = find_role(acl_section, role_id)
     acl_role.getparent().remove(acl_role)
-    for role_el in tree.findall(".//role[@id='{0}']".format(role_id)):
+    for role_el in acl_section.findall(".//role[@id='{0}']".format(role_id)):
         role_parent = role_el.getparent()
         role_parent.remove(role_el)
         if autodelete_users_groups and role_parent.find(".//role") is None:
             role_parent.getparent().remove(role_parent)
 
 
-def assign_role(target_el, role_el):
+def assign_role(acl_section, role_id, target_el):
     """
     Assign role element to specified target/group element.
     Raise LibraryError if role is already assigned to target/group.
@@ -142,6 +153,8 @@ def assign_role(target_el, role_el):
     target_el -- etree element of target/group to which role should be assign
     role_el -- etree element of role
     """
+
+    role_el = find_role(acl_section, role_id)
     assigned_role = target_el.find(
         "./role[@id='{0}']".format(role_el.get("id"))
     )
@@ -150,6 +163,19 @@ def assign_role(target_el, role_el):
             role_el.get("id"), target_el.get("id")
         ))
     etree.SubElement(target_el, "role", {"id": role_el.get("id")})
+
+
+def assign_all_roles(acl_section, role_id_list, element):
+    """
+    Assign roles from role_id_list to element.
+    Raises LibraryError on any failure.
+
+    acl_section -- cib etree node
+    element -- element to which specified roles should be assigned
+    role_id_list -- list of role id
+    """
+    for role_id in role_id_list:
+        assign_role(acl_section, role_id, element)
 
 
 def unassign_role(target_el, role_id, autodelete_target=False):
@@ -172,101 +198,67 @@ def unassign_role(target_el, role_id, autodelete_target=False):
         target_el.getparent().remove(target_el)
 
 
-def find_target(tree, target_id):
-    """
-    Return acl_target etree element with specified id.
-    Raise AclTargetNotFound if target with specified id doesn't exist.
-
-    tree -- etree node
-    target_id -- if of target to find
-    """
-    role = get_acls(tree).find('./acl_target[@id="{0}"]'.format(target_id))
-    if role is None:
-        raise AclTargetNotFound(target_id)
-    return role
-
-
-def find_group(tree, group_id):
-    """
-    Returns acl_group etree element with specified id.
-    Raise AclGroupNotFound if group with group_id doesn't exist.
-
-    tree -- etree node
-    group_id -- id of group to find
-    """
-    role = get_acls(tree).find('./acl_group[@id="{0}"]'.format(group_id))
-    if role is None:
-        raise AclGroupNotFound(group_id)
-    return role
-
-
-def provide_role(tree, role_id):
+def provide_role(acl_section, role_id):
     """
     Returns role with id role_id. If doesn't exist, it will be created.
     role_id id of desired role
     """
-    try:
-        return find_role(tree, role_id)
-    except AclRoleNotFound:
-        return create_role(tree, role_id)
+    role = find_role(acl_section, role_id, none_if_id_unused=True)
+    return role if role is not None else create_role(acl_section, role_id)
 
 
-def create_target(tree, target_id):
+def create_target(acl_section, target_id):
     """
     Creates new acl_target element with id target_id.
     Raises LibraryError if target with wpecified id aleready exists.
 
-    tree -- etree node
+    acl_section -- etree node
     target_id -- id of new target
     """
-    acl_el = get_acls(tree)
     # id of element acl_target is not type ID in CIB ACL schema so we don't need
     # to check if it is unique ID in whole CIB
-    if acl_el.find("./acl_target[@id='{0}']".format(target_id)) is not None:
+    if(
+        acl_section.find("./{0}[@id='{1}']".format(TAG_TARGET, target_id))
+        is not None
+    ):
         raise LibraryError(reports.acl_target_already_exists(target_id))
-    return etree.SubElement(get_acls(tree), "acl_target", id=target_id)
+    return etree.SubElement(acl_section, TAG_TARGET, id=target_id)
 
 
-def create_group(tree, group_id):
+def create_group(acl_section, group_id):
     """
     Creates new acl_group element with specified id.
     Raises LibraryError if tree contains element with id group_id.
 
-    tree -- etree node
+    acl_section -- etree node
     group_id -- id of new group
     """
-    check_new_id_applicable(tree, "ACL group", group_id)
-    return etree.SubElement(get_acls(tree), "acl_group", id=group_id)
+    check_new_id_applicable(acl_section, "ACL group", group_id)
+    return etree.SubElement(acl_section, TAG_GROUP, id=group_id)
 
 
-def remove_target(tree, target_id):
+def remove_target(acl_section, target_id):
     """
-    Removes acl_target element from tree with specified id.
+    Removes acl_target element from acl_section with specified id.
     Raises LibraryError if target with id target_id doesn't exist.
 
-    tree -- etree node
+    acl_section -- etree node
     target_id -- id of target element to remove
     """
-    try:
-        target = find_target(tree, target_id)
-        target.getparent().remove(target)
-    except AclTargetNotFound:
-        raise LibraryError(reports.id_not_found(target_id, "user"))
+    target = find_target(acl_section, target_id)
+    target.getparent().remove(target)
 
 
-def remove_group(tree, group_id):
+def remove_group(acl_section, group_id):
     """
     Removes acl_group element from tree with specified id.
     Raises LibraryError if group with id group_id doesn't exist.
 
-    tree -- etree node
+    acl_section -- etree node
     group_id -- id of group element to remove
     """
-    try:
-        group = find_group(tree, group_id)
-        group.getparent().remove(group)
-    except AclGroupNotFound:
-        raise LibraryError(reports.id_not_found(group_id, "group"))
+    group = find_group(acl_section, group_id)
+    group.getparent().remove(group)
 
 
 def add_permissions_to_role(role_el, permission_info_list):
@@ -294,20 +286,20 @@ def add_permissions_to_role(role_el, permission_info_list):
         perm.set(area_type_attribute_map[scope_type], scope)
 
 
-def remove_permission(tree, permission_id):
+def remove_permission(acl_section, permission_id):
     """
-    Remove permission with id permission_id from tree.
+    Remove permission with id permission_id from acl_section.
 
-    tree -- etree node
+    acl_section -- etree node
     permission_id -- id of permission element to be removed
     """
-    permission = _find_permission(tree, permission_id)
+    permission = find(TAG_PERMISSION, acl_section, permission_id)
     permission.getparent().remove(permission)
 
 
-def get_role_list(tree):
+def get_role_list(acl_section):
     """
-    Returns list of all acl_role elements from tree.
+    Returns list of all acl_role elements from acl_section.
     Format of items of output list:
         {
             "id": <role-id>,
@@ -315,10 +307,10 @@ def get_role_list(tree):
             "permission_list": [<see function _get_all_permission_list>, ...]
         }
 
-    tree -- etree node
+    acl_section -- etree node
     """
     output_list = []
-    for role_el in get_acls(tree).findall("./acl_role"):
+    for role_el in acl_section.findall("./{0}".format(TAG_ROLE)):
         role = etree_element_attibutes_to_dict(
             role_el, ["id", "description"]
         )
@@ -356,7 +348,7 @@ def _get_permission_list(role_el):
     return output_list
 
 
-def get_target_list(tree):
+def get_target_list(acl_section):
     """
     Returns list of acl_target elements in format:
         {
@@ -364,12 +356,12 @@ def get_target_list(tree):
             "role_list": [<assign role_id as string>, ...]
         }
 
-    tree -- etree node
+    acl_section -- etree node
     """
-    return _get_target_like_list_with_tag(tree, "acl_target")
+    return get_target_like_list(acl_section, TAG_TARGET)
 
 
-def get_group_list(tree):
+def get_group_list(acl_section):
     """
     Returns list of acl_group elements in format:
         {
@@ -377,14 +369,14 @@ def get_group_list(tree):
             "role_list": [<assign role_id as string>, ...]
         }
 
-    tree -- etree node
+    acl_section -- etree node
     """
-    return _get_target_like_list_with_tag(tree, "acl_group")
+    return get_target_like_list(acl_section, TAG_GROUP)
 
 
-def _get_target_like_list_with_tag(tree, tag):
+def get_target_like_list(acl_section, tag):
     output_list = []
-    for target_el in get_acls(tree).findall("./{0}".format(tag)):
+    for target_el in acl_section.findall("./{0}".format(tag)):
         output_list.append({
             "id": target_el.get("id"),
             "role_list": _get_role_list_of_target(target_el),
@@ -421,13 +413,3 @@ def dom_remove_permissions_referencing(dom, reference):
     for permission in dom.getElementsByTagName("acl_permission"):
         if permission.getAttribute("reference") == reference:
             permission.parentNode.removeChild(permission)
-
-
-def acl_error_to_report_item(e):
-    if e.__class__ == AclTargetNotFound:
-        return reports.id_not_found(e.target_id, "user")
-    elif e.__class__ == AclGroupNotFound:
-        return reports.id_not_found(e.group_id, "group")
-    elif e.__class__ == AclRoleNotFound:
-        return reports.id_not_found(e.role_id, "role")
-    raise e

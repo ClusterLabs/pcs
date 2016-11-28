@@ -8,7 +8,7 @@ from __future__ import (
 from lxml import etree
 
 from pcs.lib import reports
-from pcs.lib.cib.tools import get_root
+from pcs.lib.cib.tools import find_element_by_tag_and_id
 from pcs.lib.errors import LibraryError
 
 
@@ -22,7 +22,12 @@ def provide_group(resources_section, group_id):
     etree.Element resources_section is place where new group will be appended
     string group_id is id of group
     """
-    group_element = find_group_by_id(get_root(resources_section), group_id)
+    group_element = find_element_by_tag_and_id(
+        "group",
+        resources_section,
+        group_id,
+        none_if_id_unused=True
+    )
     if group_element is None:
         group_element = etree.SubElement(
             resources_section,
@@ -30,37 +35,6 @@ def provide_group(resources_section, group_id):
             id=group_id
         )
     return group_element
-
-def find_group_by_id(context_to_scan, group_id):
-    """
-    Return group with id=group_id. If group does not exists raise LibraryError.
-
-    etree.Element(Tree) context_to_scan is contex inside will be group searched.
-    string group_id is id of group
-    """
-    element = context_to_scan.find('.//*[@id="{0}"]'.format(group_id))
-    if element is not None and element.tag != TAG:
-        raise LibraryError(reports.id_belongs_to_unexpected_type(
-            group_id,
-            expected_types=[TAG],
-            current_type=element.tag
-        ))
-    return element
-
-def get_resource(group_element, resource_id):
-    """
-    Return resource with resource_id that is inside group_element.
-
-    etree.Element group_element is a search area
-    string resource_id is id of resource
-    """
-    resource = group_element.find('.//primitive[@id="{0}"]'.format(resource_id))
-    if resource is None:
-        raise LibraryError(reports.resource_not_found_in_group(
-            resource_id,
-            group_element.attrib["id"]
-        ))
-    return resource
 
 def place_resource(
     group_element, primitive_element,
@@ -89,7 +63,12 @@ def place_resource(
     if not adjacent_resource_id:
         return group_element.append(primitive_element)
 
-    adjacent_resource = get_resource(group_element, adjacent_resource_id)
+    adjacent_resource = find_element_by_tag_and_id(
+        "primitive",
+        group_element,
+        adjacent_resource_id,
+        id_description="resource",
+    )
 
     if put_after_adjacent and adjacent_resource.getnext() is None:
         return group_element.append(primitive_element)

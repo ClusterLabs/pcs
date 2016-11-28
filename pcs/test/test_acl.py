@@ -405,7 +405,7 @@ Group: group2
 
         o,r = pcs("acl group delete user1")
         assert r == 1
-        ac(o,"Error: group 'user1' does not exist\n")
+        ac(o,"Error: 'user1' is not an acl group\n")
 
         o,r = pcs("acl")
         ac(o, """\
@@ -835,7 +835,7 @@ Role: role4
         self.assert_pcs_success("acl group create group1")
         self.assert_pcs_fail(
             "acl role assign role1 to user group1",
-            "Error: user 'group1' does not exist\n"
+            "Error: 'group1' is not an acl target\n"
         )
 
     def test_assign_unassign_role_to_user_with_to(self):
@@ -871,7 +871,7 @@ Role: role4
         self.assert_pcs_success("acl user create user1")
         self.assert_pcs_fail(
             "acl role assign role1 to group user1",
-            "Error: group 'user1' does not exist\n"
+            "Error: 'user1' is not an acl group\n"
         )
 
     def test_assign_unassign_role_to_group_with_to(self):

@@ -14,67 +14,7 @@ from pcs.test.tools.assertions import assert_raise_library_error, assert_xml_equ
 from pcs.test.tools.pcs_unittest import TestCase, mock
 
 
-class FindGroupElement(TestCase):
-    def test_returns_none_if_id_do_not_exists(self):
-        self.assertIsNone(group.find_group_by_id(
-            etree.fromstring("<resources/>"),
-            "a"
-        ))
-
-    def test_returns_element_if_group_found(self):
-        tree = etree.Element("resources")
-        group_element = etree.SubElement(tree, "group", {"id": "a"})
-        self.assertEqual(
-            group_element,
-            group.find_group_by_id(tree, "a")
-        )
-
-    def test_raises_when_id_belongs_to_unexpected_element(self):
-        assert_raise_library_error(
-            lambda: group.find_group_by_id(
-                etree.fromstring('<resources><primitive id="a"/></resources>'),
-                "a"
-            ),
-            (
-                severities.ERROR,
-                report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                {
-                    "id": "a",
-                    "expected_types": ["group"],
-                    "current_type": "primitive",
-                },
-            ),
-        )
-
-class GetResource(TestCase):
-    def test_returns_resource_when_is_in_group(self):
-        group_element = etree.Element("group", {"id": "g"})
-        resource_element = etree.SubElement(
-            group_element,
-            "primitive",
-            {"id":"r"}
-        )
-        self.assertEqual(
-            resource_element,
-            group.get_resource(group_element, "r")
-        )
-
-    def test_raises_when_resource_not_in_group(self):
-        assert_raise_library_error(
-            lambda:
-                group.get_resource(etree.fromstring('<group id="g"/>'), "r")
-            ,
-            (
-                severities.ERROR,
-                report_codes.RESOURCE_NOT_FOUND_IN_GROUP,
-                {
-                    "resource_id": "r",
-                    "group_id": "g",
-                },
-            ),
-        )
-
-@mock.patch("pcs.lib.cib.resource.group.find_group_by_id")
+@mock.patch("pcs.lib.cib.resource.group.find_element_by_tag_and_id")
 class ProvideGroup(TestCase):
     def setUp(self):
         self.cib = etree.fromstring(
@@ -83,21 +23,19 @@ class ProvideGroup(TestCase):
         self.group_element = self.cib.find('.//group')
         self.resources_section = self.cib.find('.//resources')
 
-
-    def test_search_in_whole_tree(self, find_group_by_id):
-        def find_group(whole_tree, id):
-            self.assertEqual(self.cib, whole_tree.find('.'))
+    def test_search_in_whole_tree(self, find_element_by_tag_and_id):
+        def find_group(*args, **kwargs):
             return self.group_element
 
-        find_group_by_id.side_effect = find_group
+        find_element_by_tag_and_id.side_effect = find_group
 
         self.assertEqual(
             self.group_element,
             group.provide_group(self.resources_section, "g")
         )
 
-    def test_create_group_when_not_exists(self, find_group_by_id):
-        find_group_by_id.return_value = None
+    def test_create_group_when_not_exists(self, find_element_by_tag_and_id):
+        find_element_by_tag_and_id.return_value = None
         group_element = group.provide_group(self.resources_section, "g2")
         self.assertEqual('group', group_element.tag)
         self.assertEqual('g2', group_element.attrib["id"])
@@ -170,10 +108,12 @@ class PlaceResource(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.RESOURCE_NOT_FOUND_IN_GROUP,
+                report_codes.ID_NOT_FOUND,
                 {
-                    "resource_id": "r",
-                    "group_id": "g",
+                    "id": "r",
+                    "id_description": "resource",
+                    "context_type": "group",
+                    "context_id": "g",
                 },
             ),
         )

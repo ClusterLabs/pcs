@@ -263,8 +263,8 @@ class UpdateAlertTest(TestCase):
             ),
             (
                 Severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "unknown"}
+                report_codes.ID_NOT_FOUND,
+                {"id": "unknown"}
             )
         )
 
@@ -347,13 +347,13 @@ class RemoveAlertTest(TestCase):
         report_list = [
             (
                 Severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "unknown"}
+                report_codes.ID_NOT_FOUND,
+                {"id": "unknown"}
             ),
             (
                 Severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "unknown2"}
+                report_codes.ID_NOT_FOUND,
+                {"id": "unknown2"}
             )
         ]
         assert_raise_library_error(
@@ -385,18 +385,6 @@ class AddRecipientTest(TestCase):
         """
         self.mock_env = LibraryEnvironment(
             self.mock_log, self.mock_rep, cib_data=cib
-        )
-
-    def test_alert_not_found(self):
-        assert_raise_library_error(
-            lambda: cmd_alert.add_recipient(
-                self.mock_env, "unknown", "recipient", {}, {}
-            ),
-            (
-                Severities.ERROR,
-                report_codes.CIB_ALERT_NOT_FOUND,
-                {"alert": "unknown"}
-            )
         )
 
     def test_value_not_defined(self):
@@ -595,7 +583,7 @@ class UpdateRecipientTest(TestCase):
                 report_codes.ID_NOT_FOUND,
                 {
                     "id": "recipient",
-                    "id_description": "Recipient"
+                    "id_description": "recipient"
                 }
             )
         )

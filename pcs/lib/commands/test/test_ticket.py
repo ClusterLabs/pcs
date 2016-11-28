@@ -64,8 +64,13 @@ class CreateTest(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.RESOURCE_DOES_NOT_EXIST,
-                {"resource_id": "resourceA"},
+                report_codes.ID_NOT_FOUND,
+                {
+                    "context_type": "cib",
+                    "context_id": "",
+                    "id": "resourceA",
+                    "id_description": "resource"
+                },
             ),
         )
 

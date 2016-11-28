@@ -83,6 +83,8 @@ def service_operation_skipped(operation, info):
 
 def id_belongs_to_unexpected_type(info):
     translate_expected = {
+        "acl_group": "an acl group",
+        "acl_target": "an acl target",
         "group": "a group",
     }
     return "'{id}' is not {expected_type}".format(
@@ -91,6 +93,20 @@ def id_belongs_to_unexpected_type(info):
             translate_expected.get(tag, "{0}".format(tag))
             for tag in info["expected_types"]
         ]),
+    )
+
+def id_not_found(info):
+    desc = format_optional(info["id_description"], "{0} ")
+    if not info["context_type"] or not info["context_id"]:
+        return "{desc}'{id}' does not exist".format(desc=desc, id=info["id"])
+
+    return (
+        "there is no {desc}'{id}' in the {context_type} '{context_id}'".format(
+            desc=desc,
+            id=info["id"],
+            context_type=info["context_type"],
+            context_id=info["context_id"],
+        )
     )
 
 #Each value (a callable taking report_item.info) returns a message.
@@ -468,23 +484,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.ID_BELONGS_TO_UNEXPECTED_TYPE: id_belongs_to_unexpected_type,
 
-    codes.ID_NOT_FOUND: lambda info:
-        "{desc}'{id}' does not exist"
-        .format(
-            desc=format_optional(info["id_description"], "{0} "),
-            **info
-        )
-    ,
-
-    codes.RESOURCE_DOES_NOT_EXIST: lambda info:
-        "Resource '{resource_id}' does not exist"
-        .format(**info)
-    ,
-
-    codes.RESOURCE_NOT_FOUND_IN_GROUP: lambda info:
-        "there is no resource '{resource_id}' in the group '{group_id}'"
-        .format(**info)
-    ,
+    codes.ID_NOT_FOUND: id_not_found,
 
     codes.STONITH_RESOURCES_DO_NOT_EXIST: lambda info:
         "Stonith resource(s) '{stonith_id_list}' do not exist"
@@ -806,11 +806,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.CIB_ALERT_RECIPIENT_VALUE_INVALID: lambda info:
         "Recipient value '{recipient}' is not valid."
-        .format(**info)
-    ,
-
-    codes.CIB_ALERT_NOT_FOUND: lambda info:
-        "Alert '{alert}' not found."
         .format(**info)
     ,
 
