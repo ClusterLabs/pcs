@@ -395,6 +395,20 @@ def node_communication_finished(target, retval, data):
         }
     )
 
+
+def node_communication_debug_info(target, data):
+    """
+    Node communication debug info from pycurl
+    """
+    return ReportItem.debug(
+        report_codes.NODE_COMMUNICATION_DEBUG_INFO,
+        info={
+            "target": target,
+            "data": data,
+        }
+    )
+
+
 def node_communication_not_connected(node, reason):
     """
     an error occured when connecting to a remote node, debug info
@@ -484,6 +498,7 @@ def node_communication_command_unsuccessful(node, command, reason):
         }
     )
 
+
 def node_communication_error_other_error(
     node, command, reason,
     severity=ReportItemSeverity.ERROR, forceable=None
@@ -523,6 +538,7 @@ def node_communication_error_unable_to_connect(
         },
         forceable=forceable
     )
+
 
 def corosync_config_distribution_started():
     """

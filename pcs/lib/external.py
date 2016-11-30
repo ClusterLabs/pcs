@@ -6,9 +6,10 @@ from __future__ import (
 )
 
 import base64
-import inspect
+import io
 import json
 import os
+
 try:
     # python 2
     from pipes import quote as shell_quote
@@ -17,44 +18,20 @@ except ImportError:
     from shlex import quote as shell_quote
 import re
 import signal
-import ssl
 import subprocess
 import sys
-try:
-    # python2
-    from httplib import HTTPException
-except ImportError:
-    # python3
-    from http.client import HTTPException
 try:
     # python2
     from urllib import urlencode as urllib_urlencode
 except ImportError:
     # python3
     from urllib.parse import urlencode as urllib_urlencode
-try:
-    # python2
-    from urllib2 import (
-        build_opener as urllib_build_opener,
-        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
-        HTTPSHandler as urllib_HTTPSHandler,
-        HTTPError as urllib_HTTPError,
-        URLError as urllib_URLError
-    )
-except ImportError:
-    # python3
-    from urllib.request import (
-        build_opener as urllib_build_opener,
-        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
-        HTTPSHandler as urllib_HTTPSHandler
-    )
-    from urllib.error import (
-        HTTPError as urllib_HTTPError,
-        URLError as urllib_URLError
-    )
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import (
+    pcs_pycurl as pycurl,
+    report_codes,
+)
 from pcs.common.tools import (
     join_multilines,
     simple_cache,
@@ -558,14 +535,42 @@ class NodeCommunicator(object):
         request command to be run on the host
         data command parameters, encoded by format_data_* method
         """
-        opener = self.__get_opener()
+        def __debug_callback(data_type, debug_data):
+            prefixes = {
+                pycurl.DEBUG_TEXT: "* ",
+                pycurl.DEBUG_HEADER_IN: "< ",
+                pycurl.DEBUG_HEADER_OUT: "> ",
+                pycurl.DEBUG_DATA_IN: "<< ",
+                pycurl.DEBUG_DATA_OUT: ">> ",
+            }
+            if data_type in prefixes:
+                debug_output.write("{prefix}{data}{suffix}".format(
+                    prefix=prefixes[data_type],
+                    data=debug_data,
+                    suffix="" if debug_data.endswith("\n") else "\n"
+                ).encode("utf-8"))
+
+        output = io.BytesIO()
+        debug_output = io.BytesIO()
+        cookies = self.__prepare_cookies(host)
         url = "https://{host}:2224/{request}".format(
             host=("[{0}]".format(host) if ":" in host else host),
             request=request
         )
-        cookies = self.__prepare_cookies(host)
+
+        handler = pycurl.Curl()
+        handler.setopt(pycurl.PROTOCOLS, pycurl.PROTO_HTTPS)
+        handler.setopt(pycurl.URL, url.encode("utf-8"))
+        handler.setopt(pycurl.WRITEFUNCTION, output.write)
+        handler.setopt(pycurl.VERBOSE, 1)
+        handler.setopt(pycurl.DEBUGFUNCTION, __debug_callback)
+        handler.setopt(pycurl.SSL_VERIFYHOST, 0)
+        handler.setopt(pycurl.SSL_VERIFYPEER, 0)
+        handler.setopt(pycurl.NOSIGNAL, 1) # required for multi-threading
         if cookies:
-            opener.addheaders.append(("Cookie", ";".join(cookies)))
+            handler.setopt(pycurl.COOKIE, ";".join(cookies).encode("utf-8"))
+        if data:
+            handler.setopt(pycurl.COPYPOSTFIELDS, data.encode("utf-8"))
 
         msg = "Sending HTTP Request to: {url}"
         if data:
@@ -580,86 +585,62 @@ class NodeCommunicator(object):
         )
 
         try:
-            # python3 requires data to be bytes not str
-            if data:
-                data = data.encode("utf-8")
-            result = opener.open(url, data)
-            # python3 returns bytes not str
-            response_data = result.read().decode("utf-8")
+            handler.perform()
+            response_data = output.getvalue().decode("utf-8")
+            response_code = handler.getinfo(pycurl.RESPONSE_CODE)
             self._logger.debug(result_msg.format(
                 url=url,
-                code=result.getcode(),
+                code=response_code,
                 response=response_data
             ))
-            self._reporter.process(
-                reports.node_communication_finished(
-                    url, result.getcode(), response_data
-                )
-            )
-            return response_data
-        except urllib_HTTPError as e:
-            # python3 returns bytes not str
-            response_data = e.read().decode("utf-8")
-            self._logger.debug(result_msg.format(
-                url=url,
-                code=e.code,
-                response=response_data
+            self._reporter.process(reports.node_communication_finished(
+                url, response_code, response_data
             ))
-            self._reporter.process(
-                reports.node_communication_finished(url, e.code, response_data)
-            )
-            if e.code == 400:
+            if response_code == 400:
                 # old pcsd protocol: error messages are commonly passed in plain
                 # text in response body with HTTP code 400
                 # we need to be backward compatible with that
                 raise NodeCommandUnsuccessfulException(
                     host, request, response_data.rstrip()
                 )
-            elif e.code == 401:
+            elif response_code == 401:
                 raise NodeAuthenticationException(
-                    host, request, "HTTP error: {0}".format(e.code)
+                    host, request, "HTTP error: {0}".format(response_code)
                 )
-            elif e.code == 403:
+            elif response_code == 403:
                 raise NodePermissionDeniedException(
-                    host, request, "HTTP error: {0}".format(e.code)
+                    host, request, "HTTP error: {0}".format(response_code)
                 )
-            elif e.code == 404:
+            elif response_code == 404:
                 raise NodeUnsupportedCommandException(
-                    host, request, "HTTP error: {0}".format(e.code)
+                    host, request, "HTTP error: {0}".format(response_code)
                 )
-            else:
+            elif response_code >= 400:
                 raise NodeCommunicationException(
-                    host, request, "HTTP error: {0}".format(e.code)
+                    host, request, "HTTP error: {0}".format(response_code)
                 )
-        except urllib_URLError as e:
-            self.__handle_connection_error(host, request, e.reason)
-        except HTTPException:
-            self.__handle_connection_error(host, request, "Connection error")
-
-    def __handle_connection_error(self, host, request, reason):
-        msg = "Unable to connect to {node} ({reason})"
-        self._logger.debug(msg.format(node=host, reason=reason))
-        self._reporter.process(
-            reports.node_communication_not_connected(host, reason)
-        )
-        raise NodeConnectionException(host, request, reason)
-
-    def __get_opener(self):
-        # enable self-signed certificates
-        # https://www.python.org/dev/peps/pep-0476/
-        # http://bugs.python.org/issue21308
-        if (
-            hasattr(ssl, "_create_unverified_context")
-            and
-            "context" in inspect.getargspec(urllib_HTTPSHandler.__init__).args
-        ):
-            opener = urllib_build_opener(
-                urllib_HTTPSHandler(context=ssl._create_unverified_context()),
-                urllib_HTTPCookieProcessor()
+            return response_data
+        except pycurl.error as e:
+            dummy_errno, reason = e.args
+            msg = "Unable to connect to {node} ({reason})"
+            self._logger.debug(msg.format(node=host, reason=reason))
+            self._reporter.process(
+                reports.node_communication_not_connected(host, reason)
             )
-        else:
-            opener = urllib_build_opener(urllib_HTTPCookieProcessor())
-        return opener
+            raise NodeConnectionException(host, request, reason)
+        finally:
+            debug_data = debug_output.getvalue().decode("utf-8")
+            self._logger.debug(
+                (
+                    "Communication debug info for calling: {url}\n"
+                    "--Debug Communication Info Start--\n"
+                    "{data}\n"
+                    "--Debug Communication Info End--"
+                ).format(url=url, data=debug_data)
+            )
+            self._reporter.process(
+                reports.node_communication_debug_info(url, debug_data)
+            )
 
     def __prepare_cookies(self, host):
         # Let's be safe about characters in variables (they can come from env)

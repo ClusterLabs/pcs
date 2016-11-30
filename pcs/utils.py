@@ -8,8 +8,6 @@ from __future__ import (
 import os
 import sys
 import subprocess
-import ssl
-import inspect
 import xml.dom.minidom
 from xml.dom.minidom import parseString, parse
 import xml.etree.ElementTree as ET
@@ -25,12 +23,12 @@ import base64
 import threading
 import logging
 
-
 from pcs import settings, usage
 from pcs.cli.common.reports import (
     process_library_reports,
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
+from pcs.common import pcs_pycurl as pycurl
 from pcs.common.tools import (
     join_multilines,
     simple_cache,
@@ -70,40 +68,10 @@ import pcs.cli.booth.env
 
 try:
     # python2
-    from httplib import HTTPException
-except ImportError:
-    # python3
-    from http.client import HTTPException
-try:
-    # python2
     from urllib import urlencode as urllib_urlencode
 except ImportError:
     # python3
     from urllib.parse import urlencode as urllib_urlencode
-try:
-    # python2
-    from urllib2 import (
-        build_opener as urllib_build_opener,
-        install_opener as urllib_install_opener,
-        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
-        HTTPSHandler as urllib_HTTPSHandler,
-        HTTPError as urllib_HTTPError,
-        URLError as urllib_URLError
-    )
-except ImportError:
-    # python3
-    from urllib.request import (
-        build_opener as urllib_build_opener,
-        install_opener as urllib_install_opener,
-        HTTPCookieProcessor as urllib_HTTPCookieProcessor,
-        HTTPSHandler as urllib_HTTPSHandler
-    )
-    from urllib.error import (
-        HTTPError as urllib_HTTPError,
-        URLError as urllib_URLError
-    )
-
-
 
 
 PYTHON2 = sys.version[0] == "2"
@@ -357,6 +325,7 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
     else:
         return 1, output
 
+
 # Send an HTTP request to a node return a tuple with status, data
 # If status is 0 then data contains server response
 # Otherwise if non-zero then data contains error message
@@ -366,32 +335,104 @@ def removeLocalNode(node, node_to_remove, pacemaker_remove=False):
 # 2 = No response,
 # 3 = Auth Error
 # 4 = Permission denied
-def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess = True):
-    url = 'https://' + host + ':2224/' + request
-    # enable self-signed certificates
-    # https://www.python.org/dev/peps/pep-0476/
-    # http://bugs.python.org/issue21308
-    if (
-        hasattr(ssl, "_create_unverified_context")
-        and
-        "context" in inspect.getargspec(urllib_HTTPSHandler.__init__).args
-    ):
-        opener = urllib_build_opener(
-            urllib_HTTPSHandler(context=ssl._create_unverified_context()),
-            urllib_HTTPCookieProcessor()
-        )
-    else:
-        opener = urllib_build_opener(urllib_HTTPCookieProcessor())
-
-    tokens = readTokens()
+def sendHTTPRequest(
+    host, request, data=None, printResult=True, printSuccess=True
+):
+    url = "https://{host}:2224/{request}".format(host=host, request=request)
     if "--debug" in pcs_options:
         print("Sending HTTP Request to: " + url)
         print("Data: {0}".format(data))
-    # python3 requires data to by bytes not str
-    if data:
-        data = data.encode("utf-8")
 
-    # cookies
+    def __debug_callback(data_type, debug_data):
+        prefixes = {
+            pycurl.DEBUG_TEXT: "* ",
+            pycurl.DEBUG_HEADER_IN: "< ",
+            pycurl.DEBUG_HEADER_OUT: "> ",
+            pycurl.DEBUG_DATA_IN: "<< ",
+            pycurl.DEBUG_DATA_OUT: ">> ",
+        }
+        if data_type in prefixes:
+            debug_output.write("{prefix}{data}{suffix}".format(
+                prefix=prefixes[data_type],
+                data=debug_data,
+                suffix="" if debug_data.endswith("\n") else "\n"
+            ).encode("utf-8"))
+
+    output = BytesIO()
+    debug_output = BytesIO()
+    cookies = __get_cookie_list(host, readTokens())
+
+    handler = pycurl.Curl()
+    handler.setopt(pycurl.PROTOCOLS, pycurl.PROTO_HTTPS)
+    handler.setopt(pycurl.URL, url.encode("utf-8"))
+    handler.setopt(pycurl.WRITEFUNCTION, output.write)
+    handler.setopt(pycurl.VERBOSE, 1)
+    handler.setopt(pycurl.NOSIGNAL, 1) # required for multi-threading
+    handler.setopt(pycurl.DEBUGFUNCTION, __debug_callback)
+    handler.setopt(pycurl.SSL_VERIFYHOST, 0)
+    handler.setopt(pycurl.SSL_VERIFYPEER, 0)
+    if cookies:
+        handler.setopt(pycurl.COOKIE, ";".join(cookies).encode("utf-8"))
+    if data:
+        handler.setopt(pycurl.COPYPOSTFIELDS, data.encode("utf-8"))
+    try:
+        handler.perform()
+        response_data = output.getvalue().decode("utf-8")
+        response_code = handler.getinfo(pycurl.RESPONSE_CODE)
+        if printResult or printSuccess:
+            print(host + ": " + response_data.strip())
+        if "--debug" in pcs_options:
+            print("Response Code: {0}".format(response_code))
+            print("--Debug Response Start--\n{0}".format(response_data))
+            print("--Debug Response End--")
+            print("Communication debug info for calling: {0}".format(url))
+            print("--Debug Communication Output Start--")
+            print(debug_output.getvalue().decode("utf-8", "ignore"))
+            print("--Debug Communication Output End--")
+            print()
+
+        if response_code == 401:
+            output = (
+                3,
+                (
+                    "Unable to authenticate to {node} - (HTTP error: {code}), "
+                    "try running 'pcs cluster auth'"
+                ).format(node=host, code=response_code)
+            )
+        elif response_code == 403:
+            output = (
+                4,
+                "{node}: Permission denied - (HTTP error: {code})".format(
+                    node=host, code=response_code
+                )
+            )
+        elif response_code >= 400:
+            output = (
+                1,
+                "Error connecting to {node} - (HTTP error: {code})".format(
+                    node=host, code=response_code
+                )
+            )
+        else:
+            output = (0, response_data)
+
+        if printResult and output[0] != 0:
+            print(output[1])
+
+        return output
+    except pycurl.error as e:
+        dummy_errno, reason = e.args
+        if "--debug" in pcs_options:
+            print("Response Reason: {0}".format(reason))
+        msg = "Unable to connect to {host} ({reason})".format(
+            host=host, reason=reason
+        )
+        if printResult:
+            print(msg)
+        return (2, msg)
+
+
+def __get_cookie_list(host, tokens):
     cookies = []
     if host in tokens:
         cookies.append("token=" + tokens[host])
@@ -408,70 +449,8 @@ def sendHTTPRequest(host, request, data = None, printResult = True, printSuccess
                     # python3 requires the value to be bytes not str
                     value = base64.b64encode(value.encode("utf8"))
                 cookies.append("{0}={1}".format(name, value))
-    if cookies:
-        opener.addheaders.append(('Cookie', ";".join(cookies)))
+    return cookies
 
-    # send the request
-    urllib_install_opener(opener)
-    try:
-        result = opener.open(url,data)
-        # python3 returns bytes not str
-        html = result.read().decode("utf-8")
-        if printResult or printSuccess:
-            print(host + ": " + html.strip())
-        if "--debug" in pcs_options:
-            print("Response Code: 0")
-
-            print("--Debug Response Start--\n{0}".format(html), end="")
-            print("--Debug Response End--")
-            print()
-        return (0,html)
-    except urllib_HTTPError as e:
-        if "--debug" in pcs_options:
-            print("Response Code: " + str(e.code))
-            html = e.read().decode("utf-8")
-            print("--Debug Response Start--\n{0}".format(html), end="")
-            print("--Debug Response End--")
-        if e.code == 401:
-            output = (
-                3,
-                "Unable to authenticate to {node} - (HTTP error: {code}), try running 'pcs cluster auth'".format(
-                    node=host, code=e.code
-                )
-            )
-        elif e.code == 403:
-            output = (
-                4,
-                "{node}: Permission denied - (HTTP error: {code})".format(
-                    node=host, code=e.code
-                )
-            )
-        else:
-            output = (
-                1,
-                "Error connecting to {node} - (HTTP error: {code})".format(
-                    node=host, code=e.code
-                )
-            )
-        if printResult:
-            print(output[1])
-        return output
-    except urllib_URLError as e:
-        return __handle_HTTP_connection_error(host, str(e.reason), printResult)
-    except HTTPException:
-        return __handle_HTTP_connection_error(
-            host, "Connection error", printResult
-        )
-
-def __handle_HTTP_connection_error(host, reason,  print_result):
-    if "--debug" in pcs_options:
-        print("Response Reason: {0}".format(reason))
-    msg = "Unable to connect to {host} ({reason})".format(
-        host=host, reason=reason
-    )
-    if print_result:
-        print(msg)
-    return (2, msg)
 
 def getNodesFromCorosyncConf(conf_text=None):
     if is_rhel6():

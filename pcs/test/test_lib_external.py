@@ -8,30 +8,24 @@ from __future__ import (
 from pcs.test.tools.pcs_unittest import TestCase
 import os.path
 import logging
-try:
-    # python2
-    from urllib2 import (
-        HTTPError as urllib_HTTPError,
-        URLError as urllib_URLError
-    )
-except ImportError:
-    # python3
-    from urllib.error import (
-        HTTPError as urllib_HTTPError,
-        URLError as urllib_URLError
-    )
 
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_equal,
     assert_report_item_list_equal,
 )
-from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.custom_mock import (
+    MockCurl,
+    MockLibraryReportProcessor,
+)
 from pcs.test.tools.pcs_unittest import mock
 from pcs.test.tools.misc import outdent
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import (
+    pcs_pycurl as pycurl,
+    report_codes,
+)
 from pcs.lib import reports
 from pcs.lib.errors import (
     LibraryError,
@@ -411,7 +405,7 @@ class CommandRunnerTest(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.external.NodeCommunicator._NodeCommunicator__get_opener",
+    "pcs.lib.external.pycurl.Curl",
     autospec=True
 )
 class NodeCommunicatorTest(TestCase):
@@ -419,26 +413,24 @@ class NodeCommunicatorTest(TestCase):
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
 
-    def fixture_response(self, response_code, response_data):
-        response = mock.MagicMock(["getcode", "read"])
-        response.getcode.return_value = response_code
-        response.read.return_value = response_data.encode("utf-8")
-        return response
-
-    def fixture_http_exception(self, response_code, response_data):
-        response = urllib_HTTPError("url", response_code, "msg", [], None)
-        response.read = mock.MagicMock(
-            return_value=response_data.encode("utf-8")
-        )
-        return response
-
     def fixture_logger_call_send(self, url, data):
         send_msg = "Sending HTTP Request to: {url}"
         if data:
             send_msg += "\n--Debug Input Start--\n{data}\n--Debug Input End--"
         return mock.call(send_msg.format(url=url, data=data))
 
-    def fixture_logger_calls(self, url, data, response_code, response_data):
+    def fixture_logger_call_debug_data(self, url, data):
+        send_msg = outdent("""\
+            Communication debug info for calling: {url}
+            --Debug Communication Info Start--
+            {data}
+            --Debug Communication Info End--"""
+        )
+        return mock.call(send_msg.format(url=url, data=data))
+
+    def fixture_logger_calls(
+        self, url, data, response_code, response_data, debug_data
+    ):
         result_msg = (
             "Finished calling: {url}\nResponse Code: {code}"
             + "\n--Debug Response Start--\n{response}\n--Debug Response End--"
@@ -447,7 +439,8 @@ class NodeCommunicatorTest(TestCase):
             self.fixture_logger_call_send(url, data),
             mock.call(result_msg.format(
                 url=url, code=response_code, response=response_data
-            ))
+            )),
+            self.fixture_logger_call_debug_data(url, debug_data)
         ]
 
     def fixture_report_item_list_send(self, url, data):
@@ -462,7 +455,21 @@ class NodeCommunicatorTest(TestCase):
             )
         ]
 
-    def fixture_report_item_list(self, url, data, response_code, response_data):
+    def fixture_report_item_list_debug(self, url, data):
+        return [
+            (
+                severity.DEBUG,
+                report_codes.NODE_COMMUNICATION_DEBUG_INFO,
+                {
+                    "target": url,
+                    "data": data,
+                }
+            )
+        ]
+
+    def fixture_report_item_list(
+        self, url, data, response_code, response_data, debug_data
+    ):
         return (
             self.fixture_report_item_list_send(url, data)
             +
@@ -477,6 +484,8 @@ class NodeCommunicatorTest(TestCase):
                     }
                 )
             ]
+            +
+            self.fixture_report_item_list_debug(url, debug_data)
         )
 
     def fixture_url(self, host, request):
@@ -484,32 +493,46 @@ class NodeCommunicatorTest(TestCase):
             host=host, request=request
         )
 
-    def test_success(self, mock_get_opener):
+    def test_success(self, mock_pycurl_init):
         host = "test_host"
         request = "test_request"
         data = '{"key1": "value1", "key2": ["value2a", "value2b"]}'
-        expected_response_code = 200
         expected_response_data = "expected response data"
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
-        mock_opener.open.return_value = self.fixture_response(
-            expected_response_code, expected_response_data
+        expected_response_code = 200
+        expected_debug_data = "* text\n>> data out\n"
+        mock_pycurl_obj = MockCurl(
+            {
+                pycurl.RESPONSE_CODE: expected_response_code,
+            },
+            expected_response_data.encode("utf-8"),
+            [
+                (pycurl.DEBUG_TEXT, "text"),
+                (pycurl.DEBUG_DATA_OUT, "data out")
+            ]
         )
+        mock_pycurl_init.return_value = mock_pycurl_obj
 
         comm = lib.NodeCommunicator(self.mock_logger, self.mock_reporter, {})
         real_response = comm.call_host(host, request, data)
         self.assertEqual(expected_response_data, real_response)
 
-        mock_opener.addheaders.append.assert_not_called()
-        mock_opener.open.assert_called_once_with(
-            self.fixture_url(host, request),
-            data.encode("utf-8")
+        expected_opts = {
+            pycurl.URL: self.fixture_url(host, request).encode("utf-8"),
+            pycurl.SSL_VERIFYHOST: 0,
+            pycurl.SSL_VERIFYPEER: 0,
+            pycurl.COPYPOSTFIELDS: data.encode("utf-8"),
+        }
+
+        self.assertLessEqual(
+            set(expected_opts.items()), set(mock_pycurl_obj.opts.items())
         )
+
         logger_calls = self.fixture_logger_calls(
             self.fixture_url(host, request),
             data,
             expected_response_code,
-            expected_response_data
+            expected_response_data,
+            expected_debug_data
         )
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -519,22 +542,27 @@ class NodeCommunicatorTest(TestCase):
                 self.fixture_url(host, request),
                 data,
                 expected_response_code,
-                expected_response_data
+                expected_response_data,
+                expected_debug_data
             )
         )
 
-    def test_ipv6(self, mock_get_opener):
+    def test_ipv6(self, mock_pycurl_init):
         host = "cafe::1"
         request = "test_request"
         data = None
         token = "test_token"
         expected_response_code = 200
         expected_response_data = "expected response data"
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
-        mock_opener.open.return_value = self.fixture_response(
-            expected_response_code, expected_response_data
+        expected_debug_data = ""
+        mock_pycurl_obj = MockCurl(
+            {
+                pycurl.RESPONSE_CODE: expected_response_code,
+            },
+            expected_response_data.encode("utf-8"),
+            []
         )
+        mock_pycurl_init.return_value = mock_pycurl_obj
 
         comm = lib.NodeCommunicator(
             self.mock_logger,
@@ -543,19 +571,26 @@ class NodeCommunicatorTest(TestCase):
         )
         real_response = comm.call_host(host, request, data)
         self.assertEqual(expected_response_data, real_response)
+        expected_opts = {
+            pycurl.URL: self.fixture_url(
+                "[{0}]".format(host), request
+            ).encode("utf-8"),
+            pycurl.COOKIE: "token={0}".format(token).encode("utf-8"),
+            pycurl.SSL_VERIFYHOST: 0,
+            pycurl.SSL_VERIFYPEER: 0,
+        }
+        self.assertLessEqual(
+            set(expected_opts.items()), set(mock_pycurl_obj.opts.items())
+        )
 
-        mock_opener.addheaders.append.assert_called_once_with(
-            ("Cookie", "token={0}".format(token))
-        )
-        mock_opener.open.assert_called_once_with(
-            self.fixture_url("[{0}]".format(host), request),
-            data
-        )
+        self.assertTrue(pycurl.COPYPOSTFIELDS not in mock_pycurl_obj.opts)
+
         logger_calls = self.fixture_logger_calls(
             self.fixture_url("[{0}]".format(host), request),
             data,
             expected_response_code,
-            expected_response_data
+            expected_response_data,
+            expected_debug_data
         )
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -565,15 +600,16 @@ class NodeCommunicatorTest(TestCase):
                 self.fixture_url("[{0}]".format(host), request),
                 data,
                 expected_response_code,
-                expected_response_data
+                expected_response_data,
+                expected_debug_data
             )
         )
 
-    def test_auth_token(self, mock_get_opener):
+    def test_auth_token(self, mock_pycurl_init):
         host = "test_host"
         token = "test_token"
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
+        mock_pycurl_obj = MockCurl({pycurl.RESPONSE_CODE: 200}, b"", [])
+        mock_pycurl_init.return_value = mock_pycurl_obj
 
         comm = lib.NodeCommunicator(
             self.mock_logger,
@@ -586,15 +622,16 @@ class NodeCommunicatorTest(TestCase):
         )
         dummy_response = comm.call_host(host, "test_request", None)
 
-        mock_opener.addheaders.append.assert_called_once_with(
-            ("Cookie", "token={0}".format(token))
+        self.assertLessEqual(
+            set([(pycurl.COOKIE, "token={0}".format(token).encode("utf-8"))]),
+            set(mock_pycurl_obj.opts.items())
         )
 
-    def test_user(self, mock_get_opener):
+    def test_user(self, mock_pycurl_init):
         host = "test_host"
         user = "test_user"
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
+        mock_pycurl_obj = MockCurl({pycurl.RESPONSE_CODE: 200}, b"", [])
+        mock_pycurl_init.return_value = mock_pycurl_obj
 
         comm = lib.NodeCommunicator(
             self.mock_logger,
@@ -604,15 +641,16 @@ class NodeCommunicatorTest(TestCase):
         )
         dummy_response = comm.call_host(host, "test_request", None)
 
-        mock_opener.addheaders.append.assert_called_once_with(
-            ("Cookie", "CIB_user={0}".format(user))
+        self.assertLessEqual(
+            set([(pycurl.COOKIE, "CIB_user={0}".format(user).encode("utf-8"))]),
+            set(mock_pycurl_obj.opts.items())
         )
 
-    def test_one_group(self, mock_get_opener):
+    def test_one_group(self, mock_pycurl_init):
         host = "test_host"
         groups = ["group1"]
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
+        mock_pycurl_obj = MockCurl({pycurl.RESPONSE_CODE: 200}, b"", [])
+        mock_pycurl_init.return_value = mock_pycurl_obj
 
         comm = lib.NodeCommunicator(
             self.mock_logger,
@@ -622,53 +660,59 @@ class NodeCommunicatorTest(TestCase):
         )
         dummy_response = comm.call_host(host, "test_request", None)
 
-        mock_opener.addheaders.append.assert_called_once_with(
-            (
-                "Cookie",
-                "CIB_user_groups={0}".format("Z3JvdXAx".encode("utf8"))
-            )
+        self.assertLessEqual(
+            set([(
+                pycurl.COOKIE,
+                "CIB_user_groups={0}".format(
+                    "Z3JvdXAx".encode("utf-8")
+                ).encode("utf-8")
+            )]),
+            set(mock_pycurl_obj.opts.items())
         )
 
-    def test_all_options(self, mock_get_opener):
+    def test_all_options(self, mock_pycurl_init):
         host = "test_host"
         token = "test_token"
         user = "test_user"
         groups = ["group1", "group2"]
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
+        mock_pycurl_obj = MockCurl({pycurl.RESPONSE_CODE: 200}, b"", [])
+        mock_pycurl_init.return_value = mock_pycurl_obj
 
         comm = lib.NodeCommunicator(
             self.mock_logger,
             self.mock_reporter,
             {host: token},
-            user, groups
+            user,
+            groups
         )
         dummy_response = comm.call_host(host, "test_request", None)
 
-        mock_opener.addheaders.append.assert_called_once_with(
-            (
-                "Cookie",
-                "token={token};CIB_user={user};CIB_user_groups={groups}".format(
-                    token=token,
-                    user=user,
-                    groups="Z3JvdXAxIGdyb3VwMg==".encode("utf-8")
-                )
-            )
+        cookie_str = (
+            "token={token};CIB_user={user};CIB_user_groups={groups}".format(
+                token=token,
+                user=user,
+                groups="Z3JvdXAxIGdyb3VwMg==".encode("utf-8")
+            ).encode("utf-8")
         )
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
+        self.assertLessEqual(
+            set([(pycurl.COOKIE, cookie_str)]),
+            set(mock_pycurl_obj.opts.items())
+        )
 
-    def base_test_http_error(self, mock_get_opener, code, exception):
+    def base_test_http_error(self, mock_pycurl_init, code, exception):
         host = "test_host"
         request = "test_request"
         data = None
         expected_response_code = code
         expected_response_data = "expected response data"
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
-        mock_opener.open.side_effect = self.fixture_http_exception(
-            expected_response_code, expected_response_data
+        mock_pycurl_obj = MockCurl(
+            {
+                pycurl.RESPONSE_CODE: expected_response_code,
+            },
+            expected_response_data.encode("utf-8"),
+            []
         )
+        mock_pycurl_init.return_value = mock_pycurl_obj
 
         comm = lib.NodeCommunicator(self.mock_logger, self.mock_reporter, {})
         self.assertRaises(
@@ -676,16 +720,22 @@ class NodeCommunicatorTest(TestCase):
             lambda: comm.call_host(host, request, data)
         )
 
-        mock_opener.addheaders.append.assert_not_called()
-        mock_opener.open.assert_called_once_with(
-            self.fixture_url(host, request),
-            data
+        self.assertTrue(pycurl.COOKIE not in mock_pycurl_obj.opts)
+        self.assertTrue(pycurl.COPYPOSTFIELDS not in mock_pycurl_obj.opts)
+        expected_opts = {
+            pycurl.URL: self.fixture_url(host, request).encode("utf-8"),
+            pycurl.SSL_VERIFYHOST: 0,
+            pycurl.SSL_VERIFYPEER: 0,
+        }
+        self.assertLessEqual(
+            set(expected_opts.items()), set(mock_pycurl_obj.opts.items())
         )
         logger_calls = self.fixture_logger_calls(
             self.fixture_url(host, request),
             data,
             expected_response_code,
-            expected_response_data
+            expected_response_data,
+            ""
         )
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -695,8 +745,9 @@ class NodeCommunicatorTest(TestCase):
                 self.fixture_url(host, request),
                 data,
                 expected_response_code,
-                expected_response_data
-            )
+                expected_response_data,
+                ""
+            ),
         )
 
     def test_no_authenticated(self, mock_get_opener):
@@ -734,14 +785,16 @@ class NodeCommunicatorTest(TestCase):
             lib.NodeCommunicationException
         )
 
-    def test_connection_error(self, mock_get_opener):
+    def test_connection_error(self, mock_pycurl_init):
         host = "test_host"
         request = "test_request"
         data = None
         expected_reason = "expected reason"
-        mock_opener = mock.MagicMock()
-        mock_get_opener.return_value = mock_opener
-        mock_opener.open.side_effect = urllib_URLError(expected_reason)
+        expected_url = self.fixture_url(host, request)
+        mock_pycurl_obj = MockCurl(
+            {}, b"", [], pycurl.error(pycurl.E_SEND_ERROR, expected_reason)
+        )
+        mock_pycurl_init.return_value = mock_pycurl_obj
 
         comm = lib.NodeCommunicator(self.mock_logger, self.mock_reporter, {})
         self.assertRaises(
@@ -749,19 +802,22 @@ class NodeCommunicatorTest(TestCase):
             lambda: comm.call_host(host, request, data)
         )
 
-        mock_opener.addheaders.append.assert_not_called()
-        mock_opener.open.assert_called_once_with(
-            self.fixture_url(host, request),
-            data
+        self.assertTrue(pycurl.COOKIE not in mock_pycurl_obj.opts)
+        self.assertTrue(pycurl.COPYPOSTFIELDS not in mock_pycurl_obj.opts)
+        expected_opts = {
+            pycurl.URL: expected_url.encode("utf-8"),
+            pycurl.SSL_VERIFYHOST: 0,
+            pycurl.SSL_VERIFYPEER: 0,
+        }
+        self.assertLessEqual(
+            set(expected_opts.items()), set(mock_pycurl_obj.opts.items())
         )
         logger_calls = [
-            self.fixture_logger_call_send(
-                self.fixture_url(host, request),
-                data
-            ),
+            self.fixture_logger_call_send(expected_url, data),
             mock.call(
                 "Unable to connect to {0} ({1})".format(host, expected_reason)
-            )
+            ),
+            self.fixture_logger_call_debug_data(expected_url, "")
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -780,6 +836,8 @@ class NodeCommunicatorTest(TestCase):
                     "reason": expected_reason,
                 }
             )]
+            +
+            self.fixture_report_item_list_debug(expected_url, "")
         )
 
 

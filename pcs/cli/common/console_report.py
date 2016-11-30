@@ -290,6 +290,15 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.NODE_COMMUNICATION_DEBUG_INFO: lambda info:
+        (
+            "Communication debug info for calling: {target}\n"
+            "--Debug Communication Info Start--\n"
+            "{data}\n"
+            "--Debug Communication Info End--\n"
+        ).format(**info)
+    ,
+
     codes.NODE_COMMUNICATION_STARTED: lambda info:
         "Sending HTTP Request to: {target}\n{data_part}".format(
             data_part=format_optional(

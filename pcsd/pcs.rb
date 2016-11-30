@@ -5,10 +5,12 @@ require 'shellwords'
 require 'cgi'
 require 'net/http'
 require 'net/https'
+require 'uri'
 require 'json'
 require 'fileutils'
 require 'backports'
 require 'base64'
+require 'ethon'
 
 require 'config.rb'
 require 'cfgsync.rb'
@@ -406,31 +408,8 @@ def send_request_with_token(auth_user, node, request, post=false, data={}, remot
   )
 end
 
-def send_request(auth_user, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, cookies_data=nil)
-  cookies_data = {} if not cookies_data
-  request = "/#{request}" if not request.start_with?("/")
-
-  # fix ipv6 address for URI.parse
-  node6 = node
-  if (node.include?(":") and ! node.start_with?("["))
-    node6 = "[#{node}]"
-  end
-
-  if remote
-    uri = URI.parse("https://#{node6}:2224/remote" + request)
-  else
-    uri = URI.parse("https://#{node6}:2224" + request)
-  end
-
-  if post
-    req = Net::HTTP::Post.new(uri.path)
-    raw_data ? req.body = raw_data : req.set_form_data(data)
-  else
-    req = Net::HTTP::Get.new(uri.path)
-    req.set_form_data(data)
-  end
-
-  cookies_to_send = []
+def _get_cookie_list(auth_user, cookies_data)
+  cookie_list = []
   cookies_data_default = {}
   # Let's be safe about characters in cookie variables and do base64.
   # We cannot do it for CIB_user however to be backward compatible
@@ -444,26 +423,57 @@ def send_request(auth_user, node, request, post=false, data={}, remote=true, raw
 
   cookies_data_default.update(cookies_data)
   cookies_data_default.each { |name, value|
-    cookies_to_send << CGI::Cookie.new('name' => name, 'value' => value).to_s
+    cookie_list << CGI::Cookie.new('name' => name, 'value' => value).to_s
   }
-  req.add_field('Cookie', cookies_to_send.join(';'))
+  return cookie_list
+end
 
-  begin
-    # uri.host returns "[addr]" for ipv6 addresses, which is wrong
-    # uri.hostname returns "addr" for ipv6 addresses, which is correct, but it
-    #   is not available in older ruby versions
-    # There is a bug in Net::HTTP.new in some versions of ruby which prevents
-    # ipv6 addresses being used here at all.
-    myhttp = Net::HTTP.new(node, uri.port)
-    myhttp.use_ssl = true
-    myhttp.verify_mode = OpenSSL::SSL::VERIFY_NONE
-    res = myhttp.start do |http|
-      http.read_timeout = timeout
-      http.request(req)
-    end
-    return res.code.to_i, res.body
-  rescue Exception => e
-    $logger.info "No response from: #{node} request: #{request}, exception: #{e}"
+def send_request(
+  auth_user, node, request, post=false, data={}, remote=true, raw_data=nil,
+  timeout=30, cookies_data=nil
+)
+  cookies_data = {} if not cookies_data
+  if request.start_with?("/")
+    request.slice!(0)
+  end
+
+  node6 = node
+  if (node.include?(":") and ! node.start_with?("["))
+    node6 = "[#{node}]"
+  end
+
+  if remote
+    url = "https://#{node6}:2224/remote/#{request}"
+  else
+    url = "https://#{node6}:2224/#{request}"
+  end
+
+  if post
+    encoded_data = (raw_data) ? raw_data : URI.encode_www_form(data)
+  else
+    url_data = (raw_data) ? raw_data : URI.encode_www_form(data)
+    prefix = request.include?('?') ? '&' : '?'
+    url += "#{prefix}#{url_data}"
+  end
+
+  req = Ethon::Easy.new()
+  req.set_attributes({
+    :url => url,
+    :timeout_ms => (timeout * 1000).to_i,
+    :cookie => _get_cookie_list(auth_user, cookies_data).join(';'),
+    :ssl_verifyhost => 0,
+    :ssl_verifypeer => 0,
+    :postfields => (encoded_data) ? encoded_data : nil,
+    :httpget => (post ? 0 : 1),
+    :nosignal => 1, # required for multi-threading
+  })
+  return_code = req.perform
+  if return_code == :ok
+    return req.response_code, req.response_body
+  else
+    $logger.info(
+      "No response from: #{node} request: #{request}, error: #{return_code}"
+    )
     return 400,'{"noresponse":true}'
   end
 end

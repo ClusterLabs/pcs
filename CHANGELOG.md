@@ -19,6 +19,7 @@
 - Stopped bundling fonts used in pcsd GUI ([ghissue#125])
 - In `pcs resource create` flags `--master` and `--clone` changed to keywords
   `master` and `clone`
+- libcurl is now used for node to node communication
 
 ### Fixed
 - When upgrading CIB to the latest schema version, check for minimal common
@@ -56,6 +57,11 @@
   ([rhbz#1390071])
 - Fixed silent omission of duplicate options ([rhbz#1390066])
 - Added more validation for resource agent names ([rhbz#1387670])
+- Fixed network communication issues in pcsd when a node was specified by an
+  IPv6 address
+
+### Removed
+- Ruby 1.8 and 1.9 is no longer supported due to bad libcurl support
 
 [ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
 [ghissue#125]: https://github.com/ClusterLabs/pcs/issues/125
