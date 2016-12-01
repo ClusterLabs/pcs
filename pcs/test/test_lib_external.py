@@ -521,6 +521,7 @@ class NodeCommunicatorTest(TestCase):
             pycurl.SSL_VERIFYHOST: 0,
             pycurl.SSL_VERIFYPEER: 0,
             pycurl.COPYPOSTFIELDS: data.encode("utf-8"),
+            pycurl.TIMEOUT_MS: settings.default_request_timeout * 1000,
         }
 
         self.assertLessEqual(
@@ -603,6 +604,38 @@ class NodeCommunicatorTest(TestCase):
                 expected_response_data,
                 expected_debug_data
             )
+        )
+
+    def test_communicator_timeout(self, mock_pycurl_init):
+        host = "test_host"
+        timeout = 10
+        mock_pycurl_obj = MockCurl({pycurl.RESPONSE_CODE: 200}, b"", [])
+        mock_pycurl_init.return_value = mock_pycurl_obj
+
+        comm = lib.NodeCommunicator(
+            self.mock_logger, self.mock_reporter, {}, request_timeout=timeout
+        )
+        dummy_response = comm.call_host(host, "test_request", None)
+
+        self.assertLessEqual(
+            set([(pycurl.TIMEOUT_MS, timeout * 1000)]),
+            set(mock_pycurl_obj.opts.items())
+        )
+
+    def test_call_host_timeout(self, mock_pycurl_init):
+        host = "test_host"
+        timeout = 10
+        mock_pycurl_obj = MockCurl({pycurl.RESPONSE_CODE: 200}, b"", [])
+        mock_pycurl_init.return_value = mock_pycurl_obj
+
+        comm = lib.NodeCommunicator(
+            self.mock_logger, self.mock_reporter, {}, request_timeout=15
+        )
+        dummy_response = comm.call_host(host, "test_request", None, timeout)
+
+        self.assertLessEqual(
+            set([(pycurl.TIMEOUT_MS, timeout * 1000)]),
+            set(mock_pycurl_obj.opts.items())
         )
 
     def test_auth_token(self, mock_pycurl_init):

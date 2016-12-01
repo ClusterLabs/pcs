@@ -111,6 +111,22 @@ def main(argv=None):
             sys.exit()
         elif o == "--wait":
             utils.pcs_options[o] = waitsecs
+        elif o == "--request-timeout":
+            request_timeout_valid = False
+            try:
+                timeout = int(a)
+                if timeout > 0:
+                    utils.pcs_options[o] = timeout
+                    request_timeout_valid = True
+            except ValueError:
+                pass
+            if not request_timeout_valid:
+                utils.err(
+                    (
+                        "'{0}' is not a valid --request-timeout value, use "
+                        "a positive integer"
+                    ).format(a)
+                )
 
     if len(argv) == 0:
         usage.main()

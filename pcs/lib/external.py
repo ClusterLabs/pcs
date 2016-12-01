@@ -454,6 +454,10 @@ class NodeUnsupportedCommandException(NodeCommunicationException):
     pass
 
 
+class NodeConnectionTimedOutException(NodeCommunicationException):
+    pass
+
+
 def node_communicator_exception_to_report_item(
     e, severity=ReportItemSeverity.ERROR, forceable=None
 ):
@@ -477,6 +481,8 @@ def node_communicator_exception_to_report_item(
             reports.node_communication_error_other_error,
         NodeConnectionException:
             reports.node_communication_error_unable_to_connect,
+        NodeConnectionTimedOutException:
+            reports.node_communication_error_timed_out,
     }
     if e.__class__ in exception_to_report:
         return exception_to_report[e.__class__](
@@ -507,33 +513,48 @@ class NodeCommunicator(object):
         """
         return json.dumps(data)
 
-    def __init__(self, logger, reporter, auth_tokens, user=None, groups=None):
+    def __init__(
+        self, logger, reporter, auth_tokens, user=None, groups=None,
+        request_timeout=None
+    ):
         """
         auth_tokens authorization tokens for nodes: {node: token}
         user username
         groups groups the user is member of
+        request_timeout -- positive integer, time for one reqest in seconds
         """
         self._logger = logger
         self._reporter = reporter
         self._auth_tokens = auth_tokens
         self._user = user
         self._groups = groups
+        self._request_timeout = request_timeout
 
-    def call_node(self, node_addr, request, data):
+    @property
+    def request_timeout(self):
+        return (
+            settings.default_request_timeout
+                if self._request_timeout is None
+                else self._request_timeout
+        )
+
+    def call_node(self, node_addr, request, data, request_timeout=None):
         """
         Send a request to a node
         node_addr destination node, instance of NodeAddresses
         request command to be run on the node
         data command parameters, encoded by format_data_* method
         """
-        return self.call_host(node_addr.ring0, request, data)
+        return self.call_host(node_addr.ring0, request, data, request_timeout)
 
-    def call_host(self, host, request, data):
+    def call_host(self, host, request, data, request_timeout=None):
         """
         Send a request to a host
         host host address
         request command to be run on the host
         data command parameters, encoded by format_data_* method
+        request timeout float timeout for request, if not set object property
+            will be used
         """
         def __debug_callback(data_type, debug_data):
             prefixes = {
@@ -553,6 +574,11 @@ class NodeCommunicator(object):
         output = io.BytesIO()
         debug_output = io.BytesIO()
         cookies = self.__prepare_cookies(host)
+        timeout = (
+            request_timeout
+            if request_timeout is not None
+            else self.request_timeout
+        )
         url = "https://{host}:2224/{request}".format(
             host=("[{0}]".format(host) if ":" in host else host),
             request=request
@@ -560,6 +586,7 @@ class NodeCommunicator(object):
 
         handler = pycurl.Curl()
         handler.setopt(pycurl.PROTOCOLS, pycurl.PROTO_HTTPS)
+        handler.setopt(pycurl.TIMEOUT_MS, int(timeout * 1000))
         handler.setopt(pycurl.URL, url.encode("utf-8"))
         handler.setopt(pycurl.WRITEFUNCTION, output.write)
         handler.setopt(pycurl.VERBOSE, 1)
@@ -621,13 +648,16 @@ class NodeCommunicator(object):
                 )
             return response_data
         except pycurl.error as e:
-            dummy_errno, reason = e.args
+            errno, reason = e.args
             msg = "Unable to connect to {node} ({reason})"
             self._logger.debug(msg.format(node=host, reason=reason))
             self._reporter.process(
                 reports.node_communication_not_connected(host, reason)
             )
-            raise NodeConnectionException(host, request, reason)
+            if errno == pycurl.E_OPERATION_TIMEDOUT:
+                raise NodeConnectionTimedOutException(host, request, reason)
+            else:
+                raise NodeConnectionException(host, request, reason)
         finally:
             debug_data = debug_output.getvalue().decode("utf-8")
             self._logger.debug(

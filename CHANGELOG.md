@@ -10,6 +10,7 @@
 - Added flags `--wait`, `--disabled`, `--group`, `--after`, `--before` into
   the command `pcs stonith create`
 - Added commands `pcs stonith enable` and `pcs stonith disable`
+- Command line option --request-timeout ([rhbz#1292858])
 
 ### Changed
 - `pcs node [un]standby` and `pcs node [un]maintenance` is now atomic even if
@@ -69,6 +70,7 @@
 [ghpull#120]: https://github.com/ClusterLabs/pcs/pull/120
 [rhbz#1261116]: https://bugzilla.redhat.com/show_bug.cgi?id=1261116
 [rhbz#1284404]: https://bugzilla.redhat.com/show_bug.cgi?id=1284404
+[rhbz#1292858]: https://bugzilla.redhat.com/show_bug.cgi?id=1292858
 [rhbz#1315992]: https://bugzilla.redhat.com/show_bug.cgi?id=1315992
 [rhbz#1339355]: https://bugzilla.redhat.com/show_bug.cgi?id=1339355
 [rhbz#1347335]: https://bugzilla.redhat.com/show_bug.cgi?id=1347335

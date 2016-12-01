@@ -17,3 +17,4 @@ class Env(object):
         self.auth_tokens_getter = None
         self.debug = False
         self.cluster_conf_data = None
+        self.request_timeout = None

@@ -562,7 +562,8 @@ class LibraryEnvironmentTest(TestCase):
             self.mock_reporter,
             {},
             None,
-            []
+            [],
+            None
         )
 
     @patch_env("NodeCommunicator")
@@ -572,12 +573,14 @@ class LibraryEnvironmentTest(TestCase):
         user = "testuser"
         groups = ["some", "group"]
         tokens = {"node": "token"}
+        timeout = 10
         env = LibraryEnvironment(
             self.mock_logger,
             self.mock_reporter,
             user_login=user,
             user_groups=groups,
-            auth_tokens_getter=lambda:tokens
+            auth_tokens_getter=lambda:tokens,
+            request_timeout=timeout
         )
         comm = env.node_communicator()
         self.assertEqual(expected_comm, comm)
@@ -586,7 +589,8 @@ class LibraryEnvironmentTest(TestCase):
             self.mock_reporter,
             tokens,
             user,
-            groups
+            groups,
+            timeout
         )
 
     @patch_env("get_local_cluster_conf")

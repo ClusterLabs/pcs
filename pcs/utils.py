@@ -361,6 +361,9 @@ def sendHTTPRequest(
     output = BytesIO()
     debug_output = BytesIO()
     cookies = __get_cookie_list(host, readTokens())
+    timeout = settings.default_request_timeout
+    if "--request-timeout" in pcs_options:
+        timeout = pcs_options["--request-timeout"]
 
     handler = pycurl.Curl()
     handler.setopt(pycurl.PROTOCOLS, pycurl.PROTO_HTTPS)
@@ -369,6 +372,7 @@ def sendHTTPRequest(
     handler.setopt(pycurl.VERBOSE, 1)
     handler.setopt(pycurl.NOSIGNAL, 1) # required for multi-threading
     handler.setopt(pycurl.DEBUGFUNCTION, __debug_callback)
+    handler.setopt(pycurl.TIMEOUT_MS, int(timeout * 1000))
     handler.setopt(pycurl.SSL_VERIFYHOST, 0)
     handler.setopt(pycurl.SSL_VERIFYPEER, 0)
     if cookies:
@@ -947,6 +951,10 @@ def run_pcsdcli(command, data=None):
     env_var = dict()
     if "--debug" in pcs_options:
         env_var["PCSD_DEBUG"] = "true"
+    if "--request-timeout" in pcs_options:
+        env_var["PCSD_NETWORK_TIMEOUT"] = str(pcs_options["--request-timeout"])
+    else:
+        env_var["PCSD_NETWORK_TIMEOUT"] = str(settings.default_request_timeout)
     pcs_dir = os.path.realpath(os.path.dirname(sys.argv[0]))
     if pcs_dir == "/usr/sbin":
         pcsd_dir_path = settings.pcsd_exec_location
@@ -965,6 +973,12 @@ def run_pcsdcli(command, data=None):
         for key in ['status', 'text', 'data']:
             if key not in output_json:
                 output_json[key] = None
+
+        output = "".join(output_json['log'])
+        # check if some requests timed out, if so print message about it
+        if "error: operation_timedout" in output:
+            print("Error: Operation timed out")
+
     except ValueError:
         output_json = {
             'status': 'bad_json_output',
@@ -2680,6 +2694,7 @@ def get_lib_env():
         cib_data,
         corosync_conf_data,
         auth_tokens_getter=readTokens,
+        request_timeout=pcs_options.get("--request-timeout"),
     )
 
 def get_cli_env():
@@ -2699,6 +2714,7 @@ def get_cli_env():
     env.groups = groups
     env.auth_tokens_getter = readTokens
     env.debug = "--debug" in pcs_options
+    env.request_timeout = pcs_options.get("--request-timeout")
     return env
 
 def get_middleware_factory():

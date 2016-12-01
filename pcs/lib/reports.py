@@ -540,6 +540,25 @@ def node_communication_error_unable_to_connect(
     )
 
 
+def node_communication_error_timed_out(
+    node, command, reason,
+    severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    Communication with node timed out.
+    """
+    return ReportItem(
+        report_codes.NODE_COMMUNICATION_ERROR_TIMED_OUT,
+        severity,
+        info={
+            "node": node,
+            "command": command,
+            "reason": reason,
+        },
+        forceable=forceable
+    )
+
+
 def corosync_config_distribution_started():
     """
     corosync configuration is about to be sent to nodes

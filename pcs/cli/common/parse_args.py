@@ -18,7 +18,7 @@ PCS_LONG_OPTIONS = [
     "debug", "version", "help", "fullhelp",
     "force", "skip-offline", "autocorrect", "interactive", "autodelete",
     "all", "full", "groups", "local", "wait", "config",
-    "start", "enable", "disabled", "off",
+    "start", "enable", "disabled", "off", "request-timeout=",
     "pacemaker", "corosync",
     "no-default-ops", "defaults", "nodesc",
     "clone", "master", "name=", "group=", "node=",

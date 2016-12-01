@@ -53,6 +53,7 @@ def cli_env_to_lib_env(cli_env):
         booth=cli_env.booth,
         auth_tokens_getter=cli_env.auth_tokens_getter,
         cluster_conf_data=cli_env.cluster_conf_data,
+        request_timeout=cli_env.request_timeout,
     )
 
 def lib_env_to_cli_env(lib_env, cli_env):

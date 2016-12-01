@@ -393,7 +393,7 @@ def send_nodes_request_with_token(auth_user, nodes, request, post=false, data={}
   return code, out
 end
 
-def send_request_with_token(auth_user, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=30, additional_tokens={})
+def send_request_with_token(auth_user, node, request, post=false, data={}, remote=true, raw_data=nil, timeout=nil, additional_tokens={})
   token = additional_tokens[node] || get_node_token(node)
   $logger.info "SRWT Node: #{node} Request: #{request}"
   if not token
@@ -430,7 +430,7 @@ end
 
 def send_request(
   auth_user, node, request, post=false, data={}, remote=true, raw_data=nil,
-  timeout=30, cookies_data=nil
+  timeout=nil, cookies_data=nil
 )
   cookies_data = {} if not cookies_data
   if request.start_with?("/")
@@ -456,10 +456,20 @@ def send_request(
     url += "#{prefix}#{url_data}"
   end
 
+  timeout_ms = 30000
+  begin
+    if timeout
+      timeout_ms = (Float(timeout) * 1000).to_i
+    elsif ENV['PCSD_NETWORK_TIMEOUT']
+       timeout_ms = (Float(ENV['PCSD_NETWORK_TIMEOUT']) * 1000).to_i
+    end
+  rescue
+  end
+
   req = Ethon::Easy.new()
   req.set_attributes({
     :url => url,
-    :timeout_ms => (timeout * 1000).to_i,
+    :timeout_ms => timeout_ms,
     :cookie => _get_cookie_list(auth_user, cookies_data).join(';'),
     :ssl_verifyhost => 0,
     :ssl_verifypeer => 0,

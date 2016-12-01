@@ -59,6 +59,7 @@ class LibraryEnvironment(object):
         booth=None,
         auth_tokens_getter=None,
         cluster_conf_data=None,
+        request_timeout=None,
     ):
         self._logger = logger
         self._report_processor = report_processor
@@ -70,6 +71,7 @@ class LibraryEnvironment(object):
         self._booth = (
             BoothEnv(report_processor, booth) if booth is not None else None
         )
+        self._request_timeout = request_timeout
         self._is_cman_cluster = None
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move
@@ -292,7 +294,8 @@ class LibraryEnvironment(object):
             self.report_processor,
             self.__get_auth_tokens(),
             self.user_login,
-            self.user_groups
+            self.user_groups,
+            self._request_timeout
         )
 
     def __get_auth_tokens(self):

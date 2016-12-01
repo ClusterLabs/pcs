@@ -155,10 +155,12 @@ Usage: pcs [-f file] [-h] [commands]...
 Control and configure pacemaker and corosync.
 
 Options:
-    -h, --help  Display usage and exit.
-    -f file     Perform actions on file instead of active CIB.
-    --debug     Print all network traffic and external commands run.
-    --version   Print pcs version information.
+    -h, --help         Display usage and exit.
+    -f file            Perform actions on file instead of active CIB.
+    --debug            Print all network traffic and external commands run.
+    --version          Print pcs version information.
+    --request-timeout  Timeout for each outgoing request to another node in
+                       seconds. Default is 60s.
 
 Commands:
     cluster     Configure cluster options and nodes.

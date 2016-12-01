@@ -14,6 +14,7 @@ from pycurl import *
 required_constants = {
     "PROTOCOLS": 181,
     "PROTO_HTTPS": 2,
+    "E_OPERATION_TIMEDOUT": 28,
     # these are types of debug messages
     # see https://curl.haxx.se/libcurl/c/CURLOPT_DEBUGFUNCTION.html
     "DEBUG_TEXT": 0,
