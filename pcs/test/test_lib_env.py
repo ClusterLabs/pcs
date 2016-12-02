@@ -7,6 +7,7 @@ from __future__ import (
 
 from pcs.test.tools.pcs_unittest import TestCase
 import logging
+from functools import partial
 from lxml import etree
 
 from pcs.test.tools.assertions import (
@@ -15,7 +16,7 @@ from pcs.test.tools.assertions import (
     assert_report_item_list_equal,
 )
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
-from pcs.test.tools.misc import get_test_resource as rc
+from pcs.test.tools.misc import get_test_resource as rc, create_patcher
 from pcs.test.tools.pcs_unittest import mock
 
 from pcs.lib.env import LibraryEnvironment
@@ -27,6 +28,10 @@ from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity as severity,
 )
+
+
+patch_env = create_patcher("pcs.lib.env")
+patch_env_object = partial(mock.patch.object, LibraryEnvironment)
 
 class LibraryEnvironmentTest(TestCase):
     def setUp(self):
@@ -67,7 +72,7 @@ class LibraryEnvironmentTest(TestCase):
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assertEqual([], env.user_groups)
 
-    @mock.patch("pcs.lib.env.is_cman_cluster")
+    @patch_env("is_cman_cluster")
     def test_is_cman_cluster(self, mock_is_cman):
         mock_is_cman.return_value = True
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -75,8 +80,8 @@ class LibraryEnvironmentTest(TestCase):
         self.assertTrue(env.is_cman_cluster)
         self.assertEqual(1, mock_is_cman.call_count)
 
-    @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
-    @mock.patch("pcs.lib.env.get_cib_xml")
+    @patch_env("replace_cib_configuration_xml")
+    @patch_env("get_cib_xml")
     def test_cib_set(self, mock_get_cib, mock_push_cib):
         cib_data = "test cib data"
         new_cib_data = "new test cib data"
@@ -97,8 +102,8 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(new_cib_data, env._get_cib_xml())
         self.assertEqual(0, mock_get_cib.call_count)
 
-    @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
-    @mock.patch("pcs.lib.env.get_cib_xml")
+    @patch_env("replace_cib_configuration_xml")
+    @patch_env("get_cib_xml")
     def test_cib_not_set(self, mock_get_cib, mock_push_cib):
         cib_data = "test cib data"
         new_cib_data = "new test cib data"
@@ -113,8 +118,8 @@ class LibraryEnvironmentTest(TestCase):
         env._push_cib_xml(new_cib_data)
         self.assertEqual(1, mock_push_cib.call_count)
 
-    @mock.patch("pcs.lib.env.ensure_cib_version")
-    @mock.patch("pcs.lib.env.get_cib_xml")
+    @patch_env("ensure_cib_version")
+    @patch_env("get_cib_xml")
     def test_get_cib_no_version_live(
             self, mock_get_cib_xml, mock_ensure_cib_version
     ):
@@ -125,8 +130,8 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(0, mock_ensure_cib_version.call_count)
         self.assertFalse(env.cib_upgraded)
 
-    @mock.patch("pcs.lib.env.ensure_cib_version")
-    @mock.patch("pcs.lib.env.get_cib_xml")
+    @patch_env("ensure_cib_version")
+    @patch_env("get_cib_xml")
     def test_get_cib_upgrade_live(
         self, mock_get_cib_xml, mock_ensure_cib_version
     ):
@@ -140,8 +145,8 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(1, mock_ensure_cib_version.call_count)
         self.assertTrue(env.cib_upgraded)
 
-    @mock.patch("pcs.lib.env.ensure_cib_version")
-    @mock.patch("pcs.lib.env.get_cib_xml")
+    @patch_env("ensure_cib_version")
+    @patch_env("get_cib_xml")
     def test_get_cib_no_upgrade_live(
             self, mock_get_cib_xml, mock_ensure_cib_version
     ):
@@ -155,8 +160,8 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(1, mock_ensure_cib_version.call_count)
         self.assertFalse(env.cib_upgraded)
 
-    @mock.patch("pcs.lib.env.ensure_cib_version")
-    @mock.patch("pcs.lib.env.get_cib_xml")
+    @patch_env("ensure_cib_version")
+    @patch_env("get_cib_xml")
     def test_get_cib_no_version_file(
             self, mock_get_cib_xml, mock_ensure_cib_version
     ):
@@ -168,8 +173,8 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(0, mock_ensure_cib_version.call_count)
         self.assertFalse(env.cib_upgraded)
 
-    @mock.patch("pcs.lib.env.ensure_cib_version")
-    @mock.patch("pcs.lib.env.get_cib_xml")
+    @patch_env("ensure_cib_version")
+    @patch_env("get_cib_xml")
     def test_get_cib_upgrade_file(
             self, mock_get_cib_xml, mock_ensure_cib_version
     ):
@@ -184,8 +189,8 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(1, mock_ensure_cib_version.call_count)
         self.assertTrue(env.cib_upgraded)
 
-    @mock.patch("pcs.lib.env.ensure_cib_version")
-    @mock.patch("pcs.lib.env.get_cib_xml")
+    @patch_env("ensure_cib_version")
+    @patch_env("get_cib_xml")
     def test_get_cib_no_upgrade_file(
             self, mock_get_cib_xml, mock_ensure_cib_version
     ):
@@ -200,7 +205,7 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual(1, mock_ensure_cib_version.call_count)
         self.assertFalse(env.cib_upgraded)
 
-    @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
+    @patch_env("replace_cib_configuration_xml")
     @mock.patch.object(
         LibraryEnvironment,
         "cmd_runner",
@@ -215,7 +220,7 @@ class LibraryEnvironmentTest(TestCase):
         )
         self.assertEqual([], env.report_processor.report_item_list)
 
-    @mock.patch("pcs.lib.env.replace_cib_configuration_xml")
+    @patch_env("replace_cib_configuration_xml")
     @mock.patch.object(
         LibraryEnvironment,
         "cmd_runner",
@@ -239,11 +244,11 @@ class LibraryEnvironmentTest(TestCase):
         )
         self.assertFalse(env.cib_upgraded)
 
-    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
-    @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
-    @mock.patch("pcs.lib.env.reload_corosync_config")
-    @mock.patch("pcs.lib.env.distribute_corosync_conf")
-    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @patch_env("qdevice_reload_on_nodes")
+    @patch_env("check_corosync_offline_on_nodes")
+    @patch_env("reload_corosync_config")
+    @patch_env("distribute_corosync_conf")
+    @patch_env("get_local_corosync_conf")
     @mock.patch.object(
         LibraryEnvironment,
         "node_communicator",
@@ -283,11 +288,11 @@ class LibraryEnvironmentTest(TestCase):
         mock_reload.assert_not_called()
         mock_qdevice_reload.assert_not_called()
 
-    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
-    @mock.patch("pcs.lib.env.reload_corosync_config")
-    @mock.patch("pcs.lib.env.is_service_running")
-    @mock.patch("pcs.lib.env.distribute_corosync_conf")
-    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @patch_env("qdevice_reload_on_nodes")
+    @patch_env("reload_corosync_config")
+    @patch_env("is_service_running")
+    @patch_env("distribute_corosync_conf")
+    @patch_env("get_local_corosync_conf")
     @mock.patch.object(
         CorosyncConfigFacade,
         "get_nodes",
@@ -333,11 +338,11 @@ class LibraryEnvironmentTest(TestCase):
         mock_reload.assert_called_once_with("mock cmd runner")
         mock_qdevice_reload.assert_not_called()
 
-    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
-    @mock.patch("pcs.lib.env.reload_corosync_config")
-    @mock.patch("pcs.lib.env.is_service_running")
-    @mock.patch("pcs.lib.env.distribute_corosync_conf")
-    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @patch_env("qdevice_reload_on_nodes")
+    @patch_env("reload_corosync_config")
+    @patch_env("is_service_running")
+    @patch_env("distribute_corosync_conf")
+    @patch_env("get_local_corosync_conf")
     @mock.patch.object(
         CorosyncConfigFacade,
         "get_nodes",
@@ -383,12 +388,12 @@ class LibraryEnvironmentTest(TestCase):
         mock_reload.assert_not_called()
         mock_qdevice_reload.assert_not_called()
 
-    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
-    @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
-    @mock.patch("pcs.lib.env.reload_corosync_config")
-    @mock.patch("pcs.lib.env.is_service_running")
-    @mock.patch("pcs.lib.env.distribute_corosync_conf")
-    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @patch_env("qdevice_reload_on_nodes")
+    @patch_env("check_corosync_offline_on_nodes")
+    @patch_env("reload_corosync_config")
+    @patch_env("is_service_running")
+    @patch_env("distribute_corosync_conf")
+    @patch_env("get_local_corosync_conf")
     @mock.patch.object(
         CorosyncConfigFacade,
         "get_nodes",
@@ -439,12 +444,12 @@ class LibraryEnvironmentTest(TestCase):
             False
         )
 
-    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
-    @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
-    @mock.patch("pcs.lib.env.reload_corosync_config")
-    @mock.patch("pcs.lib.env.is_service_running")
-    @mock.patch("pcs.lib.env.distribute_corosync_conf")
-    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @patch_env("qdevice_reload_on_nodes")
+    @patch_env("check_corosync_offline_on_nodes")
+    @patch_env("reload_corosync_config")
+    @patch_env("is_service_running")
+    @patch_env("distribute_corosync_conf")
+    @patch_env("get_local_corosync_conf")
     @mock.patch.object(
         CorosyncConfigFacade,
         "get_nodes",
@@ -490,11 +495,11 @@ class LibraryEnvironmentTest(TestCase):
         mock_reload.assert_not_called()
         mock_qdevice_reload.assert_not_called()
 
-    @mock.patch("pcs.lib.env.qdevice_reload_on_nodes")
-    @mock.patch("pcs.lib.env.check_corosync_offline_on_nodes")
-    @mock.patch("pcs.lib.env.reload_corosync_config")
-    @mock.patch("pcs.lib.env.distribute_corosync_conf")
-    @mock.patch("pcs.lib.env.get_local_corosync_conf")
+    @patch_env("qdevice_reload_on_nodes")
+    @patch_env("check_corosync_offline_on_nodes")
+    @patch_env("reload_corosync_config")
+    @patch_env("distribute_corosync_conf")
+    @patch_env("get_local_corosync_conf")
     @mock.patch.object(
         CorosyncConfigFacade,
         "get_nodes",
@@ -545,7 +550,7 @@ class LibraryEnvironmentTest(TestCase):
         mock_reload.assert_not_called()
         mock_qdevice_reload.assert_not_called()
 
-    @mock.patch("pcs.lib.env.NodeCommunicator")
+    @patch_env("NodeCommunicator")
     def test_node_communicator_no_options(self, mock_comm):
         expected_comm = mock.MagicMock()
         mock_comm.return_value = expected_comm
@@ -560,7 +565,7 @@ class LibraryEnvironmentTest(TestCase):
             []
         )
 
-    @mock.patch("pcs.lib.env.NodeCommunicator")
+    @patch_env("NodeCommunicator")
     def test_node_communicator_all_options(self, mock_comm):
         expected_comm = mock.MagicMock()
         mock_comm.return_value = expected_comm
@@ -584,7 +589,7 @@ class LibraryEnvironmentTest(TestCase):
             groups
         )
 
-    @mock.patch("pcs.lib.env.get_local_cluster_conf")
+    @patch_env("get_local_cluster_conf")
     def test_get_cluster_conf_live(self, mock_get_local_cluster_conf):
         env = LibraryEnvironment(
             self.mock_logger, self.mock_reporter, cluster_conf_data=None
@@ -593,7 +598,7 @@ class LibraryEnvironmentTest(TestCase):
         self.assertEqual("cluster.conf data", env.get_cluster_conf_data())
         mock_get_local_cluster_conf.assert_called_once_with()
 
-    @mock.patch("pcs.lib.env.get_local_cluster_conf")
+    @patch_env("get_local_cluster_conf")
     def test_get_cluster_conf_not_live(self, mock_get_local_cluster_conf):
         env = LibraryEnvironment(
             self.mock_logger, self.mock_reporter, cluster_conf_data="data"
@@ -624,7 +629,7 @@ class LibraryEnvironmentTest(TestCase):
         )
         self.assertFalse(env.is_cluster_conf_live)
 
-@mock.patch("pcs.lib.env.CommandRunner")
+@patch_env("CommandRunner")
 class CmdRunner(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
@@ -664,7 +669,7 @@ class CmdRunner(TestCase):
             }
         )
 
-    @mock.patch("pcs.lib.env.tempfile.NamedTemporaryFile")
+    @patch_env("tempfile.NamedTemporaryFile")
     def test_dump_cib_file(self, mock_tmpfile, mock_runner):
         expected_runner = mock.MagicMock()
         mock_runner.return_value = expected_runner
@@ -688,43 +693,65 @@ class CmdRunner(TestCase):
         )
         mock_instance.write.assert_called_once_with("<cib />")
 
-@mock.patch("pcs.lib.env.replace_cib_configuration_xml")
-class CibPushCallbacks(TestCase):
+@patch_env_object("cmd_runner", lambda self: "runner")
+class EnsureValidWait(TestCase):
     def setUp(self):
-        self.mock_logger = mock.MagicMock(logging.Logger)
-        self.mock_reporter = MockLibraryReportProcessor()
-
-    def base_test(self, env):
-        # set up callbacks
-        log = []
-        callback1 = lambda: log.append("callback1")
-        callback2 = lambda: log.append("callback2")
-        env.add_after_cib_push_callback(callback1)
-        env.add_after_cib_push_callback(callback2)
-        # callbacks run when cib pushed
-        env.push_cib(etree.fromstring("<cib />"))
-        self.assertEqual(
-            ["callback1", "callback2"],
-            log
-        )
-        # callbacks not run again if pushed again
-        env.push_cib(etree.fromstring("<cib />"))
-        self.assertEqual(
-            ["callback1", "callback2"],
-            log
+        self.create_env = partial(
+            LibraryEnvironment,
+            mock.MagicMock(logging.Logger),
+            MockLibraryReportProcessor()
         )
 
-    def test_success_cib_live(self, mock_push):
-        env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        self.base_test(env)
-        self.assertEqual(2, mock_push.call_count)
+    @property
+    def env_live(self):
+        return self.create_env()
 
-    def test_success_cib_file(self, mock_push):
-        env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            cib_data="<cib />"
+    @property
+    def env_fake(self):
+        return self.create_env(cib_data="<cib/>")
+
+
+    def test_not_raises_if_waiting_false_no_matter_if_env_is_live(self):
+        self.env_live.ensure_wait_satisfiable(False)
+        self.env_fake.ensure_wait_satisfiable(False)
+
+    def test_raises_when_is_not_live(self):
+        env = self.env_fake
+        assert_raise_library_error(
+            lambda: env.ensure_wait_satisfiable(10),
+            (
+                severity.ERROR,
+                report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
+                {}
+            )
         )
-        self.base_test(env)
-        mock_push.assert_not_called()
 
+    @patch_env("get_valid_timeout_seconds")
+    @patch_env("ensure_wait_for_idle_support")
+    def test_do_checks(self, ensure_wait_for_idle_support, get_valid_timeout):
+        env = self.env_live
+        env.ensure_wait_satisfiable(10)
+        ensure_wait_for_idle_support.assert_called_once_with(env.cmd_runner())
+        get_valid_timeout.assert_called_once_with(10)
+
+
+@patch_env_object("cmd_runner", lambda self: "runner")
+@patch_env_object("_get_wait_timeout", lambda self, wait: wait)
+@patch_env_object("_push_cib_xml")
+@patch_env("wait_for_idle")
+class PushCib(TestCase):
+    def setUp(self):
+        self.env = LibraryEnvironment(
+            mock.MagicMock(logging.Logger),
+            MockLibraryReportProcessor()
+        )
+
+    def test_run_only_push_when_without_wait(self, wait_for_idle, push_cib_xml):
+        self.env.push_cib(etree.fromstring("<cib/>"))
+        push_cib_xml.assert_called_once_with("<cib/>")
+        wait_for_idle.assert_not_called()
+
+    def test_run_wait_when_wait_specified(self, wait_for_idle, push_cib_xml):
+        self.env.push_cib(etree.fromstring("<cib/>"), 10)
+        push_cib_xml.assert_called_once_with("<cib/>")
+        wait_for_idle.assert_called_once_with(self.env.cmd_runner(), 10)

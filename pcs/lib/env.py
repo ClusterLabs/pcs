@@ -33,11 +33,14 @@ from pcs.lib.nodes_task import (
     qdevice_reload_on_nodes,
 )
 from pcs.lib.pacemaker.live import (
+    ensure_wait_for_idle_support,
     ensure_cib_version,
     get_cib,
     get_cib_xml,
     replace_cib_configuration_xml,
+    wait_for_idle,
 )
+from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 
 
 class LibraryEnvironment(object):
@@ -72,8 +75,9 @@ class LibraryEnvironment(object):
         self._auth_tokens_getter = auth_tokens_getter
         self._auth_tokens = None
         self._cib_upgraded = False
-        self._after_cib_push_callbacks = []
         self._cib_data_tmp_file = None
+
+        self.__timeout_cache = {}
 
     @property
     def logger(self):
@@ -129,20 +133,36 @@ class LibraryEnvironment(object):
         else:
             self._cib_data = cib_data
 
-    def add_after_cib_push_callback(self, callback):
-        self._after_cib_push_callbacks.append(callback)
-        return self
+    def _get_wait_timeout(self, wait):
+        if wait is False:
+            return False
 
-    def push_cib(self, cib):
+        if wait not in self.__timeout_cache:
+            if not self.is_cib_live:
+                raise LibraryError(reports.wait_for_idle_not_live_cluster())
+            ensure_wait_for_idle_support(self.cmd_runner())
+            self.__timeout_cache[wait] = get_valid_timeout_seconds(wait)
+        return self.__timeout_cache[wait]
+
+
+    def ensure_wait_satisfiable(self, wait):
+        """
+        Raise when wait is not supported or when wait is not valid wait value.
+
+        mixed wait can be False when waiting is not required or valid timeout
+        """
+        self._get_wait_timeout(wait)
+
+    def push_cib(self, cib, wait=False):
+        timeout = self._get_wait_timeout(wait)
         #etree returns bytes: b'xml'
         #python 3 removed .encode() from bytes
         #run(...) calls subprocess.Popen.communicate which calls encode...
         #so here is bytes to str conversion
         self._push_cib_xml(etree.tostring(cib).decode())
 
-        for callback in self._after_cib_push_callbacks:
-            callback()
-        self._after_cib_push_callbacks = []
+        if timeout is not False:
+            wait_for_idle(self.cmd_runner(), timeout)
 
     @property
     def is_cib_live(self):

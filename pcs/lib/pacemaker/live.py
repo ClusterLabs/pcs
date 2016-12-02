@@ -146,6 +146,12 @@ def ensure_wait_for_idle_support(runner):
         raise LibraryError(reports.wait_for_idle_not_supported())
 
 def wait_for_idle(runner, timeout=None):
+    """
+    Run waiting command. Raise LibraryError if command failed.
+
+    runner is preconfigured object for running external programs
+    string timeout is waiting timeout
+    """
     args = [__exec("crm_resource"), "--wait"]
     if timeout is not None:
         args.append("--timeout={0}".format(timeout))

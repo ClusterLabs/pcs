@@ -5,17 +5,30 @@ from __future__ import (
     unicode_literals,
 )
 
+from contextlib import contextmanager
+
 from pcs.lib import reports
 from pcs.lib.cib.node import update_node_instance_attrs
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import (
-    ensure_wait_for_idle_support,
     get_cluster_status_xml,
     get_local_node_name,
-    wait_for_idle,
 )
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib.pacemaker.values import get_valid_timeout_seconds
+
+
+@contextmanager
+def cib_runner_nodes(lib_env, wait):
+    lib_env.ensure_wait_satisfiable(wait)
+    runner = lib_env.cmd_runner()
+    cib = lib_env.get_cib()
+
+    state_nodes = ClusterState(
+        get_cluster_status_xml(runner)
+    ).node_section.nodes
+
+    yield (cib, runner, state_nodes)
+    lib_env.push_cib(cib, wait)
 
 
 def standby_unstandby_local(lib_env, standby, wait=False):
@@ -126,79 +139,28 @@ def _set_instance_attrs_local_node(lib_env, attrs, wait):
         # name.
         raise LibraryError(reports.live_environment_required_for_local_node())
 
-    runner = lib_env.cmd_runner()
-
-    if wait is not False:
-        if not lib_env.is_cib_live:
-            raise LibraryError(reports.wait_for_idle_not_live_cluster())
-        ensure_wait_for_idle_support(runner)
-        timeout = get_valid_timeout_seconds(wait)
-        lib_env.add_after_cib_push_callback(
-            lambda: wait_for_idle(runner, timeout)
+    with cib_runner_nodes(lib_env, wait) as (cib, runner, state_nodes):
+        update_node_instance_attrs(
+            cib,
+            get_local_node_name(runner),
+            attrs,
+            state_nodes
         )
-
-    cib = lib_env.get_cib()
-    state_nodes = ClusterState(
-        get_cluster_status_xml(runner)
-    ).node_section.nodes
-
-    update_node_instance_attrs(
-        cib,
-        get_local_node_name(runner),
-        attrs,
-        state_nodes
-    )
-
-    lib_env.push_cib(cib)
 
 def _set_instance_attrs_node_list(lib_env, attrs, node_names, wait):
-    runner = lib_env.cmd_runner()
+    with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
+        known_nodes = [node.attrs.name for node in state_nodes]
+        report = []
+        for node in node_names:
+            if node not in known_nodes:
+                report.append(reports.node_not_found(node))
+        if report:
+            raise LibraryError(*report)
 
-    if wait is not False:
-        if not lib_env.is_cib_live:
-            raise LibraryError(reports.wait_for_idle_not_live_cluster())
-        ensure_wait_for_idle_support(runner)
-        timeout = get_valid_timeout_seconds(wait)
-        lib_env.add_after_cib_push_callback(
-            lambda: wait_for_idle(runner, timeout)
-        )
-
-    cib = lib_env.get_cib()
-    state_nodes = ClusterState(
-        get_cluster_status_xml(runner)
-    ).node_section.nodes
-
-    known_nodes = [node.attrs.name for node in state_nodes]
-    report = []
-    for node in node_names:
-        if node not in known_nodes:
-            report.append(reports.node_not_found(node))
-    if report:
-        raise LibraryError(*report)
-
-    for node in node_names:
-        update_node_instance_attrs(cib, node, attrs, state_nodes)
-
-    lib_env.push_cib(cib)
+        for node in node_names:
+            update_node_instance_attrs(cib, node, attrs, state_nodes)
 
 def _set_instance_attrs_all_nodes(lib_env, attrs, wait):
-    runner = lib_env.cmd_runner()
-
-    if wait is not False:
-        if not lib_env.is_cib_live:
-            raise LibraryError(reports.wait_for_idle_not_live_cluster())
-        ensure_wait_for_idle_support(runner)
-        timeout = get_valid_timeout_seconds(wait)
-        lib_env.add_after_cib_push_callback(
-            lambda: wait_for_idle(runner, timeout)
-        )
-
-    cib = lib_env.get_cib()
-    state_nodes = ClusterState(
-        get_cluster_status_xml(runner)
-    ).node_section.nodes
-
-    for node in [node.attrs.name for node in state_nodes]:
-        update_node_instance_attrs(cib, node, attrs, state_nodes)
-
-    lib_env.push_cib(cib)
+    with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
+        for node in [node.attrs.name for node in state_nodes]:
+            update_node_instance_attrs(cib, node, attrs, state_nodes)

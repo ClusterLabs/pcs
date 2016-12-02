@@ -5,21 +5,39 @@ from __future__ import (
     unicode_literals,
 )
 
+from functools import partial
+from contextlib import contextmanager
+
 from lxml import etree
 import logging
 
 from pcs.test.tools.assertions import assert_raise_library_error
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock, TestCase
+from pcs.test.tools.misc import create_patcher
 
 from pcs.common import report_codes
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import ReportItemSeverity as severity
+from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
 
 from pcs.lib.commands import node as lib
 
 
 mocked_cib = etree.fromstring("<cib />")
+
+patch_env = partial(mock.patch.object, LibraryEnvironment)
+patch_command = create_patcher("pcs.lib.commands.node")
+
+create_env = partial(
+    LibraryEnvironment,
+    mock.MagicMock(logging.Logger),
+    MockLibraryReportProcessor()
+)
+
+def fixture_node(order_num):
+    node = mock.MagicMock(attrs=mock.MagicMock())
+    node.attrs.name = "node-{0}".format(order_num)
+    return node
 
 class StandbyMaintenancePassParameters(TestCase):
     def setUp(self):
@@ -31,7 +49,7 @@ class StandbyMaintenancePassParameters(TestCase):
         self.maintenance_on = {"maintenance": "on"}
         self.maintenance_off = {"maintenance": ""}
 
-@mock.patch("pcs.lib.commands.node._set_instance_attrs_local_node")
+@patch_command("_set_instance_attrs_local_node")
 class StandbyMaintenancePassParametersLocal(StandbyMaintenancePassParameters):
     def test_standby(self, mock_doer):
         lib.standby_unstandby_local(self.lib_env, True, self.wait)
@@ -65,7 +83,7 @@ class StandbyMaintenancePassParametersLocal(StandbyMaintenancePassParameters):
             self.wait
         )
 
-@mock.patch("pcs.lib.commands.node._set_instance_attrs_node_list")
+@patch_command("_set_instance_attrs_node_list")
 class StandbyMaintenancePassParametersList(StandbyMaintenancePassParameters):
     def test_standby(self, mock_doer):
         lib.standby_unstandby_list(self.lib_env, True, self.nodes, self.wait)
@@ -107,7 +125,7 @@ class StandbyMaintenancePassParametersList(StandbyMaintenancePassParameters):
             self.wait
         )
 
-@mock.patch("pcs.lib.commands.node._set_instance_attrs_all_nodes")
+@patch_command("_set_instance_attrs_all_nodes")
 class StandbyMaintenancePassParametersAll(StandbyMaintenancePassParameters):
     def test_standby(self, mock_doer):
         lib.standby_unstandby_all(self.lib_env, True, self.wait)
@@ -142,445 +160,137 @@ class StandbyMaintenancePassParametersAll(StandbyMaintenancePassParameters):
         )
 
 class SetInstaceAttrsBase(TestCase):
+    node_count = 2
     def setUp(self):
-        self.mock_logger = mock.MagicMock(logging.Logger)
-        self.mock_reporter = MockLibraryReportProcessor()
+        self.cluster_nodes = [fixture_node(i) for i in range(self.node_count)]
 
-    def fixture_state(self, node_count):
-        node_list = []
-        for i in range(node_count):
-            node = mock.MagicMock()
-            node.attrs = mock.MagicMock()
-            node.attrs.name = "node-{0}".format(i)
-            node_list.append(node)
-        state = mock.MagicMock()
-        state.node_section = mock.MagicMock()
-        state.node_section.nodes = node_list
-        return state
+        self.launch = {"pre": False, "post": False}
+        @contextmanager
+        def cib_runner_nodes_contextmanager(env, wait):
+            self.launch["pre"] = True
+            yield ("cib", "mock_runner", self.cluster_nodes)
+            self.launch["post"] = True
 
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
-@mock.patch.object(
-    LibraryEnvironment,
-    "get_cib",
-    lambda self: mocked_cib
-)
-@mock.patch.object(
-    LibraryEnvironment,
-    "_push_cib_xml",
-    lambda self, cib: None
-)
-@mock.patch("pcs.lib.env.get_cib_xml", lambda runner: "<cib />")
-@mock.patch("pcs.lib.commands.node.get_cluster_status_xml", lambda runner: None)
-@mock.patch("pcs.lib.commands.node.update_node_instance_attrs")
-@mock.patch("pcs.lib.commands.node.get_local_node_name")
-@mock.patch("pcs.lib.commands.node.ClusterState")
-@mock.patch("pcs.lib.commands.node.wait_for_idle")
-@mock.patch("pcs.lib.commands.node.ensure_wait_for_idle_support")
+        patcher = patch_command('cib_runner_nodes')
+        self.addCleanup(patcher.stop)
+        patcher.start().side_effect = cib_runner_nodes_contextmanager
+
+    def assert_context_manager_launched(self, pre=False, post=False):
+        self.assertEqual(self.launch, {"pre": pre, "post": post})
+
+@patch_command("update_node_instance_attrs")
+@patch_command("get_local_node_name")
 class SetInstaceAttrsLocal(SetInstaceAttrsBase):
-    def test_not_possible_with_cib_file(
-        self, mock_has_wait, mock_wait, mock_status, mock_name, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            cib_data="<cib />"
-        )
+    node_count = 2
 
+    def test_not_possible_with_cib_file(self, mock_name, mock_attrs):
         assert_raise_library_error(
             lambda: lib._set_instance_attrs_local_node(
-                lib_env, "attrs", "wait"
+                create_env(cib_data="<cib />"),
+                "attrs",
+                "wait"
             ),
             (
                 severity.ERROR,
                 report_codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE,
-                {},
-                None
+                {}
             )
         )
-
-        mock_has_wait.assert_not_called()
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
+        self.assert_context_manager_launched(pre=False, post=False)
         mock_name.assert_not_called()
         mock_attrs.assert_not_called()
 
-    def test_success(
-        self, mock_has_wait, mock_wait, mock_status, mock_name, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        cluster_state = self.fixture_state(2)
-        mock_status.return_value = cluster_state
+    def test_success(self, mock_name, mock_attrs):
         mock_name.return_value = "node-1"
 
-        lib._set_instance_attrs_local_node(lib_env, "attrs", False)
+        lib._set_instance_attrs_local_node(create_env(), "attrs", False)
 
-        mock_has_wait.assert_not_called()
-        mock_wait.assert_not_called()
-        mock_status.assert_called_once_with(None)
+        self.assert_context_manager_launched(pre=True, post=True)
         mock_name.assert_called_once_with("mock_runner")
         mock_attrs.assert_called_once_with(
-            mocked_cib, "node-1", "attrs", cluster_state.node_section.nodes
+            "cib", "node-1", "attrs", self.cluster_nodes
         )
 
-    def test_wait_not_supported(
-        self, mock_has_wait, mock_wait, mock_status, mock_name, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        mock_has_wait.side_effect = ValueError
-
-        self.assertRaises(
-            ValueError,
-            lambda: lib._set_instance_attrs_local_node(
-                lib_env, "attrs", "wait"
-            )
-        )
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
-        mock_name.assert_not_called()
-        mock_attrs.assert_not_called()
-
-    def test_wait_bad_timeout(
-        self, mock_has_wait, mock_wait, mock_status, mock_name, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        assert_raise_library_error(
-            lambda: lib._set_instance_attrs_local_node(
-                lib_env, "attrs", "wait"
-            ),
-            (
-                severity.ERROR,
-                report_codes.INVALID_TIMEOUT_VALUE,
-                {
-                    "timeout": "wait",
-                },
-                None
-            )
-        )
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
-        mock_name.assert_not_called()
-        mock_attrs.assert_not_called()
-
-    def test_wait_success(
-        self, mock_has_wait, mock_wait, mock_status, mock_name, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        cluster_state = self.fixture_state(2)
-        mock_status.return_value = cluster_state
-        mock_name.return_value = "node-1"
-
-        lib._set_instance_attrs_local_node(lib_env, "attrs", 10)
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_called_once_with("mock_runner", 10)
-        mock_status.assert_called_once_with(None)
-        mock_name.assert_called_once_with("mock_runner")
-        mock_attrs.assert_called_once_with(
-            mocked_cib, "node-1", "attrs", cluster_state.node_section.nodes
-        )
-
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
-@mock.patch.object(
-    LibraryEnvironment,
-    "get_cib",
-    lambda self: mocked_cib
-)
-@mock.patch.object(
-    LibraryEnvironment,
-    "_push_cib_xml",
-    lambda self, cib: None
-)
-@mock.patch("pcs.lib.env.get_cib_xml", lambda runner: "<cib />")
-@mock.patch("pcs.lib.commands.node.get_cluster_status_xml", lambda runner: None)
-@mock.patch("pcs.lib.commands.node.update_node_instance_attrs")
-@mock.patch("pcs.lib.commands.node.ClusterState")
-@mock.patch("pcs.lib.commands.node.wait_for_idle")
-@mock.patch("pcs.lib.commands.node.ensure_wait_for_idle_support")
+@patch_command("update_node_instance_attrs")
 class SetInstaceAttrsAll(SetInstaceAttrsBase):
-    def test_success(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        cluster_state = self.fixture_state(2)
-        mock_status.return_value = cluster_state
+    node_count = 2
 
-        lib._set_instance_attrs_all_nodes(lib_env, "attrs", False)
+    def test_success(self, mock_attrs):
+        lib._set_instance_attrs_all_nodes(create_env(), "attrs", False)
 
-        mock_has_wait.assert_not_called()
-        mock_wait.assert_not_called()
-        mock_status.assert_called_once_with(None)
         self.assertEqual(2, len(mock_attrs.mock_calls))
         mock_attrs.assert_has_calls([
-            mock.call(
-                mocked_cib, "node-0", "attrs", cluster_state.node_section.nodes
-            ),
-            mock.call(
-                mocked_cib, "node-1", "attrs", cluster_state.node_section.nodes
-            ),
+            mock.call("cib", "node-0", "attrs", self.cluster_nodes),
+            mock.call("cib", "node-1", "attrs", self.cluster_nodes),
         ])
 
-    def test_wait_with_cib_file(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            cib_data="<cib />"
-        )
-
-        assert_raise_library_error(
-            lambda: lib._set_instance_attrs_all_nodes(
-                lib_env, "attrs", "wait"
-            ),
-            (
-                severity.ERROR,
-                report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
-                { },
-                None
-            )
-        )
-
-        mock_has_wait.assert_not_called()
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
-        mock_attrs.assert_not_called()
-
-    def test_wait_not_supported(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        mock_has_wait.side_effect = ValueError
-
-        self.assertRaises(
-            ValueError,
-            lambda: lib._set_instance_attrs_all_nodes(
-                lib_env, "attrs", "wait"
-            )
-        )
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
-        mock_attrs.assert_not_called()
-
-    def test_wait_bad_timeout(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        assert_raise_library_error(
-            lambda: lib._set_instance_attrs_all_nodes(
-                lib_env, "attrs", "wait"
-            ),
-            (
-                severity.ERROR,
-                report_codes.INVALID_TIMEOUT_VALUE,
-                {
-                    "timeout": "wait",
-                },
-                None
-            )
-        )
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
-        mock_attrs.assert_not_called()
-
-    def test_wait_success(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        cluster_state = self.fixture_state(2)
-        mock_status.return_value = cluster_state
-
-        lib._set_instance_attrs_all_nodes(lib_env, "attrs", 10)
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_called_once_with("mock_runner", 10)
-        mock_status.assert_called_once_with(None)
-        mock_attrs.assert_has_calls([
-            mock.call(
-                mocked_cib, "node-0", "attrs", cluster_state.node_section.nodes
-            ),
-            mock.call(
-                mocked_cib, "node-1", "attrs", cluster_state.node_section.nodes
-            ),
-        ])
-
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
-@mock.patch.object(
-    LibraryEnvironment,
-    "get_cib",
-    lambda self: mocked_cib
-)
-@mock.patch.object(
-    LibraryEnvironment,
-    "_push_cib_xml",
-    lambda self, cib: None
-)
-@mock.patch("pcs.lib.env.get_cib_xml", lambda runner: "<cib />")
-@mock.patch("pcs.lib.commands.node.get_cluster_status_xml", lambda runner: None)
-@mock.patch("pcs.lib.commands.node.update_node_instance_attrs")
-@mock.patch("pcs.lib.commands.node.ClusterState")
-@mock.patch("pcs.lib.commands.node.wait_for_idle")
-@mock.patch("pcs.lib.commands.node.ensure_wait_for_idle_support")
+@patch_command("update_node_instance_attrs")
 class SetInstaceAttrsList(SetInstaceAttrsBase):
-    def test_success(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        cluster_state = self.fixture_state(4)
-        mock_status.return_value = cluster_state
+    node_count = 4
 
+    def test_success(self, mock_attrs):
         lib._set_instance_attrs_node_list(
-            lib_env, "attrs", ["node-1", "node-2"], False
+            create_env(), "attrs", ["node-1", "node-2"], False
         )
 
-        mock_has_wait.assert_not_called()
-        mock_wait.assert_not_called()
-        mock_status.assert_called_once_with(None)
+        self.assert_context_manager_launched(pre=True, post=True)
         self.assertEqual(2, len(mock_attrs.mock_calls))
         mock_attrs.assert_has_calls([
-            mock.call(
-                mocked_cib, "node-1", "attrs", cluster_state.node_section.nodes
-            ),
-            mock.call(
-                mocked_cib, "node-2", "attrs", cluster_state.node_section.nodes
-            ),
+            mock.call("cib", "node-1", "attrs", self.cluster_nodes),
+            mock.call("cib", "node-2", "attrs", self.cluster_nodes),
         ])
 
-    def test_bad_node(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        cluster_state = self.fixture_state(4)
-        mock_status.return_value = cluster_state
-
+    def test_bad_node(self, mock_attrs):
         assert_raise_library_error(
             lambda: lib._set_instance_attrs_node_list(
-                lib_env, "attrs", ["node-1", "node-9"], False
+                create_env(), "attrs", ["node-1", "node-9"], False
             ),
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
                 {
                     "node": "node-9",
-                },
-                None
+                }
             )
         )
-
-        mock_has_wait.assert_not_called()
-        mock_wait.assert_not_called()
-        mock_status.assert_called_once_with(None)
         mock_attrs.assert_not_called()
 
-    def test_wait_with_cib_file(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
+@patch_env("push_cib")
+class CibRunnerNodes(TestCase):
+    def setUp(self):
+        self.env = create_env()
+
+    @patch_env("get_cib", lambda self: "mocked cib")
+    @patch_env("cmd_runner", lambda self: "mocked cmd_runner")
+    @patch_env("ensure_wait_satisfiable")
+    @patch_command("ClusterState")
+    @patch_command("get_cluster_status_xml")
+    def test_wire_together_all_expected_dependecies(
+        self, get_cluster_status_xml, ClusterState, ensure_wait_satisfiable,
+        push_cib
     ):
-        lib_env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            cib_data="<cib />"
+        ClusterState.return_value = mock.MagicMock(
+            node_section=mock.MagicMock(nodes="nodes")
         )
+        get_cluster_status_xml.return_value = "mock get_cluster_status_xml"
+        wait = 10
 
-        assert_raise_library_error(
-            lambda: lib._set_instance_attrs_node_list(
-                lib_env, "attrs", ["node-1"], "wait"
-            ),
-            (
-                severity.ERROR,
-                report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
-                { },
-                None
-            )
-        )
+        with lib.cib_runner_nodes(self.env, wait) as (cib, runner, nodes):
+            self.assertEqual(cib, "mocked cib")
+            self.assertEqual(runner, "mocked cmd_runner")
+            self.assertEqual(nodes, "nodes")
+            ensure_wait_satisfiable.assert_called_once_with(wait)
+            get_cluster_status_xml.assert_called_once_with("mocked cmd_runner")
+            ClusterState.assert_called_once_with("mock get_cluster_status_xml")
 
-        mock_has_wait.assert_not_called()
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
-        mock_attrs.assert_not_called()
+        push_cib.assert_called_once_with("mocked cib", wait)
 
-    def test_wait_not_supported(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        mock_has_wait.side_effect = ValueError
+    @patch_env("ensure_wait_satisfiable", mock.Mock(side_effect=LibraryError))
+    def test_raises_when_wait_is_not_satisfiable(self, push_cib):
+        def run():
+            #pylint: disable=unused-variable
+            with lib.cib_runner_nodes(self.env, "wait") as (cib, runner, nodes):
+                pass
 
-        self.assertRaises(
-            ValueError,
-            lambda: lib._set_instance_attrs_node_list(
-                lib_env, "attrs", ["node-1"], "wait"
-            )
-        )
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
-        mock_attrs.assert_not_called()
-
-    def test_wait_bad_timeout(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-
-        assert_raise_library_error(
-            lambda: lib._set_instance_attrs_node_list(
-                lib_env, "attrs", ["node-1"], "wait"
-            ),
-            (
-                severity.ERROR,
-                report_codes.INVALID_TIMEOUT_VALUE,
-                {
-                    "timeout": "wait",
-                },
-                None
-            )
-        )
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_not_called()
-        mock_status.assert_not_called()
-        mock_attrs.assert_not_called()
-
-    def test_wait_success(
-        self, mock_has_wait, mock_wait, mock_status, mock_attrs
-    ):
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
-        cluster_state = self.fixture_state(4)
-        mock_status.return_value = cluster_state
-
-        lib._set_instance_attrs_node_list(
-            lib_env, "attrs", ["node-1", "node-2"], 10
-        )
-
-        mock_has_wait.assert_called_once_with("mock_runner")
-        mock_wait.assert_called_once_with("mock_runner", 10)
-        mock_status.assert_called_once_with(None)
-        mock_attrs.assert_has_calls([
-            mock.call(
-                mocked_cib, "node-1", "attrs", cluster_state.node_section.nodes
-            ),
-            mock.call(
-                mocked_cib, "node-2", "attrs", cluster_state.node_section.nodes
-            ),
-        ])
-
+        self.assertRaises(LibraryError, run)
+        push_cib.assert_not_called()
