@@ -1926,7 +1926,7 @@ def cluster_destroy(argv):
         state_files = ["cib.xml*", "cib-*", "core.*", "hostcache", "cts.*",
                 "pe*.bz2","cib.*"]
         for name in state_files:
-            os.system("find /var/lib -name '"+name+"' -exec rm -f \{\} \;")
+            os.system("find /var/lib/{pacemaker,corosync} -name '"+name+"' -exec rm -f \{\} \;")
         try:
             qdevice_net.client_destroy()
         except:
