@@ -15,8 +15,10 @@
   immediately ([rhbz#1394846])
 - Show proper error message when there is HTTP communication failure
   ([rhbz#1394273])
+- Fixed searching for files to remove in the `/var/lib` directory ([ghpull#119])
 
 
+[ghpull#119]: https://github.com/ClusterLabs/pcs/pull/119
 [rhbz#1315992]: https://bugzilla.redhat.com/show_bug.cgi?id=1315992
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
