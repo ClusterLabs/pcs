@@ -775,48 +775,6 @@ class FailOrWarn(ResourceTest):
             "Error: 'R' already exists\n"
         )
 
-    def test_fail_on_wait_disabled_conflict(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --disabled --wait",
-            "Error: Cannot use '--wait' together with '--disabled'\n"
-        )
-
-    def test_fail_on_wait_stopped_conflict(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy meta target-role=stopped"
-                " --wait"
-            ,
-            "Error: Cannot use '--wait' together with 'target-role=stopped'\n"
-        )
-
-    def test_fail_on_wait_clone_max_conflict(self):
-        command_list = [
-            "resource create R ocf:heartbeat:Dummy --clone clone-max=0 --wait",
-            "resource create R ocf:heartbeat:Dummy --master meta clone-max=0"
-                " --wait"
-            ,
-        ]
-        for command in command_list:
-            self.assert_pcs_fail(
-                command,
-                "Error: Cannot use '--wait' together with 'clone-max=0'\n"
-            )
-
-    def test_fail_on_wait_clone_node_max_conflict(self):
-        command_list = [
-            "resource create R ocf:heartbeat:Dummy --clone clone-node-max=0"
-                " --wait"
-            ,
-            "resource create R ocf:heartbeat:Dummy --master meta"
-                " clone-node-max=0 --wait"
-            ,
-        ]
-        for command in command_list:
-            self.assert_pcs_fail(
-                command,
-                "Error: Cannot use '--wait' together with 'clone-node-max=0'\n"
-            )
-
 class FailOrWarnOp(ResourceTest):
     def test_fail_empty(self):
         self.assert_pcs_fail(

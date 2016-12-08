@@ -493,3 +493,48 @@ class IdBelongsToUnexpectedType(NameBuildTest):
             "current_type": "op",
         })
 
+class ResourceRunOnNodes(NameBuildTest):
+    code = codes.RESOURCE_RUN_ON_NODES
+    def test_one_node(self):
+        self.assert_message_from_info(
+            "resource 'R' is running on node 'node1'",
+            {
+                "resource_id": "R",
+                "roles_with_nodes": [("Started", "node1")],
+            }
+        )
+    def test_multiple_nodes(self):
+        self.assert_message_from_info(
+            "resource 'R' is running on nodes 'node1', 'node2'",
+            {
+                "resource_id": "R",
+                "roles_with_nodes": [
+                    ("Started", "node1"),
+                    ("Started", "node2"),
+                ],
+            }
+        )
+    def test_multiple_role_multiple_nodes(self):
+        self.assert_message_from_info(
+            "resource 'R' is running on nodes 'node1', 'node2'"
+            "; master on node 'node3'"
+            ,
+            {
+                "resource_id": "R",
+                "roles_with_nodes": [
+                    ("Started", "node1"),
+                    ("Started", "node2"),
+                    ("Master", "node3"),
+                ],
+            }
+        )
+
+class ResourceDoesNotRun(NameBuildTest):
+    code = codes.RESOURCE_DOES_NOT_RUN
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "resource 'R' is not running on any node",
+            {
+                "resource_id": "R",
+            }
+        )

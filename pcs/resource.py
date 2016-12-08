@@ -597,35 +597,6 @@ def resource_create_refactoring(lib, argv, group=None):
 
     parts = parse_create_args(argv[2:])
 
-    #CMDLINE CHECK
-    if "--wait" in utils.pcs_options:
-        if "--disabled" in utils.pcs_options:
-            raise error("Cannot use '--wait' together with '--disabled'")
-
-        incompatibles = {
-            "target-role": "stopped",
-        }
-        if "--master" in utils.pcs_options or "clone" in parts:
-            incompatibles.update({
-                "clone-max": "0",
-                "clone-node-max": "0",
-            })
-
-        for name, value in parts.get("meta", {}).items():
-            if name in incompatibles and incompatibles[name] == value:
-                raise error(
-                    "Cannot use '--wait' together with '{0}={1}'"
-                    .format(name, value)
-                )
-        for name, value in parts.get("clone", {}).items():
-            if name in incompatibles and incompatibles[name] == value:
-                raise error(
-                    "Cannot use '--wait' together with '{0}={1}'"
-                    .format(name, value)
-                )
-
-        wait_timeout = utils.validate_wait_get_timeout()
-
     if "clone" in parts:
         if group:
             warn("--group ignored when creating a clone")
@@ -648,9 +619,9 @@ def resource_create_refactoring(lib, argv, group=None):
         use_default_operations="--no-default-ops" not in utils.pcs_options,
         ensure_disabled="--disabled" in utils.pcs_options,
         master=is_master,
+        wait=utils.pcs_options.get("--wait", False)
     )
 
-    #LIBRARY RUN
     if "clone" in parts:
         lib.resource.create_as_clone(
             ra_id, ra_type, parts["op"],
@@ -692,30 +663,6 @@ def resource_create_refactoring(lib, argv, group=None):
             put_after_adjacent=put_after_adjacent,
             **settings
         )
-
-        if "--wait" in utils.pcs_options:
-            args = ["crm_resource", "--wait"]
-            if wait_timeout:
-                args.extend(["--timeout=%s" % wait_timeout])
-            output, retval = utils.run(args)
-            running_on = utils.resource_running_on(ra_id)
-            if retval == 0 and running_on["is_running"]:
-                print(running_on["message"])
-            else:
-                msg = []
-                if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
-                    msg.append("waiting timeout")
-                else:
-                    msg.append(
-                        "unable to start: '%s', please check logs for failure "
-                        "information"
-                        % ra_id
-                    )
-                msg.append(running_on["message"])
-                if retval != 0 and output:
-                    msg.append("\n" + output)
-                utils.err("\n".join(msg).strip())
-
 
 def resource_move(argv,clear=False,ban=False):
     other_options = []

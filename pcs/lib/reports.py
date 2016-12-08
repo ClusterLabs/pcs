@@ -883,7 +883,6 @@ def resource_cannot_be_next_to_itself_in_group(resource_id, group_id):
         }
     )
 
-
 def stonith_resources_do_not_exist(
     stonith_ids, severity=ReportItemSeverity.ERROR, forceable=None
 ):
@@ -898,6 +897,41 @@ def stonith_resources_do_not_exist(
             "stonith_ids": stonith_ids,
         },
         forceable=forceable
+    )
+
+def resource_run_on_nodes(
+    resource_id, roles_with_nodes, severity=ReportItemSeverity.INFO
+):
+    """
+    Resource is running on some nodes. Taken from cluster state.
+
+    string resource_id represent the resource
+    list of tuple roles_with_nodes contain pairs (role, node)
+    list started contain node names on which is resource started
+    list master contain node names on which is resource as master
+    list slave contain node names on which is resource as slave
+    """
+    return ReportItem(
+        report_codes.RESOURCE_RUN_ON_NODES,
+        severity,
+        info={
+            "resource_id": resource_id,
+            "roles_with_nodes": roles_with_nodes,
+        }
+    )
+
+def resource_does_not_run(resource_id, severity=ReportItemSeverity.INFO):
+    """
+    Resource is not running on any node. Taken from cluster state.
+
+    string resource_id represent the resource
+    """
+    return ReportItem(
+        report_codes.RESOURCE_DOES_NOT_RUN,
+        severity,
+        info={
+            "resource_id": resource_id,
+        }
     )
 
 def cib_load_error(reason):

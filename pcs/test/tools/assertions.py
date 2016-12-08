@@ -143,14 +143,22 @@ class ExtendedAssertionsMixin(object):
                     )
 
 
-def assert_xml_equal(expected_xml, got_xml):
+def assert_xml_equal(expected_xml, got_xml, context_explanation=""):
     checker = LXMLOutputChecker()
     if not checker.check_output(expected_xml, got_xml, 0):
-        raise AssertionError(checker.output_difference(
-            doctest.Example("", expected_xml),
-            got_xml,
-            0
-        ))
+        raise AssertionError(
+            "{context_explanation}{xml_diff}".format(
+                context_explanation=(
+                    "" if not context_explanation
+                    else "\n{0}\n".format(context_explanation)
+                ),
+                xml_diff=checker.output_difference(
+                    doctest.Example("", expected_xml),
+                    got_xml,
+                    0
+                )
+            )
+        )
 
 def assert_report_item_equal(real_report_item, report_item_info):
     if not __report_item_equal(real_report_item, report_item_info):

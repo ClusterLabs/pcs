@@ -109,6 +109,32 @@ def id_not_found(info):
         )
     )
 
+def resource_run_on_nodes(info):
+    role_label_map = {
+        "Started": "running",
+    }
+    state_info = {}
+    for state, node in info["roles_with_nodes"]:
+        state_info.setdefault(
+            role_label_map.get(state, state.lower()),
+            []
+        ).append(node)
+
+    return "resource '{resource_id}' is {detail_list}".format(
+        resource_id=info["resource_id"],
+        detail_list="; ".join([
+            "{run_type} on node{s} {node_list}".format(
+                run_type=run_type,
+                s="s" if len(node_list) > 1 else "",
+                node_list=", ".join(
+                    ["'{0}'".format(node) for node in node_list]
+                )
+            )
+            for run_type, node_list in state_info.items()
+        ])
+    )
+
+
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
 #If it is necessary to put the force text inside the string then the callable
@@ -624,6 +650,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                 " from {original_interval}"
                 " to {adapted_interval} to make the operation unique"
         ).format(**info)
+    ,
+
+    codes.RESOURCE_RUN_ON_NODES:  resource_run_on_nodes,
+
+    codes.RESOURCE_DOES_NOT_RUN: lambda info:
+        "resource '{resource_id}' is not running on any node"
+        .format(**info)
     ,
 
     codes.NODE_NOT_FOUND: lambda info:
