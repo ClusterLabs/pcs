@@ -558,6 +558,13 @@ def node_communication_error_timed_out(
         forceable=forceable
     )
 
+def node_communication_proxy_is_set():
+    """
+    Warning when connection failed and there is proxy set in environment
+    variables
+    """
+    return ReportItem.warning(report_codes.NODE_COMMUNICATION_PROXY_IS_SET)
+
 
 def corosync_config_distribution_started():
     """

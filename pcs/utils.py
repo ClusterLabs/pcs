@@ -43,6 +43,7 @@ from pcs.lib.external import (
     enable_service,
     EnableServiceError,
     is_cman_cluster as lib_is_cman_cluster,
+    is_proxy_set,
     is_service_enabled,
     is_service_running,
     is_systemctl,
@@ -425,6 +426,11 @@ def sendHTTPRequest(
 
         return output
     except pycurl.error as e:
+        if is_proxy_set(os.environ):
+            print(
+                "Warning: Proxy is set in environment variables, try "
+                "disabling it"
+            )
         dummy_errno, reason = e.args
         if "--debug" in pcs_options:
             print("Response Reason: {0}".format(reason))
@@ -978,6 +984,13 @@ def run_pcsdcli(command, data=None):
         # check if some requests timed out, if so print message about it
         if "error: operation_timedout" in output:
             print("Error: Operation timed out")
+        # check if there are any connection failures due to proxy in pcsd and
+        # print warning if so
+        proxy_msg = (
+            'Proxy is set in environment variables, try disabling it'
+        )
+        if proxy_msg in output:
+            print("Warning: {0}".format(proxy_msg))
 
     except ValueError:
         output_json = {

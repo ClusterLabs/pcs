@@ -548,6 +548,63 @@ class NodeCommunicatorTest(TestCase):
             )
         )
 
+    @mock.patch("pcs.lib.external.os")
+    def test_success_proxy_set(self, mock_os, mock_pycurl_init):
+        host = "test_host"
+        request = "test_request"
+        data = '{"key1": "value1", "key2": ["value2a", "value2b"]}'
+        expected_response_data = "expected response data"
+        expected_response_code = 200
+        mock_os.environ = {
+            "all_proxy": "proxy1",
+            "https_proxy": "proxy2",
+            "HTTPS_PROXY": "proxy3",
+        }
+        mock_pycurl_obj = MockCurl(
+            {
+                pycurl.RESPONSE_CODE: expected_response_code,
+            },
+            expected_response_data.encode("utf-8"),
+            []
+        )
+        mock_pycurl_init.return_value = mock_pycurl_obj
+
+        comm = lib.NodeCommunicator(self.mock_logger, self.mock_reporter, {})
+        real_response = comm.call_host(host, request, data)
+        self.assertEqual(expected_response_data, real_response)
+
+        expected_opts = {
+            pycurl.URL: self.fixture_url(host, request).encode("utf-8"),
+            pycurl.SSL_VERIFYHOST: 0,
+            pycurl.SSL_VERIFYPEER: 0,
+            pycurl.COPYPOSTFIELDS: data.encode("utf-8"),
+            pycurl.TIMEOUT_MS: settings.default_request_timeout * 1000,
+        }
+
+        self.assertLessEqual(
+            set(expected_opts.items()), set(mock_pycurl_obj.opts.items())
+        )
+
+        logger_calls = self.fixture_logger_calls(
+            self.fixture_url(host, request),
+            data,
+            expected_response_code,
+            expected_response_data,
+            ""
+        )
+        self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
+        self.mock_logger.debug.assert_has_calls(logger_calls)
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            self.fixture_report_item_list(
+                self.fixture_url(host, request),
+                data,
+                expected_response_code,
+                expected_response_data,
+                ""
+            )
+        )
+
     def test_ipv6(self, mock_pycurl_init):
         host = "cafe::1"
         request = "test_request"
@@ -869,6 +926,67 @@ class NodeCommunicatorTest(TestCase):
                     "reason": expected_reason,
                 }
             )]
+            +
+            self.fixture_report_item_list_debug(expected_url, "")
+        )
+
+    @mock.patch("pcs.lib.external.os")
+    def test_connection_error_proxy_set(self, mock_os, mock_pycurl_init):
+        host = "test_host"
+        request = "test_request"
+        data = None
+        expected_reason = "expected reason"
+        expected_url = self.fixture_url(host, request)
+        mock_os.environ = {
+            "all_proxy": "proxy1",
+            "https_proxy": "proxy2",
+            "HTTPS_PROXY": "proxy3",
+        }
+        mock_pycurl_obj = MockCurl(
+            {}, b"", [], pycurl.error(pycurl.E_SEND_ERROR, expected_reason)
+        )
+        mock_pycurl_init.return_value = mock_pycurl_obj
+
+        comm = lib.NodeCommunicator(self.mock_logger, self.mock_reporter, {})
+        self.assertRaises(
+            lib.NodeConnectionException,
+            lambda: comm.call_host(host, request, data)
+        )
+
+        self.assertTrue(pycurl.COOKIE not in mock_pycurl_obj.opts)
+        self.assertTrue(pycurl.COPYPOSTFIELDS not in mock_pycurl_obj.opts)
+        logger_calls = [
+            self.fixture_logger_call_send(expected_url, data),
+            mock.call(
+                "Unable to connect to {0} ({1})".format(host, expected_reason)
+            ),
+            self.fixture_logger_call_debug_data(expected_url, "")
+        ]
+        self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
+        self.mock_logger.debug.assert_has_calls(logger_calls)
+        self.mock_logger.warning.assert_has_calls([mock.call("Proxy is set")])
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            self.fixture_report_item_list_send(
+                self.fixture_url(host, request),
+                data
+            )
+            +
+            [
+                (
+                   severity.DEBUG,
+                   report_codes.NODE_COMMUNICATION_NOT_CONNECTED,
+                   {
+                       "node": host,
+                       "reason": expected_reason,
+                   }
+                ),
+                (
+                    severity.WARNING,
+                    report_codes.NODE_COMMUNICATION_PROXY_IS_SET,
+                    {}
+                )
+            ]
             +
             self.fixture_report_item_list_debug(expected_url, "")
         )
@@ -1778,4 +1896,62 @@ class EnsureIsSystemctlTest(TestCase):
                 {}
             )
         )
+
+
+class IsProxySetTest(TestCase):
+    def test_without_proxy(self):
+        self.assertFalse(lib.is_proxy_set({
+            "var1": "value",
+            "var2": "val",
+        }))
+
+    def test_multiple(self):
+        self.assertTrue(lib.is_proxy_set({
+            "var1": "val",
+            "https_proxy": "test.proxy",
+            "var2": "val",
+            "all_proxy": "test2.proxy",
+            "var3": "val",
+        }))
+
+    def test_empty_string(self):
+        self.assertFalse(lib.is_proxy_set({
+            "all_proxy": "",
+        }))
+
+    def test_http_proxy(self):
+        self.assertFalse(lib.is_proxy_set({
+            "http_proxy": "test.proxy",
+        }))
+
+    def test_HTTP_PROXY(self):
+        self.assertFalse(lib.is_proxy_set({
+            "HTTP_PROXY": "test.proxy",
+        }))
+
+    def test_https_proxy(self):
+        self.assertTrue(lib.is_proxy_set({
+            "https_proxy": "test.proxy",
+        }))
+
+    def test_HTTPS_PROXY(self):
+        self.assertTrue(lib.is_proxy_set({
+            "HTTPS_PROXY": "test.proxy",
+        }))
+
+    def test_all_proxy(self):
+        self.assertTrue(lib.is_proxy_set({
+            "all_proxy": "test.proxy",
+        }))
+
+    def test_ALL_PROXY(self):
+        self.assertTrue(lib.is_proxy_set({
+            "ALL_PROXY": "test.proxy",
+        }))
+
+    def test_no_proxy(self):
+        self.assertTrue(lib.is_proxy_set({
+            "no_proxy": "*",
+            "all_proxy": "test.proxy",
+        }))
 

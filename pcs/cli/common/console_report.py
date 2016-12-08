@@ -362,6 +362,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.NODE_COMMUNICATION_PROXY_IS_SET:
+        "Proxy is set in environment variables, try disabling it"
+    ,
+
     codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED:
         "Sending updated corosync.conf to nodes..."
     ,

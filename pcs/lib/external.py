@@ -341,6 +341,20 @@ def is_cman_cluster(runner):
     return match is not None and match.group(1) == "1"
 
 
+def is_proxy_set(env_dict):
+    """
+    Returns True whenever any of proxy environment variables (https_proxy,
+    HTTPS_PROXY, all_proxy, ALL_PROXY) are set in env_dict. False otherwise.
+
+    env_dict -- environment variables in dict
+    """
+    proxy_list = ["https_proxy", "all_proxy"]
+    for var in proxy_list + [v.upper() for v in proxy_list]:
+        if env_dict.get(var, "") != "":
+            return True
+    return False
+
+
 class CommandRunner(object):
     def __init__(self, logger, reporter, env_vars=None):
         self._logger = logger
@@ -648,6 +662,14 @@ class NodeCommunicator(object):
                 )
             return response_data
         except pycurl.error as e:
+            # In pycurl versions lower then 7.19.3 it is not possible to set
+            # NOPROXY option. Therefore for the proper support of proxy settings
+            # we have to use environment variables.
+            if is_proxy_set(os.environ):
+                self._logger.warning("Proxy is set")
+                self._reporter.process(
+                    reports.node_communication_proxy_is_set()
+                )
             errno, reason = e.args
             msg = "Unable to connect to {node} ({reason})"
             self._logger.debug(msg.format(node=host, reason=reason))

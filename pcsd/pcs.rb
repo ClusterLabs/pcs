@@ -481,11 +481,27 @@ def send_request(
   if return_code == :ok
     return req.response_code, req.response_body
   else
+    if is_proxy_set(ENV)
+      $logger.warn(
+        'Proxy is set in environment variables, try disabling it'
+      )
+    end
     $logger.info(
       "No response from: #{node} request: #{request}, error: #{return_code}"
     )
     return 400,'{"noresponse":true}'
   end
+end
+
+def is_proxy_set(env_var_hash)
+  proxy_list = ["https_proxy", "all_proxy"]
+  proxy_list += proxy_list.map {|item| item.upcase}
+  proxy_list.each { |var|
+    if env_var_hash[var] and env_var_hash[var] != ''
+      return true
+    end
+  }
+  return false
 end
 
 def add_node(auth_user, new_nodename, all=false, auto_start=true, watchdog=nil)

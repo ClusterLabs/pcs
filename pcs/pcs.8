@@ -791,6 +791,9 @@ Set the stonith\-enabled property to false on the cluster (which disables stonit
 .TP
 EDITOR
  Path to a plain\-text editor. This is used when pcs is requested to present a text for the user to edit.
+.TP
+no_proxy, https_proxy, all_proxy, NO_PROXY, HTTPS_PROXY, ALL_PROXY
+ These environment variables (listed according to their priorities) control how pcs handles proxy servers when connecting to cluster nodes. See curl(1) man page for details.
 .SH SEE ALSO
 http://clusterlabs.org/doc/
 
