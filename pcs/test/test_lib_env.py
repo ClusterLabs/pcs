@@ -143,6 +143,14 @@ class LibraryEnvironmentTest(TestCase):
         )
         self.assertEqual(1, mock_get_cib_xml.call_count)
         self.assertEqual(1, mock_ensure_cib_version.call_count)
+        assert_report_item_list_equal(
+            env.report_processor.report_item_list,
+            [(
+                severity.INFO,
+                report_codes.CIB_UPGRADE_SUCCESSFUL,
+                {}
+            )]
+        )
         self.assertTrue(env.cib_upgraded)
 
     @patch_env("ensure_cib_version")
@@ -233,14 +241,6 @@ class LibraryEnvironmentTest(TestCase):
         mock_replace_cib.assert_called_once_with(
             "mock cmd runner",
             '<cib/>'
-        )
-        assert_report_item_list_equal(
-            env.report_processor.report_item_list,
-            [(
-                severity.INFO,
-                report_codes.CIB_UPGRADE_SUCCESSFUL,
-                {}
-            )]
         )
         self.assertFalse(env.cib_upgraded)
 

@@ -121,15 +121,17 @@ class LibraryEnvironment(object):
             )
             if upgraded_cib is not None:
                 cib = upgraded_cib
+                if self.is_cib_live and not self._cib_upgraded:
+                    self.report_processor.process(
+                        reports.cib_upgrade_successful()
+                    )
                 self._cib_upgraded = True
         return cib
 
     def _push_cib_xml(self, cib_data):
         if self.is_cib_live:
             replace_cib_configuration_xml(self.cmd_runner(), cib_data)
-            if self._cib_upgraded:
-                self._cib_upgraded = False
-                self.report_processor.process(reports.cib_upgrade_successful())
+            self._cib_upgraded = False
         else:
             self._cib_data = cib_data
 
