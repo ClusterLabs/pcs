@@ -493,13 +493,31 @@ class QdeviceReloadOnNodesTest(TestCase):
                 raise NodeAuthenticationException(
                     node.label, "command", "HTTP error: 401"
                 )
-        mock_remote_stop.side_effect = raiser
+        mock_remote_start.side_effect = raiser
 
         assert_raise_library_error(
             lambda: lib.qdevice_reload_on_nodes(
                 self.mock_communicator,
                 self.mock_reporter,
                 node_addrs_list
+            ),
+            # why the same error twice?
+            # 1. Tested piece of code calls a function which puts an error
+            # into the reporter. The reporter raises an exception. The
+            # exception is caught in the tested piece of code, stored, and
+            # later put to reporter again.
+            # 2. Mock reporter remembers everything that goes through it
+            # and by the machanism described in 1 the error goes througt it
+            # twice.
+            (
+                severity.ERROR,
+                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                {
+                    "node": nodes[1],
+                    "command": "command",
+                    "reason" : "HTTP error: 401",
+                },
+                report_codes.SKIP_OFFLINE_NODES
             ),
             (
                 severity.ERROR,

@@ -14,6 +14,8 @@ from pcs.lib.errors import LibraryError
 _BOOLEAN_TRUE = frozenset(["true", "on", "yes", "y", "1"])
 _BOOLEAN_FALSE = frozenset(["false", "off", "no", "n", "0"])
 _BOOLEAN = _BOOLEAN_TRUE | _BOOLEAN_FALSE
+_ID_FIRST_CHAR_NOT_RE = re.compile("[^a-zA-Z_]")
+_ID_REST_CHARS_NOT_RE = re.compile("[^a-zA-Z0-9_.-]")
 SCORE_INFINITY = "INFINITY"
 
 
@@ -80,7 +82,7 @@ def get_valid_timeout_seconds(timeout_candidate):
         raise LibraryError(reports.invalid_timeout(timeout_candidate))
     return wait_timeout
 
-def validate_id(id_candidate, description="id"):
+def validate_id(id_candidate, description="id", reporter=None):
     """
     Validate a pacemaker id, raise LibraryError on invalid id.
 
@@ -91,18 +93,34 @@ def validate_id(id_candidate, description="id"):
     # http://www.w3.org/TR/REC-xml-names/#NT-NCName
     # http://www.w3.org/TR/REC-xml/#NT-Name
     if len(id_candidate) < 1:
-        raise LibraryError(reports.invalid_id_is_empty(
-            id_candidate, description
-        ))
-    first_char_re = re.compile("[a-zA-Z_]")
-    if not first_char_re.match(id_candidate[0]):
-        raise LibraryError(reports.invalid_id_bad_char(
+        report = reports.invalid_id_is_empty(id_candidate, description)
+        if reporter:
+            reporter.add(report)
+            return
+        else:
+            raise LibraryError(report)
+    if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]):
+        report = reports.invalid_id_bad_char(
             id_candidate, description, id_candidate[0], True
-        ))
-    char_re = re.compile("[a-zA-Z0-9_.-]")
+        )
+        if reporter:
+            reporter.add(report)
+        else:
+            raise LibraryError(report)
     for char in id_candidate[1:]:
-        if not char_re.match(char):
-            raise LibraryError(reports.invalid_id_bad_char(
+        if _ID_REST_CHARS_NOT_RE.match(char):
+            report = reports.invalid_id_bad_char(
                 id_candidate, description, char, False
-            ))
+            )
+            if reporter:
+                reporter.add(report)
+            else:
+                raise LibraryError(report)
 
+def sanitize_id(id_candidate, replacement=""):
+    if not id_candidate:
+        return id_candidate
+    return "".join([
+        "" if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]) else id_candidate[0],
+        _ID_REST_CHARS_NOT_RE.sub(replacement, id_candidate[1:])
+    ])

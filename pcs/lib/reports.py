@@ -119,6 +119,20 @@ def invalid_option(
         }
     )
 
+def invalid_option_type(option_name, allowed_types):
+    """
+    specified value is not of a valid type for the option
+    string option_name -- option name whose value is not of a valid type
+    list|string allowed_types -- list of allowed types or string description
+    """
+    return ReportItem.error(
+        report_codes.INVALID_OPTION_TYPE,
+        info={
+            "option_name": option_name,
+            "allowed_types": allowed_types,
+        },
+    )
+
 def invalid_option_value(
     option_name, option_value, allowed_values,
     severity=ReportItemSeverity.ERROR, forceable=None
@@ -833,6 +847,22 @@ def resource_does_not_exist(resource_id):
         }
     )
 
+def stonith_resources_do_not_exist(
+    stonith_ids, severity=ReportItemSeverity.ERROR, forceable=None
+):
+    """
+    specified stonith resource doesn't exist (e.g. when creating in constraints)
+    iterable stoniths -- list of specified stonith id
+    """
+    return ReportItem(
+        report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
+        severity,
+        info={
+            "stonith_ids": stonith_ids,
+        },
+        forceable=forceable
+    )
+
 def cib_load_error(reason):
     """
     cannot load cib from cibadmin, cibadmin exited with non-zero code
@@ -992,14 +1022,18 @@ def resource_cleanup_too_time_consuming(threshold):
         forceable=report_codes.FORCE_LOAD_THRESHOLD
     )
 
-def node_not_found(node):
+def node_not_found(node, severity=ReportItemSeverity.ERROR, forceable=None):
     """
     specified node does not exist
     node string specified node
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.NODE_NOT_FOUND,
-        info={"node": node}
+        severity,
+        info={
+            "node": node,
+        },
+        forceable=forceable
     )
 
 def pacemaker_local_node_name_not_found(reason):
@@ -1797,5 +1831,33 @@ def cluster_conf_read_error(path, reason):
         info={
             "path": path,
             "reason": reason,
+        }
+    )
+
+def fencing_level_already_exists(level, target_type, target_value, devices):
+    """
+    Fencing level already exists, it cannot be created
+    """
+    return ReportItem.error(
+        report_codes.CIB_FENCING_LEVEL_ALREADY_EXISTS,
+        info={
+            "level": level,
+            "target_type": target_type,
+            "target_value": target_value,
+            "devices": devices,
+        }
+    )
+
+def fencing_level_does_not_exist(level, target_type, target_value, devices):
+    """
+    Fencing level does not exist, it cannot be updated or deleted
+    """
+    return ReportItem.error(
+        report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
+        info={
+            "level": level,
+            "target_type": target_type,
+            "target_value": target_value,
+            "devices": devices,
         }
     )

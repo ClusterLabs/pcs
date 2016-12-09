@@ -7,9 +7,10 @@ from __future__ import (
 
 from pcs.test.tools.pcs_unittest import TestCase
 from pcs.cli.common.parse_args import(
-    split_list,
-    prepare_options,
     group_by_keywords,
+    parse_typed_arg,
+    prepare_options,
+    split_list,
 )
 from pcs.cli.common.errors import CmdLineInputError
 
@@ -124,3 +125,34 @@ class SplitByKeywords(TestCase):
             set(["first", "second"]),
             keyword_repeat_allowed=False,
         ))
+
+
+class ParseTypedArg(TestCase):
+    def assert_parse(self, arg, parsed):
+        self.assertEqual(
+            parse_typed_arg(arg, ["t0", "t1", "t2"], "t0"),
+            parsed
+        )
+
+    def test_no_type(self):
+        self.assert_parse("value", ("t0", "value"))
+
+    def test_escape(self):
+        self.assert_parse("%value", ("t0", "value"))
+
+    def test_allowed_type(self):
+        self.assert_parse("t1%value", ("t1", "value"))
+
+    def test_bad_type(self):
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: self.assert_parse("tX%value", "aaa")
+        )
+
+    def test_escape_delimiter(self):
+        self.assert_parse("%%value", ("t0", "%value"))
+        self.assert_parse("%val%ue", ("t0", "val%ue"))
+
+    def test_more_delimiters(self):
+        self.assert_parse("t2%va%lu%e", ("t2", "va%lu%e"))
+        self.assert_parse("t2%%va%lu%e", ("t2", "%va%lu%e"))

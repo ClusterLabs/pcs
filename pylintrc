@@ -67,7 +67,7 @@ disable=no-name-in-module, import-error, nonstandard-exception, unused-argument,
 # Maximum number of locals for function / method body
 max-locals=48
 # Maximum number of statements in function / method body
-max-statements=211
+max-statements=212
 # Maximum number of branch for function / method body
 max-branches=68
 # Maximum number of public methods for a class (see R0904).

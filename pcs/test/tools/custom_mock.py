@@ -5,20 +5,18 @@ from __future__ import (
     unicode_literals,
 )
 
+from pcs.cli.common.reports import LibraryReportProcessorToConsole
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 
-class MockLibraryReportProcessor(object):
-    def __init__(self):
-        self.report_item_list = []
+class MockLibraryReportProcessor(LibraryReportProcessorToConsole):
+    @property
+    def report_item_list(self):
+        return self.items
 
-    def process(self, report_item):
-        self.process_list([report_item])
-
-    def process_list(self, report_item_list):
-        self.report_item_list.extend(report_item_list)
-        errors = [
-            item for item in report_item_list
-            if item.severity == ReportItemSeverity.ERROR
-        ]
+    def send(self):
+        errors = []
+        for report_item in self.items:
+            if report_item.severity == ReportItemSeverity.ERROR:
+                errors.append(report_item)
         if errors:
             raise LibraryError(*errors)

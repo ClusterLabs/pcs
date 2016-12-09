@@ -782,26 +782,35 @@ Commands:
         devices will be cleaned up.  If a node is not specified then resources
         on all nodes will be cleaned up.
 
-    level
+    level [config]
         Lists all of the fencing levels currently configured.
 
-    level add <level> <node> <devices>
-        Add the fencing level for the specified node with a comma separated
-        list of devices (stonith ids) to attempt for that node at that level.
-        Fence levels are attempted in numerical order (starting with 1) if
-        a level succeeds (meaning all devices are successfully fenced in that
-        level) then no other levels are tried, and the node is considered
-        fenced.
+    level add <level> <target> <stonith id> [stonith id]...
+        Add the fencing level for the specified target with the list of stonith
+        devices to attempt for that target at that level. Fence levels are
+        attempted in numerical order (starting with 1). If a level succeeds
+        (meaning all devices are successfully fenced in that level) then no
+        other levels are tried, and the target is considered fenced.
+        Target may be a node name <node_name> or %<node_name> or
+        node%<node_name>, a node name regular expression regexp%<node_pattern>
+        or a node attribute value attrib%<name>=<value>.
 
-    level remove <level> [node id] [stonith id] ... [stonith id]
-        Removes the fence level for the level, node and/or devices specified.
-        If no nodes or devices are specified then the fence level is removed.
+    level remove <level> [target] [stonith id]...
+        Removes the fence level for the level, target and/or devices specified.
+        If no target or devices are specified then the fence level is removed.
+        Target may be a node name <node_name> or %<node_name> or
+        node%<node_name>, a node name regular expression regexp%<node_pattern>
+        or a node attribute value attrib%<name>=<value>.
 
-    level clear [node|stonith id(s)]
-        Clears the fence levels on the node (or stonith id) specified or clears
-        all fence levels if a node/stonith id is not specified.  If more than
-        one stonith id is specified they must be separated by a comma and no
-        spaces.  Example: pcs stonith level clear dev_a,dev_b
+    level clear [target|stonith id(s)]
+        Clears the fence levels on the target (or stonith id) specified or
+        clears all fence levels if a target/stonith id is not specified. If
+        more than one stonith id is specified they must be separated by a comma
+        and no spaces.
+        Target may be a node name <node_name> or %<node_name> or
+        node%<node_name>, a node name regular expression regexp%<node_pattern>
+        or a node attribute value attrib%<name>=<value>.
+        Example: pcs stonith level clear dev_a,dev_b
 
     level verify
         Verifies all fence devices and nodes specified in fence levels exist.

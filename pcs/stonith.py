@@ -5,9 +5,8 @@ from __future__ import (
     unicode_literals,
 )
 
-import sys
-import re
 import json
+import sys
 
 from pcs import (
     resource,
@@ -15,8 +14,15 @@ from pcs import (
     utils,
 )
 from pcs.cli.common import parse_args
+from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.reports import build_report_message
+from pcs.cli.fencing_topology import target_type_map_cli_to_lib
+from pcs.common import report_codes
+from pcs.common.fencing_topology import (
+    TARGET_TYPE_NODE,
+    TARGET_TYPE_REGEXP,
+    TARGET_TYPE_ATTRIBUTE,
+)
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 import pcs.lib.resource_agent as lib_ra
 
@@ -52,9 +58,13 @@ def stonith_cmd(argv):
                 raise CmdLineInputError()
         elif sub_cmd == "show":
             resource.resource_show(argv_next, True)
-            stonith_level([])
+            levels = stonith_level_config_to_str(
+                lib.fencing_topology.get_config()
+            )
+            if levels:
+                print("\n".join(indent(levels, 1)))
         elif sub_cmd == "level":
-            stonith_level(argv_next)
+            stonith_level_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "fence":
             stonith_fence(argv_next)
         elif sub_cmd == "cleanup":
@@ -72,6 +82,30 @@ def stonith_cmd(argv):
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(e, "stonith", sub_cmd)
 
+def stonith_level_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        sub_cmd, argv_next = "config", []
+    else:
+        sub_cmd, argv_next = argv[0], argv[1:]
+
+    try:
+        if sub_cmd == "add":
+            stonith_level_add_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "clear":
+            stonith_level_clear_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "config":
+            stonith_level_config_cmd(lib, argv_next, modifiers)
+        elif sub_cmd in ["remove", "delete"]:
+            stonith_level_remove_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "verify":
+            stonith_level_verify_cmd(lib, argv_next, modifiers)
+        else:
+            sub_cmd = ""
+            raise CmdLineInputError()
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "stonith", "level {0}".format(sub_cmd)
+        )
 
 def stonith_list_available(lib, argv, modifiers):
     if len(argv) > 1:
@@ -153,194 +187,179 @@ def stonith_create(argv):
         group=utils.pcs_options.get("--group", None)
     )
 
-def stonith_level(argv):
-    if len(argv) == 0:
-        stonith_level_show()
+def stonith_level_parse_node(arg):
+    target_type_candidate, target_value_candidate = parse_args.parse_typed_arg(
+        arg,
+        target_type_map_cli_to_lib.keys(),
+        "node"
+    )
+    target_type = target_type_map_cli_to_lib[target_type_candidate]
+    if target_type == TARGET_TYPE_ATTRIBUTE:
+        target_value = parse_args.split_option(target_value_candidate)
+    else:
+        target_value = target_value_candidate
+    return target_type, target_value
+
+def stonith_level_normalize_devices(argv):
+    # normalize devices - previously it was possible to delimit devices by both
+    # a comma and a space
+    return ",".join(argv).split(",")
+
+def stonith_level_add_cmd(lib, argv, modifiers):
+    if len(argv) < 3:
+        raise CmdLineInputError()
+    target_type, target_value = stonith_level_parse_node(argv[1])
+    lib.fencing_topology.add_level(
+        argv[0],
+        target_type,
+        target_value,
+        stonith_level_normalize_devices(argv[2:]),
+        force_device=modifiers["force"],
+        force_node=modifiers["force"]
+    )
+
+def stonith_level_clear_cmd(lib, argv, modifiers):
+    if len(argv) > 1:
+        raise CmdLineInputError()
+
+    if not argv:
+        lib.fencing_topology.remove_all_levels()
         return
 
-    subcmd = argv.pop(0)
+    target_type, target_value = stonith_level_parse_node(argv[0])
+    # backward compatibility mode
+    # Command parameters are: node, stonith-list
+    # Both the node and the stonith list are optional. If the node is ommited
+    # and the stonith list is present, there is no way to figure it out, since
+    # there is no specification of what the parameter is. Hence the pre-lib
+    # code tried both. It deleted all levels having the first parameter as
+    # either a node or a device list. Since it was only possible to specify
+    # node as a target back then, this is enabled only in that case.
+    report_item_list = []
+    try:
+        lib.fencing_topology.remove_levels_by_params(
+            None,
+            target_type,
+            target_value,
+            None,
+            # pre-lib code didn't return any error when no level was found
+            ignore_if_missing=True
+        )
+    except LibraryError as e:
+        report_item_list.extend(e.args)
+    if target_type == TARGET_TYPE_NODE:
+        try:
+            lib.fencing_topology.remove_levels_by_params(
+                None,
+                None,
+                None,
+                argv[0].split(","),
+                # pre-lib code didn't return any error when no level was found
+                ignore_if_missing=True
+            )
+        except LibraryError as e:
+            report_item_list.extend(e.args)
+    if report_item_list:
+        raise LibraryError(*report_item_list)
 
-    if subcmd == "add":
-        if len(argv) < 3:
-            usage.stonith(["level add"])
-            sys.exit(1)
-        stonith_level_add(argv[0], argv[1], ",".join(argv[2:]))
-    elif subcmd in ["remove","delete"]:
-        if len(argv) < 1:
-            usage.stonith(["level remove"])
-            sys.exit(1)
+def stonith_level_config_to_str(config):
+    config_data = dict()
+    for level in config:
+        if level["target_type"] not in config_data:
+            config_data[level["target_type"]] = dict()
+        if level["target_value"] not in config_data[level["target_type"]]:
+            config_data[level["target_type"]][level["target_value"]] = []
+        config_data[level["target_type"]][level["target_value"]].append(level)
 
-        node = ""
-        devices = ""
-        if len(argv) == 2:
-            node = argv[1]
-        elif len(argv) > 2:
-            node = argv[1]
-            devices = ",".join(argv[2:])
+    lines = []
+    for target_type in [
+        TARGET_TYPE_NODE, TARGET_TYPE_REGEXP, TARGET_TYPE_ATTRIBUTE
+    ]:
+        if not target_type in config_data:
+            continue
+        for target_value in sorted(config_data[target_type].keys()):
+            lines.append("Target: {0}".format(
+                "=".join(target_value) if target_type == TARGET_TYPE_ATTRIBUTE
+                else target_value
+            ))
+            level_lines = []
+            for target_level in sorted(
+                config_data[target_type][target_value],
+                key=lambda level: level["level"]
+            ):
+                level_lines.append("Level {level} - {devices}".format(
+                    level=target_level["level"],
+                    devices=",".join(target_level["devices"])
+                ))
+            lines.extend(indent(level_lines))
+    return lines
 
-        stonith_level_rm(argv[0], node, devices)
-    elif subcmd == "clear":
-        if len(argv) == 0:
-            stonith_level_clear()
-        else:
-            stonith_level_clear(argv[0])
-    elif subcmd == "verify":
-        stonith_level_verify()
-    else:
-        print("pcs stonith level: invalid option -- '%s'" % subcmd)
-        usage.stonith(["level"])
-        sys.exit(1)
+def stonith_level_config_cmd(lib, argv, modifiers):
+    if len(argv) > 0:
+        raise CmdLineInputError()
+    lines = stonith_level_config_to_str(lib.fencing_topology.get_config())
+    # do not print \n when lines are empty
+    if lines:
+        print("\n".join(lines))
 
-def stonith_level_add(level, node, devices):
-    dom = utils.get_cib_dom()
+def stonith_level_remove_cmd(lib, argv, modifiers):
+    if len(argv) < 1:
+        raise CmdLineInputError()
+    target_type, target_value, devices = None, None, None
+    level = argv[0]
+    if len(argv) > 1:
+        target_type, target_value = stonith_level_parse_node(argv[1])
+    if len(argv) > 2:
+        devices = stonith_level_normalize_devices(argv[2:])
 
-    if not re.search(r'^\d+$', level) or re.search(r'^0+$', level):
-        utils.err("invalid level '{0}', use a positive integer".format(level))
-    level = level.lstrip('0')
-    if "--force" not in utils.pcs_options:
-        for dev in devices.split(","):
-            if not utils.is_stonith_resource(dev):
-                utils.err("%s is not a stonith id (use --force to override)" % dev)
-        corosync_nodes = []
-        if utils.hasCorosyncConf():
-            corosync_nodes = utils.getNodesFromCorosyncConf()
-        pacemaker_nodes = utils.getNodesFromPacemaker()
-        if node not in corosync_nodes and node not in pacemaker_nodes:
-            utils.err("%s is not currently a node (use --force to override)" % node)
+    try:
+        lib.fencing_topology.remove_levels_by_params(
+            level,
+            target_type,
+            target_value,
+            devices
+        )
+    except LibraryError as e:
+        # backward compatibility mode
+        # Command parameters are: level, node, stonith, stonith...
+        # Both the node and the stonith list are optional. If the node is
+        # ommited and the stonith list is present, there is no way to figure it
+        # out, since there is no specification of what the parameter is. Hence
+        # the pre-lib code tried both. First it assumed the first parameter is
+        # a node. If that fence level didn't exist, it assumed the first
+        # parameter is a device. Since it was only possible to specify node as
+        # a target back then, this is enabled only in that case.
+        if target_type != TARGET_TYPE_NODE:
+            raise e
+        level_not_found = False
+        for report_item in e.args:
+            if (
+                report_item.code
+                ==
+                report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
+            ):
+                level_not_found = True
+                break
+        if not level_not_found:
+            raise e
+        target_and_devices = [target_value]
+        if devices:
+            target_and_devices.extend(devices)
+        try:
+            lib.fencing_topology.remove_levels_by_params(
+                level,
+                None,
+                None,
+                target_and_devices
+            )
+        except LibraryError as e_second:
+            raise LibraryError(*(e.args + e_second.args))
 
-    ft = dom.getElementsByTagName("fencing-topology")
-    if len(ft) == 0:
-        conf = dom.getElementsByTagName("configuration")[0]
-        ft = dom.createElement("fencing-topology")
-        conf.appendChild(ft)
-    else:
-        ft = ft[0]
-
-    fls = ft.getElementsByTagName("fencing-level")
-    for fl in fls:
-        if fl.getAttribute("target") == node and fl.getAttribute("index") == level and fl.getAttribute("devices") == devices:
-            utils.err("unable to add fencing level, fencing level for node: %s, at level: %s, with device: %s already exists" % (node,level,devices))
-
-    new_fl = dom.createElement("fencing-level")
-    ft.appendChild(new_fl)
-    new_fl.setAttribute("target", node)
-    new_fl.setAttribute("index", level)
-    new_fl.setAttribute("devices", devices)
-    new_fl.setAttribute("id", utils.find_unique_id(dom, "fl-" + node +"-" + level))
-
-    utils.replace_cib_configuration(dom)
-
-def stonith_level_rm(level, node, devices):
-    dom = utils.get_cib_dom()
-
-    if devices != "":
-        node_devices_combo  = node + "," + devices
-    else:
-        node_devices_combo = node
-
-    ft = dom.getElementsByTagName("fencing-topology")
-    if len(ft) == 0:
-        utils.err("unable to remove fencing level, fencing level for node: %s, at level: %s, with device: %s doesn't exist" % (node,level,devices))
-    else:
-        ft = ft[0]
-
-    fls = ft.getElementsByTagName("fencing-level")
-
-    if node != "":
-        if devices != "":
-            found = False
-            for fl in fls:
-                if fl.getAttribute("target") == node and fl.getAttribute("index") == level and fl.getAttribute("devices") == devices:
-                    found = True
-                    break
-
-                if fl.getAttribute("index") == level and fl.getAttribute("devices") == node_devices_combo:
-                    found = True
-                    break
-
-            if found == False:
-                utils.err("unable to remove fencing level, fencing level for node: %s, at level: %s, with device: %s doesn't exist" % (node,level,devices))
-
-            fl.parentNode.removeChild(fl)
-        else:
-            for fl in fls:
-                if fl.getAttribute("index") == level and (fl.getAttribute("target") == node or fl.getAttribute("devices") == node):
-                    fl.parentNode.removeChild(fl)
-    else:
-        for fl in fls:
-            if fl.getAttribute("index") == level:
-                parent = fl.parentNode
-                parent.removeChild(fl)
-                if len(parent.getElementsByTagName("fencing-level")) == 0:
-                    parent.parentNode.removeChild(parent)
-                    break
-
-    utils.replace_cib_configuration(dom)
-
-def stonith_level_clear(node = None):
-    dom = utils.get_cib_dom()
-    ft = dom.getElementsByTagName("fencing-topology")
-
-    if len(ft) == 0:
-        return
-
-    if node == None:
-        ft = ft[0]
-        childNodes = ft.childNodes[:]
-        for node in childNodes:
-            node.parentNode.removeChild(node)
-    else:
-        fls = dom.getElementsByTagName("fencing-level")
-        if len(fls) == 0:
-            return
-        for fl in fls:
-            if fl.getAttribute("target") == node or fl.getAttribute("devices") == node:
-                fl.parentNode.removeChild(fl)
-
-    utils.replace_cib_configuration(dom)
-
-def stonith_level_verify():
-    dom = utils.get_cib_dom()
-    corosync_nodes = []
-    if utils.hasCorosyncConf():
-        corosync_nodes = utils.getNodesFromCorosyncConf()
-    pacemaker_nodes = utils.getNodesFromPacemaker()
-
-    fls = dom.getElementsByTagName("fencing-level")
-    for fl in fls:
-        node = fl.getAttribute("target")
-        devices = fl.getAttribute("devices")
-        for dev in devices.split(","):
-            if not utils.is_stonith_resource(dev):
-                utils.err("%s is not a stonith id" % dev)
-        if node not in corosync_nodes and node not in pacemaker_nodes:
-            utils.err("%s is not currently a node" % node)
-
-def stonith_level_show():
-    dom = utils.get_cib_dom()
-
-    node_levels = {}
-    fls = dom.getElementsByTagName("fencing-level")
-    for fl in fls:
-        node = fl.getAttribute("target")
-        level = fl.getAttribute("index")
-        devices = fl.getAttribute("devices")
-
-        if node in node_levels:
-            node_levels[node].append((level,devices))
-        else:
-            node_levels[node] = [(level,devices)]
-
-    if len(node_levels.keys()) == 0:
-        return
-
-    nodes = sorted(node_levels.keys())
-
-    for node in nodes:
-        print(" Node: " + node)
-        for level in sorted(node_levels[node], key=lambda x: int(x[0])):
-            print("  Level " + level[0] + " - " + level[1])
-
+def stonith_level_verify_cmd(lib, argv, modifiers):
+    if len(argv) > 0:
+        raise CmdLineInputError()
+    # raises LibraryError in case of problems, else we don't want to do anything
+    lib.fencing_topology.verify()
 
 def stonith_fence(argv):
     if len(argv) != 1:

@@ -1773,6 +1773,7 @@ def resource_remove(resource_id, output = True):
         ])
     return True
 
+# moved to pcs.lib.cib.fencing_topology.remove_device_from_all_levels
 def stonith_level_rm_device(cib_dom, stn_id):
     topology_el_list = cib_dom.getElementsByTagName("fencing-topology")
     if not topology_el_list:

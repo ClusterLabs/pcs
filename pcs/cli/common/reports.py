@@ -57,21 +57,44 @@ build_report_message = partial(build_message_from_report, __CODE_BUILDER_MAP)
 class LibraryReportProcessorToConsole(object):
     def __init__(self, debug=False):
         self.debug = debug
+        self.items = []
+
+    def add(self, report_item):
+        self.items.append(report_item)
+        return self
+
+    def add_list(self, report_item_list):
+        self.items.extend(report_item_list)
+        return self
+
+    @property
+    def errors_count(self):
+        return len([
+            item for item in self.items
+            if item.severity == ReportItemSeverity.ERROR
+        ])
 
     def process(self, report_item):
-        self.process_list([report_item])
+        self.add(report_item)
+        self.send()
 
     def process_list(self, report_item_list):
+        self.add_list(report_item_list)
+        self.send()
+
+    def send(self):
         errors = []
-        for report_item in report_item_list:
+        for report_item in self.items:
             if report_item.severity == ReportItemSeverity.ERROR:
                 errors.append(report_item)
             elif report_item.severity == ReportItemSeverity.WARNING:
                 print("Warning: " + build_report_message(report_item))
             elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
                 print(build_report_message(report_item))
+        self.items = []
         if errors:
             raise LibraryError(*errors)
+
 
 def _prepare_force_text(report_item):
     if report_item.forceable == codes.SKIP_OFFLINE_NODES:

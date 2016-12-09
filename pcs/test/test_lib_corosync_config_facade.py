@@ -1574,6 +1574,7 @@ quorum {
             )
         )
 
+        reporter = MockLibraryReportProcessor()
         assert_raise_library_error(
             lambda: facade.add_quorum_device(
                 reporter,

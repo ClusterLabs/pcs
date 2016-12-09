@@ -12,6 +12,11 @@ from pcs.cli.common.console_report import(
     format_optional,
 )
 from pcs.common import report_codes as codes
+from pcs.common.fencing_topology import (
+    TARGET_TYPE_NODE,
+    TARGET_TYPE_REGEXP,
+    TARGET_TYPE_ATTRIBUTE,
+)
 
 class IndentTest(TestCase):
     def test_indent_list_of_lines(self):
@@ -312,3 +317,130 @@ class InvalidResourceAgentNameTest(NameBuildTest):
                 "name": ":name",
             }
         )
+
+class InvalidOptionType(NameBuildTest):
+    code = codes.INVALID_OPTION_TYPE
+    def test_allowed_string(self):
+        self.assert_message_from_info(
+            "specified option name is not valid, use allowed types",
+            {
+                "option_name": "option name",
+                "allowed_types": "allowed types",
+            }
+        )
+
+    def test_allowed_list(self):
+        self.assert_message_from_info(
+            "specified option name is not valid, use allowed, types",
+            {
+                "option_name": "option name",
+                "allowed_types": ["allowed", "types"],
+            }
+        )
+
+class StonithResourcesDoNotExist(NameBuildTest):
+    code = codes.STONITH_RESOURCES_DO_NOT_EXIST
+    def test_success(self):
+        self.assert_message_from_info(
+            "Stonith resource(s) 'device1', 'device2' do not exist",
+            {
+                "stonith_ids": ["device1", "device2"],
+            }
+        )
+
+class FencingLevelAlreadyExists(NameBuildTest):
+    code = codes.CIB_FENCING_LEVEL_ALREADY_EXISTS
+    def test_target_node(self):
+        self.assert_message_from_info(
+            "Fencing level for 'nodeA' at level '1' with device(s) "
+                "'device1,device2' already exists",
+            {
+                "level": "1",
+                "target_type": TARGET_TYPE_NODE,
+                "target_value": "nodeA",
+                "devices": ["device1", "device2"],
+            }
+        )
+
+    def test_target_pattern(self):
+        self.assert_message_from_info(
+            "Fencing level for 'node-\d+' at level '1' with device(s) "
+                "'device1,device2' already exists",
+            {
+                "level": "1",
+                "target_type": TARGET_TYPE_REGEXP,
+                "target_value": "node-\d+",
+                "devices": ["device1", "device2"],
+            }
+        )
+
+    def test_target_attribute(self):
+        self.assert_message_from_info(
+            "Fencing level for 'name=value' at level '1' with device(s) "
+                "'device1,device2' already exists",
+            {
+                "level": "1",
+                "target_type": TARGET_TYPE_ATTRIBUTE,
+                "target_value": ("name", "value"),
+                "devices": ["device1", "device2"],
+            }
+        )
+
+class FencingLevelDoesNotExist(NameBuildTest):
+    code = codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
+    def test_full_info(self):
+        self.assert_message_from_info(
+            "Fencing level for 'nodeA' at level '1' with device(s) "
+                "'device1,device2' does not exist",
+            {
+                "level": "1",
+                "target_type": TARGET_TYPE_NODE,
+                "target_value": "nodeA",
+                "devices": ["device1", "device2"],
+            }
+        )
+
+    def test_only_level(self):
+        self.assert_message_from_info(
+            "Fencing level at level '1' does not exist",
+            {
+                "level": "1",
+                "target_type": None,
+                "target_value": None,
+                "devices": None,
+            }
+        )
+
+    def test_only_target(self):
+        self.assert_message_from_info(
+            "Fencing level for 'name=value' does not exist",
+            {
+                "level": None,
+                "target_type": TARGET_TYPE_ATTRIBUTE,
+                "target_value": ("name", "value"),
+                "devices": None,
+            }
+        )
+
+    def test_only_devices(self):
+        self.assert_message_from_info(
+            "Fencing level with device(s) 'device1,device2' does not exist",
+            {
+                "level": None,
+                "target_type": None,
+                "target_value": None,
+                "devices": ["device1", "device2"],
+            }
+        )
+
+    def test_no_info(self):
+        self.assert_message_from_info(
+            "Fencing level does not exist",
+            {
+                "level": None,
+                "target_type": None,
+                "target_value": None,
+                "devices": None,
+            }
+        )
+

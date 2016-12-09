@@ -18,6 +18,7 @@ from pcs.lib.commands import (
     acl,
     alert,
     booth,
+    fencing_topology,
     node,
     qdevice,
     quorum,
@@ -177,23 +178,6 @@ def load_module(env, middleware_factory, name):
             }
         )
 
-    if name == "node":
-        return bind_all(
-            env,
-            middleware.build(middleware_factory.cib),
-            {
-                "maintenance_unmaintenance_all":
-                    node.maintenance_unmaintenance_all,
-                "maintenance_unmaintenance_list":
-                    node.maintenance_unmaintenance_list,
-                "maintenance_unmaintenance_local":
-                    node.maintenance_unmaintenance_local,
-                "standby_unstandby_all": node.standby_unstandby_all,
-                "standby_unstandby_list": node.standby_unstandby_list,
-                "standby_unstandby_local": node.standby_unstandby_local,
-            }
-        )
-
     if name == 'constraint_colocation':
         return bind_all(
             env,
@@ -223,6 +207,37 @@ def load_module(env, middleware_factory, name):
                 'show': constraint_ticket.show,
                 'add': constraint_ticket.create,
                 'remove': constraint_ticket.remove,
+            }
+        )
+
+    if name == "fencing_topology":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "add_level": fencing_topology.add_level,
+                "get_config": fencing_topology.get_config,
+                "remove_all_levels": fencing_topology.remove_all_levels,
+                "remove_levels_by_params":
+                    fencing_topology.remove_levels_by_params,
+                "verify": fencing_topology.verify,
+            }
+        )
+
+    if name == "node":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "maintenance_unmaintenance_all":
+                    node.maintenance_unmaintenance_all,
+                "maintenance_unmaintenance_list":
+                    node.maintenance_unmaintenance_list,
+                "maintenance_unmaintenance_local":
+                    node.maintenance_unmaintenance_local,
+                "standby_unstandby_all": node.standby_unstandby_all,
+                "standby_unstandby_list": node.standby_unstandby_list,
+                "standby_unstandby_local": node.standby_unstandby_local,
             }
         )
 

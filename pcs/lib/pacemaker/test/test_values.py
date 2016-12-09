@@ -227,6 +227,32 @@ class ValidateIdTest(TestCase):
             report
         )
 
+class SanitizeId(TestCase):
+    def test_dont_change_valid_id(self):
+        self.assertEqual("d", lib.sanitize_id("d"))
+        self.assertEqual("dummy", lib.sanitize_id("dummy"))
+        self.assertEqual("dum0my", lib.sanitize_id("dum0my"))
+        self.assertEqual("dum-my", lib.sanitize_id("dum-my"))
+        self.assertEqual("dum.my", lib.sanitize_id("dum.my"))
+        self.assertEqual("dum_my", lib.sanitize_id("dum_my"))
+        self.assertEqual("_dummy", lib.sanitize_id("_dummy"))
+
+    def test_empty(self):
+        self.assertEqual("", lib.sanitize_id(""))
+
+    def test_invalid_id(self):
+        self.assertEqual("", lib.sanitize_id("0"))
+        self.assertEqual("", lib.sanitize_id("-"))
+        self.assertEqual("", lib.sanitize_id("."))
+        self.assertEqual("", lib.sanitize_id(":", "_"))
+
+        self.assertEqual("dummy", lib.sanitize_id("0dummy"))
+        self.assertEqual("dummy", lib.sanitize_id("-dummy"))
+        self.assertEqual("dummy", lib.sanitize_id(".dummy"))
+        self.assertEqual("dummy", lib.sanitize_id(":dummy", "_"))
+
+        self.assertEqual("dummy", lib.sanitize_id("dum:my"))
+        self.assertEqual("dum_my", lib.sanitize_id("dum:my", "_"))
 
 class IsScoreValueTest(TestCase):
     def test_returns_true_for_number(self):

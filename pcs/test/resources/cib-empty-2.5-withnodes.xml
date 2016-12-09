@@ -2,6 +2,8 @@
   <configuration>
     <crm_config/>
     <nodes>
+      <node id="1" uname="rh7-1"/>
+      <node id="2" uname="rh7-2"/>
     </nodes>
     <resources/>
     <constraints/>

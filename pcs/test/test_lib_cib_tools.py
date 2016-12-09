@@ -223,10 +223,6 @@ class GetNodes(CibToolsTest):
         )
 
 class GetAclsTest(CibToolsTest):
-    def setUp(self):
-        self.create_cib = get_xml_manipulation_creator_from_file(rc("cib-empty-1.2.xml"))
-        self.cib = self.create_cib()
-
     def test_success_if_exists(self):
         self.cib.append_to_first_tag_name(
             "configuration",
@@ -241,6 +237,23 @@ class GetAclsTest(CibToolsTest):
         acls = lib.get_acls(self.cib.tree)
         self.assertEqual("acls", acls.tag)
         self.assertEqual("configuration", acls.getparent().tag)
+
+class GetFencingTopology(CibToolsTest):
+    def test_success_if_exists(self):
+        self.cib.append_to_first_tag_name(
+            "configuration",
+            "<fencing-topology />"
+        )
+        self.assertEqual(
+            "fencing-topology",
+            lib.get_fencing_topology(self.cib.tree).tag
+        )
+
+    def test_success_if_missing(self):
+        ft = lib.get_fencing_topology(self.cib.tree)
+        self.assertEqual("fencing-topology", ft.tag)
+        self.assertEqual("configuration", ft.getparent().tag)
+
 
 @mock.patch('pcs.lib.cib.tools.does_id_exist')
 class ValidateIdDoesNotExistsTest(TestCase):

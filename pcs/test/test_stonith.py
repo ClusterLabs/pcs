@@ -7,21 +7,44 @@ from __future__ import (
 
 import shutil
 
+from pcs import utils
+from pcs.cli.common.console_report import indent
 from pcs.test.tools.assertions import AssertPcsMixin
 from pcs.test.tools.misc import (
     ac,
     get_test_resource as rc,
+    is_minimum_pacemaker_version,
+    outdent,
 )
-from pcs.test.tools.pcs_runner import pcs, PcsRunner
-from pcs.test.tools import pcs_unittest as unittest
+from pcs.test.tools.pcs_runner import (
+    pcs,
+    PcsRunner,
+)
+from pcs.test.tools.pcs_unittest import (
+    skipUnless,
+    TestCase
+)
 
-from pcs import utils
 
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
 
+# target-pattern attribute was added in pacemaker 1.1.13 with validate-with 2.3.
+# However in pcs this was implemented much later together with target-attribute
+# support. In that time pacemaker 1.1.12 was quite old. To keep tests simple we
+# do not run fencing topology tests on pacemaker older that 1.1.13 even if it
+# supports targeting by node names.
+fencing_level_supported = is_minimum_pacemaker_version(1, 1, 13)
+fencing_level_not_supported_msg = ("Pacemaker version is too old "
+    "(must be >= 1.1.13) to test fencing levels")
+# target-attribute and target-value attributes were added in pacemaker 1.1.14
+# with validate-with 2.4.
+fencing_level_attribute_supported = is_minimum_pacemaker_version(1, 1, 14)
+fencing_level_attribute_not_supported_msg = ("Pacemaker version is too old "
+    "(must be >= 1.1.14) to test fencing levels with attribute targets")
 
-class StonithDescribeTest(unittest.TestCase, AssertPcsMixin):
+
+class StonithDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(temp_cib)
 
@@ -64,7 +87,7 @@ Stonith options:
         )
 
 
-class StonithTest(unittest.TestCase):
+class StonithTest(TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
 
@@ -370,13 +393,18 @@ Quorum:
         self.assertEqual(returnVal, 0)
 
     def testFenceLevels(self):
+        shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
+
         output, returnVal = pcs(temp_cib, "stonith level remove 1 rh7-2 F1")
+        ac(output, """\
+Error: Fencing level for 'rh7-2' at level '1' with device(s) 'F1' does not exist
+Error: Fencing level at level '1' with device(s) 'rh7-2,F1' does not exist
+""")
         assert returnVal == 1
-        ac (output,'Error: unable to remove fencing level, fencing level for node: rh7-2, at level: 1, with device: F1 doesn\'t exist\n')
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ""
+        ac(output, "")
 
         output, returnVal = pcs(temp_cib, "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' ipaddr=ip login=lgn")
         assert returnVal == 0
@@ -399,28 +427,28 @@ Quorum:
         ac(output,"")
 
         output, returnVal = pcs(temp_cib, "stonith level add NaN rh7-1 F3,F4")
-        ac(output, "Error: invalid level 'NaN', use a positive integer\n")
+        ac(output, "Error: 'NaN' is not a valid level value, use a positive integer\n")
         assert returnVal == 1
 
         output, returnVal = pcs(temp_cib, "stonith level add -10 rh7-1 F3,F4")
-        ac(output, "Error: invalid level '-10', use a positive integer\n")
+        ac(output, "Error: '-10' is not a valid level value, use a positive integer\n")
         assert returnVal == 1
 
         output, returnVal = pcs(temp_cib, "stonith level add 10abc rh7-1 F3,F4")
-        ac(output, "Error: invalid level '10abc', use a positive integer\n")
+        ac(output, "Error: '10abc' is not a valid level value, use a positive integer\n")
         assert returnVal == 1
 
         output, returnVal = pcs(temp_cib, "stonith level add 0 rh7-1 F3,F4")
-        ac(output, "Error: invalid level '0', use a positive integer\n")
+        ac(output, "Error: '0' is not a valid level value, use a positive integer\n")
         assert returnVal == 1
 
         output, returnVal = pcs(temp_cib, "stonith level add 000 rh7-1 F3,F4")
-        ac(output, "Error: invalid level '000', use a positive integer\n")
+        ac(output, "Error: '000' is not a valid level value, use a positive integer\n")
         assert returnVal == 1
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 F3,F4")
+        ac(output, "")
         assert returnVal == 0
-        assert output == ""
 
         output, returnVal = pcs(temp_cib, "stonith level add 2 rh7-1 F5,F2")
         assert returnVal == 0
@@ -428,7 +456,7 @@ Quorum:
 
         output, returnVal = pcs(temp_cib, "stonith level add 2 rh7-1 F5,F2")
         assert returnVal == 1
-        assert output == 'Error: unable to add fencing level, fencing level for node: rh7-1, at level: 2, with device: F5,F2 already exists\n',[output]
+        ac(output, "Error: Fencing level for 'rh7-1' at level '2' with device(s) 'F5,F2' already exists\n")
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-2 F1")
         assert returnVal == 0
@@ -439,44 +467,66 @@ Quorum:
         assert output == ""
 
         output, returnVal = pcs(temp_cib, "stonith show")
-        assert returnVal == 0
         ac(output,"""\
  F1\t(stonith:fence_apc):\tStopped
  F2\t(stonith:fence_apc):\tStopped
  F3\t(stonith:fence_apc):\tStopped
  F4\t(stonith:fence_apc):\tStopped
  F5\t(stonith:fence_apc):\tStopped
- Node: rh7-1
+ Target: rh7-1
+   Level 1 - F3,F4
+   Level 2 - F5,F2
+ Target: rh7-2
+   Level 1 - F1
+   Level 2 - F2
+""")
+        assert returnVal == 0
+
+        output, returnVal = pcs(temp_cib, "stonith level")
+        ac(output, """\
+Target: rh7-1
   Level 1 - F3,F4
   Level 2 - F5,F2
- Node: rh7-2
+Target: rh7-2
   Level 1 - F1
   Level 2 - F2
 """)
-
-        output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 1 - F1\n  Level 2 - F2\n',[output]
 
         output, returnVal = pcs(temp_cib, "stonith level remove 1 rh7-2 F1")
+        ac(output, "")
         assert returnVal == 0
-        assert output == ""
 
         output, returnVal = pcs(temp_cib, "stonith level remove 1 rh7-2 F1")
+        ac(output, """\
+Error: Fencing level for 'rh7-2' at level '1' with device(s) 'F1' does not exist
+Error: Fencing level at level '1' with device(s) 'rh7-2,F1' does not exist
+""")
         assert returnVal == 1
-        assert output == 'Error: unable to remove fencing level, fencing level for node: rh7-2, at level: 1, with device: F1 doesn\'t exist\n',[output]
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
+        ac(output, """\
+Target: rh7-1
+  Level 1 - F3,F4
+  Level 2 - F5,F2
+Target: rh7-2
+  Level 2 - F2
+""")
 
         output, returnVal = pcs(temp_cib, "stonith level clear rh7-1a")
-        assert returnVal == 0
-        output = ""
+        ac(output, "")
+        assert returnVal == 0, returnVal
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
+        ac(output, """\
+Target: rh7-1
+  Level 1 - F3,F4
+  Level 2 - F5,F2
+Target: rh7-2
+  Level 2 - F2
+""")
 
         output, returnVal = pcs(temp_cib, "stonith level clear rh7-1")
         assert returnVal == 0
@@ -484,7 +534,10 @@ Quorum:
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-2\n  Level 2 - F2\n',[output]
+        ac(output, """\
+Target: rh7-2
+  Level 2 - F2
+""")
 
         output, returnVal = pcs(temp_cib, "stonith level add 2 rh7-1 F5,F2")
         assert returnVal == 0
@@ -496,7 +549,13 @@ Quorum:
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-1\n  Level 1 - F3,F4\n  Level 2 - F5,F2\n Node: rh7-2\n  Level 2 - F2\n',[output]
+        ac(output, """\
+Target: rh7-1
+  Level 1 - F3,F4
+  Level 2 - F5,F2
+Target: rh7-2
+  Level 2 - F2
+""")
 
         output, returnVal = pcs(temp_cib, "stonith level clear")
         assert returnVal == 0
@@ -507,42 +566,51 @@ Quorum:
         assert output == '',[output]
 
         output, returnVal = pcs(temp_cib, "stonith level 1")
+        assert output.startswith("\nUsage: pcs stonith level ...\n")
         assert returnVal == 1
-        assert output.startswith("pcs stonith level: invalid option")
-#        ac (output,"pcs stonith level: invalid option -- '1'\n\nUsage: pcs stonith level...\n    level\n        Lists all of the fencing levels currently configured\n\n    level add <level> <node> <devices>\n        Add the fencing level for the specified node with a comma separated\n        list of devices (stonith ids) to attempt for that node at that level.\n        Fence levels are attempted in numerical order (starting with 1) if\n        a level succeeds (meaning all devices are successfully fenced in that\n        level) then no other levels are tried, and the node is considered\n        fenced.\n\n    level remove <level> [node id] [devices id] ... [device id]\n        Removes the fence level for the level, node and/or devices specified\n        If no nodes or devices are specified then the fence level is removed\n\n    level clear [node|device id(s)]\n        Clears the fence levels on the node (or device id) specified or clears\n        all fence levels if a node/device id is not specified.  If more than\n        one device id is specified they must be separated by a comma and no\n        spaces.  Example: pcs stonith level clear dev_a,dev_b\n\n    level verify\n        Verifies all fence devices and nodes specified in fence levels exist\n\n")
 
         output, returnVal = pcs(temp_cib, "stonith level abcd")
+        assert output.startswith("\nUsage: pcs stonith level ...\n")
         assert returnVal == 1
-        assert output.startswith("pcs stonith level: invalid option")
-#        assert output == "pcs stonith level: invalid option -- 'abcd'\n\nUsage: pcs stonith level...\n    level\n        Lists all of the fencing levels currently configured\n\n    level add <level> <node> <devices>\n        Add the fencing level for the specified node with a comma separated\n        list of devices (stonith ids) to attempt for that node at that level.\n        Fence levels are attempted in numerical order (starting with 1) if\n        a level succeeds (meaning all devices are successfully fenced in that\n        level) then no other levels are tried, and the node is considered\n        fenced.\n\n    level remove <level> [node id] [devices id] ... [device id]\n        Removes the fence level for the level, node and/or devices specified\n        If no nodes or devices are specified then the fence level is removed\n\n    level clear [node|device id(s)]\n        Clears the fence levels on the node (or device id) specified or clears\n        all fence levels if a node/device id is not specified.  If more than\n        one device id is specified they must be separated by a comma and no\n        spaces.  Example: pcs stonith level clear dev_a,dev_b\n\n    level verify\n        Verifies all fence devices and nodes specified in fence levels exist\n\n",[output]
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 blah")
         assert returnVal == 1
-        assert output == 'Error: blah is not a stonith id (use --force to override)\n'
+        ac(output, "Error: Stonith resource(s) 'blah' do not exist, use --force to override\n")
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 blah --force")
         assert returnVal == 0
-        assert output == ''
+        ac(output, "Warning: Stonith resource(s) 'blah' do not exist\n")
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-1\n  Level 1 - blah\n',[output]
+        ac(output, """\
+Target: rh7-1
+  Level 1 - blah
+""")
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-9 F1")
         assert returnVal == 1
-        assert output == 'Error: rh7-9 is not currently a node (use --force to override)\n'
+        ac(output, "Error: Node 'rh7-9' does not appear to exist in configuration, use --force to override\n")
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-1\n  Level 1 - blah\n',[output]
+        ac(output, """\
+Target: rh7-1
+  Level 1 - blah
+""")
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-9 F1 --force")
+        ac(output, "Warning: Node 'rh7-9' does not appear to exist in configuration\n")
         assert returnVal == 0
-        assert output == ''
 
         output, returnVal = pcs(temp_cib, "stonith level")
         assert returnVal == 0
-        assert output == ' Node: rh7-1\n  Level 1 - blah\n Node: rh7-9\n  Level 1 - F1\n',[output]
+        ac(output, """\
+Target: rh7-1
+  Level 1 - blah
+Target: rh7-9
+  Level 1 - F1
+""")
 
         o,r = pcs(temp_cib, "stonith level remove 1")
         assert r == 0
@@ -562,11 +630,17 @@ Quorum:
 
         o,r = pcs(temp_cib, "stonith level remove 4 rh7-1 F2")
         assert r == 1
-        assert o == "Error: unable to remove fencing level, fencing level for node: rh7-1, at level: 4, with device: F2 doesn't exist\n"
+        ac(o, """\
+Error: Fencing level for 'rh7-1' at level '4' with device(s) 'F2' does not exist
+Error: Fencing level at level '4' with device(s) 'rh7-1,F2' does not exist
+""")
 
         o,r = pcs(temp_cib, "stonith level remove 4 rh7-1 F1")
         assert r == 1
-        assert o == "Error: unable to remove fencing level, fencing level for node: rh7-1, at level: 4, with device: F1 doesn't exist\n"
+        ac(o, """\
+Error: Fencing level for 'rh7-1' at level '4' with device(s) 'F1' does not exist
+Error: Fencing level at level '4' with device(s) 'rh7-1,F1' does not exist
+""")
 
         o,r = pcs(temp_cib, "stonith level remove 4 rh7-1")
         assert r == 0
@@ -581,8 +655,14 @@ Quorum:
         assert o == ""
 
         o,r = pcs(temp_cib, "stonith level")
+        ac(o,"""\
+Target: rh7-1
+  Level 1 - F1,F2
+Target: rh7-2
+  Level 1 - F3
+  Level 2 - F3
+""")
         assert r == 0
-        ac(o," Node: rh7-1\n  Level 1 - F1,F2\n Node: rh7-2\n  Level 1 - F3\n  Level 2 - F3\n")
 
         o,r = pcs(temp_cib, "stonith level remove 2 F3")
         assert r == 0
@@ -593,32 +673,43 @@ Quorum:
         assert o == ""
 
         o,r = pcs(temp_cib, "stonith level")
+        ac(o,"""\
+Target: rh7-2
+  Level 1 - F3
+""")
         assert r == 0
-        ac(o," Node: rh7-2\n  Level 1 - F3\n")
 
         o,r = pcs(temp_cib, "stonith level add 1 rh7-1 F1,F2")
         assert r == 0
         ac(o,"")
 
         o,r = pcs(temp_cib, "stonith level clear F4")
-        assert r == 0
         ac(o,"")
+        self.assertEqual(r, 0)
 
         o,r = pcs(temp_cib, "stonith level clear F2")
         assert r == 0
         ac(o,"")
 
         o,r = pcs(temp_cib, "stonith level")
+        ac(o,"""\
+Target: rh7-1
+  Level 1 - F1,F2
+Target: rh7-2
+  Level 1 - F3
+""")
         assert r == 0
-        ac(o," Node: rh7-1\n  Level 1 - F1,F2\n Node: rh7-2\n  Level 1 - F3\n")
 
         o,r = pcs(temp_cib, "stonith level clear F1,F2")
         assert r == 0
         ac(o,"")
 
         o,r = pcs(temp_cib, "stonith level")
+        ac(o,"""\
+Target: rh7-2
+  Level 1 - F3
+""")
         assert r == 0
-        ac(o," Node: rh7-2\n  Level 1 - F3\n")
 
         o,r = pcs(temp_cib, "stonith level clear")
         o,r = pcs(temp_cib, "stonith level")
@@ -636,7 +727,7 @@ Quorum:
         o,r = pcs(temp_cib, "stonith level")
         assert r == 0
         ac(o, """\
- Node: rh7-1
+Target: rh7-1
   Level 10 - F1
   Level 10 - F2
 """)
@@ -647,26 +738,32 @@ Quorum:
 
         o,r = pcs(temp_cib, "stonith level add 1 rh7-bad F1 --force")
         assert r == 0
-        ac(o,"")
+        ac(o, "Warning: Node 'rh7-bad' does not appear to exist in configuration\n")
 
         o,r = pcs(temp_cib, "stonith level verify")
         assert r == 1
-        ac(o,"Error: rh7-bad is not currently a node\n")
+        ac(o, "Error: Node 'rh7-bad' does not appear to exist in configuration\n")
 
         o,r = pcs(temp_cib, "stonith level clear")
         o,r = pcs(temp_cib, "stonith level add 1 rh7-1 F1,FBad --force")
+        ac(o, "Warning: Stonith resource(s) 'FBad' do not exist\n")
         assert r == 0
-        ac(o,"")
 
         o,r = pcs(temp_cib, "stonith level verify")
         assert r == 1
-        ac(o,"Error: FBad is not a stonith id\n")
+        ac(o,"Error: Stonith resource(s) 'FBad' do not exist\n")
 
-        o,r = pcs(temp_cib, "cluster verify")
+        o,r = pcs(temp_cib, "cluster verify -V")
         assert r == 1
-        ac(o,"Error: FBad is not a stonith id\n")
+        ac(o, """\
+Error: Stonith resource(s) 'FBad' do not exist
+Warnings found during check: config may not be valid
+
+""")
 
     def testStonithDeleteRemovesLevel(self):
+        shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
+
         output, returnVal = pcs(
             temp_cib, "stonith create n1-ipmi fence_ilo --force"
         )
@@ -710,8 +807,8 @@ Quorum:
         ac(output, "")
 
         output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 n1-ipmi")
-        self.assertEqual(returnVal, 0)
         ac(output, "")
+        self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib, "stonith level add 2 rh7-1 n1-apc1,n1-apc2,n2-apc2"
@@ -739,12 +836,12 @@ Quorum:
  n2-apc1\t(stonith:fence_apc):\tStopped
  n2-apc2\t(stonith:fence_apc):\tStopped
  n2-apc3\t(stonith:fence_apc):\tStopped
- Node: rh7-1
-  Level 1 - n1-ipmi
-  Level 2 - n1-apc1,n1-apc2,n2-apc2
- Node: rh7-2
-  Level 1 - n2-ipmi
-  Level 2 - n2-apc1,n2-apc2,n2-apc3
+ Target: rh7-1
+   Level 1 - n1-ipmi
+   Level 2 - n1-apc1,n1-apc2,n2-apc2
+ Target: rh7-2
+   Level 1 - n2-ipmi
+   Level 2 - n2-apc1,n2-apc2,n2-apc3
 """)
 
         output, returnVal = pcs(temp_cib, "stonith delete n2-apc2")
@@ -760,12 +857,12 @@ Quorum:
  n1-apc2\t(stonith:fence_apc):\tStopped
  n2-apc1\t(stonith:fence_apc):\tStopped
  n2-apc3\t(stonith:fence_apc):\tStopped
- Node: rh7-1
-  Level 1 - n1-ipmi
-  Level 2 - n1-apc1,n1-apc2
- Node: rh7-2
-  Level 1 - n2-ipmi
-  Level 2 - n2-apc1,n2-apc3
+ Target: rh7-1
+   Level 1 - n1-ipmi
+   Level 2 - n1-apc1,n1-apc2
+ Target: rh7-2
+   Level 1 - n2-ipmi
+   Level 2 - n2-apc1,n2-apc3
 """)
 
         output, returnVal = pcs(temp_cib, "stonith delete n2-apc1")
@@ -780,12 +877,12 @@ Quorum:
  n1-apc1\t(stonith:fence_apc):\tStopped
  n1-apc2\t(stonith:fence_apc):\tStopped
  n2-apc3\t(stonith:fence_apc):\tStopped
- Node: rh7-1
-  Level 1 - n1-ipmi
-  Level 2 - n1-apc1,n1-apc2
- Node: rh7-2
-  Level 1 - n2-ipmi
-  Level 2 - n2-apc3
+ Target: rh7-1
+   Level 1 - n1-ipmi
+   Level 2 - n1-apc1,n1-apc2
+ Target: rh7-2
+   Level 1 - n2-ipmi
+   Level 2 - n2-apc3
 """)
 
         output, returnVal = pcs(temp_cib, "stonith delete n2-apc3")
@@ -799,11 +896,11 @@ Quorum:
  n2-ipmi\t(stonith:fence_ilo):\tStopped
  n1-apc1\t(stonith:fence_apc):\tStopped
  n1-apc2\t(stonith:fence_apc):\tStopped
- Node: rh7-1
-  Level 1 - n1-ipmi
-  Level 2 - n1-apc1,n1-apc2
- Node: rh7-2
-  Level 1 - n2-ipmi
+ Target: rh7-1
+   Level 1 - n1-ipmi
+   Level 2 - n1-apc1,n1-apc2
+ Target: rh7-2
+   Level 1 - n2-ipmi
 """)
 
         output, returnVal = pcs(temp_cib, "resource delete n1-apc1")
@@ -816,11 +913,11 @@ Quorum:
  n1-ipmi\t(stonith:fence_ilo):\tStopped
  n2-ipmi\t(stonith:fence_ilo):\tStopped
  n1-apc2\t(stonith:fence_apc):\tStopped
- Node: rh7-1
-  Level 1 - n1-ipmi
-  Level 2 - n1-apc2
- Node: rh7-2
-  Level 1 - n2-ipmi
+ Target: rh7-1
+   Level 1 - n1-ipmi
+   Level 2 - n1-apc2
+ Target: rh7-2
+   Level 1 - n2-ipmi
 """)
 
         output, returnVal = pcs(temp_cib, "resource delete n1-apc2")
@@ -832,10 +929,10 @@ Quorum:
         ac(output, """\
  n1-ipmi\t(stonith:fence_ilo):\tStopped
  n2-ipmi\t(stonith:fence_ilo):\tStopped
- Node: rh7-1
-  Level 1 - n1-ipmi
- Node: rh7-2
-  Level 1 - n2-ipmi
+ Target: rh7-1
+   Level 1 - n1-ipmi
+ Target: rh7-2
+   Level 1 - n2-ipmi
 """)
 
     def testNoStonithWarning(self):
@@ -859,3 +956,742 @@ Quorum:
 
         o,r = pcs(temp_cib, "status")
         assert "WARNING: no stonith devices and " not in o
+
+
+class LevelTestsBase(TestCase, AssertPcsMixin):
+    def setUp(self):
+        if fencing_level_attribute_supported:
+            shutil.copy(rc("cib-empty-2.5-withnodes.xml"), temp_cib)
+        else:
+            shutil.copy(rc("cib-empty-2.3-withnodes.xml"), temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+        self.config = ""
+        self.config_lines = []
+
+    def fixture_stonith_resource(self, name):
+        self.assert_pcs_success(
+            "stonith create {name} fence_apc 'pcmk_host_list=rh7-1 rh7-2', ipaddr=ip login=lgn"
+            .format(name=name)
+        )
+
+    def fixture_full_configuration(self):
+        self.fixture_stonith_resource("F1")
+        self.fixture_stonith_resource("F2")
+        self.fixture_stonith_resource("F3")
+
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1")
+        self.assert_pcs_success("stonith level add 2 rh7-1 F2")
+        self.assert_pcs_success("stonith level add 2 rh7-2 F1")
+        self.assert_pcs_success("stonith level add 1 rh7-2 F2")
+        self.assert_pcs_success("stonith level add 4 regexp%rh7-\d F3")
+        self.assert_pcs_success("stonith level add 3 regexp%rh7-\d F2 F1")
+
+        self.config = outdent(
+            """\
+            Target: rh7-1
+              Level 1 - F1
+              Level 2 - F2
+            Target: rh7-2
+              Level 1 - F2
+              Level 2 - F1
+            Target: rh7-\d
+              Level 3 - F2,F1
+              Level 4 - F3
+            """
+        )
+        self.config_lines = self.config.splitlines()
+
+        if not fencing_level_attribute_supported:
+            return
+        self.assert_pcs_success(
+            "stonith level add 5 attrib%fencewith=levels1 F3 F2"
+        )
+        self.assert_pcs_success(
+            "stonith level add 6 attrib%fencewith=levels2 F3 F1"
+        )
+        self.config += outdent(
+            """\
+            Target: fencewith=levels1
+              Level 5 - F3,F2
+            Target: fencewith=levels2
+              Level 6 - F3,F1
+            """)
+        self.config_lines = self.config.splitlines()
+
+
+@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+class LevelBadCommand(LevelTestsBase):
+    def test_success(self):
+        self.assert_pcs_fail(
+            "stonith level nonsense",
+            stdout_start="\nUsage: pcs stonith level ...\n"
+        )
+
+
+@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+class LevelAddTargetUpgradesCib(LevelTestsBase):
+    def setUp(self):
+        shutil.copy(rc("cib-empty-withnodes.xml"), temp_cib)
+        self.pcs_runner = PcsRunner(temp_cib)
+
+    @skipUnless(
+        fencing_level_attribute_supported,
+        fencing_level_attribute_not_supported_msg
+    )
+    def test_attribute(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_success(
+            "stonith level add 1 attrib%fencewith=levels F1",
+            "CIB has been upgraded to the latest schema version.\n"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: fencewith=levels
+                  Level 1 - F1
+                """
+            )
+        )
+
+    def test_regexp(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_success(
+            "stonith level add 1 regexp%node-\d+ F1",
+            "CIB has been upgraded to the latest schema version.\n"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: node-\d+
+                  Level 1 - F1
+                """
+            )
+        )
+
+
+@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+class LevelAdd(LevelTestsBase):
+    def test_not_enough_params(self):
+        self.assert_pcs_fail(
+            "stonith level add",
+            stdout_start="\nUsage: pcs stonith level add...\n"
+        )
+
+        self.assert_pcs_fail(
+            "stonith level add 1",
+            stdout_start="\nUsage: pcs stonith level add...\n"
+        )
+
+        self.assert_pcs_fail(
+            "stonith level add 1 nodeA",
+            stdout_start="\nUsage: pcs stonith level add...\n"
+        )
+
+    def test_add_wrong_target_type(self):
+        self.assert_pcs_fail(
+            "stonith level add 1 error%value F1",
+            "Error: 'error' is not an allowed type for 'error%value', "
+                "use attrib, node, regexp\n"
+        )
+
+    def test_add_bad_level(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_fail(
+            "stonith level add NaN rh7-1 F1",
+            "Error: 'NaN' is not a valid level value, use a positive integer\n"
+        )
+        self.assert_pcs_fail(
+            "stonith level add -10 rh7-1 F1",
+            "Error: '-10' is not a valid level value, use a positive integer\n"
+        )
+        self.assert_pcs_fail(
+            "stonith level add 10abc rh7-1 F1",
+            "Error: '10abc' is not a valid level value, use a positive integer\n"
+        )
+        self.assert_pcs_fail(
+            "stonith level add 0 rh7-1 F1",
+            "Error: '0' is not a valid level value, use a positive integer\n"
+        )
+        self.assert_pcs_fail(
+            "stonith level add 000 rh7-1 F1",
+            "Error: '000' is not a valid level value, use a positive integer\n"
+        )
+
+    def test_add_bad_device(self):
+        self.assert_pcs_fail(
+            "stonith level add 1 rh7-1 dev@ce",
+            "Error: invalid device id 'dev@ce', '@' is not a valid character "
+                "for a device id\n"
+        )
+
+    def test_add_more_errors(self):
+        self.assert_pcs_fail(
+            "stonith level add x rh7-X F0 dev@ce",
+            outdent(
+                """\
+                Error: 'x' is not a valid level value, use a positive integer
+                Error: Node 'rh7-X' does not appear to exist in configuration, use --force to override
+                Error: invalid device id 'dev@ce', '@' is not a valid character for a device id
+                Error: Stonith resource(s) 'F0' do not exist, use --force to override
+                """
+            )
+        )
+
+        self.assert_pcs_fail(
+            "stonith level add x rh7-X F0 dev@ce --force",
+            outdent(
+                """\
+                Error: 'x' is not a valid level value, use a positive integer
+                Error: invalid device id 'dev@ce', '@' is not a valid character for a device id
+                Warning: Node 'rh7-X' does not appear to exist in configuration
+                Warning: Stonith resource(s) 'F0' do not exist
+                """
+            )
+        )
+
+    def test_add_level_leading_zero(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_success("stonith level add 0002 rh7-1 F1")
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 2 - F1
+                """
+            )
+        )
+
+    def test_add_node(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1")
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 1 - F1
+                """
+            )
+        )
+
+        self.assert_pcs_fail(
+            "stonith level add 1 rh7-1 F1",
+            "Error: Fencing level for 'rh7-1' at level '1' with device(s) "
+                "'F1' already exists\n"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 1 - F1
+                """
+            )
+        )
+
+    def test_add_node_pattern(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_success("stonith level add 1 regexp%rh7-\d F1")
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-\d
+                  Level 1 - F1
+                """
+            )
+        )
+
+        self.assert_pcs_fail(
+            "stonith level add 1 regexp%rh7-\d F1",
+            "Error: Fencing level for 'rh7-\d' at level '1' with device(s) "
+                "'F1' already exists\n"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-\d
+                  Level 1 - F1
+                """
+            )
+        )
+
+    @skipUnless(
+        fencing_level_attribute_supported,
+        fencing_level_attribute_not_supported_msg
+    )
+    def test_add_node_attribute(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_success(
+            "stonith level add 1 attrib%fencewith=levels F1"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: fencewith=levels
+                  Level 1 - F1
+                """
+            )
+        )
+
+        self.assert_pcs_fail(
+            "stonith level add 1 attrib%fencewith=levels F1",
+            "Error: Fencing level for 'fencewith=levels' at level '1' with "
+                "device(s) 'F1' already exists\n"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: fencewith=levels
+                  Level 1 - F1
+                """
+            )
+        )
+
+    def test_add_more_devices(self):
+        self.fixture_stonith_resource("F1")
+        self.fixture_stonith_resource("F2")
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1 F2")
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 1 - F1,F2
+                """
+            )
+        )
+
+    def test_add_more_devices_old_syntax(self):
+        self.fixture_stonith_resource("F1")
+        self.fixture_stonith_resource("F2")
+        self.fixture_stonith_resource("F3")
+
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1,F2")
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 1 - F1,F2
+                """
+            )
+        )
+
+        self.assert_pcs_success("stonith level add 2 rh7-1 F1,F2 F3")
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 1 - F1,F2
+                  Level 2 - F1,F2,F3
+                """
+            )
+        )
+
+        self.assert_pcs_success("stonith level add 3 rh7-1 F1 F2,F3")
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 1 - F1,F2
+                  Level 2 - F1,F2,F3
+                  Level 3 - F1,F2,F3
+                """
+            )
+        )
+
+    def test_nonexistant_node(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_fail(
+            "stonith level add 1 rh7-X F1",
+            "Error: Node 'rh7-X' does not appear to exist in configuration"
+                ", use --force to override\n"
+        )
+        self.assert_pcs_success(
+            "stonith level add 1 rh7-X F1 --force",
+            "Warning: Node 'rh7-X' does not appear to exist in configuration\n"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-X
+                  Level 1 - F1
+                """
+            )
+        )
+
+    def test_nonexistant_device(self):
+        self.assert_pcs_fail(
+            "stonith level add 1 rh7-1 F1",
+            "Error: Stonith resource(s) 'F1' do not exist"
+                ", use --force to override\n"
+        )
+        self.assert_pcs_success(
+            "stonith level add 1 rh7-1 F1 --force",
+            "Warning: Stonith resource(s) 'F1' do not exist\n"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 1 - F1
+                """
+            )
+        )
+
+    def test_nonexistant_devices(self):
+        self.fixture_stonith_resource("F1")
+        self.assert_pcs_fail(
+            "stonith level add 1 rh7-1 F1 F2 F3",
+            "Error: Stonith resource(s) 'F2', 'F3' do not exist"
+                ", use --force to override\n"
+        )
+        self.assert_pcs_success(
+            "stonith level add 1 rh7-1 F1 F2 F3 --force",
+            "Warning: Stonith resource(s) 'F2', 'F3' do not exist\n"
+        )
+        self.assert_pcs_success(
+            "stonith level",
+            outdent(
+                """\
+                Target: rh7-1
+                  Level 1 - F1,F2,F3
+                """
+            )
+        )
+
+
+@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+class LevelConfig(LevelTestsBase):
+    full_config = outdent(
+        """\
+        Cluster Name: test99
+        Corosync Nodes:
+         rh7-1 rh7-2
+        Pacemaker Nodes:
+         rh7-1 rh7-2
+
+        Resources:
+
+        Stonith Devices:{devices}
+        Fencing Levels:{levels}
+
+        Location Constraints:
+        Ordering Constraints:
+        Colocation Constraints:
+        Ticket Constraints:
+
+        Alerts:
+         No alerts defined
+
+        Resources Defaults:
+         No defaults set
+        Operations Defaults:
+         No defaults set
+
+        Cluster Properties:
+
+        Quorum:
+          Options:
+        """
+    )
+
+    def test_empty(self):
+        self.assert_pcs_success("stonith level config", "")
+        self.assert_pcs_success("stonith level", "")
+        self.assert_pcs_success("stonith", "NO stonith devices configured\n")
+        self.assert_pcs_success(
+            "config",
+            self.full_config.format(devices="", levels="")
+        )
+
+    def test_all_posibilities(self):
+        self.fixture_full_configuration()
+        self.assert_pcs_success("stonith level config", self.config)
+        self.assert_pcs_success("stonith level", self.config)
+        self.assert_pcs_success(
+            "stonith",
+            outdent(
+                """\
+                 F1\t(stonith:fence_apc):\tStopped
+                 F2\t(stonith:fence_apc):\tStopped
+                 F3\t(stonith:fence_apc):\tStopped
+                """
+            ) + "\n".join(indent(self.config_lines, 1)) + "\n"
+        )
+        self.assert_pcs_success(
+            "config",
+            self.full_config.format(
+                devices="""
+ Resource: F1 (class=stonith type=fence_apc)
+  Attributes: pcmk_host_list="rh7-1 rh7-2," ipaddr=ip login=lgn
+  Operations: monitor interval=60s (F1-monitor-interval-60s)
+ Resource: F2 (class=stonith type=fence_apc)
+  Attributes: pcmk_host_list="rh7-1 rh7-2," ipaddr=ip login=lgn
+  Operations: monitor interval=60s (F2-monitor-interval-60s)
+ Resource: F3 (class=stonith type=fence_apc)
+  Attributes: pcmk_host_list="rh7-1 rh7-2," ipaddr=ip login=lgn
+  Operations: monitor interval=60s (F3-monitor-interval-60s)\
+""",
+                levels=("\n" + "\n".join(indent(self.config_lines, 2)))
+            )
+        )
+
+
+@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+class LevelClear(LevelTestsBase):
+    def setUp(self):
+        super(LevelClear, self).setUp()
+        self.fixture_full_configuration()
+
+    def test_clear_all(self):
+        self.assert_pcs_success("stonith level clear")
+        self.assert_pcs_success("stonith level config", "")
+
+    def test_clear_nonexistant_node_or_device(self):
+        self.assert_pcs_success("stonith level clear rh-X")
+        self.assert_pcs_success("stonith level config", self.config)
+
+    def test_clear_nonexistant_devices(self):
+        self.assert_pcs_success("stonith level clear F1,F5")
+        self.assert_pcs_success("stonith level config", self.config)
+
+    def test_pattern_is_not_device(self):
+        self.assert_pcs_success("stonith level clear regexp%F1")
+        self.assert_pcs_success("stonith level config", self.config)
+
+    def test_clear_node(self):
+        self.assert_pcs_success("stonith level clear rh7-1")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[3:]) + "\n"
+        )
+
+    def test_clear_pattern(self):
+        self.assert_pcs_success("stonith level clear regexp%rh7-\d")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:6] + self.config_lines[9:]) + "\n"
+        )
+
+    @skipUnless(
+        fencing_level_attribute_supported,
+        fencing_level_attribute_not_supported_msg
+    )
+    def test_clear_attribute(self):
+        self.assert_pcs_success("stonith level clear attrib%fencewith=levels2")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:11]) + "\n"
+        )
+
+    def test_clear_device(self):
+        self.assert_pcs_success("stonith level clear F1")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(
+                self.config_lines[0:1]
+                +
+                self.config_lines[2:5]
+                +
+                self.config_lines[6:]
+            ) + "\n"
+        )
+
+    def test_clear_devices(self):
+        self.assert_pcs_success("stonith level clear F2,F1")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
+        )
+
+
+@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+class LevelRemove(LevelTestsBase):
+    def setUp(self):
+        super(LevelRemove, self).setUp()
+        self.fixture_full_configuration()
+
+    def test_nonexisting_level_node_device(self):
+        self.assert_pcs_fail(
+            "stonith level remove 1 rh7-1 F3",
+            outdent(
+                """\
+                Error: Fencing level for 'rh7-1' at level '1' with device(s) 'F3' does not exist
+                Error: Fencing level at level '1' with device(s) 'rh7-1,F3' does not exist
+                """
+            )
+        )
+        self.assert_pcs_success("stonith level config", self.config)
+
+    def test_nonexisting_level_pattern_device(self):
+        self.assert_pcs_fail(
+            "stonith level remove 1 regexp%rh7-\d F3",
+            "Error: Fencing level for 'rh7-\d' at level '1' with device(s) 'F3' does not exist\n"
+        )
+        self.assert_pcs_success("stonith level config", self.config)
+
+        self.assert_pcs_fail(
+            "stonith level remove 3 regexp%rh7-\d F1,F2",
+            "Error: Fencing level for 'rh7-\d' at level '3' with device(s) 'F1,F2' does not exist\n"
+        )
+        self.assert_pcs_success("stonith level config", self.config)
+
+    def test_nonexisting_level(self):
+        self.assert_pcs_fail(
+            "stonith level remove 9",
+            "Error: Fencing level at level '9' does not exist\n"
+        )
+        self.assert_pcs_success("stonith level config", self.config)
+
+    def test_remove_level(self):
+        self.assert_pcs_success("stonith level remove 1")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(
+                self.config_lines[0:1]
+                +
+                self.config_lines[2:4]
+                +
+                self.config_lines[5:]
+            ) + "\n"
+        )
+
+    def test_remove_level_node(self):
+        self.assert_pcs_success("stonith level remove 1 rh7-2")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n"
+        )
+
+    def test_remove_level_pattern(self):
+        self.assert_pcs_success("stonith level remove 3 regexp%rh7-\d")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
+        )
+
+    @skipUnless(
+        fencing_level_attribute_supported,
+        fencing_level_attribute_not_supported_msg
+    )
+    def test_remove_level_attrib(self):
+        self.assert_pcs_success(
+            "stonith level remove 6 attrib%fencewith=levels2"
+        )
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:11]) + "\n"
+        )
+
+    def test_remove_level_device(self):
+        self.assert_pcs_success("stonith level remove 1 F2")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n"
+        )
+
+    def test_remove_level_devices(self):
+        self.assert_pcs_success("stonith level remove 3 F2 F1")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
+        )
+
+    def test_remove_level_devices_old_syntax(self):
+        self.assert_pcs_success("stonith level remove 3 F2,F1")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
+        )
+
+    def test_remove_level_node_device(self):
+        self.assert_pcs_success("stonith level remove 1 rh7-2 F2")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n"
+        )
+
+    def test_remove_level_pattern_device(self):
+        self.assert_pcs_success("stonith level remove 3 regexp%rh7-\d F2 F1")
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
+        )
+
+    @skipUnless(
+        fencing_level_attribute_supported,
+        fencing_level_attribute_not_supported_msg
+    )
+    def test_remove_level_attrib_device(self):
+        self.assert_pcs_success(
+            "stonith level remove 6 attrib%fencewith=levels2 F3 F1"
+        )
+        self.assert_pcs_success(
+            "stonith level config",
+            "\n".join(self.config_lines[:11]) + "\n"
+        )
+
+
+@skipUnless(fencing_level_supported, fencing_level_not_supported_msg)
+class LevelVerify(LevelTestsBase):
+    def test_success(self):
+        self.fixture_full_configuration()
+        self.assert_pcs_success("stonith level verify", "")
+
+    def test_errors(self):
+        self.fixture_stonith_resource("F1")
+
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1")
+        self.assert_pcs_success(
+            "stonith level add 2 rh7-1 FX --force",
+            "Warning: Stonith resource(s) 'FX' do not exist\n"
+        )
+        self.assert_pcs_success(
+            "stonith level add 1 rh7-X FX --force",
+            outdent(
+                """\
+                Warning: Node 'rh7-X' does not appear to exist in configuration
+                Warning: Stonith resource(s) 'FX' do not exist
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "stonith level add 2 rh7-Y FY --force",
+            outdent(
+                """\
+                Warning: Node 'rh7-Y' does not appear to exist in configuration
+                Warning: Stonith resource(s) 'FY' do not exist
+                """
+            )
+        )
+        self.assert_pcs_success(
+            "stonith level add 4 regexp%rh7-\d FX --force",
+            "Warning: Stonith resource(s) 'FX' do not exist\n"
+        )
+        self.assert_pcs_success(
+            "stonith level add 3 regexp%rh7-\d FY FZ --force",
+            "Warning: Stonith resource(s) 'FY', 'FZ' do not exist\n"
+        )
+
+        self.assert_pcs_fail(
+            "stonith level verify",
+            outdent(
+                """\
+                Error: Stonith resource(s) 'FX', 'FY', 'FZ' do not exist
+                Error: Node 'rh7-X' does not appear to exist in configuration
+                Error: Node 'rh7-Y' does not appear to exist in configuration
+                """
+            )
+        )

@@ -84,11 +84,7 @@ def get_acls(tree):
     Return 'acls' element from tree, create a new one if missing
     tree cib etree node
     """
-    acls = tree.find(".//acls")
-    if acls is None:
-        acls = etree.SubElement(get_configuration(tree), "acls")
-    return acls
-
+    return get_sub_element(get_configuration(tree), "acls")
 
 def get_alerts(tree):
     """
@@ -97,7 +93,6 @@ def get_alerts(tree):
     """
     return get_sub_element(get_configuration(tree), "alerts")
 
-
 def get_constraints(tree):
     """
     Return 'constraint' element from tree
@@ -105,12 +100,12 @@ def get_constraints(tree):
     """
     return _get_mandatory_section(tree, "configuration/constraints")
 
-def get_resources(tree):
+def get_fencing_topology(tree):
     """
-    Return 'resources' element from tree
-    tree cib etree node
+    Return the 'fencing-topology' element from the tree
+    tree -- cib etree node
     """
-    return _get_mandatory_section(tree, "configuration/resources")
+    return get_sub_element(get_configuration(tree), "fencing-topology")
 
 def get_nodes(tree):
     """
@@ -118,6 +113,13 @@ def get_nodes(tree):
     tree cib etree node
     """
     return _get_mandatory_section(tree, "configuration/nodes")
+
+def get_resources(tree):
+    """
+    Return the 'resources' element from the tree
+    tree -- cib etree node
+    """
+    return _get_mandatory_section(tree, "configuration/resources")
 
 def find_parent(element, tag_names):
     candidate = element
@@ -129,11 +131,10 @@ def find_parent(element, tag_names):
 def export_attributes(element):
     return  dict((key, value) for key, value in element.attrib.items())
 
-
 def get_sub_element(element, sub_element_tag, new_id=None, new_index=None):
     """
     Returns the FIRST sub-element sub_element_tag of element. It will create new
-    element if such doesn't exist yet. Id of new element will be new_if if
+    element if such doesn't exist yet. Id of new element will be new_id if
     it's not None. new_index specify where will be new element added, if None
     it will be appended.
 
@@ -152,7 +153,6 @@ def get_sub_element(element, sub_element_tag, new_id=None, new_index=None):
         else:
             element.insert(new_index, sub_element)
     return sub_element
-
 
 def get_pacemaker_version_by_which_cib_was_validated(cib):
     """

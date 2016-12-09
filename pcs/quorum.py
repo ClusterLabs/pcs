@@ -61,6 +61,7 @@ def quorum_device_cmd(lib, argv, modificators):
         elif sub_cmd == "update":
             quorum_device_update_cmd(lib, argv_next, modificators)
         else:
+            sub_cmd = ""
             raise CmdLineInputError()
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_errror(

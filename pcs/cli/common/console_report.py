@@ -5,11 +5,12 @@ from __future__ import (
     unicode_literals,
 )
 
-import sys
+from collections import Iterable
 from functools import partial
+import sys
 
 from pcs.common import report_codes as codes
-from collections import Iterable
+from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
 from pcs.common.tools import is_string
 
 INSTANCE_SUFFIX = "@{0}"
@@ -38,6 +39,11 @@ def indent(line_list, indent_step=2):
 
 def format_optional(value, template):
     return "" if not value else template.format(value)
+
+def format_fencing_level_target(target_type, target_value):
+    if target_type == TARGET_TYPE_ATTRIBUTE:
+        return "{0}={1}".format(target_value[0], target_value[1])
+    return target_value
 
 def service_operation_started(operation, info):
     return "{operation}{service}{instance_suffix}...".format(
@@ -122,8 +128,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.INVALID_OPTION_VALUE: lambda info:
         #value on key "allowed_values" is overloaded:
-        # * it can be list - then it express possible option values
-        # * it can be string - then it is verbal description of value
+        # * it can be a list - then it express possible option values
+        # * it can be a string - then it is verbal description of value
         "'{option_value}' is not a valid {option_name} value, use {hint}"
         .format(
             hint=(
@@ -132,6 +138,23 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
                     and
                     not is_string(info["allowed_values"])
                 ) else info["allowed_values"]
+            ),
+            **info
+        )
+    ,
+
+    codes.INVALID_OPTION_TYPE: lambda info:
+        #value on key "allowed_types" is overloaded:
+        # * it can be a list - then it express possible option types
+        # * it can be a string - then it is verbal description of the type
+        "specified {option_name} is not valid, use {hint}"
+        .format(
+            hint=(
+                ", ".join(sorted(info["allowed_types"])) if (
+                    isinstance(info["allowed_types"], Iterable)
+                    and
+                    not is_string(info["allowed_types"])
+                ) else info["allowed_types"]
             ),
             **info
         )
@@ -444,6 +467,14 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.STONITH_RESOURCES_DO_NOT_EXIST: lambda info:
+        "Stonith resource(s) '{stonith_id_list}' do not exist"
+        .format(
+            stonith_id_list="', '".join(info["stonith_ids"]),
+            **info
+        )
+    ,
+
     codes.CIB_ACL_ROLE_IS_ALREADY_ASSIGNED_TO_TARGET: lambda info:
         "Role '{role_id}' is already asigned to '{target_id}'"
         .format(**info)
@@ -457,6 +488,37 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.CIB_ACL_TARGET_ALREADY_EXISTS: lambda info:
         "'{target_id}' already exists"
         .format(**info)
+    ,
+
+    codes.CIB_FENCING_LEVEL_ALREADY_EXISTS: lambda info:
+        (
+            "Fencing level for '{target}' at level '{level}' "
+            "with device(s) '{device_list}' already exists"
+        ).format(
+            device_list=",".join(info["devices"]),
+            target=format_fencing_level_target(
+                info["target_type"], info["target_value"]
+            ),
+            **info
+        )
+    ,
+
+    codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST: lambda info:
+        "Fencing level {part_target}{part_level}{part_devices}does not exist"
+        .format(
+            part_target=(
+                "for '{0}' ".format(format_fencing_level_target(
+                    info["target_type"], info["target_value"]
+                ))
+                if info["target_type"] and info["target_value"]
+                else ""
+            ),
+            part_level=format_optional(info["level"], "at level '{0}' "),
+            part_devices=format_optional(
+                ",".join(info["devices"]) if info["devices"] else "",
+                "with device(s) '{0}' "
+            )
+        )
     ,
 
     codes.CIB_LOAD_ERROR: "unable to get cib",
@@ -737,7 +799,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.FILE_ALREADY_EXISTS: lambda info:
         "{node_prefix}{role_prefix}file {file_path} already exists"
         .format(
-             node_prefix=format_optional(info["node"], NODE_PREFIX),
+            node_prefix=format_optional(info["node"], NODE_PREFIX),
             role_prefix=format_optional(info["file_role"], "{0} "),
             **info
         )

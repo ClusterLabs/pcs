@@ -815,11 +815,13 @@ def get_fence_levels(auth_user, cib_dom=nil)
     '/cib/configuration/fencing-topology/fencing-level'
   ) { |e|
     target = e.attributes['target']
-    fence_levels[target] ||= []
-    fence_levels[target] << {
-      'level' => e.attributes['index'],
-      'devices' => e.attributes['devices']
-    }
+    if target
+      fence_levels[target] ||= []
+      fence_levels[target] << {
+        'level' => e.attributes['index'],
+        'devices' => e.attributes['devices']
+      }
+    end
   }
 
   fence_levels.each { |_, val| val.sort_by! { |obj| obj['level'].to_i }}

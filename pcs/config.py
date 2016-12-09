@@ -122,20 +122,26 @@ def config_show(argv):
             utils.process_library_reports(e.args)
 
 def config_show_cib():
+    lib = utils.get_library_wrapper()
+    modificators = utils.get_modificators()
+
     print("Resources:")
     utils.pcs_options["--all"] = 1
     utils.pcs_options["--full"] = 1
     resource.resource_show([])
+
     print()
     print("Stonith Devices:")
     resource.resource_show([], True)
     print("Fencing Levels:")
-    stonith.stonith_level_show()
-    print()
+    levels = stonith.stonith_level_config_to_str(
+        lib.fencing_topology.get_config()
+    )
+    if levels:
+        print("\n".join(indent(levels, 2)))
 
-    lib = utils.get_library_wrapper()
+    print()
     constraint.location_show([])
-    modificators = utils.get_modificators()
     order_command.show(lib, [], modificators)
     colocation_command.show(lib, [], modificators)
     ticket_command.show(lib, [], modificators)

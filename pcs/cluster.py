@@ -30,7 +30,6 @@ from pcs import (
     resource,
     settings,
     status,
-    stonith,
     usage,
     utils,
 )
@@ -1950,12 +1949,16 @@ def cluster_verify(argv):
     else:
         options.append("--xml-file")
         options.append(filename)
-
     output, retval = utils.run([settings.crm_verify] + options)
-
     if output != "":
         print(output)
-    stonith.stonith_level_verify()
+
+    lib = utils.get_library_wrapper()
+    try:
+        lib.fencing_topology.verify()
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+
     return retval
 
 def cluster_report(argv):
