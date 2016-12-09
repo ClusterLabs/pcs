@@ -60,14 +60,24 @@ def discover_tests(explicitly_enumerated_tests, exclude_enumerated_tests=False):
 explicitly_enumerated_tests = [
     prepare_test_name(arg) for arg in sys.argv[1:] if arg not in (
         "-v",
-        "--vanilla",
-        "--no-color", #deprecated, use --vanilla instead
         "--all-but",
         "--last-slash",
-        "--traditional-verbose",
+        "--list",
+        "--no-color", #deprecated, use --vanilla instead
         "--traceback-highlight",
+        "--traditional-verbose",
+        "--vanilla",
     )
 ]
+
+discovered_tests = discover_tests(
+    explicitly_enumerated_tests, "--all-but" in sys.argv
+)
+if "--list" in sys.argv:
+    test_list = tests_from_suite(discovered_tests)
+    print("\n".join(sorted(test_list)))
+    print("{0} tests found".format(len(test_list)))
+    sys.exit()
 
 if "--no-color" in sys.argv:
     print("DEPRECATED: --no-color is deprecated, use --vanilla instead")
@@ -96,9 +106,7 @@ testRunner = unittest.TextTestRunner(
     verbosity=2 if "-v" in sys.argv else 1,
     resultclass=resultclass
 )
-test_result =  testRunner.run(
-    discover_tests(explicitly_enumerated_tests, "--all-but" in sys.argv)
-)
+test_result =  testRunner.run(discovered_tests)
 if not test_result.wasSuccessful():
     sys.exit(1)
 
