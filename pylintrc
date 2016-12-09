@@ -1,10 +1,10 @@
 [MESSAGES CONTROL]
 #useful links:
 #http://pylint-messages.wikidot.com/all-codes
-#https://docs.pylint.org/features.html
+#https://pylint.readthedocs.io/en/latest/reference_guide/features.html
 #
 #can be used for example with
-#pylint --reports=n ./**/*.py --msg-template='{path}:{line}: {msg_id}: [{symbol}] {msg}'
+#find ./ -name '*.py' -exec pylint --reports=n \{\} --msg-template='{path}:{line}: {msg_id}: [{symbol}] {msg}' \;
 #
 #project adapted to pylint 1.5.4, astroid 1.4.4
 #
@@ -65,15 +65,13 @@ disable=no-name-in-module, import-error, nonstandard-exception, unused-argument,
 
 [DESIGN]
 # Maximum number of locals for function / method body
-max-locals=48
+max-locals=47
 # Maximum number of statements in function / method body
-max-statements=212
+max-statements=160
 # Maximum number of branch for function / method body
-max-branches=68
+max-branches=63
 # Maximum number of public methods for a class (see R0904).
-max-public-methods=113
-# Maximum number of boolean expressions in a if statement
-max-bool-expr=6
+max-public-methods=115
 
 
 [LOGGING]
@@ -92,11 +90,6 @@ dummy-variables-rgx=_$|dummy
 
 [FORMAT]
 # Maximum number of lines in a module
-max-module-lines=4930
+max-module-lines=4929
 # Maximum number of characters on a single line.
-max-line-length=1291
-
-[ELIF]
-
-# Maximum number of nested blocks for function / method body
-max-nested-blocks=7
+max-line-length=637
