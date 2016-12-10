@@ -21,6 +21,7 @@
   ([rhbz#1394273])
 - Fixed searching for files to remove in the `/var/lib` directory ([ghpull#119],
   [ghpull#120])
+- Fixed messages when managing services (start, stop, enable, disable...)
 
 [ghpull#119]: https://github.com/ClusterLabs/pcs/pull/119
 [ghpull#120]: https://github.com/ClusterLabs/pcs/pull/120

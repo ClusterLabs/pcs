@@ -6,7 +6,9 @@ from __future__ import (
 )
 
 from pcs.test.tools.pcs_unittest import TestCase
+
 from collections import namedtuple
+from functools import partial
 
 from pcs.cli.common.reports import build_message_from_report
 
@@ -84,3 +86,40 @@ class BuildMessageFromReportTest(TestCase):
                 ReportItem("SOME", {}),
             )
         )
+
+    def test_callable_is_partial_object(self):
+        code_builder_map = {
+            "SOME": partial(
+                lambda title, info: "{title}: {message}".format(
+                    title=title, **info
+                ),
+                "Info"
+            )
+        }
+        self.assertEqual(
+            "Info: MESSAGE",
+            build_message_from_report(
+                code_builder_map,
+                ReportItem("SOME", {"message": "MESSAGE"})
+            )
+        )
+
+    def test_callable_is_partial_object_with_force(self):
+        code_builder_map = {
+            "SOME": partial(
+                lambda title, info, force_text:
+                    "{title}: {message} {force_text}".format(
+                        title=title, force_text=force_text, **info
+                    ),
+                "Info"
+            )
+        }
+        self.assertEqual(
+            "Info: MESSAGE force text",
+            build_message_from_report(
+                code_builder_map,
+                ReportItem("SOME", {"message": "MESSAGE"}),
+                "force text"
+            )
+        )
+

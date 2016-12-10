@@ -44,7 +44,16 @@ def build_message_from_report(code_builder_map, report_item, force_text=""):
         return message + force_text
 
     try:
-        if "force_text" in inspect.getargspec(message).args:
+        # Object functools.partial cannot be used with inspect because it is not
+        # regular python function. We have to use original function for that.
+        if isinstance(message, partial):
+            keywords = message.keywords if message.keywords is not None else {}
+            args = inspect.getargspec(message.func).args
+            del args[:len(message.args)]
+            args = [arg for arg in args if arg not in keywords]
+        else:
+            args = inspect.getargspec(message).args
+        if "force_text" in args:
             return message(report_item.info, force_text)
         return message(report_item.info) + force_text
     except(TypeError, KeyError):
