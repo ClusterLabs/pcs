@@ -36,7 +36,6 @@ class Success(TestCase, AssertPcsEffectMixin):
         )
         #add to cib:
         # <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-        #   <instance_attributes id="R-instance_attributes"/>
         #   <operations>
         #     <op id="R-monitor-interval-60s" interval="60s"
         #       name="monitor"
@@ -56,7 +55,6 @@ class Success(TestCase, AssertPcsEffectMixin):
             "resource op add R start interval=20s",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-60s" interval="60s"
                             name="monitor"
@@ -76,7 +74,6 @@ class Success(TestCase, AssertPcsEffectMixin):
             ,
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-60s" interval="60s"
                             name="monitor"
@@ -103,7 +100,6 @@ class Success(TestCase, AssertPcsEffectMixin):
             "resource op add R start interval=20s",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-60s" interval="60s"
                             name="monitor"
@@ -119,7 +115,6 @@ class Success(TestCase, AssertPcsEffectMixin):
             "resource op add R stop interval=30s",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-60s" interval="60s"
                             name="monitor"

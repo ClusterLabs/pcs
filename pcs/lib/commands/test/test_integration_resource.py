@@ -27,7 +27,6 @@ fixture_cib_resources_xml_simplest = """<resources>
     <primitive class="ocf" id="A" provider="heartbeat"
         type="Dummy"
     >
-        <instance_attributes id="A-instance_attributes"/>
         <operations>
             <op id="A-monitor-interval-10" interval="10" name="monitor"
                 timeout="20"
@@ -42,7 +41,6 @@ fixture_cib_resources_xml_simplest = """<resources>
 
 fixture_cib_resources_xml_simplest_disabled = """<resources>
     <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-        <instance_attributes id="A-instance_attributes"/>
         <meta_attributes id="A-meta_attributes">
             <nvpair id="A-meta_attributes-target-role" name="target-role"
                 value="Stopped"
@@ -63,7 +61,6 @@ fixture_cib_resources_xml_simplest_disabled = """<resources>
 fixture_cib_resources_xml_master_simplest = """<resources>
     <master id="A-master">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <instance_attributes id="A-instance_attributes"/>
             <operations>
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
                     timeout="20"
@@ -83,7 +80,6 @@ fixture_cib_resources_xml_master_simplest = """<resources>
 fixture_cib_resources_xml_master_simplest_disabled = """<resources>
     <master id="A-master">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <instance_attributes id="A-instance_attributes"/>
             <operations>
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
                     timeout="20"
@@ -107,7 +103,6 @@ fixture_cib_resources_xml_master_simplest_disabled = """<resources>
 fixture_cib_resources_xml_group_simplest = """<resources>
     <group id="G">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <instance_attributes id="A-instance_attributes"/>
             <operations>
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
                     timeout="20"
@@ -127,7 +122,6 @@ fixture_cib_resources_xml_group_simplest = """<resources>
 fixture_cib_resources_xml_group_simplest_disabled = """<resources>
     <group id="G">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <instance_attributes id="A-instance_attributes"/>
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role" name="target-role"
                     value="Stopped"
@@ -152,7 +146,6 @@ fixture_cib_resources_xml_group_simplest_disabled = """<resources>
 fixture_cib_resources_xml_clone_simplest = """<resources>
     <clone id="A-clone">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <instance_attributes id="A-instance_attributes"/>
             <operations>
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
                     timeout="20"
@@ -171,7 +164,6 @@ fixture_cib_resources_xml_clone_simplest = """<resources>
 fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
     <clone id="A-clone">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <instance_attributes id="A-instance_attributes"/>
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role" name="target-role"
                     value="Stopped"
@@ -438,7 +430,6 @@ class Create(CommonResourceTest):
                 <primitive class="ocf" id="A" provider="heartbeat"
                     type="Dummy"
                 >
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor" timeout="10s"
@@ -523,7 +514,6 @@ class CreateAsMaster(CommonResourceTest):
         self.assert_command_effect(self.simplest_create, """<resources>
             <master id="A-master">
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
@@ -592,7 +582,6 @@ class CreateAsMaster(CommonResourceTest):
             """<resources>
             <master id="A-master">
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor"
@@ -625,7 +614,6 @@ class CreateAsMaster(CommonResourceTest):
             """<resources>
             <master id="A-master">
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor"
@@ -667,7 +655,6 @@ class CreateInGroup(CommonResourceTest):
         self.assert_command_effect(self.simplest_create, """<resources>
             <group id="G">
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
@@ -749,7 +736,6 @@ class CreateAsClone(CommonResourceTest):
         self.assert_command_effect(self.simplest_create, """<resources>
             <clone id="A-clone">
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
@@ -818,7 +804,6 @@ class CreateAsClone(CommonResourceTest):
             """<resources>
             <clone id="A-clone">
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor"
@@ -851,7 +836,6 @@ class CreateAsClone(CommonResourceTest):
             """<resources>
             <clone id="A-clone">
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor"
@@ -884,7 +868,6 @@ class CreateAsClone(CommonResourceTest):
             """<resources>
             <clone id="A-clone">
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="A-instance_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10" interval="10"
                             name="monitor"

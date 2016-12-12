@@ -14,7 +14,6 @@ class Success(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-60s" interval="60s"
                             name="monitor"
@@ -29,7 +28,6 @@ class Success(ResourceTest):
             "resource create R ocf:heartbeat:Dummy",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
@@ -102,7 +100,6 @@ class Success(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --no-default-ops --disabled",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <meta_attributes id="R-meta_attributes">
                         <nvpair id="R-meta_attributes-target-role"
                             name="target-role" value="Stopped"
@@ -129,7 +126,6 @@ class Success(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -158,7 +154,6 @@ class Success(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -182,7 +177,6 @@ class Success(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -260,7 +254,6 @@ class SuccessOperations(ResourceTest):
             ,
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-30s" interval="30s"
                             name="monitor"
@@ -277,7 +270,6 @@ class SuccessOperations(ResourceTest):
             ,
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-30s" interval="30s"
                             name="monitor"
@@ -297,7 +289,6 @@ class SuccessOperations(ResourceTest):
             ,
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-30s" interval="30s"
                             name="monitor"
@@ -317,7 +308,6 @@ class SuccessOperations(ResourceTest):
             ,
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-30s" interval="30s"
                             name="monitor" timeout="20s"
@@ -334,7 +324,6 @@ class SuccessOperations(ResourceTest):
             ,
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-30s" interval="30s"
                             name="monitor" timeout="20s"
@@ -360,7 +349,6 @@ class SuccessOperations(ResourceTest):
             "resource create R ocf:heartbeat:Dummy",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
@@ -381,7 +369,6 @@ class SuccessOperations(ResourceTest):
             "resource create R ocf:heartbeat:Dummy op start timeout=200",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-10" interval="10"
                             name="monitor" timeout="20"
@@ -402,7 +389,6 @@ class SuccessOperations(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-60s" interval="60s"
                             name="monitor"
@@ -419,7 +405,6 @@ class SuccessOperations(ResourceTest):
                 <primitive class="ocf" id="R" provider="pacemaker"
                     type="Stateful"
                 >
-                    <instance_attributes id="R-instance_attributes"/>
                     <operations>
                         <op id="R-monitor-interval-10" interval="10"
                             name="monitor" role="Master" timeout="20"
@@ -450,7 +435,6 @@ class SuccessGroup(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -479,7 +463,6 @@ class SuccessGroup(ResourceTest):
                     <primitive class="ocf" id="R0" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R0-instance_attributes"/>
                         <operations>
                             <op id="R0-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -489,7 +472,6 @@ class SuccessGroup(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -514,7 +496,6 @@ class SuccessGroup(ResourceTest):
                     <primitive class="ocf" id="R0" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R0-instance_attributes"/>
                         <operations>
                             <op id="R0-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -524,7 +505,6 @@ class SuccessGroup(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -534,7 +514,6 @@ class SuccessGroup(ResourceTest):
                     <primitive class="ocf" id="R1" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R1-instance_attributes"/>
                         <operations>
                             <op id="R1-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -559,7 +538,6 @@ class SuccessGroup(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -569,7 +547,6 @@ class SuccessGroup(ResourceTest):
                     <primitive class="ocf" id="R0" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R0-instance_attributes"/>
                         <operations>
                             <op id="R0-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -590,7 +567,6 @@ class SuccessMaster(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
@@ -618,7 +594,6 @@ class SuccessClone(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <meta_attributes id="R-meta_attributes">
                             <nvpair id="R-meta_attributes-a" name="a"
                                 value="b"
@@ -660,7 +635,6 @@ class SuccessClone(ResourceTest):
                     <primitive class="ocf" id="R" provider="heartbeat"
                         type="Dummy"
                     >
-                        <instance_attributes id="R-instance_attributes"/>
                         <operations>
                             <op id="R-monitor-interval-10" interval="10"
                                 name="monitor"
@@ -884,7 +858,6 @@ class FailOrWarnGroup(ResourceTest):
                 <primitive class="ocf" id="R1" provider="heartbeat"
                     type="Dummy"
                 >
-                    <instance_attributes id="R1-instance_attributes"/>
                     <meta_attributes id="R1-meta_attributes">
                         <nvpair id="R1-meta_attributes-a" name="a" value="b"/>
                     </meta_attributes>

@@ -108,10 +108,12 @@ def append_new(
         attributes
     )
 
-    append_new_instance_attributes(
-        primitive_element,
-        instance_attributes if instance_attributes else {}
-    )
+    if instance_attributes:
+        append_new_instance_attributes(
+            primitive_element,
+            instance_attributes
+        )
+
     if meta_attributes:
         append_new_meta_attributes(primitive_element, meta_attributes)
 
