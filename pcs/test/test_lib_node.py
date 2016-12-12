@@ -65,7 +65,7 @@ class NodeAddressesTest(TestCase):
         self.assertFalse(another_node0 < node0)
         self.assertFalse(node1 < node1)
         self.assertTrue(node0 < node1)
-        self.assertFalse(node1 < node1)
+        self.assertFalse(node1 < node0)
 
 
 class NodeAddressesListTest(TestCase):
