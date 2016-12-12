@@ -18,6 +18,7 @@ from pcs.lib.pacemaker.state import ClusterState
 
 __EXITCODE_WAIT_TIMEOUT = 62
 __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 6
+__EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE = 211
 __RESOURCE_CLEANUP_OPERATION_COUNT_THRESHOLD = 100
 
 class CrmMonErrorException(LibraryError):
@@ -126,7 +127,10 @@ def _upgrade_cib(runner):
     stdout, stderr, retval = runner.run(
         [__exec("cibadmin"), "--upgrade", "--force"]
     )
-    if retval != 0:
+    # If we are already on the latest schema available, do not consider it an
+    # error. We do not know here what version is required. The caller however
+    # knows and is responsible for dealing with it.
+    if retval not in (0, __EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE):
         raise LibraryError(
             reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
         )

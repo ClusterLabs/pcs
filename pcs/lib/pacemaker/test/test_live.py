@@ -308,6 +308,15 @@ class UpgradeCibTest(TestCase):
             ["/usr/sbin/cibadmin", "--upgrade", "--force"]
         )
 
+    def test_already_at_latest_schema(self):
+        error = ("Call cib_upgrade failed (-211): Schema is already "
+            "the latest available")
+        self.mock_runner.run.return_value = "", error, 211
+        lib._upgrade_cib(self.mock_runner)
+        self.mock_runner.run.assert_called_once_with(
+            ["/usr/sbin/cibadmin", "--upgrade", "--force"]
+        )
+
 @mock.patch("pcs.lib.pacemaker.live.get_cib_xml")
 @mock.patch("pcs.lib.pacemaker.live._upgrade_cib")
 class EnsureCibVersionTest(TestCase):
