@@ -1,7 +1,7 @@
 include Makefile
 include COPYING
 include pcs/pcs.8
-include pcs/bash_completion.sh
+include pcs/bash_completion
 include pcsd/.bundle/config
 graft pcsd
 graft pcsd/vendor/cache

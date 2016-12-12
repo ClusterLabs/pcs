@@ -23,7 +23,7 @@ setup(
     url='https://github.com/ClusterLabs/pcs',
     packages=find_packages(),
     package_data={'pcs':[
-        'bash_completion.sh',
+        'bash_completion',
         'pcs.8',
         'pcs',
         'test/resources/*.xml',

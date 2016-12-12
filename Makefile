@@ -85,7 +85,7 @@ install:
 	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
 	mv ${DESTDIR}${PREFIX}/bin/pcs ${DESTDIR}${PREFIX}/sbin/pcs
-	install -D -m644 pcs/bash_completion.sh ${BASH_COMPLETION_DIR}/pcs
+	install -D -m644 pcs/bash_completion ${BASH_COMPLETION_DIR}/pcs
 	install -m644 -D pcs/pcs.8 ${DESTDIR}/${MANDIR}/man8/pcs.8
 ifeq ($(IS_DEBIAN),true)
   ifeq ($(install_settings),true)
