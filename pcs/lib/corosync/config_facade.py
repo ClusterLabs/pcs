@@ -386,6 +386,7 @@ class ConfigFacade(object):
         ])
         allowed_options = required_options | optional_options
         model_options_names = frozenset(model_options.keys())
+        missing_options = []
         report_items = []
         severity = (
             ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
@@ -393,10 +394,7 @@ class ConfigFacade(object):
         forceable = None if force else report_codes.FORCE_OPTIONS
 
         if need_required:
-            for missing in sorted(required_options - model_options_names):
-                report_items.append(reports.required_option_is_missing(
-                    [missing]
-                ))
+            missing_options += required_options - model_options_names
 
         for name, value in sorted(model_options.items()):
             if name not in allowed_options:
@@ -412,9 +410,7 @@ class ConfigFacade(object):
             if value == "":
                 # do not allow to remove required options
                 if name in required_options:
-                    report_items.append(
-                        reports.required_option_is_missing([name])
-                    )
+                    missing_options.append(name)
                 else:
                     continue
 
@@ -456,6 +452,11 @@ class ConfigFacade(object):
                     report_items.append(reports.invalid_option_value(
                         name, value, allowed_values, severity, forceable
                     ))
+
+        if missing_options:
+            report_items.append(
+                reports.required_option_is_missing(sorted(missing_options))
+            )
 
         return report_items
 

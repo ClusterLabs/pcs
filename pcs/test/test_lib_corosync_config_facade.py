@@ -1207,12 +1207,8 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["host"]}
-            ),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm"]}
+                {"option_names": ["algorithm", "host"]},
+                None
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1371,12 +1367,8 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["host"]}
-            ),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm"]}
+                {"option_names": ["algorithm", "host"]},
+                None
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1395,12 +1387,8 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["host"]}
-            ),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm"]}
+                {"option_names": ["algorithm", "host"]},
+                None
             )
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -1698,12 +1686,8 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["host"]},
-            ),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm"]}
+                {"option_names": ["algorithm", "host"]},
+                None
             ),
             (
                 severity.ERROR,
@@ -1736,12 +1720,8 @@ quorum {
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["host"]},
-            ),
-            (
-                severity.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
-                {"option_names": ["algorithm"]}
+                {"option_names": ["algorithm", "host"]},
+                None
             )
         )
         self.assertFalse(facade.need_stopped_cluster)

@@ -177,17 +177,11 @@ Device:
     def test_missing_required_options(self):
         self.assert_pcs_fail(
             "quorum device add model net",
-            """\
-Error: required option 'algorithm' is missing
-Error: required option 'host' is missing
-"""
+            "Error: required options 'algorithm', 'host' are missing\n"
         )
         self.assert_pcs_fail(
             "quorum device add model net --force",
-            """\
-Error: required option 'algorithm' is missing
-Error: required option 'host' is missing
-"""
+            "Error: required options 'algorithm', 'host' are missing\n"
         )
 
     def test_bad_options(self):
