@@ -144,7 +144,7 @@ def disable_service(runner, service, instance=None):
     instance -- instance name, it ha no effect on not systemd systems.
         If None no instance name will be used.
     """
-    if not is_service_installed(runner, service):
+    if not is_service_installed(runner, service, instance):
         return
     if is_systemctl():
         stdout, stderr, retval = runner.run([
@@ -285,15 +285,17 @@ def is_service_running(runner, service, instance=None):
     return retval == 0
 
 
-def is_service_installed(runner, service):
+def is_service_installed(runner, service, instance=None):
     """
     Check if specified service is installed on local system.
 
     runner -- CommandRunner
     service -- name of service
+    instance -- systemd service instance
     """
     if is_systemctl():
-        return service in get_systemd_services(runner)
+        service_name = "{0}{1}".format(service, "" if instance is None else "@")
+        return service_name in get_systemd_services(runner)
     else:
         return service in get_non_systemd_services(runner)
 

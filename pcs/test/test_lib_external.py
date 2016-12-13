@@ -1082,6 +1082,9 @@ class DisableServiceTest(TestCase):
         mock_systemctl.return_value = True
         self.mock_runner.run.return_value = ("", "Removed symlink", 0)
         lib.disable_service(self.mock_runner, self.service)
+        mock_is_installed.assert_called_once_with(
+            self.mock_runner, self.service, None
+        )
         self.mock_runner.run.assert_called_once_with(
             [_systemctl, "disable", self.service + ".service"]
         )
@@ -1094,6 +1097,9 @@ class DisableServiceTest(TestCase):
             lib.DisableServiceError,
             lambda: lib.disable_service(self.mock_runner, self.service)
         )
+        mock_is_installed.assert_called_once_with(
+            self.mock_runner, self.service, None
+        )
         self.mock_runner.run.assert_called_once_with(
             [_systemctl, "disable", self.service + ".service"]
         )
@@ -1103,6 +1109,9 @@ class DisableServiceTest(TestCase):
         mock_systemctl.return_value = False
         self.mock_runner.run.return_value = ("", "", 0)
         lib.disable_service(self.mock_runner, self.service)
+        mock_is_installed.assert_called_once_with(
+            self.mock_runner, self.service, None
+        )
         self.mock_runner.run.assert_called_once_with(
             [_chkconfig, self.service, "off"]
         )
@@ -1115,6 +1124,9 @@ class DisableServiceTest(TestCase):
             lib.DisableServiceError,
             lambda: lib.disable_service(self.mock_runner, self.service)
         )
+        mock_is_installed.assert_called_once_with(
+            self.mock_runner, self.service, None
+        )
         self.mock_runner.run.assert_called_once_with(
             [_chkconfig, self.service, "off"]
         )
@@ -1126,6 +1138,9 @@ class DisableServiceTest(TestCase):
         mock_systemctl.return_value = True
         lib.disable_service(self.mock_runner, self.service)
         self.assertEqual(self.mock_runner.run.call_count, 0)
+        mock_is_installed.assert_called_once_with(
+            self.mock_runner, self.service, None
+        )
 
     def test_not_systemctl_not_installed(
             self, mock_is_installed, mock_systemctl
@@ -1134,12 +1149,19 @@ class DisableServiceTest(TestCase):
         mock_systemctl.return_value = False
         lib.disable_service(self.mock_runner, self.service)
         self.assertEqual(self.mock_runner.run.call_count, 0)
+        mock_is_installed.assert_called_once_with(
+            self.mock_runner, self.service, None
+        )
 
     def test_instance_systemctl(self, mock_is_installed, mock_systemctl):
+        instance = "test"
         mock_is_installed.return_value = True
         mock_systemctl.return_value = True
         self.mock_runner.run.return_value = ("", "Removed symlink", 0)
-        lib.disable_service(self.mock_runner, self.service, instance="test")
+        lib.disable_service(self.mock_runner, self.service, instance=instance)
+        mock_is_installed.assert_called_once_with(
+            self.mock_runner, self.service, instance
+        )
         self.mock_runner.run.assert_called_once_with([
             _systemctl,
             "disable",
@@ -1147,10 +1169,14 @@ class DisableServiceTest(TestCase):
         ])
 
     def test_instance_not_systemctl(self, mock_is_installed, mock_systemctl):
+        instance = "test"
         mock_is_installed.return_value = True
         mock_systemctl.return_value = False
         self.mock_runner.run.return_value = ("", "", 0)
-        lib.disable_service(self.mock_runner, self.service, instance="test")
+        lib.disable_service(self.mock_runner, self.service, instance=instance)
+        mock_is_installed.assert_called_once_with(
+            self.mock_runner, self.service, instance
+        )
         self.mock_runner.run.assert_called_once_with(
             [_chkconfig, self.service, "off"]
         )
@@ -1525,6 +1551,45 @@ class IsServiceInstalledTest(TestCase):
         mock_systemd.return_value = []
         mock_non_systemd.return_value = ["service1", "service2"]
         self.assertFalse(lib.is_service_installed(self.mock_runner, "service3"))
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        mock_non_systemd.assert_called_once_with(self.mock_runner)
+        self.assertEqual(mock_systemd.call_count, 0)
+
+    def test_installed_systemd_instance(
+        self, mock_non_systemd, mock_systemd, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = True
+        mock_systemd.return_value = ["service1", "service2@"]
+        mock_non_systemd.return_value = []
+        self.assertTrue(
+            lib.is_service_installed(self.mock_runner, "service2", "instance")
+        )
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        mock_systemd.assert_called_once_with(self.mock_runner)
+        self.assertEqual(mock_non_systemd.call_count, 0)
+
+    def test_not_installed_systemd_instance(
+        self, mock_non_systemd, mock_systemd, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = True
+        mock_systemd.return_value = ["service1", "service2"]
+        mock_non_systemd.return_value = []
+        self.assertFalse(
+            lib.is_service_installed(self.mock_runner, "service2", "instance")
+        )
+        self.assertEqual(mock_is_systemctl.call_count, 1)
+        mock_systemd.assert_called_once_with(self.mock_runner)
+        self.assertEqual(mock_non_systemd.call_count, 0)
+
+    def test_installed_not_systemd_instance(
+        self, mock_non_systemd, mock_systemd, mock_is_systemctl
+    ):
+        mock_is_systemctl.return_value = False
+        mock_systemd.return_value = []
+        mock_non_systemd.return_value = ["service1", "service2"]
+        self.assertTrue(
+            lib.is_service_installed(self.mock_runner, "service2", "instance")
+        )
         self.assertEqual(mock_is_systemctl.call_count, 1)
         mock_non_systemd.assert_called_once_with(self.mock_runner)
         self.assertEqual(mock_systemd.call_count, 0)

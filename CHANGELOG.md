@@ -22,12 +22,15 @@
 - Fixed searching for files to remove in the `/var/lib` directory ([ghpull#119],
   [ghpull#120])
 - Fixed messages when managing services (start, stop, enable, disable...)
+- Fixed disabling services on systemd systems when using instances
+  ([rhbz#1389501])
 
 [ghpull#119]: https://github.com/ClusterLabs/pcs/pull/119
 [ghpull#120]: https://github.com/ClusterLabs/pcs/pull/120
 [rhbz#1261116]: https://bugzilla.redhat.com/show_bug.cgi?id=1261116
 [rhbz#1315992]: https://bugzilla.redhat.com/show_bug.cgi?id=1315992
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
+[rhbz#1389501]: https://bugzilla.redhat.com/show_bug.cgi?id=1389501
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
 [rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273
 [rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846

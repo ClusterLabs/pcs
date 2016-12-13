@@ -2001,6 +2001,9 @@ def is_service_installed?(service)
     return false
   end
 
+  # currently we are not using systemd instances (service_name@instance) in pcsd
+  # for proper implementation of is_service_installed see
+  # pcs/lib/external.py:is_service_installed
   stdout, _, retcode = run_cmd(
     PCSAuth.getSuperuserAuth(), 'systemctl', 'list-unit-files', '--full'
   )
