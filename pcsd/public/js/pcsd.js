@@ -102,9 +102,8 @@ function create_group() {
     return;
   }
   var not_primitives = resource_list.filter(function(resource_id) {
-    return !Pcs.resourcesContainer.get_resource_by_id(resource_id).get(
-      "is_primitive"
-    );
+    var resource_obj = Pcs.resourcesContainer.get_resource_by_id(resource_id);
+    return !(resource_obj && resource_obj.get("is_primitive"));
   });
   if (not_primitives.length != 0) {
     alert("Members of group have to be primitive resources. These resources" +
