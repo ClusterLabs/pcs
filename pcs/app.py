@@ -9,7 +9,6 @@ import getopt
 import os
 import sys
 import logging
-logging.basicConfig()
 
 from pcs import (
     acl,
@@ -31,9 +30,10 @@ from pcs import (
     alert,
 )
 
-from pcs.cli.common import completion
+from pcs.cli.common import completion, parse_args
 
 
+logging.basicConfig()
 usefile = False
 filename = ""
 def main(argv=None):
@@ -49,8 +49,6 @@ def main(argv=None):
     global filename, usefile
     orig_argv = argv[:]
     utils.pcs_options = {}
-    modified_argv = []
-    real_argv = []
     try:
         # we change --cloneopt to "clone" for backwards compatibility
         new_argv = []
@@ -77,54 +75,16 @@ def main(argv=None):
             new_argv.append(arg)
         argv = new_argv
 
-        # h = help, f = file,
-        # p = password (cluster auth), u = user (cluster auth),
-        # V = verbose (cluster verify)
-        pcs_short_options = "hf:p:u:V"
-        pcs_long_options = [
-            "debug", "version", "help", "fullhelp",
-            "force", "skip-offline", "autocorrect", "interactive", "autodelete",
-            "all", "full", "groups", "local", "wait", "config",
-            "start", "enable", "disabled", "off",
-            "pacemaker", "corosync",
-            "no-default-ops", "defaults", "nodesc",
-            "clone", "master", "name=", "group=", "node=",
-            "from=", "to=", "after=", "before=",
-            "transport=", "rrpmode=", "ipv6",
-            "addr0=", "bcast0=", "mcast0=", "mcastport0=", "ttl0=", "broadcast0",
-            "addr1=", "bcast1=", "mcast1=", "mcastport1=", "ttl1=", "broadcast1",
-            "wait_for_all=", "auto_tie_breaker=", "last_man_standing=",
-            "last_man_standing_window=",
-            "token=", "token_coefficient=", "consensus=", "join=",
-            "miss_count_const=", "fail_recv_const=",
-            "corosync_conf=", "cluster_conf=",
-            "booth-conf=", "booth-key=",
-            "remote", "watchdog=",
-            #in pcs status - do not display resorce status on inactive node
-            "hide-inactive",
-        ]
-        # pull out negative number arguments and add them back after getopt
-        prev_arg = ""
-        for arg in argv:
-            if len(arg) > 0 and arg[0] == "-":
-                if arg[1:].isdigit() or arg[1:].startswith("INFINITY"):
-                    real_argv.append(arg)
-                else:
-                    modified_argv.append(arg)
-            else:
-                # If previous argument required an argument, then this arg
-                # should not be added back in
-                if not prev_arg or (not (prev_arg[0] == "-" and prev_arg[1:] in pcs_short_options) and not (prev_arg[0:2] == "--" and (prev_arg[2:] + "=") in pcs_long_options)):
-                    real_argv.append(arg)
-                modified_argv.append(arg)
-            prev_arg = arg
-
-        pcs_options, argv = getopt.gnu_getopt(modified_argv, pcs_short_options, pcs_long_options)
+        pcs_options, dummy_argv = getopt.gnu_getopt(
+            parse_args.filter_out_non_option_negative_numbers(argv),
+            parse_args.PCS_SHORT_OPTIONS,
+            parse_args.PCS_LONG_OPTIONS,
+        )
     except getopt.GetoptError as err:
         print(err)
         usage.main()
         sys.exit(1)
-    argv = real_argv
+    argv = parse_args.filter_out_options(argv)
     for o, a in pcs_options:
         if not o in utils.pcs_options:
             if o == "--watchdog":

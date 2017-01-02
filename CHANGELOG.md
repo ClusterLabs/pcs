@@ -24,6 +24,7 @@
 - Fixed messages when managing services (start, stop, enable, disable...)
 - Fixed disabling services on systemd systems when using instances
   ([rhbz#1389501])
+- Fixed parsing commandline options ([rhbz#1404229])
 
 [ghpull#119]: https://github.com/ClusterLabs/pcs/pull/119
 [ghpull#120]: https://github.com/ClusterLabs/pcs/pull/120
@@ -34,6 +35,7 @@
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
 [rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273
 [rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846
+[rhbz#1404229]: https://bugzilla.redhat.com/show_bug.cgi?id=1404229
 
 
 ## [0.9.155] - 2016-11-03
