@@ -408,4 +408,3 @@ class IsOptionExpectingValue(TestCase):
     def test_returns_false_on_option_including_value(self):
         self.assertFalse(is_option_expecting_value("--name=Name"))
         self.assertFalse(is_option_expecting_value("-fvalue"))
-
