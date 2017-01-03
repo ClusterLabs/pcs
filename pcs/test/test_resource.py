@@ -2274,9 +2274,15 @@ Deleting Resource - ClusterIP5
         ac (o,"")
         assert r==0
 
-        o,r = pcs("resource --full")
-        ac (o," Master: F0-master\n  Meta Attrs: notify=true \n  Resource: F0 (class=ocf provider=heartbeat type=Dummy)\n   Operations: monitor interval=10s role=Master (F0-monitor-interval-10s)\n               monitor interval=20s role=Slave (F0-monitor-interval-20s)\n")
-        assert r==0
+        self.assert_pcs_success("resource --full", outdent(
+            """\
+             Master: F0-master
+              Resource: F0 (class=ocf provider=heartbeat type=Dummy)
+               Meta Attrs: notify=true 
+               Operations: monitor interval=10s role=Master (F0-monitor-interval-10s)
+                           monitor interval=20s role=Slave (F0-monitor-interval-20s)
+            """
+        ))
 
     def testBadInstanceVariables(self):
         self.assert_pcs_fail(

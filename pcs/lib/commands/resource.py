@@ -18,14 +18,14 @@ from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.pacemaker.state import ensure_resource_state
 
 @contextmanager
-def cib_resources_section(env, resource_id, wait, disabled):
+def cib_resources_section(env, resource_id, wait, disabled_after_wait):
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     yield get_resources(cib)
     env.push_cib(cib, wait)
     if wait is not False:
         ensure_resource_state(
-            not disabled,
+            not disabled_after_wait,
             env.report_processor,
             env.get_cluster_state(),
             resource_id
@@ -39,7 +39,6 @@ def create(
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
     ensure_disabled=False,
-    master=False,
     wait=False,
 ):
     with cib_resources_section(
@@ -55,7 +54,6 @@ def create(
             allow_invalid_instance_attributes,
             use_default_operations,
             ensure_disabled,
-            master=master
         )
 
 def create_as_master(
@@ -66,14 +64,15 @@ def create_as_master(
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
     ensure_disabled=False,
-    master=False,
     wait=False,
 ):
-    meta_attributes = {} #keep original bug
-    with cib_resources_section(
-        env, resource_id, wait,
-        ensure_disabled or are_clone_meta_disabled(master_meta_options)
-    ) as resources_section:
+    with cib_resources_section(env, resource_id, wait, (
+        ensure_disabled
+        or
+        are_meta_disabled(meta_attributes)
+        or
+        are_clone_meta_disabled(master_meta_options)
+    )) as resources_section:
         primitive_element = resource.primitive.create(
             env.report_processor, env.cmd_runner(), resources_section,
             resource_id, resource_agent_name,
@@ -82,7 +81,6 @@ def create_as_master(
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
-            master=True
         )
 
         if ensure_disabled:
@@ -102,7 +100,6 @@ def create_as_clone(
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
     ensure_disabled=False,
-    master=False,
     wait=False,
 ):
     with cib_resources_section(env, resource_id, wait, (
@@ -121,7 +118,6 @@ def create_as_clone(
             allow_invalid_instance_attributes,
             use_default_operations,
             ensure_disabled,
-            master=master
         )
         resource.clone.append_new_clone(
             resources_section,
@@ -137,7 +133,6 @@ def create_in_group(
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
     ensure_disabled=False,
-    master=False,
     adjacent_resource_id=None,
     put_after_adjacent=False,
     wait=False,
@@ -155,7 +150,6 @@ def create_in_group(
             allow_invalid_instance_attributes,
             use_default_operations,
             ensure_disabled,
-            master=master
         )
         validate_id(group_id, "group name")
         resource.group.place_resource(

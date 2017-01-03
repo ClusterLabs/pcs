@@ -14,6 +14,8 @@
 - Restarting pcsd initiated from pcs is now a synchronous operation
   ([rhbz#1284404])
 - Stopped bundling fonts used in pcsd GUI ([ghissue#125])
+- In `pcs resource create` flags `--master` and `--clone` changed to keywords
+  `master` and `clone`
 
 ### Fixed
 - When upgrading CIB to the latest schema version, check for minimal common
@@ -39,6 +41,8 @@
   the keywords `meta` and `op` ([rhbz#1395226])
 - `pcs resource create` does not produce invalid cib when group id is already
   occupied with non-resource element ([rhbz#1382004])
+- Fixed misbehavior of the flag `--master` in `pcs resource create` command
+  ([rhbz#1378107])
 
 [ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
 [ghissue#125]: https://github.com/ClusterLabs/pcs/issues/125
@@ -49,6 +53,7 @@
 [rhbz#1315992]: https://bugzilla.redhat.com/show_bug.cgi?id=1315992
 [rhbz#1339355]: https://bugzilla.redhat.com/show_bug.cgi?id=1339355
 [rhbz#1347335]: https://bugzilla.redhat.com/show_bug.cgi?id=1347335
+[rhbz#1378107]: https://bugzilla.redhat.com/show_bug.cgi?id=1378107
 [rhbz#1382004]: https://bugzilla.redhat.com/show_bug.cgi?id=1382004
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389501]: https://bugzilla.redhat.com/show_bug.cgi?id=1389501

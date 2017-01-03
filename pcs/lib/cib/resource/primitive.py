@@ -33,8 +33,28 @@ def create(
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
     ensure_disabled=False,
-    master=False
 ):
+    """
+    Prepare all parts of primitive resource and push it to cib.
+
+    report_processor is a tool for warning/info/error reporting
+    cmd_runner is a configured tool for running external commands
+    etree.Element resources_section is place where new element will be appended
+    string resource_id is id of new resource
+    string resource_agent_name is full name of resource agent
+        e.g. ocf:heartbeat:Dummy
+    list of dict raw_operation_list specifies operations of resource
+    dict meta_attributes specifies meta attributes of resource
+    dict instance_attributes specifies instance attributes of resource
+    bool allow_absent_agent is flag for using agent that is not found in system
+    bool allow_invalid_operation is flag for skipping validation of operations
+    bool allow_invalid_instance_attributes is flag for skipping validation of
+        instance_attributes
+    bool use_default_operations is flag for completion operations with default
+        actions specified in resource agent
+    bool ensure_disabled is flag for completion meta_attributes with attribute
+        causing disabling resource
+    """
     if does_id_exist(resources_section, resource_id):
         raise LibraryError(reports.id_already_exists(resource_id))
     validate_id(resource_id, "resource name")
@@ -56,13 +76,8 @@ def create(
     if ensure_disabled:
         meta_attributes = disable_meta(meta_attributes)
 
-    # If it's a master all meta values go to the master
-    if master: #keep original bug
-        meta_attributes = {}
-
     if not allow_invalid_instance_attributes:
         resource_agent.validate_parameters(instance_attributes)
-
 
     return append_new(
         resources_section,

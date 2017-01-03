@@ -600,9 +600,9 @@ def resource_create_refactoring(lib, argv, group=None):
     if "clone" in parts:
         if group:
             warn("--group ignored when creating a clone")
-        if "--master" in utils.pcs_options:
-            warn("--master ignored when creating a clone")
-    elif "--master" in utils.pcs_options:
+        if "master" in parts:
+            warn("master ignored when creating a clone")
+    elif "master" in parts:
         if group:
             warn("--group ignored when creating a master")
 
@@ -610,7 +610,6 @@ def resource_create_refactoring(lib, argv, group=None):
         raise error("you cannot specify both --before and --after")
 
     force = "--force" in utils.pcs_options
-    is_master = "--master" in utils.pcs_options
 
     settings = dict(
         allow_absent_agent=force,
@@ -618,7 +617,6 @@ def resource_create_refactoring(lib, argv, group=None):
         allow_invalid_instance_attributes=force,
         use_default_operations="--no-default-ops" not in utils.pcs_options,
         ensure_disabled="--disabled" in utils.pcs_options,
-        master=is_master,
         wait=utils.pcs_options.get("--wait", False)
     )
 
@@ -630,12 +628,12 @@ def resource_create_refactoring(lib, argv, group=None):
             parts["clone"],
             **settings
         )
-    elif is_master:
+    elif "master" in parts:
         lib.resource.create_as_master(
             ra_id, ra_type, parts["op"],
             parts["meta"],
             parts["options"],
-            parts["meta"], #master_meta
+            parts["master"],
             **settings
         )
     elif not group:

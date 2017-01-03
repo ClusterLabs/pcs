@@ -559,7 +559,6 @@ class SuccessGroup(ResourceTest):
 
 class SuccessMaster(ResourceTest):
     def test_disable_is_on_master_element(self):
-
         self.assert_effect(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --disabled --master",
             """<resources>
@@ -570,6 +569,271 @@ class SuccessMaster(ResourceTest):
                         <operations>
                             <op id="R-monitor-interval-60s" interval="60s"
                                 name="monitor"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-master-meta_attributes">
+                        <nvpair id="R-master-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                </master>
+            </resources>"""
+        )
+
+    def test_put_options_after_master_as_its_meta_fix_1(self):
+        """
+        fixes bz 1378107 (do not use master options as primitive options)
+        """
+        self.assert_effect(
+            "resource create R ocf:heartbeat:Dummy state=a"
+                " --master is-managed=false --force"
+            ,
+            """<resources>
+                <master id="R-master">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="R-instance_attributes">
+                            <nvpair id="R-instance_attributes-state"
+                                name="state" value="a"
+                            />
+                        </instance_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="R-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-master-meta_attributes">
+                        <nvpair id="R-master-meta_attributes-is-managed"
+                            name="is-managed" value="false"
+                    />
+                    </meta_attributes>
+                </master>
+            </resources>"""
+        )
+
+    def test_put_options_after_master_as_its_meta_fix_2(self):
+        """
+        fixes bz 1378107 (do not use master options as operations)
+        """
+        self.assert_effect(
+            "resource create R ocf:heartbeat:Dummy state=a op monitor"
+                " interval=10s --master is-managed=false --force"
+                " --no-default-ops"
+            ,
+            """<resources>
+                <master id="R-master">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <instance_attributes id="R-instance_attributes">
+                            <nvpair id="R-instance_attributes-state"
+                                name="state" value="a"
+                            />
+                        </instance_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-master-meta_attributes">
+                        <nvpair id="R-master-meta_attributes-is-managed"
+                            name="is-managed" value="false"
+                    />
+                    </meta_attributes>
+                </master>
+            </resources>"""
+        )
+
+    def test_do_not_steal_primitive_meta_options(self):
+        """
+        fixes bz 1378107
+        """
+        self.assert_effect(
+            "resource create R ocf:heartbeat:Dummy meta a=b --master b=c"
+                " --no-default-ops"
+            ,
+            """<resources>
+                <master id="R-master">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <meta_attributes id="R-meta_attributes">
+                            <nvpair id="R-meta_attributes-a" name="a"
+                                value="b"
+                            />
+                        </meta_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-60s" interval="60s"
+                                name="monitor"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-master-meta_attributes">
+                        <nvpair id="R-master-meta_attributes-b" name="b"
+                            value="c"
+                        />
+                    </meta_attributes>
+                </master>
+            </resources>"""
+        )
+
+    def test_master_flag_makes_do_not_steal_meta_when_ignored(self):
+        """
+        fixes bz 1378107
+        """
+        self.assert_effect(
+            "resource create R ocf:heartbeat:Dummy meta a=b --clone"
+                " --no-default-ops --master"
+            ,
+            """<resources>
+                <clone id="R-clone">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <meta_attributes id="R-meta_attributes">
+                            <nvpair id="R-meta_attributes-a" name="a"
+                                value="b"
+                            />
+                        </meta_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-60s" interval="60s"
+                                name="monitor"
+                            />
+                        </operations>
+                    </primitive>
+                </clone>
+            </resources>"""
+            ,
+            "Warning: --master ignored when creating a clone\n",
+        )
+
+    def test_master_flag_does_not_invalidate_flag_disabled(self):
+        """
+        fixes bz 1378107
+        """
+        self.assert_effect(
+            "resource create R ocf:heartbeat:Dummy --clone --disable"
+                " --master"
+            ,
+            """<resources>
+                <clone id="R-clone">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <meta_attributes id="R-meta_attributes">
+                            <nvpair id="R-meta_attributes-target-role"
+                                name="target-role" value="Stopped"
+                            />
+                        </meta_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="R-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </clone>
+            </resources>"""
+            ,
+            "Warning: --master ignored when creating a clone\n",
+        )
+
+    def test_takes_master_meta_attributes(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
+                " ip=192.168.0.99 --master cidr_netmask=32"
+            ,
+            """<resources>
+                <master id="R-master">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="IPaddr2"
+                    >
+                        <instance_attributes id="R-instance_attributes">
+                            <nvpair id="R-instance_attributes-ip" name="ip"
+                                value="192.168.0.99"
+                            />
+                        </instance_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-60s" interval="60s"
+                                name="monitor"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-master-meta_attributes">
+                        <nvpair id="R-master-meta_attributes-cidr_netmask"
+                            name="cidr_netmask" value="32"
+                        />
+                    </meta_attributes>
+                </master>
+            </resources>"""
+        )
+
+    def test_not_steal_primitive_meta_attributes(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
+                " ip=192.168.0.99 cidr_netmask=32 meta is-managed=false"
+                " --master"
+            ,
+            """<resources>
+                <master id="R-master">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="IPaddr2"
+                    >
+                        <instance_attributes id="R-instance_attributes">
+                            <nvpair id="R-instance_attributes-cidr_netmask"
+                                name="cidr_netmask" value="32"
+                            />
+                            <nvpair id="R-instance_attributes-ip" name="ip"
+                                value="192.168.0.99"
+                            />
+                        </instance_attributes>
+                        <meta_attributes id="R-meta_attributes">
+                            <nvpair id="R-meta_attributes-is-managed"
+                                name="is-managed" value="false"
+                            />
+                        </meta_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-60s" interval="60s"
+                                name="monitor"
+                            />
+                        </operations>
+                    </primitive>
+                </master>
+            </resources>"""
+        )
+
+    def test_master_places_disabled_correctly(self):
+        self.assert_effect(
+            "resource create R ocf:heartbeat:Dummy --master --disabled",
+            """<resources>
+                <master id="R-master">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="R-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -911,70 +1175,4 @@ class FailOrWarnGroup(ResourceTest):
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1",
             "Error: there is no resource 'R1' in the group 'G1'\n"
-        )
-
-class MisfunctionTests(ResourceTest):
-    def test_with_master_options_with_meta(self):
-        self.assert_effect(
-            [
-                #is-managed should be meta attribute of primitive
-                "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
-                    " ip=192.168.0.99 cidr_netmask=32 meta is-managed=false"
-                    " --master"
-            ],
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="IPaddr2"
-                    >
-                        <instance_attributes id="R-instance_attributes">
-                            <nvpair id="R-instance_attributes-cidr_netmask"
-                                name="cidr_netmask" value="32"
-                            />
-                            <nvpair id="R-instance_attributes-ip" name="ip"
-                                value="192.168.0.99"
-                            />
-                        </instance_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="R-master-meta_attributes">
-                        <nvpair id="R-master-meta_attributes-is-managed"
-                            name="is-managed" value="false"
-                        />
-                    </meta_attributes>
-                </master>
-            </resources>"""
-        )
-
-    def test_with_master_options(self):
-        self.assert_effect(
-            #cidr_netmask should be master meta attribute
-            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
-                " ip=192.168.0.99 --master cidr_netmask=32"
-            ,
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="IPaddr2"
-                    >
-                        <instance_attributes id="R-instance_attributes">
-                            <nvpair id="R-instance_attributes-cidr_netmask"
-                                name="cidr_netmask" value="32"
-                            />
-                            <nvpair id="R-instance_attributes-ip" name="ip"
-                                value="192.168.0.99"
-                            />
-                        </instance_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
-                            />
-                        </operations>
-                    </primitive>
-                </master>
-            </resources>"""
         )

@@ -266,3 +266,29 @@ def filter_out_options(arg_list):
         ):
             args_without_options.append(arg)
     return args_without_options
+
+def upgrade_args(arg_list):
+    """
+    Return modified copy of arg_list.
+    This function transform some old syntax to new syntax to keep backward
+    compatibility.
+
+    list arg_list contains command line arguments
+    """
+    upgraded_args = []
+    args_without_options = filter_out_options(arg_list)
+    for arg in arg_list:
+        if arg in ["--cloneopt", "--clone"]:
+            upgraded_args.append("clone")
+        elif arg.startswith("--cloneopt="):
+            upgraded_args.append("clone")
+            upgraded_args.append(arg.split('=', 1)[1])
+        elif(
+            arg == "--master"
+            and
+            args_without_options[:2] == ["resource", "create"]
+        ):
+            upgraded_args.append("master")
+        else:
+            upgraded_args.append(arg)
+    return upgraded_args

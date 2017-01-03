@@ -563,7 +563,38 @@ class CreateAsMaster(CommonResourceTest):
             fixture_state_resources_xml(role="Stopped"),
         )
 
-    def test_wait_ok_disable_ok_by_target_role_master(self):
+    def test_wait_ok_disable_ok_by_target_role(self):
+        self.assert_wait_ok_disable_ok(
+            lambda: self.simplest_create(
+                wait="10",
+                meta_attributes={"target-role": "Stopped"}
+            ),
+            """<resources>
+            <master id="A-master">
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                        <op id="A-start-interval-0s" interval="0s" name="start"
+                            timeout="20"
+                        />
+                        <op id="A-stop-interval-0s" interval="0s" name="stop"
+                            timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </master>
+            </resources>""",
+            fixture_state_resources_xml(role="Stopped"),
+        )
+
+    def test_wait_ok_disable_ok_by_target_role_in_master(self):
         self.assert_wait_ok_disable_ok(
             lambda: self.simplest_create(
                 wait="10",
