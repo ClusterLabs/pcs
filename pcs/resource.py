@@ -599,9 +599,9 @@ def resource_create_refactoring(lib, argv, group=None):
 
     if "clone" in parts:
         if group:
-            warn("--group ignored when creating a clone")
+            error("you cannot specify both clone and group")
         if "master" in parts:
-            warn("master ignored when creating a clone")
+            error("you cannot specify both clone and master")
     elif "master" in parts:
         if group:
             warn("--group ignored when creating a master")

@@ -687,72 +687,6 @@ class SuccessMaster(ResourceTest):
             </resources>"""
         )
 
-    def test_master_flag_makes_do_not_steal_meta_when_ignored(self):
-        """
-        fixes bz 1378107
-        """
-        self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy meta a=b --clone"
-                " --no-default-ops --master"
-            ,
-            """<resources>
-                <clone id="R-clone">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <meta_attributes id="R-meta_attributes">
-                            <nvpair id="R-meta_attributes-a" name="a"
-                                value="b"
-                            />
-                        </meta_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
-                            />
-                        </operations>
-                    </primitive>
-                </clone>
-            </resources>"""
-            ,
-            "Warning: --master ignored when creating a clone\n",
-        )
-
-    def test_master_flag_does_not_invalidate_flag_disabled(self):
-        """
-        fixes bz 1378107
-        """
-        self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --clone --disable"
-                " --master"
-            ,
-            """<resources>
-                <clone id="R-clone">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <meta_attributes id="R-meta_attributes">
-                            <nvpair id="R-meta_attributes-target-role"
-                                name="target-role" value="Stopped"
-                            />
-                        </meta_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
-                            />
-                            <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20"
-                            />
-                            <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20"
-                            />
-                        </operations>
-                    </primitive>
-                </clone>
-            </resources>"""
-            ,
-            "Warning: --master ignored when creating a clone\n",
-        )
-
     def test_takes_master_meta_attributes(self):
         self.assert_effect(
             "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
@@ -921,20 +855,20 @@ class SuccessClone(ResourceTest):
         )
 
 class FailOrWarn(ResourceTest):
-    def test_warn_group_clone_combination(self):
+    def test_error_group_clone_combination(self):
         self.assert_pcs_success(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " --group G"
             ,
-            "Warning: --group ignored when creating a clone\n"
+            "Error: you cannot specify both clone and group\n"
         )
 
-    def test_warn_master_clone_combination(self):
+    def test_error_master_clone_combination(self):
         self.assert_pcs_success(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " --master"
             ,
-            "Warning: --master ignored when creating a clone\n"
+            "Error: you cannot specify both clone and master\n"
         )
 
     def test_warn_master_group_combination(self):
