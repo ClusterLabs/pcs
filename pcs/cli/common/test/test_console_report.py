@@ -46,7 +46,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
     code = codes.INVALID_OPTION
     def test_build_message_with_type(self):
         self.assert_message_from_info(
-            "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",
+            "invalid TYPE 'NAME', allowed options are: FIRST, SECOND",
             {
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
@@ -78,7 +78,7 @@ class RequiredOptionIsMissing(NameBuildTest):
     code = codes.REQUIRED_OPTION_IS_MISSING
     def test_build_message_with_type(self):
         self.assert_message_from_info(
-            "required TYPE option 'NAME' is missing",
+            "required TYPE 'NAME' is missing",
             {
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
@@ -291,6 +291,10 @@ class FormatOptionalTest(TestCase):
 
     def test_info_key_is_not_falsy(self):
         self.assertEqual("A: ", format_optional("A", "{0}: "))
+
+    def test_default_value(self):
+        self.assertEqual("DEFAULT", format_optional("", "{0}: ", "DEFAULT"))
+
 
 class AgentNameGuessedTest(NameBuildTest):
     code = codes.AGENT_NAME_GUESSED

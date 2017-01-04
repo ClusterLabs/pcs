@@ -248,7 +248,7 @@ class GetValidationReport(TestCase):
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["unknown"],
-                        "option_type": "resource operation",
+                        "option_type": "resource operation option",
                         "allowed": sorted(operations.ATTRIBUTES),
                     },
                     report_codes.FORCE_OPTIONS
@@ -282,7 +282,7 @@ class Validate(TestCase):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["unknown"],
-                    "option_type": "resource operation",
+                    "option_type": "resource operation option",
                     "allowed": sorted(operations.ATTRIBUTES),
                 },
                 report_codes.FORCE_OPTIONS

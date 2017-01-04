@@ -37,8 +37,8 @@ def indent(line_list, indent_step=2):
         for line in line_list
     ]
 
-def format_optional(value, template):
-    return "" if not value else template.format(value)
+def format_optional(value, template, empty_case=""):
+    return empty_case if not value else template.format(value)
 
 def format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:
@@ -148,14 +148,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.EMPTY_RESOURCE_SET_LIST: "Resource set list is empty",
 
     codes.REQUIRED_OPTION_IS_MISSING: lambda info:
-        "required {desc}option{s} {option_names_list} {are} missing"
+        "required {desc}{option_names_list} {are} missing"
         .format(
-            desc=format_optional(info["option_type"], "{0} "),
+            desc="{0}{1}".format(
+                format_optional(info["option_type"], "{0}", "option"),
+                "s " if len(info["option_names"]) > 1 else " "
+            ),
             option_names_list=", ".join(sorted([
                 "'{0}'".format(name)
                 for name in info["option_names"]
             ])),
-            s=("s" if len(info["option_names"]) > 1 else ""),
             are=(
                 "are" if len(info["option_names"]) > 1
                 else "is"
@@ -165,16 +167,18 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.INVALID_OPTION: lambda info:
         (
-            "invalid {desc}option{s} {option_names_list},"
+            "invalid {desc}{option_names_list},"
             " allowed option{are} {allowed_values}"
         ).format(
-            desc=format_optional(info["option_type"], "{0} "),
+            desc="{0}{1}".format(
+                format_optional(info["option_type"], "{0}", "option"),
+                "s: " if len(info["option_names"]) > 1 else " "
+            ),
             allowed_values=", ".join(sorted(info["allowed"])),
             option_names_list=", ".join(sorted([
                 "'{0}'".format(name)
                 for name in info["option_names"]
             ])),
-            s=("s:" if len(info["option_names"]) > 1 else ""),
             are=("s are:" if len(info["allowed"]) > 1 else " is"),
             **info
         )

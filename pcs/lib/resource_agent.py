@@ -355,14 +355,14 @@ class Agent(object):
             report_list.append(reports.invalid_option(
                 bad_opts,
                 sorted([attr["name"] for attr in self.get_parameters()]),
-                "resource operation",
+                "resource operation option",
                 forceable=report_codes.FORCE_OPTIONS,
             ))
 
         if missing_req_opts:
             report_list.append(reports.required_option_is_missing(
                 missing_req_opts,
-                "resource operation",
+                "resource operation option",
                 forceable=report_codes.FORCE_OPTIONS,
             ))
 

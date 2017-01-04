@@ -112,7 +112,7 @@ def validate_ticket_options(report_processor, options, allow_unknown_options):
             reports.append(common_reports.invalid_option(
                 [key],
                 TICKET_KEYS,
-                "booth ticket",
+                "booth ticket option",
             ))
 
         elif key not in TICKET_KEYS:
@@ -120,7 +120,7 @@ def validate_ticket_options(report_processor, options, allow_unknown_options):
                 common_reports.invalid_option(
                     [key],
                     TICKET_KEYS,
-                    "booth ticket",
+                    "booth ticket option",
                     severity=(
                         severities.WARNING if allow_unknown_options
                         else severities.ERROR

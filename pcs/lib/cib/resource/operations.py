@@ -103,7 +103,7 @@ def get_validation_report(operation):
         report_list.append(reports.invalid_option(
             invalid_options,
             sorted(ATTRIBUTES),
-            "resource operation",
+            "resource operation option",
             forceable=report_codes.FORCE_OPTIONS,
         ))
 
