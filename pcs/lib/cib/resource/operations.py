@@ -44,9 +44,11 @@ ROLE_VALUES = [
     "Master",
 ]
 
+get_report_creator = partial(reports.get_creator, report_codes.FORCE_OPTIONS)
+
 def prepare(
     report_processor, raw_operation_list, default_operation_list,
-    allow_invalid=False
+    allowed_operation_name_list, allow_invalid=False
 ):
     """
     Return operation_list prepared from raw_operation_list and
@@ -61,9 +63,9 @@ def prepare(
     """
     operation_list = [normalize(operation) for operation in raw_operation_list]
 
-    if not allow_invalid:
-        validate(report_processor, operation_list)
-
+    report_processor.process_list(
+        validate(operation_list, allowed_operation_name_list, allow_invalid)
+    )
     validate_different_intervals(operation_list)
 
     return complete(operation_list + get_remaining_defaults(
@@ -92,41 +94,63 @@ def normalize(operation):
         (key, normalize_attr(key, value)) for key, value in operation.items()
     ])
 
-def get_validation_report(operation):
+def get_validation_report(operation, allow_invalid=False):
     """
     Return list of validation reports.
     dict operation contains attributes of operation
     """
+    create_report = get_report_creator(allow_invalid)
+
     report_list = []
     invalid_options = list(set(operation.keys()) - set(ATTRIBUTES))
     if invalid_options:
-        report_list.append(reports.invalid_option(
+        report_list.append(create_report(
+            reports.invalid_option,
             invalid_options,
             sorted(ATTRIBUTES),
             "resource operation option",
-            forceable=report_codes.FORCE_OPTIONS,
         ))
 
-    if "role" in operation.keys() and operation["role"] not in ROLE_VALUES:
-        report_list.append(reports.invalid_option_value(
+    if "role" in operation and operation["role"] not in ROLE_VALUES:
+        report_list.append(create_report(
+            reports.invalid_option_value,
             "role",
             operation["role"],
             ROLE_VALUES,
-            forceable=report_codes.FORCE_OPTIONS,
+        ))
+
+    if "name" not in operation:
+        #this is always unforceable error
+        report_list.append(reports.required_option_is_missing(
+            ["name"],
+            "resource operation option",
         ))
 
     return report_list
 
-def validate(report_processor, operation_list):
+def validate(operation_list, allowed_operation_name_list, allow_invalid=False):
     """
     Validate operation_list and report about problems if needed.
-    report_processor is tool for warning/info/error reporting
     list operation_list contains dictionaries with attributes of operation
     """
     report_list = []
     for operation in operation_list:
-        report_list.extend(get_validation_report(operation))
-    report_processor.process_list(report_list)
+        report_list.extend(get_validation_report(operation, allow_invalid))
+
+    operation_name_list = [
+        operation["name"]
+        for operation in operation_list if "name" in operation
+    ]
+    invalid_names = set(operation_name_list) - set(allowed_operation_name_list)
+    if invalid_names:
+        report_list.append(get_report_creator(allow_invalid)(
+            reports.invalid_option,
+            sorted(invalid_names),
+            sorted(allowed_operation_name_list),
+            "resource operation name",
+        ))
+
+    return report_list
 
 def get_remaining_defaults(
     report_processor, operation_list, default_operation_list

@@ -14,20 +14,27 @@ from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
+from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import TestCase, mock
 
-@mock.patch("pcs.lib.cib.resource.operations.get_remaining_defaults")
-@mock.patch("pcs.lib.cib.resource.operations.complete")
-@mock.patch("pcs.lib.cib.resource.operations.validate_different_intervals")
-@mock.patch("pcs.lib.cib.resource.operations.validate")
-@mock.patch("pcs.lib.cib.resource.operations.normalize")
+
+patch_operations = create_patcher("pcs.lib.cib.resource.operations")
+
+@patch_operations("get_remaining_defaults")
+@patch_operations("complete")
+@patch_operations("validate_different_intervals")
+@patch_operations("validate")
+@patch_operations("normalize")
 class Prepare(TestCase):
     def setUp(self):
         self.report_processor = mock.Mock()
         self.run = partial(
             operations.prepare,
-            self.report_processor, [{"name": "start"}], [{"name": "stop"}]
+            self.report_processor,
+            [{"name": "start"}],
+            [{"name": "stop"}],
+            ["start", "stop"]
         )
 
     def prepare_mocks(self, normalize, complete, get_remaining_defaults):
@@ -73,7 +80,9 @@ class Prepare(TestCase):
             validate_different_intervals, get_remaining_defaults
         )
         validate.assert_called_once_with(
-            self.report_processor, [{"name": "start", "normalized": True}]
+            [{"name": "start", "normalized": True}],
+            ["start", "stop"], #allowed_operation_name_list
+            False #allow_invalid
         )
 
     def test_prepare_without_validation(
@@ -88,7 +97,11 @@ class Prepare(TestCase):
             prepared_operations, complete, normalize,
             validate_different_intervals, get_remaining_defaults
         )
-        validate.assert_not_called()
+        validate.assert_called_once_with(
+            [{"name": "start", "normalized": True}],
+            ["start", "stop"], #allowed_operation_name_list
+            True #allow_invalid
+        )
 
 
 
@@ -231,28 +244,44 @@ class NormalizeAttribute(TestCase):
         )
 
 class GetValidationReport(TestCase):
-    def test_return_empty_report_on_valid_operation(self):
-        self.assertEqual([], operations.get_validation_report({
-            "name": "monitoring",
-            "role": "Master"
-        }))
-    def test_return_report_with_all_problems(self):
+    def assert_operation_produces_report(
+        self, operation, report_list, check_warning=True
+    ):
+        if check_warning:
+            #report_list will be empty after assert execution
+            warning_report_list = [
+                (severities.WARNING, report[1], report[2], None)
+                for report in report_list
+            ]
+
         assert_report_item_list_equal(
-            operations.get_validation_report({
-                "unknown": "some",
+            operations.get_validation_report(operation),
+            report_list
+        )
+
+        if check_warning:
+            assert_report_item_list_equal(
+                operations.get_validation_report(operation, allow_invalid=True),
+                warning_report_list,
+            )
+
+
+    def test_return_empty_report_on_valid_operation(self):
+        self.assert_operation_produces_report(
+            {
+                "name": "monitoring",
+                "role": "Master"
+            },
+            []
+        )
+
+    def test_return_error_when_invalid_role_value(self):
+        self.assert_operation_produces_report(
+            {
+                "name": "monitoring",
                 "role": "invalid",
-            }),
+            },
             [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION,
-                    {
-                        "option_names": ["unknown"],
-                        "option_type": "resource operation option",
-                        "allowed": sorted(operations.ATTRIBUTES),
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
                 (
                     severities.ERROR,
                     report_codes.INVALID_OPTION_VALUE,
@@ -266,52 +295,124 @@ class GetValidationReport(TestCase):
             ],
         )
 
+    def test_return_error_when_unknown_operation_attribute(self):
+        self.assert_operation_produces_report(
+            {
+                "name": "monitoring",
+                "unknown": "invalid",
+            },
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["unknown"],
+                        "option_type": "resource operation option",
+                        "allowed": sorted(operations.ATTRIBUTES),
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ],
+        )
+
+    def test_return_errror_when_missing_key_name(self):
+        self.assert_operation_produces_report(
+            {
+                "role": "Master"
+            },
+            [
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    {
+                        "option_names": ["name"],
+                        "option_type": "resource operation option",
+                    },
+                ),
+            ],
+            check_warning=False
+        )
+
 class Validate(TestCase):
     def setUp(self):
         self.report_processor = MockLibraryReportProcessor()
-        self.run = partial(operations.validate, self.report_processor)
-
-    def test_report_nothing_on_valid_operations(self):
-        self.run([{"name": "monitoring", "role": "Master"}])
-        self.assertEqual([], self.report_processor.report_item_list)
-
-    def test_report_about_all_errors_in_operations(self):
-        expected_errors = [
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION,
-                {
-                    "option_names": ["unknown"],
-                    "option_type": "resource operation option",
-                    "allowed": sorted(operations.ATTRIBUTES),
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "role",
-                    "option_value": "invalid",
-                    "allowed_values": operations.ROLE_VALUES,
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-        ]
-        assert_raise_library_error(
-            lambda: self.run([
-                {
-                    "unknown": "some",
-                },
-                {
-                    "role": "invalid",
-                },
-            ]),
-            *expected_errors
+        self.allowed_operation_name_list = ["monitor", "start"]
+        self.validate = partial(
+            operations.validate,
+            allowed_operation_name_list=self.allowed_operation_name_list
         )
+
+    def assert_operations_produce_report(
+        self, operation_list, report_list, allow_invalid=False
+    ):
         assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            expected_errors
+            self.validate(operation_list, allow_invalid=allow_invalid),
+            report_list,
+        )
+
+    def test_return_nothing_on_valid_operations(self):
+        self.assert_operations_produce_report(
+            [{"name": "monitor", "role": "Master"}],
+            []
+        )
+
+    @patch_operations("get_validation_report")
+    def test_collect_operation_validation_errors(self, get_validation_report):
+        get_validation_report.side_effect = lambda operation, allow_invalid: {
+            "monitor": ["a", "b"],
+            "start": ["c", "d"],
+        }[operation["name"]]
+
+        self.assertEqual(
+            ["a", "b", "c", "d"],
+            self.validate([
+                {"name": "monitor"},
+                {"name": "start"},
+            ])
+        )
+
+    @patch_operations("get_validation_report", mock.Mock(return_value=[]))
+    def test_returns_error_on_invalid_operation_names(self):
+        self.assert_operations_produce_report(
+            [
+                {"name": "monitorrr"},
+                {"name": "monitor"},
+                {"name": "starttt"},
+            ],
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["monitorrr", "starttt"],
+                        "option_type": "resource operation name",
+                        "allowed": sorted(self.allowed_operation_name_list),
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ]
+        )
+
+    @patch_operations("get_validation_report", mock.Mock(return_value=[]))
+    def test_returns_warning_on_invalid_operation_names(self):
+        self.assert_operations_produce_report(
+            [
+                {"name": "monitorrr"},
+                {"name": "monitor"},
+                {"name": "starttt"},
+            ],
+            [
+                (
+                    severities.WARNING,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["monitorrr", "starttt"],
+                        "option_type": "resource operation name",
+                        "allowed": sorted(self.allowed_operation_name_list),
+                    },
+                ),
+            ],
+            allow_invalid=True
         )
 
 class GetRemainingDefaults(TestCase):

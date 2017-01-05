@@ -5,9 +5,62 @@ from __future__ import (
     unicode_literals,
 )
 
+from functools import partial
+
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItem, ReportItemSeverity
 
+def forceable_error(force_code, report_creator, *args, **kwargs):
+    """
+    Return ReportItem created by report_creator.
+
+    This is experimental shortcut for common pattern. It is intended for work in
+    the pair with function "warning".
+
+    string force_code is code for forcing error
+    callable report_creator is function that produce ReportItem. It must take
+        parameters forceable (None or force code) and severity
+        (from ReportItemSeverity)
+    rest of args are for the report_creator
+    """
+    return report_creator(
+        *args,
+        forceable=force_code,
+        severity=ReportItemSeverity.ERROR,
+        **kwargs
+    )
+
+def warning(report_creator, *args, **kwargs):
+    """
+    Return ReportItem created by report_creator.
+
+    This is experimental shortcut for common pattern. It is intended for work in
+    the pair with function "forceable_error".
+
+    callable report_creator is function that produce ReportItem. It must take
+        parameters forceable (None or force code) and severity
+        (from ReportItemSeverity)
+    rest of args are for the report_creator
+    """
+    return report_creator(
+        *args,
+        forceable=None,
+        severity=ReportItemSeverity.WARNING,
+        **kwargs
+    )
+
+def get_creator(force_code, warn_only):
+    """
+    Returns report creator wraper (forceable_error or warning).
+
+    This is experimental shortcut for decision if ReportItem will be
+    either forceable_error or warning.
+
+    string force_code is code for forcing error. It could be usefull to prepare
+        it for whole module by using functools.partial.
+    bool warn_only is flag for selecting wrapper
+    """
+    return warning if warn_only else partial(forceable_error, force_code)
 
 def common_error(text):
     # TODO replace by more specific reports

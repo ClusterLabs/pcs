@@ -426,6 +426,30 @@ class SuccessOperations(ResourceTest):
                 " make the operation unique\n"
         )
 
+    def test_warn_on_forced_unknown_operation(self):
+        self.assert_effect(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy"
+                " op monitro interval=30s --force"
+            ,
+            """<resources>
+                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                    <operations>
+                        <op id="R-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                        <op id="R-monitro-interval-30s" interval="30s"
+                            name="monitro"
+                        />
+                    </operations>
+                </primitive>
+            </resources>"""
+            ,
+            "Warning: invalid resource operation name 'monitro', allowed"
+               " options are: meta-data, migrate_from, migrate_to, monitor,"
+                " reload, start, stop, validate-all\n"
+        )
+
+
 class SuccessGroup(ResourceTest):
     def test_with_group(self):
         self.assert_effect(
@@ -945,6 +969,14 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy",
             "Error: 'R' already exists\n"
+        )
+
+    def test_fail_on_unknown_operation(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy op monitro interval=100",
+            "Error: invalid resource operation name 'monitro', allowed"
+               " options are: meta-data, migrate_from, migrate_to, monitor,"
+                " reload, start, stop, validate-all, use --force to override\n"
         )
 
 class FailOrWarnOp(ResourceTest):

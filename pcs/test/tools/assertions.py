@@ -220,7 +220,8 @@ def __find_report_info(report_info_list, report_item):
                 report_item.info,
                 report_item.forceable
             )),
-            "\n".join(map(repr, report_info_list))
+            "\n".join(map(repr, report_info_list)) if report_info_list
+                else "  No report is expected!"
         )
     )
 
