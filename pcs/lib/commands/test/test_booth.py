@@ -111,6 +111,7 @@ class ConfigDestroyTest(TestCase):
     @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
     def test_raises_when_cannot_get_content_of_config(self):
         env = mock.MagicMock()
+        env.booth.name = "somename"
         assert_raise_library_error(
             lambda: commands.config_destroy(env),
             (
@@ -126,6 +127,7 @@ class ConfigDestroyTest(TestCase):
     @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
     def test_remove_config_even_if_cannot_get_its_content_when_forced(self):
         env = mock.MagicMock()
+        env.booth.name = "somename"
         env.report_processor = MockLibraryReportProcessor()
         commands.config_destroy(env, ignore_config_load_problems=True)
         env.booth.remove_config.assert_called_once_with()
