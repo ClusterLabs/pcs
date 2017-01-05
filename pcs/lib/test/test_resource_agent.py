@@ -12,6 +12,7 @@ from pcs.test.tools.assertions import (
     ExtendedAssertionsMixin,
     assert_raise_library_error,
     assert_xml_equal,
+    start_tag_error_text,
 )
 from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.pcs_unittest import TestCase, mock
@@ -1069,7 +1070,7 @@ class StonithdMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
             self.agent._get_metadata,
             {
                 "agent": "stonithd",
-                "message": "Start tag expected, '<' not found, line 1, column 1",
+                "message": start_tag_error_text(),
             }
         )
 
@@ -1196,7 +1197,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
             self.agent._get_metadata,
             {
                 "agent": self.agent_name,
-                "message": "Start tag expected, '<' not found, line 1, column 1",
+                "message": start_tag_error_text(),
             }
         )
 

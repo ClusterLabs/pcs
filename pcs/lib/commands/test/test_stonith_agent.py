@@ -8,7 +8,7 @@ from __future__ import (
 import logging
 from lxml import etree
 
-from pcs.test.tools.assertions import assert_raise_library_error
+from pcs.test.tools.assertions import assert_raise_library_error, start_tag_error_text
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.pcs_unittest import mock, TestCase
 
@@ -204,7 +204,7 @@ class TestDescribeAgent(TestCase):
                 report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 {
                     "agent": "fence_dummy",
-                    "reason": "Start tag expected, '<' not found, line 1, column 1",
+                    "reason": start_tag_error_text(),
                 }
             )
         )
