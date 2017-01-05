@@ -11,6 +11,7 @@ import os.path
 from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
+    start_tag_error_text,
 )
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import TestCase, mock
@@ -399,7 +400,7 @@ class EnsureCibVersionTest(TestCase):
                 report_codes.CIB_UPGRADE_FAILED,
                 {
                     "reason":
-                        "Start tag expected, '<' not found, line 1, column 1",
+                        start_tag_error_text(),
                 }
             )
         )

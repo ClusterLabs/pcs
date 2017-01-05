@@ -7,9 +7,20 @@ from __future__ import (
 
 import doctest
 from lxml.doctestcompare import LXMLOutputChecker
+from lxml.etree import LXML_VERSION
 
 from pcs.lib.errors import LibraryError
 from pcs.test.tools.misc import prepare_diff
+
+def start_tag_error_text():
+    """lxml 3.7+ gives a longer 'start tag expected' error message,
+    handle it here so multiple tests can just get the appropriate
+    string from this function.
+    """
+    msg = "Start tag expected, '<' not found, line 1, column 1"
+    if LXML_VERSION >= (3, 7, 0, 0):
+        msg += " (<string>, line 1)"
+    return msg
 
 def console_report(*lines):
     #after lines append last new line
