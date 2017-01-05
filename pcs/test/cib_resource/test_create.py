@@ -920,14 +920,14 @@ class FailOrWarn(ResourceTest):
     def test_for_options_not_matching_resource_agent(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy a=b c=d",
-            "Error: invalid resource operation options: 'a', 'c',"
+            "Error: invalid resource options: 'a', 'c',"
             " allowed options are: fake, state, use --force to override\n"
         )
 
     def test_for_missing_options_of_resource_agent(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R IPaddr2",
-            "Error: required resource operation option 'ip' is missing,"
+            "Error: required resource option 'ip' is missing,"
                 " use --force to override\n"
                 "Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from"
                 " 'IPaddr2')\n"

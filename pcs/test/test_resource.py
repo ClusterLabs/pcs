@@ -2287,13 +2287,18 @@ Deleting Resource - ClusterIP5
     def testBadInstanceVariables(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=",
-            "Error: invalid resource operation options: 'test', 'test2',"
+            "Error: invalid resource options: 'test', 'test2',"
                 " allowed options are: fake, state, use --force to override\n"
         )
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy test=testC test2=test2a test4=test4A op monitor interval=35 meta test7=test7a test6=")
-        assert returnVal == 0
-        assert output == "", [output]
+        self.assert_pcs_success(
+            "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
+                " test=testC test2=test2a test4=test4A op monitor interval=35"
+                " meta test7=test7a test6="
+            ,
+            "Warning: invalid resource options: 'test', 'test2', 'test4',"
+                " allowed options are: fake, state\n"
+        )
 
         output, returnVal = pcs(temp_cib, "resource update D0 test=testA test2=testB")
         assert returnVal == 1
@@ -2314,13 +2319,22 @@ Deleting Resource - ClusterIP5
         assert returnVal == 0
 
     def testMetaAttrs(self):
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy test=testA test2=test2a op monitor interval=30 meta test5=test5a test6=test6a")
-        assert returnVal == 0
-        assert output == "", [output]
+        self.assert_pcs_success(
+             "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
+                " test=testA test2=test2a op monitor interval=30 meta"
+                " test5=test5a test6=test6a"
+            ,
+            "Warning: invalid resource options: 'test', 'test2', allowed"
+                " options are: fake, state\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "resource create --no-default-ops --force D1 ocf:heartbeat:Dummy test=testA test2=test2a op monitor interval=30")
-        assert returnVal == 0
-        assert output == "", [output]
+        self.assert_pcs_success(
+            "resource create --no-default-ops --force D1 ocf:heartbeat:Dummy"
+                " test=testA test2=test2a op monitor interval=30"
+            ,
+            "Warning: invalid resource options: 'test', 'test2', allowed"
+                " options are: fake, state\n"
+        )
 
         output, returnVal = pcs(temp_cib, "resource update --force D0 test=testC test2=test2a op monitor interval=35 meta test7=test7a test6=")
         assert returnVal == 0
@@ -4333,7 +4347,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             "resource create --no-default-ops myip IPaddr2",
             outdent(
                 """\
-                Error: required resource operation option 'ip' is missing, use --force to override
+                Error: required resource option 'ip' is missing, use --force to override
                 Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from 'IPaddr2')
                 """
             )
@@ -4341,8 +4355,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
         self.assert_pcs_success(
             "resource create --no-default-ops myip IPaddr2 --force",
-            "Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from"
-                " 'IPaddr2')\n"
+            outdent(
+                """\
+                Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from 'IPaddr2')
+                Warning: required resource option 'ip' is missing
+                """
+            )
         )
         self.assert_pcs_success(
             "resource create --no-default-ops myip2 IPaddr2 ip=3.3.3.3",
@@ -4354,7 +4372,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             "resource create --no-default-ops myfs Filesystem",
             outdent(
                 """\
-                Error: required resource operation options 'device', 'directory', 'fstype' are missing, use --force to override
+                Error: required resource options 'device', 'directory', 'fstype' are missing, use --force to override
                 Assumed agent name 'ocf:heartbeat:Filesystem' (deduced from 'Filesystem')
                 """
             )
@@ -4362,16 +4380,24 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
         self.assert_pcs_success(
             "resource create --no-default-ops myfs Filesystem --force",
-            "Assumed agent name 'ocf:heartbeat:Filesystem'"
-                " (deduced from 'Filesystem')\n"
+            outdent(
+                """\
+                Assumed agent name 'ocf:heartbeat:Filesystem' (deduced from 'Filesystem')
+                Warning: required resource options 'device', 'directory', 'fstype' are missing
+                """
+            )
         )
 
         self.assert_pcs_success(
             "resource create --no-default-ops myfs2 Filesystem device=x"
                 " directory=y --force"
             ,
-            "Assumed agent name 'ocf:heartbeat:Filesystem'"
-                " (deduced from 'Filesystem')\n"
+            outdent(
+                """\
+                Assumed agent name 'ocf:heartbeat:Filesystem' (deduced from 'Filesystem')
+                Warning: required resource option 'fstype' is missing
+                """
+            )
         )
 
         self.assert_pcs_success(

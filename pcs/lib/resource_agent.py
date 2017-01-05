@@ -346,28 +346,40 @@ class Agent(object):
             "advanced": False,
         }
 
-    def validate_parameters(self, parameters):
+    def validate_parameters(
+        self, parameters,
+        parameters_type="resource agent parameter",
+        allow_invalid=False
+    ):
+        forceable = report_codes.FORCE_OPTIONS if not allow_invalid else None
+        severity = (
+            ReportItemSeverity.ERROR if not allow_invalid
+            else ReportItemSeverity.WARNING
+        )
+
         report_list = []
         bad_opts, missing_req_opts = self.validate_parameters_values(
             parameters
         )
+
         if bad_opts:
             report_list.append(reports.invalid_option(
                 bad_opts,
                 sorted([attr["name"] for attr in self.get_parameters()]),
-                "resource operation option",
-                forceable=report_codes.FORCE_OPTIONS,
+                parameters_type,
+                severity=severity,
+                forceable=forceable,
             ))
 
         if missing_req_opts:
             report_list.append(reports.required_option_is_missing(
                 missing_req_opts,
-                "resource operation option",
-                forceable=report_codes.FORCE_OPTIONS,
+                parameters_type,
+                severity=severity,
+                forceable=forceable,
             ))
 
-        if report_list:
-            raise LibraryError(*report_list)
+        return report_list
 
     def validate_parameters_values(self, parameters_values):
         """
@@ -379,9 +391,6 @@ class Agent(object):
         # redefining the format of the return value and rewriting the whole
         # function, which will only be good. For now we just stick to the
         # original legacy code.
-        #What about raising LibraryError with list of report items? Client may
-        #not know on what categories of errors can occure. On the other side,
-        #client can stil analyze report items if necessary.
         agent_params = self.get_parameters()
 
         required_missing = []

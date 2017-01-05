@@ -11,6 +11,7 @@ from functools import partial
 from pcs.test.tools.assertions import (
     ExtendedAssertionsMixin,
     assert_raise_library_error,
+    assert_report_item_list_equal,
     assert_xml_equal,
     start_tag_error_text,
 )
@@ -1019,6 +1020,113 @@ class AgentMetadataValidateParametersValuesTest(TestCase):
             }),
             (["invalid_param"], ["required_param"])
         )
+
+class AgentMetadataValidateParameters(TestCase):
+    def setUp(self):
+        self.agent = lib_ra.Agent(mock.MagicMock(spec_set=CommandRunner))
+        self.metadata = etree.XML("""
+            <resource-agent>
+                <parameters>
+                    <parameter name="test_param" required="0">
+                        <longdesc>Long description</longdesc>
+                        <shortdesc>short description</shortdesc>
+                        <content type="string" default="default_value" />
+                    </parameter>
+                    <parameter name="required_param" required="1">
+                        <content type="boolean" />
+                    </parameter>
+                    <parameter name="another_required_param" required="1">
+                        <content type="string" />
+                    </parameter>
+                </parameters>
+            </resource-agent>
+        """)
+        patcher = mock.patch.object(lib_ra.Agent, "_get_metadata")
+        self.addCleanup(patcher.stop)
+        patcher.start().return_value = self.metadata
+
+
+    def test_returns_empty_report_when_all_required_there(self):
+        self.assertEqual(
+            [],
+            self.agent.validate_parameters({
+                "another_required_param": "value1",
+                "required_param": "value2",
+            }),
+        )
+
+    def test_returns_empty_report_when_all_required_and_optional_there(self):
+        self.assertEqual(
+            [],
+            self.agent.validate_parameters({
+                "another_required_param": "value1",
+                "required_param": "value2",
+                "test_param": "value3",
+            })
+        )
+
+    def test_report_invalid_option(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({
+                "another_required_param": "value1",
+                "required_param": "value2",
+                "invalid_param": "value3",
+            }),
+            [
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTION,
+                    {
+                        "option_names": ["invalid_param"],
+                        "option_type": "resource agent parameter",
+                        "allowed": [
+                            "another_required_param",
+                            "required_param",
+                            "test_param",
+                        ]
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ],
+        )
+
+    def test_report_missing_option(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({}),
+            [
+                (
+                    severity.ERROR,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    {
+                        "option_names": [
+                            "required_param",
+                            "another_required_param",
+                        ],
+                        "option_type": "resource agent parameter",
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+            ],
+        )
+
+    def test_warn_missing_required(self):
+        assert_report_item_list_equal(
+            self.agent.validate_parameters({}, allow_invalid=True),
+            [
+                (
+                    severity.WARNING,
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    {
+                        "option_names": [
+                            "required_param",
+                            "another_required_param",
+                        ],
+                        "option_type": "resource agent parameter",
+                    },
+                ),
+            ]
+        )
+
 
 
 class StonithdMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):

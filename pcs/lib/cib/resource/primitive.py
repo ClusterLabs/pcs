@@ -76,8 +76,13 @@ def create(
     if ensure_disabled:
         meta_attributes = disable_meta(meta_attributes)
 
-    if not allow_invalid_instance_attributes:
-        resource_agent.validate_parameters(instance_attributes)
+    report_processor.process_list(
+        resource_agent.validate_parameters(
+            instance_attributes,
+            parameters_type="resource option",
+            allow_invalid=allow_invalid_instance_attributes,
+        )
+    )
 
     return append_new(
         resources_section,
