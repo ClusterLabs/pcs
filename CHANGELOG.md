@@ -5,6 +5,8 @@
 ### Added
 - Fencing levels now may be targeted in CLI by a node name pattern or a node
   attribute in addition to a node name ([rhbz#1261116])
+- `pcs cluster cib-push` allows to push a diff obtained internally by comparing
+  CIBs in specified files ([rhbz#1404233])
 
 ### Changed
 - `pcs node [un]standby` and `pcs node [un]maintenance` is now atomic even if
@@ -44,6 +46,7 @@
 [rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273
 [rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846
 [rhbz#1404229]: https://bugzilla.redhat.com/show_bug.cgi?id=1404229
+[rhbz#1404233]: https://bugzilla.redhat.com/show_bug.cgi?id=1404233
 
 
 ## [0.9.155] - 2016-11-03

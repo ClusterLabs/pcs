@@ -1248,6 +1248,8 @@ def cluster_push(argv):
     filename = None
     scope = None
     timeout = None
+    diff_against = None
+
     if "--wait" in utils.pcs_options:
         timeout = utils.validate_wait_get_timeout()
     for arg in argv:
@@ -1260,6 +1262,8 @@ def cluster_push(argv):
                     utils.err("invalid CIB scope '%s'" % arg_value)
                 else:
                     scope = arg_value
+            if arg_name == "diff-against":
+                diff_against = arg_value
             else:
                 usage.cluster(["cib-push"])
                 sys.exit(1)
@@ -1268,6 +1272,8 @@ def cluster_push(argv):
     if not filename:
         usage.cluster(["cib-push"])
         sys.exit(1)
+    if diff_against and scope:
+        utils.err("Cannot use both scope and diff-against")
 
     try:
         new_cib_dom = xml.dom.minidom.parse(filename)
@@ -1279,13 +1285,38 @@ def cluster_push(argv):
     except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
         utils.err("unable to parse new cib: %s" % e)
 
-    command = ["cibadmin", "--replace", "--xml-file", filename]
-    if scope:
-        command.append("--scope=%s" % scope)
-    output, retval = utils.run(command)
-    if retval != 0:
-        utils.err("unable to push cib\n" + output)
+    if diff_against:
+        try:
+            xml.dom.minidom.parse(diff_against)
+        except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
+            utils.err("unable to parse original cib: %s" % e)
+        runner = utils.cmd_runner()
+        command = [
+            "crm_diff", "--original", diff_against, "--new", filename,
+            "--no-version"
+        ]
+        patch, error, dummy_retval = runner.run(command)
+        # dummy_retval == -1 means one of two things:
+        # a) an error has occured
+        # b) --original and --new differ
+        if error.strip():
+            utils.err("unable to diff the CIBs:\n" + error)
+
+        command = ["cibadmin", "--patch", "--xml-pipe"]
+        output, error, retval = runner.run(command, patch)
+        if retval != 0:
+            utils.err("unable to push cib\n" + error + output)
+
+    else:
+        command = ["cibadmin", "--replace", "--xml-file", filename]
+        if scope:
+            command.append("--scope=%s" % scope)
+        output, retval = utils.run(command)
+        if retval != 0:
+            utils.err("unable to push cib\n" + output)
+
     print("CIB updated")
+
     if "--wait" not in utils.pcs_options:
         return
     cmd = ["crm_resource", "--wait"]
