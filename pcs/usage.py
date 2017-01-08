@@ -1129,9 +1129,10 @@ def status(args = [], pout = True):
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    [status] [--full | --hide-inactive]
+    [status] [--full | --hide-inactive] [--color]
         View all information about the cluster and resources (--full provides
-        more details, --hide-inactive hides inactive resources).
+        more details, --hide-inactive hides inactive resources,
+        --color highlights status of nodes and services).
 
     resources [<resource id> | --full | --groups | --hide-inactive]
         Show all currently configured resources or if a resource is specified
