@@ -878,6 +878,35 @@ class SuccessClone(ResourceTest):
             </resources>"""
         )
 
+    def test_clone_places_disabled_correctly(self):
+        self.assert_effect(
+            "resource create R ocf:heartbeat:Dummy --clone --disabled",
+            """<resources>
+                <clone id="R-clone">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
+                            />
+                            <op id="R-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="R-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-clone-meta_attributes">
+                        <nvpair id="R-clone-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                </clone>
+            </resources>"""
+        )
+
 class FailOrWarn(ResourceTest):
     def test_error_group_clone_combination(self):
         self.assert_pcs_success(

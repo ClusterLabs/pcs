@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 from contextlib import contextmanager
+from functools import partial
 
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import (
@@ -56,9 +57,9 @@ def create(
             ensure_disabled,
         )
 
-def create_as_master(
-    env, resource_id, resource_agent_name,
-    operations, meta_attributes, instance_attributes, master_meta_options,
+def _create_as_clone_common(
+    tag, env, resource_id, resource_agent_name,
+    operations, meta_attributes, instance_attributes, clone_meta_options,
     allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -66,12 +67,19 @@ def create_as_master(
     ensure_disabled=False,
     wait=False,
 ):
+    """
+    Create resource in some kind of clone (clone or master).
+    Currently the only difference between commands "create_as_clone" and
+    "create_as_master" is in tag. So the commands create_as_clone and
+    create_as_master are created by passing tag with partial.
+
+    """
     with cib_resources_section(env, resource_id, wait, (
-        ensure_disabled
-        or
-        are_meta_disabled(meta_attributes)
-        or
-        are_clone_meta_disabled(master_meta_options)
+            ensure_disabled
+            or
+            are_meta_disabled(meta_attributes)
+            or
+            are_clone_meta_disabled(clone_meta_options)
     )) as resources_section:
         primitive_element = resource.primitive.create(
             env.report_processor, env.cmd_runner(), resources_section,
@@ -84,45 +92,13 @@ def create_as_master(
         )
 
         if ensure_disabled:
-            master_meta_options = disable_meta(master_meta_options)
+            clone_meta_options = disable_meta(clone_meta_options)
 
-        resource.clone.append_new_master(
+        resource.clone.append_new(
+            tag,
             resources_section,
             primitive_element,
-            master_meta_options,
-        )
-
-def create_as_clone(
-    env, resource_id, resource_agent_name,
-    operations, meta_attributes, instance_attributes, clone_options,
-    allow_absent_agent=False,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
-    ensure_disabled=False,
-    wait=False,
-):
-    with cib_resources_section(env, resource_id, wait, (
-            ensure_disabled
-            or
-            are_meta_disabled(meta_attributes)
-            or
-            are_clone_meta_disabled(clone_options)
-    )) as resources_section:
-        primitive_element = resource.primitive.create(
-            env.report_processor, env.cmd_runner(), resources_section,
-            resource_id, resource_agent_name,
-            operations, meta_attributes, instance_attributes,
-            allow_absent_agent,
-            allow_invalid_operation,
-            allow_invalid_instance_attributes,
-            use_default_operations,
-            ensure_disabled,
-        )
-        resource.clone.append_new_clone(
-            resources_section,
-            primitive_element,
-            clone_options,
+            clone_meta_options,
         )
 
 def create_in_group(
@@ -158,3 +134,6 @@ def create_in_group(
             adjacent_resource_id,
             put_after_adjacent,
         )
+
+create_as_clone = partial(_create_as_clone_common, resource.clone.TAG_CLONE)
+create_as_master = partial(_create_as_clone_common, resource.clone.TAG_MASTER)

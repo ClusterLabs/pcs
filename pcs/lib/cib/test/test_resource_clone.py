@@ -24,7 +24,12 @@ class AppendNewCommon(TestCase):
         self.primitive = self.cib.find(".//primitive")
 
     def assert_clone_effect(self, options, xml):
-        clone.append_new_clone(self.resources, self.primitive, options)
+        clone.append_new(
+            clone.TAG_CLONE,
+            self.resources,
+            self.primitive,
+            options
+        )
         assert_xml_equal(etree.tostring(self.cib).decode(), xml)
 
     def test_add_without_options(self):

@@ -164,11 +164,6 @@ fixture_cib_resources_xml_clone_simplest = """<resources>
 fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
     <clone id="A-clone">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <meta_attributes id="A-meta_attributes">
-                <nvpair id="A-meta_attributes-target-role" name="target-role"
-                    value="Stopped"
-                />
-            </meta_attributes>
             <operations>
                 <op id="A-monitor-interval-10" interval="10" name="monitor"
                     timeout="20"
@@ -181,6 +176,12 @@ fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
                 />
             </operations>
         </primitive>
+            <meta_attributes id="A-clone-meta_attributes">
+                <nvpair id="A-clone-meta_attributes-target-role"
+                    name="target-role"
+                    value="Stopped"
+                />
+            </meta_attributes>
     </clone>
 </resources>"""
 
@@ -503,7 +504,7 @@ class CreateAsMaster(CommonResourceTest):
             operations=[],
             meta_attributes=meta_attributes if meta_attributes else {},
             instance_attributes={},
-            master_meta_options=master_meta_options if master_meta_options
+            clone_meta_options=master_meta_options if master_meta_options
                 else {}
             ,
             wait=wait,
@@ -758,7 +759,7 @@ class CreateAsClone(CommonResourceTest):
             operations=[],
             meta_attributes=meta_attributes if meta_attributes else {},
             instance_attributes={},
-            clone_options=clone_options if clone_options else {},
+            clone_meta_options=clone_options if clone_options else {},
             wait=wait,
             ensure_disabled=disabled
         )
@@ -822,7 +823,30 @@ class CreateAsClone(CommonResourceTest):
                 wait="10",
                 meta_attributes={"target-role": "Stopped"}
             ),
-            fixture_cib_resources_xml_clone_simplest_disabled,
+            """<resources>
+            <clone id="A-clone">
+                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                    <meta_attributes id="A-meta_attributes">
+                        <nvpair id="A-meta_attributes-target-role"
+                            name="target-role"
+                            value="Stopped"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
+                        />
+                        <op id="A-start-interval-0s" interval="0s" name="start"
+                            timeout="20"
+                        />
+                        <op id="A-stop-interval-0s" interval="0s" name="stop"
+                            timeout="20"
+                        />
+                    </operations>
+                </primitive>
+            </clone>
+        </resources>"""
+        ,
             fixture_state_resources_xml(role="Stopped"),
         )
 

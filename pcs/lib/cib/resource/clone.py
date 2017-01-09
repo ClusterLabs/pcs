@@ -10,8 +10,6 @@ from __future__ import (
     unicode_literals,
 )
 
-from functools import partial
-
 from lxml import etree
 
 from pcs.lib.cib.nvpair import append_new_meta_attributes
@@ -37,7 +35,7 @@ def create_id(clone_tag, primitive_element):
         "{0}-{1}".format(primitive_element.get("id"), clone_tag)
     )
 
-def _append_new(clone_tag, resources_section, primitive_element, options):
+def append_new(clone_tag, resources_section, primitive_element, options):
     """
     Append a new clone element (containing the primitive_element) to the
     resources_section.
@@ -59,6 +57,3 @@ def _append_new(clone_tag, resources_section, primitive_element, options):
         append_new_meta_attributes(clone_element, options)
 
     return clone_element
-
-append_new_clone = partial(_append_new, TAG_CLONE)
-append_new_master = partial(_append_new, TAG_MASTER)
