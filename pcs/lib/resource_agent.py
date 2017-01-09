@@ -405,12 +405,7 @@ class Agent(object):
             required_missing
         )
 
-
-    def get_actions(self):
-        """
-        Get list of agent's actions (operations). Each action is represented as
-        dict. Example: [{"name": "monitor", "timeout": 20, "interval": 10}]
-        """
+    def _get_raw_actions(self):
         actions_element = self._get_metadata().find("actions")
         if actions_element is None:
             return []
@@ -422,19 +417,31 @@ class Agent(object):
             for action in actions_element.iter("action")
         ]
 
+    def get_actions(self):
+        """
+        Get list of agent's actions (operations). Each action is represented as
+        dict. Example: [{"name": "monitor", "timeout": 20, "interval": 10}]
+        """
+        action_list = []
+        for raw_action in self._get_raw_actions():
+            action = {}
+            for key, value in raw_action.items():
+                if key != "depth":
+                    action[key] = value
+                elif value != "0":
+                    action["OCF_CHECK_LEVEL"] = value
+            action_list.append(action)
+        return action_list
+
     def get_default_actions(self):
         """
         List actions that should be put to resource on its creation.
         Note that every action has at least attribute name.
         """
-        default_action_list = []
-        for action in self.get_actions():
-            if action.get("name", "") in DEFAULT_ACTIONS:
-                default_action_list.append(dict([
-                    (key, value) for key, value in action.items()
-                    if key != "depth"
-                ]))
-        return default_action_list
+        return [
+            action for action in self.get_actions()
+            if action.get("name", "") in DEFAULT_ACTIONS
+        ]
 
 
     def _get_metadata(self):

@@ -845,6 +845,45 @@ class AgentMetadataGetActionsTest(TestCase):
             ]
         )
 
+    def test_remove_depth_with_0(self, mock_metadata):
+        xml = """
+            <resource-agent>
+                <actions>
+                    <action name="monitor" timeout="20" depth="0"/>
+                </actions>
+            </resource-agent>
+        """
+        mock_metadata.return_value = etree.XML(xml)
+        self.assertEqual(
+            self.agent.get_actions(),
+            [
+                {
+                    "name": "monitor",
+                    "timeout": "20"
+                },
+            ]
+        )
+
+    def test_transfor_depth_to_OCF_CHECK_LEVEL(self, mock_metadata):
+        xml = """
+            <resource-agent>
+                <actions>
+                    <action name="monitor" timeout="20" depth="1"/>
+                </actions>
+            </resource-agent>
+        """
+        mock_metadata.return_value = etree.XML(xml)
+        self.assertEqual(
+            self.agent.get_actions(),
+            [
+                {
+                    "name": "monitor",
+                    "timeout": "20",
+                    "OCF_CHECK_LEVEL": "1",
+                },
+            ]
+        )
+
 
 @mock.patch.object(lib_ra.Agent, "_get_metadata")
 @mock.patch.object(lib_ra.Agent, "get_name", lambda self: "agent-name")
