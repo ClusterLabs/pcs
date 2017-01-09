@@ -244,27 +244,11 @@ class NormalizeAttribute(TestCase):
         )
 
 class GetValidationReport(TestCase):
-    def assert_operation_produces_report(
-        self, operation, report_list, check_warning=True
-    ):
-        if check_warning:
-            #report_list will be empty after assert execution
-            warning_report_list = [
-                (severities.WARNING, report[1], report[2], None)
-                for report in report_list
-            ]
-
+    def assert_operation_produces_report(self, operation, report_list):
         assert_report_item_list_equal(
             operations.get_validation_report(operation),
             report_list
         )
-
-        if check_warning:
-            assert_report_item_list_equal(
-                operations.get_validation_report(operation, allow_invalid=True),
-                warning_report_list,
-            )
-
 
     def test_return_empty_report_on_valid_operation(self):
         self.assert_operation_produces_report(
@@ -290,7 +274,7 @@ class GetValidationReport(TestCase):
                         "option_value": "invalid",
                         "allowed_values": operations.ROLE_VALUES,
                     },
-                    report_codes.FORCE_OPTIONS
+                    None
                 ),
             ],
         )
@@ -310,9 +294,9 @@ class GetValidationReport(TestCase):
                         "option_type": "resource operation option",
                         "allowed": sorted(operations.ATTRIBUTES),
                     },
+                    None
                 ),
             ],
-            check_warning=False
         )
 
     def test_return_errror_when_missing_key_name(self):
@@ -328,9 +312,9 @@ class GetValidationReport(TestCase):
                         "option_names": ["name"],
                         "option_type": "resource operation option",
                     },
+                    None
                 ),
             ],
-            check_warning=False
         )
 
 class Validate(TestCase):

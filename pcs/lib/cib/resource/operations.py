@@ -99,8 +99,6 @@ def get_validation_report(operation, allow_invalid=False):
     Return list of validation reports.
     dict operation contains attributes of operation
     """
-    create_report = get_report_creator(allow_invalid)
-
     report_list = []
     invalid_options = list(set(operation.keys()) - set(ATTRIBUTES))
     if invalid_options:
@@ -113,8 +111,8 @@ def get_validation_report(operation, allow_invalid=False):
         ))
 
     if "role" in operation and operation["role"] not in ROLE_VALUES:
-        report_list.append(create_report(
-            reports.invalid_option_value,
+        #Invalid role is always unforceable -it does not conform the schema
+        report_list.append(reports.invalid_option_value(
             "role",
             operation["role"],
             ROLE_VALUES,

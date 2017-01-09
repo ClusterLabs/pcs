@@ -449,7 +449,6 @@ class SuccessOperations(ResourceTest):
                 " reload, start, stop, validate-all\n"
         )
 
-
 class SuccessGroup(ResourceTest):
     def test_with_group(self):
         self.assert_effect(
@@ -1060,7 +1059,15 @@ class FailOrWarnOp(ResourceTest):
                 " monitor role=abc"
             ,
             "Error: 'Abc' is not a valid role value, use Master, Slave,"
-                " Started, Stopped, use --force to override\n"
+                " Started, Stopped\n"
+        )
+
+        self.assert_pcs_fail(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
+                " monitor role=abc --force"
+            ,
+            "Error: 'Abc' is not a valid role value, use Master, Slave,"
+                " Started, Stopped\n"
         )
 
     def test_force_invalid_role(self):
