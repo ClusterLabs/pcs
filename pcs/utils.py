@@ -1498,19 +1498,6 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         "nodes_slave": nodes_slave,
     }
 
-def filter_default_op_from_actions(resource_actions):
-    filtered = []
-    for action in resource_actions:
-        if action.get("name", "") not in DEFAULT_RESOURCE_ACTIONS:
-            continue
-        new_action = dict([
-            (name, value)
-            for name, value in action.items()
-            if name != "depth"
-        ])
-        filtered.append(new_action)
-    return filtered
-
 def agent_action_to_cmdline_format(action):
     op = [action["name"]]
     for key in action.keys():

@@ -176,6 +176,7 @@ class TestDescribeAgent(TestCase):
             "longdesc": "long desc",
             "parameters": [],
             "actions": [],
+            "default_actions": [],
         }
 
 

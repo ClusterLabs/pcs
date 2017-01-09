@@ -938,6 +938,7 @@ class AgentMetadataGetInfoTest(TestCase):
                     },
                     {"name": "off"},
                 ],
+                "default_actions": [],
             }
         )
 

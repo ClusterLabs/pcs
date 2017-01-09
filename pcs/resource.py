@@ -311,9 +311,7 @@ def _format_agent_description(description, stonith=False):
 
     if description.get("actions"):
         output_actions = []
-        for action in utils.filter_default_op_from_actions(
-            description["actions"]
-        ):
+        for action in description["default_actions"]:
             parts = ["  {0}:".format(action.get("name", ""))]
             parts.extend([
                 "{0}={1}".format(name, value)

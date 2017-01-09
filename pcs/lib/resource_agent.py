@@ -278,6 +278,7 @@ class Agent(object):
         agent_info = self.get_description_info()
         agent_info["parameters"] = self.get_parameters()
         agent_info["actions"] = self.get_actions()
+        agent_info["default_actions"] = self.get_default_actions()
         return agent_info
 
 
@@ -423,9 +424,8 @@ class Agent(object):
 
     def get_default_actions(self):
         """
-        Get list of default agent's actions (operations).
-        Function filter out actions that have not name in DEFAULT_ACTIONS.
-        Note that every action have attribute name at least.
+        List actions that should be put to resource on its creation.
+        Note that every action has at least attribute name.
         """
         default_action_list = []
         for action in self.get_actions():
