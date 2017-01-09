@@ -104,8 +104,9 @@ def get_validation_report(operation, allow_invalid=False):
     report_list = []
     invalid_options = list(set(operation.keys()) - set(ATTRIBUTES))
     if invalid_options:
-        report_list.append(create_report(
-            reports.invalid_option,
+        #Invalid attribute is always unforceable error. Forced invalid operation
+        #attribute cause invalid cib (because it does not conform the schema).
+        report_list.append(reports.invalid_option(
             invalid_options,
             sorted(ATTRIBUTES),
             "resource operation option",

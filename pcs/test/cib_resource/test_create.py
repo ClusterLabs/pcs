@@ -1051,7 +1051,7 @@ class FailOrWarnOp(ResourceTest):
             "Error: invalid resource operation option 'moni', allowed options"
                 " are: OCF_CHECK_LEVEL, description, enabled, id, interval,"
                 " interval-origin, name, on-fail, record-pending, requires,"
-                " role, start-delay, timeout, use --force to override\n"
+                " role, start-delay, timeout\n"
         )
 
     def test_fail_on_invalid_role(self):

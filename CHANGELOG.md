@@ -47,6 +47,8 @@
   ([rhbz#1398562])
 - Fixed misplacing metadata for disabling when running `pcs resource create`
   with flags `--clone` and `--disabled` ([rhbz#1402475])
+- Fixed incorrect acceptance of the invalid attribute of resource operation in
+  `pcs resource create` ([rhbz#1382597])
 
 [ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
 [ghissue#125]: https://github.com/ClusterLabs/pcs/issues/125
@@ -59,6 +61,7 @@
 [rhbz#1347335]: https://bugzilla.redhat.com/show_bug.cgi?id=1347335
 [rhbz#1378107]: https://bugzilla.redhat.com/show_bug.cgi?id=1378107
 [rhbz#1382004]: https://bugzilla.redhat.com/show_bug.cgi?id=1382004
+[rhbz#1382597]: https://bugzilla.redhat.com/show_bug.cgi?id=1382597
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389501]: https://bugzilla.redhat.com/show_bug.cgi?id=1389501
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941

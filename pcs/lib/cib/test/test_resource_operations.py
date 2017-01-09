@@ -310,9 +310,9 @@ class GetValidationReport(TestCase):
                         "option_type": "resource operation option",
                         "allowed": sorted(operations.ATTRIBUTES),
                     },
-                    report_codes.FORCE_OPTIONS
                 ),
             ],
+            check_warning=False
         )
 
     def test_return_errror_when_missing_key_name(self):

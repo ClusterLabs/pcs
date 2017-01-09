@@ -4224,7 +4224,7 @@ Error: Cannot remove more than one resource from cloned group
             "Error: invalid resource operation option 'blah', allowed options"
                 " are: OCF_CHECK_LEVEL, description, enabled, id, interval,"
                 " interval-origin, name, on-fail, record-pending, requires,"
-                " role, start-delay, timeout, use --force to override\n"
+                " role, start-delay, timeout\n"
         )
 
         self.assert_pcs_fail(
@@ -4232,7 +4232,7 @@ Error: Cannot remove more than one resource from cloned group
             "Error: invalid resource operation option 'blah', allowed options"
                 " are: OCF_CHECK_LEVEL, description, enabled, id, interval,"
                 " interval-origin, name, on-fail, record-pending, requires,"
-                " role, start-delay, timeout, use --force to override\n"
+                " role, start-delay, timeout\n"
         )
 
         o,r = pcs(temp_cib, "resource create --no-default-ops B ocf:heartbeat:Dummy")
