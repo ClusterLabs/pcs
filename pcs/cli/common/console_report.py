@@ -122,7 +122,7 @@ def resource_run_on_nodes(info):
 
     return "resource '{resource_id}' is {detail_list}".format(
         resource_id=info["resource_id"],
-        detail_list="; ".join([
+        detail_list="; ".join(sorted([
             "{run_type} on node{s} {node_list}".format(
                 run_type=run_type,
                 s="s" if len(node_list) > 1 else "",
@@ -131,7 +131,7 @@ def resource_run_on_nodes(info):
                 )
             )
             for run_type, node_list in state_info.items()
-        ])
+        ]))
     )
 
 

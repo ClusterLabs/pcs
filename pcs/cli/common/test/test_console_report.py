@@ -520,8 +520,8 @@ class ResourceRunOnNodes(NameBuildTest):
         )
     def test_multiple_role_multiple_nodes(self):
         self.assert_message_from_info(
-            "resource 'R' is running on nodes 'node1', 'node2'"
-            "; master on node 'node3'"
+            "resource 'R' is master on node 'node3'"
+            "; running on nodes 'node1', 'node2'"
             ,
             {
                 "resource_id": "R",
