@@ -11,16 +11,16 @@ from functools import partial
 from lxml import etree
 
 from pcs.common import report_codes
-from pcs.lib import reports
+from pcs.lib import reports, validate
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.tools import create_subelement_id
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import timeout_to_seconds
 
-
 OPERATION_NVPAIR_ATTRIBUTES = [
     "OCF_CHECK_LEVEL",
 ]
+
 ATTRIBUTES = [
     "id",
     "description",
@@ -44,7 +44,50 @@ ROLE_VALUES = [
     "Master",
 ]
 
-get_report_creator = partial(reports.get_creator, report_codes.FORCE_OPTIONS)
+REQUIRES_VALUES = [
+    "nothing",
+    "quorum",
+    "fencing",
+    "unfencing",
+]
+
+ON_FAIL_VALUES = [
+    "ignore",
+    "block",
+    "stop",
+    "restart",
+    "standby",
+    "fence",
+    "restart-container",
+]
+
+BOOLEAN_VALUES = [
+    "0",
+    "1",
+    "true",
+    "false",
+]
+
+ATTR_NORMALIZE_MAP = {
+    "role": lambda value: value.lower().capitalize(),
+    "requires": lambda value: value.lower(),
+    "on-fail": lambda value: value.lower(),
+    "record-pending": lambda value: value.lower(),
+    "enabled": lambda value: value.lower(),
+}
+
+OPERATION_OPTIONS_VALIDATORS = [
+    validate.is_required("name", "resource operation option"),
+    validate.value_in("role", ROLE_VALUES),
+    validate.value_in("requires", REQUIRES_VALUES),
+    validate.value_in("on-fail", ON_FAIL_VALUES),
+    validate.value_in("record-pending", BOOLEAN_VALUES),
+    validate.value_in("enabled", BOOLEAN_VALUES),
+    validate.mutually_exclusive(
+        ["interval-origin", "start-delay"],
+        "resource operation option"
+    )
+]
 
 def prepare(
     report_processor, raw_operation_list, default_operation_list,
@@ -63,9 +106,11 @@ def prepare(
     """
     operation_list = [normalize(operation) for operation in raw_operation_list]
 
-    report_processor.process_list(
-        validate(operation_list, allowed_operation_name_list, allow_invalid)
-    )
+    report_processor.process_list(validate_operation_list(
+        operation_list,
+        allowed_operation_name_list,
+        allow_invalid
+    ))
     validate_different_intervals(operation_list)
 
     return complete(operation_list + get_remaining_defaults(
@@ -75,79 +120,62 @@ def prepare(
         )
     )
 
-def normalize_attr(key, value):
-    """
-    Normalizes attributes of operation.
-    string key is attribute name
-    value is unnormalized sugested value
-    """
-    if key == "role":
-        return value.lower().capitalize()
-    return value
-
 def normalize(operation):
     """
     Return normalized copy of operation.
     dict operation
     """
     return dict([
-        (key, normalize_attr(key, value)) for key, value in operation.items()
+        (
+            key,
+            value if key not in ATTR_NORMALIZE_MAP
+                else ATTR_NORMALIZE_MAP[key](value)
+        )
+        for key, value in operation.items()
     ])
 
-def get_validation_report(operation, allow_invalid=False):
+def validate_operation(operation):
     """
-    Return list of validation reports.
+    Return a list with reports (ReportItems) about problems inside
+        operation.
     dict operation contains attributes of operation
     """
-    report_list = []
-    invalid_options = list(set(operation.keys()) - set(ATTRIBUTES))
-    if invalid_options:
-        #Invalid attribute is always unforceable error. Forced invalid operation
-        #attribute cause invalid cib (because it does not conform the schema).
-        report_list.append(reports.invalid_option(
-            invalid_options,
-            sorted(ATTRIBUTES),
-            "resource operation option",
-        ))
+    report_list = validate.names_in(
+        ATTRIBUTES,
+        operation.keys(),
+        "resource operation option",
+    )
 
-    if "role" in operation and operation["role"] not in ROLE_VALUES:
-        #Invalid role is always unforceable -it does not conform the schema
-        report_list.append(reports.invalid_option_value(
-            "role",
-            operation["role"],
-            ROLE_VALUES,
-        ))
-
-    if "name" not in operation:
-        #this is always unforceable error
-        report_list.append(reports.required_option_is_missing(
-            ["name"],
-            "resource operation option",
-        ))
+    report_list.extend(validate.run_collection_of_option_validators(
+        operation,
+        OPERATION_OPTIONS_VALIDATORS
+    ))
 
     return report_list
 
-def validate(operation_list, allowed_operation_name_list, allow_invalid=False):
+def validate_operation_list(
+    operation_list, allowed_operation_name_list, allow_invalid=False
+):
     """
-    Validate operation_list and report about problems if needed.
-    list operation_list contains dictionaries with attributes of operation
-    """
-    report_list = []
-    for operation in operation_list:
-        report_list.extend(get_validation_report(operation, allow_invalid))
+    Return a list with reports (ReportItems) about problems inside
+        operation_list.
 
-    operation_name_list = [
-        operation["name"]
-        for operation in operation_list if "name" in operation
-    ]
-    invalid_names = set(operation_name_list) - set(allowed_operation_name_list)
-    if invalid_names:
-        report_list.append(get_report_creator(allow_invalid)(
-            reports.invalid_option,
-            sorted(invalid_names),
-            sorted(allowed_operation_name_list),
-            "resource operation name",
-        ))
+    list operation_list contains dictionaries with attributes of operation
+    list allowed_operation_name_list contains names which are specified in
+        resource agent
+    bool allow_invalid is flag for allowing invalid operation names not listed
+        in allowed_operation_name_list.
+    """
+    report_list = validate.names_in(
+        allowed_operation_name_list,
+        [op["name"] for op in operation_list if "name" in op],
+        option_type="resource operation name",
+        code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
+        allow_extra_names=allow_invalid,
+    )
+
+    for operation in operation_list:
+        report_list.extend(validate_operation(operation))
 
     return report_list
 

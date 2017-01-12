@@ -14,8 +14,8 @@ from pcs.test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
-from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
+from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.pcs_unittest import TestCase, mock
 
 
@@ -24,7 +24,7 @@ patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 @patch_operations("get_remaining_defaults")
 @patch_operations("complete")
 @patch_operations("validate_different_intervals")
-@patch_operations("validate")
+@patch_operations("validate_operation_list")
 @patch_operations("normalize")
 class Prepare(TestCase):
     def setUp(self):
@@ -102,9 +102,6 @@ class Prepare(TestCase):
             ["start", "stop"], #allowed_operation_name_list
             True #allow_invalid
         )
-
-
-
 
 class ValidateDifferentIntervals(TestCase):
     def test_no_raises_on_empty_operation_list(self):
@@ -216,37 +213,26 @@ class Normalize(TestCase):
                 "name": "monitor",
                 "role": "Master",
                 "timeout": "10",
+                "requires": "nothing",
+                "on-fail": "ignore",
+                "record-pending": "true",
+                "enabled": "1",
             },
             operations.normalize({
                 "name": "monitor",
                 "role": "master",
                 "timeout": "10",
+                "requires": "Nothing",
+                "on-fail": "Ignore",
+                "record-pending": "True",
+                "enabled": "1",
             })
         )
 
-class NormalizeAttribute(TestCase):
-    def test_return_the_same_value_commonly(self):
-        description = "There is some description"
-        self.assertEqual(
-            description,
-            operations.normalize_attr("description", description)
-        )
-
-    def test_normalize_role(self):
-        self.assertEqual(
-            "Master",
-            operations.normalize_attr("role", "master")
-        )
-        #no valid normalizes as well
-        self.assertEqual(
-            "Faster",
-            operations.normalize_attr("role", "faster")
-        )
-
-class GetValidationReport(TestCase):
+class ValidateOperation(TestCase):
     def assert_operation_produces_report(self, operation, report_list):
         assert_report_item_list_equal(
-            operations.get_validation_report(operation),
+            operations.validate_operation(operation),
             report_list
         )
 
@@ -259,24 +245,14 @@ class GetValidationReport(TestCase):
             []
         )
 
-    def test_return_error_when_invalid_role_value(self):
-        self.assert_operation_produces_report(
-            {
-                "name": "monitoring",
-                "role": "invalid",
-            },
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "role",
-                        "option_value": "invalid",
-                        "allowed_values": operations.ROLE_VALUES,
-                    },
-                    None
-                ),
-            ],
+    @patch_operations("OPERATION_OPTIONS_VALIDATORS", [
+        mock.Mock(return_value=["ROLE REPORT"]),
+        mock.Mock(return_value=["REQUIRES REPORT"]),
+    ])
+    def test_validate_all_individual_options(self):
+        self.assertEqual(
+            ["REQUIRES REPORT", "ROLE REPORT"],
+            sorted(operations.validate_operation({"name": "monitoring"}))
         )
 
     def test_return_error_when_unknown_operation_attribute(self):
@@ -317,87 +293,91 @@ class GetValidationReport(TestCase):
             ],
         )
 
-class Validate(TestCase):
-    def setUp(self):
-        self.report_processor = MockLibraryReportProcessor()
-        self.allowed_operation_name_list = ["monitor", "start"]
-        self.validate = partial(
-            operations.validate,
-            allowed_operation_name_list=self.allowed_operation_name_list
-        )
-
-    def assert_operations_produce_report(
-        self, operation_list, report_list, allow_invalid=False
-    ):
-        assert_report_item_list_equal(
-            self.validate(operation_list, allow_invalid=allow_invalid),
-            report_list,
-        )
-
-    def test_return_nothing_on_valid_operations(self):
-        self.assert_operations_produce_report(
-            [{"name": "monitor", "role": "Master"}],
-            []
-        )
-
-    @patch_operations("get_validation_report")
-    def test_collect_operation_validation_errors(self, get_validation_report):
-        get_validation_report.side_effect = lambda operation, allow_invalid: {
-            "monitor": ["a", "b"],
-            "start": ["c", "d"],
-        }[operation["name"]]
-
-        self.assertEqual(
-            ["a", "b", "c", "d"],
-            self.validate([
-                {"name": "monitor"},
-                {"name": "start"},
-            ])
-        )
-
-    @patch_operations("get_validation_report", mock.Mock(return_value=[]))
-    def test_returns_error_on_invalid_operation_names(self):
-        self.assert_operations_produce_report(
-            [
-                {"name": "monitorrr"},
-                {"name": "monitor"},
-                {"name": "starttt"},
-            ],
+    def test_return_error_when_both_interval_origin_and_start_delay(self):
+        self.assert_operation_produces_report(
+            {
+                "name": "monitor",
+                "interval-origin": "a",
+                "start-delay": "b",
+            },
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_OPTION,
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     {
-                        "option_names": ["monitorrr", "starttt"],
-                        "option_type": "resource operation name",
-                        "allowed": sorted(self.allowed_operation_name_list),
+                        "option_names": ["interval-origin", "start-delay"],
+                        "option_type": "resource operation option",
                     },
-                    report_codes.FORCE_OPTIONS
+                    None
                 ),
-            ]
+            ],
         )
 
-    @patch_operations("get_validation_report", mock.Mock(return_value=[]))
-    def test_returns_warning_on_invalid_operation_names(self):
-        self.assert_operations_produce_report(
+class ValidateOperationList(TestCase):
+    @patch_operations("validate.names_in")
+    @patch_operations("validate_operation")
+    def test_return_nothing_on_valid_operations(
+        self, validate_operation, names_in
+    ):
+        validate_operation.return_value = []
+        names_in.return_value = []
+
+        self.assertEqual([], operations.validate_operation_list(
             [
-                {"name": "monitorrr"},
-                {"name": "monitor"},
-                {"name": "starttt"},
+                {"name": "monitor", "role": "Master"},
+                {"name": "monitor", "role": "Slave"},
+                {"name": "start", "role": "Master"},
             ],
-            [
-                (
-                    severities.WARNING,
-                    report_codes.INVALID_OPTION,
-                    {
-                        "option_names": ["monitorrr", "starttt"],
-                        "option_type": "resource operation name",
-                        "allowed": sorted(self.allowed_operation_name_list),
-                    },
-                ),
-            ],
-            allow_invalid=True
+            allowed_operation_name_list=["monitor", "start"],
+        ))
+
+        names_in.assert_called_once_with(
+            ["monitor", "start"],
+            ["monitor", "monitor", "start"],
+            option_type="resource operation name",
+            code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
+            allow_extra_names=False,
         )
+        validate_operation.assert_has_calls([
+            mock.call({"name": "monitor", "role": "Master"}),
+            mock.call({"name": "monitor", "role": "Slave"}),
+            mock.call({"name": "start", "role": "Master"}),
+        ], any_order=True)
+
+    @patch_operations("validate.names_in")
+    @patch_operations("validate_operation")
+    def test_collect_all(self, validate_operation, names_in):
+        validate_operation.side_effect = lambda operation: {
+            "monitor": ["a", "b"],
+            "start": ["c"],
+        }[operation["name"]]
+        names_in.return_value = ["0"]
+
+        self.assertEqual(
+            ["0", "a", "b", "c", "c"],
+            operations.validate_operation_list(
+                [
+                    {"name": "monitor"},
+                    {"name": "start"},
+                    {"name": "start"},
+                ],
+                allowed_operation_name_list=["monitor", "start"],
+                allow_invalid=True
+            )
+        )
+
+        names_in.assert_called_once_with(
+            ["monitor", "start"],
+            ["monitor", "start", "start"],
+            option_type="resource operation name",
+            code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
+            allow_extra_names=True,
+        )
+        validate_operation.assert_has_calls([
+            mock.call({"name": "monitor"}),
+            mock.call({"name": "start"}),
+            mock.call({"name": "start"}),
+        ], any_order=True)
 
 class GetRemainingDefaults(TestCase):
     @mock.patch("pcs.lib.cib.resource.operations.make_unique_intervals")

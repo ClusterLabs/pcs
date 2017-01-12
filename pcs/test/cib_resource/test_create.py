@@ -1062,6 +1062,7 @@ class FailOrWarnOp(ResourceTest):
                 " Started, Stopped\n"
         )
 
+    def test_force_invalid_role(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor role=abc --force"
@@ -1070,12 +1071,47 @@ class FailOrWarnOp(ResourceTest):
                 " Started, Stopped\n"
         )
 
-    def test_force_invalid_role(self):
+    def test_fail_on_invalid_requires(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-                " monitor role=abc --force"
+                " monitor requires=abc"
             ,
-            stdout_start="Error: Unable to update cib"
+            "Error: 'abc' is not a valid requires value, use fencing, nothing,"
+                " quorum, unfencing\n"
+        )
+
+    def test_fail_on_invalid_on_fail(self):
+        self.assert_pcs_fail(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
+                " monitor on-fail=abc"
+            ,
+            "Error: 'abc' is not a valid on-fail value, use block, fence,"
+                " ignore, restart, restart-container, standby, stop\n"
+        )
+
+    def test_fail_on_invalid_record_pending(self):
+        self.assert_pcs_fail(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
+                " monitor record-pending=abc"
+            ,
+            "Error: 'abc' is not a valid record-pending value, use 0, 1, false, true\n"
+        )
+
+    def test_fail_on_invalid_enabled(self):
+        self.assert_pcs_fail(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
+                " monitor enabled=abc"
+            ,
+            "Error: 'abc' is not a valid enabled value, use 0, 1, false, true\n"
+        )
+
+    def test_fail_on_combination_of_start_delay_and_interval_origin(self):
+        self.assert_pcs_fail(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
+                " monitor start-delay=10 interval-origin=20"
+            ,
+            "Error: resource operation options 'interval-origin' and"
+                " 'start-delay' are muttually exclusive\n"
         )
 
 class FailOrWarnGroup(ResourceTest):

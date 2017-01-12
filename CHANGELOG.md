@@ -49,6 +49,8 @@
   with flags `--clone` and `--disabled` ([rhbz#1402475])
 - Fixed incorrect acceptance of the invalid attribute of resource operation in
   `pcs resource create` ([rhbz#1382597])
+- Fixed validation of options of resource operations in `pcs resource create`
+  ([rhbz#1390071])
 
 [ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
 [ghissue#125]: https://github.com/ClusterLabs/pcs/issues/125
@@ -65,6 +67,7 @@
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389501]: https://bugzilla.redhat.com/show_bug.cgi?id=1389501
 [rhbz#1389941]: https://bugzilla.redhat.com/show_bug.cgi?id=1389941
+[rhbz#1390071]: https://bugzilla.redhat.com/show_bug.cgi?id=1390071
 [rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273
 [rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846
 [rhbz#1395226]: https://bugzilla.redhat.com/show_bug.cgi?id=1395226
