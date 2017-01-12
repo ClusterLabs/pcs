@@ -7,9 +7,9 @@
   attribute in addition to a node name ([rhbz#1261116])
 
 ### Changed
-- `pcs node [un]standby` and `pcs node [un]maintenance` now work atomically
-  when multiple nodes are specified ([rhbz#1315992])
-- Restarting pcsd initiated from pcs is now a sychnronous operation
+- `pcs node [un]standby` and `pcs node [un]maintenance` is now atomic even if
+  more than one node is specified ([rhbz#1315992])
+- Restarting pcsd initiated from pcs is now a synchronous operation
   ([rhbz#1284404])
 
 ### Fixed
@@ -19,7 +19,7 @@
   disabled ([rhbz#1389941])
 - Adding a node in a CMAN cluster does not cause the new node to be fenced
   immediately ([rhbz#1394846])
-- Show proper error message when there is HTTP communication failure
+- Show proper error message when there is an HTTP communication failure
   ([rhbz#1394273])
 - Fixed searching for files to remove in the `/var/lib` directory ([ghpull#119],
   [ghpull#120])
