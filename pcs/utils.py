@@ -979,20 +979,20 @@ def run_pcsdcli(command, data=None):
     pcsdcli_path = os.path.join(pcsd_dir_path, 'pcsd-cli.rb')
     gem_home = os.path.join(pcsd_dir_path, 'vendor/bundle/ruby')
     env_var["GEM_HOME"] = gem_home
-    output, retval = run(
+    stdout, dummy_stderr, retval = cmd_runner().run(
         ["/usr/bin/ruby", "-I" + pcsd_dir_path, pcsdcli_path, command],
-        string_for_stdin=json.dumps(data),
-        env_extend=env_var
+        json.dumps(data),
+        env_var
     )
     try:
-        output_json = json.loads(output)
+        output_json = json.loads(stdout)
         for key in ['status', 'text', 'data']:
             if key not in output_json:
                 output_json[key] = None
     except ValueError:
         output_json = {
             'status': 'bad_json_output',
-            'text': output,
+            'text': stdout,
             'data': None,
         }
     return output_json, retval

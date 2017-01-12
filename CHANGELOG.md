@@ -27,7 +27,10 @@
 - Fixed disabling services on systemd systems when using instances
   ([rhbz#1389501])
 - Fixed parsing commandline options ([rhbz#1404229])
+- Pcs does not exit with a false error message anymore when pcsd-cli.rb outputs
+  to stderr ([ghissue#124])
 
+[ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
 [ghpull#119]: https://github.com/ClusterLabs/pcs/pull/119
 [ghpull#120]: https://github.com/ClusterLabs/pcs/pull/120
 [rhbz#1261116]: https://bugzilla.redhat.com/show_bug.cgi?id=1261116
