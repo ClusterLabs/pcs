@@ -14,7 +14,8 @@ def forceable_error(force_code, report_creator, *args, **kwargs):
     """
     Return ReportItem created by report_creator.
 
-    This is experimental shortcut for common pattern. It is intended for work in
+    This is experimental shortcut for common pattern. It is intended to
+    cooperate with functions "error" and  "warning".
     the pair with function "warning".
 
     string force_code is code for forcing error
@@ -34,8 +35,8 @@ def warning(report_creator, *args, **kwargs):
     """
     Return ReportItem created by report_creator.
 
-    This is experimental shortcut for common pattern. It is intended for work in
-    the pair with function "forceable_error".
+    This is experimental shortcut for common pattern. It is intended to
+    cooperate with functions "error" and  "forceable_error".
 
     callable report_creator is function that produce ReportItem. It must take
         parameters forceable (None or force code) and severity
@@ -49,7 +50,26 @@ def warning(report_creator, *args, **kwargs):
         **kwargs
     )
 
-def get_creator(force_code, warn_only):
+def error(report_creator, *args, **kwargs):
+    """
+    Return ReportItem created by report_creator.
+
+    This is experimental shortcut for common pattern. It is intended to
+    cooperate with functions "forceable_error" and "forceable_error".
+
+    callable report_creator is function that produce ReportItem. It must take
+        parameters forceable (None or force code) and severity
+        (from ReportItemSeverity)
+    rest of args are for the report_creator
+    """
+    return report_creator(
+        *args,
+        forceable=None,
+        severity=ReportItemSeverity.ERROR,
+        **kwargs
+    )
+
+def get_creator(force_code=None, is_forced=False):
     """
     Returns report creator wraper (forceable_error or warning).
 
@@ -60,7 +80,11 @@ def get_creator(force_code, warn_only):
         it for whole module by using functools.partial.
     bool warn_only is flag for selecting wrapper
     """
-    return warning if warn_only else partial(forceable_error, force_code)
+    if not force_code:
+        return error
+    if is_forced:
+        return warning
+    return partial(forceable_error, force_code)
 
 def common_error(text):
     # TODO replace by more specific reports
@@ -215,6 +239,21 @@ def invalid_option_value(
         },
         forceable=forceable
     )
+
+def mutually_exclusive_options(option_names, option_type):
+    """
+    entered options can not coexist
+    set option_names contain entered mutually exclusive options
+    string option_type decsribes the option
+    """
+    return ReportItem.error(
+        report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+        info={
+            "option_names": option_names,
+            "option_type": option_type,
+        },
+    )
+
 
 def invalid_id_is_empty(id, id_description):
     """

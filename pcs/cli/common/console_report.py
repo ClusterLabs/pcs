@@ -218,6 +218,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.MUTUALLY_EXCLUSIVE_OPTIONS: lambda info:
+        "{desc}s {option_names} are muttually exclusive".format(
+            desc=(format_optional(info["option_type"], "{0}", "option")),
+            option_names = ", ".join([
+                "'{0}'".format(name)
+                for name in sorted(info["option_names"])[:-1]
+            ]) + " and '{0}'".format(sorted(info["option_names"])[-1])
+        )
+    ,
+
     codes.EMPTY_ID: lambda info:
         "{id_description} cannot be empty"
     .format(**info)

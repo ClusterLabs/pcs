@@ -542,3 +542,14 @@ class ResourceDoesNotRun(NameBuildTest):
                 "resource_id": "R",
             }
         )
+
+class MutuallyExclusiveOptions(NameBuildTest):
+    code = codes.MUTUALLY_EXCLUSIVE_OPTIONS
+    def test_build_message(self):
+        self.assert_message_from_info(
+            "some options 'a' and 'b' are muttually exclusive",
+            {
+                "option_type": "some option",
+                "option_names": ["a", "b"],
+            }
+        )
