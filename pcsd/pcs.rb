@@ -957,8 +957,11 @@ def get_rhel_version()
 end
 
 def pcsd_restart()
+  # restart in a separate process so we can send a response to the restart
+  # request
   fork {
-    sleep(10)
+    # let us send the response to the restart request
+    sleep(3)
     if ISSYSTEMCTL
       exec("systemctl", "restart", "pcsd")
     else
@@ -1339,10 +1342,18 @@ def pcsd_restart_nodes(auth_user, nodes)
   node_status = {}
   node_response.each { |node, response|
     if response[0] == 200
-      node_status[node] = {
+      my_status = {
         'status' => 'ok',
         'text' => 'Success',
       }
+      begin
+        parsed_response = JSON.parse(response[1], {:symbolize_names => true})
+        if parsed_response[:instance_signature]
+          my_status["instance_signature"] = parsed_response[:instance_signature]
+        end
+      rescue JSON::ParserError
+      end
+      node_status[node] = my_status
     else
       text = response[1]
       if response[0] == 401

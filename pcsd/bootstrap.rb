@@ -1,6 +1,7 @@
+require 'digest/sha2'
 require 'logger'
-require 'pathname'
 require 'open4'
+require 'pathname'
 
 require 'settings.rb'
 
@@ -45,6 +46,8 @@ def get_pcs_path(pcsd_path)
 end
 
 PCS_VERSION = '0.9.155'
+# unique instance signature, allows detection of dameon restarts
+DAEMON_INSTANCE_SIGNATURE = Digest::SHA2.hexdigest("#{Time.now} #{rand()}")
 COROSYNC = COROSYNC_BINARIES + "corosync"
 ISRHEL6 = is_rhel6
 ISSYSTEMCTL = is_systemctl

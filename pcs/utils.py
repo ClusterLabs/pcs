@@ -160,6 +160,11 @@ def checkStatus(node):
 def checkAuthorization(node):
     return sendHTTPRequest(node, 'remote/check_auth', None, False, False)
 
+def getPcsdInstanceSignature(node):
+    return sendHTTPRequest(
+        node, 'remote/pcsd_instance_signature', None, False, False
+    )
+
 def get_uid_gid_file_name(uid, gid):
     return "pcs-uidgid-%s-%s" % (uid, gid)
 

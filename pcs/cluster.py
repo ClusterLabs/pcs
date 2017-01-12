@@ -954,6 +954,7 @@ def is_node_fully_started(node_status):
 def wait_for_local_node_started(stop_at, interval):
     try:
         while True:
+            time.sleep(interval)
             node_status = lib_pacemaker.get_local_node_status(
                 utils.cmd_runner()
             )
@@ -961,7 +962,6 @@ def wait_for_local_node_started(stop_at, interval):
                 return 0, "Started"
             if datetime.datetime.now() > stop_at:
                 return 1, "Waiting timeout"
-            time.sleep(interval)
     except LibraryError as e:
         return 1, "Unable to get node status: {0}".format(
             "\n".join([build_report_message(item) for item in e.args])
@@ -969,6 +969,7 @@ def wait_for_local_node_started(stop_at, interval):
 
 def wait_for_remote_node_started(node, stop_at, interval):
     while True:
+        time.sleep(interval)
         code, output = utils.getPacemakerNodeStatus(node)
         # HTTP error, permission denied or unable to auth
         # there is no point in trying again as it won't get magically fixed
@@ -984,7 +985,6 @@ def wait_for_remote_node_started(node, stop_at, interval):
                 return 1, "Unable to get node status"
         if datetime.datetime.now() > stop_at:
             return 1, "Waiting timeout"
-        time.sleep(interval)
 
 def wait_for_nodes_started(node_list, timeout=None):
     timeout = 60 * 15 if timeout is None else timeout

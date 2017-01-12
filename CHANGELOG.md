@@ -9,6 +9,8 @@
 ### Changed
 - `pcs node [un]standby` and `pcs node [un]maintenance` now work atomically
   when multiple nodes are specified ([rhbz#1315992])
+- Restarting pcsd initiated from pcs is now a sychnronous operation
+  ([rhbz#1284404])
 
 ### Fixed
 - When upgrading CIB to the latest schema version, check for minimal common
@@ -29,6 +31,7 @@
 [ghpull#119]: https://github.com/ClusterLabs/pcs/pull/119
 [ghpull#120]: https://github.com/ClusterLabs/pcs/pull/120
 [rhbz#1261116]: https://bugzilla.redhat.com/show_bug.cgi?id=1261116
+[rhbz#1284404]: https://bugzilla.redhat.com/show_bug.cgi?id=1284404
 [rhbz#1315992]: https://bugzilla.redhat.com/show_bug.cgi?id=1315992
 [rhbz#1389443]: https://bugzilla.redhat.com/show_bug.cgi?id=1389443
 [rhbz#1389501]: https://bugzilla.redhat.com/show_bug.cgi?id=1389501
