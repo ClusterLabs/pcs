@@ -1058,7 +1058,7 @@ class FailOrWarnOp(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor role=abc"
             ,
-            "Error: 'Abc' is not a valid role value, use Master, Slave,"
+            "Error: 'abc' is not a valid role value, use Master, Slave,"
                 " Started, Stopped\n"
         )
 
@@ -1067,42 +1067,43 @@ class FailOrWarnOp(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor role=abc --force"
             ,
-            "Error: 'Abc' is not a valid role value, use Master, Slave,"
+            "Error: 'abc' is not a valid role value, use Master, Slave,"
                 " Started, Stopped\n"
         )
 
     def test_fail_on_invalid_requires(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-                " monitor requires=abc"
+                " monitor requires=Abc"
             ,
-            "Error: 'abc' is not a valid requires value, use fencing, nothing,"
+            "Error: 'Abc' is not a valid requires value, use fencing, nothing,"
                 " quorum, unfencing\n"
         )
 
     def test_fail_on_invalid_on_fail(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-                " monitor on-fail=abc"
+                " monitor on-fail=Abc"
             ,
-            "Error: 'abc' is not a valid on-fail value, use block, fence,"
+            "Error: 'Abc' is not a valid on-fail value, use block, fence,"
                 " ignore, restart, restart-container, standby, stop\n"
         )
 
     def test_fail_on_invalid_record_pending(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-                " monitor record-pending=abc"
+                " monitor record-pending=Abc"
             ,
-            "Error: 'abc' is not a valid record-pending value, use 0, 1, false, true\n"
+            "Error: 'Abc' is not a valid record-pending value, use 0, 1, false,"
+                " true\n"
         )
 
     def test_fail_on_invalid_enabled(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-                " monitor enabled=abc"
+                " monitor enabled=Abc"
             ,
-            "Error: 'abc' is not a valid enabled value, use 0, 1, false, true\n"
+            "Error: 'Abc' is not a valid enabled value, use 0, 1, false, true\n"
         )
 
     def test_fail_on_combination_of_start_delay_and_interval_origin(self):

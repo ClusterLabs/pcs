@@ -24,6 +24,10 @@ Example of use (how things play together):
         'allowed_values': ['B', 'C']
     }
 
+Sometimes we need to validate the normalized value but in report we need the
+original value. For this purposes is ValuePair and helpers like values_to_pairs
+and pairs_to_values.
+
 TODO provide parameters to provide forceable error/warning for functions that
      does not support it
 """
@@ -33,8 +37,65 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
+
+from collections import namedtuple
+
 from pcs.lib import reports
 
+class ValuePair(namedtuple("ValuePair", "original normalized")):
+    """
+    Storage for the original value and its normalized form
+    """
+
+def values_to_pairs(option_dict, normalize):
+    """
+    Return a dict derived from option_dict where every value is instance of
+    ValuePair.
+
+    dict option_dict contains values that should be paired with the normalized
+        form
+    callable normalize should take key and value and return normalized form.
+        Function option_value_normalization can be good base for create such
+        callable.
+    """
+    option_dict_with_pairs = {}
+    for key, value in option_dict.items():
+        if not isinstance(value, ValuePair):
+            value = ValuePair(
+                original=value,
+                normalized=normalize(key, value),
+            )
+        option_dict_with_pairs[key] = value
+    return option_dict_with_pairs
+
+def pairs_to_values(option_dict):
+    """
+    Take a dict which has OptionValuePairs as its values and return dict with
+    normalized forms as its values. It is reverse function to
+    values_to_pairs.
+
+    dict option_dict contains OptionValuePairs as its values
+    """
+    raw_option_dict = {}
+    for key, value in option_dict.items():
+        if isinstance(value, ValuePair):
+            value = value.normalized
+        raw_option_dict[key] = value
+    return raw_option_dict
+
+def option_value_normalization(normalization_map):
+    """
+    Return function that takes key and value and return the normalized form.
+
+    dict normalization_map has on each key function that takes value and return
+        its normalized form.
+    """
+    def normalize(key, value):
+        return(
+            value if key not in normalization_map
+            else normalization_map[key](value)
+        )
+    return normalize
 
 def is_required(option_name, option_type="option"):
     """
@@ -63,14 +124,17 @@ def value_in(option_name, allowed_values):
     list allowed_values contains all possibilities of option value
     """
     def validate(option_dict):
-        if(
-            option_name in option_dict
-            and
-            option_dict[option_name] not in allowed_values
-        ):
+        if option_name not in option_dict:
+            return []
+
+        value = option_dict[option_name]
+        if not isinstance(value, ValuePair):
+            value = ValuePair(value, value)
+
+        if(value.normalized not in allowed_values):
             return [reports.invalid_option_value(
                 option_name,
-                option_dict[option_name],
+                value.original,
                 allowed_values,
             )]
         return []

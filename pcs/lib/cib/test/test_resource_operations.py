@@ -10,13 +10,11 @@ from functools import partial
 from pcs.common import report_codes
 from pcs.lib.cib.resource import operations
 from pcs.lib.errors import ReportItemSeverity as severities
-from pcs.test.tools.assertions import (
-    assert_raise_library_error,
-    assert_report_item_list_equal,
-)
+from pcs.test.tools.assertions import assert_report_item_list_equal
 from pcs.test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.test.tools.misc import create_patcher
 from pcs.test.tools.pcs_unittest import TestCase, mock
+from pcs.lib.validate import ValuePair
 
 
 patch_operations = create_patcher("pcs.lib.cib.resource.operations")
@@ -24,99 +22,76 @@ patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 @patch_operations("get_remaining_defaults")
 @patch_operations("complete")
 @patch_operations("validate_different_intervals")
-@patch_operations("validate_operation_list")
-@patch_operations("normalize")
+@patch_operations("validate.names_in")
+@patch_operations("validate_operation")
 class Prepare(TestCase):
-    def setUp(self):
-        self.report_processor = mock.Mock()
-        self.run = partial(
-            operations.prepare,
-            self.report_processor,
-            [{"name": "start"}],
-            [{"name": "stop"}],
-            ["start", "stop"]
+    def test_prepare(
+        self, validate_operation, validate_names_in,
+        validate_different_intervals, complete, get_remaining_defaults
+    ):
+        validate_operation.side_effect = lambda operation: [
+            operation["name"].normalized #values commes here in ValuePairs
+        ]
+        validate_names_in.return_value = ["name_in"]
+        validate_different_intervals.return_value = ["different_interval"]
+
+
+        report_processor = mock.MagicMock()
+        raw_operation_list = [
+            {"name": "start"},
+            {"name": "monitor"},
+        ]
+        default_operation_list = [
+            {"name": "stop"},
+        ]
+        allowed_operation_name_list = ["start", "stop", "monitor"]
+        allow_invalid = True
+
+        operations.prepare(
+            report_processor,
+            raw_operation_list,
+            default_operation_list,
+            allowed_operation_name_list,
+            allow_invalid,
         )
 
-    def prepare_mocks(self, normalize, complete, get_remaining_defaults):
-        def normalize_effect(operation):
-            normalized_operation = operation.copy()
-            normalized_operation["normalized"] = True
-            return normalized_operation
+        validate_names_in.assert_called_once_with(
+            allowed_operation_name_list,
+            ["start", "monitor"],
+            option_type="resource operation name",
+            code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
+            allow_extra_names=allow_invalid,
+        )
 
-        normalize.side_effect = normalize_effect
-        complete.return_value = "completed operations"
-        get_remaining_defaults.return_value = ["remaining defaults"]
-
-    def check_mocks(
-        self,
-        prepared_operations, complete, normalize, validate_different_intervals,
-        get_remaining_defaults
-    ):
-        self.assertEqual(prepared_operations, complete.return_value)
-        normalize.assert_called_once_with({"name": "start"})
-        validate_different_intervals.assert_called_once_with([
-            {"name": "start", "normalized": True},
+        validate_different_intervals.assert_called_once_with(raw_operation_list)
+        report_processor.process_list.assert_called_once_with([
+            "name_in",
+            "start",
+            "monitor",
+            "different_interval",
         ])
-        complete.assert_called_once_with([
-            {"name": "start", "normalized": True},
-            "remaining defaults"
-        ])
-        get_remaining_defaults.assert_called_once_with(
-            self.report_processor,
-            [{"name": "start", "normalized": True}],
-            [{"name": "stop"}],
-        )
-
-    def test_prepare_with_validation(
-        self, normalize, validate, validate_different_intervals, complete,
-        get_remaining_defaults
-    ):
-        self.prepare_mocks(normalize, complete, get_remaining_defaults)
-
-        prepared_operations = self.run()
-
-        self.check_mocks(
-            prepared_operations, complete, normalize,
-            validate_different_intervals, get_remaining_defaults
-        )
-        validate.assert_called_once_with(
-            [{"name": "start", "normalized": True}],
-            ["start", "stop"], #allowed_operation_name_list
-            False #allow_invalid
-        )
-
-    def test_prepare_without_validation(
-        self, normalize, validate, validate_different_intervals, complete,
-        get_remaining_defaults
-    ):
-        self.prepare_mocks(normalize, complete, get_remaining_defaults)
-
-        prepared_operations = self.run(allow_invalid=True)
-
-        self.check_mocks(
-            prepared_operations, complete, normalize,
-            validate_different_intervals, get_remaining_defaults
-        )
-        validate.assert_called_once_with(
-            [{"name": "start", "normalized": True}],
-            ["start", "stop"], #allowed_operation_name_list
-            True #allow_invalid
+        validate_operation.assert_has_calls(
+            [
+                mock.call({"name": ValuePair("monitor", "monitor")}),
+                mock.call({"name": ValuePair("start", "start")}),
+            ],
+            any_order=True
         )
 
 class ValidateDifferentIntervals(TestCase):
-    def test_no_raises_on_empty_operation_list(self):
+    def test_return_empty_reports_on_empty_list(self):
         operations.validate_different_intervals([])
 
-    def test_no_raises_on_operations_without_duplication(self):
+    def test_return_empty_reports_on_operations_without_duplication(self):
         operations.validate_different_intervals([
             {"name": "monitor", "interval": "10s"},
             {"name": "monitor", "interval": "5s"},
             {"name": "start", "interval": "5s"},
         ])
 
-    def test_raises_on_duplicated_intervals(self):
-        assert_raise_library_error(
-            lambda:operations.validate_different_intervals([
+    def test_return_report_on_duplicated_intervals(self):
+        assert_report_item_list_equal(
+            operations.validate_different_intervals([
                 {"name": "monitor", "interval": "3600s"},
                 {"name": "monitor", "interval": "60m"},
                 {"name": "monitor", "interval": "1h"},
@@ -124,7 +99,7 @@ class ValidateDifferentIntervals(TestCase):
                 {"name": "monitor", "interval": "1m"},
                 {"name": "monitor", "interval": "5s"},
             ]),
-            (
+            [(
                 severities.ERROR,
                 report_codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION,
                 {
@@ -135,7 +110,7 @@ class ValidateDifferentIntervals(TestCase):
                         ],
                     },
                 },
-            ),
+            )]
         )
 
 class MakeUniqueIntervals(TestCase):
@@ -205,7 +180,10 @@ class Normalize(TestCase):
             "timeout": "10",
         }
 
-        self.assertEqual(operation, operations.normalize(operation))
+        self.assertEqual(operation, dict([
+            (key, operations.normalize(key, value))
+            for key, value in operation.items()
+        ]))
 
     def test_return_operation_with_normalized_values(self):
         self.assertEqual(
@@ -218,7 +196,7 @@ class Normalize(TestCase):
                 "record-pending": "true",
                 "enabled": "1",
             },
-            operations.normalize({
+            dict([(key, operations.normalize(key, value)) for key, value in {
                 "name": "monitor",
                 "role": "master",
                 "timeout": "10",
@@ -226,7 +204,7 @@ class Normalize(TestCase):
                 "on-fail": "Ignore",
                 "record-pending": "True",
                 "enabled": "1",
-            })
+            }.items()])
         )
 
 class ValidateOperation(TestCase):
@@ -312,72 +290,6 @@ class ValidateOperation(TestCase):
                 ),
             ],
         )
-
-class ValidateOperationList(TestCase):
-    @patch_operations("validate.names_in")
-    @patch_operations("validate_operation")
-    def test_return_nothing_on_valid_operations(
-        self, validate_operation, names_in
-    ):
-        validate_operation.return_value = []
-        names_in.return_value = []
-
-        self.assertEqual([], operations.validate_operation_list(
-            [
-                {"name": "monitor", "role": "Master"},
-                {"name": "monitor", "role": "Slave"},
-                {"name": "start", "role": "Master"},
-            ],
-            allowed_operation_name_list=["monitor", "start"],
-        ))
-
-        names_in.assert_called_once_with(
-            ["monitor", "start"],
-            ["monitor", "monitor", "start"],
-            option_type="resource operation name",
-            code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
-            allow_extra_names=False,
-        )
-        validate_operation.assert_has_calls([
-            mock.call({"name": "monitor", "role": "Master"}),
-            mock.call({"name": "monitor", "role": "Slave"}),
-            mock.call({"name": "start", "role": "Master"}),
-        ], any_order=True)
-
-    @patch_operations("validate.names_in")
-    @patch_operations("validate_operation")
-    def test_collect_all(self, validate_operation, names_in):
-        validate_operation.side_effect = lambda operation: {
-            "monitor": ["a", "b"],
-            "start": ["c"],
-        }[operation["name"]]
-        names_in.return_value = ["0"]
-
-        self.assertEqual(
-            ["0", "a", "b", "c", "c"],
-            operations.validate_operation_list(
-                [
-                    {"name": "monitor"},
-                    {"name": "start"},
-                    {"name": "start"},
-                ],
-                allowed_operation_name_list=["monitor", "start"],
-                allow_invalid=True
-            )
-        )
-
-        names_in.assert_called_once_with(
-            ["monitor", "start"],
-            ["monitor", "start", "start"],
-            option_type="resource operation name",
-            code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
-            allow_extra_names=True,
-        )
-        validate_operation.assert_has_calls([
-            mock.call({"name": "monitor"}),
-            mock.call({"name": "start"}),
-            mock.call({"name": "start"}),
-        ], any_order=True)
 
 class GetRemainingDefaults(TestCase):
     @mock.patch("pcs.lib.cib.resource.operations.make_unique_intervals")

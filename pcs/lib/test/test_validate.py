@@ -11,6 +11,80 @@ from pcs.lib.errors import ReportItemSeverity as severities
 from pcs.test.tools.assertions import assert_report_item_list_equal
 from pcs.test.tools.pcs_unittest import TestCase
 
+class ValuesToPairs(TestCase):
+    def test_create_from_plain_values(self):
+        self.assertEqual(
+            {
+                "first": validate.ValuePair("A", "a"),
+                "second": validate.ValuePair("B", "b"),
+            },
+            validate.values_to_pairs(
+                {
+                    "first": "A",
+                    "second": "B",
+                },
+                lambda key, value: value.lower()
+            )
+        )
+
+    def test_keep_pair_if_is_already_there(self):
+        self.assertEqual(
+            {
+                "first": validate.ValuePair("A", "aaa"),
+                "second": validate.ValuePair("B", "b"),
+            },
+            validate.values_to_pairs(
+                {
+                    "first": validate.ValuePair("A", "aaa"),
+                    "second": "B",
+                },
+                lambda key, value: value.lower()
+            )
+        )
+
+class PairsToValues(TestCase):
+    def test_keep_values_if_is_not_pair(self):
+        self.assertEqual(
+            {
+                "first": "A",
+                "second": "B",
+            },
+            validate.pairs_to_values(
+                {
+                    "first": "A",
+                    "second": "B",
+                }
+            )
+        )
+
+    def test_extract_normalized_values(self):
+        self.assertEqual(
+            {
+                "first": "aaa",
+                "second": "B",
+            },
+            validate.pairs_to_values(
+                {
+                    "first": validate.ValuePair(
+                        original="A",
+                        normalized="aaa"
+                    ),
+                    "second": "B",
+                }
+            )
+        )
+
+class OptionValueNormalization(TestCase):
+    def test_return_normalized_value_if_normalization_for_key_specified(self):
+        normalize = validate.option_value_normalization({
+            "first": lambda value: value.upper()
+        })
+        self.assertEqual("ONE", normalize("first", "one"))
+
+    def test_return_value_if_normalization_for_key_unspecified(self):
+        normalize = validate.option_value_normalization({})
+        self.assertEqual("one", normalize("first", "one"))
+
 class IsRequired(TestCase):
     def test_returns_no_report_when_required_is_present(self):
         assert_report_item_list_equal(
@@ -51,6 +125,25 @@ class ValueIn(TestCase):
                     {
                         "option_name": "a",
                         "option_value": "c",
+                        "allowed_values": ["b"],
+                    },
+                    None
+                ),
+            ]
+        )
+
+    def test_support_OptionValuePair(self):
+        assert_report_item_list_equal(
+            validate.value_in("a", ["b"])(
+                {"a": validate.ValuePair(original="C", normalized="c")}
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "C",
                         "allowed_values": ["b"],
                     },
                     None

@@ -14,7 +14,6 @@ from pcs.common import report_codes
 from pcs.lib import reports, validate
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.tools import create_subelement_id
-from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import timeout_to_seconds
 
 OPERATION_NVPAIR_ATTRIBUTES = [
@@ -68,13 +67,14 @@ BOOLEAN_VALUES = [
     "false",
 ]
 
-ATTR_NORMALIZE_MAP = {
+#normalize(key, value) -> normalized_value
+normalize = validate.option_value_normalization({
     "role": lambda value: value.lower().capitalize(),
     "requires": lambda value: value.lower(),
     "on-fail": lambda value: value.lower(),
     "record-pending": lambda value: value.lower(),
     "enabled": lambda value: value.lower(),
-}
+})
 
 OPERATION_OPTIONS_VALIDATORS = [
     validate.is_required("name", "resource operation option"),
@@ -104,35 +104,39 @@ def prepare(
         (most probably) resource agent
     bool allow_invalid is flag for validation skipping
     """
-    operation_list = [normalize(operation) for operation in raw_operation_list]
+    operations_to_validate = [
+        validate.values_to_pairs(op, normalize) for op in raw_operation_list
+    ]
 
-    report_processor.process_list(validate_operation_list(
-        operation_list,
+    report_list = validate.names_in(
         allowed_operation_name_list,
-        allow_invalid
-    ))
-    validate_different_intervals(operation_list)
+        [o["name"].normalized for o in operations_to_validate if "name" in o],
+        option_type="resource operation name",
+        code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
+        allow_extra_names=allow_invalid,
+    )
 
-    return complete(operation_list + get_remaining_defaults(
+    for operation in operations_to_validate:
+        report_list.extend(validate_operation(operation))
+
+    operation_list = [
+        validate.pairs_to_values(op) for op in operations_to_validate
+    ]
+
+    report_list.extend(validate_different_intervals(operation_list))
+
+    #can raise LibraryError
+    report_processor.process_list(report_list)
+
+    return complete(
+        operation_list
+        +
+        get_remaining_defaults(
             report_processor,
             operation_list,
             default_operation_list
         )
     )
-
-def normalize(operation):
-    """
-    Return normalized copy of operation.
-    dict operation
-    """
-    return dict([
-        (
-            key,
-            value if key not in ATTR_NORMALIZE_MAP
-                else ATTR_NORMALIZE_MAP[key](value)
-        )
-        for key, value in operation.items()
-    ])
 
 def validate_operation(operation):
     """
@@ -153,32 +157,6 @@ def validate_operation(operation):
 
     return report_list
 
-def validate_operation_list(
-    operation_list, allowed_operation_name_list, allow_invalid=False
-):
-    """
-    Return a list with reports (ReportItems) about problems inside
-        operation_list.
-
-    list operation_list contains dictionaries with attributes of operation
-    list allowed_operation_name_list contains names which are specified in
-        resource agent
-    bool allow_invalid is flag for allowing invalid operation names not listed
-        in allowed_operation_name_list.
-    """
-    report_list = validate.names_in(
-        allowed_operation_name_list,
-        [op["name"] for op in operation_list if "name" in op],
-        option_type="resource operation name",
-        code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
-        allow_extra_names=allow_invalid,
-    )
-
-    for operation in operation_list:
-        report_list.extend(validate_operation(operation))
-
-    return report_list
-
 def get_remaining_defaults(
     report_processor, operation_list, default_operation_list
 ):
@@ -187,7 +165,8 @@ def get_remaining_defaults(
         default_operation_list.
     report_processor is tool for warning/info/error reporting
     list operation_list contains dictionaries with attributes of operation
-    list default_operation_list contains dictionaries with attributes of operation
+    list default_operation_list contains dictionaries with attributes of the
+        operation
     """
     return make_unique_intervals(
         report_processor,
@@ -288,9 +267,10 @@ def validate_different_intervals(operation_list):
                 duplications[name].append(timeout)
 
     if duplications:
-        raise LibraryError(
-            reports.resource_operation_interval_duplication(dict(duplications))
-        )
+        return [reports.resource_operation_interval_duplication(
+            dict(duplications)
+        )]
+    return []
 
 def create_id(context_element, name, interval):
     """
