@@ -81,6 +81,23 @@ ifndef BASH_COMPLETION_DIR
 	BASH_COMPLETION_DIR=${DESTDIR}/etc/bash_completion.d
 endif
 
+ifndef PCSD_PARENT_DIR
+  ifeq ($(IS_DEBIAN),true)
+    PCSD_PARENT_DIR = /usr/share
+  else
+    PCSD_PARENT_DIR = ${PREFIX}/lib
+  endif
+endif
+
+pcsd_fonts = \
+	LiberationSans-Regular.ttf;LiberationSans:style=Regular \
+	LiberationSans-Bold.ttf;LiberationSans:style=Bold \
+	LiberationSans-BoldItalic.ttf;LiberationSans:style=BoldItalic \
+	LiberationSans-Italic.ttf;LiberationSans:style=Italic \
+	Overpass-Regular.ttf;Overpass:style=Regular \
+	Overpass-Bold.ttf;Overpass:style=Bold
+
+
 install:
 	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
 	mkdir -p ${DESTDIR}${PREFIX}/sbin/
@@ -123,23 +140,29 @@ ifeq ($(IS_DEBIAN),true)
 	install -m 755 -D pcsd/pcsd.debian ${DESTDIR}/${initdir}/pcsd
   endif
 else
-	mkdir -p ${DESTDIR}${PREFIX}/lib/
-	cp -r pcsd ${DESTDIR}${PREFIX}/lib/
+	mkdir -p ${DESTDIR}${PCSD_PARENT_DIR}/
+	cp -r pcsd ${DESTDIR}${PCSD_PARENT_DIR}/
 	install -m 644 -D pcsd/pcsd.conf ${DESTDIR}/etc/sysconfig/pcsd
 	install -d ${DESTDIR}/etc/pam.d
 	install  pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
   ifeq ($(IS_SYSTEMCTL),true)
 	install -d ${DESTDIR}/${systemddir}/system/
 	install -m 644 pcsd/pcsd.service ${DESTDIR}/${systemddir}/system/
-# ${DESTDIR}${PREFIX}/lib/pcsd/pcsd holds the selinux context
-	install -m 755 pcsd/pcsd.service-runner ${DESTDIR}${PREFIX}/lib/pcsd/pcsd
-	rm ${DESTDIR}${PREFIX}/lib/pcsd/pcsd.service-runner
+# ${DESTDIR}${PCSD_PARENT_DIR}/pcsd/pcsd holds the selinux context
+	install -m 755 pcsd/pcsd.service-runner ${DESTDIR}${PCSD_PARENT_DIR}/pcsd/pcsd
+	rm ${DESTDIR}${PCSD_PARENT_DIR}/pcsd/pcsd.service-runner
   else
 	install -m 755 -D pcsd/pcsd ${DESTDIR}/${initdir}/pcsd
   endif
 endif
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	install -m 644 -D pcsd/pcsd.logrotate ${DESTDIR}/etc/logrotate.d/pcsd
+	$(foreach font,$(pcsd_fonts),\
+		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
+		$(eval font_def = $(word 2,$(subst ;, ,$(font)))) \
+		$(eval font_path = $(shell fc-list '--format=%{file}' '$(font_def)')) \
+		$(if $(font_path),ln -s -f $(font_path) ${DESTDIR}${PCSD_PARENT_DIR}/pcsd/public/css/$(font_file);,$(error Font $(font_def) not found)) \
+	)
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/sbin/pcs

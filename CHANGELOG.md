@@ -11,6 +11,7 @@
   more than one node is specified ([rhbz#1315992])
 - Restarting pcsd initiated from pcs is now a synchronous operation
   ([rhbz#1284404])
+- Stopped bundling fonts used in pcsd GUI ([ghissue#125])
 
 ### Fixed
 - When upgrading CIB to the latest schema version, check for minimal common
@@ -31,6 +32,7 @@
   to stderr ([ghissue#124])
 
 [ghissue#124]: https://github.com/ClusterLabs/pcs/issues/124
+[ghissue#125]: https://github.com/ClusterLabs/pcs/issues/125
 [ghpull#119]: https://github.com/ClusterLabs/pcs/pull/119
 [ghpull#120]: https://github.com/ClusterLabs/pcs/pull/120
 [rhbz#1261116]: https://bugzilla.redhat.com/show_bug.cgi?id=1261116
