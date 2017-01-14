@@ -170,7 +170,7 @@ def verify(reporter, topology_el, resources_el, cluster_status_nodes):
             allow_force=False
         )
 
-    for node in used_nodes:
+    for node in sorted(used_nodes):
         _validate_target_valuewise(
             reporter,
             cluster_status_nodes,
