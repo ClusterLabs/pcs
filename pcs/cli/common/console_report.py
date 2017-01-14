@@ -756,7 +756,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.INVALID_RESOURCE_AGENT_NAME: lambda info:
         (
             "Invalid resource agent name '{name}'."
-            " Use standard:provider:type or standard:type."
+            " Use standard:provider:type when standard is 'ocf' or"
+            " standard:type otherwise."
             " List of standards and providers can be obtained by using commands"
             " 'pcs resource standards' and 'pcs resource providers'"
         )

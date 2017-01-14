@@ -312,9 +312,9 @@ class InvalidResourceAgentNameTest(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_info(
             "Invalid resource agent name ':name'."
-                " Use standard:provider:type or standard:type."
-                " List of standards and providers can be obtained by using"
-                " commands 'pcs resource standards' and"
+                " Use standard:provider:type when standard is 'ocf' or"
+                " standard:type otherwise. List of standards and providers can"
+                " be obtained by using commands 'pcs resource standards' and"
                 " 'pcs resource providers'"
             ,
             {

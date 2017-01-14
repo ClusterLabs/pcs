@@ -26,6 +26,39 @@ from pcs.lib.external import CommandRunner
 
 patch_agent = create_patcher("pcs.lib.resource_agent")
 
+class GetResourceAgentNameFromString(TestCase):
+    def test_returns_resource_agent_name_when_is_valid(self):
+        self.assertEqual(
+            lib_ra.ResourceAgentName("ocf", "heartbeat", "Dummy"),
+            lib_ra.get_resource_agent_name_from_string("ocf:heartbeat:Dummy")
+        )
+    def test_refuses_string_if_is_not_valid(self):
+        self.assertRaises(
+            lib_ra.InvalidResourceAgentName,
+            lambda: lib_ra.get_resource_agent_name_from_string(
+                "invalid:resource:agent:string"
+            )
+        )
+
+    def test_refuses_with_unknown_standard(self):
+        self.assertRaises(
+            lib_ra.InvalidResourceAgentName,
+            lambda: lib_ra.get_resource_agent_name_from_string("unknown:Dummy")
+        )
+
+    def test_refuses_ocf_agent_name_without_provider(self):
+        self.assertRaises(
+            lib_ra.InvalidResourceAgentName,
+            lambda: lib_ra.get_resource_agent_name_from_string("ocf:Dummy")
+        )
+
+    def test_refuses_non_ocf_agent_name_with_provider(self):
+        self.assertRaises(
+            lib_ra.InvalidResourceAgentName,
+            lambda:
+            lib_ra.get_resource_agent_name_from_string("lsb:provider:Dummy")
+        )
+
 class ListResourceAgentsStandardsTest(TestCase):
     def test_success_and_filter_stonith_out(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
@@ -1648,7 +1681,7 @@ class ResourceAgentTest(TestCase):
         )
 
     def test_does_not_raise_on_valid_name(self):
-        lib_ra.ResourceAgent(mock.MagicMock(), "formal:valid:name")
+        lib_ra.ResourceAgent(mock.MagicMock(), "ocf:heardbeat:name")
 
 class FindResourceAgentByNameTest(TestCase):
     def setUp(self):

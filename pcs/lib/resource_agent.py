@@ -22,6 +22,19 @@ _crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
 DEFAULT_ACTIONS = ["monitor", "start", "stop", "promote", "demote"]
 
+#These are all standards valid in cib. To get a list of standards supported by
+#pacemaker in local environment use result of "pcs resource standards".
+STANDARD_LIST = [
+    "ocf",
+    "lsb",
+    "heartbeat",
+    "stonith",
+    "upstart",
+    "service",
+    "systemd",
+    "nagios",
+]
+
 class ResourceAgentError(Exception):
     # pylint: disable=super-init-not-called
     def __init__(self, agent, message=""):
@@ -45,13 +58,20 @@ def get_resource_agent_name_from_string(full_agent_name):
     if not match:
         raise InvalidResourceAgentName(full_agent_name)
 
-    #TODO validation standard : provider match
+    standard = match.group("standard")
+    provider = match.group("provider") if match.group("provider") else None
+    agent_type = match.group("type")
 
-    return ResourceAgentName(
-        match.group("standard"),
-        match.group("provider") if match.group("provider") else None,
-        match.group("type"),
-    )
+    if standard not in STANDARD_LIST:
+        raise InvalidResourceAgentName(full_agent_name)
+
+    if standard == "ocf" and not provider:
+        raise InvalidResourceAgentName(full_agent_name)
+
+    if standard != "ocf" and provider:
+        raise InvalidResourceAgentName(full_agent_name)
+
+    return ResourceAgentName(standard, provider, agent_type)
 
 def list_resource_agents_standards(runner):
     """

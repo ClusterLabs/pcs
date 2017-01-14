@@ -947,13 +947,52 @@ class FailOrWarn(ResourceTest):
             " ocf:heartbeat:NoExisting failed: -5\n"
         )
 
+
+    def test_fail_on_invalid_resource_agent_name(self):
+        self.assert_pcs_fail(
+            "resource create R invalid_agent_name",
+            "Error: Unable to find agent 'invalid_agent_name', try specifying"
+                " its full name\n"
+        )
+
     def test_fail_when_invalid_agent(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat: --force",
             "Error: Invalid resource agent name 'ocf:heartbeat:'. Use"
-                " standard:provider:type or standard:type. List of standards"
-                " and providers can be obtained by using commands 'pcs resource"
-                " standards' and 'pcs resource providers'\n"
+                " standard:provider:type when standard is 'ocf' or"
+                " standard:type otherwise. List of standards and providers can"
+                " be obtained by using commands 'pcs resource standards' and"
+                " 'pcs resource providers'\n"
+        )
+
+    def test_vail_when_agent_class_is_not_allowed(self):
+        self.assert_pcs_fail(
+            "resource create R invalid:Dummy --force",
+            "Error: Invalid resource agent name 'invalid:Dummy'. Use"
+                " standard:provider:type when standard is 'ocf' or"
+                " standard:type otherwise. List of standards and providers can"
+                " be obtained by using commands 'pcs resource standards' and"
+                " 'pcs resource providers'\n"
+        )
+
+    def test_fail_when_missing_provider_with_ocf_resource_agent(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:Dummy",
+            "Error: Invalid resource agent name 'ocf:Dummy'. Use"
+                " standard:provider:type when standard is 'ocf' or"
+                " standard:type otherwise. List of standards and providers can"
+                " be obtained by using commands 'pcs resource standards' and"
+                " 'pcs resource providers'\n"
+        )
+
+    def test_fail_when_provider_appear_with_non_ocf_resource_agent(self):
+        self.assert_pcs_fail(
+            "resource create R lsb:provider:Dummy --force",
+            "Error: Invalid resource agent name 'lsb:provider:Dummy'. Use"
+                " standard:provider:type when standard is 'ocf' or"
+                " standard:type otherwise. List of standards and providers can"
+                " be obtained by using commands 'pcs resource standards' and"
+                " 'pcs resource providers'\n"
         )
 
     def test_print_info_about_agent_completion(self):
