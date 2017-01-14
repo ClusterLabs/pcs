@@ -1007,6 +1007,15 @@ class FailOrWarn(ResourceTest):
                 " reload, start, stop, validate-all, use --force to override\n"
         )
 
+    def test_fail_on_ambiguous_value_of_option(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy op monitor timeout=10"
+                " timeout=20"
+            ,
+            "Error: duplicate option 'timeout' with different values '10' and"
+                " '20'\n"
+        )
+
 class FailOrWarnOp(ResourceTest):
     def test_fail_empty(self):
         self.assert_pcs_fail(

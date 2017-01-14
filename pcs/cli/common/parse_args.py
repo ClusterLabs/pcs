@@ -63,6 +63,13 @@ def prepare_options(cmdline_args):
     options = dict()
     for arg in cmdline_args:
         name, value = split_option(arg)
+        if name not in options:
+            options[name] = value
+        elif options[name] != value:
+            raise CmdLineInputError(
+                "duplicate option '{0}' with different values '{1}' and '{2}'"
+                .format(name, options[name], value)
+            )
         options[name] = value
     return options
 

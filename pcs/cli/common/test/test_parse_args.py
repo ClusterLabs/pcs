@@ -40,6 +40,15 @@ class PrepareOptionsTest(TestCase):
             CmdLineInputError, lambda: prepare_options(['=a'])
         )
 
+    def test_refuse_options_with_same_key_and_differend_value(self):
+        self.assertRaises(
+            CmdLineInputError, lambda: prepare_options(['a=a', "a=b"])
+        )
+
+    def test_accept_options_with_ssame_key_and_same_value(self):
+        self.assertEqual({'a': '1'}, prepare_options(["a=1", "a=1"]))
+
+
 class SplitListTest(TestCase):
     def test_returns_list_with_original_when_separator_not_in_original(self):
         self.assertEqual([['a', 'b']], split_list(['a', 'b'], 'c'))
