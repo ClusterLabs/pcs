@@ -2,6 +2,7 @@ require 'rubygems'
 require 'webrick'
 require 'webrick/https'
 require 'openssl'
+gem 'rack', '< 2.0.0'
 require 'rack'
 require 'socket'
 
