@@ -8,6 +8,7 @@ from __future__ import (
 from contextlib import contextmanager
 from functools import partial
 
+from pcs.lib import resource_agent as ra
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import (
     disable_meta,
@@ -19,10 +20,19 @@ from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.pacemaker.state import ensure_resource_state
 
 @contextmanager
-def cib_resources_section(env, resource_id, wait, disabled_after_wait):
+def environment(
+    env, resource_id, wait, resource_agent_name, allow_absent_agent,
+    disabled_after_wait,
+):
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
-    yield get_resources(cib)
+    resource_agent = ra.find_valid_resource_agent_by_name(
+        env.report_processor,
+        env.cmd_runner(),
+        resource_agent_name,
+        allow_absent_agent,
+    )
+    yield (get_resources(cib), resource_agent)
     env.push_cib(cib, wait)
     if wait is not False:
         ensure_resource_state(
@@ -42,15 +52,16 @@ def create(
     ensure_disabled=False,
     wait=False,
 ):
-    with cib_resources_section(
+    with environment(
         env, resource_id, wait,
-        ensure_disabled or are_meta_disabled(meta_attributes)
-    ) as resources_section:
+        resource_agent_name,
+        allow_absent_agent,
+        ensure_disabled or are_meta_disabled(meta_attributes),
+    ) as (resources_section, resource_agent):
         resource.primitive.create(
-            env.report_processor, env.cmd_runner(), resources_section,
-            resource_id, resource_agent_name,
+            env.report_processor, resources_section,
+            resource_id, resource_agent,
             operations, meta_attributes, instance_attributes,
-            allow_absent_agent,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -74,18 +85,19 @@ def _create_as_clone_common(
     create_as_master are created by passing tag with partial.
 
     """
-    with cib_resources_section(env, resource_id, wait, (
+    with environment(env, resource_id, wait,
+        resource_agent_name, allow_absent_agent,(
             ensure_disabled
             or
             are_meta_disabled(meta_attributes)
             or
             are_clone_meta_disabled(clone_meta_options)
-    )) as resources_section:
+        ),
+    ) as (resources_section, resource_agent):
         primitive_element = resource.primitive.create(
-            env.report_processor, env.cmd_runner(), resources_section,
-            resource_id, resource_agent_name,
+            env.report_processor, resources_section,
+            resource_id, resource_agent,
             operations, meta_attributes, instance_attributes,
-            allow_absent_agent,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -113,15 +125,16 @@ def create_in_group(
     put_after_adjacent=False,
     wait=False,
 ):
-    with cib_resources_section(
+    with environment(
         env, resource_id, wait,
-        ensure_disabled or are_meta_disabled(meta_attributes)
-    ) as resources_section:
+        resource_agent_name,
+        allow_absent_agent,
+        ensure_disabled or are_meta_disabled(meta_attributes),
+    ) as (resources_section, resource_agent):
         primitive_element = resource.primitive.create(
-            env.report_processor, env.cmd_runner(), resources_section,
-            resource_id, resource_agent_name,
+            env.report_processor, resources_section,
+            resource_id, resource_agent,
             operations, meta_attributes, instance_attributes,
-            allow_absent_agent,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,

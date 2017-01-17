@@ -7,7 +7,7 @@ from __future__ import (
 
 from lxml import etree
 
-from pcs.lib import resource_agent as ra, reports
+from pcs.lib import reports
 from pcs.lib.cib.nvpair import (
     append_new_instance_attributes,
     append_new_meta_attributes,
@@ -25,10 +25,8 @@ from pcs.lib.pacemaker.values import validate_id
 TAG = "primitive"
 
 def create(
-    report_processor, cmd_runner,
-    resources_section, resource_id, resource_agent_name,
+    report_processor, resources_section, resource_id, resource_agent,
     raw_operation_list, meta_attributes, instance_attributes,
-    allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
@@ -38,15 +36,12 @@ def create(
     Prepare all parts of primitive resource and push it to cib.
 
     report_processor is a tool for warning/info/error reporting
-    cmd_runner is a configured tool for running external commands
     etree.Element resources_section is place where new element will be appended
     string resource_id is id of new resource
-    string resource_agent_name is full name of resource agent
-        e.g. ocf:heartbeat:Dummy
+    lib.resource_agent.CrmAgent resource_agent
     list of dict raw_operation_list specifies operations of resource
     dict meta_attributes specifies meta attributes of resource
     dict instance_attributes specifies instance attributes of resource
-    bool allow_absent_agent is flag for using agent that is not found in system
     bool allow_invalid_operation is flag for skipping validation of operations
     bool allow_invalid_instance_attributes is flag for skipping validation of
         instance_attributes
@@ -58,13 +53,6 @@ def create(
     if does_id_exist(resources_section, resource_id):
         raise LibraryError(reports.id_already_exists(resource_id))
     validate_id(resource_id, "resource name")
-
-    resource_agent = ra.find_valid_resource_agent_by_name(
-        report_processor,
-        cmd_runner,
-        resource_agent_name,
-        allow_absent_agent,
-    )
 
     operation_list = prepare_operations(
         report_processor,
