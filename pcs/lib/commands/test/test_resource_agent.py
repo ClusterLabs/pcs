@@ -312,7 +312,7 @@ class TestDescribeAgent(TestCase):
             "longdesc": "long desc",
             "parameters": [],
             "actions": [],
-            "default_actions": [],
+            "default_actions": [{"interval": "60s", "name": "monitor"}],
         }
 
 

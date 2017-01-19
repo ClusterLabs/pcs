@@ -15,8 +15,8 @@ class Success(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                     </operations>
                 </primitive>
@@ -61,8 +61,8 @@ class Success(ResourceTest):
                         />
                     </instance_attributes>
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -106,8 +106,8 @@ class Success(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                     </operations>
                 </primitive>
@@ -127,8 +127,8 @@ class Success(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -155,8 +155,8 @@ class Success(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -178,8 +178,8 @@ class Success(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -206,8 +206,8 @@ class Success(ResourceTest):
                             />
                         </instance_attributes>
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -238,8 +238,8 @@ class Success(ResourceTest):
                         />
                     </meta_attributes>
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
                         />
                     </operations>
                 </primitive>
@@ -390,8 +390,8 @@ class SuccessOperations(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                     </operations>
                 </primitive>
@@ -434,8 +434,8 @@ class SuccessOperations(ResourceTest):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                         <op id="R-monitro-interval-30s" interval="30s"
                             name="monitro"
@@ -459,8 +459,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -487,8 +487,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R0-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R0-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -496,8 +496,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -520,8 +520,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R0-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R0-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -529,8 +529,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -538,8 +538,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R1-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R1-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -562,8 +562,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -571,8 +571,8 @@ class SuccessGroup(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R0-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R0-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -590,8 +590,8 @@ class SuccessMaster(ResourceTest):
                         type="Dummy"
                     >
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -696,8 +696,8 @@ class SuccessMaster(ResourceTest):
                             />
                         </meta_attributes>
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10" interval="10"
+                                name="monitor" timeout="20"
                             />
                         </operations>
                     </primitive>
@@ -726,8 +726,8 @@ class SuccessMaster(ResourceTest):
                             />
                         </instance_attributes>
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -765,8 +765,8 @@ class SuccessMaster(ResourceTest):
                             />
                         </meta_attributes>
                         <operations>
-                            <op id="R-monitor-interval-60s" interval="60s"
-                                name="monitor"
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -1213,8 +1213,8 @@ class FailOrWarnGroup(ResourceTest):
                         <nvpair id="R1-meta_attributes-a" name="a" value="b"/>
                     </meta_attributes>
                     <operations>
-                        <op id="R1-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R1-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                     </operations>
                 </primitive>

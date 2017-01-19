@@ -56,8 +56,8 @@ class Success(TestCase, AssertPcsEffectMixin):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"
@@ -75,8 +75,8 @@ class Success(TestCase, AssertPcsEffectMixin):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                         <op description="test-description" name="start"
                             id="R-start-interval-20s" interval="20s"
@@ -101,8 +101,8 @@ class Success(TestCase, AssertPcsEffectMixin):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"
@@ -116,8 +116,8 @@ class Success(TestCase, AssertPcsEffectMixin):
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
-                        <op id="R-monitor-interval-60s" interval="60s"
-                            name="monitor"
+                        <op id="R-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"
                         />
                         <op id="R-start-interval-20s" interval="20s"
                             name="start"

@@ -25,6 +25,27 @@ from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
 from pcs.lib.external import CommandRunner
 
 patch_agent = create_patcher("pcs.lib.resource_agent")
+patch_agent_object = partial(mock.patch.object, lib_ra.Agent)
+
+class GetDefaultInterval(TestCase):
+    def test_return_0s_on_name_different_from_monitor(self):
+        self.assertEqual("0s", lib_ra.get_default_interval("start"))
+    def test_return_60s_on_monitor(self):
+        self.assertEqual("60s", lib_ra.get_default_interval("monitor"))
+
+@patch_agent("get_default_interval", mock.Mock(return_value="10s"))
+class CompleteAllIntervals(TestCase):
+    def test_add_intervals_everywhere_is_missing(self):
+        self.assertEqual(
+            [
+                {"name": "monitor", "interval": "20s"},
+                {"name": "start", "interval": "10s"},
+            ],
+            lib_ra.complete_all_intervals([
+                {"name": "monitor", "interval": "20s"},
+                {"name": "start"},
+            ])
+        )
 
 class GetResourceAgentNameFromString(TestCase):
     def test_returns_resource_agent_name_when_is_valid(self):
@@ -638,7 +659,7 @@ class GuessResourceAgentFullNameTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@patch_agent_object("_get_metadata")
 class AgentMetadataGetShortdescTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.Agent(
@@ -677,7 +698,7 @@ class AgentMetadataGetShortdescTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@patch_agent_object("_get_metadata")
 class AgentMetadataGetLongdescTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.Agent(
@@ -707,7 +728,7 @@ class AgentMetadataGetLongdescTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@patch_agent_object("_get_metadata")
 class AgentMetadataGetParametersTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.Agent(
@@ -805,7 +826,7 @@ class AgentMetadataGetParametersTest(TestCase):
         )
 
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@patch_agent_object("_get_metadata")
 class AgentMetadataGetActionsTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.Agent(
@@ -917,9 +938,61 @@ class AgentMetadataGetActionsTest(TestCase):
             ]
         )
 
+@patch_agent_object("DEFAULT_CIB_ACTION_NAMES", ["monitor", "start"])
+@patch_agent_object("get_actions")
+class AgentMetadataGetCibDefaultActions(TestCase):
+    def setUp(self):
+        self.agent = lib_ra.Agent(
+            mock.MagicMock(spec_set=CommandRunner)
+        )
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
-@mock.patch.object(lib_ra.Agent, "get_name", lambda self: "agent-name")
+    def test_select_only_actions_for_cib(self, get_actions):
+        get_actions.return_value = [
+            {"name": "metadata"},
+            {"name": "start", "interval": "40s"},
+            {"name": "monitor", "interval": "10s", "timeout": "30s"},
+        ]
+        self.assertEqual(
+            [
+                {"name": "start", "interval": "40s"},
+                {"name": "monitor", "interval": "10s", "timeout": "30s"}
+            ],
+            self.agent.get_cib_default_actions()
+        )
+
+    def test_complete_monitor(self, get_actions):
+        get_actions.return_value = [{"name": "metadata"}]
+        self.assertEqual(
+            [{"name": "monitor", "interval": "60s"}],
+            self.agent.get_cib_default_actions()
+        )
+
+    def test_complete_intervals(self, get_actions):
+        get_actions.return_value = [
+            {"name": "metadata"},
+            {"name": "monitor", "timeout": "30s"},
+        ]
+        self.assertEqual(
+            [{"name": "monitor", "interval": "60s", "timeout": "30s"}],
+            self.agent.get_cib_default_actions()
+        )
+
+    def test_select_only_necessary_actions_for_cib(self, get_actions):
+        get_actions.return_value = [
+            {"name": "metadata"},
+            {"name": "start", "interval": "40s"},
+            {"name": "monitor", "interval": "10s", "timeout": "30s"},
+        ]
+        self.assertEqual(
+            [
+                {"name": "monitor", "interval": "10s", "timeout": "30s"}
+            ],
+            self.agent.get_cib_default_actions(necessary_only=True)
+        )
+
+
+@patch_agent_object("_get_metadata")
+@patch_agent_object("get_name", lambda self: "agent-name")
 class AgentMetadataGetInfoTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.Agent(
@@ -1010,12 +1083,12 @@ class AgentMetadataGetInfoTest(TestCase):
                     },
                     {"name": "off"},
                 ],
-                "default_actions": [],
+                "default_actions": [{"name": "monitor", "interval": "60s"}],
             }
         )
 
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@patch_agent_object("_get_metadata")
 class AgentMetadataValidateParametersValuesTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.Agent(
@@ -1114,7 +1187,7 @@ class AgentMetadataValidateParameters(TestCase):
                 </parameters>
             </resource-agent>
         """)
-        patcher = mock.patch.object(lib_ra.Agent, "_get_metadata")
+        patcher = patch_agent_object("_get_metadata")
         self.addCleanup(patcher.stop)
         patcher.start().return_value = self.metadata
 
@@ -1260,7 +1333,7 @@ class StonithdMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@patch_agent_object("_get_metadata")
 class StonithdMetadataGetParametersTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.StonithdMetadata(
@@ -1464,7 +1537,7 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@patch_agent_object("_get_metadata")
 class StonithAgentMetadataGetActionsTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.StonithAgent(
@@ -1489,10 +1562,12 @@ class StonithAgentMetadataGetActionsTest(TestCase):
             </resource-agent>
         """
         mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(
-            self.agent.get_actions(),
-            []
-        )
+        self.assertEqual(self.agent.get_actions(), [
+            {"name": "on", "automatic":"0"},
+            {"name": "off"},
+            {"name": "reboot"},
+            {"name": "status"},
+        ])
 
 
 class StonithAgentMetadataGetParametersTest(TestCase):
@@ -1602,7 +1677,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
         ])
 
 
-@mock.patch.object(lib_ra.Agent, "_get_metadata")
+@patch_agent_object("_get_metadata")
 class StonithAgentMetadataGetProvidesUnfencingTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.StonithAgent(

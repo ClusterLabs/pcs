@@ -176,7 +176,7 @@ class TestDescribeAgent(TestCase):
             "longdesc": "long desc",
             "parameters": [],
             "actions": [],
-            "default_actions": [],
+            "default_actions": [{"name": "monitor", "interval": "60s"}],
         }
 
 

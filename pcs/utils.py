@@ -109,8 +109,6 @@ except ImportError:
 
 PYTHON2 = sys.version[0] == "2"
 
-DEFAULT_RESOURCE_ACTIONS = lib_ra.DEFAULT_ACTIONS
-
 # usefile & filename variables are set in pcs module
 usefile = False
 filename = ""
@@ -1522,7 +1520,7 @@ def get_default_op_values(full_agent_name):
 
         return [
             agent_action_to_cmdline_format(action)
-            for action in metadata.get_default_actions()
+            for action in metadata.get_cib_default_actions()
         ]
     except lib_ra.UnableToGetAgentMetadata:
         return []

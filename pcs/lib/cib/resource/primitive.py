@@ -57,7 +57,9 @@ def create(
     operation_list = prepare_operations(
         report_processor,
         raw_operation_list,
-        resource_agent.get_default_actions() if use_default_operations else [],
+        resource_agent.get_cib_default_actions(
+            necessary_only=not use_default_operations
+        ),
         [operation["name"] for operation in resource_agent.get_actions()],
         allow_invalid=allow_invalid_operation,
     )

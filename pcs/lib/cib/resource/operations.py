@@ -12,6 +12,7 @@ from lxml import etree
 
 from pcs.common import report_codes
 from pcs.lib import reports, validate
+from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.tools import create_subelement_id
 from pcs.lib.pacemaker.values import timeout_to_seconds
@@ -128,14 +129,10 @@ def prepare(
     #can raise LibraryError
     report_processor.process_list(report_list)
 
-    return complete(
-        operation_list
-        +
-        get_remaining_defaults(
-            report_processor,
-            operation_list,
-            default_operation_list
-        )
+    return complete_all_intervals(operation_list) + get_remaining_defaults(
+        report_processor,
+        operation_list,
+        default_operation_list
     )
 
 def validate_operation(operation):
@@ -177,26 +174,6 @@ def get_remaining_defaults(
             ]
         ]
     )
-
-def complete(operation_list):
-    """
-    Returns a copy of operation_list completeted with the missing parts.
-    list operation_list contains dictionaries with attributes of operation
-
-    Operation monitor is required always! No matter if --no-default-ops was
-    entered or if agent does not specify it. See
-    http://clusterlabs.org/doc/en-US/Pacemaker/1.1-pcs/html-single/Pacemaker_Explained/index.html#_resource_operations
-    """
-    completed_list = [operation.copy() for operation in operation_list]
-
-    if "monitor" not in [operation["name"] for operation in completed_list]:
-        completed_list.append({"name": "monitor"})
-
-    for operation in completed_list:
-        if "interval" not in operation:
-            operation["interval"] = get_default_interval(operation["name"])
-
-    return completed_list
 
 def get_uniq_interval(
     report_processor, used_intervals, operation_name, initial_interval
@@ -325,10 +302,3 @@ def append_new_operation(operations_element, options):
         append_new_instance_attributes(op_element, nvpair_attribute_map)
 
     return op_element
-
-def get_default_interval(operation_name):
-    """
-    Return default operation for given operation_name.
-    string operation_name
-    """
-    return "60s" if operation_name == "monitor" else "0s"

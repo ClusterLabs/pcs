@@ -20,14 +20,15 @@ from pcs.lib.validate import ValuePair
 patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 
 @patch_operations("get_remaining_defaults")
-@patch_operations("complete")
+@patch_operations("complete_all_intervals")
 @patch_operations("validate_different_intervals")
 @patch_operations("validate.names_in")
 @patch_operations("validate_operation")
 class Prepare(TestCase):
     def test_prepare(
         self, validate_operation, validate_names_in,
-        validate_different_intervals, complete, get_remaining_defaults
+        validate_different_intervals, complete_all_intervals,
+        get_remaining_defaults
     ):
         validate_operation.side_effect = lambda operation: [
             operation["name"].normalized #values commes here in ValuePairs
@@ -77,6 +78,8 @@ class Prepare(TestCase):
             ],
             any_order=True
         )
+
+        complete_all_intervals.assert_called_once_with(raw_operation_list)
 
 class ValidateDifferentIntervals(TestCase):
     def test_return_empty_reports_on_empty_list(self):
@@ -305,17 +308,3 @@ class GetRemainingDefaults(TestCase):
             ),
             [{"name": "start"}]
         )
-
-class Complete(TestCase):
-    def test_returns_the_same_operation_list_when_nothing_is_missing(self):
-        operation_list = [
-            {"name": "start", "interval": "1s"},
-            {"name": "monitor", "interval": "70s"},
-        ]
-        self.assertEqual(operations.complete(operation_list),  operation_list)
-
-    def test_complete_operation(self):
-        self.assertEqual(operations.complete([{"name": "start"}]), [
-            {"name": "start", "interval": "0s"},
-            {"name": "monitor", "interval": "60s"},
-        ])

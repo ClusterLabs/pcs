@@ -20,7 +20,19 @@ from pcs.common import report_codes
 
 _crm_resource = os.path.join(settings.pacemaker_binaries, "crm_resource")
 
-DEFAULT_ACTIONS = ["monitor", "start", "stop", "promote", "demote"]
+DEFAULT_RESOURCE_CIB_ACTION_NAMES = [
+    "monitor",
+    "start",
+    "stop",
+    "promote",
+    "demote",
+]
+DEFAULT_STONITH_CIB_ACTION_NAMES = ["monitor"]
+
+# Operation monitor is required always! No matter if --no-default-ops was
+# entered or if agent does not specify it. See
+# http://clusterlabs.org/doc/en-US/Pacemaker/1.1-pcs/html-single/Pacemaker_Explained/index.html#_resource_operations
+NECESSARY_CIB_ACTION_NAMES = ["monitor"]
 
 #These are all standards valid in cib. To get a list of standards supported by
 #pacemaker in local environment use result of "pcs resource standards".
@@ -34,6 +46,33 @@ STANDARD_LIST = [
     "systemd",
     "nagios",
 ]
+
+DEFAULT_INTERVALS = {
+    "monitor": "60s"
+}
+
+
+def get_default_interval(operation_name):
+    """
+    Return default interval for given operation_name.
+    string operation_name
+    """
+    return DEFAULT_INTERVALS.get(operation_name, "0s")
+
+def complete_all_intervals(raw_operation_list):
+    """
+    Return operation_list based on raw_operation_list where each item has key
+    "interval".
+
+    list of dict raw_operation_list can include items withou key "interval".
+    """
+    operation_list = []
+    for raw_operation in raw_operation_list:
+        operation = raw_operation.copy()
+        if "interval" not in operation:
+            operation["interval"] = get_default_interval(operation["name"])
+        operation_list.append(operation)
+    return operation_list
 
 class ResourceAgentError(Exception):
     # pylint: disable=super-init-not-called
@@ -255,6 +294,8 @@ class Agent(object):
     """
     Base class for providing convinient access to an agent's metadata
     """
+    DEFAULT_CIB_ACTION_NAMES = []
+
     def __init__(self, runner):
         """
         create an instance which reads metadata by itself on demand
@@ -298,7 +339,7 @@ class Agent(object):
         agent_info = self.get_description_info()
         agent_info["parameters"] = self.get_parameters()
         agent_info["actions"] = self.get_actions()
-        agent_info["default_actions"] = self.get_default_actions()
+        agent_info["default_actions"] = self.get_cib_default_actions()
         return agent_info
 
 
@@ -453,16 +494,25 @@ class Agent(object):
             action_list.append(action)
         return action_list
 
-    def get_default_actions(self):
+    def get_cib_default_actions(self, necessary_only=False):
         """
         List actions that should be put to resource on its creation.
         Note that every action has at least attribute name.
         """
-        return [
+
+        action_list = [
             action for action in self.get_actions()
-            if action.get("name", "") in DEFAULT_ACTIONS
+            if action.get("name", "") in (
+                NECESSARY_CIB_ACTION_NAMES if necessary_only
+                else self.DEFAULT_CIB_ACTION_NAMES
+            )
         ]
 
+        for action_name in NECESSARY_CIB_ACTION_NAMES:
+            if action_name not in [action["name"] for action in action_list]:
+                action_list.append({"name": action_name})
+
+        return complete_all_intervals(action_list)
 
     def _get_metadata(self):
         """
@@ -594,6 +644,7 @@ class CrmAgent(Agent):
 
 
 class ResourceAgent(CrmAgent):
+    DEFAULT_CIB_ACTION_NAMES = DEFAULT_RESOURCE_CIB_ACTION_NAMES
     """
     Provides convinient access to a resource agent's metadata
     """
@@ -621,6 +672,7 @@ class StonithAgent(CrmAgent):
     """
     Provides convinient access to a stonith agent's metadata
     """
+    DEFAULT_CIB_ACTION_NAMES = DEFAULT_STONITH_CIB_ACTION_NAMES
 
     _stonithd_metadata = None
 
@@ -690,29 +742,9 @@ class StonithAgent(CrmAgent):
             self.__class__._stonithd_metadata = StonithdMetadata(self._runner)
         return self.__class__._stonithd_metadata
 
-
-    def get_actions(self):
-        # In previous versions of pcs there was no way to read actions from
-        # stonith agents, the functions always returned an empty list. It
-        # wasn't clear if that is a mistake or an intention. We keep it that
-        # way for two reasons:
-        # 1) Fence agents themselfs specify the actions without any attributes
-        # (interval, timeout)
-        # 2) Pacemaker explained shows an example stonith agent configuration
-        # in CIB with only monitor operation specified (and that pcs creates
-        # automatically in "pcs stonith create" regardless of provided actions
-        # from here).
-        # It may be better to return real actions from this class and deal ommit
-        # them in higher layers, which can decide if the actions are desired or
-        # not. For now there is not enough information to do that. Code which
-        # uses this is not clean enough. Once everything is cleaned we should
-        # decide if it is better to move this to higher level.
-        return []
-
-
     def get_provides_unfencing(self):
         # self.get_actions returns an empty list
-        for action in super(StonithAgent, self).get_actions():
+        for action in self._get_raw_actions():
             if (
                 action.get("name", "") == "on"
                 and
