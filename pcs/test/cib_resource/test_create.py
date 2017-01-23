@@ -936,7 +936,8 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:NoExisting",
             "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or does"
                 " not provide valid metadata: Metadata query for"
-                " ocf:heartbeat:NoExisting failed: -5\n"
+                " ocf:heartbeat:NoExisting failed: -5, use --force to"
+                " override\n"
         )
 
     def test_warn_when_forcing_noexistent_agent(self):

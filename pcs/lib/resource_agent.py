@@ -265,8 +265,18 @@ def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
     return agents[0]
 
 def find_valid_resource_agent_by_name(
-    report_processor, runner, name, allowed_absent=False
+    report_processor, runner, name,
+    allowed_absent=False, absent_agent_supported=True
 ):
+    """
+    Return instance of ResourceAgent corresponding to name
+
+    report_processor is tool for warning/info/error reporting
+    runner is tool for launching external commands
+    string name specifies a searched agent
+    bool absent_agent_supported flag decides if is possible to allow to return
+        absent agent: if is produced forceable/no-forcable error
+    """
     if ":" not in name:
         agent = guess_exactly_one_resource_agent_full_name(runner, name)
         report_processor.process(
@@ -274,21 +284,52 @@ def find_valid_resource_agent_by_name(
         )
         return agent
 
+    return _find_valid_agent_by_name(
+        report_processor,
+        runner,
+        name,
+        ResourceAgent,
+        AbsentResourceAgent if allowed_absent else None,
+        absent_agent_supported=absent_agent_supported,
+    )
+
+def find_valid_stonith_agent_by_name(
+    report_processor, runner, name,
+    allowed_absent=False, absent_agent_supported=True
+):
+    return _find_valid_agent_by_name(
+        report_processor,
+        runner,
+        name,
+        StonithAgent,
+        AbsentStonithAgent if allowed_absent else None,
+        absent_agent_supported=absent_agent_supported,
+    )
+
+def _find_valid_agent_by_name(
+    report_processor, runner, name, PresentAgentClass, AbsentAgentClass,
+    absent_agent_supported=True
+):
     try:
-        return ResourceAgent(runner, name).validate_metadata()
+        return PresentAgentClass(runner, name).validate_metadata()
     except InvalidResourceAgentName as e:
         raise LibraryError(resource_agent_error_to_report_item(e))
     except UnableToGetAgentMetadata as e:
-        if not allowed_absent:
+        if not absent_agent_supported:
             raise LibraryError(resource_agent_error_to_report_item(e))
+
+        if not AbsentAgentClass:
+            raise LibraryError(resource_agent_error_to_report_item(
+                    e,
+                    forceable=True
+            ))
 
         report_processor.process(resource_agent_error_to_report_item(
             e,
             severity=ReportItemSeverity.WARNING,
-            forceable=True
         ))
 
-        return AbsentResourceAgent(runner, name)
+        return AbsentAgentClass(runner, name)
 
 class Agent(object):
     """
@@ -550,12 +591,8 @@ class Agent(object):
 
 
 class FakeAgentMetadata(Agent):
-    def get_name(self):
-        raise NotImplementedError()
-
-
-    def _load_metadata(self):
-        raise NotImplementedError()
+    #pylint:disable=abstract-method
+    pass
 
 
 class StonithdMetadata(FakeAgentMetadata):
@@ -590,19 +627,33 @@ class StonithdMetadata(FakeAgentMetadata):
 
 
 class CrmAgent(Agent):
-    def __init__(self, runner, full_agent_name):
+    #pylint:disable=abstract-method
+    def __init__(self, runner, name):
         """
         init
         CommandRunner runner
-        string full_agent_name standard:provider:type or standard:type
         """
         super(CrmAgent, self).__init__(runner)
-        self._full_agent_name = full_agent_name
+        self._name_parts = self._prepare_name_parts(name)
 
+    def _prepare_name_parts(self, name):
+        raise NotImplementedError()
 
-    def get_name(self):
-        return self._full_agent_name
+    def _get_full_name(self):
+        return ":".join(filter(None, [
+            self.get_standard(),
+            self.get_provider(),
+            self.get_type(),
+        ]))
 
+    def get_standard(self):
+        return self._name_parts.standard
+
+    def get_provider(self):
+        return self._name_parts.provider
+
+    def get_type(self):
+        return self._name_parts.type
 
     def is_valid_metadata(self):
         """
@@ -633,7 +684,7 @@ class CrmAgent(Agent):
             "/usr/bin/",
         ])
         stdout, stderr, retval = self._runner.run(
-            [_crm_resource, "--show-metadata", self._full_agent_name],
+            [_crm_resource, "--show-metadata", self._get_full_name()],
             env_extend={
                 "PATH": env_path,
             }
@@ -648,25 +699,24 @@ class ResourceAgent(CrmAgent):
     """
     Provides convinient access to a resource agent's metadata
     """
-    def __init__(self, runner, full_agent_name):
-        super(ResourceAgent, self).__init__(runner, full_agent_name)
-        self._name = get_resource_agent_name_from_string(full_agent_name)
+    def _prepare_name_parts(self, name):
+        return get_resource_agent_name_from_string(name)
 
-    def get_standard(self):
-        return self._name.standard
+    def get_name(self):
+        return self._get_full_name()
 
-    def get_provider(self):
-        return self._name.provider
 
-    def get_type(self):
-        return self._name.type
-
-class AbsentResourceAgent(ResourceAgent):
+class AbsentAgentMixin(object):
     def _load_metadata(self):
         return "<resource-agent/>"
 
     def validate_parameters_values(self, parameters_values):
         return ([], [])
+
+
+class AbsentResourceAgent(AbsentAgentMixin, ResourceAgent):
+    pass
+
 
 class StonithAgent(CrmAgent):
     """
@@ -676,18 +726,11 @@ class StonithAgent(CrmAgent):
 
     _stonithd_metadata = None
 
-
-    def __init__(self, runner, agent_name):
-        super(StonithAgent, self).__init__(
-            runner,
-            "stonith:{0}".format(agent_name)
-        )
-        self._agent_name = agent_name
-
+    def _prepare_name_parts(self, name):
+        return ResourceAgentName("stonith", None, name)
 
     def get_name(self):
-        return self._agent_name
-
+        return self.get_type()
 
     def get_parameters(self):
         return (
@@ -697,7 +740,6 @@ class StonithAgent(CrmAgent):
             +
             self._get_stonithd_metadata().get_parameters()
         )
-
 
     def _filter_parameters(self, parameters):
         """
@@ -736,7 +778,6 @@ class StonithAgent(CrmAgent):
             # Pacemaker marks the 'port' parameter as not required for us.
         return filtered
 
-
     def _get_stonithd_metadata(self):
         if not self.__class__._stonithd_metadata:
             self.__class__._stonithd_metadata = StonithdMetadata(self._runner)
@@ -754,6 +795,11 @@ class StonithAgent(CrmAgent):
             ):
                 return True
         return False
+
+
+class AbsentStonithAgent(AbsentAgentMixin, StonithAgent):
+    def get_parameters(self):
+        return []
 
 
 def resource_agent_error_to_report_item(

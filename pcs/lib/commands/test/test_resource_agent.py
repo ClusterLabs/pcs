@@ -238,9 +238,9 @@ class TestListAgents(TestCase):
     @mock.patch.object(lib_ra.Agent, "_get_metadata", autospec=True)
     def test_describe(self, mock_metadata):
         def mock_metadata_func(self):
-            if self._full_agent_name == "ocf:test:Stateful":
+            if self.get_name() == "ocf:test:Stateful":
                 raise lib_ra.UnableToGetAgentMetadata(
-                    self._full_agent_name,
+                    self.get_name(),
                     "test exception"
                 )
             return etree.XML("""
@@ -252,7 +252,7 @@ class TestListAgents(TestCase):
                     <actions>
                     </actions>
                 </resource-agent>
-            """.format(name=self._full_agent_name))
+            """.format(name=self.get_name()))
         mock_metadata.side_effect = mock_metadata_func
 
         # Stateful is missing as it does not provide valid metadata - see above

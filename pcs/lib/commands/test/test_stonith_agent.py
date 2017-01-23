@@ -97,10 +97,11 @@ class TestListAgents(TestCase):
 
     @mock.patch.object(lib_ra.Agent, "_get_metadata", autospec=True)
     def test_describe(self, mock_metadata):
+        self.maxDiff = None
         def mock_metadata_func(self):
-            if self._full_agent_name == "ocf:test:Stateful":
+            if self.get_name() == "ocf:test:Stateful":
                 raise lib_ra.UnableToGetAgentMetadata(
-                    self._full_agent_name,
+                    self.get_name(),
                     "test exception"
                 )
             return etree.XML("""
@@ -112,7 +113,7 @@ class TestListAgents(TestCase):
                     <actions>
                     </actions>
                 </resource-agent>
-            """.format(name=self._full_agent_name))
+            """.format(name=self.get_name()))
         mock_metadata.side_effect = mock_metadata_func
 
         # Stateful is missing as it does not provide valid metadata - see above
@@ -121,22 +122,22 @@ class TestListAgents(TestCase):
             [
                 {
                     "name": "fence_apc",
-                    "shortdesc": "short stonith:fence_apc",
-                    "longdesc": "long stonith:fence_apc",
+                    "shortdesc": "short fence_apc",
+                    "longdesc": "long fence_apc",
                     "parameters": [],
                     "actions": [],
                 },
                 {
                     "name": "fence_dummy",
-                    "shortdesc": "short stonith:fence_dummy",
-                    "longdesc": "long stonith:fence_dummy",
+                    "shortdesc": "short fence_dummy",
+                    "longdesc": "long fence_dummy",
                     "parameters": [],
                     "actions": [],
                 },
                 {
                     "name": "fence_xvm",
-                    "shortdesc": "short stonith:fence_xvm",
-                    "longdesc": "long stonith:fence_xvm",
+                    "shortdesc": "short fence_xvm",
+                    "longdesc": "long fence_xvm",
                     "parameters": [],
                     "actions": [],
                 },

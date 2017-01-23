@@ -1385,21 +1385,18 @@ class StonithdMetadataGetParametersTest(TestCase):
             ]
         )
 
+class CrmAgentDescendant(lib_ra.CrmAgent):
+    def _prepare_name_parts(self, name):
+        return lib_ra.ResourceAgentName("STANDARD", None, name)
 
-class CrmAgentMetadataGetNameTest(TestCase, ExtendedAssertionsMixin):
-    def test_success(self):
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        agent_name = "ocf:pacemaker:Dummy"
-        agent = lib_ra.CrmAgent(mock_runner, agent_name)
-
-        self.assertEqual(agent.get_name(), agent_name)
+    def get_name(self):
+        return self.get_type()
 
 
 class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        self.agent_name = "ocf:pacemaker:Dummy"
-        self.agent = lib_ra.CrmAgent(self.mock_runner, self.agent_name)
+        self.agent = CrmAgentDescendant(self.mock_runner, "TYPE")
 
 
     def test_success(self):
@@ -1416,7 +1413,11 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--show-metadata", self.agent_name],
+            [
+                "/usr/sbin/crm_resource",
+                "--show-metadata",
+                self.agent._get_full_name()
+            ],
              env_extend={
                  "PATH": "/usr/sbin/:/bin/:/usr/bin/",
              }
@@ -1430,13 +1431,17 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
             lib_ra.UnableToGetAgentMetadata,
             self.agent._get_metadata,
             {
-                "agent": self.agent_name,
+                "agent": self.agent.get_name(),
                 "message": "some error",
             }
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--show-metadata", self.agent_name],
+            [
+                "/usr/sbin/crm_resource",
+                "--show-metadata",
+                self.agent._get_full_name()
+            ],
              env_extend={
                  "PATH": "/usr/sbin/:/bin/:/usr/bin/",
              }
@@ -1450,13 +1455,17 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
             lib_ra.UnableToGetAgentMetadata,
             self.agent._get_metadata,
             {
-                "agent": self.agent_name,
+                "agent": self.agent.get_name(),
                 "message": start_tag_error_text(),
             }
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--show-metadata", self.agent_name],
+            [
+                "/usr/sbin/crm_resource",
+                "--show-metadata",
+                self.agent._get_full_name()
+            ],
              env_extend={
                  "PATH": "/usr/sbin/:/bin/:/usr/bin/",
              }
@@ -1466,9 +1475,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
 class CrmAgentMetadataIsValidAgentTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        self.agent_name = "ocf:pacemaker:Dummy"
-        self.agent = lib_ra.CrmAgent(self.mock_runner, self.agent_name)
-
+        self.agent = CrmAgentDescendant(self.mock_runner, "TYPE")
 
     def test_success(self):
         metadata = """
@@ -1820,7 +1827,7 @@ class FindResourceAgentByNameTest(TestCase):
         ResourceAgent.assert_called_once_with(self.runner, name)
         AbsentResourceAgent.assert_called_once_with(self.runner, name)
         error_to_report_item.assert_called_once_with(
-            e, severity=severity.WARNING, forceable=True
+            e, severity=severity.WARNING
         )
         self.report_processor.process.assert_called_once_with(report)
 
@@ -1841,7 +1848,7 @@ class FindResourceAgentByNameTest(TestCase):
 
         self.assertEqual(report, context_manager.exception.args[0])
         ResourceAgent.assert_called_once_with(self.runner, name)
-        error_to_report_item.assert_called_once_with(e)
+        error_to_report_item.assert_called_once_with(e, forceable=True)
 
     @patch_agent("resource_agent_error_to_report_item")
     @patch_agent("ResourceAgent")
