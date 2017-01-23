@@ -35,7 +35,10 @@ from pcs import (
 )
 from pcs.utils import parallel_for_nodes
 from pcs.common import report_codes
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import (
+    CmdLineInputError,
+    ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
+)
 from pcs.cli.common.reports import process_library_reports, build_report_message
 from pcs.lib import (
     sbd as lib_sbd,
@@ -94,11 +97,15 @@ def cluster_cmd(argv):
         cluster_token_nodes(argv)
     elif (sub_cmd == "start"):
         if "--all" in utils.pcs_options:
+            if argv:
+                utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
             start_cluster_all()
         else:
             start_cluster(argv)
     elif (sub_cmd == "stop"):
         if "--all" in utils.pcs_options:
+            if argv:
+                utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
             stop_cluster_all()
         else:
             stop_cluster(argv)
@@ -130,11 +137,15 @@ def cluster_cmd(argv):
             utils.exit_on_cmdline_input_errror(e, "node", "unstandby")
     elif (sub_cmd == "enable"):
         if "--all" in utils.pcs_options:
+            if argv:
+                utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
             enable_cluster_all()
         else:
             enable_cluster(argv)
     elif (sub_cmd == "disable"):
         if "--all" in utils.pcs_options:
+            if argv:
+                utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
             disable_cluster_all()
         else:
             disable_cluster(argv)

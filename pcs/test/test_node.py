@@ -297,6 +297,16 @@ class NodeStandby(TestCase, AssertPcsMixin):
             )
         )
 
+    def test_all_and_nodelist(self):
+        self.assert_pcs_fail(
+            "node standby rh7-1 rh7-2 --all",
+            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+        )
+        self.assert_pcs_fail(
+            "node unstandby rh7-1 rh7-2 --all",
+            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+        )
+
 
 class NodeMaintenance(TestCase, AssertPcsMixin):
     def setUp(self):
@@ -451,6 +461,16 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
                  rh7-3: maintenance=on
                 """
             )
+        )
+
+    def test_all_and_nodelist(self):
+        self.assert_pcs_fail(
+            "node maintenance rh7-1 rh7-2 --all",
+            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+        )
+        self.assert_pcs_fail(
+            "node unmaintenance rh7-1 rh7-2 --all",
+            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
         )
 
 

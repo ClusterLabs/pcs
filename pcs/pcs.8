@@ -229,19 +229,19 @@ be used around the cluster.  \fB\-\-mcast0\fR defaults to 239.255.1.1 and
 ttl defaults to 1. If \fB\-\-broadcast\fR is specified, \fB\-\-mcast0/1\fR,
 \fB\-\-mcastport0/1\fR & \fB\-\-ttl0/1\fR are ignored.
 .TP
-start [\fB\-\-all\fR] [node] [...] [\fB\-\-wait\fR[=<n>]]
+start [\fB\-\-all\fR | <node>... ] [\fB\-\-wait\fR[=<n>]]
 Start corosync & pacemaker on specified node(s), if a node is not specified then corosync & pacemaker are started on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are started on all nodes. If \fB\-\-wait\fR is specified, wait up to 'n' seconds for nodes to start.
 .TP
-stop [\fB\-\-all\fR] [node] [...]
+stop [\fB\-\-all\fR | <node>... ]
 Stop corosync & pacemaker on specified node(s), if a node is not specified then corosync & pacemaker are stopped on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are stopped on all nodes.
 .TP
 kill
 Force corosync and pacemaker daemons to stop on the local node (performs kill \-9). Note that init system (e.g. systemd) can detect that cluster is not running and start it again. If you want to stop cluster on a node, run pcs cluster stop on that node.
 .TP
-enable [\fB\-\-all\fR] [node] [...]
+enable [\fB\-\-all\fR | <node>... ]
 Configure corosync & pacemaker to run on node boot on specified node(s), if node is not specified then corosync & pacemaker are enabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are enabled on all nodes.
 .TP
-disable [\fB\-\-all\fR] [node] [...]
+disable [\fB\-\-all\fR | <node>... ]
 Configure corosync & pacemaker to not run on node boot on specified node(s), if node is not specified then corosync & pacemaker are disabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are disabled on all nodes. Note: this is the default after installation.
 .TP
 remote-node add <hostname> <resource id> [options]

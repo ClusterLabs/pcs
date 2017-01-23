@@ -12,7 +12,10 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import (
+    CmdLineInputError,
+    ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
+)
 from pcs.cli.common.parse_args import prepare_options
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -72,7 +75,7 @@ def node_utilization_cmd(lib, argv, modifiers):
 
 def node_maintenance_cmd(lib, argv, modifiers, enable):
     if len(argv) > 0 and modifiers["all"]:
-        raise CmdLineInputError()
+        raise CmdLineInputError(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
     if modifiers["all"]:
         lib.node.maintenance_unmaintenance_all(enable, modifiers["wait"])
     elif argv:
@@ -82,7 +85,7 @@ def node_maintenance_cmd(lib, argv, modifiers, enable):
 
 def node_standby_cmd(lib, argv, modifiers, enable):
     if len(argv) > 0 and modifiers["all"]:
-        raise CmdLineInputError()
+        raise CmdLineInputError(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
     if modifiers["all"]:
         lib.node.standby_unstandby_all(enable, modifiers["wait"])
     elif argv:

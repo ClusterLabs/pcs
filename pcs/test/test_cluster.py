@@ -2823,3 +2823,32 @@ logging {
 </cluster>
 """)
 
+
+class ClusterStartStop(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.pcs_runner = PcsRunner()
+
+    def test_all_and_nodelist(self):
+        self.assert_pcs_fail(
+            "cluster stop rh7-1 rh7-2 --all",
+            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+        )
+        self.assert_pcs_fail(
+            "cluster start rh7-1 rh7-2 --all",
+            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+        )
+
+
+class ClusterEnableDisable(unittest.TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.pcs_runner = PcsRunner()
+
+    def test_all_and_nodelist(self):
+        self.assert_pcs_fail(
+            "cluster enable rh7-1 rh7-2 --all",
+            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+        )
+        self.assert_pcs_fail(
+            "cluster disable rh7-1 rh7-2 --all",
+            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+        )

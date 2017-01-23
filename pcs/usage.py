@@ -596,14 +596,14 @@ Commands:
         ttl defaults to 1. If --broadcast is specified, --mcast0/1,
         --mcastport0/1 & --ttl0/1 are ignored.
 
-    start [--all] [node] [...] [--wait[=<n>]]
+    start [--all | <node>... ] [--wait[=<n>]]
         Start corosync & pacemaker on specified node(s), if a node is not
         specified then corosync & pacemaker are started on the local node.
         If --all is specified then corosync & pacemaker are started on all
         nodes.  If --wait is specified, wait up to 'n' seconds for nodes
         to start.
 
-    stop [--all] [node] [...]
+    stop [--all | <node>... ]
         Stop corosync & pacemaker on specified node(s), if a node is not
         specified then corosync & pacemaker are stopped on the local node.
         If --all is specified then corosync & pacemaker are stopped on all
@@ -615,13 +615,13 @@ Commands:
         cluster is not running and start it again. If you want to stop cluster
         on a node, run pcs cluster stop on that node.
 
-    enable [--all] [node] [...]
+    enable [--all | <node>... ]
         Configure corosync & pacemaker to run on node boot on specified
         node(s), if node is not specified then corosync & pacemaker are
         enabled on the local node. If --all is specified then corosync &
         pacemaker are enabled on all nodes.
 
-    disable [--all] [node] [...]
+    disable [--all | <node>... ]
         Configure corosync & pacemaker to not run on node boot on specified
         node(s), if node is not specified then corosync & pacemaker are
         disabled on the local node. If --all is specified then corosync &
