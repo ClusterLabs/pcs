@@ -46,7 +46,7 @@ class AssertPcsEffectMixin(AssertPcsMixin):
             etree.parse(self.temp_cib).findall(".//resources")[0]
         )
         try:
-            assert_xml_equal(xml.decode(), expected_xml_resources)
+            assert_xml_equal(expected_xml_resources, xml.decode())
         except AssertionError as e:
             raise AssertionError(
                 "{0}\n\nCopy format ;)\n{1}".format(e.message, xml_format(xml))

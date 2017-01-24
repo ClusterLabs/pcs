@@ -94,7 +94,6 @@ class ParseCreateArgs(TestCase):
             lambda: parse_args.parse_create(args)
         )
 
-
     def test_raises_when_operation_name_does_not_follow_op_keyword(self):
         self.assert_raises_cmdline(["op", "a=b"])
         self.assert_raises_cmdline(["op", "monitor", "a=b", "op", "c=d"])
@@ -122,3 +121,48 @@ class ParseCreateArgs(TestCase):
 
     def test_deal_with_empty_operatins(self):
         self.assert_raises_cmdline(["op", "monitoring", "a=b", "op"])
+
+class BuildOperations(TestCase):
+    def assert_produce(self, arg_list, result):
+        self.assertEqual(result, parse_args.build_operations(arg_list))
+
+    def assert_raises_cmdline(self, arg_list):
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: parse_args.build_operations(arg_list)
+        )
+
+    def test_return_empty_list_on_empty_input(self):
+        self.assert_produce([], [])
+
+    def test_return_all_operations_specified_in_the_same_group(self):
+        self.assert_produce(
+            [
+                ["monitor", "interval=10s", "start", "timeout=20s"]
+            ],
+            [
+                ["name=monitor", "interval=10s"],
+                ["name=start", "timeout=20s"],
+            ]
+        )
+
+    def test_return_all_operations_specified_in_different_groups(self):
+        self.assert_produce(
+            [
+                ["monitor", "interval=10s"],
+                ["start", "timeout=20s"],
+            ],
+            [
+                ["name=monitor", "interval=10s"],
+                ["name=start", "timeout=20s"],
+            ]
+        )
+
+    def test_refuse_empty_operation(self):
+        self.assert_raises_cmdline([[]])
+
+    def test_refuse_operation_without_attribute(self):
+        self.assert_raises_cmdline([["monitor"]])
+
+    def test_refuse_operation_without_name(self):
+        self.assert_raises_cmdline([["interval=10s"]])

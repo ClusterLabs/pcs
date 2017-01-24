@@ -372,7 +372,8 @@ Error: When using 'op' you must specify an operation name and at least one optio
             ,
             "Error: Agent 'ocf:pacemaker:idontexist3' is not installed or does"
                 " not provide valid metadata: Metadata query for"
-                " ocf:pacemaker:idontexist3 failed: -5\n"
+                " ocf:pacemaker:idontexist3 failed: -5, use --force to override"
+                "\n"
         )
 
         self.assert_pcs_success(

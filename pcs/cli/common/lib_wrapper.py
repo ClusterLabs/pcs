@@ -24,6 +24,7 @@ from pcs.lib.commands import (
     quorum,
     resource_agent,
     resource,
+    stonith,
     sbd,
     stonith_agent,
 )
@@ -306,6 +307,17 @@ def load_module(env, middleware_factory, name):
                 "create_as_master": resource.create_as_master,
                 "create_as_clone": resource.create_as_clone,
                 "create_in_group": resource.create_in_group,
+            }
+        )
+    if name == "stonith":
+        return bind_all(
+            env,
+            middleware.build(
+                middleware_factory.cib
+            ),
+            {
+                "create": stonith.create,
+                "create_in_group": stonith.create_in_group,
             }
         )
 

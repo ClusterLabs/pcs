@@ -220,21 +220,29 @@ def fixture_cib_calls(cib_resources_xml):
     return [
         Call("cibadmin --local --query", cib_xml),
         Call(
-            "crm_resource --show-metadata ocf:heartbeat:Dummy",
-            open(rc("resource_agent_ocf_heartbeat_dummy.xml")).read()
-        ),
-        Call(
             "cibadmin --replace --verbose --xml-pipe --scope configuration",
             check_stdin=Call.create_check_stdin_xml(etree.tostring(cib))
         ),
     ]
 
+def fixture_agent_load_calls():
+    return [
+        Call(
+            "crm_resource --show-metadata ocf:heartbeat:Dummy",
+            open(rc("resource_agent_ocf_heartbeat_dummy.xml")).read()
+        ),
+    ]
+
+
 def fixture_pre_timeout_calls(cib_resources_xml):
     return (
+        fixture_agent_load_calls()
+        +
         [
             Call("crm_resource -?", "--wait"),
         ]
-        + fixture_cib_calls(cib_resources_xml)
+        +
+        fixture_cib_calls(cib_resources_xml)
     )
 
 def fixture_wait_and_get_state_calls(state_resource_xml):
@@ -278,7 +286,11 @@ class CommonResourceTest(TestCase):
         self.create = partial(self.get_create(), self.env)
 
     def assert_command_effect(self, cmd, cib_resources_xml, reports=None):
-        runner.set_runs(fixture_cib_calls(cib_resources_xml))
+        runner.set_runs(
+            fixture_agent_load_calls()
+            +
+            fixture_cib_calls(cib_resources_xml)
+        )
         cmd()
         self.env.report_processor.assert_reports(reports if reports else [])
         runner.assert_everything_launched()

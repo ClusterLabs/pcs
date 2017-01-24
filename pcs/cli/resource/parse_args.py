@@ -21,7 +21,7 @@ def parse_create(arg_list):
         "options":  prepare_options(groups.get("options", [])),
         "op": [
             prepare_options(op)
-            for op in __build_operations(groups.get("op", []))
+            for op in build_operations(groups.get("op", []))
         ],
     }
 
@@ -33,7 +33,15 @@ def parse_create(arg_list):
 
     return parts
 
-def __build_operations(op_group_list):
+def build_operations(op_group_list):
+    """
+    Return a list of dicts. Each dict represents one operation.
+    list of list op_group_list contains items that have parameters after "op"
+        (so item can contain multiple operations) for example: [
+            [monitor timeout=1 start timeout=2],
+            [monitor timeout=3 interval=10],
+        ]
+    """
     operation_list = []
     for op_group in op_group_list:
         #empty operation is not allowed

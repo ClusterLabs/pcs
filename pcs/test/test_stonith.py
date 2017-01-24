@@ -87,8 +87,9 @@ Stonith options:
         )
 
 
-class StonithTest(TestCase):
+class StonithTest(TestCase, AssertPcsMixin):
     def setUp(self):
+        self.pcs_runner = PcsRunner(temp_cib)
         shutil.copy(empty_cib, temp_cib)
 
     def testStonithCreation(self):
@@ -100,25 +101,43 @@ class StonithTest(TestCase):
         ac(output, "Warning: Agent 'fence_noxist' is not installed or does not provide valid metadata: Metadata query for stonith:fence_noxist failed: -5\n")
         self.assertEqual(returnVal, 0)
 
-        output, returnVal = pcs(temp_cib, "stonith create test2 fence_apc")
-        assert returnVal == 1
-        ac(output,"Error: missing required option(s): 'ipaddr, login' for resource type: stonith:fence_apc (use --force to override)\n")
+        self.assert_pcs_fail(
+            "stonith create test2 fence_apc",
+            "Error: required resource options 'ipaddr', 'login' are missing, use --force to override\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "stonith create test2 fence_ilo --force")
-        assert returnVal == 0
-        ac(output,"")
+        self.assert_pcs_success(
+            "stonith create test2 fence_ilo --force",
+            "Warning: required resource option 'login' is missing\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo bad_argument=test")
-        assert returnVal == 1
-        assert output == "Error: resource option(s): 'bad_argument', are not recognized for resource type: 'stonith:fence_ilo' (use --force to override)\n",[output]
+        self.assert_pcs_fail(
+            "stonith create test3 fence_ilo bad_argument=test",
+            "Error: invalid resource option 'bad_argument', allowed options"
+                " are: action, delay, inet4_only, inet6_only, ipaddr, ipport,"
+                " login, login_timeout, notls, passwd, passwd_script,"
+                " pcmk_action_limit, pcmk_delay_max, pcmk_host_argument,"
+                " pcmk_host_check, pcmk_host_list, pcmk_host_map,"
+                " pcmk_list_action, pcmk_list_retries, pcmk_list_timeout,"
+                " pcmk_monitor_action, pcmk_monitor_retries,"
+                " pcmk_monitor_timeout, pcmk_off_action, pcmk_off_retries,"
+                " pcmk_off_timeout, pcmk_reboot_action, pcmk_reboot_retries,"
+                " pcmk_reboot_timeout, pcmk_status_action, pcmk_status_retries,"
+                " pcmk_status_timeout, port, port_as_ip, power_timeout,"
+                " power_wait, priority, retry_on, ribcl, shell_timeout, ssl,"
+                " ssl_insecure, ssl_secure, tls1.0, use --force to override\n"
+            "Error: required resource option 'login' is missing, use --force to override\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "stonith create test9 fence_apc pcmk_status_action=xxx")
-        assert returnVal == 1
-        ac(output,"Error: missing required option(s): 'ipaddr, login' for resource type: stonith:fence_apc (use --force to override)\n")
+        self.assert_pcs_fail(
+            "stonith create test9 fence_apc pcmk_status_action=xxx",
+            "Error: required resource options 'ipaddr', 'login' are missing, use --force to override\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "stonith create test9 fence_ilo pcmk_status_action=xxx --force")
-        assert returnVal == 0
-        ac(output,"")
+        self.assert_pcs_success(
+             "stonith create test9 fence_ilo pcmk_status_action=xxx --force",
+            "Warning: required resource option 'login' is missing\n"
+        )
 
         output, returnVal = pcs(temp_cib, "stonith show test9")
         ac(output, """\
@@ -132,31 +151,33 @@ class StonithTest(TestCase):
         assert returnVal == 0
         assert output == "Deleting Resource - test9\n",[output]
 
-        output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo ipaddr=test")
-        assert returnVal == 1
-        ac(output,"Error: missing required option(s): 'login' for resource type: stonith:fence_ilo (use --force to override)\n")
+        self.assert_pcs_fail(
+            "stonith create test3 fence_ilo ipaddr=test",
+            "Error: required resource option 'login' is missing, use --force to override\n"
+        )
 
-        output, returnVal = pcs(temp_cib, "stonith create test3 fence_ilo ipaddr=test --force")
-        assert returnVal == 0
-        ac(output,"")
+        self.assert_pcs_success(
+             "stonith create test3 fence_ilo ipaddr=test --force",
+            "Warning: required resource option 'login' is missing\n"
+        )
 
 # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are allowed for
 # stonith agents
-        output, returnVal = pcs(temp_cib, 'stonith create apc-fencing fence_apc params ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"')
-        assert returnVal == 0
-        ac(output,"")
+        self.assert_pcs_success(
+            'stonith create apc-fencing fence_apc ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"',
+        )
 
         output, returnVal = pcs(temp_cib, 'resource show apc-fencing')
         assert returnVal == 1
         assert output == 'Error: unable to find resource \'apc-fencing\'\n',[output]
 
-        output, returnVal = pcs(temp_cib, 'stonith show apc-fencing')
-        ac(output, """\
- Resource: apc-fencing (class=stonith type=fence_apc)
-  Attributes: ipaddr="morph-apc" login="apc" passwd="apc" switch="1" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"
-  Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)
-""")
-        assert returnVal == 0
+        self.assert_pcs_success("stonith show apc-fencing", outdent(
+            """\
+             Resource: apc-fencing (class=stonith type=fence_apc)
+              Attributes: ipaddr="morph-apc" login="apc" passwd="apc" pcmk_host_check="static-list" pcmk_host_list="buzz-01,buzz-02,buzz-03,buzz-04,buzz-05" pcmk_host_map="buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5" switch="1"
+              Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, 'stonith delete apc-fencing')
         assert returnVal == 0
@@ -186,51 +207,52 @@ class StonithTest(TestCase):
 """)
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_cib, 'stonith create test-fencing fence_apc pcmk_host_list="rhel7-node1 rhel7-node2" op monitor interval=61s --force')
-        assert returnVal == 0
-        ac(output,"")
+        self.assert_pcs_success(
+            "stonith create test-fencing fence_apc 'pcmk_host_list=rhel7-node1 rhel7-node2' op monitor interval=61s --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+        )
 
-        output, returnVal = pcs(temp_cib, 'config show')
-        ac(output, """\
-Cluster Name: test99
-Corosync Nodes:
- rh7-1 rh7-2
-Pacemaker Nodes:
+        self.assert_pcs_success("config show", outdent(
+            """\
+            Cluster Name: test99
+            Corosync Nodes:
+             rh7-1 rh7-2
+            Pacemaker Nodes:
 
-Resources:
+            Resources:
 
-Stonith Devices:
- Resource: test1 (class=stonith type=fence_noxist)
-  Operations: monitor interval=60s (test1-monitor-interval-60s)
- Resource: test2 (class=stonith type=fence_ilo)
-  Operations: monitor interval=60s (test2-monitor-interval-60s)
- Resource: test3 (class=stonith type=fence_ilo)
-  Attributes: ipaddr=test login=testA
-  Operations: monitor interval=60s (test3-monitor-interval-60s)
- Resource: test-fencing (class=stonith type=fence_apc)
-  Attributes: pcmk_host_list="rhel7-node1
-  Operations: monitor interval=61s (test-fencing-monitor-interval-61s)
-Fencing Levels:
+            Stonith Devices:
+             Resource: test1 (class=stonith type=fence_noxist)
+              Operations: monitor interval=60s (test1-monitor-interval-60s)
+             Resource: test2 (class=stonith type=fence_ilo)
+              Operations: monitor interval=60s (test2-monitor-interval-60s)
+             Resource: test3 (class=stonith type=fence_ilo)
+              Attributes: ipaddr=test login=testA
+              Operations: monitor interval=60s (test3-monitor-interval-60s)
+             Resource: test-fencing (class=stonith type=fence_apc)
+              Attributes: pcmk_host_list="rhel7-node1 rhel7-node2"
+              Operations: monitor interval=61s (test-fencing-monitor-interval-61s)
+            Fencing Levels:
 
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
+            Location Constraints:
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
 
-Alerts:
- No alerts defined
+            Alerts:
+             No alerts defined
 
-Resources Defaults:
- No defaults set
-Operations Defaults:
- No defaults set
+            Resources Defaults:
+             No defaults set
+            Operations Defaults:
+             No defaults set
 
-Cluster Properties:
+            Cluster Properties:
 
-Quorum:
-  Options:
-""")
-        assert returnVal == 0
+            Quorum:
+              Options:
+            """
+        ))
 
     def test_stonith_create_provides_unfencing(self):
         if utils.is_rhel6():
@@ -343,9 +365,10 @@ Quorum:
         assert output == "Error: must specify one (and only one) node to confirm fenced\n"
 
     def testPcmkHostList(self):
-        output, returnVal = pcs(temp_cib, "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' --force")
-        assert returnVal == 0
-        ac(output,"")
+        self.assert_pcs_success(
+            "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
+        )
 
         output, returnVal = pcs(temp_cib, "stonith show F1")
         ac(output, """\
@@ -362,7 +385,7 @@ Quorum:
         # metadata from pacemaker, this will be reviewed and fixed.
         output, returnVal = pcs(
             temp_cib,
-            'stonith create apc-1 fence_apc params ipaddr="ip" login="apc"'
+            'stonith create apc-1 fence_apc ipaddr="ip" login="apc"'
         )
 #        ac(output, """\
 #Error: missing required option(s): 'port' for resource type: stonith:fence_apc (use --force to override)
@@ -373,21 +396,21 @@ Quorum:
 
         output, returnVal = pcs(
             temp_cib,
-            'stonith create apc-2 fence_apc params ipaddr="ip" login="apc" pcmk_host_map="buzz-01:1;buzz-02:2"'
+            'stonith create apc-2 fence_apc ipaddr="ip" login="apc" pcmk_host_map="buzz-01:1;buzz-02:2"'
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib,
-            'stonith create apc-3 fence_apc params ipaddr="ip" login="apc" pcmk_host_list="buzz-01,buzz-02"'
+            'stonith create apc-3 fence_apc ipaddr="ip" login="apc" pcmk_host_list="buzz-01,buzz-02"'
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
 
         output, returnVal = pcs(
             temp_cib,
-            'stonith create apc-4 fence_apc params ipaddr="ip" login="apc" pcmk_host_argument="buzz-01"'
+            'stonith create apc-4 fence_apc ipaddr="ip" login="apc" pcmk_host_argument="buzz-01"'
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
@@ -395,67 +418,40 @@ Quorum:
     def testStonithDeleteRemovesLevel(self):
         shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
 
-        output, returnVal = pcs(
-            temp_cib, "stonith create n1-ipmi fence_ilo --force"
+        self.assert_pcs_success(
+            "stonith create n1-ipmi fence_ilo --force",
+            "Warning: required resource option 'login' is missing\n"
         )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(
-            temp_cib, "stonith create n2-ipmi fence_ilo --force"
+        self.assert_pcs_success(
+            "stonith create n2-ipmi fence_ilo --force",
+            "Warning: required resource option 'login' is missing\n"
         )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(
-            temp_cib, "stonith create n1-apc1 fence_apc --force"
+        self.assert_pcs_success(
+            "stonith create n1-apc1 fence_apc --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(
-            temp_cib, "stonith create n1-apc2 fence_apc --force"
+        self.assert_pcs_success(
+            "stonith create n1-apc2 fence_apc --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(
-            temp_cib, "stonith create n2-apc1 fence_apc --force"
+        self.assert_pcs_success(
+            "stonith create n2-apc1 fence_apc --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(
-            temp_cib, "stonith create n2-apc2 fence_apc --force"
+        self.assert_pcs_success(
+            "stonith create n2-apc2 fence_apc --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(
-            temp_cib, "stonith create n2-apc3 fence_apc --force"
+        self.assert_pcs_success(
+            "stonith create n2-apc3 fence_apc --force",
+            "Warning: required resource options 'ipaddr', 'login' are missing\n"
         )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-1 n1-ipmi")
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-
-        output, returnVal = pcs(
-            temp_cib, "stonith level add 2 rh7-1 n1-apc1,n1-apc2,n2-apc2"
-        )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(temp_cib, "stonith level add 1 rh7-2 n2-ipmi")
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
-
-        output, returnVal = pcs(
-            temp_cib, "stonith level add 2 rh7-2 n2-apc1,n2-apc2,n2-apc3"
-        )
-        self.assertEqual(returnVal, 0)
-        ac(output, "")
+        self.assert_pcs_success_all([
+            "stonith level add 1 rh7-1 n1-ipmi",
+            "stonith level add 2 rh7-1 n1-apc1,n1-apc2,n2-apc2",
+            "stonith level add 1 rh7-2 n2-ipmi",
+            "stonith level add 2 rh7-2 n2-apc1,n2-apc2,n2-apc3",
+        ])
 
         output, returnVal = pcs(temp_cib, "stonith")
         self.assertEqual(returnVal, 0)
@@ -581,7 +577,7 @@ Quorum:
         ac(o,"Deleting Resource - test_stonith\n")
         assert r == 0
 
-        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1 --clone")
+        o,r = pcs(temp_cib, "stonith create test_stonith fence_apc ipaddr=ip login=lgn,  pcmk_host_argument=node1")
         ac(o,"")
         assert r == 0
 
@@ -1066,13 +1062,13 @@ class LevelConfig(LevelTestsBase):
             self.full_config.format(
                 devices="""
  Resource: F1 (class=stonith type=fence_apc)
-  Attributes: pcmk_host_list="rh7-1 rh7-2," ipaddr=ip login=lgn
+  Attributes: ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2,"
   Operations: monitor interval=60s (F1-monitor-interval-60s)
  Resource: F2 (class=stonith type=fence_apc)
-  Attributes: pcmk_host_list="rh7-1 rh7-2," ipaddr=ip login=lgn
+  Attributes: ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2,"
   Operations: monitor interval=60s (F2-monitor-interval-60s)
  Resource: F3 (class=stonith type=fence_apc)
-  Attributes: pcmk_host_list="rh7-1 rh7-2," ipaddr=ip login=lgn
+  Attributes: ipaddr=ip login=lgn pcmk_host_list="rh7-1 rh7-2,"
   Operations: monitor interval=60s (F3-monitor-interval-60s)\
 """,
                 levels=("\n" + "\n".join(indent(self.config_lines, 2)))

@@ -8,7 +8,9 @@ from __future__ import (
 from contextlib import contextmanager
 from functools import partial
 
-from pcs.lib import resource_agent as ra
+from pcs.lib.resource_agent import(
+    find_valid_resource_agent_by_name as get_agent
+)
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import (
     disable_meta,
@@ -20,19 +22,10 @@ from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.pacemaker.state import ensure_resource_state
 
 @contextmanager
-def environment(
-    env, resource_id, wait, resource_agent_name, allow_absent_agent,
-    disabled_after_wait,
-):
+def resource_environment(env, resource_id, wait, disabled_after_wait):
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
-    resource_agent = ra.find_valid_resource_agent_by_name(
-        env.report_processor,
-        env.cmd_runner(),
-        resource_agent_name,
-        allow_absent_agent,
-    )
-    yield (get_resources(cib), resource_agent)
+    yield get_resources(cib)
     env.push_cib(cib, wait)
     if wait is not False:
         ensure_resource_state(
@@ -52,12 +45,16 @@ def create(
     ensure_disabled=False,
     wait=False,
 ):
-    with environment(
-        env, resource_id, wait,
+    resource_agent = get_agent(
+        env.report_processor,
+        env.cmd_runner(),
         resource_agent_name,
         allow_absent_agent,
+    )
+    with resource_environment(
+        env, resource_id, wait,
         ensure_disabled or are_meta_disabled(meta_attributes),
-    ) as (resources_section, resource_agent):
+    ) as resources_section:
         resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
@@ -85,15 +82,19 @@ def _create_as_clone_common(
     create_as_master are created by passing tag with partial.
 
     """
-    with environment(env, resource_id, wait,
-        resource_agent_name, allow_absent_agent,(
-            ensure_disabled
-            or
-            are_meta_disabled(meta_attributes)
-            or
-            are_clone_meta_disabled(clone_meta_options)
-        ),
-    ) as (resources_section, resource_agent):
+    resource_agent = get_agent(
+        env.report_processor,
+        env.cmd_runner(),
+        resource_agent_name,
+        allow_absent_agent,
+    )
+    with resource_environment(env, resource_id, wait, (
+        ensure_disabled
+        or
+        are_meta_disabled(meta_attributes)
+        or
+        are_clone_meta_disabled(clone_meta_options)
+    )) as resources_section:
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
@@ -125,12 +126,16 @@ def create_in_group(
     put_after_adjacent=False,
     wait=False,
 ):
-    with environment(
-        env, resource_id, wait,
+    resource_agent = get_agent(
+        env.report_processor,
+        env.cmd_runner(),
         resource_agent_name,
         allow_absent_agent,
+    )
+    with resource_environment(
+        env, resource_id, wait,
         ensure_disabled or are_meta_disabled(meta_attributes),
-    ) as (resources_section, resource_agent):
+    ) as resources_section:
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,
             resource_id, resource_agent,
