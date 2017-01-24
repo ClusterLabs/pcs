@@ -76,6 +76,10 @@ def stonith_cmd(argv):
             get_fence_agent_info(argv_next)
         elif sub_cmd == "sbd":
             sbd_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "enable":
+            resource.resource_enable(argv_next)
+        elif sub_cmd == "disable":
+            resource.resource_disable(argv_next)
         else:
             raise CmdLineInputError()
     except LibraryError as e:

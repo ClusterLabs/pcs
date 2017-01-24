@@ -9,6 +9,7 @@
   CIBs in specified files ([rhbz#1404233])
 - Added flags `--wait`, `--disabled`, `--group`, `--after`, `--before` into
   the command `pcs stonith create`
+- Added commands `pcs stonith enable` and `pcs stonith disable`
 
 ### Changed
 - `pcs node [un]standby` and `pcs node [un]maintenance` is now atomic even if

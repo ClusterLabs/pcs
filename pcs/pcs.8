@@ -329,6 +329,12 @@ Add/Change options to specified stonith id.
 delete <stonith id>
 Remove stonith id from configuration.
 .TP
+enable <stonith id> [--wait[=n]]
+Allow the cluster to use the stonith device. If --wait is specified, pcs will wait up to 'n' seconds for the stonith device to start and then return 0 if the stonith device is started, or 1 if the stonith device has not yet started. If 'n' is not specified it defaults to 60 minutes.
+.TP
+disable <stonith id> [--wait[=n]]
+Attempt to stop the stonith device if it is running and disallow the cluster to use it. If --wait is specified, pcs will wait up to 'n' seconds for the stonith device to stop and then return 0 if the stonith device is stopped or 1 if the stonith device has not stopped. If 'n' is not specified it defaults to 60 minutes.
+.TP
 cleanup [<stonith id>] [\fB\-\-node\fR <node>]
 Make the cluster forget the operation history of the stonith device and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved. If a stonith id is not specified then all resources/stonith devices will be cleaned up. If a node is not specified then resources/stonith devices on all nodes will be cleaned up.
 .TP
