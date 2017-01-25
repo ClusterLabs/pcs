@@ -84,7 +84,7 @@ def service_operation_skipped(operation, info):
 def id_belongs_to_unexpected_type(info):
     translate_expected = {
         "acl_group": "an acl group",
-        "acl_target": "an acl target",
+        "acl_target": "an acl user",
         "group": "a group",
     }
     return "'{id}' is not {expected_type}".format(

@@ -835,7 +835,7 @@ Role: role4
         self.assert_pcs_success("acl group create group1")
         self.assert_pcs_fail(
             "acl role assign role1 to user group1",
-            "Error: 'group1' is not an acl target\n"
+            "Error: 'group1' is not an acl user\n"
         )
 
     def test_assign_unassign_role_to_user_with_to(self):
