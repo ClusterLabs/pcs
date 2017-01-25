@@ -583,7 +583,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["nonsense1"],
-                    "option_type": "quorum option",
+                    "option_type": "quorum",
                     "allowed": [
                         "auto_tie_breaker",
                         "last_man_standing",
@@ -597,7 +597,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["nonsense2"],
-                    "option_type": "quorum option",
+                    "option_type": "quorum",
                     "allowed": [
                         "auto_tie_breaker",
                         "last_man_standing",
@@ -1254,7 +1254,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["bad_model_option"],
-                    "option_type": "quorum device model option",
+                    "option_type": "quorum device model",
                     "allowed": [
                         "algorithm",
                         "connect_timeout",
@@ -1316,7 +1316,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["bad_generic_option"],
-                    "option_type": "quorum device option",
+                    "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 },
                 report_codes.FORCE_OPTIONS
@@ -1326,7 +1326,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["model"],
-                    "option_type": "quorum device option",
+                    "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 }
             ),
@@ -1462,7 +1462,7 @@ quorum {
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["bad_model_option"],
-                        "option_type": "quorum device model option",
+                        "option_type": "quorum device model",
                         "allowed": [
                             "algorithm",
                             "connect_timeout",
@@ -1514,7 +1514,7 @@ quorum {
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["bad_generic_option"],
-                        "option_type": "quorum device option",
+                        "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     }
                 ),
@@ -1762,7 +1762,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["bad_model_option"],
-                    "option_type": "quorum device model option",
+                    "option_type": "quorum device model",
                     "allowed": [
                         "algorithm",
                         "connect_timeout",
@@ -1871,7 +1871,7 @@ quorum {
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["bad_model_option"],
-                        "option_type": "quorum device model option",
+                        "option_type": "quorum device model",
                         "allowed": [
                             "algorithm",
                             "connect_timeout",
@@ -1987,7 +1987,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["bad_generic_option"],
-                    "option_type": "quorum device option",
+                    "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 },
                 report_codes.FORCE_OPTIONS
@@ -1997,7 +1997,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["model"],
-                    "option_type": "quorum device option",
+                    "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 }
             ),
@@ -2044,7 +2044,7 @@ quorum {
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["model"],
-                    "option_type": "quorum device option",
+                    "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 }
             )
@@ -2090,7 +2090,7 @@ quorum {
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["bad_generic_option"],
-                        "option_type": "quorum device option",
+                        "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     },
                 ),

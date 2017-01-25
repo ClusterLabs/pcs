@@ -97,7 +97,7 @@ def option_value_normalization(normalization_map):
         )
     return normalize
 
-def is_required(option_name, option_type="option"):
+def is_required(option_name, option_type=""):
     """
     Return a the function that takes option_dict and returns report list
     (with REQUIRED_OPTION_IS_MISSING when option_dict does not contain

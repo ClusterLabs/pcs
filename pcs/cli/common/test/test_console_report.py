@@ -46,7 +46,7 @@ class BuildInvalidOptionMessageTest(NameBuildTest):
     code = codes.INVALID_OPTION
     def test_build_message_with_type(self):
         self.assert_message_from_info(
-            "invalid TYPE 'NAME', allowed options are: FIRST, SECOND",
+            "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",
             {
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
@@ -78,7 +78,7 @@ class RequiredOptionIsMissing(NameBuildTest):
     code = codes.REQUIRED_OPTION_IS_MISSING
     def test_build_message_with_type(self):
         self.assert_message_from_info(
-            "required TYPE 'NAME' is missing",
+            "required TYPE option 'NAME' is missing",
             {
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
@@ -549,7 +549,7 @@ class MutuallyExclusiveOptions(NameBuildTest):
         self.assert_message_from_info(
             "some options 'a' and 'b' are muttually exclusive",
             {
-                "option_type": "some option",
+                "option_type": "some",
                 "option_names": ["a", "b"],
             }
         )

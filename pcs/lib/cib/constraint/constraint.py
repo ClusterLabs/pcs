@@ -28,7 +28,7 @@ def _validate_attrib_names(attrib_names, options):
     ]
     if invalid_names:
         raise LibraryError(
-            reports.invalid_option(invalid_names, attrib_names, "option")
+            reports.invalid_option(invalid_names, attrib_names, None)
         )
 
 def find_valid_resource_id(

@@ -42,7 +42,7 @@ class PrepareSetTest(TestCase):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["invalid_name"],
-                    "option_type": "option",
+                    "option_type": None,
                     "allowed": ["action", "require-all", "role", "sequential"],
             }),
         )

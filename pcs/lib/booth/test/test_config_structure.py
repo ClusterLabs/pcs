@@ -60,7 +60,7 @@ class ValidateTicketOptionsTest(TestCase):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["site"],
-                    "option_type": "booth ticket option",
+                    "option_type": "booth ticket",
                     "allowed": list(config_structure.TICKET_KEYS),
                 },
             ),
@@ -69,7 +69,7 @@ class ValidateTicketOptionsTest(TestCase):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["port"],
-                    "option_type": "booth ticket option",
+                    "option_type": "booth ticket",
                     "allowed": list(config_structure.TICKET_KEYS),
                 },
             ),
@@ -87,7 +87,7 @@ class ValidateTicketOptionsTest(TestCase):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["unknown"],
-                    "option_type": "booth ticket option",
+                    "option_type": "booth ticket",
                     "allowed": list(config_structure.TICKET_KEYS),
                 },
                 report_codes.FORCE_OPTIONS
@@ -119,7 +119,7 @@ class ValidateTicketOptionsTest(TestCase):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["site"],
-                    "option_type": "booth ticket option",
+                    "option_type": "booth ticket",
                     "allowed": list(config_structure.TICKET_KEYS),
                 },
             ),
@@ -142,7 +142,7 @@ class ValidateTicketOptionsTest(TestCase):
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["unknown"],
-                        "option_type": "booth ticket option",
+                        "option_type": "booth ticket",
                         "allowed": list(config_structure.TICKET_KEYS),
                     },
                 ),

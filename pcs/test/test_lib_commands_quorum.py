@@ -407,7 +407,7 @@ class SetQuorumOptionsTest(TestCase, CmanMixin):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["invalid"],
-                    "option_type": "quorum option",
+                    "option_type": "quorum",
                     "allowed": [
                         "auto_tie_breaker",
                         "last_man_standing",
@@ -693,7 +693,7 @@ class AddDeviceTest(TestCase, CmanMixin):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["bad_option"],
-                    "option_type": "quorum device option",
+                    "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 },
                 report_codes.FORCE_OPTIONS
@@ -731,7 +731,7 @@ class AddDeviceTest(TestCase, CmanMixin):
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["bad_option"],
-                        "option_type": "quorum device option",
+                        "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     }
                 ),
@@ -2009,7 +2009,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["bad_option"],
-                    "option_type": "quorum device option",
+                    "option_type": "quorum device",
                     "allowed": ["sync_timeout", "timeout"],
                 },
                 report_codes.FORCE_OPTIONS
@@ -2040,7 +2040,7 @@ class UpdateDeviceTest(TestCase, CmanMixin):
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["bad_option"],
-                        "option_type": "quorum device option",
+                        "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                     }
                 )

@@ -70,7 +70,7 @@ def create(
     report_processor.process_list(
         resource_agent.validate_parameters(
             instance_attributes,
-            parameters_type="resource option",
+            parameters_type="resource",
             allow_invalid=allow_invalid_instance_attributes,
         )
     )

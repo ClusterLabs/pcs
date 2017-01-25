@@ -148,16 +148,14 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.EMPTY_RESOURCE_SET_LIST: "Resource set list is empty",
 
     codes.REQUIRED_OPTION_IS_MISSING: lambda info:
-        "required {desc}{option_names_list} {are} missing"
+        "required {desc}option{s} {option_names_list} {are} missing"
         .format(
-            desc="{0}{1}".format(
-                format_optional(info["option_type"], "{0}", "option"),
-                "s " if len(info["option_names"]) > 1 else " "
-            ),
+            desc=format_optional(info["option_type"], "{0} "),
             option_names_list=", ".join(sorted([
                 "'{0}'".format(name)
                 for name in info["option_names"]
             ])),
+            s=("s" if len(info["option_names"]) > 1 else ""),
             are=(
                 "are" if len(info["option_names"]) > 1
                 else "is"
@@ -167,18 +165,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.INVALID_OPTION: lambda info:
         (
-            "invalid {desc}{option_names_list},"
+            "invalid {desc}option{s} {option_names_list},"
             " allowed option{are} {allowed_values}"
         ).format(
-            desc="{0}{1}".format(
-                format_optional(info["option_type"], "{0}", "option"),
-                "s: " if len(info["option_names"]) > 1 else " "
-            ),
+            desc=format_optional(info["option_type"], "{0} "),
             allowed_values=", ".join(sorted(info["allowed"])),
             option_names_list=", ".join(sorted([
                 "'{0}'".format(name)
                 for name in info["option_names"]
             ])),
+            s=("s:" if len(info["option_names"]) > 1 else ""),
             are=("s are:" if len(info["allowed"]) > 1 else " is"),
             **info
         )
@@ -219,8 +215,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.MUTUALLY_EXCLUSIVE_OPTIONS: lambda info:
-        "{desc}s {option_names} are muttually exclusive".format(
-            desc=(format_optional(info["option_type"], "{0}", "option")),
+        "{desc}options {option_names} are muttually exclusive".format(
+            desc=format_optional(info["option_type"], "{0} "),
             option_names = ", ".join([
                 "'{0}'".format(name)
                 for name in sorted(info["option_names"])[:-1]

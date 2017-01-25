@@ -78,7 +78,7 @@ normalize = validate.option_value_normalization({
 })
 
 OPERATION_OPTIONS_VALIDATORS = [
-    validate.is_required("name", "resource operation option"),
+    validate.is_required("name", "resource operation"),
     validate.value_in("role", ROLE_VALUES),
     validate.value_in("requires", REQUIRES_VALUES),
     validate.value_in("on-fail", ON_FAIL_VALUES),
@@ -86,7 +86,7 @@ OPERATION_OPTIONS_VALIDATORS = [
     validate.value_in("enabled", BOOLEAN_VALUES),
     validate.mutually_exclusive(
         ["interval-origin", "start-delay"],
-        "resource operation option"
+        "resource operation"
     )
 ]
 
@@ -149,7 +149,7 @@ def validate_operation(operation, options_validator_list):
     report_list = validate.names_in(
         ATTRIBUTES,
         operation.keys(),
-        "resource operation option",
+        "resource operation",
     )
 
     report_list.extend(validate.run_collection_of_option_validators(

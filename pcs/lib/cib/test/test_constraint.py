@@ -122,7 +122,7 @@ class PrepareOptionsTest(TestCase):
                 report_codes.INVALID_OPTION,
                 {
                     "option_names": ["b"],
-                    "option_type": "option",
+                    "option_type": None,
                     "allowed": ["a", "id"],
                 }
             ),

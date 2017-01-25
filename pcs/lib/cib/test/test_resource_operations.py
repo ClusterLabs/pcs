@@ -253,7 +253,7 @@ class ValidateOperation(TestCase):
                     report_codes.INVALID_OPTION,
                     {
                         "option_names": ["unknown"],
-                        "option_type": "resource operation option",
+                        "option_type": "resource operation",
                         "allowed": sorted(operations.ATTRIBUTES),
                     },
                     None
@@ -272,7 +272,7 @@ class ValidateOperation(TestCase):
                     report_codes.REQUIRED_OPTION_IS_MISSING,
                     {
                         "option_names": ["name"],
-                        "option_type": "resource operation option",
+                        "option_type": "resource operation",
                     },
                     None
                 ),
@@ -292,7 +292,7 @@ class ValidateOperation(TestCase):
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     {
                         "option_names": ["interval-origin", "start-delay"],
-                        "option_type": "resource operation option",
+                        "option_type": "resource operation",
                     },
                     None
                 ),

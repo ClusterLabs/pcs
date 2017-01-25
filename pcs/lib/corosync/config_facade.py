@@ -147,11 +147,7 @@ class ConfigFacade(object):
             allowed_names = self.__class__.QUORUM_OPTIONS
             if name not in allowed_names:
                 report_items.append(
-                    reports.invalid_option(
-                        [name],
-                        allowed_names,
-                        "quorum option"
-                    )
+                    reports.invalid_option([name], allowed_names, "quorum")
                 )
                 continue
 
@@ -405,7 +401,7 @@ class ConfigFacade(object):
                 report_items.append(reports.invalid_option(
                     [name],
                     allowed_options,
-                    "quorum device model option",
+                    "quorum device model",
                     severity,
                     forceable
                 ))
@@ -485,7 +481,7 @@ class ConfigFacade(object):
                 report_items.append(reports.invalid_option(
                     [name],
                     allowed_options,
-                    "quorum device option",
+                    "quorum device",
                     severity if name != "model" else ReportItemSeverity.ERROR,
                     forceable if name != "model" else None
                 ))
