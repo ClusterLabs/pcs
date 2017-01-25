@@ -151,6 +151,68 @@ class ValueIn(TestCase):
             ]
         )
 
+    def test_supports_another_report_option_name(self):
+        assert_report_item_list_equal(
+            validate.value_in("a", ["b"], option_name_for_report="option a")(
+                {"a": "c"}
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "option a",
+                        "option_value": "c",
+                        "allowed_values": ["b"],
+                    },
+                    None
+                ),
+            ]
+        )
+
+    def test_supports_forceable_errors(self):
+        assert_report_item_list_equal(
+            validate.value_in("a", ["b"], code_to_allow_extra_values="FORCE")(
+                {"a": "c"}
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "c",
+                        "allowed_values": ["b"],
+                    },
+                    "FORCE"
+                ),
+            ]
+        )
+
+    def test_supports_warning(self):
+        assert_report_item_list_equal(
+            validate.value_in(
+                "a",
+                ["b"],
+                code_to_allow_extra_values="FORCE",
+                allow_extra_values=True
+            )(
+                {"a": "c"}
+            ),
+            [
+                (
+                    severities.WARNING,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "a",
+                        "option_value": "c",
+                        "allowed_values": ["b"],
+                    },
+                    None
+                ),
+            ]
+        )
+
 class MutuallyExclusive(TestCase):
     def test_returns_empty_report_when_valid(self):
         assert_report_item_list_equal(

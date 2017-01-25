@@ -115,13 +115,23 @@ def is_required(option_name, option_type="option"):
         return []
     return validate
 
-def value_in(option_name, allowed_values):
+def value_in(
+    option_name, allowed_values, option_name_for_report=None,
+    code_to_allow_extra_values=None, allow_extra_values=False
+):
     """
     Return a the function that takes option_dict and returns report list
     (with INVALID_OPTION_VALUE when option_name is not in allowed_values).
 
     string option_name is name of option of option_dict that will be tested
     list allowed_values contains all possibilities of option value
+    string option_name_for_report is substitued by option name if is None
+    string code_to_allow_extra_values is code for forcing invalid names. If it is
+        empty report INVALID_OPTION is non-forceable error. If it is not empty
+        report INVALID_OPTION is forceable error or warning.
+    bool allow_extra_values is flag that complements code_to_allow_extra_values
+        and determines wheter is report INVALID_OPTION forceable error or
+        warning.
     """
     def validate(option_dict):
         if option_name not in option_dict:
@@ -132,8 +142,15 @@ def value_in(option_name, allowed_values):
             value = ValuePair(value, value)
 
         if(value.normalized not in allowed_values):
-            return [reports.invalid_option_value(
-                option_name,
+            create_report = reports.get_creator(
+                code_to_allow_extra_values,
+                allow_extra_values
+            )
+            return [create_report(
+                reports.invalid_option_value,
+                option_name_for_report if option_name_for_report is not None
+                    else option_name
+                ,
                 value.original,
                 allowed_values,
             )]

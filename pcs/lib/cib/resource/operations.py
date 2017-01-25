@@ -109,16 +109,21 @@ def prepare(
         validate.values_to_pairs(op, normalize) for op in raw_operation_list
     ]
 
-    report_list = validate.names_in(
-        allowed_operation_name_list,
-        [o["name"].normalized for o in operations_to_validate if "name" in o],
-        option_type="resource operation name",
-        code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
-        allow_extra_names=allow_invalid,
-    )
+    report_list = []
 
+    options_validators = OPERATION_OPTIONS_VALIDATORS + [
+        validate.value_in(
+            "name",
+            allowed_operation_name_list,
+            option_name_for_report="operation name",
+            code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
+            allow_extra_values=allow_invalid,
+        )
+    ]
     for operation in operations_to_validate:
-        report_list.extend(validate_operation(operation))
+        report_list.extend(
+            validate_operation(operation, options_validators)
+        )
 
     operation_list = [
         validate.pairs_to_values(op) for op in operations_to_validate
@@ -135,7 +140,7 @@ def prepare(
         default_operation_list
     )
 
-def validate_operation(operation):
+def validate_operation(operation, options_validator_list):
     """
     Return a list with reports (ReportItems) about problems inside
         operation.
@@ -149,7 +154,7 @@ def validate_operation(operation):
 
     report_list.extend(validate.run_collection_of_option_validators(
         operation,
-        OPERATION_OPTIONS_VALIDATORS
+        options_validator_list
     ))
 
     return report_list

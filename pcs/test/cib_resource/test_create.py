@@ -444,9 +444,9 @@ class SuccessOperations(ResourceTest):
                 </primitive>
             </resources>"""
             ,
-            "Warning: invalid resource operation name 'monitro', allowed"
-               " options are: meta-data, migrate_from, migrate_to, monitor,"
-                " reload, start, stop, validate-all\n"
+            "Warning: 'monitro' is not a valid operation name value, use"
+                " meta-data, migrate_from, migrate_to, monitor, reload, start,"
+                " stop, validate-all\n"
         )
 
 class SuccessGroup(ResourceTest):
@@ -1042,9 +1042,9 @@ class FailOrWarn(ResourceTest):
     def test_fail_on_unknown_operation(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy op monitro interval=100",
-            "Error: invalid resource operation name 'monitro', allowed"
-               " options are: meta-data, migrate_from, migrate_to, monitor,"
-                " reload, start, stop, validate-all, use --force to override\n"
+            "Error: 'monitro' is not a valid operation name value, use"
+                " meta-data, migrate_from, migrate_to, monitor, reload, start,"
+                " stop, validate-all, use --force to override\n"
         )
 
     def test_fail_on_ambiguous_value_of_option(self):
