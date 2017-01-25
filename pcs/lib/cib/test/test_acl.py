@@ -972,13 +972,13 @@ class Find(TestCase):
     def test_refuses_bad_tag(self):
         self.assertRaises(
             AssertionError,
-            lambda: lib.find("bad_tag", "acl_section", "id")
+            lambda: lib._find("bad_tag", "acl_section", "id")
         )
 
     @mock.patch("pcs.lib.cib.acl.find_element_by_tag_and_id")
     def test_map_well_to_common_finder(self, common_finder):
         common_finder.return_value = "element"
-        self.assertEqual("element", lib.find(
+        self.assertEqual("element", lib._find(
             lib.TAG_GROUP, "acl_section", "group_id",
             none_if_id_unused=True,
             id_description="some description"
@@ -994,7 +994,7 @@ class Find(TestCase):
     @mock.patch("pcs.lib.cib.acl.find_element_by_tag_and_id")
     def test_map_well_to_common_finder_with_automatic_desc(self, common_finder):
         common_finder.return_value = "element"
-        self.assertEqual("element", lib.find(
+        self.assertEqual("element", lib._find(
             lib.TAG_GROUP, "acl_section", "group_id", none_if_id_unused=True
         ))
         common_finder.assert_called_once_with(

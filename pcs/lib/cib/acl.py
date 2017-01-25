@@ -67,7 +67,7 @@ def validate_permissions(tree, permission_info_list):
         raise LibraryError(*report_items)
 
 
-def find(
+def _find(
     tag, acl_section, element_id, none_if_id_unused=False, id_description=None
 ):
     if tag not in TAG_DESCRIPTION_MAP.keys():
@@ -83,9 +83,9 @@ def find(
         none_if_id_unused=none_if_id_unused,
     )
 
-find_group = partial(find, TAG_GROUP)
-find_role = partial(find, TAG_ROLE)
-find_target = partial(find, TAG_TARGET)
+find_group = partial(_find, TAG_GROUP)
+find_role = partial(_find, TAG_ROLE)
+find_target = partial(_find, TAG_TARGET)
 
 def find_target_or_group(acl_section, target_or_group_id):
     """
@@ -94,6 +94,10 @@ def find_target_or_group(acl_section, target_or_group_id):
     only target element will be affected by this function.
     Raises LibraryError if there is no target or group element with
     specified id.
+
+    This approach is DEPRECATED and it is there only for backward compatibility
+    reason. It is better to know explicitly whether we need target(user) or
+    group.
 
     acl_section -- cib etree node
     target_or_group_id -- id of target/group element which should be returned
@@ -293,7 +297,7 @@ def remove_permission(acl_section, permission_id):
     acl_section -- etree node
     permission_id -- id of permission element to be removed
     """
-    permission = find(TAG_PERMISSION, acl_section, permission_id)
+    permission = _find(TAG_PERMISSION, acl_section, permission_id)
     permission.getparent().remove(permission)
 
 
