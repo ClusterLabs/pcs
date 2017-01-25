@@ -19,7 +19,7 @@ from pcs.test.tools.pcs_unittest import mock, TestCase
 from pcs.common import report_codes
 from pcs.lib.cib import acl as lib
 from pcs.lib.cib.tools import get_acls
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.lib.errors import ReportItemSeverity as severities, LibraryError
 
 class LibraryAclTest(TestCase):
     def setUp(self):
@@ -330,15 +330,25 @@ class AssignRoleTest(LibraryAclTest):
         )
 
 
+@mock.patch("pcs.lib.cib.acl._assign_role")
 class AssignAllRoles(TestCase):
-    @mock.patch("pcs.lib.cib.acl.assign_role")
-    def test_(self, assign_role):
+    def test_success(self, assign_role):
+        assign_role.return_value = []
         lib.assign_all_roles("acl_section", ["1", "2", "3"], "element")
-        self.assertEqual(assign_role.mock_calls, [
+        assign_role.assert_has_calls([
             mock.call("acl_section", "1", "element"),
             mock.call("acl_section", "2", "element"),
             mock.call("acl_section", "3", "element"),
-        ])
+        ], any_order=True)
+
+    def test_fail_on_error_report(self, assign_role):
+        assign_role.return_value = ['report']
+        self.assertRaises(
+            LibraryError,
+            lambda:
+            lib.assign_all_roles("acl_section", ["1", "2", "3"], "element")
+        )
+
 
 
 class UnassignRoleTest(LibraryAclTest):

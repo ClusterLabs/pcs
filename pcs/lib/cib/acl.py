@@ -148,6 +148,21 @@ def remove_role(acl_section, role_id, autodelete_users_groups=False):
         if autodelete_users_groups and role_parent.find(".//role") is None:
             role_parent.getparent().remove(role_parent)
 
+def _assign_role(acl_section, role_id, target_el):
+    try:
+        role_el = find_role(acl_section, role_id)
+    except LibraryError as e:
+        return list(e.args)
+    assigned_role = target_el.find(
+        "./role[@id='{0}']".format(role_el.get("id"))
+    )
+    if assigned_role is not None:
+        return [reports.acl_role_is_already_assigned_to_target(
+            role_el.get("id"), target_el.get("id")
+        )]
+    etree.SubElement(target_el, "role", {"id": role_el.get("id")})
+    return []
+
 
 def assign_role(acl_section, role_id, target_el):
     """
@@ -157,17 +172,9 @@ def assign_role(acl_section, role_id, target_el):
     target_el -- etree element of target/group to which role should be assign
     role_el -- etree element of role
     """
-
-    role_el = find_role(acl_section, role_id)
-    assigned_role = target_el.find(
-        "./role[@id='{0}']".format(role_el.get("id"))
-    )
-    if assigned_role is not None:
-        raise LibraryError(reports.acl_role_is_already_assigned_to_target(
-            role_el.get("id"), target_el.get("id")
-        ))
-    etree.SubElement(target_el, "role", {"id": role_el.get("id")})
-
+    report_list = _assign_role(acl_section, role_id, target_el)
+    if report_list:
+        raise LibraryError(*report_list)
 
 def assign_all_roles(acl_section, role_id_list, element):
     """
@@ -178,8 +185,12 @@ def assign_all_roles(acl_section, role_id_list, element):
     element -- element to which specified roles should be assigned
     role_id_list -- list of role id
     """
+    report_list = []
     for role_id in role_id_list:
-        assign_role(acl_section, role_id, element)
+        report_list.extend(_assign_role(acl_section, role_id, element))
+    if report_list:
+        raise LibraryError(*report_list)
+
 
 
 def unassign_role(target_el, role_id, autodelete_target=False):
