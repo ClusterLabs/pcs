@@ -13,7 +13,7 @@ def parse_create(arg_list):
         set(["op", "meta", "clone", "master"]),
         implicit_first_group_key="options",
         group_repeated_keywords=["op"],
-        only_appeared_keywords=True,
+        only_found_keywords=True,
     )
 
     parts = {

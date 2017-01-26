@@ -70,13 +70,12 @@ def prepare_options(cmdline_args):
                 "duplicate option '{0}' with different values '{1}' and '{2}'"
                 .format(name, options[name], value)
             )
-        options[name] = value
     return options
 
 def group_by_keywords(
     arg_list, keyword_set,
     implicit_first_group_key=None, keyword_repeat_allowed=True,
-    group_repeated_keywords=None, only_appeared_keywords=False
+    group_repeated_keywords=None, only_found_keywords=False
 ):
     """
     Return dictionary with keywords as keys and following argumets as value.
@@ -96,11 +95,11 @@ def group_by_keywords(
         ["first", 1, 2, "second", 3, "first", 4] it returns
         {"first": [[1, 2], [4]], "second": [3]}.
         For these keywords is allowed repeating.
-    bool only_appeared_keywords is flag for deciding to (not)contain keywords
+    bool only_found_keywords is flag for deciding to (not)contain keywords
         that do not appeared in arg_list.
     """
 
-    def get_keywords_for_grouping(group_repeated_keywords):
+    def get_keywords_for_grouping():
         if not group_repeated_keywords:
             return []
         #implicit_first_group_key is not keyword: when it is in
@@ -117,7 +116,7 @@ def group_by_keywords(
 
     def get_completed_groups():
         completed_groups = groups.copy()
-        if not only_appeared_keywords:
+        if not only_found_keywords:
             for keyword in keyword_set:
                 if keyword not in completed_groups:
                     completed_groups[keyword] = []
@@ -141,7 +140,7 @@ def group_by_keywords(
     def process_keyword(keyword):
         if not is_acceptable_keyword_occurence(keyword):
             raise CmdLineInputError(
-                "Multiple use of keyword '{0}' is not possible".format(keyword)
+                "'{0}' cannot be used more than once".format(keyword)
             )
         groups.setdefault(keyword, [])
         if keyword in keywords_for_grouping:
@@ -154,7 +153,7 @@ def group_by_keywords(
         place.append(arg)
 
     groups = {}
-    keywords_for_grouping = get_keywords_for_grouping(group_repeated_keywords)
+    keywords_for_grouping = get_keywords_for_grouping()
 
     if arg_list:
         current_keyword = None
@@ -286,11 +285,15 @@ def upgrade_args(arg_list):
     args_without_options = filter_out_options(arg_list)
     for arg in arg_list:
         if arg in ["--cloneopt", "--clone"]:
+            #for every commands - kept as it was previously
             upgraded_args.append("clone")
         elif arg.startswith("--cloneopt="):
+            #for every commands - kept as it was previously
             upgraded_args.append("clone")
             upgraded_args.append(arg.split('=', 1)[1])
         elif(
+            #only for resource create - currently the only known problematic
+            #place
             arg == "--master"
             and
             args_without_options[:2] == ["resource", "create"]
