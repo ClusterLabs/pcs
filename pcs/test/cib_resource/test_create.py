@@ -908,15 +908,15 @@ class SuccessClone(ResourceTest):
 
 class FailOrWarn(ResourceTest):
     def test_error_group_clone_combination(self):
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " --group G"
             ,
-            "Error: you cannot specify both clone and group\n"
+            "Error: you cannot specify both clone and --group\n"
         )
 
     def test_error_master_clone_combination(self):
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --clone"
                 " --master"
             ,
@@ -924,11 +924,11 @@ class FailOrWarn(ResourceTest):
         )
 
     def test_warn_master_group_combination(self):
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --no-default-ops --master"
                 " --group G"
             ,
-            "Warning: --group ignored when creating a master\n"
+            "Error: you cannot specify both master and --group\n"
         )
 
     def test_fail_when_nonexisting_agent(self):
@@ -1227,12 +1227,29 @@ class FailOrWarnGroup(ResourceTest):
         )
 
 
-    def test_fail_when_specified_both_before_after(self):
+    def test_fail_when_entered_both_after_and_before(self):
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1"
-                " --before R1 --after R1"
-            ,
+            "resource create R ocf:heartbeat:Dummy --group G --after S1 --before S2",
             "Error: you cannot specify both --before and --after\n"
+        )
+
+    def test_fail_when_after_is_used_without_group(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy --after S1",
+            "Error: you cannot use --after without --group\n"
+        )
+
+    def test_fail_when_before_is_used_without_group(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy --before S1",
+            "Error: you cannot use --before without --group\n"
+        )
+
+    def test_fail_when_before_after_conflicts_and_moreover_without_group(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy --after S1 --before S2",
+            "Error: you cannot specify both --before and --after"
+                " and you have to specify --group\n"
         )
 
     def test_fail_when_before_does_not_exist(self):

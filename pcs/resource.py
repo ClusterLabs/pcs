@@ -29,7 +29,7 @@ from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
-from pcs.cli.common.console_report import error, warn
+from pcs.cli.common.console_report import error
 
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
@@ -592,17 +592,25 @@ def resource_create_refactoring(lib, argv, modifiers):
 
     parts = parse_create_args(argv[2:])
 
-    if "clone" in parts:
-        if modifiers["group"]:
-            error("you cannot specify both clone and group")
-        if "master" in parts:
-            error("you cannot specify both clone and master")
-    elif "master" in parts:
-        if modifiers["group"]:
-            warn("--group ignored when creating a master")
+    if "clone" in parts and modifiers["group"]:
+        raise error("you cannot specify both clone and --group")
 
-    if modifiers["after"] and modifiers["before"]:
-        raise error("you cannot specify both --before and --after")
+    if "clone" in parts and "master" in parts:
+        raise error("you cannot specify both clone and master")
+
+    if "master" in parts and modifiers["group"]:
+        raise error("you cannot specify both master and --group")
+
+    if modifiers["before"] and modifiers["after"]:
+        raise error("you cannot specify both --before and --after{0}".format(
+            "" if modifiers["group"] else " and you have to specify --group"
+        ))
+
+    if not modifiers["group"]:
+        if modifiers["before"]:
+            raise error("you cannot use --before without --group")
+        elif modifiers["after"]:
+            raise error("you cannot use --after without --group")
 
     settings = dict(
         allow_absent_agent=modifiers["force"],
