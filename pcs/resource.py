@@ -51,14 +51,7 @@ def resource_cmd(argv):
         elif sub_cmd == "describe":
             resource_list_options(lib, argv_next, modifiers)
         elif sub_cmd == "create":
-            if len(argv_next) < 2:
-                usage.resource(["create"])
-                sys.exit(1)
-            resource_create_refactoring(
-                lib,
-                argv_next,
-                group=utils.pcs_options.get("--group", None)
-            )
+            resource_create_refactoring(lib, argv_next, modifiers)
         elif sub_cmd == "move":
             resource_move(argv_next)
         elif sub_cmd == "ban":
@@ -589,33 +582,35 @@ def resource_create(
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
-def resource_create_refactoring(lib, argv, group=None):
+def resource_create_refactoring(lib, argv, modifiers):
+    if len(argv) < 2:
+        usage.resource(["create"])
+        sys.exit(1)
+
     ra_id = argv[0]
     ra_type = argv[1]
 
     parts = parse_create_args(argv[2:])
 
     if "clone" in parts:
-        if group:
+        if modifiers["group"]:
             error("you cannot specify both clone and group")
         if "master" in parts:
             error("you cannot specify both clone and master")
     elif "master" in parts:
-        if group:
+        if modifiers["group"]:
             warn("--group ignored when creating a master")
 
-    if "--after" in utils.pcs_options and "--before" in utils.pcs_options:
+    if modifiers["after"] and modifiers["before"]:
         raise error("you cannot specify both --before and --after")
 
-    force = "--force" in utils.pcs_options
-
     settings = dict(
-        allow_absent_agent=force,
-        allow_invalid_operation=force,
-        allow_invalid_instance_attributes=force,
-        use_default_operations="--no-default-ops" not in utils.pcs_options,
-        ensure_disabled="--disabled" in utils.pcs_options,
-        wait=utils.pcs_options.get("--wait", False)
+        allow_absent_agent=modifiers["force"],
+        allow_invalid_operation=modifiers["force"],
+        allow_invalid_instance_attributes=modifiers["force"],
+        use_default_operations=not modifiers["no-default-ops"],
+        ensure_disabled=modifiers["disabled"],
+        wait=modifiers["wait"],
     )
 
     if "clone" in parts:
@@ -634,7 +629,7 @@ def resource_create_refactoring(lib, argv, group=None):
             parts["master"],
             **settings
         )
-    elif not group:
+    elif not modifiers["group"]:
         lib.resource.create(
             ra_id, ra_type, parts["op"],
             parts["meta"],
@@ -644,15 +639,15 @@ def resource_create_refactoring(lib, argv, group=None):
     else:
         adjacent_resource_id = None
         put_after_adjacent = False
-        if "--after" in utils.pcs_options:
-            adjacent_resource_id = utils.pcs_options["--after"]
+        if modifiers["after"]:
+            adjacent_resource_id = modifiers["after"]
             put_after_adjacent = True
-        if "--before" in utils.pcs_options:
-            adjacent_resource_id = utils.pcs_options["--before"]
+        if modifiers["before"]:
+            adjacent_resource_id = modifiers["before"]
             put_after_adjacent = False
 
         lib.resource.create_in_group(
-            ra_id, ra_type, group, parts["op"],
+            ra_id, ra_type, modifiers["group"], parts["op"],
             parts["meta"],
             parts["options"],
             adjacent_resource_id=adjacent_resource_id,
