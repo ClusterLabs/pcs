@@ -270,7 +270,7 @@ class EnsureResourceState(TestCase):
         }
 
     def fixture_running_report(self, severity):
-        return (severity, report_codes.RESOURCE_RUN_ON_NODES, {
+        return (severity, report_codes.RESOURCE_RUNNING_ON_NODES, {
             "resource_id": self.resource_id,
             "roles_with_nodes": self.fixture_running_state_info(),
         })

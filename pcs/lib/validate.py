@@ -1,5 +1,5 @@
 """
-Module contains list of functions that should be usefull for validation.
+Module contains list of functions that should be useful for validation.
 Example of use (how things play together):
     >>> option_dict = {"some_option": "A"}
     >>> validators = [
@@ -142,7 +142,7 @@ def value_in(
             value = ValuePair(value, value)
 
         if(value.normalized not in allowed_values):
-            create_report = reports.get_creator(
+            create_report = reports.get_problem_creator(
                 code_to_allow_extra_values,
                 allow_extra_values
             )
@@ -167,13 +167,13 @@ def mutually_exclusive(mutually_exclusive_names, option_type="option"):
     string option_type describes type of option for reporting purposes
     """
     def validate(option_dict):
-        names_that_appeared = set.intersection(
+        found_names = set.intersection(
             set(option_dict.keys()),
             set(mutually_exclusive_names)
         )
-        if len(names_that_appeared) > 1:
+        if len(found_names) > 1:
             return [reports.mutually_exclusive_options(
-                sorted(list(names_that_appeared)),
+                sorted(found_names),
                 option_type,
             )]
         return []
@@ -215,7 +215,11 @@ def names_in(
     if not invalid_names:
         return []
 
-    return [reports.get_creator(code_to_allow_extra_names, allow_extra_names)(
+    create_report = reports.get_problem_creator(
+        code_to_allow_extra_names,
+        allow_extra_names
+    )
+    return [create_report(
         reports.invalid_option,
         sorted(invalid_names),
         sorted(allowed_name_list),

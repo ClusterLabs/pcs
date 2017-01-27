@@ -109,7 +109,7 @@ def id_not_found(info):
         )
     )
 
-def resource_run_on_nodes(info):
+def resource_running_on_nodes(info):
     role_label_map = {
         "Started": "running",
     }
@@ -215,7 +215,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.MUTUALLY_EXCLUSIVE_OPTIONS: lambda info:
-        "{desc}options {option_names} are muttually exclusive".format(
+        # "{desc}options {option_names} are muttually exclusive".format(
+        "Only one of {desc}options {option_names} can be used".format(
             desc=format_optional(info["option_type"], "{0} "),
             option_names = ", ".join([
                 "'{0}'".format(name)
@@ -646,7 +647,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION: lambda info: (
-        "multiple specification the same operation with the same interval:\n"
+        "multiple specification of the same operation with the same interval:\n"
         +"\n".join([
             "{0} with intervals {1}".format(name, ", ".join(intervals))
             for name, intervals_list in info["duplications"].items()
@@ -662,7 +663,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         ).format(**info)
     ,
 
-    codes.RESOURCE_RUN_ON_NODES:  resource_run_on_nodes,
+    codes.RESOURCE_RUNNING_ON_NODES:  resource_running_on_nodes,
 
     codes.RESOURCE_DOES_NOT_RUN: lambda info:
         "resource '{resource_id}' is not running on any node"

@@ -15,7 +15,7 @@ from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import (
     disable_meta,
     are_meta_disabled,
-    are_clone_meta_disabled
+    is_clone_deactivated_by_meta
 )
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.pacemaker.values import validate_id
@@ -93,7 +93,7 @@ def _create_as_clone_common(
         or
         are_meta_disabled(meta_attributes)
         or
-        are_clone_meta_disabled(clone_meta_options)
+        is_clone_deactivated_by_meta(clone_meta_options)
     )) as resources_section:
         primitive_element = resource.primitive.create(
             env.report_processor, resources_section,

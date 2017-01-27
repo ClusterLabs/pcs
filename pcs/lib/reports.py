@@ -69,7 +69,7 @@ def error(report_creator, *args, **kwargs):
         **kwargs
     )
 
-def get_creator(force_code=None, is_forced=False):
+def get_problem_creator(force_code=None, is_forced=False):
     """
     Returns report creator wraper (forceable_error or warning).
 
@@ -955,8 +955,9 @@ def object_with_id_in_unexpected_context(
 def id_not_found(id, id_description, context_type="", context_id=""):
     """
     specified id does not exist in CIB, user referenced a nonexisting id
-    id string specified id
-    id_description string decribe id's role
+    string id specified id
+    string id_description decribe id's role
+    string context_id specifies the search area
     """
     return ReportItem.error(
         report_codes.ID_NOT_FOUND,
@@ -997,7 +998,7 @@ def stonith_resources_do_not_exist(
         forceable=forceable
     )
 
-def resource_run_on_nodes(
+def resource_running_on_nodes(
     resource_id, roles_with_nodes, severity=ReportItemSeverity.INFO
 ):
     """
@@ -1005,12 +1006,9 @@ def resource_run_on_nodes(
 
     string resource_id represent the resource
     list of tuple roles_with_nodes contain pairs (role, node)
-    list started contain node names on which is resource started
-    list master contain node names on which is resource as master
-    list slave contain node names on which is resource as slave
     """
     return ReportItem(
-        report_codes.RESOURCE_RUN_ON_NODES,
+        report_codes.RESOURCE_RUNNING_ON_NODES,
         severity,
         info={
             "resource_id": resource_id,

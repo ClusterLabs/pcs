@@ -357,7 +357,7 @@ class CommonResourceTest(TestCase):
         self.env.report_processor.assert_reports([
             (
                 severities.INFO,
-                report_codes.RESOURCE_RUN_ON_NODES,
+                report_codes.RESOURCE_RUNNING_ON_NODES,
                 {
                     "roles_with_nodes": {"Started": ["node1"]},
                     "resource_id": "A",
@@ -379,7 +379,7 @@ class CommonResourceTest(TestCase):
             command,
             (
                 severities.ERROR,
-                report_codes.RESOURCE_RUN_ON_NODES,
+                report_codes.RESOURCE_RUNNING_ON_NODES,
                 {
                     'roles_with_nodes': {'Started': ['node1']},
                     'resource_id': 'A'

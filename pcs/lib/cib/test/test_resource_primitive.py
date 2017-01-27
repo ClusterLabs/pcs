@@ -57,7 +57,7 @@ class AppendNew(TestCase):
         append_new_meta_attributes,
         append_new_instance_attributes,
     ):
-        primitive_element = self.run("RESOURCE_ID", "OCF", "DUMMY")
+        primitive_element = self.run("RESOURCE_ID", "OCF", None, "DUMMY")
         self.assertEqual(
             primitive_element,
             self.resources_section.find(".//primitive")
@@ -79,7 +79,7 @@ class AppendNew(TestCase):
         append_new_meta_attributes,
         append_new_instance_attributes,
     ):
-        primitive_element = self.run("RESOURCE_ID", "OCF", "DUMMY", "HEARTBEAT")
+        primitive_element = self.run("RESOURCE_ID", "OCF", "HEARTBEAT", "DUMMY")
         self.assertEqual(
             primitive_element,
             self.resources_section.find(".//primitive")

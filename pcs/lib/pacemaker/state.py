@@ -188,7 +188,7 @@ def ensure_resource_state(
             severities.INFO if not expected_running else severities.ERROR
         ))
     else:
-        report_processor.process(reports.resource_run_on_nodes(
+        report_processor.process(reports.resource_running_on_nodes(
             resource_id,
             roles_with_nodes,
             severities.INFO if expected_running else severities.ERROR

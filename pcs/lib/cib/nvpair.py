@@ -13,7 +13,7 @@ from pcs.lib.cib.tools import (
     create_subelement_id,
 )
 
-def append_new_nvpair(nvset_element, name, value):
+def _append_new_nvpair(nvset_element, name, value):
     """
     Create nvpair with name and value as subelement of nvset_element.
 
@@ -41,7 +41,7 @@ def set_nvpair_in_nvset(nvset_element, name, value):
     nvpair = nvset_element.find("./nvpair[@name='{0}']".format(name))
     if nvpair is None:
         if value:
-            append_new_nvpair(nvset_element, name, value)
+            _append_new_nvpair(nvset_element, name, value)
     else:
         if value:
             nvpair.set("value", value)
@@ -91,7 +91,7 @@ def append_new_nvset(tag_name, context_element, nvpair_dict):
         "id": create_subelement_id(context_element, tag_name)
     })
     for name, value in sorted(nvpair_dict.items()):
-        append_new_nvpair(nvset_element, name, value)
+        _append_new_nvpair(nvset_element, name, value)
 
 append_new_instance_attributes = partial(
     append_new_nvset,

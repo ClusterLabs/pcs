@@ -453,7 +453,8 @@ class ResourceOperationIntevalDuplicationTest(NameBuildTest):
     code = codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION
     def test_build_message_with_data(self):
         self.assert_message_from_info(
-            "multiple specification the same operation with the same interval:"
+            "multiple specification of the same operation with the same"
+                " interval:"
                 "\nmonitor with intervals 3600s, 60m, 1h"
                 "\nmonitor with intervals 60s, 1m"
             ,
@@ -498,7 +499,7 @@ class IdBelongsToUnexpectedType(NameBuildTest):
         })
 
 class ResourceRunOnNodes(NameBuildTest):
-    code = codes.RESOURCE_RUN_ON_NODES
+    code = codes.RESOURCE_RUNNING_ON_NODES
     def test_one_node(self):
         self.assert_message_from_info(
             "resource 'R' is running on node 'node1'",
@@ -547,7 +548,7 @@ class MutuallyExclusiveOptions(NameBuildTest):
     code = codes.MUTUALLY_EXCLUSIVE_OPTIONS
     def test_build_message(self):
         self.assert_message_from_info(
-            "some options 'a' and 'b' are muttually exclusive",
+            "Only one of some options 'a' and 'b' can be used",
             {
                 "option_type": "some",
                 "option_names": ["a", "b"],

@@ -1012,8 +1012,8 @@ class FailOrWarnOp(ResourceTest):
                 " monitor interval=1min monitor interval=60s"
             ,
             [
-                "Error: multiple specification the same operation with the same"
-                    " interval:"
+                "Error: multiple specification of the same operation with the"
+                    " same interval:"
                 ,
                 "monitor with intervals 1h, 3600sec",
                 "monitor with intervals 1min, 60s",
@@ -1099,8 +1099,8 @@ class FailOrWarnOp(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor start-delay=10 interval-origin=20"
             ,
-            "Error: resource operation options 'interval-origin' and"
-                " 'start-delay' are muttually exclusive\n"
+            "Error: Only one of resource operation options 'interval-origin'"
+                " and 'start-delay' can be used\n"
         )
 
 class FailOrWarnGroup(ResourceTest):

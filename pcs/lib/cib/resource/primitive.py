@@ -33,7 +33,7 @@ def create(
     ensure_disabled=False,
 ):
     """
-    Prepare all parts of primitive resource and push it to cib.
+    Prepare all parts of primitive resource and append it into cib.
 
     report_processor is a tool for warning/info/error reporting
     etree.Element resources_section is place where new element will be appended
@@ -79,16 +79,15 @@ def create(
         resources_section,
         resource_id,
         resource_agent.get_standard(),
-        resource_agent.get_type(),
         resource_agent.get_provider(),
+        resource_agent.get_type(),
         instance_attributes=instance_attributes,
         meta_attributes=meta_attributes,
         operation_list=operation_list
     )
 
 def append_new(
-    resources_section, resource_id, standard, agent_type,
-    provider=None,
+    resources_section, resource_id, standard, provider, agent_type,
     instance_attributes=None,
     meta_attributes=None,
     operation_list=None
