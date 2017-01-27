@@ -7,7 +7,6 @@ from __future__ import (
 
 from pcs.lib import resource_agent
 from pcs.lib.commands.resource_agent import _complete_agent_list
-from pcs.lib.errors import LibraryError
 
 
 def list_agents(lib_env, describe=True, search=None):

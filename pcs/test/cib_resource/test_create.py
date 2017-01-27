@@ -171,7 +171,10 @@ class Success(ResourceTest):
 
     def test_with_master(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --master",
+            [
+                "resource create R ocf:heartbeat:Dummy --no-default-ops --master",
+                "resource create R ocf:heartbeat:Dummy --no-default-ops master",
+            ],
             """<resources>
                 <master id="R-master">
                     <primitive class="ocf" id="R" provider="heartbeat"
@@ -180,34 +183,6 @@ class Success(ResourceTest):
                         <operations>
                             <op id="R-monitor-interval-10" interval="10"
                                 name="monitor" timeout="20"
-                            />
-                        </operations>
-                    </primitive>
-                </master>
-            </resources>"""
-        )
-
-    def test_with_master_options(self):
-        self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
-                " ip=192.168.0.99 cidr_netmask=32 --master"
-            ,
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="IPaddr2"
-                    >
-                        <instance_attributes id="R-instance_attributes">
-                            <nvpair id="R-instance_attributes-cidr_netmask"
-                                name="cidr_netmask" value="32"
-                            />
-                            <nvpair id="R-instance_attributes-ip" name="ip"
-                                value="192.168.0.99"
-                            />
-                        </instance_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor" timeout="20s"
                             />
                         </operations>
                     </primitive>
@@ -740,69 +715,6 @@ class SuccessMaster(ResourceTest):
             </resources>"""
         )
 
-    def test_not_steal_primitive_meta_attributes(self):
-        self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
-                " ip=192.168.0.99 cidr_netmask=32 meta is-managed=false"
-                " --master"
-            ,
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="IPaddr2"
-                    >
-                        <instance_attributes id="R-instance_attributes">
-                            <nvpair id="R-instance_attributes-cidr_netmask"
-                                name="cidr_netmask" value="32"
-                            />
-                            <nvpair id="R-instance_attributes-ip" name="ip"
-                                value="192.168.0.99"
-                            />
-                        </instance_attributes>
-                        <meta_attributes id="R-meta_attributes">
-                            <nvpair id="R-meta_attributes-is-managed"
-                                name="is-managed" value="false"
-                            />
-                        </meta_attributes>
-                        <operations>
-                            <op id="R-monitor-interval-10s" interval="10s"
-                                name="monitor" timeout="20s"
-                            />
-                        </operations>
-                    </primitive>
-                </master>
-            </resources>"""
-        )
-
-    def test_master_places_disabled_correctly(self):
-        self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --master --disabled",
-            """<resources>
-                <master id="R-master">
-                    <primitive class="ocf" id="R" provider="heartbeat"
-                        type="Dummy"
-                    >
-                        <operations>
-                            <op id="R-monitor-interval-10" interval="10"
-                                name="monitor" timeout="20"
-                            />
-                            <op id="R-start-interval-0s" interval="0s"
-                                name="start" timeout="20"
-                            />
-                            <op id="R-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="R-master-meta_attributes">
-                        <nvpair id="R-master-meta_attributes-target-role"
-                            name="target-role" value="Stopped"
-                        />
-                    </meta_attributes>
-                </master>
-            </resources>"""
-        )
-
 class SuccessClone(ResourceTest):
     def test_clone_does_not_overshadow_meta_options(self):
         self.assert_effect(
@@ -941,8 +853,19 @@ class FailOrWarn(ResourceTest):
         )
 
     def test_warn_when_forcing_noexistent_agent(self):
-        self.assert_pcs_success(
+        self.assert_effect(
             "resource create R ocf:heartbeat:NoExisting --force",
+            """<resources>
+                <primitive class="ocf" id="R" provider="heartbeat"
+                    type="NoExisting"
+                >
+                    <operations>
+                        <op id="R-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
             "Warning: Agent 'ocf:heartbeat:NoExisting' is not installed or does"
             " not provide valid metadata: Metadata query for"
             " ocf:heartbeat:NoExisting failed: -5\n"
@@ -952,6 +875,13 @@ class FailOrWarn(ResourceTest):
     def test_fail_on_invalid_resource_agent_name(self):
         self.assert_pcs_fail(
             "resource create R invalid_agent_name",
+            "Error: Unable to find agent 'invalid_agent_name', try specifying"
+                " its full name\n"
+        )
+
+    def test_fail_on_invalid_resource_agent_name_even_if_forced(self):
+        self.assert_pcs_fail(
+            "resource create R invalid_agent_name --force",
             "Error: Unable to find agent 'invalid_agent_name', try specifying"
                 " its full name\n"
         )
@@ -1066,6 +996,15 @@ class FailOrWarnOp(ResourceTest):
                 " least one option\n"
         )
 
+    def test_fail_only_name_without_any_option(self):
+        self.assert_pcs_fail(
+            "resource create --no-default-ops R ocf:heartbeat:Dummy"
+                " op monitor meta is-managed=false"
+            ,
+            "Error: When using 'op' you must specify an operation name and at"
+                " least one option\n"
+        )
+
     def test_fail_duplicit(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
@@ -1121,7 +1060,7 @@ class FailOrWarnOp(ResourceTest):
         )
 
     def test_fail_on_invalid_requires(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor requires=Abc"
             ,
@@ -1130,7 +1069,7 @@ class FailOrWarnOp(ResourceTest):
         )
 
     def test_fail_on_invalid_on_fail(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor on-fail=Abc"
             ,
@@ -1139,7 +1078,7 @@ class FailOrWarnOp(ResourceTest):
         )
 
     def test_fail_on_invalid_record_pending(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor record-pending=Abc"
             ,
@@ -1148,7 +1087,7 @@ class FailOrWarnOp(ResourceTest):
         )
 
     def test_fail_on_invalid_enabled(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor enabled=Abc"
             ,
@@ -1156,7 +1095,7 @@ class FailOrWarnOp(ResourceTest):
         )
 
     def test_fail_on_combination_of_start_delay_and_interval_origin(self):
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor start-delay=10 interval-origin=20"
             ,
@@ -1170,37 +1109,6 @@ class FailOrWarnGroup(ResourceTest):
             "resource create R ocf:heartbeat:Dummy --group 1",
             "Error: invalid group name '1', '1' is not a valid first character"
                 " for a group name\n"
-        )
-
-    def test_fail_when_group_id_in_use_as_primitive(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --group R",
-            "Error: 'R' is not a group\n"
-        )
-
-    def test_fail_when_group_id_in_use_as_existing_primitive(self):
-        self.assert_pcs_success("resource create R1 ocf:heartbeat:Dummy")
-        self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group R1",
-            "Error: 'R1' is not a group\n"
-        )
-
-    def test_fail_when_group_id_in_use_as_clone(self):
-        self.assert_pcs_success(
-            "resource create R1 ocf:heartbeat:Dummy --clone"
-        )
-        self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group R1-clone",
-            "Error: 'R1-clone' is not a group\n"
-        )
-
-    def test_fail_when_group_id_in_use_as_master(self):
-        self.assert_pcs_success(
-            "resource create R1 ocf:heartbeat:Dummy --master"
-        )
-        self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group R1-master",
-            "Error: 'R1-master' is not a group\n"
         )
 
     def test_fail_when_try_use_id_of_another_element(self):

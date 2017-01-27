@@ -66,25 +66,25 @@ class ParseCreateArgs(TestCase):
     def test_args_op_clone_meta(self):
         self.assert_produce([
             "a=b", "c=d",
-            "meta", "a=b", "c=d",
-            "op", "monitor", "a=b", "c=d", "start", "e=f",
-            "clone", "a=b", "c=d",
+            "meta", "e=f", "g=h",
+            "op", "monitor", "i=j", "k=l", "start", "m=n",
+            "clone", "o=p", "q=r",
         ], {
             "options": {
                 "a": "b",
                 "c": "d",
             },
             "op": [
-                {"name": "monitor", "a": "b", "c": "d"},
-                {"name": "start", "e": "f"},
+                {"name": "monitor", "i": "j", "k": "l"},
+                {"name": "start", "m": "n"},
             ],
             "meta": {
-                "a": "b",
-                "c": "d",
+                "e": "f",
+                "g": "h",
             },
             "clone": {
-                "a": "b",
-                "c": "d",
+                "o": "p",
+                "q": "r",
             },
         })
 

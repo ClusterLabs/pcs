@@ -115,6 +115,14 @@ class ValueIn(TestCase):
             validate.value_in("a", ["b"])({"a": "b"})
         )
 
+    def test_returns_empty_report_on_valid_normalized_option(self):
+        self.assertEqual(
+            [],
+            validate.value_in("a", ["b"])(
+                {"a": validate.ValuePair(original="C", normalized="b")}
+            ),
+        )
+
     def test_returns_report_about_invalid_option(self):
         assert_report_item_list_equal(
             validate.value_in("a", ["b"])({"a": "c"}),

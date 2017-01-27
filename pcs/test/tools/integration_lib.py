@@ -21,7 +21,7 @@ class Call(object):
                 expected_stdin.decode(),
                 stdin,
                 (
-                    "Trying run command {0}. command"
+                    "Trying to run command no. {0}"
                     "\n\n    '{1}'\n\nwith expected xml stdin.\n"
                 ).format(order_num,  command)
             )

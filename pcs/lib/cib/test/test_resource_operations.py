@@ -32,7 +32,7 @@ class Prepare(TestCase):
         get_remaining_defaults
     ):
         validate_operation.side_effect = lambda operation, validator_list: [
-            operation["name"].normalized #values commes here in ValuePairs
+            operation["name"].normalized #values comes here in ValuePairs
         ]
         validate_value_in.return_value = "value_in"
         validate_different_intervals.return_value = ["different_interval"]

@@ -506,7 +506,6 @@ class CreateAsMaster(CommonResourceTest):
     def get_create(self):
         return resource.create_as_master
 
-
     def simplest_create(
         self, wait=False, disabled=False, meta_attributes=None,
         master_meta_options=None
@@ -524,23 +523,10 @@ class CreateAsMaster(CommonResourceTest):
         )
 
     def test_simplest_resource(self):
-        self.assert_command_effect(self.simplest_create, """<resources>
-            <master id="A-master">
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
-                        />
-                        <op id="A-start-interval-0s" interval="0s" name="start"
-                            timeout="20"
-                        />
-                        <op id="A-stop-interval-0s" interval="0s" name="stop"
-                            timeout="20"
-                        />
-                    </operations>
-                </primitive>
-            </master>
-        </resources>""")
+        self.assert_command_effect(
+            self.simplest_create,
+            fixture_cib_resources_xml_master_simplest
+        )
 
     def test_fail_wait(self):
         self.assert_wait_fail(
@@ -777,23 +763,10 @@ class CreateAsClone(CommonResourceTest):
         )
 
     def test_simplest_resource(self):
-        self.assert_command_effect(self.simplest_create, """<resources>
-            <clone id="A-clone">
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-                    <operations>
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
-                        />
-                        <op id="A-start-interval-0s" interval="0s" name="start"
-                            timeout="20"
-                        />
-                        <op id="A-stop-interval-0s" interval="0s" name="stop"
-                            timeout="20"
-                        />
-                    </operations>
-                </primitive>
-            </clone>
-        </resources>""")
+        self.assert_command_effect(
+            self.simplest_create,
+            fixture_cib_resources_xml_clone_simplest
+        )
 
     def test_fail_wait(self):
         self.assert_wait_fail(

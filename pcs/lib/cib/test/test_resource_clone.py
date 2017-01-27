@@ -16,7 +16,7 @@ class AppendNewCommon(TestCase):
         self.cib = etree.fromstring("""
             <cib>
                 <resources>
-                    <primitive/>
+                    <primitive id="R"/>
                 </resources>
             </cib>
         """)
@@ -36,8 +36,8 @@ class AppendNewCommon(TestCase):
         self.assert_clone_effect({}, """
             <cib>
                 <resources>
-                    <clone id="None-clone">
-                        <primitive></primitive>
+                    <clone id="R-clone">
+                        <primitive id="R"/>
                     </clone>
                 </resources>
             </cib>
@@ -47,10 +47,10 @@ class AppendNewCommon(TestCase):
         self.assert_clone_effect({"a": "b"}, """
             <cib>
                 <resources>
-                    <clone id="None-clone">
-                        <primitive></primitive>
-                        <meta_attributes id="None-clone-meta_attributes">
-                            <nvpair id="None-clone-meta_attributes-a"
+                    <clone id="R-clone">
+                        <primitive id="R"/>
+                        <meta_attributes id="R-clone-meta_attributes">
+                            <nvpair id="R-clone-meta_attributes-a"
                                 name="a" value="b"
                             />
                         </meta_attributes>

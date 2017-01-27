@@ -18,7 +18,7 @@ class DisableMeta(TestCase):
     def test_modify_target_role(self):
         self.assertEqual(
             {"target-role": "Stopped"},
-            common.disable_meta({"target-role": "Stopped"})
+            common.disable_meta({"target-role": "Started"})
         )
 
 class AreMetaDisabled(TestCase):

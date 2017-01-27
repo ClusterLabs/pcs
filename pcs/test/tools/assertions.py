@@ -59,6 +59,12 @@ class AssertPcsMixin(object):
             returncode=1
         )
 
+    def assert_pcs_fail_regardless_of_force(
+        self, command, stdout_full=None, stdout_start=None
+    ):
+        self.assert_pcs_fail(command, stdout_full, stdout_start)
+        self.assert_pcs_fail(command+" --force", stdout_full, stdout_start)
+
     def assert_pcs_result(
         self, command, stdout_full=None, stdout_start=None, returncode=0
     ):
