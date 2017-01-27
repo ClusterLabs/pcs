@@ -22,53 +22,53 @@ Print pcs version information.
 .SS "Commands:"
 .TP
 cluster
-Configure cluster options and nodes.
+ Configure cluster options and nodes.
 .TP
 resource
-Manage cluster resources.
+ Manage cluster resources.
 .TP
 stonith
-Configure fence devices.
+ Manage fence devices.
 .TP
 constraint
-Set resource constraints.
+ Manage resource constraints.
 .TP
 property
-Set pacemaker properties.
+ Manage pacemaker properties.
 .TP
 acl
-Set pacemaker access control lists.
+ Manage pacemaker access control lists.
 .TP
 qdevice
-Manage quorum device provider on the local host.
+ Manage quorum device provider on the local host.
 .TP
 quorum
-Manage cluster quorum settings.
+ Manage cluster quorum settings.
 .TP
 booth
-Manage booth (cluster ticket manager).
+ Manage booth (cluster ticket manager).
 .TP
 status
-View cluster status.
+ View cluster status.
 .TP
 config
-View and manage cluster configuration.
+ View and manage cluster configuration.
 .TP
 pcsd
-Manage pcs daemon.
+ Manage pcs daemon.
 .TP
 node
-Manage cluster nodes.
+ Manage cluster nodes.
 .TP
 alert
-Manage pacemaker alerts.
+ Manage pacemaker alerts.
 .SS "resource"
 .TP
 [show [<resource id>] | \fB\-\-full\fR | \fB\-\-groups\fR | \fB\-\-hide\-inactive\fR]
 Show all currently configured resources or if a resource is specified show the options for the configured resource.  If \fB\-\-full\fR is specified, all configured resource options will be displayed.  If \fB\-\-groups\fR is specified, only show groups (and their resources).  If \fB\-\-hide\-inactive\fR is specified, only show active resources.
 .TP
 list [filter] [\fB\-\-nodesc\fR]
-Show list of all available resource agents (if filter is provided then only resource agents matching the filter will be shown). If --nodesc is used then descriptions of resource agents are not printed.
+Show list of all available resource agents (if filter is provided then only resource agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of resource agents are not printed.
 .TP
 describe [<standard>:[<provider>:]]<type>
 Show options for the specified resource.
@@ -145,13 +145,13 @@ group add <group id> <resource id> [resource id] ... [resource id] [\fB\-\-befor
 Add the specified resource to the group, creating the group if it does not exist.  If the resource is present in another group it is moved to the new group.  You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resources relatively to some resource already existing in the group.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
 group remove <group id> <resource id> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
-Remove the specified resource(s) from the group, removing the group if it no resources remain.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
+Remove the specified resource(s) from the group, removing the group if no resources remain in it. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
 ungroup <group id> [resource id] ... [resource id] [\fB\-\-wait\fR[=n]]
 Remove the group (note: this does not remove any resources from the cluster) or if resources are specified, remove the specified resources from the group.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and the return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
 clone <resource id | group id> [clone options]... [\fB\-\-wait\fR[=n]]
-Setup up the specified resource or group as a clone.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting clone instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
+Set up the specified resource or group as a clone. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting clone instances if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
 unclone <resource id | group id> [\fB\-\-wait\fR[=n]]
 Remove the clone which contains the specified group or resource (the resource or group will not be removed).  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including stopping clone instances if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
@@ -169,7 +169,7 @@ defaults [options]
 Set default values for resources, if no options are passed, lists currently configured defaults.
 .TP
 cleanup [<resource id>] [\fB\-\-node\fR <node>]
-Cleans up the resource in the lrmd (useful to reset the resource status and failcount).  This tells the cluster to forget the operation history of a resource and re-detect its current state.  This can be useful to purge knowledge of past failures that have since been resolved.  If a resource id is not specified then all resources/stonith devices will be cleaned up.  If a node is not specified then resources on all nodes will be cleaned up.
+Make the cluster forget the operation history of the resource and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved. If a resource id is not specified then all resources/stonith devices will be cleaned up. If a node is not specified then resources/stonith devices on all nodes will be cleaned up.
 .TP
 failcount show <resource id> [node]
 Show current failcount for specified resource from all nodes or only on specified node.
@@ -177,7 +177,7 @@ Show current failcount for specified resource from all nodes or only on specifie
 failcount reset <resource id> [node]
 Reset failcount for specified resource on all nodes or only on specified node. This tells the cluster to forget how many times a resource has failed in the past.  This may allow the resource to be started or moved to a more preferred location.
 .TP
-relocate dry-run [resource1] [resource2] ...
+relocate dry\-run [resource1] [resource2] ...
 The same as 'relocate run' but has no effect on the cluster.
 .TP
 relocate run [resource1] [resource2] ...
@@ -194,9 +194,9 @@ Add specified utilization options to specified resource. If resource is not spec
 .SS "cluster"
 .TP
 auth [node] [...] [\fB\-u\fR username] [\fB\-p\fR password] [\fB\-\-force\fR] [\fB\-\-local\fR]
-Authenticate pcs to pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified (authorization tokens are stored in ~/.pcs/tokens or /var/lib/pcsd/tokens for root).  By default all nodes are also authenticated to each other, using \fB\-\-local\fR only authenticates the local node (and does not authenticate the remote nodes with each other).  Using \fB\-\-force\fR forces re-authentication to occur.
+Authenticate pcs to pcsd on nodes specified, or on all nodes configured in the local cluster if no nodes are specified (authorization tokens are stored in ~/.pcs/tokens or /var/lib/pcsd/tokens for root). By default all nodes are also authenticated to each other, using \fB\-\-local\fR only authenticates the local node (and does not authenticate the remote nodes with each other). Using \fB\-\-force\fR forces re\-authentication to occur.
 .TP
-setup [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-local\fR] [\fB\-\-enable\fR] \fB\-\-name\fR <cluster name> <node1[,node1-altaddr]> [<node2[,node2-altaddr]>] [...] [\fB\-\-transport\fR udpu|udp] [\fB\-\-rrpmode\fR active|passive] [\fB\-\-addr0\fR <addr/net> [[[\fB\-\-mcast0\fR <address>] [\fB\-\-mcastport0\fR <port>] [\fB\-\-ttl0\fR <ttl>]] | [\fB\-\-broadcast0\fR]] [\fB\-\-addr1\fR <addr/net> [[[\fB\-\-mcast1\fR <address>] [\fB\-\-mcastport1\fR <port>] [\fB\-\-ttl1\fR <ttl>]] | [\fB\-\-broadcast1\fR]]]] [\fB\-\-wait_for_all\fR=<0|1>] [\fB\-\-auto_tie_breaker\fR=<0|1>] [\fB\-\-last_man_standing\fR=<0|1> [\fB\-\-last_man_standing_window\fR=<time in ms>]] [\fB\-\-ipv6\fR] [\fB\-\-token\fR <timeout>] [\fB\-\-token_coefficient\fR <timeout>] [\fB\-\-join\fR <timeout>] [\fB\-\-consensus\fR <timeout>] [\fB\-\-miss_count_const\fR <count>] [\fB\-\-fail_recv_const\fR <failures>]
+setup [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-local\fR] [\fB\-\-enable\fR] \fB\-\-name\fR <cluster name> <node1[,node1\-altaddr]> [<node2[,node2\-altaddr]>] [...] [\fB\-\-transport\fR udpu|udp] [\fB\-\-rrpmode\fR active|passive] [\fB\-\-addr0\fR <addr/net> [[[\fB\-\-mcast0\fR <address>] [\fB\-\-mcastport0\fR <port>] [\fB\-\-ttl0\fR <ttl>]] | [\fB\-\-broadcast0\fR]] [\fB\-\-addr1\fR <addr/net> [[[\fB\-\-mcast1\fR <address>] [\fB\-\-mcastport1\fR <port>] [\fB\-\-ttl1\fR <ttl>]] | [\fB\-\-broadcast1\fR]]]] [\fB\-\-wait_for_all\fR=<0|1>] [\fB\-\-auto_tie_breaker\fR=<0|1>] [\fB\-\-last_man_standing\fR=<0|1> [\fB\-\-last_man_standing_window\fR=<time in ms>]] [\fB\-\-ipv6\fR] [\fB\-\-token\fR <timeout>] [\fB\-\-token_coefficient\fR <timeout>] [\fB\-\-join\fR <timeout>] [\fB\-\-consensus\fR <timeout>] [\fB\-\-miss_count_const\fR <count>] [\fB\-\-fail_recv_const\fR <failures>]
 Configure corosync and sync configuration out to listed nodes. \fB\-\-local\fR will only perform changes on the local node, \fB\-\-start\fR will also start the cluster on the specified nodes, \fB\-\-wait\fR will wait up to 'n' seconds for the nodes to start, \fB\-\-enable\fR will enable corosync and pacemaker on node startup, \fB\-\-transport\fR allows specification of corosync transport (default: udpu; udp for CMAN clusters), \fB\-\-rrpmode\fR allows you to set the RRP mode of the system. Currently only 'passive' is supported or tested (using 'active' is not recommended). The \fB\-\-wait_for_all\fR, \fB\-\-auto_tie_breaker\fR, \fB\-\-last_man_standing\fR, \fB\-\-last_man_standing_window\fR options are all documented in corosync's votequorum(5) man page. These options are not supported on CMAN clusters.
 
 \fB\-\-ipv6\fR will configure corosync to use ipv6 (instead of ipv4).  This option is not supported on CMAN clusters.
@@ -219,7 +219,7 @@ Configuring Redundant Ring Protocol (RRP)
 When using udpu specifying nodes, specify the ring 0 address first
 followed by a ',' and then the ring 1 address.
 
-Example: pcs cluster setup \-\-name cname nodeA-0,nodeA-1 nodeB-0,nodeB-1
+Example: pcs cluster setup \-\-name cname nodeA\-0,nodeA\-1 nodeB\-0,nodeB\-1
 
 When using udp, using \fB\-\-addr0\fR and \fB\-\-addr1\fR will allow you to configure
 rrp mode for corosync.  It's recommended to use a network (instead of
@@ -239,37 +239,31 @@ kill
 Force corosync and pacemaker daemons to stop on the local node (performs kill \-9). Note that init system (e.g. systemd) can detect that cluster is not running and start it again. If you want to stop cluster on a node, run pcs cluster stop on that node.
 .TP
 enable [\fB\-\-all\fR | <node>... ]
-Configure corosync & pacemaker to run on node boot on specified node(s), if node is not specified then corosync & pacemaker are enabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are enabled on all nodes.
+Configure cluster to run on node boot on specified node(s). If node is not specified then cluster is enabled on the local node. If \fB\-\-all\fR is specified then cluster is enabled on all nodes.
 .TP
 disable [\fB\-\-all\fR | <node>... ]
-Configure corosync & pacemaker to not run on node boot on specified node(s), if node is not specified then corosync & pacemaker are disabled on the local node. If \fB\-\-all\fR is specified then corosync & pacemaker are disabled on all nodes. Note: this is the default after installation.
-.TP
-remote-node add <hostname> <resource id> [options]
-Enables the specified resource as a remote-node resource on the specified hostname (hostname should be the same as 'uname -n').
-.TP
-remote\-node remove <hostname>
-Disables any resources configured to be remote\-node resource on the specified hostname (hostname should be the same as 'uname -n').
+Configure cluster to not run on node boot on specified node(s). If node is not specified then cluster is disabled on the local node. If \fB\-\-all\fR is specified then cluster is disabled on all nodes.
 .TP
 status
 View current cluster status (an alias of 'pcs status cluster').
 .TP
-pcsd\-status [node] [...]
-Get current status of pcsd on nodes specified, or on all nodes configured in corosync.conf if no nodes are specified.
+pcsd\-status [<node>]...
+Show current status of pcsd on nodes specified, or on all nodes configured in the local cluster if no nodes are specified.
 .TP
 sync
 Sync corosync configuration to all nodes found from current corosync.conf file (cluster.conf on systems running Corosync 1.x).
 .TP
 cib [filename] [scope=<scope> | \fB\-\-config\fR]
-Get the raw xml from the CIB (Cluster Information Base).  If a filename is provided, we save the CIB to that file, otherwise the CIB is printed.  Specify scope to get a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults, status.  \fB\-\-config\fR is the same as scope=configuration.  Do not specify a scope if you want to edit the saved CIB using pcs (pcs -f <command>).
+Get the raw xml from the CIB (Cluster Information Base).  If a filename is provided, we save the CIB to that file, otherwise the CIB is printed.  Specify scope to get a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults, status.  \fB\-\-config\fR is the same as scope=configuration.  Do not specify a scope if you want to edit the saved CIB using pcs (pcs \-f <command>).
 .TP
-cib-push <filename> [diff\-against=<filename_original> scope=<scope> | \fB\-\-config\fR] [\fB\-\-wait\fR[=<n>]]
-Push the raw xml from <filename> to the CIB (Cluster Information Base).  You can obtain the CIB by running the 'pcs cluster cib' command, which is recommended first step when you want to perform desired modifications (pcs \fB\-f\fR <command>) for the one\-off push.  If diff\-against is specified, pcs diffs contents of filename against contents of filename_original and pushes the result to the CIB.  Specify scope to push a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to push the whole CIB or be warned in the case of outdated CIB.  If --wait is specified wait up to 'n' seconds for changes to be applied.  WARNING: the selected scope of the CIB will be overwritten by the current content of the specified file.
+cib\-push <filename> [\fB\-\-wait\fR[=<n>]] [diff\-against=<filename_original> | scope=<scope> | \fB\-\-config\fR]
+Push the raw xml from <filename> to the CIB (Cluster Information Base).  You can obtain the CIB by running the 'pcs cluster cib' command, which is recommended first step when you want to perform desired modifications (pcs \fB\-f\fR <command>) for the one\-off push.  If diff\-against is specified, pcs diffs contents of filename against contents of filename_original and pushes the result to the CIB.  Specify scope to push a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to push the whole CIB or be warned in the case of outdated CIB.  If \fB\-\-wait\fR is specified wait up to 'n' seconds for changes to be applied.  WARNING: the selected scope of the CIB will be overwritten by the current content of the specified file.
 
 Example:
     pcs cluster cib > original.xml
     cp original.xml new.xml
-    pcs -f new.xml constraint location apache prefers node2
-    pcs cluster cib-push new.xml diff-against=original.xml
+    pcs \-f new.xml constraint location apache prefers node2
+    pcs cluster cib\-push new.xml diff\-against=original.xml
 .TP
 cib\-upgrade
 Upgrade the CIB to conform to the latest version of the document schema.
@@ -278,10 +272,16 @@ edit [scope=<scope> | \fB\-\-config\fR]
 Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving.  Specify scope to edit a specific section of the CIB.  Valid values of the scope are: configuration, nodes, resources, constraints, crm_config, rsc_defaults, op_defaults.  \fB\-\-config\fR is the same as scope=configuration.  Use of \fB\-\-config\fR is recommended.  Do not specify a scope if you need to edit the whole CIB or be warned in the case of outdated CIB.
 .TP
 node add <node[,node\-altaddr]> [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-enable\fR] [\fB\-\-watchdog\fR=<watchdog\-path>]
-Add the node to corosync.conf and corosync on all nodes in the cluster and sync the new corosync.conf to the new node.  If \fB\-\-start\fR is specified also start corosync/pacemaker on the new node, if \fB\-\-wait\fR is sepcified wait up to 'n' seconds for the new node to start.  If \fB\-\-enable\fR is specified enable corosync/pacemaker on new node.  When using Redundant Ring Protocol (RRP) with udpu transport, specify the ring 0 address first followed by a ',' and then the ring 1 address. Use \fB\-\-watchdog\fR to specify path to watchdog on newly added node, when SBD is enabled in cluster.
+Add the node to the cluster and sync all relevant configuration files to the new node. If \fB\-\-start\fR is specified also start cluster on the new node, if \fB\-\-wait\fR is specified wait up to 'n' seconds for the new node to start. If \fB\-\-enable\fR is specified configure cluster to start on the new node on boot. When using Redundant Ring Protocol (RRP) with udpu transport, specify the ring 0 address first followed by a ',' and then the ring 1 address. Use \fB\-\-watchdog\fR to specify path to watchdog on newly added node, when SBD is enabled in cluster. This command can only be run on an existing cluster node.
 .TP
 node remove <node>
-Shutdown specified node and remove it from pacemaker and corosync on all other nodes in the cluster.
+Shutdown specified node and remove it from the cluster.
+.TP
+remote\-node add <hostname> <resource id> [options]
+Enables the specified resource as a remote\-node resource on the specified hostname (hostname should be the same as 'uname \-n').
+.TP
+remote\-node remove <hostname>
+Disables any resources configured to be remote\-node resource on the specified hostname (hostname should be the same as 'uname \-n').
 .TP
 uidgid
 List the current configured uids and gids of users allowed to connect to corosync.
@@ -299,12 +299,14 @@ reload corosync
 Reload the corosync configuration on the current node.
 .TP
 destroy [\fB\-\-all\fR]
-Permanently destroy the cluster on the current node, killing all corosync/pacemaker processes removing all cib files and the corosync.conf file.  Using \fB\-\-all\fR will attempt to destroy the cluster on all nodes configure in the corosync.conf file.  WARNING: This command permantly removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster.
+Permanently destroy the cluster on the current node, killing all cluster processes and removing all cluster configuration files. Using \fB\-\-all\fR will attempt to destroy the cluster on all nodes in the local cluster.
+
+\fBWARNING:\fR This command permantly removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster.
 .TP
 verify [\fB\-V\fR] [filename]
 Checks the pacemaker configuration (cib) for syntax and common conceptual errors.  If no filename is specified the check is performed on the currently running cluster.  If \fB\-V\fR is used more verbose output will be printed.
 .TP
-report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D" H:M:S"]] dest
+report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D H:M:S"]] dest
 Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours.
 .SS "stonith"
 .TP
@@ -327,7 +329,7 @@ delete <stonith id>
 Remove stonith id from configuration.
 .TP
 cleanup [<stonith id>] [\fB\-\-node\fR <node>]
-Cleans up the stonith device in the lrmd (useful to reset the status and failcount).  This tells the cluster to forget the operation history of a stonith device and re-detect its current state.  This can be useful to purge knowledge of past failures that have since been resolved.  If a stonith id is not specified then all resources/stonith devices will be cleaned up.  If a node is not specified then resources on all nodes will be cleaned up.
+Make the cluster forget the operation history of the stonith device and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved. If a stonith id is not specified then all resources/stonith devices will be cleaned up. If a node is not specified then resources/stonith devices on all nodes will be cleaned up.
 .TP
 level [config]
 Lists all of the fencing levels currently configured.
@@ -427,15 +429,15 @@ Remove property from configuration (or remove attribute from specified node if \
 .SS "constraint"
 .TP
 [list|show] \fB\-\-full\fR
-List all current location, order and colocation constraints, if \fB\-\-full\fR is specified also list the constraint ids.
+List all current constraints. If \fB\-\-full\fR is specified also list the constraint ids.
 .TP
-location <resource id> prefers <node[=score]>...
+location <resource id> prefers <node>[=<score>] [<node>[=<score>]]...
 Create a location constraint on a resource to prefer the specified node and score (default score: INFINITY).
 .TP
-location <resource id> avoids <node[=score]>...
+location <resource id> avoids <node>[=<score>] [<node>[=<score>]]...
 Create a location constraint on a resource to avoid the specified node and score (default score: INFINITY).
 .TP
-location <resource id> rule [id=<rule id>] [resource-discovery=<option>] [role=master|slave] [constraint\-id=<id>] [score=<score>|score-attribute=<attribute>] <expression>
+location <resource id> rule [id=<rule id>] [resource\-discovery=<option>] [role=master|slave] [constraint\-id=<id>] [score=<score>|score\-attribute=<attribute>] <expression>
 Creates a location rule on the specified resource where the expression looks like one of the following:
 .br
   defined|not_defined <attribute>
@@ -454,12 +456,12 @@ Creates a location rule on the specified resource where the expression looks lik
 .br
   ( <expression> )
 .br
-where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource-discovery is omitted it defaults to 'always'.
+where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource\-discovery is omitted it defaults to 'always'.
 .TP
 location [show [resources|nodes [node id|resource id]...] [\fB\-\-full\fR]]
 List all the current location constraints, if 'resources' is specified location constraints are displayed per resource (default), if 'nodes' is specified location constraints are displayed per node.  If specific nodes or resources are specified then we only show information about them.  If \fB\-\-full\fR is specified show the internal constraint id's as well.
 .TP
-location add <id> <resource id> <node> <score> [resource-discovery=<option>]
+location add <id> <resource id> <node> <score> [resource\-discovery=<option>]
 Add a location constraint with the appropriate id, resource id, node name and score. (For more advanced pacemaker usage.)
 .TP
 location remove <id> [<resource id> <node> <score>]
@@ -469,10 +471,10 @@ order [show] [\fB\-\-full\fR]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 order [action] <resource id> then [action] <resource id> [options]
-Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start.  Available options are kind=Optional/Mandatory/Serialize, symmetrical=true/false, require-all=true/false and id=<constraint\-id>.
+Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start.  Available options are kind=Optional/Mandatory/Serialize, symmetrical=true/false, require\-all=true/false and id=<constraint\-id>.
 .TP
 order set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
-Create an ordered set of resources. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.  Available constraint_options are id=<constraint\-id>, kind=Optional/Mandatory/Serialize and symmetrical=true/false.
+Create an ordered set of resources. Available options are sequential=true/false, require\-all=true/false and action=start/promote/demote/stop. Available constraint_options are id=<constraint\-id>, kind=Optional/Mandatory/Serialize and symmetrical=true/false.
 .TP
 order remove <resource1> [resourceN]...
 Remove resource from any ordering constraint
@@ -484,7 +486,7 @@ colocation add [master|slave] <source resource id> with [master|slave] <target r
 Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY").  A role can be master or slave (if no role is specified, it defaults to 'started').
 .TP
 colocation set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
-Create a colocation constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Available constraint_options are id, score, score-attribute and score-attribute-mangle.
+Create a colocation constraint with a resource set. Available options are sequential=true/false and role=Stopped/Started/Master/Slave. Available constraint_options are id and either of: score, score\-attribute, score\-attribute\-mangle.
 .TP
 colocation remove <source resource id> <target resource id>
 Remove colocation constraints with specified resources.
@@ -493,21 +495,21 @@ ticket [show] [\fB\-\-full\fR]
 List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 ticket add <ticket> [<role>] <resource id> [<options>] [id=<constraint\-id>]
-Create a ticket constraint for <resource id>. Available option is loss-policy=fence/stop/freeze/demote. A role can be master, slave, started or stopped.
+Create a ticket constraint for <resource id>. Available option is loss\-policy=fence/stop/freeze/demote. A role can be master, slave, started or stopped.
 .TP
 ticket set <resource1> [<resourceN>]... [<options>] [set <resourceX> ... [<options>]] setoptions <constraint_options>
-Create a ticket constraint with a resource set. Available options are sequential=true/false, require-all=true/false, action=start/promote/demote/stop and role=Stopped/Started/Master/Slave. Required constraint option is ticket=<ticket>. Optional constraint options are id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
+Create a ticket constraint with a resource set. Available options are role=Stopped/Started/Master/Slave. Required constraint option is ticket=<ticket>. Optional constraint options are id=<constraint\-id> and loss\-policy=fence/stop/freeze/demote.
 .TP
 ticket remove <ticket> <resource id>
 Remove all ticket constraints with <ticket> from <resource id>.
 .TP
-remove [constraint id]...
+remove <constraint id>...
 Remove constraint(s) or constraint rules with the specified id(s).
 .TP
 ref <resource>...
 List constraints referencing specified resource.
 .TP
-rule add <constraint id> [id=<rule id>] [role=master|slave] [score=<score>|score-attribute=<attribute>] <expression>
+rule add <constraint id> [id=<rule id>] [role=master|slave] [score=<score>|score\-attribute=<attribute>] <expression>
 Add a rule to a constraint where the expression looks like one of the following:
 .br
   defined|not_defined <attribute>
@@ -526,7 +528,7 @@ Add a rule to a constraint where the expression looks like one of the following:
 .br
   ( <expression> )
 .br
-where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon If score is ommited it defaults to INFINITY. If id is ommited one is generated from the constraint id.
+where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the constraint id.
 .TP
 rule remove <rule id>
 Remove a rule if a rule id is specified, if rule is last rule in its constraint, the constraint will be removed.
@@ -564,7 +566,7 @@ status
 Show quorum runtime status.
 .TP
 device add [<generic options>] model <device model> [<model options>]
-Add a quorum device to the cluster.  Quorum device needs to be created first by "pcs qdevice setup" command.  It is not possible to use more than one quorum device in a cluster simultaneously.  Generic options, model and model options are all documented in corosync's corosync\-qdevice(8) man page.
+Add a quorum device to the cluster. Quorum device needs to be created first by "pcs qdevice setup" command. It is not possible to use more than one quorum device in a cluster simultaneously. Generic options, model and model options are all documented in corosync\-qdevice(8) man page.
 .TP
 device remove
 Remove a quorum device from the cluster.
@@ -573,7 +575,7 @@ device status [\fB\-\-full\fR]
 Show quorum device runtime status.  Using \fB\-\-full\fR will give more detailed output.
 .TP
 device update [<generic options>] [model <model options>]
-Add/Change quorum device options.  Generic options and model options are all documented in corosync's corosync\-qdevice(8) man page.  Requires the cluster to be stopped.
+Add/Change quorum device options.  Generic options and model options are all documented in corosync\-qdevice(8) man page. Requires the cluster to be stopped.
 
 WARNING: If you want to change "host" option of qdevice model net, use "pcs quorum device remove" and "pcs quorum device add" commands to set up configuration properly unless old and new host is the same machine.
 .TP
@@ -663,11 +665,11 @@ View current quorum status.
 qdevice <device model> [\fB\-\-full\fR] [<cluster name>]
 Show runtime status of specified model of quorum device provider.  Using \fB\-\-full\fR will give more detailed output.  If <cluster name> is specified, only information about the specified cluster will be displayed.
 .TP
-nodes [corosync|both|config]
-View current status of nodes from pacemaker. If 'corosync' is specified, print nodes currently configured in corosync, if 'both' is specified, print nodes from both corosync & pacemaker.  If 'config' is specified, print nodes from corosync & pacemaker configuration.
+nodes [corosync | both | config]
+View current status of nodes from pacemaker. If 'corosync' is specified, view current status of nodes from corosync instead. If 'both' is specified, view current status of nodes from both corosync & pacemaker. If 'config' is specified, print nodes from corosync & pacemaker configuration.
 .TP
-pcsd [<node>] ...
-Show the current status of pcsd on the specified nodes. When no nodes are specified, status of all nodes is displayed.
+pcsd [<node>]...
+Show current status of pcsd on nodes specified, or on all nodes configured in the local cluster if no nodes are specified.
 .TP
 xml
 View xml version of status (output from crm_mon \fB\-r\fR \fB\-1\fR \fB\-X\fR).
@@ -692,22 +694,22 @@ checkpoint restore <checkpoint_number>
 Restore cluster configuration to specified checkpoint.
 .TP
 import\-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] [output\-format=corosync.conf|cluster.conf] [dist=<dist>]
-Converts CMAN cluster configuration to Pacemaker cluster configuration.  Converted configuration will be saved to 'output' file.  To send the configuration to the cluster nodes the 'pcs config restore' command can be used.  If \fB\-\-interactive\fR is specified you will be prompted to solve incompatibilities manually.  If no input is specified /etc/cluster/cluster.conf will be used.  You can force to create output containing either cluster.conf or corosync.conf using the output-format option.  Optionally you can specify output version by setting 'dist' option e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.  You can get the list of supported dist values by running the "clufter \fB\-\-list\-dists\fR" command.  If 'dist' is not specified, it defaults to this node's version if that matches output-format, otherwise redhat,6.7 is used for cluster.conf and redhat,7.1 is used for corosync.conf.
+Converts CMAN cluster configuration to Pacemaker cluster configuration.  Converted configuration will be saved to 'output' file.  To send the configuration to the cluster nodes the 'pcs config restore' command can be used.  If \fB\-\-interactive\fR is specified you will be prompted to solve incompatibilities manually.  If no input is specified /etc/cluster/cluster.conf will be used.  You can force to create output containing either cluster.conf or corosync.conf using the output\-format option.  Optionally you can specify output version by setting 'dist' option e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.  You can get the list of supported dist values by running the "clufter \fB\-\-list\-dists\fR" command.  If 'dist' is not specified, it defaults to this node's version if that matches output\-format, otherwise redhat,6.7 is used for cluster.conf and redhat,7.1 is used for corosync.conf.
 .TP
-import\-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] output\-format=pcs-commands|pcs-commands-verbose [dist=<dist>]
+import\-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] output\-format=pcs\-commands|pcs\-commands\-verbose [dist=<dist>]
 Converts CMAN cluster configuration to a list of pcs commands which recreates the same cluster as Pacemaker cluster when executed.  Commands will be saved to 'output' file.  For other options see above.
 .TP
 export pcs\-commands|pcs\-commands\-verbose [output=<filename>] [dist=<dist>]
-Creates a list of pcs commands which upon execution recreates the current cluster running on this node.  Commands will be saved to 'output' file or written to stdout if 'output' is not specified.  Use pcs\-commands to get a simple list of commands, whereas pcs\-commands\-verbose creates a list including comments and debug messages.  Optionally specify output version by setting 'dist' option e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.  You can get the list of supported dist values by running the "clufter \fB\-\-list-dists\fR" command.  If 'dist' is not specified, it defaults to this node's version.
+Creates a list of pcs commands which upon execution recreates the current cluster running on this node.  Commands will be saved to 'output' file or written to stdout if 'output' is not specified.  Use pcs\-commands to get a simple list of commands, whereas pcs\-commands\-verbose creates a list including comments and debug messages.  Optionally specify output version by setting 'dist' option e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty.  You can get the list of supported dist values by running the "clufter \fB\-\-list\-dists\fR" command.  If 'dist' is not specified, it defaults to this node's version.
 .SS "pcsd"
 .TP
 certkey <certificate file> <key file>
 Load custom certificate and key files for use in pcsd.
 .TP
-sync-certificates
-Sync pcsd certificates to all nodes found from current corosync.conf file (cluster.conf on systems running Corosync 1.x).  WARNING: This will restart pcsd daemon on the nodes.
+sync\-certificates
+Sync pcsd certificates to all nodes in the local cluster. WARNING: This will restart pcsd daemon on the nodes.
 .TP
-clear-auth [\fB\-\-local\fR] [\fB\-\-remote\fR]
+clear\-auth [\fB\-\-local\fR] [\fB\-\-remote\fR]
 Removes all system tokens which allow pcs/pcsd on the current system to authenticate with remote pcs/pcsd instances and vice\-versa.  After this command is run this node will need to be re\-authenticated with other nodes (using 'pcs cluster auth').  Using \fB\-\-local\fR only removes tokens used by local pcs (and pcsd if root) to connect to other pcsd instances, using \fB\-\-remote\fR clears authentication tokens used by remote systems to connect to the local pcsd instance.
 .SS "node"
 .TP
@@ -742,10 +744,10 @@ Update existing alert handler with specified id.
 remove <alert\-id> ...
 Remove alert handlers with specified ids.
 .TP
-recipient add <alert\-id> value=<recipient\-value> [id=<recipient\-id>] [description=<description>] [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
+recipient add <alert\-id> value=<recipient\-value> [id=<recipient\-id>] [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
 Add new recipient to specified alert handler.
 .TP
-recipient update <recipient\-id> [value=<recipient\-value>] [description=<description>] [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
+recipient update <recipient\-id> [value=<recipient\-value>] [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
 Update existing recipient identified by it's id.
 .TP
 recipient remove <recipient\-id> ...
@@ -773,5 +775,30 @@ Delete the VirtualIP resource
 Create the MyStonith stonith fence_virt device which can fence host 'f1'
 .B # pcs stonith create MyStonith fence_virt pcmk_host_list=f1
 .TP
-Set the stonith-enabled property to false on the cluster (which disables stonith)
+Set the stonith\-enabled property to false on the cluster (which disables stonith)
 .B # pcs property set stonith\-enabled=false
+.SH ENVIRONMENT VARIABLES
+.TP
+EDITOR
+ Path to a plain\-text editor. This is used when pcs is requested to present a text for the user to edit.
+.SH SEE ALSO
+http://clusterlabs.org/doc/
+
+.BR corosync_overview (8),
+.BR votequorum (5),
+.BR corosync.conf (5),
+.BR corosync\-qdevice (8),
+.BR corosync\-qdevice\-tool (8),
+.BR corosync\-qnetd (8),
+.BR corosync\-qnetd\-tool (8)
+
+.BR crmd (7),
+.BR pengine (7),
+.BR stonithd (7),
+.BR crm_mon (8),
+.BR crm_report (8),
+.BR crm_simulate (8)
+
+.BR boothd (8)
+
+.BR clufter (1)

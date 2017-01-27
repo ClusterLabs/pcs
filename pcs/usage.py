@@ -163,18 +163,18 @@ Options:
 Commands:
     cluster     Configure cluster options and nodes.
     resource    Manage cluster resources.
-    stonith     Configure fence devices.
-    constraint  Set resource constraints.
-    property    Set pacemaker properties.
-    acl         Set pacemaker access control lists.
-    qdevice     Manage quorum device provider.
+    stonith     Manage fence devices.
+    constraint  Manage resource constraints.
+    property    Manage pacemaker properties.
+    acl         Manage pacemaker access control lists.
+    qdevice     Manage quorum device provider on the local host.
     quorum      Manage cluster quorum settings.
     booth       Manage booth (cluster ticket manager).
     status      View cluster status.
     config      View and manage cluster configuration.
     pcsd        Manage pcs daemon.
     node        Manage cluster nodes.
-    alert       Set pacemaker alerts.
+    alert       Manage pacemaker alerts.
 """
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -389,9 +389,9 @@ Commands:
     group remove <group id> <resource id> [resource id] ... [resource id]
           [--wait[=n]]
         Remove the specified resource(s) from the group, removing the group if
-        it no resources remain.  If --wait is specified, pcs will wait up to 'n'
-        seconds for the operation to finish (including moving resources if
-        appropriate) and then return 0 on success or 1 on error.  If 'n' is not
+        no resources remain in it. If --wait is specified, pcs will wait up to
+        'n' seconds for the operation to finish (including moving resources if
+        appropriate) and then return 0 on success or 1 on error. If 'n' is not
         specified it defaults to 60 minutes.
 
     ungroup <group id> [resource id] ... [resource id] [--wait[=n]]
@@ -403,10 +403,10 @@ Commands:
         defaults to 60 minutes.
 
     clone <resource id | group id> [clone options]... [--wait[=n]]
-        Setup up the specified resource or group as a clone.  If --wait is
+        Set up the specified resource or group as a clone. If --wait is
         specified, pcs will wait up to 'n' seconds for the operation to finish
         (including starting clone instances if appropriate) and then return 0
-        on success or 1 on error.  If 'n' is not specified it defaults to 60
+        on success or 1 on error. If 'n' is not specified it defaults to 60
         minutes.
 
     unclone <resource id | group id> [--wait[=n]]
@@ -418,10 +418,10 @@ Commands:
 
     master [<master/slave id>] <resource id | group id> [options] [--wait[=n]]
         Configure a resource or group as a multi-state (master/slave) resource.
-        If --wait is specified, pcs will wait up to 'n' seconds for the operation
-        to finish (including starting and promoting resource instances if
-        appropriate) and then return 0 on success or 1 on error.  If 'n' is not
-        specified it defaults to 60 minutes.
+        If --wait is specified, pcs will wait up to 'n' seconds for the
+        operation to finish (including starting and promoting resource
+        instances if appropriate) and then return 0 on success or 1 on error.
+        If 'n' is not specified it defaults to 60 minutes.
         Note: to remove a master you must remove the resource/group it contains.
 
     manage <resource id> ... [resource n]
@@ -435,13 +435,12 @@ Commands:
         currently configured defaults.
 
     cleanup [<resource id>] [--node <node>]
-        Cleans up the resource in the lrmd (useful to reset the resource status
-        and failcount).  This tells the cluster to forget the operation history
-        of a resource and re-detect its current state.  This can be useful to
-        purge knowledge of past failures that have since been resolved.  If a
-        resource id is not specified then all resources/stonith devices will be
-        cleaned up.  If a node is not specified then resources on all nodes
-        will be cleaned up.
+        Make the cluster forget the operation history of the resource and
+        re-detect its current state. This can be useful to purge knowledge of
+        past failures that have since been resolved. If a resource id is not
+        specified then all resources/stonith devices will be cleaned up. If a
+        node is not specified then resources/stonith devices on all nodes will
+        be cleaned up.
 
     failcount show <resource id> [node]
         Show current failcount for specified resource from all nodes or
@@ -528,11 +527,11 @@ Configure cluster for use with pacemaker
 Commands:
     auth [node] [...] [-u username] [-p password] [--force] [--local]
         Authenticate pcs to pcsd on nodes specified, or on all nodes
-        configured in corosync.conf if no nodes are specified (authorization
+        configured in the local cluster if no nodes are specified (authorization
         tokens are stored in ~/.pcs/tokens or /var/lib/pcsd/tokens for root).
         By default all nodes are also authenticated to each other, using
         --local only authenticates the local node (and does not authenticate
-        the remote nodes with each other).  Using --force forces
+        the remote nodes with each other). Using --force forces
         re-authentication to occur.
 
     setup [--start [--wait[=<n>]]] [--local] [--enable] --name <cluster name>
@@ -545,8 +544,8 @@ Commands:
             [--wait_for_all=<0|1>] [--auto_tie_breaker=<0|1>]
             [--last_man_standing=<0|1> [--last_man_standing_window=<time in ms>]]
             [--ipv6] [--token <timeout>] [--token_coefficient <timeout>]
-            [--join <timeout>] [--consensus <timeout>] [--miss_count_const <count>]
-            [--fail_recv_const <failures>]
+            [--join <timeout>] [--consensus <timeout>]
+            [--miss_count_const <count>] [--fail_recv_const <failures>]
         Configure corosync and sync configuration out to listed nodes.
         --local will only perform changes on the local node,
         --start will also start the cluster on the specified nodes,
@@ -565,21 +564,23 @@ Commands:
             option is not supported on CMAN clusters.
         --token <timeout> sets time in milliseconds until a token loss is
             declared after not receiving a token (default 1000 ms)
-        --token_coefficient <timeout> sets time in milliseconds used for clusters
-            with at least 3 nodes as a coefficient for real token timeout calculation
+        --token_coefficient <timeout> sets time in milliseconds used for
+            clusters with at least 3 nodes as a coefficient for real token
+            timeout calculation
             (token + (number_of_nodes - 2) * token_coefficient) (default 650 ms)
             This option is not supported on CMAN clusters.
         --join <timeout> sets time in milliseconds to wait for join messages
             (default 50 ms)
         --consensus <timeout> sets time in milliseconds to wait for consensus
-            to be achieved before starting a new round of membership configuration
-            (default 1200 ms)
+            to be achieved before starting a new round of membership
+            configuration (default 1200 ms)
         --miss_count_const <count> sets the maximum number of times on
             receipt of a token a message is checked for retransmission before
             a retransmission occurs (default 5 messages)
         --fail_recv_const <failures> specifies how many rotations of the token
             without receiving any messages when messages should be received
-            may occur before a new configuration is formed (default 2500 failures)
+            may occur before a new configuration is formed
+            (default 2500 failures)
 
         Configuring Redundant Ring Protocol (RRP)
 
@@ -616,32 +617,21 @@ Commands:
         on a node, run pcs cluster stop on that node.
 
     enable [--all | <node>... ]
-        Configure corosync & pacemaker to run on node boot on specified
-        node(s), if node is not specified then corosync & pacemaker are
-        enabled on the local node. If --all is specified then corosync &
-        pacemaker are enabled on all nodes.
+        Configure cluster to run on node boot on specified node(s). If node is
+        not specified then cluster is enabled on the local node. If --all is
+        specified then cluster is enabled on all nodes.
 
     disable [--all | <node>... ]
-        Configure corosync & pacemaker to not run on node boot on specified
-        node(s), if node is not specified then corosync & pacemaker are
-        disabled on the local node. If --all is specified then corosync &
-        pacemaker are disabled on all nodes. Note: this is the default after
-        installation.
-
-    remote-node add <hostname> <resource id> [options]
-        Enables the specified resource as a remote-node resource on the
-        specified hostname (hostname should be the same as 'uname -n').
-
-    remote-node remove <hostname>
-        Disables any resources configured to be remote-node resource on the
-        specified hostname (hostname should be the same as 'uname -n').
+        Configure cluster to not run on node boot on specified node(s). If node
+        is not specified then cluster is disabled on the local node. If --all
+        is specified then cluster is disabled on all nodes.
 
     status
         View current cluster status (an alias of 'pcs status cluster').
 
-    pcsd-status [node] [...]
-        Get current status of pcsd on nodes specified, or on all nodes
-        configured in corosync.conf if no nodes are specified.
+    pcsd-status [<node>]...
+        Show current status of pcsd on nodes specified, or on all nodes
+        configured in the local cluster if no nodes are specified.
 
     sync
         Sync corosync configuration to all nodes found from current
@@ -657,7 +647,7 @@ Commands:
         the saved CIB using pcs (pcs -f <command>).
 
     cib-push <filename> [--wait[=<n>]]
-            [diff-against=<filename_orignal> | scope=<scope> | --config]
+            [diff-against=<filename_original> | scope=<scope> | --config]
         Push the raw xml from <filename> to the CIB (Cluster Information Base).
         You can obtain the CIB by running the 'pcs cluster cib' command, which
         is recommended first step when you want to perform desired
@@ -693,19 +683,27 @@ Commands:
 
     node add <node[,node-altaddr]> [--start [--wait[=<n>]]] [--enable]
             [--watchdog=<watchdog-path>]
-        Add the node to corosync.conf and corosync on all nodes in the cluster
-        and sync the new corosync.conf to the new node.  If --start is
-        specified also start corosync/pacemaker on the new node, if --wait is
-        sepcified wait up to 'n' seconds for the new node to start.  If --enable
-        is specified enable corosync/pacemaker on new node.
+        Add the node to the cluster and sync all relevant configuration files
+        to the new node. If --start is specified also start cluster on the new
+        node, if --wait is specified wait up to 'n' seconds for the new node to
+        start. If --enable is specified configure cluster to start on the new
+        node on boot.
         When using Redundant Ring Protocol (RRP) with udpu transport, specify
         the ring 0 address first followed by a ',' and then the ring 1 address.
-        Use --watchdog to specify path to watchdog on newly added node, when SBD
-        is enabled in cluster.
+        Use --watchdog to specify path to watchdog on newly added node, when
+        SBD is enabled in cluster.
+        This command can only be run on an existing cluster node.
 
     node remove <node>
-        Shutdown specified node and remove it from pacemaker and corosync on
-        all other nodes in the cluster.
+        Shutdown specified node and remove it from the cluster.
+
+    remote-node add <hostname> <resource id> [options]
+        Enables the specified resource as a remote-node resource on the
+        specified hostname (hostname should be the same as 'uname -n').
+
+    remote-node remove <hostname>
+        Disables any resources configured to be remote-node resource on the
+        specified hostname (hostname should be the same as 'uname -n').
 
     uidgid
         List the current configured uids and gids of users allowed to connect
@@ -728,9 +726,9 @@ Commands:
 
     destroy [--all]
         Permanently destroy the cluster on the current node, killing all
-        corosync/pacemaker processes removing all cib files and the
-        corosync.conf file.  Using --all will attempt to destroy the
-        cluster on all nodes configure in the corosync.conf file.
+        cluster processes and removing all cluster configuration files. Using
+        --all will attempt to destroy the cluster on all nodes in the local
+        cluster.
         WARNING: This command permantly removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster.
@@ -741,7 +739,7 @@ Commands:
         performed on the currently running cluster.  If -V is used
         more verbose output will be printed.
 
-    report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D" H:M:S"]] dest
+    report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D H:M:S"]] dest
         Create a tarball containing everything needed when reporting cluster
         problems.  If --from and --to are not used, the report will include
         the past 24 hours.
@@ -782,13 +780,12 @@ Commands:
         Remove stonith id from configuration.
 
     cleanup [<stonith id>] [--node <node>]
-        Cleans up the stonith device in the lrmd (useful to reset the status
-        and failcount).  This tells the cluster to forget the operation history
-        of a stonith device and re-detect its current state.  This can be
-        useful to purge knowledge of past failures that have since been
-        resolved.  If a stonith id is not specified then all resources/stonith
-        devices will be cleaned up.  If a node is not specified then resources
-        on all nodes will be cleaned up.
+        Make the cluster forget the operation history of the stonith device and
+        re-detect its current state. This can be useful to purge knowledge of
+        past failures that have since been resolved. If a stonith id is not
+        specified then all resources/stonith devices will be cleaned up. If a
+        node is not specified then resources/stonith devices on all nodes will
+        be cleaned up.
 
     level [config]
         Lists all of the fencing levels currently configured.
@@ -918,14 +915,14 @@ Manage resource constraints
 
 Commands:
     [list|show] --full
-        List all current location, order and colocation constraints, if --full
-        is specified also list the constraint ids.
+        List all current constraints. If --full is specified also list the
+        constraint ids.
 
-    location <resource id> prefers <node[=score]>...
+    location <resource id> prefers <node>[=<score>] [<node>[=<score>]]...
         Create a location constraint on a resource to prefer the specified
         node and score (default score: INFINITY).
 
-    location <resource id> avoids <node[=score]>...
+    location <resource id> avoids <node>[=<score>] [<node>[=<score>]]...
         Create a location constraint on a resource to avoid the specified
         node and score (default score: INFINITY).
 
@@ -978,10 +975,10 @@ Commands:
               <resourceX> ... [options]]
               [setoptions [constraint_options]]
         Create an ordered set of resources.
-        Available options are sequential=true/false, require-all=true/false,
-        action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
-        Available constraint_options are id=<constraint-id>,
-        kind=Optional/Mandatory/Serialize and symmetrical=true/false.
+        Available options are sequential=true/false, require-all=true/false and
+        action=start/promote/demote/stop. Available constraint_options are
+        id=<constraint-id>, kind=Optional/Mandatory/Serialize and
+        symmetrical=true/false.
 
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
@@ -1005,10 +1002,9 @@ Commands:
                [set <resourceX> ... [options]]
                [setoptions [constraint_options]]
         Create a colocation constraint with a resource set.
-        Available options are sequential=true/false, require-all=true/false,
-        action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
-        Available constraint_options are id, score, score-attribute and
-        score-attribute-mangle.
+        Available options are sequential=true/false and
+        role=Stopped/Started/Master/Slave. Available constraint_options are id
+        and either of: score, score-attribute, score-attribute-mangle.
 
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with specified resources.
@@ -1027,15 +1023,14 @@ Commands:
                [set <resourceX> ... [<options>]]
                setoptions <constraint_options>
         Create a ticket constraint with a resource set.
-        Available options are sequential=true/false, require-all=true/false,
-        action=start/promote/demote/stop and role=Stopped/Started/Master/Slave.
-        Required constraint option is ticket=<ticket>. Optional constraint
-        options are id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
+        Available options are role=Stopped/Started/Master/Slave. Required
+        constraint option is ticket=<ticket>. Optional constraint options are
+        id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
 
     ticket remove <ticket> <resource id>
         Remove all ticket constraints with <ticket> from <resource id>.
 
-    remove [constraint id]...
+    remove <constraint id>...
         Remove constraint(s) or constraint rules with the specified id(s).
 
     ref <resource>...
@@ -1054,8 +1049,8 @@ Commands:
           <expression> and|or <expression>
           ( <expression> )
         where duration options and date spec options are: hours, monthdays,
-        weekdays, yeardays, months, weeks, years, weekyears, moon
-        If score is ommited it defaults to INFINITY. If id is ommited one is
+        weekdays, yeardays, months, weeks, years, weekyears, moon.
+        If score is omitted it defaults to INFINITY. If id is omitted one is
         generated from the constraint id.
 
     rule remove <rule id>
@@ -1165,15 +1160,16 @@ Commands:
         --full will give more detailed output.  If <cluster name> is specified,
         only information about the specified cluster will be displayed.
 
-    nodes [corosync|both|config]
+    nodes [corosync | both | config]
         View current status of nodes from pacemaker. If 'corosync' is
-        specified, print nodes currently configured in corosync, if 'both'
-        is specified, print nodes from both corosync & pacemaker.  If 'config'
-        is specified, print nodes from corosync & pacemaker configuration.
+        specified, view current status of nodes from corosync instead. If
+        'both' is specified, view current status of nodes from both corosync &
+        pacemaker. If 'config' is specified, print nodes from corosync &
+        pacemaker configuration.
 
-    pcsd [<node>] ...
-        Show the current status of pcsd on the specified nodes.
-        When no nodes are specified, status of all nodes is displayed.
+    pcsd [<node>]...
+        Show current status of pcsd on nodes specified, or on all nodes
+        configured in the local cluster if no nodes are specified.
 
     xml
         View xml version of status (output from crm_mon -r -1 -X).
@@ -1260,9 +1256,8 @@ Commands:
         Load custom certificate and key files for use in pcsd.
 
     sync-certificates
-        Sync pcsd certificates to all nodes found from current corosync.conf
-        file (cluster.conf on systems running Corosync 1.x).  WARNING: This will
-        restart pcsd daemon on the nodes.
+        Sync pcsd certificates to all nodes in the local cluster.
+        WARNING: This will restart pcsd daemon on the nodes.
 
     clear-auth [--local] [--remote]
        Removes all system tokens which allow pcs/pcsd on the current system to
@@ -1403,11 +1398,11 @@ Commands:
         Show quorum runtime status.
 
     device add [<generic options>] model <device model> [<model options>]
-        Add a quorum device to the cluster.  Quorum device needs to be created
-        first by "pcs qdevice setup" command.  It is not possible to use more
-        than one quorum device in a cluster simultaneously.  Generic options,
-        model and model options are all documented in corosync's
-        corosync-qdevice(8) man page.
+        Add a quorum device to the cluster. Quorum device needs to be created
+        first by "pcs qdevice setup" command. It is not possible to use more
+        than one quorum device in a cluster simultaneously. Generic options,
+        model and model options are all documented in corosync-qdevice(8) man
+        page.
 
     device remove
         Remove a quorum device from the cluster.
@@ -1417,9 +1412,9 @@ Commands:
         output.
 
     device update [<generic options>] [model <model options>]
-        Add/Change quorum device options.  Generic options and model options are
-        all documented in corosync's corosync-qdevice(8) man page.  Requires
-        the cluster to be stopped.
+        Add/Change quorum device options. Generic options and model options are
+        all documented in corosync-qdevice(8) man page. Requires the cluster to
+        be stopped.
 
         WARNING: If you want to change "host" option of qdevice model net, use
         "pcs quorum device remove" and "pcs quorum device add" commands
