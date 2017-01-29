@@ -273,7 +273,7 @@ Pcs.GroupSelectorComponent = Ember.Component.extend({
   group_list: [],
   group_select_content: function() {
     var list = [];
-    $.each(this.get("group_list"), function(_, group) {
+    $.each(this.getWithDefault("group_list", []), function(_, group) {
       list.push({
         name: group,
         value: group
@@ -809,7 +809,7 @@ Pcs.resourcesContainer.reopen({
   groups_enum: function() {
     var self = this;
     var res = [];
-    $.each(self.get("group_list"), function(_, group) {
+    $.each(self.getWithDefault("group_list", []), function(_, group) {
       res.push({
         name: group,
         value: group

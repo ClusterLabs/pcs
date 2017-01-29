@@ -61,6 +61,8 @@
 - Added more validation for resource agent names ([rhbz#1387670])
 - Fixed network communication issues in pcsd when a node was specified by an
   IPv6 address
+- Fixed JS error in web UI when empty cluster status is received
+  ([rhbz#1396462])
 
 ### Removed
 - Ruby 1.8 and 1.9 is no longer supported due to bad libcurl support
@@ -88,6 +90,7 @@
 [rhbz#1394273]: https://bugzilla.redhat.com/show_bug.cgi?id=1394273
 [rhbz#1394846]: https://bugzilla.redhat.com/show_bug.cgi?id=1394846
 [rhbz#1395226]: https://bugzilla.redhat.com/show_bug.cgi?id=1395226
+[rhbz#1396462]: https://bugzilla.redhat.com/show_bug.cgi?id=1396462
 [rhbz#1398562]: https://bugzilla.redhat.com/show_bug.cgi?id=1398562
 [rhbz#1402475]: https://bugzilla.redhat.com/show_bug.cgi?id=1402475
 [rhbz#1404229]: https://bugzilla.redhat.com/show_bug.cgi?id=1404229
