@@ -26,7 +26,7 @@ TAG = "primitive"
 
 def create(
     report_processor, resources_section, resource_id, resource_agent,
-    raw_operation_list, meta_attributes, instance_attributes,
+    raw_operation_list=None, meta_attributes=None, instance_attributes=None,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
@@ -50,6 +50,13 @@ def create(
     bool ensure_disabled is flag for completion meta_attributes with attribute
         causing disabling resource
     """
+    if raw_operation_list is None:
+        raw_operation_list = []
+    if meta_attributes is None:
+        meta_attributes = {}
+    if instance_attributes is None:
+        instance_attributes = {}
+
     if does_id_exist(resources_section, resource_id):
         raise LibraryError(reports.id_already_exists(resource_id))
     validate_id(resource_id, "resource name")

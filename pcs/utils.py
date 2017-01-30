@@ -51,7 +51,6 @@ from pcs.lib.external import (
     _service,
     _systemctl,
 )
-import pcs.lib.resource_agent as lib_ra
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
@@ -1502,38 +1501,6 @@ def agent_action_to_cmdline_format(action):
         if key != "name" and action[key] != "0":
             op.append("{0}={1}".format(key, action[key]))
     return op
-
-# Given a resource agent (ocf:heartbeat:XXX) return an list of default
-# operations or an empty list if unable to find any default operations
-def get_default_op_values(full_agent_name):
-    try:
-        if full_agent_name.startswith("stonith:"):
-            metadata = lib_ra.StonithAgent(
-                cmd_runner(),
-                full_agent_name[len("stonith:"):]
-            )
-        else:
-            metadata = lib_ra.ResourceAgent(
-                cmd_runner(),
-                full_agent_name
-            )
-
-        return [
-            agent_action_to_cmdline_format(action)
-            for action in metadata.get_cib_default_actions()
-        ]
-    except lib_ra.UnableToGetAgentMetadata:
-        return []
-    except lib_ra.ResourceAgentError as e:
-        #it raises
-        process_library_reports(
-            [lib_ra.resource_agent_error_to_report_item(e)]
-        )
-    except LibraryError as e:
-        #it raises
-        process_library_reports(e.args)
-
-
 
 def check_pacemaker_supports_resource_wait():
     if not has_wait_for_idle_support(cmd_runner()):

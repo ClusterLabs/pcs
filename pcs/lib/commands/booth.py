@@ -12,6 +12,7 @@ from functools import partial
 from pcs import settings
 from pcs.common.tools import join_multilines
 from pcs.lib import external, reports
+from pcs.lib.cib.resource import primitive, group
 from pcs.lib.booth import (
     config_exchange,
     config_files,
@@ -26,6 +27,7 @@ from pcs.lib.booth.env import get_config_file_name
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.node import NodeAddresses
+from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 
 
 def config_setup(env, booth_configuration, overwrite_existing=False):
@@ -145,24 +147,56 @@ def config_ticket_remove(env, ticket_name):
     )
     env.booth.push_config(build(booth_configuration))
 
-def create_in_cluster(env, name, ip, resource_create, resource_remove):
-    #TODO resource_create is provisional hack until resources are not moved to
-    #lib
-    resources_section = get_resources(env.get_cib())
+def create_in_cluster(env, name, ip, allow_absent_resource_agent=False):
+    """
+    Create group with ip resource and booth resource
+
+    LibraryEnvironment env provides all for communication with externals
+    string name identifies booth instance
+    string ip determines float ip for the operation of the booth
+    bool allow_absent_resource_agent is flag allowing create booth resource even
+        if its agent is not installed
+    """
+    cib = env.get_cib()
+    resources_section = get_resources(cib)
 
     booth_config_file_path = get_config_file_name(name)
     if resource.find_for_config(resources_section, booth_config_file_path):
         raise LibraryError(booth_reports.booth_already_in_cib(name))
 
-    resource.get_creator(resource_create, resource_remove)(
-        ip,
-        booth_config_file_path,
-        create_id = partial(
-            resource.create_resource_id,
-            resources_section,
-            name
-        )
+    create_id = partial(
+        resource.create_resource_id,
+        resources_section,
+        name
     )
+    get_agent = partial(
+        find_valid_resource_agent_by_name,
+        env.report_processor,
+        env.cmd_runner(),
+        allowed_absent=allow_absent_resource_agent
+    )
+    create_primitive = partial(
+        primitive.create,
+        env.report_processor,
+        resources_section,
+    )
+    into_booth_group = partial(
+        group.place_resource,
+        group.provide_group(resources_section, create_id("group")),
+    )
+
+    into_booth_group(create_primitive(
+        create_id("ip"),
+        get_agent("ocf:heartbeat:IPaddr2"),
+        instance_attributes={"ip": ip},
+    ))
+    into_booth_group(create_primitive(
+        create_id("service"),
+        get_agent("ocf:pacemaker:booth-site"),
+        instance_attributes={"config": booth_config_file_path},
+    ))
+
+    env.push_cib(cib)
 
 def remove_from_cluster(env, name, resource_remove, allow_remove_multiple):
     #TODO resource_remove is provisional hack until resources are not moved to
