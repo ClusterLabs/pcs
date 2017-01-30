@@ -6,7 +6,6 @@ from __future__ import (
 )
 
 from collections import defaultdict
-from functools import partial
 
 from lxml import etree
 
@@ -180,36 +179,30 @@ def get_remaining_defaults(
         ]
     )
 
-def get_uniq_interval(
-    report_processor, used_intervals, operation_name, initial_interval
-):
-    """
-    Returns unique interval for operation_name based on initial_interval.
-    report_processor is tool for warning/info/error reporting
-    defaultdict used_intervals contains already used intervals
-    string operation_name is name of contextual operation for interval
-    initial_interval is starting point for finding free value
-    """
-    interval = timeout_to_seconds(initial_interval)
-    if interval is None:
-        return initial_interval
+def get_interval_uniquer():
+    used_intervals_map = defaultdict(set)
+    def get_uniq_interval(name, initial_interval):
+        """
+        Return unique interval for name based on initial_interval if
+        initial_interval is valid or return initial_interval otherwise.
 
-    if interval not in used_intervals[operation_name]:
-        used_intervals[operation_name].add(interval)
-        return initial_interval
+        string name is the operation name for searching interval
+        initial_interval is starting point for finding free value
+        """
+        used_intervals = used_intervals_map[name]
+        normalized_interval = timeout_to_seconds(initial_interval)
+        if normalized_interval is None:
+            return initial_interval
 
-    while interval in used_intervals[operation_name]:
-        interval += 1
-    used_intervals[operation_name].add(interval)
+        if normalized_interval not in used_intervals:
+            used_intervals.add(normalized_interval)
+            return initial_interval
 
-    report_processor.process(
-        reports.resource_operation_interval_adapted(
-            operation_name,
-            initial_interval,
-            str(interval),
-        )
-    )
-    return str(interval)
+        while normalized_interval in used_intervals:
+            normalized_interval += 1
+        used_intervals.add(normalized_interval)
+        return str(normalized_interval)
+    return get_uniq_interval
 
 def make_unique_intervals(report_processor, operation_list):
     """
@@ -218,12 +211,23 @@ def make_unique_intervals(report_processor, operation_list):
     report_processor is tool for warning/info/error reporting
     list operation_list contains dictionaries with attributes of operation
     """
-    uniq = partial(get_uniq_interval, report_processor, defaultdict(set))
+    get_unique_interval = get_interval_uniquer()
     adapted_operation_list = []
     for operation in operation_list:
         adapted = operation.copy()
         if "interval" in adapted:
-            adapted["interval"] = uniq(operation["name"], operation["interval"])
+            adapted["interval"] = get_unique_interval(
+                operation["name"],
+                operation["interval"]
+            )
+            if adapted["interval"] != operation["interval"]:
+                report_processor.process(
+                    reports.resource_operation_interval_adapted(
+                        operation["name"],
+                        operation["interval"],
+                        adapted["interval"],
+                    )
+                )
         adapted_operation_list.append(adapted)
     return adapted_operation_list
 

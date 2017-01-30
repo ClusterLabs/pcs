@@ -178,6 +178,19 @@ class MakeUniqueIntervals(TestCase):
             ),
         ])
 
+    def test_keep_duplicit_values_when_are_not_valid_interval(self):
+        self.assertEqual(
+            self.run([
+                {"name": "monitor", "interval": "some"},
+                {"name": "monitor", "interval": "some"},
+            ]),
+            [
+                {"name": "monitor", "interval": "some"},
+                {"name": "monitor", "interval": "some"},
+            ]
+        )
+
+
 class Normalize(TestCase):
     def test_return_operation_with_the_same_values(self):
         operation = {
