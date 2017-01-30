@@ -45,6 +45,29 @@ def create(
     ensure_disabled=False,
     wait=False,
 ):
+    """
+    Create resource in a cib.
+
+    LibraryEnvironment env provides all for communication with externals
+    string resource_id is identifier of resource
+    string resource_agent_name contains name for the identification of agent
+    list of dict operations contains attributes for each entered operation
+    dict meta_attributes contains attributes for primitive/meta_attributes
+    dict instance_attributes contains attributes for
+        primitive/instance_attributes
+    bool allow_absent_agent is a flag for allowing agent that is not installed
+        in a system
+    bool allow_invalid_operation is a flag for allowing to use operations that
+        are not listed in a resource agent metadata
+    bool allow_invalid_instance_attributes is a flag for allowing to use
+        instance attributes that are not listed in a resource agent metadata
+        or for allowing to not use the instance_attributes that are required in
+        resource agent metadata
+    bool use_default_operations is a flag for stopping stopping of adding
+        default cib operations (specified in a resource agent)
+    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
+    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    """
     resource_agent = get_agent(
         env.report_processor,
         env.cmd_runner(),
@@ -77,10 +100,32 @@ def _create_as_clone_common(
 ):
     """
     Create resource in some kind of clone (clone or master).
+
     Currently the only difference between commands "create_as_clone" and
     "create_as_master" is in tag. So the commands create_as_clone and
     create_as_master are created by passing tag with partial.
 
+    string tag is any clone tag. Currently it can be "clone" or "master".
+    LibraryEnvironment env provides all for communication with externals
+    string resource_id is identifier of resource
+    string resource_agent_name contains name for the identification of agent
+    list of dict operations contains attributes for each entered operation
+    dict meta_attributes contains attributes for primitive/meta_attributes
+    dict instance_attributes contains attributes for
+        primitive/instance_attributes
+    dict clone_meta_options contains attributes for clone/meta_attributes
+    bool allow_absent_agent is a flag for allowing agent that is not installed
+        in a system
+    bool allow_invalid_operation is a flag for allowing to use operations that
+        are not listed in a resource agent metadata
+    bool allow_invalid_instance_attributes is a flag for allowing to use
+        instance attributes that are not listed in a resource agent metadata
+        or for allowing to not use the instance_attributes that are required in
+        resource agent metadata
+    bool use_default_operations is a flag for stopping stopping of adding
+        default cib operations (specified in a resource agent)
+    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
+    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -126,6 +171,31 @@ def create_in_group(
     put_after_adjacent=False,
     wait=False,
 ):
+    """
+    Create resource in a cib and put it into defined group
+
+    LibraryEnvironment env provides all for communication with externals
+    string resource_id is identifier of resource
+    string resource_agent_name contains name for the identification of agent
+    string group_id is identificator for group to put primitive resource inside
+    list of dict operations contains attributes for each entered operation
+    dict meta_attributes contains attributes for primitive/meta_attributes
+    bool allow_absent_agent is a flag for allowing agent that is not installed
+        in a system
+    bool allow_invalid_operation is a flag for allowing to use operations that
+        are not listed in a resource agent metadata
+    bool allow_invalid_instance_attributes is a flag for allowing to use
+        instance attributes that are not listed in a resource agent metadata
+        or for allowing to not use the instance_attributes that are required in
+        resource agent metadata
+    bool use_default_operations is a flag for stopping stopping of adding
+        default cib operations (specified in a resource agent)
+    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
+    string adjacent_resource_id identify neighbor of a newly created resource
+    bool put_after_adjacent is flag to put a newly create resource befor/after
+        adjacent resource
+    mixed wait is flag for controlling waiting for pacemaker iddle mechanism
+    """
     resource_agent = get_agent(
         env.report_processor,
         env.cmd_runner(),

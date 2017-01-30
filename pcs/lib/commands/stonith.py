@@ -22,13 +22,15 @@ def create(
     wait=False,
 ):
     """
-    Create stonith as resource in cib.
+    Create stonith as resource in a cib.
 
     LibraryEnvironment env provides all for communication with externals
-    string stonith_id is identifier for intended stonith resource
+    string stonith_id is an identifier of stonith resource
     string stonith_agent_name contains name for the identification of agent
     list of dict operations contains attributes for each entered operation
     dict meta_attributes contains attributes for primitive/meta_attributes
+    dict instance_attributes contains attributes for
+        primitive/instance_attributes
     bool allow_absent_agent is a flag for allowing agent that is not installed
         in a system
     bool allow_invalid_operation is a flag for allowing to use operations that
@@ -78,14 +80,16 @@ def create_in_group(
     wait=False,
 ):
     """
-    Create stonith as resource in cib and put it into defined group.
+    Create stonith as resource in a cib and put it into defined group.
 
     LibraryEnvironment env provides all for communication with externals
-    string stonith_id is identifier for intended stonith resource
+    string stonith_id is an identifier of stonith resource
     string stonith_agent_name contains name for the identification of agent
     string group_id is identificator for group to put stonith inside
     list of dict operations contains attributes for each entered operation
     dict meta_attributes contains attributes for primitive/meta_attributes
+    dict instance_attributes contains attributes for
+        primitive/instance_attributes
     bool allow_absent_agent is a flag for allowing agent that is not installed
         in a system
     bool allow_invalid_operation is a flag for allowing to use operations that
@@ -97,7 +101,7 @@ def create_in_group(
     bool use_default_operations is a flag for stopping stopping of adding
         default cib operations (specified in a stonith agent)
     bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    string adjacent_resource_id identify neighbor of a newly created resource
+    string adjacent_resource_id identify neighbor of a newly created stonith
     bool put_after_adjacent is flag to put a newly create resource befor/after
         adjacent stonith
     mixed wait is flag for controlling waiting for pacemaker iddle mechanism
