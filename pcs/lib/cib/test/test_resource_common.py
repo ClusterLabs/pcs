@@ -30,7 +30,7 @@ class AreMetaDisabled(TestCase):
         self.assertFalse(common.are_meta_disabled({}))
         self.assertFalse(common.are_meta_disabled({"target-role": "any"}))
 
-class AreCloneMetaDisabled(TestCase):
+class IsCloneDeactivatedByMeta(TestCase):
     def assert_is_disabled(self, meta_attributes):
         self.assertTrue(common.is_clone_deactivated_by_meta(meta_attributes))
 
@@ -44,6 +44,7 @@ class AreCloneMetaDisabled(TestCase):
         self.assert_is_disabled({"clone-max": "00"})
         self.assert_is_disabled({"clone-max": 0})
         self.assert_is_disabled({"clone-node-max": "0"})
+        self.assert_is_disabled({"clone-node-max": "abc1"})
 
     def test_detect_is_not_disabled(self):
         self.assert_is_not_disabled({})
@@ -53,3 +54,5 @@ class AreCloneMetaDisabled(TestCase):
         self.assert_is_not_disabled({"clone-max": 1})
         self.assert_is_not_disabled({"clone-node-max": "1"})
         self.assert_is_not_disabled({"clone-node-max": 1})
+        self.assert_is_not_disabled({"clone-node-max": "1abc"})
+        self.assert_is_not_disabled({"clone-node-max": "1.1"})
